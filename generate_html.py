@@ -6526,6 +6526,9 @@ def generate_account_page(*, dry_run=False, output_dir=None):
                           "how you get around"),
         "markets": ("📈", "TSLA + SPCX closes from the network's own data "
                           "pipeline — on any paid tier"),
+        "skip_repeats": ("✂️", "When a later show retells a story an earlier "
+                               "one told, Mira trims it — only at a clean "
+                               "story break, and she says so"),
     }
     ctx["personal_addons"] = [
         {"id": aid, "label": meta["label"], "tier": meta["tier"],
@@ -6533,6 +6536,11 @@ def generate_account_page(*, dry_run=False, output_dir=None):
         for aid, meta in PERSONAL_ADDONS.items()
     ]
     ctx["default_addons"] = list(DEFAULT_ADDONS)
+    # Oct 18 2026: "Tell Mira about you" + edition length — limits from the
+    # engine (the Worker mirrors them; drift-guarded).
+    from engine.personal_edition import PROFILE_MAX_CHARS, TARGET_MINUTES
+    ctx["profile_max_chars"] = PROFILE_MAX_CHARS
+    ctx["target_minutes_options"] = list(TARGET_MINUTES)
     # Books for members (Sep 14 2026): the library card lists every
     # listed volume; the download link answers only for active PNN
     # members (Worker /api/books). Public metadata only — the private

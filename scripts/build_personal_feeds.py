@@ -73,7 +73,10 @@ from engine.daily_edition import (  # noqa: E402
     realign_handoffs,
     segment_trim_cmd,
 )
+from engine import personal_stories as pstories  # noqa: E402
 from engine.personal_edition import (  # noqa: E402
+    EditionContext,
+    ensure_trim_mentions,
     MIRA_PERSONAL_DISCLOSURE,
     PERSONAL_R2_PREFIX,
     PersonalSpec,
@@ -211,6 +214,18 @@ def build_segment_cache(
         if seg is None:
             continue
         target = cache_dir / f"{slug}.mp3"
+        # The promo cut comes from the committed transcript, so it is known
+        # without the audio — and it must be on the segment even when the
+        # cached file already exists: the edition's transcript stops there
+        # (Oct 18 2026 — it was only ever a local here, so the cues of the
+        # trimmed promo tail rode into every personal transcript).
+        cut = None
+        if seg.transcript_path:
+            transcript = load_transcript(seg.transcript_path)
+            hit = find_promo_cut(transcript) if transcript else None
+            if hit:
+                cut = hit["raw_seconds"] + seg.music_intro_offset
+        seg.cut_final_seconds = cut
         if target.exists():
             out[slug] = target
             continue
@@ -228,12 +243,6 @@ def build_segment_cache(
                     with raw.open("wb") as fh:
                         for chunk in resp.iter_content(1 << 16):
                             fh.write(chunk)
-            cut = None
-            if seg.transcript_path:
-                transcript = load_transcript(seg.transcript_path)
-                hit = find_promo_cut(transcript) if transcript else None
-                if hit:
-                    cut = hit["raw_seconds"] + seg.music_intro_offset
             _run(segment_trim_cmd(raw, target, cut), f"trim {slug}")
             _level_segment(slug, target)
             out[slug] = target
@@ -329,12 +338,14 @@ def _mira_piece(text: str, name: str, workdir: Path,
 
 def generate_personal_links(
     spec: PersonalSpec, segments: List[Segment], target_date: dt.date,
+    context: Optional[EditionContext] = None,
 ) -> dict:
     try:
         from digests.xai_grok import grok_generate_text
 
         handoff_count = max(0, len(segments) - 1)
-        prompt = build_personal_links_prompt(ROOT, spec, segments, target_date)
+        prompt = build_personal_links_prompt(ROOT, spec, segments, target_date,
+                                             context)
         text, _meta = grok_generate_text(
             prompt=prompt, model=LINKS_MODEL, temperature=0.7,
             # Same budget as Nerra Daily's links call: a fixed 2,000 cut a
@@ -357,7 +368,7 @@ def generate_personal_links(
     except Exception as exc:  # noqa: BLE001
         logger.warning("%s…: links failed (%s) — fallback",
                        spec.token[:8], exc)
-    return fallback_personal_links(spec, segments, target_date)
+    return fallback_personal_links(spec, segments, target_date, context)
 
 
 def generate_local_brief(spec: PersonalSpec, target_date: dt.date,
@@ -430,9 +441,12 @@ def generate_topics_brief(spec: PersonalSpec,
 
 
 def _transcript_pieces(spec, segments, durations, links, local_texts,
-                       topics_text, markets_text, signoff_text):
+                       topics_text, markets_text, signoff_text, spans=None):
     """Splice order → (speaker, duration, text | None, transcript | None,
-    cut) for transcript_entries. Mirrors the splice in build_for_spec."""
+    cut) for transcript_entries. Mirrors the splice in build_for_spec.
+    *spans* — per slug, the stretches trimmed out of that segment: its
+    transcript and its promo-cut point move onto the trimmed timeline."""
+    spans = spans or {}
     pieces = [("Mira", durations.get("intro", 0.0), links["intro"], None, None)]
     for i, (_city, text) in enumerate(local_texts, 1):
         pieces.append(("Mira", durations.get(f"local_{i}", 0.0), text, None, None))
@@ -445,8 +459,10 @@ def _transcript_pieces(spec, segments, durations, links, local_texts,
             pieces.append(("Mira", durations.get(f"handoff_{i}", 0.0),
                            links["handoffs"][i - 1], None, None))
         transcript = load_transcript(seg.transcript_path) if seg.transcript_path else None
+        removed = spans.get(seg.slug) or []
         pieces.append((seg.show_name, durations.get(f"seg_{seg.slug}", 0.0),
-                       None, transcript, seg.cut_final_seconds))
+                       None, pstories.remap_transcript(transcript, removed),
+                       pstories.remap_cut_point(seg.cut_final_seconds, removed)))
     pieces.append(("Mira", durations.get("signoff", 0.0), signoff_text, None, None))
     return pieces
 
@@ -471,6 +487,148 @@ def _ensure_cover(client, spec: PersonalSpec, state: dict, prefix: str) -> bool:
         return bool(state.get("cover_signature"))
     finally:
         shutil.rmtree(out.parent, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# Personalization (Oct 18 2026) — deterministic, no model or search call
+# ---------------------------------------------------------------------------
+
+#: Per run, per show: the segment's stories (chapters, headlines, digest
+#: units, transcript) and its pauses. Computed once and shared by every
+#: member, like the segment cache itself.
+_STORIES: Dict[str, "pstories.SegmentStories"] = {}
+_SILENCES: Dict[str, List[Tuple[float, float]]] = {}
+
+#: Mira's pieces as the links prompt sizes them (words): intro, each
+#: handoff, sign-off + disclosure — the length estimate before TTS.
+_MIRA_WORDS = {"intro": 110, "handoff": 45, "signoff": 95}
+
+
+def _stories_for(seg: Segment, path: Path) -> "pstories.SegmentStories":
+    key = f"{seg.slug}:{seg.episode_num}:{path}"
+    if key not in _STORIES:
+        transcript = load_transcript(seg.transcript_path) if seg.transcript_path else None
+        _STORIES[key] = pstories.segment_stories(
+            seg, ROOT, cut_seconds=seg.cut_final_seconds,
+            duration=_duration(path), transcript=transcript,
+            private=bool(parse_private_ref(seg.audio_url)))
+    return _STORIES[key]
+
+
+def _silences_for(slug: str, path: Path) -> List[Tuple[float, float]]:
+    key = f"{slug}:{path}"
+    if key not in _SILENCES:
+        _SILENCES[key] = pstories.detect_cut_silences(path)
+    return _SILENCES[key]
+
+
+def plan_personalization(
+    spec: PersonalSpec,
+    segments: List[Segment],
+    cache: Dict[str, Path],
+    past_rows: List[dict],
+    target_date: dt.date,
+    episode_num: int,
+    extra_mira_words: int = 0,
+) -> Tuple[EditionContext, List["pstories.Cut"], List["pstories.SegmentStories"]]:
+    """Everything personal about today's edition, before any audio is made:
+    what this listener already heard, which stories two of their shows both
+    tell, what their settings trim, where their own subjects are, and the
+    length estimate. Logs counts only — never the profile, a name or a city."""
+    stories = [_stories_for(seg, cache[seg.slug]) for seg in segments]
+    memory = (pstories.memory_notes(stories, past_rows, target_date)
+              if episode_num > 1 else [])
+    threads = pstories.week_threads(stories, past_rows, target_date)
+    repeats = pstories.cross_repeats(stories)
+
+    cuts: List[pstories.Cut] = []
+    refused: Dict[str, int] = {}
+    if spec.skip_repeats and repeats:
+        silences = {s.slug: _silences_for(s.slug, cache[s.slug]) for s in stories
+                    if any(r.later == s.slug for r in repeats)}
+        cuts, why = pstories.plan_repeat_cuts(stories, repeats, silences)
+        for _r, reason in why:
+            refused[reason] = refused.get(reason, 0) + 1
+    n = len(segments)
+    words = (_MIRA_WORDS["intro"] + _MIRA_WORDS["handoff"] * max(0, n - 1)
+             + _MIRA_WORDS["signoff"] + extra_mira_words)
+    overhead = pstories.estimate_mira_seconds(words, n + 1)
+    content = sum(s.duration for s in stories)
+    if spec.target_minutes:
+        target = spec.target_minutes * 60.0
+        if overhead + content - sum(c.seconds for c in cuts) > target:
+            silences = {s.slug: _silences_for(s.slug, cache[s.slug]) for s in stories}
+            cuts += pstories.plan_length_cuts(stories, target, overhead, silences,
+                                              already=cuts)
+    context = EditionContext(
+        edition_number=episode_num, memory=memory, week_threads=threads,
+        target_minutes=spec.target_minutes,
+        weekday=target_date.weekday(), overhead_seconds=overhead,
+        repeat_objects=repeats)
+    logger.info(
+        "%s…: personal — memory %d, threads %d, repeats %d, planned trims %d%s",
+        spec.token[:8], len(memory), len(threads), len(repeats), len(cuts),
+        (" refused " + ", ".join(f"{k}: {v}" for k, v in sorted(refused.items())))
+        if refused else "")
+    return context, cuts, stories
+
+
+def finish_context(context: EditionContext, stories: List["pstories.SegmentStories"],
+                   kept: List["pstories.Cut"], spec: Optional[PersonalSpec] = None,
+                   spans: Optional[Dict[str, List[Tuple[float, float]]]] = None,
+                   ) -> EditionContext:
+    """Fill in what depends on the cuts that actually rendered: the trims
+    Mira must name, the repeat notes for every retelling still in the
+    audio, the interest pointers (never to a trimmed story) and the length
+    estimate."""
+    by_slug = {s.slug: s for s in stories}
+    if spec is not None:
+        context.highlights = pstories.interest_highlights(
+            stories, spec.topics, spec.profile, spans or {})
+        logger.info("%s…: personal — %d trim(s) rendered, %d highlight(s)",
+                    spec.token[:8], len(kept), len(context.highlights))
+    context.trims = [
+        {"slug": c.slug, "show": by_slug[c.slug].show_name, "title": c.title,
+         "reason": c.reason, "earlier_show": c.earlier_show,
+         "url": by_slug[c.slug].full_episode_url, "seconds": round(c.seconds, 1)}
+        for c in kept]
+    trimmed = {(c.slug, c.title) for c in kept}
+    context.repeats = [
+        f'{r.later_show} comes back to "{r.later_text}" — {r.earlier_show} '
+        f'told it earlier today ("{r.earlier_text}").'
+        for r in context.repeat_objects
+        if not (r.chapter is not None and (r.later, r.chapter.title) in trimmed)
+    ][:pstories.MAX_REPEAT_NOTES]
+    content = sum(s.duration for s in stories) - sum(c.seconds for c in kept)
+    context.estimated_minutes = round((context.overhead_seconds + content) / 60.0, 1)
+    return context
+
+
+def apply_cuts(cuts: List["pstories.Cut"], cache: Dict[str, Path],
+               stories: List["pstories.SegmentStories"], workdir: Path,
+               ) -> Tuple[Dict[str, Path], Dict[str, List[Tuple[float, float]]], List["pstories.Cut"]]:
+    """Render each trimmed segment for this member (the shared cached file
+    is never touched). A failed render drops that segment's cuts — the
+    whole episode airs and nothing claims a trim that did not happen."""
+    paths = {slug: p for slug, p in cache.items()}
+    spans: Dict[str, List[Tuple[float, float]]] = {}
+    kept: List[pstories.Cut] = []
+    by_slug = {s.slug: s for s in stories}
+    for slug in sorted({c.slug for c in cuts}):
+        removed = pstories.removed_spans(cuts, slug)
+        out = workdir / f"{slug}.trimmed.mp3"
+        dur = by_slug[slug].duration
+        try:
+            _run(pstories.cut_segment_cmd(cache[slug], out,
+                                          pstories.keep_ranges(dur, removed), dur),
+                 f"trim repeats {slug}")
+        except Exception as exc:  # noqa: BLE001 — the whole episode still airs
+            logger.warning("trim render failed for %s (%s) — segment airs whole", slug, exc)
+            continue
+        paths[slug] = out
+        spans[slug] = removed
+        kept.extend(c for c in cuts if c.slug == slug)
+    return paths, spans, kept
 
 
 # ---------------------------------------------------------------------------
@@ -513,14 +671,33 @@ def build_for_spec(
                        spec.token[:8], len(segments))
         return False
 
+    episode_num = (int(previous[0].get("episode_num", 0)) if previous
+                   else 1 + max((int(e.get("episode_num", 0))
+                                 for e in episodes), default=0))
     workdir = Path(tempfile.mkdtemp(prefix=f"np_{spec.token[:8]}_"))
     try:
-        links = generate_personal_links(spec, segments, target_date)
+        # The researched pieces come first now (Oct 18 2026): their length
+        # feeds the edition's length estimate, and nothing in the links
+        # call depends on them.
         local_texts = generate_local_briefs(spec, target_date)
         topics_text = generate_topics_brief(spec, target_date)
         markets_text = ""
         if "markets" in spec.effective_addons():
             markets_text = build_markets_line(ROOT)
+        extra_words = sum(len(t.split()) for _c, t in local_texts) + len(
+            (topics_text or "").split()) + len(markets_text.split())
+
+        # Personalization — deterministic, no model call: memory, repeats,
+        # trims, interests. The audio trims render before the links so a
+        # failed render never leaves Mira naming a trim that did not happen.
+        context, planned, stories = plan_personalization(
+            spec, segments, cache, episodes, target_date, episode_num, extra_words)
+        seg_paths, spans, kept = apply_cuts(planned, cache, stories, workdir)
+        context = finish_context(context, stories, kept, spec, spans)
+
+        links = generate_personal_links(spec, segments, target_date, context)
+        links = ensure_trim_mentions(links, segments, context.trims,
+                                     spec.target_minutes)
 
         durations: Dict[str, float] = {}
         intro = _mira_piece(links["intro"], "intro", workdir)
@@ -549,7 +726,7 @@ def build_for_spec(
         signoff = _mira_piece(signoff_text, "signoff", workdir, lead_in=sting)
         durations["signoff"] = _duration(signoff)
         for seg in segments:
-            durations[f"seg_{seg.slug}"] = _duration(cache[seg.slug])
+            durations[f"seg_{seg.slug}"] = _duration(seg_paths[seg.slug])
 
         splice: List[Path] = [intro]
         splice.extend(local_pieces)
@@ -560,14 +737,18 @@ def build_for_spec(
         for i, seg in enumerate(segments):
             if i > 0:
                 splice.append(handoffs[i - 1])
-            splice.append(cache[seg.slug])
+            splice.append(seg_paths[seg.slug])
         splice.append(signoff)
 
-        # Chapter math mirrors the splice: handoff i leads segment i.
+        # Chapter math mirrors the splice: handoff i leads segment i; each
+        # segment's own chapters after its lead become navigable chapters,
+        # on the trimmed timeline.
         durations_for_chapters = dict(durations)
         for i in range(1, len(segments)):
             durations_for_chapters[f"handoff_{i}"] = durations.get(
                 f"handoff_{i}", 0.0)
+        subchapters = {st.slug: pstories.segment_subchapters(st, spans.get(st.slug, []))
+                       for st in stories}
 
         filename = (f"Nerra_Personal_{target_date:%Y%m%d}"
                     + (f"_r{revision}" if previous else "") + ".mp3")
@@ -575,10 +756,13 @@ def build_for_spec(
         concatenate_audio(splice, final)
         total = _duration(final)
         title = personal_episode_title(target_date, segments)
-        logger.info("%s…: %0.1f min, %d segments%s%s", spec.token[:8],
-                    total / 60, len(segments),
+        logger.info("%s…: %0.1f min%s, %d segments%s%s%s", spec.token[:8],
+                    total / 60,
+                    f" (asked for {spec.target_minutes})" if spec.target_minutes else "",
+                    len(segments),
                     f" + {len(local_pieces)} local brief(s)" if local_pieces else "",
-                    " + topics" if topics_piece else "")
+                    " + topics" if topics_piece else "",
+                    f", {len(kept)} trim(s) {sum(c.seconds for c in kept):.0f}s" if kept else "")
         if dry_run or client is None:
             keep = os.environ.get("NP_KEEP_DIR")
             if keep:
@@ -587,21 +771,19 @@ def build_for_spec(
                 dest = Path(keep) / spec.token[:8]
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(final, dest / filename)
-                pieces = personal_chapter_pieces(spec, segments, durations_for_chapters)
+                pieces = personal_chapter_pieces(spec, segments, durations_for_chapters,
+                                                 subchapters)
                 (dest / "chapters.json").write_text(
                     json.dumps(build_chapters(pieces, title), indent=1))
                 cues = transcript_entries(_transcript_pieces(
                     spec, segments, durations, links, local_texts, topics_text,
-                    markets_text, signoff_text))
+                    markets_text, signoff_text, spans))
                 (dest / "transcript.vtt").write_text(transcript_vtt(cues))
                 logger.info("%s…: dry-run artifacts kept in %s", spec.token[:8], dest)
             return True
 
-        episode_num = (int(previous[0].get("episode_num", 0)) if previous
-                       else 1 + max((int(e.get("episode_num", 0))
-                                     for e in episodes), default=0))
         chapter_pieces = personal_chapter_pieces(spec, segments,
-                                                 durations_for_chapters)
+                                                 durations_for_chapters, subchapters)
         chapters = build_chapters(chapter_pieces, title)
         # Outlets each brief credits by name → the episode notes.
         sources: Dict[str, List[str]] = {}
@@ -611,10 +793,10 @@ def build_for_spec(
             sources["Your topics"] = named_sources(topics_text)
         description, notes_html = episode_notes(
             spec, chapters["chapters"], sources_by_chapter=sources,
-            segments=segments)
+            segments=segments, trims=context.trims)
         cues = transcript_entries(_transcript_pieces(
             spec, segments, durations, links, local_texts, topics_text,
-            markets_text, signoff_text))
+            markets_text, signoff_text, spans))
         tr_json_name, tr_vtt_name = transcript_filenames_for(date_iso)
         row = {
             "episode_num": episode_num,
@@ -629,6 +811,12 @@ def build_for_spec(
                 timespec="seconds").replace("+00:00", "Z"),
             "revision": revision if previous else 0,
             "transcripts": [tr_json_name, tr_vtt_name],
+            # Edition memory (Oct 18 2026): what this edition carried, so
+            # tomorrow's Mira knows what the listener already heard. Public
+            # episode text only; capped by engine.personal_stories.
+            "contents": pstories.edition_contents(stories),
+            "trimmed": [{"slug": t["slug"], "title": t["title"],
+                         "reason": t["reason"]} for t in context.trims],
         }
         episodes.append(row)
         from engine.personal_edition import prune_episode_state

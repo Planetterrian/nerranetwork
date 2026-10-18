@@ -421,3 +421,101 @@ require every item to name its source aloud; a generic attribution
 through Stripe's customer portal from the account page (never a second
 checkout); `customer.subscription.updated` moves the tier and keeps the
 feed token.
+
+## Mira knows the listener (18 Oct 2026)
+
+Operator brief: a deeply personal edition for any subscriber without
+adding cost. **The cost rule held: no new model or web-search call per
+member per day.** Everything below is either deterministic code
+(`engine/personal_stories.py`), ffmpeg work on audio the builder already
+cached, or a few more lines in the ONE existing links call
+(`generate_personal_links`, `shows/prompts/nerra_personal_links.txt`).
+TTS grows only by Mira's own lines. Register entries
+`personal-deep-2026-10-18`, `personal-trims-2026-10-18`; guards
+`tests/test_personal_deep_2026_10_18.py`, `workers/gallery/test/personal.test.ts`
+("profile, length and skip_repeats").
+
+| Feature | Member sets | What it does | Marginal cost |
+|---|---|---|---|
+| Tell Mira about you | a note, ≤ 240 chars | Mira may use it for at most two short "why this matters to you" observations, only where today's material connects | a few prompt lines |
+| Edition memory | nothing | today's stories matched against the member's last seven editions → "heard on Tuesday in Tesla Shorts Time" notes; first edition explains what Mira does; Sunday names the week's threads | ~0 (state row grows ~4 KB) |
+| Repeats across their shows | nothing | "MAG 7 Daily comes back to the Gemini story Models & Agents told" — Mira says so and names what the later show adds | ~0 |
+| `skip_repeats` add-on | toggle (off by default) | cuts the later telling at its chapter boundaries when every rule passes | one ffmpeg render of the trimmed segment |
+| Edition length | none / 20 / 30 / 45 / 60 min | trims from the end of the longest segments at chapter boundaries until it fits; ships long when the rules forbid more | same |
+| Interest pointers + story chapters | (topics, note) | "in MAG 7, story 5 is your Gemini topic"; the feed's chapters now include each show's own story chapters | ~0 |
+
+### Rules that bind
+
+- **The note is data, never instructions.** Scrubbed exactly like every
+  free-text field (`_clean_free_text` / the Worker's `cleanList`), capped at
+  `PROFILE_MAX_CHARS` (mirrored as `PROFILE_MAX`), delimited in the prompt,
+  and the prompt forbids flattery, repeating it back, or stating anything
+  about the listener beyond what they wrote. The builder never logs it;
+  logs carry counts and the 8-character token only. It reaches the model
+  that writes Mira's lines, as the name and city already do — the account
+  page says so.
+- **Memory is counted, not guessed.** Each `episodes.json` row now carries
+  `contents` (per segment: slug, show, episode, hook, at most eight
+  headlines — public episode text only) and `trimmed`. Matching is the
+  story-recurrence salient-token approach with spoken numbers and generic
+  headline words removed. The row cap (`PERSONAL_FEED_MAX_EPISODES`, 7) is
+  the memory window; the existing prune keeps it small.
+- **Matcher calibration** (committed digests 2026-10-04 → 10-17, every pair
+  of choosable shows on the same day): a mention needs 4 shared salient
+  tokens over 40% of the smaller headline, or 3 over 60%, or 3 over 40%
+  when the two digest bodies share ≥ 30% of their vocabulary. 76 pairs
+  passed; every one read as the same story or the same event (the false
+  pairs at 3 tokens — "Frequent Daytime Napping Linked to Higher Dementia
+  Risk" vs "Lithium in drinking water linked to higher…", "German chancellor
+  arrives in Kyiv" vs "Kyiv bridge hit…" — are excluded by the body rule).
+  A cut needs ≥ 4 tokens, ≥ 50% and body share ≥ 0.25: 58 of the 76.
+- **A cut is a whole show chapter and every rule must pass**
+  (`check_chapter_cut`): never a members-only episode (no public full
+  version to point at), never the cold open / teaser / sign-off, never the
+  lead story, never the segment's last chapter (on shows without a Closing
+  chapter it carries the sign-off — MAG 7's "On the Calendar"); both edges
+  within 1.5 s of a pause and between two sentences (Whisper stretches a
+  word across a real pause — "and" over 0.7 s on MAG 7 Ep022); a repeat
+  cut, or any headline chapter, must be ONE story by the transcript
+  (≥ 70% of its spoken words belong to the digest item, first and last
+  sentences belong, the sentence before and after do not).
+- **A pause is a silence or the story-break pause.** Music shows lay a
+  swell of their theme under every story-break pause (Oct 14), measured at
+  about -21 dB RMS on Models & Agents Ep203, so `silencedetect` never finds
+  it; a Whisper word gap ≥ 0.8 s that ends a sentence counts (ordinary
+  sentence gaps measured 0.5-0.75 s). Joins render with 40 ms fades.
+- **Honest outcome of the repeat trim:** on the 14 calibration days, 11
+  strong repeats sat on a single-story headline chapter in the later show
+  and **none** passed every rule on the real audio — 7 were the later show's
+  lead story, 2 had no pause at a chapter edge, 1 edge fell inside a
+  sentence, 1 chapter carried a second story. Show chapters often start
+  late (Tesla's carry the next unchaptered item), so repeat trims will be
+  rare until `engine/chapters.py` anchors story starts precisely; Mira's
+  spoken note is what the member gets meanwhile. The length budget does
+  trim: a 20-minute ask on a 44-minute lineup cut 164 s in four chapters
+  and shipped long, with the realized length logged.
+- **A trim is never silent.** The links prompt names each trim; when Mira's
+  lead-in into that show does not say so, the builder adds one fixed
+  sentence (`trim_sentence`, code not a prompt specimen). The episode notes
+  list "Trimmed for you" with the full-episode link. A failed render drops
+  that segment's cuts before the links are written.
+- **Timelines stay aligned.** Chapters and the Whisper transcript move onto
+  the trimmed timeline (`remap_transcript`, `remap_cut_point`,
+  `segment_subchapters`). The promo-cut point is now set on every segment
+  even when the cached file exists (it had been a local in
+  `build_segment_cache`, so the trimmed promo tail's cues rode into every
+  personal transcript).
+- **Defaults preserve today's edition.** `skip_repeats` is not in
+  `DEFAULT_ADDONS`; a member who never saves a length has no budget; a page
+  from before this change sends neither field and the Worker leaves both
+  untouched.
+
+### Operator steps
+
+1. `wrangler deploy` in `workers/gallery/` — the profile, length and
+   `skip_repeats` fields are dead until then (vitest 121/121 green in the
+   session; `npx vitest run`). No new secret.
+2. The account page regenerates with `generate_html.py --network`/`--all`.
+3. Nothing on the batch host: the builder change ships with this repo.
+4. Spot-listen the first edition carrying each new block and the first
+   three trimmed editions (⚠️ AUDIO — Mira's lines change).

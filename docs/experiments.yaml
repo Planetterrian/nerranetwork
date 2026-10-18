@@ -5089,3 +5089,67 @@ experiments:
       ⚠️ AUDIO: _shared/hook_supported.txt in ten digest prompts (Tesla, MIT —
       a control show of the Sep 22 spoken-open read — and the cohort), the
       Board's two-venue line, AI Chips' Teardown source rule.
+  - id: personal-deep-2026-10-18
+    title: "Nerra Personal: Mira knows the listener — profile, edition memory, repeats, interest pointers, story chapters"
+    area: growth
+    shipped: 2026-10-18
+    readout: 2026-11-15
+    status: reading
+    baseline: >
+      Oct 2026: every personal edition was the same template with the
+      member's name in it — Mira saw the day's hooks and nothing about the
+      listener, re-introduced a story they heard two days earlier as new,
+      had no data on which of their shows told the same story, and the feed
+      carried one chapter per show. Membership itself is unmeasured in this
+      repo (api/member_metrics.json: configured false on 2026-09-21).
+    target: >
+      No new model or search call per member (builder logs: one links call
+      per edition, unchanged). On the builder's per-member log line,
+      memory notes > 0 on most editions after a member's first week, and
+      every trimmed segment's lead-in names the trim. Retention: no paying
+      member lost in the readout window who used the profile or length
+      settings; account-page saves of the new fields read in the Worker.
+    criteria: >
+      Read the builder log counts (memory / repeats / trims / highlights,
+      never listener data) and member_metrics active counts. A trim the
+      audio does not name, or a highlight pointing at a trimmed story, is a
+      defect, not a result. Listen to one edition with each new block in
+      play before reading anything else (⚠️ AUDIO — Mira's lines change).
+    notes: >
+      engine/personal_stories.py (deterministic); EditionContext rides the
+      one links call (shows/prompts/nerra_personal_links.txt);
+      episodes.json rows carry `contents` (cap 8 headlines per segment) and
+      `trimmed`. Operator: wrangler deploy workers/gallery for the profile
+      and length fields.
+  - id: personal-trims-2026-10-18
+    title: "Nerra Personal: skip_repeats and the edition length budget trim at chapter boundaries"
+    area: growth
+    shipped: 2026-10-18
+    readout: 2026-11-15
+    status: reading
+    baseline: >
+      Calibration on committed data, 2026-10-04 to 10-17, every pair of
+      choosable shows on the same day: 76 cross-show repeats at mention
+      level, 58 strong enough to cut, 11 of them on a single-story headline
+      chapter in the later show — and 0 of the 11 passed every cut rule on
+      the real audio (7 lead story, 2 no pause at a chapter edge, 1 edge
+      inside a sentence, 1 chapter carrying a second story). A 20-minute
+      budget on a 44-minute MAG 7 / M&A / AI Chips / SpaceX lineup trimmed
+      164 s (4 chapters) and shipped long, as designed.
+    target: >
+      Every trim lands between two sentences inside a pause (spot-listen the
+      first three trimmed editions); no trim on a lead story, a sign-off or a
+      members-only episode; the realized length logged beside the asked-for
+      one on every budgeted edition.
+    criteria: >
+      Repeat trims are expected to be rare until show chapters anchor on
+      story starts (engine/chapters.py — Tesla's start late and carry the
+      next unchaptered item); Mira's spoken repeat note is the main product
+      and is read in personal-deep-2026-10-18. A trim that clips a sentence
+      is a P0 for the rule that let it through, not a tuning question.
+    notes: >
+      engine.personal_stories.check_chapter_cut owns the rules; pauses are
+      silencedetect silences or story-break word gaps >= 0.8 s (music shows
+      lay a theme swell under the story-break pause, about -21 dB RMS on
+      Models & Agents Ep203, which silencedetect never sees); joins render
+      with 40 ms fades. ⚠️ AUDIO.
