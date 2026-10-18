@@ -835,13 +835,16 @@ def build_for_spec(
                 "application/json")
         _r2_put(client, f"{prefix}/{tr_vtt_name}",
                 transcript_vtt(cues).encode("utf-8"), "text/vtt")
+        special_rows = _sync_special_audio(client, spec, state)
         _r2_put(client, state_key,
                 json.dumps({"episodes": episodes,
-                            "cover_signature": state.get("cover_signature", "")}
+                            "cover_signature": state.get("cover_signature", ""),
+                            "special_files": state.get("special_files", [])}
                            ).encode("utf-8"),
                 "application/json")
         _r2_put(client, f"{prefix}/feed.rss",
-                build_personal_feed_xml(spec, episodes, cover=has_cover)
+                build_personal_feed_xml(spec, episodes, cover=has_cover,
+                                        specials=special_rows)
                 .encode("utf-8"),
                 "application/rss+xml")
         for old in dropped:
@@ -852,6 +855,60 @@ def build_for_spec(
         return False
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _sync_special_audio(client, spec: PersonalSpec, state: dict) -> List[dict]:
+    """Copy every released members-only series episode into this member's
+    keyspace (server-side, once) and return the feed rows for them
+    (Oct 18 2026, engine.specials). The Worker serves only
+    ``personal/<token>/<file>``, so the copy is what lets a member's app
+    fetch it with no Worker change. Mutates ``state["special_files"]``."""
+    from engine.specials import member_feed_rows, private_key_from_ref
+
+    have = set(state.get("special_files") or [])
+    rows = []
+    for row in member_feed_rows():
+        name = row["filename"]
+        if name not in have:
+            try:
+                src_bucket, src_key = private_key_from_ref(row["audio_ref"])
+                client.copy_object(
+                    Bucket=_bucket(), Key=f"{PERSONAL_R2_PREFIX}/{spec.token}/{name}",
+                    CopySource={"Bucket": src_bucket, "Key": src_key},
+                    ContentType="audio/mpeg", MetadataDirective="REPLACE")
+            except Exception as exc:  # noqa: BLE001 — a missing special never sinks a feed
+                logger.warning("%s…: special %s not copied: %s", spec.token[:8], name, exc)
+                continue
+            have.add(name)
+        rows.append(row)
+    state["special_files"] = sorted(have)
+    return rows
+
+
+def ensure_specials(spec: PersonalSpec, client) -> bool:
+    """Rewrite a member's feed when a newly released series has episodes
+    their feed does not carry yet — also on a day no edition was built
+    (already built, or too few segments). Returns True when it rewrote."""
+    from engine.specials import member_feed_rows
+
+    wanted = {r["filename"] for r in member_feed_rows()}
+    if not wanted:
+        return False
+    state_key = f"{PERSONAL_R2_PREFIX}/{spec.token}/episodes.json"
+    state = _r2_get_json(client, state_key) or {}
+    if wanted <= set(state.get("special_files") or []):
+        return False
+    rows = _sync_special_audio(client, spec, state)
+    prefix = f"{PERSONAL_R2_PREFIX}/{spec.token}"
+    _r2_put(client, state_key, json.dumps(state).encode("utf-8"), "application/json")
+    _r2_put(client, f"{prefix}/feed.rss",
+            build_personal_feed_xml(spec, state.get("episodes", []),
+                                    cover=bool(state.get("cover_signature")),
+                                    specials=rows).encode("utf-8"),
+            "application/rss+xml")
+    logger.info("%s…: feed now carries %d members-only special episode(s)",
+                spec.token[:8], len(rows))
+    return True
 
 
 def main() -> int:
@@ -902,12 +959,17 @@ def main() -> int:
     sting = ensure_sting(cache_root)
 
     client = None if args.dry_run else _r2_client()
-    built = sum(
-        1 for spec in specs
+    built = 0
+    for spec in specs:
         if build_for_spec(spec, target_date, segments_by_slug, cache,
                           client, dry_run=args.dry_run,
-                          replace=args.replace, sting=sting)
-    )
+                          replace=args.replace, sting=sting):
+            built += 1
+        if client is not None:
+            try:
+                ensure_specials(spec, client)
+            except Exception as exc:  # noqa: BLE001 — one subscriber never sinks the batch
+                logger.error("%s…: specials sync failed: %s", spec.token[:8], exc)
     logger.info("built %d/%d personal editions for %s",
                 built, len(specs), target_date)
     return 0 if built or not specs else 1

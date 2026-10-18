@@ -914,6 +914,7 @@ def build_personal_feed_xml(
     episodes: List[dict],
     *,
     cover: bool = False,
+    specials: Optional[List[dict]] = None,
 ) -> str:
     """Personal RSS from the subscriber's episode state (newest first).
 
@@ -962,6 +963,30 @@ def build_personal_feed_xml(
             pub = _dt.datetime.now(_dt.timezone.utc)
         fe.pubDate(pub)
         fe.podcast.itunes_episode(num)
+        fe.podcast.itunes_duration(int(float(row.get("duration_seconds", 0))))
+        fe.enclosure(
+            enclosure_url_for(spec.token, str(row.get("filename") or "")),
+            str(int(row.get("bytes", 0) or 0)),
+            "audio/mpeg",
+        )
+    # Members-only series (Oct 18 2026, engine.specials): every paying
+    # member gets every released series, as bonus items outside the 7-day
+    # edition window. The audio was copied into this member's keyspace by
+    # the builder (scripts/build_personal_feeds.py ensure_specials).
+    for row in specials or []:
+        fe = fg.add_entry(order="append")
+        fe.id(f"personal-{spec.token[:8]}-special-{row.get('series_id')}-{row.get('episode_id')}")
+        fe.title(str(row.get("title") or ""))
+        fe.description(str(row.get("description") or ""))
+        try:
+            base = _dt.datetime.fromisoformat(str(row.get("date") or "")).replace(
+                hour=9, tzinfo=_dt.timezone.utc)
+        except ValueError:
+            base = _dt.datetime.now(_dt.timezone.utc)
+        # Part 1 is the newest by a minute per part, so apps that sort by
+        # date list the series in order.
+        fe.pubDate(base - _dt.timedelta(minutes=int(row.get("part") or 0)))
+        fe.podcast.itunes_episode_type("bonus")
         fe.podcast.itunes_duration(int(float(row.get("duration_seconds", 0))))
         fe.enclosure(
             enclosure_url_for(spec.token, str(row.get("filename") or "")),

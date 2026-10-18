@@ -1,0 +1,45 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-specials { max-width: 820px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); }
+        .nn-specials h1 { font-family: var(--font-heading); margin-bottom: var(--sp-2); }
+        .nn-specials .lede { color: var(--nn-text-secondary); font-size: 1.05rem; }
+        .nn-series { border: 1px solid var(--nn-border); border-radius: 14px; background: var(--nn-surface); padding: var(--sp-6); margin: var(--sp-8) 0; scroll-margin-top: calc(var(--nav-height) + var(--sp-4)); }
+        .nn-series-kicker { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nn-cyan); margin: 0 0 var(--sp-2); }
+        .nn-series h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); font-size: 1.5rem; }
+        .nn-series .sub { color: var(--nn-text-secondary); margin: 0 0 var(--sp-4); }
+        .nn-series audio { width: 100%; max-width: 480px; margin: var(--sp-2) 0 var(--sp-4); }
+        .nn-series ol { list-style: none; padding-left: 0; margin: var(--sp-4) 0; }
+        .nn-series li { margin: 0.35rem 0; }
+        .nn-series li small { color: var(--nn-text-secondary); }
+        .nn-series-meta { font-size: 0.88rem; color: var(--nn-text-secondary); }
+        .nn-series-cta { display: inline-block; margin-top: var(--sp-4); padding: 0.8rem 1.2rem; border-radius: 10px; font-weight: 700; text-decoration: none; background: var(--nn-gradient); color: #fff; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="nn-specials" id="main-content">
+    <h1>Members-only series</h1>
+    <p class="lede">Long, sourced deep dives produced once and delivered to every Nerra Personal
+       member in their personal podcast feed. The trailers are free.</p>
+
+    {% for s in series %}
+    <section class="nn-series" id="{{ s.id }}" aria-labelledby="h-{{ s.id }}">
+        <p class="nn-series-kicker">Members only · {{ s.total_parts }} episodes · from {{ s.host_name }}</p>
+        <h2 id="h-{{ s.id }}">{{ s.title }}</h2>
+        {% if s.subtitle %}<p class="sub">{{ s.subtitle }}</p>{% endif %}
+        <p>{{ s.summary }}</p>
+        {% if s.trailer_url %}<audio controls preload="none" src="{{ s.trailer_url }}" aria-label="Play the {{ s.title }} trailer"></audio>{% endif %}
+        <ol>
+            {% for e in s.episodes %}
+            <li>{{ e.title }}{% if e.minutes %} <small>· {{ e.minutes }} min</small>{% endif %}</li>
+            {% endfor %}
+        </ol>
+        <p class="nn-series-meta">Written from {{ s.sources }} fetched sources · {{ s.claims_verified }} claims checked against their sources{% if s.flagged %} · {{ s.flagged }} unverified sentences marked{% endif %} · released {{ s.released }}</p>
+        <a class="nn-series-cta" href="{{ path_prefix }}join.html">Join Nerra Personal to listen</a>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

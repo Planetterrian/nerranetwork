@@ -619,6 +619,15 @@ def _dashboard_stats_for(slug: str) -> List[Dict[str, str]]:
         return []
 
 
+def _special_ps(slug: str, today) -> str:
+    try:
+        from engine.specials import newsletter_ps
+        return newsletter_ps(slug, today)
+    except Exception as exc:  # noqa: BLE001 — a teaser line never blocks a send
+        logger.warning("specials P.S. skipped: %s", exc)
+        return ""
+
+
 def send_show_newsletter(
     digest_text: str,
     config,
@@ -795,6 +804,9 @@ def send_show_newsletter(
         # the May 2 daily — bug). Pass the episode number explicitly.
         issue_number=episode_num,
         archive_url=archive_url,
+        # Members-only series (Oct 18 2026): a teaser show's emails mention
+        # a released series for 14 days (engine.specials.newsletter_ps).
+        p_s=_special_ps(slug, _today),
     )
 
     # Pre-send contrast tripwire (§7.3). Light-mode-only check — the
