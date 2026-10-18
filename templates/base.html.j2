@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ meta_description }}">
+    {#- Oct 18 2026: a page with no description of its own introduces the
+        network by its tagline and promise (engine.brand), never by one show. -#}
+    {%- set _nn_default_desc = (network_tagline ~ ' ' ~ network_promise()) if network_promise is defined else 'News and podcasts from Nerra Network.' -%}
+    <meta name="description" content="{{ meta_description | default(_nn_default_desc, true) }}">
     {% if marketing.gsc_verification %}<meta name="google-site-verification" content="{{ marketing.gsc_verification }}">{% endif %}
     {% if meta_keywords %}<meta name="keywords" content="{{ meta_keywords }}">{% endif %}
     {#- Templates may override ``block title``; the default is the
@@ -21,7 +24,7 @@
         copy of the approved search strings. -#}
     <!-- Open Graph -->
     <meta property="og:title" content="{{ page_title | default('Nerra Network — Independent Podcast Network') }}">
-    <meta property="og:description" content="{{ page_description | default(meta_description | default('Free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.')) }}">
+    <meta property="og:description" content="{{ page_description | default(meta_description | default(_nn_default_desc, true), true) }}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     {#- Oct 18 2026: one decision about the share card, engine.share_cards.
         resolve_og_image — a square cover becomes its show's 1200x630 card,
@@ -43,7 +46,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
     <meta name="twitter:title" content="{{ page_title | default('Nerra Network') }}">
-    <meta name="twitter:description" content="{{ page_description | default(meta_description | default('Free daily shows. Feed your curiosity. Not your anxiety.')) }}">
+    <meta name="twitter:description" content="{{ page_description | default(meta_description | default(_nn_default_desc, true), true) }}">
     <meta name="twitter:image" content="{{ _og.url }}">
     {% if _og.alt %}<meta name="twitter:image:alt" content="{{ _og.alt | e }}">{% endif %}
     {#- Until Sep 2026 no page on this site named an account on its share card,
@@ -184,7 +187,7 @@
         'footer_listen': 'Слушать' if _is_ru else 'Listen',
         'footer_connect': 'Контакты' if _is_ru else 'Connect',
         'footer_about': 'О сети' if _is_ru else 'About',
-        'footer_brand_desc': 'Без рекламы. Независимая сеть из Ванкувера, Канада.' if _is_ru else 'Zero fluff. Independent podcast network produced in Vancouver, Canada.',
+        'footer_brand_desc': ((network_tagline_ru if network_tagline_ru is defined else '') ~ ' Независимая сеть из Ванкувера, Канада.') if _is_ru else ((network_tagline if network_tagline is defined else '') ~ ' Independent news and podcasts from Vancouver, Canada.'),
         'footer_network_player': 'Плеер сети' if _is_ru else 'Network Player',
         'footer_network_rss': 'RSS сети' if _is_ru else 'Network RSS',
         'footer_about_network': 'О Nerra Network' if _is_ru else 'About Nerra Network',

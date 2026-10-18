@@ -296,10 +296,10 @@ class TestMarkets:
     def test_every_value_carries_its_as_of_date(self):
         m = N.market_strip(mag7=MAG7, spcx=SPCX, tsla=None, launches=LAUNCHES, now=NOW)
         syms = [q["symbol"] for q in m["quotes"]]
-        assert syms == ["TSLA", "NVDA", "SPCX"]
+        assert syms == ["NVDA", "TSLA", "SPCX"]  # alphabetical, never one company first
         for q in m["quotes"]:
             assert q["as_of"] and q["as_of_iso"]
-        tsla = m["quotes"][0]
+        tsla = next(q for q in m["quotes"] if q["symbol"] == "TSLA")
         assert tsla["basis"] == "close" and tsla["as_of"] == "Oct 16" and tsla["change"] == "−2.1%"
         assert m["quotes"][-1]["basis"] == "last quote"
         assert m["groups"][0]["label"] == "Closes" and m["groups"][0]["as_of"] == "Oct 16"

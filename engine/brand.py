@@ -59,6 +59,38 @@ CONTACT_EMAIL = "hello@nerranetwork.com"
 # says ad-free; when the paid tier is described as ad-free, that copy lives
 # here, next to the sponsor policy, and names the paid product it applies to.
 
+# --- The network's promise (Oct 18 2026) ----------------------------------
+#
+# Operator-directed: the tagline and the one-paragraph promise lead every
+# surface that introduces the network — the homepage masthead, the footer,
+# the default meta description and the share cards — ahead of any single
+# show. They are written here once; a template or card that types its own
+# version drifts (the site had three spellings of the tagline).
+
+#: The tagline, as the operator writes it.
+NETWORK_TAGLINE = "Feed your curiosity, not your anxiety."
+NETWORK_TAGLINE_RU = "Питайте любопытство, а не тревогу."
+
+#: The subjects, broadest first — no single show leads the network's promise.
+NETWORK_SUBJECTS = "space, AI, markets, world news, science and more"
+
+
+def network_promise(show_count: int) -> str:
+    """The standfirst: what the network is and why to trust it.
+
+    ``show_count`` is the number of PUBLIC shows (members-only desks are not
+    free, so they are not counted in a sentence that says "free shows").
+    """
+    return (f"News and ideas from {int(show_count)} free shows on {NETWORK_SUBJECTS}. "
+            "Every story is sourced, every claim is checked against its source, "
+            "and you can read the article or hear the episode it came from.")
+
+
+#: A short form for surfaces with one line to spare (cards, meta).
+NETWORK_PROMISE_SHORT = ("Every story sourced. Every claim checked against its source. "
+                         "Read the article or hear the episode.")
+
+
 #: Where sponsor enquiries go. One address for now; split it out when there
 #: is a second person to read it.
 SPONSOR_EMAIL = CONTACT_EMAIL

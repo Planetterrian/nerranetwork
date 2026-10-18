@@ -2201,6 +2201,22 @@ def _build_all_shows_list():
     return shows
 
 
+def _public_shows(shows=None):
+    """Shows a visitor can listen to for free: public access, feed exists.
+
+    ONE filter for every sentence that counts "free shows" — the homepage
+    standfirst, the default meta description and the network share card
+    (Oct 18 2026; the card had said 31 beside the homepage's 26).
+    """
+    from engine import landing_test as _lt
+    shows = _build_all_shows_list() if shows is None else shows
+    return [
+        s for s in shows
+        if s.get("access", "public") in _lt.PUBLIC_ACCESS_MODES
+        and s.get("has_feed", True)
+    ]
+
+
 def _access_card_fields(slug):
     """``access`` / ``access_label`` for one show's card and page."""
     try:
@@ -2359,6 +2375,16 @@ def _with_utm(url, source="nerranetwork", medium="web", campaign=""):
     return url + sep + "&".join(parts)
 
 
+_PUBLIC_SHOW_COUNT = None
+
+
+def _public_show_count_cached() -> int:
+    global _PUBLIC_SHOW_COUNT
+    if _PUBLIC_SHOW_COUNT is None:
+        _PUBLIC_SHOW_COUNT = len(_public_shows())
+    return _PUBLIC_SHOW_COUNT
+
+
 def _get_jinja_env():
     """Create a shared Jinja2 environment with marketing globals + filters."""
     env = Environment(
@@ -2435,6 +2461,14 @@ def _get_jinja_env():
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
+    # Oct 18 2026: the tagline and the promise lead every surface that
+    # introduces the network; engine.brand owns the words.
+    from engine import brand as _brand_copy
+    env.globals["network_tagline"] = _brand_copy.NETWORK_TAGLINE
+    env.globals["network_tagline_ru"] = _brand_copy.NETWORK_TAGLINE_RU
+    env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
+    env.globals["network_promise"] = lambda n=None: _brand_copy.network_promise(
+        n if n is not None else _public_show_count_cached())
     # Oct 18 2026: every page's share card is decided in one place (base.html.j2
     # calls this) — see engine/share_cards.py.
     from engine import share_cards as _share_cards
@@ -5099,11 +5133,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     shows = _build_all_shows_list() if all_shows is None else list(all_shows)
-    public = [
-        s for s in shows
-        if s.get("access", "public") in _lt.PUBLIC_ACCESS_MODES
-        and s.get("has_feed", True)
-    ]
+    public = _public_shows(shows)
     gallery_root = (Path(gallery_dir) if gallery_dir
                     else ROOT / "site" / "data" / "gallery")
     hub_for = _lt.hub_by_slug(public)
@@ -5811,7 +5841,7 @@ _RU_LANDING_COPY = {
         "hero_description": (
             "Starship, Falcon, Starlink, Dragon и рынок SPCX — 10–13 минут "
             "инженерной сути каждый день. Источники названы, один честный "
-            "контраргумент в каждом выпуске, без рекламы и без пересказа "
+            "контраргумент в каждом выпуске и никакого пересказа "
             "заголовков."
         ),
         "magnet_title": "«Хроника SpaceX» — письмо по воскресеньям",
@@ -5840,7 +5870,7 @@ _RU_LANDING_COPY = {
             "Все важные сюжеты Tesla за 10–12 минут в день: FSD и "
             "автономность, Optimus, Cybercab, энергетика и 4680, курс "
             "TSLA и один честный контраргумент в каждом выпуске. "
-            "Источники названы, без рекламы и без пересказа заголовков."
+            "Источники названы, никакого пересказа заголовков."
         ),
         "magnet_title": "«Хроника Tesla» — письмо по воскресеньям",
         "magnet_description": (

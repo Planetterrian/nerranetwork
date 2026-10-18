@@ -31,16 +31,21 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from engine import share_cards as S  # noqa: E402
+from engine.brand import (  # noqa: E402
+    NETWORK_PROMISE_SHORT, NETWORK_SUBJECTS, NETWORK_TAGLINE, network_promise,
+)
 
 logger = logging.getLogger("build_share_cards")
 
-# The network card's artwork: one show per strand, flagships first. A slug
-# that leaves the registry simply drops out; the grid needs nine.
+# The network card's artwork: the BREADTH of the network, one show per
+# subject the promise names (space, AI, markets, world news, science), never
+# two of one beat (Oct 18 2026, operator: the card had led on SpaceX and
+# Tesla). A slug that leaves the registry drops out; the grid needs nine.
 NETWORK_COVER_SLUGS = (
-    "nerra_daily", "spacex", "models_agents",
-    "tesla", "fascinating_frontiers", "omni_view_world",
-    "planetterrian", "modern_investing", "age_of_ai",
-    "unintended_consequences", "ai_chips", "first_principles",
+    "nerra_daily", "fascinating_frontiers", "models_agents",
+    "omni_view_world", "planetterrian", "modern_investing",
+    "unintended_consequences", "ai_chips", "age_of_ai",
+    "first_principles", "longevity", "prediction_markets",
 )
 
 STRAND_KICKERS = {
@@ -73,11 +78,11 @@ def _page_cards(show_count: int) -> dict:
                          "Every Nerra show grouped by what it covers, with sources named.",
                          ("ai_chips", "fascinating_frontiers", "modern_investing", "longevity"), ""),
         "start-here": ("Start here", "Find your show",
-                       f"{n} shows on AI, space, markets, science and the world.",
-                       ("nerra_daily", "tesla", "models_agents", "omni_view"), ""),
-        "about": ("About", "An independent podcast network",
-                  f"{n} shows, most of them daily, produced in Vancouver, Canada.",
-                  ("nerra_daily", "spacex", "planetterrian", "omni_view_world"), ""),
+                       f"{n} free shows on {NETWORK_SUBJECTS}.",
+                       ("nerra_daily", "fascinating_frontiers", "models_agents", "omni_view_world"), ""),
+        "about": ("About", NETWORK_TAGLINE,
+                  NETWORK_PROMISE_SHORT + " Made in Vancouver, Canada.",
+                  ("nerra_daily", "planetterrian", "modern_investing", "omni_view_world"), ""),
         "faq": ("Questions", "How Nerra works",
                 "How the shows use AI, who hosts, when episodes release and how to subscribe.",
                 (), ""),
@@ -176,10 +181,14 @@ def build_committed(check: bool = False) -> list[str]:
         if S.save_jpeg(img, path):
             changed.append(str(path.relative_to(ROOT)))
 
-    count = len(shows)
+    # The FREE shows a visitor can hear — the homepage's number, never the
+    # registry's (which counts members-only and feedless shows too).
+    import generate_html as g
+    count = len(g._public_shows())
     network = S.render_network_card(show_count=count,
                                     covers=_covers(shows, NETWORK_COVER_SLUGS)[:9])
-    emit(network, S.network_card_path(), f"{S.NETWORK_NAME}: {S.NETWORK_TAGLINE} {count} shows.")
+    emit(network, S.network_card_path(),
+         f"{S.NETWORK_NAME}: {NETWORK_TAGLINE} {network_promise(count)}")
     # The legacy default is still named by hand-written pages and by links the
     # platforms cached: it becomes the network card too (it still carried the
     # no-advertising promise the Oct 11 sponsor policy retired).
@@ -191,6 +200,7 @@ def build_committed(check: bool = False) -> list[str]:
             legacy.write_bytes(buf.getvalue())
         changed.append(str(legacy.relative_to(ROOT)))
 
+    from engine import show_lang
     from engine import topic_hubs as H
     all_shows = [dict(cfg, slug=slug) for slug, cfg in shows.items()]
     first_hub = {}
@@ -214,6 +224,7 @@ def build_committed(check: bool = False) -> list[str]:
             brand_color=cfg.get("brand_color") or "",
             kicker=kicker,
             domain_path=_display_path(cfg.get("show_page") or ""),
+            lang=show_lang.page_lang(slug),
         ), S.show_card_path(slug),
             f"{cfg.get('name', slug)}, a {S.NETWORK_NAME} podcast: "
             f"{cfg.get('hero_tagline') or cfg.get('tagline') or ''}")
