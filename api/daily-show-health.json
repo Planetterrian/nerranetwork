@@ -1,13 +1,13 @@
 {
-  "date": "20261018",
-  "timestamp": "2026-10-18T19:09:44.874798",
-  "episodes_checked": 15,
+  "date": "20261019",
+  "timestamp": "2026-10-19T21:28:08.692008",
+  "episodes_checked": 20,
   "escalations_required": 0,
   "results": [
     {
       "slug": "tesla",
       "show_name": "Tesla Shorts Time",
-      "timestamp": "2026-10-18T19:09:43.334603",
+      "timestamp": "2026-10-19T21:28:06.697326",
       "checks": {
         "chapters": {
           "status": "flagged",
@@ -26,13 +26,18 @@
                   "where": ""
                 },
                 {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
                   "title": "The Counterpoint",
                   "pattern": "one thing worth watching|challenge worth discussing|Short Spot|short.?seller",
                   "where": ""
                 }
               ],
               "confidence": 0.7,
-              "description": "Multiple chapter markers not found: ['Top Stories', 'Tesla X Takeover', 'The Counterpoint']"
+              "description": "Multiple chapter markers not found: ['Top Stories', 'Tesla X Takeover', 'Also Today', 'The Counterpoint']"
             }
           ],
           "chapter_count": 4
@@ -42,9 +47,18 @@
           "findings": []
         },
         "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 1530,
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "below_target_length",
+              "word_count": 1374,
+              "floor": 1400,
+              "deficit": 26,
+              "confidence": 0.7046428571428571,
+              "description": "Episode 1374w (floor 1400w, -26w)"
+            }
+          ],
+          "word_count": 1374,
           "floor": 1400
         },
         "metadata": {
@@ -56,7 +70,7 @@
     {
       "slug": "omni_view",
       "show_name": "Omni View",
-      "timestamp": "2026-10-18T19:09:43.457129",
+      "timestamp": "2026-10-19T21:28:06.816661",
       "checks": {
         "chapters": {
           "status": "ok",
@@ -70,7 +84,7 @@
         "word_count": {
           "status": "ok",
           "findings": [],
-          "word_count": 1459,
+          "word_count": 1433,
           "floor": 1400
         },
         "metadata": {
@@ -82,11 +96,34 @@
     {
       "slug": "fascinating_frontiers",
       "show_name": "Fascinating Frontiers",
-      "timestamp": "2026-10-18T19:09:43.561136",
+      "timestamp": "2026-10-19T21:28:06.921437",
       "checks": {
         "chapters": {
-          "status": "ok",
-          "findings": [],
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
+                  "title": "Cosmic Spotlight",
+                  "pattern": "Cosmic Spotlight",
+                  "where": ""
+                },
+                {
+                  "title": "Cosmic Deep Dive",
+                  "pattern": "cosmic deep dive",
+                  "where": ""
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['Also Today', 'Cosmic Spotlight', 'Cosmic Deep Dive']"
+            }
+          ],
           "chapter_count": 3
         },
         "phonetics": {
@@ -98,13 +135,13 @@
           "findings": [
             {
               "type": "significantly_short",
-              "word_count": 1346,
-              "target_percentage": 79.17647058823529,
+              "word_count": 1003,
+              "target_percentage": 59.0,
               "confidence": 0.8,
-              "description": "Episode is 79% of target"
+              "description": "Episode is 59% of target"
             }
           ],
-          "word_count": 1346,
+          "word_count": 1003,
           "floor": 1700
         },
         "metadata": {
@@ -116,7 +153,7 @@
     {
       "slug": "planetterrian",
       "show_name": "Planetterrian Daily",
-      "timestamp": "2026-10-18T19:09:43.670551",
+      "timestamp": "2026-10-19T21:28:07.030113",
       "checks": {
         "chapters": {
           "status": "ok",
@@ -131,16 +168,69 @@
           "status": "flagged",
           "findings": [
             {
-              "type": "below_target_length",
-              "word_count": 1557,
-              "floor": 1600,
-              "deficit": 43,
-              "confidence": 0.70671875,
-              "description": "Episode 1557w (floor 1600w, -43w)"
+              "type": "significantly_short",
+              "word_count": 1128,
+              "target_percentage": 70.5,
+              "confidence": 0.8,
+              "description": "Episode is 70% of target"
             }
           ],
-          "word_count": 1557,
+          "word_count": 1128,
           "floor": 1600
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "env_intel",
+      "show_name": "Environmental Intelligence",
+      "timestamp": "2026-10-19T21:28:07.138101",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "Executive Summary",
+                  "pattern": "executive summary|here's what matters",
+                  "where": ""
+                },
+                {
+                  "title": "Lead Story",
+                  "pattern": "lead story|centrepiece|most significant",
+                  "where": ""
+                },
+                {
+                  "title": "Science & Technical",
+                  "pattern": "\\bscience (?:and|&) tech(?:nical)?\\b|\\bon the science side\\b",
+                  "where": ""
+                },
+                {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['Executive Summary', 'Lead Story', 'Science & Technical', 'Also Today']"
+            }
+          ],
+          "chapter_count": 7
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "ok",
+          "findings": [],
+          "word_count": 1116,
+          "floor": 900
         },
         "metadata": {
           "status": "ok",
@@ -151,7 +241,7 @@
     {
       "slug": "models_agents",
       "show_name": "Models & Agents",
-      "timestamp": "2026-10-18T19:09:43.779604",
+      "timestamp": "2026-10-19T21:28:07.242191",
       "checks": {
         "chapters": {
           "status": "flagged",
@@ -185,6 +275,11 @@
                   "where": ""
                 },
                 {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
                   "title": "Things to Try",
                   "pattern": "things to try|try this week",
                   "where": ""
@@ -196,7 +291,7 @@
                 }
               ],
               "confidence": 0.7,
-              "description": "Multiple chapter markers not found: ['What You Need to Know', 'Top Story', 'Model Updates', 'Agent & Tool Developments', 'Practical & Community', 'Things to Try', 'On the Horizon']"
+              "description": "Multiple chapter markers not found: ['What You Need to Know', 'Top Story', 'Model Updates', 'Agent & Tool Developments', 'Practical & Community', 'Also Today', 'Things to Try', 'On the Horizon']"
             }
           ],
           "chapter_count": 4
@@ -208,7 +303,7 @@
         "word_count": {
           "status": "ok",
           "findings": [],
-          "word_count": 1906,
+          "word_count": 1729,
           "floor": 1500
         },
         "metadata": {
@@ -220,7 +315,7 @@
     {
       "slug": "models_agents_beginners",
       "show_name": "Models & Agents for Beginners",
-      "timestamp": "2026-10-18T19:09:43.885522",
+      "timestamp": "2026-10-19T21:28:07.347669",
       "checks": {
         "chapters": {
           "status": "flagged",
@@ -269,8 +364,127 @@
         "word_count": {
           "status": "ok",
           "findings": [],
-          "word_count": 1502,
+          "word_count": 1291,
           "floor": 1200
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "finansy_prosto",
+      "show_name": "\u0424\u0438\u043d\u0430\u043d\u0441\u044b \u041f\u0440\u043e\u0441\u0442\u043e",
+      "timestamp": "2026-10-19T21:28:07.441359",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "\u0413\u043b\u0430\u0432\u043d\u0430\u044f \u0442\u0435\u043c\u0430",
+                  "pattern": "\u0433\u043b\u0430\u0432\u043d\u0430\u044f \u0442\u0435\u043c\u0430|\u0433\u043b\u0430\u0432\u043d\u0430\u044f \u043d\u043e\u0432\u043e\u0441\u0442\u044c|\u0441\u0430\u043c\u043e\u0435 \u0432\u0430\u0436\u043d\u043e\u0435|\u0441\u0435\u0433\u043e\u0434\u043d\u044f \u0440\u0430\u0437\u0431\u0435\u0440\u0451\u043c\u0441\u044f|\u0441\u0435\u0433\u043e\u0434\u043d\u044f \u043c\u044b \u0440\u0430\u0437\u0431\u0435\u0440\u0451\u043c|\u0442\u0435\u043c\u0430 \u0441\u0435\u0433\u043e\u0434\u043d\u044f",
+                  "where": ""
+                },
+                {
+                  "title": "\u041a\u0430\u043a \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442",
+                  "pattern": "\u043a\u0430\u043a \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442|\u043a\u0430\u043a \u044d\u0442\u043e \u0443\u0441\u0442\u0440\u043e\u0435\u043d\u043e|\u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c\u0441\u044f|\u0434\u0430\u0432\u0430\u0439\u0442\u0435 \u0440\u0430\u0437\u0431\u0435\u0440\u0451\u043c\u0441\u044f|\u043f\u043e\u0447\u0435\u043c\u0443 \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442|\u043e\u0431\u044a\u044f\u0441\u043d\u0438 \u043a\u0430\u043a \u043f\u043e\u0434\u0440\u0443\u0433\u0435",
+                  "where": ""
+                },
+                {
+                  "title": "\u041f\u0440\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u0441\u043e\u0432\u0435\u0442\u044b",
+                  "pattern": "\u043f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u0430\u043c\u0438|\u043f\u0440\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\\w+ \u0441\u043e\u0432\u0435\u0442|\u043f\u0435\u0440\u0432\u044b\u0439 \u0441\u043e\u0432\u0435\u0442|\u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0441\u043e\u0432\u0435\u0442\u043e\u0432|\u043d\u0430 \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0435",
+                  "where": ""
+                },
+                {
+                  "title": "\u041a\u043e\u0440\u043e\u0442\u043a\u043e \u0438 \u044f\u0441\u043d\u043e",
+                  "pattern": "\u043a\u043e\u0440\u043e\u0442\u043a\u043e \u0438 \u044f\u0441\u043d\u043e|\u0431\u044b\u0441\u0442\u0440\u044b\u0435 \u043d\u043e\u0432\u043e\u0441\u0442\u0438",
+                  "where": ""
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['\u0413\u043b\u0430\u0432\u043d\u0430\u044f \u0442\u0435\u043c\u0430', '\u041a\u0430\u043a \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442', '\u041f\u0440\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u0441\u043e\u0432\u0435\u0442\u044b', '\u041a\u043e\u0440\u043e\u0442\u043a\u043e \u0438 \u044f\u0441\u043d\u043e']"
+            }
+          ],
+          "chapter_count": 3
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "significantly_short",
+              "word_count": 634,
+              "target_percentage": 63.4,
+              "confidence": 0.8,
+              "description": "Episode is 63% of target"
+            }
+          ],
+          "word_count": 634,
+          "floor": 1000
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "privet_russian",
+      "show_name": "\u041f\u0440\u0438\u0432\u0435\u0442, \u0420\u0443\u0441\u0441\u043a\u0438\u0439!",
+      "timestamp": "2026-10-19T21:28:07.534601",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "Vocabulary Builder",
+                  "pattern": "vocabulary builder|let's learn more|let's build more|more words|more new words",
+                  "where": ""
+                },
+                {
+                  "title": "Grammar Bite",
+                  "pattern": "grammar bite|grammar time|how Russian works|little grammar|quick grammar|grammar moment",
+                  "where": ""
+                },
+                {
+                  "title": "Culture Corner",
+                  "pattern": "culture corner|fun fact|did you know",
+                  "where": ""
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['Vocabulary Builder', 'Grammar Bite', 'Culture Corner']"
+            }
+          ],
+          "chapter_count": 6
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "significantly_short",
+              "word_count": 598,
+              "target_percentage": 74.75,
+              "confidence": 0.8,
+              "description": "Episode is 75% of target"
+            }
+          ],
+          "word_count": 598,
+          "floor": 800
         },
         "metadata": {
           "status": "ok",
@@ -281,7 +495,7 @@
     {
       "slug": "modern_investing",
       "show_name": "Modern Investing Techniques",
-      "timestamp": "2026-10-18T19:09:43.980905",
+      "timestamp": "2026-10-19T21:28:07.621682",
       "checks": {
         "chapters": {
           "status": "flagged",
@@ -305,11 +519,6 @@
                   "where": ""
                 },
                 {
-                  "title": "Trade Review & Lessons",
-                  "pattern": "yesterday's trade|trade review|how did .* pick|(?:prior|last|previous) (?:simulated )?weekly hold|last week's hold|mid-week update|newly closed|already been scored",
-                  "where": ""
-                },
-                {
                   "title": "Tools & Techniques",
                   "pattern": "tools and techniques|tools & techniques|recommended tools|let's talk tools",
                   "where": ""
@@ -321,19 +530,28 @@
                 }
               ],
               "confidence": 0.7,
-              "description": "Multiple chapter markers not found: ['Market Pulse', 'Strategy Spotlight', 'Investor Education', 'Trade Review & Lessons', 'Tools & Techniques', 'Quick Hits']"
+              "description": "Multiple chapter markers not found: ['Market Pulse', 'Strategy Spotlight', 'Investor Education', 'Tools & Techniques', 'Quick Hits']"
             }
           ],
-          "chapter_count": 7
+          "chapter_count": 6
         },
         "phonetics": {
           "status": "ok",
           "findings": []
         },
         "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 2095,
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "below_target_length",
+              "word_count": 1658,
+              "floor": 1800,
+              "deficit": 142,
+              "confidence": 0.7197222222222222,
+              "description": "Episode 1658w (floor 1800w, -142w)"
+            }
+          ],
+          "word_count": 1658,
           "floor": 1800
         },
         "metadata": {
@@ -345,7 +563,7 @@
     {
       "slug": "unintended_consequences",
       "show_name": "Unintended Consequences",
-      "timestamp": "2026-10-18T19:09:44.091337",
+      "timestamp": "2026-10-19T21:28:07.728518",
       "checks": {
         "chapters": {
           "status": "flagged",
@@ -383,7 +601,7 @@
               "description": "Multiple chapter markers not found: ['The Good Intention', 'The Implementation', 'The Unintended Consequences', 'The Aftermath', 'The Lesson']"
             }
           ],
-          "chapter_count": 3
+          "chapter_count": 4
         },
         "phonetics": {
           "status": "ok",
@@ -392,7 +610,7 @@
         "word_count": {
           "status": "ok",
           "findings": [],
-          "word_count": 1595,
+          "word_count": 2083,
           "floor": 1300
         },
         "metadata": {
@@ -404,31 +622,48 @@
     {
       "slug": "first_principles",
       "show_name": "First Principles Daily",
-      "timestamp": "2026-10-18T19:09:44.179904",
+      "timestamp": "2026-10-19T21:28:07.816560",
       "checks": {
         "chapters": {
           "status": "ok",
           "findings": [],
-          "chapter_count": 13
+          "chapter_count": 12
         },
         "phonetics": {
           "status": "ok",
           "findings": []
         },
         "word_count": {
-          "status": "flagged",
-          "findings": [
-            {
-              "type": "below_target_length",
-              "word_count": 1371,
-              "floor": 1400,
-              "deficit": 29,
-              "confidence": 0.7051785714285714,
-              "description": "Episode 1371w (floor 1400w, -29w)"
-            }
-          ],
-          "word_count": 1371,
+          "status": "ok",
+          "findings": [],
+          "word_count": 1635,
           "floor": 1400
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "dp_pod",
+      "show_name": "The DP Pod: The Do Positive Podcast",
+      "timestamp": "2026-10-19T21:28:07.905116",
+      "checks": {
+        "chapters": {
+          "status": "ok",
+          "findings": [],
+          "chapter_count": 6
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "ok",
+          "findings": [],
+          "word_count": 1871,
+          "floor": 1550
         },
         "metadata": {
           "status": "ok",
@@ -439,7 +674,7 @@
     {
       "slug": "spacex",
       "show_name": "SpaceX Daily",
-      "timestamp": "2026-10-18T19:09:44.269518",
+      "timestamp": "2026-10-19T21:28:07.992566",
       "checks": {
         "chapters": {
           "status": "ok",
@@ -453,7 +688,7 @@
         "word_count": {
           "status": "ok",
           "findings": [],
-          "word_count": 1404,
+          "word_count": 1352,
           "floor": 1300
         },
         "metadata": {
@@ -463,113 +698,9 @@
       }
     },
     {
-      "slug": "ai_chips",
-      "show_name": "AI Chips & Data Centres Daily",
-      "timestamp": "2026-10-18T19:09:44.391966",
-      "checks": {
-        "chapters": {
-          "status": "ok",
-          "findings": [],
-          "chapter_count": 3
-        },
-        "phonetics": {
-          "status": "ok",
-          "findings": []
-        },
-        "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 2005,
-          "floor": 1400
-        },
-        "metadata": {
-          "status": "ok",
-          "findings": []
-        }
-      }
-    },
-    {
-      "slug": "mag7",
-      "show_name": "MAG 7 Daily",
-      "timestamp": "2026-10-18T19:09:44.491794",
-      "checks": {
-        "chapters": {
-          "status": "ok",
-          "findings": [],
-          "chapter_count": 4
-        },
-        "phonetics": {
-          "status": "ok",
-          "findings": []
-        },
-        "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 1460,
-          "floor": 1250
-        },
-        "metadata": {
-          "status": "ok",
-          "findings": []
-        }
-      }
-    },
-    {
-      "slug": "prediction_markets",
-      "show_name": "Prediction Markets Daily",
-      "timestamp": "2026-10-18T19:09:44.593293",
-      "checks": {
-        "chapters": {
-          "status": "ok",
-          "findings": [],
-          "chapter_count": 5
-        },
-        "phonetics": {
-          "status": "ok",
-          "findings": []
-        },
-        "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 1406,
-          "floor": 1400
-        },
-        "metadata": {
-          "status": "ok",
-          "findings": []
-        }
-      }
-    },
-    {
-      "slug": "vancouver",
-      "show_name": "Vancouver Daily News",
-      "timestamp": "2026-10-18T19:09:44.685085",
-      "checks": {
-        "chapters": {
-          "status": "ok",
-          "findings": [],
-          "chapter_count": 5
-        },
-        "phonetics": {
-          "status": "ok",
-          "findings": []
-        },
-        "word_count": {
-          "status": "ok",
-          "findings": [],
-          "word_count": 1600,
-          "floor": 1450
-        },
-        "metadata": {
-          "status": "ok",
-          "findings": []
-        }
-      }
-    },
-    {
-      "slug": "omni_view_world",
-      "show_name": "Omni View Top World News",
-      "timestamp": "2026-10-18T19:09:44.786269",
+      "slug": "offshore_north",
+      "show_name": "Offshore North",
+      "timestamp": "2026-10-19T21:28:08.113230",
       "checks": {
         "chapters": {
           "status": "ok",
@@ -585,13 +716,241 @@
           "findings": [
             {
               "type": "significantly_short",
-              "word_count": 1260,
-              "target_percentage": 72.0,
+              "word_count": 1017,
+              "target_percentage": 67.80000000000001,
               "confidence": 0.8,
-              "description": "Episode is 72% of target"
+              "description": "Episode is 68% of target"
             }
           ],
-          "word_count": 1260,
+          "word_count": 1017,
+          "floor": 1500
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "ai_chips",
+      "show_name": "AI Chips & Data Centres Daily",
+      "timestamp": "2026-10-19T21:28:08.220368",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "Introduction",
+                  "pattern": "This is AI Chips and Data Centres|first episode of|AI Chips and Data Centres, episode",
+                  "where": "start"
+                },
+                {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
+                  "title": "The Teardown",
+                  "pattern": "\\btake\\b[^.!?\\n]{0,40}?\\bapart\\b",
+                  "where": ""
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['Introduction', 'Also Today', 'The Teardown']"
+            }
+          ],
+          "chapter_count": 3
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "ok",
+          "findings": [],
+          "word_count": 1401,
+          "floor": 1400
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "mag7",
+      "show_name": "MAG 7 Daily",
+      "timestamp": "2026-10-19T21:28:08.317751",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "Top News",
+                  "pattern": "top of the tape",
+                  "where": "body"
+                },
+                {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
+                  "title": "The Thread",
+                  "pattern": "across the seven|runs through (several|more than one) of (them|these companies)",
+                  "where": ""
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['Top News', 'Also Today', 'The Thread']"
+            }
+          ],
+          "chapter_count": 4
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "significantly_short",
+              "word_count": 981,
+              "target_percentage": 78.48,
+              "confidence": 0.8,
+              "description": "Episode is 78% of target"
+            }
+          ],
+          "word_count": 981,
+          "floor": 1250
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "prediction_markets",
+      "show_name": "Prediction Markets Daily",
+      "timestamp": "2026-10-19T21:28:08.416350",
+      "checks": {
+        "chapters": {
+          "status": "ok",
+          "findings": [],
+          "chapter_count": 5
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "ok",
+          "findings": [],
+          "word_count": 1478,
+          "floor": 1400
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "vancouver",
+      "show_name": "Vancouver Daily News",
+      "timestamp": "2026-10-19T21:28:08.507271",
+      "checks": {
+        "chapters": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "multiple_marker_misses",
+              "missed": [
+                {
+                  "title": "The Closer Look",
+                  "pattern": "a closer look|the longer story",
+                  "where": "body"
+                },
+                {
+                  "title": "Also Today",
+                  "pattern": "also today",
+                  "where": "body"
+                },
+                {
+                  "title": "What's On",
+                  "pattern": "what'?s on around town",
+                  "where": "body"
+                },
+                {
+                  "title": "Both Sides",
+                  "pattern": "case on both sides",
+                  "where": "body"
+                }
+              ],
+              "confidence": 0.7,
+              "description": "Multiple chapter markers not found: ['The Closer Look', 'Also Today', \"What's On\", 'Both Sides']"
+            }
+          ],
+          "chapter_count": 4
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "significantly_short",
+              "word_count": 1193,
+              "target_percentage": 82.27586206896552,
+              "confidence": 0.8,
+              "description": "Episode is 82% of target"
+            }
+          ],
+          "word_count": 1193,
+          "floor": 1450
+        },
+        "metadata": {
+          "status": "ok",
+          "findings": []
+        }
+      }
+    },
+    {
+      "slug": "omni_view_world",
+      "show_name": "Omni View Top World News",
+      "timestamp": "2026-10-19T21:28:08.606336",
+      "checks": {
+        "chapters": {
+          "status": "ok",
+          "findings": [],
+          "chapter_count": 4
+        },
+        "phonetics": {
+          "status": "ok",
+          "findings": []
+        },
+        "word_count": {
+          "status": "flagged",
+          "findings": [
+            {
+              "type": "significantly_short",
+              "word_count": 1077,
+              "target_percentage": 61.542857142857144,
+              "confidence": 0.8,
+              "description": "Episode is 62% of target"
+            }
+          ],
+          "word_count": 1077,
           "floor": 1750
         },
         "metadata": {

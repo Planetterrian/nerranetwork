@@ -121,6 +121,18 @@
 .lt-quote.is-flat .lt-quote-chg { color: var(--lt-muted); }
 .lt-launch-name { color: var(--nn-white); font-weight: 700; }
 .lt-markets-more { flex: none; font-weight: 700; color: var(--lt-accent-text) !important; font-size: 0.76rem; }
+/* Oct 19 2026: live quotes (assets/js/live-ticker.js). A live group carries a dot. */
+.lt-mk-group.is-live .lt-mk-label::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px;
+  border-radius: 50%; background: var(--lt-cyan); vertical-align: 1px; }
+/* The tapes: a row wider than its box moves; its Pause button appears only then. */
+.lt-tape-pause {
+  flex: none; font-family: var(--lt-ui); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--lt-muted); background: transparent; border: 1px solid var(--lt-rule); border-radius: 999px;
+  padding: 2px 9px; cursor: pointer; line-height: 1.4;
+}
+.lt-tape-pause:hover, .lt-tape-pause:focus-visible { color: var(--nn-white); border-color: var(--lt-muted); }
+.lt-tape-pause[hidden] { display: none; }
+.is-moving > ul { scroll-snap-type: none; }
 
 /* ---- Timestamps ---- */
 .lt-today { display: inline-block; font-family: var(--lt-ui); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lt-today-text); background: var(--lt-today-bg); padding: 1px 6px; border-radius: 4px; vertical-align: 1px; }
@@ -255,6 +267,7 @@
 .lt-ticker li a { color: var(--lt-ink); }
 .lt-ticker li a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-ticker-show { font-weight: 700; color: var(--show-color-text); margin-right: 6px; }
+.lt-ticker .lt-tape-pause { order: 3; align-self: center; }
 
 /* ---- Shared story atoms ---- */
 .lt-kicker {
@@ -1632,9 +1645,9 @@ body.lt-player-open { overflow: hidden; }
 
 <header class="lt-masthead container"><div class="lt-masthead-inner">
     <div class="lt-masthead-meta">
-        <time class="lt-dateline" datetime="2026-10-18">dimanche 18 octobre 2026</time>
-        <span>Mis à jour à <time datetime="2026-10-19T01:27:01Z">21:27 ET</time></span>
-        <span>Nouveaux épisodes aujourd'hui: 6</span>
+        <time class="lt-dateline" datetime="2026-10-19">lundi 19 octobre 2026</time>
+        <span>Mis à jour à <time datetime="2026-10-19T21:34:05Z">17:34 ET</time></span>
+        <span>Nouveaux épisodes aujourd'hui: 7</span>
     </div>
     <div class="lt-masthead-row">
         <div class="lt-brandline">
@@ -1659,16 +1672,31 @@ body.lt-player-open { overflow: hidden; }
         <li><a href="#latest">À la une</a></li>
         <li><a href="#flagships">SpaceX et Tesla</a></li>
         <li><a href="#top-stories">Les grands titres</a></li>
-        <li><a href="#section-ai">Intelligence artificielle</a></li><li><a href="#section-space">Espace</a></li><li><a href="#section-markets">Marchés et investissement</a></li><li><a href="#section-history-and-consequences">Histoire et conséquences</a></li>
-        <li><a href="#section-more">Et aussi</a></li>
+        <li><a href="#section-ai">Intelligence artificielle</a></li><li><a href="#section-space">Espace</a></li><li><a href="#section-markets">Marchés et investissement</a></li><li><a href="#section-climate-and-energy">Climat et énergie</a></li><li><a href="#section-history-and-consequences">Histoire et conséquences</a></li>
+        
         <li><a href="#shows">Émissions</a></li>
         <li><a href="#listen">Où écouter</a></li>
     </ul>
 </nav></div>
 
-<div class="lt-ticker container" role="region" aria-label="À la une">
+<div class="lt-ticker container" role="region" aria-label="À la une" data-live-headlines data-every="300">
     <span class="lt-ticker-label">À la une</span>
+    <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Lecture">Pause</button>
     <ul>
+        
+        <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep135.html"><span class="lt-ticker-show">SpaceX Daily</span><span>Les analystes s&#39;attendent à ce que SpaceX affiche son premier trimestre bénéficiaire…</span></a></li>
+        
+        <li style="--show-color:#E31937;"><a href="../blog/tesla/ep639.html"><span class="lt-ticker-show">Tesla Shorts Time</span><span>Tesla a ajouté plus de 260 Cybercabs à Austin le mois dernier alors que la NHTSA examine…</span></a></li>
+        
+        <li style="--show-color:#7C3AED;"><a href="../blog/models_agents/ep208.html"><span class="lt-ticker-show">Models & Agents</span><span>Des tables d&#39;embeddings figées de 16 Mo permettent à des modèles ternaires de 46 Mo…</span></a></li>
+        
+        <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep227.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>Une structure radio de deux millions d&#39;années-lumière en forme de clé de sol a été…</span></a></li>
+        
+        <li style="--show-color:#047857;"><a href="../blog/modern_investing/ep205.html"><span class="lt-ticker-show">Modern Investing Techniques</span><span>Les impayés de prêts auto au plus haut depuis 2010 pourraient peser sur les titres de…</span></a></li>
+        
+        <li style="--show-color:#0F766E;"><a href="../blog/first_principles/ep135.html"><span class="lt-ticker-show">First Principles Daily</span><span>Les plans de travail installés à soixante dollars le pied carré ne contiennent souvent…</span></a></li>
+        
+        <li style="--show-color:#1B5E20;"><a href="../blog/env_intel/ep073.html"><span class="lt-ticker-show">Environmental Intelligence</span><span>Les goulots d&#39;étranglement du transport interprovincial continuent de limiter les ajouts…</span></a></li>
         
         <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep134.html"><span class="lt-ticker-show">SpaceX Daily</span><span>L&#39;Ukraine négocie directement avec SpaceX et le Pentagone pour lever les plafonds de…</span></a></li>
         
@@ -1676,28 +1704,14 @@ body.lt-player-open { overflow: hidden; }
         
         <li style="--show-color:#7C3AED;"><a href="../blog/models_agents/ep207.html"><span class="lt-ticker-show">Models & Agents</span><span>Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches…</span></a></li>
         
-        <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep226.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>Quatre astronautes d&#39;Artemis II ont reçu la Stephen Hawking Medal pour avoir transformé…</span></a></li>
-        
-        <li style="--show-color:#047857;"><a href="../blog/modern_investing/ep204.html"><span class="lt-ticker-show">Modern Investing Techniques</span><span>Le sell-off FPI de Rs 52,000 crore en Inde ce mois-ci montre pourquoi les détenteurs de…</span></a></li>
-        
-        <li style="--show-color:#0F766E;"><a href="../blog/first_principles/ep134.html"><span class="lt-ticker-show">First Principles Daily</span><span>Trois cent cinquante-deux dollars achetaient un téléviseur RCA en mille neuf cent…</span></a></li>
-        
-        <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep133.html"><span class="lt-ticker-show">SpaceX Daily</span><span>Les expériences SpaceX Dragon sur des rétines artificielles et du tissu cérébral se…</span></a></li>
-        
-        <li style="--show-color:#E31937;"><a href="../blog/tesla/ep637.html"><span class="lt-ticker-show">Tesla Shorts Time</span><span>Un domaine sud-africain fonctionne entièrement hors réseau grâce à cinq Powerwalls…</span></a></li>
-        
-        <li style="--show-color:#7C3AED;"><a href="../blog/models_agents/ep206.html"><span class="lt-ticker-show">Models & Agents</span><span>Perplexity a open-sourcé son sandbox Firecracker microVM, offrant aux builders une…</span></a></li>
-        
-        <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep225.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>À sept milliards d&#39;années-lumière, un superamas contenant plus de deux millions de…</span></a></li>
-        
     </ul>
 </div>
 
 <section class="lt-top container" aria-label="Article principal">
     
     <article class="lt-lead" style="--show-color:#7C3AED;">
-        <a href="../blog/models_agents/ep207.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-18/ep207/bc2a6b12256a.thumb.webp" alt=""
+        <a href="../blog/models_agents/ep208.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-19/ep208/3714a2762ba3.thumb.webp" alt=""
          width="800" height="450"
          fetchpriority="high" decoding="async">
 </a>
@@ -1706,15 +1720,15 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Intelligence artificielle</span>
     <a href="../models-agents.html">Models & Agents</a>
 </p>
-            <h2 class="lt-hl"><a href="../blog/models_agents/ep207.html">Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches réelles, tout en s’exécutant sur une seule carte de 16 Go.</a></h2>
+            <h2 class="lt-hl"><a href="../blog/models_agents/ep208.html">Des tables d&#39;embeddings figées de 16 Mo permettent à des modèles ternaires de 46 Mo d&#39;atteindre 615–740 tokens/s sur CPU d&#39;ordinateur portable tout en égalant les baselines en virgule flottante sur LAMBADA et PIQA.</a></h2>
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T08:32:46Z">18 octobre 2026 · 04:32 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep207.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T09:42:02Z">19 octobre 2026 · 05:42 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep208.html">Lire</a>
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.fr.mp3" aria-label="Écouter l'épisode — Models & Agents 207"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/models_agents/ep207.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep208_20261019.fr.mp3" aria-label="Écouter l'épisode — Models & Agents 208"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/models_agents/ep208.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../models-agents.html">Plus de Models & Agents</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </div>
@@ -1725,48 +1739,48 @@ body.lt-player-open { overflow: hidden; }
         <ol>
             
             <li style="--show-color:#1A5CFF;">
-                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T12:47:36Z">18 octobre 2026 · 08:47 ET</time></span></p>
+                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:03:09Z">19 octobre 2026 · 06:03 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/spacex/ep135.html">Les analystes s&#39;attendent à ce que SpaceX affiche son premier trimestre bénéficiaire depuis l&#39;IPO lorsque les résultats seront publiés mardi.</a></h3>
+            </li>
+            
+            <li style="--show-color:#E31937;">
+                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:02:13Z">19 octobre 2026 · 06:02 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/tesla/ep639.html">Tesla a ajouté plus de 260 Cybercabs à Austin le mois dernier alors que la NHTSA examine les vitesses en zone scolaire.</a></h3>
+            </li>
+            
+            <li style="--show-color:#6B47FF;">
+                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T09:23:13Z">19 octobre 2026 · 05:23 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep227.html">Une structure radio de deux millions d&#39;années-lumière en forme de clé de sol a été réénergisée par une collision d&#39;amas de galaxies.</a></h3>
+            </li>
+            
+            <li style="--show-color:#047857;">
+                <p class="lt-kicker"><a href="../modern-investing.html">Modern Investing Techniques</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:14:08Z">19 octobre 2026 · 06:14 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/modern_investing/ep205.html">Les impayés de prêts auto au plus haut depuis 2010 pourraient peser sur les titres de consommation discrétionnaire dans votre TFSA.</a></h3>
+            </li>
+            
+            <li style="--show-color:#0F766E;">
+                <p class="lt-kicker"><a href="../first-principles.html">First Principles Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T08:14:38Z">19 octobre 2026 · 04:14 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep135.html">Les plans de travail installés à soixante dollars le pied carré ne contiennent souvent qu’environ dix dollars de matière première.</a></h3>
+            </li>
+            
+            <li style="--show-color:#1B5E20;">
+                <p class="lt-kicker"><a href="../env-intel.html">Environmental Intelligence</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T08:23:08Z">19 octobre 2026 · 04:23 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/env_intel/ep073.html">Les goulots d&#39;étranglement du transport interprovincial continuent de limiter les ajouts d&#39;énergie propre au Canada malgré les crédits d&#39;impôt fédéraux et la sortie du charbon.</a></h3>
+            </li>
+            
+            <li style="--show-color:#1A5CFF;">
+                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><time datetime="2026-10-18T12:47:36Z">18 octobre 2026 · 08:47 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/spacex/ep134.html">L&#39;Ukraine négocie directement avec SpaceX et le Pentagone pour lever les plafonds de vitesse Starshield sur les drones.</a></h3>
             </li>
             
             <li style="--show-color:#E31937;">
-                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T09:00:06Z">18 octobre 2026 · 05:00 ET</time></span></p>
+                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><time datetime="2026-10-18T09:00:06Z">18 octobre 2026 · 05:00 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/tesla/ep638.html">Les assureurs auto coréens font face à un ratio de sinistres de 107,6 % après le triplement des ventes de Tesla.</a></h3>
             </li>
             
-            <li style="--show-color:#6B47FF;">
-                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T12:42:28Z">18 octobre 2026 · 08:42 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep226.html">Quatre astronautes d&#39;Artemis II ont reçu la Stephen Hawking Medal pour avoir transformé leur vol lunaire en une expérience humaine partagée.</a></h3>
-            </li>
-            
-            <li style="--show-color:#047857;">
-                <p class="lt-kicker"><a href="../modern-investing.html">Modern Investing Techniques</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T08:34:33Z">18 octobre 2026 · 04:34 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/modern_investing/ep204.html">Le sell-off FPI de Rs 52,000 crore en Inde ce mois-ci montre pourquoi les détenteurs de TFSA ont besoin de règles plus strictes de diversification par pays.</a></h3>
-            </li>
-            
-            <li style="--show-color:#0F766E;">
-                <p class="lt-kicker"><a href="../first-principles.html">First Principles Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T08:40:40Z">18 octobre 2026 · 04:40 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep134.html">Trois cent cinquante-deux dollars achetaient un téléviseur RCA en mille neuf cent quarante-six.</a></h3>
-            </li>
-            
-            <li style="--show-color:#1A5CFF;">
-                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><time datetime="2026-10-17T09:46:42Z">17 octobre 2026 · 05:46 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/spacex/ep133.html">Les expériences SpaceX Dragon sur des rétines artificielles et du tissu cérébral se déroulent désormais en microgravité soutenue à bord de la station.</a></h3>
-            </li>
-            
-            <li style="--show-color:#E31937;">
-                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><time datetime="2026-10-17T09:26:40Z">17 octobre 2026 · 05:26 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/tesla/ep637.html">Un domaine sud-africain fonctionne entièrement hors réseau grâce à cinq Powerwalls associés à quatre-vingt-six panneaux solaires.</a></h3>
-            </li>
-            
             <li style="--show-color:#7C3AED;">
-                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><time datetime="2026-10-17T08:32:47Z">17 octobre 2026 · 04:32 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/models_agents/ep206.html">Perplexity a open-sourcé son sandbox Firecracker microVM, offrant aux builders une couche d&#39;isolation auto-hébergeable pour les tâches d&#39;agents de longue durée.</a></h3>
-            </li>
-            
-            <li style="--show-color:#6B47FF;">
-                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><time datetime="2026-10-17T08:17:29Z">17 octobre 2026 · 04:17 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep225.html">À sept milliards d&#39;années-lumière, un superamas contenant plus de deux millions de milliards de masses solaires pourrait révéler si les particules de matière noire interagissent entre elles.</a></h3>
+                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><time datetime="2026-10-18T08:32:46Z">18 octobre 2026 · 04:32 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/models_agents/ep207.html">Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches réelles, tout en s’exécutant sur une seule carte de 16 Go.</a></h3>
             </li>
             
         </ol>
@@ -1796,20 +1810,20 @@ body.lt-player-open { overflow: hidden; }
                     <p class="lt-flag-tag">Starship, Falcon, Starlink, Dragon et le marché SPCX — l'essentiel technique du jour.</p>
                 </div>
             </div>
-            <a href="../blog/spacex/ep134.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/spacex/2026-10-18/ep134/3ebdc8d4445c.thumb.webp" alt=""
+            <a href="../blog/spacex/ep135.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/spacex/2026-10-19/ep135/36c751ea7516.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
-            <h3 class="lt-hl"><a href="../blog/spacex/ep134.html">L&#39;Ukraine négocie directement avec SpaceX et le Pentagone pour lever les plafonds de vitesse Starshield sur les drones.</a></h3>
+            <h3 class="lt-hl"><a href="../blog/spacex/ep135.html">Les analystes s&#39;attendent à ce que SpaceX affiche son premier trimestre bénéficiaire depuis l&#39;IPO lorsque les résultats seront publiés mardi.</a></h3>
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T12:47:36Z">18 octobre 2026 · 08:47 ET</time></span>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:03:09Z">19 octobre 2026 · 06:03 ET</time></span>
     
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/spacex/SpaceX_Daily_Ep134_20261018.fr.mp3" aria-label="Écouter l'épisode — SpaceX Daily 134"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/spacex/ep134.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/spacex/SpaceX_Daily_Ep135_20261019.fr.mp3" aria-label="Écouter l'épisode — SpaceX Daily 135"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/spacex/ep135.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../spacex.html">Plus de SpaceX Daily</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </article>
@@ -1828,20 +1842,20 @@ body.lt-player-open { overflow: hidden; }
                     <p class="lt-flag-tag">FSD et conduite autonome, Optimus, Cybercab, l'énergie et le cours TSLA.</p>
                 </div>
             </div>
-            <a href="../blog/tesla/ep638.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/tesla/2026-10-18/ep638/f5f2bde7e6a7.thumb.webp" alt=""
+            <a href="../blog/tesla/ep639.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/tesla/2026-10-19/ep639/25c98baefae7.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
-            <h3 class="lt-hl"><a href="../blog/tesla/ep638.html">Les assureurs auto coréens font face à un ratio de sinistres de 107,6 % après le triplement des ventes de Tesla.</a></h3>
+            <h3 class="lt-hl"><a href="../blog/tesla/ep639.html">Tesla a ajouté plus de 260 Cybercabs à Austin le mois dernier alors que la NHTSA examine les vitesses en zone scolaire.</a></h3>
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T09:00:06Z">18 octobre 2026 · 05:00 ET</time></span>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:02:13Z">19 octobre 2026 · 06:02 ET</time></span>
     
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep638_20261018.fr.mp3" aria-label="Écouter l'épisode — Tesla Shorts Time 638"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/tesla/ep638.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep639_20261019.fr.mp3" aria-label="Écouter l'épisode — Tesla Shorts Time 639"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/tesla/ep639.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../tesla.html">Plus de Tesla Shorts Time</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </article>
@@ -1856,8 +1870,8 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-grid-4">
         
         <article class="lt-card" style="--show-color:#6B47FF;">
-            <a href="../blog/fascinating_frontiers/ep226.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-18/ep226/dcaea8bb1423.thumb.webp" alt=""
+            <a href="../blog/fascinating_frontiers/ep227.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-19/ep227/504ee013b258.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
@@ -1866,18 +1880,18 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Espace</span>
     <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep226.html">Quatre astronautes d&#39;Artemis II ont reçu la Stephen Hawking Medal pour avoir transformé leur vol lunaire en une expérience humaine partagée.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep227.html">Une structure radio de deux millions d&#39;années-lumière en forme de clé de sol a été réénergisée par une collision d&#39;amas de galaxies.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T12:42:28Z">18 octobre 2026 · 08:42 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep226.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T09:23:13Z">19 octobre 2026 · 05:23 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep227.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
 </div>
             </div>
         </article>
         
         <article class="lt-card" style="--show-color:#047857;">
-            <a href="../blog/modern_investing/ep204.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-18/ep204/6bdbd7045aaf.thumb.webp" alt=""
+            <a href="../blog/modern_investing/ep205.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-19/ep205/8a1acfb8a43f.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
@@ -1886,19 +1900,19 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Marchés et investissement</span>
     <a href="../modern-investing.html">Modern Investing Techniques</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/modern_investing/ep204.html">Le sell-off FPI de Rs 52,000 crore en Inde ce mois-ci montre pourquoi les détenteurs de TFSA ont besoin de règles plus strictes de diversification par pays.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/modern_investing/ep205.html">Les impayés de prêts auto au plus haut depuis 2010 pourraient peser sur les titres de consommation discrétionnaire dans votre TFSA.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T08:34:33Z">18 octobre 2026 · 04:34 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep204.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T10:14:08Z">19 octobre 2026 · 06:14 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep205.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../modern-investing.html">Écouter</a>
 </div>
             </div>
         </article>
         
         <article class="lt-card" style="--show-color:#0F766E;">
-            <a href="../blog/first_principles/ep134.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-18/ep134/1a2fae39ea99.thumb.webp" alt=""
-         width="450" height="800"
+            <a href="../blog/first_principles/ep135.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-19/ep135/da67dba8ea4d.thumb.webp" alt=""
+         width="800" height="450"
          loading="lazy" decoding="async">
 </a>
             <div class="lt-card-body">
@@ -1906,17 +1920,17 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Histoire et conséquences</span>
     <a href="../first-principles.html">First Principles Daily</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep134.html">Trois cent cinquante-deux dollars achetaient un téléviseur RCA en mille neuf cent quarante-six.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep135.html">Les plans de travail installés à soixante dollars le pied carré ne contiennent souvent qu’environ dix dollars de matière première.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-18T08:40:40Z">18 octobre 2026 · 04:40 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep134.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T08:14:38Z">19 octobre 2026 · 04:14 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep135.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
 </div>
             </div>
         </article>
         
         <article class="lt-card" style="--show-color:#1B5E20;">
-            <a href="../blog/env_intel/ep072.html" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
+            <a href="../blog/env_intel/ep073.html" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
     <picture>
         <source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp">
         <img src="../assets/covers/environmental-intelligence.jpg" alt="" width="400" height="400"
@@ -1928,10 +1942,10 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Climat et énergie</span>
     <a href="../env-intel.html">Environmental Intelligence</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/env_intel/ep072.html">Une lacune juridique dans la Loi sur les espèces en péril du Canada laisse 153 des 288 cas en retard de protection en date de janvier 2025.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/env_intel/ep073.html">Les goulots d&#39;étranglement du transport interprovincial continuent de limiter les ajouts d&#39;énergie propre au Canada malgré les crédits d&#39;impôt fédéraux et la sortie du charbon.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-12T08:14:19Z">12 octobre 2026 · 04:14 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/env_intel/ep072.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-19T08:23:08Z">19 octobre 2026 · 04:23 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/env_intel/ep073.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../env-intel.html">Écouter</a>
 </div>
             </div>
@@ -1946,6 +1960,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-ai">Intelligence artificielle</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#7C3AED;">
+            <a href="../blog/models_agents/ep207.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-18/ep207/bc2a6b12256a.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../models-agents.html">Models & Agents</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/models_agents/ep207.html">Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches réelles, tout en s’exécutant sur une seule carte de 16 Go.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-18T08:32:46Z">18 octobre 2026 · 04:32 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep207.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../models-agents.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#7C3AED;">
             <a href="../blog/models_agents/ep206.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -1967,26 +2001,6 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#7C3AED;">
-            <a href="../blog/models_agents/ep205.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-16/ep205/071a53df0f13.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../models-agents.html">Models & Agents</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/models_agents/ep205.html">La compression KV pause-token réduit le cache de 3,5× et accélère l’inférence H100 de 3,2× sur de longs problèmes de maths.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-16T08:09:37Z">16 octobre 2026 · 04:09 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep205.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../models-agents.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
@@ -1995,6 +2009,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-space">Espace</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#6B47FF;">
+            <a href="../blog/fascinating_frontiers/ep226.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-18/ep226/dcaea8bb1423.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep226.html">Quatre astronautes d&#39;Artemis II ont reçu la Stephen Hawking Medal pour avoir transformé leur vol lunaire en une expérience humaine partagée.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-18T12:42:28Z">18 octobre 2026 · 08:42 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep226.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#6B47FF;">
             <a href="../blog/fascinating_frontiers/ep225.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -2016,26 +2050,6 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#6B47FF;">
-            <a href="../blog/fascinating_frontiers/ep224.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-16/ep224/eae067012d6c.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep224.html">Des cartes détaillées de jeunes failles lunaires donnent désormais la mesure la plus claire à ce jour de l’ampleur de la contraction de la Lune au cours de son refroidissement.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-16T08:14:37Z">16 octobre 2026 · 04:14 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep224.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
@@ -2044,6 +2058,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-markets">Marchés et investissement</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#047857;">
+            <a href="../blog/modern_investing/ep204.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-18/ep204/6bdbd7045aaf.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../modern-investing.html">Modern Investing Techniques</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/modern_investing/ep204.html">Le sell-off FPI de Rs 52,000 crore en Inde ce mois-ci montre pourquoi les détenteurs de TFSA ont besoin de règles plus strictes de diversification par pays.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-18T08:34:33Z">18 octobre 2026 · 04:34 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep204.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../modern-investing.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#047857;">
             <a href="../blog/modern_investing/ep203.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -2065,22 +2099,55 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#047857;">
-            <a href="../blog/modern_investing/ep202.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-16/ep202/aa962d264cf8.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
+    </div>
+    
+</section>
+
+<section class="lt-block container" id="section-climate-and-energy" aria-labelledby="lt-sec-climate-and-energy">
+    <div class="lt-block-head"><h2 id="lt-sec-climate-and-energy">Climat et énergie</h2></div>
+    
+    <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#1B5E20;">
+            <a href="../blog/env_intel/ep072.html" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
+    <picture>
+        <source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp">
+        <img src="../assets/covers/environmental-intelligence.jpg" alt="" width="400" height="400"
+             loading="lazy" decoding="async">
+    </picture>
 </a>
             <div class="lt-card-body">
                 <p class="lt-kicker">
     
-    <a href="../modern-investing.html">Modern Investing Techniques</a>
+    <a href="../env-intel.html">Environmental Intelligence</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/modern_investing/ep202.html">La hausse de 15 % des bénéfices distribuables de Brookfield donne aux détenteurs de TFSA une nouvelle raison de revoir leur exposition aux infrastructures.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/env_intel/ep072.html">Une lacune juridique dans la Loi sur les espèces en péril du Canada laisse 153 des 288 cas en retard de protection en date de janvier 2025.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-16T08:48:29Z">16 octobre 2026 · 04:48 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep202.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../modern-investing.html">Écouter</a>
+    <span class="lt-when"><time datetime="2026-10-12T08:14:19Z">12 octobre 2026 · 04:14 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/env_intel/ep072.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../env-intel.html">Écouter</a>
+</div>
+            </div>
+        </article>
+        
+        <article class="lt-feature" style="--show-color:#1B5E20;">
+            <a href="../blog/env_intel/ep071.html" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
+    <picture>
+        <source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp">
+        <img src="../assets/covers/environmental-intelligence.jpg" alt="" width="400" height="400"
+             loading="lazy" decoding="async">
+    </picture>
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../env-intel.html">Environmental Intelligence</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/env_intel/ep071.html">La Colombie-Britannique finance la réduction des émissions industrielles pour maintenir sa compétitivité.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-05T08:16:59Z">5 octobre 2026 · 04:16 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/env_intel/ep071.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../env-intel.html">Écouter</a>
 </div>
             </div>
         </article>
@@ -2093,6 +2160,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-history-and-consequences">Histoire et conséquences</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#0F766E;">
+            <a href="../blog/first_principles/ep134.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-18/ep134/1a2fae39ea99.thumb.webp" alt=""
+         width="450" height="800"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../first-principles.html">First Principles Daily</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep134.html">Trois cent cinquante-deux dollars achetaient un téléviseur RCA en mille neuf cent quarante-six.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-18T08:40:40Z">18 octobre 2026 · 04:40 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep134.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#0F766E;">
             <a href="../blog/first_principles/ep133.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
@@ -2114,58 +2201,11 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#0F766E;">
-            <a href="../blog/first_principles/ep132.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-16/ep132/be62500b7d30.thumb.webp" alt=""
-         width="450" height="800"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../first-principles.html">First Principles Daily</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep132.html">Des armoires de cuisine vendues plusieurs milliers de dollars ne contiennent que quelques centaines de dollars en panneaux et quincaillerie.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-16T08:45:21Z">16 octobre 2026 · 04:45 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep132.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
 
 
-
-<section class="lt-block container" id="section-more" aria-labelledby="lt-more-h">
-    <div class="lt-block-head"><h2 id="lt-more-h">Aussi sur le réseau</h2></div>
-    <ul class="lt-stack lt-grid-3">
-        <li class="lt-row" style="--show-color:#1B5E20;">
-    <div>
-        <p class="lt-kicker">
-    <span class="lt-hub">Climat et énergie</span>
-    <a href="../env-intel.html">Environmental Intelligence</a>
-</p>
-        <h3 class="lt-hl"><a href="../blog/env_intel/ep071.html">La Colombie-Britannique finance la réduction des émissions industrielles pour maintenir sa compétitivité.</a></h3>
-        <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-05T08:16:59Z">5 octobre 2026 · 04:16 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/env_intel/ep071.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../env-intel.html">Écouter</a>
-</div>
-    </div>
-    <a href="../blog/env_intel/ep071.html" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
-    <picture>
-        <source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp">
-        <img src="../assets/covers/environmental-intelligence.jpg" alt="" width="400" height="400"
-             loading="lazy" decoding="async">
-    </picture>
-</a>
-</li>
-    </ul>
-</section>
 
 <section class="lt-block container" id="shows" aria-labelledby="lt-shows-h">
     <div class="lt-block-head"><h2 id="lt-shows-h">Les émissions en français</h2><p class="lt-block-sub">Nos émissions anglaises, traduites et lues en français le jour même.</p></div>
@@ -2573,7 +2613,8 @@ body.lt-player-open { overflow: hidden; }
         });
     });
     </script>
-    
+    <script src="../assets/js/live-ticker.js" defer></script>
+
 
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
