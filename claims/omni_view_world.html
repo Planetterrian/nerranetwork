@@ -299,21 +299,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="../fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="../ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -471,16 +490,6 @@
                         <a href="../env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="../ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="../ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="../unintended-consequences.html" role="menuitem">
@@ -659,16 +668,6 @@
                         <a href="../blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="../blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="../blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="../blog/unintended_consequences/index.html">
@@ -880,7 +879,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="../omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -900,16 +899,6 @@
             <a href="../env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="../unintended-consequences.html" class="nn-mobile-show-link">
@@ -934,6 +923,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="../fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="../ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -961,7 +958,7 @@
         <p class="nn-claims-back"><a href="../claims.html">← Claims &amp; corrections, every show</a></p>
         <h1>Omni View Top World News: claims &amp; corrections</h1>
         
-        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-18 to 2026-10-18</div>
+        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-19 to 2026-10-19</div>
         <p class="lede">
             
             Every factual claim this show made in the last 30 days, with what a
@@ -989,8 +986,8 @@
         <h2>Last 30 days</h2>
         
         <div class="nn-claims-tiles">
-            <div class="nn-claims-tile"><div class="nn-claims-tile-num">482</div><div class="nn-claims-tile-label">claims across 26 episodes</div></div>
-            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">97.9%</div><div class="nn-claims-tile-label">verified against their source</div></div>
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">501</div><div class="nn-claims-tile-label">claims across 27 episodes</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">98.0%</div><div class="nn-claims-tile-label">verified against their source</div></div>
             <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">10</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
             <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
             <div class="nn-claims-tile nn-claims-tile--corrections"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">corrections filed</div></div>
@@ -1008,6 +1005,155 @@
         
         <h2>Episode by episode</h2>
         <details class="nn-claims-episode" open>
+            <summary>
+                <span class="nn-claims-episode-title">Episode 27</span>
+                <span class="nn-claims-episode-date">2026-10-19</span>
+                <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> 19
+                </span>
+            </summary>
+            <div class="nn-claims-episode-body">
+                <p class="nn-claims-episode-links"><a href="../blog/omni_view_world/ep027.html">Read this episode →</a>
+                </p>
+                <p class="nn-claims-sub">Claims</p>
+                <ol class="nn-claims-list">
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/19/cuts-world-food-programme-end-support-palestinians-gaza" target="_blank" rel="noopener" title="Cuts force World Food Programme to end support for half a million Palestinians in Gaza">theguardian.com</a></span>
+                        </div>
+                        The World Food Programme is ending monthly support for more than half a million people in Gaza after aid cuts, according to its director for Palestine, who said winter is likely to deepen hunger.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/19/cuts-world-food-programme-end-support-palestinians-gaza" target="_blank" rel="noopener" title="Cuts force World Food Programme to end support for half a million Palestinians in Gaza">theguardian.com</a></span>
+                        </div>
+                        Two-thirds of Gaza’s population face crisis levels of food insecurity and 200,000 people are in danger of famine, The Guardian reports.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/19/cuts-world-food-programme-end-support-palestinians-gaza" target="_blank" rel="noopener" title="Cuts force World Food Programme to end support for half a million Palestinians in Gaza">theguardian.com</a></span>
+                        </div>
+                        More than a year after a Trump-brokered ceasefire, promised reconstruction in Gaza has not begun, there are few jobs, and the vast majority still rely on aid.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/19/china-economy-grows-faster-than-forecast-after-ai-boom-boosted-exports" target="_blank" rel="noopener" title="China’s economy grows faster than forecast after AI boom boosts exports">theguardian.com</a></span>
+                        </div>
+                        China’s GDP grew 4.5 percent year on year in the third quarter, better than economists expected and up from 4.3 percent in the second quarter.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/19/china-economy-grows-faster-than-forecast-after-ai-boom-boosted-exports" target="_blank" rel="noopener" title="China’s economy grows faster than forecast after AI boom boosts exports">theguardian.com</a></span>
+                        </div>
+                        Roaring exports lifted China’s third-quarter growth, factory output grew much faster than consumer spending, and electronics demand buoyed industrial output amid an AI boom.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.france24.com/en/video/20261019-french-interior-minister-admits-police-lost-control-of-protests" target="_blank" rel="noopener" title="French interior minister admits police 'lost control' of protests">france24.com</a></span>
+                        </div>
+                        Laurent Nunez admitted police lost control in some cities, cited a lack of anticipation, and tendered a resignation Macron did not accept.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.france24.com/en/video/20261019-french-shops-demolished-after-weekend-riots-across-the-country" target="_blank" rel="noopener" title="French shops demolished after weekend riots across the country">france24.com</a></span>
+                        </div>
+                        Macron held an emergency meeting Sunday and warned that those who looted will have to pay, after shopfronts were demolished and stock worth thousands of euros was stolen.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/live/2026/oct/19/europe-france-protests-riots-macron-ukraine-russia-zelenskyy-sweden-latest-news-updates" target="_blank" rel="noopener" title="France braces for weeks more of protests as unrest spreads to Italy – Europe live">theguardian.com</a></span>
+                        </div>
+                        The Guardian reports 2,400 arrests in France, yellow-vest demonstrations called for October 24 and November 5, and a Meloni security meeting Monday after looting in Milan.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.democracydocket.com/news-alerts/texans-head-to-the-polls-putting-trumps-redistricting-map-to-the-test/" target="_blank" rel="noopener" title="Texans head to the polls, putting Trump’s redistricting map to the test">democracydocket.com</a></span>
+                        </div>
+                        Texas early voting runs Monday through October 30 under maps passed after Trump said Republicans were entitled to five more seats.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.democracydocket.com/news-alerts/texans-head-to-the-polls-putting-trumps-redistricting-map-to-the-test/" target="_blank" rel="noopener" title="Texans head to the polls, putting Trump’s redistricting map to the test">democracydocket.com</a></span>
+                        </div>
+                        Republican officials in Tarrant County cut Election Day voting locations by 30 percent, and thousands of Texans were affected by a registration backlog.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.democracydocket.com/news-alerts/texans-head-to-the-polls-putting-trumps-redistricting-map-to-the-test/" target="_blank" rel="noopener" title="Texans head to the polls, putting Trump’s redistricting map to the test">democracydocket.com</a></span>
+                        </div>
+                        Mail ballots in Texas must be returned by 7 p.m. on Election Day or by 5 p.m. the next day if postmarked by Election Day, and Robert Howden became secretary of state in July.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.voiceofemirates.com/en/politics/2026/10/19/trump-is-open-to-a-trilateral-summit-with-putin-and-xi-jinping-without-zelenskys-participation/" target="_blank" rel="noopener" title="Trump is open to a trilateral summit with Putin and Xi Jinping without Zelensky’s participation">voiceofemirates.com</a></span>
+                        </div>
+                        The Wall Street Journal, as cited by Voice of Emirates, reported a Kremlin proposal for a Trump-Putin-Xi summit beside APEC in Shenzhen from November 8 to 19 that would exclude Zelensky.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.voiceofemirates.com/en/politics/2026/10/19/trump-is-open-to-a-trilateral-summit-with-putin-and-xi-jinping-without-zelenskys-participation/" target="_blank" rel="noopener" title="Trump is open to a trilateral summit with Putin and Xi Jinping without Zelensky’s participation">voiceofemirates.com</a></span>
+                        </div>
+                        Trump said things were going very well but did not confirm the summit; a US official said he has not given final approval but appears open; Peskov said there is no concrete plan.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.voiceofemirates.com/en/politics/2026/10/19/trump-is-open-to-a-trilateral-summit-with-putin-and-xi-jinping-without-zelenskys-participation/" target="_blank" rel="noopener" title="Trump is open to a trilateral summit with Putin and Xi Jinping without Zelensky’s participation">voiceofemirates.com</a></span>
+                        </div>
+                        Leaks attributed to a former Russian intelligence officer say Putin raised the summit on an October 9 call that also included a preliminary understanding on US purchases of Russian diesel.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/19/qatar-warns-global-energy-shockwaves-from-iran-war-have-yet-to-peak?traffic_source=rss" target="_blank" rel="noopener" title="Qatar warns global energy shockwaves from Iran war have yet to peak">aljazeera.com</a></span>
+                        </div>
+                        Qatar’s deputy prime minister warned energy shockwaves from the Iran war have yet to peak, called for dialogue with Tehran, highlighted US defence ties and rejected Strait of Hormuz transit fees.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/cxvgd0ymgzgyo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Alberta heads to polls to decide whether to hold vote on separation from Canada">bbc.co.uk</a></span>
+                        </div>
+                        Alberta is voting on whether to hold a separation referendum, and the BBC says polling suggests most Albertans favour remaining in Canada.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/18/us/capsized-boat-survivors-sharks.html" target="_blank" rel="noopener" title="Coast Guard Halts Search for Survivors of Capsized Boat Off Mexico">nytimes.com</a></span>
+                        </div>
+                        The Coast Guard halted a search off Mexico after 16 people were rescued, 11 were missing, and three had injuries consistent with shark bites.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/ckj0ly6qnp1lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Deadly fire at Canada military base moved a kilometre 'in 30 to 60 seconds'">bbc.co.uk</a></span>
+                        </div>
+                        A fire at a Canadian military base killed four men, injured dozens, and spread a kilometre in 30 to 60 seconds.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/19/world/australia/helen-haines-mp-attacked-wangaratta-australia.html" target="_blank" rel="noopener" title="Australian Lawmaker Helen Haines Injured After Attack, Prime Minister Says">nytimes.com</a></span>
+                        </div>
+                        Australian lawmaker Helen Haines, 65, was struck by a car outside her office; a suspect is in custody and the counterterrorism team was activated.
+                    </li>
+                </ol>
+            </div>
+        </details>
+        <details class="nn-claims-episode">
             <summary>
                 <span class="nn-claims-episode-title">Episode 26</span>
                 <span class="nn-claims-episode-date">2026-10-18</span>
@@ -4919,10 +5065,6 @@
                         
                         <li><a href="../env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="../ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="../ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="../unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="../first-principles.html">First Principles Daily</a></li>
@@ -4946,7 +5088,7 @@
                     <a href="../player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="../network.rss">Network RSS</a>
-                    <a href="../how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="../how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="../fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="../ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="../about.html">About Nerra Network</a>
@@ -4994,7 +5136,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -5041,10 +5183,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
