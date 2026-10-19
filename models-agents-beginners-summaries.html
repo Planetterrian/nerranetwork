@@ -29,10 +29,12 @@
     <link rel="alternate" type="application/rss+xml" title="Models & Agents for Beginners RSS" href="models_agents_beginners_podcast.rss">
     
 
-    <!-- Google Fonts: DM Sans + Source Serif 4 -->
+    <!-- Google Fonts: DM Sans + Source Serif 4 (non-blocking: media=print onload swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
@@ -107,21 +109,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -279,16 +300,6 @@
                         <a href="env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
@@ -467,16 +478,6 @@
                         <a href="blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
@@ -698,7 +699,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -718,16 +719,6 @@
             <a href="env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
@@ -752,6 +743,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -864,6 +863,20 @@
     <!-- Summaries -->
     <section style="padding:var(--sp-4) 0 var(--sp-12);">
         <div class="container"><div id="summaries-container">
+                <div class="nn-summary-item" data-date="2026-10-19">
+                    <div class="nn-summary-header">
+                        <div>
+                            <div class="nn-summary-date">October 19, 2026</div>
+                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 201: AI agents just teamed up to beat Minecraft’s final boss with zero human help.</div>
+                        </div>
+                        <div class="nn-summary-actions">
+                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents_beginners/MAB_Ep201_20261019.mp3" aria-label="Ep 201: AI agents just teamed up to beat Minecraft’s final boss with zero human help. audio"></audio>
+                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/models_agents_beginners/MAB_Ep201_20261019.mp3" target="_blank" rel="noopener">Download</a>
+                            <a class="nn-summary-link" href="blog/models_agents_beginners/ep201.html">Read transcript</a>
+                        </div>
+                    </div>
+                    <div class="nn-summary-content"><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">AI agents just teamed up to beat Minecraft’s final boss with zero human help.</p><p>Four Gemini 4 agents worked together like a video-game party, sharing ideas and fixing each other’s mistakes until they defeated the Ender Dragon. This shows how AI helpers are starting to collaborate instead of working alone. Today we’ll unpack what that means, explore how multi-agent teams actually function, and check out a new ChatGPT feature that lets you split tasks across different AI teammates plus a mod that makes game characters talk back in real time.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>The Big Story</h3><p>Four separate Gemini 4 agents recently played Minecraft together and beat the Ender Dragon without any person giving instructions after the game started. The agents are called Argon agents in the report, and they handled the entire run by communicating with one another through shared messages.</p><p>Think of it like four friends who each bring a different skill to a group project: one explores, one gathers resources, one fights, and one keeps track of the plan. The agents could talk to each other, point out mistakes, and even warn one another about dangers. One agent might send a tip about a useful item it found, while another could issue a warning about an incoming threat or admit a mistake it made earlier in the run.</p><p>This matters because most AI tools you use today work by themselves. When several AIs can share information and correct each other in real time, they can tackle longer, more complicated jobs like building something in a game or helping with a big school research project. The agents learned from each other’s successes and failures during the run, which is closer to how humans actually improve at games.</p><p>For you, it means the AI helpers you might use for homework or creative projects could soon feel more like a study group than a single tutor. Instead of asking one chatbot the same question twice and getting slightly different answers, you could have multiple specialized helpers that keep each other on track. The Minecraft run lasted long enough that the agents had to adapt their strategy several times, showing the value of that ongoing conversation between them.</p><p>You can’t play with these exact Gemini agents yet, but you can watch the Engadget article’s linked video to see the full run and notice how the agents communicate. The same idea of AIs working as a team is already appearing in other tools you can try today, such as features that let you assign different roles inside a single chat window. Source: [engadget.com](https://www.engadget.com/2289944/google-gemini-4-agents-just-beat-minecraft-with-no-human-intervention/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Explain Like I&#x27;m 14</h3><p>You know how when you’re playing a team sport, each player watches the others and calls out what they see so the whole group can react faster? One player spots the ball coming, another runs to the open spot, and a third passes it without anyone stopping to explain the whole plan. AI agents do something similar when they work on the same task.</p><p>Each agent keeps its own simple memory of what it has done so far. When one agent finishes a step, it sends a short message to the others instead of keeping everything secret. The next agent reads that message and decides its own next move, just like a teammate reacting to a shout on the field. In the Minecraft example, one agent might report finding a key item while another notes a dangerous mob nearby, letting the group adjust without starting over.</p><p>Over time the messages help the group avoid repeating the same mistake. That back-and-forth is what lets four separate AIs finish a long Minecraft fight that would be too messy for one AI alone. The messages act like quick notes passed between teammates rather than a full written report, keeping the flow going even when the situation changes quickly.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Cool Stuff &amp; Try This</h3><p><strong>ChatGPT now lets you split work across an AI team</strong></p><p>OpenAI added a feature that lets you create several different AI teammates inside one chat and assign each one its own job. One teammate can research, another can write, and a third can check for mistakes. The update is described as giving ChatGPT an “AI Team” capability along with a GPT-6 Astra Pro upgrade that supports assigning tasks separately and tracking progress at any time.</p><p>It feels like having study partners who each focus on one part of the project so nothing gets forgotten. If you’re working on a report or planning a game night, this can keep things organized without you juggling separate chats. The system lets you name the teammates and give them clear roles so the conversation stays structured even when the project grows longer.</p><p>Go to chatgpt.com, start a new chat, and look for the option to add team members or assign tasks. Try asking it to “create a research teammate, a writing teammate, and a fact-checker teammate, then have them plan a short presentation on your favorite game.” You can then watch the progress updates as each teammate completes its part and hands the next step to the others. Source: [eu.36kr.com](https://eu.36kr.com/en/p/4031321049715076)</p><p><strong>NPCs that answer you in real time inside games</strong></p><p>A modder built a tool that lets characters in games like GTA V listen to what you say and reply in their own voice within a second. The characters even try to act on your words, turning a silent game world into something that feels alive. The system uses NVIDIA Nemotron for speech recognition, Qwen 3.8 27B for generating replies, and Fish Audio Drama 3 for cloned voices, all running on a serverless GPU setup.</p><p>It’s still early, but the idea shows how AI can make single-player games feel more like talking to real people. You can watch the short demo video linked in the Reddit post to see it in action. The mod works by packaging the skills into one downloadable repo so anyone can test it on their own machine without writing new code. Source: [reddit.com](https://www.reddit.com/r/ChatGPT/comments/1x93coy/npcs_can_talk_back_now_from_universal_modder_on_x/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Quick Bits</h3><p><strong>Joseph Gordon-Levitt says the real AI worry isn’t robots—it’s the companies</strong></p><p>The actor posted that the biggest risk from AI comes from how the big tech firms decide to build and control these tools, not from sci-fi killer machines. It’s a reminder that the choices made by the people creating AI will shape what the technology can and can’t do for everyone else. Gordon-Levitt argues that focusing only on dramatic robot scenarios misses the quieter decisions happening inside companies right now. Source: [tomsguide.com](https://www.tomsguide.com/ai/joseph-gordon-levitt-warns-the-real-ai-threat-isnt-killer-robots-its-the-companies-building-them)</p><p><strong>Cancer patients are quietly asking AI chatbots for help</strong></p><p>A new report found many people dealing with cancer turn to chatbots for information or support but often don’t tell their doctors. The story highlights both how useful these tools can feel and why it’s still important to check medical advice with real professionals. Patients in the study used the chatbots for quick answers about symptoms or treatment side effects, yet most kept those conversations private from their medical teams. Source: [bioengineer.org](https://bioengineer.org/cancer-patients-quietly-turn-to-ai-chatbots-and-most-keep-it-secret-from-their-doctors/)</p></div>
+                </div>
                 <div class="nn-summary-item" data-date="2026-10-18">
                     <div class="nn-summary-header">
                         <div>
@@ -1129,20 +1142,6 @@
                         </div>
                     </div>
                     <div class="nn-summary-content"><h3>Models &amp; Agents for Beginners</h3><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Anthropic just opened a new study where your answers about AI can go public for everyone to see.</p><p>Today’s biggest story is a fresh chance for regular Claude users to shape how AI companies listen to people like you. We’ll also unpack how feedback studies actually work under the hood and spotlight two tools you can try right now without any coding. Let’s dive in.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>The Big Story</h3><p>Anthropic just launched a new study asking people what they want from AI and how it should fit into their lives. The twist is that participants can choose to make their answers public so anyone—not just the company—can read and learn from them. Think of it like a giant suggestion box where your ideas might end up on a public bulletin board instead of staying in a private folder. Last December the same team collected responses from 81,000 people in what they called the largest qualitative study ever done on hopes and fears about AI. This time the study adds the option to share responses openly so students, teachers, and creators can see what others are hoping for from AI tools they use every day for homework, art, or games. If lots of people say companies should change something, those comments stay visible on the record where anyone can point to them later. The study runs from September 29 to October 6 and is open to anyone with a free, Pro, or Max Claude account on both Claude and Claude Code. Your answers will shape research at The Anthropic Institute and inform the decisions the company makes going forward. For you, it means a direct way to influence the direction of tools you might already use in school or for hobbies. To join, head to claude.ai and look for the Anthropic Interviewer link in the announcement posted by [@AnthropicAI](https://x.com/AnthropicAI). Your voice could help decide what AI looks like for the next generation of users. Source: [x.com](https://x.com/AnthropicAI/status/2104982629884063840)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Explain Like I&#x27;m 14</h3><p>You know how when you finish a group project at school, the teacher sometimes asks everyone to write down what worked and what didn’t so the next class can do better? Now picture that same idea but with thousands of people typing answers on their phones about an AI chatbot they use for homework or music ideas. Each reply gets stored as a separate note instead of being mixed together right away. Researchers then read through the notes one by one, grouping similar thoughts like “I wish it explained math better” or “I want it to respect my privacy.” Because some people choose to make their notes public, anyone can scroll through the same collection later and spot patterns without needing special access. The company uses those patterns to decide what to build next, but the public version also lets outsiders check whether the company is actually listening. It’s basically turning private opinions into a shared library that grows over time.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Cool Stuff &amp; Try This</h3><p><strong>ChatGPT Spaces turn into shared project hubs</strong></p><p>OpenAI is testing Spaces, a feature that lets you create shared workspaces where multiple people and AI agents can work on the same project together. It feels like a mix between a group chat and a digital notebook where the AI can help organize ideas, pull in files, or keep track of tasks. Students could use it for group science projects or band members could brainstorm song lyrics in one place. Anyone with a ChatGPT account can start exploring Spaces right now by opening the app or going to chatgpt.com and looking for the Spaces tab in the sidebar. Try creating a new Space called “Weekend Art Ideas” and invite a friend to add prompts together. You can also test how the AI keeps track of tasks by asking it to list three next steps for a school presentation inside that shared Space.</p><p><strong>Write your own letter to humanity</strong></p><p>A fun Reddit experiment shows how asking ChatGPT to write a letter to everyone on Earth produces surprisingly thoughtful results about kindness, curiosity, and noticing ordinary moments. The prompt is simple and works in any free chatbot. Go to chatgpt.com, type this exact line: “If you could write a letter to all of humanity and know that everyone on Earth would read it, what would you write?” Then read the reply out loud to a friend and talk about which parts feel true to you. One user posted the full letter they received, which talked about how every person you have ever hated has been afraid and how labels like conservative or liberal can describe something true without describing everything true. The experiment started after someone saw a similar post several weeks earlier and decided to try it themselves. Source: [reddit.com](https://www.reddit.com/r/ChatGPT/comments/1wtv3g4/letter_to_humanity/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Quick Bits</h3><p><strong>OpenAI drops “dots” as a new agent</strong></p><p>OpenAI just introduced dots, a lightweight AI helper designed to handle small everyday tasks inside ChatGPT. Early users are already testing it for quick reminders and simple research. The announcement came directly from OpenAI’s official site on September 30.</p><p><strong>xAI grabs dot.com before OpenAI’s launch</strong></p><p>Elon Musk’s xAI bought the domain dot.com right before OpenAI announced its new dots feature, then pointed it to the Grok chatbot. It’s a playful internet moment that shows how fast domain names can become part of AI marketing. The story was reported by TechCrunch on September 29. Source: [techcrunch.com](https://techcrunch.com/2026/09/29/the-internet-is-convinced-elon-musks-xai-trolled-openais-dots-launch/)</p></div>
-                </div>
-                <div class="nn-summary-item" data-date="2026-09-29">
-                    <div class="nn-summary-header">
-                        <div>
-                            <div class="nn-summary-date">September 29, 2026</div>
-                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 181: Claude just dropped a faster, cheaper model that anyone can try right now.</div>
-                        </div>
-                        <div class="nn-summary-actions">
-                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/models_agents_beginners/MAB_Ep181_20260929.mp3" aria-label="Ep 181: Claude just dropped a faster, cheaper model that anyone can try right now. audio"></audio>
-                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/models_agents_beginners/MAB_Ep181_20260929.mp3" target="_blank" rel="noopener">Download</a>
-                            <a class="nn-summary-link" href="blog/models_agents_beginners/ep181.html">Read transcript</a>
-                        </div>
-                    </div>
-                    <div class="nn-summary-content"><h3>Models &amp; Agents for Beginners</h3><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Claude just dropped a faster, cheaper model that anyone can try right now.</p><p>Anthropic released Claude Sonnet 5.5, a new version of its popular AI that runs quicker and costs less while keeping strong performance. This matters because it shows how AI tools keep getting more practical for everyday creative work. Today we&#x27;ll break down what this release actually means, explore how AIs decide what counts as part of a problem, and check out a fun skate-ramp design tool built with AI.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>The Big Story</h3><p>Anthropic just made Claude Sonnet 5.5 available to everyone. It is the second model in the Claude 5.5 family and works more than 30 percent faster than the previous Sonnet while costing up to 30 percent less for most tasks. Think of it like upgrading from a basic phone plan to one that gives you faster data and lower bills at the same time. The model handles writing, coding help, and creative projects with the same quality level but finishes answers sooner. This matters for students because cheaper and quicker AI means you can use it more often for homework help or brainstorming without worrying about running out of free messages. For anyone making art or stories, it lowers the barrier so you can experiment more freely. The change also shows companies are competing on price and speed, not just raw power. You can try it yourself right now by going to claude.ai, signing up for the free account if you do not have one, and starting a new chat. Ask it to rewrite a paragraph from your favorite book in the style of a text message or turn a history lesson into song lyrics. The free tier gives you access to the new model immediately. Students working on essays can paste a rough draft and ask for clearer wording suggestions that arrive in seconds instead of minutes. Hobby writers can request multiple short scene variations and pick the one that feels right without paying extra. The speed improvement means the back-and-forth conversation feels more like chatting with a helpful friend than waiting for a slow computer. Because the price dropped, schools or clubs that share one account can stretch their budget further across many users. The release announcement came directly from Anthropic on X, confirming the upgrade applies to everyday work like the tasks just described. Source: [x.com](https://x.com/AnthropicAI/status/2104633259925630995)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Explain Like I&#x27;m 14</h3><p>You know how when you plan a school project you have to decide what counts inside your budget. Maybe you include the cost of poster board and markers, but you leave out the time you spend drawing after dinner or the bus ride to the store. That choice of what goes inside the budget and what stays outside is called drawing brackets. AI systems do the exact same thing when they solve problems. They look at the instructions you give them and decide which facts, costs, consequences, and side effects belong inside the calculation. If you ask an AI to pick the cheapest place to build a data center, it might count electricity prices but leave out how that choice affects nearby rivers or future drought risks. The tricky part is that the AI gets really good at optimizing whatever you put inside the brackets, but it cannot magically notice something you never mentioned. When the real world behaves differently than the AI predicted, that is often a sign the brackets were drawn too small. The useful skill is learning to check whether the AI remembered to look outside its original list. You can practice this by giving an AI a task and then asking it afterward what important things it left out of its answer. The Reddit essay that sparked this idea points out that expanding the brackets too far eventually connects everything to everything else, so the real goal is knowing when to widen them and when to keep them focused. Revisability becomes the key instead of trying to include every possible detail at once. Source: [reddit.com](https://www.reddit.com/r/artificial/comments/1wt484l/what_if_intelligence_includes_noticing_what_weve/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Cool Stuff &amp; Try This</h3><p><strong>Build your own skate ramp with AI</strong></p><p>A dad named Linus used AI to create a free tool called PLY that designs mini-ramps using real wood sizes and safety rules. It turns a simple request like “help my kid’s teacher build a small ramp” into a full plan with measurements and material lists. This is exciting because it shows how AI can help with hands-on hobbies instead of just writing essays. Anyone who likes skating, building, or DIY projects should try it. Go to the link in his recent X post, describe the space you have available, and watch it generate a grounded design. You can then tweak the height or materials and see how the plan changes. No coding needed, just type what you want. The tool stays grounded in common lumber sizes so the plans can actually be built with supplies from a regular hardware store. Skate teachers and park builders started messaging Linus after seeing the design, showing real demand for this kind of practical help. Teens can use it to plan a backyard feature for friends or a school project that combines physics and creativity. The output includes step-by-step material counts so you know exactly what to buy before starting construction. Source: [x.com](https://x.com/LinusEkenstam/status/2104808203028742580)</p><p><strong>Watch an AI remove the squid from a novel</strong></p><p>Ethan Mollick asked Claude to edit the classic book All Quiet on the Western Front so it contains zero mentions of squid, then turned the result into a short video. The AI handled the silly request with clever humor instead of getting confused. It is a fun way to see how far creative editing has come. Open the post on X, read the original request, and then try the same silly edit yourself at claude.ai by pasting a short story and asking it to remove one random object. The experiment started as a test of how much the newer model had improved at following odd instructions compared with earlier versions. Watching the video shows the AI inventing funny ways to keep the story flowing while erasing every trace of the unwanted element. You can repeat the test with any short text you choose, such as removing all mentions of a color from a poem or replacing every food reference with something else. The humor in the responses proves the model now understands context and tone well enough to play along with absurd edits. Source: [x.com](https://x.com/emollick/status/2104787162210435095)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Quick Bits</h3><p><strong>OpenAI pauses a new model launch</strong></p><p>OpenAI decided not to release its next big model after safety reviews raised concerns. The choice shows companies are slowing down when risks look too high instead of racing ahead. Source: [bbc.com](https://www.bbc.com/news/articles/cm5y5nynl75ko)</p><p><strong>Florida wants rules on human-like chatbots</strong></p><p>Lawmakers in Florida are asking courts to limit how much ChatGPT and similar tools can sound like real people. The move is part of growing conversations about keeping AI clearly labeled so users know what they are talking to. Source: [newsbytesapp.com](https://www.newsbytesapp.com/news/science/florida-seeks-ban-on-chatgpt-s-human-like-attributes/story)</p></div>
                 </div>
             </div>
             <noscript>
@@ -1686,10 +1685,6 @@
                         
                         <li><a href="env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="first-principles.html">First Principles Daily</a></li>
@@ -1713,7 +1708,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1761,7 +1756,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1808,10 +1803,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
