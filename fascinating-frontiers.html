@@ -147,21 +147,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -319,16 +338,6 @@
                         <a href="env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
@@ -507,16 +516,6 @@
                         <a href="blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
@@ -735,7 +734,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -755,16 +754,6 @@
             <a href="env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
@@ -789,6 +778,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -936,24 +933,24 @@
     <!-- Latest Episode -->
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
-            <div class="latest-episode glass-card" id="latest-player" data-episode="226">
+            <div class="latest-episode glass-card" id="latest-player" data-episode="227">
                 <div class="latest-episode-label">Latest Episode</div>
                 <div class="nn-latest-grid">
                     <div class="nn-latest-listen">
-                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 226: Four Artemis II astronauts accepted the Stephen Hawking Medal for turning their lunar…</div>
-                        <div class="latest-episode-date" id="latest-date">October 18, 2026</div>
+                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 227: A two-million-light-year radio structure shaped like a treble clef was re-energized by a…</div>
+                        <div class="latest-episode-date" id="latest-date">October 19, 2026</div>
                         
-                        <audio id="latest-audio" controls preload="metadata" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep226_20261018.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        <audio id="latest-audio" controls preload="metadata" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep227_20261019.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
                         
                         <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                     </div>
 
                     <div class="nn-latest-read">
                         <div class="nn-latest-read-label">Read this episode</div>
-                        <div class="nn-latest-summary" id="latest-summary">Four Artemis II astronauts accepted the Stephen Hawking Medal for turning their lunar flight into a shared human experience.</div>
+                        <div class="nn-latest-summary" id="latest-summary">A two-million-light-year radio structure shaped like a treble clef was re-energized by a galaxy cluster collision.</div>
                         <div class="nn-latest-actions">
                             
-                            <a id="latest-article" href="blog/fascinating_frontiers/ep226.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
+                            <a id="latest-article" href="blog/fascinating_frontiers/ep227.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
                             
                             
                             <a class="nn-latest-archive" href="blog/fascinating_frontiers/index.html">Every episode, written up</a>
@@ -987,6 +984,14 @@
             
             <div id="episodes-grid" class="episodes-grid">
                 
+                
+                <div class="episode-card glass-card">
+                    <div class="episode-card-title">Ep 227: A two-million-light-year radio structure shaped like a treble clef was re-energized by a…</div>
+                    <div class="episode-card-date">Mon, Oct 19, 2026</div>
+                    
+                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep227_20261019.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                    
+                </div>
                 
                 <div class="episode-card glass-card">
                     <div class="episode-card-title">Ep 226: Four Artemis II astronauts accepted the Stephen Hawking Medal for turning their lunar…</div>
@@ -1073,14 +1078,6 @@
                     <div class="episode-card-date">Thu, Oct 08, 2026</div>
                     
                     <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep216_20261008.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 215: Sophie Adenot and her Crew-12 crewmates undocked from the International Space Station…</div>
-                    <div class="episode-card-date">Wed, Oct 07, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep215_20261007.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                     
                 </div>
                 
@@ -1453,6 +1450,19 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
                 
+                <a href="blog/fascinating_frontiers/ep227.html" class="blog-idx-card">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-date">October 19, 2026</span>
+                        <span class="blog-idx-ep">Ep 227</span>
+                        <span class="blog-idx-reading">5 min</span>
+                    </div>
+                    <h2>A two-million-light-year radio structure shaped like a treble clef was re-energized by a galaxy cluster collision.</h2>
+                    
+                    <p>A two-million-light-year radio structure shaped like a treble clef was re-energized by a galaxy cluster collision.</p>
+                    
+                    <span class="blog-idx-read-more">Read article &rarr;</span>
+                </a>
+                
                 <a href="blog/fascinating_frontiers/ep226.html" class="blog-idx-card">
                     <div class="blog-idx-card-top">
                         <span class="blog-idx-date">October 18, 2026</span>
@@ -1475,19 +1485,6 @@
                     <h2>Seven billion light-years away, a supercluster holding more than two quadrillion solar masses may show whether dark matter particles interact with one another.</h2>
                     
                     <p>Seven billion light-years away, a supercluster holding more than two quadrillion solar masses may show whether dark matter particles interact with one another.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/fascinating_frontiers/ep224.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">October 16, 2026</span>
-                        <span class="blog-idx-ep">Ep 224</span>
-                        <span class="blog-idx-reading">6 min</span>
-                    </div>
-                    <h2>Detailed maps of young lunar faults now give the clearest measure yet of how much the moon has contracted while cooling.</h2>
-                    
-                    <p>Detailed maps of young lunar faults now give the clearest measure yet of how much the moon has contracted while cooling.</p>
                     
                     <span class="blog-idx-read-more">Read article &rarr;</span>
                 </a>
@@ -1751,10 +1748,6 @@
                         
                         <li><a href="env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="first-principles.html">First Principles Daily</a></li>
@@ -1778,7 +1771,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1826,7 +1819,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1873,10 +1866,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
@@ -2016,7 +2005,7 @@
            only the server can tell an article from a redirect stub. An
            episode missing from this map renders without a link, never with a
            broken one. */
-        const EPISODE_POST_URLS = {"197": "blog/fascinating_frontiers/ep197.html", "198": "blog/fascinating_frontiers/ep198.html", "199": "blog/fascinating_frontiers/ep199.html", "200": "blog/fascinating_frontiers/ep200.html", "201": "blog/fascinating_frontiers/ep201.html", "202": "blog/fascinating_frontiers/ep202.html", "203": "blog/fascinating_frontiers/ep203.html", "204": "blog/fascinating_frontiers/ep204.html", "205": "blog/fascinating_frontiers/ep205.html", "206": "blog/fascinating_frontiers/ep206.html", "207": "blog/fascinating_frontiers/ep207.html", "208": "blog/fascinating_frontiers/ep208.html", "209": "blog/fascinating_frontiers/ep209.html", "210": "blog/fascinating_frontiers/ep210.html", "211": "blog/fascinating_frontiers/ep211.html", "212": "blog/fascinating_frontiers/ep212.html", "213": "blog/fascinating_frontiers/ep213.html", "214": "blog/fascinating_frontiers/ep214.html", "215": "blog/fascinating_frontiers/ep215.html", "216": "blog/fascinating_frontiers/ep216.html", "217": "blog/fascinating_frontiers/ep217.html", "218": "blog/fascinating_frontiers/ep218.html", "219": "blog/fascinating_frontiers/ep219.html", "220": "blog/fascinating_frontiers/ep220.html", "221": "blog/fascinating_frontiers/ep221.html", "222": "blog/fascinating_frontiers/ep222.html", "223": "blog/fascinating_frontiers/ep223.html", "224": "blog/fascinating_frontiers/ep224.html", "225": "blog/fascinating_frontiers/ep225.html", "226": "blog/fascinating_frontiers/ep226.html"};
+        const EPISODE_POST_URLS = {"198": "blog/fascinating_frontiers/ep198.html", "199": "blog/fascinating_frontiers/ep199.html", "200": "blog/fascinating_frontiers/ep200.html", "201": "blog/fascinating_frontiers/ep201.html", "202": "blog/fascinating_frontiers/ep202.html", "203": "blog/fascinating_frontiers/ep203.html", "204": "blog/fascinating_frontiers/ep204.html", "205": "blog/fascinating_frontiers/ep205.html", "206": "blog/fascinating_frontiers/ep206.html", "207": "blog/fascinating_frontiers/ep207.html", "208": "blog/fascinating_frontiers/ep208.html", "209": "blog/fascinating_frontiers/ep209.html", "210": "blog/fascinating_frontiers/ep210.html", "211": "blog/fascinating_frontiers/ep211.html", "212": "blog/fascinating_frontiers/ep212.html", "213": "blog/fascinating_frontiers/ep213.html", "214": "blog/fascinating_frontiers/ep214.html", "215": "blog/fascinating_frontiers/ep215.html", "216": "blog/fascinating_frontiers/ep216.html", "217": "blog/fascinating_frontiers/ep217.html", "218": "blog/fascinating_frontiers/ep218.html", "219": "blog/fascinating_frontiers/ep219.html", "220": "blog/fascinating_frontiers/ep220.html", "221": "blog/fascinating_frontiers/ep221.html", "222": "blog/fascinating_frontiers/ep222.html", "223": "blog/fascinating_frontiers/ep223.html", "224": "blog/fascinating_frontiers/ep224.html", "225": "blog/fascinating_frontiers/ep225.html", "226": "blog/fascinating_frontiers/ep226.html", "227": "blog/fascinating_frontiers/ep227.html"};
         const PATH_PREFIX = "";
         const SHOW_NAME = "Fascinating Frontiers";
 
