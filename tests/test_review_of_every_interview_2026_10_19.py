@@ -199,6 +199,7 @@ class TestAStagedRunCarriesTheLatestLessons:
 
     def _fi(self, monkeypatch, briefs=({"id": "b"},)):
         import fire_interviews as F
+        monkeypatch.delenv("MIRA_TURN_SILENCE_MS", raising=False)
         updates = []
         monkeypatch.setattr(F, "sb_select", lambda table, q="": (
             [{"id": "app"}] if table == "guest_applications" else list(briefs)))
@@ -209,7 +210,8 @@ class TestAStagedRunCarriesTheLatestLessons:
 
     def test_a_staged_prompt_is_brought_up_to_date(self, monkeypatch):
         F, updates = self._fi(monkeypatch)
-        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "OLD"}
+        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "OLD",
+               "turn_detection": F.turn_detection()}
         assert F.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is True
         table, q, patch = updates[0]
         assert table == "interview_runs" and "status=eq.staged" in q and "id=eq.run-1" in q
@@ -217,7 +219,8 @@ class TestAStagedRunCarriesTheLatestLessons:
 
     def test_an_unchanged_prompt_is_not_rewritten(self, monkeypatch):
         F, updates = self._fi(monkeypatch)
-        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "NEW PROMPT"}
+        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "NEW PROMPT",
+               "turn_detection": F.turn_detection()}
         assert F.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is False
         assert updates == []
 
@@ -239,3 +242,144 @@ class TestAStagedRunCarriesTheLatestLessons:
         skip = src[src.index('already has an active run — skipping'):]
         skip = skip[:skip.index("continue")]
         assert "refresh_staged_prompt(r, interview)" in skip
+
+
+class TestAGuestTakeIsPlacedOnTheWholeLeg:
+    """Jon Cheney, Oct 19 2026. His browser take was on the leg's clock to a
+    tenth of a second; align_to_reference, measuring only the first sixty
+    seconds, trimmed 21.9 s off it, and every answer in the mix, the
+    transcript and the grade sat twenty-two seconds before its question."""
+
+    def _pi(self, monkeypatch, *, windows, on_clock=True, delay=0.0):
+        import post_interview as pi
+        calls = {}
+        monkeypatch.setattr(pi, "whole_file_delay", lambda t, r, w: calls.setdefault("whole", (-21.9, 0.6)))
+        def room(track, room, workdir, expected=None, pieces_out=None):
+            calls["expected"] = expected
+            return Path(str(track) + ".room"), delay, windows
+        monkeypatch.setattr(pi, "align_to_room", room)
+        monkeypatch.setattr(pi, "place_phrases", lambda g, r, out: (Path(str(g) + ".phr"), {"moved": 3}))
+        monkeypatch.setattr(pi, "gate_to_reference", lambda g, r, out, heard_wav=None: (Path(str(g) + ".gated"), {"kept": 1}))
+        monkeypatch.setattr(pi, "take_on_clock", lambda t, r, w: on_clock)
+        return pi, calls
+
+    def test_the_whole_file_estimate_is_the_expectation(self, monkeypatch, tmp_path):
+        pi, calls = self._pi(monkeypatch, windows=3)
+        out = pi.place_local_take(Path("take.wav"), Path("leg.wav"), Path("heard.wav"), tmp_path)
+        assert calls["expected"] == -21.9
+        assert out is not None and out.name.endswith(".room.phr.gated")
+
+    def test_a_take_that_cannot_be_placed_is_not_used(self, monkeypatch, tmp_path):
+        pi, _ = self._pi(monkeypatch, windows=0)
+        assert pi.place_local_take(Path("take.wav"), Path("leg.wav"), None, tmp_path) is None
+
+    def test_a_take_off_the_clock_after_placement_is_not_used(self, monkeypatch, tmp_path):
+        pi, _ = self._pi(monkeypatch, windows=3, on_clock=False)
+        assert pi.place_local_take(Path("take.wav"), Path("leg.wav"), None, tmp_path) is None
+
+    def test_the_old_head_window_estimate_is_gone_from_the_guest_path(self):
+        src = (V / "post_interview.py").read_text(encoding="utf-8")
+        body = src[src.index("def build_tracks("):src.index("def place_local_take(")]
+        assert "align_to_reference(local_guest" not in body
+        assert "place_local_take(local_guest, guest_vox, guest_r" in body
+
+    def test_whole_file_delay_sign(self, tmp_path):
+        """A take whose recorder started 21.9 s after the leg's shows every
+        event 21.9 s sooner on its own clock, and is delayed by +21.9 s (the
+        same convention as estimate_room_delay: pad it)."""
+        import numpy as np
+        import audio.local_tracks as lt
+        rng = np.random.default_rng(1)
+        sr = lt.ROOM_ENVELOPE_SR
+        room = np.abs(rng.normal(size=600 * sr)).astype(np.float32)
+        lead = int(21.9 * sr)
+        take = np.concatenate([room[lead:], np.zeros(lead, dtype=np.float32)])
+        envs = {"take": take, "room": room}
+        lt_env = lt._whole_envelope
+        try:
+            lt._whole_envelope = lambda path, workdir: envs[Path(path).stem]
+            delay, strength = lt.whole_file_delay(Path("take.wav"), Path("room.wav"), tmp_path)
+        finally:
+            lt._whole_envelope = lt_env
+        assert abs(delay - 21.9) < 0.05 and strength > 0.5
+
+
+class TestItIsTheGuestsHour:
+    """Patrick, Oct 19 2026: guests are told, before the day and by Mira at
+    the open, that they can steer, skip, start again, pause and have things
+    cut, so the hour is about what they came to say, and the edit keeps the
+    promise."""
+
+    YOUR_HOUR = "It's your hour."
+
+    def test_mira_says_so_at_the_open(self):
+        flat = _flat(PROMPT)
+        beat2 = flat[flat.index("2. ONE SENTENCE ON HOW THIS WORKS, ONE THAT IT IS THEIR HOUR"):flat.index("{{cohost_intro_step}}")]
+        assert "This is your hour" in beat2
+        assert "anything can come out afterwards" in beat2
+        assert "never again" in beat2
+
+    def test_and_knows_what_to_do_when_they_take_her_up_on_it(self):
+        flat = _flat(PROMPT)
+        rule = flat[flat.index("IT IS THEIR HOUR, AND YOU TOLD THEM SO"):flat.index("A PERSONAL STORY IS NOT A CLAIM")]
+        for cue, answer in (("skip a question", '"Of course"'),
+                            ("start an answer again", '"Go ahead"'),
+                            ("something to be cut", '"Done, that stays out"'),
+                            ("want a moment", '"Take your time"')):
+            assert cue in rule and answer in rule, cue
+        assert "never that one again in any form" in rule
+        assert "a thinking pause is never the end of an answer" in rule
+
+    def test_the_booking_email_says_so(self):
+        worker = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+        assert "const GUEST_YOUR_HOUR_HTML" in worker
+        booked = worker[worker.index("Thank you for booking. We're on"):]
+        booked = booked[:booked.index("miraSignature(show)")]
+        assert "${GUEST_YOUR_HOUR_HTML}" in booked
+        tpl = (ROOT / "templates" / "email" / "voices_booking_confirmation.j2").read_text(encoding="utf-8")
+        assert self.YOUR_HOUR in tpl and "start an answer again" in tpl
+
+    def test_the_brief_says_so_and_names_the_words(self):
+        tpl = (ROOT / "templates" / "email" / "voices_prep_brief.j2").read_text(encoding="utf-8")
+        assert "<h3>In the room</h3>" in tpl
+        assert self.YOUR_HOUR in tpl
+        assert '"give me a second"' in tpl and '"let\'s cut that"' in tpl
+
+    def test_the_five_minute_notice_reminds_them(self):
+        src = (V / "fire_interviews.py").read_text(encoding="utf-8")
+        body = src[src.index("def start_notice_email("):src.index("def start_notice_sms(")]
+        assert "it's your hour" in body
+
+    def test_the_edit_keeps_the_promise(self):
+        edit = _flat((V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8"))
+        assert "WHAT THE GUEST ASKED TO HAVE OUT COMES OUT" in edit
+        for words in ("let me start over", "can we cut that", "I'd rather not"):
+            assert words in edit, words
+        assert "not subject to the twenty-five-second minimum" in edit
+
+    def test_no_em_dash_in_the_guest_wording(self):
+        for path in (ROOT / "templates" / "email" / "voices_prep_brief.j2",
+                     ROOT / "templates" / "email" / "voices_booking_confirmation.j2"):
+            body = path.read_text(encoding="utf-8")
+            body = body[body.index("#}") + 2:]   # the template comment is not sent
+            assert "—" not in body, path.name
+
+
+class TestSheWaitsForAThought:
+    def test_the_end_of_turn_silence_is_long_enough_to_think_in(self):
+        import fire_interviews as F
+        assert F.TURN_SILENCE_MS == 1800
+
+    def test_a_staged_run_picks_up_the_new_silence(self, monkeypatch):
+        import fire_interviews as F
+        updates = []
+        monkeypatch.setattr(F, "sb_select", lambda table, q="": (
+            [{"id": "app"}] if table == "guest_applications" else [{"id": "b"}]))
+        monkeypatch.setattr(F, "sb_update", lambda table, q, patch: updates.append(patch) or [patch])
+        monkeypatch.setattr(F, "compile_mira_prompt", lambda iv, app, brief: "SAME")
+        monkeypatch.setattr(F, "is_closing_session", lambda iv: False)
+        monkeypatch.delenv("MIRA_TURN_SILENCE_MS", raising=False)
+        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "SAME",
+               "turn_detection": {"silence_duration_ms": 1300}}
+        assert F.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is True
+        assert updates == [{"turn_detection": {"silence_duration_ms": 1800}}]

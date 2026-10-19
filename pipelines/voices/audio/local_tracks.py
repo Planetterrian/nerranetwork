@@ -363,6 +363,36 @@ def _window_offset(a: np.ndarray, b: np.ndarray,
     return float(lags[k]) / ROOM_ENVELOPE_SR, float(max(0.0, corr[k] / norm))
 
 
+def whole_file_delay(track_wav: Path, room_wav: Path, workdir: Path,
+                     max_offset: float = ROOM_MAX_OFFSET_SEC,
+                     ) -> Tuple[float, float]:
+    """The delay that puts ``track_wav`` on ``room_wav``'s clock, from one
+    correlation of the two WHOLE loudness envelopes, and its strength.
+
+    Oct 19 2026 (Jon Cheney). ``estimate_offset`` measures a browser take
+    against the first sixty seconds of its call leg, which is the one
+    minute of an interview in which the guest says almost nothing: Mira is
+    opening. It took a 0.2 correlation at +21.9 s for the answer and
+    trimmed that much off a take that had been on the leg's clock to a
+    tenth of a second. Measured over the whole leg the true lag is the
+    only peak that stands out, so this is the expectation ``align_to_room``
+    refines and verifies window by window. Coarse by design: one envelope
+    step, and nothing is shifted on its say-so alone.
+    """
+    workdir = Path(workdir)
+    a = _whole_envelope(Path(track_wav), workdir)
+    b = _whole_envelope(Path(room_wav), workdir)
+    if len(a) < ROOM_ENVELOPE_SR or len(b) < ROOM_ENVELOPE_SR:
+        return 0.0, 0.0
+    lag, strength = _window_offset(a, b, -max_offset, max_offset)
+    if lag is None:
+        return 0.0, 0.0
+    # lag < 0: track[t - |lag|] matches room[t], every event shows up sooner
+    # on the track's clock, its recorder started later, and it is delayed by
+    # |lag|; the same convention as estimate_room_delay (delay = base - lag).
+    return -lag, strength
+
+
 def _window_picks(track: np.ndarray, room: np.ndarray, window: int,
                   step: int, lo: float, hi: float, base: float,
                   ) -> list[Tuple[float, float, float]]:

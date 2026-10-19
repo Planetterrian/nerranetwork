@@ -1343,6 +1343,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>About a day before, I'll send a short brief with the themes I'd like to explore.
      You can reply to any of my emails with thoughts, corrections, or anything you would
      rather not discuss, and I'll take it into the conversation.</p>
+     ${GUEST_YOUR_HOUR_HTML}
      <p>The conversation is recorded. You get the transcript first, with a week to approve it,
      cut anything from it or refuse it; after seven days without a reply the episode goes
      ahead as sent, and you can ask for a takedown at any time.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
@@ -1950,6 +1951,20 @@ async function callGuestLink(env: Env, interviewId: string): Promise<string> {
 
 // Oct 1 2026: the same audio paragraph and steps as pipelines/voices/common.py
 // (GUEST_AUDIO_HTML, studio_steps_html); keep the two in step.
+// Oct 19 2026 (Patrick, after a review of every interview): the guest is
+// told, before the day and again by Mira at the open, that the hour is
+// theirs to steer, and that anything can come out afterwards. The same
+// words go in the brief (templates/email/voices_prep_brief.j2).
+const GUEST_YOUR_HOUR_HTML =
+  '<p style="background:#faf5ff;border-left:4px solid #7c3aed;padding:.7em 1em">' +
+  "<strong>It's your hour.</strong> I'm there to ask about what you came to talk " +
+  "about. If a question doesn't land, say so and I'll move on. If you'd rather go " +
+  "somewhere else, say so and we'll go there. If you want to start an answer again, " +
+  "just start again. If you want a moment to think, say so and I'll wait. And if " +
+  "anything comes out that you'd rather not have in the episode, tell me in the " +
+  "moment or mark it on the transcript afterwards, and it comes out of the audio " +
+  "too, cleanly. None of that needs an explanation.</p>";
+
 const GUEST_AUDIO_HTML =
   '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">' +
   "<strong>For the best sound:</strong> please join from a computer, wearing " +

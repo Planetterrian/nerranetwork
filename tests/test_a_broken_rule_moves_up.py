@@ -83,11 +83,13 @@ def test_her_prompt_ends_on_what_she_keeps_breaking():
 def test_the_turn_silence_is_written_on_the_run(monkeypatch):
     import fire_interviews
     monkeypatch.delenv("MIRA_TURN_SILENCE_MS", raising=False)
-    assert fire_interviews.turn_detection() == {"silence_duration_ms": 1300}
+    # Oct 19 2026: 1.3 s became 1.8 s after two guests said she moved on
+    # while they were still thinking (Scott Pulcini, Jon Cheney).
+    assert fire_interviews.turn_detection() == {"silence_duration_ms": 1800}
     monkeypatch.setenv("MIRA_TURN_SILENCE_MS", "9000")
     assert fire_interviews.turn_detection() == {"silence_duration_ms": 2500}
     monkeypatch.setenv("MIRA_TURN_SILENCE_MS", "nonsense")
-    assert fire_interviews.turn_detection() == {"silence_duration_ms": 1300}
+    assert fire_interviews.turn_detection() == {"silence_duration_ms": 1800}
     assert '"turn_detection": turn_detection(),' in (V / "fire_interviews.py").read_text()
     scenario = (ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js").read_text()
     assert "Number(tuned.silence_duration_ms) || 1100" in scenario   # reads it off the row

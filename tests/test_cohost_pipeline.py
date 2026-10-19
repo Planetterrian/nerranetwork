@@ -327,6 +327,12 @@ class TestTrackSelection:
         # which correlates real audio; identity here.
         monkeypatch.setattr(pi, "strip_bleed",
                             lambda track, others, workdir, label="": (Path(track), {"bleed": False}))
+        # Oct 19 2026: the guest's take is placed through whole_file_delay
+        # and align_to_room (above) and checked once more before it is used;
+        # all three correlate real audio, so the check is identity here.
+        monkeypatch.setattr(pi, "whole_file_delay",
+                            lambda track, room, workdir: (0.0, 0.9))
+        monkeypatch.setattr(pi, "take_on_clock", lambda track, ref, workdir: True)
         local = {}
         monkeypatch.setattr(pi, "fetch_local_track",
                             lambda key, wd: local.get(key))
@@ -350,10 +356,12 @@ class TestTrackSelection:
                             host_raw=tmp_path / "raw_host.mp3",
                             mira_raw=tmp_path / "raw_mira.mp3")
         assert t["sources"] == {"guest": "local", "host": "local", "mira": "voximplant"}
-        assert t["guest"].name == "local_guest_aligned.wav"
+        # Oct 19 2026: the guest's take goes through align_to_room, which
+        # the fixture returns untouched (already on the leg's clock).
+        assert t["guest"].name == "local_guest.wav"
         assert t["host"].name == "local_host_aligned.wav"
         assert t["mira"].name == "mira_leg.wav"
-        assert ("local_guest.wav", "guest.wav") in aligned
+        assert ("local_guest.wav", "guest.wav") not in aligned
         # One host leg: the placed leg itself is the host reference
         # (mix_same_clock only stitches when there is more than one).
         assert ("local_host.wav", "host_leg0.wav") in aligned

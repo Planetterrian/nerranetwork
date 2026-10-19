@@ -475,11 +475,17 @@ def refresh_staged_prompt(run: dict, interview: dict) -> bool:
         logger.exception("Refreshing the staged prompt for %s failed (non-fatal)",
                          interview.get("id"))
         return False
-    if not prompt or prompt == (run.get("mira_system_prompt") or ""):
+    patch: dict = {}
+    if prompt and prompt != (run.get("mira_system_prompt") or ""):
+        patch["mira_system_prompt"] = prompt
+    # The end-of-turn silence travels with the run too (Oct 19 2026: Jason
+    # Shumard's run was staged at 1.3 s the day before it moved to 1.8 s).
+    if run.get("turn_detection") != turn_detection():
+        patch["turn_detection"] = turn_detection()
+    if not patch:
         return False
     try:
-        sb_update("interview_runs", f"id=eq.{run['id']}&status=eq.staged",
-                  {"mira_system_prompt": prompt})
+        sb_update("interview_runs", f"id=eq.{run['id']}&status=eq.staged", patch)
     except Exception:  # noqa: BLE001
         logger.exception("Saving the refreshed prompt for run %s failed (non-fatal)", run["id"])
         return False
@@ -491,12 +497,21 @@ def is_closing_session(interview: dict) -> bool:
     return (interview.get("session_kind") or "interview") == "closing"
 
 
+#: End-of-turn silence, ms. Oct 19 2026: 1300 → 1800. Scott Pulcini (Oct 6)
+#: and Jon Cheney (Oct 19) said the same thing unprompted: "if I pause too
+#: long you're gonna move on to the next question", "the questions came at
+#: me pretty quickly". A pause to think is where the good answers come from,
+#: and 1.3 s is shorter than one. The prompt cannot fix this: it is the
+#: voice API deciding the guest has finished, before Mira hears a word.
+TURN_SILENCE_MS = 1800
+
+
 def turn_detection() -> dict:
     """End-of-turn silence Mira waits for, per run (MIRA_TURN_SILENCE_MS)."""
     try:
-        ms = int(os.environ.get("MIRA_TURN_SILENCE_MS") or 1300)
+        ms = int(os.environ.get("MIRA_TURN_SILENCE_MS") or TURN_SILENCE_MS)
     except ValueError:
-        ms = 1300
+        ms = TURN_SILENCE_MS
     return {"silence_duration_ms": max(600, min(2500, ms))}
 
 
@@ -1020,7 +1035,10 @@ def start_notice_email(interview: dict, app: dict, show) -> "tuple[str, str]":
                 f'<p style="font-size:1.1em"><a href="{studio}"><strong>Join your interview here</strong></a></p>'
                 "<p>Headphones on, and from your computer for the best sound.</p>"
                 + str(studio_steps_html(studio)))
-    body += ("<p>If anything gets in the way, just reply to this email and I'll see it.</p>"
+    body += ("<p>One reminder: it's your hour. Skip anything, take me anywhere, start "
+             "any answer again, and anything you'd rather not have in the episode comes "
+             "out afterwards.</p>"
+             "<p>If anything gets in the way, just reply to this email and I'll see it.</p>"
              + mira_signature_html(show))
     return subject, body
 

@@ -96,8 +96,12 @@ def test_the_room_is_kept_out_between_turns(tmp_path):
 
 
 def test_post_production_places_and_gates_a_local_take():
-    assert "place_phrases(guest, guest_vox" in POST
-    assert "gate_to_reference(guest, guest_vox" in POST
+    # Oct 19 2026: the take is placed in place_local_take, whose reference
+    # is the guest's call leg (build_tracks passes guest_vox) and whose
+    # ``heard`` is the room as the guest heard it (guest_r).
+    assert "place_local_take(local_guest, guest_vox, guest_r" in POST
+    assert "place_phrases(guest, reference" in POST
+    assert "gate_to_reference(guest, reference" in POST
 
 
 def _tones(path, spans, sr=48000, total=6.0):
@@ -136,7 +140,8 @@ def test_the_hold_does_not_carry_the_room_into_the_take(tmp_path):
 
 
 def test_post_production_tells_the_gate_what_the_guest_heard():
-    assert "heard_wav=guest_r" in POST
+    assert "heard_wav=heard" in POST
+    assert "place_local_take(local_guest, guest_vox, guest_r" in POST
 
 
 def test_a_stereo_recording_can_carry_the_guests_own_take():

@@ -48,9 +48,9 @@ from common import (  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from address import first_name, written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
-    ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
-    gate_to_reference, place_phrases,
-    place_at,
+    ROOM_MIN_WINDOWS, ROOM_RESIDUAL_SEC, align_to_reference, align_to_room,
+    fetch_local_track, gate_to_reference, place_phrases,
+    place_at, room_pieces, whole_file_delay,
 )
 from audio.bleed import strip_bleed  # noqa: E402
 from audio.mix_tracks import (  # noqa: E402
@@ -465,18 +465,9 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
                                     workdir / "local_guest")
     if (local_guest is not None and _covers(local_guest, guest_vox, "guest")
             and _clean_enough(local_guest, guest_vox, "guest")):
-        guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
-        sources["guest"] = "local"
-        # Oct 7 2026: one offset leaves phrases up to half a second off the
-        # room, and a take without echo cancellation carries the room; see
-        # local_tracks.place_phrases / gate_to_reference.
-        try:
-            guest, placed = place_phrases(guest, guest_vox, workdir / "aligned" / "guest_placed.wav")
-            guest, kept = gate_to_reference(guest, guest_vox, workdir / "aligned" / "guest_gated.wav",
-                                          heard_wav=guest_r)
-            logger.info("guest take placed %s and gated %s", placed, kept)
-        except Exception:  # noqa: BLE001 — the single-offset take still stands
-            logger.exception("phrase placement failed; keeping the single-offset take")
+        guest = place_local_take(local_guest, guest_vox, guest_r, workdir / "aligned")
+        if guest is not None:
+            sources["guest"] = "local"
     if guest is None:
         guest, sources["guest"] = guest_vox, "voximplant"
 
@@ -608,6 +599,72 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     return {"guest": guest, "host": host, "mira": mira, "sources": sources,
             "alignment": alignment, "unaligned": unaligned, "pieces": pieces,
             "bleed": bleed}
+
+
+def place_local_take(local: Path, reference: Path, heard: Path | None,
+                     workdir: Path) -> Path | None:
+    """The guest's browser take on their call leg's clock, or None when it
+    cannot be put there and checked.
+
+    Oct 19 2026, Jon Cheney. The take was placed by ``align_to_reference``,
+    one sixty-second window at the head of the leg, where he had said
+    almost nothing. It took a 0.2 correlation at +21.9 s and trimmed that
+    off a take that had been on the leg's clock to a tenth of a second.
+    Every answer then sat twenty-two seconds before its question: in the
+    mix the guest reviews, in the transcript, and in the grade, which read
+    the result as nineteen interruptions and fourteen repeated questions
+    and marked three standing rules broken. Thor Hesselberg's and Cory
+    O'Daniel's tapes show the same shape.
+
+    So the take is measured across the whole leg (``whole_file_delay``),
+    refined and verified window by window (``align_to_room``), placed
+    phrase by phrase, and then checked once more where it will be used. A
+    take that fails any of that is not used: the leg's own audio is thinner,
+    but it is in the right place, and a wrong place is the worst thing a
+    recording can be.
+    """
+    expected, strength = whole_file_delay(local, reference, workdir)
+    logger.info("guest take: whole-file delay %+.2fs (corr %.2f)", expected, strength)
+    placed, delay, windows = align_to_room(local, reference, workdir, expected=expected)
+    if windows < 1:
+        logger.warning("guest take: could not be placed on the leg's clock "
+                       "(estimate %+.2fs) — using the call leg instead", expected)
+        return None
+    logger.info("guest take: on the leg's clock at %+.2fs (%d windows)", delay, windows)
+    guest = placed
+    # Oct 7 2026: one offset leaves phrases up to half a second off the
+    # room, and a take without echo cancellation carries the room; see
+    # local_tracks.place_phrases / gate_to_reference.
+    try:
+        guest, phrases = place_phrases(guest, reference, workdir / "guest_placed.wav")
+        guest, kept = gate_to_reference(guest, reference, workdir / "guest_gated.wav",
+                                        heard_wav=heard)
+        logger.info("guest take placed %s and gated %s", phrases, kept)
+    except Exception:  # noqa: BLE001 — the single-offset take still stands
+        logger.exception("phrase placement failed; keeping the single-offset take")
+    if not take_on_clock(guest, reference, workdir):
+        logger.warning("guest take: off the leg's clock after placement — "
+                       "using the call leg instead")
+        return None
+    return guest
+
+
+def take_on_clock(track: Path, reference: Path, workdir: Path) -> bool:
+    """Does ``track`` sit on ``reference``'s clock, everywhere it can be
+    measured? The last check before a browser take replaces the call leg."""
+    try:
+        check = room_pieces(track, reference, workdir / "check", expected=0.0, span=30.0)
+    except Exception:  # noqa: BLE001 — an unmeasurable take is not a placed take
+        logger.exception("guest take: final clock check failed")
+        return False
+    if not check:
+        return False
+    off = [p for p in check if abs(float(p.get("delay") or 0.0)) > ROOM_RESIDUAL_SEC]
+    if off:
+        logger.warning("guest take: %s", ", ".join(
+            f"{p['from']:.0f}-{p['to']:.0f}s at {p['delay']:+.2f}s" for p in off))
+        return False
+    return True
 
 
 def build_leg_local(guest: Path, raw: Path, out: Path) -> Path:
