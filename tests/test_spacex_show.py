@@ -951,6 +951,9 @@ class TestKnownSectionsOnlyChapters:
     KNOWN_TITLES = {
         "Introduction", "The Counterpoint", "AI & Compute",
         "The Engineering Angle", "Market Watch", "Tomorrow Teaser", "Closing",
+        # Oct 19 2026: the Also Today run (every remaining qualifying story,
+        # one sentence each) is a known section, chaptered on its digest text.
+        "Also Today",
     }
 
     def test_yaml_pins_known_sections_only(self):

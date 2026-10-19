@@ -2129,7 +2129,13 @@ def run(args: argparse.Namespace) -> None:
         # LLM headroom to drop near-duplicates and still hit the 15-item
         # target with diverse angles. Prompt token usage rises ~30%
         # (~1200 extra tokens) but stays well under the 128k context.
-        MAX_ARTICLES_FOR_LLM = 40
+        # Oct 19 2026: 40 → DEFAULT_MAX_PROMPT_ARTICLES (60), per show via
+        # ``max_prompt_articles`` — the digest now carries an Also Today run
+        # for every remaining qualifying story, so the prompt lists more of
+        # what was fetched instead of discarding it before the model sees it.
+        from engine.config import DEFAULT_MAX_PROMPT_ARTICLES
+        MAX_ARTICLES_FOR_LLM = int(
+            getattr(config, "max_prompt_articles", 0) or DEFAULT_MAX_PROMPT_ARTICLES)
         MAX_HOOK_ARTICLES_FOR_LLM = 12
         if len(articles) > MAX_ARTICLES_FOR_LLM:
             logger.info(
@@ -2145,6 +2151,11 @@ def run(args: argparse.Namespace) -> None:
             _hook_kept = [a for a in articles if a.get("source_kind") == "hook"][:MAX_HOOK_ARTICLES_FOR_LLM]
             _feed = [a for a in articles if a.get("source_kind") != "hook"]
             articles = _feed[:MAX_ARTICLES_FOR_LLM - len(_hook_kept)] + _hook_kept
+        # Consumer: the dashboard's prompt_articles_reported_pct_7d (Oct 19
+        # 2026 — items shipped over articles the prompt listed) and the show
+        # review. Recorded on every run so the share can never read as a
+        # fake zero on a day the cap never fired.
+        metrics.record("articles_in_prompt", len(articles))
 
         # 5f. Restore chronological order for the prompt — LLMs follow the digest
         # format template more reliably when articles appear newest-first by feed,
@@ -3488,6 +3499,20 @@ def run(args: argparse.Namespace) -> None:
                     from engine.digest_lint import items_without_source as _iws
                     _tot, _miss = _iws(x_thread)
                     metrics.record("items_without_source_shipped", _miss)
+                    # Oct 19 2026: how much of the sourced list the digest
+                    # reports (the operator's ask), and how much of that is
+                    # the Also Today run. Consumers: the dashboard's
+                    # prompt_articles_reported_pct_7d / also_today_items_7d.
+                    try:
+                        from engine.digest_lint import also_today_items as _ati
+                        _in_prompt = int(metrics.counters.get("articles_in_prompt", 0) or 0)
+                        metrics.record("items_shipped", _tot)
+                        metrics.record("digest_also_today_items", _ati(x_thread))
+                        if _in_prompt:
+                            metrics.record("prompt_articles_reported_pct",
+                                           round(100.0 * _tot / _in_prompt, 1))
+                    except Exception as _ati_exc:  # noqa: BLE001 — never block a run
+                        logger.debug("Also Today metrics skipped: %s", _ati_exc)
                     if _tot and _miss and _miss != int(
                             (locals().get("_lint_metrics") or {}).get("items_without_source", _miss)):
                         logger.warning(

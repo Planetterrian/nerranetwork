@@ -507,7 +507,7 @@ def ff_validation_config() -> ValidationConfig:
                 pattern=(
                     r"(?:### Top 15 Space|### Top \d+ Space|(?<=\n---\n)(?=(?:1[.)] )?\*\*))"
                     r"(.*?)"
-                    r"(?=━━|### Cosmic Spotlight|$)"
+                    r"(?=━━|### Also Today|## Also Today|### Cosmic Spotlight|$)"
                 ),
                 min_items=8,
             ),
@@ -530,7 +530,7 @@ def pt_validation_config() -> ValidationConfig:
                 pattern=(
                     r"(?:### Top 15 Science|### Top \d+ Science)"
                     r"(.*?)"
-                    r"(?=━━|### Planetterrian Spotlight|$)"
+                    r"(?=━━|### Also Today|## Also Today|### Planetterrian Spotlight|$)"
                 ),
                 min_items=8,
             ),
@@ -890,7 +890,7 @@ def ai_chips_validation_config() -> ValidationConfig:
             _items_rule("Data Centres & Power", "Data Centres & Power",
                         r"### Supply Chain|## Supply Chain", 2),
             _items_rule("Supply Chain & Policy", "Supply Chain & Policy",
-                        r"### The Teardown|## The Teardown", 1, optional=True),
+                        r"### Also Today|## Also Today|### The Teardown|## The Teardown", 1, optional=True),
             # Oct 14 2026: the Teardown is the show's deep dive (450-600
             # words, built from one fetched article). A missing one is a
             # structural defect; a thin one is logged.
@@ -920,7 +920,7 @@ def mag7_validation_config() -> ValidationConfig:
             # so it only ever read as a daily validation failure). One is
             # the floor; zero is the structural defect.
             _items_rule("Company Desk", "Company Desk",
-                        r"### The Counterpoint|## The Counterpoint", 1),
+                        r"### Also Today|## Also Today|### The Counterpoint|## The Counterpoint", 1),
             # Sep 24 2026: Ep2 shipped with no Counterpoint at all (the
             # overlap dedup had removed it, header included) and nothing
             # regenerated — a missing section is a structural defect, same
@@ -953,7 +953,7 @@ def peptides_validation_config() -> ValidationConfig:
         section_pairs=[],
         sections=[
             _items_rule("The Week in Peptides", "The Week in Peptides",
-                        r"### Peptide Spotlight|## Peptide Spotlight", 3),
+                        r"### Also Today|## Also Today|### Peptide Spotlight|## Peptide Spotlight", 3),
             SectionRule(
                 name="Peptide Spotlight",
                 pattern=(r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
@@ -972,7 +972,7 @@ def longevity_validation_config() -> ValidationConfig:
         section_pairs=[],
         sections=[
             _items_rule("The Week in Longevity", "The Week in Longevity",
-                        r"### Mechanism of the Week|## Mechanism of the Week", 3),
+                        r"### Also Today|## Also Today|### Mechanism of the Week|## Mechanism of the Week", 3),
             SectionRule(
                 name="Mechanism of the Week",
                 pattern=(r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
@@ -998,7 +998,7 @@ def prediction_markets_validation_config() -> ValidationConfig:
                 min_items=0,
                 min_chars=250,
             ),
-            _items_rule("The Ecosystem", "The Ecosystem", r"### The Board|## The Board", 2),
+            _items_rule("The Ecosystem", "The Ecosystem", r"### Also Today|## Also Today|### The Board|## The Board", 2),
             SectionRule(
                 name="The Board",
                 pattern=(r"(?:### The Board|## The Board)(.*?)"
@@ -1030,7 +1030,7 @@ def vancouver_validation_config() -> ValidationConfig:
             # the material (omitted otherwise).
             SectionRule(
                 name="The Closer Look",
-                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Getting Around|## Getting Around|$)",
+                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Also Today|## Also Today|### Getting Around|## Getting Around|$)",
                 min_items=0,
                 min_chars=1500,
                 optional=True,
@@ -1067,7 +1067,7 @@ def collingwood_validation_config() -> ValidationConfig:
                         r"### Council|## Council|### The Closer Look|## The Closer Look|### Roads|## Roads", 2),
             SectionRule(
                 name="The Closer Look",
-                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Roads|## Roads|$)",
+                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Also Today|## Also Today|### Roads|## Roads|$)",
                 min_items=0,
                 min_chars=1500,
                 optional=True,

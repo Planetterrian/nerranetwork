@@ -161,7 +161,7 @@ class TestHookArticlesSurviveEveryCap:
 
     def test_prompt_cap_keeps_hook_articles(self):
         src = Path("run_show.py").read_text()
-        i = src.index("MAX_ARTICLES_FOR_LLM = 40")
+        i = src.index("MAX_ARTICLES_FOR_LLM = int(")
         assert '"source_kind") == "hook"' in src[i:i + 1800]
 
 

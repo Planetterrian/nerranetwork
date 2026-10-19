@@ -310,6 +310,24 @@ def story_items(digest: str) -> List[str]:
     return out
 
 
+ALSO_TODAY_SECTION = "Also Today"
+
+
+def also_today_items(digest: str) -> int:
+    """Oct 19 2026: story items inside the digest's ``Also Today`` run —
+    the one-sentence items every news show now carries for the qualifying
+    stories its developed sections leave out. 0 when the section is absent."""
+    n = 0
+    for title, body in sections(digest):
+        if title.strip().lower() != ALSO_TODAY_SECTION.lower():
+            continue
+        for block in items(body):
+            head = block.splitlines()[0]
+            if _NUMBERED_ITEM_RE.match(head) or _HEADLINE_ITEM_RE.match(head):
+                n += 1
+    return n
+
+
 def items_without_source(digest: str) -> Tuple[int, int]:
     """``(story items, of which carry no URL at all)``."""
     blocks = story_items(digest)

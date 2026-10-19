@@ -20,6 +20,11 @@ logger = logging.getLogger(__name__)
 # Dataclass hierarchy
 # ---------------------------------------------------------------------------
 
+#: Oct 19 2026 — articles the digest prompt lists (ShowConfig.max_prompt_articles
+#: = 0). 40 from May to Oct 19 2026; 60 since the Also Today run gave the
+#: remaining qualifying stories a place in every news digest.
+DEFAULT_MAX_PROMPT_ARTICLES = 60
+
 @dataclass
 class SourceConfig:
     url: str
@@ -1391,6 +1396,14 @@ class ShowConfig:
     # description only, exactly as before.
     fetch_full_text: int = 0
     fetch_full_text_chars: int = 2500
+    # Oct 19 2026: how many fetched articles the digest prompt lists after
+    # the relevance sort (run_show's MAX_ARTICLES_FOR_LLM — a literal 40
+    # since May 2026). The operator asked that sourced news be REPORTED
+    # rather than discarded: the prompt now carries an Also Today run for
+    # every remaining qualifying story, so the list it chooses from grew to
+    # DEFAULT_MAX_PROMPT_ARTICLES. 0 = the default; hook articles keep their
+    # own bounded slot (MAX_HOOK_ARTICLES_FOR_LLM).
+    max_prompt_articles: int = 0
     # Remove "No X was disclosed" sentences from the digest and the script
     # (engine/absence_sentences.py, Sep 22 2026 new-show Ep1s). Opt-in;
     # False = every other show byte-identical.
@@ -1687,6 +1700,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         web_search_always=bool(data.get("web_search_always", False)),
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
+        max_prompt_articles=int(data.get("max_prompt_articles", 0) or 0),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
