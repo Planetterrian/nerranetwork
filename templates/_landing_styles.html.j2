@@ -61,6 +61,18 @@
 .lt-quote.is-flat .lt-quote-chg { color: var(--lt-muted); }
 .lt-launch-name { color: var(--nn-white); font-weight: 700; }
 .lt-markets-more { flex: none; font-weight: 700; color: var(--lt-accent-text) !important; font-size: 0.76rem; }
+/* Oct 19 2026: live quotes (assets/js/live-ticker.js). A live group carries a dot. */
+.lt-mk-group.is-live .lt-mk-label::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px;
+  border-radius: 50%; background: var(--lt-cyan); vertical-align: 1px; }
+/* The tapes: a row wider than its box moves; its Pause button appears only then. */
+.lt-tape-pause {
+  flex: none; font-family: var(--lt-ui); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--lt-muted); background: transparent; border: 1px solid var(--lt-rule); border-radius: 999px;
+  padding: 2px 9px; cursor: pointer; line-height: 1.4;
+}
+.lt-tape-pause:hover, .lt-tape-pause:focus-visible { color: var(--nn-white); border-color: var(--lt-muted); }
+.lt-tape-pause[hidden] { display: none; }
+.is-moving > ul { scroll-snap-type: none; }
 
 /* ---- Timestamps ---- */
 .lt-today { display: inline-block; font-family: var(--lt-ui); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lt-today-text); background: var(--lt-today-bg); padding: 1px 6px; border-radius: 4px; vertical-align: 1px; }
@@ -195,6 +207,7 @@
 .lt-ticker li a { color: var(--lt-ink); }
 .lt-ticker li a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-ticker-show { font-weight: 700; color: var(--show-color-text); margin-right: 6px; }
+.lt-ticker .lt-tape-pause { order: 3; align-self: center; }
 
 /* ---- Shared story atoms ---- */
 .lt-kicker {

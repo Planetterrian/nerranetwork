@@ -356,6 +356,16 @@ MARKET_MAX_AGE_DAYS = 3
 #: The quotes the strip prints, in order, from ``api/mag7_quotes.json``.
 MARKET_TICKERS = ("TSLA", "NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META")
 
+#: Oct 19 2026: the page updates the strip from this Worker route
+#: (workers/gallery/src/markets.ts). The build-time values stay on screen
+#: until it answers, and whenever it does not.
+LIVE_MARKETS_API = "https://api.nerranetwork.com/api/markets"
+
+#: Seconds between live refreshes while the page is visible: quotes, and the
+#: Latest headlines (re-read from the page's own latest build).
+LIVE_QUOTES_REFRESH_S = 60
+LIVE_HEADLINES_REFRESH_S = 300
+
 #: The flagship shows' own tickers (engine.brand.FLAGSHIP_SHOW_SLUGS): the
 #: front page's flagship band prints each show's line from the strip.
 SHOW_TICKERS = {"spacex": "SPCX", "tesla": "TSLA"}
