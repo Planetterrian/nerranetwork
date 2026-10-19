@@ -5475,6 +5475,10 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "masthead": _nr.masthead(now),
         "developing": developing,
         "markets": markets,
+        # Oct 19 2026: the strip and the Latest ticker update on the page.
+        "live_ticker": {"markets_api": _nr.LIVE_MARKETS_API,
+                        "quotes_every_s": _nr.LIVE_QUOTES_REFRESH_S,
+                        "headlines_every_s": _nr.LIVE_HEADLINES_REFRESH_S},
         "corrections": corrections,
         "schedule": schedule,
         "org_ld": org_ld,
@@ -6365,6 +6369,8 @@ _LANGUAGE_HUB_COPY = {
         "nav_latest": "Свежее",
         "nav_shows": "Подкасты",
         "ticker_label": "Свежее",
+        "tape_pause": "Пауза",
+        "tape_play": "Пуск",
         "lead_label": "Главный сюжет",
         "latest_heading": "Последние выпуски",
         "every_show_link": "Все подкасты по-русски →",
@@ -6480,6 +6486,8 @@ _LANGUAGE_HUB_COPY = {
         "nav_latest": "À la une",
         "nav_shows": "Émissions",
         "ticker_label": "À la une",
+        "tape_pause": "Pause",
+        "tape_play": "Lecture",
         "lead_label": "Article principal",
         "latest_heading": "Derniers épisodes",
         "every_show_link": "Toutes les émissions en français →",
@@ -6575,6 +6583,7 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
     what the network is. ``now`` fixes the build clock; ``gallery_dir`` points
     at a scratch gallery index directory (tests).
     """
+    from engine import newsroom as _newsroom
     from engine import language_front as _front
     from engine import brand as _brand
     from engine.publisher import apply_op3_prefix as _op3
@@ -6692,6 +6701,8 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
         # native shows here, which have letters. A language with no native
         # show has no letter to offer, so the form is omitted (one ask).
         "hide_footer_subscribe": not native,
+        # Oct 19 2026: the Latest row re-reads this page's newest build.
+        "live_ticker": {"headlines_every_s": _newsroom.LIVE_HEADLINES_REFRESH_S},
     }
     html = _get_jinja_env().get_template("language_hub.html.j2").render(**context)
     out_path = (Path(output_dir) / target) if output_dir else ROOT / target

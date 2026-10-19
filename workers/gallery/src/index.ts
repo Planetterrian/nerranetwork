@@ -41,6 +41,7 @@ import {
   handleStripeWebhook,
 } from "./personal";
 import * as resend from "./resend";
+import { handleMarkets } from "./markets";
 import type { Env, HandlerDeps } from "./types";
 
 const DEPS: HandlerDeps = { buttondown, resend };
@@ -105,6 +106,9 @@ export default {
           return await handleAdminSpecs(request, env);
         case "GET /api/admin/show-demand":
           return await handleShowDemand(request, env);
+        case "GET /api/markets":
+          // Oct 19 2026: live quotes for the front page's markets strip.
+          return await handleMarkets(request, ctx);
         case "GET /api/health":
           return jsonResponse(request, 200, { ok: true });
         default:

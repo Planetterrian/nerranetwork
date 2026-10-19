@@ -368,12 +368,13 @@
     date (engine.newsroom.market_strip). A stale or undated value is absent. -#}
 {%- set mk = markets -%}
 {% if mk and (mk.groups or mk.launch) %}
-<div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches">
+<div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches"{% if live_ticker %} data-live-markets="{{ live_ticker.markets_api }}" data-every="{{ live_ticker.quotes_every_s }}"{% endif %}>
     <span class="lt-markets-h">Markets &amp; launches</span>
+    <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Play">Pause</button>
     <ul>
         {% for g in mk.groups %}
-        <li class="lt-mk-group"><span class="lt-mk-label">{{ g.label }} · <time datetime="{{ g.as_of_iso }}">{{ g.as_of }}</time></span>
-            {% for q in g.quotes %}<span class="lt-quote is-{{ q.direction }}"><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}</span>{% endfor %}
+        <li class="lt-mk-group" data-quotes><span class="lt-mk-label">{{ g.label }} · <time datetime="{{ g.as_of_iso }}">{{ g.as_of }}</time></span>
+            {% for q in g.quotes %}<span class="lt-quote is-{{ q.direction }}" data-symbol="{{ q.symbol }}"><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}</span>{% endfor %}
         </li>
         {% endfor %}
         {% if mk.launch %}
@@ -414,8 +415,9 @@
     </ul>
 </nav></div>
 
-<div class="lt-ticker container" role="region" aria-label="Latest headlines">
+<div class="lt-ticker container" role="region" aria-label="Latest headlines"{% if live_ticker %} data-live-headlines data-every="{{ live_ticker.headlines_every_s }}"{% endif %}>
     <span class="lt-ticker-label">Latest</span>
+    <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Play">Pause</button>
     <ul>
         {% for s in p.latest %}
         <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text | e }}</span></a></li>
@@ -493,7 +495,7 @@
                     {% if f.tagline %}<p class="lt-flag-tag">{{ f.tagline }}</p>{% endif %}
                 </div>
                 {% if f.quote %}{% set q = f.quote %}
-                <p class="lt-flag-quote lt-quote is-{{ q.direction }}"><span><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}<small>{{ 'Close' if q.basis == 'close' else 'Last quote' }} · <time datetime="{{ q.as_of_iso }}">{{ q.as_of }}</time></small></span></p>
+                <p class="lt-flag-quote lt-quote is-{{ q.direction }}" data-symbol="{{ q.symbol }}"><span><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}<small>{{ 'Close' if q.basis == 'close' else 'Last quote' }} · <time datetime="{{ q.as_of_iso }}">{{ q.as_of }}</time></small></span></p>
                 {% endif %}
             </div>
             {{ media(f) }}
@@ -1024,6 +1026,9 @@
     deferred, and it loads nothing from YouTube until a visitor presses Play. #}
 <script src="{{ path_prefix }}assets/js/shorts-reel.js" defer></script>
 {%- endif %}
+{#- Oct 19 2026: live quotes from the Worker, Latest headlines re-read from
+    this page's newest build, and both rows moving as a tape. -#}
+<script src="{{ path_prefix }}assets/js/live-ticker.js" defer></script>
 {#- Relative timestamps (BBC / Guardian convention): the server prints the
     absolute Eastern time; this rewrites it to "2 hours ago" / "Yesterday",
     keeps the absolute stamp as the tooltip, drops a "Today" marker whose

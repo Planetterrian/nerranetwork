@@ -137,8 +137,9 @@
     </ul>
 </nav></div>
 
-<div class="lt-ticker container" role="region" aria-label="{{ hub.nav_latest }}">
+<div class="lt-ticker container" role="region" aria-label="{{ hub.nav_latest }}"{% if live_ticker %} data-live-headlines data-every="{{ live_ticker.headlines_every_s }}"{% endif %}>
     <span class="lt-ticker-label">{{ hub.ticker_label }}</span>
+    <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="{{ hub.tape_pause }}" data-play="{{ hub.tape_play }}">{{ hub.tape_pause }}</button>
     <ul>
         {% for s in p.latest %}
         <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text | e }}</span></a></li>
@@ -362,4 +363,10 @@
     </div>
 </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{#- Oct 19 2026: the Latest row re-reads this page's newest build and moves
+    as a tape (assets/js/live-ticker.js). -#}
+<script src="{{ path_prefix }}assets/js/live-ticker.js" defer></script>
 {% endblock %}
