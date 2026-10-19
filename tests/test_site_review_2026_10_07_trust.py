@@ -280,10 +280,22 @@ class TestRussianIndex:
             assert (ROOT / "ru" / name).exists()
 
     def test_covers_are_the_small_sized_webps(self, page):
-        assert not re.search(r'covers/[a-z-]+\.jpg', page)
+        # Oct 19 2026: the page is a front page; a story's scene image is the
+        # episode's own (a remote thumbnail) and the cover <picture> fallbacks
+        # are the show-card rule. Every local image is the small webp.
         for tag in re.findall(r"<img\b[^>]*>", page):
-            assert "-400.webp" in tag and "width=" in tag and "height=" in tag, tag
-            assert (ROOT / re.search(r'src="\.\./([^"]+)"', tag).group(1)).exists()
+            assert "width=" in tag and "height=" in tag, tag
+            m = re.search(r'src="\.\./([^"]+)"', tag)
+            if m is None:
+                assert re.search(r'src="https://', tag), tag
+                continue
+            src = m.group(1)
+            if src.endswith(".jpg"):
+                # The <picture> fallback beside a -400.webp <source>.
+                assert (ROOT / src).exists(), tag
+                continue
+            assert "-400.webp" in tag, tag
+            assert (ROOT / src).exists(), tag
 
 
 # ---------------------------------------------------------------------------

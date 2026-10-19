@@ -2520,6 +2520,7 @@ def _get_jinja_env():
     from engine import brand as _brand_copy
     env.globals["network_tagline"] = _brand_copy.NETWORK_TAGLINE
     env.globals["network_tagline_ru"] = _brand_copy.NETWORK_TAGLINE_RU
+    env.globals["network_tagline_fr"] = _brand_copy.NETWORK_TAGLINE_FR
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
 
     def _network_promise_visitor(_n=None) -> str:
@@ -6352,6 +6353,61 @@ _LANGUAGE_HUB_COPY = {
             "оригинального английского выпуска. Nerra Network использует "
             "ИИ-инструменты в производстве контента."),
         "ai_link_label": "Подробнее",
+        # Front page (Oct 19 2026)
+        "wordmark_suffix": "по-русски",
+        "updated_label": "Обновлено",
+        "new_today": "Новых выпусков сегодня",
+        "today_label": "Сегодня",
+        "action_shows": "Наши подкасты",
+        "action_listen": "Где слушать",
+        "action_english": "Сайт на английском",
+        "sections_nav_label": "Разделы страницы",
+        "nav_latest": "Свежее",
+        "nav_shows": "Подкасты",
+        "ticker_label": "Свежее",
+        "lead_label": "Главный сюжет",
+        "latest_heading": "Последние выпуски",
+        "every_show_link": "Все подкасты по-русски →",
+        "flagships_nav": "SpaceX и Tesla",
+        "flagships_heading": "Флагманские шоу",
+        "flagships_sub": "Два крупнейших ежедневных шоу сети — их последние выпуски с русской озвучкой.",
+        "top_heading": "Главные сюжеты",
+        "more_nav": "Ещё",
+        "more_heading": "Ещё из сети",
+        "read_label": "Читать",
+        "read_full_native": "Читать статью",
+        "read_full_dubbed": "Читать статью (на английском)",
+        "more_from": "Ещё от",
+        "play_label": "Слушать выпуск",
+        "translated_note": "Аудио на русском · статья и источники на английском.",
+        "empty_note": "Пока нет выпусков для показа. Все подкасты — ниже.",
+        "shows_heading": "Подкасты на русском языке",
+        "shows_sub": "Сделанные на русском — и русская озвучка наших англоязычных шоу.",
+        "about_heading": "О Nerra Network",
+        "about_text": (
+            "Nerra Network — независимая сеть новостей и подкастов из Ванкувера, "
+            "Канада: SpaceX, Tesla, ИИ, рынки, мировые новости, космос и наука. "
+            "Каждая история опирается на названные источники, каждое утверждение "
+            "проверяется по своему источнику, и к каждому выпуску есть статья. "
+            "Два подкаста мы делаем на русском; остальные выходят на английском и "
+            "получают русскую озвучку в тот же день."),
+        "show_blurbs": {
+            "spacex": "Starship, Falcon, Starlink, Dragon и рынок SPCX — инженерная суть дня.",
+            "tesla": "FSD и автономность, Optimus, Cybercab, энергетика и курс TSLA.",
+            "fascinating_frontiers": "Космос и наука: открытия дня, объяснённые понятно.",
+            "modern_investing": "Рынки Канады и США, инвестиционные идеи и уроки — ежедневно.",
+        },
+        "section_headings": {
+            "ai": "Искусственный интеллект", "space": "Космос",
+            "markets": "Рынки и инвестиции", "tesla": "Tesla", "science": "Наука",
+            "health-and-longevity": "Здоровье и долголетие",
+            "climate-and-energy": "Климат и энергетика", "world-news": "Мировые новости",
+            "interviews": "Интервью", "history-and-consequences": "История и последствия",
+            "engineering": "Инженерия", "local-news": "Местные новости",
+            "prediction-markets": "Рынки предсказаний", "ai-infrastructure": "Инфраструктура ИИ",
+            "sailing": "Океанские гонки", "language-learning": "Изучение языков",
+            "good-news": "Хорошие новости",
+        },
         "shows": {
             "finansy_prosto": {
                 "cadence": "По понедельникам",
@@ -6412,6 +6468,64 @@ _LANGUAGE_HUB_COPY = {
             "de l'épisode anglais original. Nerra Network utilise des outils "
             "d'IA dans la production de ses contenus."),
         "ai_link_label": "En savoir plus",
+        # Front page (Oct 19 2026)
+        "wordmark_suffix": "en français",
+        "updated_label": "Mis à jour à",
+        "new_today": "Nouveaux épisodes aujourd'hui",
+        "today_label": "Aujourd'hui",
+        "action_shows": "Nos émissions",
+        "action_listen": "Où écouter",
+        "action_english": "Le site en anglais",
+        "sections_nav_label": "Sections de la page",
+        "nav_latest": "À la une",
+        "nav_shows": "Émissions",
+        "ticker_label": "À la une",
+        "lead_label": "Article principal",
+        "latest_heading": "Derniers épisodes",
+        "every_show_link": "Toutes les émissions en français →",
+        "flagships_nav": "SpaceX et Tesla",
+        "flagships_heading": "Émissions phares",
+        "flagships_sub": "Les deux plus grandes émissions quotidiennes du réseau, dans leurs derniers épisodes en français.",
+        "top_heading": "Les grands titres",
+        "more_nav": "Et aussi",
+        "more_heading": "Aussi sur le réseau",
+        "read_label": "Lire",
+        "read_full_native": "Lire l'article",
+        "read_full_dubbed": "Lire l'article (en anglais)",
+        "more_from": "Plus de",
+        "play_label": "Écouter l'épisode",
+        "translated_note": "Audio en français · article et sources en anglais.",
+        "empty_note": "Aucun épisode à afficher pour le moment. Toutes les émissions sont ci-dessous.",
+        "shows_heading": "Les émissions en français",
+        "shows_sub": "Nos émissions anglaises, traduites et lues en français le jour même.",
+        "about_heading": "À propos de Nerra Network",
+        "about_text": (
+            "Nerra Network est un réseau indépendant d'information et de podcasts "
+            "de Vancouver, au Canada : SpaceX, Tesla, l'IA, les marchés, l'actualité "
+            "mondiale, l'espace et la science. Chaque histoire repose sur des sources "
+            "nommées, chaque affirmation est vérifiée contre sa source, et chaque "
+            "épisode a son article. Les émissions sont produites en anglais et "
+            "traduites en français le jour même."),
+        "show_blurbs": {
+            "spacex": "Starship, Falcon, Starlink, Dragon et le marché SPCX — l'essentiel technique du jour.",
+            "tesla": "FSD et conduite autonome, Optimus, Cybercab, l'énergie et le cours TSLA.",
+            "fascinating_frontiers": "L'espace et la science : les découvertes du jour, expliquées clairement.",
+            "modern_investing": "Les marchés canadiens et américains, des idées et des leçons d'investissement, chaque jour.",
+            "models_agents": "Les modèles et agents d'IA : ce qui change concrètement, chaque jour.",
+            "env_intel": "La politique environnementale et la conformité au Canada, chaque semaine.",
+            "first_principles": "Raisonner à partir des premiers principes : un exemple ou un secteur à repenser, chaque jour.",
+        },
+        "section_headings": {
+            "ai": "Intelligence artificielle", "space": "Espace",
+            "markets": "Marchés et investissement", "tesla": "Tesla", "science": "Science",
+            "health-and-longevity": "Santé et longévité",
+            "climate-and-energy": "Climat et énergie", "world-news": "Actualité mondiale",
+            "interviews": "Entretiens", "history-and-consequences": "Histoire et conséquences",
+            "engineering": "Ingénierie", "local-news": "Actualité locale",
+            "prediction-markets": "Marchés prédictifs", "ai-infrastructure": "Infrastructure de l'IA",
+            "sailing": "Course au large", "language-learning": "Apprentissage des langues",
+            "good-news": "Bonnes nouvelles",
+        },
         "shows": {},
     },
 }
@@ -6450,9 +6564,20 @@ def _hub_latest_episode(show, prefix):
     }
 
 
-def generate_language_hub_page(lang, *, dry_run=False, output_dir=None):
-    """Render one language's hub (``<lang>/index.html``); ``None`` when the
-    language has no hub path or no hand-written copy."""
+def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
+                               gallery_dir=None, now=None):
+    """Render one language's front page (``<lang>/index.html``); ``None``
+    when the language has no hub path or no hand-written copy.
+
+    Since Oct 19 2026 the page is a news front page like ``index.html``
+    (engine.language_front: the English assembler over the stories that exist
+    in the language), followed by the language's shows, where to listen and
+    what the network is. ``now`` fixes the build clock; ``gallery_dir`` points
+    at a scratch gallery index directory (tests).
+    """
+    from engine import language_front as _front
+    from engine import brand as _brand
+    from engine.publisher import apply_op3_prefix as _op3
     from engine.video_metadata import CHANNEL_HANDLES
 
     lang = str(lang or "").strip().lower()
@@ -6461,9 +6586,14 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None):
     if not target or not copy:
         return None
 
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
     prefix = "../"
     shows = _build_all_shows_list()
     public = _public_shows(shows)
+    gallery_root = (Path(gallery_dir) if gallery_dir
+                    else ROOT / "site" / "data" / "gallery")
 
     native = []
     for s in public:
@@ -6509,7 +6639,36 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None):
     others = [{**row, "href": f"{prefix}{row['path']}" if row["path"] else "/"}
               for row in _site_language_links() if row["lang"] != lang]
 
+    # ---- The front page: the English assembler over this language's stories
+    def _audio(url):
+        if url.startswith("https://audio.nerranetwork.com/"):
+            return _op3(url)
+        return url if url.startswith("https://") else ""
+
+    def _post(slug, number):
+        return _blog_url_for_episode(slug, episode_num=number) if number else ""
+
+    from engine import landing_test as _lt
+    in_language = [s for s in public
+                   if s.get("page_lang") == lang
+                   or (s.get("page_lang") or "en") == "en"
+                   and lang in (_show_lang.track_languages(s["slug"]) or ())]
+    stories = _front.collect_stories(
+        lang, in_language, network_shows=NETWORK_SHOWS, root=ROOT,
+        gallery_root=gallery_root, blog_url_for=_post, audio_url_for=_audio,
+        now=now, hub_for=_lt.hub_by_slug(in_language))
+    ranked = _rank_shows_by_audience(in_language)
+    page = _front.assemble(
+        stories, lang=lang, audience_order=[s["slug"] for s in ranked],
+        flagships=_brand.FLAGSHIP_SHOW_SLUGS,
+        section_headings=copy.get("section_headings") or {})
+    tagline = {"ru": _brand.NETWORK_TAGLINE_RU, "fr": _brand.NETWORK_TAGLINE_FR}.get(
+        lang, _brand.NETWORK_TAGLINE)
+
     context = {
+        "page": page,
+        "masthead": _front.masthead(now, lang),
+        "tagline": tagline,
         "path_prefix": prefix,
         "page_lang": lang,
         "page_title": copy["title"],

@@ -1,156 +1,365 @@
 {# ---------------------------------------------------------------------
-   Language hub — <lang>/index.html (Oct 18 2026).
+   Language front page — <lang>/index.html (Oct 19 2026).
 
-   The one page a reader of this language lands on: the shows made natively
-   in it, the English shows that produce a translated audio track in it (each
-   a real subscribable feed), the on-site landers, and the YouTube channel for
-   the language. The English homepage lists English shows only and sends a
-   reader here through the header's Language menu.
-
-   Every reader-facing string comes from generate_html._LANGUAGE_HUB_COPY
-   (hand-written per language); this template types nothing a reader sees.
+   The English homepage's news-front layout (same stylesheet, same
+   assembler) over the stories that exist in this language: the shows made
+   natively in it and the English shows that produce a translated audio
+   track in it. Then the language's shows, where to listen, and what the
+   network is — every reader-facing string from
+   generate_html._LANGUAGE_HUB_COPY, hand-written per language; this
+   template types nothing a reader sees.
    --------------------------------------------------------------------- #}
 {% extends "base.html.j2" %}
 
 {% block head_extra %}
+{% include "_landing_styles.html.j2" %}
 <style>
-  .lh-hero { padding: calc(var(--nav-height) + 3rem) 0 2.5rem; text-align: center; }
-  .lh-hero h1 { font-size: clamp(2rem, 4vw, 3rem); margin: 0 0 1rem; }
-  .lh-hero p { max-width: 42rem; margin: 0 auto 1.5rem; color: var(--nn-text-secondary); font-size: 1.1rem; line-height: 1.6; }
-  .lh-actions { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; }
-  .lh-langs { margin-top: 1.25rem; font-size: 0.9rem; color: var(--nn-text-muted); }
-  .lh-langs a { margin: 0 0.35rem; }
-  .lh-latest { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--nn-border); font-size: 0.9rem; }
-  .lh-latest-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nn-text-muted); margin-bottom: 0.25rem; }
   .lh-dubbed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
   .lh-dub { display: grid; grid-template-columns: 72px 1fr; gap: var(--sp-3); align-items: start; padding: var(--sp-4); border-radius: 16px; }
   .lh-dub img { width: 72px; height: 72px; border-radius: 12px; display: block; }
   .lh-dub h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
   .lh-dub p { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--nn-text-secondary); }
   .lh-dub-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.85rem; }
-  .lh-dub-latest { margin-top: 0.5rem; font-size: 0.85rem; }
-  .lh-dub-latest audio { display: block; width: 100%; margin-top: 0.35rem; }
+  .lh-latest { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--nn-border); font-size: 0.9rem; }
+  .lh-latest-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nn-text-muted); margin-bottom: 0.25rem; }
   .lh-listen { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-4); }
   .lh-listen a.glass-card { display: block; padding: var(--sp-4); border-radius: 16px; text-decoration: none; color: inherit; }
   .lh-listen h3 { margin: 0 0 0.3rem; font-size: 1rem; }
   .lh-listen p { margin: 0; font-size: 0.85rem; color: var(--nn-text-secondary); }
   .lh-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 48rem; }
+  .lt-translated { font-size: 0.78rem; color: var(--nn-text-muted); margin: 0.35rem 0 0; }
   @media (max-width: 600px) { .lh-dub { grid-template-columns: 56px 1fr; } .lh-dub img { width: 56px; height: 56px; } }
 </style>
 {% endblock %}
 
+{#- ---------------------------------------------------------------------- -#}
+{%- macro story_href(s) -%}{{ path_prefix }}{{ s.post_url or s.show_page }}{%- endmacro -%}
+
+{%- macro media(s, eager=false) -%}
+{%- if s.image_url -%}
+<a href="{{ story_href(s) }}" class="lt-media{% if s.image_orientation == 'portrait' %} is-portrait{% endif %}" tabindex="-1" aria-hidden="true">
+    <img src="{{ s.image_url }}" alt=""
+         width="{{ 450 if s.image_orientation == 'portrait' else 800 }}" height="{{ 800 if s.image_orientation == 'portrait' else 450 }}"
+         {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+</a>
+{%- else -%}
+<a href="{{ story_href(s) }}" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
+    <picture>
+        {% if s.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ s.cover_webp }}">{% endif %}
+        <img src="{{ path_prefix }}{{ s.cover_url }}" alt="" width="400" height="400"
+             {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+    </picture>
+</a>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro kicker(s, with_hub=true) -%}
+<p class="lt-kicker">
+    {% if with_hub and s.hub_heading %}<span class="lt-hub">{{ s.hub_heading }}</span>{% endif %}
+    <a href="{{ path_prefix }}{{ s.show_page }}">{{ s.show_name }}</a>
+</p>
+{%- endmacro -%}
+
+{%- macro when(st) -%}
+{%- if st and st.label -%}
+{%- if st.is_today %}<span class="lt-today">{{ hub.today_label }}</span> {% endif -%}
+<time datetime="{{ st.iso }}">{{ st.label | e }}</time>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro meta(s, listen=true, read=true) -%}
+<div class="lt-meta">
+    {% if s.stamp and s.stamp.label %}<span class="lt-when">{{ when(s.stamp) }}</span>{% elif s.date_raw %}<time datetime="{{ s.date_raw }}">{{ s.date_raw }}</time>{% endif %}
+    {% if read and s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">{{ hub.read_label }}</a>{% endif %}
+    {% if listen %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.show_page }}">{{ hub.listen_label }}</a>{% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro row(s, with_hub=false) -%}
+<li class="lt-row" style="--show-color:{{ s.brand_color }};">
+    <div>
+        {{ kicker(s, with_hub) }}
+        <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
+        {{ meta(s) }}
+    </div>
+    {{ media(s) }}
+</li>
+{%- endmacro -%}
+
+{%- macro listen_row(s, primary_read=true) -%}
+<div class="lt-lead-audio">
+    {% if s.audio_url %}<audio controls preload="none" src="{{ s.audio_url }}" aria-label="{{ hub.play_label }} — {{ s.show_name }} {{ s.episode_num }}"></audio>{% endif %}
+    {% if s.post_url %}<a class="lt-btn{% if primary_read %} lt-btn--primary{% endif %}" href="{{ path_prefix }}{{ s.post_url }}">{{ hub.read_full_dubbed if s.translated else hub.read_full_native }}</a>{% endif %}
+    <a class="lt-btn" href="{{ path_prefix }}{{ s.show_page }}">{{ hub.more_from }} {{ s.show_name }}</a>
+</div>
+{%- if s.translated %}<p class="lt-translated">{{ hub.translated_note }}</p>{% endif -%}
+{%- endmacro -%}
+
 {% block content %}
-<section class="lh-hero">
-    <div class="container">
-        <h1>{{ hub.h1 }}</h1>
-        <p>{{ hub.intro }}</p>
-        <div class="lh-actions">
-            {% if native_shows %}<a href="#shows" class="nn-btn nn-btn-primary" style="--show-color:#6B47FF;">{{ hub.native_heading }}</a>{% endif %}
-            {% if dubbed_shows %}<a href="#dubbed" class="nn-btn{% if not native_shows %} nn-btn-primary{% endif %}" style="--show-color:#6B47FF;">{{ hub.dubbed_heading }}</a>{% endif %}
-            <a href="#listen" class="nn-btn">{{ hub.listen_heading }}</a>
-        </div>
-        {% if other_languages %}
-        <p class="lh-langs">{{ hub.other_languages_label }}:
-            {% for l in other_languages %}<a href="{{ l.href }}" lang="{{ l.lang }}" hreflang="{{ l.lang }}">{{ l.label }}</a>{% if not loop.last %}·{% endif %}{% endfor %}
-        </p>
-        {% endif %}
+<div class="lt-page">
+{% set p = page %}
+
+<header class="lt-masthead container"><div class="lt-masthead-inner">
+    <div class="lt-masthead-meta">
+        <time class="lt-dateline" datetime="{{ masthead.date_iso }}">{{ masthead.date }}</time>
+        <span>{{ hub.updated_label }} <time datetime="{{ masthead.updated_iso }}">{{ masthead.updated }}</time></span>
+        {% if p.today_count %}<span>{{ hub.new_today }}: {{ p.today_count }}</span>{% endif %}
     </div>
+    <div class="lt-masthead-row">
+        <div class="lt-brandline">
+            <h1 class="lt-wordmark">Nerra Network <span>{{ hub.wordmark_suffix }}</span></h1>
+            <p class="lt-tagline">{{ tagline }}</p>
+        </div>
+        <div class="lt-standfirst-wrap">
+            <p class="lt-standfirst">{{ hub.intro }}</p>
+            <p class="lt-masthead-actions">
+                <a class="is-primary" href="#shows">{{ hub.action_shows }}</a>
+                <a href="#listen">{{ hub.action_listen }}</a>
+                <a href="{{ home_url }}" hreflang="en">{{ hub.action_english }}</a>
+            </p>
+        </div>
+    </div>
+</div></header>
+
+{% if not p.lead %}
+<div class="container lt-empty"><p>{{ hub.empty_note }}</p></div>
+{% else %}
+
+<div class="container"><nav class="lt-secnav" aria-label="{{ hub.sections_nav_label }}">
+    <ul>
+        <li><a href="#latest">{{ hub.nav_latest }}</a></li>
+        {% if p.flagships %}<li><a href="#flagships">{{ hub.flagships_nav }}</a></li>{% endif %}
+        {% if p.top %}<li><a href="#top-stories">{{ hub.top_heading }}</a></li>{% endif %}
+        {% for sec in p.sections %}<li><a href="#section-{{ sec.id }}">{{ sec.heading }}</a></li>{% endfor %}
+        {% if p.more %}<li><a href="#section-more">{{ hub.more_nav }}</a></li>{% endif %}
+        <li><a href="#shows">{{ hub.nav_shows }}</a></li>
+        <li><a href="#listen">{{ hub.listen_heading }}</a></li>
+    </ul>
+</nav></div>
+
+<div class="lt-ticker container" role="region" aria-label="{{ hub.nav_latest }}">
+    <span class="lt-ticker-label">{{ hub.ticker_label }}</span>
+    <ul>
+        {% for s in p.latest %}
+        <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text | e }}</span></a></li>
+        {% endfor %}
+    </ul>
+</div>
+
+<section class="lt-top container" aria-label="{{ hub.lead_label }}">
+    {% set s = p.lead %}
+    <article class="lt-lead" style="--show-color:{{ s.brand_color }};">
+        {{ media(s, eager=true) }}
+        <div class="lt-lead-body">
+            {{ kicker(s) }}
+            <h2 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h2>
+            {{ meta(s, listen=false) }}
+            {{ listen_row(s) }}
+        </div>
+    </article>
+
+    <aside class="lt-latest" id="latest" aria-labelledby="lt-latest-h">
+        <h2 class="lt-rail-h" id="lt-latest-h">{{ hub.latest_heading }}</h2>
+        <ol>
+            {% for s in p.latest %}{% if s is not sameas p.lead %}
+            <li style="--show-color:{{ s.brand_color }};">
+                <p class="lt-kicker"><a href="{{ path_prefix }}{{ s.show_page }}">{{ s.show_name }}</a>{% if s.stamp and s.stamp.label %} <span class="lt-rail-when">{{ when(s.stamp) }}</span>{% endif %}</p>
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
+            </li>
+            {% endif %}{% endfor %}
+        </ol>
+        <p class="lt-rail-more"><a href="#shows">{{ hub.every_show_link }}</a></p>
+    </aside>
 </section>
 
-{% if native_shows %}
-<section id="shows" class="nn-section">
-    <div class="container">
-        <div class="nn-section-header">
-            <h2>{{ hub.native_heading }}</h2>
-            {% if hub.native_sub %}<p>{{ hub.native_sub }}</p>{% endif %}
-        </div>
-        <div class="show-showcase">
-            {% for s in native_shows %}
-            {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-            <div class="show-card-wrap" data-slug="{{ s.slug }}" style="--show-color:{{ s.brand_color }};--show-color-text:color-mix(in srgb, {{ s.brand_color }}, white 35%);">
-                <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
-                    <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" class="show-card-image" width="400" height="400" loading="lazy" decoding="async">
-                    <h3 class="show-card-name">{{ s.name }}</h3>
-                    <div class="show-card-badges">
-                        {% if s.hub_cadence %}<span class="show-card-badge">{{ s.hub_cadence }}</span>{% endif %}
-                        {% if s.hub_length %}<span class="show-card-badge">{{ s.hub_length }}</span>{% endif %}
-                    </div>
-                    <div class="show-card-tagline">{{ s.hub_description }}</div>
-                    {% if s.latest and s.latest.hook %}
-                    <div class="lh-latest">
-                        <span class="lh-latest-label">{{ hub.latest_label }}{% if s.latest.date %} · {{ s.latest.date }}{% endif %}</span>
-                        {{ s.latest.hook }}
-                    </div>
-                    {% endif %}
-                    <div class="show-card-listen">
-                        {{ hub.listen_label }}
-                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </div>
+{% if p.flagships %}
+<section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
+    <div class="lt-block-head">
+        <h2 id="lt-flag-h">{{ hub.flagships_heading }}</h2>
+        <p class="lt-block-sub">{{ hub.flagships_sub }}</p>
+    </div>
+    <div class="lt-flag-grid">
+        {% for f in p.flagships %}
+        <article class="lt-flag" style="--show-color:{{ f.brand_color }};">
+            <div class="lt-flag-head">
+                <a class="lt-flag-cover" href="{{ path_prefix }}{{ f.show_page }}" tabindex="-1" aria-hidden="true">
+                    <picture>
+                        {% if f.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ f.cover_webp }}">{% endif %}
+                        <img src="{{ path_prefix }}{{ f.cover_url }}" alt="" width="72" height="72" loading="lazy" decoding="async">
+                    </picture>
                 </a>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{% if dubbed_shows %}
-<section id="dubbed" class="nn-section">
-    <div class="container">
-        <div class="nn-section-header">
-            <h2>{{ hub.dubbed_heading }}</h2>
-            <p>{{ hub.dubbed_sub }}</p>
-        </div>
-        <div class="lh-dubbed">
-            {% for s in dubbed_shows %}
-            {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-            <article class="lh-dub glass-card" style="--show-color:{{ s.brand_color }};">
-                <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" width="400" height="400" loading="lazy" decoding="async">
                 <div>
-                    <h3><a href="{{ s.lander or (path_prefix ~ s.show_page) }}">{{ s.name }}</a></h3>
-                    <p lang="en">{{ s.tagline }}</p>
-                    <div class="lh-dub-links">
-                        <a href="{{ s.feed_url }}">{{ hub.feed_label }}</a>
-                        {% if s.lander %}<a href="{{ s.lander }}">{{ hub.lander_label }}</a>{% endif %}
-                        {% if s.apple_track_url %}<a href="{{ s.apple_track_url }}" target="_blank" rel="noopener" lang="en">Apple Podcasts</a>{% endif %}
-                    </div>
-                    {% if s.latest_track %}
-                    <div class="lh-dub-latest">
-                        <span class="lh-latest-label">{{ hub.episode_label }} {{ s.latest_track.number }}{% if s.latest_track.date %} · {{ s.latest_track.date }}{% endif %}</span>
-                        {% if s.latest_track.title %}{{ s.latest_track.title }}{% endif %}
-                        <audio controls preload="none" src="{{ s.latest_track.audio_url }}"></audio>
-                    </div>
-                    {% endif %}
+                    <p class="lt-flag-name"><a href="{{ path_prefix }}{{ f.show_page }}">{{ f.show_name }}</a></p>
+                    {% set _ftag = (hub.show_blurbs or {}).get(f.slug) %}
+                    {% if _ftag %}<p class="lt-flag-tag">{{ _ftag }}</p>{% endif %}
                 </div>
-            </article>
-            {% endfor %}
-        </div>
+            </div>
+            {{ media(f) }}
+            <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
+            {{ meta(f, listen=false, read=false) }}
+            {{ listen_row(f) }}
+        </article>
+        {% endfor %}
     </div>
 </section>
 {% endif %}
 
-<section id="listen" class="nn-section">
-    <div class="container">
-        <div class="nn-section-header">
-            <h2>{{ hub.listen_heading }}</h2>
-        </div>
-        <div class="lh-listen">
-            {% if youtube %}
-            <a class="glass-card" href="{{ youtube.url }}" target="_blank" rel="noopener">
-                <h3>{{ hub.youtube_label.replace('{handle}', youtube.handle) }}</h3>
-                <p>{{ hub.youtube_sub }}</p>
-            </a>
-            {% endif %}
-            <a class="glass-card" href="{{ network_rss }}">
-                <h3 lang="en">Network RSS</h3>
-                <p>{{ hub.network_rss_label }}</p>
-            </a>
-            <a class="glass-card" href="{{ home_url }}" hreflang="en">
-                <h3>{{ hub.english_label }}</h3>
-                <p>{{ hub.english_sub }}</p>
-            </a>
-        </div>
-        <p class="lh-note" style="margin-top:var(--sp-5);">{{ hub.ai_note }} <a href="{{ path_prefix }}ai-disclosure.html">{{ hub.ai_link_label }}</a></p>
+{% if p.top %}
+<section class="lt-block container" id="top-stories" aria-labelledby="lt-top-h">
+    <div class="lt-block-head"><h2 id="lt-top-h">{{ hub.top_heading }}</h2></div>
+    <div class="lt-grid-4">
+        {% for s in p.top %}
+        <article class="lt-card" style="--show-color:{{ s.brand_color }};">
+            {{ media(s) }}
+            <div class="lt-card-body">
+                {{ kicker(s) }}
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
+                {{ meta(s) }}
+            </div>
+        </article>
+        {% endfor %}
     </div>
 </section>
+{% endif %}
+
+{% for sec in p.sections %}
+<section class="lt-block container" id="section-{{ sec.id }}" aria-labelledby="lt-sec-{{ sec.id }}">
+    <div class="lt-block-head"><h2 id="lt-sec-{{ sec.id }}">{{ sec.heading }}</h2></div>
+    {% if sec.stories|length == 2 %}
+    <div class="lt-pair">
+        {% for f in sec.stories %}
+        <article class="lt-feature" style="--show-color:{{ f.brand_color }};">
+            {{ media(f) }}
+            <div class="lt-card-body">
+                {{ kicker(f, false) }}
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
+                {{ meta(f) }}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="lt-section-grid">
+        {% set f = sec.stories[0] %}
+        <article class="lt-feature" style="--show-color:{{ f.brand_color }};">
+            {{ media(f) }}
+            <div class="lt-card-body">
+                {{ kicker(f, false) }}
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
+                {{ meta(f) }}
+            </div>
+        </article>
+        <ul class="lt-stack">
+            {% for s in sec.stories[1:] %}{{ row(s) }}{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endfor %}
+
+{% if p.more %}
+<section class="lt-block container" id="section-more" aria-labelledby="lt-more-h">
+    <div class="lt-block-head"><h2 id="lt-more-h">{{ hub.more_heading }}</h2></div>
+    <ul class="lt-stack lt-grid-3">
+        {% for s in p.more %}{{ row(s, true) }}{% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endif %}{#- p.lead -#}
+
+{#- The language's shows: made in the language, then translated. -#}
+<section class="lt-block container" id="shows" aria-labelledby="lt-shows-h">
+    <div class="lt-block-head"><h2 id="lt-shows-h">{{ hub.shows_heading }}</h2><p class="lt-block-sub">{{ hub.shows_sub }}</p></div>
+    {% if native_shows %}
+    <h3 class="lt-rail-h" style="margin:var(--sp-4) 0 var(--sp-3);">{{ hub.native_heading }}</h3>
+    {% if hub.native_sub %}<p class="lh-note">{{ hub.native_sub }}</p>{% endif %}
+    <div class="show-showcase">
+        {% for s in native_shows %}
+        {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+        <div class="show-card-wrap" data-slug="{{ s.slug }}" style="--show-color:{{ s.brand_color }};--show-color-text:color-mix(in srgb, {{ s.brand_color }}, white 35%);">
+            <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
+                <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" class="show-card-image" width="400" height="400" loading="lazy" decoding="async">
+                <h3 class="show-card-name">{{ s.name }}</h3>
+                <div class="show-card-badges">
+                    {% if s.hub_cadence %}<span class="show-card-badge">{{ s.hub_cadence }}</span>{% endif %}
+                    {% if s.hub_length %}<span class="show-card-badge">{{ s.hub_length }}</span>{% endif %}
+                </div>
+                <div class="show-card-tagline">{{ s.hub_description }}</div>
+                {% if s.latest and s.latest.hook %}
+                <div class="lh-latest">
+                    <span class="lh-latest-label">{{ hub.latest_label }}{% if s.latest.date %} · {{ s.latest.date }}{% endif %}</span>
+                    {{ s.latest.hook }}
+                </div>
+                {% endif %}
+                <div class="show-card-listen">
+                    {{ hub.listen_label }}
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if dubbed_shows %}
+    <div id="dubbed">
+    <h3 class="lt-rail-h" style="margin:var(--sp-5) 0 var(--sp-3);">{{ hub.dubbed_heading }}</h3>
+    <p class="lh-note">{{ hub.dubbed_sub }}</p>
+    <div class="lh-dubbed">
+        {% for s in dubbed_shows %}
+        {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+        <article class="lh-dub glass-card" style="--show-color:{{ s.brand_color }};">
+            <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" width="400" height="400" loading="lazy" decoding="async">
+            <div>
+                <h3><a href="{{ s.lander or (path_prefix ~ s.show_page) }}">{{ s.name }}</a></h3>
+                {% set _blurb = (hub.show_blurbs or {}).get(s.slug) %}
+                <p{% if not _blurb %} lang="en"{% endif %}>{{ _blurb or s.tagline }}</p>
+                <div class="lh-dub-links">
+                    <a href="{{ s.feed_url }}">{{ hub.feed_label }}</a>
+                    {% if s.lander %}<a href="{{ s.lander }}">{{ hub.lander_label }}</a>{% endif %}
+                    {% if s.apple_track_url %}<a href="{{ s.apple_track_url }}" target="_blank" rel="noopener" lang="en">Apple Podcasts</a>{% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    </div>
+    {% endif %}
+</section>
+
+<section class="lt-block container" id="listen" aria-labelledby="lt-listen-h">
+    <div class="lt-block-head"><h2 id="lt-listen-h">{{ hub.listen_heading }}</h2></div>
+    <div class="lh-listen">
+        {% if youtube %}
+        <a class="glass-card" href="{{ youtube.url }}" target="_blank" rel="noopener">
+            <h3>{{ hub.youtube_label.replace('{handle}', youtube.handle) }}</h3>
+            <p>{{ hub.youtube_sub }}</p>
+        </a>
+        {% endif %}
+        <a class="glass-card" href="{{ network_rss }}">
+            <h3 lang="en">Network RSS</h3>
+            <p>{{ hub.network_rss_label }}</p>
+        </a>
+        <a class="glass-card" href="{{ home_url }}" hreflang="en">
+            <h3>{{ hub.english_label }}</h3>
+            <p>{{ hub.english_sub }}</p>
+        </a>
+    </div>
+    {% if other_languages %}
+    <p class="lh-note" style="margin-top:var(--sp-4);">{{ hub.other_languages_label }}:
+        {% for l in other_languages %}<a href="{{ l.href }}" lang="{{ l.lang }}" hreflang="{{ l.lang }}">{{ l.label }}</a>{% if not loop.last %} · {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+</section>
+
+<section class="lt-block container" id="about" aria-labelledby="lt-about-h">
+    <div class="lt-block-head"><h2 id="lt-about-h">{{ hub.about_heading }}</h2></div>
+    <div class="lt-about">
+        <div class="lt-about-text">
+            <p><strong>{{ tagline }}</strong></p>
+            <p>{{ hub.about_text }}</p>
+            <p class="lh-note">{{ hub.ai_note }} <a href="{{ path_prefix }}ai-disclosure.html">{{ hub.ai_link_label }}</a></p>
+        </div>
+    </div>
+</section>
+</div>
 {% endblock %}

@@ -289,3 +289,98 @@ class TestHubAppleLinks:
             dubbed = h.split('id="dubbed"', 1)[1].split("</section>", 1)[0] if 'id="dubbed"' in h else ""
             for found in re.findall(r"podcasts\.apple\.com/podcast/id(\d+)", dubbed):
                 assert found not in english_ids, (lang, found)
+
+
+# ---------------------------------------------------------------------------
+# The hubs are front pages (Oct 19 2026)
+# ---------------------------------------------------------------------------
+
+LATIN_WORD = re.compile(r"[A-Za-z]{4,}")
+
+
+class TestLanguageFrontPages:
+    """ru/index.html and fr/index.html are news front pages like index.html:
+    the same stylesheet and assembler over the stories that exist in the
+    language — a lead, the flagship band, top stories, the latest rail,
+    sections — with every reader string in the language."""
+
+    def test_the_three_front_pages_share_one_stylesheet(self):
+        home_src = (ROOT / "templates/network_page.html.j2").read_text(encoding="utf-8")
+        hub_src = (ROOT / "templates/language_hub.html.j2").read_text(encoding="utf-8")
+        assert '{% include "_landing_styles.html.j2" %}' in home_src
+        assert '{% include "_landing_styles.html.j2" %}' in hub_src
+        assert (ROOT / "templates/_landing_styles.html.j2").is_file()
+
+    def test_each_hub_has_the_front_page_shape(self, hubs):
+        for lang, h in hubs.items():
+            body = _body(h)
+            assert 'class="lt-masthead' in body and 'class="lt-wordmark"' in body, lang
+            assert 'class="lt-lead"' in body, lang
+            assert 'id="latest"' in body and 'class="lt-ticker' in body, lang
+            assert 'id="top-stories"' in body, lang
+            assert 'id="flagships"' in body, lang
+            assert 'id="shows"' in body and 'id="listen"' in body and 'id="about"' in body, lang
+
+    def test_flagship_band_is_one_card_per_show(self, hubs):
+        for lang, h in hubs.items():
+            band = h.split('id="flagships"', 1)[1].split("</section>", 1)[0]
+            names = re.findall(r'class="lt-flag-name"><a href="[^"]+">([^<]+)<', band)
+            assert names == ["SpaceX Daily", "Tesla Shorts Time"], (lang, names)
+
+    def test_headlines_are_translated_and_audio_is_the_translated_track(self, hubs):
+        ru = _body(hubs["ru"])
+        lead = re.search(r'<h2 class="lt-hl"[^>]*><a href="[^"]+">([^<]+)<', ru).group(1)
+        assert CYRILLIC_WORD.search(lead), lead
+        # Every dubbed story plays the language's own MP3.
+        for src in re.findall(r'<audio controls preload="none" src="([^"]+)"', ru):
+            assert ".ru.mp3" in src or "finansy_prosto" in src or "privet_russian" in src, src
+        fr = _body(hubs["fr"])
+        for src in re.findall(r'<audio controls preload="none" src="([^"]+)"', fr):
+            assert src.endswith(".fr.mp3"), src
+        # Russian headlines carry no lang attribute; an English one (Привет's
+        # hooks are written in English) is marked.
+        assert ' lang="en"' in ru
+
+    def test_masthead_dates_and_section_headings_are_in_the_language(self, hubs):
+        from engine import language_front as LF
+        ru, fr = _body(hubs["ru"]), _body(hubs["fr"])
+        assert re.search(r'lt-dateline" datetime="\d{4}-\d{2}-\d{2}">[а-я]+, \d+ [а-я]+ \d{4}<', ru)
+        assert re.search(r'lt-dateline" datetime="\d{4}-\d{2}-\d{2}">[a-z]+ \d+ [a-zéû]+ \d{4}<', fr)
+        english = {h["heading"] for h in __import__("engine.topic_hubs", fromlist=["TOPIC_HUBS"]).TOPIC_HUBS}
+        for h in (ru, fr):
+            for heading in re.findall(r'id="lt-sec-[^"]+">([^<]+)<', h):
+                assert heading not in english, heading
+        assert LF.long_date(__import__("datetime").date(2026, 10, 18), "ru") == "воскресенье, 18 октября 2026"
+        assert LF.long_date(__import__("datetime").date(2026, 10, 18), "fr") == "dimanche 18 octobre 2026"
+
+    def test_translated_hook_prefers_the_complete_description(self):
+        from engine import language_front as LF
+        track = {"title": "Ep 134 : L'Ukraine négocie directement avec SpaceX et le",
+                 "description": "L'Ukraine négocie directement avec SpaceX et le Pentagone pour "
+                                "lever les plafonds de vitesse. Deuxième phrase."}
+        assert LF.translated_hook(track) == (
+            "L'Ukraine négocie directement avec SpaceX et le Pentagone pour lever les plafonds de vitesse.")
+        assert LF.translated_record({"translations": {"fr": {"title": "x"}}}, "fr") is None
+        assert LF.translated_record({}, "ru") is None
+
+    def test_no_english_reader_copy_leaks_into_the_russian_chrome_free_body(self, hubs):
+        # The body's typed strings come from the copy dict; the only Latin in
+        # the Russian page's non-headline copy is a show or product name.
+        body = _body(hubs["ru"]).split("</main>", 1)[0]
+        body = re.sub(r"<(script|style)\b.*?</\1>", "", body, flags=re.S)
+        # Headlines (model text, in whatever language the show writes), the
+        # native cards' latest-episode line and anything marked lang= are
+        # content, not the page's own copy.
+        body = re.sub(r"<(h2|h3|p) class=\"lt-hl\".*?</\1>", "", body, flags=re.S)
+        body = re.sub(r"<li style=\"--show-color[^\"]*\"><a href=\"[^\"]+\">.*?</a></li>", "", body, flags=re.S)
+        body = re.sub(r"<div class=\"lh-latest\">.*?</div>", "", body, flags=re.S)
+        body = re.sub(r"<(a|span|p)\b[^>]*\blang=\"[a-z]{2}\"[^>]*>.*?</\1>", "", body, flags=re.S)
+        body = re.sub(r"<[^>]+>", " ", body)
+        words = set(LATIN_WORD.findall(body))
+        allowed = {"Nerra", "Network", "SpaceX", "Daily", "Tesla", "Shorts", "Time",
+                   "Fascinating", "Frontiers", "Modern", "Investing", "Techniques",
+                   "Apple", "Podcasts", "YouTube", "NerraRU", "English", "Français", "RSS",
+                   "Starship", "Falcon", "Starlink", "Dragon", "SPCX", "TSLA", "Optimus",
+                   "Cybercab", "Models", "Agents", "Beginners", "Привет"}
+        leaked = {w for w in words if w not in allowed and not w.isupper()}
+        assert not leaked, sorted(leaked)[:20]
