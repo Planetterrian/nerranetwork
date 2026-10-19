@@ -260,10 +260,42 @@ def _parse(text: str) -> Any:
         return json.loads(m.group(0))
 
 
+#: Oct 19 2026: senders whose mail is a platform notice by construction. The
+#: inbox job was spending one Grok call per GitHub notification thread
+#: (7-8 threads, 48 ticks a day — ~200 calls a day) to label them
+#: platform_notice every time. The address decides; no model call.
+PLATFORM_SENDERS = (
+    "notifications@github.com", "noreply@github.com", "no-reply@github.com",
+    "support@github.com", "noreply@medium.com", "calendar-notification@google.com",
+    "no-reply@accounts.google.com", "drive-shares-dm-noreply@google.com",
+    "noreply@youtube.com", "no-reply@spotify.com", "no-reply@podcasters.spotify.com",
+    "noreply@buttondown.email", "no-reply@buttondown.com", "no-reply@cloudflare.com",
+    "noreply@notifications.cloudflare.com", "no-reply@stripe.com", "notifications@stripe.com",
+    "no-reply@supabase.com", "noreply@supabase.io", "mailer-daemon@googlemail.com",
+    "no-reply@cal.com", "notifications@cal.com",
+)
+
+
+def platform_sender(from_email: str) -> bool:
+    addr = (from_email or "").strip().lower()
+    return bool(addr) and (addr in PLATFORM_SENDERS or addr.startswith("mailer-daemon@"))
+
+
+def platform_notice_classification(from_email: str) -> Dict[str, Any]:
+    out = dict(LOW_CONFIDENCE_FALLBACK)
+    out.update(category="platform_notice", confidence=1.0,
+               topic_summary=f"platform notice from {from_email} (no model call)")
+    out["_attempts"] = 0
+    return out
+
+
 def classify_thread(thread: Dict[str, Any], own_email: str) -> Dict[str, Any]:
     """Classify one Gmail thread. Never raises on model misbehaviour: after
     one strict retry the low-confidence fallback is returned so policy
     holds the thread for a human."""
+    inbound = latest_inbound(thread, own_email) or {}
+    if platform_sender(inbound.get("from_email", "")):
+        return platform_notice_classification(inbound.get("from_email", ""))
     prompt = build_prompt(thread, own_email)
     attempts = [prompt,
                 prompt + "\n\nYour previous answer was not valid JSON matching the "

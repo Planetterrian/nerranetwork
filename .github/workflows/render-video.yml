@@ -225,6 +225,21 @@ jobs:
           scripts/create_recovery_pr.sh
           exit $?
 
+      - name: Start the multilingual sweep
+        # Oct 19 2026: the sweep used to wake on this workflow's completion
+        # and decide on a runner that there was nothing to do; the render job
+        # dispatches it for this show once its artifacts are pushed. The dubs
+        # reuse the episode's scene images through the gallery manifest; the
+        # homepage job rebuilds it minutes later (and ru_dub refreshes the
+        # manifest from origin/main itself, deferring on `no_scenes_yet`),
+        # and that job is often superseded in its concurrency group — spacex
+        # on Oct 19 — so the dispatch does not ride it. The sweep's cron
+        # passes remain the catch-all.
+        if: always() && !inputs.rehearse && steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/followup_dispatch.py multilingual --show "${{ inputs.show }}" --after-video
+
       - name: Alert on failure
         if: failure() && !inputs.rehearse
         env:

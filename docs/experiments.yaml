@@ -5270,3 +5270,25 @@ experiments:
       free_show_count; .github/workflows/capture-site-screens.yml;
       multi_platform_enabled false on tesla/spacex. Guards:
       tests/test_video_pass_2026_10_18.py.
+  - id: expansion-item-floor-2026-10-19
+    title: "The digest expansion retry adds stories when a section is under its item floor"
+    area: content
+    shipped: 2026-10-19
+    readout: 2026-11-02
+    status: reading
+    baseline: >
+      Fascinating Frontiers' last ten episodes (Ep218-227) carried 15, 7, 2, 7,
+      0, 12, 7, 8, 5 and 3 story items against a validator floor of 8; Ep227
+      was generated three times from 44 articles with three stories each and
+      padded to the word floor by the expansion retry ('treble clef' five
+      times). Planetterrian shares the shape.
+    target: >
+      items_with_headline on FF and Planetterrian at or above the floor on 8 of
+      10 episodes; no rise in digest_placeholder_tokens or the near-duplicate
+      strip count; prose word floors still met. Read the metrics, never the
+      word count alone.
+    notes: >
+      engine.generator.digest_item_shortfalls reads SHOW_VALIDATION_CONFIGS
+      and the retry prompt names the shortfall above the depth rule. Digest
+      side only (the sanctioned length lever). Guards:
+      tests/test_slate_2026_10_19.py::TestExpansionAsksForStories.

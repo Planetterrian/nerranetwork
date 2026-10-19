@@ -724,25 +724,28 @@ class TestMultilingualDecoupled:
         assert "zh_approved" in text
         assert "--latest \"$LATEST\" --zh-approved" not in text
 
-    def test_workflow_run_trigger_narrows_matrix(self):
-        # A "Run Podcast Show" completion sweeps only the show it published
-        # (parsed from the "Auto-generated: <show> <date>" head commit) —
-        # the old all-7-show fan-out per episode run was ~35 no-op jobs/day.
+    def test_the_sweep_is_dispatched_by_the_show_run_not_by_workflow_run(self):
+        # Oct 9 2026: the workflow_run resolve job read the triggering run's
+        # jobs to narrow the matrix to the show that published. Oct 19 2026:
+        # the trigger is gone — it woke the sweep ~46 times a day to decide
+        # "nothing to translate" on a runner. The show run and the video job
+        # dispatch the sweep for ONE show through scripts/followup_dispatch.py,
+        # and a single-show dispatch answers without a checkout.
         text = (PROJECT_ROOT / ".github" / "workflows" / "multilingual.yml").read_text(
             encoding="utf-8")
-        assert "HEAD_COMMIT_MESSAGE" in text
-        assert "Auto-generated:" in text
-        # Oct 9 2026: the head commit never named the show on a scheduled run
-        # (the episode commit is made DURING the run), so the fallback swept
-        # all seven shows on every successful run — 92 Multilingual commits
-        # on Oct 7. The step reads the triggering run's jobs ("run (<show>)")
-        # and needs actions: read for it; the head-commit match stays as the
-        # fallback behind an API failure.
-        assert "TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}" in text
-        assert '/actions/runs/{run_id}/jobs' in text
-        # Oct 18 2026: the video job's "render (<show>)" counts too.
-        assert 'r"(?:run|render) \\((\\S+)\\)"' in text
-        assert "actions: read" in text
+        assert "workflow_run:" not in text
+        assert "TRIGGER_RUN_ID" not in text and "HEAD_COMMIT_MESSAGE" not in text
+        assert "id: single" in text
+        assert "steps.single.outputs.shows || steps.resolve.outputs.shows" in text
+        assert text.count("if: steps.single.outcome == 'skipped'") == 3
+        # The cron passes stay as the catch-all.
+        assert "- cron: '7 14 * * *'" in text and "- cron: '7 18 * * *'" in text
+        run_show = (PROJECT_ROOT / ".github" / "workflows" / "run-show.yml").read_text(
+            encoding="utf-8")
+        assert 'followup_dispatch.py multilingual --show "${{ matrix.show }}"' in run_show
+        video = (PROJECT_ROOT / ".github" / "workflows" / "render-video.yml").read_text(
+            encoding="utf-8")
+        assert 'followup_dispatch.py multilingual --show "${{ inputs.show }}" --after-video' in video
 
     def test_push_exhaustion_preserves_commit_via_recovery_pr(self):
         # RU-dub uploads' only dedupe record (youtube_videos.ru.json) lives in

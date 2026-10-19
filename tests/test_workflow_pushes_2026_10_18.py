@@ -103,22 +103,40 @@ class TestSafeCommitPushAbortsRebase:
 
 
 class TestCancelledRunsStillWake:
-    def test_nerra_daily_wakes_on_a_cancelled_run(self):
+    """Oct 18 2026: run-show's finalize job sits in a shared concurrency group,
+    so a run whose show job PUBLISHED can still conclude ``cancelled``; the
+    edition and the sweep had to wake on that conclusion too. Oct 19 2026:
+    both are dispatched from INSIDE the ``run`` job (scripts/followup_dispatch.py),
+    so the finalize job's fate no longer decides anything — the wake-up
+    follows the pipeline step's own outcome."""
+
+    def test_nerra_daily_wakes_from_the_run_job_whatever_happens_after(self):
+        text = _wf("run-show.yml")
+        i = text.index("name: Wake the Nerra Daily gate")
+        block = text[i:i + 1200]
+        assert "if: always() && github.event.inputs.test_mode != 'true'" in block
+        assert "followup_dispatch.py nerra-daily" in block
         doc = yaml.safe_load(_wf("nerra-daily.yml"))
-        cond = doc["jobs"]["build"]["if"]
-        for c in ("success", "failure", "cancelled"):
-            assert f'"{c}"' in cond, c
+        assert "if" not in doc["jobs"]["build"]
+        assert "workflow_run" not in (doc.get("on") or doc.get(True))
 
-    def test_multilingual_wakes_on_a_cancelled_run(self):
+    def test_multilingual_follows_the_pipeline_step_not_the_run_conclusion(self):
+        text = _wf("run-show.yml")
+        i = text.index("name: Start the multilingual sweep")
+        block = text[i:i + 1200]
+        assert "steps.pipeline.outcome == 'success'" in block
+        assert "steps.pipeline.outputs.skipped != 'true'" in block
         doc = yaml.safe_load(_wf("multilingual.yml"))
-        cond = doc["jobs"]["resolve"]["if"]
-        assert '"success"' in cond and '"cancelled"' in cond
+        assert "if" not in doc["jobs"]["resolve"]
+        assert "workflow_run" not in (doc.get("on") or doc.get(True))
 
-    def test_multilingual_translates_only_successful_show_jobs(self):
-        text = _wf("multilingual.yml")
-        assert 'job.get("conclusion") == "success"' in text
-        # Oct 18 2026: the video job's "render (<show>)" jobs count too.
-        assert r're.fullmatch(r"(?:run|render) \((\S+)\)"' in text
+    def test_multilingual_translates_only_a_show_that_published(self):
+        script = (ROOT / "scripts" / "followup_dispatch.py").read_text(encoding="utf-8")
+        assert "no episode dated today" in script
+        assert "is_public_on(config, today)" in script
+        # The video job dispatches for its show too (its own "render" step).
+        video = _wf("render-video.yml")
+        assert 'followup_dispatch.py multilingual --show "${{ inputs.show }}" --after-video' in video
 
 
 class TestDuplicateGuard:

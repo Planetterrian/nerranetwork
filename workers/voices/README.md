@@ -98,6 +98,11 @@ wrangler secret put RESEND_API_KEY
 wrangler secret put VOICES_FROM_EMAIL
 wrangler secret put CALCOM_BOOKING_URL
 wrangler secret put SLACK_WEBHOOK           # optional
+# Oct 19 2026 (optional): the half-hour producer tick dispatches a runner only
+# when Gmail holds an unprocessed thread. Paste the SAME values the inbox
+# workflow uses; unset = a dispatch every half hour, as before.
+wrangler secret put GMAIL_SERVICE_ACCOUNT_JSON  # the service-account JSON (one line)
+wrangler secret put GMAIL_DELEGATED_USER        # the delegated mailbox (patrick@avvizo.com in production)
 # Nerra Voices (all optional — everything falls back to the Age of AI values):
 wrangler secret put CALCOM_BOOKING_URL_NERRA_VOICES   # second Cal.com event; else CALCOM_BOOKING_URL is reused
 wrangler secret put CALCOM_EVENT_SLUG_AGE_OF_AI       # Cal.com event-type slug (or numeric id) → routes the booking webhook

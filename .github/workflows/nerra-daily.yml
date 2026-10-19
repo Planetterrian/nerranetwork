@@ -19,17 +19,21 @@ name: Nerra Daily Edition
 # Vancouver Daily News keeps its local Pacific slot and is not in the edition.
 #
 # Triggers: the Cloudflare Worker (workers/scheduler EDITION_DISPATCH)
-# dispatches this workflow at 06:35 and 06:50 Eastern to the minute; a
-# workflow_run after every "Run Podcast Show" completion lets a straggler
-# that lands inside the hold build the edition at once (before 06:35 the
-# gate exits 0 quietly); the scheduled crons are late GitHub fallbacks
-# that cover both UTC offsets. Re-runs are free: the committed summaries
-# entry for the edition date is the idempotency key.
-
+# dispatches this workflow at 06:35 and 06:50 Eastern to the minute; a show
+# run that lands after 06:35 dispatches it itself (below); the scheduled
+# crons are late GitHub fallbacks that cover both UTC offsets. Re-runs are
+# free: the committed summaries entry for the edition date is the
+# idempotency key.
+#
+# Oct 19 2026: no workflow_run trigger any more. It woke this gate after
+# EVERY Run Podcast Show run (~44 a day, each paying checkout + Python to
+# read "holding for the release"). The scheduler Worker dispatches the gate
+# at the release and at the end of the hold (EDITION_DISPATCH), and a show
+# run that lands AFTER the release — a straggler inside the hold, a re-run
+# after a failed morning — dispatches it itself
+# (scripts/followup_dispatch.py nerra-daily, run-show.yml's last step, on
+# success, failure or skip). The crons below are the GitHub fallbacks.
 on:
-  workflow_run:
-    workflows: ["Run Podcast Show"]
-    types: [completed]
   schedule:
     # Fallbacks for the Worker's Eastern-clock dispatches (GitHub cron is
     # UTC, cannot follow daylight saving and is often hours late — the gate
@@ -66,27 +70,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-26.04
-    # On workflow_run, proceed after a success OR a failure: a failed run
-    # adds no segment, but past the hold it is the last wake-up of the
-    # morning. Oct 18 2026: every show from 09:16 UTC failed its smoke
-    # step, every edition trigger was skipped, the Worker's Eastern
-    # dispatch was not deployed and the GitHub fallback crons had not
-    # fired by 12:20 UTC — no edition at 7 AM. The ready gate decides.
-    # Same day: `cancelled` too. run-show's finalize job sits in the
-    # finalize-shared-pages concurrency group, so a pending finalize is
-    # cancelled when a newer one queues and the whole run concludes
-    # `cancelled` although its show job published (2 of 11 edition skips
-    # on Oct 18). The conclusion only decides whether to wake; the ready
-    # gate reads what is committed (published episodes, skip markers), so
-    # a cancelled run is handled exactly like any other wake-up.
-    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","failure","cancelled"]'), github.event.workflow_run.conclusion) }}
+    # Every wake-up (Worker dispatch, a show run's dispatch, a fallback
+    # cron) is handled the same way: the ready gate reads what is committed
+    # (published episodes, skip markers) and decides. Oct 18 2026: every
+    # show from 09:16 UTC failed its smoke step and no trigger woke the
+    # gate — which is why a FAILED show run dispatches it too (run-show.yml).
     timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           # ALWAYS the current tip of main, never the event's pinned SHA:
-          # a workflow_run event resolves GITHUB_SHA at dispatch time, so a
+          # a dispatch event resolves GITHUB_SHA at dispatch time, so a
           # run queued behind an in-flight build would otherwise start from
           # a tree WITHOUT the edition commit, see the date as unpublished,
           # and rebuild it — overwriting the live R2 object under the

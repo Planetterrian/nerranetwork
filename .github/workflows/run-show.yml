@@ -1006,6 +1006,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/video_job.py dispatch --show "${{ matrix.show }}"
 
+      - name: Start the multilingual sweep
+        # Oct 19 2026: multilingual.yml used to wake on EVERY run of this
+        # workflow (workflow_run) and spend a minute deciding there was
+        # nothing to translate. The show run knows: it dispatches only when
+        # it published a public episode of an auto-translated show whose
+        # video is not still rendering (render-video.yml dispatches then).
+        # The sweep's two cron passes remain the catch-all.
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/followup_dispatch.py multilingual --show "${{ matrix.show }}"
+
+      - name: Wake the Nerra Daily gate
+        # Oct 19 2026: nerra-daily.yml used to wake on every run of this
+        # workflow too (~44 gate runs a day, each paying checkout + Python
+        # to read "holding for the release"). The scheduler Worker dispatches
+        # the gate at the release and at the end of the hold; a show landing
+        # AFTER the release — a straggler, or a re-run after a failed morning
+        # — wakes it here. always(): a failed run adds no segment, but past
+        # the hold it is the morning's last wake-up (the Oct 18 lesson).
+        if: always() && github.event.inputs.test_mode != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/followup_dispatch.py nerra-daily --show "${{ matrix.show }}"
+
       - name: Alert on failure
         if: failure()
         run: |

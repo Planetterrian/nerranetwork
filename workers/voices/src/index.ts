@@ -64,6 +64,16 @@ export interface Env {
   CALCOM_EVENT_SLUG_AGE_OF_AI?: string;
   CALCOM_EVENT_SLUG_NERRA_VOICES?: string;
   SLACK_WEBHOOK?: string;
+  // Oct 19 2026: the half-hour producer tick asks Gmail whether anything is
+  // unprocessed before it dispatches a runner (producerTickDue). The SAME
+  // service account + delegated mailbox the inbox job uses
+  // (nerra_producer_inbox.yml's GMAIL_SERVICE_ACCOUNT_JSON /
+  // GMAIL_DELEGATED_USER). Both optional: unset = dispatch every half hour
+  // as before. GMAIL_MIRA_USER names Mira's own mailbox; unset = the
+  // address inside VOICES_FROM_EMAIL, as the pipeline resolves it.
+  GMAIL_SERVICE_ACCOUNT_JSON?: string;
+  GMAIL_DELEGATED_USER?: string;
+  GMAIL_MIRA_USER?: string;
   // WebRTC studio (July 2026): Voximplant app user the browser SDK logs in
   // as, via the one-time-key handshake in /voices/studio-auth.
   VOX_GUEST_USER?: string;      // default "guest"
@@ -2115,13 +2125,21 @@ async function reminderFallback(env: Env): Promise<number> {
  *  most thirty minutes — never a guest in a locked studio. */
 const FIRE_TICK_LOOKBACK_MS = 48 * 3600000;   // sweep_browser_no_shows window
 const FIRE_TICK_LOOKAHEAD_MS = 140 * 60000;   // REMINDER_AHEAD upper bound + drift
+// Oct 19 2026: an interview is the fire script's to act on only around its
+// slot — the reminder ahead of it, the fire window, the live run (50-minute
+// hard cap). The 48-hour lookback on INTERVIEWS held the gate open all day
+// for two interviews whose runs had already fired ("already has an active
+// run — skipping", 148 dispatches on Oct 19); the run-table clause below
+// still covers the no-show sweep's two days.
+const FIRE_TICK_INTERVIEW_LOOKBACK_MS = 3 * 3600000;
 
 async function fireTickDue(env: Env): Promise<boolean> {
   try {
     const lo = new Date(Date.now() - FIRE_TICK_LOOKBACK_MS).toISOString();
+    const ilo = new Date(Date.now() - FIRE_TICK_INTERVIEW_LOOKBACK_MS).toISOString();
     const hi = new Date(Date.now() + FIRE_TICK_LOOKAHEAD_MS).toISOString();
     const due = await sb(env, "GET",
-      `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
+      `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${ilo}&scheduled_at=lte.${hi}&select=id&limit=1`);
     if (due?.length) return true;
     // Bounded like the no-show sweep: on Oct 13 2026 the table held two
     // awaiting_guest rows from September and a staged row from the day
@@ -2132,6 +2150,93 @@ async function fireTickDue(env: Env): Promise<boolean> {
     return !!runs?.length;
   } catch (err: any) {
     console.error("fire-tick gate failed (dispatching anyway):", err?.message ?? err);
+    return true;
+  }
+}
+
+/** Oct 19 2026: the :00/:30 producer tick dispatched nerra_producer_inbox.yml
+ *  48 times a day (~70 s of runner each) and the job's first act is one Gmail
+ *  query — threads without the Producer/Processed label, newer than 30 days,
+ *  in the inbox — which on most ticks returns nothing. The Worker runs that
+ *  same query first (gmail_client.list_unprocessed_threads's `q`, the same
+ *  service account and delegated user) on both mailboxes and dispatches
+ *  only when a thread is waiting. FAIL-OPEN: no credentials configured, a
+ *  token error, a Gmail error — all dispatch, as before. The live-interview
+ *  five-minute tick is not gated (a guest in the studio is never made to
+ *  wait on a query). GitHub's own every-30-minutes cron on the workflow is the catch-all
+ *  behind a wrong "nothing waiting". */
+const PRODUCER_INBOX_QUERY = "-label:Producer/Processed newer_than:30d in:inbox";
+const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.modify"; // the scope the delegation grants
+
+function b64url(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function pemToDer(pem: string): ArrayBuffer {
+  const body = pem.replace(/-----[A-Z ]+-----/g, "").replace(/\s+/g, "");
+  const bin = atob(body);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
+async function gmailAccessToken(env: Env, user: string): Promise<string> {
+  const sa = JSON.parse(env.GMAIL_SERVICE_ACCOUNT_JSON || "{}");
+  if (!sa.client_email || !sa.private_key) throw new Error("service account JSON lacks client_email/private_key");
+  const key = await crypto.subtle.importKey(
+    "pkcs8", pemToDer(sa.private_key), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const now = Math.floor(Date.now() / 1000);
+  const enc = new TextEncoder();
+  const header = b64url(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = b64url(enc.encode(JSON.stringify({
+    iss: sa.client_email, sub: user, scope: GMAIL_SCOPE,
+    aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 600,
+  })));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(`${header}.${claims}`));
+  const assertion = `${header}.${claims}.${b64url(new Uint8Array(sig))}`;
+  const resp = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
+  });
+  if (!resp.ok) throw new Error(`google token for ${user}: ${resp.status}`);
+  const data = await resp.json() as { access_token?: string };
+  if (!data.access_token) throw new Error(`google token for ${user}: no access_token`);
+  return data.access_token;
+}
+
+async function mailboxHasUnprocessed(env: Env, user: string): Promise<boolean> {
+  const token = await gmailAccessToken(env, user);
+  const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q="
+    + encodeURIComponent(PRODUCER_INBOX_QUERY);
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!resp.ok) throw new Error(`gmail threads for ${user}: ${resp.status}`);
+  const data = await resp.json() as { threads?: unknown[] };
+  return Array.isArray(data.threads) && data.threads.length > 0;
+}
+
+function miraMailbox(env: Env): string {
+  const configured = (env.GMAIL_MIRA_USER || "").trim().toLowerCase();
+  if (configured) return configured;
+  const m = /<([^>]+)>/.exec(env.VOICES_FROM_EMAIL || "");
+  return (m ? m[1] : env.VOICES_FROM_EMAIL || "").trim().toLowerCase();
+}
+
+async function producerTickDue(env: Env): Promise<boolean> {
+  const user = (env.GMAIL_DELEGATED_USER || "").trim().toLowerCase();
+  if (!env.GMAIL_SERVICE_ACCOUNT_JSON || !user) return true;  // not configured: as before
+  try {
+    const boxes = [user];
+    const mira = miraMailbox(env);
+    if (mira && mira !== user) boxes.push(mira);
+    for (const box of boxes) {
+      if (await mailboxHasUnprocessed(env, box)) return true;
+    }
+    return false;
+  } catch (err: any) {
+    console.error("producer-tick gate failed (dispatching anyway):", err?.message ?? err);
     return true;
   }
 }
@@ -3483,7 +3588,13 @@ export default {
     // concurrency group makes the overlap with GitHub's cron harmless.
     if (halfHour) {
       try {
-        await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
+        // Oct 19 2026: gated on Gmail (producerTickDue) — a runner starts
+        // only when a thread is waiting in either mailbox; fail-open.
+        if (await producerTickDue(env)) {
+          await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
+        } else {
+          console.log("producer-tick: nothing unprocessed in Gmail; no dispatch");
+        }
       } catch (err: any) {
         console.error("producer-tick dispatch failed:", err?.message ?? err);
       }

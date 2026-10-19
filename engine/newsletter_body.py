@@ -368,6 +368,12 @@ def promote_hook_to_blockquote(body: str) -> str:
         text = stripped
         if text.startswith("**") and text.endswith("**") and len(text) > 4:
             text = text[2:-2].strip()
+        # Oct 19 2026: a bold-wrapped heading (``**# Models & Agents**``,
+        # Models & Agents Ep208) is the title, not the hook — the real hook
+        # was the next line. It became ``> **# Models & Agents**`` and 337
+        # related cards across the blog read it as the episode's headline.
+        if text.startswith("#"):
+            continue
         lines[i] = f"> **{text}**"
         return "\n".join(lines)
     return body
