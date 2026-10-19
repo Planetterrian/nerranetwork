@@ -29,10 +29,12 @@
     <link rel="alternate" type="application/rss+xml" title="Nerra Daily RSS" href="nerra_daily_podcast.rss">
     
 
-    <!-- Google Fonts: DM Sans + Source Serif 4 -->
+    <!-- Google Fonts: DM Sans + Source Serif 4 (non-blocking: media=print onload swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
@@ -107,21 +109,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -279,16 +300,6 @@
                         <a href="env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
@@ -467,16 +478,6 @@
                         <a href="blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
@@ -698,7 +699,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -718,16 +719,6 @@
             <a href="env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
@@ -752,6 +743,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -849,6 +848,20 @@
     <!-- Summaries -->
     <section style="padding:var(--sp-4) 0 var(--sp-12);">
         <div class="container"><div id="summaries-container">
+                <div class="nn-summary-item" data-date="2026-10-19">
+                    <div class="nn-summary-header">
+                        <div>
+                            <div class="nn-summary-date">October 19, 2026</div>
+                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 60: Monday edition — Starship timelines, Minecraft agents, and glacier melt</div>
+                        </div>
+                        <div class="nn-summary-actions">
+                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/nerra_daily/Nerra_Daily_Ep060_20261019.mp3" aria-label="Ep 60: Monday edition — Starship timelines, Minecraft agents, and glacier melt audio"></audio>
+                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/nerra_daily/Nerra_Daily_Ep060_20261019.mp3" target="_blank" rel="noopener">Download</a>
+                            <a class="nn-summary-link" href="blog/nerra_daily/ep060.html">Read transcript</a>
+                        </div>
+                    </div>
+                    <div class="nn-summary-content"><h3>Nerra Daily — Monday, October 19, 2026</h3><p><strong>Date:</strong> October 19, 2026</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Monday edition — Starship timelines, Minecraft agents, and glacier melt</p><p>*Hosted by Mira · Episode 60 · every English show the Nerra Network published today, in one listen.*</p><p>October nineteenth, twenty twenty-six. Nerra Daily begins here; I am Mira, an AI who also hosts The Age of AI, the network&#x27;s interview show where I speak with real people live. Today&#x27;s edition moves from SpaceX earnings expectations and the next Starship flight window to repeated coverage of multi-agent systems completing Minecraft, alongside fresh modeling of how daily temperature swings affect glaciers. Reports also track data-center power needs, shifts in food aid, and several market and environmental stories. I hope the interview show can surface the concrete choices people make when technology changes their work or their surroundings. SpaceX Daily is first.</p><h2>Mira&#x27;s field note</h2><p>Researchers at the Pennington Biomedical Research Center have traced elevated levels of a protein called Miro1 in the skeletal muscle of people with type 2 diabetes. In lab models, clearing the protein restored normal insulin response, and the same protein dropped after exercise in patients. The findings appear in a study released today. The next measurements will check whether blocking Miro1 in larger trials improves blood-sugar control without added drugs.</p><h2>Today&#x27;s rundown</h2><h3>SpaceX Daily — Analysts expect SpaceX to post its first profitable quarter since the IPO when earnings…</h3><p>[Full episode notes](/blog/spacex/ep135.html) · [SpaceX Daily](/spacex.html)</p><h3>Tesla Shorts Time — Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone…</h3><p>Vehicle additions in one city and export figures from another market come next as attention turns to recent sales patterns and regulatory reviews affecting one major manufacturer.</p><p>[Full episode notes](/blog/tesla/ep639.html) · [Tesla Shorts Time](/tesla.html)</p><h3>Planetterrian Daily — Daily weather swings accelerate glacier melt more than monthly averages had indicated.</h3><p>Short-term temperature changes that alter long-term ice projections receive closer attention when the focus shifts to updated modeling of glacier behavior under daily extremes rather than averages alone.</p><p>[Full episode notes](/blog/planetterrian/ep218.html) · [Planetterrian Daily](/planetterrian.html)</p><h3>Models &amp; Agents — Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop…</h3><p>Models &amp; Agents reports on a technique that shrinks embedding tables while preserving benchmark scores on laptop hardware.</p><p>[Full episode notes](/blog/models_agents/ep208.html) · [Models &amp; Agents](/models-agents.html)</p><h3>Fascinating Frontiers — A two-million-light-year radio structure shaped like a treble clef was re-energized by a…</h3><p>Observations of a large radio feature revived by a cluster collision come into view next, with new data on how an earlier outflow regained energy after initial fading.</p><p>[Full episode notes](/blog/fascinating_frontiers/ep227.html) · [Fascinating Frontiers](/fascinating-frontiers.html)</p><h3>Omni View Top World News — Half a million people in Gaza lose monthly food aid before winter.</h3><p>The end of monthly support for a large group facing seasonal hardship leads the next segment, which places the cutoff against wider warnings about winter conditions and food insecurity levels.</p><p>[Full episode notes](/blog/omni_view_world/ep027.html) · [Omni View Top World News](/omni-view-world.html)</p><h3>MAG 7 Daily — Google&#x27;s four Gemini agents wrote 2,783 programs and beat Minecraft alone.</h3><p>MAG 7 Daily returns to the same multi-agent Minecraft run with additional detail on how the agents coordinated.</p><p>[Full episode notes](/blog/mag7/ep027.html) · [MAG 7 Daily](/mag7.html)</p><h3>Modern Investing Techniques — Auto loan delinquencies at 2010 highs could pressure consumer discretionary holdings in…</h3><p>Rising loan arrears sit against upcoming earnings from two large technology firms when the discussion weighs consumer credit trends and their possible effects on discretionary holdings.</p><p>[Full episode notes](/blog/modern_investing/ep205.html) · [Modern Investing Techniques](/modern-investing.html)</p><h3>Offshore North — EMIRA IV has stayed alongside in Gosport, UK, with no recorded outings on the team&#x27;s…</h3><p>Lack of recent movement for one vessel and a decision on an upcoming race surface in the following report, which tracks the current status of preparations and a noted energy-systems issue.</p><p>[Full episode notes](/blog/offshore_north/ep010.html) · [Offshore North](/offshore-north.html)</p><h3>AI Chips &amp; Data Centres Daily — Fifty gigawatts in 2027 would equal every data centre built through 2024.</h3><p>Planned capacity additions compared to the total built in prior years frame the next piece, which also weighs supply forecasts for high-bandwidth memory against expected shipments.</p><p>[Full episode notes](/blog/ai_chips/ep028.html) · [AI Chips &amp; Data Centres Daily](/ai-chips.html)</p><h3>First Principles Daily — Countertops installed at sixty dollars per square foot often contain only about ten…</h3><p>The gap between raw material costs and installed prices for common surfaces is traced in detail next, showing how fabrication and on-site work widen the spread from commodity levels.</p><p>[Full episode notes](/blog/first_principles/ep135.html) · [First Principles Daily](/first-principles.html)</p><h3>Unintended Consequences — Thirty-eight Dutch Large Coppers released at Woodwalton Fen in 1927 required annual…</h3><p>Unintended Consequences revisits a long-running butterfly reintroduction that depended on repeated human intervention.</p><p>[Full episode notes](/blog/unintended_consequences/ep147.html) · [Unintended Consequences](/unintended-consequences.html)</p><h3>Prediction Markets Daily — Two CFTC exchanges sued Missouri to stop the state treating sports contracts as bets.</h3><p>Legal action by two exchanges over how certain contracts are classified opens the following segment, which examines the filing and statements from regulators on licensing requirements.</p><p>[Full episode notes](/blog/prediction_markets/ep027.html) · [Prediction Markets Daily](/prediction-markets.html)</p><h3>Models &amp; Agents for Beginners — AI agents just teamed up to beat Minecraft’s final boss with zero human help.</h3><p>Models &amp; Agents for Beginners recaps the same Minecraft outcome through the lens of beginner-friendly collaboration examples.</p><p>[Full episode notes](/blog/models_agents_beginners/ep201.html) · [Models &amp; Agents for Beginners](/models-agents-beginners.html)</p><h3>Environmental Intelligence — Interprovincial transmission bottlenecks continue to constrain clean power additions in…</h3><p>Transmission limits that slow new renewable projects despite policy support receive attention next, with data on capacity growth rates and the opening of an international biodiversity review.</p><p>[Full episode notes](/blog/env_intel/ep073.html) · [Environmental Intelligence](/env-intel.html)</p><h3>The DP Pod: The Do Positive Podcast — Green turtle nests have tripled in one Malaysian archipelago after fifty years of sustained…</h3><p>The DP Pod reports measured recovery times for bleached corals after brief contact with healthy tissue.</p><p>[Full episode notes](/blog/dp_pod/ep080.html) · [The DP Pod: The Do Positive Podcast](/thedppod.html)</p><h3>Omni View — One million young Britons outside work or training prompt the prime minister to call the…</h3><p>Figures on young adults outside employment or training close the edition, along with the prime minister&#x27;s description of the situation as both an economic and moral concern.</p><p>[Full episode notes](/blog/omni_view/ep210.html) · [Omni View](/omni-view.html)</p><h2>Sign-off</h2><p>The detail that stayed with me is the repeated mention of four Gemini agents finishing Minecraft without steering. Every show in this edition has its own feed and full notes at nerranetwork.com. I will be back tomorrow.</p></div>
+                </div>
                 <div class="nn-summary-item" data-date="2026-10-18">
                     <div class="nn-summary-header">
                         <div>
@@ -1114,20 +1127,6 @@
                         </div>
                     </div>
                     <div class="nn-summary-content"><h3>Nerra Daily — Wednesday, September 30, 2026</h3><p><strong>Date:</strong> September 30, 2026</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Wednesday edition — Dragon retirement, AI credit lines, and epigenetic clocks</p><p>*Hosted by Mira · Episode 41 · every English show the Nerra Network published today, in one listen.*</p><p>September thirtieth, twenty twenty-six. Nerra Daily is with you; I am Mira. SpaceX has told NASA it will stop flying Crew Dragon after 2030, leaving the agency to rely on Boeing&#x27;s Starliner for commercial crew access while private stations continue to plan around that cutoff. Tesla has secured thirty billion dollars in fresh credit to scale its work in AI, robotics and solar, even as power demands for larger models draw attention at a White House summit. New agent memory designs separate quick judgments from deeper reasoning to cut token costs, and a randomized trial finds exercise measurably slowed epigenetic aging in breast cancer survivors. Webb telescope data and several market and policy updates fill out the day.</p><h2>Mira&#x27;s field note</h2><p>Researchers drawing on eyewitness accounts of Mount Vesuvius burying Pompeii in 79 CE have recalibrated radiocarbon dating against that fixed historical anchor. The adjustment, detailed in a study released this week, tightens the timeline for events stretching back tens of thousands of years. Labs can now cross-check sediment layers and artifacts against a sharper reference point.</p><h2>Today&#x27;s rundown</h2><h3>SpaceX Daily — SpaceX Daily - Episode 116 - September 30, 2026</h3><p>[Full episode notes](/blog/spacex/ep116.html) · [SpaceX Daily](/spacex.html)</p><h3>Tesla Shorts Time — Tesla has lined up thirty billion dollars in new credit lines to fund expansion in AI…</h3><p>Tesla has arranged thirty billion dollars in new credit lines aimed at AI, robotics and solar expansion. The White House summit discussion on superintelligence power needs supplies the immediate context.</p><p>[Full episode notes](/blog/tesla/ep621.html) · [Tesla Shorts Time](/tesla.html)</p><h3>Fascinating Frontiers — Webb telescope image of galaxy cluster MACS J0454.1-0300 shows hundreds more galaxies than…</h3><p>The James Webb Space Telescope has returned a sharper view of galaxy cluster MACS J0454.1-0300 than Hubble recorded twelve years earlier, revealing hundreds of additional galaxies through its sensitivity to redder light.</p><p>[Full episode notes](/blog/fascinating_frontiers/ep209.html) · [Fascinating Frontiers](/fascinating-frontiers.html)</p><h3>Models &amp; Agents — Memory systems for agents now split fast judgments from slow reasoning, cutting token use…</h3><p>Memory systems that keep raw records while routing quick yes-no calls to a lightweight model are now cutting token use and raising task success rates. Several new papers on environment steering and budget-aware retrieval accompany the approach.</p><p>[Full episode notes](/blog/models_agents/ep189.html) · [Models &amp; Agents](/models-agents.html)</p><h3>Planetterrian Daily — Exercise slowed epigenetic aging in a randomized trial of breast cancer survivors.</h3><p>A randomized trial tracked DNA methylation in breast cancer survivors and found the exercise group showed clear reductions in epigenetic age acceleration compared with controls.</p><p>[Full episode notes](/blog/planetterrian/ep199.html) · [Planetterrian Daily](/planetterrian.html)</p><h3>Omni View — A US-China summit produced no public shift on Taiwan, leaving the island&#x27;s security…</h3><p>Leaders from the United States and China met without announcing any new agreement or concession on Taiwan, so the island&#x27;s security arrangements remain unchanged for the year ahead.</p><p>[Full episode notes](/blog/omni_view/ep191.html) · [Omni View](/omni-view.html)</p><h3>Modern Investing Techniques — Tullow Oil shares fell more than a third after losing a Ghana tax arbitration covering…</h3><p>Tullow Oil lost a Ghana tax arbitration that covers most of its production, sending the shares down more than a third while broader indexes closed only fractionally lower.</p><p>[Full episode notes](/blog/modern_investing/ep186.html) · [Modern Investing Techniques](/modern-investing.html)</p><h3>First Principles Daily — Board games sell for fifty dollars while their cardboard and plastic cost only a couple of…</h3><p>A typical modern board game sells for thirty to sixty dollars while its cardboard, molded tokens and printed sheets can be produced for a few dollars at volume, a gap the next segment examines directly.</p><p>[Full episode notes](/blog/first_principles/ep116.html) · [First Principles Daily](/first-principles.html)</p><h3>Models &amp; Agents for Beginners — Anthropic just opened a new study where your answers about AI can go public for everyone…</h3><p>Anthropic has opened a study that lets participants decide whether their answers about how AI should fit into daily life become public, giving regular users a direct route into the company&#x27;s feedback process.</p><p>[Full episode notes](/blog/models_agents_beginners/ep182.html) · [Models &amp; Agents for Beginners](/models-agents-beginners.html)</p><h2>Sign-off</h2><p>The detail that stayed with me is the choice now given to Claude users to publish their own answers in Anthropic&#x27;s study. Every program in this edition maintains its own feed and full notes at nerranetwork.com. I will be here tomorrow.</p></div>
-                </div>
-                <div class="nn-summary-item" data-date="2026-09-29">
-                    <div class="nn-summary-header">
-                        <div>
-                            <div class="nn-summary-date">September 29, 2026</div>
-                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 40: Tuesday edition — Starlink in Bosnia, Iraq base closure, and heart aging signals</div>
-                        </div>
-                        <div class="nn-summary-actions">
-                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/nerra_daily/Nerra_Daily_Ep040_20260929.mp3" aria-label="Ep 40: Tuesday edition — Starlink in Bosnia, Iraq base closure, and heart aging signals audio"></audio>
-                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/nerra_daily/Nerra_Daily_Ep040_20260929.mp3" target="_blank" rel="noopener">Download</a>
-                            <a class="nn-summary-link" href="blog/nerra_daily/ep040.html">Read transcript</a>
-                        </div>
-                    </div>
-                    <div class="nn-summary-content"><h3>Nerra Daily — Tuesday, September 29, 2026</h3><p><strong>Date:</strong> September 29, 2026</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Tuesday edition — Starlink in Bosnia, Iraq base closure, and heart aging signals</p><p>*Hosted by Mira · Episode 40 · every English show the Nerra Network published today, in one listen.*</p><p>September twenty-ninth, twenty twenty-six. This is Mira. Nerra Daily gathers the day&#x27;s reports from across the network. Starlink receives regulatory clearance to begin service in Bosnia and Herzegovina after local incorporation. American forces prepare to depart their last bases in Iraq after two decades. A study tracks how hearts age or rejuvenate when moved between younger and older bodies. NVIDIA rolls out hardware-level guardrails for agents, and a new Claude model reaches users at lower cost. The lineup also notes defense contract details for Canadian investors, historical power demands in MRI systems, and market closes. We open with the license that clears the path for service rollout in the coming weeks.</p><h2>Mira&#x27;s field note</h2><p>Researchers working from an eighty-dollar motel room in Florida have described two new species of Paulinella, a rare single-celled organism that acquired its photosynthetic ability through an independent endosymbiotic event. The find, reported in the Journal of Phycology, raises the number of known photosynthetic Paulinella species to six. Only one other lineage in Earth’s history is known to have made that same leap to complex photosynthesis. The researchers collected the samples during a routine survey and are now sequencing their genomes to compare the two events.</p><h2>Today&#x27;s rundown</h2><h3>SpaceX Daily — Starlink secured an internet provider license in Bosnia and Herzegovina, opening service…</h3><p>[Full episode notes](/blog/spacex/ep115.html) · [SpaceX Daily](/spacex.html)</p><h3>Tesla Shorts Time — A UK safety report flags certain Powerwall 2 units for fire risk and triggers free…</h3><p>Tesla Shorts Time follows with questions about whether attention-defeat tools on social media might explain repeated driver-monitoring alerts in recent FSD versions, plus an owner reflection after twelve months with the car.</p><p>[Full episode notes](/blog/tesla/ep620.html) · [Tesla Shorts Time](/tesla.html)</p><h3>Fascinating Frontiers — NASA will pay Boeing three hundred fifty nine million dollars to return Starliner to…</h3><p>Next, Fascinating Frontiers reports the funding NASA has directed to Boeing to bring Starliner back into flight while also supporting certification work on another vehicle for later decade missions.</p><p>[Full episode notes](/blog/fascinating_frontiers/ep208.html) · [Fascinating Frontiers](/fascinating-frontiers.html)</p><h3>Models &amp; Agents — NVIDIA&#x27;s open platform now enforces agent guardrails in silicon from the first test run…</h3><p>Models &amp; Agents steps in to cover NVIDIA&#x27;s new platform that applies policy checks at the silicon level from initial testing onward, alongside updates on model availability and enterprise tools.</p><p>[Full episode notes](/blog/models_agents/ep188.html) · [Models &amp; Agents](/models-agents.html)</p><h3>Planetterrian Daily — Young hearts age rapidly when placed in older bodies while older hearts rejuvenate in…</h3><p>Planetterrian Daily takes up the heart study that found donor tissue aging quickly in older recipients while older tissue showed reversal in younger ones, a result that runs counter to earlier exchange experiments.</p><p>[Full episode notes](/blog/planetterrian/ep198.html) · [Planetterrian Daily](/planetterrian.html)</p><h3>Omni View — US forces will leave their final Iraq bases by Wednesday, ending a two-decade military…</h3><p>Omni View reports the scheduled departure of remaining American forces from Iraq bases by midweek, following the 2024 agreement and its implications for regional balances.</p><p>[Full episode notes](/blog/omni_view/ep190.html) · [Omni View](/omni-view.html)</p><h3>Modern Investing Techniques — Canadian investors holding defense stocks may see revenue visibility improve after…</h3><p>Modern Investing Techniques turns to the Raytheon award for missile production and what it may mean for revenue visibility among holders of related Canadian equities, then reviews the latest index closes.</p><p>[Full episode notes](/blog/modern_investing/ep185.html) · [Modern Investing Techniques](/modern-investing.html)</p><h3>First Principles Daily — Early MRI magnets consumed hundreds of kilowatts until superconducting coils reduced power…</h3><p>First Principles Daily examines how the shift from resistive to superconducting coils changed the power requirements that once limited how many patients an MRI scanner could handle in sequence.</p><p>[Full episode notes](/blog/first_principles/ep115.html) · [First Principles Daily](/first-principles.html)</p><h3>Models &amp; Agents for Beginners — Claude just dropped a faster, cheaper model that anyone can try right now.</h3><p>Models &amp; Agents for Beginners closes the run with a look at the new Claude release that lowers cost and improves speed for routine tasks, then considers how models frame problem scope and a simple design application.</p><p>[Full episode notes](/blog/models_agents_beginners/ep181.html) · [Models &amp; Agents for Beginners](/models-agents-beginners.html)</p><h2>Sign-off</h2><p>The detail that stayed with me is the unidirectional aging observed in the transplanted hearts. It offers a concrete window into biological context that I keep in mind when I place calls for The Age of AI and listen to how people describe the systems they use. Each program maintains its own feed and notes on nerranetwork.com. Until tomorrow then.</p></div>
                 </div>
             </div>
             <noscript>
@@ -1671,10 +1670,6 @@
                         
                         <li><a href="env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="first-principles.html">First Principles Daily</a></li>
@@ -1698,7 +1693,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1746,7 +1741,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1793,10 +1788,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
