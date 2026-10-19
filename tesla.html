@@ -155,21 +155,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -327,16 +346,6 @@
                         <a href="env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
@@ -515,16 +524,6 @@
                         <a href="blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
@@ -743,7 +742,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -763,16 +762,6 @@
             <a href="env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
@@ -797,6 +786,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -953,24 +950,24 @@
     <!-- Latest Episode -->
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
-            <div class="latest-episode glass-card" id="latest-player" data-episode="638">
+            <div class="latest-episode glass-card" id="latest-player" data-episode="639">
                 <div class="latest-episode-label">Latest Episode</div>
                 <div class="nn-latest-grid">
                     <div class="nn-latest-listen">
-                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 638: Korean auto insurers face a 107.6 percent loss ratio after Tesla sales tripled.</div>
-                        <div class="latest-episode-date" id="latest-date">October 18, 2026</div>
+                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 639: Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone…</div>
+                        <div class="latest-episode-date" id="latest-date">October 19, 2026</div>
                         
-                        <audio id="latest-audio" controls preload="metadata" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep638_20261018.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        <audio id="latest-audio" controls preload="metadata" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep639_20261019.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
                         
                         <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                     </div>
 
                     <div class="nn-latest-read">
                         <div class="nn-latest-read-label">Read this episode</div>
-                        <div class="nn-latest-summary" id="latest-summary">Korean auto insurers face a 107.6 percent loss ratio after Tesla sales tripled.</div>
+                        <div class="nn-latest-summary" id="latest-summary">Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone speeds.</div>
                         <div class="nn-latest-actions">
                             
-                            <a id="latest-article" href="blog/tesla/ep638.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
+                            <a id="latest-article" href="blog/tesla/ep639.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
                             
                             
                             <a class="nn-latest-archive" href="blog/tesla/index.html">Every episode, written up</a>
@@ -1004,6 +1001,14 @@
             
             <div id="episodes-grid" class="episodes-grid">
                 
+                
+                <div class="episode-card glass-card">
+                    <div class="episode-card-title">Ep 639: Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone…</div>
+                    <div class="episode-card-date">Mon, Oct 19, 2026</div>
+                    
+                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep639_20261019.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                    
+                </div>
                 
                 <div class="episode-card glass-card">
                     <div class="episode-card-title">Ep 638: Korean auto insurers face a 107.6 percent loss ratio after Tesla sales tripled.</div>
@@ -1090,14 +1095,6 @@
                     <div class="episode-card-date">Thu, Oct 08, 2026</div>
                     
                     <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep628_20261008.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 627: A Dutch battery developer is scaling gigawatt-hour projects into Germany, widening the…</div>
-                    <div class="episode-card-date">Wed, Oct 07, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep627_20261007.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                     
                 </div>
                 
@@ -1544,6 +1541,19 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
                 
+                <a href="blog/tesla/ep639.html" class="blog-idx-card">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-date">October 19, 2026</span>
+                        <span class="blog-idx-ep">Ep 639</span>
+                        <span class="blog-idx-reading">7 min</span>
+                    </div>
+                    <h2>Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone speeds.</h2>
+                    
+                    <p>Tesla added more than 260 Cybercabs in Austin last month while NHTSA reviews school-zone speeds.</p>
+                    
+                    <span class="blog-idx-read-more">Read article &rarr;</span>
+                </a>
+                
                 <a href="blog/tesla/ep638.html" class="blog-idx-card">
                     <div class="blog-idx-card-top">
                         <span class="blog-idx-date">October 18, 2026</span>
@@ -1566,19 +1576,6 @@
                     <h2>A South African estate runs entirely off-grid on five Powerwalls paired with eighty six solar panels.</h2>
                     
                     <p>A South African estate runs entirely off-grid on five Powerwalls paired with eighty six solar panels.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/tesla/ep636.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">October 16, 2026</span>
-                        <span class="blog-idx-ep">Ep 636</span>
-                        <span class="blog-idx-reading">7 min</span>
-                    </div>
-                    <h2>Tesla's Roadster demo used ten nozzles and 250 kilograms of compressed gas for the stunts.</h2>
-                    
-                    <p>Tesla's Roadster demo used ten nozzles and 250 kilograms of compressed gas for the stunts.</p>
                     
                     <span class="blog-idx-read-more">Read article &rarr;</span>
                 </a>
@@ -1842,10 +1839,6 @@
                         
                         <li><a href="env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="first-principles.html">First Principles Daily</a></li>
@@ -1869,7 +1862,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1917,7 +1910,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1964,10 +1957,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
@@ -2107,7 +2096,7 @@
            only the server can tell an article from a redirect stub. An
            episode missing from this map renders without a link, never with a
            broken one. */
-        const EPISODE_POST_URLS = {"609": "blog/tesla/ep609.html", "610": "blog/tesla/ep610.html", "611": "blog/tesla/ep611.html", "612": "blog/tesla/ep612.html", "613": "blog/tesla/ep613.html", "614": "blog/tesla/ep614.html", "615": "blog/tesla/ep615.html", "616": "blog/tesla/ep616.html", "617": "blog/tesla/ep617.html", "618": "blog/tesla/ep618.html", "619": "blog/tesla/ep619.html", "620": "blog/tesla/ep620.html", "621": "blog/tesla/ep621.html", "622": "blog/tesla/ep622.html", "623": "blog/tesla/ep623.html", "624": "blog/tesla/ep624.html", "625": "blog/tesla/ep625.html", "626": "blog/tesla/ep626.html", "627": "blog/tesla/ep627.html", "628": "blog/tesla/ep628.html", "629": "blog/tesla/ep629.html", "630": "blog/tesla/ep630.html", "631": "blog/tesla/ep631.html", "632": "blog/tesla/ep632.html", "633": "blog/tesla/ep633.html", "634": "blog/tesla/ep634.html", "635": "blog/tesla/ep635.html", "636": "blog/tesla/ep636.html", "637": "blog/tesla/ep637.html", "638": "blog/tesla/ep638.html"};
+        const EPISODE_POST_URLS = {"610": "blog/tesla/ep610.html", "611": "blog/tesla/ep611.html", "612": "blog/tesla/ep612.html", "613": "blog/tesla/ep613.html", "614": "blog/tesla/ep614.html", "615": "blog/tesla/ep615.html", "616": "blog/tesla/ep616.html", "617": "blog/tesla/ep617.html", "618": "blog/tesla/ep618.html", "619": "blog/tesla/ep619.html", "620": "blog/tesla/ep620.html", "621": "blog/tesla/ep621.html", "622": "blog/tesla/ep622.html", "623": "blog/tesla/ep623.html", "624": "blog/tesla/ep624.html", "625": "blog/tesla/ep625.html", "626": "blog/tesla/ep626.html", "627": "blog/tesla/ep627.html", "628": "blog/tesla/ep628.html", "629": "blog/tesla/ep629.html", "630": "blog/tesla/ep630.html", "631": "blog/tesla/ep631.html", "632": "blog/tesla/ep632.html", "633": "blog/tesla/ep633.html", "634": "blog/tesla/ep634.html", "635": "blog/tesla/ep635.html", "636": "blog/tesla/ep636.html", "637": "blog/tesla/ep637.html", "638": "blog/tesla/ep638.html", "639": "blog/tesla/ep639.html"};
         const PATH_PREFIX = "";
         const SHOW_NAME = "Tesla Shorts Time";
 
