@@ -1,0 +1,128 @@
+Frozen 16 megabyte tables let laptop CPUs run 46 megabyte ternary models at 615 tokens per second. They match float baselines on Lambada and PIQA, peaking at 740 tokens per second. This is Models & Agents, Episode 208. Researchers swap the full-learned embedding table in a Gemma-shaped 270 million parameter model for a table of 512 bit codes, according to a new archive paper. Those codes come from principal component projection,
+and signed binarization of a pre-trained embedding, and the frozen table is then trained
+from scratch on 2.05 billion tokens. A learned table still cuts validation loss by 0.20
+Nats, yet the frozen version matches or beats it on Helliswag as well.
+Paired with a ternary bitnet B1.58 body, the network sits in 62 megabytes of memory and
+runs 5-6 times faster than the float models 8-bit GGUF in Lama.CPP at roughly 1-7th
+the memory. After training, the frozen table accepts 10,000 new words at a 3% cost, while
+the learned table collapses by 43%. All weights, data, and evaluation answers are released.
+Synthetic target languages numbering 96 let GPT-2 small models train from scratch, while
+clause word order, noun phrase order, alignment, complement system, and action nominal strategy
+all vary in work posted to archive.
+Targeted minimal pair evaluation across 34 grammatical phenomena shows typological parallels
+in basic clause configurations.
+Clear divergences appear in complement systems and action nominal strategies, and the models
+also acquire combinations rare or unattested in natural languages.
+PurlChat is an 8.47 million-parameter causal decoder-only transformer built for Luganda from
+first principles in Jaxx and Flax NNX, detailed in an archive NLP paper. A bite-level BPE tokenizer
+that's bite-paring coding, with a vocabulary of 8,192 achieves 1.60 tokens per word fertility.
+Two-stage training on 59,501 pre-training sequences and 510 instruction dialogues
+drops validation cross entropy from 9.4695 to 0.1818 NATS.
+The model reaches 0.9792 Rouge L and 0.9405 BU on a held out diagnostic benchmark while
+preserving band 2 noun class concord.
+A language-agnostic pipeline denoises noisy knowledge-based text alignments with a natural language inference
+filter, called NLI, and releases Heary, a 1.5 million-instance silver data set for Hebrew
+relation extraction.
+Gemma 431B reaches 0.915F1, matching GPT 5.4 at 0.921, according to the archive writeup.
+On a fully held out dual annotated test set, the same Gemma checkpoint scores 0.844F1.
+Experiments across US, Dutch, and Chinese contexts find that large language models overpredict
+stereotypes, and archive study reports.
+Non-English prompts improve cultural context consideration.
+Additional instruction tuning reduces false positive rates, while training data size moderates
+detection effectiveness non-monotonically.
+Causal latent workspaces add prefix-specific latent slots that each position writes to and
+from before the next shared block, in a four-round shared depth looped transformer described on
+archive. At 101.71 million parameters, the model leads on WikiText 103 raw, eWik8, and tiny
+stories. Proplexity improves 0.73 to 1.06% over the strongest non-workspace control across nine
+seeds. An inductive framework combines full and partial colexification networks with short concept
+descriptions to embed previously unseen concepts according to Archive.
+The resulting embeddings correlate with cross-linguistic similarity measures and generalize to
+nodes absent from training data.
+Real CLI introduces a paired benchmark that measures both task execution and human agent collaboration
+quality for command line interface agents or CLI agents in a new Archive paper.
+Real CLI XX supplies complete specifications, while real CLI collab uses a scripted user delivering progressive corrections, scoring 22 sub-dimensions across 51 interaction templates.
+Frontier agents reach at most 49.2% average score, and 37.6% joint collaboration score.
+Consistent shortfalls show up in steerability, trust calibration, and safety boundary management.
+A single injected passage succeeds in up to 61% of cases across two medical multi-agent
+systems and three benchmarks, researchers show on archive.
+Collaboration does not reliably protect against attack.
+A training-free defense that separates patient findings from clinical judgments and verifies
+each judgment against findings alone lowers attack success on MedQA to 4-7% while preserving
+accuracy on clean cases.
+Pro per Mem pairs egocentric video with year-long distractor-rich memories, averaging 618,000 tokens,
+and human verified trigger windows, according to Archive.
+Pro per agent surfaces relevant memory via a graph store and gates it to avoid unnecessary interruptions.
+Strict accuracy rises from below 10% to 37.5% on QN 3.827b and 38% on GPT 5.3 chat,
+without additional training. Reinforcement learning post-training reaches 42.4%.
+Execution guided tool use over large libraries isolates candidate
+investigations in separate branches, executes each, then adopts only useful
+results into the main trajectory, work on archive names Briai. On MCP Atlas, with a
+shared pool of 1,897 tools, it achieves an average claim score of 89.77, a 14.37
+7-point gain over MCP0.
+The method remains on the Pareto Frontier for performance versus input token cost.
+Public data sets totaling 77 sources feed a 141 million parameter encoder, trained on
+1.12 million examples relabeled under a consistent 12-category schema for personally identifiable
+information, or PII, and archive paper shows.
+It achieves the highest recall against larger baselines in 11 of 14 comparisons on AI4 privacy and Nemotron PII at a low false positive operating point.
+Throughput is 2 to 10 times higher with 94 to 97% less peak GPU memory than the baselines.
+Layerwise unlearning that touches only one selected transformer layer uses confidence weighted forgetting and retain regularization in a method called KOLU, posted to archive.
+On Tofu, it improves both forgetting and retention over NPO, SAT-imp, and GA-based foam UL
+in all six settings.
+On Mews, it records the highest retained no-mem and privilege, closest to zero, among
+compared methods, while using 77.4 to 79.5% less GPU memory than full model unlearning.
+Token Economizer is an external controller that learns which micro-skills to inject, which
+Each irrelevant tools to prune and went to break unproductive loops across sequences
+of realistic coding tasks, according to Archive.
+It reduces average token cost 18.4% to 30.9% for Clawed Code, Codex, and GitHub Copilot
+CLI paired with Frontier models while preserving task success.
+Savings generalized to web development and security auditing.
+Joint embedding guided pruning trains a public reference model on PII free views of the
+same records and uses cross-model representation probes, plus integrated gradients to identify
+and prune 1.6% of neurons, and archive paper reports.
+PII inference accuracy drops up to 7.4 times and extraction recall up to 13.9 times.
+Unseen text perplexity stays within 16% of the unprune model for most large language models.
+Pull the release ternary checkpoint with the frozen embedding table and time it against
+your current 8-bit GGUF setup on the same laptop CPU.
+Score your own CLI agent in both real CLI modes, so you can separate RAW task completion
+from how it handles a correcting user.
+If a fine-tuned domain model is leaking PII, run the J-PAPRUN recipe on it rather than
+starting a full retrain.
+On a library of a few hundred functions, try Bria's pattern of inspecting tools and separate
+execution branches before adopting results into the main trajectory.
+Low resource NLP groups are expected to release further byte-level BPE tokenizers tuned
+for agglutinative languages.
+Expanded benchmarks that jointly score execution and collaboration quality are likely to appear
+for additional agent domains beyond CLI.
+Lair-wise, unlearning methods that operate on single-selected layers will probably be tested
+on larger open-weight families in the coming weeks.
+One extra-learned parameter per head is the cost when we pop the hood on first passage
+attention. The mechanism replaces monotonic accumulation of decay along the key query path
+with a path extreme operation. That operation lowers a key's logit by the deepest dip of a learned
+scalar field below that key's level. When the field and the levels follow a shared learned walk,
+the mechanism naturally forms a stack. A constant dimension head can then realize any subset of
+keys left alive by subsequent dips. In synthetic experiments, a single layer FPA head converges
+to the target-alive key sets on every seed. Comparable softmax and forgetting transformer
+baselines fail on all seeds. At 110 million parameters, the model matches forgetting
+transformer perplexity. It still achieves perfect pasky retrieval at 8 times the training length,
+even when its key value cache is compressed to roughly 25%. The added scalar field introduces
+is that one extra learned parameter per head and a small constant time max tracking operation
+per step. Use FPA when long context retrieval stability matters more than the marginal
+training cost of the extra field. The main gotcha is that the learned walk must be shared
+between field and levels, otherwise the stack property disappears and performance falls back
+to soft max levels. Before we go, memory gated proactive agents are lined up for extra reinforcement
+learning stages aimed at cutting early or repeated interruptions.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin Network,
+links in the show notes.
+One more thing, if you like today's episode, our Sister Show Mag 7 Daily is worth a spot
+in your feed.
+What the seven largest technology companies actually did today as businesses, it's one
+of the Narin Network's daily briefings all free at NarinNetwork.com.
+Want the written briefing with source links?
+Each show keeps a summaries page on NarinNetwork.com, Scannable, Dated, and Free.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

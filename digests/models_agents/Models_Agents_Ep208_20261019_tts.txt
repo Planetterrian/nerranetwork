@@ -1,0 +1,151 @@
+Frozen sixteen megabyte tables let laptop CPUs run forty-six megabyte ternary models at six hundred fifteen tokens per second.
+
+They match float baselines on LAMBADA and PIQA, peaking at seven hundred forty tokens per second.
+
+This is Models and Agents, episode two hundred eight.
+
+Researchers swap the full learned embedding table in a Gemma-shaped two hundred seventy million parameter model for a table of five hundred twelve-bit codes, according to a new arXiv paper.
+
+Those codes come from principal-component projection and sign binarisation of a pretrained embedding, and the frozen table is then trained from scratch on two point zero five billion tokens.
+
+A learned table still cuts validation loss by zero point two zero nats, yet the frozen version matches or beats it on HellaSwag as well.
+
+Paired with a ternary BitNet b one point five eight body, the network sits in sixty-two megabytes of memory and runs five to six times faster than the float model's eight-bit GGUF in llama.cpp at roughly one-seventh the memory.
+
+After training, the frozen table accepts ten thousand new words at a three percent cost, while the learned table collapses by forty-three percent.
+
+All weights, data, and evaluation answers are released.
+
+Synthetic target languages numbering ninety-six let G P T two small models train from scratch while clause word order, noun-phrase order, alignment, complement system, and action-nominal strategy all vary, in work posted to arXiv.
+
+Targeted minimal-pair evaluation across thirty-four grammatical phenomena shows typological parallels in basic clause configurations.
+
+Clear divergences appear in complement systems and action-nominal strategies, and the models also acquire combinations rare or unattested in natural languages.
+
+Pearl-Chat is an eight point four seven million parameter causal decoder-only transformer built for Luganda from first principles in JAX and Flax NNX, detailed in an arXiv N L P paper.
+
+A byte-level BPE tokenizer, that's byte-pair encoding, with a vocabulary of eight thousand one hundred ninety-two achieves one point six zero tokens per word fertility.
+
+Two-stage training on fifty-nine thousand five hundred one pre-training sequences and five hundred ten instruction dialogues drops validation cross-entropy from nine point four six nine five to zero point one eight one eight nats.
+
+The model reaches zero point nine seven nine two ROUGE-L and zero point nine four zero five BLEU on a held-out diagnostic benchmark while preserving Bantu noun-class concord.
+
+A language-agnostic pipeline denoises noisy knowledge-base text alignments with a natural language inference filter, called NLI, and releases HeRE, a one point five million instance silver dataset for Hebrew relation extraction.
+
+Gemma four thirty-one B it reaches zero point nine one five F1, matching G P T five point four at zero point nine two one, according to the arXiv write-up.
+
+On a fully held-out dual-annotated test set the same Gemma checkpoint scores zero point eight four four F1.
+
+Experiments across U S, Dutch, and Chinese contexts find that large language models over-predict stereotypes, an arXiv study reports.
+
+Non-English prompts improve cultural-context consideration.
+
+Additional instruction tuning reduces false-positive rates, while training-data size moderates detection effectiveness non-monotonically.
+
+Causal Latent Workspaces add prefix-specific latent slots that each position writes to and reads from before the next shared block, in a four-round shared-depth looped transformer described on arXiv.
+
+At one hundred one point seven one million parameters the model leads on WikiText one hundred three raw, enwik eight, and TinyStories.
+
+Perplexity improves zero point seven three to one point zero six percent over the strongest non-workspace control across nine seeds.
+
+An inductive framework combines full and partial colexification networks with short concept descriptions to embed previously unseen concepts, according to arXiv.
+
+The resulting embeddings correlate with cross-linguistic similarity measures and generalise to nodes absent from training data.
+
+RealCLI introduces a paired benchmark that measures both task execution and human-agent collaboration quality for command-line interface agents, or CLI agents, in a new arXiv paper.
+
+REALCLI-EXEC supplies complete specifications, while REALCLI-COLLAB uses a scripted user delivering progressive corrections, scoring twenty-two sub-dimensions across fifty-one interaction templates.
+
+Frontier agents reach at most forty-nine point two percent average score and thirty-seven point six percent joint collaboration score.
+
+Consistent shortfalls show up in steerability, trust calibration, and safety boundary management.
+
+A single injected passage succeeds in up to sixty-one percent of cases across two medical multi-agent systems and three benchmarks, researchers show on arXiv.
+
+Collaboration does not reliably protect against attack.
+
+A training-free defense that separates patient findings from clinical judgments and verifies each judgment against findings alone lowers attack success on MedQA to four to seven percent while preserving accuracy on clean cases.
+
+ProPerMem pairs egocentric video with year-long distractor-rich memories averaging six hundred eighteen thousand tokens and human-verified trigger windows, according to arXiv.
+
+ProPerAgent surfaces relevant memory via a graph store and gates it to avoid unnecessary interruptions.
+
+Strict accuracy rises from below ten percent to thirty-seven point five percent on Qwen three point eight twenty-seven B and thirty-eight percent on G P T five point three Chat without additional training.
+
+Reinforcement learning post-training reaches forty-two point four percent.
+
+Execution-guided tool use over large libraries isolates candidate investigations in separate branches, executes each, then adopts only useful results into the main trajectory, work on arXiv names BRIA.
+
+On M C P Atlas with a shared pool of one thousand eight hundred ninety-seven tools it achieves an average claim score of eighty-nine point seven seven, a fourteen point three seven point gain over M C P Zero.
+
+The method remains on the Pareto frontier for performance versus input-token cost.
+
+Public datasets totaling seventy-seven sources feed a one hundred forty-one million parameter encoder trained on one point one two million examples relabeled under a consistent twelve-category schema for personally identifiable information, or PII, an arXiv paper shows.
+
+It achieves the highest recall against larger baselines in eleven of fourteen comparisons on AI4Privacy and Nemotron-PII at a low false-positive operating point.
+
+Throughput is two to ten times higher with ninety-four to ninety-seven percent less peak G P U memory than the baselines.
+
+Layerwise unlearning that touches only one selected transformer layer uses confidence-weighted forgetting and retain regularisation in a method called CoLU, posted to arXiv.
+
+On TOFU it improves both forgetting and retention over NPO, SatImp, and GA-based FOM-UL in all six settings.
+
+On MUSE it records the highest retained KnowMem and PrivLeak closest to zero among compared methods while using seventy-seven point four to seventy-nine point five percent less G P U memory than full-model unlearning.
+
+TokenEconomizer is an external controller that learns which micro-skills to inject, which irrelevant tools to prune, and when to break unproductive loops across sequences of realistic coding tasks, according to arXiv.
+
+It reduces average token cost eighteen point four to thirty point nine percent for Claude Code, Codex, and GitHub Copilot CLI paired with frontier models while preserving task success.
+
+Savings generalise to web development and security auditing.
+
+Joint-embedding-guided pruning trains a public reference model on PII-free views of the same records and uses cross-model representation probes plus integrated gradients to identify and prune one point six percent of neurons, an arXiv paper reports.
+
+PII inference accuracy drops up to seven point four times and extraction recall up to thirteen point nine times.
+
+Unseen-text perplexity stays within sixteen percent of the unpruned model for most large language models.
+
+Pull the released ternary checkpoint with the frozen embedding table and time it against your current eight-bit GGUF setup on the same laptop CPU.
+
+Score your own CLI agent in both RealCLI modes so you can separate raw task completion from how it handles a correcting user.
+
+If a fine-tuned domain model is leaking PII, run the JEPA-Prune recipe on it rather than starting a full retrain.
+
+On a library of a few hundred functions, try BRIA's pattern of inspecting tools in separate execution branches before adopting results into the main trajectory.
+
+Low-resource N L P groups are expected to release further byte-level BPE tokenizers tuned for agglutinative languages.
+
+Expanded benchmarks that jointly score execution and collaboration quality are likely to appear for additional agent domains beyond CLI.
+
+Layerwise unlearning methods that operate on single selected layers will probably be tested on larger open-weight families in the coming weeks.
+
+One extra learned parameter per head is the cost when we pop the hood on First Passage Attention.
+
+The mechanism replaces monotonic accumulation of decay along the key-query path with a path-extrema operation.
+
+That operation lowers a key's logit by the deepest dip of a learned scalar field below that key's level.
+
+When the field and the levels follow a shared learned walk, the mechanism naturally forms a stack.
+
+A constant-dimension head can then realise any subset of keys left alive by subsequent dips.
+
+In synthetic experiments a single-layer FPA head converges to the target alive-key sets on every seed.
+
+Comparable softmax and Forgetting-Transformer baselines fail on all seeds.
+
+At one hundred ten million parameters the model matches Forgetting-Transformer perplexity.
+
+It still achieves perfect passkey retrieval at eight times the training length even when its key-value cache is compressed to roughly twenty-five percent.
+
+The added scalar field introduces that one extra learned parameter per head and a small constant-time max-tracking operation per step.
+
+Use FPA when long-context retrieval stability matters more than the marginal training cost of the extra field.
+
+The main gotcha is that the learned walk must be shared between field and levels, otherwise the stack property disappears and performance falls back to softmax levels.
+
+Before we go — memory-gated proactive agents are lined up for extra reinforcement-learning stages aimed at cutting early or repeated interruptions.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Mag Seven Daily is worth a spot in your feed: what the seven largest technology companies actually did today, as businesses. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com. Want the written briefing with source links? Each show keeps a summaries page on nerranetwork dot com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

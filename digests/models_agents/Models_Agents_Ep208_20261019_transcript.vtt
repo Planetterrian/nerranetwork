@@ -1,0 +1,385 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.660
+Frozen 16 megabyte tables let laptop CPUs run 46 megabyte ternary models at 615 tokens per second. They match float baselines on Lambada and PIQA, peaking at 740 tokens per second. This is Models &amp; Agents, Episode 208. Researchers swap the full-learned embedding table in a Gemma-shaped 270 million parameter model for a table of 512 bit codes, according to a new archive paper. Those codes come from principal component projection,
+
+00:00:29.660 --> 00:00:34.680
+and signed binarization of a pre-trained embedding, and the frozen table is then trained
+
+00:00:34.680 --> 00:00:41.460
+from scratch on 2.05 billion tokens. A learned table still cuts validation loss by 0.20
+
+00:00:41.920 --> 00:00:46.020
+Nats, yet the frozen version matches or beats it on Helliswag as well.
+
+00:00:46.640 --> 00:00:53.080
+Paired with a ternary bitnet B1.58 body, the network sits in 62 megabytes of memory and
+
+00:00:53.080 --> 00:01:00.300
+runs 5-6 times faster than the float models 8-bit GGUF in Lama.CPP at roughly 1-7th
+
+00:01:00.300 --> 00:01:06.520
+the memory. After training, the frozen table accepts 10,000 new words at a 3% cost, while
+
+00:01:06.520 --> 00:01:12.580
+the learned table collapses by 43%. All weights, data, and evaluation answers are released.
+
+00:01:13.644 --> 00:01:19.834
+Synthetic target languages numbering 96 let GPT-2 small models train from scratch, while
+
+00:01:19.834 --> 00:01:25.574
+clause word order, noun phrase order, alignment, complement system, and action nominal strategy
+
+00:01:25.574 --> 00:01:28.134
+all vary in work posted to archive.
+
+00:01:28.794 --> 00:01:34.374
+Targeted minimal pair evaluation across 34 grammatical phenomena shows typological parallels
+
+00:01:34.374 --> 00:01:36.134
+in basic clause configurations.
+
+00:01:36.794 --> 00:01:42.034
+Clear divergences appear in complement systems and action nominal strategies, and the models
+
+00:01:42.034 --> 00:01:45.894
+also acquire combinations rare or unattested in natural languages.
+
+00:01:45.894 --> 00:01:53.057
+PurlChat is an 8.47 million-parameter causal decoder-only transformer built for Luganda from
+
+00:01:53.057 --> 00:02:00.937
+first principles in Jaxx and Flax NNX, detailed in an archive NLP paper. A bite-level BPE tokenizer
+
+00:02:00.937 --> 00:02:08.637
+that's bite-paring coding, with a vocabulary of 8,192 achieves 1.60 tokens per word fertility.
+
+00:02:09.317 --> 00:02:15.597
+Two-stage training on 59,501 pre-training sequences and 510 instruction dialogues
+
+00:02:16.257 --> 00:02:22.017
+drops validation cross entropy from 9.4695 to 0.1818 NATS.
+
+00:02:22.357 --> 00:02:30.677
+The model reaches 0.9792 Rouge L and 0.9405 BU on a held out diagnostic benchmark while
+
+00:02:30.677 --> 00:02:32.977
+preserving band 2 noun class concord.
+
+00:02:33.854 --> 00:02:40.114
+A language-agnostic pipeline denoises noisy knowledge-based text alignments with a natural language inference
+
+00:02:40.114 --> 00:02:46.994
+filter, called NLI, and releases Heary, a 1.5 million-instance silver data set for Hebrew
+
+00:02:46.994 --> 00:02:48.094
+relation extraction.
+
+00:02:48.814 --> 00:02:58.814
+Gemma 431B reaches 0.915F1, matching GPT 5.4 at 0.921, according to the archive writeup.
+
+00:02:59.354 --> 00:03:05.954
+On a fully held out dual annotated test set, the same Gemma checkpoint scores 0.844F1.
+
+00:03:05.954 --> 00:03:12.835
+Experiments across US, Dutch, and Chinese contexts find that large language models overpredict
+
+00:03:12.835 --> 00:03:15.395
+stereotypes, and archive study reports.
+
+00:03:16.055 --> 00:03:18.995
+Non-English prompts improve cultural context consideration.
+
+00:03:19.815 --> 00:03:24.935
+Additional instruction tuning reduces false positive rates, while training data size moderates
+
+00:03:24.935 --> 00:03:27.215
+detection effectiveness non-monotonically.
+
+00:03:28.158 --> 00:03:33.898
+Causal latent workspaces add prefix-specific latent slots that each position writes to and
+
+00:03:33.898 --> 00:03:39.318
+from before the next shared block, in a four-round shared depth looped transformer described on
+
+00:03:39.318 --> 00:03:47.498
+archive. At 101.71 million parameters, the model leads on WikiText 103 raw, eWik8, and tiny
+
+00:03:47.498 --> 00:03:55.378
+stories. Proplexity improves 0.73 to 1.06% over the strongest non-workspace control across nine
+
+00:03:55.378 --> 00:04:01.773
+seeds. An inductive framework combines full and partial colexification networks with short concept
+
+00:04:01.773 --> 00:04:05.993
+descriptions to embed previously unseen concepts according to Archive.
+
+00:04:06.453 --> 00:04:11.533
+The resulting embeddings correlate with cross-linguistic similarity measures and generalize to
+
+00:04:11.533 --> 00:04:13.273
+nodes absent from training data.
+
+00:04:14.330 --> 00:04:20.290
+Real CLI introduces a paired benchmark that measures both task execution and human agent collaboration
+
+00:04:20.290 --> 00:04:25.990
+quality for command line interface agents or CLI agents in a new Archive paper.
+
+00:04:25.990 --> 00:04:38.650
+Real CLI XX supplies complete specifications, while real CLI collab uses a scripted user delivering progressive corrections, scoring 22 sub-dimensions across 51 interaction templates.
+
+00:04:39.290 --> 00:04:46.410
+Frontier agents reach at most 49.2% average score, and 37.6% joint collaboration score.
+
+00:04:46.910 --> 00:04:52.230
+Consistent shortfalls show up in steerability, trust calibration, and safety boundary management.
+
+00:04:52.230 --> 00:04:58.783
+A single injected passage succeeds in up to 61% of cases across two medical multi-agent
+
+00:04:58.783 --> 00:05:02.543
+systems and three benchmarks, researchers show on archive.
+
+00:05:03.023 --> 00:05:05.863
+Collaboration does not reliably protect against attack.
+
+00:05:06.403 --> 00:05:11.243
+A training-free defense that separates patient findings from clinical judgments and verifies
+
+00:05:11.243 --> 00:05:18.043
+each judgment against findings alone lowers attack success on MedQA to 4-7% while preserving
+
+00:05:18.043 --> 00:05:19.583
+accuracy on clean cases.
+
+00:05:19.583 --> 00:05:27.622
+Pro per Mem pairs egocentric video with year-long distractor-rich memories, averaging 618,000 tokens,
+
+00:05:28.162 --> 00:05:31.002
+and human verified trigger windows, according to Archive.
+
+00:05:31.442 --> 00:05:37.962
+Pro per agent surfaces relevant memory via a graph store and gates it to avoid unnecessary interruptions.
+
+00:05:38.422 --> 00:05:48.542
+Strict accuracy rises from below 10% to 37.5% on QN 3.827b and 38% on GPT 5.3 chat,
+
+00:05:48.542 --> 00:05:54.302
+without additional training. Reinforcement learning post-training reaches 42.4%.
+
+00:05:55.212 --> 00:05:59.132
+Execution guided tool use over large libraries isolates candidate
+
+00:05:59.132 --> 00:06:04.232
+investigations in separate branches, executes each, then adopts only useful
+
+00:06:04.232 --> 00:06:10.232
+results into the main trajectory, work on archive names Briai. On MCP Atlas, with a
+
+00:06:10.232 --> 00:06:18.312
+shared pool of 1,897 tools, it achieves an average claim score of 89.77, a 14.37
+
+00:06:18.312 --> 00:06:20.412
+7-point gain over MCP0.
+
+00:06:20.672 --> 00:06:25.552
+The method remains on the Pareto Frontier for performance versus input token cost.
+
+00:06:26.458 --> 00:06:32.658
+Public data sets totaling 77 sources feed a 141 million parameter encoder, trained on
+
+00:06:32.658 --> 00:06:39.058
+1.12 million examples relabeled under a consistent 12-category schema for personally identifiable
+
+00:06:39.058 --> 00:06:42.758
+information, or PII, and archive paper shows.
+
+00:06:42.758 --> 00:06:53.438
+It achieves the highest recall against larger baselines in 11 of 14 comparisons on AI4 privacy and Nemotron PII at a low false positive operating point.
+
+00:06:53.838 --> 00:06:59.998
+Throughput is 2 to 10 times higher with 94 to 97% less peak GPU memory than the baselines.
+
+00:07:00.995 --> 00:07:11.135
+Layerwise unlearning that touches only one selected transformer layer uses confidence weighted forgetting and retain regularization in a method called KOLU, posted to archive.
+
+00:07:11.135 --> 00:07:18.095
+On Tofu, it improves both forgetting and retention over NPO, SAT-imp, and GA-based foam UL
+
+00:07:18.095 --> 00:07:19.235
+in all six settings.
+
+00:07:19.775 --> 00:07:24.535
+On Mews, it records the highest retained no-mem and privilege, closest to zero, among
+
+00:07:24.535 --> 00:07:31.795
+compared methods, while using 77.4 to 79.5% less GPU memory than full model unlearning.
+
+00:07:32.748 --> 00:07:37.928
+Token Economizer is an external controller that learns which micro-skills to inject, which
+
+00:07:37.928 --> 00:07:42.108
+Each irrelevant tools to prune and went to break unproductive loops across sequences
+
+00:07:42.108 --> 00:07:45.228
+of realistic coding tasks, according to Archive.
+
+00:07:45.628 --> 00:07:52.928
+It reduces average token cost 18.4% to 30.9% for Clawed Code, Codex, and GitHub Copilot
+
+00:07:52.928 --> 00:07:56.988
+CLI paired with Frontier models while preserving task success.
+
+00:07:57.708 --> 00:08:00.748
+Savings generalized to web development and security auditing.
+
+00:08:01.802 --> 00:08:06.702
+Joint embedding guided pruning trains a public reference model on PII free views of the
+
+00:08:06.702 --> 00:08:12.362
+same records and uses cross-model representation probes, plus integrated gradients to identify
+
+00:08:12.362 --> 00:08:16.582
+and prune 1.6% of neurons, and archive paper reports.
+
+00:08:17.402 --> 00:08:23.922
+PII inference accuracy drops up to 7.4 times and extraction recall up to 13.9 times.
+
+00:08:24.542 --> 00:08:30.162
+Unseen text perplexity stays within 16% of the unprune model for most large language models.
+
+00:08:31.051 --> 00:08:35.151
+Pull the release ternary checkpoint with the frozen embedding table and time it against
+
+00:08:35.151 --> 00:08:38.691
+your current 8-bit GGUF setup on the same laptop CPU.
+
+00:08:39.391 --> 00:08:44.831
+Score your own CLI agent in both real CLI modes, so you can separate RAW task completion
+
+00:08:44.831 --> 00:08:46.731
+from how it handles a correcting user.
+
+00:08:47.391 --> 00:08:52.711
+If a fine-tuned domain model is leaking PII, run the J-PAPRUN recipe on it rather than
+
+00:08:52.711 --> 00:08:53.851
+starting a full retrain.
+
+00:08:54.511 --> 00:08:59.451
+On a library of a few hundred functions, try Bria's pattern of inspecting tools and separate
+
+00:08:59.451 --> 00:09:02.871
+execution branches before adopting results into the main trajectory.
+
+00:09:02.871 --> 00:09:09.307
+Low resource NLP groups are expected to release further byte-level BPE tokenizers tuned
+
+00:09:09.307 --> 00:09:10.787
+for agglutinative languages.
+
+00:09:11.727 --> 00:09:16.507
+Expanded benchmarks that jointly score execution and collaboration quality are likely to appear
+
+00:09:16.507 --> 00:09:19.047
+for additional agent domains beyond CLI.
+
+00:09:19.887 --> 00:09:24.487
+Lair-wise, unlearning methods that operate on single-selected layers will probably be tested
+
+00:09:24.487 --> 00:09:27.087
+on larger open-weight families in the coming weeks.
+
+00:09:28.128 --> 00:09:32.728
+One extra-learned parameter per head is the cost when we pop the hood on first passage
+
+00:09:32.728 --> 00:09:38.428
+attention. The mechanism replaces monotonic accumulation of decay along the key query path
+
+00:09:38.828 --> 00:09:44.968
+with a path extreme operation. That operation lowers a key's logit by the deepest dip of a learned
+
+00:09:44.968 --> 00:09:50.368
+scalar field below that key's level. When the field and the levels follow a shared learned walk,
+
+00:09:50.888 --> 00:09:56.428
+the mechanism naturally forms a stack. A constant dimension head can then realize any subset of
+
+00:09:56.428 --> 00:10:02.628
+keys left alive by subsequent dips. In synthetic experiments, a single layer FPA head converges
+
+00:10:02.628 --> 00:10:08.108
+to the target-alive key sets on every seed. Comparable softmax and forgetting transformer
+
+00:10:08.108 --> 00:10:13.608
+baselines fail on all seeds. At 110 million parameters, the model matches forgetting
+
+00:10:13.608 --> 00:10:19.348
+transformer perplexity. It still achieves perfect pasky retrieval at 8 times the training length,
+
+00:10:19.528 --> 00:10:25.508
+even when its key value cache is compressed to roughly 25%. The added scalar field introduces
+
+00:10:25.508 --> 00:10:30.448
+is that one extra learned parameter per head and a small constant time max tracking operation
+
+00:10:30.448 --> 00:10:36.008
+per step. Use FPA when long context retrieval stability matters more than the marginal
+
+00:10:36.008 --> 00:10:41.148
+training cost of the extra field. The main gotcha is that the learned walk must be shared
+
+00:10:41.148 --> 00:10:46.268
+between field and levels, otherwise the stack property disappears and performance falls back
+
+00:10:46.268 --> 00:10:52.784
+to soft max levels. Before we go, memory gated proactive agents are lined up for extra reinforcement
+
+00:10:52.784 --> 00:10:56.304
+learning stages aimed at cutting early or repeated interruptions.
+
+00:10:56.644 --> 00:10:58.404
+That's models and agents for today.
+
+00:10:58.944 --> 00:11:02.744
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:11:03.204 --> 00:11:05.384
+and subscribe so you don't miss tomorrow's update.
+
+00:11:06.004 --> 00:11:07.424
+The AI world moves fast.
+
+00:11:07.924 --> 00:11:08.844
+We'll help you keep up.
+
+00:11:09.124 --> 00:11:13.804
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin Network,
+
+00:11:14.224 --> 00:11:15.104
+links in the show notes.
+
+00:11:15.604 --> 00:11:20.604
+One more thing, if you like today's episode, our Sister Show Mag 7 Daily is worth a spot
+
+00:11:20.604 --> 00:11:21.204
+in your feed.
+
+00:11:21.204 --> 00:11:26.604
+What the seven largest technology companies actually did today as businesses, it's one
+
+00:11:26.604 --> 00:11:30.764
+of the Narin Network's daily briefings all free at NarinNetwork.com.
+
+00:11:31.204 --> 00:11:33.044
+Want the written briefing with source links?
+
+00:11:33.684 --> 00:11:38.804
+Each show keeps a summaries page on NarinNetwork.com, Scannable, Dated, and Free.
+
+00:11:39.384 --> 00:11:42.364
+This episode used AI voice synthesis of my voice.
+
+00:11:42.884 --> 00:11:45.224
+Editorial selection and analysis are my own.
