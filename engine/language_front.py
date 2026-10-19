@@ -252,8 +252,22 @@ def assemble(stories: Iterable[Dict[str, Any]], *, lang: str,
     """The English assembler's layout, with the section headings and the
     edition date written in *lang*. Sections never link the English topic
     hubs (``hub_url`` stays empty)."""
-    page = _lt.assemble(stories, audience_order=audience_order, live_hub_ids=(),
-                        flagships=flagships)
+    # Oct 19 2026: a native show's story whose headline is not in the page's
+    # language (Привет, Русский! writes its hooks in English) never leads
+    # the page or runs as a top story — Ep74's "Today we step into the
+    # Russian woods…" led ru/index.html. It stays on the page, in the Latest
+    # rail, marked ``lang="en"``.
+    stories = list(stories)
+    foreign = [s for s in stories if s.get("lang")]
+    page = _lt.assemble([s for s in stories if not s.get("lang")],
+                        audience_order=audience_order, live_hub_ids=(), flagships=flagships)
+    if foreign:
+        placed = {id(s) for s in [page.get("lead"), *page.get("top", []), *page.get("latest", []),
+                                   *page.get("more", []), *page.get("flagships", []),
+                                   *(x for sec in page.get("sections", []) for x in sec["stories"])] if s}
+        extra = [s for s in foreign if id(s) not in placed]
+        page["latest"] = sorted([*page.get("latest", []), *extra],
+                                key=lambda s: s.get("date_obj") or dt.date.min, reverse=True)
     # One card per flagship show, its newest story (the English band's shape;
     # the assembler puts every flagship story in the band, and this page runs
     # up to STORIES_PER_SHOW of each). The older ones stay in the Latest list.
