@@ -234,7 +234,8 @@ class TestOrderAndIds:
 
 class TestStyleAndScript:
     def _css(self):
-        text = TEMPLATE.read_text(encoding="utf-8")
+        # Oct 19 2026: the stylesheet is the shared _landing_styles include.
+        text = (ROOT / "templates" / "_landing_styles.html.j2").read_text(encoding="utf-8")
         css = text[text.index("<style>"):text.index("</style>")]
         return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
 

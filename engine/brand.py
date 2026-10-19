@@ -70,6 +70,8 @@ CONTACT_EMAIL = "hello@nerranetwork.com"
 #: The tagline, as the operator writes it.
 NETWORK_TAGLINE = "Feed your curiosity, not your anxiety."
 NETWORK_TAGLINE_RU = "Питайте любопытство, а не тревогу."
+#: The French front page's tagline (fr/index.html, Oct 19 2026).
+NETWORK_TAGLINE_FR = "Nourrissez votre curiosité, pas votre anxiété."
 
 #: The subjects, broadest first — no single show leads the network's promise.
 NETWORK_SUBJECTS = "space, AI, markets, world news, science and more"

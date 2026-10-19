@@ -4856,6 +4856,30 @@ same vocabulary. The chrome's translation dict is still EN/RU only: the French
 hub's body is French and its chrome English (a `fr` dict is the next step if
 the hub earns traffic).
 
+**Oct 19 2026 — the hubs are front pages.** Operator: the Russian and French
+pages should be the equivalent of the English landing page, tailored to those
+audiences. `ru/index.html` and `fr/index.html` now render the English
+homepage's news-front layout — **the same stylesheet** (`_landing_styles.html.j2`,
+extracted from `network_page.html.j2`; the English render is byte-identical)
+and **the same assembler** (`engine.landing_test.assemble`) — over the
+stories that exist in the language (`engine/language_front.py`): a native
+show's episodes as the English page would run them, and for each English show
+with a translated track, every episode that has one — the headline is the
+TRANSLATED title/description the multilingual stage wrote beside the track
+(`translated_hook`: the description's first complete sentence, since the feed
+title is clipped to 100 characters), the audio is the translated MP3, the
+picture is the episode's own scene matched on the English hook, the article
+link is the English post (which carries the language switcher), and "Also in
+this episode" is empty because those headlines exist only in English. Up to
+`STORIES_PER_SHOW` (3) episodes a show so a seven-show page has a lead, top
+stories and sections; the flagship band keeps one card per flagship. Dates,
+the masthead and the subject headings are written in the language
+(`MONTHS` / `WEEKDAYS`; `section_headings` in `_LANGUAGE_HUB_COPY`), the
+English topic hubs are never linked, and `engine.brand.NETWORK_TAGLINE_FR`
+joins the RU tagline. A guard strips the headlines and asserts the Russian
+page's own copy carries no English word. Guards:
+`TestLanguageFrontPages` in `tests/test_site_languages_2026_10_18.py`.
+
 ### The front page and the share cards (Oct 18 2026)
 
 Operator-directed: the landing test becomes the homepage, a news site's front

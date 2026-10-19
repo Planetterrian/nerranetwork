@@ -418,14 +418,18 @@ class TestFreshness:
 
 class TestMobileAndChrome:
     def test_no_fixed_widths_wider_than_a_phone(self):
-        tpl = (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
+        # Oct 19 2026: the front page's stylesheet is the shared include
+        # (_landing_styles.html.j2), which the language front pages use too.
+        tpl = (ROOT / "templates" / "_landing_styles.html.j2").read_text(encoding="utf-8")
         style = tpl.split("<style>", 1)[1].split("</style>", 1)[0]
         assert style.count("{") == style.count("}")
         for px in re.findall(r"(?<![-\w])(?:min-)?width:\s*(\d+)px", style):
             assert int(px) <= 360, px
 
     def test_brand_colour_is_never_raw_text(self):
-        tpl = (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
+        # Oct 19 2026: the front page's stylesheet is the shared include
+        # (_landing_styles.html.j2), which the language front pages use too.
+        tpl = (ROOT / "templates" / "_landing_styles.html.j2").read_text(encoding="utf-8")
         style = tpl.split("<style>", 1)[1].split("</style>", 1)[0]
         assert not re.search(r"(?<!-)color:\s*var\(--show-color\)", style)
 
