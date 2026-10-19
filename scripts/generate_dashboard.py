@@ -2250,6 +2250,9 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
     """
     cutoff = anchor_d - _dt.timedelta(days=days)
     n_all = regen = n_x = posted = queued = 0
+    # Oct 19 2026: how much of the sourced list the digest reports.
+    reported_pcts: List[float] = []
+    also_today: List[int] = []
     digests = root / "digests"
     for show_dir in (sorted(digests.iterdir()) if digests.is_dir() else []):
         if not show_dir.is_dir():
@@ -2269,6 +2272,10 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
             n_all += 1
             if counters.get("digest_structural_regen"):
                 regen += 1
+            if counters.get("prompt_articles_reported_pct") is not None:
+                reported_pcts.append(float(counters["prompt_articles_reported_pct"]))
+            if counters.get("digest_also_today_items") is not None:
+                also_today.append(int(counters["digest_also_today_items"]))
             if "x_posted" in counters:
                 n_x += 1
                 if counters.get("x_posted") is True:
@@ -2279,6 +2286,15 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
         "digest_structural_regen_share_7d": round(regen / n_all, 2) if n_all >= min_n else None,
         "x_posted_share_7d": round(posted / n_x, 2) if n_x >= min_n else None,
         "x_queued_share_7d": round(queued / n_x, 2) if n_x >= min_n else None,
+        # Oct 19 2026 (report-more-sourced-news): mean share of the articles
+        # the prompt listed that shipped as a story item, and the mean size of
+        # the Also Today run. Null under min_n episodes carrying the counters.
+        "prompt_articles_reported_pct_7d": (
+            round(sum(reported_pcts) / len(reported_pcts), 1)
+            if len(reported_pcts) >= min_n else None),
+        "also_today_items_7d": (
+            round(sum(also_today) / len(also_today), 1)
+            if len(also_today) >= min_n else None),
     }
 
 

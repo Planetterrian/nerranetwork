@@ -151,9 +151,15 @@ class TestStreamErrorEvents:
 
 
 def test_edition_wakes_after_a_failed_show_run():
-    wf = (ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text(encoding="utf-8")
-    cond = [ln for ln in wf.splitlines() if ln.strip().startswith("if:") and "workflow_run" in ln][0]
-    assert '"failure"' in cond and '"success"' in cond
+    # Oct 19 2026: the gate's workflow_run trigger is gone (Actions minutes);
+    # the show run itself wakes the gate, and that step runs on a FAILED run
+    # too — past the hold, a failed run is the morning's last wake-up.
+    wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")
+    step = wf[wf.index("- name: Wake the Nerra Daily gate"):]
+    cond = [ln for ln in step.splitlines() if ln.strip().startswith("if:")][0]
+    assert "always()" in cond
+    assert "outcome == 'success'" not in cond and "skipped" not in cond
+    assert "workflow_run:" not in (ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text(encoding="utf-8")
 
 
 class TestMitStopParser:

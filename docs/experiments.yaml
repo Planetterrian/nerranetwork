@@ -5292,3 +5292,33 @@ experiments:
       and the retry prompt names the shortfall above the depth rule. Digest
       side only (the sanctioned length lever). Guards:
       tests/test_slate_2026_10_19.py::TestExpansionAsksForStories.
+  - id: report-more-sourced-news-2026-10-19
+    title: "Every news digest carries an Also Today run for the sourced stories it would have cut"
+    area: content
+    shipped: 2026-10-19
+    readout: 2026-11-02
+    status: reading
+    metric: prompt_articles_reported_pct_7d
+    baseline: >
+      Over Oct 13-19 the prompt listed at most 40 of what each show fetched
+      (desks 300-480 articles, Tesla 72, MAG 7 119) and the digests carried
+      6-15 story items: 20% of the listed articles on Tesla, 25% on the
+      desks, 15% on MAG 7, 11% on AI Chips, 8% on Prediction Markets. The
+      depth rules ("prefer fewer stories at full depth", "7 stories
+      properly, not 12 shallowly") and the desks' "3 to 5" Also Today cap
+      told the model to discard the rest.
+    target: >
+      prompt_articles_reported_pct_7d above 35 network-wide with
+      also_today_items_7d at 4 or more, no rise in
+      digest_structural_regen_share_7d or items_without_source_shipped, the
+      developed sections' item floors still met (the Also Today run sits
+      outside every floor's span), and the shows inside their promised
+      length. ⚠️ AUDIO — A/B-listen the run on one flagship and one desk.
+    notes: >
+      shows/prompts/_shared/also_today.txt on 14 digest prompts (the desks
+      keep their own, uncapped); MAB's Quick Bits and MIT's Quick Hits are the
+      same run under their own names; Top World's items 6-10 already are.
+      ShowConfig.max_prompt_articles (DEFAULT_MAX_PROMPT_ARTICLES 60, was a
+      literal 40). Metrics articles_in_prompt, items_shipped,
+      digest_also_today_items, prompt_articles_reported_pct. Guards:
+      tests/test_report_more_sourced_news_2026_10_19.py.

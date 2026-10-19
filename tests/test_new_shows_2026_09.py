@@ -573,7 +573,7 @@ class TestTestModeNeverPublishes:
 class TestHookArticlesSurviveTheCap:
     def test_cap_keeps_hook_articles(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        cap = src[src.index("MAX_ARTICLES_FOR_LLM = 40"):]
+        cap = src[src.index("MAX_ARTICLES_FOR_LLM = int("):]
         cap = cap[:cap.index("# Get content tracker summary") if "# Get content tracker summary" in cap else 3000]
         assert 'a.get("source_kind") == "hook"' in cap
         assert "articles = articles[:MAX_ARTICLES_FOR_LLM]" not in src

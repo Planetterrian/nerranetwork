@@ -46,7 +46,10 @@ class TestDeskFormatV2:
         # 10-12 minute promise.
         assert "### Across the Region\n**2 or 3 items**, developed" in body
         assert "### The Closer Look\n**1 story, 300-420 words**" in body
-        assert "### Also Today\n**3 to 5 items, one sentence each**" in body
+        # Oct 19 2026: no cap — every remaining qualifying story, one sentence
+        # each (the operator: report sourced news, never discard it).
+        assert "### Also Today\n**Every remaining qualifying story, one sentence each**" in body
+        assert "3 to 5 items" not in body
         assert "omitted when fewer than two" in body
         # Consequence-first opening when the actor is outside the region.
         assert "opens on the consequence INSIDE the region" in body
