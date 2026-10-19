@@ -522,6 +522,12 @@ def live_trouble_reply(app: Dict[str, Any], iv: Dict[str, Any], show: Any) -> st
         "Have Mira call my phone button has me calling you straight away.")
 
 
+def _never_auto(inbound: Dict[str, Any], policy: Any) -> bool:
+    from pipelines.producer.policy import domain_blocked, sender_domain
+    blocked = getattr(policy, "never_auto_reply_domains", ()) or ()
+    return bool(blocked) and domain_blocked(sender_domain(inbound.get("from_email") or ""), blocked)
+
+
 def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
                        guest: Optional[Dict[str, Any]], gmail: Any, policy: Any,
                        dry_run: bool) -> Dict[str, Any]:
@@ -615,6 +621,11 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
         reason = f"I was only {p['confidence']:.0%} sure what they wanted"
     elif policy.mode != "auto":
         reason = f"the Producer is in {policy.mode} mode"
+    # Oct 19 2026 (Cory O'Daniel left his interview at six minutes): a
+    # domain on the never-auto-reply list is answered by Patrick, guests
+    # included, not only publicists pitching.
+    elif _never_auto(inbound, policy):
+        reason = f"{inbound.get('from_email') or 'this sender'} is on the never-auto-reply list"
     # Oct 7 2026 (Dr. Jason Shumard): his team wrote on Oct 5 that he could
     # not make Oct 7 and asked to move it. Mira had already answered three
     # times in that thread (the sound note, a confirmation), so she held the

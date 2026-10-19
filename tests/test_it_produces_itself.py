@@ -237,7 +237,10 @@ class TestSheOwnsWhatSheIs:
         assert "What earns something is being good at it" in PROMPT
 
     def test_the_guest_experience_is_named_not_ignored(self):
-        assert "this is an odd setup, I know" in PROMPT
+        # Oct 19 2026 (Cory O'Daniel): naming the setup became part of a
+        # forty-second recital; the strangeness is made unremarkable instead.
+        assert "odd setup" not in PROMPT
+        assert "Make the strangeness of the hour" in PROMPT
         assert "legitimate content, not a distraction" in PROMPT
 
     def test_nerra_is_described_in_patricks_own_terms(self):
@@ -1687,7 +1690,7 @@ class TestTheAdjectiveReflexIsBannedAsAShape:
     def test_the_prompt_bans_the_shape_and_bridges_the_warm_up(self):
         assert 'opening a reply with "That\'s a [adjective] [noun]"' in PROMPT
         assert "Do not grade an answer with an adjective at all" in PROMPT
-        assert "WARM UP FIRST, THEN EASE IN" in PROMPT
+        assert "GET TO THEIR SUBJECT FAST" in PROMPT
         assert "come out of something they just said" in PROMPT
         assert "a fast, dry guest gets a fast, dry host" in PROMPT
 

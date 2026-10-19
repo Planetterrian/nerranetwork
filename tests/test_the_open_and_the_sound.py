@@ -120,22 +120,25 @@ class TestHowSheSounds:
 class TestWhatSheSaysAtTheTop:
     def test_she_introduces_herself_and_the_show(self):
         assert "HOW TO OPEN" in PROMPT
-        assert "I'm Mira. I'm the AI who hosts {{show_name}}." in PROMPT
+        assert "I'm Mira, the AI who hosts {{show_name}}," in PROMPT
         assert ("first podcast hosted and run end to end by an AI"
                 in _flat(PROMPT))
 
     def test_the_claim_is_made_once_and_not_as_a_boast(self):
         flat = _flat(PROMPT)
         assert "Say it once, as a fact rather than a boast, and never again" in flat
-        assert "a host who keeps mentioning it sounds like a press release" in flat
+        assert "sounds like a press release" in flat
 
-    def test_she_says_how_the_hour_will_go(self):
+    def test_the_format_is_one_sentence_not_a_recital(self):
+        """Oct 19 2026 (Cory O'Daniel): forty seconds of how-this-works before
+        the first question. The guest has the format by email; in the room it
+        is one sentence: who she is, and that they see the transcript first."""
         flat = _flat(PROMPT)
-        assert "roughly {{planned_minutes}} minutes" in flat
-        assert "nothing is live" in flat
-        # Oct 11 2026: the guest's terms as built (gate 2 auto-approves after
-        # seven days), never "approve the episode before anyone else does".
-        assert "a week to approve it, cut from it or refuse it" in flat
+        opening = flat[flat.index("HOW TO OPEN"):flat.index("GET TO THEIR SUBJECT FAST")]
+        assert "ONE SENTENCE ON HOW THIS WORKS" in opening
+        assert "you'll see the transcript before anything goes out" in opening
+        assert "roughly {{planned_minutes}} minutes" not in opening
+        assert "nothing is live" not in flat
         assert "approve the episode before anyone else does" not in flat
 
     def test_the_co_host_is_introduced_only_when_there_is_one(self):

@@ -32,13 +32,14 @@ class TestTheOpeningIsWarm:
     def test_greeting_first_and_listening(self):
         flat = _flat(PROMPT)
         assert "WHO YOU ARE IN THE ROOM" in PROMPT
-        assert "Three short beats, each one a turn that ends and LISTENS" in flat
+        assert "Two short beats, each a turn that ends and LISTENS" in flat
         assert "never start talking while the guest is still saying hello" in flat
         assert "GREET THEM AS A PERSON" in PROMPT
-        assert flat.index("GREET THEM AS A PERSON") < flat.index("I'm Mira. I'm the AI who hosts {{show_name}}.")
+        assert flat.index("GREET THEM AS A PERSON") < flat.index("I'm Mira, the AI who hosts {{show_name}},")
 
     def test_tagline_is_not_the_first_words(self):
-        assert "never as your first words: {{opening_line}}" in _flat(PROMPT)
+        # Oct 19 2026: the tagline belongs to the produced episode, not the room.
+        assert "The show's tagline (\"{{opening_line}}\") belongs to the produced episode; never say it in the room." in _flat(PROMPT)
 
     def test_warmth_through_the_hour(self):
         flat = _flat(PROMPT)

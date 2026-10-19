@@ -148,9 +148,10 @@ def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
 
 
 COHOST_INTRO_STEP = (
-    "   - {{cohost_name}}, your co-host, by name: a real person, the founder "
-    "of the network, who will jump in with his own questions. If he is "
-    "already in the room, hand him a beat to say hello himself;\n"
+    "   In that same sentence, introduce {{cohost_name}}, your co-host, by "
+    "name: a real person, the founder of the network, who will jump in with "
+    "his own questions. If he is already in the room, hand him a beat to say "
+    "hello himself before your first question.\n"
 )
 
 

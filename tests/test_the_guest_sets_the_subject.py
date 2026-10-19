@@ -44,7 +44,8 @@ class TestHowMiraHoldsTheSubject:
         assert "WHEN THE GUEST STEERS, GO WITH THEM" in PROMPT
         assert "A PERSONAL STORY IS NOT A CLAIM" in PROMPT
         assert "A complete answer comes before any follow-up" in PROMPT
-        assert "within the first five minutes you are on the subject" in PROMPT
+        # Oct 19 2026 (Cory O'Daniel): five minutes was too long.
+        assert "By the second minute you are on the subject they came to discuss" in " ".join(PROMPT.split())
 
     def test_the_clock_brings_her_back(self):
         assert "If any point under THE SUBJECT THEY CAME FOR has not" in SCENARIO
