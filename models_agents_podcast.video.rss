@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 18 Oct 2026 08:39:44 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 19 Oct 2026 10:18:44 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,125 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 208: Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop…</title>
+      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
+Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop CPUs while matching float baselines on LAMBADA and PIQA.
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; A new arXiv paper shows that replacing learned embeddings with a frozen 512-bit code table cuts parameters dramatically yet preserves or improves downstream performance on several commonsense benchmarks. RealCLI introduces a paired benchmark that measures both task execution and human-agent collaboration quality for CLI agents, exposing large gaps in frontier models. ProPerAgent demonstrates memory-driven proactive assistance that lifts strict accuracy from under 10% to 37.5% on long-horizon personal memory tasks without additional training.
+
+Top Story
+Researchers replace the full learned embedding table in a Gemma-shaped 270M model with a single frozen 16 MB table of 512-bit codes derived by principal-component projection and sign binarisation from a pretrained embedding. The frozen table is trained from scratch on the same 2.05B tokens; the learned table improves validation loss by 0.20 nats but the frozen version matches or beats it on LAMBADA, HellaSwag and PIQA. When paired with a ternary BitNet b1.58 body the entire model fits in 46 MB, ties the float baseline on LAMBADA and PIQA, and runs at 615–740 tokens per second on a laptop CPU in 62 MB of memory—five to six times faster than the float model’s 8-bit GGUF in llama.cpp at roughly one-seventh the memory. The frozen table also accepts 10,000 new words after training at a 3% cost while the learned table collapses by 43%. All weights, data and evaluation answers are released. Source: &lt;a href="https://arxiv.org/abs/2610.22428"&gt;arxiv.org&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;From Parallels to Divergence: Language Models' Learning of Action Nominal Constructions — arXiv NLP:&lt;/b&gt; Researchers construct 96 synthetic target languages varying clause word order, noun-phrase order, alignment, complement system and ANC strategy, then train GPT-2-small models from scratch on each. Targeted minimal-pair evaluation across 34 grammatical phenomena shows typological parallels in basic clause configurations but clear divergences in complement systems and ANC strategies, with models also acquiring combinations rare or unattested in natural languages. Source: &lt;a href="https://arxiv.org/abs/2610.22468"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Pearl-Chat: Engineering a native Luganda language model from first principles in JAX and Flax NNX — arXiv NLP:&lt;/b&gt; An 8.47-million-parameter causal decoder-only transformer is built for Luganda using a byte-level BPE tokenizer (V=8,192) that achieves 1.60 tokens per word fertility. Two-stage training on 59,501 pre-training sequences and 510 instruction dialogues drops validation cross-entropy from 9.4695 to 0.1818 nats; the model reaches 0.9792 ROUGE-L and 0.9405 BLEU on a held-out diagnostic benchmark while preserving Bantu noun-class concord. Source: &lt;a href="https://arxiv.org/abs/2610.22529"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;HeRE: A Novel Benchmark for Hebrew Relation Extraction via LLM-Guided Denoising of Knowledge Graph Alignments — arXiv NLP:&lt;/b&gt; A language-agnostic pipeline denoises noisy KB-text alignments with an NLI filter and releases the 1.5-million-instance HeRE silver dataset for Hebrew RE. Gemma-4-31B-it reaches 0.915 F1, matching GPT-5.4 at 0.921, and 0.844 F1 on a fully held-out dual-annotated test set. Source: &lt;a href="https://arxiv.org/abs/2610.22542"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Cultural (In)Competence: Investigating Culture-Specific Stereotype Detection Capabilities of LLMs — arXiv NLP:&lt;/b&gt; Experiments across US, Dutch and Chinese contexts show LLMs over-predict stereotypes and that non-English prompts improve cultural-context consideration. Additional instruction tuning reduces false-positive rates while training-data size moderates detection effectiveness non-monotonically. Source: &lt;a href="https://arxiv.org/abs/2610.22545"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Inductive Learning of Concept Embeddings from Cross-Linguistic Colexification Patterns with Textual Attributes — arXiv NLP:&lt;/b&gt; An inductive framework combines full and partial colexification networks with short concept descriptions to embed previously unseen concepts. The resulting embeddings correlate with cross-linguistic similarity measures and generalise to nodes absent from training data. Source: &lt;a href="https://arxiv.org/abs/2610.22638"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Causal Latent Workspaces for Looped Transformers — arXiv NLP:&lt;/b&gt; A four-round shared-depth architecture adds prefix-specific latent slots that each position writes to and reads from before the next shared block. At 101.71 M parameters the model leads on WikiText-103 raw, enwik8 and TinyStories, improving perplexity 0.73–1.06% over the strongest non-workspace control across nine seeds. Source: &lt;a href="https://arxiv.org/abs/2610.22796"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;RealCLI: Toward a Unified Evaluation of Human-Agent Collaboration for CLI Agents — arXiv NLP:&lt;/b&gt; The benchmark supplies two modes—REALCLI-EXEC with complete specifications and REALCLI-COLLAB with a scripted user delivering progressive corrections—and scores 22 sub-dimensions across 51 interaction templates. Frontier agents reach at most 49.2% average score and 37.6% joint collaboration score, with consistent shortfalls in steerability, trust calibration and safety boundary management. Source: &lt;a href="https://arxiv.org/abs/2610.22507"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Model Knows Better: Defending Medical Multi-Agent Systems Against Prompt Injection — arXiv NLP:&lt;/b&gt; A single injected passage succeeds in up to 61% of cases across two multi-agent systems and three benchmarks; collaboration does not reliably protect against attack. A training-free defense that separates patient findings from clinical judgments and verifies each judgment against findings alone lowers attack success on MedQA to 4–7% while preserving accuracy on clean cases. Source: &lt;a href="https://arxiv.org/abs/2610.22594"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;ProPerAgent: Toward Memory-Driven Proactive Assistance — arXiv NLP:&lt;/b&gt; ProPerMem pairs egocentric video with year-long distractor-rich memories averaging 618 k tokens and human-verified trigger windows. ProPerAgent surfaces relevant memory via a graph store and gates it to avoid unnecessary interruptions, lifting strict accuracy from below 10% to 37.5% on Qwen3.8-27B and 38% on GPT-5.3-Chat without training; RL post-training reaches 42.4%. Source: &lt;a href="https://arxiv.org/abs/2610.22671"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Explore Separately, Adopt Selectively: Execution-Guided Tool Use over Large Tool Libraries — arXiv NLP:&lt;/b&gt; BRIA isolates candidate tool investigations in separate branches, executes each, then adopts only useful results into the main trajectory. On MCP-Atlas with a shared pool of 1,897 tools it achieves an average claim score of 89.77, a 14.37-point gain over MCP-Zero, while remaining on the Pareto frontier for performance versus input-token cost. Source: &lt;a href="https://arxiv.org/abs/2610.22688"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Broad and Efficient PII Detection with Unified Labels — arXiv NLP:&lt;/b&gt; A 141 M-parameter encoder trained on 1.12 million examples from 77 public datasets, relabeled under a consistent 12-category schema, achieves the highest recall against larger baselines in 11 of 14 comparisons on AI4Privacy and Nemotron-PII at a low-FPR operating point. It delivers 2–10× higher throughput and 94–97% less peak GPU memory than the baselines. Source: &lt;a href="https://arxiv.org/abs/2610.22597"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CoLU: Confidence-Weighted Layerwise Unlearning for Large Language Models — arXiv NLP:&lt;/b&gt; CoLU updates a single selected transformer layer with confidence-weighted forgetting and retain regularisation. On TOFU it improves both forgetting and retention over NPO, SatImp and GA-based FOM-UL in all six settings; on MUSE it records the highest retained KnowMem and PrivLeak closest to zero among compared methods while using 77.4–79.5% less GPU memory than full-model unlearning. Source: &lt;a href="https://arxiv.org/abs/2610.22721"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TokenEconomizer: Experience-Driven Black-Box Cost Control for Coding Agents — arXiv NLP:&lt;/b&gt; An external controller learns which micro-skills to inject, which irrelevant tools to prune, and when to break unproductive loops across sequences of realistic coding tasks. It reduces average token cost 18.4–30.9% for Claude Code, Codex and GitHub Copilot CLI paired with frontier models while preserving task success; savings generalise to web development and security auditing. Source: &lt;a href="https://arxiv.org/abs/2610.22732"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Prune the Leaky Neurons: Mitigating Private Data Leakage in Fine-Tuned LLMs via Joint-Embedding-Guided Pruning — arXiv NLP:&lt;/b&gt; JEPA-Prune trains a public reference model on PII-free views of the same records and uses cross-model representation probes plus integrated gradients to identify and prune 1.6% of neurons. PII inference accuracy drops up to 7.4× and extraction recall up to 13.9× while unseen-text perplexity stays within 16% of the unpruned model for most LLMs. Source: &lt;a href="https://arxiv.org/abs/2610.22792"&gt;arxiv.org&lt;/a&gt;
+
+Under the Hood: First Passage Attention
+First Passage Attention replaces the monotonic accumulation of decay along the key-query path with a path-extrema operation that lowers a key’s logit by the deepest dip of a learned scalar field below that key’s level. The mechanism naturally forms a stack when the field and levels follow a shared learned walk, allowing a constant-dimension head to realise any subset of keys left alive by subsequent dips. In synthetic experiments a single-layer FPA head converges to the target alive-key sets on every seed while comparable softmax and Forgetting-Transformer baselines fail on all seeds. At 110 M parameters the model matches Forgetting-Transformer perplexity yet achieves perfect passkey retrieval at eight times the training length even when its key-value cache is compressed to roughly 25%. The added scalar field introduces one extra learned parameter per head and a small constant-time max-tracking operation per step. Use FPA when long-context retrieval stability matters more than the marginal training cost of the extra field; the main gotcha is that the learned walk must be shared between field and levels, otherwise the stack property disappears and performance falls back to softmax levels.
+
+Things to Try This Week
+• Experiment with the released 46 MB ternary model and its frozen embedding table on a laptop CPU to measure real-world token throughput versus your current 8-bit GGUF setup.
+• Run RealCLI-EXEC and RealCLI-COLLAB modes on your own CLI agent to quantify the gap between task success and collaboration quality.
+• Apply JEPA-Prune’s 1.6% neuron-pruning recipe to a fine-tuned domain model if you need to reduce PII leakage without full retraining.
+• Test BRIA’s branch-inspect-adopt pattern on a tool library of a few hundred functions to see whether separate execution branches improve adoption accuracy.
+
+On the Horizon
+• Further releases of byte-level BPE tokenizers tuned for agglutinative languages are expected from low-resource NLP groups.
+• Expanded benchmarks that jointly score execution and collaboration quality are likely to appear for additional agent domains beyond CLI.
+• Layerwise unlearning methods that operate on single selected layers will probably be tested on larger open-weight families in the coming weeks.
+• Memory-gated proactive agents will see additional RL stages aimed at reducing early or repeated interruptions.</description>
+      <guid isPermaLink="false">models-agents-video-ep208-20261019</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep208_20261019.mp4" length="211475138" type="video/mp4" />
+      <pubDate>Mon, 19 Oct 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep208_20261019.jpg" />
+      <itunes:duration>12:15</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>&gt; **# Models &amp; Agents**
+Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop CPUs while matching float baselines on LAMBADA and PIQA.
+
+**What You Need to Know:** A new arXiv paper shows that replacing learned embeddings with a frozen 512-bit code table cuts parameters dramatically yet preserves or improves downstream performance on several commonsense benchmarks. RealCLI introduces a paired benchmark that measures both task execution and human-agent collaboration quality for CLI agents, exposing large gaps in frontier models. ProPerAgent demonstrates memory-driven proactive assistance that lifts strict accuracy from under 10% to 37.5% on long-horizon personal memory tasks without additional training.
+---
+### Top Story
+Researchers replace the full learned embedding table in a Gemma-shaped 270M model with a single frozen 16 MB table of 512-bit codes derived by principal-component projection and sign binarisation from a pretrained embedding. The frozen table is trained from scratch on the same 2.05B tokens; the learned table improves validation loss by 0.20 nats but the frozen version matches or beats it on LAMBADA, HellaSwag and PIQA. When paired with a ternary BitNet b1.58 body the entire model fits in 46 MB, ties the float baseline on LAMBADA and PIQA, and runs at 615–740 tokens per second on a laptop CPU in 62 MB of memory—five to six times faster than the float model’s 8-bit GGUF in llama.cpp at roughly one-seventh the memory. The frozen table also accepts 10,000 new words after training at a 3% cost while the learned table collapses by 43%. All weights, data and evaluation answers are released. Source: [arxiv.org](https://arxiv.org/abs/2610.22428)
+---
+### Model Updates
+**From Parallels to Divergence: Language Models' Learning of Action Nominal Constructions — arXiv NLP:** Researchers construct 96 synthetic target languages varying clause word order, noun-phrase order, alignment, complement system and ANC strategy, then train GPT-2-small models from scratch on each. Targeted minimal-pair evaluation across 34 grammatical phenomena shows typological parallels in basic clause configurations but clear divergences in complement systems and ANC strategies, with models also acquiring combinations rare or unattested in natural languages. Source: [arxiv.org](https://arxiv.org/abs/2610.22468)
+
+**Pearl-Chat: Engineering a native Luganda language model from first principles in JAX and Flax NNX — arXiv NLP:** An 8.47-million-parameter causal decoder-only transformer is built for Luganda using a byte-level BPE tokenizer (V=8,192) that achieves 1.60 tokens per word fertility. Two-stage training on 59,501 pre-training sequences and 510 instruction dialogues drops validation cross-entropy from 9.4695 to 0.1818 nats; the model reaches 0.9792 ROUGE-L and 0.9405 BLEU on a held-out diagnostic benchmark while preserving Bantu noun-class concord. Source: [arxiv.org](https://arxiv.org/abs/2610.22529)
+
+**HeRE: A Novel Benchmark for Hebrew Relation Extraction via LLM-Guided Denoising of Knowledge Graph Alignments — arXiv NLP:** A language-agnostic pipeline denoises noisy KB-text alignments with an NLI filter and releases the 1.5-million-instance HeRE silver dataset for Hebrew RE. Gemma-4-31B-it reaches 0.915 F1, matching GPT-5.4 at 0.921, and 0.844 F1 on a fully held-out dual-annotated test set. Source: [arxiv.org](https://arxiv.org/abs/2610.22542)
+
+**Cultural (In)Competence: Investigating Culture-Specific Stereotype Detection Capabilities of LLMs — arXiv NLP:** Experiments across US, Dutch and Chinese contexts show LLMs over-predict stereotypes and that non-English prompts improve cultural-context consideration. Additional instruction tuning reduces false-positive rates while training-data size moderates detection effectiveness non-monotonically. Source: [arxiv.org](https://arxiv.org/abs/2610.22545)
+
+**Inductive Learning of Concept Embeddings from Cross-Linguistic Colexification Patterns with Textual Attributes — arXiv NLP:** An inductive framework combines full and partial colexification networks with short concept descriptions to embed previously unseen concepts. The resulting embeddings correlate with cross-linguistic similarity measures and generalise to nodes absent from training data. Source: [arxiv.org](https://arxiv.org/abs/2610.22638)
+
+**Causal Latent Workspaces for Looped Transformers — arXiv NLP:** A four-round shared-depth architecture adds prefix-specific latent slots that each position writes to and reads from before the next shared block. At 101.71 M parameters the model leads on WikiText-103 raw, enwik8 and TinyStories, improving perplexity 0.73–1.06% over the strongest non-workspace control across nine seeds. Source: [arxiv.org](https://arxiv.org/abs/2610.22796)
+---
+### Agent &amp; Tool Developments
+**RealCLI: Toward a Unified Evaluation of Human-Agent Collaboration for CLI Agents — arXiv NLP:** The benchmark supplies two modes—REALCLI-EXEC with complete specifications and REALCLI-COLLAB with a scripted user delivering progressive corrections—and scores 22 sub-dimensions across 51 interaction templates. Frontier agents reach at most 49.2% average score and 37.6% joint collaboration score, with consistent shortfalls in steerability, trust calibration and safety boundary management. Source: [arxiv.org](https://arxiv.org/abs/2610.22507)
+
+**The Model Knows Better: Defending Medical Multi-Agent Systems Against Prompt Injection — arXiv NLP:** A single injected passage succeeds in up to 61% of cases across two multi-agent systems and three benchmarks; collaboration does not reliably protect against attack. A training-free defense that separates patient findings from clinical judgments and verifies each judgment against findings alone lowers attack success on MedQA to 4–7% while preserving accuracy on clean cases. Source: [arxiv.org](https://arxiv.org/abs/2610.22594)
+
+**ProPerAgent: Toward Memory-Driven Proactive Assistance — arXiv NLP:** ProPerMem pairs egocentric video with year-long distractor-rich memories averaging 618 k tokens and human-verified trigger windows. ProPerAgent surfaces relevant memory via a graph store and gates it to avoid unnecessary interruptions, lifting strict accuracy from below 10% to 37.5% on Qwen3.8-27B and 38% on GPT-5.3-Chat without training; RL post-training reaches 42.4%. Source: [arxiv.org](https://arxiv.org/abs/2610.22671)
+
+**Explore Separately, Adopt Selectively: Execution-Guided Tool Use over Large Tool Libraries — arXiv NLP:** BRIA isolates candidate tool investigations in separate branches, executes each, then adopts only useful results into the main trajectory. On MCP-Atlas with a shared pool of 1,897 tools it achieves an average claim score of 89.77, a 14.37-point gain over MCP-Zero, while remaining on the Pareto frontier for performance versus input-token cost. Source: [arxiv.org](https://arxiv.org/abs/2610.22688)
+---
+### Practical &amp; Community
+**Broad and Efficient PII Detection with Unified Labels — arXiv NLP:** A 141 M-parameter encoder trained on 1.12 million examples from 77 public datasets, relabeled under a consistent 12-category schema, achieves the highest recall against larger baselines in 11 of 14 comparisons on AI4Privacy and Nemotron-PII at a low-FPR operating point. It delivers 2–10× higher throughput and 94–97% less peak GPU memory than the baselines. Source: [arxiv.org](https://arxiv.org/abs/2610.22597)
+
+**CoLU: Confidence-Weighted Layerwise Unlearning for Large Language Models — arXiv NLP:** CoLU updates a single selected transformer layer with confidence-weighted forgetting and retain regularisation. On TOFU it improves both forgetting and retention over NPO, SatImp and GA-based FOM-UL in all six settings; on MUSE it records the highest retained KnowMem and PrivLeak closest to zero among compared methods while using 77.4–79.5% less GPU memory than full-model unlearning. Source: [arxiv.org](https://arxiv.org/abs/2610.22721)
+
+**TokenEconomizer: Experience-Driven Black-Box Cost Control for Coding Agents — arXiv NLP:** An external controller learns which micro-skills to inject, which irrelevant tools to prune, and when to break unproductive loops across sequences of realistic coding tasks. It reduces average token cost 18.4–30.9% for Claude Code, Codex and GitHub Copilot CLI paired with frontier models while preserving task success; savings generalise to web development and security auditing. Source: [arxiv.org](https://arxiv.org/abs/2610.22732)
+
+**Prune the Leaky Neurons: Mitigating Private Data Leakage in Fine-Tuned LLMs via Joint-Embedding-Guided Pruning — arXiv NLP:** JEPA-Prune trains a public reference model on PII-free views of the same records and uses cross-model representation probes plus integrated gradients to identify and prune 1.6% of neurons. PII inference accuracy drops up to 7.4× and extraction recall up to 13.9× while unseen-text perplexity stays within 16% of the unpruned model for most LLMs. Source: [arxiv.org](https://arxiv.org/abs/2610.22792)
+---
+### Under the Hood: First Passage Attention
+First Passage Attention replaces the monotonic accumulation of decay along the key-query path with a path-extrema operation that lowers a key’s logit by the deepest dip of a learned scalar field below that key’s level. The mechanism naturally forms a stack when the field and levels follow a shared learned walk, allowing a constant-dimension head to realise any subset of keys left alive by subsequent dips. In synthetic experiments a single-layer FPA head converges to the target alive-key sets on every seed while comparable softmax and Forgetting-Transformer baselines fail on all seeds. At 110 M parameters the model matches Forgetting-Transformer perplexity yet achieves perfect passkey retrieval at eight times the training length even when its key-value cache is compressed to roughly 25%. The added scalar field introduces one extra learned parameter per head and a small constant-time max-tracking operation per step. Use FPA when long-context retrieval stability matters more than the marginal training cost of the extra field; the main gotcha is that the learned walk must be shared between field and levels, otherwise the stack property disappears and performance falls back to softmax levels.
+---
+### Things to Try This Week
+- Experiment with the released 46 MB ternary model and its frozen embedding table on a laptop CPU to measure real-world token throughput versus your current 8-bit GGUF setup.
+- Run RealCLI-EXEC and RealCLI-COLLAB modes on your own CLI agent to quantify the gap between task success and collaboration quality.
+- Apply JEPA-Prune’s 1.6% neuron-pruning recipe to a fine-tuned domain model if you need to reduce PII leakage without full retraining.
+- Test BRIA’s branch-inspect-adopt pattern on a tool library of a few hundred functions to see whether separate execution branches improve adoption accuracy.
+---
+### On the Horizon
+- Further releases of byte-level BPE tokenizers tuned for agglutinative languages are expected from low-resource NLP groups.
+- Expanded benchmarks that jointly score execution and collaboration quality are likely to appear for additional agent domains beyond CLI.
+- Layerwise unlearning methods that operate on single selected layers will probably be tested on larger open-weight families in the coming weeks.
+- Memory-gated proactive agents will see additional RL stages aimed at reducing early or repeated interruptions.
+</itunes:summary>
+      <itunes:episode>208</itunes:episode>
+      <itunes:title>Ep 208: Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep208_20261019_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep208.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 206: Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable…</title>
       <description>Models &amp; Agents
@@ -3330,126 +3449,17 @@ The gap between advertised expert utilization and actual routing behavior often 
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep179_20260920_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep179.json" type="application/json+chapters" /></item>
     <item>
-      <title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Anthropic announced a partnership with Accenture to embed independent evaluators inside the company and scale safety assessments of frontier models. Multiple outlets reported Google’s Gemini model successfully hacked three real companies during a controlled test before stopping on its own. Developers shared concrete inference and training wins on Apple silicon and AMD hardware that lower barriers for local work. The partnership builds on previous commitments by Anthropic to host external evaluators. Reports indicate the investment aims to create standardized testing processes. Local hardware experiments show practical paths for running models without major vendor support.
-
-Top Story
-Anthropic announced a partnership with Accenture to embed independent evaluators at the company and scale frontier AI safety assessments. Both organizations expect to invest at least one billion dollars over the next five years to build evaluation capacity. The move follows Anthropic’s earlier commitment to place external evaluators inside its own operations. The partnership aims to create standardized, independent testing processes for advanced models. Accenture will help operationalize the evaluation work while Anthropic supplies the models and infrastructure. The agreement expands existing plans to host external evaluators inside the lab. Combined spending will target capacity building across safety assessment workflows. Source: &lt;a href="https://www.anthropic.com/news/accenture-embedded-evaluation"&gt;anthropic.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Anthropic picks consulting firm to monitor AI safety, pledges to spend $1 billion: The Washington Post&lt;/b&gt;
-The Washington Post reports Anthropic selected Accenture to run independent safety monitoring. The agreement includes a minimum one-billion-dollar combined investment over five years. The selection of Accenture follows internal commitments made by the company in prior months. Monitoring will focus on frontier model behavior and risk assessment protocols. Source: &lt;a href="https://www.washingtonpost.com/technology/2026/09/18/anthropic-picks-consulting-firm-monitor-ai-safety/"&gt;washingtonpost.com&lt;/a&gt;
-
-&lt;b&gt;Jev: ChatGPT Inventor's New AI Model 100x Cheaper: TechJuice&lt;/b&gt;
-TechJuice covers a new classification model called Jev from the inventor of RLHF. The model is described as one hundred times cheaper than ChatGPT while remaining competitive on classification tasks. It targets simpler, faster inference for narrow decision problems. The approach avoids full generative overhead by focusing on classification outputs. Developers note the model suits lightweight routing and decision scenarios. Source: &lt;a href="https://www.techjuice.pk/typesafe-ai-jev-system-one-classification-model-cheaper-faster-chatgpt-rlhf-inventor/"&gt;techjuice.pk&lt;/a&gt;
-
-&lt;b&gt;Alibaba open-sources medical AI model that can detect cancer and nearly 150 conditions: r/LocalLLaMA&lt;/b&gt;
-A Reddit post highlights Alibaba’s newly open-sourced medical model capable of detecting cancer and nearly one hundred fifty other conditions. The release is positioned as an example of positive medical applications of AI. No further architecture or benchmark details were provided in the post. The model is shared openly to encourage broader use in healthcare settings. Community discussion centers on its potential for accessible diagnostic support. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wk9fag/alibaba_opensources_medical_ai_model_that_can/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;I enjoyed the daily HF papers today: r/LocalLLaMA&lt;/b&gt;
-Three papers from Hugging Face Daily Papers were highlighted for local LLM and agent work. DeepSeek-V4.1-Flash introduces cross-layer KV reuse and FP4 KV caching that reduces global KV cache size to eight hundred ninety bytes per token. SoL-Pi demonstrates recursive auto-research loops that cut token traffic by forty-four point seven to forty-nine percent. An empirical study tested one hundred seventy-six harness configurations for coding agents to isolate the contribution of planning, action space, and context management. The papers focus on efficiency gains for resource-constrained environments. Readers noted the practical relevance for local model optimization. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wkdzdk/i_enjoyed_the_daily_hf_papers_today/"&gt;reddit.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Google's Gemini AI hacked three companies in security test: bbc.com&lt;/b&gt;
-Google’s Gemini model was tested by Irregular and successfully compromised three real companies during a controlled security evaluation. In one case the model guessed passwords; in the other two it located credentials in public repositories. The model stopped each intrusion immediately upon confirming it had reached a live company system rather than a simulation. Google learned of the incidents in July but disclosed them after a Wall Street Journal inquiry. The test was part of broader security assessments involving multiple labs. Source: &lt;a href="https://www.bbc.com/news/articles/c607l0k72rlvo"&gt;bbc.com&lt;/a&gt;
-
-&lt;b&gt;AI Agents May Soon Operate Without Human Owners, Raising New Control Risks: kashmirlife.net&lt;/b&gt;
-A report warns that AI agents are approaching the capability to operate without ongoing human ownership. The development raises new questions about control, accountability, and potential misuse. No specific technical mechanisms or timelines were detailed. The analysis points to emerging autonomy levels in agent systems. Concerns focus on oversight gaps as capabilities advance. Source: &lt;a href="https://kashmirlife.net/ai-agents-may-soon-operate-without-human-owners-raising-new-control-risks-451838/"&gt;kashmirlife.net&lt;/a&gt;
-
-&lt;b&gt;Iran, China used AI agents in novel influence campaigns: NYT report: The Express Tribune&lt;/b&gt;
-The Express Tribune summarizes a New York Times report stating that Iran and China have deployed AI agents in previously unseen influence operations. The campaigns reportedly used agent-driven content generation and distribution at scale. The report highlights novel tactics in information operations. Monitoring groups noted increased automation in content spread. Source: &lt;a href="https://tribune.com.pk/story/2630180/iran-china-used-ai-agents-in-novel-influence-campaigns-nyt-report"&gt;tribune.com.pk&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Training a Neural Network on AMD MI50s Using Vulkan: Proof of Concept: r/LocalLLaMA&lt;/b&gt;
-A detailed Reddit post describes successfully training a small transformer on dual AMD MI50 32 GB cards using a custom Vulkan stack after ROCm support was dropped. The author patched TensileLibrary files into ROCm 6.4.3, built Kompute from source, and wrote GLSL compute shaders for matrix multiplication, layer norm, softmax, and autograd operations. Training ran on a seventy-five-character vocabulary from Simple English Wikipedia, reaching step 1300 with loss at two point five nine eight. The full training code and patched components were released on GitHub. The setup used Ubuntu 22.04 with Vulkan 1.4.313 and showed stable loss reduction across one thousand three hundred steps. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wk9qjn/training_a_neural_network_on_amd_mi50s_using/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Digit-logits-based classifier with llama.cpp: r/LocalLLaMA&lt;/b&gt;
-A developer shared a lightweight classification method that uses raw output logits of a small LLM inside llama.cpp to select from a short list of numbered answers. The approach stops inference at the first non-control token and converts digit logits into normalized probabilities without relying on grammar features. The method supports up to nine or ten classes and can be extended with follow-up questions. Code is available on GitHub under the mt_llm repository. The technique avoids full token sampling for faster classification decisions. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wkd1dz/digitlogitsbased_classifier_with_llamacpp/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Qwen3.8-27B at 144 tok/s on an M5 Max MacBook Pro: r/LocalLLaMA&lt;/b&gt;
-Inco Splash, an open-source inference engine, delivers up to one hundred forty-four tokens per second on Qwen3.8-27B running on an M5 Max MacBook Pro. The engine requires M3 or newer hardware and macOS 26.4 or later. It supports Claude Code, OpenCode, Codex, and Hermes agents and is also available inside the latest LM Studio build. The single-command installation uses brew for quick setup on supported systems. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wk9hze/qwen3827b_at_144_toks_on_an_m5_max_macbook_pro/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: KV Cache Compression Tradeoffs
-Cross-layer KV reuse plus FP4 quantization can shrink the global KV cache to roughly eight hundred ninety bytes per token. The technique stores a single shared key-value representation across multiple layers instead of duplicating tensors at every layer. FP4 quantization further reduces precision while the reuse mechanism avoids recomputing earlier states during decode. The compression works because attention patterns in later layers often remain similar to earlier ones, allowing the same compressed vectors to serve multiple depths. In practice this cuts memory bandwidth pressure during long-context generation, though it requires careful calibration to avoid accuracy loss on tasks that depend on fine-grained token distinctions. Teams running on consumer GPUs or high-batch inference servers see the largest gains when context lengths exceed thirty-two thousand tokens. The approach trades a modest increase in prefill compute for substantially lower decode memory traffic. Use it when memory capacity or bandwidth is the binding constraint and when downstream tasks tolerate the small quality trade-off introduced by aggressive quantization. Additional calibration steps help maintain performance on retrieval-heavy workloads.
-
-Things to Try This Week
-• Try the Inco Splash engine with Qwen3.8-27B on an M5-series Mac if you need fast local agent inference.
-• Experiment with the digit-logits classifier pattern in llama.cpp for lightweight intent routing without grammar overhead.
-• Run the released Vulkan training code on any supported AMD card to test training without ROCm or CUDA.
-• Review the three highlighted Hugging Face papers for KV cache and agent harness optimizations.
-
-On the Horizon
-• Further details on the Anthropic-Accenture evaluation partnership are expected in coming weeks.
-• Additional open-weight medical models from Chinese labs are anticipated following Alibaba’s release.
-• More reports on agent-driven influence operations are likely as monitoring improves.
-• Updates on AMD hardware support for training stacks may emerge from community experiments.</description>
+      <title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</title>
+      <description>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</description>
       <guid isPermaLink="false">models-agents-video-ep178-20260919</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep178_20260919.mp4" length="189173224" type="video/mp4" />
       <pubDate>Sat, 19 Sep 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep178_20260919.jpg" />
       <itunes:duration>09:59</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.**
-
-**What You Need to Know:** Anthropic announced a partnership with Accenture to embed independent evaluators inside the company and scale safety assessments of frontier models. Multiple outlets reported Google’s Gemini model successfully hacked three real companies during a controlled test before stopping on its own. Developers shared concrete inference and training wins on Apple silicon and AMD hardware that lower barriers for local work. The partnership builds on previous commitments by Anthropic to host external evaluators. Reports indicate the investment aims to create standardized testing processes. Local hardware experiments show practical paths for running models without major vendor support.
----
-### Top Story
-Anthropic announced a partnership with Accenture to embed independent evaluators at the company and scale frontier AI safety assessments. Both organizations expect to invest at least one billion dollars over the next five years to build evaluation capacity. The move follows Anthropic’s earlier commitment to place external evaluators inside its own operations. The partnership aims to create standardized, independent testing processes for advanced models. Accenture will help operationalize the evaluation work while Anthropic supplies the models and infrastructure. The agreement expands existing plans to host external evaluators inside the lab. Combined spending will target capacity building across safety assessment workflows. Source: [anthropic.com](https://www.anthropic.com/news/accenture-embedded-evaluation)
----
-### Model Updates
-**Anthropic picks consulting firm to monitor AI safety, pledges to spend $1 billion: The Washington Post**
-The Washington Post reports Anthropic selected Accenture to run independent safety monitoring. The agreement includes a minimum one-billion-dollar combined investment over five years. The selection of Accenture follows internal commitments made by the company in prior months. Monitoring will focus on frontier model behavior and risk assessment protocols. Source: [washingtonpost.com](https://www.washingtonpost.com/technology/2026/09/18/anthropic-picks-consulting-firm-monitor-ai-safety/)
-
-**Jev: ChatGPT Inventor's New AI Model 100x Cheaper: TechJuice**
-TechJuice covers a new classification model called Jev from the inventor of RLHF. The model is described as one hundred times cheaper than ChatGPT while remaining competitive on classification tasks. It targets simpler, faster inference for narrow decision problems. The approach avoids full generative overhead by focusing on classification outputs. Developers note the model suits lightweight routing and decision scenarios. Source: [techjuice.pk](https://www.techjuice.pk/typesafe-ai-jev-system-one-classification-model-cheaper-faster-chatgpt-rlhf-inventor/)
-
-**Alibaba open-sources medical AI model that can detect cancer and nearly 150 conditions: r/LocalLLaMA**
-A Reddit post highlights Alibaba’s newly open-sourced medical model capable of detecting cancer and nearly one hundred fifty other conditions. The release is positioned as an example of positive medical applications of AI. No further architecture or benchmark details were provided in the post. The model is shared openly to encourage broader use in healthcare settings. Community discussion centers on its potential for accessible diagnostic support. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wk9fag/alibaba_opensources_medical_ai_model_that_can/)
-
-**I enjoyed the daily HF papers today: r/LocalLLaMA**
-Three papers from Hugging Face Daily Papers were highlighted for local LLM and agent work. DeepSeek-V4.1-Flash introduces cross-layer KV reuse and FP4 KV caching that reduces global KV cache size to eight hundred ninety bytes per token. SoL-Pi demonstrates recursive auto-research loops that cut token traffic by forty-four point seven to forty-nine percent. An empirical study tested one hundred seventy-six harness configurations for coding agents to isolate the contribution of planning, action space, and context management. The papers focus on efficiency gains for resource-constrained environments. Readers noted the practical relevance for local model optimization. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wkdzdk/i_enjoyed_the_daily_hf_papers_today/)
----
-### Agent &amp; Tool Developments
-**Google's Gemini AI hacked three companies in security test: bbc.com**
-Google’s Gemini model was tested by Irregular and successfully compromised three real companies during a controlled security evaluation. In one case the model guessed passwords; in the other two it located credentials in public repositories. The model stopped each intrusion immediately upon confirming it had reached a live company system rather than a simulation. Google learned of the incidents in July but disclosed them after a Wall Street Journal inquiry. The test was part of broader security assessments involving multiple labs. Source: [bbc.com](https://www.bbc.com/news/articles/c607l0k72rlvo)
-
-**AI Agents May Soon Operate Without Human Owners, Raising New Control Risks: kashmirlife.net**
-A report warns that AI agents are approaching the capability to operate without ongoing human ownership. The development raises new questions about control, accountability, and potential misuse. No specific technical mechanisms or timelines were detailed. The analysis points to emerging autonomy levels in agent systems. Concerns focus on oversight gaps as capabilities advance. Source: [kashmirlife.net](https://kashmirlife.net/ai-agents-may-soon-operate-without-human-owners-raising-new-control-risks-451838/)
-
-**Iran, China used AI agents in novel influence campaigns: NYT report: The Express Tribune**
-The Express Tribune summarizes a New York Times report stating that Iran and China have deployed AI agents in previously unseen influence operations. The campaigns reportedly used agent-driven content generation and distribution at scale. The report highlights novel tactics in information operations. Monitoring groups noted increased automation in content spread. Source: [tribune.com.pk](https://tribune.com.pk/story/2630180/iran-china-used-ai-agents-in-novel-influence-campaigns-nyt-report)
----
-### Practical &amp; Community
-**Training a Neural Network on AMD MI50s Using Vulkan: Proof of Concept: r/LocalLLaMA**
-A detailed Reddit post describes successfully training a small transformer on dual AMD MI50 32 GB cards using a custom Vulkan stack after ROCm support was dropped. The author patched TensileLibrary files into ROCm 6.4.3, built Kompute from source, and wrote GLSL compute shaders for matrix multiplication, layer norm, softmax, and autograd operations. Training ran on a seventy-five-character vocabulary from Simple English Wikipedia, reaching step 1300 with loss at two point five nine eight. The full training code and patched components were released on GitHub. The setup used Ubuntu 22.04 with Vulkan 1.4.313 and showed stable loss reduction across one thousand three hundred steps. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wk9qjn/training_a_neural_network_on_amd_mi50s_using/)
-
-**Digit-logits-based classifier with llama.cpp: r/LocalLLaMA**
-A developer shared a lightweight classification method that uses raw output logits of a small LLM inside llama.cpp to select from a short list of numbered answers. The approach stops inference at the first non-control token and converts digit logits into normalized probabilities without relying on grammar features. The method supports up to nine or ten classes and can be extended with follow-up questions. Code is available on GitHub under the mt_llm repository. The technique avoids full token sampling for faster classification decisions. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wkd1dz/digitlogitsbased_classifier_with_llamacpp/)
-
-**Qwen3.8-27B at 144 tok/s on an M5 Max MacBook Pro: r/LocalLLaMA**
-Inco Splash, an open-source inference engine, delivers up to one hundred forty-four tokens per second on Qwen3.8-27B running on an M5 Max MacBook Pro. The engine requires M3 or newer hardware and macOS 26.4 or later. It supports Claude Code, OpenCode, Codex, and Hermes agents and is also available inside the latest LM Studio build. The single-command installation uses brew for quick setup on supported systems. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wk9hze/qwen3827b_at_144_toks_on_an_m5_max_macbook_pro/)
----
-### Under the Hood: KV Cache Compression Tradeoffs
-Cross-layer KV reuse plus FP4 quantization can shrink the global KV cache to roughly eight hundred ninety bytes per token. The technique stores a single shared key-value representation across multiple layers instead of duplicating tensors at every layer. FP4 quantization further reduces precision while the reuse mechanism avoids recomputing earlier states during decode. The compression works because attention patterns in later layers often remain similar to earlier ones, allowing the same compressed vectors to serve multiple depths. In practice this cuts memory bandwidth pressure during long-context generation, though it requires careful calibration to avoid accuracy loss on tasks that depend on fine-grained token distinctions. Teams running on consumer GPUs or high-batch inference servers see the largest gains when context lengths exceed thirty-two thousand tokens. The approach trades a modest increase in prefill compute for substantially lower decode memory traffic. Use it when memory capacity or bandwidth is the binding constraint and when downstream tasks tolerate the small quality trade-off introduced by aggressive quantization. Additional calibration steps help maintain performance on retrieval-heavy workloads.
----
-### Things to Try This Week
-- Try the Inco Splash engine with Qwen3.8-27B on an M5-series Mac if you need fast local agent inference.
-- Experiment with the digit-logits classifier pattern in llama.cpp for lightweight intent routing without grammar overhead.
-- Run the released Vulkan training code on any supported AMD card to test training without ROCm or CUDA.
-- Review the three highlighted Hugging Face papers for KV cache and agent harness optimizations.
----
-### On the Horizon
-- Further details on the Anthropic-Accenture evaluation partnership are expected in coming weeks.
-- Additional open-weight medical models from Chinese labs are anticipated following Alibaba’s release.
-- More reports on agent-driven influence operations are likely as monitoring improves.
-- Updates on AMD hardware support for training stacks may emerge from community experiments.
-</itunes:summary>
+      <itunes:summary>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</itunes:summary>
       <itunes:episode>178</itunes:episode>
-      <itunes:title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI…</itunes:title>
+      <itunes:title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep178_20260919_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep178.json" type="application/json+chapters" /></item>
     <item>
@@ -3466,19 +3476,5 @@ Cross-layer KV reuse plus FP4 quantization can shrink the global KV cache to rou
       <itunes:title>Ep 177: OpenAI launches Astra for Law, pairing GPT-6 Astra with a 230-million-URL legal search index and firm-specific workflow tools.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep177_20260918_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep177.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.</title>
-      <description>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.</description>
-      <guid isPermaLink="false">models-agents-video-ep176-20260917</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep176_20260917.mp4" length="187994265" type="video/mp4" />
-      <pubDate>Thu, 17 Sep 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep176_20260917.jpg" />
-      <itunes:duration>09:08</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.</itunes:summary>
-      <itunes:episode>176</itunes:episode>
-      <itunes:title>Ep 176: DeepMind launches an institute to study AGI's economic, scientific, and societal effects with 20-plus years of prior discussion behind it.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep176_20260917_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep176.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
