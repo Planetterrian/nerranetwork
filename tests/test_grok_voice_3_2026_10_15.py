@@ -154,7 +154,8 @@ class TestPromptStructure:
 
     def test_every_earlier_rule_survived(self):
         text = PROMPT.read_text(encoding="utf-8")
-        for needle in ("HOW TO OPEN.", "THE CLOSING ROUND happens with every guest, every time",
+        # "HOW TO OPEN" carries its reason in brackets since Oct 19 2026.
+        for needle in ("HOW TO OPEN", "THE CLOSING ROUND happens with every guest, every time",
                        "THEIR LAST WORD IS THEIRS, NOT YOURS.", "FACT CHECKING.",
                        "NEVER SIGNAL THE END BEFORE IT IS THE END.", "YOUR OWN VOICE.",
                        "{{cohost_craft}}", "{{lessons}}", "{{guest_shape}}"):

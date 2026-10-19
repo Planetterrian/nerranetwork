@@ -551,8 +551,14 @@ def adopt_lessons(show_slug: str, interview_id: str,
         mine = [r for r in adopted if r.get("show") == scope]
         room = lesson_cap(scope) - (len(current) + len(mine))
         if room <= 0:
-            oldest = sorted(current + mine,
-                            key=lambda r: str(r.get("decided_at") or ""))[:1]
+            # Oct 19 2026: the oldest by date was retired, whatever its
+            # record. At the cap that would have been "Do not re-ask a
+            # question", broken twice and still being broken, while rules she
+            # has kept for a month stayed. A rule she keeps breaking is still
+            # doing work; the room comes from the oldest one she has kept.
+            pool = current + mine
+            kept = [r for r in pool if not _relapses(r)] or pool
+            oldest = sorted(kept, key=lambda r: str(r.get("decided_at") or ""))[:1]
             if oldest:
                 retire_lessons([str(oldest[0].get("id"))],
                                "made room for a newer lesson")

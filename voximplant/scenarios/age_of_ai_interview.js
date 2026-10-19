@@ -610,6 +610,17 @@ let inboundSpeaking = false; // someone in the room is talking right now (Oct 5 
 let inboundSpokeAt = 0;
 let openingDeferrals = 0;
 let roomEnded = false;
+// Oct 19 2026 (review of every graded interview). The room asked for a new
+// turn whenever it wanted one, whether or not Mira was already mid-turn, and
+// each sign-off line could fire a rescue of its own. Jason Fishman (Oct 1)
+// heard "That's the end of the recording" twice and then "I spoke too soon";
+// Piper Martz (Oct 13) heard three sign-offs; both traces show two rescues
+// two seconds apart. A turn the room wants now waits for the one in flight,
+// and one sign-off earns one rescue.
+let pendingTurn = false;          // a room-requested turn waiting for hers to end
+let lastRescueAt = 0;
+const RESCUE_COOLDOWN_MS = 20 * 1000;
+let lastMiraLineAt = 0;           // when she last said anything (remember())
 let endReason = "normal";
 
 async function roomAlerting(e, dest) {
@@ -680,7 +691,7 @@ async function openRoom() {
           " completely, then thank them warmly for something particular, tell them" +
           " that's the end of the recording and they can hang up now. One short turn." }] },
       });
-      if (!miraSpeaking && !inboundSpeaking) { miraSpeaking = true; grokAgent.responseCreate({}); }
+      if (!inboundSpeaking) requestTurn(grokAgent);
     } catch (err) { /* the end below still happens */ }
     hardCapTimer = setTimeout(function () { endRoom("hard_cap"); }, 5 * 60 * 1000);
   }, hardCapMs());
@@ -789,6 +800,7 @@ function remember(who, text) {
   transcript.push(who + ": " + String(text).slice(0, 400));
   if (transcript.length > 200) transcript.splice(0, transcript.length - 200);
   if (who === "Mira") {
+    lastMiraLineAt = Date.now();
     // Order matters: note the question BEFORE testing for a sign-off, so a
     // turn that asks for a parting thought and then ends the recording in the
     // same breath is caught by the same rule.
@@ -803,6 +815,27 @@ function remember(who, text) {
   } else {
     lastWordAnswered = true;
   }
+}
+
+/**
+ * Ask for a turn of hers: now if nothing is in flight, otherwise as soon as
+ * the current turn ends (Oct 19 2026). Two turns at once is how a single
+ * sign-off became two or three on the tape. If the guest starts talking
+ * meanwhile the request is dropped: the note it carried is already in her
+ * context, and their finishing gives her the turn anyway.
+ */
+function requestTurn(agent) {
+  if (!agent || roomEnded) return;
+  if (miraSpeaking) { pendingTurn = true; return; }
+  miraSpeaking = true;
+  agent.responseCreate({});
+}
+
+/** True (and starts the cooldown) when no other rescue has just fired. */
+function rescueAllowed() {
+  if (Date.now() - lastRescueAt < RESCUE_COOLDOWN_MS) return false;
+  lastRescueAt = Date.now();
+  return true;
 }
 
 // What the next Mira needs in order to continue rather than restart.
@@ -965,6 +998,7 @@ async function createAgent(note) {
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
     anyoneHeard = true;
     if (agent !== grokAgent) return;
+    pendingTurn = false;
     agent.clearMediaBuffer();
     if (!miraSpeaking) return;
     miraSpeaking = false;
@@ -1010,12 +1044,36 @@ async function createAgent(note) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.Unknown, function (ev) {
         const raw = JSON.stringify((ev && (ev.data || ev)) || {});
         if (raw.indexOf("input_audio_transcription.completed") >= 0) remember("Guest", textOf(ev));
+        if (raw.indexOf("\"response.created\"") >= 0) markTurnStarted(agent);
+      });
+    }
+    // Oct 19 2026. miraSpeaking was set only when the ROOM asked for a turn
+    // (the opening, a rescue, a resumed session). Every ordinary answer is
+    // started by the server's turn detection, so for those the barge-in
+    // handler cleared her audio but never cancelled the turn or told her the
+    // rest went unsaid: across fourteen traced interviews it yielded at most
+    // twice an hour while the tapes count up to ten interruptions. She then
+    // believed she had asked what the guest never heard, which is the
+    // repeated and half-picked-up questions in the grades. Any turn that
+    // starts, whoever started it, is now one that can be cut off.
+    if (Grok.VoiceAgentAPIEvents.ResponseCreated) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseCreated, function () {
+        markTurnStarted(agent);
       });
     }
     if (Grok.VoiceAgentAPIEvents.ResponseDone) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
         miraSpeaking = false;
         trace("grok", "response done");
+        // A turn the room asked for while she was mid-turn goes now, unless
+        // someone has started talking, in which case their finishing will
+        // give her the turn and the note is already in her context.
+        if (pendingTurn && agent === grokAgent && !roomEnded) {
+          pendingTurn = false;
+          if (!inboundSpeaking) {
+            try { miraSpeaking = true; agent.responseCreate({}); } catch (err) { /* best-effort */ }
+          }
+        }
       });
     }
   } catch (err) { /* event names differ across connector versions */ }
@@ -1027,6 +1085,11 @@ async function createAgent(note) {
     onAgentClosed(generation, event);
   });
   return agent;
+}
+
+/** A turn of hers has begun, whoever asked for it (Oct 19 2026). */
+function markTurnStarted(agent) {
+  if (agent === grokAgent && !roomEnded) miraSpeaking = true;
 }
 
 async function startAgent() {
@@ -1149,8 +1212,13 @@ function openWhenReady(reason) {
   // Oct 5 2026, Piper Martz: she said "Hi Mira, thanks for having me" and
   // the opening began on top of her. While the guest is talking, wait for
   // them to finish (up to ten seconds), then answer what they said.
+  // Oct 19 2026: and while she is already answering them. When the guest
+  // says hello before the settle beat ends, the server answers it on its own;
+  // the opening then fired a second turn over the first (Piper Martz, Oct 13:
+  // "a string of overlapping self-corrections"; Cory O'Daniel, Oct 19, cut
+  // off in his first second).
   if (humansIn("guest") > 0 && openingDeferrals < 14
-      && (inboundSpeaking || Date.now() - inboundSpokeAt < 900)) {
+      && (inboundSpeaking || Date.now() - inboundSpokeAt < 900 || miraSpeaking)) {
     openingDeferrals++;
     if (openingDeferrals === 1) trace("opening", "guest is speaking; waiting for them to finish");
     setTimeout(function () { openWhenReady(reason); }, 700);
@@ -1188,7 +1256,22 @@ function openWhenReady(reason) {
             "tell you." }] },
       });
     }
-    if (humansIn("guest") > 0) {
+    // She has already answered their hello herself (see above), so beat 1
+    // is done: tell her where she is, and let their reply give her the turn.
+    const alreadyGreeted = humansIn("guest") > 0 && !guestGreeted && !isClosingSession()
+      && lastMiraLineAt > guestJoinedAt();
+    if (alreadyGreeted) {
+      trace("opening", "she had already answered their hello; no second greeting");
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system",
+          content: [{ type: "input_text", text:
+            "[OPENING — system note, do not read aloud] You have already said hello" +
+            " to the guest. Do not greet them again and do not introduce yourself" +
+            " yet. When they answer, react to what they said in a few words, then" +
+            " beat 2 of HOW TO OPEN: one sentence on how this works, then your" +
+            " first real question about the subject they came to discuss." }] },
+      });
+    } else if (humansIn("guest") > 0) {
       // Oct 5 2026 (Patrick): the opening was a recited paragraph and then a
       // question she answered herself. It is now a greeting first, and the
       // explanation of how the hour works comes on her next turn.
@@ -1209,8 +1292,10 @@ function openWhenReady(reason) {
             " have answered and you have reacted to it." }] },
       });
     }
-    miraSpeaking = true;
-    grokAgent.responseCreate({});
+    if (!alreadyGreeted) {
+      miraSpeaking = true;
+      grokAgent.responseCreate({});
+    }
     startTimeChecks();
     armAudioCheck();
     micCheckTimer = setTimeout(function () { silentMicNudge(1); }, SILENT_MIC_AFTER_MS);
@@ -1290,6 +1375,15 @@ function greetHostAndWait() {
   } catch (err) {
     Logger.write("[aoa " + runId + "] host greeting failed: " + err.message);
   }
+}
+
+/** When the first guest leg arrived (0 if none has). */
+function guestJoinedAt() {
+  let at = 0;
+  for (let i = 0; i < legs.length; i++) {
+    if (legs[i].role === "guest" && (!at || legs[i].joinedAt < at)) at = legs[i].joinedAt;
+  }
+  return at;
 }
 
 function cohostName() {
@@ -1651,6 +1745,10 @@ function catchClosingWithoutTheAnswer(text) {
   if (!SIGN_OFF_RE.test(text || "")) return false;
   if (!closingOnAnUnansweredQuestion()) return false;
   if (lastWordRescues >= 2) return false;
+  // One sign-off is several transcript lines ("That's the end of the
+  // recording." "You can hang up now."); each used to fire its own rescue.
+  // Returning true still stops the early sign-off rule firing on top.
+  if (!rescueAllowed()) return true;
   lastWordRescues += 1;
   const waited = Math.round((Date.now() - lastWordAskedAt) / 1000);
   trace("close", "closed " + waited + "s after handing over the last word, "
@@ -1671,8 +1769,7 @@ function catchClosingWithoutTheAnswer(text) {
         " the recording. Only once they have actually spoken, or a note tells" +
         " you they have nothing to add, may you close." }] },
     });
-    miraSpeaking = true;
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] closing rescue failed: " + err.message);
   }
@@ -1785,8 +1882,9 @@ function catchEarlySignOff(text) {
   if (!SIGN_OFF_RE.test(text || "")) return;
   const elapsed = elapsedMin();
   if (elapsed >= closingOpensAtMin()) return;
+  if (earlySignOffs >= 2) return;  // never nag; two rescues is already a lot
+  if (!rescueAllowed()) return;    // the same sign-off, its next line
   earlySignOffs += 1;
-  if (earlySignOffs > 2) return;   // never nag; two rescues is already a lot
   trace("time", "early sign-off at " + elapsed + " min of " + plannedMin() +
         " — asking her to carry on");
   Logger.write("[aoa " + runId + "] early sign-off caught at " + elapsed + " min");
@@ -1803,8 +1901,7 @@ function catchEarlySignOff(text) {
         " it rather than opening a new subject. Do not apologise at length" +
         " and do not explain yourself." }] },
     });
-    miraSpeaking = true;
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] early sign-off rescue failed: " + err.message);
   }

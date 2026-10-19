@@ -450,6 +450,43 @@ def where_we_left_off(interview: dict) -> str:
     return "The closing round had just begun when the first recording stopped."
 
 
+def refresh_staged_prompt(run: dict, interview: dict) -> bool:
+    """Recompile a staged run's prompt so it carries what was learned since.
+
+    Oct 19 2026 (review of every graded interview). A run is staged up to a
+    day ahead, and the grading pass adopts lessons an hour or so after each
+    interview, so the next day's interview went in without the last one's
+    lessons: Jason Shumard was staged before Cory O'Daniel had been graded.
+    Every tick now brings a staged prompt up to date, and only while the run
+    is still staged: once the guest has opened the studio it is left alone.
+    """
+    if (run or {}).get("status") != "staged" or not run.get("id"):
+        return False
+    try:
+        app = sb_select("guest_applications", f"id=eq.{interview['application_id']}")[0]
+        if is_closing_session(interview):
+            prompt = compile_closing_prompt(interview, app)
+        else:
+            briefs = sb_select("interview_briefs", f"interview_id=eq.{interview['id']}")
+            if not briefs:
+                return False
+            prompt = compile_mira_prompt(interview, app, briefs[0])
+    except Exception:  # noqa: BLE001 — the staged prompt still works
+        logger.exception("Refreshing the staged prompt for %s failed (non-fatal)",
+                         interview.get("id"))
+        return False
+    if not prompt or prompt == (run.get("mira_system_prompt") or ""):
+        return False
+    try:
+        sb_update("interview_runs", f"id=eq.{run['id']}&status=eq.staged",
+                  {"mira_system_prompt": prompt})
+    except Exception:  # noqa: BLE001
+        logger.exception("Saving the refreshed prompt for run %s failed (non-fatal)", run["id"])
+        return False
+    logger.info("Run %s: staged prompt refreshed with the latest lessons", run["id"])
+    return True
+
+
 def is_closing_session(interview: dict) -> bool:
     return (interview.get("session_kind") or "interview") == "closing"
 
@@ -777,6 +814,9 @@ def fire_due_interviews() -> int:
         if [r for r in active if r not in stale]:
             logger.info("Interview %s already has an active run — skipping",
                         interview["id"])
+            for r in active:
+                if r not in stale:
+                    refresh_staged_prompt(r, interview)
             if studio and in_window and not interview.get("reminder_sent_at"):
                 start_time_email(interview)
             continue

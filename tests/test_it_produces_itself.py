@@ -1939,8 +1939,10 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
         guard = guard[:guard.index("function startTimeChecks")] if "function startTimeChecks" in guard else guard
         assert "closingPermitted" in guard
         assert "the interview is NOT" in guard
-        assert "earlySignOffs > 2" in guard      # rescue, never nag
-        assert "responseCreate" in guard         # she says it, not us
+        assert "earlySignOffs >= 2" in guard     # rescue, never nag
+        # She says it, not us; since Oct 19 2026 through requestTurn, which
+        # waits for the turn in flight instead of talking over it.
+        assert "requestTurn(grokAgent)" in guard
 
     def test_the_prompt_waits_for_permission_and_does_no_arithmetic(self):
         flat = _flat(self.PROMPT)
