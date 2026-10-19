@@ -129,9 +129,11 @@ class TestMultilingualConcurrency:
         assert conc["cancel-in-progress"] is False
 
     def test_a_skipped_show_is_not_swept(self):
-        src = _read(".github/workflows/multilingual.yml")
-        assert "_skipped_today" in src
-        assert '.skip_{stamp}.json' in src
+        # Oct 19 2026: the decision moved to the show run's dispatch — a show
+        # with no digest dated today (a skip) never starts a sweep.
+        src = _read("scripts/followup_dispatch.py")
+        assert 'out_dir.glob(f"*_{stamp}.md")' in src
+        assert "no episode dated today" in src
 
 
 # --- Nerra Daily fallback -------------------------------------------------------

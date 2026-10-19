@@ -284,9 +284,14 @@ class TestAfternoonSlateFixes:
         assert cfg.llm.stream is True
 
     def test_empty_jobs_read_narrows_the_sweep(self):
+        # Oct 19 2026: the jobs read is gone with the workflow_run trigger —
+        # the show run dispatches the sweep for the one show it published
+        # (scripts/followup_dispatch.py), so a gate-only run that published
+        # nothing dispatches nothing. The cron passes stay the catch-all.
         text = (ROOT / ".github" / "workflows" / "multilingual.yml").read_text(encoding="utf-8")
-        assert "if published:" not in text
-        assert "shows = [s for s in published if s in enabled]" in text
+        assert "workflow_run:" not in text
+        script = (ROOT / "scripts" / "followup_dispatch.py").read_text(encoding="utf-8")
+        assert "no episode dated today" in script
 
     def test_register_entries_exist(self):
         import yaml
