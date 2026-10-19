@@ -109,21 +109,40 @@
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="Language" title="Site language and episode audio language"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                     <span id="nn-lang-current">EN</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                    
                 </div>
             </div>
 
@@ -281,16 +300,6 @@
                         <a href="env-intel.html" role="menuitem">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
-                        </a>
-                        
-                        <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто
-                        </a>
-                        
-                        <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
@@ -469,16 +478,6 @@
                         <a href="blog/env_intel/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
-                        </a>
-                        
-                        <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Финансы Просто Blog
-                        </a>
-                        
-                        <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
@@ -700,7 +699,7 @@
         </details>
         
         <details class="nn-mobile-shows nn-mobile-group">
-            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
@@ -720,16 +719,6 @@
             <a href="env-intel.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
-            </a>
-            
-            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто
-            </a>
-            
-            <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
@@ -754,6 +743,14 @@
             
         </details>
         
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
             <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
@@ -856,6 +853,20 @@
     <!-- Summaries -->
     <section style="padding:var(--sp-4) 0 var(--sp-12);">
         <div class="container"><div id="summaries-container">
+                <div class="nn-summary-item" data-date="2026-10-19">
+                    <div class="nn-summary-header">
+                        <div>
+                            <div class="nn-summary-date">October 19, 2026</div>
+                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 73: Interprovincial transmission bottlenecks continue to constrain clean power additions in…</div>
+                        </div>
+                        <div class="nn-summary-actions">
+                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/env_intel/Env_Intel_Ep073_20261019.mp3" aria-label="Ep 73: Interprovincial transmission bottlenecks continue to constrain clean power additions in… audio"></audio>
+                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/env_intel/Env_Intel_Ep073_20261019.mp3" target="_blank" rel="noopener">Download</a>
+                            <a class="nn-summary-link" href="blog/env_intel/ep073.html">Read transcript</a>
+                        </div>
+                    </div>
+                    <div class="nn-summary-content"><h3>Environmental Intelligence</h3><p>🔬 <strong>Environmental Intelligence</strong> — Canadian Environmental Professional Briefing</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Interprovincial transmission bottlenecks continue to constrain clean power additions in Canada despite federal tax credits and coal phase-out.</p><p><strong>Executive Summary:</strong> GlobalData reports Canada&#x27;s cumulative installed power capacity expanding at a 2.1 percent CAGR through 2035, with non-hydro renewables rising from 20.6 percent to 31.4 percent of total capacity. The COP17 biodiversity summit opens in Yerevan to conduct the first global review of the 2022 nature pact, where countries remain off-track on 22 of 23 targets. Practitioners planning projects in western provinces should factor east-west transmission constraints into timelines this week.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Compliance Brief (30-second scan for busy managers)</h3><ul><li><strong>Top regulatory change:</strong> No new provincial or federal instruments reported today</li><li><strong>Immediate action:</strong> Review interprovincial grid constraints for any wind, solar or nuclear projects under federal tax credit programs</li><li><strong>Deadline:</strong> Ongoing — no fixed date stated</li><li><strong>Who&#x27;s affected:</strong> Power sector consultants and remediation planners in Alberta, Saskatchewan and British Columbia</li><li><strong>Across the provinces:</strong> Focus remains on federal-provincial coordination gaps</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Lead Story</h3><p>GlobalData&#x27;s latest Canada Power Market report projects cumulative installed power capacity expanding at a compound annual growth rate of 2.1 percent between 2025 and 2035. Non-hydro renewable capacity, mainly wind and solar PV, is forecast to increase its share from 20.6 percent to 31.4 percent of total capacity as electricity demand grows at 1.7 percent CAGR. The report identifies interprovincial transmission bottlenecks as the principal infrastructure constraint, noting that surplus low-carbon generation in Quebec, Manitoba and British Columbia cannot readily flow to decarbonize systems in Alberta or Saskatchewan. Provincial networks remain more extensively connected to US markets than to neighbouring Canadian provinces. Attaurrahman Ojindaram Saibasan, Power Analyst at GlobalData, states that Canada already operates one of the world’s cleanest power systems anchored by vast provincial hydropower resources and an established nuclear fleet. The next decade will mark a significant evolution with non-hydro renewables driving the majority of net capacity additions led by onshore wind and utility-scale solar. Major nuclear life-extension programs and small modular reactor deployments will help maintain baseload stability. Practitioners assessing or remediating sites tied to new generation or transmission infrastructure should incorporate these coordination delays into project schedules. Canada is entering a pivotal phase of power-sector expansion as federal tax credits, the phase-out of coal-fired generation, and accelerating industrial electrification drive substantial capital into wind, solar, and nuclear power. Realizing the full potential of these clean additions will require overcoming persistent interprovincial transmission bottlenecks and modernizing regional grids according to the analysis. Electricity planning remains constitutionally divided across 10 distinct provincial jurisdictions. Source: [cyprusshippingnews.com](https://cyprusshippingnews.com/2026/10/19/canada-clean-power-push-challenged-by-interprovincial-grid-limits-says-globaldata/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Regulatory &amp; Policy Watch</h3><p><strong>COP17 biodiversity summit opens in Yerevan:</strong> RFI</p><p>Almost 200 countries will review progress on the 2022 nature pact that set 23 targets including conserving 30 percent of land and oceans. A draft UN review found countries off-track on 22 targets, with stronger progress on traditional conservation than on production and consumption changes. Environment ministries face funding cuts in both rich and poor countries, creating barriers to cross-ministry coordination on root causes of nature loss. Wildlife populations continue to shrink with monitored populations across nearly 6,000 species falling by an average of 73 percent between 1970 and 2022 according to the WWF Living Planet Report. Astrid Schomaker who heads the UN Convention on Biological Diversity notes that progress is moving in the right direction but way too slowly. Juliette Landry a biodiversity researcher at the Paris-based think tank IDDRI explains that barriers include lack of political will for some countries and lack of access to financial resources capacities and technologies for others. Cop17 runs in the Armenian capital Yerevan until 30 October and marks the first global review of progress since the adoption of the landmark nature pact in 2022. The agreement set targets from cutting pollution to saving threatened species and conserving 30 percent of the world’s land and oceans. Progress has been stronger on traditional conservation work than on changing the way goods are produced and consumed one of the root causes of nature loss. Source: [rfi.fr](https://www.rfi.fr/en/environment/20261019-nature-summit-confronts-the-money-still-driving-wildlife-destruction-cop17-yerevan)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Industry &amp; Practice</h3><p>No qualifying industry announcements with specific regulatory or compliance implications for Canadian environmental professionals appeared in today&#x27;s sources.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Practitioner Deep Dive: Spring Groundwater Monitoring Preparation</h3><p>A monitoring dataset from last spring shows inconsistent dissolved oxygen readings across wells screened at similar depths in the same aquifer. The variation often traces to differences in purge volume or stabilisation criteria rather than actual plume movement. Experienced assessors cross-check field parameters against historical low-flow records before attributing changes to site conditions. They also verify that the pump intake sits at the screen midpoint and that drawdown stays below ten percent of the screen length. The mistake I see most often is accepting stabilisation after only three consecutive readings without confirming the well has been purged at least three well volumes. The fix is straightforward: document the actual volume removed and compare it to the calculated well volume before recording final parameters. Low-flow sampling requires careful attention to stabilisation parameters including pH conductivity temperature and dissolved oxygen. Field teams must ensure the pump rate remains consistent and that the water level drawdown does not exceed the recommended threshold. Historical data from the same wells provides the baseline for identifying whether current readings reflect true aquifer conditions or procedural variations. Calibration of field meters before each sampling event reduces the risk of instrument drift affecting results. Documentation of purge volumes allows later review of whether the well was adequately developed prior to parameter recording.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Action Items</h3><ul><li>Review GlobalData Canada Power Market report for implications on transmission-related site assessments in western provinces</li><li>Monitor COP17 outcomes for any biodiversity target updates that could affect Species at Risk Act screening on future projects</li><li>Update internal project scheduling templates to include interprovincial grid coordination delays for power-sector work</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Week Ahead</h3><ul><li>COP17 biodiversity summit continues in Yerevan through October 30</li><li>No other federal or provincial consultation deadlines or effective dates identified in today&#x27;s sources</li></ul></div>
+                </div>
                 <div class="nn-summary-item" data-date="2026-10-12">
                     <div class="nn-summary-header">
                         <div>
@@ -1121,20 +1132,6 @@
                         </div>
                     </div>
                     <div class="nn-summary-content"><h3>Environmental Intelligence</h3><p>🔬 <strong>Environmental Intelligence</strong> — Canadian Environmental Professional Briefing</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">BC advances conservation planning across 127,000 hectares of ecosystems and wilderness areas.</p><p><strong>Executive Summary:</strong> British Columbia has initiated three new conservation planning projects that will set land-use parameters for large wilderness blocks. Parallel reporting highlights permafrost-driven acidification in Arctic rivers and lakes, with direct implications for northern water-quality monitoring programs. A separate opinion analysis questions the environmental trade-offs embedded in a major BC pipeline decision. Practitioners should review the conservation planning documents this week for potential overlaps with existing contaminated-sites work.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Compliance Brief (30-second scan for busy managers)</h3><ul><li><strong>Top regulatory change:</strong> BC — Water, Land and Resource Stewardship conservation planning — no fixed effective date yet</li><li><strong>Immediate action:</strong> Obtain the three project terms of reference and map against current client sites in the affected regions</li><li><strong>Deadline:</strong> Ongoing; early engagement window open now</li><li><strong>Who&#x27;s affected:</strong> Consultants and risk assessors working on Crown land or near protected-area boundaries in BC</li><li><strong>Across the provinces:</strong> Federal focus today on northern permafrost impacts</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Lead Story</h3><p>British Columbia’s Ministry of Water, Land and Resource Stewardship announced that work is now underway on three conservation planning projects.</p><p>The planning areas together cover approximately 127,000 hectares of ecosystems and wilderness.</p><p>No new regulatory thresholds or amended standards were released with the announcement, but the plans will establish management objectives that can constrain future land-use and remediation activities.</p><p>Consultants conducting Phase I and Phase II ESAs or preparing risk assessments near these blocks should confirm whether proposed investigation or remediation works intersect with the planning boundaries.</p><p>Next steps include release of detailed planning terms of reference; practitioners should request copies directly from the ministry to identify any new information requirements. Source: [news.gov.bc.ca](https://news.gov.bc.ca/releases/2026WLRS0032-000798)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Regulatory &amp; Policy Watch</h3><p><strong>BC conservation planning launch: BC Gov News</strong></p><p>Three separate planning processes have started that will define objectives for roughly 127,000 hectares. The resulting plans may impose new constraints on industrial activity and site remediation within or adjacent to the planning areas. No comment deadline has been published. Source: [news.gov.bc.ca](https://news.gov.bc.ca/releases/2026WLRS0032-000798)</p><p><strong>BC energy-conservation program expansion: BC Gov News</strong></p><p>BC Hydro is distributing free smart thermostats under the Power Smart 2.0 initiative in partnership with a Canadian clean-tech firm. The program targets residential energy demand reduction but does not alter contaminated-sites compliance obligations. Source: [news.gov.bc.ca](https://news.gov.bc.ca/releases/2026ECS0037-000794)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Science &amp; Technical</h3><p><strong>Rusting Rivers: Alarm Grows Over Rising Acid in Arctic Waters: The Tyee</strong></p><p>Climate-driven permafrost thaw combined with increased rainfall is generating sulfuric acid in rivers and lakes across Arctic Canada. Resulting pH declines can mobilize metals and alter background water-quality conditions used in northern site assessments. Source: [thetyee.ca](https://thetyee.ca/News/2026/07/06/Alarm-Over-Rusting-Rivers-Rising-Acid-Artic-Waters/)</p><p><strong>Seals in changing seas dive longer: Nature Climate Change</strong></p><p>Published online 07 July 2026; marine mammals are extending dive times in response to changing prey distributions. The finding has limited direct application to contaminated-sites work but underscores the need to update ecological receptor assumptions in northern marine risk assessments. Source: [nature.com](https://www.nature.com/articles/s41558-026-02703-z)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Industry &amp; Practice</h3><p><strong>Pipeline environmental trade-offs questioned: The Tyee</strong></p><p>An opinion analysis argues that recent pipeline routing and capacity decisions in British Columbia have locked in long-term environmental liabilities. Consultants advising on linear infrastructure projects should verify whether updated spill contingency and groundwater monitoring plans are required under existing permits. Source: [thetyee.ca](https://thetyee.ca/Opinion/2026/07/07/Please-Advise-Did-BC-Get-Shafted/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Practitioner Deep Dive: Permafrost thaw and acid generation in northern site assessments</h3><p>A routine groundwater sampling round in the Northwest Territories returns pH values 1.5 units lower than the previous year’s data at the same wells, with concurrent spikes in sulfate and dissolved metals. The change is not explained by site activities; instead, regional permafrost degradation is releasing previously sequestered sulfides that oxidize once exposed to increased infiltration and oxygen. Under the CCME framework and territorial equivalents, background conditions must be re-established before attributing concentrations to the site, yet many Phase II scopes still rely on a single pre-thaw baseline dataset. Experienced assessors now collect paired surface-water and shallow groundwater samples at reference locations outside the inferred plume to document the shifting regional signature before finalizing the conceptual site model. The most common mistake is assuming that historical background values remain valid; the fix is to schedule an explicit background re-characterization event whenever multi-year monitoring shows consistent directional shifts in pH or major ions.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Action Items</h3><ul><li>Review the three BC conservation planning project descriptions for overlap with any active or proposed contaminated-sites work in the province.</li><li>Update northern site-assessment scopes to include paired reference sampling for pH, sulfate, and metals where permafrost thaw is evident.</li><li>Monitor the BC Ministry of Water, Land and Resource Stewardship website for release of detailed planning terms of reference.</li><li>Brief clients holding permits near the 127,000-hectare planning areas on potential new information requirements.</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Week Ahead</h3><ul><li>Ongoing: BC conservation planning comment opportunities (no fixed close date published)</li><li>July 2026: Anticipated federal updates on northern water-quality monitoring priorities tied to permafrost research</li><li>Next 30 days: Review any new metal-mobilization data releases from territorial governments for use in risk assessments</li></ul></div>
-                </div>
-                <div class="nn-summary-item" data-date="2026-07-06">
-                    <div class="nn-summary-header">
-                        <div>
-                            <div class="nn-summary-date">July 6, 2026</div>
-                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">Ep 53: Federal $26 million clean energy funding flows to 17 projects across Alberta and Saskatchewan.</div>
-                        </div>
-                        <div class="nn-summary-actions">
-                            <audio class="nn-summary-audio" controls preload="none" src="https://audio.nerranetwork.com/env_intel/Env_Intel_Ep053_20260706.mp3" aria-label="Ep 53: Federal $26 million clean energy funding flows to 17 projects across Alberta and Saskatchewan. audio"></audio>
-                            <a class="nn-summary-link" href="https://audio.nerranetwork.com/env_intel/Env_Intel_Ep053_20260706.mp3" target="_blank" rel="noopener">Download</a>
-                            <a class="nn-summary-link" href="blog/env_intel/ep053.html">Read transcript</a>
-                        </div>
-                    </div>
-                    <div class="nn-summary-content"><h3>Environmental Intelligence</h3><p>🔬 <strong>Environmental Intelligence</strong> — Canadian Environmental Professional Briefing</p><p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">Federal $26 million clean energy funding flows to 17 projects across Alberta and Saskatchewan.</p><p><strong>Executive Summary:</strong> Ottawa directs CA$26 million to grid modernization and clean energy initiatives in Alberta and Saskatchewan. The July 4 Canada Gazette issue signals upcoming federal consultation opportunities. New Great Lakes PFAS transport research provides site-specific data for Ontario and Quebec practitioners. Flood declarations in Manitoba and Quebec highlight immediate needs for updated risk mapping on active files.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Compliance Brief (30-second scan for busy managers)</h3><ul><li><strong>Top regulatory change:</strong> Federal — $26M clean energy allocation under existing programs — effective immediately for Alberta and Saskatchewan recipients</li><li><strong>Immediate action:</strong> Review project eligibility lists for overlap with current contaminated-sites or remediation mandates</li><li><strong>Deadline:</strong> Monitor Canada Gazette Part I for 30-day comment windows opening this month</li><li><strong>Who&#x27;s affected:</strong> Energy-sector consultants and remediation firms operating in western provinces</li><li><strong>Across the provinces:</strong> Manitoba and Quebec flood emergencies trigger site-specific adaptation reviews this week</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Lead Story</h3><p>The federal government announced CA$26 million in funding for 17 clean energy, grid modernization, and energy security projects in Alberta and Saskatchewan. The allocation supports infrastructure upgrades that intersect with existing environmental compliance obligations under provincial EPEA and EMPA frameworks. Prior federal programs of this type have required recipients to integrate contaminated-site assessments and spill-prevention upgrades into funded work. Practitioners managing portfolios in these provinces should map funded sites against current Phase II or risk assessment files to identify new data-sharing requirements. Implementation timelines remain unspecified in the announcement, but project lists are now public. Alberta and Saskatchewan firms should confirm whether their active mandates qualify for supplementary federal reporting streams. Source: [Google News](https://news.google.com/rss/articles/CBMibkFVX3lxTE1NOUtaY1NzRmZ3ZW1IMWdGeXpiWl9HZXdTN2NHLURDSGJHV1JXY3gzM2ZibjkydW90ekdudzlfb1ZGNjZ6ZHBVSENXWUExemtIM0RYSFBnOHdmR2owRnA5RnJKQ2QwUlJXZHZiRWVR?oc=5)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Regulatory &amp; Policy Watch</h3><p><strong>Canada Gazette Part I, July 4, 2026: Federal</strong></p><p>The weekly issue was published with the standard complement of proposed regulations and notices. No specific environmental instruments are detailed in the index, but the edition triggers the routine 30-day comment cycle for any new CEPA or Fisheries Act proposals contained within. Source: [gazette.gc.ca](https://gazette.gc.ca/rp-pr/p1/2026/2026-07-04/html/index-eng.html)</p><p><strong>Federal clean energy funding announcement: Alberta and Saskatchewan</strong></p><p>The $26 million package targets grid and clean energy projects without explicit new regulatory text. Recipients must still satisfy existing provincial contaminated-sites reporting under EPEA and EMPA when ground disturbance occurs. Source: [Google News](https://news.google.com/rss/articles/CBMi2gFBVV95cUxONWNENjhNQ3pneFhuN0xQd21kTUxnWEpVbEM0cDhhbmVLRDRFLU5SR0tCc1AtaVQza0l3SlhMNzNPbHpKZUlVU2JHQUlSSjlmejRmdmN0WE9FaXBUWjRtQ2JDUWh6QXNKcVNCblRCUWkwc2EydGlYVmFIZG53eVZPRmR1c0xUQmppcGJDWlZYRW03UEVCQXRFVUxMbHJHNmV3bVUtLVgyTGRPQ1lRa29Mb1VrQmlESVJxWTRxNmpnR3c0Z0I4dThXSXVnQ0VfU3lKbm1nUHE2ZlR5Zw?oc=5)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Science &amp; Technical</h3><p><strong>New research traces how ‘forever chemicals’ move through the Great Lakes and into people: Grist</strong></p><p>Transport modelling shows PFAS migration from water column to drinking-water intakes and human serum in the Great Lakes basin. Findings supply site-specific attenuation data usable in Ontario and Quebec risk assessments under O. Reg. 153/04 and equivalent provincial protocols. Source: [grist.org](https://grist.org/science/new-research-traces-how-forever-chemicals-move-through-great-lakes-into-people/)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Industry &amp; Practice</h3><p><strong>Proposed class actions target City of Montreal, West Island suburbs, after floods: CBC</strong></p><p>Two class-action filings allege inadequate municipal flood-risk mitigation following June 20 rainfall. Remediation and environmental consultants working on West Island sites should verify whether current closure reports address updated 2026 flood-frequency assumptions. Source: [cbc.ca](https://www.cbc.ca/news/canada/montreal/west-island-floods-june-20-2026-class-action-9.7258906?cmp=rss)</p><p><strong>Sioux Valley Dakota Nation and Brandon declare flood emergencies: CBC</strong></p><p>Manitoba communities issued emergency declarations as Assiniboine River levels rise toward a July 12 peak. Field teams should confirm groundwater monitoring schedules account for elevated water tables before resuming sampling. Source: [cbc.ca](https://www.cbc.ca/news/canada/manitoba/sioux-valley-dakota-nation-flooding-state-of-emergency-9.7259179?cmp=rss)</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Practitioner Deep Dive: Floodplain groundwater interaction during site assessments</h3><p>A closure package for a former service station in southern Manitoba shows benzene concentrations stable in three wells but rising sharply in a fourth after spring flooding, despite no new release. The difference arises because the fourth well sits inside the active floodplain where the water table now intersects a residual LNAPL smear zone that was previously above the seasonal high. Under Manitoba Environment Act guidance and CCME Tier 1 protocols, practitioners must distinguish between plume migration and temporary hydraulic connection; the latter often produces transient exceedances that resolve once water levels drop. Experienced assessors cross-reference well hydrographs against river-stage data from the nearest gauge rather than relying solely on quarterly snapshots. The most common mistake is assuming any post-flood increase signals a new source and triggering unnecessary additional investigation; the fix is to collect one extra round of water-level and product-thickness measurements during the next low-water period before revising the conceptual site model.</p><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Action Items</h3><ul><li>Review federal clean energy project lists against current Alberta and Saskatchewan contaminated-sites files for new assessment triggers</li><li>Cross-check West Island flood class-action filings against active Quebec LQE site files for updated risk assumptions</li><li>Update Manitoba groundwater monitoring schedules to capture post-peak water-table conditions after July 12</li><li>Confirm whether any funded Saskatchewan projects intersect existing EMPA reporting obligations</li></ul><hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;"><h3>Week Ahead</h3><ul><li>July 12: Assiniboine River flood peak forecast — Manitoba practitioners should complete pre-peak site visits</li><li>Mid-July: Canada Gazette comment windows expected to open on any Part I proposals from the July 4 issue</li><li>Ongoing: Monitor Great Lakes PFAS transport data releases for incorporation into Ontario and Quebec risk assessments this quarter</li></ul></div>
                 </div>
             </div>
             <noscript>
@@ -1678,10 +1675,6 @@
                         
                         <li><a href="env-intel.html">Environmental Intelligence</a></li>
                         
-                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
-                        
-                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
-                        
                         <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
                         
                         <li><a href="first-principles.html">First Principles Daily</a></li>
@@ -1705,7 +1698,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1753,7 +1746,7 @@
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
-                    <summary>Choose shows <span>(31)</span></summary>
+                    <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1800,10 +1793,6 @@
                         <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
                         
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
-                        
-                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                         
                         <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
                         
