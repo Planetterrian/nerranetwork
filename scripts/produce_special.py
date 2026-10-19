@@ -255,7 +255,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--series", required=True)
     ap.add_argument("--episode", action="append", default=[],
-                    help="episode id (repeatable); default every unproduced episode")
+                    help="episode id or part number (repeatable); default every unproduced episode")
     ap.add_argument("--force", action="store_true", help="re-produce produced episodes")
     ap.add_argument("--text-only", action="store_true", help="research and writing only")
     ap.add_argument("--audio-only", action="store_true",

@@ -79,6 +79,36 @@ class TestSeries:
                 assert len(quoted.split()) <= 4, (s.id, quoted)
 
 
+class TestEpisodeLookup:
+    """Oct 19 2026: the operator typed ``1`` into the workflow's episodes
+    input (described as "episode ids") and both runs died before producing
+    anything. A part number is as unambiguous as the slug, so both work."""
+
+    def _merger(self):
+        return S.find_series("spacex-tesla-merger")
+
+    def test_part_number_and_id_name_the_same_episode(self):
+        series = self._merger()
+        first = series.episodes[0]
+        assert series.episode(first.id) is first
+        assert series.episode("1") is first
+        assert series.episode(" 01 ") is first
+        assert series.episode("part-1") is first
+        assert series.episode("part07") is series.episodes[6]
+
+    def test_unknown_episode_names_every_valid_choice(self):
+        series = self._merger()
+        with pytest.raises(S.SpecialsError) as exc:
+            series.episode("8")
+        msg = str(exc.value)
+        for ep in series.episodes:
+            assert f"{ep.part} ({ep.id})" in msg
+
+    def test_workflow_input_says_part_numbers_work(self):
+        text = (ROOT / ".github" / "workflows" / "produce-special.yml").read_text(encoding="utf-8")
+        assert "part numbers or episode ids" in text
+
+
 class TestResearch:
     def _ep(self):
         return S.Episode(id="e", part=1, title="T", brief="B", questions=["q1", "q2", "q3"])

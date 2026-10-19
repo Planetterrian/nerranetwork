@@ -139,10 +139,27 @@ class Series:
         return len(self.episodes)
 
     def episode(self, episode_id: str) -> Episode:
+        """Return an episode by its id or by its part number.
+
+        Oct 19 2026: the workflow's ``episodes`` input read "episode ids" and
+        the operator typed ``1`` — a part number — twice; both runs died on
+        this lookup before producing anything. A part number (``1``, ``01``,
+        ``part-1``, ``part01``) is as unambiguous as the slug, so both are
+        accepted, and the error names every valid choice.
+        """
+        key = str(episode_id).strip()
         for ep in self.episodes:
-            if ep.id == episode_id:
+            if ep.id == key:
                 return ep
-        raise SpecialsError(f"{self.id}: no episode {episode_id!r}")
+        digits = re.sub(r"^(?:part|ep(?:isode)?)[-_ ]?", "", key.lower())
+        if digits.isdigit():
+            for ep in self.episodes:
+                if ep.part == int(digits):
+                    return ep
+        choices = ", ".join(f"{ep.part} ({ep.id})" for ep in self.episodes)
+        raise SpecialsError(
+            f"{self.id}: no episode {episode_id!r}; use a part number or id: {choices}"
+        )
 
     def rules_text(self) -> str:
         if not self.rules_file:
