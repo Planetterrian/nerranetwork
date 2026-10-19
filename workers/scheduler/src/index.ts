@@ -34,8 +34,9 @@ const SLOT_TZ = "America/New_York";
 // build takes 6-7 minutes — and 06:50 is the end of the straggler hold,
 // past which the gate builds with whatever landed
 // (engine/daily_edition.py RELEASE_EASTERN / HOLD_UNTIL_EASTERN). A
-// straggler that lands inside the hold triggers the build itself
-// (nerra-daily.yml's workflow_run). Deliberately an OBJECT, not a SLOTS row
+// straggler that lands inside the hold triggers the build itself (its show
+// run dispatches nerra-daily.yml — scripts/followup_dispatch.py, Oct 19
+// 2026; the workflow_run trigger is gone). Deliberately an OBJECT, not a SLOTS row
 // — tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
 const EDITION_DISPATCH = {
   tz: "America/New_York",

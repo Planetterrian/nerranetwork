@@ -3,6 +3,28 @@ name: Run Tests
 on:
   push:
     branches: [main]
+    # Oct 19 2026: the pipeline pushes to main ~100 times a day (episode
+    # commits, audio-first checkpoints, video, multilingual, finalize), and
+    # each push ran the full suite — ~18 runs and ~150 runner-minutes a day
+    # testing commits that change no code. A push that touches ONLY generated
+    # output is skipped; pull requests always run (no paths filter there, so
+    # a required check is never left pending).
+    paths-ignore:
+      - 'digests/**'
+      - 'blog/**'
+      - 'claims/**'
+      - 'topics/**'
+      - 'ru/**'
+      - 'fr/**'
+      - 'api/**'
+      - 'site/data/**'
+      - 'assets/share/**'
+      - 'assets/site_screens/**'
+      - 'specials/**'
+      - 'books/catalog.json'
+      - '*.rss'
+      - '*.html'
+      - 'sitemap.xml'
   pull_request:
     branches: [main]
 

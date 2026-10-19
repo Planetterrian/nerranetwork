@@ -181,7 +181,12 @@ class TestRegistration:
         wf = (ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text()
         assert "build_daily_edition.py" in wf
         assert "--when-ready" in wf
-        assert "workflow_run" in wf          # assembles right after the last show
+        # Oct 19 2026: no workflow_run — the show run dispatches the gate
+        # after the release (scripts/followup_dispatch.py nerra-daily) and the
+        # scheduler Worker dispatches it at the release and the hold's end.
+        assert "workflow_run:" not in wf
+        run_show = (ROOT / ".github" / "workflows" / "run-show.yml").read_text()
+        assert 'followup_dispatch.py nerra-daily --show "${{ matrix.show }}"' in run_show
         assert "group: nerra-daily" in wf    # sweeps never race each other
         assert "safe-commit-push" in wf
         assert "ref: main" in wf             # never the event's stale SHA

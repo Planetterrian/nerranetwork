@@ -292,8 +292,11 @@ class TestNoPublicSurfaceSeesIt:
 
     def test_multilingual_skips_members_days_and_members_only_shows(self):
         wf = (ROOT / ".github" / "workflows" / "multilingual.yml").read_text(encoding="utf-8")
-        assert "is_public_on(cfg" in wf
-        assert '"members_only"' in wf
+        assert '"members_only"' in wf          # the cron passes skip gated shows
+        # Oct 19 2026: the per-day check moved with the dispatch decision —
+        # the show run asks engine.access before it starts a sweep.
+        script = (ROOT / "scripts" / "followup_dispatch.py").read_text(encoding="utf-8")
+        assert "is_public_on(config, today)" in script
 
     def test_frame_memory_reads_members_scripts(self, tmp_path):
         from engine.frame_memory import script_paths

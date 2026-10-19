@@ -300,9 +300,16 @@ class TestTheWorkflows:
         assert 'python scripts/video_job.py dispatch --show "${{ matrix.show }}"' in RUN_WF
 
     def test_multilingual_follows_the_video(self):
-        assert 'workflows: ["Run Podcast Show", "Render Episode Video"]' in ML_WF
-        assert re.search(r"\(\?:run\|render\)", ML_WF)
+        # Oct 19 2026: the video job dispatches the sweep itself once the
+        # scene manifest is on main (scripts/followup_dispatch.py); the
+        # workflow_run fan-out is gone. The cron passes still wait on a
+        # pending video, and the show run's dispatch defers to the video job.
+        assert "workflow_run:" not in ML_WF
         assert ".video_pending_" in ML_WF and "Waiting for their video job" in ML_WF
+        video_wf = (ROOT / ".github" / "workflows" / "render-video.yml").read_text(encoding="utf-8")
+        assert "followup_dispatch.py multilingual" in video_wf and "--after-video" in video_wf
+        script = (ROOT / "scripts" / "followup_dispatch.py").read_text(encoding="utf-8")
+        assert "the video job is still rendering" in script
 
 
 # --------------------------------------------------- the reel's preview loop --
