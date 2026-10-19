@@ -99,13 +99,25 @@ def section_body(digest: str, name: str) -> Optional[str]:
     return None
 
 
+_NUMBERED_ITEM_RE = re.compile(r"^\s*\d+\.\s*\*\*")
+_HEADLINE_ITEM_RE = re.compile(r"^\s*\*\*[^*]{10,}\*\*\s*$")
+
+
 def items(body: str) -> List[str]:
     """Blank-line-separated blocks that open on an item head."""
     blocks = [b.strip() for b in re.split(r"\n\s*\n", body or "") if b.strip()]
     out: List[str] = []
     for b in blocks:
         first = b.splitlines()[0]
-        if _ITEM_HEAD_RE.match(first) or first.startswith("**"):
+        # Oct 19 2026: a bold ``**Title: Outlet**`` line followed by a blank
+        # line and its body is ONE item. The body's first sentence can read
+        # as an item head of its own ("Mark Gurman wrote …: …"), which left
+        # the title block without its Source line: MAG 7 Ep026 recorded
+        # ``items_without_source_shipped = 3`` on seven sourced items.
+        headline_only = bool(out) and "\n" not in out[-1] and _HEADLINE_ITEM_RE.match(out[-1])
+        if headline_only and not first.startswith("**") and not _NUMBERED_ITEM_RE.match(first):
+            out[-1] = out[-1] + "\n" + b
+        elif _ITEM_HEAD_RE.match(first) or first.startswith("**"):
             out.append(b)
         elif out:
             out[-1] = out[-1] + "\n" + b
@@ -282,8 +294,6 @@ def lint_region_world_thin(digest: str) -> Optional[LintFinding]:
 # bold-anything rule and 0/12 under this one. Opt-in per show; the shows
 # whose format legitimately carries no per-item URL (MIT, the Russian
 # shows, the narrative shows) never opt in.
-_NUMBERED_ITEM_RE = re.compile(r"^\s*\d+\.\s*\*\*")
-_HEADLINE_ITEM_RE = re.compile(r"^\s*\*\*[^*]{10,}\*\*\s*$")
 ITEMS_WITHOUT_SOURCE_MIN_ITEMS = 3
 ITEMS_WITHOUT_SOURCE_MIN_SHARE = 0.5
 

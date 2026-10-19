@@ -244,6 +244,7 @@ _LABEL_RE = re.compile(
     r'<span class="ProfileCard-label">([^<]+)</span></th><td>(.*?)</td>', re.S
 )
 _SPEC_RE = re.compile(r"<tr><th>([^<]+)</th><td>(.*?)</td></tr>", re.S)
+_PROFILE_KEYS = ("baptismal_name", "architect", "construction", "launch_date", "skipper")
 _SAIL_NO_RE = re.compile(r"<h2[^>]*>\s*([A-Z]{2,3}\s?\d{1,4})\s*</h2>")
 _HIGHLIGHT_RE = re.compile(r"<strong>\s*(\d{4})\s*:\s*</strong>\s*(.*?)(?:<br\s*/?>|</p>|</div>)", re.S)
 
@@ -257,6 +258,13 @@ def parse_imoca_boat_page(html: str) -> Dict[str, Any]:
         out[label.strip().lower().replace(" ", "_")] = _strip(value)
     for label, value in _SPEC_RE.findall(html):
         key = label.strip().lower().replace(" ", "_").replace(".", "")
+        # Oct 19 2026: imoca.org dropped the ProfileCard spans — the facts
+        # now sit in a plain ``<tr><th>Baptismal name</th><td>…`` table
+        # (class BoatSpecs-sheet), the same shape as the spec rows. The
+        # nightly had failed every one of the 20 boat pages ("page carried
+        # no ProfileCard facts") and kept the fleet guide on stale records.
+        if key in _PROFILE_KEYS and _strip(value) and key not in out:
+            out[key] = _strip(value)
         if key in ("foils", "weight", "mast_type", "length", "draught", "beam") and _strip(value):
             out[key] = _strip(value)
     m = _SAIL_NO_RE.search(html)

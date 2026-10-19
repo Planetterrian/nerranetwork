@@ -2125,13 +2125,21 @@ async function reminderFallback(env: Env): Promise<number> {
  *  most thirty minutes — never a guest in a locked studio. */
 const FIRE_TICK_LOOKBACK_MS = 48 * 3600000;   // sweep_browser_no_shows window
 const FIRE_TICK_LOOKAHEAD_MS = 140 * 60000;   // REMINDER_AHEAD upper bound + drift
+// Oct 19 2026: an interview is the fire script's to act on only around its
+// slot — the reminder ahead of it, the fire window, the live run (50-minute
+// hard cap). The 48-hour lookback on INTERVIEWS held the gate open all day
+// for two interviews whose runs had already fired ("already has an active
+// run — skipping", 148 dispatches on Oct 19); the run-table clause below
+// still covers the no-show sweep's two days.
+const FIRE_TICK_INTERVIEW_LOOKBACK_MS = 3 * 3600000;
 
 async function fireTickDue(env: Env): Promise<boolean> {
   try {
     const lo = new Date(Date.now() - FIRE_TICK_LOOKBACK_MS).toISOString();
+    const ilo = new Date(Date.now() - FIRE_TICK_INTERVIEW_LOOKBACK_MS).toISOString();
     const hi = new Date(Date.now() + FIRE_TICK_LOOKAHEAD_MS).toISOString();
     const due = await sb(env, "GET",
-      `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
+      `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${ilo}&scheduled_at=lte.${hi}&select=id&limit=1`);
     if (due?.length) return true;
     // Bounded like the no-show sweep: on Oct 13 2026 the table held two
     // awaiting_guest rows from September and a staged row from the day

@@ -1797,6 +1797,45 @@ def digest_section_word_counts(text: str) -> List[Tuple[str, int]]:
 DIGEST_EXPANSION_SECOND_PASS_SHARE = 0.9
 
 
+def digest_item_shortfalls(text: str, slug: str) -> List[Tuple[str, int, int]]:
+    """``[(section, items, floor)]`` for every story section of *slug*'s
+    validation config that the draft leaves under its ``min_items``.
+
+    Oct 19 2026: Fascinating Frontiers Ep227 was generated three times from
+    44 articles and every draft carried THREE stories under a floor of
+    eight; the expansion retry (which tells the model to "prefer fewer items
+    at full depth") padded each to the word floor with prose — 'treble
+    clef' five times — and the validator's item floor never got a retry of
+    its own. The retry now names the shortfall so it adds stories from the
+    material instead of lengthening the ones it has. Pure; an unknown show
+    or a config error is an empty list.
+    """
+    if not slug:
+        return []
+    try:
+        from engine.validation import SHOW_VALIDATION_CONFIGS, _extract_items_from_section
+        factory = SHOW_VALIDATION_CONFIGS.get(slug)
+        if not factory:
+            return []
+        vconfig = factory()
+    except Exception:  # noqa: BLE001 — never let the retry prompt fail on this
+        return []
+    out: List[Tuple[str, int, int]] = []
+    for rule in getattr(vconfig, "sections", []) or []:
+        floor = int(getattr(rule, "min_items", 0) or 0)
+        if floor < 2 or getattr(rule, "optional", False) or not getattr(rule, "pattern", ""):
+            continue
+        try:
+            if not re.search(rule.pattern, text, re.DOTALL | re.IGNORECASE):
+                continue
+            count = len(_extract_items_from_section(text, rule.pattern))
+        except re.error:
+            continue
+        if count < floor:
+            out.append((rule.name, count, floor))
+    return out
+
+
 def _build_digest_expansion_retry_prompt(
     word_count: int,
     min_words: int,
@@ -1804,6 +1843,7 @@ def _build_digest_expansion_retry_prompt(
     *,
     narrative: bool = False,
     sections: Optional[List[Tuple[str, int]]] = None,
+    item_shortfalls: Optional[List[Tuple[str, int, int]]] = None,
 ) -> str:
     """Build the one-shot expansion-retry prompt for a too-short digest/brief.
 
@@ -1844,6 +1884,19 @@ def _build_digest_expansion_retry_prompt(
             + "".join(f"- {h}: {n} words\n" for h, n in sections)
             + "Where the format above gives a section its own length, meet it; "
             "lengthen the sections furthest below their own spec first.\n"
+        )
+    if item_shortfalls:
+        section_lines += (
+            "ITEM FLOOR: these story sections carry fewer stories than the "
+            "format requires —\n"
+            + "".join(f"- {name}: {n} items, the floor is {floor}\n"
+                      for name, n, floor in item_shortfalls)
+            + "Reach each floor by ADDING stories from the material supplied "
+            "above (each as its own item with a headline, its facts and its "
+            "Source: line), choosing the stories not yet covered; never reach "
+            "it by splitting or re-telling a story already in the draft, and "
+            "never by lengthening the items you have. The depth rule below "
+            "ranks second to this floor.\n"
         )
     return (
         f"\n\n---\n"
@@ -2876,6 +2929,7 @@ def generate_digest(
                 text,
                 narrative=bool(getattr(config, "narrative_mode", False)),
                 sections=digest_section_word_counts(text),
+                item_shortfalls=digest_item_shortfalls(text, getattr(config, "slug", "")),
             )
             try:
                 expanded, meta_exp = _digest_call(

@@ -138,10 +138,13 @@ class TestWorkflowWiring:
         assert "if: always() && github.event.inputs.test_mode != 'true'" in block
         assert "actions: write" in text
 
-    def test_video_job_dispatches_after_the_manifest_push(self):
+    def test_video_job_dispatches_after_its_own_push(self):
+        # The render job, after its artifact push — never the homepage job,
+        # which its concurrency group supersedes (spacex, Oct 19).
         text = self._wf("render-video.yml")
-        i = text.index("bash scripts/push_regenerable.sh")
-        assert "followup_dispatch.py multilingual" in text[i:]
+        i = text.index("name: Start the multilingual sweep")
+        assert "steps.commit.outputs.pushed == 'true'" in text[i:i + 1200]
+        assert "followup_dispatch.py multilingual" in text[i:i + 1200]
 
     def test_no_workflow_run_fanout_remains(self):
         for name in ("multilingual.yml", "nerra-daily.yml"):

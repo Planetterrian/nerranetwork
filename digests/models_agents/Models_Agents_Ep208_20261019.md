@@ -1,5 +1,5 @@
-> **# Models & Agents**
-Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop CPUs while matching float baselines on LAMBADA and PIQA.
+# Models & Agents
+> **Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop CPUs while matching float baselines on LAMBADA and PIQA.**
 
 **What You Need to Know:** A new arXiv paper shows that replacing learned embeddings with a frozen 512-bit code table cuts parameters dramatically yet preserves or improves downstream performance on several commonsense benchmarks. RealCLI introduces a paired benchmark that measures both task execution and human-agent collaboration quality for CLI agents, exposing large gaps in frontier models. ProPerAgent demonstrates memory-driven proactive assistance that lifts strict accuracy from under 10% to 37.5% on long-horizon personal memory tasks without additional training.
 ---
