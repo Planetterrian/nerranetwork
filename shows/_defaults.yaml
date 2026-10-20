@@ -131,6 +131,24 @@ tts:
   # they come from the chapters.json sidecar, not from section-TTS.
   # To re-enable section-TTS + drop the wrap, flip both fields here.
   use_section_tts: false
+  # ---- Story tags (Oct 20 2026, engine/story_tags.py) ----
+  # The voice marks a new story the way a reader does. Measured Oct 19
+  # against NPR's hourly newscast and Up First: a human lifts +2..+8 Hz
+  # opening a sentence and +34 Hz opening a new story and lands harder on
+  # a story's last words; this voice lifts ~+20 Hz at every sentence and
+  # the same at a story change, so stories ran together whatever sat in
+  # the gap. At every boundary engine.story_breaks finds (the same ones
+  # the beat uses), BEFORE synthesis: story_tag_open before the new
+  # story's first line ([breath] is a sanctioned tag the model already
+  # writes), and story_tag_close — a bare tag NAME, e.g. "low" for
+  # <low>...</low> — around the previous story's last sentence. The close
+  # tag ships EMPTY until Actions "Probe TTS tags" shows which pitch tag
+  # this voice consumes without speaking it (candidates: low,
+  # lower-pitch, soft). Never set it from documentation alone.
+  # AUDIO — A/B-listen.
+  story_tags: true
+  story_tag_open: "[breath]"
+  story_tag_close: ""
   # ---- Legacy ElevenLabs baseline ----
   # No show currently overrides `provider: elevenlabs`. Kept here so
   # an emergency rollback (e.g. Grok TTS outage) is a one-line YAML
@@ -255,7 +273,13 @@ audio:
   # soft swell of the show's own theme under each pause, ducked as the next
   # story begins. 0 = off. AUDIO — A/B-listen.
   story_break_seconds: 1.0
-  story_break_cue: true
+  # Oct 20 2026 (operator-directed): the music swells are OFF everywhere.
+  # Measured on Tesla Ep639 they fired 13 times in nine minutes, one every
+  # ~32 s, 5-10 dB under the voice (the final loudnorm lifts an exposed
+  # gap), and 11 of the 13 sat between items inside ONE section. A human
+  # newscast marks a story change with the voice, not with sound in the
+  # gap — see tts.story_tags. The code remains for a per-show opt-in.
+  story_break_cue: false
 
 storage:
   provider: r2

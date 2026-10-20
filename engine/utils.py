@@ -701,6 +701,9 @@ _INLINE_SPEECH_TAGS = (
     "pause", "long-pause", "laugh", "cry",
     "sniff", "kiss", "throat-clear",
     "breath", "sigh", "gasp",
+    # Oct 20 2026: listed by third-party Grok TTS references (Telnyx); kept
+    # here so a script carrying one strips cleanly on every reader surface.
+    "inhale", "exhale", "chuckle", "giggle",
 )
 _INLINE_TAG_PATTERN = re.compile(
     r"\[\s*(?:" + "|".join(re.escape(t) for t in _INLINE_SPEECH_TAGS) + r")\s*\]",
@@ -721,6 +724,9 @@ _WRAPPING_TAGS = (
     "slow", "fast", "high", "low",
     "singing", "emphasis",
     "build-intensity",
+    # Oct 20 2026: the pitch tags as third-party references spell them
+    # (Telnyx); candidates for tts.story_tag_close — see engine/story_tags.py.
+    "higher-pitch", "lower-pitch",
 )
 _WRAPPING_TAG_PATTERN = re.compile(
     r"</?\s*(?:" + "|".join(re.escape(t) for t in _WRAPPING_TAGS) + r")\s*>",

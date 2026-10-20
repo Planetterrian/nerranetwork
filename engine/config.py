@@ -235,6 +235,17 @@ class TTSConfig:
     # to apply safely). The network default in ``_defaults.yaml`` is
     # False as of May 13 2026.
     use_section_tts: bool = True
+    # Oct 20 2026 (engine/story_tags.py): speech tags at every story
+    # boundary story_breaks finds, inserted before synthesis so the voice
+    # marks a new story the way a reader does (a breath to open it, and
+    # optionally a wrapping tag around the previous story's last sentence
+    # so it lands). Dataclass default off = byte-identical TTS text; the
+    # network value lives in shows/_defaults.yaml. ``story_tag_close`` is a
+    # bare tag NAME ("low" -> <low>...</low>), set only from probe
+    # evidence on the custom voice — an unknown tag is spoken aloud.
+    story_tags: bool = False
+    story_tag_open: str = "[breath]"
+    story_tag_close: str = ""
     # Post-TTS transcription validation (opt-in)
     validate_transcription: bool = False
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"
@@ -353,7 +364,10 @@ class AudioConfig:
     # (the voice's own pause is measured and only the difference spliced),
     # and when this is on, a soft swell of the show's theme is laid under
     # each pause in the music mix (engine.audio.breather_offsets). Shows
-    # with no music file get the pause alone.
+    # with no music file get the pause alone. Oct 20 2026: OFF network-wide
+    # (operator: the swells read as interludes — 13 in a 9-minute Tesla
+    # episode, 5-10 dB under the voice); the story change is marked by the
+    # voice instead (tts.story_tags). The code stays for a per-show opt-in.
     story_break_cue: bool = False
 
 

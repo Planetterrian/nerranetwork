@@ -4765,6 +4765,32 @@ def run(args: argparse.Namespace) -> None:
             except Exception:  # noqa: BLE001 — tripwire must never break a run
                 pass
 
+            # Oct 20 2026 (engine/story_tags.py): speech tags where a new
+            # story starts — a breath opening its first line and, when the
+            # probe has named one, a landing tag around the previous
+            # story's last sentence — so the VOICE marks the change the way
+            # a newsreader does. Same boundaries as the audio beat (9a);
+            # the music cue under the beat is retired. Inserted here so the
+            # committed *_tts.txt is exactly what was spoken.
+            if (getattr(config.tts, "story_tags", False)
+                    and not config.tts.dialogue_mode
+                    and float(getattr(config.audio, "story_break_seconds", 0.0) or 0.0) > 0):
+                try:
+                    from engine.story_tags import tag_story_boundaries as _tag_stories
+                    _tagged = _tag_stories(
+                        podcast_script, x_thread or "",
+                        open_tag=getattr(config.tts, "story_tag_open", "[breath]"),
+                        close_tag=getattr(config.tts, "story_tag_close", ""),
+                    )
+                    podcast_script = _tagged.script
+                    metrics.record("story_tags_boundaries", _tagged.boundaries)
+                    metrics.record("story_tags_inserted", _tagged.opened)
+                    metrics.record("story_tags_closed", _tagged.closed)
+                    logger.info("Story tags: %d story starts, %d opened, %d closing sentences wrapped",
+                                _tagged.boundaries, _tagged.opened, _tagged.closed)
+                except Exception as exc:  # noqa: BLE001 — never costs an episode
+                    logger.warning("Story tags skipped (non-fatal): %s", exc)
+
             # Save TTS-ready script for debugging pronunciation/intro issues
             from engine.utils import strip_lone_surrogates as _scrub
             tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
@@ -5237,12 +5263,17 @@ def run(args: argparse.Namespace) -> None:
                         from engine import story_breaks as _sb
 
                         _tx_path = digests_dir / f"{_ep_prefix}_transcript.json"
-                        _lines = _sb.story_boundary_lines(podcast_script, x_thread or "")
+                        # Boundaries and Whisper anchors read the script
+                        # WITHOUT its speech tags: a [breath] opening a line
+                        # (engine/story_tags.py) is not in the audio.
+                        from engine.utils import strip_speech_tags as _sb_strip
+                        _spoken_script = _sb_strip(podcast_script)
+                        _lines = _sb.story_boundary_lines(_spoken_script, x_thread or "")
                         _breaks: list = []
                         _unmatched = _unplaced = 0
                         if _lines and _tx_path.exists():
                             _anchors, _unmatched = _sb.boundary_anchors(
-                                podcast_script, _lines, json.loads(_tx_path.read_text(encoding="utf-8")))
+                                _spoken_script, _lines, json.loads(_tx_path.read_text(encoding="utf-8")))
                             _breaks, _unplaced = _sb.plan_breaks(
                                 _anchors, _sb.detect_silences(raw_mp3), gap_seconds=_break_s)
                         _cuts = [b.cut for b in _breaks if b.insert > 0]
@@ -5449,8 +5480,9 @@ def run(args: argparse.Namespace) -> None:
                             "_transcript.json")
                         if _tx_ch.exists():
                             from engine.chapters import align_timestamps_to_transcript
+                            from engine.utils import strip_speech_tags as _ch_strip
                             align_timestamps_to_transcript(
-                                episode_chapters, podcast_script,
+                                episode_chapters, _ch_strip(podcast_script),
                                 json.loads(_tx_ch.read_text(encoding="utf-8")),
                                 music_intro_offset=float(config.audio.voice_intro_delay or 0.0),
                                 total_duration=audio_duration,

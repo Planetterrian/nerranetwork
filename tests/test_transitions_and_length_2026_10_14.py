@@ -169,7 +169,9 @@ class TestConfigAndWiring:
         from engine.config import AudioConfig
         assert AudioConfig().story_break_seconds == 0.0 and AudioConfig().story_break_cue is False
         a = _cfg("omni_view_world").audio
-        assert a.story_break_seconds == 1.0 and a.story_break_cue is True
+        # Oct 20 2026: the beat stays, the music swell under it is retired
+        # network-wide (tests/test_story_tags_2026_10_20.py pins the set).
+        assert a.story_break_seconds == 1.0 and a.story_break_cue is False
 
     def test_run_show_plans_totals_and_passes_the_cues(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
