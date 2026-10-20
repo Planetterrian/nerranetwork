@@ -413,29 +413,59 @@ def read_published_item(rss_path: Path, episode_num: int) -> Optional[dict]:
             continue
         title = item.findtext("title") or ""
         desc = item.findtext("description") or ""
-        return {"title": title.strip(), "description": desc}
+        # Oct 20 2026: the enclosure URL, the page link and the GUID are
+        # the published item's and never rebuilt. The repair had rebuilt
+        # the enclosure from publishing.base_url (the site, not R2 —
+        # a 404 on all fourteen repaired feeds), put the MP3 in <link>
+        # where the blog page belongs, and minted a fresh GUID, which
+        # every app reads as a NEW episode to download again.
+        enc = item.find("enclosure")
+        return {
+            "title": title.strip(),
+            "description": desc,
+            "enclosure_url": (enc.get("url") if enc is not None else "") or "",
+            "link": (item.findtext("link") or "").strip(),
+            "guid": (item.findtext("guid") or "").strip(),
+        }
     return None
 
 
 def refresh_rss_item(config, art: EpisodeArtifacts, audio_duration: float,
-                     published: dict) -> None:
+                     published: dict, uploaded_url: str = "") -> None:
     """Replace the episode's feed item with corrected audio metadata."""
     from engine.audio import format_duration
     from engine.publisher import apply_op3_prefix, update_rss_feed
 
     rss_path = ROOT / config.publishing.rss_file
-    raw_url = (f"{config.publishing.base_url}/"
-               f"{config.publishing.audio_subdir}/{art.final_mp3.name}")
-    audio_url = (apply_op3_prefix(raw_url, config.analytics.prefix_url)
-                 if config.analytics.enabled else raw_url)
+    # The repaired object lands at the key the feed already points to, so
+    # the enclosure URL is the published one, verbatim (same host, same
+    # OP3 prefix). Only when the item carried none is it rebuilt from the
+    # upload URL — never from publishing.base_url, which is the SITE.
+    audio_url = published.get("enclosure_url") or ""
+    if not audio_url.endswith(art.final_mp3.name):
+        if not uploaded_url:
+            raise ValueError(
+                f"Ep{art.episode_num}'s feed item carries no enclosure for "
+                f"{art.final_mp3.name} and no upload URL was given.")
+        audio_url = (apply_op3_prefix(uploaded_url, config.analytics.prefix_url)
+                     if config.analytics.enabled else uploaded_url)
+    page_url = published.get("link") or ""
+    if page_url.lower().endswith(".mp3"):
+        page_url = ""
 
-    chapters_url = transcript_url = None
+    chapters_url = transcript_url = transcript_vtt_url = None
     if art.chapters_path.exists():
         chapters_url = (f"{config.publishing.base_url}/"
                         f"{config.publishing.audio_subdir}/{art.chapters_path.name}")
     if art.transcript_json.exists():
         transcript_url = (f"{config.publishing.base_url}/"
                           f"{config.publishing.audio_subdir}/{art.transcript_json.name}")
+        # Apple reads the text/vtt tag, which goes FIRST (Oct 1 2026); the
+        # first fourteen repairs had dropped it from every repaired item.
+        vtt_path = art.transcript_json.with_name(art.prefix + "_transcript.vtt")
+        if vtt_path.exists():
+            transcript_vtt_url = (f"{config.publishing.base_url}/"
+                                  f"{config.publishing.audio_subdir}/{vtt_path.name}")
 
     episode_date = dt.datetime.strptime(art.date_str, "%Y%m%d").date()
 
@@ -467,6 +497,9 @@ def refresh_rss_item(config, art: EpisodeArtifacts, audio_duration: float,
         audio_url=audio_url,
         chapters_url=chapters_url,
         transcript_url=transcript_url,
+        transcript_vtt_url=transcript_vtt_url,
+        episode_page_url=page_url,
+        keep_existing_guid=True,
     )
 
 
@@ -830,8 +863,8 @@ def main() -> int:
     # --- feed ----------------------------------------------------------------
     published = read_published_item(ROOT / config.publishing.rss_file, art.episode_num)
     if published:
-        refresh_rss_item(config, art, audio_duration, published)
-        logger.info("RSS item refreshed (duration + byte length).")
+        refresh_rss_item(config, art, audio_duration, published, uploaded_url=url)
+        logger.info("RSS item refreshed (duration + byte length; enclosure, link and GUID kept).")
     else:
         logger.warning(
             "Ep%s has no item in %s — audio replaced, feed left alone.",

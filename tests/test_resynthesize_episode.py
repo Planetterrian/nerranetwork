@@ -383,3 +383,101 @@ class TestStoryBreaksInTheRepair:
         art.transcript_json.write_text("{}", encoding="utf-8")
         monkeypatch.setattr(sb, "story_boundary_lines", lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
         assert rs.insert_story_breaks(tesla_config, art, "A.\n", art.raw_mp3) == art.raw_mp3
+
+
+# ---------------------------------------------------------------------------
+# The feed item keeps its enclosure, its page link and its GUID (Oct 20 2026)
+# ---------------------------------------------------------------------------
+
+class TestRepairNeverMovesTheFeedItem:
+    """The first fourteen repairs rebuilt the enclosure from
+    publishing.base_url (the site, a 404), put the MP3 in <link> and minted
+    a new GUID — every app read a new episode pointing at nothing."""
+
+    FEED = """<?xml version='1.0' encoding='UTF-8'?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:podcast="https://podcastindex.org/namespace/1.0" version="2.0">
+  <channel>
+    <title>Tesla Shorts Time</title>
+    <link>https://nerranetwork.com/tesla.html</link>
+    <description>d</description>
+    <item>
+      <title>Ep 640: Hook</title>
+      <link>https://nerranetwork.com/blog/tesla/ep640.html</link>
+      <description>body</description>
+      <guid isPermaLink="false">tesla-shorts-time-ep640-20261020-100545144177</guid>
+      <enclosure url="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep640_20261020.mp3" length="1" type="audio/mpeg"/>
+      <itunes:episode>640</itunes:episode>
+      <pubDate>Tue, 20 Oct 2026 08:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
+"""
+
+    def test_published_item_carries_enclosure_link_and_guid(self, tmp_path):
+        feed = tmp_path / "podcast.rss"
+        feed.write_text(self.FEED, encoding="utf-8")
+        item = rs.read_published_item(feed, 640)
+        assert item["enclosure_url"].endswith("/tesla/Tesla_Shorts_Time_Pod_Ep640_20261020.mp3")
+        assert item["link"] == "https://nerranetwork.com/blog/tesla/ep640.html"
+        assert item["guid"] == "tesla-shorts-time-ep640-20261020-100545144177"
+
+    def test_refresh_keeps_the_published_enclosure_link_and_guid(self, monkeypatch, tmp_path, tesla_config):
+        feed = tmp_path / "podcast.rss"
+        feed.write_text(self.FEED, encoding="utf-8")
+        monkeypatch.setattr(rs, "ROOT", tmp_path)
+        monkeypatch.setattr(tesla_config.publishing, "rss_file", "podcast.rss")
+        art = rs.EpisodeArtifacts(
+            slug="tesla", episode_num=640, date_str="20261020",
+            prefix="Tesla_Shorts_Time_Pod_Ep640_20261020", digests_dir=tmp_path,
+            script_path=tmp_path / "s.txt", digest_path=tmp_path / "d.md",
+            raw_mp3=tmp_path / "raw.mp3",
+            final_mp3=tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020.mp3",
+            chapters_path=tmp_path / "chapters_ep640.json",
+            transcript_txt=tmp_path / "t.txt",
+            transcript_json=tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.json")
+        art.final_mp3.write_bytes(b"\0" * 2048)
+        art.transcript_json.write_text("{}", encoding="utf-8")
+        (tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.vtt").write_text("WEBVTT\n", encoding="utf-8")
+        seen = {}
+        monkeypatch.setattr("engine.publisher.update_rss_feed", lambda **kw: seen.update(kw))
+        published = rs.read_published_item(feed, 640)
+        rs.refresh_rss_item(tesla_config, art, 619.0, published,
+                            uploaded_url="https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep640_20261020.mp3")
+        assert seen["audio_url"] == published["enclosure_url"]
+        assert seen["episode_page_url"] == "https://nerranetwork.com/blog/tesla/ep640.html"
+        assert seen["keep_existing_guid"] is True
+        assert "nerranetwork.com/digests/" not in seen["audio_url"]
+        # The text/vtt transcript tag (Apple reads it) rides along with the JSON one.
+        assert seen["transcript_vtt_url"].endswith("Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.vtt")
+        assert seen["transcript_url"].endswith("_transcript.json")
+
+    def test_an_item_without_an_enclosure_takes_the_upload_url_with_the_prefix(self, monkeypatch, tmp_path, tesla_config):
+        seen = {}
+        monkeypatch.setattr("engine.publisher.update_rss_feed", lambda **kw: seen.update(kw))
+        monkeypatch.setattr(rs, "ROOT", tmp_path)
+        art = rs.EpisodeArtifacts(
+            slug="tesla", episode_num=640, date_str="20261020", prefix="p", digests_dir=tmp_path,
+            script_path=tmp_path / "s.txt", digest_path=tmp_path / "d.md", raw_mp3=tmp_path / "raw.mp3",
+            final_mp3=tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020.mp3",
+            chapters_path=tmp_path / "c.json", transcript_txt=tmp_path / "t.txt", transcript_json=tmp_path / "t.json")
+        art.final_mp3.write_bytes(b"\0" * 2048)
+        published = {"title": "t", "description": "d", "enclosure_url": "", "link": "x.mp3", "guid": ""}
+        rs.refresh_rss_item(tesla_config, art, 10.0, published,
+                            uploaded_url="https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep640_20261020.mp3")
+        assert seen["audio_url"].endswith("audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep640_20261020.mp3")
+        assert seen["episode_page_url"] == ""  # an MP3 is never the page link
+        with pytest.raises(ValueError):
+            rs.refresh_rss_item(tesla_config, art, 10.0, published, uploaded_url="")
+
+    def test_no_committed_feed_item_points_at_the_site_for_its_audio(self):
+        bad = []
+        for feed in ROOT.glob("*.rss"):
+            for line in feed.read_text(encoding="utf-8").splitlines():
+                if "<enclosure" in line and "nerranetwork.com/digests/" in line:
+                    bad.append(f"{feed.name}: {line.strip()[:120]}")
+        assert not bad, bad
+
+    def test_the_workflow_commits_the_script_and_the_vtt(self):
+        wf = (ROOT / ".github" / "workflows" / "resynthesize-episode.yml").read_text(encoding="utf-8")
+        for p in ("digests/**/*_tts.txt", "digests/**/*_transcript.vtt"):
+            assert p in wf, p
