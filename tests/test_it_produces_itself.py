@@ -1377,7 +1377,9 @@ class TestTheGuestKnowsWhenItIsOver:
         # Oct 15 2026: the prompt follows xAI's section order for Grok Voice
         # 3.0; the block that follows HOW IT ENDS is INVITE PEOPLE IN now.
         block = self.PROMPT[self.PROMPT.index("HOW IT ENDS, FOR THE GUEST"):]
-        block = block[:block.index("INVITE PEOPLE IN")]
+        # Oct 19 2026: HOW IT ENDS mentions the invitation by name (it comes
+        # before the sign-off now); the block ends where its own section does.
+        block = block[:block.index(" INVITE PEOPLE IN. At the close")]
         assert "nothing at all once they have left the room" in block
 
     def test_the_page_tells_them_before_they_start(self):

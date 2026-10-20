@@ -383,3 +383,18 @@ class TestSheWaitsForAThought:
                "turn_detection": {"silence_duration_ms": 1300}}
         assert F.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is True
         assert updates == [{"turn_detection": {"silence_duration_ms": 1800}}]
+
+
+class TestTheInvitationComesBeforeTheSignOff:
+    """Jon Cheney, Oct 19 2026 (rebuilt tape): "You can hang up now", then
+    three sentences inviting listeners to apply. The invitation belongs
+    between the thank-you and the sign-off, so the sign-off is the last
+    thing the guest hears."""
+
+    def test_the_order_is_thanks_invitation_sign_off(self):
+        flat = _flat(PROMPT)
+        ends = flat[flat.index("HOW IT ENDS, FOR THE GUEST."):flat.index("## Guardrails")]
+        assert ends.index("thank them once, for something particular") \
+            < ends.index("Then the invitation to listeners") \
+            < ends.index('say the words "that\'s the end of the recording"')
+        assert "never after the sign-off" in ends
