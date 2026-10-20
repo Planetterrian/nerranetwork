@@ -4791,6 +4791,13 @@ def run(args: argparse.Namespace) -> None:
                 except Exception as exc:  # noqa: BLE001 — never costs an episode
                     logger.warning("Story tags skipped (non-fatal): %s", exc)
 
+            # Oct 20 2026 (operator listen, the first slate with story
+            # tags): a [breath] on this voice is far too prominent. No
+            # breath-family tag reaches synthesis, whoever wrote it — the
+            # model's own or any code path above.
+            from engine.utils import strip_breath_tags as _strip_breaths
+            podcast_script = _strip_breaths(podcast_script)
+
             # Save TTS-ready script for debugging pronunciation/intro issues
             from engine.utils import strip_lone_surrogates as _scrub
             tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"

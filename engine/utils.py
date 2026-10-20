@@ -734,6 +734,29 @@ _WRAPPING_TAG_PATTERN = re.compile(
 )
 
 
+#: Oct 20 2026 (operator listen): a ``[breath]`` on this voice is "way too
+#: prominent" — the story-start breaths shipped on 14 episodes that morning
+#: and every one is re-synthesized without them. No breath-family tag reaches
+#: synthesis any more, whoever wrote it (the model's own, or a code path).
+_BREATH_TAGS = ("breath", "inhale", "exhale", "sigh")
+_BREATH_TAG_PATTERN = re.compile(
+    r"[ \t]*\[\s*(?:" + "|".join(_BREATH_TAGS) + r")\s*\][ \t]*",
+    flags=re.IGNORECASE,
+)
+
+
+def strip_breath_tags(text: str) -> str:
+    """Remove ``[breath]`` / ``[inhale]`` / ``[exhale]`` / ``[sigh]`` from
+    text bound for TTS, keeping every other tag. Idempotent; a tag that
+    opened a line leaves no leading space behind."""
+    if not text or not _BREATH_TAG_PATTERN.search(text):
+        return text  # byte-identical when there is nothing to remove
+    out = _BREATH_TAG_PATTERN.sub(" ", text)
+    out = re.sub(r"(?m)^[ \t]+", "", out)
+    out = re.sub(r"[ \t]{2,}", " ", out)
+    return re.sub(r"[ \t]+\n", "\n", out)
+
+
 def strip_speech_tags(text: str) -> str:
     """Remove Grok TTS speech tags from text.
 

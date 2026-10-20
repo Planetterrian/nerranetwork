@@ -109,18 +109,47 @@ class TestNetworkSetting:
         d = yaml.safe_load((ROOT / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
         assert d["audio"]["story_break_cue"] is False
         assert d["audio"]["story_break_seconds"] == 1.0
-        assert d["tts"]["story_tags"] is True
-        assert d["tts"]["story_tag_open"] == "[breath]"
+        # Oct 20 2026, the first slate: the breath was heard as far too
+        # prominent on the custom voice. Off, and no breath tag reaches TTS.
+        assert d["tts"]["story_tags"] is False
+        assert d["tts"]["story_tag_open"] == ""
         assert d["tts"]["story_tag_close"] == ""
 
-    def test_no_show_keeps_the_music_cue(self):
+    def test_no_show_keeps_the_music_cue_or_turns_story_tags_on(self):
         for p in _show_yamls():
             cfg = load_config(p)
             assert cfg.audio.story_break_cue is False, p.name
+            assert cfg.tts.story_tags is False, p.name
 
-    def test_the_opener_is_a_sanctioned_tag(self):
+    def test_breath_is_no_longer_a_sanctioned_tag(self):
         from engine import intros
-        assert any(t.startswith(T.DEFAULT_OPEN_TAG) for t in intros._SANCTIONED_TAGS)
+        assert not any("breath" in t for t in intros._SANCTIONED_TAGS)
+        assert "[breath]" not in intros.build_delivery_spec("tesla")
+
+
+class TestNoBreathReachesSynthesis:
+    def test_strip_breath_tags(self):
+        from engine.utils import strip_breath_tags
+        s = "Last fact here.\n[breath] South Korea's exports fell.\nIt [inhale] went [pause] on. [exhale]\n"
+        assert strip_breath_tags(s) == "Last fact here.\nSouth Korea's exports fell.\nIt went [pause] on.\n"
+        assert strip_breath_tags(strip_breath_tags(s)) == strip_breath_tags(s)
+        assert strip_breath_tags("") == ""
+
+    @pytest.mark.skipif(not HAVE_FIXTURE, reason="fixture episode pruned")
+    def test_a_tagged_script_strips_back_to_its_words(self):
+        from engine.utils import strip_breath_tags
+        md, script = _real()
+        tagged = T.tag_story_boundaries(script, md, open_tag="[breath]").script
+        assert strip_breath_tags(tagged).split() == script.split()
+
+    def test_run_show_resynth_and_the_dubs_strip_before_synthesis(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        strip_at = src.index("podcast_script = _strip_breaths(podcast_script)")
+        assert src.index("from engine.story_tags import tag_story_boundaries") < strip_at < src.index("# Save TTS-ready script")
+        resynth = (ROOT / "scripts" / "resynthesize_episode.py").read_text(encoding="utf-8")
+        assert "strip_breath_tags(" in resynth
+        multi = (ROOT / "engine" / "multilingual.py").read_text(encoding="utf-8")
+        assert "strip_breath_tags(" in multi
 
 
 class TestRunShowWiring:
@@ -217,3 +246,51 @@ class TestMeasurementBehindTheChange:
         anchors, unmatched = S.boundary_anchors(clean, lines, tx)
         base_anchors, base_unmatched = S.boundary_anchors(script, S.story_boundary_lines(script, md), tx)
         assert anchors == base_anchors and unmatched == base_unmatched
+
+
+class TestTheMapNeverTitlesAChapter:
+    """The map speaks the segments' own anchor phrases (SpaceX Ep136: "…and
+    later the engineering angle on first-stage reuse" fired The Engineering
+    Angle at 11 s and the real deep dive fell back to its digest heading)."""
+
+    SCRIPT = (
+        "Falcon 9 booster B1063 reaches its 36th flight today.\n\n"
+        "This is SpaceX Daily, episode 136.\n\n"
+        "Senators on Starshield in Ukraine, Grok on X, and later the engineering angle on first-stage reuse.\n\n"
+        + "\n\n".join(f"Story sentence number {k} carries a fact of its own for the record." for k in range(40))
+        + "\n\nReuse physics is the engineering angle today, because a first stage only flies again if the energy budget closes.\n\n"
+        + "\n\n".join(f"Deep dive sentence {k} adds a number to the physics." for k in range(12))
+        + "\n\nAnd that's a wrap on today's SpaceX developments.\n"
+    )
+    MARKERS = [
+        {"pattern": r"this is spacex daily", "title": "Introduction", "where": "start"},
+        {"pattern": r"engineering deep dive|engineering angle", "title": "The Engineering Angle"},
+        {"pattern": r"that's a wrap", "title": "Closing", "where": "end"},
+    ]
+
+    def test_a_marker_fires_on_the_real_segment_not_the_map(self):
+        from engine.chapters import parse_chapters
+        chapters = parse_chapters(self.SCRIPT, self.MARKERS, min_chapters=1)
+        angle = next(c for c in chapters if c.title == "The Engineering Angle")
+        assert angle.opening.startswith("Reuse physics is the engineering angle today")
+        assert [c.title for c in chapters].count("The Engineering Angle") == 1
+
+    def test_a_start_marker_on_the_identity_line_still_fires(self):
+        from engine.chapters import parse_chapters
+        chapters = parse_chapters(self.SCRIPT, self.MARKERS, min_chapters=1)
+        intro = next(c for c in chapters if c.title == "Introduction")
+        assert intro.opening.startswith("This is SpaceX Daily")
+
+    def test_the_real_ep136_script_titles_the_deep_dive_once(self):
+        import yaml
+        from engine.chapters import parse_chapters
+        ep = ROOT / "digests" / "spacex" / "SpaceX_Daily_Ep136_20261020"
+        if not Path(f"{ep}_tts.txt").exists():
+            pytest.skip("fixture episode pruned")
+        ch = yaml.safe_load((ROOT / "shows" / "spacex.yaml").read_text(encoding="utf-8"))["chapters"]
+        chapters = parse_chapters(Path(f"{ep}_tts.txt").read_text(encoding="utf-8"), ch["section_markers"],
+                                  known_sections_only=ch.get("known_sections_only", False),
+                                  digest_text=Path(f"{ep}.md").read_text(encoding="utf-8"))
+        angles = [c for c in chapters if c.title == "The Engineering Angle"]
+        assert len(angles) == 1 and angles[0].word_start > 500
+        assert not any(c.title == "Engineering Deep Dive" for c in chapters)

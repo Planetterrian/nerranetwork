@@ -253,6 +253,50 @@ def read_committed_gate(config, art: EpisodeArtifacts):
 # Mix + chapters
 # ---------------------------------------------------------------------------
 
+def insert_story_breaks(config, art: EpisodeArtifacts, script: str,
+                        raw_mp3: Path) -> Path:
+    """The beat between stories (Oct 13 2026, ``engine/story_breaks.py``),
+    exactly as run_show's 9a-breaks step splices it: story starts from the
+    digest, each cut in the voice's own silence, lossless WAV out, and the
+    fresh transcript shifted with it. Returns the voice to mix — the
+    spliced WAV, or *raw_mp3* untouched when there is nothing to splice or
+    anything fails (a repair never ships worse audio than a run would).
+    """
+    break_s = float(getattr(config.audio, "story_break_seconds", 0.0) or 0.0)
+    if break_s <= 0 or config.tts.dialogue_mode or not raw_mp3.exists():
+        return raw_mp3
+    try:
+        import subprocess
+
+        from engine import story_breaks as sb
+        from engine.utils import strip_speech_tags
+
+        spoken = strip_speech_tags(script)
+        digest_md = art.digest_path.read_text(encoding="utf-8") if art.digest_path.exists() else ""
+        lines = sb.story_boundary_lines(spoken, digest_md)
+        if not lines or not art.transcript_json.exists():
+            logger.info("Story breaks: %d story starts, nothing spliced", len(lines))
+            return raw_mp3
+        anchors, unmatched = sb.boundary_anchors(
+            spoken, lines, json.loads(art.transcript_json.read_text(encoding="utf-8")))
+        breaks, unplaced = sb.plan_breaks(anchors, sb.detect_silences(raw_mp3), gap_seconds=break_s)
+        cuts = [b.cut for b in breaks if b.insert > 0]
+        lens = [b.insert for b in breaks if b.insert > 0]
+        logger.info("Story breaks: %d story starts, %d beats to %.1fs total pause "
+                    "(%.1fs spliced, %d not located)", len(lines), len(breaks),
+                    break_s, sum(lens), unmatched + unplaced)
+        if not cuts:
+            return raw_mp3
+        breaks_wav = raw_mp3.with_name(raw_mp3.stem + "_breaks.wav")
+        subprocess.run(sb.insert_silences_cmd(raw_mp3, breaks_wav, cuts, lens),
+                       check=True, timeout=900)
+        sb.rewrite_transcript_files(art.digests_dir, art.prefix, cuts, lens)
+        return breaks_wav
+    except Exception as exc:  # noqa: BLE001 — the beat is never worth an episode
+        logger.warning("Story breaks skipped (non-fatal): %s", exc)
+        return raw_mp3
+
+
 def mix_episode(config, raw_mp3: Path, final_mp3: Path) -> float:
     """Mix voice with the show's music exactly as ``run_show`` does."""
     from engine.audio import get_audio_duration, mix_with_music, normalize_voice
@@ -648,6 +692,17 @@ def main() -> int:
         logger.error("%s", exc)
         return 1
     script = art.script_path.read_text(encoding="utf-8")
+    # Oct 20 2026: no breath-family tag reaches synthesis (the operator heard
+    # the story-start [breath] as far too prominent). The committed script is
+    # rewritten to match what the repaired audio speaks.
+    from engine.utils import strip_breath_tags
+    stripped = strip_breath_tags(script)
+    if stripped != script:
+        n_tags = script.count("[") - stripped.count("[")
+        logger.info("  breath tags removed from the script before synthesis: %d", n_tags)
+        if args.apply:
+            art.script_path.write_text(stripped, encoding="utf-8")
+        script = stripped
 
     logger.info("Repairing %s Ep%s (%s)", config.name, art.episode_num, art.date_str)
     logger.info("  script:  %s (%d chars)", art.script_path.name, len(script))
@@ -717,8 +772,9 @@ def main() -> int:
             return 1
         logger.warning("Gate failed — re-synthesizing.")
 
-    # --- mix + duration floor ------------------------------------------------
-    audio_duration = mix_episode(config, art.raw_mp3, art.final_mp3)
+    # --- the beat between stories, then mix + duration floor ------------------
+    voice_for_mix = insert_story_breaks(config, art, script, art.raw_mp3)
+    audio_duration = mix_episode(config, voice_for_mix, art.final_mp3)
     logger.info("Mixed: %s (%.0fs)", art.final_mp3.name, audio_duration)
 
     floor = config.min_audio_duration

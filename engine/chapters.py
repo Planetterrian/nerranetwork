@@ -21,6 +21,12 @@ from typing import List, Optional
 
 from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
 
+# Oct 20 2026: the identity line and THE MAP after it (engine.intros
+# build_cold_open_spec) — the same shape engine.story_breaks reads, kept
+# here as a copy so chapters never imports the audio module.
+_MAP_IDENTITY_RE = re.compile(r"^\W*this is .{2,60}episode", re.IGNORECASE)
+_MAP_IDENTITY_SEARCH_LINES = 4
+
 logger = logging.getLogger(__name__)
 
 #: One budget for every headline-derived chapter title (Oct 14 2026). The
@@ -1390,7 +1396,30 @@ def parse_chapters(
     start_window_end = max(int(total_words * 0.10), 60)
     end_window_start = min(int(total_words * 0.85), max(total_words - 250, 0))
 
-    for line in lines:
+    # Oct 20 2026: the MAP — one sentence right after the identity line
+    # naming the stories and segments still to come (engine.intros
+    # build_cold_open_spec) — speaks the segments' own anchor phrases.
+    # SpaceX Ep136's "…and later the engineering angle on first-stage
+    # reuse" fired "The Engineering Angle" at 11 s and the real deep dive
+    # at 301 s fell back to its digest heading. A marker other than a
+    # ``start`` one never matches on the identity line or the line after it.
+    map_lines: set = set()
+    seen_text = 0
+    for i, line in enumerate(lines):
+        if not line.strip():
+            continue
+        seen_text += 1
+        if _MAP_IDENTITY_RE.match(line.strip()):
+            map_lines.add(i)
+            for j in range(i + 1, len(lines)):
+                if lines[j].strip():
+                    map_lines.add(j)
+                    break
+            break
+        if seen_text >= _MAP_IDENTITY_SEARCH_LINES:
+            break
+
+    for line_i, line in enumerate(lines):
         line_words = line.split()
         line_word_count = len(line_words)
         line_stripped = line.rstrip("\n\r")
@@ -1401,6 +1430,8 @@ def parse_chapters(
             # markers (the Tesla closing was titled "Introduction" on
             # every episode through Ep505).
             if title in matched_titles:
+                continue
+            if line_i in map_lines and where != "start":
                 continue
             if where == "start" and word_idx > start_window_end:
                 continue

@@ -329,3 +329,57 @@ class TestWorkflow:
         for key in ("GROK_API_KEY", "R2_ENDPOINT_URL",
                     "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"):
             assert key in env
+
+
+# ---------------------------------------------------------------------------
+# The beat between stories (Oct 20 2026)
+# ---------------------------------------------------------------------------
+
+class TestStoryBreaksInTheRepair:
+    """A repaired episode carries the same 1.0 s beat between stories a run
+    ships (Oct 13 2026); the tool had mixed the raw voice straight through."""
+
+    def test_the_step_sits_between_the_gate_and_the_mix(self):
+        src = (ROOT / "scripts" / "resynthesize_episode.py").read_text(encoding="utf-8")
+        gate = src.index("if report.passed:")
+        splice = src.index("voice_for_mix = insert_story_breaks(config, art, script, art.raw_mp3)")
+        mix = src.index("mix_episode(config, voice_for_mix, art.final_mp3)")
+        assert gate < splice < mix
+
+    def test_splice_reads_the_stripped_script_and_shifts_the_transcript(
+            self, monkeypatch, tmp_path, tesla_config):
+        from engine import story_breaks as sb
+        art = rs.EpisodeArtifacts(
+            slug="tesla", episode_num=1, date_str="20261020", prefix="T_Ep001_20261020",
+            digests_dir=tmp_path, script_path=tmp_path / "s.txt", digest_path=tmp_path / "d.md",
+            raw_mp3=tmp_path / "raw.mp3", final_mp3=tmp_path / "f.mp3",
+            chapters_path=tmp_path / "c.json", transcript_txt=tmp_path / "t.txt",
+            transcript_json=tmp_path / "T_Ep001_20261020_transcript.json")
+        art.raw_mp3.write_bytes(b"x")
+        art.digest_path.write_text("# d\n", encoding="utf-8")
+        art.transcript_json.write_text('{"segments": []}', encoding="utf-8")
+        seen = {}
+        monkeypatch.setattr(sb, "story_boundary_lines", lambda spoken, md: seen.setdefault("spoken", spoken) and [3])
+        monkeypatch.setattr(sb, "boundary_anchors", lambda *a, **k: ([(10.0, 10.5)], 0))
+        monkeypatch.setattr(sb, "detect_silences", lambda p: [(10.4, 10.9)])
+        monkeypatch.setattr(sb, "plan_breaks", lambda *a, **k: ([sb.Break(cut=10.6, insert=0.55, gap_start=10.4, gap_end=10.9)], 0))
+        monkeypatch.setattr(sb, "insert_silences_cmd", lambda src, dst, c, l: ["true"])
+        shifted = {}
+        monkeypatch.setattr(sb, "rewrite_transcript_files", lambda d, p, c, l: shifted.update(dir=d, prefix=p, cuts=c))
+        out = rs.insert_story_breaks(tesla_config, art, "A.\n[breath] B.\n<emphasis>C</emphasis>.\n", art.raw_mp3)
+        assert out.name == "raw_breaks.wav"
+        assert "[breath]" not in seen["spoken"] and "<emphasis>" not in seen["spoken"]
+        assert shifted == {"dir": tmp_path, "prefix": "T_Ep001_20261020", "cuts": [10.6]}
+
+    def test_a_failure_ships_the_raw_voice(self, monkeypatch, tmp_path, tesla_config):
+        from engine import story_breaks as sb
+        art = rs.EpisodeArtifacts(
+            slug="tesla", episode_num=1, date_str="20261020", prefix="p",
+            digests_dir=tmp_path, script_path=tmp_path / "s.txt", digest_path=tmp_path / "d.md",
+            raw_mp3=tmp_path / "raw.mp3", final_mp3=tmp_path / "f.mp3",
+            chapters_path=tmp_path / "c.json", transcript_txt=tmp_path / "t.txt",
+            transcript_json=tmp_path / "p_transcript.json")
+        art.raw_mp3.write_bytes(b"x")
+        art.transcript_json.write_text("{}", encoding="utf-8")
+        monkeypatch.setattr(sb, "story_boundary_lines", lambda *a: (_ for _ in ()).throw(RuntimeError("boom")))
+        assert rs.insert_story_breaks(tesla_config, art, "A.\n", art.raw_mp3) == art.raw_mp3
