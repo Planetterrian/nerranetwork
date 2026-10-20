@@ -522,9 +522,26 @@ class TestANoShowIsNotAFailure:
 
     def test_a_guest_joining_is_what_counts(self):
         f = self._fn()
-        assert f({"scenario_trace": [{"e": "leg", "d": "guest #1 joined (1 in room)"}]})
-        assert not f({"scenario_trace": [{"e": "leg", "d": "host #2 joined (1 in room)"},
+        opened = {"e": "room", "d": "opened (webrtc); mixer via sendMediaBetween"}
+        assert f({"scenario_trace": [opened, {"e": "leg", "d": "guest #1 joined (1 in room)"}]})
+        assert not f({"scenario_trace": [opened,
+                                         {"e": "leg", "d": "host #2 joined (1 in room)"},
                                          {"e": "room", "d": "ending: normal"}]})
+
+    def test_the_run_row_knows_before_the_trace_does(self):
+        """Oct 20 2026, Jason Shumard: the stored trace is the last 120 lines
+        and his join had scrolled off it. The Worker stamps guest_joined_at
+        on the run when a guest joins; that is asked first."""
+        f = self._fn()
+        opened = {"e": "room", "d": "opened (webrtc); mixer via sendMediaBetween"}
+        assert f({"guest_joined_at": "2026-10-20T16:30:25.083+00:00",
+                  "scenario_trace": [opened, {"e": "grok", "d": "response done"}]})
+
+    def test_a_trimmed_trace_is_not_evidence_of_an_empty_room(self):
+        f = self._fn()
+        # Trimmed: it no longer starts at the room opening.
+        assert f({"scenario_trace": [{"e": "grok", "d": "response done"},
+                                     {"e": "room", "d": "ending: normal"}]})
 
     def test_no_evidence_is_not_evidence_of_absence(self):
         f = self._fn()

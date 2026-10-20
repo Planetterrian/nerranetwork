@@ -2234,6 +2234,25 @@ function trace(event, detail) {
   if (traceFlushTimer) return;
   traceFlushTimer = setTimeout(flushTrace, 1500);
 }
+// Oct 20 2026, Jason Shumard. The stored trace was the last 120 lines, and
+// a 36-minute interview with three reconnects writes more than that, so the
+// line that said he had joined scrolled off the front. Post-production reads
+// the trace to ask whether a guest ever came, found no join, filed a real
+// interview as a no-show, and emailed him "we didn't manage to connect"
+// while he was still taking his headphones off. The record of who joined
+// and left, and the room opening, is now kept whatever else is dropped.
+const TRACE_KEEP_LINES = 120;
+function traceForStorage() {
+  if (traceLines.length <= TRACE_KEEP_LINES) return traceLines;
+  const kept = [];
+  const tail = traceLines.slice(-TRACE_KEEP_LINES);
+  for (let i = 0; i < traceLines.length - TRACE_KEEP_LINES; i++) {
+    const line = traceLines[i];
+    if (line.e === "leg" || (line.e === "room" && /^opened|new room session/.test(line.d || ""))) kept.push(line);
+  }
+  if (kept.length) kept.push({ t: tail[0].t, e: "room", d: "---- " + (traceLines.length - TRACE_KEEP_LINES - kept.length) + " earlier lines dropped ----" });
+  return kept.concat(tail);
+}
 function flushTrace() {
   traceFlushTimer = null;
   if (!runId) return;
@@ -2247,7 +2266,7 @@ function flushTrace() {
           "Authorization: Bearer " + getSecret("SUPABASE_SERVICE_KEY"),
           "Content-Type: application/json",
         ],
-        postData: JSON.stringify({ scenario_trace: traceLines.slice(-120) }),
+        postData: JSON.stringify({ scenario_trace: traceForStorage() }),
       }
     ).then(function () {}, function () {});
   } catch (err) { /* never blocks */ }

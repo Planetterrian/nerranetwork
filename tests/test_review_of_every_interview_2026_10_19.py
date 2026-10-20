@@ -398,3 +398,39 @@ class TestTheInvitationComesBeforeTheSignOff:
             < ends.index("Then the invitation to listeners") \
             < ends.index('say the words "that\'s the end of the recording"')
         assert "never after the sign-off" in ends
+
+
+class TestTheRoomKeepsItsJoinRecord:
+    """Oct 20 2026, Jason Shumard: the room stored its last 120 trace lines,
+    his interview wrote more, and the line saying he had joined was gone.
+    Whatever else is dropped, the opening and every join and leave stay."""
+
+    def test_joins_survive_the_trim(self):
+        body = _jsfn("traceForStorage")
+        assert 'line.e === "leg"' in body
+        assert "/^opened|new room session/" in body
+        assert "earlier lines dropped" in body
+        assert "scenario_trace: traceForStorage()" in SCENARIO
+        assert "traceLines.slice(-120)" not in SCENARIO
+
+    @pytest.mark.skipif(not shutil.which("node"), reason="node not installed")
+    def test_the_trim_keeps_the_join_in_node(self, tmp_path):
+        src = _jsfn("traceForStorage")
+        script = ("const TRACE_KEEP_LINES = 120; const traceLines = [];\n" + src + "\n"
+                  "traceLines.push({t:'t0', e:'room', d:'opened (webrtc); mixer'});\n"
+                  "traceLines.push({t:'t1', e:'leg', d:'guest #1 joined (1 in room)'});\n"
+                  "for (let i = 0; i < 200; i++) traceLines.push({t:'t'+(i+2), e:'grok', d:'response done'});\n"
+                  "traceLines.push({t:'t999', e:'leg', d:'guest #1 left: disconnected (0 in room)'});\n"
+                  "const out = traceForStorage();\n"
+                  "console.log(JSON.stringify({n: out.length, first: out[0].d, second: out[1].d, "
+                  "marker: out[2].d, last: out[out.length-1].d}));\n")
+        path = tmp_path / "trim.js"
+        path.write_text(script, encoding="utf-8")
+        res = subprocess.run(["node", str(path)], capture_output=True, text=True)
+        assert res.returncode == 0, res.stderr
+        import json
+        out = json.loads(res.stdout)
+        assert out["first"].startswith("opened") and "guest #1 joined" in out["second"]
+        assert "earlier lines dropped" in out["marker"]
+        assert "guest #1 left" in out["last"]
+        assert out["n"] == 123

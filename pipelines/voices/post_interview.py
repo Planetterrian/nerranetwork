@@ -102,15 +102,28 @@ def _interview_and_app(run: dict) -> tuple[dict, dict]:
 
 
 def _anyone_joined(run: dict) -> bool:
-    """Did a guest ever connect? The room's own trace is the record.
+    """Did a guest ever connect? The run row and the room's trace are the record.
 
     A room with no guest leg produced no recording, so everything downstream
     is meaningless. Absent or unreadable trace counts as "yes" — an empty
     trace is not proof of an empty room, and it is better to try to process a
     real interview and fail loudly than to file one as a no-show.
+
+    Oct 20 2026, Jason Shumard: the room keeps only the last 120 trace lines,
+    his 36 minutes with three reconnects wrote more, and the line that said
+    he had joined was gone. This read "no guest", filed a real interview as
+    a no-show, and emailed him "we didn't manage to connect". The Worker
+    stamps ``guest_joined_at`` on the run the moment a guest joins, and that
+    column is the first thing asked now; a trace that no longer starts at the
+    room opening has been trimmed and is not evidence of an empty room.
     """
+    if run.get("guest_joined_at"):
+        return True
     trace = run.get("scenario_trace")
     if not isinstance(trace, list) or not trace:
+        return True
+    first = trace[0] if isinstance(trace[0], dict) else {}
+    if not str(first.get("d", "")).startswith("opened"):
         return True
     for event in trace:
         detail = ""
