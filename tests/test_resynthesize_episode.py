@@ -433,8 +433,11 @@ class TestRepairNeverMovesTheFeedItem:
             raw_mp3=tmp_path / "raw.mp3",
             final_mp3=tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020.mp3",
             chapters_path=tmp_path / "chapters_ep640.json",
-            transcript_txt=tmp_path / "t.txt", transcript_json=tmp_path / "t.json")
+            transcript_txt=tmp_path / "t.txt",
+            transcript_json=tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.json")
         art.final_mp3.write_bytes(b"\0" * 2048)
+        art.transcript_json.write_text("{}", encoding="utf-8")
+        (tmp_path / "Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.vtt").write_text("WEBVTT\n", encoding="utf-8")
         seen = {}
         monkeypatch.setattr("engine.publisher.update_rss_feed", lambda **kw: seen.update(kw))
         published = rs.read_published_item(feed, 640)
@@ -444,6 +447,9 @@ class TestRepairNeverMovesTheFeedItem:
         assert seen["episode_page_url"] == "https://nerranetwork.com/blog/tesla/ep640.html"
         assert seen["keep_existing_guid"] is True
         assert "nerranetwork.com/digests/" not in seen["audio_url"]
+        # The text/vtt transcript tag (Apple reads it) rides along with the JSON one.
+        assert seen["transcript_vtt_url"].endswith("Tesla_Shorts_Time_Pod_Ep640_20261020_transcript.vtt")
+        assert seen["transcript_url"].endswith("_transcript.json")
 
     def test_an_item_without_an_enclosure_takes_the_upload_url_with_the_prefix(self, monkeypatch, tmp_path, tesla_config):
         seen = {}

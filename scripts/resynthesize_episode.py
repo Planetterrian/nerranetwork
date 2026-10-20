@@ -453,13 +453,19 @@ def refresh_rss_item(config, art: EpisodeArtifacts, audio_duration: float,
     if page_url.lower().endswith(".mp3"):
         page_url = ""
 
-    chapters_url = transcript_url = None
+    chapters_url = transcript_url = transcript_vtt_url = None
     if art.chapters_path.exists():
         chapters_url = (f"{config.publishing.base_url}/"
                         f"{config.publishing.audio_subdir}/{art.chapters_path.name}")
     if art.transcript_json.exists():
         transcript_url = (f"{config.publishing.base_url}/"
                           f"{config.publishing.audio_subdir}/{art.transcript_json.name}")
+        # Apple reads the text/vtt tag, which goes FIRST (Oct 1 2026); the
+        # first fourteen repairs had dropped it from every repaired item.
+        vtt_path = art.transcript_json.with_name(art.prefix + "_transcript.vtt")
+        if vtt_path.exists():
+            transcript_vtt_url = (f"{config.publishing.base_url}/"
+                                  f"{config.publishing.audio_subdir}/{vtt_path.name}")
 
     episode_date = dt.datetime.strptime(art.date_str, "%Y%m%d").date()
 
@@ -491,6 +497,7 @@ def refresh_rss_item(config, art: EpisodeArtifacts, audio_duration: float,
         audio_url=audio_url,
         chapters_url=chapters_url,
         transcript_url=transcript_url,
+        transcript_vtt_url=transcript_vtt_url,
         episode_page_url=page_url,
         keep_existing_guid=True,
     )
