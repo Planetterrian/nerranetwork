@@ -6390,4 +6390,14 @@ speaks the segments' anchor phrases, and SpaceX Ep136's "later the
 engineering angle" titled The Engineering Angle at 11 s while the real
 deep dive fell back to its digest heading). `engine/story_tags.py` and the
 probe remain for the next candidate, and a candidate is LISTENED to on a
-shipped episode before it ships to a slate.
+shipped episode before it ships to a slate. **The repair tool never moves a
+feed item** (same day, found on the first fourteen repairs): it had rebuilt
+the enclosure from `publishing.base_url` — the SITE, a 404 on every repaired
+feed — put the MP3 in `<link>` where the blog page belongs, and minted a new
+GUID, which every app reads as a new episode to download again. Now
+`read_published_item` carries the enclosure URL, link and GUID and
+`refresh_rss_item` writes them back verbatim (`keep_existing_guid`); the
+workflow commits the stripped `*_tts.txt` and the shifted `.vtt` too. The
+audio at the R2 key was right the whole time (the edge cache serves the old
+object for a while — read `cf-cache-status` before calling an upload
+missing); guard `TestRepairNeverMovesTheFeedItem`.
