@@ -1,0 +1,403 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.760
+Devon now commits 89% of cognition's own code as the lab hits a $1 billion run rate. That figure sits on a $48 billion valuation. This is Models &amp; Agents, Episode 209. After cognition, we get X's Search API, Inception's diffusion model, the agent governance problem, and the local boxes people are actually wiring up. Then, things to try on the horizon and an engineering tear down. Cognition, ai magazine reports, posted the jump on
+
+00:00:29.760 --> 00:00:37.220
+on September 25th, 2026, up from $492 million in May after raising more than $2 billion.
+
+00:00:38.160 --> 00:00:42.920
+Devon plans, writes, tests, and commits, and a human reviews what it produced.
+
+00:00:43.540 --> 00:00:48.020
+Scott Wu, the chief executive, says the agent currently lands between a junior and
+
+00:00:48.020 --> 00:00:49.160
+a mid-level engineer.
+
+00:00:49.820 --> 00:00:55.420
+Goldman Sachs, Mercedes-Benz, GE Aerospace, and New Bank are on the customer list, with
+
+00:00:55.420 --> 00:01:02.180
+distribution deals at Infosys, Cognizant, and AWS. Mercedes-Benz put more than 200,000
+
+00:01:02.180 --> 00:01:07.460
+lines of cobalt through Devon, and new banks saw 8-12 times efficiency gains on large
+
+00:01:07.460 --> 00:01:14.160
+migrations. Cognition bought wind surf in July 2025 and gained an agentic integrated development
+
+00:01:14.160 --> 00:01:18.720
+environment, or IDE, that sits beside Devon in a working developer's day.
+
+00:01:20.140 --> 00:01:25.620
+Exis shipped Exis 3.0 as an upgrade to its web search API for AI agents.
+
+00:01:26.040 --> 00:01:31.160
+Mark Tech post reports, with a larger embedding model and a cheaper light search type priced
+
+00:01:31.160 --> 00:01:33.140
+at $4 per 1000 requests.
+
+00:01:34.040 --> 00:01:38.700
+Dynamic highlights is now generally available and it picks tokens across results instead
+
+00:01:38.700 --> 00:01:39.760
+of page by page.
+
+00:01:40.020 --> 00:01:46.200
+That path uses 95% fewer tokens than full page text and still improves answer quality.
+
+00:01:46.200 --> 00:01:51.420
+Excess says the new version leads perplexity, brave, and parallel on all eight of its
+
+00:01:51.420 --> 00:01:58.840
+self-run benchmarks, with the widest gaps on browse comp at 91.8% and atlas at 42%.
+
+00:01:58.840 --> 00:02:03.860
+The company runs its own crawler and an independent index covering more than two trillion URLs,
+
+00:02:04.460 --> 00:02:06.180
+and there is no self-hosted option.
+
+00:02:06.820 --> 00:02:12.420
+Light accepts query, result count, highlights, text, categories, domain and date filters,
+
+00:02:12.420 --> 00:02:14.380
+plus location and moderation.
+
+00:02:15.733 --> 00:02:18.993
+Mercury III, a diffusion language model from Inception,
+
+00:02:19.693 --> 00:02:22.593
+fills in many tokens at once instead of one after another,
+
+00:02:23.113 --> 00:02:24.213
+Mark Tech Post reports.
+
+00:02:24.873 --> 00:02:28.873
+It hits 1068 tokens per second on Nvidia GPUs
+
+00:02:28.873 --> 00:02:31.633
+and carries a 1 million token context window.
+
+00:02:32.213 --> 00:02:36.213
+On Inception's own table, Mercury III leads GPT-6 Luna
+
+00:02:36.213 --> 00:02:40.793
+and Claude Haiku 5.5 on 8 of 12 tests at medium settings.
+
+00:02:40.793 --> 00:02:44.593
+with its biggest gains on instruction following and agentic coding.
+
+00:02:44.893 --> 00:02:50.313
+The model is more than 40 times larger than Mercury 1, and average quality across standard
+
+00:02:50.313 --> 00:02:55.933
+benchmarks rose roughly three times across those generations, while speed stayed above 1,000
+
+00:02:55.933 --> 00:02:56.873
+tokens per second.
+
+00:02:57.493 --> 00:03:03.293
+Serving is only through Inception's NVIDIA GPU API, with no open weights and no quantized
+
+00:03:03.293 --> 00:03:03.673
+builds.
+
+00:03:05.376 --> 00:03:13.896
+The author of Cynthia put out Tess 4.5 to 27b, a Quinn 3.8 to 27b fine-tune in the local
+
+00:03:13.896 --> 00:03:15.336
+Lama community on Reddit.
+
+00:03:15.856 --> 00:03:20.076
+It matches the same benchmark scores with 25% fewer tokens overall.
+
+00:03:20.736 --> 00:03:27.296
+On the hardest subsets, CLI 40 and data extraction, the cut is 32 to 43% fewer tokens.
+
+00:03:28.216 --> 00:03:30.376
+GGUF weights are up on hugging face.
+
+00:03:30.376 --> 00:03:34.796
+burning fewer tokens means faster answers and longer sessions before the
+
+00:03:34.796 --> 00:03:41.222
+context window fills, and that stacks with draft head acceleration on local GPUs.
+
+00:03:41.682 --> 00:03:45.762
+Enterprises now have to track and secure their own proliferating AI agents,
+
+00:03:46.182 --> 00:03:51.642
+not only fend off external rogue ones, CIO reports. Most organizations still lack
+
+00:03:51.642 --> 00:03:56.862
+basic visibility, and Thropic says 82% have found unregistered agents on their
+
+00:03:56.862 --> 00:04:04.162
+networks, and 57% already run agents on multi-stage workflows. Standing up an agent is one API call,
+
+00:04:04.482 --> 00:04:10.622
+or vibe coding by any employee, so vendor, platform native, and homegrown agents pile onto the sprawl.
+
+00:04:11.102 --> 00:04:16.482
+Security teams need a single record per agent that captures onboarding owner, access privileges,
+
+00:04:16.922 --> 00:04:22.822
+behavior, and cross-platform capabilities. An over-provisioned email agent with 50 attached tools
+
+00:04:22.822 --> 00:04:24.702
+is the example worth investigating.
+
+00:04:26.216 --> 00:04:32.316
+Switch from Sandbox AQ now watches AI agents spend, performance metrics and security
+
+00:04:32.316 --> 00:04:35.396
+posture in one view, HPC Wire reports.
+
+00:04:36.136 --> 00:04:40.936
+Security and finance teams get unified telemetry across every platform an agent runs on.
+
+00:04:41.576 --> 00:04:46.896
+Cybersecurity experts told Think Digital Partners that autonomous agents need new digital identity
+
+00:04:46.896 --> 00:04:51.756
+frameworks because human-centric controls break down when agents act on their own across
+
+00:04:51.756 --> 00:05:03.872
+systems. A builder on Reddit's local Lama forum plans to buy a used HP Z640 with dual E5-2,680v4
+
+00:05:03.872 --> 00:05:14.032
+CPUs and 64GB of ECC RAM for 550 euros, then drop in 2 RTX 306012GB cards. The intended mix
+
+00:05:14.032 --> 00:05:21.672
+is Q3.8 Flash Next on Strata plus Lama.CPP, PyTorch computer vision training, reinforcement
+
+00:05:21.672 --> 00:05:26.652
+learning in Pie Bullet, Laura fine-tuning, and Mini Max H3 video generation.
+
+00:05:27.212 --> 00:05:33.432
+Open questions are dual-socket PCIe layout, power limit adapters for the 3060s, whether
+
+00:05:33.432 --> 00:05:40.152
+the included Quadro M6000 24GB card still helps under CUDA 12, and chassis thermals that
+
+00:05:40.152 --> 00:05:42.712
+hit 86 degrees Celsius during mem test.
+
+00:05:44.569 --> 00:05:49.949
+Model Fit is a real-time Mac configurator, posted to that same local Lama community
+
+00:05:49.949 --> 00:05:55.069
+that shows which large language models fit in memory, and what inference speed to expect
+
+00:05:55.069 --> 00:05:57.149
+on every Apple Silicon configuration.
+
+00:05:57.769 --> 00:06:03.129
+The estimates come from a model fitted on actual Lama Bench runs, Apple list prices refresh
+
+00:06:03.129 --> 00:06:09.249
+daily, and the tool is built to help a buyer pick among M4, M5 Pro, and other SKUs for
+
+00:06:09.249 --> 00:06:09.949
+local work.
+
+00:06:11.855 --> 00:06:17.215
+Low latency streaming speech-to-speech is what voice managerships, over a single web socket,
+
+00:06:17.215 --> 00:06:23.015
+with bargin, session memory, and tool-call integration, according to a local Lama post.
+
+00:06:23.515 --> 00:06:27.875
+Hermes' console is a Kotlin reference client styled after Star Trek L-Cars.
+
+00:06:28.415 --> 00:06:35.895
+The stack uses Nemotron and Breeze TTS-2, and it is out under MIT with client integration docs and a Python client.
+
+00:06:37.054 --> 00:06:46.054
+Someone running Gemma 431bq5KM at about 2.3 tokens per second on a single RTX 306012 gigabyte card,
+
+00:06:46.054 --> 00:06:49.894
+once 15 plus tokens per second at 16,000 context.
+
+00:06:50.434 --> 00:06:53.314
+The options on the table in that local llama thread
+
+00:06:53.614 --> 00:06:57.094
+are an RTX 5060 Ti 16 gigabyte card
+
+00:06:57.094 --> 00:07:00.074
+on a PCIe 3.0 times one riser,
+
+00:07:00.454 --> 00:07:06.274
+plus layer splitting, or a cheap dual Tesla P179 or X99 build.
+
+00:07:07.474 --> 00:07:09.874
+A Centali and AI agent also today
+
+00:07:09.874 --> 00:07:13.114
+cut trade finance amendment time by 80%.
+
+00:07:13.114 --> 00:07:14.694
+PYM and TS reports.
+
+00:07:15.334 --> 00:07:19.714
+Cognizant and Google Cloud expanded a partnership to scale enterprise AI agents,
+
+00:07:19.934 --> 00:07:24.614
+according to HPCWire. A security firm found a China-linked AI agent
+
+00:07:24.614 --> 00:07:27.814
+behind Japan cyber attacks, the Straits Times reports.
+
+00:07:28.574 --> 00:07:32.734
+AI agents are changing the manager's job while accountability has not caught up.
+
+00:07:33.334 --> 00:07:37.574
+IT brief Australia reports. A new AI model detects hidden diseases
+
+00:07:37.574 --> 00:07:42.234
+in routine computed tomography or CT scans, according to news medical.
+
+00:07:42.234 --> 00:07:47.774
+Documents reveal a military plan for agentic AI that hacks United States adversaries,
+
+00:07:48.174 --> 00:07:53.694
+Gizmodo reports. Point your agents at X of 3.0 light when you want dynamic highlights
+
+00:07:53.694 --> 00:07:59.274
+instead of swallowing full-page text. Open model fit before you buy a Mac for local inference,
+
+00:07:59.794 --> 00:08:04.934
+and compare the Lama Bench derived speed estimates across M4 and M5 proskews.
+
+00:08:05.454 --> 00:08:11.174
+Run Mercury 3 against your current auto-regressive model on instruction following or agentic coding tasks,
+
+00:08:11.174 --> 00:08:13.234
+and feel the parallel decode.
+
+00:08:13.894 --> 00:08:16.914
+Wire voice manager to the Hermes console Kotlin client
+
+00:08:16.914 --> 00:08:19.874
+if you need barge in speech to speech for a local agent.
+
+00:08:21.702 --> 00:08:25.442
+Open AI continues expanding low resource language support,
+
+00:08:25.902 --> 00:08:28.042
+co-ball, foretran, visual basic,
+
+00:08:28.462 --> 00:08:30.502
+for legacy modernization customers.
+
+00:08:31.182 --> 00:08:33.462
+Vulter is rolling out further agentic AI
+
+00:08:33.462 --> 00:08:35.502
+infrastructure upgrades on its platform.
+
+00:08:37.360 --> 00:08:40.460
+Web pages wrap the useful bits inside navigation.
+
+00:08:40.460 --> 00:08:47.140
+Scripps and ads that agents then strip at token cost, so let me pop the hood on LLMs.TXT.
+
+00:08:47.680 --> 00:08:50.240
+The curated markdown file meant to skip that parse.
+
+00:08:50.900 --> 00:08:55.440
+The proposal puts one file at the site route that gathers expert level summaries and links
+
+00:08:55.440 --> 00:08:59.160
+to key pages, and that file is the map and agent reads first.
+
+00:08:59.800 --> 00:09:04.800
+Context windows are still finite, so every token spent chewing Chrome is a token that never
+
+00:09:04.800 --> 00:09:05.660
+reaches the answer.
+
+00:09:05.660 --> 00:09:11.280
+A clean markdown map lets the agent judge relevance before it fetches full pages, which
+
+00:09:11.280 --> 00:09:14.200
+is the step that used to dump a whole human layout into the prompt.
+
+00:09:14.820 --> 00:09:19.620
+The V2 revision added standard link relations so the agent does not have to guess the URL.
+
+00:09:20.300 --> 00:09:25.680
+Those relations are real alternate with type text slash markdown, and real describe by.
+
+00:09:26.180 --> 00:09:31.540
+Open AI and Thropic and Gemini already publish their developer docs this way, and documentation
+
+00:09:31.540 --> 00:09:33.940
+platforms generate the file automatically.
+
+00:09:33.940 --> 00:09:38.440
+The engineering trade-off is maintenance overhead versus retrieval quality.
+
+00:09:38.980 --> 00:09:43.000
+Sites that keep the file current see agents land on the right information faster,
+
+00:09:43.440 --> 00:09:46.900
+and a stale file is just another outdated asset sitting at the root.
+
+00:09:47.540 --> 00:09:51.240
+Publish one when you already maintain high-quality mark-down documentation
+
+00:09:51.240 --> 00:09:55.480
+and you want coding agents or retrieval systems to consume it reliably.
+
+00:09:56.080 --> 00:09:57.920
+Skip it when nobody will update the map.
+
+00:09:59.616 --> 00:10:04.876
+Before we go, Microsoft Foundry is adding scheduled agents and smarter tool use features
+
+00:10:04.876 --> 00:10:07.416
+alongside GPT-6 model integration.
+
+00:10:07.956 --> 00:10:09.776
+That's models and agents for today.
+
+00:10:10.416 --> 00:10:14.396
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:10:14.876 --> 00:10:17.116
+and subscribe so you don't miss tomorrow's update.
+
+00:10:17.696 --> 00:10:19.136
+The AI world moves fast.
+
+00:10:19.776 --> 00:10:24.296
+We'll help you keep up, see you tomorrow, and if you'd rather watch than listen, find
+
+00:10:24.296 --> 00:10:27.556
+us on YouTube at Narin Network, links in the show notes.
+
+00:10:27.556 --> 00:10:30.956
+Quick tip from the network, try peptides weekly next.
+
+00:10:31.496 --> 00:10:35.016
+The week in peptide science, evidence first, and never dosing advice.
+
+00:10:35.676 --> 00:10:38.956
+Every Narin Network show is free at NarinNetwork.com.
+
+00:10:39.556 --> 00:10:45.616
+Following the long arcs, story trackers on NarinNetwork.com follow major programs across episodes.
+
+00:10:46.236 --> 00:10:49.516
+Tesla, SpaceX, AI, Space Science, and more.
+
+00:10:50.216 --> 00:10:53.156
+This episode used AI voice synthesis of my voice.
+
+00:10:53.156 --> 00:10:56.136
+Editorial selection and analysis are my own.
