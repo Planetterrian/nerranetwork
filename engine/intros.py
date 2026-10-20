@@ -1277,7 +1277,7 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "Rank the day's items by that test and open on the winner, even "
         "when it is not the biggest story.\n"
         "- THE BODY KEEPS THE OPEN'S PROMISE FIRST. The first story told "
-        "after the show's identity line is the story the open named — its "
+        "after the show's identity line (and the map, below) is the story the open named — its "
         "full telling, with the facts the open did not already say, never "
         "the open's own sentence again — and only then the rest of the "
         "material in its own order. Someone who stays past the first "
@@ -1298,7 +1298,16 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "concrete quantity inside the first ten, and the stake in the same "
         "sentence. A longer opener is two sentences pretending to be one; "
         "split it or cut it.\n"
-        "- ONLY AFTER the cold open, give the short identity line."
+        "- ONLY AFTER the cold open, give the short identity line.\n"
+        "- THE MAP comes right after the identity line: ONE sentence that "
+        "gives the listener the shape of the episode — the two or three "
+        "stories that follow the lead, each in a few plain words and in the "
+        "order they will come, then any recurring segment by its name. It is "
+        "a map, not a tease: no count of items, no number from any story, "
+        "no promise language, never the lead story again (the open just "
+        "told it), and never the same sentence shape as yesterday's. A "
+        "listener who hears it knows what the next ten minutes hold and "
+        "hears each story change coming. Then the lead story, in full."
     )
 
 

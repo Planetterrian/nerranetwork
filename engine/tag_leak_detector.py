@@ -104,7 +104,10 @@ _RAW_PATTERNS: List[Tuple[str, str]] = [
     # left in the transcript text. Rare, but covers the case where
     # Whisper transcribes both the bracket and the contents.
     (r"\[\s*(?:pause|breath|sigh|gasp|laugh|cry|sniff|kiss|"
-     r"throat-clear|long-pause)\s*\]", "stray-bracketed-tag"),
+     r"throat-clear|long-pause|inhale|exhale)\s*\]", "stray-bracketed-tag"),
+    # Oct 20 2026: the pitch tags a story-landing tag may use
+    # (engine/story_tags.py). Spoken, they come out as the two words.
+    (r"\b(?:lower|higher)[ -]pitch\b", "pitch-tag"),
 ]
 
 LEAK_PATTERNS: List[Tuple[Pattern[str], str]] = [

@@ -5341,3 +5341,31 @@ experiments:
       workers/gallery/src/markets.ts (GET /api/markets) and
       assets/js/live-ticker.js. Needs `wrangler deploy` in workers/gallery;
       until then the page keeps its printed values. Render and metadata only.
+  - id: story-tags-and-map-2026-10-20
+    title: "The voice marks a story change (speech tags), the music swell is off, a map opens the body"
+    area: retention
+    shipped: 2026-10-20
+    readout: 2026-11-03
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: >
+      Oct 19 2026, Tesla Ep639: 13 music swells in 9 min (one every ~32 s),
+      measured 5-10 dB under the voice, 11 of 13 between items inside one
+      section; the operator heard them as interludes. Grok TTS lifts ~+20 Hz
+      opening EVERY sentence and +23 Hz opening a story (human: +2..+8 vs
+      +34 on Up First), and lands the same at a story end as at a sentence
+      end (-8 vs -10 Hz; human -30 vs -18). No show carried a spoken map.
+    target: >
+      A/B-listen the first slate (operator). Instrument: the story-onset lift
+      on a shipped episode exceeds the sentence lift by >= 15 Hz once a
+      landing tag is set from the probe; `story_tags_inserted` equals
+      `story_breaks_inserted` within 2 on every news show; no `pitch-tag` or
+      `breath` tag leak in `tag_leaks_by_pattern`; the map sentence is present
+      after the identity line on the news shows (read five scripts a show).
+      Then EN long-form median averageViewPercentage against the baseline.
+    notes: >
+      engine/story_tags.py (tts.story_tags, story_tag_open "[breath]",
+      story_tag_close "" until Actions "Probe TTS tags" names the pitch tag
+      this voice consumes), audio.story_break_cue false network-wide, the
+      beat itself unchanged at 1.0 s, THE MAP rule in
+      engine.intros.build_cold_open_spec (every EN podcast prompt). ⚠️ AUDIO.

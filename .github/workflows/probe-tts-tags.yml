@@ -1,0 +1,45 @@
+# Read-only probe of Grok TTS speech tags at a story boundary (Oct 20 2026) —
+# see scripts/probe_tts_tags.py. Synthesises six short variants on the
+# production voice (~3,000 characters in total), prints the pitch landing and
+# lift at the boundary plus the Whisper transcript of that region, and
+# attaches the WAVs so the operator can listen. Publishes nothing. Runs on a
+# push that changes the probe (so a session branch can run it before merge)
+# and on demand.
+name: Probe TTS tags
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths:
+      - scripts/probe_tts_tags.py
+      - .github/workflows/probe-tts-tags.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          cache: pip
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          python -m pip install -q -r requirements.txt
+      - name: Probe speech tags on the custom voice
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python3 scripts/probe_tts_tags.py
+      - name: Attach the audio
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tts-tag-probe
+          path: probe_out/
+          retention-days: 7
