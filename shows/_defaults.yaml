@@ -146,8 +146,13 @@ tts:
   # this voice consumes without speaking it (candidates: low,
   # lower-pitch, soft). Never set it from documentation alone.
   # AUDIO — A/B-listen.
-  story_tags: true
-  story_tag_open: "[breath]"
+  # Oct 20 2026, the first slate: the operator heard the breath as "way too
+  # prominent" on this voice. OFF, and run_show strips every breath-family
+  # tag before synthesis whoever wrote it (engine.utils.strip_breath_tags);
+  # the 14 episodes that aired with it were re-synthesized. The module and
+  # the probe stay for the next candidate.
+  story_tags: false
+  story_tag_open: ""
   story_tag_close: ""
   # ---- Legacy ElevenLabs baseline ----
   # No show currently overrides `provider: elevenlabs`. Kept here so

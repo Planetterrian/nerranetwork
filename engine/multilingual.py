@@ -274,7 +274,10 @@ def generate_for_episode(
         logger.warning("multilingual: no _tts.txt for Ep%s in %s", episode_num, output_dir)
         return {}
 
-    english_script = tts_file.read_text(encoding="utf-8").strip()
+    # Oct 20 2026: no breath-family tag reaches a dub's synthesis either —
+    # the translation would carry it into the FR/RU track.
+    from engine.utils import strip_breath_tags
+    english_script = strip_breath_tags(tts_file.read_text(encoding="utf-8")).strip()
     en_title = rec.get("episode_title", "") or ""
     en_desc = english_hook(output_dir, episode_num) or en_title
     existing = rec.get("translations", {}) or {}

@@ -102,8 +102,18 @@ class TestHomepage:
         for h in hrefs:
             assert (ROOT / h).is_file(), h
 
-    def test_markets_strip_leads_with_the_flagship_ticker(self, home):
-        strip = home[home.index('id="markets"'):]
+    def test_markets_strip_leads_with_the_flagship_ticker(self, tmp_path):
+        # Oct 20 2026: the strip drops a quote more than three days old OR
+        # dated after the page's clock, so a fixed NOW goes red the moment the
+        # nightly commits newer bars (a guard that reads committed data must
+        # tolerate today). Render this check at 13:30 ET on the newest bar.
+        import json
+        quotes = json.loads((ROOT / "api" / "mag7_quotes.json").read_text(encoding="utf-8"))
+        newest = max(q["bar_date"] for q in quotes.get("quotes", []) if q.get("bar_date"))
+        y, m, d = (int(x) for x in newest.split("-"))
+        now = dt.datetime(y, m, d, 17, 30, tzinfo=dt.timezone.utc)
+        page = G.generate_network_page(output_dir=tmp_path, now=now).read_text(encoding="utf-8")
+        strip = page[page.index('id="markets"'):]
         assert strip.index(">TSLA<") < strip.index(">NVDA<")
 
     def test_footer_signs_with_the_tagline(self, home):

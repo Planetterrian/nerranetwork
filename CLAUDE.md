@@ -6369,3 +6369,25 @@ reads lower by design on map shows (the map sits in its three-sentence
 window). ⚠️ AUDIO on every English show — A/B-listen the first slate; read
 `story_tags_inserted` beside `story_breaks_inserted` and
 `tag_leaks_by_pattern` for `breath` / `pitch-tag`.
+
+**Oct 20 2026, the first slate — the breath is OUT.** The operator heard the
+`[breath]` at every story start as "way too prominent" on the custom voice
+(the probe had measured it as the cleanest tag; a measurement is not a
+listen). Now `tts.story_tags: false` with an empty opener, **no
+breath-family tag reaches synthesis whoever wrote it**
+(`engine.utils.strip_breath_tags` — `[breath]` / `[inhale]` / `[exhale]` /
+`[sigh]` — in run_show before the `*_tts.txt` save, in
+`scripts/resynthesize_episode.py` on the committed script, and on the
+multilingual stage's translation input), and `[breath]` left the delivery
+spec's sanctioned set. The 14 episodes that aired with it are repaired by
+re-synthesis from their committed scripts through Actions "Re-synthesize
+Episode" (same R2 key, feed item kept; the tool strips the tags from the
+script first); their long-form videos and the Nerra Daily edition of the
+day keep the old audio. The map sentence and the no-music beat stay.
+**A chapter marker never fires on the identity line or the map sentence
+after it** unless it is a `start` marker (`engine/chapters.py` — the map
+speaks the segments' anchor phrases, and SpaceX Ep136's "later the
+engineering angle" titled The Engineering Angle at 11 s while the real
+deep dive fell back to its digest heading). `engine/story_tags.py` and the
+probe remain for the next candidate, and a candidate is LISTENED to on a
+shipped episode before it ships to a slate.

@@ -1315,8 +1315,11 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
 # spoken aloud as a literal word — that is the landmine-#17 leak shape
 # (M&A Ep045 voiced "Fast." at chunk boundaries; UC Ep001 voiced "Build
 # intensity."). Adding to this list requires listening evidence, not
-# documentation.
-_SANCTIONED_TAGS = ("[breath]", "[pause]", "[long-pause]",
+# documentation. Oct 20 2026: ``[breath]`` is OUT — the operator heard it
+# as far too prominent on the custom voice (14 episodes re-synthesized),
+# and ``engine.utils.strip_breath_tags`` removes it before synthesis in any
+# case.
+_SANCTIONED_TAGS = ("[pause]", "[long-pause]",
                     "<emphasis>...</emphasis>")
 
 
