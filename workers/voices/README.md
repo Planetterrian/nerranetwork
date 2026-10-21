@@ -62,15 +62,17 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 | Route | Purpose |
 |---|---|
 | `POST /voices/apply` | Public guest application form (both apply pages post here with their `show`) |
-| `POST /voices/interview-complete` | Voximplant scenario hangup webhook → `repository_dispatch: interview-complete` |
+| `POST /voices/interview-complete` | Voximplant scenario hangup webhook → `repository_dispatch: interview-complete` (signed, see below). Oct 21 2026: the room's turn-taking counters (`barge_ins`, `server_turns`, `self_answers_blocked`, `closing_round_complete`, `closing_questions_asked`) are kept inside `grok_session_log`; a run whose `session_kind` is `rehearsal` (the rehearsal harness's fixture guest) is stored with `grok_session_log.rehearsal = true` and nothing is dispatched or emailed |
 | `POST /voices/cal-com-booked` | Cal.com booking webhook → schedules the interview + confirmation email |
-| `GET/POST /voices/review/<token>` | Guest transcript review (gate 2): approve → `repository_dispatch: interview-approved-by-guest`; removal requests → back to Patrick |
+| `GET/POST /voices/review/<token>` | Guest transcript review (gate 2): approve → `repository_dispatch: interview-approved-by-guest`; removal requests → back to Patrick. Oct 21 2026: the page shows `edit_transcript` (the transcript of the edit a listener will hear) when the pipeline wrote one, each timed line is clickable and a click stores `{start_sec, end_sec, line}` in `editorial_packages.guest_redaction_windows`; the production is dispatched BEFORE the package is marked approved (a thrown dispatch leaves the interview at `approved` for housekeeping to retry) |
+| `GET/POST /voices/survey/<token>` | Oct 21 2026: Mira's three-question survey a day after the room (1–5 against a human host, one thing to change, recommend to a peer) → `editorial_packages.survey_*`; the pipeline mints `survey_token` and emails the link whether or not the guest opens the review page |
 | `GET /voices/admin/triage?token=…` | Patrick's application triage UI (~30 s/app), grouped by show |
 | `GET /voices/admin/review/<pkg-id>?token=…` | Patrick's editorial review UI (gate 1): audio + transcript + drafts, approve/kill |
-| `POST /voices/triage-decision` · `POST /voices/triage-reassign` · `POST /voices/editorial-decision` | The admin actions (token-gated); `triage-reassign` moves an application to the other show |
+| `POST /voices/triage-decision` · `POST /voices/triage-reassign` · `POST /voices/editorial-decision` | The admin actions (token-gated); `triage-reassign` moves an application to the other show; a second Approve at gate 1 is a no-op (no second guest email, no new deadline — Oct 21 2026) |
+| `POST /voices/lesson-decision` | Promote or retire a proposed Mira lesson. Oct 21 2026: a package's review token decides only the lessons its own interview proposed; a show's standing lesson or a `network` lesson needs `ADMIN_TOKEN` (the review page hides those buttons otherwise) |
 | `GET /voices/studio-state?interview=…&role=guest\|host` | Studio page poll: `ready`/`run_id` while the newest run is joinable (`awaiting_guest` or `in_progress` — every role, rejoins included), `show` / `show_name` for branding, `host_mode`, `guest_joined`, `host_joined`, `live_run_id`/`run_status` |
 | `POST /voices/studio-auth {key, role?}` | Voximplant one-time-key login → `{token, user, role}`; since the room model (Sept 9 2026) every role signs in as the shared `guest` studio user (derived password) — no admin token |
-| `POST /voices/leg-event {run_id, role, event[, record_url, video_url]}` | The room reports each leg's `joined`/`left` → `guest_joined_at` (first join), `host_joined_at` (first join; a rejoin clears `host_left_at`), `host_left_at`; each participant session's `left` also carries its recording URLs → `recording_guest_url` / `recording_host_url`, `grok_session_log.voximplant_record_url` / `voximplant_video_url` (extra guests → `extra_guest_record_urls`) |
+| `POST /voices/leg-event {run_id, role, event[, record_url, video_url]}` (signed, see below) | The room reports each leg's `joined`/`left` → `guest_joined_at` (first join), `host_joined_at` (first join; a rejoin clears `host_left_at`), `host_left_at`; each participant session's `left` also carries its recording URLs → `recording_guest_url` / `recording_host_url`, `grok_session_log.voximplant_record_url` / `voximplant_video_url` (extra guests → `extra_guest_record_urls`) |
 | `POST /voices/upload-chunk?run_id=&role=&seq=[&token=]` | Raw `audio/webm` body (≤ 10 MB) from the studio page's local MediaRecorder → R2 `<r2_prefix>/local/<run_id>/<role>/<seq:05d>.webm`. Uploads (any role) need run status `fired\|in_progress\|awaiting_guest\|completed` (the tail arrives after hangup) |
 | `POST /voices/upload-done {run_id, role, chunks, mime, started_at, duration_ms, token?}` | HEADs every chunk, writes `…/<role>/manifest.json` (ordered keys, `missing`, timings) and sets `interview_runs.local_<role>_url` to the manifest **key** (the pipeline reads R2 with its own credentials) |
 | `GET /voices/host-link?interview=…&token=…` | Admin: Patrick's co-host studio link (`…&role=host` — no token on the link itself since the room model) |
@@ -78,6 +80,44 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 | `scheduled` (daily 17:00 UTC) | Gate-2 housekeeping: day-4 guest reminder, day-7 auto-approve |
 | `scheduled` (every 5 min) | Punctual fire-tick → `repository_dispatch: fire-tick` (GitHub's own 5-minute cron arrives hours late under load). Oct 13 2026: gated on the schedule — `fireTickDue` reads Supabase for an interview at briefed/scheduled/in_progress inside [now-48h, now+140min] or a live run and dispatches only then; any Supabase error dispatches (fail-open) and the :00/:30 ticks always dispatch. 288 no-op jobs a day → ~50. |
 | `GET /voices/health` | Deploy verification: which secrets are set (never values — includes `vox_host_password` and the `voices_r2` binding), cron config, and a live read-only GitHub auth probe — `github_status: 401` means the stored token is bad (expired, or pasted with a trailing newline); `repository_dispatch` needs **Contents: Read and write** |
+
+## Signed webhooks (Oct 21 2026)
+
+The room signs what it posts. With `VOICES_WEBHOOK_SECRET` set on the
+Worker, `POST /voices/interview-complete`, `/voices/leg-event`,
+`/voices/narration-take` and a scenario-sourced `/voices/studio-silence`
+must carry `X-Voices-Signature: <lowercase hex HMAC-SHA256 of the raw
+request body>` under that secret (a `sha256=` prefix is tolerated); a
+missing or wrong header is a 401. The scenario gets the same value at
+deploy (`__VOICES_WEBHOOK_SECRET__`, "Deploy Voximplant scenario"). With
+the secret unset the Worker accepts unsigned posts and logs once, so the
+Worker can be deployed before the scenario without dropping a live room's
+hangup. The studio page's own routes (`/studio-check`, `/studio-silence`
+from the browser, the uploads) cannot hold a secret and keep their run and
+interview gates. Cal.com's booking webhook is verified against
+`X-Cal-Signature-256` (hex HMAC-SHA256 of the raw body) when
+`CALCOM_WEBHOOK_SECRET` is set. `GET /voices/health` reports both flags.
+
+Other hardening the same day: `/voices/studio-phone` dials only an
+interview at `scheduled`, `briefed` or `in_progress` (it could flip a
+recorded interview back to `briefed`); gate-2 housekeeping runs each
+package in its own try, so one bounced reminder no longer stops the rest,
+and it re-dispatches a package whose guest approved while the GitHub
+dispatch failed; `/voices/join` opens the studio only for
+`?interview=<id>&t=<manage token>` and otherwise emails the link to the
+address on the booking (it used to redirect anyone who typed a guest's
+address inside the last half hour); the emails say the studio opens
+fifteen minutes before, which is what `STUDIO_OPENS_BEFORE_MS` does.
+
+## Tests
+
+```bash
+cd workers/voices && npm install && npx vitest run   # test/*.test.ts
+npx tsc --noEmit                                      # typecheck
+```
+
+`tests/test_voices_worker_hardening_2026_10_21.py` reads the source as
+text from Python for the contract lines, so CI guards them without Node.
 
 ## Deploys
 
@@ -98,6 +138,8 @@ wrangler secret put RESEND_API_KEY
 wrangler secret put VOICES_FROM_EMAIL
 wrangler secret put CALCOM_BOOKING_URL
 wrangler secret put SLACK_WEBHOOK           # optional
+wrangler secret put VOICES_WEBHOOK_SECRET   # Oct 21 2026: the room's signing key (same value in the scenario deploy)
+wrangler secret put CALCOM_WEBHOOK_SECRET   # optional: Cal.com webhook secret → X-Cal-Signature-256 verified
 # Oct 19 2026 (optional): the half-hour producer tick dispatches a runner only
 # when Gmail holds an unprocessed thread. Paste the SAME values the inbox
 # workflow uses; unset = a dispatch every half hour, as before.
