@@ -35,4 +35,62 @@ reviews:
     ab_listen_required: false
     rationale: 'P1 blocker: without Voices-aware substrate every AOAI review can only restate the registry shell and will mis-score empty _tts as quality.'
   agent_cost_usd: 0.0453
-do_not_retry: []
+- date: '2026-10-21'
+  pr: null
+  doc: docs/reviews/age_of_ai_review_2026_10_21.md
+  generated_by: claude (operator-directed full pipeline + interview review)
+  summary: 'Read all 11 published episodes, the 3 Nerra Voices episodes, the 3 unpublished Oct 19-20 rooms, Mira''s compiled prompt and every grading/metrics/lesson row. The factory is complete; the interview is not yet good and the loop is not improving it (grades 2-7 with no trend, median turn 28 s -> 7.6 s, interruptions at a record 14). Four causes in order: room turn-taking mechanics (fixed-silence end of turn, timer rotation mid-answer, greet-on-join, four responseCreate bypasses), a 43,000-character prohibition prompt full of quoted specimens and dated incidents, an examiner research posture (fact-check tool, brief tensions, forced cross-guest callbacks), and a grader that measures time from a transcript and almost never asks the guest. Plan: room mechanics first, prompt rewrite second, research posture third, then audio-measured metrics, a guest survey, weekly adoption and a rehearsal harness.'
+  scored_prior_predictions:
+  - metric: review_snapshot_aoai_artifact_visibility
+    verdict: miss
+    evidence: 'The Oct 15 Grok review of the sister show again ran with no transcripts, metrics or prompts and returned raw output; review_snapshot.py still reads _tts.txt and chapters this show never writes. This review read the substrate by hand from digests/age_of_ai and Supabase.'
+  - metric: contingency_podcast_cold_open_order
+    verdict: not_scored
+    evidence: 'Contingency path never exercised (topic queue empty by design); not a listener-facing surface.'
+  shipped: []
+  deferred:
+  - Scenario changes (completion check before responseCreate, rotation at a pause, no greet-on-join, requestTurn everywhere, guest/co-host separation, sign-off catch on response deltas, lightning round driven by code) - proposed, operator A/B after rehearsal
+  - Prompt rewrite to ~1,500 words with no quoted specimens or dated incidents, lessons capped at five positive lines, relapse recap removed - proposed, landmine 17
+  - Brief and fact-check reshaping; carry-the-show limited to one offer per hour inside the guest's subject
+  - Audio-measured episode_metrics (overlap, turn gap, self-answered turns, echo-open rate, guest words per answer, closing round complete, seams)
+  - Guest survey email 24 h after the room; weekly lesson adoption; rehearsal harness with a fixture guest
+  - Redactions with time windows applied to the shipped edit; guest approves the edit transcript; restart/cut requests exempt from the 25 s drop floor; agenda into question generation
+  - Worker hardening (lesson ownership on /lesson-decision, webhook signatures, /studio-phone status check, gate2Housekeeping try/catch, status after dispatch)
+  predictions:
+  - metric: episode_metrics.interruptions (audio-measured overlap events per 10 min once 7.4 ships; transcript estimate until then)
+    baseline: '14 per room on both Oct 19-20 rooms (~3 per 10 min)'
+    expected: under 1 per 10 min on the fifth room after the completion check ships
+    verdict: pending
+    evidence: null
+  - metric: episode_metrics.mira_mean_turn_sec
+    baseline: '7.6 (Jon Cheney, Oct 19), 8.7 (Jason Shumard, Oct 20)'
+    expected: 12-20 s median with a specific reaction inside the turn, on three consecutive rooms after the prompt rewrite
+    verdict: pending
+    evidence: null
+  - metric: self_answered_turns (Mira turn with no guest speech since her previous turn)
+    baseline: 'present on 4 of the last 6 tapes (Ep2, Ep5, Ep11, Shumard)'
+    expected: '0 on every room after the empty-delta guard'
+    verdict: pending
+    evidence: null
+  - metric: episode_grades.overall
+    baseline: '2-7, mean 5.4 over 13 grades, no trend'
+    expected: three consecutive rooms at 7 or above, warmth at 7 or above on two of them
+    verdict: pending
+    evidence: null
+  - metric: guest_experience rows per published episode (plus the new 24 h survey once it exists)
+    baseline: '1 of 13'
+    expected: every published episode carries a guest answer; rating at or above 4 of 5 on four of five
+    verdict: pending
+    evidence: null
+  - metric: re-record or early-leave per booked room
+    baseline: '2 of 23 (Chad Law redo, Cory O''Daniel at 6 min)'
+    expected: '0 over the next 15 rooms'
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr: []
+  agent_cost_usd: null
+do_not_retry:
+- Adding a prohibition to Mira's live prompt for a fault the room can enforce (one question per turn, no second sign-off, no re-asking); the three such lessons carry relapse counts of 2, 4 and 3 and the fault persists (Oct 21 2026 review).
+- Retiring a verbal tic by listing its instances in the prompt; seventy "That's a ..." lines were listed and the shape moved to a one-word echo opener on every turn (Jon Cheney, Oct 19 2026).
+- Quoting a bad line or a guest's complaint verbatim in the prompt as a teaching example; the network-wide de-seed-by-shape rule applies to Mira exactly as it did to Tesla and DP Pod.
+- Raising the end-of-turn silence timer as the fix for interruptions; 1,100 -> 1,300 -> 1,800 ms and the Oct 20 room still logged 14.
