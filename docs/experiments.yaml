@@ -5373,3 +5373,42 @@ experiments:
       no breath-family tag reaches synthesis (engine.utils.strip_breath_tags),
       the 14 episodes re-synthesized. What remains under test is the map and
       the beat without music.
+  - id: age-of-ai-room-and-loop-2026-10-21
+    title: "The Age of AI: the room stops interrupting, the prompt becomes a brief, the loop can hear"
+    area: retention
+    shipped: 2026-10-21
+    readout: 2026-11-11
+    status: reading
+    baseline: >
+      Oct 21 2026 review (docs/reviews/age_of_ai_review_2026_10_21.md):
+      thirteen grades 2-7 with no trend, mean 5.4; Mira's median turn fell
+      from ~28 s to 7.6 s; the Oct 19 and Oct 20 rooms logged 14 interruptions
+      each (~3 per 10 min, estimated from the transcript); self-answered
+      questions on 4 of the last 6 tapes; the closing round complete on 3 of
+      6; one guest answer in thirteen; 2 of 23 rooms re-recorded or left early.
+    target: >
+      Scored on the fifth interview after the deploy, from episode_metrics
+      with metrics_basis = audio and the guest survey: overlap events under
+      1 per 10 min; self_answered_turns 0 on every room; mira_turn_sec_median
+      12-20 s; guest_words_per_answer rising within the hour; echo_open_rate
+      under 10%; closing_round_complete on every room; survey rating >= 4 on
+      four of five; no re-record or early leave; seams 0; three consecutive
+      grades >= 7. The rehearsal report (docs/age_of_ai_rehearsal.md) must
+      read PASS on a fixture guest before the next scenario or prompt change.
+    notes: >
+      Scenario: end of turn is a decision (create_response off, decideTurn),
+      requestTurn everywhere, no first word on join, hand-over at a pause,
+      per-leg mic state, sign-off cancelled on the deltas, the closing round
+      a state machine, reasoning_effort from the run row, signed requests.
+      Prompt: a ~1,500-word host's brief with no quoted specimens or dated
+      incidents (docs/mira_craft_notes.md keeps the history), lessons capped
+      at five positive lines, fact-check off by default, carry-the-show one
+      offer an hour. Loop: pipelines/voices/audio_metrics.py from the
+      per-speaker Whisper words, the retro proposes and the Monday job
+      adopts, a three-question survey 24 h after the room, review_snapshot
+      reads the interview shows. Around the hour: restart and cut requests
+      honoured in the edit, the guest approves the edit's transcript, redaction
+      windows applied to the shipped file, a thank-you within the hour, a
+      publish-day package, a five-minute hello two days before. Operator:
+      deploy the scenario, the Worker and the migrations; rehearse before
+      the next room. AUDIO on every room.
