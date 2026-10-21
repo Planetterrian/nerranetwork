@@ -97,6 +97,18 @@ def network_promise(show_count: int) -> str:
 FLAGSHIP_SHOW_SLUGS = ("spacex", "tesla")
 
 
+def network_promise_visitor() -> str:
+    """The promise as a visitor reads it on the front page: count-free.
+
+    The homepage standfirst, the default meta description and the media kit's
+    hero all render this one sentence (operator, Oct 18 and Oct 21 2026: the
+    press messaging matches the landing page word for word).
+    """
+    return (f"Free news and ideas on {NETWORK_SUBJECTS}. "
+            "Every story is sourced, every claim is checked against its source, "
+            "and you can read the article or hear the episode it came from.")
+
+
 #: A short form for surfaces with one line to spare (cards, meta).
 NETWORK_PROMISE_SHORT = ("Every story sourced. Every claim checked against its source. "
                          "Read the article or hear the episode.")
@@ -175,27 +187,116 @@ def network_boilerplate(show_count: int, languages=("en",)) -> dict:
     """
     n = int(show_count)
     langs = _language_list(languages)
-    short = (f"Nerra Network is an independent network of {n} free podcasts on "
-             f"{NETWORK_SUBJECTS}, made in Vancouver, Canada. {NETWORK_TAGLINE}")
+    short = (f"{NETWORK_TAGLINE} Nerra Network makes free news and ideas on "
+             f"{NETWORK_SUBJECTS}: {n} free podcasts, made in Vancouver, Canada, "
+             "with every claim checked against its source.")
     medium = (
-        f"Nerra Network is an independent podcast network based in Vancouver, "
-        f"Canada, publishing {n} free shows in {langs} on {NETWORK_SUBJECTS}. "
-        "Every story is sourced and every claim is checked against its source, "
-        "on a public record anyone can read. The shows are written and voiced "
-        "with AI under editorial rules set by people, and its interview shows "
-        "are hosted by Mira, an AI whose guests decide whether their "
-        "conversation is published at all. Founded in 2024 by Patrick Novak "
-        "and Dan Perra."
+        f"{NETWORK_TAGLINE} Nerra Network makes free news and ideas on "
+        f"{NETWORK_SUBJECTS}, published as {n} free shows in {langs} from "
+        "Vancouver, Canada. Every story is sourced, every claim is checked "
+        "against its source, and you can read the article or hear the episode "
+        "it came from. The shows are written and voiced with AI under editorial "
+        "rules set by people, and its interview shows are hosted by Mira, an AI "
+        "whose guests decide whether their conversation is published at all. "
+        "Founded in 2024 by Patrick Novak and Dan Perra."
     )
     long = (
         medium + " Its flagship shows follow SpaceX and Tesla every day; Nerra "
         "Daily gathers the morning's shows into one edition by 7 a.m. Eastern, "
         "anchored by Mira. Every episode is free in any podcast app and as a "
         "written article with its sources, most shows publish to YouTube, and "
-        "readers can see which claims were verified and which were not. "
-        f"{NETWORK_TAGLINE}"
+        "readers can see which claims were verified and which were not on a "
+        "public record."
     )
     return {"short": short, "medium": medium, "long": long}
+
+# --- The media kit's growth and marketing copy (Oct 21 2026) ---------------
+#
+# What the network is building next, stated as work that exists or is
+# under way, never as a forecast: the kit's measured momentum (computed from
+# the nightly files in generate_html) sits beside these, and a projection
+# with no basis is the thing a publicist checks first. ``{apple}``,
+# ``{spotify}``, ``{shows}`` and ``{video_words}`` (spelled out, so it never
+# reads as a second show count) are filled from the data.
+
+#: (heading, sentence) pairs, in the order the kit prints them.
+GROWTH_NEXT = (
+    ("Every show in every app",
+     "{apple} of {shows} free shows are listed on Apple Podcasts and {spotify} "
+     "on Spotify. The newer shows already play in any app by their feeds; "
+     "their directory listings are next, starting with Podcast Index."),
+    ("Three languages on YouTube",
+     "English, Russian and French channels carry the shows as videos and "
+     "Shorts. The Russian and French channels add dubbed editions of SpaceX "
+     "Daily, Tesla Shorts Time and Fascinating Frontiers, and the Russian "
+     "channel also carries the Russian lesson show Привет, Русский!"),
+    ("Video in podcast apps",
+     "{video_words} shows publish a video feed beside their audio feed, made "
+     "for the video players in Apple Podcasts and other apps."),
+    ("More conversations",
+     "The Age of AI and Nerra Voices add a guest each time a conversation is "
+     "recorded and the guest has had their week with the transcript."),
+    ("Members",
+     "Nerra Personal is a private daily feed of the shows a member picks, in "
+     "their order, with Mira addressing them by name."),
+    ("Sponsorship",
+     "Sponsors are coming to the site and the free shows, labelled every "
+     "time and kept apart from the reporting. No sponsor has a say over what "
+     "a show covers."),
+)
+
+
+def marketing_posts(site_url: str = "https://nerranetwork.com") -> list:
+    """Copy-ready posts for anyone who wants to share the network.
+
+    Built from the tagline and the promise so a post never says more than
+    the site does. Each carries a plain link (a person's own post is not a
+    published surface of ours, so no campaign tag is added for them).
+    """
+    root = site_url.rstrip("/")
+    return [
+        {"key": "post-short", "label": "Short post",
+         "where": "X, Threads, Bluesky",
+         "text": (f"{NETWORK_TAGLINE} Nerra Network makes free news and ideas "
+                  f"on {NETWORK_SUBJECTS}, and every claim is checked against "
+                  f"its source. {root}")},
+        {"key": "post-long", "label": "Longer post",
+         "where": "LinkedIn, Facebook, a newsletter",
+         "text": (f"{NETWORK_TAGLINE} Nerra Network makes free news and ideas "
+                  f"on {NETWORK_SUBJECTS}. Every story is sourced, every claim "
+                  "is checked against its source, and you can read the article "
+                  "or hear the episode it came from. Start with Nerra Daily, "
+                  "the morning's shows in one episode, or find a show of your "
+                  f"own: {root}/start-here.html")},
+        {"key": "post-guest", "label": "For a guest sharing their interview",
+         "where": "Any platform",
+         "text": ("I sat down with Mira, the AI host of The Age of AI on Nerra "
+                  "Network, for a live conversation. I had a week with my own "
+                  "transcript to approve it, cut from it or refuse it before "
+                  "anything was published. Listen here: [your episode link]")},
+        {"key": "post-notes", "label": "One line for show notes or a bio",
+         "where": "Show notes, a talk bio, a byline",
+         "text": f"Nerra Network: {NETWORK_TAGLINE} {root}"},
+    ]
+
+
+#: How the brand files and art may be used. Plain rules a reader can follow.
+BRAND_USAGE = {
+    "yes": (
+        "Use the logos, cover art and share images in coverage, reviews, "
+        "guest announcements, show notes and talks about Nerra Network.",
+        "Quote an episode or use a short clip, credited to the show, with a "
+        "link to its episode page.",
+        "Link to nerranetwork.com or to a show's own page.",
+    ),
+    "no": (
+        "Recolour, stretch or redraw the logos, or combine them with another mark.",
+        "Suggest that Nerra Network endorses, sponsors or partners with you "
+        "unless it does.",
+        "Use the art to sell a product, or present Mira as a person.",
+    ),
+}
+
 
 #: One sentence, for the places that have room for one (FAQ answers, cards,
 #: the press kit).
