@@ -8,16 +8,19 @@ Every interview leaves two things behind besides an episode:
   the tape, which Patrick promotes or discards at gate 1. Active lessons are
   appended to Mira's system prompt for every later interview on that show.
 
-Sept 21 2026: the loop closes itself. Lessons used to land as proposals for
+Sept 21 2026: the loop closed itself. Lessons used to land as proposals for
 Patrick to promote at gate 1, and eight of them were still sitting there
 unread while the same faults recurred — a queue is not a learning loop. The
-grading pass now ADOPTS what it decides, retires what it has outgrown, and
-tells Patrick what it did. Two things keep the old safety without the queue:
-the grader is shown the instructions Mira already carries and told not to
-restate them, so a relapse cannot multiply into three copies of one lesson;
-and every adoption is reversible from the same triage page that used to
-approve it, because a bad instruction should cost one click to remove rather
-than a deploy.
+grading pass then ADOPTED what it decided and retired what it had outgrown.
+
+Oct 21 2026: thirteen scorecards later the grades had not moved (2–7, no
+trend), about a hundred lessons had been merged, dropped or retired, and the
+numbers the grader read were estimated from transcript line starts. So the
+loop changed shape again: ``audio_metrics`` measures the craft from each
+speaker's own recording, the grading pass PROPOSES (with the metric that
+would show the lesson working), and ``adopt_lessons_weekly.py`` adopts at
+most six over the week's rooms with those numbers in front of it. A lesson
+is retired when its metric has been green for three rooms, never by age.
 """
 
 from __future__ import annotations
@@ -409,10 +412,20 @@ def save_metrics(interview_id: str, metrics: Dict[str, Any]) -> None:
         logger.exception("episode_metrics insert failed (non-fatal)")
 
 
+#: The audio measures a proposed lesson may name as the number that will
+#: say whether it worked (``show_lessons.metric``, Oct 21 2026). A lesson
+#: with no metric is retired by a human, never by the weekly pass.
+LESSON_METRICS = {
+    "overlap_events_per_10min", "self_answered_turns", "mira_turn_sec_median",
+    "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams",
+}
+
+
 def save_proposed_lessons(show_slug: str, interview_id: str,
                           lessons: List[dict]) -> int:
     """Store a retro pass's output as PROPOSED lessons. Nothing reaches Mira
-    until a human promotes it."""
+    from here: the weekly pass (adopt_lessons_weekly.py) adopts at most six,
+    with the week's audio numbers in front of it (Oct 21 2026)."""
     saved = 0
     for item in lessons or []:
         if not isinstance(item, dict):
@@ -423,14 +436,21 @@ def save_proposed_lessons(show_slug: str, interview_id: str,
             continue
         if category not in LESSON_CATEGORIES:
             category = "other"
+        metric = str(item.get("metric") or "").strip().lower() or None
+        if metric not in LESSON_METRICS:
+            metric = None
+        scope = (show_slug if str(item.get("scope") or "").strip().lower()
+                 in ("this_show", "show", show_slug) else NETWORK)
         try:
             sb_insert("show_lessons", {
-                "show": show_slug,
+                "show": scope,
                 "interview_id": interview_id,
                 "category": category,
                 "lesson": lesson[:400],
                 "evidence": str(item.get("evidence") or "")[:400] or None,
+                "metric": metric,
                 "status": "proposed",
+                "decision_note": f"proposed by the grading pass ({item.get('confidence') or 'medium'} confidence)",
             })
             saved += 1
         except Exception:  # noqa: BLE001
@@ -519,9 +539,14 @@ def retire_lessons(ids: List[str], why: str = "superseded") -> int:
 
 
 def adopt_lessons(show_slug: str, interview_id: str,
-                  lessons: List[dict]) -> List[dict]:
-    """Put a grading pass's lessons straight into Mira's standing
-    instructions, and return the ones that took.
+                  lessons: List[dict], decided_by: str = "weekly",
+                  note: str = "") -> List[dict]:
+    """Put lessons into Mira's standing instructions and return the ones
+    that took.
+
+    Oct 21 2026: no longer called from the grading pass. The weekly pass
+    (adopt_lessons_weekly.py) calls it over the week's proposals with the
+    audio metrics in front of it; ``decided_by`` records which.
 
     Each lesson is the whole network's (``"scope": "all_shows"``, the
     default: listening, questions, pacing and tone are the same craft on
@@ -564,6 +589,9 @@ def adopt_lessons(show_slug: str, interview_id: str,
                                "made room for a newer lesson")
                 by_scope[scope] = [r for r in current
                                    if str(r.get("id")) != str(oldest[0].get("id"))]
+        metric = str(item.get("metric") or "").strip().lower() or None
+        if metric not in LESSON_METRICS:
+            metric = None
         try:
             row = sb_insert("show_lessons", {
                 "show": scope,
@@ -571,10 +599,11 @@ def adopt_lessons(show_slug: str, interview_id: str,
                 "category": category,
                 "lesson": lesson[:400],
                 "evidence": str(item.get("evidence") or "")[:400] or None,
+                "metric": metric,
                 "status": "active",
                 "decided_at": _now(),
-                "decided_by": "mira",
-                "decision_note": f"adopted automatically ({item.get('confidence') or 'medium'} confidence)",
+                "decided_by": decided_by,
+                "decision_note": (note or "adopted by the weekly pass")[:200],
             })
             adopted.append(row if isinstance(row, dict) and row.get("show") else {**(row or {}), "show": scope})
             existing.append(lesson)
@@ -920,8 +949,17 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
     if metrics:
         m = metrics[0]
         bits = []
-        for label, key, suffix in (
-                ("interruptions", "interruptions", ""),
+        audio_rows = (
+            ("overlap (s)", "overlap_sec", ""),
+            ("overlap events", "overlap_events", ""),
+            ("median turn gap (ms)", "turn_gap_ms_median", ""),
+            ("her median turn (s)", "mira_turn_sec_median", ""),
+            ("self-answered turns", "self_answered_turns", ""),
+            ("echo openers", "echo_open_rate", "%"),
+            ("guest words per answer", "guest_words_per_answer_median", ""),
+        ) if m.get("metrics_basis") == "audio" else ()
+        for label, key, suffix in audio_rows + (
+                ("interruptions (transcript estimate)", "interruptions", ""),
                 ("repeated questions", "repeated_questions", ""),
                 ("her share of the talking", "host_talk_share", "%"),
                 ("questions asked", "questions", "")):
@@ -937,15 +975,16 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
         live = [r for r in proposed if r.get("status") == "active"]
         parts.append(
             "<p>These are now standing instructions for every later interview "
-            "on this show. They are already in force — nothing is waiting on "
-            "you. If one of them is wrong, remove it on the triage page and "
-            "she stops carrying it:</p><ul>"
+            "on this show. If one of them is wrong, remove it on the triage page "
+            "and she stops carrying it:</p><ul>"
             if live else
-            "<p>Left for you to decide on:</p><ul>")
+            "<p>Proposed from this tape. The weekly pass adopts at most six "
+            "over the week's rooms, with the audio numbers in front of it; "
+            "you can promote or drop any of them on the review page now:</p><ul>")
         for row in proposed:
             lesson = (row.get("lesson") or "").strip()
             why = (row.get("evidence") or "").strip()
-            mark = "" if row.get("status") == "active" else " <i>(awaiting you)</i>"
+            mark = "" if row.get("status") == "active" else " <i>(proposed)</i>"
             scope = (" <i>(every show)</i>" if row.get("show") == NETWORK
                      and row.get("status") == "active" else "")
             parts.append(f"<li>{lesson}{mark}{scope}"

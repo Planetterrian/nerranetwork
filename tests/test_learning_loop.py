@@ -132,12 +132,15 @@ class TestLessonsReachMiraOnlyViaAHuman:
     def test_fire_appends_the_block_to_miras_prompt(self):
         assert "lessons=lessons_block(show.slug)," in FIRE
 
-    def test_post_interview_grades_and_adopts_without_blocking(self):
-        # Sept 21 2026: the pass adopts rather than proposes. It still must
-        # never be able to cost an episode.
+    def test_post_interview_grades_and_proposes_without_blocking(self):
+        # Sept 21 2026 made this pass adopt on its own; Oct 21 2026 took
+        # that back (thirteen grades, no trend, ~100 lessons churned). The
+        # pass measures, grades and PROPOSES; the weekly pass adopts. It
+        # still must never be able to cost an episode.
         assert "09_interview_retro.txt" in POST
-        assert "adopt_lessons(" in POST and "save_metrics(" in POST
-        assert "save_grade(" in POST and "retire_lessons(" in POST
+        assert "save_proposed_lessons(" in POST and "save_metrics(" in POST
+        assert "save_grade(" in POST
+        assert "adopt_lessons(" not in POST and "retire_lessons(" not in POST
         block = POST[POST.index("# Learning loop"):]
         block = block[:block.index('if package.get("topical_show_fits")')]
         assert "except Exception:" in block
@@ -146,7 +149,7 @@ class TestLessonsReachMiraOnlyViaAHuman:
         assert "Judge the HOST, not the guest" in RETRO
         assert "Ignore anything caused by infrastructure" in RETRO
         assert "An empty list is the correct answer" in RETRO
-        assert "WHAT YOU DECIDE HERE IS APPLIED WITHOUT ANYONE" in RETRO
+        assert "WHAT YOU PROPOSE HERE IS DECIDED ONCE A WEEK" in RETRO
 
     def test_worker_gates_promotion_on_the_package_token(self):
         body = WORKER[WORKER.index("async function handleLessonDecision("):]

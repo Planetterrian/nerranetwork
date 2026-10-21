@@ -167,12 +167,13 @@ class TestPatrickIsToldWhatChanges:
     LEARNING = (V / "learning.py").read_text(encoding="utf-8")
     ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
 
-    def test_the_summary_says_what_was_done_not_what_is_wanted(self):
-        """Sept 21 2026: the lessons in this email are already in force, so it
-        is a record of a decision rather than a request for one."""
+    def test_the_summary_says_what_was_done_and_what_is_proposed(self):
+        """Sept 21 2026: the lessons in this email were already in force.
+        Oct 21 2026: the pass proposes and the weekly pass adopts, so the
+        email says which is which and never asks Patrick to gate a tape."""
         body = _pyfn("improvement_summary", self.LEARNING)
         assert "What Mira took from this one" in body
-        assert "already in force" in body and "nothing is waiting on" in body
+        assert "weekly pass adopts at most six" in body
         assert "remove it on the triage page" in body
         assert "until you approve" not in body
 
@@ -2099,9 +2100,11 @@ class TestAPublishThatCommitsNothingIsNotSilent:
 class TestTheLoopClosesItself:
     """Sept 21 2026. Eight lessons had been sitting as proposals — four from
     Meridan Zerner, four from Sameer Ranjan — while the same faults recurred
-    in both episodes. A queue nobody drains is not a learning loop. The
-    grading pass now adopts what it decides and retires what the show has
-    outgrown, and Patrick reads the decision instead of gating it."""
+    in both episodes. A queue nobody drains is not a learning loop, so the
+    grading pass adopted what it decided. Oct 21 2026: a loop that churns is
+    not one that closes either — the pass proposes with the metric that
+    would show the lesson working, and the weekly pass adopts at most six
+    over the week's rooms with the audio measures in front of it."""
 
     LEARNING = (V / "learning.py").read_text(encoding="utf-8")
     RETRO = (V / "prompts" / "editorial_passes" / "09_interview_retro.txt").read_text(encoding="utf-8")
@@ -2110,8 +2113,8 @@ class TestTheLoopClosesItself:
     def test_lessons_go_in_live_and_say_who_decided(self):
         body = _pyfn("adopt_lessons", self.LEARNING)
         assert '"status": "active"' in body
-        assert '"decided_by": "mira"' in body
-        assert "adopted automatically" in body
+        assert '"decided_by": decided_by' in body
+        assert 'decided_by: str = "weekly"' in body
 
     def test_it_will_not_carry_the_same_lesson_twice(self):
         import importlib, sys as _sys
@@ -2135,7 +2138,7 @@ class TestTheLoopClosesItself:
         # Oct 5 2026: a cap per scope (the network's craft, the show's own).
         assert "lesson_cap(scope) - (len(current) + len(mine))" in body
         assert "made room for a newer lesson" in body
-        assert "RETIRE the instructions that have done their job" in self.RETRO
+        assert "RETIRE is a recommendation, decided weekly" in self.RETRO
 
     def test_the_guests_own_verdict_is_fed_back_in(self):
         assert "{{guest_feedback}}" in self.RETRO
