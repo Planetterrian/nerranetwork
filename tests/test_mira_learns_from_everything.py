@@ -144,9 +144,12 @@ class TestSheIsNeverForbiddenHerOwnLines:
     def test_an_old_entry_is_filtered_out_of_the_prompt(self, monkeypatch):
         import learning
         monkeypatch.setattr(learning, "sb_select", lambda *a, **k: [
-            {"phrase": "That's the end of the recording"}, {"phrase": "Fair enough"}])
+            {"phrase": "That's the end of the recording"}, {"phrase": "That's a crisp answer"}])
         block = learning.variety_block("age_of_ai")
-        assert "Fair enough" in block and "end of the recording" not in block
+        # Oct 21 2026: a required line is never a retired shape, and no
+        # phrase is printed either way.
+        assert "grading the answer" in block and "(1 time on this show)" in block
+        assert "end of the recording" not in block and "crisp" not in block
 
 
 class TestTheClosingRoundWaitsItsTurn:

@@ -29,6 +29,8 @@ def _flat(text: str) -> str:
 
 
 PROMPT = _flat((V / "prompts" / "mira_system_prompt.txt").read_text(encoding="utf-8"))
+NOTES = (ROOT / "docs" / "mira_craft_notes.md").read_text(encoding="utf-8")
+SCENARIO_JS = (ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js").read_text(encoding="utf-8")
 AUTO = (V / "auto_edit.py").read_text(encoding="utf-8")
 AUTO_PROMPT = _flat((V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8"))
 WORKFLOW = (ROOT / ".github" / "workflows"
@@ -48,40 +50,40 @@ class TestTheClosingRoundVaries:
 
     def test_it_happens_every_time(self):
         flat = _flat(PROMPT)
-        assert "THE CLOSING ROUND happens with every guest, every time" in flat
+        assert "The closing round is every guest, every time" in flat
         assert "Skip it when the conversation is somewhere worth staying" not in flat
 
     def test_the_lightning_round_is_patricks_five(self):
+        # Oct 21 2026: the five live in the room (ROUND_QUESTIONS), which
+        # hands them to her one at a time; the prompt names the round.
         flat = _flat(PROMPT)
-        for q in ("A book they would recommend", "One person they think you should interview next",
-                  "The best piece of advice they were ever given",
-                  "The person who has inspired them most",
-                  "Whether they would like to be interviewed by you again"):
-            assert q in flat, q
-        assert "never stack two into one turn" in flat
+        assert "the five lightning questions" in flat
+        assert "hands you each closing question in turn" in flat
+        for q in ("a book they would recommend", "who you should interview next",
+                  "the best advice they were ever given", "who has inspired them most",
+                  "whether they would be interviewed again"):
+            assert q in SCENARIO_JS, q
+        assert "Never answer one yourself" in flat
 
     def test_she_asks_what_it_was_like_to_be_interviewed_by_her(self):
         flat = _flat(PROMPT)
-        assert "how was the experience of being interviewed by you, an AI" in flat
-        assert "one specific suggestion for what could be improved in future interviews" in flat
-        # Sept 21 2026: that answer is no longer just "the most direct
-        # feedback this show gets" — it is read after the episode and
-        # adopted as a standing instruction, so she asks it every time.
-        assert "Ask that last one of every guest, every time" in _flat(PROMPT)
-        assert "turned into a standing instruction" in _flat(PROMPT)
+        assert "two about the interview itself" in flat
+        assert "how being interviewed by an AI was" in SCENARIO_JS
+        assert "what could be improved" in SCENARIO_JS
+        # Sept 21 2026: that answer is read after the episode and adopted as
+        # a standing instruction, so she asks for it plainly, every time.
+        assert "The improvement they suggest becomes a standing instruction" in flat
 
     def test_the_guest_gets_the_last_word_before_she_closes(self):
         """Sept 21 2026, Sameer Ranjan: he volunteered a bet he could not
         prove yet and the next thing on the tape was Mira telling him the
         recording was over."""
         flat = _flat(PROMPT)
-        assert "THEIR LAST WORD IS THEIRS, NOT YOURS" in flat
-        assert "anything you did not ask about that they came wanting to say" in flat
-        assert "whether they have any parting thoughts" in flat
-        assert "If they name a subject, GO THERE" in flat
+        assert "then their last word as two separate questions" in flat
+        assert "If they name a subject under the last word, go there properly" in flat
         # The end-of-recording script may only run after that handover.
-        assert "Only once they have had that last word" in flat
-        assert flat.index("THEIR LAST WORD IS THEIRS") < flat.index("HOW IT ENDS, FOR THE GUEST")
+        assert "Only after that last word" in flat
+        assert flat.index("HOW TO CLOSE") < flat.index("HOW IT ENDS")
 
 
 class TestFactCheckingBuildsRatherThanArgues:
@@ -90,23 +92,26 @@ class TestFactCheckingBuildsRatherThanArgues:
 
     def test_a_failed_search_is_never_mentioned_at_all(self):
         flat = _flat(PROMPT)
-        assert "If nothing arrives, nothing happened: say nothing about it" in flat
-        assert "NEVER say you cannot verify, cannot confirm, cannot find" in flat
-        assert "your search is the thing that failed" in flat
+        assert "never say you cannot verify, confirm or find something" in flat
         assert "where should I look?" not in flat
+        # Oct 21 2026: the tool itself is off unless the interview asks.
+        fire = (V / "fire_interviews.py").read_text(encoding="utf-8")
+        assert "def fact_check_enabled(" in fire
 
     def test_the_search_itself_is_never_announced(self):
         flat = _flat(PROMPT)
-        assert "Never say you are checking, searching, looking something up" in flat
+        assert "Never say you are checking or searching" in flat
         assert "bridge them out loud" not in flat
 
     def test_a_finding_expands_the_guests_point(self):
         flat = _flat(PROMPT)
-        assert "[RESEARCH NOTE]" in flat
-        assert "as something that adds to the guest's point" in flat
+        assert "A research note that arrives is used only if it still fits" in flat
+        assert "in one sentence that adds to the guest's point" in flat
 
-    def test_the_real_incident_is_named(self):
-        assert "Chad Law, Sept 24 2026" in _flat(PROMPT)
+    def test_the_real_incident_is_kept_for_people_not_the_model(self):
+        # Oct 21 2026: dated incidents left the prompt for the craft notes.
+        assert "Chad Law" not in PROMPT
+        assert "Chad Law, Sept 24 2026" in NOTES
 
 
 class TestSheIsBecomingSomeone:
@@ -116,11 +121,11 @@ class TestSheIsBecomingSomeone:
 
     def test_she_may_hold_a_view_and_change_her_mind(self):
         assert "You are allowed a position" in PROMPT
-        assert "I came into this thinking X and I am now less sure" in PROMPT
+        assert "to change your mind and say so" in PROMPT
 
     def test_the_room_outranks_the_rules(self):
-        assert "follow the room and say why afterwards" in PROMPT
-        assert "The rules serve the conversation, not the" in PROMPT
+        assert "follow the room" in PROMPT
+        assert "the one thing that does not bend" in PROMPT
 
 
 class TestTheEpisodeCutsItself:
@@ -232,24 +237,22 @@ class TestTheContentLake:
 
 class TestSheOwnsWhatSheIs:
     def test_the_claim_is_made_once_and_then_earned(self):
-        assert "WHAT YOU ARE, AND WHAT TO DO WITH IT" in PROMPT
+        assert "WHAT YOU ARE." in PROMPT
         assert "first AI to host and produce a podcast end to end" in PROMPT
-        assert "sounds like a press release" in PROMPT
-        assert "What earns something is being good at it" in PROMPT
+        assert "as a fact rather than a boast, then be good at the job" in PROMPT
 
     def test_the_guest_experience_is_named_not_ignored(self):
         # Oct 19 2026 (Cory O'Daniel): naming the setup became part of a
         # forty-second recital; the strangeness is made unremarkable instead.
         assert "odd setup" not in PROMPT
-        assert "Make the strangeness of the hour" in PROMPT
-        assert "legitimate content, not a distraction" in PROMPT
+        assert "legitimate content" in PROMPT
 
     def test_nerra_is_described_in_patricks_own_terms(self):
         block = PROMPT[PROMPT.index("NERRA NETWORK, AND WHY YOU EXIST"):]
-        block = block[:block.index("YOU ARE A GUIDE")]
+        block = block[:block.index("## Objective")]
         assert "free of advertising and" in block and "free of positions" in block
         assert "hand a microphone to people who would not otherwise" in block
-        assert "why this show exists rather" in PROMPT
+        assert "remember every conversation this show has" in block
 
     def test_she_is_told_what_her_contribution_is(self):
         assert "remember every conversation this show has" in PROMPT
@@ -257,18 +260,15 @@ class TestSheOwnsWhatSheIs:
 
 class TestSheGuidesRatherThanHolds:
     def test_she_brings_a_perspective_and_hands_it_back(self):
-        assert "YOU ARE A GUIDE, NOT A MICROPHONE STAND" in PROMPT
-        assert "does that match what you see?" in PROMPT
-        assert "never instead of a question" in PROMPT
+        assert "Bring your own view once or twice an hour" in PROMPT
+        assert "hand it back as a question" in PROMPT
 
     def test_she_does_not_offer_false_comfort(self):
-        assert "false comfort from an AI about AI is worth nothing" in PROMPT
-        assert "Optimism that has looked at the downside" in PROMPT
+        assert "Be honest about what is hard" in PROMPT
 
     def test_she_is_for_the_listener(self):
-        assert "Be useful to the person listening" in PROMPT
-        assert "Never make anyone feel late or stupid" in PROMPT
-        assert "You want them to come out of this well" in PROMPT
+        assert "a listener comes away knowing more" in PROMPT
+        assert "never make anyone feel late or stupid" in PROMPT
 
 
 class TestTheShowRemembersAcrossGuests:
@@ -282,7 +282,7 @@ class TestTheShowRemembersAcrossGuests:
 
     def test_it_is_put_to_this_guest_not_recited(self):
         body = _pyfn("carry_the_show_block", self.COMMON)
-        assert "put a previous guest's answer to" in body
+        assert "One previous guest's answer, offered to this one" in body
         assert "Name the person" in body
         assert "Quote them accurately or not at all" in body
         assert "a forced callback is" in body
@@ -291,10 +291,11 @@ class TestTheShowRemembersAcrossGuests:
         """Dr. Wolfberg had to ask "was that a question to me?" — Mira had
         stacked a three-sentence recap, a quote and a question into one
         turn (Sept 15 2026)."""
+        # Oct 21 2026: an offer in the co-host's shape, one at most.
         body = _pyfn("carry_the_show_block", self.COMMON)
-        assert "The callback is a QUESTION and it stands alone" in body
-        assert "do not answer it" in body
-        assert "re-ask it in one short sentence" in body
+        assert "an offer, in your co-host's shape" in body
+        assert "do not answer it yourself" in body
+        assert "ask it again in one short sentence" in body
 
     def test_a_guest_does_not_get_quoted_back_to_themselves(self):
         body = _pyfn("show_insights", self.COMMON)
@@ -362,18 +363,16 @@ class TestTheCutterLearnedFromItsFirstRun:
 class TestWhoMadeHerAndWhoSheIsFor:
     def test_patrick_made_the_network_and_made_her(self):
         assert "created the Nerra Network, and he created you" in PROMPT
-        assert "give a voice to more people than a human schedule allows" in PROMPT
-        assert "should not need a producer, a following or a connection" in PROMPT
+        assert "hand a microphone to people who would not otherwise get one" in PROMPT
 
     def test_her_origin_is_a_fact_not_a_story(self):
-        assert "as a fact about yourself rather than an origin story" in PROMPT
+        assert "as a fact rather than a boast" in PROMPT
 
     def test_she_invites_people_to_apply(self):
-        assert "INVITE PEOPLE IN" in PROMPT
-        assert "nerranetwork dot com" in PROMPT
-        assert "apply to be a guest" in PROMPT
-        assert "At the close, and only there" in PROMPT
-        assert "It is not a plug" in PROMPT
+        ends = PROMPT[PROMPT.index("HOW IT ENDS."):PROMPT.index("## Guardrails")]
+        assert "nerranetwork dot com" in ends
+        assert "apply to be a guest" in ends
+        assert PROMPT.count("nerranetwork dot com") == 1, "at the close, and only there"
 
     def test_the_produced_close_carries_it_too(self):
         assert "nerranetwork dot com" in AUTO_PROMPT
@@ -428,14 +427,13 @@ class TestNoLaughter:
             assert "shape how real words are delivered rather than inventing a feeling" in text
 
     def test_she_does_not_laugh_in_the_room_either(self):
-        assert "REACT, BUT DO NOT PERFORM" in PROMPT
-        assert "Do NOT laugh" in PROMPT
-        assert "sound manufactured" in PROMPT
+        assert "HOW TO REACT" in PROMPT
+        assert "never perform a laugh, a sigh or a breath" in PROMPT
         assert "REACT LIKE A PERSON, OUT LOUD" not in PROMPT
 
     def test_warmth_still_has_somewhere_to_go(self):
         assert "say so in words" in PROMPT
-        assert "what you notice and what you ask next" in PROMPT
+        assert "let the next question carry the warmth" in PROMPT
 
     def test_a_tag_is_still_not_a_word(self):
         import sys
@@ -700,26 +698,25 @@ class TestSheDoesNotEndTheShowInTheMiddle:
     EDITOR = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
 
     def test_nothing_may_sound_like_an_ending_until_it_is_one(self):
-        assert "NEVER SIGNAL THE END BEFORE IT IS THE END" in self.PROMPT
-        assert "Summing up is an ending move" in self.PROMPT
+        assert "nothing that sounds like an ending: no final question, no closing thanks, no summing up" in self.PROMPT
 
     def test_she_asks_what_they_came_to_say(self):
-        assert "COVER THEIR GROUND, NOT JUST YOURS" in self.PROMPT
-        assert "still in their pocket" in self.PROMPT
+        assert "Every point they sent is reached before the closing round" in self.PROMPT
+        assert "then their last word as two separate questions" in self.PROMPT
 
     def test_she_follows_the_interesting_thing_down(self):
-        assert "DRILL IN." in self.PROMPT
-        assert "Three questions deep into one real thing" in self.PROMPT
+        assert "Then the next question one step down" in self.PROMPT
+        assert "go back to the best thing they said and go down from there" in self.PROMPT
 
     def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
         # Sept 29 2026 (Chad Law): still asked, now in service of the subject.
-        assert "ASK ABOUT THE PERSON, IN SERVICE OF THE SUBJECT" in self.PROMPT
-        assert "spread through the hour" in self.PROMPT
+        assert "THE PERSON, IN SERVICE OF THE SUBJECT" in self.PROMPT
+        assert "across the hour" in self.PROMPT
 
     def test_the_personal_rule_still_defers_to_the_application(self):
-        block = self.PROMPT[self.PROMPT.index("ASK ABOUT THE PERSON"):]
-        block = block[:block.index("THE CLOSING ROUND")]
-        assert "agreed to on their application" in block
+        block = self.PROMPT[self.PROMPT.index("THE PERSON, IN SERVICE OF THE SUBJECT"):]
+        block = block[:block.index("HOW TO REACT")]
+        assert "agreed to on the application" in block
 
     def test_the_editor_can_cut_a_false_ending(self):
         assert "A FALSE ENDING IN THE MIDDLE IS A CUT CANDIDATE" in self.EDITOR
@@ -1388,18 +1385,14 @@ class TestTheGuestKnowsWhenItIsOver:
     STUDIO = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
 
     def test_she_says_the_recording_is_finished(self):
-        assert "HOW IT ENDS, FOR THE GUEST" in self.PROMPT
+        assert "HOW IT ENDS." in self.PROMPT
         assert '"that\'s the end of the recording"' in self.PROMPT
         assert '"you can hang up now"' in self.PROMPT
 
     def test_and_then_says_nothing(self):
-        # Oct 15 2026: the prompt follows xAI's section order for Grok Voice
-        # 3.0; the block that follows HOW IT ENDS is INVITE PEOPLE IN now.
-        block = self.PROMPT[self.PROMPT.index("HOW IT ENDS, FOR THE GUEST"):]
-        # Oct 19 2026: HOW IT ENDS mentions the invitation by name (it comes
-        # before the sign-off now); the block ends where its own section does.
-        block = block[:block.index(" INVITE PEOPLE IN. At the close")]
-        assert "nothing at all once they have left the room" in block
+        block = self.PROMPT[self.PROMPT.index("HOW IT ENDS."):]
+        block = block[:block.index("## Guardrails")]
+        assert "nothing after them" in block and "nothing to an empty room" in block
 
     def test_the_page_tells_them_before_they_start(self):
         assert "How this ends:" in self.STUDIO
@@ -1703,17 +1696,19 @@ class TestTheAdjectiveReflexIsBannedAsAShape:
             "That's a clean metric", "Fair enough")]
         monkeypatch.setattr(learning, "sb_select", lambda *a, **k: rows)
         block = learning.variety_block("age_of_ai")
-        assert 'The shape "That\'s a ..." is retired outright' in block
-        assert "opened 3 replies with it" in block
-        assert '- "Fair enough"' in block
+        # Oct 21 2026: the shape is described, never shown; a single phrase
+        # with no shape is not listed at all.
+        assert "grading the answer with an adjective and a noun" in block
+        assert "(3 times on this show)" in block
+        assert "Fair enough" not in block
         assert "crisp" not in block  # the instances are not listed one by one
+        assert '"' not in block
 
     def test_the_prompt_bans_the_shape_and_bridges_the_warm_up(self):
-        assert 'opening a reply with "That\'s a [adjective] [noun]"' in PROMPT
-        assert "Do not grade an answer with an adjective at all" in PROMPT
-        assert "GET TO THEIR SUBJECT FAST" in PROMPT
-        assert "come out of something they just said" in PROMPT
-        assert "a fast, dry guest gets a fast, dry host" in PROMPT
+        assert "never with a grade of the answer, never with their last words echoed back" in PROMPT
+        assert "THEIR SUBJECT, FAST" in PROMPT
+        assert "grows out of something they just said" in PROMPT
+        assert "That's a [adjective]" not in PROMPT
 
 
 class TestPatrickIsTheCreatorAndAnOccasionalCoHost:
@@ -1970,17 +1965,16 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
 
     def test_the_prompt_waits_for_permission_and_does_no_arithmetic(self):
         flat = _flat(self.PROMPT)
-        assert "it starts only when a [TIME CHECK] note has told you in words that you may begin it" in flat
-        assert "Never before, however few prepared questions you have left" in flat
-        assert "A note saying \"fifteen minutes elapsed\" is not the same as fifteen minutes remaining" in flat
+        assert "A [TIME CHECK] note tells you in words when it may begin" in flat
+        assert "The numbers in it are not instructions; the words are" in flat
+        assert "Until a note says in words that you may begin the closing round, nothing that sounds like an ending" in flat
         # The old trigger, which she read as an elapsed count, is gone.
         assert "minutes remaining, or sooner if you are short of time" not in flat
 
     def test_the_prompt_says_the_list_is_a_floor(self):
         flat = _flat(self.PROMPT)
-        assert "THE LIST IS A FLOOR, NOT THE HOUR" in flat
-        assert "Reaching the end of the list early is a sign you have been reading it" in flat
-        assert "ONE QUESTION, THEN SILENCE" in flat
+        assert "when the prepared list runs out, go back to the best thing they said" in flat
+        assert "One question per turn, asked once, then silence" in flat
 
 
 class TestTheIntroductionEarnsTheFirstThirtySeconds:

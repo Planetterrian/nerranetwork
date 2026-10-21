@@ -57,40 +57,42 @@ def _jsfn(name: str, src: str = SCENARIO) -> str:
 class TestThePromptTeachesRhythm:
     def test_what_guests_have_told_us_is_in_her_prompt(self):
         flat = _flat(PROMPT)
-        assert "WHAT GUESTS HAVE TOLD US" in flat
+        # Oct 21 2026: what guests said is in docs/mira_craft_notes.md; the
+        # prompt states the rhythm it taught, without quoting them.
+        notes = (ROOT / "docs" / "mira_craft_notes.md").read_text(encoding="utf-8")
         for said in ("answering machine", "not as personal", "came a little too quick",
                      "it doesn't feel like a conversation"):
-            assert said in flat, said
-        assert "give it one specific, human beat in plain words" in flat
-        assert "Never grade the answer and never summarise it back" in flat
+            assert said in notes, said
+            assert said not in flat, said
+        assert "give it one specific human beat in plain words" in flat
+        assert "never with a grade of the answer" in flat
 
     def test_a_short_answer_needs_no_acknowledgment_but_a_real_one_does(self):
         flat = _flat(PROMPT)
         assert "Most answers need no acknowledgment" not in flat
         assert "A short answer needs no acknowledgment" in flat
-        # The ban on grading stays.
-        assert "Do not grade an answer with an adjective at all" in flat
+        # The ban on grading stays, stated by shape.
+        assert "never with a grade of the answer" in flat
 
     def test_the_lightning_round_reacts_between_questions(self):
         flat = _flat(PROMPT)
-        assert "Each question is its own turn: ask it, stop, and let them answer in full" in flat
-        assert "react to what they actually said in a few words that prove you heard it" in flat
-        assert "never stack two into one turn" in flat
+        assert "Ask each question you are handed in full as its own turn, and wait for the whole answer" in flat
+        assert "react in a few words that prove you heard" in flat
         assert "Never answer one yourself" in flat
 
     def test_a_complaint_is_taken_on_board_not_explained_back(self):
         flat = _flat(PROMPT)
-        assert "never explain their complaint back to them" in flat
+        assert "one plain acknowledgment, then their subject, in their words" in flat
 
     def test_the_change_of_course_line_is_not_a_banned_phrase(self):
-        # "Fair enough" is on her retired list; "Fair." was its echo.
+        # Oct 21 2026: no specimen line of any kind; the only quoted words
+        # in the prompt are the two the room's sign-off catcher listens for.
         assert '("Fair.")' not in PROMPT
-        assert "Okay, let's leave that one." in PROMPT
+        assert "Okay, let's leave that one." not in PROMPT
+        assert PROMPT.count('"') == 4
 
     def test_no_em_dash_in_what_was_added(self):
-        start = PROMPT.index("WHAT GUESTS HAVE TOLD US")
-        end = PROMPT.index("SAY IT A DIFFERENT WAY EVERY TIME")
-        assert "—" not in PROMPT[start:end]
+        assert "—" not in PROMPT
 
 
 class TestTheGraderGuardsAgainstColderLessons:
@@ -316,21 +318,21 @@ class TestItIsTheGuestsHour:
 
     def test_mira_says_so_at_the_open(self):
         flat = _flat(PROMPT)
-        beat2 = flat[flat.index("2. ONE SENTENCE ON HOW THIS WORKS, ONE THAT IT IS THEIR HOUR"):flat.index("{{cohost_intro_step}}")]
-        assert "This is your hour" in beat2
+        beat2 = flat[flat.index("2. One sentence that you are Mira"):flat.index("{{cohost_intro_step}}")]
+        assert "this is their hour" in beat2
         assert "anything can come out afterwards" in beat2
-        assert "never again" in beat2
 
     def test_and_knows_what_to_do_when_they_take_her_up_on_it(self):
         flat = _flat(PROMPT)
-        rule = flat[flat.index("IT IS THEIR HOUR, AND YOU TOLD THEM SO"):flat.index("A PERSONAL STORY IS NOT A CLAIM")]
-        for cue, answer in (("skip a question", '"Of course"'),
-                            ("start an answer again", '"Go ahead"'),
-                            ("something to be cut", '"Done, that stays out"'),
-                            ("want a moment", '"Take your time"')):
+        rule = flat[flat.index("IT IS THEIR HOUR, AND YOU TOLD THEM SO"):flat.index("THE PERSON, IN SERVICE OF THE SUBJECT")]
+        # Oct 21 2026: the answers are described, never quoted.
+        for cue, answer in (("skip a question", "of course"),
+                            ("start an answer again", "go ahead, then silence"),
+                            ("something to be cut", "it stays out"),
+                            ("want a moment", "take your time")):
             assert cue in rule and answer in rule, cue
-        assert "never that one again in any form" in rule
-        assert "a thinking pause is never the end of an answer" in rule
+        assert "never that one again" in rule
+        assert "then nothing for as long as it takes" in rule
 
     def test_the_booking_email_says_so(self):
         worker = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
@@ -395,11 +397,11 @@ class TestTheInvitationComesBeforeTheSignOff:
 
     def test_the_order_is_thanks_invitation_sign_off(self):
         flat = _flat(PROMPT)
-        ends = flat[flat.index("HOW IT ENDS, FOR THE GUEST."):flat.index("## Guardrails")]
-        assert ends.index("thank them once, for something particular") \
-            < ends.index("Then the invitation to listeners") \
-            < ends.index('say the words "that\'s the end of the recording"')
-        assert "never after the sign-off" in ends
+        ends = flat[flat.index("HOW IT ENDS."):flat.index("## Guardrails")]
+        assert ends.index("Thank them once, for something particular") \
+            < ends.index("where listeners find the rest") \
+            < ends.index('the words "that\'s the end of the recording"')
+        assert "nothing after them" in ends
 
 
 class TestTheRoomKeepsItsJoinRecord:

@@ -204,7 +204,7 @@ class TestTheShapeReachesMira:
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",
                 "show_memory", "question_count", "minutes", "guest_shape",
-                "prior_record", "carry_the_show",
+                "prior_record", "carry_the_show", "guest_agenda", "guest_notes",
             },
             "mira_narration.txt": {
                 "show_name", "show_premise", "guest_name", "guest_title",

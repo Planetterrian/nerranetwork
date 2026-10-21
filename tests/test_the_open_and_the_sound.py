@@ -123,23 +123,23 @@ class TestHowSheSounds:
 class TestWhatSheSaysAtTheTop:
     def test_she_introduces_herself_and_the_show(self):
         assert "HOW TO OPEN" in PROMPT
-        assert "I'm Mira, the AI who hosts {{show_name}}," in PROMPT
+        assert "you are Mira, the AI who hosts {{show_name}}" in _flat(PROMPT)
         assert ("first podcast hosted and run end to end by an AI"
                 in _flat(PROMPT))
 
     def test_the_claim_is_made_once_and_not_as_a_boast(self):
         flat = _flat(PROMPT)
-        assert "Say it once, as a fact rather than a boast, and never again" in flat
-        assert "sounds like a press release" in flat
+        assert "once, in a clause, as a fact rather than a boast" in flat
+        assert "then be good at the job" in flat
 
     def test_the_format_is_one_sentence_not_a_recital(self):
         """Oct 19 2026 (Cory O'Daniel): forty seconds of how-this-works before
         the first question. The guest has the format by email; in the room it
         is one sentence: who she is, and that they see the transcript first."""
         flat = _flat(PROMPT)
-        opening = flat[flat.index("HOW TO OPEN"):flat.index("GET TO THEIR SUBJECT FAST")]
-        assert "ONE SENTENCE ON HOW THIS WORKS" in opening
-        assert "you'll see the transcript before anything goes out" in opening
+        opening = flat[flat.index("HOW TO OPEN"):flat.index("THEIR SUBJECT, FAST")]
+        assert "One sentence that you are Mira" in opening
+        assert "they will see the transcript before anything goes out" in opening
         assert "roughly {{planned_minutes}} minutes" not in opening
         assert "nothing is live" not in flat
         assert "approve the episode before anyone else does" not in flat
@@ -446,39 +446,34 @@ class TestTheCraftRules:
     def test_yielding_is_separated_from_waiting(self):
         flat = _flat(self.PROMPT)
         # Waiting: the end of the thought, not the pause for breath ...
-        assert "LET THEM FINISH. Wait for the end of the thought" in flat
+        assert "Wait for the end of the thought, not the pause for breath" in flat
         # ... and yielding: stop the moment the guest starts, mid-word.
-        assert "yield the moment you hear them" in flat
-        assert "stop mid-word, do not finish your thought" in flat
+        assert "If they begin while you are speaking, stop mid-word" in flat
 
     def test_a_question_is_asked_once(self):
         flat = _flat(self.PROMPT)
-        assert "ONE question per turn, asked once" in flat
-        assert "never re-ask a question that has not been answered yet" in flat
-        assert "The discomfort is yours to hold, not theirs to fill" in flat
-        assert "Silence means they are thinking: count to five and wait again" in flat
-        # The same rule again, where the cost of stacking is spelled out.
-        assert "ONE QUESTION, THEN SILENCE" in flat
+        assert "One question per turn, asked once, then silence" in flat
+        assert "a pause is them thinking, and the discomfort is yours to hold" in flat
+        # Oct 21 2026: the stacking and re-asking rules are the room's to
+        # keep (the scenario drives the closing round question by question).
+        assert "One question per turn, asked once." in self.PROMPT
 
     def test_the_close_waits_for_the_answer(self):
         flat = _flat(self.PROMPT)
-        assert "permission to close at the next natural break" in flat
-        assert "not an instruction to talk over the answer in progress" in flat
-        assert "let it land, then close" in flat
+        assert "Until a note says in words that you may begin the closing round" in flat
         # And the guest's own last word. Sept 22 2026, Viktor Popovic: she
         # asked for his parting thought and closed eleven seconds later,
         # which is worse than never asking.
-        assert "THEIR LAST WORD IS THEIRS, NOT YOURS" in flat
-        assert "AND WAITING IS THE WHOLE POINT OF ASKING" in flat
+        assert "let the silence sit" in flat
         assert "you close because they have finished" in flat
 
     def test_the_closing_round_is_a_tool_not_a_ritual(self):
         flat = _flat(self.PROMPT)
         # Sept 27 2026: a fixed round now, not a menu (Patrick, after Roddy
-        # de la Garza): the lightning round, then the interview itself.
-        assert "THE CLOSING ROUND happens with every guest, every time" in flat
-        assert "THE LIGHTNING ROUND" in flat and "THE INTERVIEW ITSELF" in flat
-        assert flat.index("THE LIGHTNING ROUND") < flat.index("THE INTERVIEW ITSELF") < flat.index("THEIR LAST WORD IS THEIRS")
+        # de la Garza). Oct 21 2026: the room hands her each question.
+        assert "The closing round is the room's to run" in flat
+        assert "the five lightning questions, two about the interview itself, then their last word" in flat
+        assert flat.index("HOW TO CLOSE") < flat.index("HOW IT ENDS")
 
     def test_the_co_host_is_a_model_to_learn_from(self):
         assert "LEARN FROM YOUR CO-HOST" in self.PROMPT
@@ -499,9 +494,12 @@ class TestTheCraftRules:
         assert "he gives something before he asks for\nsomething" in self.PROMPT
 
     def test_the_examples_are_from_real_tapes(self):
-        assert "almost like your NetClaw" in self.PROMPT
-        assert "part of the necessary dialogue" in self.PROMPT
-        assert "a hundred times smarter" in self.PROMPT
+        # Oct 21 2026: the tapes' lines are in docs/mira_craft_notes.md; the
+        # craft file states each move without quoting them.
+        notes = " ".join((ROOT / "docs" / "mira_craft_notes.md").read_text(encoding="utf-8").split())
+        for line in ("almost like your NetClaw", "part of the necessary dialogue",
+                     "a hundred times smarter"):
+            assert line in notes and line not in self.PROMPT, line
 
     def test_the_question_pass_learned_the_same_shape(self):
         qgen = (ROOT / "pipelines" / "voices" / "prompts"

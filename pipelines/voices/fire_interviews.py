@@ -37,7 +37,7 @@ from common import (  # noqa: E402
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164, guest_details, interview_subject, missed_email,
 )
-from learning import lessons_block, relapse_recap, variety_block  # noqa: E402
+from learning import lessons_block, variety_block  # noqa: E402
 from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
 from interview_shape import planned_minutes, shape_block  # noqa: E402
 
@@ -84,8 +84,8 @@ COHOST_BLOCK = (
     "something, otherwise acknowledge in a few words and hand the floor back "
     "to the guest. He is not the interviewee: never interview {{cohost_first}}, "
     "never ask him the lightning round, and keep the guest as the centre of "
-    "the conversation. If {{cohost_first}} says 'let's pause' or 'hold on', "
-    "stop talking and wait for him."
+    "the conversation. If {{cohost_first}} asks for a pause, stop talking "
+    "and wait for him."
 )
 
 
@@ -284,27 +284,53 @@ MIRA_TOOLS = [
             },
         },
     },
-    {
-        "type": "function",
-        "name": "fact_check_claim",
-        "description": (
-            "Quietly research a checkable thing the guest just said (an "
-            "event, number, case or person) in the background. Returns at "
-            "once: carry on talking and say nothing about it. Anything useful "
-            "arrives later as a [RESEARCH NOTE]; if nothing arrives, never "
-            "mention the search."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "claim": {"type": "string"},
-                "context": {"type": "string",
-                            "description": "what the guest was discussing"},
-            },
-            "required": ["claim"],
-        },
-    },
 ]
+
+# Oct 21 2026 (review of every interview): the fact-check tool is OFF by
+# default. Together with a brief that listed "mismatches", it produced the
+# examiner's posture on air — a host telling guests she could not verify
+# things that were true. It stays available for a guest who asks for figures
+# or dates to be checked (``fact_check: true`` on the interview row), and its
+# description never asks for a verdict: it adds to the guest's point or it
+# says nothing.
+FACT_CHECK_TOOL = {
+    "type": "function",
+    "name": "fact_check_claim",
+    "description": (
+        "Quietly look for a figure, date or related case that ADDS to "
+        "something the guest just said. Returns at once: "
+        "carry on talking and say nothing about it. Anything useful arrives later as a "
+        "[RESEARCH NOTE] with its source; if nothing arrives, "
+        "nothing happened and the guest's point stands. Never use it to test "
+        "whether the guest is right."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "claim": {"type": "string"},
+            "context": {"type": "string",
+                        "description": "what the guest was discussing"},
+        },
+        "required": ["claim"],
+    },
+}
+
+
+def fact_check_enabled(interview: dict | None, app: dict | None = None) -> bool:
+    """Whether this interview's room carries the fact-check tool. Off unless
+    the interview row (or, failing that, the application) says so."""
+    for row in (interview, app):
+        if row is not None and row.get("fact_check") is not None:
+            return bool(row.get("fact_check"))
+    return False
+
+
+def mira_tools(interview: dict | None = None, app: dict | None = None) -> list:
+    """The tools the room gives Mira for this interview."""
+    tools = list(MIRA_TOOLS)
+    if fact_check_enabled(interview, app):
+        tools.append(FACT_CHECK_TOOL)
+    return tools
 
 
 def _now() -> dt.datetime:
@@ -325,6 +351,30 @@ def _iso(t: dt.datetime) -> str:
     # strings, where an unencoded "+" is decoded as a space → 400 (this
     # crashed every fire cron tick until July 17 2026).
     return t.isoformat().replace("+00:00", "Z")
+
+
+def is_hello_session(interview: dict) -> bool:
+    """A five-minute pre-call hello (fork E, Oct 21 2026): Mira meets the
+    guest two days before the room, checks their sound and asks what they
+    most want the hour to reach."""
+    return (interview or {}).get("session_kind") == "hello"
+
+
+def compile_prompt_for(interview: dict, app: dict, brief: dict | None) -> str:
+    """The prompt for whichever kind of session this is: closing, hello
+    (``hello_sessions.compile_hello_prompt`` when that module is present,
+    else the ordinary interview prompt), or the interview."""
+    if is_closing_session(interview):
+        return compile_closing_prompt(interview, app)
+    if is_hello_session(interview):
+        try:
+            from hello_sessions import compile_hello_prompt  # noqa: E402
+        except ImportError:
+            logger.warning("hello_sessions is not available; a hello session "
+                           "gets the interview prompt")
+        else:
+            return compile_hello_prompt(interview, app)
+    return compile_mira_prompt(interview, app, brief or {})
 
 
 def compile_closing_prompt(interview: dict, app: dict) -> str:
@@ -464,13 +514,13 @@ def refresh_staged_prompt(run: dict, interview: dict) -> bool:
         return False
     try:
         app = sb_select("guest_applications", f"id=eq.{interview['application_id']}")[0]
-        if is_closing_session(interview):
-            prompt = compile_closing_prompt(interview, app)
+        if is_closing_session(interview) or is_hello_session(interview):
+            prompt = compile_prompt_for(interview, app, None)
         else:
             briefs = sb_select("interview_briefs", f"interview_id=eq.{interview['id']}")
             if not briefs:
                 return False
-            prompt = compile_mira_prompt(interview, app, briefs[0])
+            prompt = compile_prompt_for(interview, app, briefs[0])
     except Exception:  # noqa: BLE001 — the staged prompt still works
         logger.exception("Refreshing the staged prompt for %s failed (non-fatal)",
                          interview.get("id"))
@@ -548,22 +598,52 @@ def keyterms_for(app: dict, show, cohost: str = "") -> list:
     return out
 
 
+# Oct 21 2026: the live interview's reasoning effort is a run setting, read
+# by the scenario as ``config.reasoning_effort``. "high" is what every room
+# has run since Grok Voice 3.0; the rehearsal harness trials "low" before a
+# guest hears it. Env MIRA_REASONING_EFFORT overrides for a deploy.
+REASONING_EFFORTS = ("none", "low", "medium", "high")
+DEFAULT_REASONING_EFFORT = "high"
+
+
+def reasoning_effort() -> str:
+    value = (os.environ.get("MIRA_REASONING_EFFORT") or "").strip().lower()
+    return value if value in REASONING_EFFORTS else DEFAULT_REASONING_EFFORT
+
+
+# Columns a run row may name before their migration is applied, with the
+# migration that adds each. PostgREST refuses a row naming a column the table
+# lacks, and a refused insert would cost the interview, so the insert retries
+# without the column and names the migration to apply.
+_OPTIONAL_RUN_COLUMNS = {
+    "keyterms": "20261015_interview_runs_keyterms.sql",
+    "reasoning_effort": "20261021_mira_hears_and_asks.sql",
+}
+
+
 def insert_interview_run(row: dict) -> dict:
-    """``sb_insert("interview_runs", row)`` that survives the Oct 15 2026
-    ``keyterms`` column not being applied yet: PostgREST refuses a row naming
-    a column the table lacks, and a refused insert would cost the interview.
-    Retries once without the column and names the migration to apply."""
-    try:
-        return sb_insert("interview_runs", row)
-    except requests.HTTPError as exc:
-        body = (getattr(exc.response, "text", "") or "")[:400]
-        if "keyterms" in row and exc.response is not None and exc.response.status_code in (400, 404) \
-                and "keyterms" in body:
+    """``sb_insert("interview_runs", row)`` that survives an optional column
+    not being applied yet (``_OPTIONAL_RUN_COLUMNS``)."""
+    row = dict(row)
+    row.setdefault("reasoning_effort", reasoning_effort())
+    for _ in range(len(_OPTIONAL_RUN_COLUMNS) + 1):
+        try:
+            return sb_insert("interview_runs", row)
+        except requests.HTTPError as exc:
+            body = (getattr(exc.response, "text", "") or "")[:400]
+            status = exc.response.status_code if exc.response is not None else 0
+            missing = [c for c in _OPTIONAL_RUN_COLUMNS if c in row and c in body]
+            if status not in (400, 404) or not missing:
+                raise
+            column = missing[0]
             logger.warning(
-                "interview_runs has no keyterms column (apply supabase/migrations/"
-                "20261015_interview_runs_keyterms.sql); firing without key terms: %s", body)
-            return sb_insert("interview_runs", {k: v for k, v in row.items() if k != "keyterms"})
-        raise
+                "interview_runs has no %s column (apply supabase/migrations/%s); "
+                "firing without it: %s", column, _OPTIONAL_RUN_COLUMNS[column], body)
+            row = {k: v for k, v in row.items() if k != column}
+    return sb_insert("interview_runs", row)
+
+
+PROMPT_MAX_CHARS = 16000
 
 
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
@@ -578,7 +658,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     questions = brief.get("likely_questions") or []
     q_text = "\n".join(f"- {q.get('question', q) if isinstance(q, dict) else q}"
                        for q in questions)
-    return load_prompt(
+    prompt = load_prompt(
         "mira_system_prompt.txt",
         show=show,
         show_name=show.name,
@@ -608,13 +688,20 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         # half lightning round.
         lightning_at=max(4, min(15, round(minutes / 3))),
         guest_shape=shape_block(interview, app),
-        # What previous guests said, so she can put one of them to this one.
-        carry_the_show=carry_the_show_block(show, exclude_email=app.get("email", "")),
+        # What one previous guest said on this guest's subject, as an offer.
+        carry_the_show=carry_the_show_block(show, exclude_email=app.get("email", ""), app=app),
         # Sept 17 2026: the standing lessons go near the TOP, right after the
         # guest, not on the end of four thousand words of craft. The prompt
         # was cut to a third so they carry the weight they are meant to.
         lessons=lessons_block(show.slug),
-    ) + variety_block(show.slug) + relapse_recap(show.slug)
+    ) + variety_block(show.slug)
+    # Oct 21 2026: the compiled prompt was 43,000 characters for one guest,
+    # under 6,000 of them about that guest. A brief is what a host reads in
+    # the minute before the room opens; past this it is a rulebook again.
+    if len(prompt) > PROMPT_MAX_CHARS:
+        logger.warning("Mira's compiled prompt is %d characters (budget %d) for %s",
+                       len(prompt), PROMPT_MAX_CHARS, app.get("name"))
+    return prompt
 
 
 def when_text(iso: str, guest_tz: str = "") -> str:
@@ -902,9 +989,7 @@ def fire_due_interviews() -> int:
             host_mode = host_mode_enabled(interview)
             run = insert_interview_run({
                 "interview_id": interview["id"],
-                "mira_system_prompt": (compile_closing_prompt(interview, app)
-                                       if is_closing_session(interview)
-                                       else compile_mira_prompt(interview, app, brief)),
+                "mira_system_prompt": compile_prompt_for(interview, app, brief),
                 "session_kind": interview.get("session_kind") or "interview",
                 # The length the guest asked for, in the room as well as in
                 # the prompt: the scenario's time checks and hard cap read it.
@@ -919,7 +1004,7 @@ def fire_due_interviews() -> int:
                 # transcription should spell right. Read by the scenario into
                 # audio.input.transcription.keyterms; [] sends nothing.
                 "keyterms": keyterms_for(app, show, cohost_name()),
-                "tools": MIRA_TOOLS,
+                "tools": mira_tools(interview, app),
                 "guest_phone": phone,
                 "caller_id": caller_id,
                 "scheduled_for": interview["scheduled_at"],

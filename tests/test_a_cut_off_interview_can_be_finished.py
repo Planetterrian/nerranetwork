@@ -48,4 +48,4 @@ def test_worker_books_it_as_its_own_row():
 
 def test_briefs_skip_it():
     src = (ROOT / "pipelines" / "voices" / "generate_briefs.py").read_text(encoding="utf-8")
-    assert '(interview.get("session_kind") or "interview") == "closing"' in src
+    assert '(interview.get("session_kind") or "interview") in ("closing", "hello")' in src

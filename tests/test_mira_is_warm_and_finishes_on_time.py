@@ -32,20 +32,20 @@ class TestTheOpeningIsWarm:
     def test_greeting_first_and_listening(self):
         flat = _flat(PROMPT)
         assert "WHO YOU ARE IN THE ROOM" in PROMPT
-        assert "Two short beats, each a turn that ends and LISTENS" in flat
-        assert "never start talking while the guest is still saying hello" in flat
-        assert "GREET THEM AS A PERSON" in PROMPT
-        assert flat.index("GREET THEM AS A PERSON") < flat.index("I'm Mira, the AI who hosts {{show_name}},")
+        assert "Two short turns, each one ending so that you can listen" in flat
+        assert "If they speak first, answer what they said" in flat
+        assert "Hello by name, warmly" in flat
+        assert flat.index("Hello by name, warmly") < flat.index("you are Mira, the AI who hosts {{show_name}}")
 
     def test_tagline_is_not_the_first_words(self):
         # Oct 19 2026: the tagline belongs to the produced episode, not the room.
-        assert "The show's tagline (\"{{opening_line}}\") belongs to the produced episode; never say it in the room." in _flat(PROMPT)
+        assert "The tagline ({{opening_line}}) belongs to the produced episode" in _flat(PROMPT)
 
     def test_warmth_through_the_hour(self):
         flat = _flat(PROMPT)
         assert "WARMTH THROUGH THE WHOLE HOUR" in PROMPT
-        assert "come back to one later in the hour" in flat
-        assert "Warmth is not compliments and it is not gushing; it is attention" in flat
+        assert "acknowledge the human part before the next question" in flat
+        assert "Warmth is attention, not compliments" in flat
 
     def test_scenario_waits_for_a_hello_and_asks_for_beat_one(self):
         assert "inboundSpeaking || Date.now() - inboundSpokeAt < 900" in SCENARIO
@@ -78,7 +78,7 @@ class TestTimeNeverRunsOut:
 
     def test_prompt_says_no_cap(self):
         flat = _flat(PROMPT)
-        assert "There is no time cap" in flat
+        assert "is the plan, not a limit" in flat
         assert "an interview never ends because the clock ran out" in flat
         assert "Hard time cap" not in flat
 
