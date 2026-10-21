@@ -1,0 +1,367 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.900
+RL training is driving models to abandon English and chain-of-thought traces, revealing internal reasoning that no longer needs human language. Builders who verify or audit those traces now need inspection methods that do not assume the intermediate steps stay readable. This is Models &amp; Agents, Episode 210, calibrated unlearning and clinical quantization land next, then latent agent memory and multilingual web agents, then things to try and on the horizon. Andre Carpathi wrote on X
+
+00:00:29.900 --> 00:00:35.200
+that current reinforcement learning post-training is working, measured by traces that stay coherent.
+
+00:00:35.720 --> 00:00:40.340
+He pointed to internal representations that are more efficient for the task than natural language.
+
+00:00:40.940 --> 00:00:46.500
+That matches earlier reports of models inventing private token sequences during long horizon tasks.
+
+00:00:47.748 --> 00:00:53.388
+H2DF arrives on archive as calibrated target bands for controllable language model unlearning.
+
+00:00:53.988 --> 00:00:57.828
+Unbounded gradient ascent is replaced by a data dependent target band.
+
+00:00:57.828 --> 00:01:02.888
+pressure applies only below a lower threshold and reverses once that band is reached.
+
+00:01:03.428 --> 00:01:08.588
+Each step uses one forget batch pass, with sparse retain replay every tenth step.
+
+00:01:09.148 --> 00:01:14.248
+On Tofu, the method matches grad diff forget and retain negative log likelihood, while
+
+00:01:14.248 --> 00:01:15.088
+cutting variability.
+
+00:01:15.788 --> 00:01:19.688
+On Muse News, retention improves over gradient ascent and NPO.
+
+00:01:20.776 --> 00:01:26.336
+Accented English automatic speech recognition, or ASR, is the target of mixture of phonetic
+
+00:01:26.336 --> 00:01:33.256
+experts low-rank adaptation or Laura for conformer models. The archive method places six low-rank
+
+00:01:33.256 --> 00:01:38.976
+experts aligned to manner of articulation classes. Routing happens at the frame level with a hybrid
+
+00:01:38.976 --> 00:01:44.596
+phoneme plus acoustic gate. The shared expert set removes the need for accent-specific modules
+
+00:01:44.596 --> 00:01:52.776
+and supports zero-shot transfer to held out accents. On L2ARCTIC, it delivers a 12.3% relative word
+
+00:01:52.776 --> 00:01:56.776
+error rate improvement over single-lora in the zero-shot setting.
+
+00:01:57.660 --> 00:02:02.020
+Clinical verification decisions get a statistical certificate from CERTA.
+
+00:02:02.520 --> 00:02:07.640
+The archive work decides when an 8-bit or 4-bit quantized model can safely replace its
+
+00:02:07.640 --> 00:02:10.400
+BF-16 reference for a given clinical decision.
+
+00:02:10.920 --> 00:02:16.100
+Across 11 models, the 8-bit path covered 99.8-100% of decisions.
+
+00:02:16.760 --> 00:02:22.920
+The 4-bit frontier cut amortized costs to roughly 26% of the BF-16 baseline, while
+
+00:02:22.920 --> 00:02:29.550
+While staying under 48 GB, multi-hop rag and Casper MP are the test beds for evidence-based
+
+00:02:29.550 --> 00:02:36.010
+generation with retrieval augmented generation, or rag, EBG on archive requires line-level
+
+00:02:36.010 --> 00:02:38.850
+citations and scores both correctness and grounding.
+
+00:02:39.830 --> 00:02:44.470
+Similarity retrieval reliably surfaces any relevant chunk, but frequently misses the full
+
+00:02:44.470 --> 00:02:46.530
+set needed for multi-fact questions.
+
+00:02:47.190 --> 00:02:51.210
+Chunking erase's document level metadata required for identity resolution.
+
+00:02:51.210 --> 00:02:57.564
+Culture Lens varies country, value, true norm, and contradictory norm evidence in an archive
+
+00:02:57.564 --> 00:03:05.024
+study of cultural reasoning. The suite runs 9,261 scenarios. Stating a contradictory norm
+
+00:03:05.024 --> 00:03:11.144
+drops aligned answers by 32 to 47 points, even when the model knows the correct country norm.
+
+00:03:11.784 --> 00:03:16.464
+Blocking the contradictory norm inside the model restores the correct answer in most cases.
+
+00:03:16.464 --> 00:03:24.804
+Supervised fine-tuning on contradictory norm examples raises align performance to 85% to 93% on unseen countries.
+
+00:03:25.750 --> 00:03:32.370
+Inserting a learned readout token and training a confidence probe on its hidden state is the method in a new archive paper.
+
+00:03:32.950 --> 00:03:39.130
+The approach outperforms probes that read from existing vocabulary tokens on multiple data sets and model families.
+
+00:03:39.730 --> 00:03:42.650
+Extending it to multiple learned tokens yields further gains.
+
+00:03:42.650 --> 00:03:46.350
+The change is a drop-in replacement for any existing probe.
+
+00:03:47.349 --> 00:03:52.389
+ALF World is one test bed where LAMM keeps competing hypotheses without emitting text.
+
+00:03:52.889 --> 00:03:59.909
+The archive agent encodes interaction evidence in a shared common state and competing hypotheses in weighted delta components.
+
+00:04:00.529 --> 00:04:04.529
+Updates run recurrently from action outcome predictions without emitting text.
+
+00:04:04.989 --> 00:04:11.869
+On ALF World, it raises success rate at 30 by 6 points and cuts redundant actions by 17.7 points.
+
+00:04:11.869 --> 00:04:18.177
+science. On Science World's success rises 22 points. Hindi, Bengali, Urdu, and
+
+00:04:18.177 --> 00:04:23.197
+Amharic join English on six fully localized websites in low agent. The archive
+
+00:04:23.197 --> 00:04:28.477
+benchmark yields 3,000 task instances. Both closed and open source agents drop
+
+00:04:28.477 --> 00:04:32.597
+sharply on the low resource languages, with open source models showing the
+
+00:04:32.597 --> 00:04:36.877
+largest degradation. Post-training on a small subset of traces recover
+
+00:04:36.877 --> 00:04:42.576
+substantial performance. Group relative credit assignment is how GRSE decides which
+
+00:04:42.576 --> 00:04:43.996
+agent's skill should change.
+
+00:04:44.496 --> 00:04:49.856
+The archive method runs each question multiple times under the same skill libraries and contrasts
+
+00:04:49.856 --> 00:04:53.116
+executions to assign credit to specific agent's skill pairs.
+
+00:04:53.796 --> 00:04:57.996
+On hotpot QA, it outperforms MA skills on multi-hop questions.
+
+00:04:58.436 --> 00:05:03.336
+On corrupted libraries, it correctly signs every planted harmful skill and recovers clean
+
+00:05:03.336 --> 00:05:04.436
+library performance.
+
+00:05:05.457 --> 00:05:09.837
+Multimodal medical workflows get a vision language planner in MED agent plus.
+
+00:05:09.837 --> 00:05:14.997
+the archive system pairs that planner with 18 specialist models spanning 12 tasks
+
+00:05:14.997 --> 00:05:16.277
+and 8 modalities.
+
+00:05:16.657 --> 00:05:21.657
+The planner achieves 91% tool-call accuracy in single-tool multi-round settings.
+
+00:05:22.507 --> 00:05:26.177
+Accuracy is 80.7% in multi-tool single-round settings.
+
+00:05:26.577 --> 00:05:32.217
+End-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists.
+
+00:05:33.345 --> 00:05:37.225
+Simon Willisn published the exact prompt he uses for AI proofreading.
+
+00:05:37.225 --> 00:05:43.825
+he placed it in his agentic engineering patterns guide on his site. Simon Willison, after an audio-only
+
+00:05:43.825 --> 00:05:49.805
+multiplayer mode caused motion sickness, added a web-socket relay for real online multiplayer in
+
+00:05:49.805 --> 00:05:56.045
+his Battle Drone's demo. Anthropic released all 211 tested scorpion talks and binder designs,
+
+00:05:56.445 --> 00:06:01.385
+plus the corresponding lab data. The public resource for scientists is on hugging face.
+
+00:06:01.385 --> 00:06:07.896
+An independent Schlottski's and Sinabon franchisee used chat GPT work to cut menu repricing
+
+00:06:07.896 --> 00:06:09.756
+time by 95%.
+
+00:06:10.016 --> 00:06:13.116
+Cash reconciliation dropped to 94% less time.
+
+00:06:13.696 --> 00:06:19.256
+The open AI blog says the work surfaced a workflow that could free roughly $100,000 in cash
+
+00:06:19.256 --> 00:06:19.556
+flow.
+
+00:06:20.491 --> 00:06:23.511
+Allen AI published fair stress on the hugging face blog.
+
+00:06:24.131 --> 00:06:28.691
+The benchmark probes fairness across a wider set of decision scenarios than prior suites.
+
+00:06:28.691 --> 00:06:34.731
+Dario Amode also today published a detailed reply listing nine commercially costly safety
+
+00:06:34.731 --> 00:06:39.271
+actions andthropic took in the past year while defending its race to the top frontier
+
+00:06:39.271 --> 00:06:39.971
+strategy.
+
+00:06:40.511 --> 00:06:45.791
+Sam Altman announced that Alexander Madri has rejoined OpenAI to lead safety and security
+
+00:06:45.791 --> 00:06:47.331
+work on superintelligence.
+
+00:06:47.891 --> 00:06:53.331
+OpenAI acquired Orchestra Bio to extend its Rosalind life sciences tooling into full drug
+
+00:06:53.331 --> 00:06:54.491
+development coordination.
+
+00:06:54.491 --> 00:07:01.111
+IBM Research released ALTK Evolve on the Hugging Face blog, using learned memory to reach
+
+00:07:01.111 --> 00:07:05.971
+the top of the Tao-squared Bench customer service leaderboard without requiring a frontier
+
+00:07:05.971 --> 00:07:06.431
+model.
+
+00:07:07.424 --> 00:07:11.964
+Paste Simon Willison's proofreading prompt into your editor and run it on the next technical
+
+00:07:11.964 --> 00:07:12.884
+document you write.
+
+00:07:13.404 --> 00:07:16.464
+It catches subtle phrasing issues that generic prompts miss.
+
+00:07:17.224 --> 00:07:22.864
+Run Mopey Laura on an Accented English ASR fine-tune when you do not want a separate module
+
+00:07:22.864 --> 00:07:23.564
+per accent.
+
+00:07:23.564 --> 00:07:29.104
+Try the Learned Readout Token Confidence Probe on your current generation pipeline as a
+
+00:07:29.104 --> 00:07:30.264
+one-line insertion.
+
+00:07:30.864 --> 00:07:36.684
+Evaluate Lamb Style Layton Multi-Hypothesis Memory on any long horizon agent task, where
+
+00:07:36.684 --> 00:07:40.224
+competing explanations must be retained without bloating the context.
+
+00:07:41.202 --> 00:07:46.402
+More labs are likely to publish non-English chain-of-thought inspection tools following Carpathi's
+
+00:07:46.402 --> 00:07:46.982
+observation.
+
+00:07:47.782 --> 00:07:52.762
+Additional low resource web agent benchmarks and adaptation recipes are anticipated after
+
+00:07:52.762 --> 00:07:58.684
+the low agent release. Shared prompts shrink per task traces, and that is the failure we
+
+00:07:58.684 --> 00:08:03.784
+pop the hood on for implicit budgeting under task composition. When several tasks share
+
+00:08:03.784 --> 00:08:08.744
+a single prompt, models allocate fewer tokens to each task than they would in isolation.
+
+00:08:09.504 --> 00:08:14.824
+That happens even when the total context remains comfortably inside the window. The model maintains
+
+00:08:14.824 --> 00:08:20.724
+an implicit per task compute budget that shrinks under competition. Tasks whose isolated solutions
+
+00:08:20.724 --> 00:08:24.344
+versions already require long traces to suffer the largest accuracy drop.
+
+00:08:24.744 --> 00:08:27.784
+The budgeting is visible in token counts per subtask.
+
+00:08:28.304 --> 00:08:33.344
+Errors rise suddenly once any single task's trace length exceeds a model-specific threshold.
+
+00:08:33.984 --> 00:08:38.844
+Adding explicit per-task length instructions or forcing intermediate verification steps
+
+00:08:38.844 --> 00:08:43.664
+restores most of the loss performance at the cost of extra tokens overall.
+
+00:08:44.344 --> 00:08:49.084
+Measure per-task token usage on representative multitask prompts before deployment.
+
+00:08:49.084 --> 00:08:54.924
+If any task routinely exceeds roughly 60% of its isolated length, split the prompt
+
+00:08:54.924 --> 00:08:58.644
+or add verification rather than relying on the model to self-regulate.
+
+00:08:59.570 --> 00:09:04.710
+Before we go, anthropic is due to say more about its public benefit fund and pacing strategy
+
+00:09:04.710 --> 00:09:05.610
+in the coming weeks.
+
+00:09:06.230 --> 00:09:07.890
+That's models and agents for today.
+
+00:09:08.450 --> 00:09:12.330
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:09:12.850 --> 00:09:15.050
+and subscribe so you don't miss tomorrow's update.
+
+00:09:15.630 --> 00:09:16.990
+The AI world moves fast.
+
+00:09:17.310 --> 00:09:18.210
+We'll help you keep up.
+
+00:09:18.210 --> 00:09:22.710
+see you tomorrow, and if you'd rather watch than listen, find us on YouTube at
+
+00:09:22.710 --> 00:09:24.710
+Narin Network, links in the show notes.
+
+00:09:25.030 --> 00:09:27.250
+This show comes to you from the Narin Network.
+
+00:09:27.590 --> 00:09:31.270
+If you want a sharp, weekly briefing, longevity weekly has you covered.
+
+00:09:31.830 --> 00:09:34.970
+The week in aging science, each finding with its evidence level.
+
+00:09:35.570 --> 00:09:37.950
+All our shows are free at Narin Network dot com.
+
+00:09:38.670 --> 00:09:44.770
+Live dashboards, T-S-L-A, SpaceX launches, the investing scoreboard are all at Narin Network
+
+00:09:44.770 --> 00:09:45.730
+dot com data.
+
+00:09:45.730 --> 00:09:51.990
+This episode used AI voice synthesis of my voice, editorial selection, and analysis are my own.

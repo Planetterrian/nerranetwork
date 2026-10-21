@@ -1,0 +1,122 @@
+RL training is driving models to abandon English and chain-of-thought traces, revealing internal reasoning that no longer needs human language. Builders who verify or audit those traces now need inspection methods that do not assume the intermediate steps stay readable. This is Models & Agents, Episode 210, calibrated unlearning and clinical quantization land next, then latent agent memory and multilingual web agents, then things to try and on the horizon. Andre Carpathi wrote on X
+that current reinforcement learning post-training is working, measured by traces that stay coherent.
+He pointed to internal representations that are more efficient for the task than natural language.
+That matches earlier reports of models inventing private token sequences during long horizon tasks.
+H2DF arrives on archive as calibrated target bands for controllable language model unlearning.
+Unbounded gradient ascent is replaced by a data dependent target band.
+pressure applies only below a lower threshold and reverses once that band is reached.
+Each step uses one forget batch pass, with sparse retain replay every tenth step.
+On Tofu, the method matches grad diff forget and retain negative log likelihood, while
+cutting variability.
+On Muse News, retention improves over gradient ascent and NPO.
+Accented English automatic speech recognition, or ASR, is the target of mixture of phonetic
+experts low-rank adaptation or Laura for conformer models. The archive method places six low-rank
+experts aligned to manner of articulation classes. Routing happens at the frame level with a hybrid
+phoneme plus acoustic gate. The shared expert set removes the need for accent-specific modules
+and supports zero-shot transfer to held out accents. On L2ARCTIC, it delivers a 12.3% relative word
+error rate improvement over single-lora in the zero-shot setting.
+Clinical verification decisions get a statistical certificate from CERTA.
+The archive work decides when an 8-bit or 4-bit quantized model can safely replace its
+BF-16 reference for a given clinical decision.
+Across 11 models, the 8-bit path covered 99.8-100% of decisions.
+The 4-bit frontier cut amortized costs to roughly 26% of the BF-16 baseline, while
+While staying under 48 GB, multi-hop rag and Casper MP are the test beds for evidence-based
+generation with retrieval augmented generation, or rag, EBG on archive requires line-level
+citations and scores both correctness and grounding.
+Similarity retrieval reliably surfaces any relevant chunk, but frequently misses the full
+set needed for multi-fact questions.
+Chunking erase's document level metadata required for identity resolution.
+Culture Lens varies country, value, true norm, and contradictory norm evidence in an archive
+study of cultural reasoning. The suite runs 9,261 scenarios. Stating a contradictory norm
+drops aligned answers by 32 to 47 points, even when the model knows the correct country norm.
+Blocking the contradictory norm inside the model restores the correct answer in most cases.
+Supervised fine-tuning on contradictory norm examples raises align performance to 85% to 93% on unseen countries.
+Inserting a learned readout token and training a confidence probe on its hidden state is the method in a new archive paper.
+The approach outperforms probes that read from existing vocabulary tokens on multiple data sets and model families.
+Extending it to multiple learned tokens yields further gains.
+The change is a drop-in replacement for any existing probe.
+ALF World is one test bed where LAMM keeps competing hypotheses without emitting text.
+The archive agent encodes interaction evidence in a shared common state and competing hypotheses in weighted delta components.
+Updates run recurrently from action outcome predictions without emitting text.
+On ALF World, it raises success rate at 30 by 6 points and cuts redundant actions by 17.7 points.
+science. On Science World's success rises 22 points. Hindi, Bengali, Urdu, and
+Amharic join English on six fully localized websites in low agent. The archive
+benchmark yields 3,000 task instances. Both closed and open source agents drop
+sharply on the low resource languages, with open source models showing the
+largest degradation. Post-training on a small subset of traces recover
+substantial performance. Group relative credit assignment is how GRSE decides which
+agent's skill should change.
+The archive method runs each question multiple times under the same skill libraries and contrasts
+executions to assign credit to specific agent's skill pairs.
+On hotpot QA, it outperforms MA skills on multi-hop questions.
+On corrupted libraries, it correctly signs every planted harmful skill and recovers clean
+library performance.
+Multimodal medical workflows get a vision language planner in MED agent plus.
+the archive system pairs that planner with 18 specialist models spanning 12 tasks
+and 8 modalities.
+The planner achieves 91% tool-call accuracy in single-tool multi-round settings.
+Accuracy is 80.7% in multi-tool single-round settings.
+End-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists.
+Simon Willisn published the exact prompt he uses for AI proofreading.
+he placed it in his agentic engineering patterns guide on his site. Simon Willison, after an audio-only
+multiplayer mode caused motion sickness, added a web-socket relay for real online multiplayer in
+his Battle Drone's demo. Anthropic released all 211 tested scorpion talks and binder designs,
+plus the corresponding lab data. The public resource for scientists is on hugging face.
+An independent Schlottski's and Sinabon franchisee used chat GPT work to cut menu repricing
+time by 95%.
+Cash reconciliation dropped to 94% less time.
+The open AI blog says the work surfaced a workflow that could free roughly $100,000 in cash
+flow.
+Allen AI published fair stress on the hugging face blog.
+The benchmark probes fairness across a wider set of decision scenarios than prior suites.
+Dario Amode also today published a detailed reply listing nine commercially costly safety
+actions andthropic took in the past year while defending its race to the top frontier
+strategy.
+Sam Altman announced that Alexander Madri has rejoined OpenAI to lead safety and security
+work on superintelligence.
+OpenAI acquired Orchestra Bio to extend its Rosalind life sciences tooling into full drug
+development coordination.
+IBM Research released ALTK Evolve on the Hugging Face blog, using learned memory to reach
+the top of the Tao-squared Bench customer service leaderboard without requiring a frontier
+model.
+Paste Simon Willison's proofreading prompt into your editor and run it on the next technical
+document you write.
+It catches subtle phrasing issues that generic prompts miss.
+Run Mopey Laura on an Accented English ASR fine-tune when you do not want a separate module
+per accent.
+Try the Learned Readout Token Confidence Probe on your current generation pipeline as a
+one-line insertion.
+Evaluate Lamb Style Layton Multi-Hypothesis Memory on any long horizon agent task, where
+competing explanations must be retained without bloating the context.
+More labs are likely to publish non-English chain-of-thought inspection tools following Carpathi's
+observation.
+Additional low resource web agent benchmarks and adaptation recipes are anticipated after
+the low agent release. Shared prompts shrink per task traces, and that is the failure we
+pop the hood on for implicit budgeting under task composition. When several tasks share
+a single prompt, models allocate fewer tokens to each task than they would in isolation.
+That happens even when the total context remains comfortably inside the window. The model maintains
+an implicit per task compute budget that shrinks under competition. Tasks whose isolated solutions
+versions already require long traces to suffer the largest accuracy drop.
+The budgeting is visible in token counts per subtask.
+Errors rise suddenly once any single task's trace length exceeds a model-specific threshold.
+Adding explicit per-task length instructions or forcing intermediate verification steps
+restores most of the loss performance at the cost of extra tokens overall.
+Measure per-task token usage on representative multitask prompts before deployment.
+If any task routinely exceeds roughly 60% of its isolated length, split the prompt
+or add verification rather than relying on the model to self-regulate.
+Before we go, anthropic is due to say more about its public benefit fund and pacing strategy
+in the coming weeks.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+see you tomorrow, and if you'd rather watch than listen, find us on YouTube at
+Narin Network, links in the show notes.
+This show comes to you from the Narin Network.
+If you want a sharp, weekly briefing, longevity weekly has you covered.
+The week in aging science, each finding with its evidence level.
+All our shows are free at Narin Network dot com.
+Live dashboards, T-S-L-A, SpaceX launches, the investing scoreboard are all at Narin Network
+dot com data.
+This episode used AI voice synthesis of my voice, editorial selection, and analysis are my own.
