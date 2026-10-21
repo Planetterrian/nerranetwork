@@ -1,285 +1,466 @@
 {% extends "base.html.j2" %}
+{#- The Nerra Network media kit (Oct 21 2026). Rendered by
+    generate_html.generate_press_page from committed data only: every number
+    below has a source file and an as-of date, and every sentence about the
+    network comes from engine/brand.py. A dash means "not measured yet",
+    never zero. Nightly --static-pages keeps it current. -#}
 
 {% block head_extra %}
     <style>
-        .press-hero {
-            padding: calc(var(--nav-height) + var(--sp-16)) var(--sp-6) var(--sp-10);
-            text-align: center;
+        .mk { max-width: 1040px; margin: 0 auto; padding: 0 var(--sp-6); }
+        .mk-hero { padding: calc(var(--nav-height) + var(--sp-12)) 0 var(--sp-8); }
+        .mk-eyebrow { font-family: var(--font-ui); font-size: .78rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--nn-purple-text); margin: 0 0 var(--sp-3); }
+        .mk-hero h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 6vw, 3.4rem);
+            font-weight: 700; line-height: 1.05; color: var(--nn-white); margin: 0 0 var(--sp-4);
+            letter-spacing: -.02em; }
+        .mk-hero h1 span { background: var(--nn-gradient); -webkit-background-clip: text;
+            background-clip: text; color: transparent; }
+        .mk-lede { font-family: var(--font-body); font-size: 1.15rem; line-height: 1.6;
+            color: var(--nn-text); max-width: 720px; margin: 0 0 var(--sp-5); }
+        .mk-meta { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); margin: 0 0 var(--sp-6); }
+        .mk-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+        .mk-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.2rem;
+            border-radius: 100px; font-family: var(--font-ui); font-weight: 600; font-size: .92rem;
+            text-decoration: none; border: 1px solid var(--nn-border-hover); color: var(--nn-white);
+            background: var(--nn-card); cursor: pointer; }
+        .mk-btn:hover, .mk-btn:focus-visible { border-color: var(--nn-cyan); }
+        .mk-btn-primary { background: var(--nn-gradient); border-color: transparent; color: #fff; }
+        .mk-toc { display: flex; flex-wrap: wrap; gap: .4rem .9rem; padding: var(--sp-4) 0;
+            border-top: 1px solid var(--nn-border); border-bottom: 1px solid var(--nn-border);
+            margin-bottom: var(--sp-6); }
+        .mk-toc a { font-family: var(--font-ui); font-size: .88rem; color: var(--nn-text-muted); text-decoration: none; }
+        .mk-toc a:hover { color: var(--nn-white); }
+        .mk-section { padding: var(--sp-8) 0; border-bottom: 1px solid var(--nn-border); scroll-margin-top: calc(var(--nav-height) + 1rem); }
+        .mk-section:last-of-type { border-bottom: 0; }
+        .mk-section h2 { font-family: var(--font-heading); font-size: clamp(1.5rem, 3.5vw, 2rem);
+            font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-2); }
+        .mk-section h3 { font-family: var(--font-heading); font-size: 1.12rem; font-weight: 600;
+            color: var(--nn-white); margin: var(--sp-6) 0 var(--sp-2); }
+        .mk-section p, .mk-section li { font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; }
+        .mk-section p { margin: 0 0 var(--sp-4); max-width: 760px; }
+        .mk-sub { color: var(--nn-text-muted) !important; font-size: .98rem; }
+        .mk-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin: var(--sp-5) 0; }
+        .mk-stats.four { grid-template-columns: repeat(4, 1fr); }
+        .mk-stat { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
+        .mk-stat-v { font-family: var(--font-heading); font-size: 1.9rem; font-weight: 700; color: var(--nn-white); line-height: 1.1; }
+        .mk-stat-l { font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text-muted); margin-top: .35rem; line-height: 1.4; }
+        .mk-card { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-5); margin-bottom: var(--sp-4); }
+        .mk-facts { display: grid; grid-template-columns: max-content 1fr; gap: .55rem 1.4rem; margin: 0; }
+        .mk-facts dt { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); }
+        .mk-facts dd { margin: 0; font-family: var(--font-body); color: var(--nn-text); }
+        .mk-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: .9rem; }
+        .mk-table th, .mk-table td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--nn-border); color: var(--nn-text); }
+        .mk-table th { color: var(--nn-text-muted); font-weight: 500; font-size: .8rem; }
+        .mk-table td.num, .mk-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .mk-table-wrap { overflow-x: auto; }
+        .mk-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); }
+        .mk-bars { list-style: none; padding: 0; margin: 0; }
+        .mk-bars li { display: grid; grid-template-columns: 7.5rem 1fr 2.6rem; align-items: center; gap: .6rem;
+            font-family: var(--font-ui); font-size: .86rem; margin: .4rem 0; }
+        .mk-bar { height: 8px; border-radius: 4px; background: var(--nn-surface); overflow: hidden; }
+        .mk-bar i { display: block; height: 100%; background: var(--nn-gradient); }
+        .mk-show { display: grid; grid-template-columns: 96px 1fr; gap: var(--sp-4); align-items: start; }
+        .mk-show img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
+        .mk-show h3 { margin-top: 0; }
+        .mk-pills { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0 .8rem; padding: 0; list-style: none; }
+        .mk-pills li { font-family: var(--font-ui); font-size: .78rem; padding: .25rem .65rem; border-radius: 100px;
+            border: 1px solid var(--nn-border-hover); color: var(--nn-text); }
+        .mk-guests { columns: 2 220px; column-gap: var(--sp-5); padding-left: 1.1rem; margin: .4rem 0 0; }
+        .mk-guests li { break-inside: avoid; margin: .15rem 0; }
+        .mk-guests small { color: var(--nn-text-muted); font-family: var(--font-ui); }
+        .mk-check { list-style: none; padding: 0; margin: 0; }
+        .mk-check li { padding-left: 1.6rem; position: relative; margin: .45rem 0; }
+        .mk-check li::before { content: "✓"; position: absolute; left: 0; color: var(--nn-cyan); font-weight: 700; }
+        .mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-3); }
+        .mk-tile { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-3);
+            display: flex; gap: var(--sp-3); align-items: center; text-decoration: none; }
+        .mk-tile:hover { border-color: var(--nn-border-hover); }
+        .mk-tile img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .mk-tile b { display: block; font-family: var(--font-heading); font-size: .92rem; color: var(--nn-white); }
+        .mk-tile span { font-family: var(--font-ui); font-size: .76rem; color: var(--nn-text-muted); }
+        .mk-founder { display: grid; grid-template-columns: 64px 1fr; gap: var(--sp-4); }
+        .mk-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--nn-gradient); display: grid; place-items: center;
+            font-family: var(--font-heading); font-weight: 700; color: #fff; font-size: 1.2rem; }
+        .mk-role { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); margin: 0 0 .6rem; }
+        .mk-copy { position: relative; }
+        .mk-copy blockquote { margin: 0; font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; }
+        .mk-copy-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .6rem; }
+        .mk-copy-head b { font-family: var(--font-heading); color: var(--nn-white); }
+        .mk-copy-head small { font-family: var(--font-ui); color: var(--nn-text-muted); }
+        .mk-copy-btn { font-family: var(--font-ui); font-size: .78rem; padding: .3rem .8rem; border-radius: 6px;
+            border: 1px solid var(--nn-border-hover); background: var(--nn-surface); color: var(--nn-text); cursor: pointer; }
+        .mk-copy-btn:hover, .mk-copy-btn:focus-visible { border-color: var(--nn-cyan); color: var(--nn-white); }
+        .mk-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); }
+        .mk-logo { border: 1px solid var(--nn-border); border-radius: 12px; overflow: hidden; }
+        .mk-logo-art { height: 120px; display: grid; place-items: center; padding: 1rem; background: #0B0F1A; }
+        .mk-logo-art.light { background: #F5F6FA; }
+        .mk-logo-art img { width: 100%; height: 80px; object-fit: contain; }
+        .mk-logo-cap { padding: .7rem .9rem; font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text);
+            display: flex; justify-content: space-between; gap: .5rem; }
+        .mk-swatches { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-3) 0; padding: 0; list-style: none; }
+        .mk-swatches li { display: flex; align-items: center; gap: .6rem; font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text); }
+        .mk-swatches i { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--nn-border-hover); display: block; }
+        .mk-art { width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--nn-border); display: block; }
+        .mk-faq dt { font-family: var(--font-heading); font-weight: 600; color: var(--nn-white); margin-top: var(--sp-4); }
+        .mk-faq dd { margin: .35rem 0 0; font-family: var(--font-body); color: var(--nn-text); line-height: 1.6; max-width: 760px; }
+        @media (max-width: 640px) {
+            .mk { padding: 0 16px; }
+            .mk-stats, .mk-stats.four { grid-template-columns: repeat(2, 1fr); }
+            .mk-stat-v { font-size: 1.5rem; }
+            .mk-facts { grid-template-columns: 1fr; gap: .1rem; }
+            .mk-facts dd { margin-bottom: .6rem; }
+            .mk-show { grid-template-columns: 64px 1fr; }
+            .mk-show img { width: 64px; height: 64px; }
+            .mk-bars li { grid-template-columns: 6rem 1fr 2.4rem; }
         }
-        .press-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(2rem, 5vw, 2.8rem);
-            font-weight: 700;
-            color: var(--nn-white);
-            margin: 0 0 var(--sp-3);
-        }
-        .press-hero p {
-            font-family: var(--font-body);
-            font-size: 1.1rem;
-            color: var(--nn-text-muted);
-            max-width: 620px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        .press-section {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: var(--sp-8) var(--sp-6);
-        }
-        .press-section h2 {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--nn-white);
-            margin: 0 0 var(--sp-3);
-        }
-        .press-section h3 {
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--nn-white);
-            margin: var(--sp-6) 0 var(--sp-2);
-        }
-        .press-section p {
-            font-family: var(--font-body);
-            color: var(--nn-text);
-            line-height: 1.7;
-            margin: 0 0 var(--sp-4);
-        }
-        .press-card {
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 14px;
-            padding: var(--sp-5);
-            margin-bottom: var(--sp-4);
-        }
-        .press-card pre {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: var(--sp-4);
-            overflow-x: auto;
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            font-size: 0.85rem;
-            color: var(--nn-text);
-            line-height: 1.55;
-            white-space: pre-wrap;
-            margin: 0;
-        }
-        .press-show-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: var(--sp-3);
-            margin: var(--sp-4) 0;
-        }
-        .press-show-tile {
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 12px;
-            padding: var(--sp-3);
-            display: flex;
-            align-items: center;
-            gap: var(--sp-3);
-        }
-        .press-show-tile img {
-            width: 56px;
-            height: 56px;
-            border-radius: 8px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        .press-show-tile-info {
-            min-width: 0;
-        }
-        .press-show-tile-name {
-            font-family: var(--font-heading);
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--nn-white);
-            margin-bottom: 2px;
-        }
-        .press-show-tile-desc {
-            font-family: var(--font-ui);
-            font-size: 0.75rem;
-            color: var(--nn-text-muted);
-        }
-        .press-contact-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--sp-3);
-            margin: var(--sp-4) 0;
-        }
-        .press-contact-row a {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--sp-2);
-            padding: var(--sp-3) var(--sp-5);
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 100px;
-            color: var(--nn-text);
-            text-decoration: none;
-            font-family: var(--font-ui);
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        .press-contact-row a:hover {
-            border-color: var(--nn-purple);
-            color: var(--nn-white);
-        }
-        .copy-btn {
-            background: var(--nn-surface);
-            border: 1px solid var(--nn-border);
-            color: var(--nn-text-muted);
-            padding: var(--sp-1) var(--sp-3);
-            border-radius: 6px;
-            font-family: var(--font-ui);
-            font-size: 0.75rem;
-            cursor: pointer;
-            margin-top: var(--sp-2);
-        }
-        .copy-btn:hover {
-            border-color: var(--nn-purple);
-            color: var(--nn-white);
+        @media print {
+            .nn-nav, nav, footer, .mk-actions, .mk-toc, .mk-copy-btn, .mobile-menu { display: none !important; }
+            body, .page-main { background: #fff !important; }
+            .mk-hero { padding-top: 0; }
+            .mk-section, .mk-card, .mk-stat, .mk-tile { break-inside: avoid; }
+            .mk h1, .mk h2, .mk h3, .mk p, .mk li, .mk dd, .mk dt, .mk td, .mk th, .mk-stat-v, .mk-tile b,
+            .mk blockquote, .mk-copy-head b { color: #111 !important; }
+            .mk-hero h1 span { color: #4B2FD6 !important; background: none; }
+            .mk-card, .mk-stat, .mk-tile, .mk-logo { border-color: #ccc !important; background: #fff !important; }
+            .mk a { color: #2A1FA8 !important; }
         }
     </style>
 {% endblock %}
 
 {% block content %}
-{% from "_macros.html.j2" import mira_claim %}
-    <div class="page-main">
-        <section class="press-hero">
-            <h1>Press &amp; Media Kit</h1>
-            <p>Resources for journalists, podcast apps, and partners covering Nerra Network.
-            Everything below is free to use without permission — just link back to
-            <a href="https://nerranetwork.com">nerranetwork.com</a>.</p>
-        </section>
+{% from "_macros.html.j2" import mira_claim, mira_steps_list %}
+{%- set au = audience -%}
+<div class="page-main">
+<div class="mk">
 
-        <section class="press-section">
-            <h2>At a glance</h2>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    <li><strong>Name:</strong> Nerra Network</li>
-                    <li><strong>Founded:</strong> 2024, Vancouver, Canada</li>
-                    <li><strong>Founder:</strong> Patrick Novak</li>
-                    <li><strong>Shows:</strong> {{ shows_count }} free (incl. Nerra Daily, the combined daily edition){% if members_shows_count %}, plus {{ members_shows_count }} for Nerra Personal members{% endif %}</li>
-                    <li><strong>Episodes:</strong> {{ "{:,}".format(total_episodes) }} shipped</li>
-                    <li><strong>Languages:</strong> English, Français, Русский, 中文 (two shows produced natively in Russian)</li>
-                    <li><strong>Cadence:</strong> Most shows daily; others weekly or when an interview is ready (each show page lists its schedule)</li>
-                    <li><strong>Production:</strong> AI-written and AI-narrated from curated sources, human-owned editorial standards (<a href="{{ path_prefix }}ai-disclosure.html" style="color:var(--nn-cyan);">AI disclosure</a>)</li>
-                    <li><strong>Funding:</strong> Independent; listener memberships (Nerra Personal), donations and labelled sponsorships (<a href="{{ path_prefix }}sponsor.html" style="color:var(--nn-cyan);">sponsor policy</a>)</li>
-                    <li><strong>Website:</strong> <a href="https://nerranetwork.com" style="color:var(--nn-cyan);">nerranetwork.com</a></li>
-                </ul>
-            </div>
-        </section>
+    <header class="mk-hero">
+        <p class="mk-eyebrow">Media kit</p>
+        <h1>Nerra Network. <span>{{ network_tagline }}</span></h1>
+        <p class="mk-lede">{{ network_promise() }}</p>
+        <p class="mk-meta">Figures measured{% if au.as_of %} as of {{ au.as_of }}{% endif %} and refreshed nightly. Free to use in coverage with a link to <a href="https://nerranetwork.com">nerranetwork.com</a>.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="#book-a-guest">Book a guest</a>
+            <a class="mk-btn" href="{{ path_prefix }}{{ zip_path }}" download>Download logos (.zip)</a>
+            <button type="button" class="mk-btn" data-mk-print>Save as PDF</button>
+            <a class="mk-btn" href="mailto:{{ press_email }}?subject=Media%20enquiry">Email the network</a>
+        </div>
+    </header>
 
-        <section class="press-section">
-            <h2>Boilerplate</h2>
-            <p>Copy-paste for articles, press releases, and podcast directories.</p>
+    <nav class="mk-toc" aria-label="On this page">
+        <a href="#at-a-glance">At a glance</a>
+        <a href="#audience">Audience</a>
+        <a href="#book-a-guest">Book a guest</a>
+        <a href="#mira">Mira</a>
+        <a href="#shows">Shows</a>
+        <a href="#trust">Trust record</a>
+        <a href="#founders">Founders</a>
+        <a href="#boilerplate">Boilerplate</a>
+        <a href="#brand">Brand assets</a>
+        <a href="#questions">Questions</a>
+        <a href="#contact">Contact</a>
+    </nav>
 
-            <h3>Short (25 words)</h3>
-            <div class="press-card">
-                <pre id="boilerplate-short">Nerra Network is an independent podcast network producing free daily shows on AI, Tesla, investing, space, science, and environmental policy from Vancouver.</pre>
-                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('boilerplate-short').textContent);this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
-            </div>
+    <section class="mk-section" id="at-a-glance">
+        <h2>At a glance</h2>
+        <div class="mk-stats">
+            <div class="mk-stat"><div class="mk-stat-v">{{ shows_count }}</div><div class="mk-stat-l">free shows{% if members_shows_count %}, plus {{ members_shows_count }} regional desks for members{% endif %}</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ "{:,}".format(total_episodes) }}</div><div class="mk-stat-l">episodes published</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.downloads_30d }}</div><div class="mk-stat-l">podcast downloads in the last 30 days</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views }}</div><div class="mk-stat-l">YouTube views across three channels</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ language_names|length }}</div><div class="mk-stat-l">languages: {{ language_names|join(", ") }}</div></div>
+            {% if trust %}<div class="mk-stat"><div class="mk-stat-v">{{ trust.claims }}</div><div class="mk-stat-l">claims checked against their sources in {{ trust.days }} days</div></div>{% endif %}
+        </div>
+        <div class="mk-card">
+            <dl class="mk-facts">
+                <dt>Founded</dt><dd>2024, Vancouver, Canada</dd>
+                <dt>Founders</dt><dd>{% for f in founders %}{{ f.name }}{% if not loop.last %} and {% endif %}{% endfor %}</dd>
+                <dt>Flagships</dt><dd>{% for s in flagship_shows %}<a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a>{% if not loop.last %} and {% endif %}{% endfor %}, every day</dd>
+                <dt>Daily edition</dt><dd><a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a>, the morning's shows in one episode by 7 a.m. Eastern, anchored by Mira</dd>
+                <dt>Interview shows</dt><dd>{% for s in interview_shows %}<a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a>{% if not loop.last %} and {% endif %}{% endfor %}, hosted live by Mira, the network's AI host</dd>
+                <dt>How it is made</dt><dd>Written and voiced with AI from sources the pipeline fetches, under editorial rules people set; every claim checked against its source (<a href="{{ path_prefix }}ai-disclosure.html">AI disclosure</a>)</dd>
+                <dt>Business model</dt><dd>{{ sponsor_policy.summary }} Members can subscribe to a personal daily feed (<a href="{{ path_prefix }}join.html">Nerra Personal</a>).</dd>
+                <dt>Where to listen</dt><dd>Any podcast app, YouTube, and as a written article at <a href="https://nerranetwork.com">nerranetwork.com</a> (<a href="{{ path_prefix }}how-to-listen.html">every feed</a>)</dd>
+            </dl>
+        </div>
+    </section>
 
-            <h3>Medium (60 words)</h3>
-            <div class="press-card">
-                <pre id="boilerplate-medium">Nerra Network is an independent podcast network based in Vancouver, Canada, producing free daily shows covering AI, Tesla, SpaceX, investing, space and science, world news, environmental policy, and language learning, plus Nerra Daily, a combined edition of the whole network. Founded in 2024 by Patrick Novak, the shows are written and narrated with AI from curated sources under human editorial standards, and are designed to help curious people stay informed without algorithmic outrage or clickbait.</pre>
-                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('boilerplate-medium').textContent);this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
-            </div>
-        </section>
+    <section class="mk-section" id="audience">
+        <h2>Audience</h2>
+        <p class="mk-sub">Measured, never estimated. Podcast downloads come from OP3, the open podcast analytics service; YouTube figures from YouTube Analytics. A dash means a figure is not measured yet.</p>
+        <div class="mk-stats four">
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.last_week }}</div><div class="mk-stat-l">downloads in the last complete week{% if au.wow_pct is not none %} ({{ "%+.0f"|format(au.wow_pct) }}% on the week before){% endif %}</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_subscribers }}</div><div class="mk-stat-l">YouTube subscribers</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views_28d }}</div><div class="mk-stat-l">YouTube views on videos published in the last 28 days</div></div>
+            {% if au.shorts_view_pct %}<div class="mk-stat"><div class="mk-stat-v">{{ au.shorts_view_pct }}%</div><div class="mk-stat-l">of each Short watched, on average</div></div>{% endif %}
+            {% if au.newsletter_subscribers %}<div class="mk-stat"><div class="mk-stat-v">{{ au.newsletter_subscribers }}</div><div class="mk-stat-l">newsletter subscribers</div></div>{% endif %}
+        </div>
 
-        {# The Mira section (Sep 2026). The press kit is the artifact a
-            journalist actually works from, and it did not mention the host who
-            makes three of these shows unlike anything else on the network. The
-            claim, its basis and the correction invitation are rendered from
-            engine/brand.py via the macro so this page can never carry a
-            drifted copy of the network's most quotable sentence. -#}
-        <section class="press-section">
-            <h2>Mira, the AI host</h2>
-            <p>{{ mira.summary }}</p>
-            {{ mira_claim(heading='', show_footnote=true) }}
-            <p>{{ mira.network_role }}</p>
-            <h3>Published so far</h3>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    {% for show in mira_shows %}
-                    <li>
-                        <strong>{{ show.name }}</strong> — {{ show.episode_label|lower }},
-                        {{ show.schedule[:1]|lower }}{{ show.schedule[1:] }}.
-                        <a href="{{ path_prefix }}{{ show.show_page }}">{{ show.show_page }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <p style="margin-top:1rem;">
-                Guests so far include Dan Perra and Adrian Wolfberg of the
-                Defense Intelligence Agency's Knowledge Lab. Interview requests,
-                guest suggestions and questions about the consent terms:
-                <a href="{{ path_prefix }}mira.html">the Mira page</a> sets out
-                the full process, including the two points where a human
-                decides something.
-            </p>
-        </section>
-
-        <section class="press-section">
-            <h2>Shows</h2>
-            <p>Most shows publish daily; the rest run on a fixed weekly or alternating-day cadence, and The Age of AI publishes when an interview is ready. Cover art and feeds available below.</p>
-            <div class="press-show-grid">
-                {% for s in all_shows %}
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
-                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">{{ s.name }}</div>
-                        <div class="press-show-tile-desc">{{ s.tagline }}</div>
-                    </div>
-                </div>
+        {% if au.shows %}
+        <h3>Most downloaded shows, last 30 days</h3>
+        <div class="mk-card mk-table-wrap">
+            <table class="mk-table">
+                <thead><tr><th>Show</th><th class="num">Podcast downloads</th><th class="num">YouTube views, 28 days</th></tr></thead>
+                <tbody>
+                {% for r in au.shows %}
+                    <tr><td>{% if r.page %}<a href="{{ path_prefix }}{{ r.page }}">{{ r.name }}</a>{% else %}{{ r.name }}{% endif %}</td><td class="num">{{ r.downloads_30d }}</td><td class="num">{{ r.youtube_views }}</td></tr>
                 {% endfor %}
-            </div>
-        </section>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
 
-        <section class="press-section">
-            <h2>Logo &amp; brand assets</h2>
-            <p>Use the Nerra Network name and gradient mark in any coverage. Please don't
-            modify the gradient colors or re-combine the wordmark with other brands.</p>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    <li><strong>Wordmark:</strong> <em>Nerra Network</em> — set in DM Sans Bold</li>
-                    <li><strong>Primary gradient:</strong> <code style="color:var(--nn-cyan);">#6B47FF</code> → <code style="color:var(--nn-cyan);">#00D4FF</code></li>
-                    <li><strong>Logo file:</strong> <a href="{{ path_prefix }}assets/nerra-logo-icon.svg" style="color:var(--nn-cyan);">nerra-logo-icon.svg</a> (vector)</li>
-                    <li><strong>Favicon:</strong> Inline SVG on the site root</li>
+        <div class="mk-two">
+            {% if au.channels %}
+            <div class="mk-card">
+                <h3 style="margin-top:0">YouTube channels</h3>
+                <table class="mk-table">
+                    <thead><tr><th>Channel</th><th class="num">Subscribers</th><th class="num">Views</th></tr></thead>
+                    <tbody>
+                    {% for c in au.channels %}
+                        <tr><td><a href="{{ c.url }}" rel="noopener">{{ c.handle }}</a> <small style="color:var(--nn-text-muted)">{{ c.language }}</small></td><td class="num">{{ c.subscribers }}</td><td class="num">{{ c.views }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% if au.ages %}
+            <div class="mk-card">
+                <h3 style="margin-top:0">Who watches</h3>
+                <p class="mk-sub" style="margin-bottom:.6rem">English channel, last 28 days: {{ au.pct_over_35 }}% are aged 35 or over. YouTube reports age for signed-in viewers only.</p>
+                <ul class="mk-bars">
+                {% for a in au.ages %}
+                    <li><span>Age {{ a.band }}</span><span class="mk-bar"><i style="width:{{ (100 * a.pct / (au.ages|map(attribute='pct')|max)) | round(0) | int }}%"></i></span><span>{{ a.pct }}%</span></li>
+                {% endfor %}
                 </ul>
             </div>
-        </section>
-
-        <section class="press-section">
-            <h2>Founder</h2>
-            <p><strong>Patrick Novak</strong> — Founder and producer. Vancouver, Canada.
-            Available for interviews, panel discussions, and written Q&amp;A on
-            independent podcasting, AI-assisted content workflows, and the fresh-over-
-            long editorial philosophy that defines Nerra Network.</p>
-        </section>
-
-        <section class="press-section">
-            <h2>Contact</h2>
-            <p>For media requests, partnerships, or fact-checking, reach out:</p>
-            <div class="press-contact-row">
-                <a href="mailto:press@nerranetwork.com">📧 press@nerranetwork.com</a>
-                <a href="{{ path_prefix }}contact.html">General contact</a>
-                <a href="{{ network_social[0].url }}" target="_blank" rel="noopener">{{ network_social[0].handle }} on X</a>
+            {% endif %}
+            {% if au.channels %}
+            <div class="mk-card">
+                <h3 style="margin-top:0">Where they are</h3>
+                {% for c in au.channels if c.countries %}
+                <p style="margin:0 0 .6rem"><b>{{ c.handle }}:</b> {% for g in c.countries %}{{ g.name }} {{ g.pct }}%{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                {% endfor %}
+                {% if au.site_countries %}<p style="margin:0"><b>Website:</b> {{ au.site_countries|join(", ") }}</p>{% endif %}
             </div>
-        </section>
+            {% endif %}
+        </div>
+    </section>
 
-        <section class="press-section">
-            <h2>Related</h2>
-            <p>
-                <a href="{{ path_prefix }}about.html" style="color:var(--nn-cyan);">About Nerra Network</a> ·
-                <a href="{{ path_prefix }}ai-disclosure.html" style="color:var(--nn-cyan);">AI disclosure</a> ·
-                <a href="{{ path_prefix }}faq.html" style="color:var(--nn-cyan);">FAQ</a>
-            </p>
-        </section>
-    </div>
+    <section class="mk-section" id="book-a-guest">
+        <h2>Book a guest</h2>
+        <p>The network's two interview shows are hosted by Mira, an AI, in a live and unscripted conversation of about 45 minutes. Every episode says plainly that the host is an AI, and every guest decides whether their conversation is published.</p>
+        {% for s in interview_shows %}
+        <div class="mk-card mk-show">
+            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="96" height="96" loading="lazy">
+            <div>
+                <h3>{{ s.name }}</h3>
+                <p style="margin-bottom:.4rem">{{ s.description }}</p>
+                <ul class="mk-pills">
+                    <li>{{ s.episode_length }}</li>
+                    <li>{% if s.episode_count %}{{ s.episode_count }} episode{{ "s" if s.episode_count != 1 }} published{% else %}Not published yet{% endif %}</li>
+                    <li>Live, unscripted</li>
+                    <li>No fee either way</li>
+                </ul>
+                <p class="mk-sub" style="margin:.2rem 0 .2rem"><b>Where the episode goes</b></p>
+                <ul class="mk-check" style="margin-bottom:.6rem">{% for w in s.where %}<li>{{ w }}</li>{% endfor %}</ul>
+                {% if s.guests %}
+                <p class="mk-sub" style="margin:.6rem 0 0"><b>Recent guests</b></p>
+                <ul class="mk-guests">
+                {% for g in s.guests %}
+                    <li>{% if g.post_url %}<a href="{{ path_prefix }}{{ g.post_url }}">{{ g.name }}</a>{% else %}{{ g.name }}{% endif %}{% if g.identifier %} <small>· {{ g.identifier }}</small>{% endif %}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                <div class="mk-actions" style="margin-top:var(--sp-4)">
+                    {% if s.booking_url %}<a class="mk-btn mk-btn-primary" href="{{ s.booking_url }}" rel="noopener">Pick a time for {{ s.name }}</a>{% endif %}
+                    {% if s.apply_page %}<a class="mk-btn" href="{{ path_prefix }}{{ s.apply_page }}">Apply with background</a>{% endif %}
+                    <a class="mk-btn" href="{{ path_prefix }}{{ s.show_page }}">Hear past episodes</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="mk-two">
+            <div class="mk-card">
+                <h3 style="margin-top:0">What the guest does</h3>
+                <ul class="mk-check">
+                    <li>Books a time with their own email address, so the prep brief and studio link reach them directly.</li>
+                    <li>Joins from a computer browser with headphones. There is nothing to install.</li>
+                    <li>Sends up to five points they want covered; Mira reaches every one.</li>
+                    <li>Gets a short prep brief the day before, with what Mira is curious about.</li>
+                </ul>
+            </div>
+            <div class="mk-card">
+                <h3 style="margin-top:0">What the guest keeps</h3>
+                <ul class="mk-check">
+                    <li>Their own transcript before anything is assembled, with a week to approve it, cut from it or refuse it. What they cut is removed from the audio, not bleeped.</li>
+                    <li>A takedown, available after publication.</li>
+                    <li>A human editor reviews every episode before release.</li>
+                    <li>On publish day: the link, a short moment from the conversation and a share image.</li>
+                </ul>
+            </div>
+        </div>
+        <h3>How an interview runs</h3>
+        {{ mira_steps_list(compact=true) }}
+    </section>
+
+    <section class="mk-section" id="mira">
+        <h2>Mira, the AI host</h2>
+        <p>{{ mira.summary }}</p>
+        {{ mira_claim(heading='', show_footnote=true) }}
+        <p>{{ mira.network_role }}</p>
+        <div class="mk-grid" style="margin-bottom:var(--sp-4)">
+            {% for show in mira_shows %}
+            <a class="mk-tile" href="{{ path_prefix }}{{ show.show_page }}">
+                <img src="{{ path_prefix }}{{ show.podcast_image }}" alt="" width="52" height="52" loading="lazy">
+                <div><b>{{ show.name }}</b><span>{{ show.episode_label }} · {{ show.schedule }}</span></div>
+            </a>
+            {% endfor %}
+        </div>
+        <p>The full process, including the two points where a human decides something, is on <a href="{{ path_prefix }}mira.html">the Mira page</a>.</p>
+    </section>
+
+    <section class="mk-section" id="shows">
+        <h2>The shows</h2>
+        <p class="mk-sub">{{ shows_count }} free shows. Most publish daily; the rest weekly or when an interview is ready. Each show page lists its schedule, feeds and cover art.</p>
+        <div class="mk-grid">
+            {% for s in flagship_shows + kit_shows %}
+            <a class="mk-tile" href="{{ path_prefix }}{{ s.show_page }}">
+                <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="52" height="52" loading="lazy">
+                <div><b>{{ s.name }}</b><span>{{ s.schedule }}{% if s.episode_length %} · {{ s.episode_length }}{% endif %}</span></div>
+            </a>
+            {% endfor %}
+        </div>
+        {% if books %}
+        <h3>Books</h3>
+        <p>The narrative shows are collected into books by Patrick Novak, as ebooks and audiobooks:</p>
+        <ul>
+        {% for b in books %}
+            <li><a href="{{ b.link }}" rel="noopener"><i>{{ b.title }}</i></a>{% if b.subtitle %}: {{ b.subtitle }}{% endif %}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <section class="mk-section" id="trust">
+        <h2>Trust record</h2>
+        {% if trust %}
+        <div class="mk-stats">
+            <div class="mk-stat"><div class="mk-stat-v">{{ trust.claims }}</div><div class="mk-stat-l">claims checked in the last {{ trust.days }} days, across {{ trust.episodes }} episodes</div></div>
+            {% if trust.verified_pct is not none %}<div class="mk-stat"><div class="mk-stat-v">{{ "%.0f"|format(trust.verified_pct) }}%</div><div class="mk-stat-l">verified against their sources</div></div>{% endif %}
+            <div class="mk-stat"><div class="mk-stat-v">{{ trust.corrections }}</div><div class="mk-stat-l">corrections published in the same window</div></div>
+        </div>
+        {% endif %}
+        <p>Every factual claim an episode makes is recorded with its source and checked against that source's text. A claim that cannot be verified is published with a public flag rather than hidden, and the whole record is open on the <a href="{{ path_prefix }}claims.html">claims and corrections ledger</a>. Corrections are dated on the episode's page and named in the next episode's show notes; audio is never edited silently.</p>
+        <p><a href="{{ path_prefix }}editorial.html">Editorial standards</a> · <a href="{{ path_prefix }}ai-disclosure.html">AI disclosure</a> · <a href="{{ path_prefix }}sponsor.html">Sponsor policy</a></p>
+    </section>
+
+    <section class="mk-section" id="founders">
+        <h2>Founders</h2>
+        <p class="mk-sub">The name is theirs: Novak plus Perra.</p>
+        {% for f in founders %}
+        <div class="mk-card mk-founder">
+            <div class="mk-avatar" aria-hidden="true">{{ f.name.split()|map("first")|join }}</div>
+            <div>
+                <h3 style="margin:0">{{ f.name }}</h3>
+                <p class="mk-role">{{ f.role }}</p>
+                <p style="margin-bottom:.6rem">{{ f.bio }}</p>
+                {% if f.topics %}
+                <p class="mk-sub" style="margin:.4rem 0 .2rem"><b>Available to talk about</b></p>
+                <ul style="margin:0;padding-left:1.1rem">{% for t in f.topics %}<li>{{ t }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        <p class="mk-sub">Photos, written Q&amp;A and interview requests: <a href="mailto:{{ press_email }}?subject=Founder%20interview">{{ press_email }}</a>.</p>
+    </section>
+
+    <section class="mk-section" id="boilerplate">
+        <h2>Boilerplate</h2>
+        <p class="mk-sub">Copy-ready descriptions for articles, show notes and introductions. The numbers update as the network grows.</p>
+        {% for key, label in [("short", "Short"), ("medium", "Medium"), ("long", "Long")] %}
+        <div class="mk-card mk-copy">
+            <div class="mk-copy-head"><b>{{ label }} <small>· {{ boilerplate[key].split()|length }} words</small></b>
+                <button type="button" class="mk-copy-btn" data-mk-copy="bp-{{ key }}">Copy</button></div>
+            <blockquote id="bp-{{ key }}">{{ boilerplate[key] }}</blockquote>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section class="mk-section" id="brand">
+        <h2>Brand assets</h2>
+        <p class="mk-sub">Free to use in coverage of Nerra Network. Please keep the logos unaltered: no recolouring, stretching, or combining with other marks.</p>
+        <div class="mk-actions" style="margin-bottom:var(--sp-5)">
+            <a class="mk-btn mk-btn-primary" href="{{ path_prefix }}{{ zip_path }}" download>Download every logo (.zip)</a>
+        </div>
+        <div class="mk-logos">
+            {% for l in logos %}
+            <div class="mk-logo">
+                <div class="mk-logo-art{% if l.bg == 'light' %} light{% endif %}"><img src="{{ path_prefix }}{{ l.png or l.path }}" alt="{{ l.label }}" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>{{ l.label }}</span><span>{% if l.png %}<a href="{{ path_prefix }}{{ l.png }}" download>PNG</a> · {% endif %}<a href="{{ path_prefix }}{{ l.path }}" download>SVG</a></span></div>
+            </div>
+            {% endfor %}
+        </div>
+        <h3>Colours and type</h3>
+        <ul class="mk-swatches">
+            <li><i style="background:#6B47FF"></i>Purple #6B47FF</li>
+            <li><i style="background:#00D4FF"></i>Cyan #00D4FF</li>
+            <li><i style="background:#0B0F1A"></i>Night #0B0F1A</li>
+            <li><i style="background:linear-gradient(135deg,#6B47FF,#00D4FF)"></i>Gradient, purple to cyan</li>
+        </ul>
+        <p>Headings are set in DM Sans, body text in Source Serif 4.</p>
+        <h3>Art for coverage</h3>
+        <p>A 1200 × 630 image for articles and social posts. Every show's cover art is on its show page.</p>
+        <a href="{{ path_prefix }}{{ art_path }}" download><img class="mk-art" src="{{ path_prefix }}{{ art_path }}" alt="Nerra Network share image" width="1200" height="630" loading="lazy"></a>
+    </section>
+
+    <section class="mk-section" id="questions">
+        <h2>Questions we are asked</h2>
+        <dl class="mk-faq">
+            <dt>Is the host really an AI?</dt>
+            <dd>Yes. Mira is an AI. Every episode says so, and she introduces herself as the network's AI host when she first writes to a guest. Patrick Novak built her, and he joins an interview as co-host when a guest asks for him.</dd>
+            <dt>Who decides what gets published?</dt>
+            <dd>A human editor reviews every interview before release, and the guest has a week with their own transcript to approve it, cut from it or refuse it. A takedown stays available afterwards.</dd>
+            <dt>Does anyone pay to appear?</dt>
+            <dd>No. There is no fee in either direction, and sponsors have no say over who appears or what is covered.</dd>
+            <dt>How are the news shows made?</dt>
+            <dd>The pipeline fetches the day's reporting, AI writes and voices each episode under editorial rules people wrote, and every claim is checked against its source before publication; a claim that could not be verified is checked again each night for a week. The <a href="{{ path_prefix }}ai-disclosure.html">AI disclosure</a> sets out exactly what a person does and does not do.</dd>
+            <dt>Can we quote an episode or use a clip?</dt>
+            <dd>Yes, with credit to the show and a link to the episode. Every episode has a written article and transcript to quote from.</dd>
+        </dl>
+    </section>
+
+    <section class="mk-section" id="contact">
+        <h2>Contact</h2>
+        <p>Media requests, interviews with the founders, fact-checks and partnerships go to one inbox that a person reads.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="mailto:{{ press_email }}?subject=Media%20enquiry">{{ press_email }}</a>
+            <a class="mk-btn" href="{{ network_social[0].url }}" rel="noopener">{{ network_social[0].handle }} on X</a>
+            <a class="mk-btn" href="{{ path_prefix }}contact.html">All contact options</a>
+        </div>
+        <p class="mk-sub" style="margin-top:var(--sp-5)">This page lives at <a href="https://nerranetwork.com/press.html">nerranetwork.com/press.html</a> (also <a href="https://nerranetwork.com/media-kit.html">/media-kit.html</a>) and updates itself as the network grows. More: <a href="{{ path_prefix }}about.html">About</a> · <a href="{{ path_prefix }}faq.html">FAQ</a> · <a href="{{ path_prefix }}sponsor.html">Sponsor</a>.</p>
+    </section>
+
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    document.addEventListener("click", function (e) {
+        var printBtn = e.target.closest("[data-mk-print]");
+        if (printBtn) { window.print(); return; }
+        var btn = e.target.closest("[data-mk-copy]");
+        if (!btn) return;
+        var el = document.getElementById(btn.getAttribute("data-mk-copy"));
+        if (!el || !navigator.clipboard) return;
+        navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+            btn.textContent = "Copied";
+            setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+        });
+    });
+})();
+</script>
 {% endblock %}

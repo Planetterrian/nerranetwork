@@ -87,9 +87,12 @@ def write(name, svg):
     print("wrote", name)
 
 # ---------- 1. Horizontal (dark bg use / transparent) ----------
+# Oct 21 2026: the frame was 600 wide and "Network" ends at 611.8, so the
+# "k" was cut off in every copy; the stacked frame cut both ends of the
+# wordmark (-23..406 in a 0..380 frame). Frames widened, artwork unmoved.
 w, _ = wm(150, 92, 62, "#FFFFFF", "url(#nerraText)")
 desc = '<text x="151" y="124" textLength="406" lengthAdjust="spacingAndGlyphs" font-family="\'DM Sans\',Arial,sans-serif" font-weight="600" font-size="15" fill="#94A3B8">INDEPENDENT PODCAST NETWORK</text>'
-write("nerra-logo-horizontal.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160" role="img" aria-label="Nerra Network">
+write("nerra-logo-horizontal.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 632 160" width="632" height="160" role="img" aria-label="Nerra Network">
   <defs>{GRAD}</defs>
   {mark(20,30,glow=False)}
   {w}
@@ -99,7 +102,7 @@ write("nerra-logo-horizontal.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" v
 # ---------- 1b. Horizontal light bg ----------
 w2, _ = wm(150, 92, 62, "#0B0F1A", "url(#nerra)")
 descL = '<text x="151" y="124" textLength="406" lengthAdjust="spacingAndGlyphs" font-family="\'DM Sans\',Arial,sans-serif" font-weight="600" font-size="15" fill="#475569">INDEPENDENT PODCAST NETWORK</text>'
-write("nerra-logo-horizontal-light.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160" role="img" aria-label="Nerra Network">
+write("nerra-logo-horizontal-light.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 632 160" width="632" height="160" role="img" aria-label="Nerra Network">
   <defs>{GRAD}</defs>
   {mark(20,30,glow=False)}
   {w2}
@@ -108,7 +111,7 @@ write("nerra-logo-horizontal-light.svg", f'''<svg xmlns="http://www.w3.org/2000/
 
 # ---------- 2. Stacked ----------
 ws, _ = wm_centered(190, 205, 58, "#FFFFFF", "url(#nerraText)")
-write("nerra-logo-stacked.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 340" width="380" height="340" role="img" aria-label="Nerra Network">
+write("nerra-logo-stacked.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 0 460 340" width="460" height="340" role="img" aria-label="Nerra Network">
   <defs>{GRAD}{GLOWDEF}</defs>
   {mark(140,20)}
   {ws}
