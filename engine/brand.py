@@ -122,6 +122,27 @@ SPONSOR_EMAIL = CONTACT_EMAIL
 #: inbox for the reason above: one address a person actually reads.
 PRESS_EMAIL = CONTACT_EMAIL
 
+#: When the network began, as the operator states it (Oct 21 2026): the
+#: Nerra Network NAME was established in February and March 2026, and
+#: audience measurement, marketing and the channels only began around June
+#: 2026 (the first complete OP3 week is 29 June; the YouTube subscriber
+#: snapshots start 22 July). Every growth figure the kits print covers months,
+#: not years, and the kits say so. Never write "2024" as a founding year: the
+#: earlier automated Tesla show predates the network and its name.
+NETWORK_ESTABLISHED_YEAR = 2026
+NETWORK_FOUNDING_DATE = "2026-02"            # schema.org foundingDate
+NETWORK_NAMED_TEXT = "February and March 2026"
+MEASUREMENT_STARTED_TEXT = "June 2026"
+
+
+def network_history_note() -> str:
+    """One sentence for the kits, beside the growth figures."""
+    return (f"The Nerra Network name was established in {NETWORK_NAMED_TEXT}, "
+            f"and audience measurement, marketing and the channels began in "
+            f"{MEASUREMENT_STARTED_TEXT}, so every growth figure here covers "
+            "months, not years.")
+
+
 #: The two co-founders, as their own show states them (Novak + Perra =
 #: Nerra; ``shows/network_meta.yaml`` dp_pod.about_host) and as Patrick told
 #: it on the record in The Age of AI Ep001. Facts only: nothing here is a
@@ -133,9 +154,10 @@ FOUNDERS = (
         "role": "Co-founder and producer",
         "bio": (
             "Patrick Novak is a Vancouver-based entrepreneur, a physical chemist "
-            "by training and a published science fiction novelist. He started "
-            "Nerra Network in 2024, after a daily Tesla podcast he relied on "
-            "stopped publishing, by rebuilding it as an automated show. He "
+            "by training and a published science fiction novelist. The network "
+            "began when a daily Tesla podcast he relied on stopped publishing "
+            "and he rebuilt it as an automated show; he established the Nerra "
+            "Network name in February and March 2026. He "
             "designs the production pipeline, writes the editorial rules the "
             "AI works under, and built Mira, the network's AI host. He "
             "co-hosts The DP Pod."
@@ -198,7 +220,7 @@ def network_boilerplate(show_count: int, languages=("en",)) -> dict:
         "it came from. The shows are written and voiced with AI under editorial "
         "rules set by people, and its interview shows are hosted by Mira, an AI "
         "whose guests decide whether their conversation is published at all. "
-        "Founded in 2024 by Patrick Novak and Dan Perra."
+        f"Established in {NETWORK_ESTABLISHED_YEAR} by Patrick Novak and Dan Perra."
     )
     long = (
         medium + " Its flagship shows follow SpaceX and Tesla every day; Nerra "
@@ -324,7 +346,220 @@ SPONSOR_POLICY_RULES = (
     ("Every episode stays free",
      "Sponsorship pays for the network; it never puts an episode behind a "
      "paywall."),
+    ("Never on an interview",
+     "The Age of AI and Nerra Voices carry no sponsor. A guest gives an hour "
+     "of their own words, and those words are never sold."),
 )
+
+
+# ---------------------------------------------------------------------------
+# The sponsorship kit (Oct 21 2026, operator-directed)
+# ---------------------------------------------------------------------------
+#
+# ``sponsor.html`` is the advertising and sponsorship kit: the audience it
+# reaches (the media kit's own numbers), the packages and their rates, the
+# terms for the first partners, how a booking runs, and the rules above. The
+# rates are the OPERATOR's: edit them here and the page, the producer's
+# drafted replies and the guest mail all follow. They are flat monthly fees,
+# not a CPM: the network is small and growing, a flat fee prices the
+# placement and the category, and a partner who books early keeps the rate
+# while the audience grows. The page prints each package's MEASURED reach
+# beside its price (a dash when unmeasured) and never a forecast.
+
+#: The public pages a guest, publicist or sponsor is pointed to. The guest
+#: mail and the producer's facts read these, never a typed URL.
+SITE_URL = "https://nerranetwork.com"
+MEDIA_KIT_URL = f"{SITE_URL}/press.html"
+SPONSOR_KIT_URL = f"{SITE_URL}/sponsor.html"
+
+SPONSOR_CURRENCY = "USD"
+
+#: How many partners get founding terms. The page says the terms close when
+#: these are taken; it never counts down or invents scarcity.
+SPONSOR_FOUNDING_PLACES = 3
+
+#: The packages, in the order the page shows them. ``shows`` are the slugs
+#: whose measured audience is the package's reach; ``price`` is per month in
+#: :data:`SPONSOR_CURRENCY`; ``from_price`` marks a starting rate.
+SPONSOR_PACKAGES = (
+    {"id": "founding", "name": "Founding partner", "price": 5000,
+     "term": "three-month minimum",
+     "summary": ("The network's first partners: the two flagship shows, the "
+                 "daily edition and your category to yourself."),
+     "includes": (
+         "Your category kept exclusive across every free show for the term",
+         "Nerra Daily opens with your credit, every edition",
+         "One labelled message on every episode of SpaceX Daily and Tesla Shorts Time",
+         "Named as a founding partner on this page and in the media kit",
+         "The founding rate held for twelve months from your first booking",
+     ),
+     "shows": ("spacex", "tesla", "nerra_daily"), "featured": True},
+    {"id": "spacex", "name": "SpaceX Daily", "price": 2500,
+     "term": "one-month minimum",
+     "summary": ("The network's largest show: the engineering and business "
+                 "of SpaceX, every morning."),
+     "includes": (
+         "The show's only sponsor for the month",
+         "One labelled message on every episode",
+         "A credit in the show notes and on every episode page",
+     ),
+     "shows": ("spacex",)},
+    {"id": "tesla", "name": "Tesla Shorts Time", "price": 1500,
+     "term": "one-month minimum",
+     "summary": "Tesla's news, filings and products, every morning.",
+     "includes": (
+         "The show's only sponsor for the month",
+         "One labelled message on every episode",
+         "A credit in the show notes and on every episode page",
+     ),
+     "shows": ("tesla",)},
+    {"id": "nerra_daily", "name": "Nerra Daily, presented by you", "price": 1500,
+     "term": "one-month minimum",
+     "summary": ("The day's shows in one edition, out by 7am Eastern, with "
+                 "Mira introducing each one."),
+     "includes": (
+         "A presenting credit at the open of every edition",
+         "One labelled message inside each edition",
+         "A credit in the show notes and on the edition's page",
+     ),
+     "shows": ("nerra_daily",)},
+    {"id": "ai", "name": "The AI shows", "price": 1500,
+     "term": "one-month minimum",
+     "summary": ("Every show on models, agents and the chips and data "
+                 "centres behind them."),
+     "includes": (
+         "One labelled message on every episode of each show",
+         "A credit in the show notes and on every episode page",
+         "Your category kept exclusive across these shows",
+     ),
+     "shows": ("models_agents", "models_agents_beginners", "ai_chips")},
+    {"id": "space_science", "name": "Space, science and ideas", "price": 1200,
+     "term": "one-month minimum",
+     "summary": ("The frontier shows: space and astronomy, the life "
+                 "sciences, first principles and unintended consequences."),
+     "includes": (
+         "One labelled message on every episode of each show",
+         "A credit in the show notes and on every episode page",
+         "Your category kept exclusive across these shows",
+     ),
+     "shows": ("fascinating_frontiers", "planetterrian", "first_principles",
+               "unintended_consequences")},
+    {"id": "markets_world", "name": "Markets and the world", "price": 1000,
+     "term": "one-month minimum",
+     "summary": ("Investing, the largest tech companies, prediction markets "
+                 "and the day's world news."),
+     "includes": (
+         "One labelled message on every episode of each show",
+         "A credit in the show notes and on every episode page",
+         "Your category kept exclusive across these shows",
+     ),
+     "shows": ("modern_investing", "mag7", "prediction_markets", "omni_view",
+               "omni_view_world")},
+    {"id": "single", "name": "Any other free show", "price": 500,
+     "from_price": True, "term": "one-month minimum",
+     "summary": ("One show to yourself, from the local and weekly shows to "
+                 "the Russian-language ones. Ask for the show you want."),
+     "includes": (
+         "The show's only sponsor for the month",
+         "One labelled message on every episode",
+         "A credit in the show notes and on every episode page",
+     ),
+     "shows": ()},
+)
+
+#: The kit's opening line, under the tagline and the promise.
+SPONSOR_KIT_LEDE = (
+    "Put your message beside reporting people trust: labelled, in its own "
+    "slot, on free shows listeners choose to feed their curiosity."
+)
+
+#: Now booking: what is true before the first message runs.
+SPONSOR_KIT_STATUS = (
+    "Now booking. The first sponsored messages run in the first month a "
+    "partner books, and every one follows the rules on this page."
+)
+
+#: Why a sponsor would want this audience, in the network's own terms.
+SPONSOR_REASONS = (
+    ("An audience that chose curiosity",
+     "People come to Nerra to learn what changed in space, AI, markets, "
+     "science and the world, on purpose, from shows that publish every "
+     "morning."),
+    ("A record your message sits beside",
+     "Every story is sourced and every claim is checked against its source, "
+     "in public. Your message is labelled and kept apart, so it borrows the "
+     "trust without spending it."),
+    ("In early, at a rate that holds",
+     "The audience is growing week on week. A founding partner keeps the "
+     "founding rate for a year while it does."),
+)
+
+#: What every booking carries, whatever the package.
+SPONSOR_TERMS = (
+    ("Written with you",
+     "We write each message from your facts, in the show's own voice, and "
+     "you approve the facts before it runs. You approve your message; you "
+     "never see or approve the show around it."),
+    ("Voiced by the show's host",
+     "The hosts are AI voices, and every episode says so. Your message is "
+     "read in the same voice, labelled as sponsored, in its own slot."),
+    ("Measured the same way",
+     "At the end of each month you get the downloads and views of the "
+     "episodes that carried your message, from the same sources as the "
+     "numbers on this page."),
+    ("An episode for an episode",
+     "If a booked episode does not publish, your message runs on the next "
+     "one. You never pay for an episode that did not go out."),
+)
+
+#: How a booking runs, in order.
+SPONSOR_STEPS = (
+    ("Write to us", "Tell us the shows or package, the month and your category."),
+    ("We confirm", "We confirm the dates are open and the category is yours."),
+    ("We write the message", "A draft from your facts, for you to approve."),
+    ("It runs", "Labelled, on every episode of the term."),
+    ("You get the numbers", "Downloads and views of every episode that carried it."),
+)
+
+
+def sponsor_packages() -> list:
+    """The packages for templates and mail, prices formatted once."""
+    out = []
+    for pkg in SPONSOR_PACKAGES:
+        row = dict(pkg)
+        row["includes"] = list(pkg["includes"])
+        row["shows"] = list(pkg["shows"])
+        price = f"${pkg['price']:,}"
+        row["price_text"] = (f"From {price}" if pkg.get("from_price") else price)
+        row["unit"] = "a month"
+        out.append(row)
+    return out
+
+
+def sponsor_kit() -> dict:
+    """Everything the kit page says that is not a measured number."""
+    return {
+        "packages": sponsor_packages(),
+        "terms": [{"title": t, "body": b} for t, b in SPONSOR_TERMS],
+        "steps": [{"title": t, "body": b} for t, b in SPONSOR_STEPS],
+        "founding_places": SPONSOR_FOUNDING_PLACES,
+        "lede": SPONSOR_KIT_LEDE,
+        "status": SPONSOR_KIT_STATUS,
+        "reasons": [{"title": t, "body": b} for t, b in SPONSOR_REASONS],
+        "currency": SPONSOR_CURRENCY,
+        "email": SPONSOR_EMAIL,
+        "url": SPONSOR_KIT_URL,
+        "media_kit_url": MEDIA_KIT_URL,
+    }
+
+
+#: One line for guest mail and the producer: where a guest, a publicist or a
+#: would-be sponsor finds the network's materials. Plain text; the HTML mail
+#: wraps the two URLs itself.
+def kits_sentence() -> str:
+    return (f"The network's media kit, with the audience numbers, logos and "
+            f"the boilerplate, is at {MEDIA_KIT_URL}, and the sponsorship kit "
+            f"is at {SPONSOR_KIT_URL}.")
 
 
 MIRA_SHOW_SLUGS = ("nerra_daily", "age_of_ai", "nerra_voices")

@@ -201,6 +201,17 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
         if url:
             lines.append(f"- They can pick a time here, booking with their own email address: {url}")
             links.append(url)
+    # Oct 21 2026: the two kits a guest or their publicist asks for. The
+    # media kit answers "what is the audience" with measured numbers (the
+    # old answer was "we do not publish numbers"); the sponsorship kit is
+    # offered only when someone asks about sponsoring. Links from
+    # engine.brand, the page's one owner.
+    from engine import brand as _brand
+    lines.append(f"- The network's media kit, with measured audience numbers, logos, show art "
+                 f"and the boilerplate a guest or their publicist can use: {_brand.MEDIA_KIT_URL}")
+    lines.append(f"- The sponsorship kit, with the packages and rates for sponsoring the free "
+                 f"shows (the interview shows carry no sponsor): {_brand.SPONSOR_KIT_URL}")
+    links += [_brand.MEDIA_KIT_URL, _brand.SPONSOR_KIT_URL]
     agenda = app.get("guest_agenda") if isinstance(app.get("guest_agenda"), dict) else {}
     if agenda.get("points"):
         lines.append("- The points they asked you to cover in the interview (already on file): "

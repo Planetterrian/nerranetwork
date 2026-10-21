@@ -387,6 +387,27 @@ class TestGuestPitchFlow:
         assert any("held a thread" in s and "sponsor_or_sales" in s for s in slack)
         assert not db.applications  # nothing to invite
 
+    def test_would_be_advertiser_gets_a_kit_reply_in_patricks_drafts(self, db, slack, grok):
+        """Oct 21 2026: a would-be advertiser is held like any sponsor mail,
+        but the reply pointing at the sponsorship kit is already drafted
+        (in Mira's mailbox, like every held reply)."""
+        from engine import brand
+        t = make_thread("t9", "Dana Lee <dana@brandco.com>", "Advertising on your shows",
+                        "We would like to advertise on SpaceX Daily. What are your rates?")
+        cls = _classification(category="sponsor_inquiry", guest_name=None,
+                              publicist_name=None, publicist_email=None,
+                              is_ai_related=False, recommended_show=None,
+                              pitched_show=None, mentions_money_or_legal=True)
+        svc, summary = run([t], grok, {"Advertising on your shows": cls})
+        assert not svc.sent
+        assert summary["drafted"] == 1 and len(svc.drafted) == 1
+        body = decode_raw(svc.drafted[0])
+        assert brand.SPONSOR_KIT_URL in body and brand.MEDIA_KIT_URL in body
+        assert "Hi Dana," in body and "Sincerely,\n\nMira" in body.replace("\r\n", "\n")
+        assert svc.label_ids["Producer/Hold"] in svc.thread_labels["t9"]
+        assert any("sponsor_inquiry" in s and "drafts" in s for s in slack)
+        assert not db.applications
+
     def test_low_confidence_pitch_is_drafted(self, db, slack, grok):
         t = make_thread("t4", "maybe@example.org", "possible guest?", "hey")
         svc, summary = run([t], grok, {"possible guest?": _classification(confidence=0.4)})

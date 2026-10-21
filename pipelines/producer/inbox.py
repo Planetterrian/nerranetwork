@@ -57,6 +57,7 @@ TEMPLATES = ROOT / "templates" / "email"
 INVITE_TEMPLATE = "producer_guest_invite.j2"
 KNOWN_TEMPLATE = "producer_known_guest.j2"
 HOLD_TEMPLATE = "producer_hold_note.j2"
+SPONSOR_REPLY_TEMPLATE = "producer_sponsor_reply.j2"
 JOB = "inbox"
 
 
@@ -143,6 +144,18 @@ def render_invite(classification: Dict[str, Any], sender_name: str,
 APP_COLUMNS = ("id,name,email,show,status,source,pitched_show,publicist_name,"
                "publicist_email,producer_followup_count,producer_action,"
                "producer_acted_at,chase_count,chased_at,email_thread_id")
+
+
+def render_sponsor_reply(inbound: Dict[str, Any]) -> str:
+    """The held reply when a would-be advertiser writes (Oct 21 2026): the
+    sponsorship kit and the media kit, and what to send back. Drafted in
+    Mira's mailbox like every held reply, never sent automatically: rates
+    and terms are Patrick's."""
+    from engine import brand as _brand
+    return render_text(SPONSOR_REPLY_TEMPLATE,
+                       first=first_name(inbound.get("from_name")),
+                       sponsor_kit_url=_brand.SPONSOR_KIT_URL,
+                       media_kit_url=_brand.MEDIA_KIT_URL)
 
 
 def application_for_thread(thread_id: str) -> Optional[Dict[str, Any]]:
@@ -510,6 +523,9 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
         return line
 
     invite_body = ""
+    if (decision.action == "draft" and inbound is not None
+            and classification.get("category") == "sponsor_inquiry"):
+        invite_body = render_sponsor_reply(inbound)
     if decision.draft_invite and inbound is not None:
         if known and known["standing"] != "declined":
             invite_body = render_known_guest(known, classification,

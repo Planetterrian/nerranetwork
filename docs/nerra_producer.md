@@ -74,7 +74,7 @@ writes to Supabase; every would-be action is logged.
   environment wins over the yaml.
 * Hard exclusions, which always produce a hold (draft + Slack note) and
   never a send, in any mode:
-  * category `sponsor_or_sales` or `personal_or_business`;
+  * category `sponsor_inquiry` (a would-be advertiser: Mira's reply pointing at the sponsorship and media kits waits in the held drafts), `sponsor_or_sales` or `personal_or_business`;
   * `mentions_money_or_legal` true;
   * classifier confidence below `min_confidence` (0.75);
   * sender domain in `never_auto_reply_domains` (apple.com, spotify.com,

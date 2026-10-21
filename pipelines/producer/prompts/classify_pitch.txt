@@ -8,7 +8,7 @@ Classify the email below and return ONE JSON object and nothing else. No prose, 
 
 Schema (every key required):
 {
-  "category": "guest_pitch" | "sponsor_or_sales" | "platform_notice" | "personal_or_business" | "newsletter_or_noise" | "guest_followup",
+  "category": "guest_pitch" | "sponsor_inquiry" | "sponsor_or_sales" | "platform_notice" | "personal_or_business" | "newsletter_or_noise" | "guest_followup",
   "confidence": number between 0 and 1,
   "guest_name": string or null,
   "guest_title_org": string or null,
@@ -26,7 +26,8 @@ Schema (every key required):
 
 Rules:
 - "guest_pitch": someone (a publicist, agent, or the guest themselves) proposing a person as a podcast guest. "guest_followup": a reply or nudge on a pitch that was already discussed in this thread.
-- "sponsor_or_sales": advertising, sponsorship, paid placement, link exchanges, services being sold to Patrick.
+- "sponsor_inquiry": a company, brand or agency asking to advertise on or sponsor the Nerra Network's shows, site or newsletters, or asking for its rates or media kit as a would-be advertiser (money would come TO the network).
+- "sponsor_or_sales": everything else commercial: services, software or growth offers being sold to Patrick, paid guest placements offered to him, link exchanges, sponsorship deals where the network would pay.
 - "platform_notice": automated mail from a platform or vendor (Apple, Spotify, YouTube, Google, GitHub, Cloudflare, Supabase, Voximplant, billing systems).
 - "personal_or_business": real correspondence from a person that is not a guest pitch (partners, contracts, invoices, friends, family, legal).
 - "newsletter_or_noise": bulk mail, digests, marketing blasts, spam.
