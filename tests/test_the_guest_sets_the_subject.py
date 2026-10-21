@@ -39,13 +39,14 @@ class TestTheAgendaReachesMira:
 
 class TestHowMiraHoldsTheSubject:
     def test_the_rules(self):
-        assert "THE SUBJECT THEY CAME FOR IS THE SPINE OF THE HOUR" in PROMPT
-        assert "TANGENTS GET A TURN OR TWO, THEN YOU COME BACK OUT LOUD" in PROMPT
-        assert "WHEN THE GUEST STEERS, GO WITH THEM" in PROMPT
-        assert "A PERSONAL STORY IS NOT A CLAIM" in PROMPT
-        assert "A complete answer comes before any follow-up" in PROMPT
+        flat = " ".join(PROMPT.split())
+        assert "The subject they came for is the spine of the hour" in flat
+        assert "A tangent gets a turn or two, then you bring it back, out loud" in flat
+        assert "When the guest steers, go with them at once" in flat
+        assert "A personal story is never checked and never questioned" in flat
+        assert "Wait for the end of the thought, not the pause for breath" in flat
         # Oct 19 2026 (Cory O'Daniel): five minutes was too long.
-        assert "By the second minute you are on the subject they came to discuss" in " ".join(PROMPT.split())
+        assert "By the second minute you are on the subject they came for" in flat
 
     def test_the_clock_brings_her_back(self):
         assert "If any point under THE SUBJECT THEY CAME FOR has not" in SCENARIO

@@ -129,7 +129,9 @@ class TestTheFormAsksForTheShape:
 
     def test_booking_writes_the_length_onto_the_interview(self):
         assert "const plannedMinutes = clampMinutes(apps[0].desired_minutes) ?? 45;" in WORKER
-        assert WORKER.count("duration_min: closing ? 15 : plannedMinutes") == 2, \
+        # Oct 21 2026: a hello session is five minutes (HELLO_MINUTES); the
+        # closing and the interview keep their lengths.
+        assert WORKER.count("duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes") == 2, \
             "both the new interview and the rebooked one"
 
 
@@ -204,7 +206,7 @@ class TestTheShapeReachesMira:
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",
                 "show_memory", "question_count", "minutes", "guest_shape",
-                "prior_record", "carry_the_show",
+                "prior_record", "carry_the_show", "guest_agenda", "guest_notes",
             },
             "mira_narration.txt": {
                 "show_name", "show_premise", "guest_name", "guest_title",

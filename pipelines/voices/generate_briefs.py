@@ -13,7 +13,8 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    carry_the_show_block, episode_memory_block, llm, load_prompt,
+    carry_the_show_block, episode_memory_block, guest_agenda_block,
+    guest_notes_block, llm, load_prompt,
     logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
     send_email, show_for, guest_audio_html, studio_steps_html,
@@ -98,9 +99,15 @@ def generate_brief(interview: dict, app: dict) -> dict:
                     question_count=question_count(minutes),
                     minutes=minutes,
                     guest_shape=shape_block(interview, app),
+                    # Oct 21 2026: the subject the guest asked for, and what
+                    # they wrote before the call, reach the question set — they
+                    # had reached only Mira's live prompt, so the prepared set
+                    # was written without the subject the guest came for.
+                    guest_agenda=guest_agenda_block(app),
+                    guest_notes=guest_notes_block(app),
                     prior_record=prior_record(app),
                     carry_the_show=carry_the_show_block(
-                        show, exclude_email=app.get("email", ""))),
+                        show, exclude_email=app.get("email", ""), app=app)),
         temperature=0.6, max_tokens=2000,
     )
     questions = parse_json_lenient(questions_raw)
@@ -133,6 +140,36 @@ def setup_test_url(show, interview_id: str) -> str:
     return f"{show.studio_url(interview_id)}&role=guest&test=1"
 
 
+CURIOUS_ABOUT_MAX = 3
+
+
+def curious_about(questions) -> list:
+    """The three things Mira is curious about, in her words, for the prep
+    email (Oct 21 2026: the brief goes both ways, so the first question is
+    not a surprise and the hour has a shape the guest helped choose).
+
+    Written from the question set the brief already carries, with no model
+    call: each prepared question's ``why`` line says what it should
+    surface; the first three become one sentence each. A set without
+    ``why`` lines falls back to the questions themselves."""
+    out = []
+    for q in questions or []:
+        text = ""
+        if isinstance(q, dict):
+            text = " ".join(str(q.get("why") or q.get("question") or "").split())
+        else:
+            text = " ".join(str(q or "").split())
+        text = text.strip().rstrip(".")
+        if not text:
+            continue
+        if text[:1].isupper() and not text[:2].isupper():
+            text = text[0].lower() + text[1:]
+        out.append(f"I'm curious about {text}.")
+        if len(out) >= CURIOUS_ABOUT_MAX:
+            break
+    return out
+
+
 def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
     show = show_for(interview, app)
     html = render_email(
@@ -155,6 +192,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         if isinstance(app.get("guest_agenda"), dict) else [],
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
+        curious_about=curious_about(brief.get("likely_questions")),
         closing_question=show.closing_question,
     )
     send_email(app["email"],
@@ -177,9 +215,10 @@ def main() -> int:
 
     failures = 0
     for interview in due:
-        if (interview.get("session_kind") or "interview") == "closing":
+        if (interview.get("session_kind") or "interview") in ("closing", "hello"):
             # Oct 5 2026: a closing session has no brief to send; the guest
-            # already knows the subject. Marked briefed so the reminders run.
+            # already knows the subject. Oct 21 2026: nor has a pre-call
+            # hello. Marked briefed so the reminders run.
             sb_update("interviews", f"id=eq.{interview['id']}", {"status": "briefed"})
             continue
         existing = sb_select("interview_briefs",

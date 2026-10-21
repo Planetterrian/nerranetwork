@@ -226,9 +226,9 @@ class TestSpecArtifacts:
         text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(
             encoding="utf-8")
         assert "You are Mira" in text
-        assert "THE CLOSING ROUND" in text and "lightning round" in text
-        assert 'Closing question always: "{{closing_question}}"' in text
-        assert "There is no time cap" in text
+        assert "HOW TO CLOSE" in text and "lightning questions" in text
+        assert "({{closing_question}})" in text
+        assert "is the plan, not a limit" in text
         for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}",
                       "{{show_name}}", "{{show_premise}}", "{{opening_line}}"):
             assert token in text, f"missing template token {token}"
@@ -272,11 +272,13 @@ class TestSpecArtifacts:
 
 class TestFireLogic:
     def test_mira_tools_shape(self):
-        from fire_interviews import MIRA_TOOLS
+        # Oct 21 2026: the fact-check tool is off unless the interview asks.
+        from fire_interviews import MIRA_TOOLS, mira_tools
         names = {t["name"] for t in MIRA_TOOLS}
-        assert names == {"nerra_episode_lookup", "guest_brief_lookup",
-                         "fact_check_claim"}, "spec §3.2: exactly these 3 tools"
-        for tool in MIRA_TOOLS:
+        assert names == {"nerra_episode_lookup", "guest_brief_lookup"}
+        assert {t["name"] for t in mira_tools({"fact_check": True}, {})} == (
+            names | {"fact_check_claim"}), "spec §3.2: the third tool, on request"
+        for tool in mira_tools({"fact_check": True}, {}):
             assert tool["type"] == "function"
             assert tool["parameters"]["type"] == "object"
 

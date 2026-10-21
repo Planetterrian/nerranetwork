@@ -81,7 +81,12 @@ class TestSessionSettings:
     def test_live_interview_pins_high_and_sends_keyterms(self):
         js = SCENARIO.read_text(encoding="utf-8")
         live = js[js.index("const sessionCfg = {"):js.index("agent.sessionUpdate({ session: sessionCfg })")]
-        assert 'reasoning: { effort: "high" }' in live
+        # Oct 21 2026: pinned by the run row (interview_runs.reasoning_effort,
+        # default "high"), never by a connector default, so the rehearsal
+        # harness can trial "low" on a fixture guest before a real one.
+        assert "reasoning: { effort: reasoningEffort() }" in live
+        fn = js[js.index("function reasoningEffort()"):js.index("function reasoningEffort()") + 400]
+        assert 'config.reasoning_effort' in fn and ': "high";' in fn
         assert "sessionAudioConfig()" in live
         fn = js[js.index("function sessionAudioConfig()"):js.index("function turnDetection()")]
         assert "config.keyterms" in fn and "transcription: { keyterms: clean }" in fn
@@ -155,13 +160,13 @@ class TestPromptStructure:
     def test_every_earlier_rule_survived(self):
         text = PROMPT.read_text(encoding="utf-8")
         # "HOW TO OPEN" carries its reason in brackets since Oct 19 2026.
-        for needle in ("HOW TO OPEN", "THE CLOSING ROUND happens with every guest, every time",
-                       "THEIR LAST WORD IS THEIRS, NOT YOURS.", "FACT CHECKING.",
-                       "NEVER SIGNAL THE END BEFORE IT IS THE END.", "YOUR OWN VOICE.",
+        # Oct 21 2026: the same rules, stated once each as a host's brief.
+        for needle in ("HOW TO OPEN", "HOW TO CLOSE.", "HOW IT ENDS.",
+                       "RESEARCH IS QUIET.", "TIME.", "YOUR OWN VOICE.",
                        "{{cohost_craft}}", "{{lessons}}", "{{guest_shape}}"):
             assert needle in text, needle
         crit = text.split("## CRITICAL INSTRUCTIONS")[1]
-        assert "ONE question per turn" in crit and "[TIME CHECK]" in crit
+        assert "One question per turn" in crit and "[TIME CHECK]" in crit
         # xAI: no soft language in CRITICAL INSTRUCTIONS.
         assert not re.search(r"\b(try to|ideally|if possible)\b", crit)
 

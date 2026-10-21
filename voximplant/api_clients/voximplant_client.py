@@ -34,6 +34,13 @@ API_BASE = "https://api.voximplant.com/platform_api"
 APPLICATION_NAME = os.environ.get("VOXIMPLANT_APP_NAME", "nerra-voices")
 RULE_NAME = os.environ.get("VOXIMPLANT_RULE_NAME", "age-of-ai-interview")
 SCENARIO_NAME = "age_of_ai_interview"
+# Rehearsal harness (Oct 21 2026): a second scenario that plays a past guest
+# into an interview room so a change to Mira's room is measured before a real
+# person hears it (docs/age_of_ai_rehearsal.md). Its rule's pattern never
+# matches an inbound call; it exists so StartScenarios can name it.
+FIXTURE_SCENARIO_NAME = "age_of_ai_fixture_guest"
+FIXTURE_RULE_NAME = os.environ.get("VOXIMPLANT_FIXTURE_RULE_NAME", "age-of-ai-fixture-guest")
+FIXTURE_RULE_PATTERN = r"^fixture-guest-never-dialled$"
 # xAI Voice Agent model for Mira. Oct 15 2026: pinned to `grok-voice-3.0`
 # (released Oct 14 2026; the `grok-voice-latest` alias moved to it the same
 # day and `grok-voice-2.0` is deprecated). xAI's own guidance is to pin a
@@ -49,6 +56,8 @@ DEFAULT_GROK_VOICE_MODEL = os.environ.get(
 DEFAULT_GROK_SESSION_MAX_MIN = "30"
 _SCENARIO_PATH = (Path(__file__).resolve().parent.parent
                   / "scenarios" / "age_of_ai_interview.js")
+_FIXTURE_SCENARIO_PATH = (Path(__file__).resolve().parent.parent
+                          / "scenarios" / "age_of_ai_fixture_guest.js")
 
 
 class VoximplantError(RuntimeError):
@@ -130,6 +139,44 @@ def start_narration_take(take_id: str, text: str, voice: str = "ara",
     )
 
 
+def start_fixture_guest(run_id: str, *, persona: str, voice: str = "sal",
+                        minutes: int = 10, speaks_first: bool = False,
+                        fixture_id: str = "", guest_name: str = "",
+                        cough_clip: Optional[str] = None,
+                        silence_ms: Optional[int] = None,
+                        beats: Optional[List[Dict[str, Any]]] = None,
+                        rule_name: str = FIXTURE_RULE_NAME) -> Dict[str, Any]:
+    """Send the FIXTURE GUEST into an interview room (rehearsal harness).
+
+    Starts ``age_of_ai_fixture_guest.js`` on its own rule with the persona
+    and the scheduled behaviours in customData; the fixture then places the
+    same callConference a human leg does, so the room session starts (or
+    admits it) exactly as it would for a person. ``persona`` is rendered by
+    ``pipelines/voices/rehearsal.py`` and is the only large field.
+    """
+    if not persona or not persona.strip():
+        raise VoximplantError("a fixture guest needs a persona")
+    custom: Dict[str, Any] = {
+        "run_id": run_id, "fixture": True, "fixture_id": fixture_id,
+        "guest_name": guest_name, "persona": persona, "voice": voice,
+        "minutes": int(minutes), "speaks_first": bool(speaks_first),
+    }
+    if cough_clip:
+        custom["cough_clip"] = cough_clip
+    if silence_ms:
+        custom["silence_ms"] = int(silence_ms)
+    if beats:
+        custom["beats"] = beats
+    result = _call(
+        "StartScenarios",
+        rule_name=rule_name,
+        application_name=APPLICATION_NAME,
+        script_custom_data=json.dumps(custom),
+    )
+    logger.info("fixture guest %s started for run %s", fixture_id or "?", run_id)
+    return result
+
+
 def upload_scenario(path: Path,
                     scenario_name: str = SCENARIO_NAME,
                     supabase_url: Optional[str] = None,
@@ -179,6 +226,14 @@ def upload_scenario(path: Path,
     session_max = (os.environ.get("GROK_SESSION_MAX_MIN", "").strip()
                    or DEFAULT_GROK_SESSION_MAX_MIN)
     source = source.replace("__GROK_SESSION_MAX_MIN__", str(session_max))
+    # Request signing (Oct 21 2026): when VOICES_WEBHOOK_SECRET is set the
+    # room signs every request it makes to the Worker (X-Voices-Signature,
+    # hex HMAC-SHA256 of the body) and the Worker, deployed with the same
+    # secret, refuses unsigned ones. Unset leaves the placeholder, which the
+    # scenario reads as "send no header".
+    webhook_secret = os.environ.get("VOICES_WEBHOOK_SECRET", "").strip()
+    if webhook_secret:
+        source = source.replace("__VOICES_WEBHOOK_SECRET__", webhook_secret)
     print(f"scenario deploys with Grok voice model {voice_model}, "
           f"session cap {session_max} min", flush=True)
 
@@ -191,6 +246,14 @@ def upload_scenario(path: Path,
         return _call("AddScenario",
                      scenario_name=scenario_name,
                      scenario_script=source)
+
+
+def upload_fixture_scenario(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Deploy the fixture-guest scenario with the same deploy-time
+    substitutions as the interview scenario (same placeholders, same
+    secrets, same pinned voice model)."""
+    return upload_scenario(path or _FIXTURE_SCENARIO_PATH,
+                           scenario_name=FIXTURE_SCENARIO_NAME)
 
 
 def set_application_secrets(supabase_service_key: str,
@@ -415,3 +478,25 @@ def ensure_room_rule(application_name: str = APPLICATION_NAME,
         "rule_id": rule_id, "created": created, "reordered": reordered,
         "rules": [(r.get("rule_name"), r.get("rule_pattern")) for r in rules],
     }
+
+
+def ensure_fixture_rule(application_name: str = APPLICATION_NAME,
+                        scenario_name: str = FIXTURE_SCENARIO_NAME,
+                        rule_name: str = FIXTURE_RULE_NAME,
+                        pattern: str = FIXTURE_RULE_PATTERN) -> Dict[str, Any]:
+    """Create the fixture-guest rule if missing (rehearsal harness).
+
+    A StartScenarios call names a RULE, and a rule names a scenario, so the
+    fixture scenario needs one. Its pattern can never match an inbound call
+    (nothing dials ``fixture-guest-never-dialled``) and it is never moved to
+    the top: the room rule keeps its place. Idempotent."""
+    rules = list_rules(application_name)
+    existing = next((r for r in rules if r.get("rule_name") == rule_name), None)
+    if existing is not None:
+        return {"rule_id": existing.get("rule_id"), "created": False}
+    res = _call("AddRule", application_name=application_name,
+                rule_name=rule_name, rule_pattern=pattern,
+                scenario_name=scenario_name)
+    logger.info("Voximplant rule %s (%s) created for %s: %s", rule_name, pattern,
+                scenario_name, res)
+    return {"rule_id": res.get("rule_id"), "created": True}

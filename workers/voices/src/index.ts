@@ -9,6 +9,8 @@
  *   POST /voices/cal-com-booked       Cal.com booking webhook (show from event type)
  *   GET  /voices/review/:token        guest transcript review page (gate 2)
  *   POST /voices/review/:token        guest approve / redact submit
+ *   GET  /voices/survey/:token        guest survey, a day after the room (Oct 21 2026)
+ *   POST /voices/survey/:token        the three answers
  *   GET  /voices/admin/triage         Patrick's application triage UI (grouped by show)
  *   POST /voices/triage-decision      approve/decline an application
  *   POST /voices/triage-reassign      move an application to the other show
@@ -63,7 +65,23 @@ export interface Env {
   // "voices" → nerra_voices, anything else → age_of_ai.
   CALCOM_EVENT_SLUG_AGE_OF_AI?: string;
   CALCOM_EVENT_SLUG_NERRA_VOICES?: string;
+  // Oct 21 2026: the five-minute pre-call hello (pipelines/voices, migration
+  // 20261021_pre_call_hello.sql). The Cal.com event-type slug (or numeric id)
+  // that books one; without it a slug or title containing "hello" is one.
+  CALCOM_EVENT_SLUG_HELLO?: string;
   SLACK_WEBHOOK?: string;
+  // Oct 21 2026: the room signs what it posts here. The scenario carries the
+  // same value (substituted at deploy as __VOICES_WEBHOOK_SECRET__) and sends
+  // X-Voices-Signature: sha256=<hex HMAC-SHA256 of the raw body>. Unset =
+  // the scenario-only routes accept unsigned requests as before, so a Worker
+  // deployed ahead of the scenario cannot drop a live room's hangup. The
+  // browser studio never holds the secret: the routes it shares with the
+  // scenario (studio-check, studio-silence, the uploads) verify a signature
+  // only when one is sent.
+  VOICES_WEBHOOK_SECRET?: string;
+  // Oct 21 2026: Cal.com's webhook secret (Cal.com signs the raw body with
+  // HMAC-SHA256 and sends the hex in X-Cal-Signature-256). Unset = accept.
+  CALCOM_WEBHOOK_SECRET?: string;
   // Oct 19 2026: the half-hour producer tick asks Gmail whether anything is
   // unprocessed before it dispatches a runner (producerTickDue). The SAME
   // service account + delegated mailbox the inbox job uses
@@ -231,6 +249,20 @@ function showFromCalCom(env: Env, eventSlug: string, eventTypeId: string): Show 
   return slug.includes("voices") ? SHOWS.nerra_voices : SHOWS.age_of_ai;
 }
 
+/** Is this booking the five-minute hello? The configured event type wins
+ *  (slug or numeric id, the showFromCalCom pattern); else "hello" in the
+ *  slug or the event title. A closing session is never a hello. */
+export function isHelloBooking(env: Pick<Env, "CALCOM_EVENT_SLUG_HELLO">, eventSlug: string,
+                               eventTypeId: string, title: string): boolean {
+  const slug = eventSlug.trim().toLowerCase();
+  const id = eventTypeId.trim().toLowerCase();
+  const want = (env.CALCOM_EVENT_SLUG_HELLO ?? "").trim().toLowerCase();
+  if (want && (want === slug || (id && want === id))) return true;
+  return /hello/i.test(slug) || /\bhello\b/i.test(title);
+}
+
+export const HELLO_MINUTES = 5;
+
 // ---------------------------------------------------------------------------
 // Small clients
 // ---------------------------------------------------------------------------
@@ -257,6 +289,83 @@ async function sb(env: Env, method: string, path: string, body?: unknown,
  *  defensively. */
 function githubToken(env: Env): string {
   return (env.GITHUB_DISPATCH_TOKEN || "").trim();
+}
+
+// ---------------------------------------------------------------------------
+// Webhook signatures (Oct 21 2026). The review found every inbound webhook
+// accepting an unsigned body: anyone who knew a run id could end a room,
+// attach a recording URL or flip a leg's timeline. The scenario now signs
+// what it posts and the Worker checks it when it holds the secret.
+// ---------------------------------------------------------------------------
+
+export const SIGNATURE_HEADER = "X-Voices-Signature";
+export const CALCOM_SIGNATURE_HEADER = "X-Cal-Signature-256";
+
+export async function hmacHex(secret: string, message: string | ArrayBuffer): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const data = typeof message === "string" ? enc.encode(message) : new Uint8Array(message);
+  const sig = await crypto.subtle.sign("HMAC", key, data);
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Does `header` carry a valid HMAC-SHA256 of `raw` under `secret`? Accepts
+ *  "sha256=<hex>" or the bare hex, case-insensitively. */
+export async function signatureOk(secret: string, header: string | null,
+                                  raw: string | ArrayBuffer): Promise<boolean> {
+  const given = String(header ?? "").trim().replace(/^sha256=/i, "").toLowerCase();
+  if (!given) return false;
+  const want = await hmacHex(secret, raw);
+  return tokenEquals(given, want);
+}
+
+let unsignedWarned = false;
+
+/** Verdict for a scenario-originated request. `required` = the route is
+ *  only ever called by the room (interview-complete, leg-event,
+ *  narration-take): with the secret set, an unsigned or wrong signature is
+ *  a 401. `required: false` = the studio page shares the route and cannot
+ *  sign; a request is refused only when it carries a BAD signature. */
+export async function webhookVerdict(env: Pick<Env, "VOICES_WEBHOOK_SECRET">,
+                                     header: string | null, raw: string | ArrayBuffer,
+                                     required: boolean): Promise<"ok" | "unsigned" | "bad"> {
+  const secret = (env.VOICES_WEBHOOK_SECRET || "").trim();
+  if (!secret) {
+    if (!unsignedWarned) {
+      unsignedWarned = true;
+      console.warn("VOICES_WEBHOOK_SECRET is not set: inbound webhooks are accepted unsigned");
+    }
+    return "ok";
+  }
+  if (!header) return required ? "bad" : "unsigned";
+  return (await signatureOk(secret, header, raw)) ? "ok" : "bad";
+}
+
+/** Read a JSON body the room may have signed. Returns the parsed body (null
+ *  when unparseable) and, when the signature fails, the 401 to send. */
+async function readSignedJson(req: Request, env: Env, required: boolean):
+    Promise<{ body: any; denied: Response | null }> {
+  const raw = await req.text().catch(() => "");
+  const verdict = await webhookVerdict(env, req.headers.get(SIGNATURE_HEADER), raw, required);
+  if (verdict === "bad") return { body: null, denied: json({ error: "bad signature" }, 401) };
+  let body: any = null;
+  try { body = raw ? JSON.parse(raw) : null; } catch { body = null; }
+  return { body, denied: null };
+}
+
+/** Cal.com: X-Cal-Signature-256 is the hex HMAC-SHA256 of the raw body under
+ *  the webhook's secret. Verified only when CALCOM_WEBHOOK_SECRET is set. */
+async function readCalComJson(req: Request, env: Env):
+    Promise<{ body: any; denied: Response | null }> {
+  const raw = await req.text().catch(() => "");
+  const secret = (env.CALCOM_WEBHOOK_SECRET || "").trim();
+  if (secret && !(await signatureOk(secret, req.headers.get(CALCOM_SIGNATURE_HEADER), raw))) {
+    return { body: null, denied: json({ error: "bad signature" }, 401) };
+  }
+  let body: any = null;
+  try { body = raw ? JSON.parse(raw) : null; } catch { body = null; }
+  return { body, denied: null };
 }
 
 async function dispatch(env: Env, eventType: string, payload: Record<string, unknown>) {
@@ -659,15 +768,42 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
 const PLATFORM_FAULT_REASONS = new Set(["grok_dropped", "agent_startup_failed", "media_bridge_failed"]);
 
 async function handleInterviewComplete(req: Request, env: Env): Promise<Response> {
-  const payload = await req.json<any>().catch(() => null);
+  const { body: payload, denied } = await readSignedJson(req, env, true);
+  if (denied) return denied;
   if (!payload?.run_id) return json({ error: "run_id required" }, 400);
   // Room model (Sept 9 2026): the per-person recording URLs arrive from
   // the participant sessions via /voices/leg-event, so the completion
   // payload MERGES into grok_session_log and never nulls a per-leg URL
   // it does not carry.
   const existingRows = await sb(env, "GET",
-    `interview_runs?id=eq.${payload.run_id}&select=grok_session_log,status,disconnect_reason`);
+    `interview_runs?id=eq.${payload.run_id}&select=grok_session_log,status,disconnect_reason,session_kind`);
   const existingLog = existingRows?.[0]?.grok_session_log ?? {};
+  // Oct 21 2026: the room reports how the turn-taking went on every run.
+  // Kept inside grok_session_log (no new column); the rehearsal harness and
+  // the audio metrics read them from there.
+  const roomCounters = roomCountersOf(payload);
+  // A rehearsal (the harness's fixture guest in a real room) is stored and
+  // stopped there: no post-interview processing, no email, no Slack.
+  if (String(existingRows?.[0]?.session_kind ?? "") === "rehearsal") {
+    await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
+      status: payload.status === "failed" ? "failed" : "completed",
+      disconnect_reason: payload.disconnect_reason ?? payload.reason ?? null,
+      duration_sec: payload.duration_sec ?? null,
+      ...(payload.voximplant_mira_record_url ? { recording_mira_url: payload.voximplant_mira_record_url } : {}),
+      grok_session_log: {
+        ...existingLog,
+        ...(payload.grok_session_log ? { log: payload.grok_session_log } : {}),
+        ...(payload.voximplant_record_url ? { voximplant_record_url: payload.voximplant_record_url } : {}),
+        ...(payload.voximplant_mira_record_url ? { voximplant_mira_record_url: payload.voximplant_mira_record_url } : {}),
+        ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
+        ...(payload.speech_events !== undefined ? { speech_events: Number(payload.speech_events) || 0 } : {}),
+        call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
+        rehearsal: true,
+        ...roomCounters,
+      },
+    });
+    return json({ ok: true, rehearsal: true });
+  }
   // Sept 28 2026: the guest pressed "Have Mira call my phone". Their browser
   // room ends when they hang up, and its completion must not reopen the
   // studio (short call) or send a few minutes of silence to post-production
@@ -696,6 +832,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
       ...(payload.speech_events !== undefined ? { speech_events: Number(payload.speech_events) || 0 } : {}),
       call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
+      ...roomCounters,
     },
     // Per-leg Voximplant recordings and the host timeline the room
     // reports. Columns from supabase/migrations/20260906_cohost_conference.sql;
@@ -847,6 +984,24 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
 
   await dispatch(env, "interview-complete", { run_id: payload.run_id });
   return json({ ok: true });
+}
+
+/** The turn-taking counters the room posts at the end of every run (Oct 21
+ *  2026): barge-ins, server-started turns, self-answers the completion check
+ *  blocked, whether the closing round completed and which of its questions
+ *  were asked. Numbers and booleans only; anything else is dropped. */
+export function roomCountersOf(payload: any): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of ["barge_ins", "server_turns", "self_answers_blocked"]) {
+    if (payload?.[k] !== undefined && Number.isFinite(Number(payload[k]))) out[k] = Number(payload[k]);
+  }
+  if (typeof payload?.closing_round_complete === "boolean") out.closing_round_complete = payload.closing_round_complete;
+  if (Array.isArray(payload?.closing_questions_asked)) {
+    out.closing_questions_asked = payload.closing_questions_asked.slice(0, 20).map((q: unknown) => String(q).slice(0, 200));
+  } else if (payload?.closing_questions_asked !== undefined && Number.isFinite(Number(payload.closing_questions_asked))) {
+    out.closing_questions_asked = Number(payload.closing_questions_asked);
+  }
+  return out;
 }
 
 /** Every address on a Cal.com booking, booker first.
@@ -1100,7 +1255,8 @@ async function handleCalComRescheduled(env: Env, p: any): Promise<Response | nul
 }
 
 async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
-  const hook = await req.json<any>().catch(() => null);
+  const { body: hook, denied } = await readCalComJson(req, env);
+  if (denied) return denied;
   const p = hook?.payload ?? hook ?? {};
   const trigger = String(hook?.triggerEvent ?? hook?.trigger_event ?? "").toUpperCase();
   if (trigger === "BOOKING_CANCELLED") return handleCalComCancelled(env, p);
@@ -1260,8 +1416,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // session that records only the closing round of an interview the old
   // time cap cut off. It is always its own row, pointing at the interview
   // it finishes.
+  const eventTitle = String(p.title ?? p.eventTitle ?? p.eventType?.title ?? "");
   const closing = /closing/i.test(eventSlug) ||
-    /finishing our conversation/i.test(String(p.title ?? p.eventTitle ?? p.eventType?.title ?? ""));
+    /finishing our conversation/i.test(eventTitle);
   let continues: string | null = null;
   if (closing) {
     const prev = await sb(env, "GET",
@@ -1269,11 +1426,21 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       `&status=not.in.(scheduled,briefed,cancelled,missed)&order=scheduled_at.desc&limit=1&select=id`);
     continues = prev?.[0]?.id ?? null;
   }
-  const existing = closing
-    ? await sb(env, "GET",
-        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.closing&status=in.(scheduled,briefed)&limit=1`)
-    : await sb(env, "GET",
-        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview&status=in.(scheduled,briefed)&limit=1`);
+  // Oct 21 2026: the five-minute hello two days before the interview. Its
+  // own row (session_kind "hello", five minutes) pointing at the guest's
+  // scheduled interview, so the agenda it produces lands on the right one.
+  const hello = !closing && isHelloBooking(env, eventSlug, eventTypeId, eventTitle);
+  let helloFor: string | null = null;
+  if (hello) {
+    const main = await sb(env, "GET",
+      `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview` +
+      `&status=in.(scheduled,briefed)&order=scheduled_at.asc&limit=1&select=id`);
+    helloFor = main?.[0]?.id ?? null;
+    if (!helloFor) console.warn(`cal-com-booked: hello for ${emailAddr} has no scheduled interview to precede`);
+  }
+  const kind = closing ? "closing" : hello ? "hello" : "interview";
+  const existing = await sb(env, "GET",
+    `interviews?application_id=eq.${apps[0].id}&session_kind=eq.${kind}&status=in.(scheduled,briefed)&limit=1`);
   let interviewId: string;
   if (existing?.length) {
     interviewId = existing[0].id;
@@ -1281,14 +1448,16 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
         cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: closing ? 15 : plannedMinutes, host_mode: false });
+        duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes, host_mode: false,
+        ...(hello ? { hello_for_interview_id: helloFor } : {}) });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
         cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: closing ? 15 : plannedMinutes, host_mode: false,
-        ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}) },
+        duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes, host_mode: false,
+        ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}),
+        ...(hello ? { session_kind: "hello", hello_for_interview_id: helloFor } : {}) },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
@@ -1326,13 +1495,32 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     await slack(env, `${show.shortLabel}: ${apps[0].name} booked a closing session ${pacificTime(startTime)}`);
     return json({ ok: true, show: show.slug, interview_id: interviewId, closing: true });
   }
+  if (hello) {
+    // The usual confirmation shape — the studio link and the three steps —
+    // and no prep brief: the brief belongs to the interview, and the hello
+    // is where the guest tells Mira what it should reach.
+    await email(env, emailAddr, `Our five-minute hello before ${show.name}`,
+      `<p>Hi ${esc(firstName(apps[0].name))},</p>
+       <p>Thank you for booking the hello. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""},
+       and it is five minutes: I say hello, we check your sound, and you tell me the one or
+       two things you most want our conversation to reach. That becomes the shape of the hour.</p>
+       <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
+       it: the studio opens ${STUDIO_OPENS_BEFORE_TEXT} before we start, and there is nothing to install.</p>
+       ${GUEST_AUDIO_HTML}
+       ${studioStepsHtml(studio)}
+       <p>${manage ? `If you need to move it, <a href="${esc(manage)}">use this link</a>.` : "If you need to move it, use the reschedule link in your calendar confirmation."}</p>
+       ${miraSignature(show)}`, true, publicistCc(apps[0]));
+    await slack(env, `${show.shortLabel}: ${apps[0].name} booked a five-minute hello ${pacificTime(startTime)}` +
+      (helloFor ? "" : " (no scheduled interview found to attach it to)"));
+    return json({ ok: true, show: show.slug, interview_id: interviewId, hello: true, hello_for_interview_id: helloFor });
+  }
   await email(env, emailAddr, `You're booked on ${show.name}`,
     `<p>Hi ${esc(firstName(apps[0].name))},</p>
      <p>Thank you for booking. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""}.
      I'm Mira, the AI host of ${esc(show.name)}, and it will be just the two of us.</p>
      ${subjectHtml(interviewSubject(null, apps[0], true))}
      <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
-     it: the studio opens ten minutes before we start, and there is nothing to install.</p>
+     it: the studio opens ${STUDIO_OPENS_BEFORE_TEXT} before we start, and there is nothing to install.</p>
      ${GUEST_AUDIO_HTML}
      <p>You can run the <a href="${setupTest}">30-second setup test</a> any time before
      the day. It confirms I'll hear you clearly. This is an audio conversation: I'm a voice,
@@ -1439,6 +1627,16 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
   if (body.decision === "archive") {
     return archivePackage(env, String(body.package_id), String(body.notes ?? "").trim() || "archived from the review page");
   }
+  // Oct 21 2026: a second Approve used to resend the guest's review email
+  // and push their seven-day deadline out again. Approve is idempotent now:
+  // a package already past gate 1 keeps its deadline and its email.
+  const before = (await sb(env, "GET",
+    `editorial_packages?id=eq.${body.package_id}&select=id,status&limit=1`))?.[0];
+  if (!before) return json({ error: "package not found" }, 404);
+  if (body.decision === "approve"
+      && ["approved_by_patrick", "approved_by_guest", "published"].includes(String(before.status))) {
+    return json({ ok: true, already: before.status });
+  }
   const status = body.decision === "approve" ? "approved_by_patrick" : "killed";
   const rows = await sb(env, "PATCH", `editorial_packages?id=eq.${body.package_id}`, {
     status,
@@ -1511,12 +1709,40 @@ async function handleLessonDecision(req: Request, env: Env): Promise<Response> {
   if (!UUID_RE.test(lessonId) || !["active", "retired"].includes(status)) {
     return json({ error: "lesson_id + status(active|retired) required" }, 400);
   }
-  const denied = await requirePackageAccess(req, env, String(body?.package_id ?? ""));
+  const packageId = String(body?.package_id ?? "");
+  const denied = await requirePackageAccess(req, env, packageId);
   if (denied) return denied;
+  // Oct 21 2026: any package's review token could activate or retire ANY
+  // lesson, network-wide ones included. The token now decides only the
+  // lessons its own interview proposed; a show's standing lesson or a
+  // network lesson needs the admin token.
+  const lesson = (await sb(env, "GET",
+    `show_lessons?id=eq.${lessonId}&select=id,show,interview_id,status&limit=1`))?.[0];
+  if (!lesson) return json({ error: "lesson not found" }, 404);
+  const viaReviewLink = !!requireAdmin(req, env);
+  if (viaReviewLink) {
+    const pkg = UUID_RE.test(packageId)
+      ? (await sb(env, "GET", `editorial_packages?id=eq.${packageId}&select=id,interview_id&limit=1`))?.[0]
+      : null;
+    if (!lessonDecisionAllowed(lesson, pkg)) {
+      return json({ error: "this review link may only decide lessons from its own interview" }, 403);
+    }
+  }
   const rows = await sb(env, "PATCH", `show_lessons?id=eq.${lessonId}`,
-    { status, decided_at: new Date().toISOString() }, "return=representation");
+    { status, decided_at: new Date().toISOString(),
+      decided_by: viaReviewLink ? "patrick:review-link" : "patrick" },
+    "return=representation");
   if (!rows?.[0]) return json({ error: "lesson not found" }, 404);
   return json({ ok: true, id: lessonId, status });
+}
+
+/** May a package's review token decide this lesson? Only when the lesson
+ *  was proposed by that package's interview and is not network-scoped. */
+export function lessonDecisionAllowed(lesson: { show?: unknown; interview_id?: unknown },
+                                      pkg: { interview_id?: unknown } | null | undefined): boolean {
+  if (!pkg || !pkg.interview_id || !lesson.interview_id) return false;
+  if (String(lesson.show ?? "") === "network") return false;
+  return String(lesson.interview_id) === String(pkg.interview_id);
 }
 
 /** POST /voices/narration-take {take_id, status, record_url?, detail?}
@@ -1525,7 +1751,8 @@ async function handleLessonDecision(req: Request, env: Env): Promise<Response> {
  *  take_id is an opaque row that must already exist, and the only thing this
  *  can do is attach a Voximplant recording URL to it. */
 async function handleNarrationTake(req: Request, env: Env): Promise<Response> {
-  const body = await req.json<any>().catch(() => null);
+  const { body, denied } = await readSignedJson(req, env, true);
+  if (denied) return denied;
   const takeId = String(body?.take_id ?? "");
   if (!takeId || takeId.length > 128) return json({ error: "take_id required" }, 400);
   const status = ["ok", "failed"].includes(String(body?.status)) ? String(body.status) : "failed";
@@ -1669,26 +1896,41 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
     `episode_grades?interview_id=eq.${pkg.interview_id}&select=ask_the_guest&limit=1`))?.[0];
   const askGuest = String(grade?.ask_the_guest ?? "").trim() ||
     "How was it, being interviewed by an AI? Is there one thing I could do better next time?";
+  // Oct 21 2026: the guest approves the transcript of the EDIT when the
+  // pipeline has written one (editorial_packages.edit_transcript), else the
+  // room's transcript as before — they used to sign off lines the edit had
+  // already removed. Each timed line is clickable; a click marks a cut
+  // with its time window, which the edit applies in code.
+  const editTranscript = String(pkg.edit_transcript ?? "").trim();
+  const transcriptText = editTranscript
+    || (pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim();
+  const transcriptHtml = reviewTranscriptHtml(transcriptText);
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Review your ${esc(show.shortLabel)} conversation</title>
 <style>body{font:16px/1.6 system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#1a202c}
 pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;max-height:60vh;overflow:auto}
+.ln{cursor:pointer;display:block;padding:.1rem .3rem;border-radius:4px}.ln:hover{background:#edf2f7}
+.ln.cut{background:#fed7d7;text-decoration:line-through}
 textarea{width:100%;min-height:90px}button{background:${show.brandColor};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin-right:.6rem}
 .secondary{background:#4a5568}</style>
 <h1>Your ${esc(show.shortLabel)} conversation</h1>
 <p>Here is the recording and the transcript — this is what would publish.
-Have a listen, then approve it as-is, or tell us what to remove: quote the
-passage(s) and we'll cut them from both the audio and the transcript before
-anything goes out.</p>
+Have a listen, then approve it as-is, or tell us what to remove: click any
+line below to mark it for cutting, or quote a passage in the box, and we'll
+cut it from both the audio and the transcript before anything goes out.</p>
 ${listenUrl
   ? `<audio controls preload="none" src="${esc(listenUrl)}" style="width:100%;margin:1rem 0"></audio>`
   : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or approve on the transcript alone.</em></p>`}
 <h3>Transcript</h3>
-<pre>${esc((pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim())}</pre>
+${editTranscript
+  ? `<p><em>This is the transcript of the edit a listener will hear, not of the whole recording.</em></p>`
+  : ""}
+<p style="color:#4a5568;font-size:.95rem">Click a line to mark it for cutting; click again to unmark. <span id="marked">Nothing marked.</span></p>
+<pre id="transcript">${transcriptHtml}</pre>
 <h3>Request removals (optional)</h3>
-<textarea id="redactions" placeholder="Quote any passage you'd like removed, one per line, with a word on why if you like."></textarea>
+<textarea id="redactions" placeholder="Anything a marked line cannot say: quote a passage, or describe the cut, with a word on why if you like."></textarea>
 <h3>One question from Mira (optional)</h3>
 <p>${esc(askGuest)}</p>
 <textarea id="experience" placeholder="Anything at all, including what irritated you. I read every answer, and it changes how I interview the next guest."></textarea>
@@ -1720,7 +1962,24 @@ and we'll link it.</p>
 // Sept 17 2026, Dr. Wolfberg: he pressed Approve, the request went through,
 // and the only acknowledgement was a line at the very bottom of a long page
 // he never scrolled to. The answer now appears where the button was.
+// Oct 21 2026: a click on a timed line marks it for cutting; the window
+// (start, end = next line's start) rides with the submit.
+const markedEl = document.getElementById('marked');
+function markedWindows(){
+  return Array.from(document.querySelectorAll('.ln.cut')).map(function(el){
+    return {start_sec: Number(el.dataset.start), end_sec: Number(el.dataset.end), line: el.textContent};
+  });
+}
+document.getElementById('transcript').addEventListener('click', function(ev){
+  const el = ev.target.closest('.ln');
+  if (!el) return;
+  el.classList.toggle('cut');
+  const n = document.querySelectorAll('.ln.cut').length;
+  markedEl.textContent = n ? (n + ' line' + (n === 1 ? '' : 's') + ' marked for cutting.') : 'Nothing marked.';
+});
 async function submitReview(approve){
+  // Lines marked for cutting are a removal request, whichever button was pressed.
+  if (approve && markedWindows().length) approve = false;
   const picked = document.querySelector('input[name=followup]:checked');
   const approveBtn = document.getElementById('approveBtn');
   const removeBtn = document.getElementById('removeBtn');
@@ -1731,6 +1990,7 @@ async function submitReview(approve){
     const resp = await fetch(location.pathname, {method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
+        windows: markedWindows(),
         followup: picked ? picked.value : 'none',
         followup_note: document.getElementById('followupNote').value,
         experience: document.getElementById('experience').value,
@@ -1755,6 +2015,25 @@ async function submitReview(approve){
   done.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
 </script>`);
+}
+
+/** The transcript as clickable lines: each timed line becomes a span that
+ *  carries its window; untimed lines render as text. */
+export function reviewTranscriptHtml(text: string): string {
+  const timed = transcriptLines(text);
+  let i = 0;
+  const out: string[] = [];
+  for (const raw of String(text ?? "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) { out.push(""); continue; }
+    if (i < timed.length && timed[i].line === line) {
+      const w = timed[i++];
+      out.push(`<span class="ln" data-start="${w.start}" data-end="${w.end}">${esc(line)}</span>`);
+    } else {
+      out.push(esc(line));
+    }
+  }
+  return out.join("\n");
 }
 
 async function handleGuestReviewSubmit(req: Request, env: Env, token: string): Promise<Response> {
@@ -1811,22 +2090,200 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
       (body?.followup_note ? ` — ${String(body.followup_note).slice(0, 300)}` : ""));
   }
 
-  if (body.approve) {
+  // Oct 21 2026: a cut the guest marks on a transcript line carries its
+  // time window, so the edit can apply it in code (guest_redaction_windows);
+  // the free-text box stays for anything a line cannot say.
+  const windows = redactionWindows(body?.windows);
+  if (windows.length) {
+    const existing = Array.isArray(pkg.guest_redaction_windows) ? pkg.guest_redaction_windows : [];
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
-      { status: "approved_by_guest", guest_reviewed_at: now });
-    await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "approved" });
-    await dispatch(env, "interview-approved-by-guest", { interview_id: pkg.interview_id });
+      { guest_redaction_windows: mergeWindows(existing, windows) });
+  }
+
+  if (body.approve) {
+    // The guest's "yes" is recorded first, so a thrown dispatch can never
+    // lose it; production is marked approved only once GitHub has the event.
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, { guest_reviewed_at: now });
+    try {
+      await approveAndDispatch(env, { ...pkg, guest_reviewed_at: now }, pkg.interview_id, now);
+    } catch (err: any) {
+      console.error(`guest approval dispatch failed for ${pkg.id}: ${err?.message ?? err}`);
+      await slack(env, `:warning: ${show.shortLabel}: guest APPROVED package ${pkg.id} but the production dispatch failed (${String(err?.message ?? err).slice(0, 120)}); gate-2 housekeeping retries daily.`);
+      return json({ ok: true, dispatched: false });
+    }
     await slack(env, `${show.shortLabel}: guest APPROVED package ${pkg.id} — production dispatched`);
   } else {
     const requests = String(body.redactions ?? "").trim();
+    const noted = windows.length
+      ? `${requests}${requests ? "\n" : ""}${windows.length} marked line(s) carry time windows (guest_redaction_windows).`
+      : requests;
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, {
       guest_reviewed_at: now,
-      guest_redactions: [{ note: requests, resolved: false }],
+      guest_redactions: [{ note: noted, resolved: false }],
       status: "in_review",
     });
-    await slack(env, `${show.shortLabel}: guest requested removals on package ${pkg.id} — needs Patrick:\n${requests.slice(0, 500)}`);
+    await slack(env, `${show.shortLabel}: guest requested removals on package ${pkg.id} — needs Patrick:\n${noted.slice(0, 500)}`);
   }
   return json({ ok: true });
+}
+
+/** One transcript line as the review page renders it: the [mm:ss] or
+ *  [h:mm:ss] prefix is its start; the end is the next line's start, or
+ *  start + 15 s on the last line. */
+export const TRANSCRIPT_LINE_RE = /^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*(.*)$/;
+export const REDACTION_LINE_DEFAULT_SEC = 15;
+
+export function transcriptLines(text: string): Array<{ start: number; end: number; line: string }> {
+  const rows: Array<{ start: number; line: string }> = [];
+  for (const raw of String(text ?? "").split(/\r?\n/)) {
+    const m = raw.match(TRANSCRIPT_LINE_RE);
+    if (!m) continue;
+    const start = m[3] !== undefined
+      ? Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3])
+      : Number(m[1]) * 60 + Number(m[2]);
+    rows.push({ start, line: raw.trim() });
+  }
+  return rows.map((r, i) => ({
+    start: r.start,
+    end: i + 1 < rows.length ? Math.max(r.start + 1, rows[i + 1].start) : r.start + REDACTION_LINE_DEFAULT_SEC,
+    line: r.line,
+  }));
+}
+
+/** The windows a review submit carries, cleaned: numbers only, end after
+ *  start, the line text capped, at most 200 of them. */
+export function redactionWindows(raw: unknown): Array<{ start_sec: number; end_sec: number; line: string }> {
+  if (!Array.isArray(raw)) return [];
+  const out: Array<{ start_sec: number; end_sec: number; line: string }> = [];
+  for (const w of raw.slice(0, 200)) {
+    const start = Number(w?.start_sec ?? w?.start);
+    const end = Number(w?.end_sec ?? w?.end);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) continue;
+    out.push({ start_sec: Math.round(start * 100) / 100, end_sec: Math.round(end * 100) / 100,
+               line: String(w?.line ?? "").slice(0, 400) });
+  }
+  return out;
+}
+
+export function mergeWindows(existing: any[], added: any[]): any[] {
+  const seen = new Set(existing.map((w) => `${w?.start_sec}-${w?.end_sec}`));
+  const out = [...existing];
+  for (const w of added) {
+    const key = `${w.start_sec}-${w.end_sec}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(w);
+  }
+  return out.sort((a, b) => Number(a.start_sec) - Number(b.start_sec));
+}
+
+// -- Guest survey (Oct 21 2026) -----------------------------------------------
+// Three questions, emailed by Mira a day after the room (the pipeline mints
+// editorial_packages.survey_token and sends the link), asked whether or not
+// the guest ever opens the review page. The first number is this show's
+// headline figure, the way audience_headline is the network's.
+
+export const SURVEY_RECOMMEND = new Set(["yes", "no", "maybe"]);
+
+async function pkgBySurveyToken(env: Env, token: string): Promise<any | null> {
+  const rows = await sb(env, "GET",
+    `editorial_packages?survey_token=eq.${encodeURIComponent(token)}&limit=1`);
+  return rows?.[0] ?? null;
+}
+
+/** The answers a survey submit carries, cleaned; null when nothing usable. */
+export function surveyAnswers(body: any): { survey_rating: number | null; survey_change: string | null;
+                                             survey_recommend: string | null } | null {
+  const rating = Math.round(Number(body?.rating));
+  const okRating = Number.isFinite(rating) && rating >= 1 && rating <= 5;
+  const change = String(body?.change ?? "").trim().slice(0, 2000);
+  const recommend = oneOf(body?.recommend, [...SURVEY_RECOMMEND]);
+  if (!okRating && !change && !recommend) return null;
+  return {
+    survey_rating: okRating ? rating : null,
+    survey_change: change || null,
+    survey_recommend: recommend,
+  };
+}
+
+async function handleSurveyPage(env: Env, token: string): Promise<Response> {
+  const pkg = await pkgBySurveyToken(env, token);
+  if (!pkg) return html(page("Link not found",
+    "<p>This link has expired or was mistyped. Reply to any of Mira's emails instead.</p>"), 404);
+  const { app, show } = await interviewWithApp(env, pkg.interview_id);
+  const answered = !!pkg.survey_answered_at;
+  const chosen = (v: string) => String(pkg.survey_recommend ?? "") === v ? " checked" : "";
+  const stars = [1, 2, 3, 4, 5].map((n) =>
+    `<label style="margin-right:1rem"><input type="radio" name="rating" value="${n}"` +
+    `${Number(pkg.survey_rating) === n ? " checked" : ""}> ${n}</label>`).join("");
+  return html(page(`How was the hour, ${esc(firstName(app?.name))}?`, `
+    <p>Three questions, from Mira. They take a minute, and every answer changes
+    how I interview the next guest on ${esc(show.name)}.</p>
+    ${answered ? "<p><em>You have answered already; you can change your answers below.</em></p>" : ""}
+    <h3>1. On a scale of one to five, how did the hour compare with a human host?</h3>
+    <p style="color:#4a5568;font-size:.95rem">1 = much worse · 3 = about the same · 5 = much better</p>
+    <p>${stars}</p>
+    <h3>2. One thing you would change</h3>
+    <textarea id="change" style="width:100%;min-height:90px"
+      placeholder="Pace, a question, something I should have asked, something I should not have said.">${esc(String(pkg.survey_change ?? ""))}</textarea>
+    <h3>3. Would you recommend it to a peer?</h3>
+    <p>
+    <label><input type="radio" name="recommend" value="yes"${chosen("yes")}> Yes</label><br>
+    <label><input type="radio" name="recommend" value="maybe"${chosen("maybe")}> Maybe</label><br>
+    <label><input type="radio" name="recommend" value="no"${chosen("no")}> No</label>
+    </p>
+    <p><button id="send" onclick="sendSurvey()">Send to Mira</button>
+    <span id="done" style="display:none;font-weight:600;color:#166534"></span></p>
+    <script>
+    async function sendSurvey(){
+      const btn = document.getElementById('send');
+      btn.disabled = true; btn.textContent = 'Sending\u2026';
+      const r = document.querySelector('input[name=rating]:checked');
+      const rec = document.querySelector('input[name=recommend]:checked');
+      let ok = false;
+      try {
+        const resp = await fetch(location.pathname, {method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({rating: r ? Number(r.value) : null,
+            change: document.getElementById('change').value,
+            recommend: rec ? rec.value : null})});
+        ok = resp.ok;
+      } catch (e) { ok = false; }
+      const done = document.getElementById('done');
+      done.textContent = ok ? 'Thank you. I read every answer.' : 'Something went wrong \u2014 reply to my email instead.';
+      done.style.color = ok ? '#166534' : '#991B1B';
+      done.style.display = 'inline';
+      if (ok) btn.style.display = 'none';
+      else { btn.disabled = false; btn.textContent = 'Send to Mira'; }
+    }
+    </script>`, show.brandColor));
+}
+
+async function handleSurveySubmit(req: Request, env: Env, token: string): Promise<Response> {
+  const pkg = await pkgBySurveyToken(env, token);
+  if (!pkg) return json({ error: "not found" }, 404);
+  const body = await req.json<any>().catch(() => ({}));
+  const answers = surveyAnswers(body);
+  if (!answers) return json({ error: "nothing answered" }, 400);
+  const now = new Date().toISOString();
+  // A second submit updates the answers; the first time is the one that counts.
+  await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+    { ...answers, survey_answered_at: pkg.survey_answered_at ?? now });
+  const { app, show } = await interviewWithApp(env, pkg.interview_id);
+  const who = app?.name ?? "a guest";
+  await slack(env, `${show.shortLabel}: ${who} answered Mira's survey — ` +
+    `${answers.survey_rating ?? "?"}/5, recommend: ${answers.survey_recommend ?? "?"}` +
+    (answers.survey_change ? ` — "${answers.survey_change.slice(0, 200)}"` : ""));
+  try {
+    await email(env, operatorEmail(env),
+      `${show.shortLabel}: ${who} rated the hour ${answers.survey_rating ?? "?"}/5`,
+      `<p>${esc(String(who))} answered Mira's three questions:</p>
+       <p><b>Compared with a human host:</b> ${esc(String(answers.survey_rating ?? "not answered"))} / 5<br>
+       <b>One thing to change:</b> ${esc(answers.survey_change ?? "not answered")}<br>
+       <b>Recommend to a peer:</b> ${esc(answers.survey_recommend ?? "not answered")}</p>
+       <p>Stored on package ${esc(String(pkg.id))}; the weekly lesson pass reads it.</p>`);
+  } catch (err: any) { console.error("survey email failed:", err?.message ?? err); }
+  return json({ ok: true, updated: !!pkg.survey_answered_at });
 }
 
 // -- Admin UIs (lean, token-gated) ------------------------------------------
@@ -1978,7 +2435,7 @@ const GUEST_AUDIO_HTML =
 
 function studioStepsHtml(studio: string): string {
   return "<p><strong>On the day, three steps and we're on:</strong></p><ol>" +
-    `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ten minutes before we start.</li>` +
+    `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ${STUDIO_OPENS_BEFORE_TEXT} before we start.</li>` +
     "<li>Press <strong>Check my microphone</strong> and read the sentence out loud until it says <strong>Sounds good</strong>.</li>" +
     "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
     "<p>If your computer gives you trouble, open the same link on your phone, earbuds in: it " +
@@ -2006,6 +2463,10 @@ async function setCalendarLocation(env: Env, show: Show, uid: string, studio: st
   }
 }
 
+function minutesToStart(iv: any): number {
+  return (Date.parse(iv?.scheduled_at) - Date.now()) / 60000;
+}
+
 /** GET/POST /voices/join — the location on the Cal.com event types. A guest
  *  who opens the meeting from a calendar lands here, types the address they
  *  booked with, and goes straight to their studio when the interview is
@@ -2019,10 +2480,18 @@ async function handleJoin(req: Request, env: Env): Promise<Response> {
      <h1 style="font-size:1.35rem">${esc(title)}</h1>${body}
      <p style="color:#4a5568;font-size:.9rem;margin-top:2rem">Trouble? Email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>.</p></body>`,
     { headers: { "content-type": "text/html; charset=utf-8" } });
+  // Oct 21 2026: the interview id alone used to open anyone's studio, and a
+  // typed email address did the same inside the half hour before the start.
+  // The studio now opens from this page only for the guest's own manage
+  // token (every reminder carries it); an address gets the link by email.
   const iid = url.searchParams.get("interview") ?? "";
-  if (UUID_RE.test(iid)) {
+  const token = String(url.searchParams.get("t") ?? url.searchParams.get("token") ?? "").trim();
+  if (UUID_RE.test(iid) && token.length >= 16) {
     const { iv, show } = await interviewGuest(env, iid);
-    if (iv) return Response.redirect(studioUrl(show, iid, "guest"), 302);
+    const own = iv ? await manageInterview(env, token) : null;
+    if (iv && own && String(own.id) === String(iv.id)) {
+      return Response.redirect(studioUrl(show, iid, "guest"), 302);
+    }
   }
   const form = (note = "") => page("Join your interview with Mira",
     `${note}<p>Enter the email address you booked with and I'll take you to your studio.</p>
@@ -2052,20 +2521,19 @@ async function handleJoin(req: Request, env: Env): Promise<Response> {
   }
   const show = showFor(app, { show: iv.show });
   const studio = studioUrl(show, iv.id, "guest");
-  const minsToStart = (Date.parse(iv.scheduled_at) - Date.now()) / 60000;
-  if (minsToStart <= 30) return Response.redirect(studio, 302);
-  // Not close to the start: the link goes to the guest's own inbox rather
-  // than to whoever typed their address.
+  // The link goes to the guest's own inbox rather than to whoever typed
+  // their address, however close to the start it is.
   try {
     await email(env, String(app.email), `Your ${show.name} studio link`,
       `<p>Hi ${esc(firstName(app.name))},</p><p>Here's your personal studio link for our interview on
        <strong>${esc(pacificTime(iv.scheduled_at))}</strong>:
-       <a href="${studio}">join your interview here</a>. It opens ten minutes before we start.</p>
+       <a href="${studio}">join your interview here</a>. It opens ${STUDIO_OPENS_BEFORE_TEXT} before we start.</p>
        ${GUEST_AUDIO_HTML}${studioStepsHtml(studio)}${miraSignature(show)}`, true);
   } catch (err: any) { console.error("join link email failed:", err?.message ?? err); }
   return page("Check your email",
     `<p>Your interview is on <strong>${esc(pacificTime(iv.scheduled_at))}</strong>. I've emailed your personal
-     studio link to the address on your booking. On the day, open it on your computer with headphones on.</p>`);
+     studio link to the address on your booking${minutesToStart(iv) <= 30 ? " — it should be there in a moment" : ""}.
+     On the day, open it on your computer with headphones on.</p>`);
 }
 
 /** Oct 5 2026 (Jon Cheney). The two-hour reminder is sent by the GitHub fire
@@ -2433,6 +2901,9 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
        ${metrics.repeated_questions ?? 0} repeated question(s) ·
        ${metrics.dead_air_sec ?? 0}s dead air · ${metrics.agent_sessions ?? 1} session(s), ${metrics.drops ?? 0} drop(s)`
     : "not measured";
+  // Oct 21 2026: a review link decides its own interview's proposals; the
+  // standing list is read-only unless the admin token opened the page.
+  const isAdmin = !requireAdmin(req, env);
   const lessonRow = (l: any, kind: "proposed" | "active") => `
     <li style="margin:.5rem 0">
       <b>${esc(String(l.category ?? ""))}</b> — ${esc(String(l.lesson ?? ""))}
@@ -2440,7 +2911,7 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
       ${kind === "proposed"
         ? `<br><button onclick="lesson('${l.id}','active')">Teach Mira this</button>
            <button onclick="lesson('${l.id}','retired')">Discard</button>`
-        : `<br><button onclick="lesson('${l.id}','retired')">Stop applying this</button>`}
+        : (isAdmin ? `<br><button onclick="lesson('${l.id}','retired')">Stop applying this</button>` : "")}
     </li>`;
   return html(`<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex">
 <title>${esc(show.shortLabel)} — editorial review</title>
@@ -2568,23 +3039,52 @@ async function handleFactCheck(req: Request, env: Env): Promise<Response> {
 
 // -- Scheduled: gate-2 housekeeping ------------------------------------------
 
+/** The guest (or the clock) approved: production is dispatched FIRST and
+ *  the package is marked approved only once GitHub has the event. A thrown
+ *  dispatch leaves the package at approved_by_patrick with the interview at
+ *  "approved", which gate2Housekeeping retries daily (Oct 21 2026 — status
+ *  was written before the dispatch, so a failed dispatch left a package
+ *  that read as approved and never published). */
+async function approveAndDispatch(env: Env, pkg: any, interviewId: string, when: string) {
+  await sb(env, "PATCH", `interviews?id=eq.${interviewId}`, { status: "approved" });
+  await dispatch(env, "interview-approved-by-guest", { interview_id: interviewId });
+  await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+    { status: "approved_by_guest", guest_reviewed_at: pkg.guest_reviewed_at ?? when });
+}
+
 async function gate2Housekeeping(env: Env) {
   const now = Date.now();
   const pkgs = await sb(env, "GET",
     "editorial_packages?status=eq.approved_by_patrick&guest_review_deadline=not.is.null");
   for (const pkg of pkgs ?? []) {
+    // Oct 21 2026: one failed email (a bounced address, Resend down for a
+    // minute) used to throw out of the loop and stop every later package
+    // that day. Each package is its own try.
+    try {
+      await gate2Package(env, pkg, now);
+    } catch (err: any) {
+      console.error(`gate2: package ${pkg.id} failed: ${err?.message ?? err}`);
+    }
+  }
+}
+
+async function gate2Package(env: Env, pkg: any, now: number) {
     const deadline = Date.parse(pkg.guest_review_deadline);
     const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
     if (!interview || !app) {
       console.error(`gate2: package ${pkg.id} has no interview/application — skipped`);
-      continue;
+      return;
+    }
+    if (String(interview.status) === "approved") {
+      // The guest approved and the production dispatch failed at the time
+      // (see approveAndDispatch). Try again now rather than at day 7.
+      await approveAndDispatch(env, pkg, interview.id, new Date().toISOString());
+      await slack(env, `${show.shortLabel}: package ${pkg.id} — production dispatched on retry`);
+      return;
     }
     if (now >= deadline) {
       // Day 7: auto-approve (spec §7) — guest can still request takedown.
-      await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
-        { status: "approved_by_guest", guest_reviewed_at: new Date().toISOString() });
-      await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "approved" });
-      await dispatch(env, "interview-approved-by-guest", { interview_id: interview.id });
+      await approveAndDispatch(env, pkg, interview.id, new Date().toISOString());
       await slack(env, `${show.shortLabel}: package ${pkg.id} AUTO-APPROVED (7-day window elapsed)`);
     } else if (deadline - now < 3 * 864e5 && deadline - now > 2 * 864e5) {
       // Day 4 (±cron granularity): one reminder.
@@ -2598,7 +3098,6 @@ async function gate2Housekeeping(env: Env) {
          and you can still ask for changes after it publishes.</p>${miraSignature(show)}`, true,
         publicistCc(app));
     }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2895,7 +3394,15 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
  *  level_db?} — nothing has been heard from the guest since they joined.
  *  Emails Patrick once per run, whichever side notices first. */
 async function handleStudioSilence(req: Request, env: Env): Promise<Response> {
-  const body = await req.json<any>().catch(() => null);
+  const { body, denied } = await readSignedJson(req, env, false);
+  if (denied) return denied;
+  // The room signs its posts; a browser post (source=studio) cannot carry
+  // the secret and is accepted as before. A scenario post without a valid
+  // signature, when the Worker holds the secret, is refused.
+  if (body?.source === "scenario" && (env.VOICES_WEBHOOK_SECRET || "").trim()
+      && !req.headers.get(SIGNATURE_HEADER)) {
+    return json({ error: "signature required" }, 401);
+  }
   const runId = String(body?.run_id ?? "").trim();
   if (!UUID_RE.test(runId)) return json({ error: "run_id required" }, 400);
   const source = body?.source === "scenario" ? "scenario" : "studio";
@@ -2949,7 +3456,11 @@ async function handleStudioPhone(req: Request, env: Env): Promise<Response> {
   if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
   const { iv, app, show } = await interviewGuest(env, interviewId);
   if (!iv || !app) return json({ error: "not found" }, 404);
-  if (["completed", "cancelled", "missed", "published"].includes(String(iv.status))) {
+  // Oct 21 2026: only an interview inside its live window may be dialled.
+  // This button used to accept anything but four finished statuses, so a
+  // recorded interview in post-production could be flipped back to
+  // "briefed" and the guest phoned.
+  if (!LIVE_INTERVIEW_STATUSES.has(String(iv.status))) {
     return json({ error: "this interview is not live" }, 409);
   }
   // This button dials NOW. It belongs to the studio on the day; a guest on
@@ -3073,8 +3584,10 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
 }
 
 // The studio may open from 15 minutes before the start until three hours
-// after it, while the interview is still on.
+// after it, while the interview is still on. Oct 21 2026: three emails said
+// "ten minutes"; the copy reads this constant now, so it cannot drift again.
 const STUDIO_OPENS_BEFORE_MS = 15 * 60 * 1000;
+export const STUDIO_OPENS_BEFORE_TEXT = "fifteen minutes";
 const STUDIO_OPEN_UNTIL_MS = 3 * 60 * 60 * 1000;
 function studioOpenable(iv: any): boolean {
   if (!["briefed", "scheduled", "in_progress"].includes(String(iv?.status))) return false;
@@ -3108,6 +3621,8 @@ async function rescueStudio(env: Env, iv: any, show: any, role: string) {
 }
 
 const JOINABLE_RUN_STATUSES = new Set(["awaiting_guest", "pending", "in_progress"]);
+// The statuses an interview holds while it can still happen today.
+export const LIVE_INTERVIEW_STATUSES = new Set(["scheduled", "briefed", "in_progress"]);
 const DEAD_INTERVIEW_STATUSES = new Set(["cancelled", "missed", "no_show", "killed", "archived", "failed"]);
 
 // POST /voices/studio-auth {key, role?} — Voximplant one-time-key
@@ -3175,7 +3690,8 @@ async function handleStudioAuth(req: Request, env: Env): Promise<Response> {
 // post_interview.py reads — because the room session that fires the
 // completion webhook never sees them.
 async function handleLegEvent(req: Request, env: Env): Promise<Response> {
-  const body = await req.json<any>().catch(() => null);
+  const { body, denied } = await readSignedJson(req, env, true);
+  if (denied) return denied;
   const runId = String(body?.run_id ?? "");
   const role = body?.role, event = body?.event;
   if (!UUID_RE.test(runId) || !(isStudioRole(role) || role === "probe") || !["joined", "left"].includes(event)) {
@@ -3186,6 +3702,9 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
     `recording_guest_url,recording_host_url,grok_session_log`);
   const run = runs?.[0];
   if (!run) return json({ error: "run not found" }, 404);
+  // Oct 21 2026: the rehearsal harness's fixture guest joins as a guest leg
+  // with `fixture: true` on the event. Nothing here reads it; the leg is
+  // recorded like any guest's, so the audio metrics see the same tracks.
   if (role === "probe") {
     // Diagnostics: the synthetic participant's room-leg recording.
     if (typeof body?.record_url === "string" && body.record_url) {
@@ -3452,6 +3971,9 @@ async function handleHealth(env: Env): Promise<Response> {
       vox_host_password_env_ignored: !!env.VOX_HOST_PASSWORD,
       voices_r2: !!env.VOICES_R2,
       operator_phone: !!env.OPERATOR_PHONE,
+      // Oct 21 2026: inbound webhooks are signed by the room when this is set.
+      webhook_secret: !!(env.VOICES_WEBHOOK_SECRET || "").trim(),
+      calcom_webhook_secret: !!(env.CALCOM_WEBHOOK_SECRET || "").trim(),
     },
     shows: Object.keys(SHOWS),
   };
@@ -3508,6 +4030,13 @@ export default {
         return req.method === "POST"
           ? handleManageSubmit(req, env, token)
           : handleManagePage(env, token);
+      }
+      // Oct 21 2026: the three-question survey Mira emails a day after the room.
+      const survey = path.match(/^\/voices\/survey\/([A-Za-z0-9_-]{16,})$/);
+      if (survey) {
+        return req.method === "POST"
+          ? handleSurveySubmit(req, env, survey[1])
+          : handleSurveyPage(env, survey[1]);
       }
       const review = path.match(/^\/voices\/review\/([A-Za-z0-9_-]{16,})$/);
       if (review) {

@@ -179,14 +179,14 @@ class TestMiraIsToldWhatTheFirstRecordingFinished:
         block = fi.already_answered({"continues_interview_id": "iv1"}, self.QUESTION)
         assert block.startswith("- The show's own question")
         assert "{{already_answered}}" in PROMPT
-        assert "do NOT ask any of them again" in PROMPT
+        assert "you do not ask them" in " ".join(PROMPT.split())
         src = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
         assert "already_answered=already_answered(interview, show.closing_question)" in src
 
     def test_the_prompt_resumes_on_a_line_a_listener_can_follow(self):
-        assert "ask the question in full" in PROMPT
+        assert "ask the question in full" in " ".join(PROMPT.split())
         assert "Do not say you were cut off" in PROMPT
-        assert "Say the welcome and the apology ONCE" in PROMPT
+        assert "Say the welcome and the apology once" in PROMPT
         assert "do not announce the\n   end of the recording again" in PROMPT
 
 
@@ -205,7 +205,12 @@ class TestTheGuestSpeakingAnswersTheLastWord:
 
     def test_the_room_measures_it_when_the_guest_stops(self):
         i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
-        assert "noteGuestSpoke(Date.now() - inboundSpokeAt);" in SCENARIO[i:i + 200]
+        # Oct 21 2026: the length is measured once and shared with the turn
+        # decision (speechSinceMiraMs), so the last-word rule reads the same
+        # number the room decides turns on.
+        stopped = SCENARIO[i:i + 300]
+        assert "const ms = Date.now() - inboundSpokeAt;" in stopped
+        assert "noteGuestSpoke(ms);" in stopped
 
     def test_a_build_without_the_stopped_event_still_hears_them(self):
         i = SCENARIO.index("InputAudioBufferSpeechStarted, function () {")

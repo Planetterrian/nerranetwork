@@ -8,16 +8,19 @@ Every interview leaves two things behind besides an episode:
   the tape, which Patrick promotes or discards at gate 1. Active lessons are
   appended to Mira's system prompt for every later interview on that show.
 
-Sept 21 2026: the loop closes itself. Lessons used to land as proposals for
+Sept 21 2026: the loop closed itself. Lessons used to land as proposals for
 Patrick to promote at gate 1, and eight of them were still sitting there
 unread while the same faults recurred — a queue is not a learning loop. The
-grading pass now ADOPTS what it decides, retires what it has outgrown, and
-tells Patrick what it did. Two things keep the old safety without the queue:
-the grader is shown the instructions Mira already carries and told not to
-restate them, so a relapse cannot multiply into three copies of one lesson;
-and every adoption is reversible from the same triage page that used to
-approve it, because a bad instruction should cost one click to remove rather
-than a deploy.
+grading pass then ADOPTED what it decided and retired what it had outgrown.
+
+Oct 21 2026: thirteen scorecards later the grades had not moved (2–7, no
+trend), about a hundred lessons had been merged, dropped or retired, and the
+numbers the grader read were estimated from transcript line starts. So the
+loop changed shape again: ``audio_metrics`` measures the craft from each
+speaker's own recording, the grading pass PROPOSES (with the metric that
+would show the lesson working), and ``adopt_lessons_weekly.py`` adopts at
+most six over the week's rooms with those numbers in front of it. A lesson
+is retired when its metric has been green for three rooms, never by age.
 """
 
 from __future__ import annotations
@@ -44,8 +47,13 @@ MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
 # separately) while grading lower. Lessons are now either the whole
 # network's or one show's own; Mira carries both.
 NETWORK = "network"
-MAX_NETWORK_LESSONS = 14         # interviewing craft, every show
-MAX_SHOW_LESSONS = 8             # this show's own format and subject
+MAX_NETWORK_LESSONS = 14         # interviewing craft, every show (stored)
+MAX_SHOW_LESSONS = 6             # this show's own format and subject (Oct 21 2026)
+# Oct 21 2026 (review of every interview): the network craft lives in the
+# prompt body now, written in the positive. The block Mira reads is at most
+# five lines, show-specific first, and the network scope fills in only while
+# the show has fewer than five of its own.
+PROMPT_LESSONS_MAX = 5
 MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
@@ -268,9 +276,18 @@ def save_host_phrases(show_slug: str, interview_id: str, phrases: List[str]) -> 
 
 
 def variety_block(show_slug: str) -> str:
-    """The phrases Mira has already used on this show, so she stops reusing
-    them. Empty for a show with no history, so a first episode reads exactly
-    as it did before."""
+    """The reply SHAPES Mira has worn out on this show, named without a
+    single instance. Empty for a show with no history.
+
+    Sept 18 2026: retiring the instances did nothing — seventy "That's a
+    [adjective] [noun]" lines across six episodes, a fresh adjective each
+    time, every one technically new. Oct 21 2026 (review of every
+    interview): listing the instances did worse than nothing — the shape
+    moved to a one-word echo of the guest's last words on every turn. The
+    network's rule for every prompt applies here: de-seed by shape, never
+    with a quotable example. So the block names the shape and the count that
+    earned it, and never prints a phrase she said.
+    """
     try:
         rows = sb_select("host_phrases",
                          f"show=eq.{show_slug}&order=created_at.desc"
@@ -278,45 +295,40 @@ def variety_block(show_slug: str) -> str:
     except Exception:  # noqa: BLE001
         logger.exception("host phrases unavailable (non-fatal)")
         return ""
-    phrases = []
+    shapes: dict = {}
     for row in rows or []:
         phrase = (row.get("phrase") or "").strip()
-        if REQUIRED_WORDS.search(phrase):
+        if not phrase or REQUIRED_WORDS.search(phrase):
             continue                    # never forbid what she must say
-        if phrase and phrase.lower() not in {p.lower() for p in phrases}:
-            phrases.append(phrase)
-    if not phrases:
-        return ""
-    # Sept 18 2026. Retiring the instances did nothing: seventy "That's a
-    # [adjective] [noun]" lines across six episodes, a fresh adjective each
-    # time, every one of them technically new. The SHAPE is what repeats,
-    # so the shape is what gets named, once, with the count that earned it.
-    shapes: dict = {}
-    singles = []
-    for phrase in phrases:
         shape = phrase_shape(phrase)
         if shape:
             shapes[shape] = shapes.get(shape, 0) + 1
-        else:
-            singles.append(phrase)
-    out = ["\n\nALREADY USED ON THIS SHOW"]
+    if not shapes:
+        return ""
+    out = ["\n\nREPLY SHAPES RETIRED ON THIS SHOW. Each of these is a reflex you",
+           "have leaned on across episodes; open a reply with the specific thing",
+           "they said instead, in a shape of your own."]
     for shape, n in sorted(shapes.items(), key=lambda kv: -kv[1]):
-        out.append(f'The shape "{shape}" is retired outright: you have opened '
-                   f'{n} replies with it on this show, changing only the '
-                   f'adjective, which is not variety. Never open a reply that way '
-                   f'again, whatever the adjective.')
-    if singles:
-        out.append("You have said each of these on a previous episode. They are "
-                   "retired. Do not say them again, and do not say a near-variant "
-                   "of them:\n" + "\n".join(f'- "{p}"' for p in singles))
+        out.append(f"- {_SHAPE_DESCRIPTIONS.get(shape, shape)} "
+                   f"({n} time{'s' if n != 1 else ''} on this show).")
     return "\n".join(out) + "\n"
 
 
 _SHAPES = (
-    (re.compile(r"(?i)^that'?s (a|an) "), "That's a ..."),
-    (re.compile(r"(?i)^what (a|an) "), "What a ..."),
-    (re.compile(r"(?i)^i love (that|how|the) "), "I love that ..."),
+    (re.compile(r"(?i)^that'?s (a|an) "), "grading-opener"),
+    (re.compile(r"(?i)^what (a|an) "), "exclaimed-grade"),
+    (re.compile(r"(?i)^i love (that|how|the) "), "love-opener"),
+    (re.compile(r"(?i)^(great|good|fantastic|wonderful|excellent|interesting|fascinating)\b"),
+     "adjective-opener"),
 )
+
+# What each shape is, said without an instance of it (Oct 21 2026).
+_SHAPE_DESCRIPTIONS = {
+    "grading-opener": "opening a reply by grading the answer with an adjective and a noun",
+    "exclaimed-grade": "opening a reply with an exclaimed grade of the answer",
+    "love-opener": "opening a reply by saying how much you liked it",
+    "adjective-opener": "opening a reply with a one-word approving adjective",
+}
 
 
 def phrase_shape(phrase: str) -> str:
@@ -409,10 +421,20 @@ def save_metrics(interview_id: str, metrics: Dict[str, Any]) -> None:
         logger.exception("episode_metrics insert failed (non-fatal)")
 
 
+#: The audio measures a proposed lesson may name as the number that will
+#: say whether it worked (``show_lessons.metric``, Oct 21 2026). A lesson
+#: with no metric is retired by a human, never by the weekly pass.
+LESSON_METRICS = {
+    "overlap_events_per_10min", "self_answered_turns", "mira_turn_sec_median",
+    "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams",
+}
+
+
 def save_proposed_lessons(show_slug: str, interview_id: str,
                           lessons: List[dict]) -> int:
     """Store a retro pass's output as PROPOSED lessons. Nothing reaches Mira
-    until a human promotes it."""
+    from here: the weekly pass (adopt_lessons_weekly.py) adopts at most six,
+    with the week's audio numbers in front of it (Oct 21 2026)."""
     saved = 0
     for item in lessons or []:
         if not isinstance(item, dict):
@@ -423,14 +445,21 @@ def save_proposed_lessons(show_slug: str, interview_id: str,
             continue
         if category not in LESSON_CATEGORIES:
             category = "other"
+        metric = str(item.get("metric") or "").strip().lower() or None
+        if metric not in LESSON_METRICS:
+            metric = None
+        scope = (show_slug if str(item.get("scope") or "").strip().lower()
+                 in ("this_show", "show", show_slug) else NETWORK)
         try:
             sb_insert("show_lessons", {
-                "show": show_slug,
+                "show": scope,
                 "interview_id": interview_id,
                 "category": category,
                 "lesson": lesson[:400],
                 "evidence": str(item.get("evidence") or "")[:400] or None,
+                "metric": metric,
                 "status": "proposed",
+                "decision_note": f"proposed by the grading pass ({item.get('confidence') or 'medium'} confidence)",
             })
             saved += 1
         except Exception:  # noqa: BLE001
@@ -519,9 +548,14 @@ def retire_lessons(ids: List[str], why: str = "superseded") -> int:
 
 
 def adopt_lessons(show_slug: str, interview_id: str,
-                  lessons: List[dict]) -> List[dict]:
-    """Put a grading pass's lessons straight into Mira's standing
-    instructions, and return the ones that took.
+                  lessons: List[dict], decided_by: str = "weekly",
+                  note: str = "") -> List[dict]:
+    """Put lessons into Mira's standing instructions and return the ones
+    that took.
+
+    Oct 21 2026: no longer called from the grading pass. The weekly pass
+    (adopt_lessons_weekly.py) calls it over the week's proposals with the
+    audio metrics in front of it; ``decided_by`` records which.
 
     Each lesson is the whole network's (``"scope": "all_shows"``, the
     default: listening, questions, pacing and tone are the same craft on
@@ -564,6 +598,9 @@ def adopt_lessons(show_slug: str, interview_id: str,
                                "made room for a newer lesson")
                 by_scope[scope] = [r for r in current
                                    if str(r.get("id")) != str(oldest[0].get("id"))]
+        metric = str(item.get("metric") or "").strip().lower() or None
+        if metric not in LESSON_METRICS:
+            metric = None
         try:
             row = sb_insert("show_lessons", {
                 "show": scope,
@@ -571,10 +608,11 @@ def adopt_lessons(show_slug: str, interview_id: str,
                 "category": category,
                 "lesson": lesson[:400],
                 "evidence": str(item.get("evidence") or "")[:400] or None,
+                "metric": metric,
                 "status": "active",
                 "decided_at": _now(),
-                "decided_by": "mira",
-                "decision_note": f"adopted automatically ({item.get('confidence') or 'medium'} confidence)",
+                "decided_by": decided_by,
+                "decision_note": (note or "adopted by the weekly pass")[:200],
             })
             adopted.append(row if isinstance(row, dict) and row.get("show") else {**(row or {}), "show": scope})
             existing.append(lesson)
@@ -821,16 +859,14 @@ def record_relapses(show_slug: str, items: List[Any]) -> int:
 
 
 def relapse_recap(show_slug: str) -> str:
-    """The instructions she keeps breaking, said once more at the very end of
-    her prompt. Empty until something has been broken twice over."""
-    rows = [r for r in standing_lessons(show_slug) if _relapses(r) > 0 and r.get("lesson")]
-    if not rows:
-        return ""
-    rows.sort(key=lambda r: (-_relapses(r), str(r.get("last_relapse_at") or "")))
-    top = rows[:RELAPSE_RECAP_MAX]
-    return ("\n\nBEFORE EVERY TURN. You have broken these in more than one "
-            "interview, so they come last as well as first:\n"
-            + "\n".join(f"- {r['lesson']}" for r in top) + "\n")
+    """Empty since Oct 21 2026. The recap said the most-broken rules a
+    second time at the end of the prompt; the three lessons it carried had
+    relapse counts of 2, 4 and 3 and the faults persisted, because each was a
+    fault the room can enforce and the model cannot reliably (one question
+    per turn, no second sign-off, no re-asking). The room enforces them now;
+    ``record_relapses`` still counts them for the grader and the weekly
+    adoption, and this stays a function so callers need not change."""
+    return ""
 
 
 def lesson_cap(scope: str) -> int:
@@ -849,21 +885,41 @@ def active_lessons(show_slug: str) -> List[dict]:
         return []
 
 
+def prompt_lessons(show_slug: str) -> List[dict]:
+    """The lessons Mira carries into THIS interview: the show's own first,
+    newest first, then the network's only while the show has fewer than
+    ``PROMPT_LESSONS_MAX`` of its own; never more than five in all."""
+    rows: List[dict] = []
+    seen = set()
+    for scope in (show_slug, NETWORK):
+        for row in active_lessons(scope):
+            key = str(row.get("lesson") or "").strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append(row)
+            if len(rows) >= PROMPT_LESSONS_MAX:
+                return rows
+    return rows
+
+
 def lessons_block(show_slug: str) -> str:
     """The block appended to Mira's system prompt. Empty when nothing has
-    been promoted, so a fresh show reads exactly as it did before."""
-    rows = standing_lessons(show_slug)
-    if not rows:
-        return ""
-    # The ones she keeps breaking go first (Oct 8 2026); the rest keep order.
-    rows = sorted(rows, key=lambda r: -_relapses(r))
+    been promoted, so a fresh show reads exactly as it did before.
+
+    Oct 21 2026: at most five lines (``PROMPT_LESSONS_MAX``), the show's own
+    lessons first. They are standing notes, not corrections ranked by how
+    often she broke them; the relapse ordering and the end-of-prompt recap
+    are gone, because a rule broken three times is a room defect the
+    scenario now enforces, not a prompt defect to repeat louder."""
+    rows = prompt_lessons(show_slug)
     lines = "\n".join(f"- {r['lesson']}" for r in rows if r.get("lesson"))
     if not lines:
         return ""
     return (
-        "\nWHAT EARLIER INTERVIEWS TAUGHT YOU. These are standing corrections "
-        "from tape of your own past episodes, reviewed and approved by your "
-        "producer. They outrank everything below and apply to this interview:\n"
+        "\nWHAT THIS SHOW HAS TAUGHT YOU. Standing notes from your own past "
+        "episodes on this show, reviewed and approved by your producer. They "
+        "apply to this interview:\n"
         + lines + "\n"
     )
 
@@ -920,8 +976,17 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
     if metrics:
         m = metrics[0]
         bits = []
-        for label, key, suffix in (
-                ("interruptions", "interruptions", ""),
+        audio_rows = (
+            ("overlap (s)", "overlap_sec", ""),
+            ("overlap events", "overlap_events", ""),
+            ("median turn gap (ms)", "turn_gap_ms_median", ""),
+            ("her median turn (s)", "mira_turn_sec_median", ""),
+            ("self-answered turns", "self_answered_turns", ""),
+            ("echo openers", "echo_open_rate", "%"),
+            ("guest words per answer", "guest_words_per_answer_median", ""),
+        ) if m.get("metrics_basis") == "audio" else ()
+        for label, key, suffix in audio_rows + (
+                ("interruptions (transcript estimate)", "interruptions", ""),
                 ("repeated questions", "repeated_questions", ""),
                 ("her share of the talking", "host_talk_share", "%"),
                 ("questions asked", "questions", "")):
@@ -937,15 +1002,16 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
         live = [r for r in proposed if r.get("status") == "active"]
         parts.append(
             "<p>These are now standing instructions for every later interview "
-            "on this show. They are already in force — nothing is waiting on "
-            "you. If one of them is wrong, remove it on the triage page and "
-            "she stops carrying it:</p><ul>"
+            "on this show. If one of them is wrong, remove it on the triage page "
+            "and she stops carrying it:</p><ul>"
             if live else
-            "<p>Left for you to decide on:</p><ul>")
+            "<p>Proposed from this tape. The weekly pass adopts at most six "
+            "over the week's rooms, with the audio numbers in front of it; "
+            "you can promote or drop any of them on the review page now:</p><ul>")
         for row in proposed:
             lesson = (row.get("lesson") or "").strip()
             why = (row.get("evidence") or "").strip()
-            mark = "" if row.get("status") == "active" else " <i>(awaiting you)</i>"
+            mark = "" if row.get("status") == "active" else " <i>(proposed)</i>"
             scope = (" <i>(every show)</i>" if row.get("show") == NETWORK
                      and row.get("status") == "active" else "")
             parts.append(f"<li>{lesson}{mark}{scope}"

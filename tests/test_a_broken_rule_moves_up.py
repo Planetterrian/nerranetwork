@@ -30,16 +30,19 @@ def _rows():
 
 
 def test_the_most_broken_come_first_and_last(monkeypatch):
+    """Oct 21 2026 (review of every interview): superseded. The three rules
+    she kept breaking were room faults, and the room enforces them now; the
+    block carries at most five standing notes, the show's own first, in the
+    order they were adopted, and the end-of-prompt recap is gone."""
     import learning
-    monkeypatch.setattr(learning, "standing_lessons", lambda slug: _rows())
+    rows = _rows()
+    monkeypatch.setattr(learning, "active_lessons",
+                        lambda scope: [r for r in rows if r["show"] == scope])
     block = learning.lessons_block("age_of_ai")
     order = [line[2:] for line in block.splitlines() if line.startswith("- ")]
-    assert order[:2] == ["Probe the bet.", "Do not re-ask."]
-    assert order[-1] == "Follow the thread."
-    recap = learning.relapse_recap("age_of_ai")
-    told = [line[2:] for line in recap.splitlines() if line.startswith("- ")]
-    assert told[:2] == ["Probe the bet.", "Do not re-ask."] and len(told) == 3
-    assert "Follow the thread." not in recap
+    assert order[0] == "Probe the bet."
+    assert len(order) == 5 and "Follow the thread." in order
+    assert learning.relapse_recap("age_of_ai") == ""
 
 
 def test_nothing_broken_means_no_recap(monkeypatch):
@@ -76,8 +79,10 @@ def test_the_retro_asks_for_relapses_and_post_production_records_them():
 
 
 def test_her_prompt_ends_on_what_she_keeps_breaking():
+    # Oct 21 2026: it no longer does. The recap repeated room faults louder.
     fire = (V / "fire_interviews.py").read_text()
-    assert ") + variety_block(show.slug) + relapse_recap(show.slug)" in fire
+    assert ") + variety_block(show.slug)" in fire
+    assert "+ relapse_recap(" not in fire
 
 
 def test_the_turn_silence_is_written_on_the_run(monkeypatch):

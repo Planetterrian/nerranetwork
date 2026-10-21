@@ -60,4 +60,6 @@ class TestTheSearchIsReal:
 class TestSheIsToldWhatTheToolDoes:
     def test_the_tool_description_says_to_say_nothing(self):
         assert "carry on talking and say nothing about it" in FIRE
-        assert "mention the search" in FIRE
+        assert "nothing happened and the guest's point stands" in FIRE
+        # Oct 21 2026: and the tool is off unless the interview asks for it.
+        assert "def mira_tools(" in FIRE and "fact_check_enabled(interview, app)" in FIRE

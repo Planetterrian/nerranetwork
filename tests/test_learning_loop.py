@@ -118,7 +118,7 @@ class TestLessonsReachMiraOnlyViaAHuman:
             {"lesson": "Ask one question at a time and stop talking."}]
         block = learning.lessons_block("age_of_ai")
         assert "Ask one question at a time" in block
-        assert "EARLIER INTERVIEWS" in block
+        assert "WHAT THIS SHOW HAS TAUGHT YOU" in block
 
     def test_a_lookup_failure_never_blocks_an_interview(self):
         import learning
@@ -132,12 +132,15 @@ class TestLessonsReachMiraOnlyViaAHuman:
     def test_fire_appends_the_block_to_miras_prompt(self):
         assert "lessons=lessons_block(show.slug)," in FIRE
 
-    def test_post_interview_grades_and_adopts_without_blocking(self):
-        # Sept 21 2026: the pass adopts rather than proposes. It still must
-        # never be able to cost an episode.
+    def test_post_interview_grades_and_proposes_without_blocking(self):
+        # Sept 21 2026 made this pass adopt on its own; Oct 21 2026 took
+        # that back (thirteen grades, no trend, ~100 lessons churned). The
+        # pass measures, grades and PROPOSES; the weekly pass adopts. It
+        # still must never be able to cost an episode.
         assert "09_interview_retro.txt" in POST
-        assert "adopt_lessons(" in POST and "save_metrics(" in POST
-        assert "save_grade(" in POST and "retire_lessons(" in POST
+        assert "save_proposed_lessons(" in POST and "save_metrics(" in POST
+        assert "save_grade(" in POST
+        assert "adopt_lessons(" not in POST and "retire_lessons(" not in POST
         block = POST[POST.index("# Learning loop"):]
         block = block[:block.index('if package.get("topical_show_fits")')]
         assert "except Exception:" in block
@@ -146,12 +149,17 @@ class TestLessonsReachMiraOnlyViaAHuman:
         assert "Judge the HOST, not the guest" in RETRO
         assert "Ignore anything caused by infrastructure" in RETRO
         assert "An empty list is the correct answer" in RETRO
-        assert "WHAT YOU DECIDE HERE IS APPLIED WITHOUT ANYONE" in RETRO
+        assert "WHAT YOU PROPOSE HERE IS DECIDED ONCE A WEEK" in RETRO
 
     def test_worker_gates_promotion_on_the_package_token(self):
         body = WORKER[WORKER.index("async function handleLessonDecision("):]
         body = body[:body.index("\n// -- Gate 2")]
-        assert "requirePackageAccess(req, env, String(body?.package_id ?? \"\"))" in body
+        # Oct 21 2026: the package id is read once and the gate is followed by
+        # an ownership check (lessonDecisionAllowed) — a review link decides
+        # only its own interview's lessons.
+        assert 'const packageId = String(body?.package_id ?? "");' in body
+        assert "requirePackageAccess(req, env, packageId)" in body
+        assert "lessonDecisionAllowed(lesson, pkg)" in body
         assert '["active", "retired"].includes(status)' in body
         assert '"/voices/lesson-decision"' in WORKER
 
@@ -519,11 +527,11 @@ class TestMiraDoesNotRepeatHerself:
         learning.sb_select = lambda *a, **k: [{"phrase": "That's a crisp way to put it"},
                                               {"phrase": "Fair enough"}]
         block = learning.variety_block("age_of_ai")
-        assert "ALREADY USED ON THIS SHOW" in block
+        assert "REPLY SHAPES RETIRED ON THIS SHOW" in block
         # Sept 18 2026: an instance of a reflex is reported as the reflex.
-        assert 'The shape "That\'s a ..." is retired outright' in block
-        assert "Fair enough" in block
-        assert "near-variant" in block
+        # Oct 21 2026: and never printed; a phrase with no shape is dropped.
+        assert "grading the answer with an adjective and a noun (1 time on this show)" in block
+        assert "crisp" not in block and "Fair enough" not in block
 
     def test_a_lookup_failure_never_blocks_an_interview(self):
         import learning
@@ -545,11 +553,11 @@ class TestMiraDoesNotRepeatHerself:
     def test_the_prompt_tells_her_to_vary_her_language(self):
         text = (ROOT / "pipelines" / "voices" / "prompts"
                 / "mira_system_prompt.txt").read_text(encoding="utf-8")
-        assert "SAY IT A DIFFERENT WAY EVERY TIME" in text
-        assert "ALREADY USED ON THIS\nSHOW" in text or "ALREADY USED ON THIS SHOW" in " ".join(text.split())
-        assert "LET THEM FINISH" in text
-        assert "Never read a source aloud" in text
-        assert "the interview is over" in text
+        flat = " ".join(text.split())
+        assert "Open a reply with the specific thing" in flat
+        assert "Wait for the end of the thought, not the pause for breath" in flat
+        assert "never read a source aloud" in flat
+        assert "the interview is over" in flat
 
 
 class TestTheShowDoesNotOpenToAnEmptyChair:
@@ -791,10 +799,10 @@ class TestCraftLessonsFromTheFirstEpisodes:
     def test_the_prompt_carries_what_the_tapes_taught(self):
         text = (ROOT / "pipelines" / "voices" / "prompts"
                 / "mira_system_prompt.txt").read_text(encoding="utf-8")
-        assert "WHAT THE FIRST EPISODES TAUGHT US" in text
-        assert "Ask for the instance, not the pattern" in text
-        assert "Say more about" in text and "is almost always the best next thing" in text
+        # Oct 21 2026: stated once, inside HOW TO LISTEN, without a specimen.
+        assert "Ask for the instance, not\nthe pattern" in text
         assert "let it stand" in text
+        assert "Say more about" not in text
 
 
 class TestNarrationIsNotLevelled:

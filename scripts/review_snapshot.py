@@ -208,6 +208,131 @@ def _latest(paths, count: int):
     return numbered[-count:]
 
 
+#: The interview shows produce no _tts.txt, chapters or credit files: their
+#: episodes come from the Nerra Voices pipeline, and their craft record is
+#: Supabase (episode_grades, episode_metrics, show_lessons) plus the digest
+#: markdown. Oct 21 2026: both scheduled reviews of these shows had read
+#: "0 _tts.txt" as evidence; the snapshot now reads what the shows write.
+INTERVIEW_SHOW_SLUGS = ("age_of_ai", "nerra_voices")
+
+#: The audio measures printed per episode, with the §7.7 target beside each.
+_AUDIO_METRIC_ROWS = (
+    ("overlap_events", "overlap events", "under 1 per 10 min"),
+    ("turn_gap_ms_median", "median turn gap (ms)", "400-900"),
+    ("mira_turn_sec_median", "her median turn (s)", "12-20"),
+    ("self_answered_turns", "self-answered turns", "0"),
+    ("echo_open_rate", "echo-open rate", "under 0.10"),
+    ("guest_words_per_answer_median", "guest words per answer", "rising"),
+    ("guest_words_trend", "guest words trend (last/first third)", "above 1"),
+    ("closing_round_complete", "closing round complete", "every room"),
+    ("seams", "seams", "0"),
+)
+
+
+def _voices_rows(table: str, query: str) -> list[dict]:
+    """Supabase rows when the Voices credentials are in the environment;
+    an empty list otherwise (the snapshot must run anywhere)."""
+    import os
+    if not (os.environ.get("SUPABASE_URL") or os.environ.get("VOICES_SUPABASE_URL")):
+        return []
+    try:
+        voices = ROOT / "pipelines" / "voices"
+        if str(voices) not in sys.path:
+            sys.path.insert(0, str(voices))
+        from common import sb_select  # type: ignore
+        return sb_select(table, query) or []
+    except Exception:  # noqa: BLE001 — a read-only report never fails on this
+        return []
+
+
+def _interview_episodes(out_dir: Path, episodes: int) -> list[tuple[int, Path]]:
+    return _latest([p for p in out_dir.glob("*_Ep*.md")], episodes)
+
+
+def _digest_head(path: Path) -> tuple[str, str]:
+    """The hook line and the one-line summary of a digest."""
+    hook = summary = ""
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not hook and line.startswith("> **"):
+            hook = line.strip("> *").strip()
+        elif not summary and line.startswith("**What You Need to Know:**"):
+            summary = line.split(":**", 1)[-1].strip()
+        if hook and summary:
+            break
+    return hook, summary
+
+
+def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
+    """The craft record of an interview show: per-episode grade and audio
+    measures, the guest's own rating, and the standing lessons."""
+    lines = [f"# Review snapshot: {slug}", "",
+             f"Output dir: `{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}` "
+             "· interview show (Nerra Voices pipeline; no _tts.txt, chapters or credit "
+             "files are expected — the record is the digest and Supabase)", ""]
+    found = _interview_episodes(out_dir, episodes) if out_dir.exists() else []
+    lines.append(f"## Published episodes (last {len(found)})")
+    if not found:
+        lines.append("- (no episode digests committed yet)")
+    for num, path in found:
+        hook, summary = _digest_head(path)
+        lines.append(f"- Ep{num:03d} `{path.name}`: {hook or summary or '(no hook line)'}")
+    lines.append("")
+
+    grades = _voices_rows("episode_grades",
+                          f"show=eq.{slug}&order=created_at.desc&limit={episodes}")
+    lines.append(f"## Grades and audio measures (last {len(grades)} graded rooms)")
+    if not grades:
+        lines.append("- (no graded rooms read — set SUPABASE_URL / SUPABASE_SERVICE_KEY "
+                     "to read episode_grades and episode_metrics)")
+    else:
+        overall = [g.get("overall") for g in grades if g.get("overall") is not None]
+        if overall:
+            lines.append(f"- overall grades, newest first: {', '.join(str(o) for o in overall)} "
+                         f"(mean {sum(float(o) for o in overall) / len(overall):.1f})")
+        for g in grades:
+            m = (_voices_rows("episode_metrics",
+                              f"interview_id=eq.{g.get('interview_id')}&limit=1") or [{}])[0]
+            basis = m.get("metrics_basis") or "unmeasured"
+            cells = []
+            for key, label, target in _AUDIO_METRIC_ROWS:
+                value = m.get(key)
+                if value is None:
+                    continue
+                cells.append(f"{label} {value} (target {target})")
+            lines.append(f"- {str(g.get('created_at') or '')[:10]} overall {g.get('overall')} "
+                         f"· warmth {g.get('warmth')} · turn-taking {g.get('turn_taking')} "
+                         f"· basis {basis}" + (": " + " · ".join(cells) if cells else ""))
+    lines.append("")
+
+    surveys = _voices_rows("editorial_packages",
+                           "survey_rating=not.is.null&order=survey_answered_at.desc&limit=40"
+                           "&select=survey_rating,survey_recommend,interview_id")
+    lines.append("## The guest's own rating (24 h survey)")
+    if surveys:
+        ratings = [int(r["survey_rating"]) for r in surveys if r.get("survey_rating") is not None]
+        lines.append(f"- {len(ratings)} answered · mean {sum(ratings) / len(ratings):.2f} · "
+                     f"{sum(1 for r in ratings if r >= 4)} rated 4 or 5")
+    else:
+        lines.append("- (no survey answers read)")
+    lines.append("")
+
+    active_rows = _voices_rows("show_lessons",
+                               f"status=eq.active&show=in.({slug},network)&order=decided_at.desc&limit=30")
+    proposed_rows = _voices_rows("show_lessons",
+                                 f"status=eq.proposed&show=in.({slug},network)&order=created_at.desc&limit=30")
+    lines.append(f"## Standing lessons ({len(active_rows)} active, {len(proposed_rows)} proposed for the weekly pass)")
+    for r in active_rows:
+        metric = f" [metric: {r['metric']}]" if r.get("metric") else ""
+        lines.append(f"- active ({'all shows' if r.get('show') == 'network' else 'this show'}){metric}: {r.get('lesson')}")
+    for r in proposed_rows:
+        lines.append(f"- proposed: {r.get('lesson')}")
+    if not active_rows and not proposed_rows:
+        lines.append("- (none read)")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_snapshot(slug: str, episodes: int = 10) -> str:
     show_yaml = ROOT / "shows" / f"{slug}.yaml"
     if not show_yaml.exists():
@@ -218,6 +343,8 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
     ) or {}
 
     out_dir = ROOT / (_deep_get(show_cfg, "episode.output_dir") or f"digests/{slug}")
+    if slug in INTERVIEW_SHOW_SLUGS:
+        return interview_show_section(slug, out_dir, episodes)
     lines = [f"# Review snapshot: {slug}", ""]
     if not out_dir.exists():
         lines.append(f"(no output directory at {out_dir} — nothing produced yet)")

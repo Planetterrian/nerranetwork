@@ -201,7 +201,7 @@ def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
     from markupsafe import Markup
     link = _h.escape(studio_link or "", quote=True)
     out = ("<p><strong>On the day, three steps and we're on:</strong></p><ol>"
-           f'<li>Open <a href="{link}">your studio link</a> on your computer, up to ten '
+           f'<li>Open <a href="{link}">your studio link</a> on your computer, up to fifteen '
            "minutes before we start.</li>"
            "<li>Press <strong>Check my microphone</strong> and read the sentence out loud "
            "until it says <strong>Sounds good</strong>.</li>"
@@ -1071,39 +1071,88 @@ def show_insights(show: ShowRef = None, exclude_email: str = "",
     return out
 
 
-def carry_the_show_block(show: ShowRef = None, exclude_email: str = "") -> str:
-    """The block that lets Mira bring one guest's answer to the next guest."""
-    rows = show_insights(show, exclude_email=exclude_email)
+_SUBJECT_STOP = {
+    "about", "after", "again", "being", "between", "could", "every", "first",
+    "from", "guest", "having", "into", "their", "there", "these", "they",
+    "thing", "things", "think", "those", "through", "under", "until", "what",
+    "when", "where", "which", "while", "with", "would", "years", "people",
+    "world", "other", "because", "should", "really", "something", "still",
+}
+SUBJECT_MATCH_MIN = 2            # shared content words that make two subjects one
+
+
+def subject_words(*texts: Any) -> set:
+    """The content words of a subject: five letters or more, not furniture."""
+    out = set()
+    for text in texts:
+        for word in re.findall(r"[a-z][a-z'-]+", str(text or "").lower()):
+            word = word.strip("'-")
+            if len(word) >= 5 and word not in _SUBJECT_STOP:
+                out.add(word)
+    return out
+
+
+def guest_subject_words(app: Optional[Dict[str, Any]]) -> set:
+    """What THIS guest came to talk about: their agenda, topics and pitch."""
+    app = app or {}
+    agenda = app.get("guest_agenda") if isinstance(app.get("guest_agenda"), dict) else {}
+    topics = app.get("topics") if isinstance(app.get("topics"), list) else []
+    return subject_words(agenda.get("topic"), *(agenda.get("points") or []),
+                         *topics, app.get("pitch_summary"))
+
+
+def _same_subject(row: Dict[str, Any], guest_words: set) -> bool:
+    if not guest_words:
+        return False
+    theirs = subject_words(row.get("summary"), row.get("quote"), row.get("why"))
+    return len(theirs & guest_words) >= SUBJECT_MATCH_MIN
+
+
+def carry_the_show_block(show: ShowRef = None, exclude_email: str = "",
+                         app: Optional[Dict[str, Any]] = None) -> str:
+    """One previous guest's answer, offered to this one — or nothing.
+
+    Oct 21 2026 (review of every interview). The block used to hand Mira six
+    quotes and the instruction to use one "where it genuinely belongs"; she
+    put them to the wrong guest at the wrong moment on six of nine episodes,
+    and one guest's complaint was being asked about a stranger she had never
+    heard of. Now: at most ONE insight, only when the previous guest's
+    subject shares at least ``SUBJECT_MATCH_MIN`` content words with what
+    this guest came to discuss, never for a guest who asked to keep the hour
+    to the work, and always as an offer in the co-host's shape: who the
+    person is in a few words, what they said, and whether it holds from
+    where this guest sits. Without the application there is no subject to
+    match against, so there is no callback.
+    """
+    if not app:
+        return ""
+    from interview_shape import personal_depth  # noqa: E402
+    if personal_depth(app) == "none":
+        return ""
+    guest_words = guest_subject_words(app)
+    rows = [r for r in show_insights(show, exclude_email=exclude_email)
+            if _same_subject(r, guest_words)]
     if not rows:
         return ""
-    lines = ["WHAT THIS SHOW HAS LEARNED SO FAR (from guests who came before "
-             "this one — real people, real words, and yours to use):"]
-    for row in rows:
-        lines.append(f"\n{row['guest']} ({row['recorded_on']}): {row['summary']}")
-        lines.append(f'  In their words: "{row["quote"]}"')
-        for pred in row["predictions"]:
-            lines.append(f"  They predicted: {pred.get('prediction')}"
-                         + (f" (by {pred['due_on']})" if pred.get("due_on") else ""))
+    row = rows[0]
+    lines = ["WHAT A PREVIOUS GUEST SAID ON THIS SUBJECT (a real person, real "
+             "words, and yours to use once):",
+             f"\n{row['guest']} ({row['recorded_on']}): {row['summary']}",
+             f'  In their words: "{row["quote"]}"']
+    for pred in row["predictions"][:1]:
+        lines.append(f"  They predicted: {pred.get('prediction')}"
+                     + (f" (by {pred['due_on']})" if pred.get("due_on") else ""))
     lines.append(
-        "\nUSE ONE OF THESE, ONCE, WHERE IT GENUINELY BELONGS. Not as trivia "
-        "and not to show that you remember — put a previous guest's answer to "
-        "THIS guest, in their own area, and ask what they make of it. "
-        "Name the person. Quote them accurately or not at all. If nothing above "
-        "genuinely connects to this conversation, say nothing — "
-        "a forced callback is worse than none, and there will be a better "
-        "one next time. Sept 22 2026: you put a nutritionist's line about "
-        "being the architect of your own life to a payments founder, "
-        "mid-way through his answer about processor fees. That is the "
-        "forced callback this means. The test: would this guest have "
-        "brought up that subject themselves? If not, leave it."
-        "\n\nHOW TO SAY IT. The callback is a QUESTION and it stands alone. "
-        "One sentence of who said what, then the question, then silence: "
-        "\"Vincent Rylan, a novelist, told me nobody can opt out of the race "
-        "because opting out only decides who the winner is not. Is he "
-        "right?\" Then stop. Do not put it after a recap of what this guest "
-        "just said, do not add a second question, and do not answer it "
-        "yourself. On Sept 15 2026 you stacked a three-sentence summary, a "
-        "quote and a question into one turn, and Dr. Wolfberg had to ask "
-        "whether that was a question to him. If the guest asks that, it "
-        "was not clear: re-ask it in one short sentence.")
+        "\nUSE IT ONCE AT MOST, where this guest is already on that ground, "
+        "and only if it genuinely belongs; "
+        "a forced callback is worse than none. "
+        "HOW TO SAY IT: an offer, in your co-host's shape. One sentence "
+        "that names the person and says in a few words who they are, one "
+        "that gives their point, and then ask whether it holds from where "
+        "this guest sits. Never ask whether the other person was right, do "
+        "not put it after a recap of what this guest just said, do not add a "
+        "second question, and do not answer it yourself. If the guest asks "
+        "whether that was a question to them, it was not clear: "
+        "ask it again in one short sentence. Name the person. "
+        "Quote them accurately or not at all.")
     return "\n".join(lines)

@@ -36,8 +36,27 @@
  *    end-of-interview webhook. The room ends REJOIN_GRACE_MS after the last
  *    human leaves, so a dropped connection is "open the link again".
  *
+ * Turn-taking since Oct 21 2026 (review docs/reviews/age_of_ai_review_2026_10_21.md):
+ *  - end of turn is a DECISION (decideTurn), not the VAD's timer: the server
+ *    VAD finds the pause with create_response off, the room reads the guest's
+ *    words since Mira's last line and gives her the turn only when someone has
+ *    spoken and the last clause reads finished; a turn the server starts on
+ *    its own with nobody having spoken is cancelled at once;
+ *  - every turn of hers goes through requestTurn, which never starts over the
+ *    guest (the opening, a tool's return, a rescue, a rejoin, a hand-over);
+ *  - she never speaks first on join: the guest's first words, or three
+ *    seconds, open her mouth;
+ *  - the session hand-over happens at a pause she is in, carrying the whole
+ *    transcript, and the new session owes no unprompted first line;
+ *  - the co-host's voice (per-leg MicStatusChange) is not the guest's
+ *    barge-in and not the guest's answer;
+ *  - a sign-off before the window is cancelled on the transcript DELTAS, so
+ *    the guest hears at most its first words;
+ *  - the closing round is a state machine here: the room hands her each of
+ *    the ROUND_QUESTIONS one at a time after the previous answer ends.
+ *
  * All call config (guest phone, caller id, compiled Mira prompt, tools,
- * voice preset, host_mode) is pulled from Supabase so the fire step and
+ * voice preset, host_mode, reasoning_effort) is pulled from Supabase so the fire step and
  * the studio page stay thin triggers and the run row is the single source
  * of truth.
  *
@@ -85,7 +104,18 @@ const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20
 // before he had his headphones on — and the co-host joined at 14:55:56, 43
 // seconds into a show that had already started without him. Both halves of
 // the clunky open are timing, not wording.
-const GUEST_SETTLE_MS = 7 * 1000;   // let the guest arrive before she speaks
+// Oct 21 2026: she never speaks first on join. The guest's first words, or
+// three seconds of them settling, is what opens her mouth — in every mode.
+const GUEST_SETTLE_MS = 3 * 1000;
+// End of turn is a decision, not a timer (Oct 21 2026). The voice API's
+// server VAD still finds the pause, but it no longer starts her turn: the
+// room reads what the guest said since her last line and decides. These are
+// the waits the decision allows itself after the VAD has fired.
+const TURN_DECIDE_MS = 500;            // let the transcription of the last clause land
+const TURN_TRANSCRIPT_WAIT_MS = 1500;  // once more, when speech was heard but no words arrived
+const TURN_THINK_EXTRA_MS = 1500;      // once more, when the last clause reads unfinished
+const TURN_MIN_SPEECH_MS = 1000;       // untranscribed speech this long still earns her a turn
+const ROUND_REPROMPT_MS = 35 * 1000;   // a closing question unanswered this long gets one gentle re-ask
 const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
 // Sept 14 2026 (Vincent Rylan): he joined at 21:53 for a 22:00 interview and
 // the two-minute hold ran out at 21:55, so Mira opened the show four minutes
@@ -132,8 +162,12 @@ const GROK_SESSION_MAX_MIN = (function () {
   const raw = parseInt("__GROK_SESSION_MAX_MIN__", 10);
   return (raw > 0) ? raw : 30;
 })();
-// Rotate 4 min before the ceiling, never sooner than 2 min in.
-const ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 4) * 60 * 1000;
+// Oct 21 2026: the hand-over is DUE 6 min before the ceiling and happens at
+// the next pause she is in (after her turn ends, before the guest's next
+// word); if no pause comes it is forced 90 s before the ceiling. Matt Davis
+// and Jon Cheney each lost an answer to the old timer firing mid-sentence.
+const ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 6) * 60 * 1000;
+const ROTATE_FORCE_MS = Math.max(3, GROK_SESSION_MAX_MIN - 1.5) * 60 * 1000;
 // A run row may shorten this for a rehearsal:
 //   update interview_runs set grok_session_log =
 //     coalesce(grok_session_log,'{}'::jsonb) || '{"rotate_after_sec":90}'
@@ -146,7 +180,14 @@ function rotateAfterMs() {
   } catch (err) { /* fall through */ }
   return ROTATE_AFTER_MS_DEFAULT;
 }
-const HANDOVER_TURNS = 24;   // transcript lines carried into the next session
+// Oct 21 2026: the WHOLE kept transcript rides into the next session (it was
+// 24 lines, and a continuation that has forgotten the first half re-asks it).
+const HANDOVER_TURNS = 200;
+// Webhook signing (Oct 21 2026): every request the room makes to the Worker
+// carries X-Voices-Signature, the hex HMAC-SHA256 of its body under a secret
+// substituted at deploy. An unset placeholder sends no header, so a Worker
+// without the secret keeps accepting as before.
+const WEBHOOK_SECRET = "__VOICES_WEBHOOK_SECRET__";
 
 // Shared state (each session is one of the two kinds; unused fields stay null).
 let runId = null;
@@ -226,12 +267,13 @@ async function narrationSession(custom) {
     try { if (recorder) recorder.stop(); } catch (err) { /* best-effort */ }
     await sleep(1200);            // let RecorderEvents.Stopped land the URL
     try {
+      const takeBody = JSON.stringify({
+        take_id: takeId, status: status,
+        record_url: recordUrl, detail: detail || null,
+      });
       await Net.httpRequestAsync(NARRATION_TAKE_URL, {
-        method: "POST", headers: ["Content-Type: application/json"],
-        postData: JSON.stringify({
-          take_id: takeId, status: status,
-          record_url: recordUrl, detail: detail || null,
-        }),
+        method: "POST", headers: signedHeaders(takeBody),
+        postData: takeBody,
       });
     } catch (err) {
       Logger.write("[aoa narr " + takeId + "] report failed: " + err.message);
@@ -618,6 +660,27 @@ let roomEnded = false;
 // two seconds apart. A turn the room wants now waits for the one in flight,
 // and one sign-off earns one rescue.
 let pendingTurn = false;          // a room-requested turn waiting for hers to end
+// Turn decision state (Oct 21 2026).
+let turnRequested = false;        // the room asked for the response now starting
+let serverTurns = 0;              // responses the server started on its own
+let selfAnswersBlocked = 0;       // server turns cancelled because nobody had spoken
+let guestSpokeSinceMira = false;  // the guest leg (or the mix) has spoken since her last turn
+let hostSpokeSinceMira = false;   // the co-host has, and the guest has not
+let speechSinceMiraMs = 0;        // how much, in ms, by the VAD
+let turnDecisionTimer = null;     // the pending decideTurn
+let turnWaitedForWords = false;   // decideTurn already waited once for a transcription
+let turnWaitedToThink = false;    // decideTurn already waited once on an unfinished clause
+let miraLineIndex = -1;           // transcript index of her last line (the guest delta starts after it)
+let currentResponseText = "";     // what she has said so far on the response in flight
+let responseCancelledEarly = false; // this response was cut by the room before it finished
+let rotationDue = false;          // the session hand-over is waiting for a pause
+let rotateForceTimer = null;
+let handoverTurnOwed = false;     // the new session owes the guest a reply
+// Per-leg microphone state (CallEvents.MicStatusChange), so a co-host's
+// cough is not the guest's barge-in.
+let micStatusSeen = false;
+let guestMicActive = 0;
+let hostMicActive = 0;
 let lastRescueAt = 0;
 const RESCUE_COOLDOWN_MS = 20 * 1000;
 let lastMiraLineAt = 0;           // when she last said anything (remember())
@@ -683,6 +746,7 @@ async function openRoom() {
     // has said the recording is over.
     Logger.write("[aoa " + runId + "] hard cap reached, closing");
     trace("time", "hard cap reached; asking for an immediate close");
+    closingPermitted = true; roundClosed = true; roundActive = false; roundPendingStart = false;
     try {
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text:
@@ -706,6 +770,20 @@ function admitLeg(call, role) {
   call.addEventListener(CallEvents.Connected, function () {
     VoxEngine.sendMediaBetween(call, conf);
     if (!firstJoinAt) firstJoinAt = Date.now();
+    // Oct 21 2026: per-leg voice activity, so the room knows WHO is talking
+    // before it treats speech as the guest's barge-in or the guest's answer.
+    try {
+      if (call.handleMicStatus && CallEvents.MicStatusChange) {
+        call.handleMicStatus(true);
+        call.addEventListener(CallEvents.MicStatusChange, function (ev) {
+          micStatusSeen = true;
+          const on = !!(ev && ev.active);
+          leg.micActive = on;
+          guestMicActive = legs.filter(function (l) { return l.role === "guest" && l.micActive; }).length;
+          hostMicActive = legs.filter(function (l) { return l.role === "host" && l.micActive; }).length;
+        });
+      }
+    } catch (err) { /* older VoxEngine: the mix decides, as before */ }
     if (role === "host") {
       hostJoins++;
       if (!hostJoinedAt) hostJoinedAt = new Date().toISOString();
@@ -738,6 +816,8 @@ function admitLeg(call, role) {
     const idx = legs.indexOf(leg);
     if (idx < 0) return;
     legs.splice(idx, 1);
+    guestMicActive = legs.filter(function (l) { return l.role === "guest" && l.micActive; }).length;
+    hostMicActive = legs.filter(function (l) { return l.role === "host" && l.micActive; }).length;
     trace("leg", role + " #" + leg.id + " left: " + why + " (" + legs.length + " in room)");
     if (role === "host" && !legs.some(function (l) { return l.role === "host"; })) {
       hostLeftAt = new Date().toISOString();
@@ -798,9 +878,14 @@ function textOf(event) {
 function remember(who, text) {
   if (!text) return;
   transcript.push(who + ": " + String(text).slice(0, 400));
-  if (transcript.length > 200) transcript.splice(0, transcript.length - 200);
+  if (transcript.length > 200) {
+    const dropped = transcript.length - 200;
+    transcript.splice(0, dropped);
+    miraLineIndex = Math.max(-1, miraLineIndex - dropped);
+  }
   if (who === "Mira") {
     lastMiraLineAt = Date.now();
+    miraLineIndex = transcript.length - 1;
     // Order matters: note the question BEFORE testing for a sign-off, so a
     // turn that asks for a parting thought and then ends the recording in the
     // same breath is caught by the same rule.
@@ -812,6 +897,10 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
     try { noteRoundQuestion(text); }
     catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
+    try {
+      if (closingPermitted && !roundActive && !roundClosed && !isClosingSession()
+          && CLOSING_ROUND_RE.test(text || "")) startRound("she announced it", -1);
+    } catch (err) { Logger.write("[aoa " + runId + "] round start check failed: " + err.message); }
   } else {
     lastWordAnswered = true;
   }
@@ -827,8 +916,113 @@ function remember(who, text) {
 function requestTurn(agent) {
   if (!agent || roomEnded) return;
   if (miraSpeaking) { pendingTurn = true; return; }
+  // Oct 21 2026: never over the guest. The decision after their next pause
+  // gives her the turn (decideTurn honours pendingTurn without needing new
+  // guest words, since the note that asked is already in her context).
+  if (inboundSpeaking) { pendingTurn = true; return; }
+  pendingTurn = false;
   miraSpeaking = true;
+  turnRequested = true;
   agent.responseCreate({});
+}
+
+// ---------------------------------------------------------------------------
+// End of turn is a decision (Oct 21 2026)
+// ---------------------------------------------------------------------------
+//
+// With turn_detection.create_response off, the server finds the guest's
+// pause and tells the room (SpeechStopped) but starts nothing. The room then
+// reads what the guest said since Mira's last line and decides:
+//   - nobody has spoken since her last turn  -> she stays quiet (this is the
+//     self-answered question of Ep2, Ep5, Ep11 and Jason Shumard, ended by
+//     construction);
+//   - speech was heard but no words have arrived yet -> wait once for the
+//     transcription, then give her the turn anyway (a transcription can fail;
+//     a guest who spoke for a second is owed a reply);
+//   - the last clause reads unfinished ("...and", "because", a trailing
+//     comma) -> wait once more; a guest mid-thought is where the good answers
+//     come from;
+//   - a hand-over is due -> this pause is where it happens.
+// If the server starts a turn on its own anyway (create_response ignored),
+// the response.created listener cancels it when nobody had spoken.
+
+const UNFINISHED_TAIL_RE = /(?:^|\s)(and|but|so|or|because|although|though|um|uh|like|the|a|an|to|of|that|which|if|when|then|also|with|for|in|on|at|is|was|are|were|i|we|you|it|they|he|she|my|our|your|their|this|these|those|as|than|by|from|into|about)[,.\s]*$/i;
+
+function guestDelta() {
+  const lines = [];
+  for (let i = miraLineIndex + 1; i < transcript.length; i++) {
+    if (transcript[i].indexOf("Mira: ") !== 0) lines.push(transcript[i].replace(/^[^:]+:\s*/, ""));
+  }
+  return lines.join(" ").trim();
+}
+
+function looksFinished(text) {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  if (/[.?!]["')\]]?$/.test(t)) return true;
+  if (/[,;:\-–—]$/.test(t)) return false;
+  return !UNFINISHED_TAIL_RE.test(t);
+}
+
+function cancelTurnDecision() {
+  if (turnDecisionTimer) { clearTimeout(turnDecisionTimer); turnDecisionTimer = null; }
+}
+
+function scheduleTurnDecision(delayMs) {
+  cancelTurnDecision();
+  turnDecisionTimer = setTimeout(decideTurn, delayMs || TURN_DECIDE_MS);
+}
+
+function decideTurn() {
+  turnDecisionTimer = null;
+  if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
+  const owed = pendingTurn;
+  const spoke = guestSpokeSinceMira || hostSpokeSinceMira;
+  if (!spoke && !owed) {
+    trace("turn", "pause with no words since her last turn; holding");
+    return;
+  }
+  const delta = guestDelta();
+  if (spoke && !delta && speechSinceMiraMs >= TURN_MIN_SPEECH_MS && !turnWaitedForWords) {
+    turnWaitedForWords = true;
+    scheduleTurnDecision(TURN_TRANSCRIPT_WAIT_MS);
+    return;
+  }
+  if (spoke && !delta && speechSinceMiraMs < TURN_MIN_SPEECH_MS && !owed) {
+    trace("turn", "a sound, not a sentence (" + speechSinceMiraMs + " ms); holding");
+    return;
+  }
+  if (delta && !looksFinished(delta) && !turnWaitedToThink && !owed) {
+    turnWaitedToThink = true;
+    trace("turn", "clause reads unfinished; giving them " + TURN_THINK_EXTRA_MS + " ms more");
+    scheduleTurnDecision(TURN_THINK_EXTRA_MS);
+    return;
+  }
+  if (rotationDue) {
+    handoverTurnOwed = true;
+    rotateAgent();
+    return;
+  }
+  if (roundActive && roundAwaitingAnswer && spoke) {
+    roundAnswered();
+    return;
+  }
+  if (roundPendingStart && spoke) {
+    roundPendingStart = false;
+    startRound("the answer in progress ended");
+    return;
+  }
+  requestTurn(grokAgent);
+}
+
+/** The room heard someone start talking: who, and what it means for her. */
+function noteInboundStart() {
+  cancelTurnDecision();
+  turnWaitedForWords = false;
+  turnWaitedToThink = false;
+  const hostOnly = micStatusSeen && guestMicActive === 0 && hostMicActive > 0;
+  if (hostOnly) hostSpokeSinceMira = true; else guestSpokeSinceMira = true;
+  return hostOnly;
 }
 
 /** True (and starts the cooldown) when no other rescue has just fired. */
@@ -847,8 +1041,8 @@ function handoverNote() {
     Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000) + " minutes. " +
     "Do NOT re-introduce yourself, do NOT greet them again, do NOT restate " +
     "the premise of the show, and do NOT repeat questions already asked. " +
-    "There was a brief technical pause; if anything, say something short and " +
-    "natural like \"sorry, go on\" and carry straight on.\n" +
+    "There was a brief technical pause of a second or two; carry straight on " +
+    "as if there had been none, and if you speak next, answer what they last said.\n" +
     (Object.keys(roundAsked).length
       ? "Closing questions already asked and answered in this interview, never" +
         " to be asked again: " + Object.keys(roundAsked).join("; ") + ".\n"
@@ -904,7 +1098,19 @@ function turnDetection() {
     // and shorter than a "let me think about that" pause, which the prompt
     // tells her to leave alone anyway.
     silence_duration_ms: Number(tuned.silence_duration_ms) || 1100,
+    // Oct 21 2026: the VAD finds the pause; the ROOM decides whether it is
+    // the end of a turn (decideTurn). Raising the silence timer (1,100 ->
+    // 1,300 -> 1,800 ms) never stopped the interruptions because a timer is
+    // not a completion check. A run row may set create_response: true to
+    // put the old behaviour back for one room.
+    create_response: tuned.create_response === true,
   };
+}
+
+/** Reasoning effort for the live interview: from the run row, else "high". */
+function reasoningEffort() {
+  const raw = String((config && config.reasoning_effort) || "").trim().toLowerCase();
+  return (raw === "none" || raw === "low" || raw === "medium" || raw === "high") ? raw : "high";
 }
 
 /**
@@ -937,11 +1143,12 @@ async function createAgent(note) {
         // longer than that before taking the turn. Tunable per run without a
         // scenario deploy: interview_runs.turn_detection.
         turn_detection: turnDetection(),
-        // Oct 15 2026 (Grok Voice 3.0): reasoning stays on for the live
-        // interview — xAI's "high" is for nuanced tone and ambiguous turns,
-        // which is the whole job — and is pinned so a default change cannot
-        // move it. The narration read runs at "none" (see narrationSession).
-        reasoning: { effort: "high" },
+        // Oct 15 2026 (Grok Voice 3.0): reasoning is pinned so a default
+        // change cannot move it; the narration read runs at "none" (see
+        // narrationSession). Oct 21 2026: the run row may set it
+        // (interview_runs.reasoning_effort) so the rehearsal harness can
+        // trial "low" against "high" before a guest hears either.
+        reasoning: { effort: reasoningEffort() },
         instructions: config.mira_system_prompt + (note || ""),
         tools: config.tools || [],
     };
@@ -967,8 +1174,14 @@ async function createAgent(note) {
       } else {
         trace("grok", "session " + generation + " bridged — resuming the interview");
         rotating = false;
-        // Nudge her to speak first so the seam is a beat, not a silence.
-        try { miraSpeaking = true; agent.responseCreate({}); } catch (err) { /* best-effort */ }
+        // Oct 21 2026: no unprompted first turn. The hand-over happened at a
+        // pause the guest left; she speaks only if that pause was theirs
+        // handing her the turn (handoverTurnOwed), otherwise she waits for
+        // them like any other turn.
+        if (handoverTurnOwed) {
+          handoverTurnOwed = false;
+          try { requestTurn(agent); } catch (err) { /* best-effort */ }
+        }
       }
     } catch (err) {
       Logger.write("[aoa " + runId + "] media-bridge failure: " + err.message);
@@ -985,20 +1198,31 @@ async function createAgent(note) {
   if (Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) {
     agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped, function () {
       inboundSpeaking = false;
-      noteGuestSpoke(Date.now() - inboundSpokeAt);
+      const ms = Date.now() - inboundSpokeAt;
+      speechSinceMiraMs += Math.max(0, ms);
+      noteGuestSpoke(ms);
+      if (agent !== grokAgent) return;
+      // The VAD found the pause; the room decides whether it is the end of
+      // a turn (see decideTurn). The opening waits for this too.
+      if (!openingFired) { setTimeout(openAfterGuestSpoke, TURN_DECIDE_MS); return; }
+      scheduleTurnDecision(TURN_DECIDE_MS);
     });
   }
   agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
     inboundSpeaking = true; inboundSpokeAt = Date.now();
     // Without a stopped event there is no length to measure; speech after
     // the last-word question is then taken as the answer when it starts.
-    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS);
+    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) { noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS); speechSinceMiraMs += LAST_WORD_MIN_SPEECH_MS; }
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
     anyoneHeard = true;
     if (agent !== grokAgent) return;
-    pendingTurn = false;
+    const hostOnly = noteInboundStart();
+    // Oct 21 2026: the co-host's voice is not the guest's barge-in. When the
+    // per-leg microphone state says only a host leg is live, she finishes
+    // her sentence; he is heard and answered on her next turn.
+    if (hostOnly) { if (miraSpeaking) trace("turn", "co-host spoke during her turn; not a barge-in"); return; }
     agent.clearMediaBuffer();
     if (!miraSpeaking) return;
     miraSpeaking = false;
@@ -1045,6 +1269,19 @@ async function createAgent(note) {
         const raw = JSON.stringify((ev && (ev.data || ev)) || {});
         if (raw.indexOf("input_audio_transcription.completed") >= 0) remember("Guest", textOf(ev));
         if (raw.indexOf("\"response.created\"") >= 0) markTurnStarted(agent);
+        // Oct 21 2026: her words as they are spoken, so a sign-off before
+        // the window has opened is cancelled mid-sentence, not noted after.
+        if (raw.indexOf("audio_transcript.delta") >= 0 && agent === grokAgent) {
+          const piece = textOf(ev);
+          if (piece) { currentResponseText += (currentResponseText ? " " : "") + piece; catchEarlyCloseOnDelta(currentResponseText); }
+        }
+      });
+    }
+    if (Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDelta) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDelta, function (ev) {
+        if (agent !== grokAgent) return;
+        const piece = textOf(ev);
+        if (piece) { currentResponseText += (currentResponseText ? " " : "") + piece; catchEarlyCloseOnDelta(currentResponseText); }
       });
     }
     // Oct 19 2026. miraSpeaking was set only when the ROOM asked for a turn
@@ -1065,15 +1302,14 @@ async function createAgent(note) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
         miraSpeaking = false;
         trace("grok", "response done");
+        if (agent !== grokAgent || roomEnded) return;
+        // Oct 21 2026: the pause after her turn, before the guest's next
+        // word, is where a due hand-over happens (never on a timer).
+        if (rotationDue && !inboundSpeaking && !rotating) { rotateAgent(); return; }
         // A turn the room asked for while she was mid-turn goes now, unless
         // someone has started talking, in which case their finishing will
         // give her the turn and the note is already in her context.
-        if (pendingTurn && agent === grokAgent && !roomEnded) {
-          pendingTurn = false;
-          if (!inboundSpeaking) {
-            try { miraSpeaking = true; agent.responseCreate({}); } catch (err) { /* best-effort */ }
-          }
-        }
+        if (pendingTurn && !inboundSpeaking) requestTurn(agent);
       });
     }
   } catch (err) { /* event names differ across connector versions */ }
@@ -1089,7 +1325,38 @@ async function createAgent(note) {
 
 /** A turn of hers has begun, whoever asked for it (Oct 19 2026). */
 function markTurnStarted(agent) {
-  if (agent === grokAgent && !roomEnded) miraSpeaking = true;
+  if (agent !== grokAgent || roomEnded) return;
+  miraSpeaking = true;
+  currentResponseText = "";
+  responseCancelledEarly = false;
+  cancelTurnDecision();
+  const requested = turnRequested;
+  turnRequested = false;
+  const spoke = guestSpokeSinceMira || hostSpokeSinceMira;
+  // Oct 21 2026: a turn the room did not ask for is the server's own
+  // (create_response ignored, or an older connector). Counted; and when
+  // nobody has said a word since her last turn it is cancelled at once —
+  // that turn is the question she answers herself.
+  if (!requested) {
+    serverTurns += 1;
+    if (serverTurns <= 3) trace("turn", "server started a turn on its own (#" + serverTurns + ")");
+    if (!spoke && openingFired) {
+      selfAnswersBlocked += 1;
+      miraSpeaking = false;
+      try {
+        if (agent.responseCancel) agent.responseCancel();
+        else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
+        agent.clearMediaBuffer();
+      } catch (err) { /* best-effort */ }
+      trace("turn", "cancelled a turn nobody had asked for (#" + selfAnswersBlocked + "): no guest words since her last line");
+      return;
+    }
+  }
+  guestSpokeSinceMira = false;
+  hostSpokeSinceMira = false;
+  speechSinceMiraMs = 0;
+  turnWaitedForWords = false;
+  turnWaitedToThink = false;
 }
 
 async function startAgent() {
@@ -1107,21 +1374,44 @@ async function startAgent() {
 // Hand the conversation to a fresh session before xAI kills this one.
 function armRotation() {
   if (rotateTimer) clearTimeout(rotateTimer);
-  rotateTimer = setTimeout(rotateAgent, rotateAfterMs());
+  if (rotateForceTimer) clearTimeout(rotateForceTimer);
+  rotationDue = false;
+  // Oct 21 2026: the timer no longer rotates; it marks the hand-over DUE,
+  // and the next pause she is in performs it (ResponseDone with nobody
+  // talking, or the guest's pause in decideTurn). Only when no pause has
+  // come by the ceiling's last 90 s is it forced.
+  rotateTimer = setTimeout(function () {
+    rotateTimer = null;
+    if (roomEnded || rotating) return;
+    rotationDue = true;
+    trace("grok", "hand-over due; waiting for a pause she is in");
+    if (!miraSpeaking && !inboundSpeaking) rotateAgent();
+  }, rotateAfterMs());
+  const forceIn = Math.max(30 * 1000, Math.min(ROTATE_FORCE_MS, rotateAfterMs() + 4.5 * 60 * 1000));
+  rotateForceTimer = setTimeout(function () {
+    rotateForceTimer = null;
+    if (roomEnded || rotating || !rotationDue) return;
+    trace("grok", "no pause came; forcing the hand-over before the session ceiling");
+    handoverTurnOwed = miraSpeaking;   // she was mid-sentence: the new session finishes the thought
+    rotateAgent();
+  }, forceIn);
 }
 
 async function rotateAgent() {
-  rotateTimer = null;
+  if (rotateTimer) { clearTimeout(rotateTimer); rotateTimer = null; }
+  if (rotateForceTimer) { clearTimeout(rotateForceTimer); rotateForceTimer = null; }
+  rotationDue = false;
   if (roomEnded || rotating || !grokAgent) return;
   // Nobody is in the room (everyone dropped, or the room is draining). A
   // fresh session would just burn an xAI session on silence; wait for a
   // rejoin instead. If the room really is over, endRoom() clears the timer.
-  if (legs.length === 0) { rotateTimer = setTimeout(rotateAgent, 15 * 1000); return; }
+  if (legs.length === 0) { rotateTimer = setTimeout(function () { rotationDue = true; rotateAgent(); }, 15 * 1000); return; }
   rotating = true;
+  cancelTurnDecision();
   const previous = grokAgent;
   const note = handoverNote();
   trace("grok", "handing over to a fresh session after " +
-        Math.round((Date.now() - (agentStartedAt || Date.now())) / 1000) + "s (" +
+        Math.round((Date.now() - (agentStartedAt || Date.now())) / 1000) + "s at a pause (" +
         transcript.length + " lines of transcript, xAI cap " + GROK_SESSION_MAX_MIN + " min)");
   let next;
   try {
@@ -1130,7 +1420,8 @@ async function rotateAgent() {
     rotating = false;
     trace("grok", "hand-over failed, staying on the current session: " + err.message);
     // Try again shortly; the current session still has a couple of minutes.
-    rotateTimer = setTimeout(rotateAgent, 30 * 1000);
+    rotateTimer = setTimeout(function () { rotationDue = true; rotateAgent(); }, 30 * 1000);
+    if (handoverTurnOwed) { handoverTurnOwed = false; requestTurn(grokAgent); }
     return;
   }
   // Swap: the new session takes over the mix, the old one is unwired and
@@ -1172,7 +1463,11 @@ function maybeOpen() {
     // co-host walks into a conversation already in progress; on Sept 14 2026
     // it was the second, and it is what made the first minutes unusable.
     if (waitingForCohost()) {
-      greetGuestAndWait();
+      // Oct 21 2026: she does not speak on join. The guest's first words, or
+      // three seconds, earn the one holding line (greetGuestAndWait).
+      if (!guestGreeted && !openingTimer) {
+        openingTimer = setTimeout(function () { openingTimer = null; greetGuestAndWait(); }, GUEST_SETTLE_MS);
+      }
       if (!cohostWaitTimer) {
         cohostWaitTimer = setTimeout(function () {
           cohostWaitTimer = null;
@@ -1285,6 +1580,11 @@ function openWhenReady(reason) {
                 " for coming back, then ask how they are and listen. The lightning round comes" +
                 " after that. "
               : "") +
+            (isHelloSession()
+              ? " This is the short hello before their interview, not the interview: say who" +
+                " you are in a clause, that this is just a hello and a sound check, and ask how" +
+                " they can hear you. No show introduction and no interview questions. "
+              : "") +
             " This turn is beat 1 of HOW TO OPEN only: a warm, unhurried hello by name," +
             " glad they came, and ONE easy human question (how they are today, or" +
             " where they are joining from). Then stop and listen. Do not answer your" +
@@ -1292,15 +1592,14 @@ function openWhenReady(reason) {
             " have answered and you have reacted to it." }] },
       });
     }
-    if (!alreadyGreeted) {
-      miraSpeaking = true;
-      grokAgent.responseCreate({});
-    }
+    if (!alreadyGreeted) requestTurn(grokAgent);
+    if (isClosingSession()) roundPendingStart = true;
+    if (isHelloSession()) { closingPermitted = true; roundClosed = true; }
     startTimeChecks();
     armAudioCheck();
     micCheckTimer = setTimeout(function () { silentMicNudge(1); }, SILENT_MIC_AFTER_MS);
   } catch (err) {
-    Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
+    Logger.write("[aoa " + runId + "] opening turn failed: " + err.message);
   }
 }
 
@@ -1346,11 +1645,19 @@ function greetGuestAndWait() {
           "introduction, and do not ask an interview question yet. Then stay " +
           "quiet — small talk if they speak to you, nothing otherwise." }] },
     });
-    miraSpeaking = true;
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] guest holding greeting failed: " + err.message);
   }
+}
+
+/** The guest spoke before the show opened (Oct 21 2026): answer that, in
+ *  whichever mode the room is in, instead of opening over them later. */
+function openAfterGuestSpoke() {
+  if (openingFired || roomEnded || !grokAgent || humansIn("guest") === 0) return;
+  if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
+  if (waitingForCohost()) { greetGuestAndWait(); return; }
+  openWhenReady("guest spoke first");
 }
 
 // Only the co-host is here. Say hello once, then be quiet until the guest
@@ -1370,8 +1677,7 @@ function greetHostAndWait() {
           "yourself or the guest, and do not ask any interview questions. " +
           "Then stay silent until you are told the guest has joined." }] },
     });
-    miraSpeaking = true;
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] host greeting failed: " + err.message);
   }
@@ -1431,7 +1737,7 @@ function resumeForGuest() {
           "of it, and you should ask the whole thing rather than a fragment. " +
           "Then stop and wait for them." }] },
     });
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] resumeForGuest failed: " + err.message);
   }
@@ -1498,10 +1804,11 @@ function postSilenceAlert(seconds) {
   silenceAlerted = true;
   trace("audio_path", "nothing heard for " + seconds + "s — Patrick alerted");
   try {
+    const body = JSON.stringify({ run_id: runId, source: "scenario", seconds: seconds });
     Net.httpRequestAsync(SILENCE_URL, {
       method: "POST",
-      headers: ["Content-Type: application/json"],
-      postData: JSON.stringify({ run_id: runId, source: "scenario", seconds: seconds }),
+      headers: signedHeaders(body),
+      postData: body,
     }).then(function () {}, function (err) {
       Logger.write("[aoa " + runId + "] silence alert failed: " + err.message);
     });
@@ -1544,7 +1851,7 @@ function silentMicNudge(attempt) {
           "them. When they come through, say one short line (\"There you are, perfect.\") " +
           "and carry on." }] },
     });
-    grokAgent.responseCreate({});
+    requestTurn(grokAgent);
     if (attempt < 2) {
       micCheckTimer = setTimeout(function () { silentMicNudge(attempt + 1); }, 45 * 1000);
     }
@@ -1573,6 +1880,14 @@ function closingOpensAtMin() {
 
 function isClosingSession() {
   return !!(config && config.session_kind === "closing");
+}
+
+// Oct 21 2026: the five-minute hello two days before the interview (fork
+// E, pipelines/voices/hello_sessions.py). No show open, no closing round,
+// no sign-off rules: she meets them, checks the sound, and asks what they
+// most want the hour to reach.
+function isHelloSession() {
+  return !!(config && config.session_kind === "hello");
 }
 
 function elapsedMin() {
@@ -1606,7 +1921,12 @@ function startTimeChecks() {
       let note = "[TIME CHECK — system note, do not read aloud] " +
         elapsed + " minutes elapsed; about " + remainMin +
         " minutes remain of the planned " + plannedMin() + "-minute interview.";
-      if (elapsed < closingOpensAtMin()) {
+      if (isHelloSession()) {
+        note = "[TIME CHECK — system note, do not read aloud] " + elapsed + " minutes into" +
+          " the five-minute hello. Once the sound is right and you know what they most want" +
+          " the hour to reach, say what happens next in one line and let them go. No closing" +
+          " round, no thank-you speech.";
+      } else if (elapsed < closingOpensAtMin()) {
         const left = closingOpensAtMin() - elapsed;
         note += " YOU ARE NOT NEAR THE END. Do not start a closing round, do" +
           " not ask a final question, do not thank her for the conversation" +
@@ -1627,25 +1947,23 @@ function startTimeChecks() {
         }
         note += " Before the closing round, make sure every point under THE" +
           " SUBJECT THEY CAME FOR has been reached; if one has not, go there" +
-          " first. You may begin the closing round when the current thread" +
-          " reaches a natural end: the show's question, the five" +
-          " lightning-round questions, the two about the interview itself," +
-          " then their last word. There is no hurry, but every guest gets" +
-          " all of it.";
+          " first. When the current thread reaches a natural end you may" +
+          " begin the closing round with the show's own question; from there" +
+          " the room hands you each closing question one at a time, and you" +
+          " add only the reaction between them. There is no hurry, but every" +
+          " guest gets all of it.";
       } else if (remainMin > 0) {
         // Oct 5 2026, Piper Martz: the round takes about eight minutes and
         // used to be required only in the last three, five minutes before
         // the hard cap. She began it at 49:50 and the room ended at 50:00,
         // mid-answer, with no thank-you.
         closingPermitted = true;
-        if (!closingRequired) { closingRequired = true; trace("time", "closing round required at " + elapsed + " min"); }
-        note += " Begin the closing round when the current thread reaches a" +
-          " natural end: the show's question, the five lightning-round" +
-          " questions and the two about the interview itself, one at a time," +
-          " then their last word, then your closing thanks. It takes about " +
+        if (!closingRequired) { closingRequired = true; roundPendingStart = !roundActive && !roundClosed; trace("time", "closing round required at " + elapsed + " min"); }
+        note += " The closing round begins when the current answer ends: the" +
+          " room will hand you each closing question, one at a time, and you" +
+          " add only a short reaction between them; it takes about " +
           closingRoundMin() + " minutes. There is no cut-off: if the guest is" +
-          " in the middle of something or wants to keep going, follow them" +
-          " and start the round afterwards. Never hurry a guest.";
+          " in the middle of something, let them finish. Never hurry a guest.";
       } else {
         closingPermitted = true;
         note += " The planned time has passed. That is fine: there is no" +
@@ -1668,17 +1986,17 @@ function startTimeChecks() {
   const mustCloseInMs = Math.max(0, (plannedMin() - closingRoundMin()) * 60000
     - (Date.now() - (firstJoinAt || Date.now())));
   setTimeout(function () {
-    if (roomEnded || !grokAgent || closingRequired) return;
+    if (roomEnded || !grokAgent || closingRequired || isHelloSession()) return;
     closingRequired = true; closingPermitted = true;
+    roundPendingStart = !roundActive && !roundClosed;
     trace("time", "closing round required (scheduled note)");
     try {
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text:
           "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
-          " minutes remain. Begin the closing round at the very next pause, once the" +
-          " current answer has finished: the show's question, the five lightning-round" +
-          " questions and the two about the interview itself, then their last word," +
-          " then your closing thanks." }] },
+          " minutes remain. Once the current answer has finished, the room will hand" +
+          " you the closing questions one at a time; you add only a short reaction" +
+          " between them, and the room tells you when to close." }] },
       });
     } catch (err) { /* the five-minute notes still run */ }
   }, mustCloseInMs);
@@ -1815,8 +2133,13 @@ function noteRoundQuestion(text) {
       });
       return;
     }
+    if (roundActive && roundAwaitingAnswer && roundIndex >= 0 && ROUND_QUESTIONS[roundIndex][0] === label) return; // the room asked it
     roundAsked[label] = elapsedMin();
-    trace("round", "asked: " + label);
+    trace("round", "asked on her own: " + label);
+    if (closingPermitted && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()) {
+      startRound("she began it with " + label, ROUND_QUESTIONS.indexOf(q));
+      return;
+    }
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system", content: [{ type: "input_text", text:
         "[ROUND — system note, do not read aloud] Closing questions asked so far" +
@@ -1840,6 +2163,7 @@ let earlyClosings = 0;
 // conversation and resumes the round when a time note says she may.
 function catchEarlyClosingRound(text) {
   if (roomEnded || !grokAgent || closingPermitted || isClosingSession()) return;
+  if (responseCancelledEarly) return;   // the room already stopped this sentence
   if (!CLOSING_ROUND_RE.test(text || "")) return;
   const elapsed = elapsedMin();
   const opensAt = closingOpensAtMin();
@@ -1875,6 +2199,7 @@ function catchEarlyClosingRound(text) {
  */
 function catchEarlySignOff(text) {
   if (roomEnded || !grokAgent) return;
+  if (responseCancelledEarly) return;   // the room already stopped this sentence
   // A close that lands on an unanswered last-word question is wrong whatever
   // the clock says, so that rule runs first and on its own.
   if (catchClosingWithoutTheAnswer(text)) return;
@@ -1908,6 +2233,198 @@ function catchEarlySignOff(text) {
 }
 
 /**
+ * Oct 21 2026: the sign-off and closing-round catchers above run on lines
+ * she has ALREADY said. This one runs on the transcript deltas of the
+ * response in flight and cancels it the moment a closing phrase appears
+ * before the window has opened (or on an unanswered last-word question), so
+ * the guest hears at most the first words of a close that is not happening.
+ * remember() then sees the cancelled text; responseCancelledEarly keeps the
+ * after-the-fact rules from firing a second rescue on it.
+ */
+function catchEarlyCloseOnDelta(textSoFar) {
+  if (roomEnded || !grokAgent || responseCancelledEarly || !miraSpeaking) return;
+  const t = String(textSoFar || "");
+  let why = "";
+  if (SIGN_OFF_RE.test(t) && closingOnAnUnansweredQuestion()) why = "a sign-off on an unanswered last-word question";
+  else if (!closingPermitted && !isClosingSession() && elapsedMin() < closingOpensAtMin() - 1) {
+    if (SIGN_OFF_RE.test(t)) why = "a sign-off at " + elapsedMin() + " min of " + plannedMin();
+    else if (CLOSING_ROUND_RE.test(t) && !roundActive) why = "the closing round at " + elapsedMin() + " min of " + plannedMin();
+  }
+  if (!why) return;
+  responseCancelledEarly = true;
+  miraSpeaking = false;
+  try {
+    if (grokAgent.responseCancel) grokAgent.responseCancel();
+    else if (grokAgent.send) grokAgent.send(JSON.stringify({ type: "response.cancel" }));
+    grokAgent.clearMediaBuffer();
+  } catch (err) { /* best-effort; the after-the-fact rule still runs */ }
+  trace("close", "cancelled mid-sentence: " + why);
+  if (!rescueAllowed()) return;
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] The room stopped your last" +
+        " sentence before it finished, because it was starting to end the" +
+        " interview and the interview is not over. Nothing is wrong and the" +
+        " guest is still here. Carry on as if that sentence had not begun:" +
+        (lastWordAskedAt && !lastWordAnswered
+          ? " you had handed them the last word, so wait in silence for it."
+          : " react in one short line to the last thing they said, then ask the next" +
+            " question one level down into their subject.") }] },
+    });
+    if (lastWordAskedAt && !lastWordAnswered) return;   // silence is the behaviour
+    requestTurn(grokAgent);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] early-close cancel note failed: " + err.message);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The closing round is a state machine in the room (Oct 21 2026)
+// ---------------------------------------------------------------------------
+//
+// The eight closing questions were hers to remember, in order, one per turn,
+// and the lesson "one question per turn" relapsed four times. The room now
+// drives them: it hands her ONE question at a time, after the guest's answer
+// to the previous one has ended, and she supplies only the reaction between
+// them. Her instructions say the room will do this. A question she asked on
+// her own (noteRoundQuestion) is skipped, never asked again.
+
+let roundActive = false;
+let roundPendingStart = false;    // the round begins at the guest's next finished answer
+let roundAwaitingAnswer = false;
+let roundIndex = -1;              // index into ROUND_QUESTIONS of the question in play
+let roundRepromptTimer = null;
+let roundLastWordAsked = false;
+let roundClosed = false;
+
+function roundQuestionText(entry) {
+  const label = entry[0];
+  if (label === "the show's own question") {
+    return (config && config.show_question) ||
+      "the show's own closing question, exactly as your instructions give it";
+  }
+  return label;
+}
+
+function startRound(why, askedIndex) {
+  if (roundActive || roundClosed || roomEnded || !grokAgent) return;
+  roundActive = true;
+  roundPendingStart = false;
+  closingPermitted = true;
+  trace("round", "room-driven closing round begins (" + why + ")");
+  if (askedIndex >= 0) {
+    // She asked this one herself: wait for its answer, then the room goes on.
+    roundIndex = askedIndex;
+    roundAwaitingAnswer = true;
+    roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
+    return;
+  }
+  askNextRoundQuestion();
+}
+
+function askNextRoundQuestion() {
+  if (roomEnded || !grokAgent || !roundActive) return;
+  if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+  let next = roundIndex + 1;
+  while (next < ROUND_QUESTIONS.length && roundAsked[ROUND_QUESTIONS[next][0]] !== undefined) next += 1;
+  if (next >= ROUND_QUESTIONS.length) { askRoundLastWord(); return; }
+  roundIndex = next;
+  roundAwaitingAnswer = true;
+  const entry = ROUND_QUESTIONS[next];
+  roundAsked[entry[0]] = elapsedMin();
+  trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROUND " + (next + 1) + " of " + ROUND_QUESTIONS.length + " — system note, do not read" +
+        " aloud] React in one short, specific line to what they just said if something in" +
+        " it struck you; then ask ONLY this, in your own words: " + roundQuestionText(entry) +
+        ". Nothing else this turn — no second question, no preview of the next one — then" +
+        " stop and let them answer. The room will hand you the next one." }] },
+    });
+    requestTurn(grokAgent);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] round question " + (next + 1) + " failed: " + err.message);
+  }
+  roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
+}
+
+function roundReprompt() {
+  roundRepromptTimer = null;
+  if (roomEnded || !grokAgent || !roundActive || !roundAwaitingAnswer) return;
+  if (guestSpokeSinceMira || inboundSpeaking || miraSpeaking) return;
+  trace("round", "no answer yet to " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; one gentle re-ask");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROUND — system note, do not read aloud] They have not answered yet. Say one" +
+        " short line that makes the question real and easy — the same question, no new" +
+        " one — then wait in silence for as long as it takes." }] },
+    });
+    requestTurn(grokAgent);
+  } catch (err) { /* the next time check still runs */ }
+}
+
+function roundAnswered() {
+  if (!roundActive || !roundAwaitingAnswer) return;
+  roundAwaitingAnswer = false;
+  if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+  if (roundLastWordAsked) { closeRound(); return; }
+  trace("round", "answered " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length);
+  askNextRoundQuestion();
+}
+
+function askRoundLastWord() {
+  if (roundLastWordAsked || roomEnded || !grokAgent) return;
+  roundLastWordAsked = true;
+  roundAwaitingAnswer = true;
+  trace("round", "every closing question asked; handing them the last word");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROUND — system note, do not read aloud] That was the last of the closing" +
+        " questions. Now hand them the last word: ask whether there is anything they came" +
+        " wanting to say that the two of you never reached, and mean it. Then stop and" +
+        " wait in silence; the room will tell you when to close." }] },
+    });
+    requestTurn(grokAgent);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] last-word hand-off failed: " + err.message);
+  }
+  roundRepromptTimer = setTimeout(function () {
+    roundRepromptTimer = null;
+    // Nothing to add, in their own silence: that is an answer too.
+    if (roundActive && roundAwaitingAnswer && !guestSpokeSinceMira && !inboundSpeaking && !miraSpeaking) {
+      trace("round", "no last word after " + Math.round(ROUND_REPROMPT_MS / 1000) + "s; closing");
+      roundAwaitingAnswer = false;
+      closeRound();
+    }
+  }, ROUND_REPROMPT_MS);
+}
+
+function closeRound() {
+  if (roundClosed || roomEnded || !grokAgent) return;
+  roundClosed = true;
+  roundActive = false;
+  lastWordAnswered = true;
+  closingPermitted = true;
+  trace("round", "complete; closing thanks");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROUND — system note, do not read aloud] The closing round is complete. One" +
+        " short turn: thank them warmly for something particular they said today, then" +
+        " tell them that's the end of the recording and they can hang up now. Nothing" +
+        " after that." }] },
+    });
+    requestTurn(grokAgent);
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] closing thanks failed: " + err.message);
+  }
+}
+
+/**
  * Grok connection dropped mid-call (spec §7 row 3). The native
  * VoiceAgentAPIClient has no auto-reconnect, so after a short guard delay
  * (lets a normal teardown race resolve) play Mira's pre-recorded apology
@@ -1933,6 +2450,12 @@ async function recoverAgent(reason) {
   grokAgent = null;
   try { if (previous) { if (previous.close) previous.close(); else if (previous.stop) previous.stop(); } }
   catch (err) { /* it is already gone; that is why we are here */ }
+  // The guest may have been mid-answer, or waiting on her, when the socket
+  // died: the new session replies only if they have said something since
+  // her last line (the same rule as every other turn). Decided before the
+  // session is built, since its bridge event reads the flag.
+  handoverTurnOwed = guestSpokeSinceMira || hostSpokeSinceMira;
+  miraSpeaking = false;
   const note = handoverNote();
   let next;
   try {
@@ -1993,7 +2516,8 @@ async function endRoom(reason) {
   roomEnded = true;
   endReason = reason;
   [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer,
-   rotateTimer, noShowTimer, cohostWaitTimer].forEach(function (t) { if (t) clearTimeout(t); });
+   rotateTimer, rotateForceTimer, noShowTimer, cohostWaitTimer, turnDecisionTimer,
+   roundRepromptTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
@@ -2015,6 +2539,12 @@ async function endRoom(reason) {
       duration_sec: firstJoinAt ? Math.round((Date.now() - firstJoinAt) / 1000) : 0,
       disconnect_reason: reason,
       audio_path: "room_mix",
+      // Oct 21 2026: the room's own account of its turn-taking.
+      barge_ins: bargeIns,
+      server_turns: serverTurns,
+      self_answers_blocked: selfAnswersBlocked,
+      closing_round_complete: roundClosed,
+      closing_questions_asked: Object.keys(roundAsked).length,
       grok_session_log: grokAgent && grokAgent.getSessionLog ? grokAgent.getSessionLog() : null,
     });
   } catch (err) {
@@ -2185,7 +2715,9 @@ async function onToolCall(event) {
     grokAgent.conversationItemCreate({
       item: { type: "function_call_output", call_id: callId, output: String(output).slice(0, 8000) },
     });
-    grokAgent.responseCreate({});
+    // Oct 21 2026: the tool's return is a turn like any other — never
+    // started over the guest (requestTurn waits for their pause).
+    requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] tool call failed (" + name + "): " + err.message);
     try {
@@ -2193,7 +2725,7 @@ async function onToolCall(event) {
         item: { type: "function_call_output", call_id: callId,
                 output: JSON.stringify({ error: "tool temporarily unavailable" }) },
       });
-      grokAgent.responseCreate({});
+      requestTurn(grokAgent);
     } catch (ignored) {}
   }
 }
@@ -2205,10 +2737,11 @@ async function onToolCall(event) {
 // Per-leg presence for the studio pages. Fire-and-forget, never blocks.
 function postLegEvent(role, event) {
   try {
+    const body = JSON.stringify({ run_id: runId, role: role, event: event });
     Net.httpRequestAsync(LEG_EVENT_URL, {
       method: "POST",
-      headers: ["Content-Type: application/json"],
-      postData: JSON.stringify({ run_id: runId, role: role, event: event }),
+      headers: signedHeaders(body),
+      postData: body,
     }).then(function (res) {
       if (!(res && res.code >= 200 && res.code < 300)) {
         Logger.write("[aoa " + runId + "] leg-event " + role + "/" + event + " got HTTP " + (res && res.code));
@@ -2276,6 +2809,98 @@ function flushTrace() {
 // Helpers
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Request signing (Oct 21 2026). VoxEngine exposes no HMAC module, so SHA-256
+// is spelled out here (FIPS 180-4, verified against the standard test
+// vectors in tests/test_room_mechanics_2026_10_21.py). The Worker verifies
+// X-Voices-Signature against the same secret; a deploy without the secret
+// sends plain requests, which a Worker without the secret accepts.
+// ---------------------------------------------------------------------------
+
+function utf8Bytes(str) {
+  const out = [];
+  for (let i = 0; i < str.length; i++) {
+    let c = str.charCodeAt(i);
+    if (c >= 0xd800 && c < 0xdc00 && i + 1 < str.length) {
+      const d = str.charCodeAt(i + 1);
+      if (d >= 0xdc00 && d < 0xe000) { c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00); i++; }
+    }
+    if (c < 0x80) out.push(c);
+    else if (c < 0x800) out.push(0xc0 | (c >> 6), 0x80 | (c & 63));
+    else if (c < 0x10000) out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+    else out.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+  }
+  return out;
+}
+
+const SHA256_K = [
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+
+function sha256Bytes(bytes) {
+  const h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const len = bytes.length;
+  const padded = bytes.slice();
+  padded.push(0x80);
+  while ((padded.length % 64) !== 56) padded.push(0);
+  const bits = len * 8;
+  for (let i = 7; i >= 0; i--) padded.push(i >= 4 ? Math.floor(bits / Math.pow(2, 8 * i)) & 0xff : (bits >>> (8 * i)) & 0xff);
+  const w = new Array(64);
+  for (let off = 0; off < padded.length; off += 64) {
+    for (let i = 0; i < 16; i++) {
+      w[i] = ((padded[off + 4 * i] << 24) | (padded[off + 4 * i + 1] << 16) |
+              (padded[off + 4 * i + 2] << 8) | padded[off + 4 * i + 3]) >>> 0;
+    }
+    for (let i = 16; i < 64; i++) {
+      const s0 = ((w[i - 15] >>> 7) | (w[i - 15] << 25)) ^ ((w[i - 15] >>> 18) | (w[i - 15] << 14)) ^ (w[i - 15] >>> 3);
+      const s1 = ((w[i - 2] >>> 17) | (w[i - 2] << 15)) ^ ((w[i - 2] >>> 19) | (w[i - 2] << 13)) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    let a = h[0], b = h[1], c = h[2], d = h[3], e = h[4], f = h[5], g = h[6], hh = h[7];
+    for (let i = 0; i < 64; i++) {
+      const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (hh + S1 + ch + SHA256_K[i] + w[i]) >>> 0;
+      const S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+      hh = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    h[0] = (h[0] + a) >>> 0; h[1] = (h[1] + b) >>> 0; h[2] = (h[2] + c) >>> 0; h[3] = (h[3] + d) >>> 0;
+    h[4] = (h[4] + e) >>> 0; h[5] = (h[5] + f) >>> 0; h[6] = (h[6] + g) >>> 0; h[7] = (h[7] + hh) >>> 0;
+  }
+  const out = [];
+  h.forEach(function (v) { out.push((v >>> 24) & 0xff, (v >>> 16) & 0xff, (v >>> 8) & 0xff, v & 0xff); });
+  return out;
+}
+
+function hmacSha256Hex(secret, message) {
+  let key = utf8Bytes(secret);
+  if (key.length > 64) key = sha256Bytes(key);
+  while (key.length < 64) key.push(0);
+  const ipad = key.map(function (b) { return b ^ 0x36; });
+  const opad = key.map(function (b) { return b ^ 0x5c; });
+  const inner = sha256Bytes(ipad.concat(utf8Bytes(message)));
+  const outer = sha256Bytes(opad.concat(inner));
+  return outer.map(function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+}
+
+/** Headers for a request to the Worker: JSON, plus the signature when a secret was deployed. */
+function signedHeaders(body) {
+  const headers = ["Content-Type: application/json"];
+  if (WEBHOOK_SECRET && WEBHOOK_SECRET.indexOf("__") !== 0) {
+    try { headers.push("X-Voices-Signature: " + hmacSha256Hex(WEBHOOK_SECRET, body)); }
+    catch (err) { Logger.write("[aoa " + runId + "] could not sign a request: " + err.message); }
+  }
+  return headers;
+}
+
 function getSecret(name) {
   // Secrets are substituted into the scenario source at DEPLOY time by
   // voximplant_client.py upload_scenario (same mechanism as
@@ -2329,10 +2954,11 @@ async function fireWebhook(payload) {
   webhookFired = true;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      const body = JSON.stringify(payload);
       const res = await Net.httpRequestAsync(WEBHOOK_URL, {
         method: "POST",
-        headers: ["Content-Type: application/json"],
-        postData: JSON.stringify(payload),
+        headers: signedHeaders(body),
+        postData: body,
       });
       if (res.code >= 200 && res.code < 300) return;
       Logger.write("[aoa] webhook attempt " + attempt + " got HTTP " + res.code);
