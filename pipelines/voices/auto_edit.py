@@ -158,6 +158,128 @@ def _last_guest_turn(transcript: str) -> float | None:
     return latest
 
 
+# ---------------------------------------------------------------------------
+# What the guest asked for comes out, whatever its length (Oct 21 2026)
+# ---------------------------------------------------------------------------
+#
+# Mira tells every guest at the open that they can start an answer again,
+# skip a question or ask for something to be cut. The edit kept that promise
+# only when the model noticed and only when the stretch cleared the
+# twenty-five-second floor below, so a two-second "scratch that" survived
+# into the episode. The room transcript is read for the request itself,
+# the span it implies is built from the lines around it, and such a drop is
+# never subject to the floor. The model's own drops are kept; a request the
+# model also found is merged with its span.
+RESTART_RE = re.compile(
+    r"\b(let me (start|try|do) (that |this )?(over|again)|(can|could|may) i (start|do|try|say|take) "
+    r"(that |this )?(over|again)|start (that |this )?(over|again)|scratch that|"
+    r"let me (rephrase|redo|re-?do)|i'?ll (start|say) (that |this )?(over|again)|"
+    r"take two|from the top)\b", re.I)
+CUT_RE = re.compile(
+    r"\b((can|could) (we|you) (cut|take|leave|edit|keep) (that|this|it)( (out|off))?|"
+    r"off the record|don'?t (use|include|keep|publish) (that|this)|"
+    r"(cut|strike|remove|delete) (that|this)( (part|bit|out))?|"
+    r"(leave|take) (that|this) (out|off)|not for the (show|episode|recording)|"
+    r"i'?d rather (that|this) (not|didn'?t|wasn'?t))\b", re.I)
+DECLINE_RE = re.compile(
+    r"^(i'?d rather not|i'?ll pass|pass on that|let'?s not go there|"
+    r"i'?d prefer not|i can'?t (talk|speak|comment) (about|on) that|"
+    r"no comment|skip (that|this) one)\b", re.I)
+# A request is about what was just said: the span never reaches further back.
+REQUEST_SPAN_MAX_SEC = 180.0
+# Mira's acknowledgment of a request ("Done, that stays out") is part of the
+# exchange and comes out with it, when it is this short.
+ACK_MAX_WORDS = 12
+
+
+def _lines(transcript: str) -> list:
+    out = []
+    for raw in transcript.splitlines():
+        m = _LINE.match(raw.strip())
+        if not m:
+            continue
+        h, mm, ss, who, text = m.groups()
+        at = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
+        out.append((float(at), who.strip(), text.strip()))
+    return out
+
+
+def _line_end(lines: list, i: int) -> float:
+    """Where line ``i`` stops: the next line's start, or the word estimate."""
+    at, _who, text = lines[i]
+    if i + 1 < len(lines):
+        return lines[i + 1][0] - 0.25
+    return at + WORD_SEC * max(1, len(text.split())) + LINE_TAIL_SEC
+
+
+def guest_requests(transcript: str, host: str = "Mira") -> list:
+    """``[{from_sec, to_sec, why, kind, guest_request: True}]`` on the room
+    clock, one per restart, cut request or declined question in the
+    transcript, in time order. Never raises: an unparseable transcript gives
+    an empty list, and the model's drops still apply."""
+    lines = _lines(transcript)
+    found = []
+    for i, (at, who, text) in enumerate(lines):
+        if who.lower() == host.lower():
+            continue
+        kind = ("restart" if RESTART_RE.search(text) else
+                "cut" if CUT_RE.search(text) else
+                "decline" if DECLINE_RE.search(text) else "")
+        if not kind:
+            continue
+        # Back to the start of the guest's turn (their consecutive lines),
+        # and for a cut or a decline to the host's question that led into it.
+        j = i
+        while j > 0 and lines[j - 1][1].lower() == who.lower() \
+                and at - lines[j - 1][0] <= REQUEST_SPAN_MAX_SEC:
+            j -= 1
+        if kind in ("cut", "decline") and j > 0 and lines[j - 1][1].lower() == host.lower() \
+                and at - lines[j - 1][0] <= REQUEST_SPAN_MAX_SEC:
+            j -= 1
+        start = lines[j][0]
+        # Forward over the request line, and the host's short acknowledgment.
+        k = i
+        # ...but never over a question: "Of course. Where did pricing go
+        # next?" is an acknowledgment AND the next question, and the
+        # question has to survive for its answer to make sense.
+        if k + 1 < len(lines) and lines[k + 1][1].lower() == host.lower() \
+                and len(lines[k + 1][2].split()) <= ACK_MAX_WORDS \
+                and "?" not in lines[k + 1][2]:
+            k += 1
+        end = _line_end(lines, k)
+        if kind == "restart":
+            # The retake starts where the next line of theirs begins; the
+            # request itself and the aborted attempt go, the retake stays.
+            end = lines[k + 1][0] - 0.25 if k + 1 < len(lines) else end
+        if end <= start:
+            continue
+        found.append({"from_sec": round(start, 2), "to_sec": round(end, 2),
+                      "kind": kind, "guest_request": True,
+                      "why": f"the guest asked ({kind}): \"{text[:120]}\""})
+    return found
+
+
+def merge_drops(model_drops: list, requests: list) -> list:
+    """The model's drops plus the guest's requests, overlapping spans merged
+    and a merged span inheriting the request's exemption from the floor."""
+    rows = [dict(d) for d in (model_drops or []) if d.get("from_sec") is not None
+            and d.get("to_sec") is not None]
+    for r in requests:
+        rows.append(dict(r))
+    rows.sort(key=lambda d: float(d["from_sec"]))
+    merged: list = []
+    for d in rows:
+        if merged and float(d["from_sec"]) <= float(merged[-1]["to_sec"]):
+            last = merged[-1]
+            last["to_sec"] = max(float(last["to_sec"]), float(d["to_sec"]))
+            last["guest_request"] = bool(last.get("guest_request") or d.get("guest_request"))
+            if d.get("why") and d["why"] not in str(last.get("why", "")):
+                last["why"] = (str(last.get("why", "")) + " " + d["why"]).strip()
+        else:
+            merged.append(d)
+    return merged
+
+
 def _where_it_closes(transcript: str, end_sec: float, room_end: float,
                      why: str) -> tuple[float, str]:
     """The end of the episode's conversation, and a note when it is early.
@@ -636,19 +758,33 @@ def build(run_id: str) -> dict:
         transcript_of(ctx), float(decided["end_sec"]), room_end,
         decided.get("end_why") or "")
     end = leg(end)
+    requests = guest_requests(transcript_of(ctx))
+    if requests:
+        logger.info("the guest asked for %d thing(s) to come out: %s", len(requests),
+                    "; ".join(r["why"] for r in requests))
     drops = []
-    for d in decided.get("drop") or []:
+    for d in merge_drops(decided.get("drop") or [], requests):
         a, b = leg(float(d["from_sec"])), leg(float(d["to_sec"]))
         # A "can you hear me" right after the welcome is short and worth the
         # seam; anywhere else a short drop is not.
         floor = EARLY_DROP_MIN_SEC if a < start + EARLY_WINDOW_SEC else MIN_DROP_SEC
+        # ...and what the guest asked to have out comes out at any length:
+        # a two-second "scratch that" is a seam worth making (Oct 21 2026).
+        if d.get("guest_request"):
+            floor = 0.0
         if b - a >= floor and start < a < b < end:
-            drops.append({"from": a, "to": b, "why": d.get("why", "")})
+            drops.append({"from": a, "to": b, "why": d.get("why", ""),
+                          **({"guest_request": True} if d.get("guest_request") else {})})
     drops.sort(key=lambda d: d["from"])
+    kept_requests = sum(1 for d in drops if d.get("guest_request"))
+    rationale_requests = (f"{kept_requests} passage(s) the guest asked to have out "
+                          "are out, whatever their length." if kept_requests else "")
 
     rationale = decided.get("rationale", "")
     if ended_early:
         rationale = (rationale + " " if rationale else "") + ended_early
+    if rationale_requests:
+        rationale = (rationale + " " if rationale else "") + rationale_requests
     clean, bed_why = _clean_bed(run)
     rationale = (rationale + " " if rationale else "") + bed_why
     logger.info("%s", bed_why)
@@ -712,6 +848,11 @@ def build(run_id: str) -> dict:
         "run_id": run["id"],
         "narration": slug,
         "note": rationale,
+        # The clock the cuts address, relative to the room's: the assembler
+        # needs it to place the guest's own cut windows (room clock) on the
+        # cuts (leg clock). Zero on every run since the tracks were aligned.
+        "room_offset_sec": round(offset, 3),
+        "guest_request_drops": kept_requests,
         "cuts": cuts,
     }
 
