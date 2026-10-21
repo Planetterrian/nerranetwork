@@ -54,6 +54,15 @@ MAX_SHOW_LESSONS = 6             # this show's own format and subject (Oct 21 20
 # five lines, show-specific first, and the network scope fills in only while
 # the show has fewer than five of its own.
 PROMPT_LESSONS_MAX = 5
+# Oct 21 2026: a lesson that QUOTES the line it bans hands Mira the specimen
+# (the network rule: de-seed by shape, never with a quotable example). The
+# weekly pass asks for unquoted lessons, but a lesson edited by hand reaches
+# the prompt without that pass, and two did on the eve of an interview
+# ('Whatever.', "That's a [adjective] [noun]"). Text inside quote marks is the
+# signature; an apostrophe inside a word (guest's, don't) is not a quote.
+QUOTED_SPECIMEN_RE = re.compile(
+    r"[\"\u201c\u201d][^\"\u201c\u201d]{1,80}[\"\u201c\u201d]"
+    r"|(?<![A-Za-z])['\u2018][^'\u2018\u2019]{1,80}['\u2019](?![A-Za-z])")
 MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
@@ -885,6 +894,11 @@ def active_lessons(show_slug: str) -> List[dict]:
         return []
 
 
+def quotes_a_specimen(lesson: Any) -> bool:
+    """True when a lesson carries a quoted line (``QUOTED_SPECIMEN_RE``)."""
+    return bool(QUOTED_SPECIMEN_RE.search(str(lesson or "")))
+
+
 def prompt_lessons(show_slug: str) -> List[dict]:
     """The lessons Mira carries into THIS interview: the show's own first,
     newest first, then the network's only while the show has fewer than
@@ -895,6 +909,11 @@ def prompt_lessons(show_slug: str) -> List[dict]:
         for row in active_lessons(scope):
             key = str(row.get("lesson") or "").strip().lower()
             if not key or key in seen:
+                continue
+            if quotes_a_specimen(row.get("lesson")):
+                logger.warning("lesson %s quotes a line and stays out of the "
+                               "prompt; reword it to describe the habit",
+                               row.get("id"))
                 continue
             seen.add(key)
             rows.append(row)
