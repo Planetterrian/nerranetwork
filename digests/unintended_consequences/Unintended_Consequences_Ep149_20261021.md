@@ -1,4 +1,4 @@
-> **Wolves entering 29 Wisconsin counties cut deer-vehicle collisions by 24 percent each year.**
+> **Wolves entering 29 Wisconsin counties cut deer-vehicle collisions by about 24 percent.**
 ---
 ### Segment 1 — The Cold Open
 In the winter of 2009, a radio-collared wolf crossed a county road in northern Wisconsin and paused to scent-mark a stretch of pavement that also served as a deer travel corridor. Within two years, local deer began shifting their movement patterns away from that same stretch. The change registered not in wolf howls but in the county sheriff’s reduced stack of collision reports.
