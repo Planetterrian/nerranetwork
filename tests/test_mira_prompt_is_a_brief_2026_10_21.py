@@ -198,6 +198,42 @@ class TestLessonsAreFiveAndPositive:
         assert "WHAT THIS SHOW HAS TAUGHT YOU" in block
         assert "outrank" not in block and "corrections" not in block
 
+    def test_a_lesson_that_quotes_a_line_never_reaches_the_prompt(self, monkeypatch):
+        # Oct 21 2026: two hand-edited lessons quoted the lines they banned
+        # ("Whatever.", "That's a [adjective] [noun]") on the eve of a room.
+        # A quoted line is a specimen; the next unquoted lesson takes its slot.
+        L = self._learning(monkeypatch, {
+            "show=eq.network": [
+                {"id": "n0", "lesson": "Never grade an answer: no 'Fair enough', no summary."},
+                {"id": "n1", "lesson": "Do not open by repeating the guest's last words."},
+                {"id": "n2", "lesson": "Never say \u201cgreat question\u201d."},
+                {"id": "n3", "lesson": "Ask for one concrete example when an answer is vague."},
+            ],
+            "show=eq.age_of_ai": [
+                {"id": "s0", "lesson": "Never insert a lone word such as 'Whatever.'"},
+                {"id": "s1", "lesson": "Probe the unproven bet the guest volunteers."},
+            ],
+        })
+        block = L.lessons_block("age_of_ai")
+        lines = [line for line in block.splitlines() if line.startswith("- ")]
+        assert lines == ["- Probe the unproven bet the guest volunteers.",
+                         "- Do not open by repeating the guest's last words.",
+                         "- Ask for one concrete example when an answer is vague."]
+        assert not any(L.quotes_a_specimen(line) for line in lines)
+
+    def test_an_apostrophe_is_not_a_quote(self):
+        import learning
+        for text in ("Move from a guest's point to the next question.",
+                     "Don't re-ask a question they've answered.",
+                     "A previous guest's words go to this guest's own subject."):
+            assert not learning.quotes_a_specimen(text), text
+
+    def test_listening_never_licenses_the_echo(self):
+        # The HOW TO LISTEN beat once offered "their own word handed back",
+        # the phrase that taught the echo the prompt's last rule forbids.
+        assert "own word handed back" not in _flat(PROMPT)
+        assert "what struck you, or what it changes" in _flat(PROMPT)
+
     def test_the_show_cap_is_six(self):
         import learning
         assert learning.MAX_SHOW_LESSONS == 6
