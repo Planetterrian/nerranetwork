@@ -58,12 +58,14 @@ from audio.mix_tracks import (  # noqa: E402
     split_channels, split_left,
 )
 from learning import (  # noqa: E402
-    adopt_lessons, guest_feedback, host_formulas, lessons_for_prompt, measure,
+    guest_feedback, host_formulas, lessons_for_prompt, measure,
     measure_silence,
     parse_transcript, recent_editor_cuts, recent_guest_experience,
-    record_relapses, retire_lessons, save_grade, save_host_phrases,
+    record_relapses, save_grade, save_host_phrases,
     save_metrics, save_proposed_lessons, session_events_summary,
 )
+import audio_metrics  # noqa: E402
+from fire_interviews import is_closing_session  # noqa: E402
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
 SHORT_CALL_THRESHOLD_SEC = 10 * 60
@@ -877,12 +879,18 @@ def _drop_echoes(segments: list[tuple[float, str, str]],
 
 
 def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
-                    header: str = "", offsets: dict | None = None) -> tuple[str, float]:
+                    header: str = "", offsets: dict | None = None,
+                    words_out: dict | None = None) -> tuple[str, float]:
     """Whisper each (label, mono wav) track and merge the segments by
     start time into ``[MM:SS] <label>: text`` lines. The tracks ARE the
     diarization. ``offsets`` maps a label to the seconds between the room
     opening and that track's recording starting, so everyone lands on one
-    clock. Returns (transcript, mean segment confidence 0..1)."""
+    clock. Returns (transcript, mean segment confidence 0..1).
+
+    Oct 21 2026: ``words_out`` (label -> Whisper word dicts on the room
+    clock) collects the per-word timestamps the same pass already produces,
+    so the audio metrics (``audio_metrics.measure_audio``) read the tape
+    rather than estimating from the transcript's line starts."""
     from engine.transcripts import generate_transcript
     merged: list[tuple[float, str, str]] = []
     confidences: list[float] = []
@@ -905,6 +913,15 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
             if not text or _is_hallucination(seg, text):
                 continue
             merged.append((float(seg.get("start", 0.0)) + shift, label, text))
+            if words_out is not None:
+                bucket = words_out.setdefault(label, [])
+                for w in seg.get("words") or []:
+                    try:
+                        bucket.append({"start": float(w.get("start")) + shift,
+                                       "end": float(w.get("end")) + shift,
+                                       "word": str(w.get("word") or "").strip()})
+                    except (TypeError, ValueError, AttributeError):
+                        continue
             # faster-whisper avg_logprob ≈ log-confidence; map to 0..1-ish.
             if "avg_logprob" in seg:
                 confidences.append(
@@ -955,7 +972,8 @@ def _track_durations(tracks: dict) -> dict:
 
 
 def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
-                              run: dict | None = None) -> tuple[str, float]:
+                              run: dict | None = None,
+                              words_out: dict | None = None) -> tuple[str, float]:
     """Phase 2: per-speaker tracks → ``Mira:`` / ``Patrick:`` / ``<Guest>:``
     labelled transcript with the speakers header line on top."""
     labelled = [("Mira", tracks["mira"]), (cohost_label(), tracks["host"]),
@@ -972,7 +990,7 @@ def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
     else:
         offsets = {"Mira": 0.0, cohost_label(): 0.0, _guest_label(app): 0.0}
     return diarized_tracks(labelled, workdir, header=speakers_header(app),
-                           offsets=offsets)
+                           offsets=offsets, words_out=words_out)
 
 
 _ECHO_SAME_RATIO = 0.75      # how alike two lines must be to be one line twice
@@ -1108,6 +1126,59 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
     return package
 
 
+class _NotAnInterview(Exception):
+    """A closing session: measured and kept, never graded (Oct 21 2026)."""
+
+
+def words_by_role(words_by_label: dict, app: dict) -> dict:
+    """``{"mira": [...], "host": [...], "guest": [...]}`` from the transcript
+    labels: Mira is Mira, the co-host's label is the host, anyone else is
+    the guest."""
+    out: dict = {}
+    for label, words in (words_by_label or {}).items():
+        key = (label or "").strip().lower()
+        if key == "mira":
+            role = "mira"
+        elif key in (cohost_label().lower(), "patrick", "host"):
+            role = "host"
+        else:
+            role = "guest"
+        out.setdefault(role, []).extend(words or [])
+    for words in out.values():
+        words.sort(key=lambda w: (w.get("start", 0.0), w.get("end", 0.0)))
+    return out
+
+
+def room_opened_at(run: dict) -> "dt.datetime | None":
+    """When the room clock started, for lining the trace up with the words:
+    the first trace line (``room: opened``), else nothing."""
+    for event in run.get("scenario_trace") or []:
+        if not isinstance(event, dict) or not event.get("t"):
+            continue
+        try:
+            return dt.datetime.fromisoformat(str(event["t"]).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return None
+
+
+def audio_metrics_basis_text(metrics: dict) -> str:
+    """One paragraph telling the grader which numbers came from the tape."""
+    if metrics.get("metrics_basis") == "audio":
+        return ("AUDIO. overlap_sec, overlap_events, turn_gap_ms_*, "
+                "mira_turn_sec_*, guest_words_per_answer_median, guest_words_trend, "
+                "self_answered_turns and echo_open_rate were measured from each "
+                "speaker's own recording with word timestamps. Believe them over "
+                "your reading of the transcript. interruptions, repeated_questions "
+                "and mira_mean_turn_sec are the older transcript estimates kept "
+                "for comparison; where they disagree with the audio numbers, the "
+                "audio numbers are right.")
+    return ("TRANSCRIPT ONLY. No per-speaker audio was measured for this room, "
+            "so overlap, turn gaps, turn lengths, self-answered turns and the "
+            "echo rate are unknown. Do not grade turn_taking or pacing from the "
+            "transcript: leave both at the mid-point and say why in grade_why.")
+
+
 def main() -> int:
     run = _run_row()
     interview, app = _interview_and_app(run)
@@ -1182,13 +1253,18 @@ def main() -> int:
         tracks = build_tracks(run, raw, workdir, host_raw=host_raw,
                               mira_raw=mira_raw, host_legs=host_legs)
         processed: dict = {}
+        # Per-speaker Whisper words on the room clock, label -> words; the
+        # audio metrics read these (Oct 21 2026). Empty on the raw-stereo
+        # path, where nothing can say who was speaking when.
+        words_by_label: dict = {}
         if tracks["host"] is not None:
             for speaker in ("guest", "host", "mira"):
                 processed[speaker] = r2_upload(
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
             mixed = mix_three(tracks["guest"], tracks["host"], tracks["mira"],
                               workdir / "mixed.wav")
-            transcript, confidence = diarized_transcript_three(tracks, app, workdir, run)
+            transcript, confidence = diarized_transcript_three(
+                tracks, app, workdir, run, words_out=words_by_label)
         elif tracks["sources"].get("mira") != "guest_r":
             # No co-host, but Mira has a recording of her own — either her
             # Voximplant leg or nothing at all, and here it is her leg. That
@@ -1226,7 +1302,7 @@ def main() -> int:
                 offsets = {_guest_label(app): 0.0, "Mira": 0.0}
             transcript, confidence = diarized_tracks(
                 [(_guest_label(app), tracks["guest"]), ("Mira", tracks["mira"])],
-                workdir, offsets=offsets)
+                workdir, offsets=offsets, words_out=words_by_label)
         else:
             # Mira was never recorded separately, so the only thing that
             # carries her is the guest's right channel — which carries the
@@ -1322,11 +1398,18 @@ def main() -> int:
             "audio_quality_flag": ",".join(flags) or None,
         })
 
-        # Learning loop: measure the craft, grade the hour, and change how she
-        # works. Sept 21 2026: the grade is APPLIED rather than proposed —
-        # eight proposals had been waiting for a human while the same faults
-        # recurred. The grader sees what she already carries and is told not
-        # to restate it, and every adoption is reversible from triage.
+        # Learning loop (Oct 21 2026 review, §7.4). The craft is MEASURED
+        # from the per-speaker audio where the tape allows it, the hour is
+        # graded with that basis stated, and the grader PROPOSES lessons.
+        # Nothing is adopted here: adoption happens once a week over all the
+        # week's rooms with the audio numbers in front of it
+        # (adopt_lessons_weekly.py). Sept 21 had made this pass adopt on its
+        # own, and thirteen scorecards later the grades had not moved while
+        # about a hundred lessons were merged, dropped or retired — a loop
+        # that churns is not a loop that closes. A closing session is kept
+        # on the record (transcript, metrics) and never graded: a ten-minute
+        # lightning round is not an interview.
+        closing_session = is_closing_session(interview)
         try:
             metrics = measure(run, package.get("transcript_cleaned") or transcript,
                               host_label="Mira", guest_label=_guest_label(app))
@@ -1352,8 +1435,19 @@ def main() -> int:
                     if processed else "audio: the guest's stereo recording")
                 notes["longest_silence_sec"] = heard["longest_silence_sec"]
                 notes["silences"] = heard["silences"]
+            audio = audio_metrics.measure_audio(
+                words_by_role(words_by_label, app), trace=run.get("scenario_trace"),
+                round_questions=None, transcript=transcript,
+                room_start=room_opened_at(run))
+            metrics.update(audio_metrics.columns(audio))
+            metrics.setdefault("notes", {})["audio"] = audio_metrics.notes(audio)
+            if audio.get("metrics_basis") != "audio":
+                metrics["metrics_basis"] = "transcript"
             save_metrics(interview["id"], metrics)
-            logger.info("episode metrics: %s", metrics)
+            logger.info("episode metrics: %s", {k: v for k, v in metrics.items() if k != "notes"})
+            if closing_session:
+                logger.info("closing session: measured, not graded")
+                raise _NotAnInterview()
             cleaned = package.get("transcript_cleaned") or transcript
             # Whether who-said-what in this transcript can be trusted is a
             # fact about how it was recorded, so it is TOLD to the grader
@@ -1391,29 +1485,28 @@ def main() -> int:
                                   "silences")
                         if (metrics.get("notes") or {}).get(k) is not None}},
                     ensure_ascii=False),
+                audio_basis=audio_metrics_basis_text(metrics),
                 cleaned_transcript=cleaned,
             ), temperature=0.3, max_tokens=2500)) or {}
             if not isinstance(graded, dict):
                 graded = {}
-            retired = retire_lessons(
-                [r.get("id") for r in (graded.get("retire") or [])
-                 if isinstance(r, dict)],
-                "retired by the grading pass")
-            adopted = adopt_lessons(show.slug, interview["id"],
-                                    graded.get("lessons") or [])
+            proposed = save_proposed_lessons(
+                show.slug, interview["id"], graded.get("lessons") or [])
             relapsed = record_relapses(show.slug, graded.get("relapsed") or [])
             if relapsed:
                 logger.info("%d standing instruction(s) broken again", relapsed)
-            save_grade(show.slug, interview["id"], graded, adopted, retired)
-            logger.info("graded %s: overall %s — %d lesson(s) adopted, %d retired",
+            save_grade(show.slug, interview["id"], graded, [], 0)
+            logger.info("graded %s: overall %s — %d lesson(s) proposed for the weekly pass",
                         app["name"], (graded.get("grades") or {}).get("overall"),
-                        len(adopted), retired)
+                        proposed)
             # Retire the acknowledgment reflexes she leaned on this time.
             tics = host_formulas(
                 parse_transcript(package.get("transcript_cleaned") or transcript),
                 "Mira")
             logger.info("retiring %d host phrase(s): %s",
                         save_host_phrases(show.slug, interview["id"], tics), tics)
+        except _NotAnInterview:
+            pass
         except Exception:  # noqa: BLE001 — an episode never waits on this
             logger.exception("Retrospective failed (non-fatal)")
 

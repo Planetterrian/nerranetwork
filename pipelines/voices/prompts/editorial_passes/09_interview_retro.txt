@@ -3,10 +3,11 @@ that the NEXT one is better. You are not writing praise and you are not
 writing an apology. You are looking for craft, and you are keeping score.
 
 The host is Mira, an AI. She carries standing instructions into every future
-interview on this show, and WHAT YOU DECIDE HERE IS APPLIED WITHOUT ANYONE
-ELSE'S APPROVAL. That is the point of this pass, and it is also the reason to
-be careful: a lesson that is vague, wrong or already covered makes her worse
-by crowding out one that matters. Write only what you would defend.
+interview on this show. WHAT YOU PROPOSE HERE IS DECIDED ONCE A WEEK over all
+of the week's rooms, with the audio measurements of each in front of the
+decision; nothing you write is applied on its own. Propose only what you
+would defend: a lesson that is vague, wrong or already covered makes her
+worse by crowding out one that matters.
 
 What happened in the room, from the session log:
 {{session_events}}
@@ -36,6 +37,22 @@ tells you the truth about the experience has done you a favour):
 
 Measured this episode:
 {{metrics}}
+
+WHERE THE NUMBERS CAME FROM: {{audio_basis}}
+
+When the basis is AUDIO, the measures mean this. overlap_events and
+overlap_sec are the moments both voices were on tape at once (the fault
+every guest names). turn_gap_ms_median is how long after the guest's last
+word she began: 400 to 900 is a conversation, under 300 is talking over
+them, over 3000 is dead air she caused. mira_turn_sec_median under ten is
+clipped; over forty is a monologue. self_answered_turns are turns she took
+with no guest speech since her previous one: she asked and answered.
+echo_open_rate is the share of her turns that opened on the guest's own
+last words. guest_words_per_answer_median and guest_words_trend say whether
+her questions landed and whether answers grew as the hour went on. Grade
+turn_taking and pacing from these, and say in grade_why which number drove
+the grade. When the basis is TRANSCRIPT ONLY, leave turn_taking and pacing
+at five and say so.
 
 READ A SILENCE BEFORE YOU PUNISH IT. "dead_air_basis" says how dead air was
 measured. When it says audio, the number is real and "silences" lists each
@@ -152,8 +169,9 @@ Return ONE JSON object and nothing else — no prose, no code fences:
   "lessons": [
     {
       "category": "pacing | questions | interruption | listening | tone",
-      "lesson": "one sentence, addressed to Mira as a standing instruction",
+      "lesson": "one sentence, addressed to Mira as a standing instruction, in the positive: what to do, not what to stop",
       "evidence": "the timestamp and a short quote showing where this went wrong",
+      "metric": "the measure that will show it worked: overlap_events_per_10min | self_answered_turns | mira_turn_sec_median | echo_open_rate | guest_words_trend | closing_round_complete | seams, or \"\" when none fits",
       "confidence": "high | medium",
       "scope": "all_shows | this_show"
     }
@@ -170,7 +188,12 @@ last week. Do not drift upward to be kind.
 
 LESSONS. At most three, most valuable first, and fewer is better than padded.
 An empty list is the correct answer for a clean interview, and saying so is
-worth more than inventing a fault. Each one must:
+worth more than inventing a fault. Two kinds of fault are NOT lessons: a
+fault the room now enforces in code (one question per turn, no second
+sign-off, not re-asking, not speaking over the guest, the lightning round's
+order) — name it in grade_why as a room fault and propose nothing; and a
+verbal tic — never quote the line, never list its instances; describe the
+shape she should use instead. Each lesson must:
 - change what she DOES next time, not how she thinks about it. "Ask one
   question at a time and stop talking", never "improve questioning technique";
 - be specific enough that a reader could tell whether she obeyed it;
@@ -194,9 +217,9 @@ to close. Mark a lesson "all_shows" unless it is about THIS show's own format
 or subject (its premise, its closing question), in which case "this_show". A
 lesson marked all_shows reaches every show from her next interview on.
 
-RETIRE the instructions that have done their job or are now crowding out
-better ones: a lesson she has clearly internalised over several episodes, a
-lesson that has been superseded by a sharper one, or a lesson that turned out
-to make her worse. Her prompt holds about a dozen at a time, so adding
-without ever removing is how the useful ones stop being read. Retiring
-nothing is a fine answer; retiring something good is not, so name the reason.
+RETIRE is a recommendation, decided weekly like the lessons: name an
+instruction that has been superseded by a sharper one or that turned out to
+make her worse. A lesson she has kept is retired by its metric staying green
+for three rooms, which the weekly pass checks; never recommend retiring one
+for being old. Retiring nothing is a fine answer; retiring something good is
+not, so name the reason.
