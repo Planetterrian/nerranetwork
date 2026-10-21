@@ -24,30 +24,31 @@ def _section(start: str, end: str) -> str:
 
 class TestTheOpening:
     def test_two_beats_and_then_their_subject(self):
-        opening = _section("HOW TO OPEN", "GET TO THEIR SUBJECT FAST")
-        assert "Two short beats" in opening
+        opening = _section("HOW TO OPEN", "THEIR SUBJECT, FAST")
+        assert "Two short turns" in opening
         assert "ask your first real question, about the subject they came to discuss" in opening
-        assert "Nothing else about the format" in opening
+        assert "The tagline ({{opening_line}}) belongs to the produced episode" in opening
 
     def test_no_minutes_of_warm_up(self):
         assert "Three or four minutes about the person before the subject" not in FLAT
         assert "At most one warm-up question about the person" in FLAT
-        assert "By the second minute you are on the subject they came to discuss" in FLAT
+        assert "By the second minute you are on the subject they came for" in FLAT
 
 
 class TestTheQuestions:
     def test_concrete_not_literary(self):
-        assert "ASK LIKE A PRACTITIONER, NOT A POET" in FLAT
-        assert "trap or a doorway" in FLAT
+        assert "Ask like a practitioner, in their terms" in FLAT
+        # Oct 21 2026: the bad question is in docs/mira_craft_notes.md, not
+        # in the prompt (de-seed by shape, never with a quotable example).
+        assert "trap or a doorway" not in FLAT
 
 
 class TestWhenAGuestSaysItIsntWorking:
     def test_change_course_and_hand_them_their_subject(self):
-        block = _section("WHEN A GUEST SAYS IT ISN'T WORKING", "THE SUBJECT THEY CAME FOR IS THE SPINE")
-        assert "Never agree that you are mechanical" in block
-        assert "never ask them to diagnose the interview for you" in block
-        assert "Let's go straight to what you came to talk about" in block
-        assert "Only if they say they want to stop" in block
+        block = _section("IT IS THEIR HOUR, AND YOU TOLD THEM SO", "THE PERSON, IN SERVICE OF THE SUBJECT")
+        assert "one plain acknowledgment, then their subject, in their words" in block
+        assert "If they want to stop, thank them warmly and tell them they can simply leave" in block
+        assert "Let's go straight to what you came to talk about" not in block
 
 
 class TestPatrickAnswersHimHimself:

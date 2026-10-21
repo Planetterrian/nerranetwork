@@ -44,8 +44,13 @@ MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
 # separately) while grading lower. Lessons are now either the whole
 # network's or one show's own; Mira carries both.
 NETWORK = "network"
-MAX_NETWORK_LESSONS = 14         # interviewing craft, every show
-MAX_SHOW_LESSONS = 8             # this show's own format and subject
+MAX_NETWORK_LESSONS = 14         # interviewing craft, every show (stored)
+MAX_SHOW_LESSONS = 6             # this show's own format and subject (Oct 21 2026)
+# Oct 21 2026 (review of every interview): the network craft lives in the
+# prompt body now, written in the positive. The block Mira reads is at most
+# five lines, show-specific first, and the network scope fills in only while
+# the show has fewer than five of its own.
+PROMPT_LESSONS_MAX = 5
 MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
@@ -268,9 +273,18 @@ def save_host_phrases(show_slug: str, interview_id: str, phrases: List[str]) -> 
 
 
 def variety_block(show_slug: str) -> str:
-    """The phrases Mira has already used on this show, so she stops reusing
-    them. Empty for a show with no history, so a first episode reads exactly
-    as it did before."""
+    """The reply SHAPES Mira has worn out on this show, named without a
+    single instance. Empty for a show with no history.
+
+    Sept 18 2026: retiring the instances did nothing — seventy "That's a
+    [adjective] [noun]" lines across six episodes, a fresh adjective each
+    time, every one technically new. Oct 21 2026 (review of every
+    interview): listing the instances did worse than nothing — the shape
+    moved to a one-word echo of the guest's last words on every turn. The
+    network's rule for every prompt applies here: de-seed by shape, never
+    with a quotable example. So the block names the shape and the count that
+    earned it, and never prints a phrase she said.
+    """
     try:
         rows = sb_select("host_phrases",
                          f"show=eq.{show_slug}&order=created_at.desc"
@@ -278,45 +292,40 @@ def variety_block(show_slug: str) -> str:
     except Exception:  # noqa: BLE001
         logger.exception("host phrases unavailable (non-fatal)")
         return ""
-    phrases = []
+    shapes: dict = {}
     for row in rows or []:
         phrase = (row.get("phrase") or "").strip()
-        if REQUIRED_WORDS.search(phrase):
+        if not phrase or REQUIRED_WORDS.search(phrase):
             continue                    # never forbid what she must say
-        if phrase and phrase.lower() not in {p.lower() for p in phrases}:
-            phrases.append(phrase)
-    if not phrases:
-        return ""
-    # Sept 18 2026. Retiring the instances did nothing: seventy "That's a
-    # [adjective] [noun]" lines across six episodes, a fresh adjective each
-    # time, every one of them technically new. The SHAPE is what repeats,
-    # so the shape is what gets named, once, with the count that earned it.
-    shapes: dict = {}
-    singles = []
-    for phrase in phrases:
         shape = phrase_shape(phrase)
         if shape:
             shapes[shape] = shapes.get(shape, 0) + 1
-        else:
-            singles.append(phrase)
-    out = ["\n\nALREADY USED ON THIS SHOW"]
+    if not shapes:
+        return ""
+    out = ["\n\nREPLY SHAPES RETIRED ON THIS SHOW. Each of these is a reflex you",
+           "have leaned on across episodes; open a reply with the specific thing",
+           "they said instead, in a shape of your own."]
     for shape, n in sorted(shapes.items(), key=lambda kv: -kv[1]):
-        out.append(f'The shape "{shape}" is retired outright: you have opened '
-                   f'{n} replies with it on this show, changing only the '
-                   f'adjective, which is not variety. Never open a reply that way '
-                   f'again, whatever the adjective.')
-    if singles:
-        out.append("You have said each of these on a previous episode. They are "
-                   "retired. Do not say them again, and do not say a near-variant "
-                   "of them:\n" + "\n".join(f'- "{p}"' for p in singles))
+        out.append(f"- {_SHAPE_DESCRIPTIONS.get(shape, shape)} "
+                   f"({n} time{'s' if n != 1 else ''} on this show).")
     return "\n".join(out) + "\n"
 
 
 _SHAPES = (
-    (re.compile(r"(?i)^that'?s (a|an) "), "That's a ..."),
-    (re.compile(r"(?i)^what (a|an) "), "What a ..."),
-    (re.compile(r"(?i)^i love (that|how|the) "), "I love that ..."),
+    (re.compile(r"(?i)^that'?s (a|an) "), "grading-opener"),
+    (re.compile(r"(?i)^what (a|an) "), "exclaimed-grade"),
+    (re.compile(r"(?i)^i love (that|how|the) "), "love-opener"),
+    (re.compile(r"(?i)^(great|good|fantastic|wonderful|excellent|interesting|fascinating)\b"),
+     "adjective-opener"),
 )
+
+# What each shape is, said without an instance of it (Oct 21 2026).
+_SHAPE_DESCRIPTIONS = {
+    "grading-opener": "opening a reply by grading the answer with an adjective and a noun",
+    "exclaimed-grade": "opening a reply with an exclaimed grade of the answer",
+    "love-opener": "opening a reply by saying how much you liked it",
+    "adjective-opener": "opening a reply with a one-word approving adjective",
+}
 
 
 def phrase_shape(phrase: str) -> str:
@@ -821,16 +830,14 @@ def record_relapses(show_slug: str, items: List[Any]) -> int:
 
 
 def relapse_recap(show_slug: str) -> str:
-    """The instructions she keeps breaking, said once more at the very end of
-    her prompt. Empty until something has been broken twice over."""
-    rows = [r for r in standing_lessons(show_slug) if _relapses(r) > 0 and r.get("lesson")]
-    if not rows:
-        return ""
-    rows.sort(key=lambda r: (-_relapses(r), str(r.get("last_relapse_at") or "")))
-    top = rows[:RELAPSE_RECAP_MAX]
-    return ("\n\nBEFORE EVERY TURN. You have broken these in more than one "
-            "interview, so they come last as well as first:\n"
-            + "\n".join(f"- {r['lesson']}" for r in top) + "\n")
+    """Empty since Oct 21 2026. The recap said the most-broken rules a
+    second time at the end of the prompt; the three lessons it carried had
+    relapse counts of 2, 4 and 3 and the faults persisted, because each was a
+    fault the room can enforce and the model cannot reliably (one question
+    per turn, no second sign-off, no re-asking). The room enforces them now;
+    ``record_relapses`` still counts them for the grader and the weekly
+    adoption, and this stays a function so callers need not change."""
+    return ""
 
 
 def lesson_cap(scope: str) -> int:
@@ -849,21 +856,41 @@ def active_lessons(show_slug: str) -> List[dict]:
         return []
 
 
+def prompt_lessons(show_slug: str) -> List[dict]:
+    """The lessons Mira carries into THIS interview: the show's own first,
+    newest first, then the network's only while the show has fewer than
+    ``PROMPT_LESSONS_MAX`` of its own; never more than five in all."""
+    rows: List[dict] = []
+    seen = set()
+    for scope in (show_slug, NETWORK):
+        for row in active_lessons(scope):
+            key = str(row.get("lesson") or "").strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append(row)
+            if len(rows) >= PROMPT_LESSONS_MAX:
+                return rows
+    return rows
+
+
 def lessons_block(show_slug: str) -> str:
     """The block appended to Mira's system prompt. Empty when nothing has
-    been promoted, so a fresh show reads exactly as it did before."""
-    rows = standing_lessons(show_slug)
-    if not rows:
-        return ""
-    # The ones she keeps breaking go first (Oct 8 2026); the rest keep order.
-    rows = sorted(rows, key=lambda r: -_relapses(r))
+    been promoted, so a fresh show reads exactly as it did before.
+
+    Oct 21 2026: at most five lines (``PROMPT_LESSONS_MAX``), the show's own
+    lessons first. They are standing notes, not corrections ranked by how
+    often she broke them; the relapse ordering and the end-of-prompt recap
+    are gone, because a rule broken three times is a room defect the
+    scenario now enforces, not a prompt defect to repeat louder."""
+    rows = prompt_lessons(show_slug)
     lines = "\n".join(f"- {r['lesson']}" for r in rows if r.get("lesson"))
     if not lines:
         return ""
     return (
-        "\nWHAT EARLIER INTERVIEWS TAUGHT YOU. These are standing corrections "
-        "from tape of your own past episodes, reviewed and approved by your "
-        "producer. They outrank everything below and apply to this interview:\n"
+        "\nWHAT THIS SHOW HAS TAUGHT YOU. Standing notes from your own past "
+        "episodes on this show, reviewed and approved by your producer. They "
+        "apply to this interview:\n"
         + lines + "\n"
     )
 

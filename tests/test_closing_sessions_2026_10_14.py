@@ -179,14 +179,14 @@ class TestMiraIsToldWhatTheFirstRecordingFinished:
         block = fi.already_answered({"continues_interview_id": "iv1"}, self.QUESTION)
         assert block.startswith("- The show's own question")
         assert "{{already_answered}}" in PROMPT
-        assert "do NOT ask any of them again" in PROMPT
+        assert "you do not ask them" in " ".join(PROMPT.split())
         src = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
         assert "already_answered=already_answered(interview, show.closing_question)" in src
 
     def test_the_prompt_resumes_on_a_line_a_listener_can_follow(self):
-        assert "ask the question in full" in PROMPT
+        assert "ask the question in full" in " ".join(PROMPT.split())
         assert "Do not say you were cut off" in PROMPT
-        assert "Say the welcome and the apology ONCE" in PROMPT
+        assert "Say the welcome and the apology once" in PROMPT
         assert "do not announce the\n   end of the recording again" in PROMPT
 
 

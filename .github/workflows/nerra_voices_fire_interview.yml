@@ -40,6 +40,16 @@ jobs:
           python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
+      # Oct 21 2026: invitations to the five-minute pre-call hello, two days
+      # before the room. Its own step so a failure here never stops a fire.
+      - name: Hello-session invites
+        continue-on-error: true
+        run: python pipelines/voices/hello_sessions.py invites
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
       - run: python pipelines/voices/fire_interviews.py
         env:
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}

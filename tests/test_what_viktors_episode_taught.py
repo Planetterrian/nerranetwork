@@ -186,9 +186,12 @@ class TestTheLastWordIsWaitedFor:
             assert not pattern.search(other), other
 
     def test_the_prompt_says_asking_without_waiting_is_worse(self):
-        assert "AND WAITING IS THE WHOLE POINT OF ASKING" in PROMPT
-        assert "eleven" in PROMPT and "seconds later" in PROMPT
-        assert "you close because they have finished" in PROMPT
+        # Oct 21 2026: the rule stays in the prompt; the eleven-second story
+        # lives in docs/mira_craft_notes.md with the other incidents.
+        assert "let the silence sit" in " ".join(PROMPT.split())
+        assert "you close because they have finished" in " ".join(PROMPT.split())
+        notes = (V.parent.parent / "docs" / "mira_craft_notes.md").read_text(encoding="utf-8")
+        assert "eleven" in notes and "seconds later" in notes
 
 
 class TestTheGraderIsToldTheFactNotLeftToGuess:
@@ -612,8 +615,13 @@ class TestOnlyPublishedGuestsAreCarried:
         assert self._insights(monkeypatch, published={"vincent"}, fail=True) == []
 
     def test_the_forced_callback_is_described_by_the_one_that_happened(self):
-        assert "architect of your own life to a payments founder" in COMMON_SRC
-        assert "would this guest have" in COMMON_SRC
+        # Oct 21 2026: the incident is in the craft notes; the code keeps the
+        # rule (one subject-matched offer, or nothing) without the specimen.
+        notes = " ".join((V.parent.parent / "docs" / "mira_craft_notes.md")
+                         .read_text(encoding="utf-8").split())
+        assert "architect of your own life to a payments founder" in notes
+        assert "a forced callback is worse than none" in COMMON_SRC
+        assert "def _same_subject(" in COMMON_SRC
 
 
 class TestSheIsToldWhenSheWasCutOff:

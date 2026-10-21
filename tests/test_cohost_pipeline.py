@@ -466,7 +466,7 @@ class TestCohostPrompt:
         prompt = compile_mira_prompt({"episode_thesis": "T", "host_mode": True}, _APP, _BRIEF)
         assert "CO-HOST: Patrick Novak, the network's founder, is in the room as your co-host." in prompt
         assert "never interview Patrick, never ask him the lightning round" in prompt
-        assert "If Patrick says 'let's pause' or 'hold on', stop talking and wait for him." in prompt
+        assert "If Patrick asks for a pause, stop talking and wait for him." in prompt
         assert "{{" not in prompt
 
     def test_block_present_when_host_mode_true(self):
