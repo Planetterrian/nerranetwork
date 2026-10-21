@@ -305,6 +305,28 @@ class TestCatalog:
         deletes = [k["params"] for m, t, k in calls if m == "DELETE" and t == "catalog_items"]
         assert deletes == [{"episode_key": "eq.spacex:1", "position": "gte.3"}]
 
+    def test_upsert_never_sends_one_key_twice_in_a_statement(self, monkeypatch):
+        # Oct 21 2026 first fill: Postgres refused a claims batch carrying one
+        # key twice (21000) and every correction after it was never copied.
+        from engine import catalog
+        sent = []
+        monkeypatch.setattr(catalog, "_rest", lambda m, t, **k: sent.append(k["body"]))
+        rows = [{"claim_key": "a", "v": 1}, {"claim_key": "b", "v": 1}, {"claim_key": "a", "v": 2}]
+        assert catalog.upsert("catalog_claims", rows, "claim_key") == 2
+        body = [r for chunk in sent for r in chunk]
+        assert sorted(r["claim_key"] for r in body) == ["a", "b"]
+        assert {r["claim_key"]: r["v"] for r in body}["a"] == 2
+
+    def test_a_ledger_repeating_an_id_keeps_both_claims(self, tmp_path):
+        from engine import catalog
+        d = tmp_path / "spacex"
+        d.mkdir()
+        (d / "SpaceX_Ep001_20261021_claims.json").write_text(json.dumps({"claims": [
+            {"id": "c1", "claim": "one"}, {"id": "c1", "claim": "two"}]}), encoding="utf-8")
+        ep = {"episode_key": "spacex:1", "show_slug": "spacex", "episode_num": 1, "date": "2026-10-21"}
+        rows = catalog.claim_rows([ep], {"spacex": d})
+        assert len(rows) == 2 and len({r["claim_key"] for r in rows}) == 2
+
     def test_article_rows_mark_aired_and_match_stories(self, tmp_path):
         from engine import catalog
         db = tmp_path / "lake.db"
