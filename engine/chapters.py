@@ -26,6 +26,25 @@ from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
 # here as a copy so chapters never imports the audio module.
 _MAP_IDENTITY_RE = re.compile(r"^\W*this is .{2,60}episode", re.IGNORECASE)
 _MAP_IDENTITY_SEARCH_LINES = 4
+# What a map sentence sounds like (Oct 21 2026). A script written before the
+# Oct 20 map has its LEAD on the line after the identity line, so only a line
+# that reads as a list of what comes next is treated as the map: it carries no
+# digit (the spec bans numbers), a sequencing word ("then", "follows", "after
+# that", "at the end") and a list comma. Measured on the 16 Oct 21 maps (all
+# read as maps) and the 187 pre-map scripts of Oct 10-19 (see the guard).
+_MAP_CUE_RE = re.compile(
+    r"(?:^after\b|\b(?:then|follows?|up after|after the lead|and later|later we)\b"
+    r"|\bat the end\b(?! of))",
+    re.IGNORECASE)
+
+
+def _looks_like_map(line: str) -> bool:
+    text = (line or "").strip()
+    if not text or re.search(r"\d", text):
+        return False
+    return bool(_MAP_CUE_RE.search(text)) and text.count(",") >= 1
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -610,13 +629,25 @@ def _lead_story_split(
             if head.word_start < p[0] < head.word_end]
     text = "".join(lines)
     text_tokens = lead_text_tokens or set()
+    # Oct 21 2026: the identity line and the map sentence after it are never
+    # the lead. The map names the stories, so it shares the hook's words and
+    # took the lead chapter on six of the Oct 21 episodes (FF at 10.7 s, MAB
+    # at 7.3 s, Top World at 12.2 s — the lead itself began seconds later).
+    _skip: set = set()
+    for j, (_w, _c, _t) in enumerate(body[:LEAD_SEARCH_PARAGRAPHS]):
+        if _MAP_IDENTITY_RE.match(text[_c:_c + 120].strip()):
+            _skip.update({j, j + 1})
+            break
+    _floor = max(_skip) + 1 if _skip else 0
     for i, (w, c, tokens) in enumerate(body[:LEAD_SEARCH_PARAGRAPHS]):
+        if i in _skip:
+            continue
         # The paragraph tells the hook's story: it shares the hook's or the
         # headline's words, or (Oct 14 2026) three of the digest's own lead
         # text — the desks' short, pronoun-led paragraphs match that way.
         if (len(tokens & lead_tokens) >= 2 or len(tokens & text_tokens) >= LEAD_TEXT_MIN_SHARED
                 or w in (lead_story_words or ())):
-            while i > 0 and _opens_as_continuation(text[body[i - 1][1]:body[i - 1][1] + 80]):
+            while i > _floor and _opens_as_continuation(text[body[i - 1][1]:body[i - 1][1] + 80]):
                 i -= 1
             w, c = body[i][0], body[i][1]
             return w, c, (_whole_title(title) if whole_only else _clip_title(title, max_chars))
@@ -755,6 +786,10 @@ def _digest_item_titles(digest_text: str) -> List[str]:
             elif rest.strip() and not numbered and not _OUTLET_TAIL_RE.match(rest):
                 continue  # a bold lead-in to a sentence, not a heading
             raw = bold.strip("[]").replace("]:", ":").replace("] ", " ")
+        if raw.lstrip().startswith("#"):
+            # Oct 21 2026: ``**# Models & Agents**`` is the digest's title,
+            # bold-wrapped — Ep210 shipped a chapter named "# Models & Agents".
+            continue
         title = _clean_item_title(raw)
         if not title or title.lower() in seen:
             continue
@@ -1816,6 +1851,41 @@ def parse_chapters(
                 deduped.append(ch)
         chapters = deduped
 
+    # Oct 21 2026: no chapter after the first starts on the identity line or
+    # the map sentence, whatever path placed it. The map names the stories
+    # to come, so headline anchoring matched it too: the lead chapter opened
+    # on the map on six of the Oct 21 episodes (Fascinating Frontiers 10.7 s,
+    # MAB 7.3 s, Top World 12.2 s) while the lead began seconds later.
+    _map_line = max(map_lines) if len(map_lines) > 1 else None
+    if (_map_line is not None and len(chapters) > 1
+            and _looks_like_map(lines[_map_line])):
+        starts = []
+        pos = 0
+        for ln in lines:
+            starts.append(pos)
+            pos += len(ln)
+        lo = starts[_map_line]
+        hi_line = _map_line + 1
+        while hi_line < len(lines) and not lines[hi_line].strip():
+            hi_line += 1
+        if hi_line < len(lines):
+            hi = starts[hi_line] + (len(lines[hi_line]) - len(lines[hi_line].lstrip()))
+            hi_w = len(script[:hi].split())
+            k = 1
+            while k < len(chapters):
+                ch = chapters[k]
+                if lo <= ch.char_start < hi:
+                    nxt = chapters[k + 1].char_start if k + 1 < len(chapters) else len(script)
+                    if hi < nxt:
+                        ch.char_start, ch.word_start = hi, hi_w
+                        chapters[k - 1].char_end, chapters[k - 1].word_end = hi, hi_w
+                    else:
+                        chapters[k - 1].char_end = ch.char_end
+                        chapters[k - 1].word_end = ch.word_end
+                        del chapters[k]
+                        continue
+                k += 1
+
     for ch in chapters:
         ch.opening = script[ch.char_start:ch.char_start + 120].strip().split("\n")[0]
 
@@ -2067,9 +2137,13 @@ def write_chapters_json(
     if episode_title:
         data["title"] = episode_title
 
-    for ch in chapters:
+    for i, ch in enumerate(chapters):
         entry = {
-            "startTime": ch.startTime,
+            # Oct 21 2026: the first chapter covers the episode from 0. It
+            # had started on the identity line (~5 s on most shows, 17.6 s
+            # on Models & Agents Ep210), so the hook played under no
+            # chapter at all.
+            "startTime": 0.0 if i == 0 else ch.startTime,
             "title": ch.title,
         }
         if ch.endTime > ch.startTime:

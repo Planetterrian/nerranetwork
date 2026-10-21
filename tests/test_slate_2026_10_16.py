@@ -205,7 +205,7 @@ class TestSmallerDefects:
         sys.path.insert(0, str(ROOT / "shows" / "hooks"))
         import modern_investing as mit
         phrase = mit._record_start_phrase({"metadata": {"inception_date": "2026-03-16"}})
-        assert phrase == "since the practice record began on March 16, 2026"
+        assert phrase == "since the practice portfolio opened on March 16, 2026"
         src = (ROOT / "shows" / "hooks" / "modern_investing.py").read_text(encoding="utf-8")
         assert "since inception {_sign(bench_itd)}" not in src
 

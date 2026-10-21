@@ -3556,18 +3556,23 @@ def _build_benchmark_block(tracker: dict) -> str:
 
 
 def _record_start_phrase(tracker: dict) -> str:
-    """"since the practice record began on March 16, 2026".
+    """"since the practice portfolio opened on March 16, 2026".
 
     Oct 16 2026: Ep202 aired the NASDAQ as "up nineteen point three nine
     percent since inception", which a listener hears as the index's own
     history. The figure runs from the practice record's first day, so the
     line names that day."""
     raw = ((tracker or {}).get("metadata") or {}).get("inception_date") or ""
+    # Oct 21 2026: the index figure runs from the day the practice portfolio
+    # opened, which is NOT the start of the rules-based record the show
+    # scores itself on (era inception, Aug 18). Ep207 said "since this
+    # practice record began on March 16" and then "this record began August
+    # 18" — two start dates for one record. The line names what it measures.
     try:
         d = datetime.date.fromisoformat(str(raw)[:10])
     except ValueError:
-        return "since the practice record began"
-    return f"since the practice record began on {d.strftime('%B')} {d.day}, {d.year}"
+        return "since the practice portfolio opened"
+    return f"since the practice portfolio opened on {d.strftime('%B')} {d.day}, {d.year}"
 
 
 def _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd, alpha_itd,

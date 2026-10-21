@@ -715,7 +715,9 @@ def build_podcast_template_vars(
     )
     _spec_is_ru = _spec_slug in _RUSSIAN_SPOKEN_SHOWS
     pod_vars.setdefault(
-        "cold_open_spec", build_cold_open_spec(_spec_slug, is_ru=_spec_is_ru),
+        "cold_open_spec", build_cold_open_spec(
+            _spec_slug, is_ru=_spec_is_ru,
+            narrative=bool(getattr(config, "narrative_mode", False))),
     )
     pod_vars.setdefault(
         "delivery_spec", build_delivery_spec(_spec_slug, is_ru=_spec_is_ru),

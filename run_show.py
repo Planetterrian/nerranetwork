@@ -7234,11 +7234,16 @@ def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics) 
     """True when a structural retry spent on retold story clusters tells
     MORE clusters as several items than the original did (Oct 17 2026,
     story-clusters-2026-10-01 readout); records the retry's count."""
-    from engine.story_clusters import retold_clusters
+    from engine.story_clusters import dropped_clusters, retold_clusters
 
     after = len(retold_clusters(candidate, articles, clusters))
     metrics.record("story_clusters_retold_after_retry", after)
-    return after > len(retold_before)
+    # Oct 21 2026: a retry that folds a retold story into NOTHING is worse
+    # than the duplicate it was asked to fix (Tesla Ep641 lost the
+    # Tesla-SpaceX merger committees this way).
+    dropped = dropped_clusters(candidate, retold_before)
+    metrics.record("story_clusters_dropped_by_retry", len(dropped))
+    return after > len(retold_before) or bool(dropped)
 
 # Mid-line / sentence-final attribution: "… within a human lifetime.
 # Source goodnewsnetwork.org." (colon-less) and "… measured. Source:

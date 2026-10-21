@@ -20,7 +20,7 @@ A neutron star spinning more than 300 times per second appeared to brake unusual
 **Valles Marineris still reshaping Mars today — Phys.org**
 Columbia University and Imperial College London researchers mapped young fault scarps inside the solar system’s largest canyon system. The scarps indicate ongoing tectonic extension driven by the planet’s cooling interior. Activity continues billions of years after the canyon first formed. The measurements show that the rate of shrinkage remains small yet sufficient to trigger occasional landslides along steep slopes. Source: [phys.org](https://phys.org/news/2026-10-giant-canyon-mars-tectonically-today.html)
 
-**JWST reveals protostellar jets inside Orion’s nursery — NASA**
+**JWST reveals protostellar jets inside NGC 7129 in Cepheus — NASA**
 The telescope imaged atomic and molecular hydrogen in NGC 7129, highlighting jets driven by embedded protostars. Golden regions trace hot atomic gas while red areas mark cooler shocked molecular hydrogen. The data show how outflows stir and heat the surrounding cloud. The image captures both the bright atomic hydrogen in the central zones and the extended molecular hydrogen shocked by the jets. Source: [nasa.gov](https://www.nasa.gov/image-detail/55572978759-545472774e-o/)
 
 **Ancient rains chart prebiotic pathways on Mars — Universe Today**

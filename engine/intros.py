@@ -1226,7 +1226,8 @@ _COLD_OPEN_BANNED = (
 )
 
 
-def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
+def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False,
+                         narrative: bool = False) -> str:
     """The cold-open rules injected into every podcast prompt.
 
     A single shared spec rather than fifteen hand-written variants, so
@@ -1299,16 +1300,37 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "sentence. A longer opener is two sentences pretending to be one; "
         "split it or cut it.\n"
         "- ONLY AFTER the cold open, give the short identity line.\n"
-        "- THE MAP comes right after the identity line: ONE sentence that "
-        "gives the listener the shape of the episode — the two or three "
-        "stories that follow the lead, each in a few plain words and in the "
-        "order they will come, then any recurring segment by its name. It is "
-        "a map, not a tease: no count of items, no number from any story, "
-        "no promise language, never the lead story again (the open just "
-        "told it), and never the same sentence shape as yesterday's. A "
-        "listener who hears it knows what the next ten minutes hold and "
-        "hears each story change coming. Then the lead story, in full."
+        + (_NARRATIVE_MAP if narrative else _NEWS_MAP)
     )
+
+
+# The map sentence (Oct 20 2026). A news episode maps its stories; a
+# narrative episode is one story, so its map names the parts the listener
+# will hear. Oct 21 2026: the news wording on the two narrative shows made
+# the model invent a segment ("a First Principles Spotlight on the material
+# floor", FPD Ep137 — no such segment exists), and on the North America
+# desk it listed six items and called an eight-minute episode "the hour".
+_NEWS_MAP = (
+    "- THE MAP comes right after the identity line: ONE sentence that "
+    "gives the listener the shape of the episode — the two or three "
+    "stories that follow the lead, never more than three, each in a few "
+    "plain words and in the order they will come, then any recurring "
+    "segment by its name. It is a map, not a tease: no count of items, no "
+    "number from any story, no promise language, no length or duration "
+    "word, never the lead story again (the open just told it), and never "
+    "the same sentence shape as yesterday's. A listener who hears it knows "
+    "what comes next and hears each story change coming. Then the lead "
+    "story, in full."
+)
+_NARRATIVE_MAP = (
+    "- THE MAP comes right after the identity line: ONE short sentence "
+    "that gives the listener the shape of this one story — the parts they "
+    "will hear, each named by what it is about in this episode, in the "
+    "order they come. Never a generic stage word, never a "
+    "segment or section label, never a name for a part the episode does "
+    "not speak, no number, no promise language, no length or duration "
+    "word. Then the story, in order."
+)
 
 
 # The ONLY tags Grok TTS consumes silently. Anything outside this set is

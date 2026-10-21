@@ -29,7 +29,19 @@ import generate_html as G  # noqa: E402
 from engine import newsroom as N  # noqa: E402
 
 UTC = dt.timezone.utc
-NOW = dt.datetime(2026, 10, 19, 16, 21, tzinfo=UTC)
+def _newest_bar_now() -> dt.datetime:
+    """16:21 UTC on the newest committed bar date. Oct 21 2026: a fixed NOW
+    went red once the nightly committed bars more than three days newer (the
+    strip drops a stale quote and one dated after the page's clock) — a guard
+    that reads committed data must tolerate today."""
+    import json
+    quotes = json.loads((ROOT / "api" / "mag7_quotes.json").read_text(encoding="utf-8"))
+    newest = max(q["bar_date"] for q in quotes.get("quotes", []) if q.get("bar_date"))
+    y, m, d = (int(x) for x in newest.split("-"))
+    return dt.datetime(y, m, d, 16, 21, tzinfo=UTC)
+
+
+NOW = _newest_bar_now()
 WORKER = ROOT / "workers" / "gallery" / "src"
 JS = ROOT / "assets" / "js" / "live-ticker.js"
 
