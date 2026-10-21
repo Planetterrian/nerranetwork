@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker, {
-  CALCOM_SIGNATURE_HEADER, LIVE_INTERVIEW_STATUSES, SIGNATURE_HEADER,
+  CALCOM_SIGNATURE_HEADER, HELLO_MINUTES, LIVE_INTERVIEW_STATUSES, SIGNATURE_HEADER,
+  isHelloBooking,
   STUDIO_OPENS_BEFORE_TEXT, hmacHex, lessonDecisionAllowed, mergeWindows,
   redactionWindows, reviewTranscriptHtml, roomCountersOf, signatureOk, surveyAnswers,
   transcriptLines, webhookVerdict,
@@ -566,5 +567,81 @@ describe("rehearsal runs", () => {
     expect(resp.status).toBe(200);
     expect(((await resp.json()) as any).patched).toEqual(["guest_joined_at"]);
     expect(calls.some((c) => c.method === "PATCH" && c.body.guest_joined_at)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The five-minute hello booking (Oct 21 2026, fork E's pre-call hello)
+// ---------------------------------------------------------------------------
+
+describe("hello bookings", () => {
+  it("recognises the configured event type, else a slug or title with hello; never a closing", () => {
+    expect(isHelloBooking({ CALCOM_EVENT_SLUG_HELLO: "pre-call" }, "pre-call", "", "Anything")).toBe(true);
+    expect(isHelloBooking({ CALCOM_EVENT_SLUG_HELLO: "4242" }, "other", "4242", "")).toBe(true);
+    expect(isHelloBooking({}, "hello-with-mira", "", "")).toBe(true);
+    expect(isHelloBooking({}, "age-of-ai", "", "A five-minute hello before the show")).toBe(true);
+    expect(isHelloBooking({}, "age-of-ai", "", "The Age of AI interview")).toBe(false);
+    expect(HELLO_MINUTES).toBe(5);
+  });
+
+  it("books a hello as its own five-minute row pointing at the scheduled interview, no prep brief", async () => {
+    const start = "2026-10-25T17:00:00Z";
+    const { fn, calls } = fakeFetch((c) => {
+      const t = sbTable(c.url);
+      if (c.method === "GET" && t === "guest_applications") {
+        return [{ id: "app1", name: "Stan Lewis", email: "stan@x.y", show: "age_of_ai", status: "approved" }];
+      }
+      if (c.method === "GET" && t === "interviews") {
+        if (c.url.includes("session_kind=eq.interview")) return [{ id: IV }];
+        if (c.url.includes("session_kind=eq.hello")) return [];
+        return [{ manage_token: "managetokenmanagetoken" }];
+      }
+      if (c.method === "POST" && t === "interviews") return [{ id: IV2 }];
+      return [];
+    });
+    vi.stubGlobal("fetch", fn);
+    const hook = { triggerEvent: "BOOKING_CREATED", payload: {
+      uid: "cal-uid", startTime: start, title: "Hello with Mira",
+      eventType: { slug: "hello-with-mira", title: "Hello with Mira" },
+      attendees: [{ email: "stan@x.y", name: "Stan Lewis", timeZone: "America/Vancouver" }],
+    } };
+    const resp = await worker.route(post("/voices/cal-com-booked", hook), env());
+    expect(resp.status).toBe(200);
+    expect(await resp.json()).toMatchObject({ ok: true, hello: true, hello_for_interview_id: IV, interview_id: IV2 });
+    const created = calls.find((c) => c.method === "POST" && sbTable(c.url) === "interviews");
+    expect(created?.body).toMatchObject({ session_kind: "hello", duration_min: 5, hello_for_interview_id: IV,
+                                          application_id: "app1", scheduled_at: start });
+    const mail = calls.find((c) => c.url.startsWith("https://api.resend.com/"));
+    expect(mail?.body.to).toEqual(["stan@x.y"]);
+    expect(mail?.body.subject).toContain("five-minute hello");
+    expect(mail?.body.html).toContain("studio link");
+    expect(mail?.body.html).not.toContain("short brief");
+    expect(calls.some((c) => c.url.endsWith("/dispatches") && c.body.event_type === "fire-tick")).toBe(true);
+  });
+
+  it("an ordinary booking is unchanged by the hello branch", async () => {
+    const { fn, calls } = fakeFetch((c) => {
+      const t = sbTable(c.url);
+      if (c.method === "GET" && t === "guest_applications") {
+        return [{ id: "app1", name: "Stan Lewis", email: "stan@x.y", show: "age_of_ai", status: "approved" }];
+      }
+      if (c.method === "GET" && t === "interviews") {
+        return c.url.includes("manage_token") ? [{ manage_token: "managetokenmanagetoken" }] : [];
+      }
+      if (c.method === "POST" && t === "interviews") return [{ id: IV }];
+      return [];
+    });
+    vi.stubGlobal("fetch", fn);
+    const hook = { triggerEvent: "BOOKING_CREATED", payload: {
+      uid: "cal-uid", startTime: "2026-10-27T17:00:00Z", title: "The Age of AI interview",
+      eventType: { slug: "age-of-ai" }, attendees: [{ email: "stan@x.y", name: "Stan Lewis" }],
+    } };
+    const resp = await worker.route(post("/voices/cal-com-booked", hook), env());
+    expect(await resp.json()).toEqual({ ok: true, show: "age_of_ai", interview_id: IV });
+    const created = calls.find((c) => c.method === "POST" && sbTable(c.url) === "interviews");
+    expect(created?.body.session_kind).toBeUndefined();
+    expect(created?.body.duration_min).toBe(45);
+    const mail = calls.find((c) => c.url.startsWith("https://api.resend.com/"));
+    expect(mail?.body.html).toContain("short brief");
   });
 });
