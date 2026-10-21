@@ -1580,6 +1580,11 @@ function openWhenReady(reason) {
                 " for coming back, then ask how they are and listen. The lightning round comes" +
                 " after that. "
               : "") +
+            (isHelloSession()
+              ? " This is the short hello before their interview, not the interview: say who" +
+                " you are in a clause, that this is just a hello and a sound check, and ask how" +
+                " they can hear you. No show introduction and no interview questions. "
+              : "") +
             " This turn is beat 1 of HOW TO OPEN only: a warm, unhurried hello by name," +
             " glad they came, and ONE easy human question (how they are today, or" +
             " where they are joining from). Then stop and listen. Do not answer your" +
@@ -1589,6 +1594,7 @@ function openWhenReady(reason) {
     }
     if (!alreadyGreeted) requestTurn(grokAgent);
     if (isClosingSession()) roundPendingStart = true;
+    if (isHelloSession()) { closingPermitted = true; roundClosed = true; }
     startTimeChecks();
     armAudioCheck();
     micCheckTimer = setTimeout(function () { silentMicNudge(1); }, SILENT_MIC_AFTER_MS);
@@ -1876,6 +1882,14 @@ function isClosingSession() {
   return !!(config && config.session_kind === "closing");
 }
 
+// Oct 21 2026: the five-minute hello two days before the interview (fork
+// E, pipelines/voices/hello_sessions.py). No show open, no closing round,
+// no sign-off rules: she meets them, checks the sound, and asks what they
+// most want the hour to reach.
+function isHelloSession() {
+  return !!(config && config.session_kind === "hello");
+}
+
 function elapsedMin() {
   return Math.round((Date.now() - (firstJoinAt || Date.now())) / 60000);
 }
@@ -1907,7 +1921,12 @@ function startTimeChecks() {
       let note = "[TIME CHECK — system note, do not read aloud] " +
         elapsed + " minutes elapsed; about " + remainMin +
         " minutes remain of the planned " + plannedMin() + "-minute interview.";
-      if (elapsed < closingOpensAtMin()) {
+      if (isHelloSession()) {
+        note = "[TIME CHECK — system note, do not read aloud] " + elapsed + " minutes into" +
+          " the five-minute hello. Once the sound is right and you know what they most want" +
+          " the hour to reach, say what happens next in one line and let them go. No closing" +
+          " round, no thank-you speech.";
+      } else if (elapsed < closingOpensAtMin()) {
         const left = closingOpensAtMin() - elapsed;
         note += " YOU ARE NOT NEAR THE END. Do not start a closing round, do" +
           " not ask a final question, do not thank her for the conversation" +
@@ -1967,7 +1986,7 @@ function startTimeChecks() {
   const mustCloseInMs = Math.max(0, (plannedMin() - closingRoundMin()) * 60000
     - (Date.now() - (firstJoinAt || Date.now())));
   setTimeout(function () {
-    if (roomEnded || !grokAgent || closingRequired) return;
+    if (roomEnded || !grokAgent || closingRequired || isHelloSession()) return;
     closingRequired = true; closingPermitted = true;
     roundPendingStart = !roundActive && !roundClosed;
     trace("time", "closing round required (scheduled note)");
@@ -2117,7 +2136,7 @@ function noteRoundQuestion(text) {
     if (roundActive && roundAwaitingAnswer && roundIndex >= 0 && ROUND_QUESTIONS[roundIndex][0] === label) return; // the room asked it
     roundAsked[label] = elapsedMin();
     trace("round", "asked on her own: " + label);
-    if (closingPermitted && !roundActive && !roundClosed && !isClosingSession()) {
+    if (closingPermitted && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()) {
       startRound("she began it with " + label, ROUND_QUESTIONS.indexOf(q));
       return;
     }

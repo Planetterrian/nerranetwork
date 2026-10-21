@@ -198,6 +198,15 @@ class TestTheClosingRoundIsAStateMachine:
         start = _fn("function startRound(why, askedIndex)")
         assert "if (askedIndex >= 0) {" in start and "roundAwaitingAnswer = true;" in start
 
+    def test_a_hello_session_has_no_show_open_and_no_round(self):
+        assert 'config.session_kind === "hello"' in _fn("function isHelloSession()")
+        opened = _fn("function openWhenReady(reason)")
+        assert "This is the short hello before their interview, not the interview" in opened
+        assert "if (isHelloSession()) { closingPermitted = true; roundClosed = true; }" in opened
+        checks = _fn("function startTimeChecks()")
+        assert "if (isHelloSession()) {" in checks and "No closing" in checks
+        assert "closingRequired || isHelloSession()) return;" in checks
+
     def test_a_closing_session_runs_the_round_from_its_first_answer(self):
         assert "if (isClosingSession()) roundPendingStart = true;" in _fn("function openWhenReady(reason)")
 
