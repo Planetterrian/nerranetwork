@@ -201,7 +201,7 @@ def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
     from markupsafe import Markup
     link = _h.escape(studio_link or "", quote=True)
     out = ("<p><strong>On the day, three steps and we're on:</strong></p><ol>"
-           f'<li>Open <a href="{link}">your studio link</a> on your computer, up to ten '
+           f'<li>Open <a href="{link}">your studio link</a> on your computer, up to fifteen '
            "minutes before we start.</li>"
            "<li>Press <strong>Check my microphone</strong> and read the sentence out loud "
            "until it says <strong>Sounds good</strong>.</li>"
