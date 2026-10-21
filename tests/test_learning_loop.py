@@ -151,7 +151,12 @@ class TestLessonsReachMiraOnlyViaAHuman:
     def test_worker_gates_promotion_on_the_package_token(self):
         body = WORKER[WORKER.index("async function handleLessonDecision("):]
         body = body[:body.index("\n// -- Gate 2")]
-        assert "requirePackageAccess(req, env, String(body?.package_id ?? \"\"))" in body
+        # Oct 21 2026: the package id is read once and the gate is followed by
+        # an ownership check (lessonDecisionAllowed) — a review link decides
+        # only its own interview's lessons.
+        assert 'const packageId = String(body?.package_id ?? "");' in body
+        assert "requirePackageAccess(req, env, packageId)" in body
+        assert "lessonDecisionAllowed(lesson, pkg)" in body
         assert '["active", "retired"].includes(status)' in body
         assert '"/voices/lesson-decision"' in WORKER
 
