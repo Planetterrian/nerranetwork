@@ -29,7 +29,30 @@ import generate_html as G  # noqa: E402
 from engine import newsroom as N  # noqa: E402
 
 UTC = dt.timezone.utc
-NOW = dt.datetime(2026, 10, 19, 16, 21, tzinfo=UTC)
+
+
+def _render_clock() -> dt.datetime:
+    """13:30 ET on the newest bar in the committed closes file.
+
+    The strip drops any value older than ``MARKET_MAX_AGE_DAYS`` or dated
+    AFTER the render clock, and the nightly commits newer bars every day: a
+    fixed date rendered the strip on Oct 19 and nothing on Oct 21 (a guard
+    that reads committed data must tolerate today — the brand-messaging
+    guard's idiom). Falls back to the pass's own date when the file is
+    unreadable, so the fixture never raises before the test can say why.
+    """
+    fallback = dt.datetime(2026, 10, 19, 16, 21, tzinfo=UTC)
+    try:
+        import json
+        quotes = json.loads((ROOT / "api" / "mag7_quotes.json").read_text(encoding="utf-8"))
+        newest = max(q["bar_date"] for q in quotes.get("quotes", []) if q.get("bar_date"))
+        y, m, d = (int(x) for x in newest.split("-"))
+        return dt.datetime(y, m, d, 17, 30, tzinfo=UTC)
+    except Exception:  # noqa: BLE001
+        return fallback
+
+
+NOW = _render_clock()
 WORKER = ROOT / "workers" / "gallery" / "src"
 JS = ROOT / "assets" / "js" / "live-ticker.js"
 
