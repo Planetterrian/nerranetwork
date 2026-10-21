@@ -9,4 +9,33 @@
     descent before that. The segment's tolerances ("under one meter per
     second", "under one degree per second", "a few hundred milliseconds")
     were illustrative, not figures SpaceX has published.
-  where: audio
+  where: both
+  replacements:
+    - find: "into a vertical capture with body flaps alone, only seconds before contact."
+      replace: "into a vertical capture only seconds before contact: the flaps steer the belly-flop, then the Raptor engines relight to flip the stage upright and brake."
+    - find: "A few hundred milliseconds of timing error puts it outside the arm-geometry envelope."
+      replace: "The flip and the landing burn have to be timed so the stage arrives inside the arm-geometry envelope."
+    - find: "Horizontal velocity and leftover rates have to die to roughly a meter and a degree while the stage is still on aerodynamic control."
+      replace: "Horizontal velocity and leftover rates have to die away before the arms close, and the landing burn does the last of that work."
+    - find: "At vertical, residual horizontal speed must sit under one meter per second and pitch and yaw rates under one degree per second, or the arms and the skirt yield."
+      replace: "At vertical, residual horizontal speed and pitch and yaw rates have to be small enough for the arms and the skirt to take the load; SpaceX has not published the limits."
+    - find: "Two meters per second is not twice the problem;"
+      replace: "Twice the leftover speed is not twice the problem;"
+    - find: "One extra degree per second walks a compressive stack into a peel on the arm pins."
+      replace: "A leftover rotation turns a straight compressive load into a peel on the arm pins."
+    - find: "The plan uses body flaps rather than engines for those last seconds, which keeps a plume off the tower and makes the catch a purely mechanical take of a tiny leftover state."
+      replace: "The flaps steer the descent, but the last seconds belong to the engines: the stage relights its Raptors to flip upright and brake, and the arms take what is left."
+    - find: "The controller still modulates flaps into the last half-second before capture."
+      replace: "The controller trims that burn into the last half-second before capture."
+    - find: "any timing error of even a few hundred milliseconds places the vehicle outside the narrow capture envelope defined by the arm geometry."
+      replace: "the timing of the flip and the landing burn decides whether the vehicle arrives inside the capture envelope defined by the arm geometry."
+    - find: "must null both horizontal velocity and residual angular rates to within roughly a meter and a degree while the vehicle is still under aerodynamic control."
+      replace: "must null both horizontal velocity and residual angular rates before the arms close."
+    - find: "That precision is harder than booster landing because the upper stage lacks the booster’s large grid fins and must rely solely on body flaps whose effectiveness drops sharply once dynamic pressure falls below a few kilopascals."
+      replace: "The upper stage lacks the booster’s large grid fins, and its body flaps lose effectiveness sharply once dynamic pressure falls below a few kilopascals, which is why the Raptor engines relight to flip it upright and brake for the final seconds."
+    - find: "residual horizontal velocity must be under one meter per second while pitch and yaw rates stay below one degree per second; otherwise the contact loads exceed the yield strength of the arm mechanisms or the vehicle’s skirt structure."
+      replace: "residual horizontal velocity and pitch and yaw rates must be small enough that the contact loads stay below the yield strength of the arm mechanisms and the vehicle’s skirt structure; SpaceX has not published those limits."
+    - find: "The animation sequence implies the control system continues to modulate flap deflections even as the vehicle falls past the tower top, buying an extra half-second of authority before the final capture."
+      replace: "The animation sequence shows the stage falling past the tower top before the arms close, so the landing burn has to be trimmed into the last moments before capture."
+    - find: "must also provide the final pitch authority for the flip,"
+      replace: "must also hold attitude until the engines take over for the flip,"
