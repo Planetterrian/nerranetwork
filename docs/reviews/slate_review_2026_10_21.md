@@ -72,11 +72,6 @@ Age of AI work and were left to it.
    `story_item_count` counts numbered, bold-headed sourced and Omni View heading
    items; both record on every show.
 
-7. **A date-bound guard** (`tests/test_live_ticker_2026_10_19.py`) pinned its
-   clock to Oct 19 and failed on clean main once newer quotes were committed;
-   it now renders on the newest committed bar date, like the Oct 20 brand
-   guard.
-
 ## 3. Prompt changes (⚠️ AUDIO — A/B-listen the first episode of each)
 
 - **The map sentence** (`engine/intros.py`): news shows name at most three
