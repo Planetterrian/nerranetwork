@@ -120,6 +120,7 @@ def _strip_quoted(body: str) -> str:
 
 def build_prompt(thread: Dict[str, Any], app: Dict[str, Any], own_email: str,
                  policy: Any) -> str:
+    from engine import brand as _brand
     show = get_show(app.get("show") or "nerra_voices")
     template = PROMPT_PATH.read_text(encoding="utf-8")
     pitched = policy.pitched_show_name(app.get("pitched_show")) if policy else ""
@@ -130,6 +131,8 @@ def build_prompt(thread: Dict[str, Any], app: Dict[str, Any], own_email: str,
         "apply_url": show.apply_url,
         "booking_url": booking_url(show.slug) or "(booking link unavailable, use needs_patrick)",
         "pitched_show_name": pitched,
+        "media_kit_url": _brand.MEDIA_KIT_URL,
+        "sponsor_kit_url": _brand.SPONSOR_KIT_URL,
         "thread": _render_thread(thread, own_email),
         "guest_name": app.get("name") or "the guest",
         "contact_name": app.get("publicist_name") or app.get("name") or "",

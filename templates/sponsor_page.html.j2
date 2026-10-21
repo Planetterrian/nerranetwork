@@ -1,119 +1,258 @@
 {% extends "base.html.j2" %}
-{#- Sponsor page (Oct 11 2026). Every number comes from the committed
-    api/audience_headline.json through generate_sponsor_page(); an unmeasured
-    figure renders as a dash, never a zero. The rules come from
-    engine.brand.SPONSOR_POLICY_RULES (the ``sponsor_policy`` global) — do not
-    type a rule here. -#}
+{#- The advertising and sponsorship kit (Oct 11 2026; rebuilt Oct 21 2026
+    beside the media kit). Every number comes from committed data through
+    generate_sponsor_page(); an unmeasured figure renders as a dash, never a
+    zero. The packages, rates, terms and reasons come from
+    engine.brand.sponsor_kit() (the ``kit`` context) and the rules from
+    engine.brand.SPONSOR_POLICY_RULES (the ``sponsor_policy`` global): do not
+    type a rate, a package or a rule here. -#}
 
 {% block head_extra %}
+{% include "_kit_styles.html.j2" %}
     <style>
-        .sp-hero { padding: calc(var(--nav-height) + var(--sp-16)) var(--sp-6) var(--sp-8); text-align: center; }
-        .sp-hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-3); }
-        .sp-hero p { font-family: var(--font-body); font-size: 1.1rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto; line-height: 1.6; }
-        .sp-section { max-width: 900px; margin: 0 auto; padding: var(--sp-8) var(--sp-6); }
-        .sp-section h2 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-3); }
-        .sp-section h3 { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600; color: var(--nn-white); margin: 0 0 var(--sp-2); }
-        .sp-section p, .sp-section li { font-family: var(--font-body); color: var(--nn-text); line-height: 1.7; }
-        .sp-note { font-size: 0.85rem; color: var(--nn-text-muted); }
-        .sp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0; }
-        .sp-stat { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
-        .sp-stat-value { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 700; color: var(--nn-white); }
-        .sp-stat-label { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
-        .sp-table-wrap { overflow-x: auto; }
-        .sp-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 0.9rem; }
-        .sp-table th, .sp-table td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--nn-border); color: var(--nn-text); }
-        .sp-table th { color: var(--nn-text-muted); font-weight: 600; }
-        .sp-table td.num, .sp-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
-        .sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0; }
-        .sp-card { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
-        .sp-card p { margin: 0; font-size: 0.95rem; }
-        .sp-cta { display: inline-block; margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-6); border-radius: 100px; background: var(--nn-purple); color: #fff; text-decoration: none; font-family: var(--font-ui); font-weight: 600; }
+        .sp-packages { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: var(--sp-4); }
+        .sp-pkg { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 16px; padding: var(--sp-5);
+            display: flex; flex-direction: column; gap: var(--sp-3); }
+        .sp-pkg h3 { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--nn-white); margin: 0; }
+        .sp-pkg p { margin: 0; }
+        .sp-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: .2rem .5rem; }
+        .sp-price b { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--nn-white); line-height: 1; }
+        .sp-price span { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); }
+        .sp-reach { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); border-top: 1px solid var(--nn-border);
+            padding-top: var(--sp-3); margin-top: auto; }
+        .sp-reach div b { display: block; font-family: var(--font-heading); font-size: 1.15rem; color: var(--nn-white); }
+        .sp-reach div span { font-family: var(--font-ui); font-size: .76rem; color: var(--nn-text-muted); line-height: 1.35; display: block; }
+        .sp-pkg-shows { font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text-muted); }
+        .sp-pkg-shows a { color: var(--nn-text); }
+        .sp-featured { border-color: var(--nn-cyan); position: relative; overflow: hidden; }
+        .sp-featured::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--nn-gradient); }
+        .sp-pkg-wide { grid-column: 1 / -1; }
+        .sp-pkg-wide .mk-check { columns: 2 260px; column-gap: var(--sp-5); }
+        .sp-pkg-wide .mk-check li { break-inside: avoid; }
+        .sp-featured-wrap { margin-bottom: var(--sp-4); }
+        .sp-featured .sp-badge { align-self: flex-start; font-family: var(--font-ui); font-size: .72rem; letter-spacing: .1em;
+            text-transform: uppercase; padding: .25rem .7rem; border-radius: 100px; background: var(--nn-gradient); color: #fff; }
+        .sp-featured-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--sp-5); align-items: start; }
+        .sp-steps { counter-reset: sp; list-style: none; padding: 0; margin: 0;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-3); }
+        .sp-steps li { counter-increment: sp; background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 12px;
+            padding: var(--sp-4); font-family: var(--font-body); color: var(--nn-text); line-height: 1.5; font-size: .95rem; }
+        .sp-steps li::before { content: counter(sp); display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+            background: var(--nn-gradient); color: #fff; font-family: var(--font-ui); font-weight: 700; font-size: .85rem; margin-bottom: .6rem; }
+        .sp-steps b { display: block; font-family: var(--font-heading); color: var(--nn-white); margin-bottom: .2rem; }
+        .sp-status { font-family: var(--font-ui); font-size: .9rem; color: var(--nn-text); background: var(--nn-surface);
+            border: 1px solid var(--nn-border); border-radius: 10px; padding: .7rem 1rem; display: inline-block; margin: 0 0 var(--sp-5); }
+        @media (max-width: 760px) { .sp-featured-grid { grid-template-columns: 1fr; } }
     </style>
 {% endblock %}
 
 {% block content %}
-    <div class="page-main">
-        <section class="sp-hero">
-            <h1>Sponsor the Nerra Network</h1>
-            <p>{{ published_show_count }} independent shows on AI, SpaceX, Tesla, markets,
-            science and world news, most of them daily, in {{ listening_language_count }}
-            listening languages. Every episode is free; sponsors help keep it that way.</p>
-        </section>
+{%- set au = audience -%}
+<div class="page-main">
+<div class="mk">
 
-        <section class="sp-section" aria-labelledby="sp-audience">
-            <h2 id="sp-audience">The audience, measured</h2>
-            <div class="sp-stats">
-                <div class="sp-stat"><div class="sp-stat-value">{{ audience.downloads_30d }}</div><div class="sp-stat-label">Podcast downloads, last 30 days</div></div>
-                <div class="sp-stat"><div class="sp-stat-value">{{ audience.downloads_7d }}</div><div class="sp-stat-label">Podcast downloads, last 7 days</div></div>
-                <div class="sp-stat"><div class="sp-stat-value">{{ audience.youtube_views }}</div><div class="sp-stat-label">YouTube views on videos from the last 28 days</div></div>
-                <div class="sp-stat"><div class="sp-stat-value">{{ total_episodes }}</div><div class="sp-stat-label">Episodes published</div></div>
-            </div>
-            <p class="sp-note">Downloads are counted by <a href="https://op3.dev">OP3</a>, an
-            open podcast analytics service, on every feed it has indexed; YouTube figures come
-            from the YouTube Analytics API. Figures as of {{ audience.as_of }}. Live numbers:
-            <a href="{{ path_prefix }}management.html?view=sponsor">the sponsor view of Mission Control</a>.</p>
+    <header class="mk-hero">
+        <p class="mk-eyebrow">Advertising and sponsorship</p>
+        <h1 class="mk-wordmark">Sponsor <span>Nerra</span></h1>
+        <p class="mk-tagline">{{ network_tagline }}</p>
+        <p class="mk-lede">{{ network_promise() }}</p>
+        <p class="mk-lede">{{ kit.lede }}</p>
+        <p class="sp-status">{{ kit.status }}</p>
+        <p class="mk-meta">Figures measured{% if au.as_of and au.as_of != "—" %} as of {{ au.as_of }}{% endif %} and refreshed nightly. Rates in {{ kit.currency }}, before tax.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="#packages">See the packages</a>
+            <a class="mk-btn" href="mailto:{{ kit.email }}?subject=Sponsoring%20Nerra%20Network">Email to book</a>
+            <a class="mk-btn" href="{{ path_prefix }}press.html">Media kit</a>
+            <button type="button" class="mk-btn" data-mk-print>Save as PDF</button>
+        </div>
+    </header>
 
-            {% if audience.shows %}
-            <h3>By show</h3>
-            <div class="sp-table-wrap">
-                <table class="sp-table">
-                    <thead><tr>
-                        <th scope="col">Show</th>
-                        <th scope="col" class="num">Downloads, 30 days</th>
-                        <th scope="col" class="num">YouTube views, 28 days</th>
-                    </tr></thead>
-                    <tbody>
-                    {% for row in audience.shows %}
-                        <tr>
-                            <td><a href="{{ path_prefix }}{{ row.page }}">{{ row.name }}</a></td>
-                            <td class="num">{{ row.downloads_30d }}</td>
-                            <td class="num">{{ row.youtube_views }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <p class="sp-note">A dash means the figure is not measured yet, not zero.</p>
-            {% endif %}
-        </section>
+    <nav class="mk-toc" aria-label="On this page">
+        <a href="#at-a-glance">At a glance</a>
+        <a href="#why">Why Nerra</a>
+        <a href="#audience">Audience and growth</a>
+        <a href="#packages">Packages and rates</a>
+        <a href="#terms">Every booking</a>
+        <a href="#how">How it works</a>
+        <a href="#rules">The rules</a>
+        <a href="#growth-next">What's next</a>
+        <a href="#contact">Book</a>
+    </nav>
 
-        <section class="sp-section" aria-labelledby="sp-formats">
-            <h2 id="sp-formats">Ways to sponsor</h2>
-            <div class="sp-grid">
-                <div class="sp-card"><h3>A show, by the episode or the month</h3>
-                    <p>A labelled sponsor message in the episode, read in the show's own
-                    voice, plus a sponsor line and link in the show notes and the episode's
-                    article. The hosts are AI voices, and every episode says so.</p></div>
-                <div class="sp-card"><h3>A subject across the network</h3>
-                    <p>Every show on one subject at once: AI, space, markets, science,
-                    world news. The <a href="{{ path_prefix }}topics/index.html">topic pages</a>
-                    list which shows each one covers.</p></div>
-                <div class="sp-card"><h3>Nerra Daily</h3>
-                    <p>The network's combined daily edition: every English show of the morning in
-                    one feed, anchored by Mira. One placement reaches listeners of every show.</p></div>
-                <div class="sp-card"><h3>The newsletters</h3>
-                    <p>A sponsor line in a show's daily email, kept apart from the stories and
-                    marked as sponsored.</p></div>
-            </div>
-            <p>Rates are set per show from the downloads above. Tell us which shows or
-            subjects you want to reach and we will reply with a quote.</p>
-        </section>
+    <section class="mk-section" id="at-a-glance">
+        <h2>At a glance</h2>
+        <div class="mk-stats">
+            <div class="mk-stat"><div class="mk-stat-v">{{ published_show_count }}</div><div class="mk-stat-l">free shows, every episode free</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ total_episodes }}</div><div class="mk-stat-l">episodes published</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.downloads_30d }}</div><div class="mk-stat-l">podcast downloads in the last 30 days</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views }}</div><div class="mk-stat-l">YouTube views of videos from the last 28 days</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ growth.followers_total }}</div><div class="mk-stat-l">subscribers and followers on the channels that report them</div></div>
+            {% if growth.downloads_4w_pct is not none %}<div class="mk-stat"><div class="mk-stat-v">{{ "%+d"|format(growth.downloads_4w_pct) }}%</div><div class="mk-stat-l">podcast downloads, last four weeks on the four before</div></div>{% endif %}
+        </div>
+    </section>
 
-        <section class="sp-section" aria-labelledby="sp-rules">
-            <h2 id="sp-rules">What a sponsor can and cannot do</h2>
-            <div class="sp-grid">
-            {% for rule in sponsor_policy.rules %}
-                <div class="sp-card"><h3>{{ rule.title }}</h3><p>{{ rule.body }}</p></div>
+    <section class="mk-section" id="why">
+        <h2>Why sponsor Nerra</h2>
+        <div class="mk-plans">
+            {% for r in kit.reasons %}
+            <div class="mk-card"><h3>{{ r.title }}</h3><p>{{ r.body }}</p></div>
             {% endfor %}
-            </div>
-            <p>These rules are part of our <a href="{{ path_prefix }}editorial.html#sponsors">editorial
-            standards</a>. A sponsor that wants something they rule out is not a fit.</p>
-        </section>
+        </div>
+    </section>
 
-        <section class="sp-section" aria-labelledby="sp-contact">
-            <h2 id="sp-contact">Get in touch</h2>
-            <p>Write to us with the shows or subjects you have in mind and your dates.</p>
-            <a class="sp-cta" href="mailto:{{ sponsor_policy.email }}?subject=Sponsoring%20Nerra%20Network">{{ sponsor_policy.email }}</a>
-        </section>
-    </div>
+    <section class="mk-section" id="audience">
+        <h2>The audience, measured</h2>
+        <p class="mk-sub">Downloads are counted by OP3, the open podcast analytics service, and YouTube views by YouTube Analytics: the same numbers as the <a href="{{ path_prefix }}press.html#audience">media kit</a>.{% if au.as_of and au.as_of != "—" %} As of {{ au.as_of }}.{% endif %}</p>
+        <div class="mk-two">
+            <div class="mk-card mk-chart-card">
+                <h3>Podcast downloads, by week</h3>
+                {% if growth.downloads_last %}<p class="mk-sub" style="margin:0">{{ growth.downloads_last.value }} in the week of {{ growth.downloads_last.week }}{% if growth.downloads_multiple %}, <span class="mk-up">{{ growth.downloads_multiple }}× the week of {{ growth.downloads_first.week }}</span>{% endif %}.</p>{% endif %}
+                {{ growth.downloads_chart | safe }}
+                {% if growth.weekly_downloads %}<details class="mk-details"><summary>Show the numbers</summary>
+                <table class="mk-table"><thead><tr><th scope="col">Week of</th><th scope="col" class="num">Downloads</th></tr></thead><tbody>
+                    {% for w in growth.weekly_downloads %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
+                </tbody></table></details>{% endif %}
+            </div>
+            <div class="mk-card mk-chart-card">
+                <h3>YouTube subscribers</h3>
+                {% if growth.subs_first %}<p class="mk-sub" style="margin:0">{{ growth.subs_now }} now, from {{ growth.subs_first.value }} on {{ growth.subs_first.date }}{% if growth.subs_gain_30d %}; <span class="mk-up">{{ growth.subs_gain_30d }} new in 30 days</span>{% endif %}.</p>{% endif %}
+                {{ growth.subs_chart | safe }}
+                {% if growth.weekly_subs %}<details class="mk-details"><summary>Show the numbers</summary>
+                <table class="mk-table"><thead><tr><th scope="col">Week of</th><th scope="col" class="num">Subscribers</th></tr></thead><tbody>
+                    {% for w in growth.weekly_subs %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
+                </tbody></table></details>{% endif %}
+            </div>
+        </div>
+        {% if au.shows %}
+        <h3>By show</h3>
+        <div class="mk-table-wrap">
+            <table class="mk-table">
+                <thead><tr>
+                    <th scope="col">Show</th>
+                    <th scope="col" class="num">Downloads, 30 days</th>
+                    <th scope="col" class="num">YouTube views, 28 days</th>
+                </tr></thead>
+                <tbody>
+                {% for row in au.shows %}
+                    <tr>
+                        <td><a href="{{ path_prefix }}{{ row.page }}">{{ row.name }}</a></td>
+                        <td class="num">{{ row.downloads_30d }}</td>
+                        <td class="num">{{ row.youtube_views }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="mk-sub">A dash means the figure is not measured yet, not zero.</p>
+        {% endif %}
+    </section>
+
+    <section class="mk-section" id="packages">
+        <h2>Packages and rates</h2>
+        <p class="mk-sub">Flat monthly rates, in {{ kit.currency }} before tax. Each package shows the measured reach of its shows over the last 30 days; nothing on this page is a forecast. Founding terms are offered to the first {{ kit.founding_places }} partners and close when they are taken.</p>
+        {% for p in kit.packages if p.featured %}
+        <div class="sp-featured-wrap">
+            <article class="sp-pkg sp-featured" aria-labelledby="pkg-{{ p.id }}">
+                <span class="sp-badge">Founding terms</span>
+                <div class="sp-featured-grid">
+                    <div>
+                        <h3 id="pkg-{{ p.id }}">{{ p.name }}</h3>
+                        <p style="margin:.4rem 0 .8rem">{{ p.summary }}</p>
+                        <div class="sp-price"><b>{{ p.price_text }}</b><span>{{ p.unit }}, {{ p.term }}</span></div>
+                        {% if p.show_links %}<p class="sp-pkg-shows" style="margin-top:.8rem">{% for s in p.show_links %}<a href="{{ path_prefix }}{{ s.page }}">{{ s.name }}</a>{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+                    </div>
+                    <div>
+                        <ul class="mk-check">{% for i in p.includes %}<li>{{ i }}</li>{% endfor %}</ul>
+                    </div>
+                </div>
+                {% if p.reach %}
+                <div class="sp-reach">
+                    <div><b>{{ p.reach.downloads_30d }}</b><span>podcast downloads, 30 days{% if p.reach.measured < p.reach.count %} ({{ p.reach.measured }} of {{ p.reach.count }} measured){% endif %}</span></div>
+                    <div><b>{{ p.reach.youtube_views }}</b><span>YouTube views, videos of the last 28 days</span></div>
+                </div>
+                {% endif %}
+            </article>
+        </div>
+        {% endfor %}
+        <div class="sp-packages">
+            {% for p in kit.packages if not p.featured %}
+            <article class="sp-pkg{% if not p.reach %} sp-pkg-wide{% endif %}" aria-labelledby="pkg-{{ p.id }}">
+                <h3 id="pkg-{{ p.id }}">{{ p.name }}</h3>
+                <p>{{ p.summary }}</p>
+                <div class="sp-price"><b>{{ p.price_text }}</b><span>{{ p.unit }}, {{ p.term }}</span></div>
+                <ul class="mk-check">{% for i in p.includes %}<li>{{ i }}</li>{% endfor %}</ul>
+                {% if p.show_links %}<p class="sp-pkg-shows">{% if not p.reach %}Shows: {% endif %}{% for s in p.show_links %}<a href="{{ path_prefix }}{{ s.page }}">{{ s.name }}</a>{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+                {% if p.reach %}
+                <div class="sp-reach">
+                    <div><b>{{ p.reach.downloads_30d }}</b><span>downloads, 30 days{% if p.reach.measured < p.reach.count %} ({{ p.reach.measured }} of {{ p.reach.count }} measured){% endif %}</span></div>
+                    <div><b>{{ p.reach.youtube_views }}</b><span>YouTube views, 28 days</span></div>
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% if interview_show_names %}<p class="mk-sub" style="margin-top:var(--sp-5)">{{ interview_show_names|join(" and ") }} are not for sale: the interview shows carry no sponsor.</p>{% endif %}
+    </section>
+
+    <section class="mk-section" id="terms">
+        <h2>What every booking includes</h2>
+        <div class="mk-plans" style="grid-template-columns:repeat(auto-fit,minmax(min(400px,100%),1fr))">
+            {% for t in kit.terms %}
+            <div class="mk-card"><h3>{{ t.title }}</h3><p>{{ t.body }}</p></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mk-section" id="how">
+        <h2>How a booking works</h2>
+        <ol class="sp-steps">
+            {% for s in kit.steps %}<li><b>{{ s.title }}</b>{{ s.body }}</li>{% endfor %}
+        </ol>
+    </section>
+
+    <section class="mk-section" id="rules">
+        <h2>What a sponsor can and cannot do</h2>
+        <div class="mk-plans">
+        {% for rule in sponsor_policy.rules %}
+            <div class="mk-card"><h3>{{ rule.title }}</h3><p>{{ rule.body }}</p></div>
+        {% endfor %}
+        </div>
+        <p style="margin-top:var(--sp-4)">These rules are part of our <a href="{{ path_prefix }}editorial.html#sponsors">editorial standards</a>. A sponsor that wants something they rule out is not a fit.</p>
+    </section>
+
+    {% if growth.next %}
+    <section class="mk-section" id="growth-next">
+        <h2>Where the network is going</h2>
+        <p class="mk-sub">Sponsorship pays for the free shows and for this work. Each item is work that exists or is under way, never a forecast.</p>
+        <div class="mk-plans">
+            {% for n in growth.next if n.heading != "Sponsorship" %}
+            <div class="mk-card"><h3>{{ n.heading }}</h3><p>{{ n.body }}</p></div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="mk-section" id="contact">
+        <h2>Book</h2>
+        <p>Write with the package or the shows you want, the month you have in mind and your category. Patrick Novak, the network's founder, answers sponsorship mail himself.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="mailto:{{ kit.email }}?subject=Sponsoring%20Nerra%20Network">{{ kit.email }}</a>
+            <a class="mk-btn" href="{{ path_prefix }}press.html">Media kit</a>
+            <a class="mk-btn" href="{{ path_prefix }}editorial.html#sponsors">Editorial standards</a>
+        </div>
+        <p class="mk-sub" style="margin-top:var(--sp-5)">This page lives at <a href="{{ kit.url }}">nerranetwork.com/sponsor.html</a> (also /advertise.html) and updates itself nightly as the network grows.</p>
+    </section>
+
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    document.addEventListener("click", function (e) {
+        if (e.target.closest("[data-mk-print]")) { window.print(); }
+    });
+})();
+</script>
 {% endblock %}

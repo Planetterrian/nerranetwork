@@ -35,7 +35,7 @@ PRODUCER_MODEL = "grok-latest"
 MAX_BODY_CHARS = 3000
 
 CATEGORIES = (
-    "guest_pitch", "sponsor_or_sales", "platform_notice",
+    "guest_pitch", "sponsor_inquiry", "sponsor_or_sales", "platform_notice",
     "personal_or_business", "newsletter_or_noise", "guest_followup",
 )
 INTERVIEW_SHOWS = ("age_of_ai", "nerra_voices")

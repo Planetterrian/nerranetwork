@@ -353,6 +353,7 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
     link, the same day, with every link they gave us shown back to them so
     they can see it landed. Their publicist, if they have one, is copied.
     """
+    from engine import brand as _brand
     e = _html.escape
     name = str(app.get("name") or "").strip()
     first = name.split()[0] if name else "there"
@@ -410,6 +411,15 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
         "second conversation, when there will be something to measure the first "
         "one against; reply with a yes and I'll send the booking link nearer the "
         "time.</p>",
+        # Oct 21 2026 (operator): the two kits, last and in one paragraph.
+        # The media kit is what a guest's publicist asks for next; the
+        # sponsorship kit is an offer, never a pitch, and the interview
+        # shows themselves carry no sponsor.
+        "<p>If you or your publicist want our audience numbers, logos or a line "
+        f"about the network for a post of your own, the media kit has them: "
+        f"{link(_brand.MEDIA_KIT_URL)}. And if your company would ever like to reach "
+        f"the people who listen, the sponsorship kit is at {link(_brand.SPONSOR_KIT_URL)}; "
+        "the interview shows themselves never carry a sponsor.</p>",
         "<p>Thank you again for the conversation.</p>",
         mira_signature_html(show),
     ]

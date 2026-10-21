@@ -36,7 +36,7 @@ _DEFAULTS: Dict[str, Any] = {
     "min_confidence": 0.75,
     "max_sends_per_run": 25,
     "never_auto_reply_domains": [],
-    "hold_categories": ["sponsor_or_sales", "personal_or_business"],
+    "hold_categories": ["sponsor_inquiry", "sponsor_or_sales", "personal_or_business"],
     "ignore_categories": ["platform_notice", "newsletter_or_noise"],
     "labels": {"processed": "Producer/Processed", "hold": "Producer/Hold"},
     "inbox_query": "newer_than:30d in:inbox",

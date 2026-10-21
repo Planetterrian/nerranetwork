@@ -8054,22 +8054,84 @@ def _sponsor_audience(max_rows: int = 12) -> dict:
     }
 
 
+def _sponsor_package_reach(packages: list) -> list:
+    """Each sponsor package with its MEASURED reach and its shows.
+
+    Reach is the sum of the package's shows' 30-day downloads and YouTube
+    views from ``api/audience_headline.json`` (the numbers the media kit and
+    the dashboard print). A show OP3 has not indexed is counted as
+    unmeasured, never as zero, and the page says how many of the package's
+    shows were measured. The open-ended package lists the free shows no
+    other package names (never an interview show: they carry no sponsor)."""
+    from engine import brand as _brand
+
+    def fmt(v):
+        return "—" if v is None else f"{int(v):,}"
+
+    data = _load_json_quiet(ROOT / "api" / "audience_headline.json") or {}
+    per_show = data.get("shows") or {}
+    public = [s for s in _public_shows(_build_all_shows_list())]
+    by_slug = {s["slug"]: s for s in public}
+    named = {slug for pkg in packages for slug in pkg["shows"]}
+    never = set(_brand.HUMAN_REVIEW_SHOW_SLUGS)
+    out = []
+    for pkg in packages:
+        row = dict(pkg)
+        slugs = [s for s in pkg["shows"] if s in by_slug]
+        if not pkg["shows"]:
+            row["show_links"] = [
+                {"name": s["name"], "page": s.get("show_page") or ""}
+                for s in public if s["slug"] not in named and s["slug"] not in never]
+            row["reach"] = None
+            out.append(row)
+            continue
+        downloads = [per_show.get(s, {}).get("downloads_30d") for s in slugs]
+        measured = [v for v in downloads if v is not None]
+        views = [((per_show.get(s, {}).get("youtube") or {}).get("views") or 0) for s in slugs]
+        row["show_links"] = [{"name": by_slug[s]["name"], "page": by_slug[s].get("show_page") or ""}
+                             for s in slugs]
+        row["reach"] = {
+            "downloads_30d": fmt(sum(measured)) if measured else "—",
+            "youtube_views": fmt(sum(views)) if any(views) else "—",
+            "measured": len(measured),
+            "count": len(slugs),
+        }
+        out.append(row)
+    return out
+
+
 def generate_sponsor_page(*, dry_run=False, output_dir=None):
-    """Generate ``sponsor.html`` (Oct 11 2026) — the audience, the ways to
-    sponsor and the rules a sponsor accepts. Numbers from
-    ``_sponsor_audience``; rules from ``engine.brand`` via the
-    ``sponsor_policy`` global."""
+    """Generate ``sponsor.html`` — the advertising and sponsorship kit.
+
+    Oct 11 2026: the audience and the rules. Oct 21 2026 (operator): the
+    full kit beside the media kit, in its voice and from its numbers: the
+    landing page's tagline and promise, measured audience and growth, the
+    packages and rates from ``engine.brand.SPONSOR_PACKAGES`` with each one's
+    measured reach, the terms every booking carries, how a booking runs and
+    the rules (``sponsor_policy`` global). The nightly ``--static-pages``
+    regen keeps the numbers current; the rates change only in brand."""
+    from engine import brand as _brand
+
     env = _get_jinja_env()
     template = env.get_template("sponsor_page.html.j2")
+    shows = [s for s in _public_shows(_build_all_shows_list())]
+    kit = _brand.sponsor_kit()
+    kit["packages"] = _sponsor_package_reach(kit["packages"])
     context = {
         "path_prefix": "",
-        "page_title": "Sponsor the Nerra Network",
-        "page_description": "Sponsor independent shows on AI, SpaceX, Tesla, markets, science and world news. Measured audience, labelled sponsor messages, no say over coverage.",
-        "meta_description": "Sponsor the Nerra Network: measured downloads and YouTube views by show, the ways to sponsor, and the rules every sponsor accepts.",
-        "meta_keywords": "sponsor podcast, podcast sponsorship, Nerra Network sponsor, AI podcast sponsor, SpaceX podcast sponsor",
+        "page_title": "Advertise and sponsor | Nerra Network",
+        "page_description": ("The Nerra Network sponsorship kit: measured audience and growth, "
+                             "packages and rates for the free shows, and the rules every "
+                             "sponsor works under."),
+        "meta_description": ("Advertise on the Nerra Network: measured downloads and YouTube views "
+                             "by show, sponsorship packages and rates for SpaceX Daily, Tesla "
+                             "Shorts Time, Nerra Daily and the AI, science and markets shows, "
+                             "and the rules every sponsor accepts."),
+        "meta_keywords": ("advertise podcast, podcast sponsorship, Nerra Network sponsor, "
+                          "SpaceX podcast sponsor, Tesla podcast sponsor, AI podcast sponsor"),
         "theme_color": "#6B47FF",
         "og_image": "",
-        "canonical_url": "https://nerranetwork.com/sponsor.html",
+        "canonical_url": _brand.SPONSOR_KIT_URL,
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
@@ -8078,6 +8140,10 @@ def generate_sponsor_page(*, dry_run=False, output_dir=None):
         "listening_language_count": len(_listening_languages()),
         "total_episodes": f"{_count_total_episodes():,}",
         "audience": _sponsor_audience(),
+        "growth": _media_kit_growth(shows),
+        "kit": kit,
+        "interview_show_names": [s["name"] for s in _build_all_shows_list()
+                                 if s["slug"] in _brand.HUMAN_REVIEW_SHOW_SLUGS],
     }
     html = template.render(**context)
     out_path = (Path(output_dir) if output_dir else ROOT) / "sponsor.html"
