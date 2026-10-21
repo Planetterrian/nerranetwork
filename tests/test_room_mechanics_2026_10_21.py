@@ -260,5 +260,13 @@ class TestRequestsToTheWorkerAreSigned:
         assert 'os.environ.get("VOICES_WEBHOOK_SECRET", "")' in CLIENT
         assert "VOICES_WEBHOOK_SECRET: ${{ secrets.VOICES_WEBHOOK_SECRET }}" in DEPLOY
 
+    def test_the_fixture_guest_signs_the_same_way(self):
+        fixture = (ROOT / "voximplant" / "scenarios" / "age_of_ai_fixture_guest.js").read_text(encoding="utf-8")
+        mine = SCENARIO[SCENARIO.index("function utf8Bytes"):SCENARIO.index("function getSecret(name)")]
+        theirs = fixture[fixture.index("function utf8Bytes"):fixture.index("function getSecret(name)")]
+        assert mine == theirs
+        assert 'const WEBHOOK_SECRET = "__VOICES_WEBHOOK_SECRET__";' in fixture
+        assert "headers: signedHeaders(body)" in fixture[fixture.index("async function postLegEvent"):]
+
     def test_the_scenario_parses(self):
         subprocess.run(["node", "--check", str(SCENARIO_PATH)], check=True)
