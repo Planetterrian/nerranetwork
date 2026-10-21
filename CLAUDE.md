@@ -5111,7 +5111,12 @@ for Patrick like any commercial mail, with Mira's reply pointing at both kits
 (and naming Patrick as the one who handles sponsorship) waiting in the held
 drafts (`producer_sponsor_reply.j2`); nothing about rates is ever sent
 automatically. The about and contact pages no longer
-say the network takes no sponsorships. Not changed: Mira's live prompt still
+say the network takes no sponsorships. **When the network began
+(operator):** the Nerra Network name was established in February and March
+2026 and measurement, marketing and the channels began in June 2026;
+`engine.brand.NETWORK_FOUNDING_DATE` / `network_history_note()` own that, both
+kits print the note beside the growth figures, and no surface dates the
+network to 2024 (guarded). Not changed: Mira's live prompt still
 says the network carries information "free of advertising" (a room change
 needs a rehearsal PASS and an operator listen).
 

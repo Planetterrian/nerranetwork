@@ -122,6 +122,27 @@ SPONSOR_EMAIL = CONTACT_EMAIL
 #: inbox for the reason above: one address a person actually reads.
 PRESS_EMAIL = CONTACT_EMAIL
 
+#: When the network began, as the operator states it (Oct 21 2026): the
+#: Nerra Network NAME was established in February and March 2026, and
+#: audience measurement, marketing and the channels only began around June
+#: 2026 (the first complete OP3 week is 29 June; the YouTube subscriber
+#: snapshots start 22 July). Every growth figure the kits print covers months,
+#: not years, and the kits say so. Never write "2024" as a founding year: the
+#: earlier automated Tesla show predates the network and its name.
+NETWORK_ESTABLISHED_YEAR = 2026
+NETWORK_FOUNDING_DATE = "2026-02"            # schema.org foundingDate
+NETWORK_NAMED_TEXT = "February and March 2026"
+MEASUREMENT_STARTED_TEXT = "June 2026"
+
+
+def network_history_note() -> str:
+    """One sentence for the kits, beside the growth figures."""
+    return (f"The Nerra Network name was established in {NETWORK_NAMED_TEXT}, "
+            f"and audience measurement, marketing and the channels began in "
+            f"{MEASUREMENT_STARTED_TEXT}, so every growth figure here covers "
+            "months, not years.")
+
+
 #: The two co-founders, as their own show states them (Novak + Perra =
 #: Nerra; ``shows/network_meta.yaml`` dp_pod.about_host) and as Patrick told
 #: it on the record in The Age of AI Ep001. Facts only: nothing here is a
@@ -133,9 +154,10 @@ FOUNDERS = (
         "role": "Co-founder and producer",
         "bio": (
             "Patrick Novak is a Vancouver-based entrepreneur, a physical chemist "
-            "by training and a published science fiction novelist. He started "
-            "Nerra Network in 2024, after a daily Tesla podcast he relied on "
-            "stopped publishing, by rebuilding it as an automated show. He "
+            "by training and a published science fiction novelist. The network "
+            "began when a daily Tesla podcast he relied on stopped publishing "
+            "and he rebuilt it as an automated show; he established the Nerra "
+            "Network name in February and March 2026. He "
             "designs the production pipeline, writes the editorial rules the "
             "AI works under, and built Mira, the network's AI host. He "
             "co-hosts The DP Pod."
@@ -198,7 +220,7 @@ def network_boilerplate(show_count: int, languages=("en",)) -> dict:
         "it came from. The shows are written and voiced with AI under editorial "
         "rules set by people, and its interview shows are hosted by Mira, an AI "
         "whose guests decide whether their conversation is published at all. "
-        "Founded in 2024 by Patrick Novak and Dan Perra."
+        f"Established in {NETWORK_ESTABLISHED_YEAR} by Patrick Novak and Dan Perra."
     )
     long = (
         medium + " Its flagship shows follow SpaceX and Tesla every day; Nerra "

@@ -7337,7 +7337,7 @@ def generate_about_page(*, dry_run=False, output_dir=None):
         "all_shows": _build_all_shows_list(),
         # Stats (shows_count removed as part of count-agnostic brand refresh)
         "total_episodes": _count_total_episodes(),
-        "founding_date": "2024-07-01",
+        "founding_date": _brand_founding_date(),
         "listening_language_count": len(_listening_languages()),
         # Organization sameAs — the network's accounts (the three SHOW
         # handles were the only ones here, which told search engines the
@@ -7989,6 +7989,7 @@ def generate_press_page(*, dry_run=False, output_dir=None):
         "press_email": _brand.PRESS_EMAIL,
         "audience": audience,
         "growth": growth,
+        "history": _network_history(),
         "marketing": marketing,
         "interview_shows": _media_kit_interview_shows(),
         "trust": _media_kit_trust(),
@@ -8052,6 +8053,20 @@ def _sponsor_audience(max_rows: int = 12) -> dict:
         "youtube_views": fmt((net.get("youtube") or {}).get("views")),
         "shows": rows[:max_rows],
     }
+
+
+def _brand_founding_date() -> str:
+    from engine import brand as _brand
+    return _brand.NETWORK_FOUNDING_DATE
+
+
+def _network_history() -> dict:
+    """When the network was named and when measurement began (Oct 21 2026),
+    for the two kits: from engine.brand, never typed in a template."""
+    from engine import brand as _brand
+    return {"named": _brand.NETWORK_NAMED_TEXT,
+            "measured": _brand.MEASUREMENT_STARTED_TEXT,
+            "note": _brand.network_history_note()}
 
 
 def _sponsor_package_reach(packages: list) -> list:
@@ -8142,6 +8157,7 @@ def generate_sponsor_page(*, dry_run=False, output_dir=None):
         "audience": _sponsor_audience(),
         "growth": _media_kit_growth(shows),
         "kit": kit,
+        "history": _network_history(),
         "interview_show_names": [s["name"] for s in _build_all_shows_list()
                                  if s["slug"] in _brand.HUMAN_REVIEW_SHOW_SLUGS],
     }

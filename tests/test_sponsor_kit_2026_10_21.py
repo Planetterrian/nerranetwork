@@ -214,3 +214,39 @@ class TestGuestMailCarriesTheKits:
                           policy=pol, sender_email="dana@brandco.com",
                           already_replied=False, already_in_db=False, sends_so_far=0)
         assert d.action == "draft" and d.notify
+
+
+class TestWhenTheNetworkBegan:
+    """Oct 21 2026 (operator): the Nerra Network name was established in
+    February and March 2026 and measurement began around June 2026. The
+    kits had said "Founded 2024", which overstated how long the growth
+    figures run."""
+
+    def test_brand_owns_the_dates(self):
+        assert brand.NETWORK_ESTABLISHED_YEAR == 2026
+        assert brand.NETWORK_FOUNDING_DATE.startswith("2026-")
+        note = brand.network_history_note()
+        assert "February and March 2026" in note and "June 2026" in note
+
+    def test_no_surface_says_founded_in_2024(self):
+        bad = re.compile(r"(founded|started|established)[^.]{0,60}\b2024\b|\b2024\b[^.]{0,20}vancouver",
+                         re.I)
+        sources = [ROOT / "engine" / "brand.py", ROOT / "generate_html.py",
+                   *(ROOT / "templates").glob("*.j2")]
+        for path in sources:
+            text = path.read_text(encoding="utf-8")
+            text = re.sub(r"#.*", "", text) if path.suffix == ".py" else text
+            assert not bad.search(text), f"{path.name} dates the network to 2024"
+        assert '"2024-07-01"' not in (ROOT / "generate_html.py").read_text(encoding="utf-8")
+
+    def test_both_kits_carry_the_note(self, tmp_path):
+        import generate_html
+        generate_html.generate_sponsor_page(output_dir=tmp_path)
+        generate_html.generate_press_page(output_dir=tmp_path)
+        note = brand.network_history_note()
+        for name in ("sponsor.html", "press.html"):
+            html = (tmp_path / name).read_text(encoding="utf-8")
+            assert note in html, name
+            assert "2024, Vancouver" not in html
+        boiler = brand.network_boilerplate(26)["medium"]
+        assert "Established in 2026" in boiler and "2024" not in boiler

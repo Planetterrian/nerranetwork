@@ -59,7 +59,8 @@
         </div>
         <div class="mk-card">
             <dl class="mk-facts">
-                <dt>Founded</dt><dd>2024, Vancouver, Canada</dd>
+                <dt>Established</dt><dd>{{ history.named }} (the Nerra Network name), Vancouver, Canada</dd>
+                <dt>Measured since</dt><dd>{{ history.measured }}: audience measurement, marketing and the channels began then</dd>
                 <dt>Founders</dt><dd>{% for f in founders %}{{ f.name }}{% if not loop.last %} and {% endif %}{% endfor %}</dd>
                 <dt>Flagships</dt><dd>{% for s in flagship_shows %}<a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a>{% if not loop.last %} and {% endif %}{% endfor %}, every day</dd>
                 <dt>Daily edition</dt><dd><a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a>, the morning's shows in one episode by 7 a.m. Eastern, anchored by Mira</dd>
@@ -75,7 +76,7 @@
         <h2>Audience and growth</h2>
         <p class="mk-sub">Measured, never estimated. Podcast downloads come from OP3, the open podcast analytics service; YouTube figures from YouTube Analytics; followers from each platform. A dash means a figure is not measured yet.</p>
         <div class="mk-headline"><b>{{ au.downloads_30d }}</b><span>podcast downloads in 30 days</span><b>+</b><b>{{ growth.youtube_views_window }}</b><span>YouTube views in {% if growth.youtube_window_days %}{{ growth.youtube_window_days }} days{% else %}the last 30 days{% endif %}</span></div>
-        <p class="mk-sub">Total audience across podcast apps and YouTube{% if growth.as_of %}, to {{ growth.as_of }}{% endif %}.</p>
+        <p class="mk-sub">Total audience across podcast apps and YouTube{% if growth.as_of %}, to {{ growth.as_of }}{% endif %}. {{ history.note }}</p>
 
         <div class="mk-two">
             <div class="mk-card mk-chart-card">
