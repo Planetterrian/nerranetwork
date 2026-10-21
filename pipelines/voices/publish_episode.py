@@ -12,6 +12,15 @@ per landmine #1/#2.
 
 Run from a checkout with commit rights (the workflow commits the RSS +
 summaries + regenerated pages the same way run-show.yml does).
+
+THE GUEST'S CUTS SHIP OR NOTHING DOES (Oct 21 2026). A guest marks the
+passages they want out on the review page (``editorial_packages.
+guest_redaction_windows``, on the room clock) and ``assemble_edit`` cuts them
+from the file it builds, recording a fingerprint of the windows it applied on
+``tracks.edit.windows_hash``. ``assert_windows_applied`` refuses to publish
+when the package carries windows the shipped file was not built against — a
+window marked after the edit, or an edit built before the review page could
+store windows at all. The remedy is the assemble workflow, never a flag.
 """
 
 from __future__ import annotations
@@ -114,6 +123,27 @@ def episode_audio(run: dict) -> str:
         "no assembled episode on this run — publishing would ship the raw "
         "room. Run the assemble workflow for this interview first."
     )
+
+
+def assert_windows_applied(pkg: dict, run: dict) -> None:
+    """Refuse to ship audio the guest's marked cuts were not applied to."""
+    from edit_transcript import normalise_windows, windows_hash
+    windows = normalise_windows((pkg or {}).get("guest_redaction_windows"))
+    if not windows:
+        return
+    edit = ((run.get("grok_session_log") or {}).get("tracks") or {}).get("edit") or {}
+    built_against = str(edit.get("windows_hash") or "")
+    wanted = windows_hash(windows)
+    if built_against == wanted:
+        return
+    why = (f"the guest marked {len(windows)} passage(s) to cut and the assembled "
+           f"file was built against {'none of them' if not built_against else 'a different set'}"
+           " — run the assemble workflow for this interview, then publish")
+    try:
+        notify_operator(f"Publish refused: {why}", critical=True)
+    except Exception:  # noqa: BLE001
+        logger.exception("could not notify the operator")
+    raise RuntimeError(f"refusing to publish: {why}")
 
 
 def _bullets(text: str) -> str:
@@ -275,8 +305,46 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     return path
 
 
+RETURN_AFTER_MONTHS = 3   # "would you come back": a date, not a sentiment
+
+
+def return_month(when: dt.date, months: int = RETURN_AFTER_MONTHS) -> str:
+    """``"January 2027"``: the month the guest is invited back for."""
+    m = when.month - 1 + months
+    year = when.year + m // 12
+    return dt.date(year, m % 12 + 1, 1).strftime("%B %Y")
+
+
+def clip_link(pkg: dict, show: VoiceShow, episode_num: int) -> tuple:
+    """``(url, title)`` of a 60-second moment the guest can share: the first
+    clip suggestion, as a deep link into the YouTube upload when the publish
+    recorded one, else into the episode's post with a ``#t=`` offset."""
+    clips = pkg.get("clip_suggestions") or []
+    clip = next((c for c in clips if isinstance(c, dict) and c.get("start") is not None), None)
+    if clip is None:
+        return "", ""
+    start = max(0, int(float(clip["start"])))
+    title = str(clip.get("title") or "").strip()
+    index = ROOT / show.audio_subdir / "youtube_videos.json"
+    try:
+        for v in (json.loads(index.read_text(encoding="utf-8")).get("videos") or []):
+            if isinstance(v, dict) and v.get("episode") == episode_num and v.get("video_id"):
+                return f"https://www.youtube.com/watch?v={v['video_id']}&t={start}s", title
+    except (OSError, ValueError):
+        pass
+    return f"{show.post_url(episode_num)}#t={start}", title
+
+
+def share_card_link(show: VoiceShow, episode_num: int) -> str:
+    try:
+        from engine.share_cards import episode_card_url
+        return episode_card_url(ROOT / show.audio_subdir, episode_num) or ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def published_email(show: VoiceShow, app: dict, pkg: dict,
-                    episode_num: int) -> tuple:
+                    episode_num: int, when: dt.date | None = None) -> tuple:
     """Subject and body of the note the guest gets when their episode is out.
 
     Sept 20 2026. John Capobianco's team asked twice where the episode would
@@ -322,11 +390,26 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
         parts.append("<p>And the reading you asked us to point people at:</p><ul>"
                      + "".join(f"<li>{_md_link_html(m)}</li>" for m in materials)
                      + "</ul>")
+    # Oct 21 2026: what a guest tells people about is the thing they can
+    # share in one tap. A sixty-second moment, the card, and a date.
+    clip_url, clip_title = clip_link(pkg, show, episode_num)
+    if clip_url:
+        parts.append("<p>A short moment to share, if you want one"
+                     + (f" — <em>{e(clip_title)}</em>" if clip_title else "")
+                     + f": {link(clip_url)}</p>")
+    card = share_card_link(show, episode_num)
+    if card:
+        parts.append(f"<p>The episode's share card, for a post of your own: {link(card)}</p>")
+    month = return_month(when or dt.date.today())
     parts += [
         "<p>If anything on the page is wrong, a link, a title, a spelling, "
         "reply to this and I'll have it fixed the same day. If you post about it, "
         "send me the link and I'll share it on. The network is "
         f"{link(show.base_url)} and @planetterrian on X if you want to tag it.</p>",
+        f"<p>And I would like you back. I have put {e(month)} in the calendar for a "
+        "second conversation, when there will be something to measure the first "
+        "one against; reply with a yes and I'll send the booking link nearer the "
+        "time.</p>",
         "<p>Thank you again for the conversation.</p>",
         mira_signature_html(show),
     ]
@@ -346,12 +429,21 @@ def _md_link_html(line: str) -> str:
 
 
 def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int) -> None:
-    """Send :func:`published_email`; a failure here never unpublishes anything."""
+    """Send :func:`published_email` once; a failure never unpublishes anything."""
+    if pkg.get("publish_package_sent_at"):
+        logger.info("publish-day note already sent %s", pkg["publish_package_sent_at"])
+        return
     subject, body = published_email(show, app, pkg, episode_num)
     to = str(app.get("email") or "").strip()
     cc = [str(app.get("publicist_email") or "").strip()]
     try:
         send_email(to, subject, body, cc_operator=True, cc=cc)
+        try:
+            sb_update("editorial_packages", f"id=eq.{pkg['id']}",
+                      {"publish_package_sent_at":
+                       dt.datetime.now(dt.timezone.utc).isoformat()})
+        except Exception:  # noqa: BLE001
+            logger.exception("publish_package_sent_at not stamped (non-fatal)")
     except Exception:  # noqa: BLE001 — the episode is out; the note can be resent
         logger.exception("published email to %s not sent", to)
         notify_operator(show.slack(
@@ -381,6 +473,7 @@ def publish_one(interview_id: str) -> int:
                     f"id=eq.{pkg['interview_run_id']}")[0]
     show = show_for(interview, app)
 
+    assert_windows_applied(pkg, run)
     audio_url = episode_audio(run)
 
     episode_num = _next_episode_number(show)

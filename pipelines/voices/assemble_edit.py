@@ -48,7 +48,6 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -60,6 +59,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import requests  # noqa: E402
 
+from edit_transcript import (  # noqa: E402
+    apply_windows, normalise_windows, transcript_of_the_edit, windows_hash,
+)
 from common import (  # noqa: E402
     OPERATOR_EMAIL, logger, package_review_token, r2_upload, sb_select,
     sb_update, send_email,
@@ -666,6 +668,15 @@ def assemble(slug: str) -> dict:
     cuts = spec.get("cuts") or []
     if not cuts:
         raise SystemExit("EDL has no cuts")
+    # Oct 21 2026: the guest's own cut windows (marked on the review page, on
+    # the room clock) come out of the file THIS step builds, which is the one
+    # that publishes. produce_episode applied them to a file nobody shipped.
+    package = _live_package(run_id, _interview_id(spec, run))
+    windows = normalise_windows((package or {}).get("guest_redaction_windows"))
+    room_offset = float(spec.get("room_offset_sec") or 0.0)
+    cuts, applied = apply_windows(cuts, windows, room_offset)
+    if windows:
+        logger.info("%d passage(s) the guest marked are cut from the edit", applied)
 
     cache: Dict[str, Path] = {}
     with tempfile.TemporaryDirectory() as tmp:
@@ -745,6 +756,7 @@ def assemble(slug: str) -> dict:
             pieces.append(_piece(cut, src, out))
             logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))
 
+        piece_durations = [_duration(piece) for piece in pieces]
         episode = work / "episode.mp3"
         inputs: List[str] = []
         labels: List[str] = []
@@ -769,6 +781,23 @@ def assemble(slug: str) -> dict:
     # same running order, everyone on one clock. The pipeline's own transcript
     # describes the unedited room, which is not what a guest is asked to
     # approve, so this replaces it on the editorial package when present.
+    # The transcript of the edit, re-stamped on the published file's clock
+    # from the measured pieces, is what the guest is asked to approve (Oct 21
+    # 2026): the room's transcript carried lines the edit removed.
+    edit_text = ""
+    try:
+        narration_texts = _narration_texts(spec.get("narration", ""))
+        edit_text = transcript_of_the_edit(
+            (package or {}).get("transcript_raw") or "", cuts, piece_durations,
+            room_offset, narration_texts)
+        if package and edit_text:
+            sb_update("editorial_packages", f"id=eq.{package['id']}",
+                      {"edit_transcript": edit_text})
+            logger.info("transcript of the edit (%d lines) written to package %s",
+                        edit_text.count("\n"), package["id"])
+    except Exception:  # noqa: BLE001 — the episode is the point
+        logger.exception("transcript of the edit not written (non-fatal)")
+
     transcript_path = EDL_DIR / f"{slug}.transcript.txt"
     if transcript_path.exists():
         text = transcript_path.read_text(encoding="utf-8")
@@ -797,7 +826,12 @@ def assemble(slug: str) -> dict:
     log = dict(run.get("grok_session_log") or {})
     tracks = dict(log.get("tracks") or {})
     tracks["preview"] = url
-    tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1)}
+    tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1),
+                      # publish_episode refuses to ship this file if the guest
+                      # has marked a window since it was built.
+                      "windows_applied": applied,
+                      "windows_hash": windows_hash(windows),
+                      "built_at": dt.datetime.now(dt.timezone.utc).isoformat()}
     log["tracks"] = tracks
     sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
     logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
@@ -823,6 +857,38 @@ def assemble(slug: str) -> dict:
         # The episode exists either way; losing the email must not lose it.
         logger.exception("could not announce the episode — it is at %s", url)
     return {"url": url, "duration_sec": seconds}
+
+
+def _live_package(run_id: str, interview_id: str) -> dict | None:
+    """The newest package that is still alive for this run (or interview)."""
+    try:
+        pkgs = (sb_select("editorial_packages",
+                          f"interview_run_id=eq.{run_id}&status=neq.killed"
+                          "&select=id,transcript_raw,guest_redaction_windows"
+                          "&order=created_at.desc")
+                or (sb_select("editorial_packages",
+                              f"interview_id=eq.{interview_id}&status=neq.killed"
+                              "&select=id,transcript_raw,guest_redaction_windows"
+                              "&order=created_at.desc") if interview_id else []))
+    except Exception:  # noqa: BLE001
+        logger.exception("could not read the editorial package (non-fatal)")
+        return None
+    return pkgs[0] if pkgs else None
+
+
+def _narration_texts(narration_slug: str) -> Dict[str, str]:
+    """``{segment id: text}`` of the narration this edit reads from."""
+    if not narration_slug:
+        return {}
+    try:
+        from narrate import _stored_spec
+        path = Path(__file__).parent / "narration" / f"{narration_slug}.json"
+        spec = (json.loads(path.read_text(encoding="utf-8")) if path.exists()
+                else _stored_spec(narration_slug, "narration")) or {}
+        return {str(seg.get("id")): str(seg.get("text") or "")
+                for seg in (spec.get("segments") or []) if seg.get("id")}
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def _improvements(show_slug: str, interview_id: str) -> str:
@@ -941,7 +1007,7 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
         send_email(
             OPERATOR_EMAIL,
             f"{show.short_label}: {guest} is cut and ready for your ear",
-            f"<p>Hi Patrick,</p>"
+            "<p>Hi Patrick,</p>"
             + _sync_warning(run)
             + _placement_notes(run)
             + f"<p>The {guest} episode is assembled — introduction, conversation and "

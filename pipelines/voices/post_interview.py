@@ -1420,6 +1420,7 @@ def main() -> int:
         if package.get("topical_show_fits"):
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"topical_show_fits": package["topical_show_fits"]})
+        __import__("guest_thanks").after_room(run, interview, app, package.get("transcript_cleaned") or transcript, pkg)  # Oct 21 2026: the thank-you within the hour (or a hello's agenda); never raises
 
     # Oct 5 2026 (Piper Martz): a closing session is not an episode of its
     # own. The cut step splices it onto the edit of the interview it finishes
