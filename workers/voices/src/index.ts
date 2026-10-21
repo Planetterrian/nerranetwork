@@ -758,8 +758,34 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
   // payload MERGES into grok_session_log and never nulls a per-leg URL
   // it does not carry.
   const existingRows = await sb(env, "GET",
-    `interview_runs?id=eq.${payload.run_id}&select=grok_session_log,status,disconnect_reason`);
+    `interview_runs?id=eq.${payload.run_id}&select=grok_session_log,status,disconnect_reason,session_kind`);
   const existingLog = existingRows?.[0]?.grok_session_log ?? {};
+  // Oct 21 2026: the room reports how the turn-taking went on every run.
+  // Kept inside grok_session_log (no new column); the rehearsal harness and
+  // the audio metrics read them from there.
+  const roomCounters = roomCountersOf(payload);
+  // A rehearsal (the harness's fixture guest in a real room) is stored and
+  // stopped there: no post-interview processing, no email, no Slack.
+  if (String(existingRows?.[0]?.session_kind ?? "") === "rehearsal") {
+    await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
+      status: payload.status === "failed" ? "failed" : "completed",
+      disconnect_reason: payload.disconnect_reason ?? payload.reason ?? null,
+      duration_sec: payload.duration_sec ?? null,
+      ...(payload.voximplant_mira_record_url ? { recording_mira_url: payload.voximplant_mira_record_url } : {}),
+      grok_session_log: {
+        ...existingLog,
+        ...(payload.grok_session_log ? { log: payload.grok_session_log } : {}),
+        ...(payload.voximplant_record_url ? { voximplant_record_url: payload.voximplant_record_url } : {}),
+        ...(payload.voximplant_mira_record_url ? { voximplant_mira_record_url: payload.voximplant_mira_record_url } : {}),
+        ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
+        ...(payload.speech_events !== undefined ? { speech_events: Number(payload.speech_events) || 0 } : {}),
+        call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
+        rehearsal: true,
+        ...roomCounters,
+      },
+    });
+    return json({ ok: true, rehearsal: true });
+  }
   // Sept 28 2026: the guest pressed "Have Mira call my phone". Their browser
   // room ends when they hang up, and its completion must not reopen the
   // studio (short call) or send a few minutes of silence to post-production
@@ -788,6 +814,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
       ...(payload.speech_events !== undefined ? { speech_events: Number(payload.speech_events) || 0 } : {}),
       call_mode: payload.call_mode ?? existingLog.call_mode ?? null,
+      ...roomCounters,
     },
     // Per-leg Voximplant recordings and the host timeline the room
     // reports. Columns from supabase/migrations/20260906_cohost_conference.sql;
@@ -939,6 +966,24 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
 
   await dispatch(env, "interview-complete", { run_id: payload.run_id });
   return json({ ok: true });
+}
+
+/** The turn-taking counters the room posts at the end of every run (Oct 21
+ *  2026): barge-ins, server-started turns, self-answers the completion check
+ *  blocked, whether the closing round completed and which of its questions
+ *  were asked. Numbers and booleans only; anything else is dropped. */
+export function roomCountersOf(payload: any): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of ["barge_ins", "server_turns", "self_answers_blocked"]) {
+    if (payload?.[k] !== undefined && Number.isFinite(Number(payload[k]))) out[k] = Number(payload[k]);
+  }
+  if (typeof payload?.closing_round_complete === "boolean") out.closing_round_complete = payload.closing_round_complete;
+  if (Array.isArray(payload?.closing_questions_asked)) {
+    out.closing_questions_asked = payload.closing_questions_asked.slice(0, 20).map((q: unknown) => String(q).slice(0, 200));
+  } else if (payload?.closing_questions_asked !== undefined && Number.isFinite(Number(payload.closing_questions_asked))) {
+    out.closing_questions_asked = Number(payload.closing_questions_asked);
+  }
+  return out;
 }
 
 /** Every address on a Cal.com booking, booker first.
@@ -3607,6 +3652,9 @@ async function handleLegEvent(req: Request, env: Env): Promise<Response> {
     `recording_guest_url,recording_host_url,grok_session_log`);
   const run = runs?.[0];
   if (!run) return json({ error: "run not found" }, 404);
+  // Oct 21 2026: the rehearsal harness's fixture guest joins as a guest leg
+  // with `fixture: true` on the event. Nothing here reads it; the leg is
+  // recorded like any guest's, so the audio metrics see the same tracks.
   if (role === "probe") {
     // Diagnostics: the synthetic participant's room-leg recording.
     if (typeof body?.record_url === "string" && body.record_url) {

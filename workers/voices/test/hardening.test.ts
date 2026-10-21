@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker, {
   CALCOM_SIGNATURE_HEADER, LIVE_INTERVIEW_STATUSES, SIGNATURE_HEADER,
   STUDIO_OPENS_BEFORE_TEXT, hmacHex, lessonDecisionAllowed, mergeWindows,
-  redactionWindows, reviewTranscriptHtml, signatureOk, surveyAnswers,
+  redactionWindows, reviewTranscriptHtml, roomCountersOf, signatureOk, surveyAnswers,
   transcriptLines, webhookVerdict,
 } from "../src/index";
 
@@ -499,5 +499,72 @@ describe("redaction windows", () => {
     expect(text).not.toContain("room line");
     expect(text).toContain("transcript of the edit a listener will hear");
     expect(text).toContain("markedWindows()");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rehearsal runs and the room's turn-taking counters (Oct 21 2026)
+// ---------------------------------------------------------------------------
+
+describe("rehearsal runs", () => {
+  const counters = { barge_ins: 2, server_turns: 31, self_answers_blocked: 1,
+                     closing_round_complete: true, closing_questions_asked: ["one bet", "a book"] };
+
+  it("a rehearsal run stores the webhook and the counters, dispatches nothing, emails nobody", async () => {
+    const { fn, calls } = fakeFetch((c) => {
+      if (c.method === "GET" && sbTable(c.url) === "interview_runs") {
+        return [{ grok_session_log: { call_mode: "webrtc" }, status: "in_progress", disconnect_reason: null, session_kind: "rehearsal" }];
+      }
+      return [];
+    });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post("/voices/interview-complete", {
+      run_id: RUN, status: "completed", duration_sec: 600, voximplant_mira_record_url: "https://r/mira.mp3",
+      voximplant_mix_record_url: "https://r/mix.mp3", grok_session_log: { x: 1 }, ...counters }), env());
+    expect(resp.status).toBe(200);
+    expect(await resp.json()).toEqual({ ok: true, rehearsal: true });
+    const patch = calls.find((c) => c.method === "PATCH" && sbTable(c.url) === "interview_runs");
+    expect(patch?.body.status).toBe("completed");
+    expect(patch?.body.duration_sec).toBe(600);
+    expect(patch?.body.recording_mira_url).toBe("https://r/mira.mp3");
+    expect(patch?.body.grok_session_log).toMatchObject({ rehearsal: true, voximplant_mix_record_url: "https://r/mix.mp3", log: { x: 1 }, ...counters });
+    expect(calls.some((c) => c.url.endsWith("/dispatches"))).toBe(false);
+    expect(calls.some((c) => c.url.startsWith("https://api.resend.com/"))).toBe(false);
+  });
+
+  it("a real run keeps the counters in grok_session_log and still dispatches", async () => {
+    const { fn, calls } = fakeFetch((c) => {
+      if (c.method === "GET" && sbTable(c.url) === "interview_runs") {
+        return [{ grok_session_log: {}, status: "in_progress", disconnect_reason: null, session_kind: "interview" }];
+      }
+      return [];
+    });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post("/voices/interview-complete",
+      { run_id: RUN, status: "completed", duration_sec: 2400, ...counters, unexpected_field: "ignored" }), env());
+    expect(resp.status).toBe(200);
+    const patch = calls.find((c) => c.method === "PATCH" && sbTable(c.url) === "interview_runs");
+    expect(patch?.body.grok_session_log).toMatchObject(counters);
+    expect(calls.some((c) => c.url.endsWith("/dispatches") && c.body.event_type === "interview-complete")).toBe(true);
+  });
+
+  it("drops counters that are not numbers or booleans", () => {
+    expect(roomCountersOf({ barge_ins: "3", server_turns: "many", closing_round_complete: "yes", closing_questions_asked: 4 }))
+      .toEqual({ barge_ins: 3, closing_questions_asked: 4 });
+    expect(roomCountersOf({})).toEqual({});
+  });
+
+  it("a fixture guest's leg event is an ordinary guest leg", async () => {
+    const { fn, calls } = fakeFetch((c) => {
+      if (c.method === "GET" && sbTable(c.url) === "interview_runs") {
+        return [{ id: RUN, guest_joined_at: null, host_joined_at: null, host_left_at: null, grok_session_log: {} }];
+      }
+      return [];
+    });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post("/voices/leg-event", { run_id: RUN, role: "guest", event: "joined", fixture: true }), env());
+    expect(resp.status).toBe(200);
+    expect(((await resp.json()) as any).patched).toEqual(["guest_joined_at"]);
+    expect(calls.some((c) => c.method === "PATCH" && c.body.guest_joined_at)).toBe(true);
   });
 });

@@ -190,3 +190,13 @@ def test_worker_has_a_vitest_suite():
     assert '"test": "vitest run"' in pkg
     assert (ROOT / "workers" / "voices" / "test" / "hardening.test.ts").exists()
     assert (ROOT / "workers" / "voices" / "vitest.config.ts").exists()
+
+
+def test_rehearsal_runs_are_stored_and_never_processed():
+    body = _fn("handleInterviewComplete")
+    assert 'session_kind ?? "") === "rehearsal"' in body
+    assert "rehearsal: true" in body
+    assert "roomCountersOf(payload)" in body
+    counters = _fn("roomCountersOf")
+    for k in ("barge_ins", "server_turns", "self_answers_blocked", "closing_round_complete", "closing_questions_asked"):
+        assert k in counters
