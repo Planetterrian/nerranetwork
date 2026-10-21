@@ -84,7 +84,18 @@ def _rest(method: str, table: str, *, params=None, body=None,
 
 
 def upsert(table: str, rows: List[dict], on_conflict: str) -> int:
-    """Insert-or-merge *rows* (only the columns present are written)."""
+    """Insert-or-merge *rows* (only the columns present are written).
+
+    Rows repeating a conflict key are collapsed first, the last one winning:
+    Postgres refuses an upsert that touches one row twice in one statement
+    (21000), and one bad pair would fail the whole batch (the first full fill,
+    Oct 21 2026, lost every correction behind a claims batch).
+    """
+    keys = [k.strip() for k in on_conflict.split(",")]
+    unique: Dict[tuple, dict] = {}
+    for r in rows:
+        unique[tuple(r.get(k) for k in keys)] = r
+    rows = list(unique.values())
     n = 0
     for i in range(0, len(rows), BATCH):
         chunk = rows[i:i + BATCH]
@@ -232,11 +243,18 @@ def claim_rows(ep_rows: List[dict], show_dirs: Dict[str, Path]) -> List[dict]:
         except (OSError, ValueError):
             continue
         claims = data.get("claims") if isinstance(data, dict) else data
+        seen: set = set()
         for n, c in enumerate(claims or []):
             if not isinstance(c, dict):
                 continue
+            # A ledger can carry one id twice (a repair or coverage-floor entry
+            # beside the original); both claims are kept, under distinct keys.
+            cid = str(c.get("id") or n)
+            if cid in seen:
+                cid = f"{cid}#{n}"
+            seen.add(cid)
             out.append({
-                "claim_key": f"{ep['episode_key']}:{c.get('id') or n}",
+                "claim_key": f"{ep['episode_key']}:{cid}",
                 "episode_key": ep["episode_key"], "show_slug": ep["show_slug"],
                 "episode_num": ep["episode_num"], "date": ep["date"],
                 "claim": c.get("claim") or "", "source_url": c.get("source_url") or "",
