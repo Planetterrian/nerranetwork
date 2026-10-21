@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 20 Oct 2026 10:12:12 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 21 Oct 2026 10:15:26 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,179 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 210: RL training is driving models to abandon English in chain-of-thought traces, revealing…</title>
+      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
+&lt;b&gt;RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Andrej Karpathy highlighted that reinforcement learning now produces coherent non-English reasoning traces. Dario Amodei detailed nine commercially costly safety steps Anthropic has taken in the past year while defending its frontier strategy. Simon Willison released a reusable AI proofreading prompt and added real-time multiplayer to his Battle Drones demo. Multiple new arXiv papers introduce calibrated unlearning, phonetic-expert adaptation for accented ASR, and latent multi-hypothesis memory for long-horizon agents.
+
+Top Story
+Andrej Karpathy observed that current RL post-training is working because models are producing coherent chain-of-thought traces that no longer rely on English. The shift indicates the models have developed internal representations that are more efficient for the task than natural language. Builders using reasoning traces for verification or auditing will need new inspection methods once the intermediate steps stop being human-readable. The observation aligns with earlier reports of models inventing private token sequences during long-horizon tasks. Watch for labs to publish tools that surface or translate these non-English traces. Source: &lt;a href="https://x.com/karpathy/status/2112763753754485205"&gt;x.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;H2DF: Calibrated Target Bands for Controllable Language-Model Unlearning — arXiv NLP&lt;/b&gt;
+H2DF replaces unbounded gradient ascent with a data-dependent target band that applies pressure only below a lower threshold and reverses it once the band is reached. The method needs only one forget-batch pass per step plus sparse retain replay every tenth step. On TOFU it matches GradDiff forget and retain NLL while cutting variability; on MUSE-News it improves retention over GA and NPO. Source: &lt;a href="https://arxiv.org/abs/2610.26864"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Mixture of Phonetic Experts Based Low-Rank Adaptation of Conformer Models for Accented English Speech Recognition — arXiv NLP&lt;/b&gt;
+MoPE-LoRA places six low-rank experts aligned to manner-of-articulation classes and routes at the frame level with a hybrid phoneme-plus-acoustic gate. The shared expert set removes the need for accent-specific modules and supports zero-shot transfer to held-out accents. On L2-ARCTIC it delivers a 12.3 % relative WER improvement over single LoRA in the zero-shot setting. Source: &lt;a href="https://arxiv.org/abs/2610.26888"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Do We Need the Largest LLMs for Every Clinical Decision? — arXiv NLP&lt;/b&gt;
+CERTA supplies a statistical certificate that decides when an 8-bit or 4-bit quantized model can safely replace its BF16 reference for a given clinical verification decision. Across eleven models the 8-bit path covered 99.8–100 % of decisions; the 4-bit frontier cut amortized cost to roughly 26 % of the BF16 baseline while staying under 48 GB. Source: &lt;a href="https://arxiv.org/abs/2610.26937"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Bottleneck Is Retrieval, Not Reading: Diagnosing Evidence-Based Generation with RAG for Long Context Question Answering — arXiv NLP&lt;/b&gt;
+EBG requires line-level citations and scores both correctness and grounding. On MultiHop-RAG and QASPER-MP it shows that similarity retrieval reliably surfaces any relevant chunk but frequently misses the full set needed for multi-fact questions, while chunking erases document-level metadata required for identity resolution. Source: &lt;a href="https://arxiv.org/abs/2610.26951"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Culture Within: Towards Mechanistic Understanding of Cultural Reasoning in LLMs — arXiv NLP&lt;/b&gt;
+CultureLens varies country, value, true-norm and contradictory-norm evidence across 9 261 scenarios. Stating a contradictory norm drops aligned answers by 32–47 points even when the model knows the correct country norm; blocking the contradictory norm inside the model restores the correct answer in most cases. Supervised fine-tuning on contradictory-norm examples raises aligned performance to 85–93 % on unseen countries. Source: &lt;a href="https://arxiv.org/abs/2610.27202"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Learned Readout Tokens for Extracting Large Language Model Confidence — arXiv NLP&lt;/b&gt;
+A learned readout token is inserted and its hidden state is used to train a confidence probe. The approach outperforms probes that read from existing vocabulary tokens on multiple datasets and model families; extending it to multiple learned tokens yields further gains. The change is a drop-in replacement for any existing probe. Source: &lt;a href="https://arxiv.org/abs/2610.27566"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;LAMB: Latent Multi-Hypothesis Beliefs for Long-Horizon Large Language Agents — arXiv NLP&lt;/b&gt;
+LAMB encodes interaction evidence in a shared Common state and competing hypotheses in weighted Delta components, updating them recurrently from action-outcome predictions without emitting text. On ALFWorld it raises SR@30 by 6 points and cuts redundant actions by 17.7 points; on ScienceWorld success rises 22 points. Source: &lt;a href="https://arxiv.org/abs/2610.26955"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;LoWAgent: A Low-Resource Multilingual Benchmark for Web Agents — arXiv NLP&lt;/b&gt;
+LoWAgent supplies six fully localized websites across English, Hindi, Bengali, Urdu and Amharic, yielding 3 000 task instances. Both closed and open-source agents drop sharply on the low-resource languages, with open-source models showing the largest degradation; post-training on a small subset of traces recovers substantial performance. Source: &lt;a href="https://arxiv.org/abs/2610.27205"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Which Agent's Skill Should Change? Group-Relative Credit Assignment for Evolving Multi-Agent Teams — arXiv NLP&lt;/b&gt;
+GRSE runs each question multiple times under the same skill libraries and contrasts executions to assign credit to specific agent–skill pairs. On HotpotQA it outperforms MASkills on multi-hop questions; on corrupted libraries it correctly signs every planted harmful skill and recovers clean-library performance. Source: &lt;a href="https://arxiv.org/abs/2610.27227"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;MMedAgent-Plus: Scaling Multimodal Medical Agents across Modalities, Tasks and Workflows — arXiv NLP&lt;/b&gt;
+MMedAgent-Plus pairs a vision-language planner with 18 specialist models spanning 12 tasks and 8 modalities. The planner achieves 91 % tool-call accuracy in single-tool multi-round settings and 80.7 % in multi-tool single-round settings; end-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists. Source: &lt;a href="https://arxiv.org/abs/2610.27233"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;AI proofreading prompt shared — Simon Willison&lt;/b&gt;
+Simon Willison published the exact prompt he uses for AI proofreading and made it available in his agentic-engineering-patterns guide. Source: &lt;a href="https://simonwillison.net/guides/agentic-engineering-patterns/prompts/#proofreader"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;Online multiplayer added to Battle Drones after headache bug — Simon Willison&lt;/b&gt;
+After an audio-only multiplayer mode caused motion sickness, Simon Willison added a WebSocket relay for real online multiplayer in his Battle Drones demo. Source: &lt;a href="https://simonwillison.net/2026/Oct/20/battledrones/#update-online-multiplayer-support"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;Releasing 211 scorpion toxin binder designs and lab data — &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt;
+Anthropic released all 211 tested binder designs plus the corresponding lab data on Hugging Face as a public resource for scientists. Source: &lt;a href="https://huggingface.co/datasets/Anthropic/scorpion-toxin-binder-design"&gt;huggingface.co&lt;/a&gt;
+
+&lt;b&gt;FairStress: A deeper evaluation of fairness in LLM decision-making — Hugging Face Blog&lt;/b&gt;
+AllenAI published FairStress, a benchmark that probes fairness across a wider set of decision scenarios than prior suites. Source: &lt;a href="https://huggingface.co/blog/allenai/fairstress"&gt;huggingface.co&lt;/a&gt;
+
+&lt;b&gt;Franchisee reconciles cash in 94% less time with ChatGPT Work — OpenAI Blog&lt;/b&gt;
+An independent Schlotzsky’s and Cinnabon franchisee used ChatGPT Work to cut menu-repricing time by 95 % and surface a workflow that could free roughly $100 K in cash flow. Source: &lt;a href="https://openai.com/index/ted-taylor-restaurant"&gt;openai.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Dario Amodei defends Anthropic's "race to the top" strategy and lists safety actions — &lt;a href="https://x.com/DarioAmodei"&gt;@DarioAmodei&lt;/a&gt;:&lt;/b&gt; Dario Amodei published a detailed reply listing nine commercially costly safety actions taken by Anthropic in the past year while defending the company’s frontier strategy. Source: &lt;a href="https://x.com/DarioAmodei/status/2112732230124818891"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Sam Altman welcomes Aleksander Madry back to OpenAI for safety work — Sam Altman:&lt;/b&gt; Sam Altman announced that Aleksander Madry has rejoined OpenAI to lead safety and security work on superintelligence. Source: &lt;a href="https://x.com/sama/status/2112652656602923366"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI Acquires Orchestra Bio for Drug Development — &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;:&lt;/b&gt; OpenAI acquired Orchestra Bio to extend its Rosalind life-sciences tooling into full drug-development coordination. Source: &lt;a href="https://x.com/OpenAI/status/2112607347688583586"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;ALTK-Evolve: How learned memory tops the τ²-bench leaderboard on customer service tasks without a frontier model — Hugging Face Blog:&lt;/b&gt; IBM Research released ALTK-Evolve, which uses learned memory to reach the top of the τ²-bench customer-service leaderboard without requiring a frontier model. Source: &lt;a href="https://huggingface.co/blog/ibm-research/altk-evolve-bc"&gt;huggingface.co&lt;/a&gt;
+
+Under the Hood: Implicit Budgeting Under Task Composition
+When several tasks share a single prompt, models allocate fewer tokens to each task than they would in isolation, even when the total context remains comfortably inside the window. The effect appears because the model maintains an implicit per-task compute budget that shrinks under competition; tasks whose isolated solutions already require long traces suffer the largest accuracy drop. The budgeting is visible in token counts per sub-task and in the sudden rise of errors once any single task’s trace length exceeds a model-specific threshold. Adding explicit per-task length instructions or forcing intermediate verification steps restores most of the lost performance, but at the cost of extra tokens overall. The practical takeaway is to measure per-task token usage on representative multi-task prompts before deployment; if any task routinely exceeds roughly 60 % of its isolated length, split the prompt or add verification rather than relying on the model to self-regulate.
+
+Things to Try This Week
+• Paste Simon Willison’s proofreading prompt into your editor and run it on the next technical document you write; it catches subtle phrasing issues that generic prompts miss.
+• Test H2DF-style target-band unlearning on a small TOFU-style dataset if you need controllable forgetting without the overshoot common in plain gradient ascent.
+• Run MoPE-LoRA on an accented English ASR fine-tune; the six phonetic experts give measurable gains on held-out accents without maintaining separate modules.
+• Try the learned-readout-token confidence probe on your current generation pipeline; it is a one-line insertion that improves AUROC on both in-domain and out-of-domain checks.
+• Evaluate LAMB-style latent multi-hypothesis memory on any long-horizon agent task where competing explanations must be retained without bloating the context.
+
+On the Horizon
+• OpenAI is expected to expand the Rosalind life-sciences tooling now that Orchestra Bio has been acquired.
+• Anthropic plans to release further details on its public-benefit fund and pacing strategy in the coming weeks.
+• More labs are likely to publish non-English chain-of-thought inspection tools following Karpathy’s observation.
+• Additional low-resource web-agent benchmarks and adaptation recipes are anticipated after the LoWAgent release.</description>
+      <guid isPermaLink="false">models-agents-video-ep210-20261021</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep210_20261021.mp4" length="250202935" type="video/mp4" />
+      <pubDate>Wed, 21 Oct 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep210_20261021.jpg" />
+      <itunes:duration>10:22</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>**# Models &amp; Agents**
+&gt; **RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language.**
+
+**What You Need to Know:** Andrej Karpathy highlighted that reinforcement learning now produces coherent non-English reasoning traces. Dario Amodei detailed nine commercially costly safety steps Anthropic has taken in the past year while defending its frontier strategy. Simon Willison released a reusable AI proofreading prompt and added real-time multiplayer to his Battle Drones demo. Multiple new arXiv papers introduce calibrated unlearning, phonetic-expert adaptation for accented ASR, and latent multi-hypothesis memory for long-horizon agents.
+---
+### Top Story
+Andrej Karpathy observed that current RL post-training is working because models are producing coherent chain-of-thought traces that no longer rely on English. The shift indicates the models have developed internal representations that are more efficient for the task than natural language. Builders using reasoning traces for verification or auditing will need new inspection methods once the intermediate steps stop being human-readable. The observation aligns with earlier reports of models inventing private token sequences during long-horizon tasks. Watch for labs to publish tools that surface or translate these non-English traces. Source: [x.com](https://x.com/karpathy/status/2112763753754485205)
+---
+### Model Updates
+**H2DF: Calibrated Target Bands for Controllable Language-Model Unlearning — arXiv NLP**
+H2DF replaces unbounded gradient ascent with a data-dependent target band that applies pressure only below a lower threshold and reverses it once the band is reached. The method needs only one forget-batch pass per step plus sparse retain replay every tenth step. On TOFU it matches GradDiff forget and retain NLL while cutting variability; on MUSE-News it improves retention over GA and NPO. Source: [arxiv.org](https://arxiv.org/abs/2610.26864)
+
+**Mixture of Phonetic Experts Based Low-Rank Adaptation of Conformer Models for Accented English Speech Recognition — arXiv NLP**
+MoPE-LoRA places six low-rank experts aligned to manner-of-articulation classes and routes at the frame level with a hybrid phoneme-plus-acoustic gate. The shared expert set removes the need for accent-specific modules and supports zero-shot transfer to held-out accents. On L2-ARCTIC it delivers a 12.3 % relative WER improvement over single LoRA in the zero-shot setting. Source: [arxiv.org](https://arxiv.org/abs/2610.26888)
+
+**Do We Need the Largest LLMs for Every Clinical Decision? — arXiv NLP**
+CERTA supplies a statistical certificate that decides when an 8-bit or 4-bit quantized model can safely replace its BF16 reference for a given clinical verification decision. Across eleven models the 8-bit path covered 99.8–100 % of decisions; the 4-bit frontier cut amortized cost to roughly 26 % of the BF16 baseline while staying under 48 GB. Source: [arxiv.org](https://arxiv.org/abs/2610.26937)
+
+**The Bottleneck Is Retrieval, Not Reading: Diagnosing Evidence-Based Generation with RAG for Long Context Question Answering — arXiv NLP**
+EBG requires line-level citations and scores both correctness and grounding. On MultiHop-RAG and QASPER-MP it shows that similarity retrieval reliably surfaces any relevant chunk but frequently misses the full set needed for multi-fact questions, while chunking erases document-level metadata required for identity resolution. Source: [arxiv.org](https://arxiv.org/abs/2610.26951)
+
+**The Culture Within: Towards Mechanistic Understanding of Cultural Reasoning in LLMs — arXiv NLP**
+CultureLens varies country, value, true-norm and contradictory-norm evidence across 9 261 scenarios. Stating a contradictory norm drops aligned answers by 32–47 points even when the model knows the correct country norm; blocking the contradictory norm inside the model restores the correct answer in most cases. Supervised fine-tuning on contradictory-norm examples raises aligned performance to 85–93 % on unseen countries. Source: [arxiv.org](https://arxiv.org/abs/2610.27202)
+
+**Learned Readout Tokens for Extracting Large Language Model Confidence — arXiv NLP**
+A learned readout token is inserted and its hidden state is used to train a confidence probe. The approach outperforms probes that read from existing vocabulary tokens on multiple datasets and model families; extending it to multiple learned tokens yields further gains. The change is a drop-in replacement for any existing probe. Source: [arxiv.org](https://arxiv.org/abs/2610.27566)
+---
+### Agent &amp; Tool Developments
+**LAMB: Latent Multi-Hypothesis Beliefs for Long-Horizon Large Language Agents — arXiv NLP**
+LAMB encodes interaction evidence in a shared Common state and competing hypotheses in weighted Delta components, updating them recurrently from action-outcome predictions without emitting text. On ALFWorld it raises SR@30 by 6 points and cuts redundant actions by 17.7 points; on ScienceWorld success rises 22 points. Source: [arxiv.org](https://arxiv.org/abs/2610.26955)
+
+**LoWAgent: A Low-Resource Multilingual Benchmark for Web Agents — arXiv NLP**
+LoWAgent supplies six fully localized websites across English, Hindi, Bengali, Urdu and Amharic, yielding 3 000 task instances. Both closed and open-source agents drop sharply on the low-resource languages, with open-source models showing the largest degradation; post-training on a small subset of traces recovers substantial performance. Source: [arxiv.org](https://arxiv.org/abs/2610.27205)
+
+**Which Agent's Skill Should Change? Group-Relative Credit Assignment for Evolving Multi-Agent Teams — arXiv NLP**
+GRSE runs each question multiple times under the same skill libraries and contrasts executions to assign credit to specific agent–skill pairs. On HotpotQA it outperforms MASkills on multi-hop questions; on corrupted libraries it correctly signs every planted harmful skill and recovers clean-library performance. Source: [arxiv.org](https://arxiv.org/abs/2610.27227)
+
+**MMedAgent-Plus: Scaling Multimodal Medical Agents across Modalities, Tasks and Workflows — arXiv NLP**
+MMedAgent-Plus pairs a vision-language planner with 18 specialist models spanning 12 tasks and 8 modalities. The planner achieves 91 % tool-call accuracy in single-tool multi-round settings and 80.7 % in multi-tool single-round settings; end-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists. Source: [arxiv.org](https://arxiv.org/abs/2610.27233)
+---
+### Practical &amp; Community
+**AI proofreading prompt shared — Simon Willison**
+Simon Willison published the exact prompt he uses for AI proofreading and made it available in his agentic-engineering-patterns guide. Source: [simonwillison.net](https://simonwillison.net/guides/agentic-engineering-patterns/prompts/#proofreader)
+
+**Online multiplayer added to Battle Drones after headache bug — Simon Willison**
+After an audio-only multiplayer mode caused motion sickness, Simon Willison added a WebSocket relay for real online multiplayer in his Battle Drones demo. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/20/battledrones/#update-online-multiplayer-support)
+
+**Releasing 211 scorpion toxin binder designs and lab data — [@AnthropicAI](https://x.com/AnthropicAI)**
+Anthropic released all 211 tested binder designs plus the corresponding lab data on Hugging Face as a public resource for scientists. Source: [huggingface.co](https://huggingface.co/datasets/Anthropic/scorpion-toxin-binder-design)
+
+**FairStress: A deeper evaluation of fairness in LLM decision-making — Hugging Face Blog**
+AllenAI published FairStress, a benchmark that probes fairness across a wider set of decision scenarios than prior suites. Source: [huggingface.co](https://huggingface.co/blog/allenai/fairstress)
+
+**Franchisee reconciles cash in 94% less time with ChatGPT Work — OpenAI Blog**
+An independent Schlotzsky’s and Cinnabon franchisee used ChatGPT Work to cut menu-repricing time by 95 % and surface a workflow that could free roughly $100 K in cash flow. Source: [openai.com](https://openai.com/index/ted-taylor-restaurant)
+---
+### Also Today
+**Dario Amodei defends Anthropic's "race to the top" strategy and lists safety actions — [@DarioAmodei](https://x.com/DarioAmodei):** Dario Amodei published a detailed reply listing nine commercially costly safety actions taken by Anthropic in the past year while defending the company’s frontier strategy. Source: [x.com](https://x.com/DarioAmodei/status/2112732230124818891)
+
+**Sam Altman welcomes Aleksander Madry back to OpenAI for safety work — Sam Altman:** Sam Altman announced that Aleksander Madry has rejoined OpenAI to lead safety and security work on superintelligence. Source: [x.com](https://x.com/sama/status/2112652656602923366)
+
+**OpenAI Acquires Orchestra Bio for Drug Development — [@OpenAI](https://x.com/OpenAI):** OpenAI acquired Orchestra Bio to extend its Rosalind life-sciences tooling into full drug-development coordination. Source: [x.com](https://x.com/OpenAI/status/2112607347688583586)
+
+**ALTK-Evolve: How learned memory tops the τ²-bench leaderboard on customer service tasks without a frontier model — Hugging Face Blog:** IBM Research released ALTK-Evolve, which uses learned memory to reach the top of the τ²-bench customer-service leaderboard without requiring a frontier model. Source: [huggingface.co](https://huggingface.co/blog/ibm-research/altk-evolve-bc)
+---
+### Under the Hood: Implicit Budgeting Under Task Composition
+When several tasks share a single prompt, models allocate fewer tokens to each task than they would in isolation, even when the total context remains comfortably inside the window. The effect appears because the model maintains an implicit per-task compute budget that shrinks under competition; tasks whose isolated solutions already require long traces suffer the largest accuracy drop. The budgeting is visible in token counts per sub-task and in the sudden rise of errors once any single task’s trace length exceeds a model-specific threshold. Adding explicit per-task length instructions or forcing intermediate verification steps restores most of the lost performance, but at the cost of extra tokens overall. The practical takeaway is to measure per-task token usage on representative multi-task prompts before deployment; if any task routinely exceeds roughly 60 % of its isolated length, split the prompt or add verification rather than relying on the model to self-regulate.
+---
+### Things to Try This Week
+- Paste Simon Willison’s proofreading prompt into your editor and run it on the next technical document you write; it catches subtle phrasing issues that generic prompts miss.
+- Test H2DF-style target-band unlearning on a small TOFU-style dataset if you need controllable forgetting without the overshoot common in plain gradient ascent.
+- Run MoPE-LoRA on an accented English ASR fine-tune; the six phonetic experts give measurable gains on held-out accents without maintaining separate modules.
+- Try the learned-readout-token confidence probe on your current generation pipeline; it is a one-line insertion that improves AUROC on both in-domain and out-of-domain checks.
+- Evaluate LAMB-style latent multi-hypothesis memory on any long-horizon agent task where competing explanations must be retained without bloating the context.
+---
+### On the Horizon
+- OpenAI is expected to expand the Rosalind life-sciences tooling now that Orchestra Bio has been acquired.
+- Anthropic plans to release further details on its public-benefit fund and pacing strategy in the coming weeks.
+- More labs are likely to publish non-English chain-of-thought inspection tools following Karpathy’s observation.
+- Additional low-resource web-agent benchmarks and adaptation recipes are anticipated after the LoWAgent release.
+</itunes:summary>
+      <itunes:episode>210</itunes:episode>
+      <itunes:title>Ep 210: RL training is driving models to abandon English in chain-of-thought traces, revealing…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep210_20261021_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep210.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 209: Devin now commits 89% of Cognition’s own code while the company hits a $1bn annualised…</title>
       <description>Models &amp; Agents
@@ -3368,140 +3541,17 @@ Context poisoning occurs when irrelevant or confusable tokens raise the maximum 
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep181_20260922_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep181.json" type="application/json+chapters" /></item>
     <item>
-      <title>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Stealien, a Korea-led team, won the APEX 2026 competition with an autonomous AI agent that outperformed human teams. Several new arXiv papers detail practical advances in small-model uncertainty handling, clinical knowledge graphs, and multilingual benchmarks. US and China officials discussed exchanging AI safety alerts ahead of a summit. Builders should watch how semantic-entropy routing and schema-guided evaluation move from research into deployable tools this week.
-
-Top Story
-Stealien AI agent tops APEX 2026 as Korea-led team outperforms human rivals. The agent secured first place in the competition by completing tasks that human teams could not match. The win highlights rapid progress in autonomous agent reliability on multi-step professional workflows. Teams working on agent orchestration can now benchmark against a documented Korea-led system that beat human baselines. Watch for follow-up technical reports on the agent's architecture and failure modes. Source: &lt;a href="https://biz.chosun.com/en/en-it/2026/09/21/SIPOPA64YFEZLHMYTGTEUGJQQI/"&gt;biz.chosun.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Do small language models know what they don't know?: arXiv NLP&lt;/b&gt;
-Token-level entropy proved near zero in 91 percent of dataset-model combinations for models under 3 billion parameters, making it unusable for confidence signals. Semantic entropy, computed by sampling multiple answers, clustering by meaning, and measuring distributional uncertainty, restored a usable signal. Routing uncertain queries to a larger expert model via semantic entropy delivered accuracy gains up to 50 percentage points, with cross-family routing averaging 22 percent improvement. The study evaluated seven distinct approaches across 7 model pairs and 5 standard NLU benchmarks. Token-level entropy early stopping and semantic entropy estimation were among the methods tested on consumer hardware. Source: &lt;a href="https://arxiv.org/abs/2609.20824"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;From Discharge Notes to Patient Understanding: Persona-Grounded, Open-Ended Simulation of LLMs as Discharge Educators: arXiv NLP&lt;/b&gt;
-DischargeBench introduces 477 persona-grounded cases across 24 ICD chapters with axes for personality, education level, health literacy, and recall. An Education Monitor Agent maintains patient realism during multi-turn sessions while an LLM-as-a-Judge scores Conversation Quality, Topic Checklist, Comprehension, and Factual Consistency. Aggregate scores masked clinically relevant variation across chapters and personas, exposing coverage failures on difficult cases. The benchmark uses MIMIC-IV-Ext-DischargeBench and aligns the judge against physician annotations. Source: &lt;a href="https://arxiv.org/abs/2609.20827"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Beyond WER: Entity and Disfluency Recall in Accented Conversational ASR: arXiv NLP&lt;/b&gt;
-A three-stage pipeline using SQL curation, regional LoRA adapters on Qwen2.5-Omni-3B, and a six-category LLM judge taxonomy raised entity recall from 53-55 percent to 80-85 percent and filler recall from under 5 percent to 76-86 percent while holding WER at 6-10 percent. Curation alone contributed 2.8 to 4.2 percentage points of the entity-recall gain. The system outperformed Whisper and a commercial ASR on entity recall while matching a zero-shot 30B model at one-tenth the size. The pipeline was tested on 6k utterances from speakers in India, Indonesia, and Latin America. Source: &lt;a href="https://arxiv.org/abs/2609.20828"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SAGE: Schema-Guided LLMs for Grant Review: arXiv NLP&lt;/b&gt;
-SAGE translates grant rubrics into structured checks and links judgments to evidence in application packages. On 35 nonprofit applications it reached kappa of 0.58 after expert inspection, outperforming a one-prompt-per-criterion baseline at kappa 0.33. A claim-level audit identified confirmed, disputed, and unaddressed parts of the draft. The system was evaluated in two stages against 105 original competition reviews and produced 202 assessments in the assisted round. Source: &lt;a href="https://arxiv.org/abs/2609.20829"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Reviser: Revision-Capable Text Generation via Autoregressive Cursor Actions: arXiv NLP&lt;/b&gt;
-Reviser predicts single action tokens—INSERT, MOVE, or STOP—on a mutable canvas, enabling non-monotonic generation. On a continuation benchmark it was strongly preferred to SEDD and MDLM in arena evaluations while using substantially less inference compute than multi-pass refinement baselines at both 100M and 300M scales. The model performs frequent backward moves and mid-canvas insertions rather than end-append decoding. Source: &lt;a href="https://arxiv.org/abs/2609.20830"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Catena Trust Bank Secures Preliminary OCC Approval for AI-Agent Financial Infrastructure: forkast.news&lt;/b&gt;
-Catena Trust Bank received preliminary approval from the Office of the Comptroller of the Currency to build AI-agent financial infrastructure. The approval covers agent-driven operations in banking workflows. Regulated financial institutions now have a documented path for deploying autonomous agents under federal oversight. Source: &lt;a href="https://forkast.news/catena-trust-bank-secures-preliminary-occ-approval-for-ai-agent-financial-infrastructure/"&gt;forkast.news&lt;/a&gt;
-
-&lt;b&gt;Autonomous AI Agents Cause Widespread Digital Disruptions Across Platforms: SuaraGarut.ID&lt;/b&gt;
-Autonomous agents triggered disruptions across multiple online platforms through unintended actions. The incidents highlight reliability gaps when agents operate without sufficient sandboxing. Platform operators are examining containment strategies for long-running agent sessions. Source: &lt;a href="https://suaragarut.id/en/ai-agents-cause-digital-disruptions"&gt;suaragarut.id&lt;/a&gt;
-
-&lt;b&gt;US and China discuss AI safety plan ahead of Trump-Xi summit: BBC&lt;/b&gt;
-US and Chinese officials discussed a framework for exchanging AI safety alerts before the upcoming summit. The proposal includes mutual notification of safety incidents and evaluation findings. The talks mark a concrete step toward bilateral safety coordination. Source: &lt;a href="https://www.bbc.com/news/articles/c8vgyzn2d31yo"&gt;bbc.com&lt;/a&gt;
-
-&lt;b&gt;U.S. proposes exchanging AI safety alerts with China, Bessent says: NBC News&lt;/b&gt;
-Treasury Secretary Bessent stated the US proposed direct exchange of AI safety alerts with China. The mechanism would allow rapid sharing of identified risks and mitigation approaches. Implementation details remain under discussion. Source: &lt;a href="https://www.nbcnews.com/world/asia/us-proposes-exchanging-ai-safety-alerts-china-bessent-says-rcna598923"&gt;nbcnews.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;TatBLiMP: A Benchmark of Linguistic Minimal Pairs for Tatar: arXiv NLP&lt;/b&gt;
-TatBLiMP provides 1248 sentence pairs covering 16 morphosyntactic phenomena for the Tatar language, the first such grammaticality benchmark for the language. A 478M from-scratch model and a 125M monolingual model reached near 0.97 accuracy, while frontier 30-120B models scored 0.80-0.92. The benchmark runs on base models and mid-training checkpoints without requiring generation or parsing. It adapts TurBLiMP operations and adds one Tatar-specific phenomenon on bare-noun number after numerals. Source: &lt;a href="https://arxiv.org/abs/2609.20832"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Transsion's Speaker-Attributed Multilingual ASR System for the MLC-SLM 2026 Challenge: arXiv NLP&lt;/b&gt;
-Transsion's cascaded system combining DiariZen diarization, Qwen3-Omni ASR, and timestamp fusion achieved 15.41 percent tcpMER and placed second in the challenge. The pipeline produces speaker-attributed STM outputs for multilingual conversational speech. The diarization module uses local speaker activity estimation and global clustering. Source: &lt;a href="https://arxiv.org/abs/2609.20833"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;PhysioBench: A Unified Benchmark for Physiological Signal Question Answering: arXiv NLP&lt;/b&gt;
-PhysioBench harmonizes 22 public datasets into 61.4 million questions across 30 tasks for physiological signal understanding. None of the 21 evaluated models, including large language, vision-language, and physiological foundation models, achieved consistently strong performance across modalities. The benchmark supplies traceable question-answer pairs grounded in signal segments. Source: &lt;a href="https://arxiv.org/abs/2609.20836"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;μ²-Bench: A Multilingual Machine Unlearning Benchmark: arXiv NLP&lt;/b&gt;
-μ²-Bench simulates the full memorization-unlearning-evaluation pipeline across multiple languages and evaluates both training and hold-out languages. Successful multilingual unlearning requires methods that explicitly account for cross-lingual knowledge dispersion. Source: &lt;a href="https://arxiv.org/abs/2609.20945"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Semantic Entropy Estimation in Small Language Models
-Semantic entropy recovers usable confidence signals in models under three billion parameters where token-level entropy collapses to near zero. The method generates multiple samples, clusters them by meaning, and measures distributional uncertainty across clusters rather than individual tokens. This approach adds sampling overhead but enables selective routing that improves accuracy by up to fifty points when uncertain queries are handed to a larger expert. Cross-family routing from a 360M model to Phi-3.5-mini averaged twenty-two percent gains, showing that expert quality matters more than architectural match. The technique therefore functions as an intelligent compute allocator rather than a pure efficiency play. Teams should apply semantic entropy routing when operating small models on consumer hardware and when downstream accuracy justifies the extra samples; skip it when every query must run at minimal latency.
-
-Things to Try This Week
-• Run semantic entropy sampling on SmolLM or similar sub-3B models and route uncertain queries to a larger expert to measure accuracy lift on your NLU tasks.
-• Test TatBLiMP on any Tatar-capable base model or checkpoint to track focused language training progress.
-• Evaluate your current discharge-education prompts against DischargeBench personas to surface coverage gaps across ICD chapters.
-
-On the Horizon
-• Further details expected from the US-China AI safety alert exchange discussions.
-• Additional results from the MLC-SLM 2026 challenge participants.
-• New multilingual unlearning evaluations using μ²-Bench.</description>
+      <title>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.</title>
+      <description>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.</description>
       <guid isPermaLink="false">models-agents-video-ep180-20260921</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep180_20260921.mp4" length="188425703" type="video/mp4" />
       <pubDate>Mon, 21 Sep 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep180_20260921.jpg" />
       <itunes:duration>09:43</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.**
-
-**What You Need to Know:** Stealien, a Korea-led team, won the APEX 2026 competition with an autonomous AI agent that outperformed human teams. Several new arXiv papers detail practical advances in small-model uncertainty handling, clinical knowledge graphs, and multilingual benchmarks. US and China officials discussed exchanging AI safety alerts ahead of a summit. Builders should watch how semantic-entropy routing and schema-guided evaluation move from research into deployable tools this week.
----
-### Top Story
-Stealien AI agent tops APEX 2026 as Korea-led team outperforms human rivals. The agent secured first place in the competition by completing tasks that human teams could not match. The win highlights rapid progress in autonomous agent reliability on multi-step professional workflows. Teams working on agent orchestration can now benchmark against a documented Korea-led system that beat human baselines. Watch for follow-up technical reports on the agent's architecture and failure modes. Source: [biz.chosun.com](https://biz.chosun.com/en/en-it/2026/09/21/SIPOPA64YFEZLHMYTGTEUGJQQI/)
----
-### Model Updates
-**Do small language models know what they don't know?: arXiv NLP**
-Token-level entropy proved near zero in 91 percent of dataset-model combinations for models under 3 billion parameters, making it unusable for confidence signals. Semantic entropy, computed by sampling multiple answers, clustering by meaning, and measuring distributional uncertainty, restored a usable signal. Routing uncertain queries to a larger expert model via semantic entropy delivered accuracy gains up to 50 percentage points, with cross-family routing averaging 22 percent improvement. The study evaluated seven distinct approaches across 7 model pairs and 5 standard NLU benchmarks. Token-level entropy early stopping and semantic entropy estimation were among the methods tested on consumer hardware. Source: [arxiv.org](https://arxiv.org/abs/2609.20824)
-
-**From Discharge Notes to Patient Understanding: Persona-Grounded, Open-Ended Simulation of LLMs as Discharge Educators: arXiv NLP**
-DischargeBench introduces 477 persona-grounded cases across 24 ICD chapters with axes for personality, education level, health literacy, and recall. An Education Monitor Agent maintains patient realism during multi-turn sessions while an LLM-as-a-Judge scores Conversation Quality, Topic Checklist, Comprehension, and Factual Consistency. Aggregate scores masked clinically relevant variation across chapters and personas, exposing coverage failures on difficult cases. The benchmark uses MIMIC-IV-Ext-DischargeBench and aligns the judge against physician annotations. Source: [arxiv.org](https://arxiv.org/abs/2609.20827)
-
-**Beyond WER: Entity and Disfluency Recall in Accented Conversational ASR: arXiv NLP**
-A three-stage pipeline using SQL curation, regional LoRA adapters on Qwen2.5-Omni-3B, and a six-category LLM judge taxonomy raised entity recall from 53-55 percent to 80-85 percent and filler recall from under 5 percent to 76-86 percent while holding WER at 6-10 percent. Curation alone contributed 2.8 to 4.2 percentage points of the entity-recall gain. The system outperformed Whisper and a commercial ASR on entity recall while matching a zero-shot 30B model at one-tenth the size. The pipeline was tested on 6k utterances from speakers in India, Indonesia, and Latin America. Source: [arxiv.org](https://arxiv.org/abs/2609.20828)
-
-**SAGE: Schema-Guided LLMs for Grant Review: arXiv NLP**
-SAGE translates grant rubrics into structured checks and links judgments to evidence in application packages. On 35 nonprofit applications it reached kappa of 0.58 after expert inspection, outperforming a one-prompt-per-criterion baseline at kappa 0.33. A claim-level audit identified confirmed, disputed, and unaddressed parts of the draft. The system was evaluated in two stages against 105 original competition reviews and produced 202 assessments in the assisted round. Source: [arxiv.org](https://arxiv.org/abs/2609.20829)
-
-**Reviser: Revision-Capable Text Generation via Autoregressive Cursor Actions: arXiv NLP**
-Reviser predicts single action tokens—INSERT, MOVE, or STOP—on a mutable canvas, enabling non-monotonic generation. On a continuation benchmark it was strongly preferred to SEDD and MDLM in arena evaluations while using substantially less inference compute than multi-pass refinement baselines at both 100M and 300M scales. The model performs frequent backward moves and mid-canvas insertions rather than end-append decoding. Source: [arxiv.org](https://arxiv.org/abs/2609.20830)
----
-### Agent &amp; Tool Developments
-**Catena Trust Bank Secures Preliminary OCC Approval for AI-Agent Financial Infrastructure: forkast.news**
-Catena Trust Bank received preliminary approval from the Office of the Comptroller of the Currency to build AI-agent financial infrastructure. The approval covers agent-driven operations in banking workflows. Regulated financial institutions now have a documented path for deploying autonomous agents under federal oversight. Source: [forkast.news](https://forkast.news/catena-trust-bank-secures-preliminary-occ-approval-for-ai-agent-financial-infrastructure/)
-
-**Autonomous AI Agents Cause Widespread Digital Disruptions Across Platforms: SuaraGarut.ID**
-Autonomous agents triggered disruptions across multiple online platforms through unintended actions. The incidents highlight reliability gaps when agents operate without sufficient sandboxing. Platform operators are examining containment strategies for long-running agent sessions. Source: [suaragarut.id](https://suaragarut.id/en/ai-agents-cause-digital-disruptions)
-
-**US and China discuss AI safety plan ahead of Trump-Xi summit: BBC**
-US and Chinese officials discussed a framework for exchanging AI safety alerts before the upcoming summit. The proposal includes mutual notification of safety incidents and evaluation findings. The talks mark a concrete step toward bilateral safety coordination. Source: [bbc.com](https://www.bbc.com/news/articles/c8vgyzn2d31yo)
-
-**U.S. proposes exchanging AI safety alerts with China, Bessent says: NBC News**
-Treasury Secretary Bessent stated the US proposed direct exchange of AI safety alerts with China. The mechanism would allow rapid sharing of identified risks and mitigation approaches. Implementation details remain under discussion. Source: [nbcnews.com](https://www.nbcnews.com/world/asia/us-proposes-exchanging-ai-safety-alerts-china-bessent-says-rcna598923)
----
-### Practical &amp; Community
-**TatBLiMP: A Benchmark of Linguistic Minimal Pairs for Tatar: arXiv NLP**
-TatBLiMP provides 1248 sentence pairs covering 16 morphosyntactic phenomena for the Tatar language, the first such grammaticality benchmark for the language. A 478M from-scratch model and a 125M monolingual model reached near 0.97 accuracy, while frontier 30-120B models scored 0.80-0.92. The benchmark runs on base models and mid-training checkpoints without requiring generation or parsing. It adapts TurBLiMP operations and adds one Tatar-specific phenomenon on bare-noun number after numerals. Source: [arxiv.org](https://arxiv.org/abs/2609.20832)
-
-**Transsion's Speaker-Attributed Multilingual ASR System for the MLC-SLM 2026 Challenge: arXiv NLP**
-Transsion's cascaded system combining DiariZen diarization, Qwen3-Omni ASR, and timestamp fusion achieved 15.41 percent tcpMER and placed second in the challenge. The pipeline produces speaker-attributed STM outputs for multilingual conversational speech. The diarization module uses local speaker activity estimation and global clustering. Source: [arxiv.org](https://arxiv.org/abs/2609.20833)
-
-**PhysioBench: A Unified Benchmark for Physiological Signal Question Answering: arXiv NLP**
-PhysioBench harmonizes 22 public datasets into 61.4 million questions across 30 tasks for physiological signal understanding. None of the 21 evaluated models, including large language, vision-language, and physiological foundation models, achieved consistently strong performance across modalities. The benchmark supplies traceable question-answer pairs grounded in signal segments. Source: [arxiv.org](https://arxiv.org/abs/2609.20836)
-
-**μ²-Bench: A Multilingual Machine Unlearning Benchmark: arXiv NLP**
-μ²-Bench simulates the full memorization-unlearning-evaluation pipeline across multiple languages and evaluates both training and hold-out languages. Successful multilingual unlearning requires methods that explicitly account for cross-lingual knowledge dispersion. Source: [arxiv.org](https://arxiv.org/abs/2609.20945)
----
-### Under the Hood: Semantic Entropy Estimation in Small Language Models
-Semantic entropy recovers usable confidence signals in models under three billion parameters where token-level entropy collapses to near zero. The method generates multiple samples, clusters them by meaning, and measures distributional uncertainty across clusters rather than individual tokens. This approach adds sampling overhead but enables selective routing that improves accuracy by up to fifty points when uncertain queries are handed to a larger expert. Cross-family routing from a 360M model to Phi-3.5-mini averaged twenty-two percent gains, showing that expert quality matters more than architectural match. The technique therefore functions as an intelligent compute allocator rather than a pure efficiency play. Teams should apply semantic entropy routing when operating small models on consumer hardware and when downstream accuracy justifies the extra samples; skip it when every query must run at minimal latency.
----
-### Things to Try This Week
-- Run semantic entropy sampling on SmolLM or similar sub-3B models and route uncertain queries to a larger expert to measure accuracy lift on your NLU tasks.
-- Test TatBLiMP on any Tatar-capable base model or checkpoint to track focused language training progress.
-- Evaluate your current discharge-education prompts against DischargeBench personas to surface coverage gaps across ICD chapters.
----
-### On the Horizon
-- Further details expected from the US-China AI safety alert exchange discussions.
-- Additional results from the MLC-SLM 2026 challenge participants.
-- New multilingual unlearning evaluations using μ²-Bench.
-</itunes:summary>
+      <itunes:summary>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.</itunes:summary>
       <itunes:episode>180</itunes:episode>
-      <itunes:title>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now…</itunes:title>
+      <itunes:title>Ep 180: Korea-led AI agent tops human rivals at APEX 2026, proving agent systems can now outperform experts on complex tasks.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep180_20260921_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep180.json" type="application/json+chapters" /></item>
     <item>
@@ -3518,19 +3568,5 @@ Semantic entropy recovers usable confidence signals in models under three billio
       <itunes:title>Ep 179: Local neural programs compiled from English descriptions now run entirely on CPU without external APIs.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep179_20260920_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep179.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</title>
-      <description>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</description>
-      <guid isPermaLink="false">models-agents-video-ep178-20260919</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep178_20260919.mp4" length="189173224" type="video/mp4" />
-      <pubDate>Sat, 19 Sep 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep178_20260919.jpg" />
-      <itunes:duration>09:59</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</itunes:summary>
-      <itunes:episode>178</itunes:episode>
-      <itunes:title>Ep 178: Anthropic commits at least one billion dollars over five years to independent frontier AI evaluation through a new Accenture partnership.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep178_20260919_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep178.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
