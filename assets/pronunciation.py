@@ -1174,6 +1174,15 @@ def replace_dates(text: str) -> str:
     return text
 
 
+# A phrase right after a bare clock time that already names the half of
+# the day ("4:53 in the afternoon", "11:15 tonight", "7:05 local time").
+_DAY_PART_AFTER_RE = re.compile(
+    r"\s*(?:(?i:in the (?:morning|afternoon|evening)|at night|tonight|"
+    r"this (?:morning|afternoon|evening)|overnight|local time|"
+    r"(?:eastern|pacific|central|mountain)\b)|(?:[A-Z]{1,4}T|UTC|GMT)\b)",
+)
+
+
 def replace_times(text: str) -> str:
     """Convert clock times to spoken form: '03:08 AM' -> 'three oh eight A M'.
 
@@ -1229,8 +1238,15 @@ def replace_times(text: str) -> str:
             # Normalize am/pm
             am_pm = am_pm_raw.upper().replace(".", "").strip()
             if am_pm not in ("AM", "PM"):
-                # 24-hour format
+                # Oct 21 2026: a bare time never gains a half of the day the
+                # text did not give. AI Chips Ep030 aired "four fifty-three
+                # A M in the afternoon" for "4:53 in the afternoon" — every
+                # bare H:MM before noon had been read as morning. A
+                # day-part phrase after the time says it already; a
+                # single-digit hour with nothing after it is said plainly.
+                after = m.string[m.end():m.end() + 24]
                 if hour >= 13:
+                    # 24-hour format
                     hour -= 12
                     am_pm = "P M"
                 elif hour == 12:
@@ -1238,8 +1254,13 @@ def replace_times(text: str) -> str:
                 elif hour == 0:
                     hour = 12
                     am_pm = "A M"
-                else:
+                elif _DAY_PART_AFTER_RE.match(after):
+                    am_pm = ""
+                elif hour_str.startswith("0"):
+                    # Zero-padded 24-hour form ("09:30") is a morning time.
                     am_pm = "A M"
+                else:
+                    am_pm = ""
             else:
                 am_pm = am_pm[0] + " " + am_pm[1]  # "AM" -> "A M"
 
@@ -1247,12 +1268,13 @@ def replace_times(text: str) -> str:
                 return m.group(0)
 
             hour_word = number_to_words(hour)
+            tail = f" {am_pm}" if am_pm else ""
             if minute == 0:
-                return f"{hour_word} {am_pm}"
+                return f"{hour_word}{tail}" if am_pm else f"{hour_word} o'clock"
             elif 1 <= minute <= 9:
-                return f"{hour_word} oh {number_to_words(minute)} {am_pm}"
+                return f"{hour_word} oh {number_to_words(minute)}{tail}"
             else:
-                return f"{hour_word} {number_to_words(minute)} {am_pm}"
+                return f"{hour_word} {number_to_words(minute)}{tail}"
         except (ValueError, AttributeError):
             return m.group(0)
 

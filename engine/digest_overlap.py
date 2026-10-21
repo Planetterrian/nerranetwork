@@ -143,6 +143,26 @@ def _body_tokens(block: str) -> frozenset:
     return _salient_tokens(_BOLD_RE.sub(" ", body))
 
 
+_INLINE_SOURCE_RE = re.compile(r"\bSources?(?:/Post)?\s*:\s*", re.IGNORECASE)
+_LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)|<?https?://\S+>?")
+
+
+def _story_tokens(block: str) -> frozenset:
+    """The item's own words with its links removed — for the shared-URL
+    test only. Oct 21 2026: a Source written at the end of a sentence ("…
+    leave Meta. Source: https://…") is not a line of its own, so the URL's
+    words (https, www, com, the host, the path) counted as story words and
+    two items citing one page always read as one story. MAG 7 Ep029 lost
+    its Joel Kaplan item that way, and the combined script still told it."""
+    body = "\n".join(
+        line for line in block.split("\n")
+        if not re.match(r"\s*Source(?:/Post)?\s*:", line, re.IGNORECASE)
+    )
+    body = _LINK_RE.sub(lambda m: m.group(1) or " ", body)
+    body = _INLINE_SOURCE_RE.sub(" ", body)
+    return _salient_tokens(_BOLD_RE.sub(" ", body))
+
+
 def _same_story(title_a: str, title_b: str) -> Optional[str]:
     ta, tb = _salient_tokens(title_a), _salient_tokens(title_b)
     if ta and tb and len(ta & tb) >= 3:
@@ -159,11 +179,20 @@ def _url_match_is_same_story(prior: tuple, title: Optional[str],
                              tokens: frozenset) -> bool:
     """A shared URL counts only when the items also share the story."""
     _section, prior_title, prior_tokens = prior
-    if title and prior_title and (
-            _same_story(prior_title, title)
-            or len(_salient_tokens(prior_title) & _salient_tokens(title)) >= 2):
-        return True  # a new angle on the same story still names its subject
-    if min(len(prior_tokens), len(tokens)) < URL_MATCH_MIN_TOKENS:
+    short = min(len(prior_tokens), len(tokens)) < URL_MATCH_MIN_TOKENS
+    if title and prior_title:
+        if (_same_story(prior_title, title)
+                or len(_salient_tokens(prior_title) & _salient_tokens(title)) >= 2):
+            return True  # a new angle on the same story still names its subject
+        if short:
+            # Oct 21 2026: two titled items whose headlines share no subject
+            # are two stories, however short one of them is. A one-sentence
+            # Also Today item is always "too little text", so the legacy rule
+            # below dropped MAG 7 Ep029's Joel Kaplan item for sharing a
+            # source page with the Tesla-SpaceX merger item — and the
+            # combined script still told it, with no Source behind it.
+            return False
+    if short:
         return True  # too little text to tell stories apart — legacy rule
     shared = len(prior_tokens & tokens)
     return shared / min(len(prior_tokens), len(tokens)) >= URL_MATCH_MIN_OVERLAP
@@ -318,9 +347,10 @@ def dedupe_cross_section_items(
         reason = None
         kept_section = ""
         body_tokens = _body_tokens(stripped)
+        story_tokens = _story_tokens(stripped)
         for url in urls:
             if url in seen_urls and _url_match_is_same_story(
-                    seen_urls[url], title, body_tokens):
+                    seen_urls[url], title, story_tokens):
                 kept_section = seen_urls[url][0]
                 reason = "same source URL"
                 break
@@ -349,7 +379,7 @@ def dedupe_cross_section_items(
             continue
 
         for url in urls:
-            seen_urls.setdefault(url, (section, title or "", body_tokens))
+            seen_urls.setdefault(url, (section, title or "", story_tokens))
         if title:
             seen_titles.append((section, title))
         seen_bodies.append((section, title or "", body_tokens))

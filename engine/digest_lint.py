@@ -313,17 +313,48 @@ def story_items(digest: str) -> List[str]:
 ALSO_TODAY_SECTION = "Also Today"
 
 
+_BOLD_HEAD_RE = re.compile(r"^\s*(?:\d+\.\s*)?\*\*\S")
+# Omni View writes each story as its own heading: ``### 3) Nigeria confirms …``.
+_HEADING_ITEM_RE = re.compile(r"^\s*\d+\)\s+\S")
+
+
 def also_today_items(digest: str) -> int:
     """Oct 19 2026: story items inside the digest's ``Also Today`` run —
     the one-sentence items every news show now carries for the qualifying
-    stories its developed sections leave out. 0 when the section is absent."""
+    stories its developed sections leave out. 0 when the section is absent.
+
+    Oct 21 2026: every block that opens on a bold head counts, whatever
+    follows the head on its line. The Oct 19 counter wanted the bold title
+    alone on its line, so ``**Title: Outlet** One sentence.`` (Planetterrian,
+    Omni View) and ``**Title — Outlet:** One sentence.`` (Models & Agents)
+    read 0 beside a section of four items."""
     n = 0
     for title, body in sections(digest):
         if title.strip().lower() != ALSO_TODAY_SECTION.lower():
             continue
         for block in items(body):
+            if _BOLD_HEAD_RE.match(block.splitlines()[0]):
+                n += 1
+    return n
+
+
+def story_item_count(digest: str) -> int:
+    """Oct 21 2026: sourced story items in the digest, in every shape the
+    shows write — a numbered item, a block opening on a bold head that
+    carries a URL, or an Omni View ``### N) Title`` heading. A bold field
+    line with no URL (``**Ticker:** XYZ``) is not a story. Read by the
+    ``items_shipped`` / ``prompt_articles_reported_pct`` metrics, which had
+    used the bold-title-alone shape only and so read every inline-headed
+    item as missing."""
+    n = 0
+    for title, body in sections(digest):
+        if _HEADING_ITEM_RE.match(title):
+            n += 1
+            continue
+        for block in items(body):
             head = block.splitlines()[0]
-            if _NUMBERED_ITEM_RE.match(head) or _HEADLINE_ITEM_RE.match(head):
+            if _NUMBERED_ITEM_RE.match(head) or (
+                    _BOLD_HEAD_RE.match(head) and urls_in(block)):
                 n += 1
     return n
 

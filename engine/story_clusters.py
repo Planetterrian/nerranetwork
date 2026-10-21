@@ -214,6 +214,29 @@ def retold_clusters(
     return out
 
 
+def dropped_clusters(
+    digest_text: str,
+    retold_before: Sequence[Sequence[str]],
+    *,
+    min_shared: int = 3,
+) -> List[List[str]]:
+    """The retold groups a retry left with NO item at all (Oct 21 2026).
+
+    The retry is asked to fold a story told as several items into ONE; Tesla
+    Ep641's retry folded the Tesla-SpaceX merger committees — the day's
+    biggest Tesla story, the lead on SpaceX and MAG 7 — into nothing, and
+    the retold count read 0, so the retry was kept. A group survives when
+    some item headline shares ``min_shared`` salient words with one of its
+    original headlines."""
+    titles = [salient_tokens(t) for t in digest_item_titles(digest_text)]
+    out: List[List[str]] = []
+    for heads in retold_before or []:
+        toks = [salient_tokens(h) for h in heads]
+        if not any(len(t & tt) >= min_shared for t in toks for tt in titles):
+            out.append(list(heads))
+    return out
+
+
 def retold_cluster_note(retold: Sequence[Sequence[str]], *, max_clusters: int = 3) -> str:
     """The structural-regeneration note for clusters told as several items
     (Oct 17 2026 readout of story-clusters-2026-10-01: Tesla retold a
@@ -238,5 +261,6 @@ __all__ = [
     "MIN_SHARED", "MIN_SHARE", "COMMON_DF",
     "cluster_articles", "annotate_articles", "annotation_for",
     "cluster_retold_in_digest", "retold_clusters", "retold_cluster_note",
+    "dropped_clusters",
     "digest_item_titles", "common_tokens",
 ]

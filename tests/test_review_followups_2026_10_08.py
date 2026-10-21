@@ -96,8 +96,10 @@ class TestDeepDivesSurviveTheDedupe:
             f"DC Byte puts EMEA IT capacity at 93 GW across every stage. Source: {url}",
             "",
             "### The Teardown: What Ninety-Three Gigawatts Is Counting",
-            "Deployed capacity is what is in service. The 93 GW stack is what has "
-            f"been drawn, committed, started or switched on. Source: {url}",
+            # Oct 21 2026: the shared-URL test reads the items' words without
+            # their links, so the fixture repeats the item's own facts.
+            "Deployed capacity is what is in service. DC Byte puts EMEA IT capacity "
+            f"at 93 GW across every stage. Source: {url}",
             "",
             "### On the Horizon", "- Nothing dated.",
         ])

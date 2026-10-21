@@ -3499,20 +3499,6 @@ def run(args: argparse.Namespace) -> None:
                     from engine.digest_lint import items_without_source as _iws
                     _tot, _miss = _iws(x_thread)
                     metrics.record("items_without_source_shipped", _miss)
-                    # Oct 19 2026: how much of the sourced list the digest
-                    # reports (the operator's ask), and how much of that is
-                    # the Also Today run. Consumers: the dashboard's
-                    # prompt_articles_reported_pct_7d / also_today_items_7d.
-                    try:
-                        from engine.digest_lint import also_today_items as _ati
-                        _in_prompt = int(metrics.counters.get("articles_in_prompt", 0) or 0)
-                        metrics.record("items_shipped", _tot)
-                        metrics.record("digest_also_today_items", _ati(x_thread))
-                        if _in_prompt:
-                            metrics.record("prompt_articles_reported_pct",
-                                           round(100.0 * _tot / _in_prompt, 1))
-                    except Exception as _ati_exc:  # noqa: BLE001 — never block a run
-                        logger.debug("Also Today metrics skipped: %s", _ati_exc)
                     if _tot and _miss and _miss != int(
                             (locals().get("_lint_metrics") or {}).get("items_without_source", _miss)):
                         logger.warning(
@@ -3525,6 +3511,25 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _abs_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Absence-sentence filter failed (non-fatal): %s",
                                _abs_exc)
+
+        # Oct 19 2026: how much of the sourced list the digest reports (the
+        # operator's ask), and how much of that is the Also Today run.
+        # Consumers: the dashboard's prompt_articles_reported_pct_7d /
+        # also_today_items_7d. Oct 21 2026: recorded on EVERY show — it had
+        # sat inside the opt-in absence filter above, so the readout covered
+        # the launch cohort only and never saw a flagship.
+        try:
+            from engine.digest_lint import also_today_items as _ati
+            from engine.digest_lint import story_item_count as _sic
+            _in_prompt = int(metrics.counters.get("articles_in_prompt", 0) or 0)
+            _shipped = _sic(x_thread)
+            metrics.record("items_shipped", _shipped)
+            metrics.record("digest_also_today_items", _ati(x_thread))
+            if _in_prompt:
+                metrics.record("prompt_articles_reported_pct",
+                               round(100.0 * _shipped / _in_prompt, 1))
+        except Exception as _ati_exc:  # noqa: BLE001 — metrics only
+            logger.debug("Also Today metrics skipped: %s", _ati_exc)
 
         # --- Source-integrity gate (Aug 2026, engine/claims.py) ---
         # The generation stage emitted a claim ledger alongside the prose
@@ -7229,11 +7234,16 @@ def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics) 
     """True when a structural retry spent on retold story clusters tells
     MORE clusters as several items than the original did (Oct 17 2026,
     story-clusters-2026-10-01 readout); records the retry's count."""
-    from engine.story_clusters import retold_clusters
+    from engine.story_clusters import dropped_clusters, retold_clusters
 
     after = len(retold_clusters(candidate, articles, clusters))
     metrics.record("story_clusters_retold_after_retry", after)
-    return after > len(retold_before)
+    # Oct 21 2026: a retry that folds a retold story into NOTHING is worse
+    # than the duplicate it was asked to fix (Tesla Ep641 lost the
+    # Tesla-SpaceX merger committees this way).
+    dropped = dropped_clusters(candidate, retold_before)
+    metrics.record("story_clusters_dropped_by_retry", len(dropped))
+    return after > len(retold_before) or bool(dropped)
 
 # Mid-line / sentence-final attribution: "… within a human lifetime.
 # Source goodnewsnetwork.org." (colon-less) and "… measured. Source:
