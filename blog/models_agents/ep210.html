@@ -99,11 +99,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep210.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1866,21 +1877,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.mp3", "title": "RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language.", "desc": "RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep210_20261021.fr.mp3", "title": "Ep 210 : L’entraînement RL pousse les modèles à abandonner l’anglais dans les traces de chain-of-thought, révélant…", "desc": "L’entraînement RL pousse les modèles à abandonner l’anglais dans les traces de chain-of-thought, révélant un raisonnement interne qui n’a plus besoin du langage humain."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1986,6 +2003,101 @@
 <li>Additional low-resource web-agent benchmarks and adaptation recipes are anticipated after the LoWAgent release.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>L’entraînement par apprentissage par renforcement pousse les modèles à abandonner l’anglais dans leurs traces de chaîne de pensée, révélant un raisonnement interne qui n’a plus besoin du langage humain.</p>
+<p>Les développeurs qui vérifient ou auditent ces traces ont désormais besoin de méthodes d’inspection qui ne partent plus du principe que les étapes intermédiaires restent lisibles.</p>
+<p>C’est Models and Agents, épisode deux cent dix.</p>
+<p>Ensuite, le désapprentissage calibré et la quantification clinique, puis la mémoire latente des agents et les agents web multilingues, puis Choses à essayer et À l’horizon.</p>
+<p>Andrej Karpathy a écrit sur X que le post-entraînement actuel par apprentissage par renforcement fonctionne, mesuré par des traces qui restent cohérentes.</p>
+<p>Il a mis en avant des représentations internes plus efficaces pour la tâche que le langage naturel.</p>
+<p>Ça cadre avec des rapports plus anciens de modèles qui inventent des séquences de jetons privées pendant des tâches à horizon long.</p>
+<p>H2DF arrive sur arXiv, avec des bandes cibles calibrées pour un désapprentissage contrôlable des modèles de langage.</p>
+<p>La montée de gradient non bornée est replacée par une bande cible dépendante des données.</p>
+<p>La pression ne s’applique qu’en dessous d’un seuil inférieur, et s’inverse une fois cette bande atteinte.</p>
+<p>Chaque étape utilise une passe sur un lot d’oubli, avec un rejeu clairsemé de conservation toutes les dix étapes.</p>
+<p>Sur TOFU, la méthode égale GradDiff sur la log-vraisemblance négative d’oubli et de conservation, tout en réduisant la variabilité.</p>
+<p>Sur MUSE-News, la conservation s’améliore par rapport à la montée de gradient et à NPO.</p>
+<p>La reconnaissance automatique de la parole en anglais accentué est la cible de l’adaptation de rang bas par mélange d’experts phonétiques, ou Laura, pour les modèles Conformer.</p>
+<p>La méthode arXiv place six experts de rang bas alignés sur les classes de mode d’articulation.</p>
+<p>Le routage se fait au niveau de la trame, avec une porte hybride phonème plus acoustique.</p>
+<p>L’ensemble d’experts partagé supprime le besoin de modules spécifiques à chaque accent, et permet le transfert sans exemple vers des accents non vus.</p>
+<p>Sur L2-ARCTIC, elle apporte une amélioration relative de douze virgule trois pour cent du taux d’erreur de mots par rapport à une Laura unique, en configuration sans exemple.</p>
+<p>Les décisions de vérification clinique reçoivent un certificat statistique de CERTA.</p>
+<p>Le travail arXiv décide quand un modèle quantifié en huit bits ou en quatre bits peut remplacer en toute sécurité sa référence B F seize pour une décision clinique donnée.</p>
+<p>Sur onze modèles, la voie huit bits a couvert de quatre-vingt-dix-neuf virgule huit à cent pour cent des décisions.</p>
+<p>La frontière quatre bits a réduit le coût amorti à environ vingt-six pour cent de la référence B F seize, tout en restant sous quarante-huit gigaoctets.</p>
+<p>MultiHop-rag et QASPER-MP sont les bancs d’essai pour la génération fondée sur les preuves avec génération augmentée par récupération, ou rag.</p>
+<p>EBG, sur arXiv, exige des citations au niveau de la ligne et note à la fois l’exactitude et l’ancrage.</p>
+<p>La recherche par similarité fait remonter de façon fiable n’importe quel fragment pertinent, mais rate souvent l’ensemble complet qu’il faut pour les questions à faits multiples.</p>
+<p>Le découpage en fragments efface les métadonnées au niveau du document, indispensables à la résolution d’identité.</p>
+<p>CultureLens fait varier le pays, la valeur, la norme vraie et les preuves de norme contradictoire, dans une étude arXiv du raisonnement culturel.</p>
+<p>La suite déroule neuf mille deux cent soixante et un scénarios.</p>
+<p>Énoncer une norme contradictoire fait chuter les réponses alignées de trente-deux à quarante-sept points, même quand le modèle connaît la norme correcte du pays.</p>
+<p>Bloquer la norme contradictoire à l’intérieur du modèle rétablit la bonne réponse dans la plupart des cas.</p>
+<p>L’affinage supervisé sur des exemples de norme contradictoire fait monter la performance alignée à quatre-vingt-cinq à quatre-vingt-treize pour cent sur des pays non vus.</p>
+<p>Insérer un jeton de lecture appris et entraîner une sonde de confiance sur son état caché, voilà la méthode d’un nouvel article arXiv.</p>
+<p>L’approche surpasse les sondes qui lisent depuis les jetons de vocabulaire existants, sur plusieurs jeux de données et familles de modèles.</p>
+<p>L’étendre à plusieurs jetons appris apporte des gains supplémentaires.</p>
+<p>Le changement est un remplacement direct de n’importe quelle sonde existante.</p>
+<p>ALFWorld est un banc d’essai où LAMB conserve des hypothèses concurrentes sans émettre de texte.</p>
+<p>L’agent arXiv encode les preuves d’interaction dans un état Common partagé, et les hypothèses concurrentes dans des composantes Delta pondérées.</p>
+<p>Les mises à jour tournent de façon récurrente à partir des prédictions action-résultat, sans émettre de texte.</p>
+<p>Sur ALFWorld, il fait monter le taux de succès à trente de six points, et réduit les actions redondantes de dix-sept virgule sept points.</p>
+<p>Sur ScienceWorld, le succès grimpe de vingt-deux points.</p>
+<p>Le hindi, le bengali, l’ourdou et l’amharique rejoignent l’anglais sur six sites entièrement localisés dans LoWAgent.</p>
+<p>Le banc d’essai arXiv produit trois mille instances de tâches.</p>
+<p>Les agents fermés comme les agents à code ouvert chutent nettement sur les langues à faibles ressources, les modèles à code ouvert montrant la plus forte dégradation.</p>
+<p>Le post-entraînement sur un petit sous-ensemble de traces récupère une performance substantielle.</p>
+<p>L’attribution de crédit relative au groupe, c’est ainsi que GRSE décide quelle compétence d’agent doit changer.</p>
+<p>La méthode arXiv exécute chaque question plusieurs fois sous les mêmes bibliothèques de compétences, et contraste les exécutions pour attribuer le crédit à des paires agent-compétence précises.</p>
+<p>Sur HotpotQA, elle surpasse MASkills sur les questions multi-sauts.</p>
+<p>Sur des bibliothèques corrompues, elle signe correctement chaque compétence nuisible plantée, et récupère la performance de bibliothèque propre.</p>
+<p>Les flux de travail médicaux multimodaux reçoivent un planificateur vision-langage dans MMedAgent-Plus.</p>
+<p>Le système arXiv associe ce planificateur à dix-huit modèles spécialistes couvrant douze tâches et huit modalités.</p>
+<p>Le planificateur atteint quatre-vingt-onze pour cent de précision d’appel d’outil en configuration un outil, plusieurs tours.</p>
+<p>La précision est de quatre-vingt virgule sept pour cent en configuration plusieurs outils, un seul tour.</p>
+<p>La précision de bout en bout sur les cas réservés atteint zéro virgule neuf huit, à égalité avec les spécialistes dédiés.</p>
+<p>Simon Willison a publié l’invite exacte qu’il utilise pour la relecture par I.A.</p>
+<p>Il l’a placée dans son guide des schémas d’ingénierie agentique, sur son site.</p>
+<p>Simon Willison, après qu’un mode multijoueur uniquement audio a provoqué le mal des transports, a ajouté un relais WebSocket pour du vrai multijoueur en ligne dans sa démo Battle Drones.</p>
+<p>Anthropic a publié les deux cent onze conceptions testées de lieurs de toxine de scorpion, plus les données de laboratoire correspondantes.</p>
+<p>La ressource publique pour les scientifiques est sur Hugging Face.</p>
+<p>Un franchisé indépendant Schlotzsky&#x27;s et Cinnabon a utilisé ChatGPT Work pour réduire le temps de revalorisation des menus de quatre-vingt-quinze pour cent.</p>
+<p>Le rapprochement de caisse est tombé à quatre-vingt-quatorze pour cent de temps en moins.</p>
+<p>Le blog Open A I dit que ce travail a fait émerger un flux de travail qui pourrait libérer environ cent mille dollars de trésorerie.</p>
+<p>AllenAI a publié FairStress sur le blog Hugging Face.</p>
+<p>Le banc d’essai sonde l’équité sur un ensemble plus large de scénarios de décision que les suites précédentes.</p>
+<p>Dario Amodei a aussi publié aujourd’hui une réponse détaillée listant neuf actions de sécurité commercialement coûteuses qu’Anthropic a prises l’année passée, tout en défendant sa stratégie de course vers le sommet de la frontière.</p>
+<p>Sam Altman a annoncé qu’Aleksander Madry a rejoint à nouveau Open A I pour diriger les travaux de sûreté et de sécurité sur la superintelligence.</p>
+<p>Open A I a acquis Orchestra Bio pour étendre ses outils Rosalind en sciences de la vie vers une coordination complète du développement de médicaments.</p>
+<p>IBM Research a publié ALTK-Evolve sur le blog Hugging Face, en s’appuyant sur une mémoire apprise pour atteindre le sommet du classement tau-squared bench du service client, sans exiger un modèle de frontière.</p>
+<p>Collez l’invite de relecture de Simon Willison dans votre éditeur et lancez-la sur le prochain document technique que vous rédigez.</p>
+<p>Elle attrape des problèmes de formulation subtils que les invites génériques ratent.</p>
+<p>Lancez MoPE-Laura sur un affinage de reconnaissance vocale de l’anglais accentué, quand vous ne voulez pas un module séparé par accent.</p>
+<p>Essayez la sonde de confiance à jeton de lecture appris sur votre chaîne de génération actuelle, comme une insertion d’une seule ligne.</p>
+<p>Évaluez une mémoire latente multi-hypothèses façon LAMB sur n’importe quelle tâche d’agent à horizon long où des explications concurrentes doivent être conservées sans gonfler le contexte.</p>
+<p>Davantage de laboratoires devraient publier des outils d’inspection de chaîne de pensée non anglaise, à la suite de l’observation de Karpathy.</p>
+<p>D’autres bancs d’essai d’agents web à faibles ressources et des recettes d’adaptation sont attendus après la sortie de LoWAgent.</p>
+<p>Les invites partagées rétrécissent les traces par tâche, et c’est cette défaillance dont on lève le capot : la budgétisation implicite sous composition de tâches.</p>
+<p>Quand plusieurs tâches partagent une seule invite, les modèles allouent moins de jetons à chaque tâche qu’ils ne le feraient isolément.</p>
+<p>Ça arrive même quand le contexte total reste largement à l’aise dans la fenêtre.</p>
+<p>Le modèle maintient un budget de calcul implicite par tâche, qui se rétrécit sous la concurrence.</p>
+<p>Les tâches dont les solutions isolées exigent déjà de longues traces subissent la plus forte chute de précision.</p>
+<p>La budgétisation se voit dans les comptes de jetons par sous-tâche.</p>
+<p>Les erreurs grimpent d’un coup dès que la longueur de trace d’une seule tâche dépasse un seuil propre au modèle.</p>
+<p>Ajouter des instructions explicites de longueur par tâche, ou forcer des étapes de vérification intermédiaires, rétablit l’essentiel de la performance perdue, au prix de jetons supplémentaires au total.</p>
+<p>Mesurez l’usage de jetons par tâche sur des invites multi-tâches représentatives, avant le déploiement.</p>
+<p>Si une tâche dépasse régulièrement environ soixante pour cent de sa longueur isolée, scindez l’invite ou ajoutez une vérification, plutôt que de compter sur le modèle pour s’autoréguler.</p>
+<p>Avant de partir — Anthropic devrait en dire plus sur son fonds d’intérêt public et sa stratégie de rythme, dans les semaines à venir.</p>
+<p>Voilà pour Models and Agents aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.</p>
+<p>Le monde de l’I.A. avance vite. On vous aide à suivre.</p>
+<p>À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube, à Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Cette émission vous vient du Nerra Network. Si vous voulez un point hebdomadaire tranchant, Longevity Weekly s’occupe de vous — la semaine des sciences du vieillissement, chaque résultat avec son niveau de preuve.</p>
+<p>Toutes nos émissions sont gratuites sur nerranetwork point com. Les tableaux de bord en direct — T-S-L-A, les lancements SpaceX, le tableau d’affichage de l’investissement — sont tous sur nerranetwork point com data.</p>
+<p>Cet épisode a utilisé une synthèse vocale I.A. de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
@@ -2635,17 +2747,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep137.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/planetterrian/ep220.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>The 1977 Apple II sold for twelve hundred ninety eight dollars when its processor and memory came from standard catalogs.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Computational models show high-conductance potassium channels evolved to stabilize spike timing by easing calcium competition in neurons.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/modern_investing/ep206.html" class="blog-related-card" style="--card-show-color: #047857">
+                    <a href="../../blog/longevity/ep005.html" class="blog-related-card" style="--card-show-color: #3F6212">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
-                        <h3>Canadian dividend investors may see pressure on rate-sensitive holdings as September inflation rose to 3.1%.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Longevity Weekly</span>
+                        <h3>A tissue study of twenty-eight women found ovaries still change after menopause.</h3>
                         
                     </a>
                     
