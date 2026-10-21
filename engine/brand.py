@@ -106,6 +106,97 @@ NETWORK_PROMISE_SHORT = ("Every story sourced. Every claim checked against its s
 #: is a second person to read it.
 SPONSOR_EMAIL = CONTACT_EMAIL
 
+#: Where press and publicists write (Oct 21 2026, the media kit). The same
+#: inbox for the reason above: one address a person actually reads.
+PRESS_EMAIL = CONTACT_EMAIL
+
+#: The two co-founders, as their own show states them (Novak + Perra =
+#: Nerra; ``shows/network_meta.yaml`` dp_pod.about_host) and as Patrick told
+#: it on the record in The Age of AI Ep001. Facts only: nothing here is a
+#: claim the press kit cannot source. A photo is sent on request, so none is
+#: named.
+FOUNDERS = (
+    {
+        "name": "Patrick Novak",
+        "role": "Co-founder and producer",
+        "bio": (
+            "Patrick Novak is a Vancouver-based entrepreneur, a physical chemist "
+            "by training and a published science fiction novelist. He started "
+            "Nerra Network in 2024, after a daily Tesla podcast he relied on "
+            "stopped publishing, by rebuilding it as an automated show. He "
+            "designs the production pipeline, writes the editorial rules the "
+            "AI works under, and built Mira, the network's AI host. He "
+            "co-hosts The DP Pod."
+        ),
+        "topics": (
+            "Building a news network with AI under rules people write",
+            "Designing an AI interviewer that gives guests the final say",
+            "Publishing a public record of every claim checked against its source",
+            "What automation can and cannot do for a one-person newsroom",
+        ),
+    },
+    {
+        "name": "Dan Perra",
+        "role": "Co-founder and co-host of The DP Pod",
+        "bio": (
+            "Dan Perra is a commercial airline pilot and longtime technology "
+            "enthusiast. He co-founded the network with Patrick and co-hosts "
+            "The DP Pod, their weekly show on good news in science and "
+            "technology and one practical action a listener can take."
+        ),
+        "topics": (),
+    },
+)
+
+#: Language names the boilerplate prints, keyed by the site's codes
+#: (``engine.show_lang.site_languages``).
+LANGUAGE_NAMES = {"en": "English", "fr": "French", "ru": "Russian",
+                  "es": "Spanish", "zh": "Chinese"}
+
+
+def _language_list(codes) -> str:
+    names = [LANGUAGE_NAMES.get(c, c) for c in codes]
+    if not names:
+        return "English"
+    if len(names) == 1:
+        return names[0]
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def network_boilerplate(show_count: int, languages=("en",)) -> dict:
+    """The press kit's copy-ready descriptions, short to long.
+
+    ``show_count`` is the PUBLIC count (as :func:`network_promise`);
+    ``languages`` the site's language codes. Every sentence states what the
+    network does today; a new show or language changes the numbers, never
+    the wording. The Mira sentence stays inside the narrow claim
+    (:data:`MIRA_FIRST_CLAIM`): the guest decides whether the conversation is
+    published, with no superlative.
+    """
+    n = int(show_count)
+    langs = _language_list(languages)
+    short = (f"Nerra Network is an independent network of {n} free podcasts on "
+             f"{NETWORK_SUBJECTS}, made in Vancouver, Canada. {NETWORK_TAGLINE}")
+    medium = (
+        f"Nerra Network is an independent podcast network based in Vancouver, "
+        f"Canada, publishing {n} free shows in {langs} on {NETWORK_SUBJECTS}. "
+        "Every story is sourced and every claim is checked against its source, "
+        "on a public record anyone can read. The shows are written and voiced "
+        "with AI under editorial rules set by people, and its interview shows "
+        "are hosted by Mira, an AI whose guests decide whether their "
+        "conversation is published at all. Founded in 2024 by Patrick Novak "
+        "and Dan Perra."
+    )
+    long = (
+        medium + " Its flagship shows follow SpaceX and Tesla every day; Nerra "
+        "Daily gathers the morning's shows into one edition by 7 a.m. Eastern, "
+        "anchored by Mira. Every episode is free in any podcast app and as a "
+        "written article with its sources, most shows publish to YouTube, and "
+        "readers can see which claims were verified and which were not. "
+        f"{NETWORK_TAGLINE}"
+    )
+    return {"short": short, "medium": medium, "long": long}
+
 #: One sentence, for the places that have room for one (FAQ answers, cards,
 #: the press kit).
 SPONSOR_POLICY_SUMMARY = (

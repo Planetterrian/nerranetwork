@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our shows.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Nerra Network media kit: 26 free shows, measured audience, guest booking for The Age of AI and Nerra Voices, founder bios, boilerplate and logos.">
     
-    <meta name="keywords" content="Nerra Network press kit, media resources, podcast press, Patrick Novak, Vancouver podcast"><title>Press & Media Kit — Nerra Network</title>
+    <meta name="keywords" content="Nerra Network media kit, press kit, podcast media kit, Mira AI host, book a podcast guest, Patrick Novak"><title>Media Kit — Nerra Network</title>
     <meta name="theme-color" content="#6B47FF"><!-- Open Graph -->
-    <meta property="og:title" content="Press & Media Kit — Nerra Network">
-    <meta property="og:description" content="Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.">
+    <meta property="og:title" content="Media Kit — Nerra Network">
+    <meta property="og:description" content="The Nerra Network media kit: measured audience, how to book a guest with Mira, founder bios, copy-ready boilerplate and brand assets.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://nerranetwork.com/assets/share/pages/press.jpg">
     <meta property="og:image:width" content="1200">
@@ -19,8 +19,8 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Press & Media Kit — Nerra Network">
-    <meta name="twitter:description" content="Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.">
+    <meta name="twitter:title" content="Media Kit — Nerra Network">
+    <meta name="twitter:description" content="The Nerra Network media kit: measured audience, how to book a guest with Mira, founder bios, copy-ready boilerplate and brand assets.">
     <meta name="twitter:image" content="https://nerranetwork.com/assets/share/pages/press.jpg">
     <meta name="twitter:image:alt" content="Press — Press &amp; media kit. Boilerplate, logos, the founder&#39;s contact and every show."><meta name="twitter:site" content="@nerranetwork">
     <meta name="twitter:creator" content="@nerranetwork">
@@ -52,144 +52,123 @@
 
     
     <style>
-        .press-hero {
-            padding: calc(var(--nav-height) + var(--sp-16)) var(--sp-6) var(--sp-10);
-            text-align: center;
+        .mk { max-width: 1040px; margin: 0 auto; padding: 0 var(--sp-6); }
+        .mk-hero { padding: calc(var(--nav-height) + var(--sp-12)) 0 var(--sp-8); }
+        .mk-eyebrow { font-family: var(--font-ui); font-size: .78rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--nn-purple-text); margin: 0 0 var(--sp-3); }
+        .mk-hero h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 6vw, 3.4rem);
+            font-weight: 700; line-height: 1.05; color: var(--nn-white); margin: 0 0 var(--sp-4);
+            letter-spacing: -.02em; }
+        .mk-hero h1 span { background: var(--nn-gradient); -webkit-background-clip: text;
+            background-clip: text; color: transparent; }
+        .mk-lede { font-family: var(--font-body); font-size: 1.15rem; line-height: 1.6;
+            color: var(--nn-text); max-width: 720px; margin: 0 0 var(--sp-5); }
+        .mk-meta { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); margin: 0 0 var(--sp-6); }
+        .mk-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+        .mk-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.2rem;
+            border-radius: 100px; font-family: var(--font-ui); font-weight: 600; font-size: .92rem;
+            text-decoration: none; border: 1px solid var(--nn-border-hover); color: var(--nn-white);
+            background: var(--nn-card); cursor: pointer; }
+        .mk-btn:hover, .mk-btn:focus-visible { border-color: var(--nn-cyan); }
+        .mk-btn-primary { background: var(--nn-gradient); border-color: transparent; color: #fff; }
+        .mk-toc { display: flex; flex-wrap: wrap; gap: .4rem .9rem; padding: var(--sp-4) 0;
+            border-top: 1px solid var(--nn-border); border-bottom: 1px solid var(--nn-border);
+            margin-bottom: var(--sp-6); }
+        .mk-toc a { font-family: var(--font-ui); font-size: .88rem; color: var(--nn-text-muted); text-decoration: none; }
+        .mk-toc a:hover { color: var(--nn-white); }
+        .mk-section { padding: var(--sp-8) 0; border-bottom: 1px solid var(--nn-border); scroll-margin-top: calc(var(--nav-height) + 1rem); }
+        .mk-section:last-of-type { border-bottom: 0; }
+        .mk-section h2 { font-family: var(--font-heading); font-size: clamp(1.5rem, 3.5vw, 2rem);
+            font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-2); }
+        .mk-section h3 { font-family: var(--font-heading); font-size: 1.12rem; font-weight: 600;
+            color: var(--nn-white); margin: var(--sp-6) 0 var(--sp-2); }
+        .mk-section p, .mk-section li { font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; }
+        .mk-section p { margin: 0 0 var(--sp-4); max-width: 760px; }
+        .mk-sub { color: var(--nn-text-muted) !important; font-size: .98rem; }
+        .mk-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin: var(--sp-5) 0; }
+        .mk-stats.four { grid-template-columns: repeat(4, 1fr); }
+        .mk-stat { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
+        .mk-stat-v { font-family: var(--font-heading); font-size: 1.9rem; font-weight: 700; color: var(--nn-white); line-height: 1.1; }
+        .mk-stat-l { font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text-muted); margin-top: .35rem; line-height: 1.4; }
+        .mk-card { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-5); margin-bottom: var(--sp-4); }
+        .mk-facts { display: grid; grid-template-columns: max-content 1fr; gap: .55rem 1.4rem; margin: 0; }
+        .mk-facts dt { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); }
+        .mk-facts dd { margin: 0; font-family: var(--font-body); color: var(--nn-text); }
+        .mk-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: .9rem; }
+        .mk-table th, .mk-table td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--nn-border); color: var(--nn-text); }
+        .mk-table th { color: var(--nn-text-muted); font-weight: 500; font-size: .8rem; }
+        .mk-table td.num, .mk-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .mk-table-wrap { overflow-x: auto; }
+        .mk-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--sp-4); }
+        .mk-bars { list-style: none; padding: 0; margin: 0; }
+        .mk-bars li { display: grid; grid-template-columns: 7.5rem 1fr 2.6rem; align-items: center; gap: .6rem;
+            font-family: var(--font-ui); font-size: .86rem; margin: .4rem 0; }
+        .mk-bar { height: 8px; border-radius: 4px; background: var(--nn-surface); overflow: hidden; }
+        .mk-bar i { display: block; height: 100%; background: var(--nn-gradient); }
+        .mk-show { display: grid; grid-template-columns: 96px 1fr; gap: var(--sp-4); align-items: start; }
+        .mk-show img { width: 96px; height: 96px; border-radius: 12px; object-fit: cover; }
+        .mk-show h3 { margin-top: 0; }
+        .mk-pills { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0 .8rem; padding: 0; list-style: none; }
+        .mk-pills li { font-family: var(--font-ui); font-size: .78rem; padding: .25rem .65rem; border-radius: 100px;
+            border: 1px solid var(--nn-border-hover); color: var(--nn-text); }
+        .mk-guests { columns: 2 220px; column-gap: var(--sp-5); padding-left: 1.1rem; margin: .4rem 0 0; }
+        .mk-guests li { break-inside: avoid; margin: .15rem 0; }
+        .mk-guests small { color: var(--nn-text-muted); font-family: var(--font-ui); }
+        .mk-check { list-style: none; padding: 0; margin: 0; }
+        .mk-check li { padding-left: 1.6rem; position: relative; margin: .45rem 0; }
+        .mk-check li::before { content: "✓"; position: absolute; left: 0; color: var(--nn-cyan); font-weight: 700; }
+        .mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--sp-3); }
+        .mk-tile { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-3);
+            display: flex; gap: var(--sp-3); align-items: center; text-decoration: none; }
+        .mk-tile:hover { border-color: var(--nn-border-hover); }
+        .mk-tile img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .mk-tile b { display: block; font-family: var(--font-heading); font-size: .92rem; color: var(--nn-white); }
+        .mk-tile span { font-family: var(--font-ui); font-size: .76rem; color: var(--nn-text-muted); }
+        .mk-founder { display: grid; grid-template-columns: 64px 1fr; gap: var(--sp-4); }
+        .mk-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--nn-gradient); display: grid; place-items: center;
+            font-family: var(--font-heading); font-weight: 700; color: #fff; font-size: 1.2rem; }
+        .mk-role { font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text-muted); margin: 0 0 .6rem; }
+        .mk-copy { position: relative; }
+        .mk-copy blockquote { margin: 0; font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; }
+        .mk-copy-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .6rem; }
+        .mk-copy-head b { font-family: var(--font-heading); color: var(--nn-white); }
+        .mk-copy-head small { font-family: var(--font-ui); color: var(--nn-text-muted); }
+        .mk-copy-btn { font-family: var(--font-ui); font-size: .78rem; padding: .3rem .8rem; border-radius: 6px;
+            border: 1px solid var(--nn-border-hover); background: var(--nn-surface); color: var(--nn-text); cursor: pointer; }
+        .mk-copy-btn:hover, .mk-copy-btn:focus-visible { border-color: var(--nn-cyan); color: var(--nn-white); }
+        .mk-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); }
+        .mk-logo { border: 1px solid var(--nn-border); border-radius: 12px; overflow: hidden; }
+        .mk-logo-art { height: 120px; display: grid; place-items: center; padding: 1rem; background: #0B0F1A; }
+        .mk-logo-art.light { background: #F5F6FA; }
+        .mk-logo-art img { width: 100%; height: 80px; object-fit: contain; }
+        .mk-logo-cap { padding: .7rem .9rem; font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text);
+            display: flex; justify-content: space-between; gap: .5rem; }
+        .mk-swatches { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-3) 0; padding: 0; list-style: none; }
+        .mk-swatches li { display: flex; align-items: center; gap: .6rem; font-family: var(--font-ui); font-size: .85rem; color: var(--nn-text); }
+        .mk-swatches i { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--nn-border-hover); display: block; }
+        .mk-art { width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--nn-border); display: block; }
+        .mk-faq dt { font-family: var(--font-heading); font-weight: 600; color: var(--nn-white); margin-top: var(--sp-4); }
+        .mk-faq dd { margin: .35rem 0 0; font-family: var(--font-body); color: var(--nn-text); line-height: 1.6; max-width: 760px; }
+        @media (max-width: 640px) {
+            .mk { padding: 0 16px; }
+            .mk-stats, .mk-stats.four { grid-template-columns: repeat(2, 1fr); }
+            .mk-stat-v { font-size: 1.5rem; }
+            .mk-facts { grid-template-columns: 1fr; gap: .1rem; }
+            .mk-facts dd { margin-bottom: .6rem; }
+            .mk-show { grid-template-columns: 64px 1fr; }
+            .mk-show img { width: 64px; height: 64px; }
+            .mk-bars li { grid-template-columns: 6rem 1fr 2.4rem; }
         }
-        .press-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(2rem, 5vw, 2.8rem);
-            font-weight: 700;
-            color: var(--nn-white);
-            margin: 0 0 var(--sp-3);
-        }
-        .press-hero p {
-            font-family: var(--font-body);
-            font-size: 1.1rem;
-            color: var(--nn-text-muted);
-            max-width: 620px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        .press-section {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: var(--sp-8) var(--sp-6);
-        }
-        .press-section h2 {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--nn-white);
-            margin: 0 0 var(--sp-3);
-        }
-        .press-section h3 {
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--nn-white);
-            margin: var(--sp-6) 0 var(--sp-2);
-        }
-        .press-section p {
-            font-family: var(--font-body);
-            color: var(--nn-text);
-            line-height: 1.7;
-            margin: 0 0 var(--sp-4);
-        }
-        .press-card {
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 14px;
-            padding: var(--sp-5);
-            margin-bottom: var(--sp-4);
-        }
-        .press-card pre {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: var(--sp-4);
-            overflow-x: auto;
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            font-size: 0.85rem;
-            color: var(--nn-text);
-            line-height: 1.55;
-            white-space: pre-wrap;
-            margin: 0;
-        }
-        .press-show-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: var(--sp-3);
-            margin: var(--sp-4) 0;
-        }
-        .press-show-tile {
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 12px;
-            padding: var(--sp-3);
-            display: flex;
-            align-items: center;
-            gap: var(--sp-3);
-        }
-        .press-show-tile img {
-            width: 56px;
-            height: 56px;
-            border-radius: 8px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        .press-show-tile-info {
-            min-width: 0;
-        }
-        .press-show-tile-name {
-            font-family: var(--font-heading);
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--nn-white);
-            margin-bottom: 2px;
-        }
-        .press-show-tile-desc {
-            font-family: var(--font-ui);
-            font-size: 0.75rem;
-            color: var(--nn-text-muted);
-        }
-        .press-contact-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--sp-3);
-            margin: var(--sp-4) 0;
-        }
-        .press-contact-row a {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--sp-2);
-            padding: var(--sp-3) var(--sp-5);
-            background: var(--nn-card);
-            border: 1px solid var(--nn-border);
-            border-radius: 100px;
-            color: var(--nn-text);
-            text-decoration: none;
-            font-family: var(--font-ui);
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        .press-contact-row a:hover {
-            border-color: var(--nn-purple);
-            color: var(--nn-white);
-        }
-        .copy-btn {
-            background: var(--nn-surface);
-            border: 1px solid var(--nn-border);
-            color: var(--nn-text-muted);
-            padding: var(--sp-1) var(--sp-3);
-            border-radius: 6px;
-            font-family: var(--font-ui);
-            font-size: 0.75rem;
-            cursor: pointer;
-            margin-top: var(--sp-2);
-        }
-        .copy-btn:hover {
-            border-color: var(--nn-purple);
-            color: var(--nn-white);
+        @media print {
+            .nn-nav, nav, footer, .mk-actions, .mk-toc, .mk-copy-btn, .mobile-menu { display: none !important; }
+            body, .page-main { background: #fff !important; }
+            .mk-hero { padding-top: 0; }
+            .mk-section, .mk-card, .mk-stat, .mk-tile { break-inside: avoid; }
+            .mk h1, .mk h2, .mk h3, .mk p, .mk li, .mk dd, .mk dt, .mk td, .mk th, .mk-stat-v, .mk-tile b,
+            .mk blockquote, .mk-copy-head b { color: #111 !important; }
+            .mk-hero h1 span { color: #4B2FD6 !important; background: none; }
+            .mk-card, .mk-stat, .mk-tile, .mk-logo { border-color: #ccc !important; background: #fff !important; }
+            .mk a { color: #2A1FA8 !important; }
         }
     </style>
 
@@ -895,483 +874,618 @@
 
     <main id="main-content">
     
+<div class="page-main">
+<div class="mk">
 
-    <div class="page-main">
-        <section class="press-hero">
-            <h1>Press &amp; Media Kit</h1>
-            <p>Resources for journalists, podcast apps, and partners covering Nerra Network.
-            Everything below is free to use without permission — just link back to
-            <a href="https://nerranetwork.com">nerranetwork.com</a>.</p>
-        </section>
+    <header class="mk-hero">
+        <p class="mk-eyebrow">Media kit</p>
+        <h1>Nerra Network. <span>Feed your curiosity, not your anxiety.</span></h1>
+        <p class="mk-lede">Free news and ideas on space, AI, markets, world news, science and more. Every story is sourced, every claim is checked against its source, and you can read the article or hear the episode it came from.</p>
+        <p class="mk-meta">Figures measured as of 2026-10-20 and refreshed nightly. Free to use in coverage with a link to <a href="https://nerranetwork.com">nerranetwork.com</a>.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="#book-a-guest">Book a guest</a>
+            <a class="mk-btn" href="assets/press/nerra-network-brand-assets.zip" download>Download logos (.zip)</a>
+            <button type="button" class="mk-btn" data-mk-print>Save as PDF</button>
+            <a class="mk-btn" href="mailto:hello@nerranetwork.com?subject=Media%20enquiry">Email the network</a>
+        </div>
+    </header>
 
-        <section class="press-section">
-            <h2>At a glance</h2>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    <li><strong>Name:</strong> Nerra Network</li>
-                    <li><strong>Founded:</strong> 2024, Vancouver, Canada</li>
-                    <li><strong>Founder:</strong> Patrick Novak</li>
-                    <li><strong>Shows:</strong> 26 free (incl. Nerra Daily, the combined daily edition), plus 5 for Nerra Personal members</li>
-                    <li><strong>Episodes:</strong> 2,613 shipped</li>
-                    <li><strong>Languages:</strong> English, Français, Русский, 中文 (two shows produced natively in Russian)</li>
-                    <li><strong>Cadence:</strong> Most shows daily; others weekly or when an interview is ready (each show page lists its schedule)</li>
-                    <li><strong>Production:</strong> AI-written and AI-narrated from curated sources, human-owned editorial standards (<a href="ai-disclosure.html" style="color:var(--nn-cyan);">AI disclosure</a>)</li>
-                    <li><strong>Funding:</strong> Independent; listener memberships (Nerra Personal), donations and labelled sponsorships (<a href="sponsor.html" style="color:var(--nn-cyan);">sponsor policy</a>)</li>
-                    <li><strong>Website:</strong> <a href="https://nerranetwork.com" style="color:var(--nn-cyan);">nerranetwork.com</a></li>
+    <nav class="mk-toc" aria-label="On this page">
+        <a href="#at-a-glance">At a glance</a>
+        <a href="#audience">Audience</a>
+        <a href="#book-a-guest">Book a guest</a>
+        <a href="#mira">Mira</a>
+        <a href="#shows">Shows</a>
+        <a href="#trust">Trust record</a>
+        <a href="#founders">Founders</a>
+        <a href="#boilerplate">Boilerplate</a>
+        <a href="#brand">Brand assets</a>
+        <a href="#questions">Questions</a>
+        <a href="#contact">Contact</a>
+    </nav>
+
+    <section class="mk-section" id="at-a-glance">
+        <h2>At a glance</h2>
+        <div class="mk-stats">
+            <div class="mk-stat"><div class="mk-stat-v">26</div><div class="mk-stat-l">free shows, plus 5 regional desks for members</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">2,630</div><div class="mk-stat-l">episodes published</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">12,565</div><div class="mk-stat-l">podcast downloads in the last 30 days</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">450,972</div><div class="mk-stat-l">YouTube views across three channels</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">3</div><div class="mk-stat-l">languages: English, French, Russian</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">5,130</div><div class="mk-stat-l">claims checked against their sources in 30 days</div></div>
+        </div>
+        <div class="mk-card">
+            <dl class="mk-facts">
+                <dt>Founded</dt><dd>2024, Vancouver, Canada</dd>
+                <dt>Founders</dt><dd>Patrick Novak and Dan Perra</dd>
+                <dt>Flagships</dt><dd><a href="tesla.html">Tesla Shorts Time</a> and <a href="spacex.html">SpaceX Daily</a>, every day</dd>
+                <dt>Daily edition</dt><dd><a href="nerra-daily.html">Nerra Daily</a>, the morning's shows in one episode by 7 a.m. Eastern, anchored by Mira</dd>
+                <dt>Interview shows</dt><dd><a href="age-of-ai.html">The Age of AI</a> and <a href="nerra-voices.html">Nerra Voices</a>, hosted live by Mira, the network's AI host</dd>
+                <dt>How it is made</dt><dd>Written and voiced with AI from sources the pipeline fetches, under editorial rules people set; every claim checked against its source (<a href="ai-disclosure.html">AI disclosure</a>)</dd>
+                <dt>Business model</dt><dd>Every episode is free. Sponsors may support the shows; a sponsored message is always labelled as one, and no sponsor chooses, reviews or changes what a show covers. Members can subscribe to a personal daily feed (<a href="join.html">Nerra Personal</a>).</dd>
+                <dt>Where to listen</dt><dd>Any podcast app, YouTube, and as a written article at <a href="https://nerranetwork.com">nerranetwork.com</a> (<a href="how-to-listen.html">every feed</a>)</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="mk-section" id="audience">
+        <h2>Audience</h2>
+        <p class="mk-sub">Measured, never estimated. Podcast downloads come from OP3, the open podcast analytics service; YouTube figures from YouTube Analytics. A dash means a figure is not measured yet.</p>
+        <div class="mk-stats four">
+            <div class="mk-stat"><div class="mk-stat-v">4,032</div><div class="mk-stat-l">downloads in the last complete week (+40% on the week before)</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">852</div><div class="mk-stat-l">YouTube subscribers</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">61,071</div><div class="mk-stat-l">YouTube views on videos published in the last 28 days</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">69%</div><div class="mk-stat-l">of each Short watched, on average</div></div>
+            
+        </div>
+
+        
+        <h3>Most downloaded shows, last 30 days</h3>
+        <div class="mk-card mk-table-wrap">
+            <table class="mk-table">
+                <thead><tr><th>Show</th><th class="num">Podcast downloads</th><th class="num">YouTube views, 28 days</th></tr></thead>
+                <tbody>
+                
+                    <tr><td><a href="spacex.html">SpaceX Daily</a></td><td class="num">4,465</td><td class="num">15,285</td></tr>
+                
+                    <tr><td><a href="tesla.html">Tesla Shorts Time</a></td><td class="num">1,664</td><td class="num">11,903</td></tr>
+                
+                    <tr><td><a href="models-agents.html">Models & Agents</a></td><td class="num">1,128</td><td class="num">4,190</td></tr>
+                
+                    <tr><td><a href="models-agents-beginners.html">Models & Agents for Beginners</a></td><td class="num">727</td><td class="num">2,525</td></tr>
+                
+                    <tr><td><a href="planetterrian.html">Planetterrian Daily</a></td><td class="num">695</td><td class="num">239</td></tr>
+                
+                    <tr><td><a href="fascinating-frontiers.html">Fascinating Frontiers</a></td><td class="num">562</td><td class="num">23,711</td></tr>
+                
+                    <tr><td><a href="omni-view.html">Omni View</a></td><td class="num">550</td><td class="num">1,213</td></tr>
+                
+                    <tr><td><a href="modern-investing.html">Modern Investing Techniques</a></td><td class="num">518</td><td class="num">782</td></tr>
+                
+                    <tr><td><a href="first-principles.html">First Principles Daily</a></td><td class="num">449</td><td class="num">981</td></tr>
+                
+                    <tr><td><a href="nerra-daily.html">Nerra Daily</a></td><td class="num">374</td><td class="num">—</td></tr>
+                
+                </tbody>
+            </table>
+        </div>
+        
+
+        <div class="mk-two">
+            
+            <div class="mk-card">
+                <h3 style="margin-top:0">YouTube channels</h3>
+                <table class="mk-table">
+                    <thead><tr><th>Channel</th><th class="num">Subscribers</th><th class="num">Views</th></tr></thead>
+                    <tbody>
+                    
+                        <tr><td><a href="https://www.youtube.com/@NerraNetwork" rel="noopener">@NerraNetwork</a> <small style="color:var(--nn-text-muted)">English</small></td><td class="num">530</td><td class="num">194,076</td></tr>
+                    
+                        <tr><td><a href="https://www.youtube.com/@NerraRU" rel="noopener">@NerraRU</a> <small style="color:var(--nn-text-muted)">Russian</small></td><td class="num">249</td><td class="num">228,936</td></tr>
+                    
+                        <tr><td><a href="https://www.youtube.com/@NerraFR" rel="noopener">@NerraFR</a> <small style="color:var(--nn-text-muted)">French</small></td><td class="num">73</td><td class="num">27,960</td></tr>
+                    
+                    </tbody>
+                </table>
+            </div>
+            
+            
+            <div class="mk-card">
+                <h3 style="margin-top:0">Who watches</h3>
+                <p class="mk-sub" style="margin-bottom:.6rem">English channel, last 28 days: 84% are aged 35 or over. YouTube reports age for signed-in viewers only.</p>
+                <ul class="mk-bars">
+                
+                    <li><span>Age 25-34</span><span class="mk-bar"><i style="width:64%"></i></span><span>16%</span></li>
+                
+                    <li><span>Age 35-44</span><span class="mk-bar"><i style="width:96%"></i></span><span>24%</span></li>
+                
+                    <li><span>Age 45-54</span><span class="mk-bar"><i style="width:100%"></i></span><span>25%</span></li>
+                
+                    <li><span>Age 55-64</span><span class="mk-bar"><i style="width:76%"></i></span><span>19%</span></li>
+                
+                    <li><span>Age 65+</span><span class="mk-bar"><i style="width:64%"></i></span><span>16%</span></li>
+                
                 </ul>
             </div>
-        </section>
-
-        <section class="press-section">
-            <h2>Boilerplate</h2>
-            <p>Copy-paste for articles, press releases, and podcast directories.</p>
-
-            <h3>Short (25 words)</h3>
-            <div class="press-card">
-                <pre id="boilerplate-short">Nerra Network is an independent podcast network producing free daily shows on AI, Tesla, investing, space, science, and environmental policy from Vancouver.</pre>
-                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('boilerplate-short').textContent);this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+            
+            
+            <div class="mk-card">
+                <h3 style="margin-top:0">Where they are</h3>
+                
+                <p style="margin:0 0 .6rem"><b>@NerraNetwork:</b> United States 46%, South Korea 16%, India 9%, Germany 8%, Canada 6%</p>
+                
+                <p style="margin:0 0 .6rem"><b>@NerraRU:</b> Russia 42%, Ukraine 18%, Kazakhstan 11%, Uzbekistan 8%, Belarus 5%</p>
+                
+                <p style="margin:0 0 .6rem"><b>@NerraFR:</b> France 87%, Indonesia 9%, Canada 2%, Belgium 1%, Switzerland 1%</p>
+                
+                <p style="margin:0"><b>Website:</b> United States, India, Singapore, Canada, China</p>
             </div>
+            
+        </div>
+    </section>
 
-            <h3>Medium (60 words)</h3>
-            <div class="press-card">
-                <pre id="boilerplate-medium">Nerra Network is an independent podcast network based in Vancouver, Canada, producing free daily shows covering AI, Tesla, SpaceX, investing, space and science, world news, environmental policy, and language learning, plus Nerra Daily, a combined edition of the whole network. Founded in 2024 by Patrick Novak, the shows are written and narrated with AI from curated sources under human editorial standards, and are designed to help curious people stay informed without algorithmic outrage or clickbait.</pre>
-                <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('boilerplate-medium').textContent);this.textContent='Copied ✓';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+    <section class="mk-section" id="book-a-guest">
+        <h2>Book a guest</h2>
+        <p>The network's two interview shows are hosted by Mira, an AI, in a live and unscripted conversation of about 45 minutes. Every episode says plainly that the host is an AI, and every guest decides whether their conversation is published.</p>
+        
+        <div class="mk-card mk-show">
+            <img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="96" height="96" loading="lazy">
+            <div>
+                <h3>The Age of AI</h3>
+                <p style="margin-bottom:.4rem">The interview show where the roles are reversed: Mira, an AI, interviews real people and asks the questions — live, on the record.</p>
+                <ul class="mk-pills">
+                    <li>~45 min</li>
+                    <li>12 episodes published</li>
+                    <li>Live, unscripted</li>
+                    <li>No fee either way</li>
+                </ul>
+                <p class="mk-sub" style="margin:.2rem 0 .2rem"><b>Where the episode goes</b></p>
+                <ul class="mk-check" style="margin-bottom:.6rem"><li>An episode page on nerranetwork.com with the full transcript</li><li>Every podcast app, through the show's public feed</li><li>Apple Podcasts</li><li>Spotify</li><li>YouTube, as a full-length video</li><li>The show's email newsletter</li></ul>
+                
+                <p class="mk-sub" style="margin:.6rem 0 0"><b>Recent guests</b></p>
+                <ul class="mk-guests">
+                
+                    <li><a href="blog/age_of_ai/ep012.html">Thor Hesselberg</a></li>
+                
+                    <li><a href="blog/age_of_ai/ep011.html">Jason Fishman</a></li>
+                
+                    <li><a href="blog/age_of_ai/ep010.html">Roddy de la Garza</a> <small>· Broker /Author / Area Leader, Roddy de la Garza Real Estate Group @ EPIQUE</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep009.html">Sheldon Poon</a> <small>· CEO Drive Marketing, Drive Marketing</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep008.html">Sameer Ranjan</a> <small>· Co-Founder & CTO, Catenate</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep007.html">Vincent Rylan</a> <small>· Author, Memoirs of the End</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep006.html">Matt Davis</a> <small>· Co-founder, Critical Propulsion</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep005.html">John Capobianco</a> <small>· Head of AI and DevRel, Itential</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep004.html">Hogan Shrum</a> <small>· Co-Founder, PIPPA</small></li>
+                
+                    <li><a href="blog/age_of_ai/ep003.html">Adrian Wolfberg</a> <small>· Founder and CEO, Organizational Insight Consulting LLC</small></li>
+                
+                </ul>
+                
+                <div class="mk-actions" style="margin-top:var(--sp-4)">
+                    <a class="mk-btn mk-btn-primary" href="https://cal.com/patrick-novak-lkcqo4/age-of-ai-interview" rel="noopener">Pick a time for The Age of AI</a>
+                    <a class="mk-btn" href="age-of-ai-apply.html">Apply with background</a>
+                    <a class="mk-btn" href="age-of-ai.html">Hear past episodes</a>
+                </div>
             </div>
-        </section>
+        </div>
+        
+        <div class="mk-card mk-show">
+            <img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="96" height="96" loading="lazy">
+            <div>
+                <h3>Nerra Voices</h3>
+                <p style="margin-bottom:.4rem">Real people on the work they've chosen, interviewed live by Mira, the Nerra Network's AI host. No AI angle required.</p>
+                <ul class="mk-pills">
+                    <li>~45 min</li>
+                    <li>3 episodes published</li>
+                    <li>Live, unscripted</li>
+                    <li>No fee either way</li>
+                </ul>
+                <p class="mk-sub" style="margin:.2rem 0 .2rem"><b>Where the episode goes</b></p>
+                <ul class="mk-check" style="margin-bottom:.6rem"><li>An episode page on nerranetwork.com with the full transcript</li><li>Every podcast app, through the show's public feed</li></ul>
+                
+                <p class="mk-sub" style="margin:.6rem 0 0"><b>Recent guests</b></p>
+                <ul class="mk-guests">
+                
+                    <li><a href="blog/nerra_voices/ep003.html">Scott Pulcini</a> <small>· Futures trader</small></li>
+                
+                    <li><a href="blog/nerra_voices/ep002.html">Dr. Michael Brandt</a> <small>· Facial plastic and reconstructive surgeon at FORM Face + Body, Toronto</small></li>
+                
+                    <li><a href="blog/nerra_voices/ep001.html">Viktor Popovic</a> <small>· Founder, President, Avendo</small></li>
+                
+                </ul>
+                
+                <div class="mk-actions" style="margin-top:var(--sp-4)">
+                    <a class="mk-btn mk-btn-primary" href="https://cal.com/patrick-novak-lkcqo4/nerra-voices-interview" rel="noopener">Pick a time for Nerra Voices</a>
+                    <a class="mk-btn" href="nerra-voices-apply.html">Apply with background</a>
+                    <a class="mk-btn" href="nerra-voices.html">Hear past episodes</a>
+                </div>
+            </div>
+        </div>
+        
 
-        <section class="press-section">
-            <h2>Mira, the AI host</h2>
-            <p>Mira is the Nerra Network's AI host: she anchors the daily combined edition, conducts the network's interviews herself with real people on the record, and reads the personalised editions subscribers build.</p>
-            <div class="nn-mira-claim ">
+        <div class="mk-two">
+            <div class="mk-card">
+                <h3 style="margin-top:0">What the guest does</h3>
+                <ul class="mk-check">
+                    <li>Books a time with their own email address, so the prep brief and studio link reach them directly.</li>
+                    <li>Joins from a computer browser with headphones. There is nothing to install.</li>
+                    <li>Sends up to five points they want covered; Mira reaches every one.</li>
+                    <li>Gets a short prep brief the day before, with what Mira is curious about.</li>
+                </ul>
+            </div>
+            <div class="mk-card">
+                <h3 style="margin-top:0">What the guest keeps</h3>
+                <ul class="mk-check">
+                    <li>Their own transcript before anything is assembled, with a week to approve it, cut from it or refuse it. What they cut is removed from the audio, not bleeped.</li>
+                    <li>A takedown, available after publication.</li>
+                    <li>A human editor reviews every episode before release.</li>
+                    <li>On publish day: the link, a short moment from the conversation and a share image.</li>
+                </ul>
+            </div>
+        </div>
+        <h3>How an interview runs</h3>
+        <ol class="mira-steps mira-steps--compact ">
+  <li>
+    <h3>You apply</h3>
+    <p>A short form: who you are and what you would talk about. No media training, no pitch deck, no AI angle required.</p>
+  </li>
+  <li>
+    <h3>A human reads it</h3>
+    <p>Patrick triages every application himself. This is the step that decides whether an interview happens.</p>
+  </li>
+  <li>
+    <h3>You talk to Mira</h3>
+    <p>Open the studio link, pick a microphone, join — or take a call on your phone if you would rather. Mira hears you and answers in real time. It is a conversation, not a questionnaire, and it runs under an hour.</p>
+  </li>
+  <li>
+    <h3>A human edits it</h3>
+    <p>Patrick reviews the episode before anything is assembled. This gate has no timer: nothing publishes because a review was slow.</p>
+  </li>
+  <li>
+    <h3>You approve your transcript</h3>
+    <p>You read what you said, and you have a week to approve it, cut anything from it, or refuse it. What you cut is removed from the audio before the episode is built — not bleeped, cut. After seven days without a reply the episode goes ahead as sent, and you can ask for a takedown at any time.</p>
+  </li>
+</ol>
+    </section>
+
+    <section class="mk-section" id="mira">
+        <h2>Mira, the AI host</h2>
+        <p>Mira is the Nerra Network's AI host: she anchors the daily combined edition, conducts the network's interviews herself with real people on the record, and reads the personalised editions subscribers build.</p>
+        <div class="nn-mira-claim ">
   <p class="nn-mira-claim__claim"><strong>The Age of AI and Nerra Voices are the first interview shows of their kind: an AI asks the questions, and the human guest decides whether the conversation is published at all.</strong></p>
   <p class="nn-mira-claim__basis">What is unusual is not that the host is an AI — it is the terms. Mira holds a live, unscripted conversation rather than reading a script at a recording. She discloses on air that the host is a machine. A human editor reviews every episode before release, and that review has no timer that expires into publication. And the guest gets their own transcript before anything is assembled, with a week to approve it, cut anything from it, or refuse it outright: what they cut is removed from the audio, not bleeped, and a takedown stays available after publication. Plenty of shows use AI to write, narrate or edit, and some now let it interview. We have not found another that hands the guest the final say.</p>
   <p class="nn-mira-claim__footnote"><em>If you know of an interview show that was already doing this, we would genuinely like to hear about it — write to hello@nerranetwork.com and this page will say so.</em></p>
 </div>
-            <p>One host across three jobs: a daily edition that carries every English show the network published that day, two interview shows, and a personalised feed that greets each subscriber by name.</p>
-            <h3>Published so far</h3>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    
-                    <li>
-                        <strong>Nerra Daily</strong> — 30 episodes,
-                        daily, 7am Eastern.
-                        <a href="nerra-daily.html">nerra-daily.html</a>
-                    </li>
-                    
-                    <li>
-                        <strong>The Age of AI</strong> — 12 episodes,
-                        when an interview is ready.
-                        <a href="age-of-ai.html">age-of-ai.html</a>
-                    </li>
-                    
-                    <li>
-                        <strong>Nerra Voices</strong> — 3 episodes,
-                        when an interview is ready.
-                        <a href="nerra-voices.html">nerra-voices.html</a>
-                    </li>
-                    
-                </ul>
-            </div>
-            <p style="margin-top:1rem;">
-                Guests so far include Dan Perra and Adrian Wolfberg of the
-                Defense Intelligence Agency's Knowledge Lab. Interview requests,
-                guest suggestions and questions about the consent terms:
-                <a href="mira.html">the Mira page</a> sets out
-                the full process, including the two points where a human
-                decides something.
-            </p>
-        </section>
+        <p>One host across three jobs: a daily edition that carries every English show the network published that day, two interview shows, and a personalised feed that greets each subscriber by name.</p>
+        <div class="mk-grid" style="margin-bottom:var(--sp-4)">
+            
+            <a class="mk-tile" href="nerra-daily.html">
+                <img src="assets/covers/nerra-daily.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Nerra Daily</b><span>30 episodes · Daily, 7am Eastern</span></div>
+            </a>
+            
+            <a class="mk-tile" href="age-of-ai.html">
+                <img src="assets/covers/age-of-ai.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>The Age of AI</b><span>12 episodes · When an interview is ready</span></div>
+            </a>
+            
+            <a class="mk-tile" href="nerra-voices.html">
+                <img src="assets/covers/nerra-voices.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Nerra Voices</b><span>3 episodes · When an interview is ready</span></div>
+            </a>
+            
+        </div>
+        <p>The full process, including the two points where a human decides something, is on <a href="mira.html">the Mira page</a>.</p>
+    </section>
 
-        <section class="press-section">
-            <h2>Shows</h2>
-            <p>Most shows publish daily; the rest run on a fixed weekly or alternating-day cadence, and The Age of AI publishes when an interview is ready. Cover art and feeds available below.</p>
-            <div class="press-show-grid">
+    <section class="mk-section" id="shows">
+        <h2>The shows</h2>
+        <p class="mk-sub">26 free shows. Most publish daily; the rest weekly or when an interview is ready. Each show page lists its schedule, feeds and cover art.</p>
+        <div class="mk-grid">
+            
+            <a class="mk-tile" href="tesla.html">
+                <img src="assets/covers/tesla-shorts-time.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Tesla Shorts Time</b><span>Daily · ~15 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="spacex.html">
+                <img src="assets/covers/spacex.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>SpaceX Daily</b><span>Daily · ~11-14 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="nerra-daily.html">
+                <img src="assets/covers/nerra-daily.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Nerra Daily</b><span>Daily, 7am Eastern · ~2 hours</span></div>
+            </a>
+            
+            <a class="mk-tile" href="models-agents.html">
+                <img src="assets/covers/models-agents.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Models & Agents</b><span>Daily · ~10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="ai-chips.html">
+                <img src="assets/covers/ai-chips.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>AI Chips & Data Centres Daily</b><span>Daily · ~10-12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="planetterrian.html">
+                <img src="assets/covers/planetterrian-daily.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Planetterrian Daily</b><span>Daily · ~15 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="peptides.html">
+                <img src="assets/covers/peptides.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Peptides Weekly</b><span>Weekly (Thursday) · ~10-12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="longevity.html">
+                <img src="assets/covers/longevity.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Longevity Weekly</b><span>Weekly (Wednesday) · ~10-12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="omni-view.html">
+                <img src="assets/covers/omni-view.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Omni View</b><span>Daily · ~12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="omni-view-world.html">
+                <img src="assets/covers/omni-view-world.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Omni View Top World News</b><span>Daily · ~11-13 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="vancouver.html">
+                <img src="assets/covers/vancouver.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Vancouver Daily News</b><span>Daily · ~8-9 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="collingwood.html">
+                <img src="assets/covers/collingwood.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Collingwood Weekly</b><span>Weekly (Friday) · ~9-10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="models-agents-beginners.html">
+                <img src="assets/covers/models-agents-beginners.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Models & Agents for Beginners</b><span>Daily · ~10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="fascinating-frontiers.html">
+                <img src="assets/covers/fascinating-frontiers.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Fascinating Frontiers</b><span>Daily · ~15 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="modern-investing.html">
+                <img src="assets/covers/modern-investing.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Modern Investing Techniques</b><span>Daily · ~12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="mag7.html">
+                <img src="assets/covers/mag7.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>MAG 7 Daily</b><span>Daily · ~9-11 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="prediction-markets.html">
+                <img src="assets/covers/prediction-markets.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Prediction Markets Daily</b><span>Daily · ~8-10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="env-intel.html">
+                <img src="assets/covers/environmental-intelligence.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Environmental Intelligence</b><span>Weekly — Mondays · ~10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="ru/finansy-prosto.html">
+                <img src="assets/covers/finansy-prosto.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Финансы Просто</b><span>Weekly — Mondays · ~12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="ru/privet-russian.html">
+                <img src="assets/covers/privet-russian.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Привет, Русский!</b><span>Weekly — Mondays · ~10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="unintended-consequences.html">
+                <img src="assets/covers/unintended-consequences.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Unintended Consequences</b><span>Daily · ~15-18 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="first-principles.html">
+                <img src="assets/covers/first-principles-daily.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>First Principles Daily</b><span>Daily · ~10-12 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="thedppod.html">
+                <img src="assets/covers/dp-pod.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>The DP Pod: The Do Positive Podcast</b><span>Weekly — Mondays · ~10 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="age-of-ai.html">
+                <img src="assets/covers/age-of-ai.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>The Age of AI</b><span>When an interview is ready · ~45 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="nerra-voices.html">
+                <img src="assets/covers/nerra-voices.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Nerra Voices</b><span>When an interview is ready · ~45 min</span></div>
+            </a>
+            
+            <a class="mk-tile" href="offshore-north.html">
+                <img src="assets/covers/offshore-north.jpg" alt="" width="52" height="52" loading="lazy">
+                <div><b>Offshore North</b><span>Weekly — Mondays · ~12 min</span></div>
+            </a>
+            
+        </div>
+        
+        <h3>Books</h3>
+        <p>The narrative shows are collected into books by Patrick Novak, as ebooks and audiobooks:</p>
+        <ul>
+        
+            <li><a href="https://books2read.com/u/bWVVnq" rel="noopener"><i>First Principles, Volume 1</i></a>: Fifty-eight teardowns of what things really cost — and what they could</li>
+        
+            <li><a href="https://books2read.com/u/mBDDaR" rel="noopener"><i>Unintended Consequences, Volume 1</i></a>: Seventy-three true stories of good intentions gone spectacularly wrong</li>
+        
+        </ul>
+        
+    </section>
+
+    <section class="mk-section" id="trust">
+        <h2>Trust record</h2>
+        
+        <div class="mk-stats">
+            <div class="mk-stat"><div class="mk-stat-v">5,130</div><div class="mk-stat-l">claims checked in the last 30 days, across 607 episodes</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">95%</div><div class="mk-stat-l">verified against their sources</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">12</div><div class="mk-stat-l">corrections published in the same window</div></div>
+        </div>
+        
+        <p>Every factual claim an episode makes is recorded with its source and checked against that source's text. A claim that cannot be verified is published with a public flag rather than hidden, and the whole record is open on the <a href="claims.html">claims and corrections ledger</a>. Corrections are dated on the episode's page and named in the next episode's show notes; audio is never edited silently.</p>
+        <p><a href="editorial.html">Editorial standards</a> · <a href="ai-disclosure.html">AI disclosure</a> · <a href="sponsor.html">Sponsor policy</a></p>
+    </section>
+
+    <section class="mk-section" id="founders">
+        <h2>Founders</h2>
+        <p class="mk-sub">The name is theirs: Novak plus Perra.</p>
+        
+        <div class="mk-card mk-founder">
+            <div class="mk-avatar" aria-hidden="true">PN</div>
+            <div>
+                <h3 style="margin:0">Patrick Novak</h3>
+                <p class="mk-role">Co-founder and producer</p>
+                <p style="margin-bottom:.6rem">Patrick Novak is a Vancouver-based entrepreneur, a physical chemist by training and a published science fiction novelist. He started Nerra Network in 2024, after a daily Tesla podcast he relied on stopped publishing, by rebuilding it as an automated show. He designs the production pipeline, writes the editorial rules the AI works under, and built Mira, the network's AI host. He co-hosts The DP Pod.</p>
                 
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/nerra-daily-400.webp">
-                        <img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Nerra Daily</div>
-                        <div class="press-show-tile-desc">Every show. One daily listen.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/models-agents-400.webp">
-                        <img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Models & Agents</div>
-                        <div class="press-show-tile-desc">Daily AI models, agents, and practical developments.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/ai-chips-400.webp">
-                        <img src="assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">AI Chips & Data Centres Daily</div>
-                        <div class="press-show-tile-desc">The silicon, the buildings and the power behind AI.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp">
-                        <img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Planetterrian Daily</div>
-                        <div class="press-show-tile-desc">Science, longevity, and the frontier of human health.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/peptides-400.webp">
-                        <img src="assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Peptides Weekly</div>
-                        <div class="press-show-tile-desc">Peptides, with the evidence read carefully.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/longevity-400.webp">
-                        <img src="assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Longevity Weekly</div>
-                        <div class="press-show-tile-desc">The science of aging, read carefully.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-400.webp">
-                        <img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View</div>
-                        <div class="press-show-tile-desc">See every side. Decide for yourself.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-world-400.webp">
-                        <img src="assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View Top World News</div>
-                        <div class="press-show-tile-desc">The ten stories that matter most today, anywhere.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-north-america-400.webp">
-                        <img src="assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View North America</div>
-                        <div class="press-show-tile-desc">North America, one region deep, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-europe-400.webp">
-                        <img src="assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View Europe</div>
-                        <div class="press-show-tile-desc">Europe, one region deep, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-asia-pacific-400.webp">
-                        <img src="assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View Asia Pacific</div>
-                        <div class="press-show-tile-desc">Asia Pacific, one region deep, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-africa-mideast-400.webp">
-                        <img src="assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View Africa & Middle East</div>
-                        <div class="press-show-tile-desc">Africa and the Middle East, one region deep, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-latam-400.webp">
-                        <img src="assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Omni View Central & South America</div>
-                        <div class="press-show-tile-desc">Central and South America, one region deep, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/vancouver-400.webp">
-                        <img src="assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Vancouver Daily News</div>
-                        <div class="press-show-tile-desc">The morning brief for Metro Vancouver.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/collingwood-400.webp">
-                        <img src="assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Collingwood Weekly</div>
-                        <div class="press-show-tile-desc">The week around the south Georgian Bay.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp">
-                        <img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Models & Agents for Beginners</div>
-                        <div class="press-show-tile-desc">AI explained simply — for beginners and teens.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp">
-                        <img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Fascinating Frontiers</div>
-                        <div class="press-show-tile-desc">Journey to the stars with today's discoveries.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/modern-investing-400.webp">
-                        <img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Modern Investing Techniques</div>
-                        <div class="press-show-tile-desc">AI-Powered Market Intelligence</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/mag7-400.webp">
-                        <img src="assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">MAG 7 Daily</div>
-                        <div class="press-show-tile-desc">Seven companies, one daily desk.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/prediction-markets-400.webp">
-                        <img src="assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Prediction Markets Daily</div>
-                        <div class="press-show-tile-desc">Where forecasting meets the market.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp">
-                        <img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Tesla Shorts Time</div>
-                        <div class="press-show-tile-desc">Shorting Tesla? Time's Up.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/spacex-400.webp">
-                        <img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">SpaceX Daily</div>
-                        <div class="press-show-tile-desc">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp">
-                        <img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Environmental Intelligence</div>
-                        <div class="press-show-tile-desc">Environmental regulatory and compliance briefing.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp">
-                        <img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Финансы Просто</div>
-                        <div class="press-show-tile-desc">Finances Made Simple.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/privet-russian-400.webp">
-                        <img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Привет, Русский!</div>
-                        <div class="press-show-tile-desc">Learn Russian — Привет means hello!</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp">
-                        <img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Unintended Consequences</div>
-                        <div class="press-show-tile-desc">Good intentions. Surprising results. Real lessons.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp">
-                        <img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">First Principles Daily</div>
-                        <div class="press-show-tile-desc">Reason from raw materials, not analogy.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/dp-pod-400.webp">
-                        <img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">The DP Pod: The Do Positive Podcast</div>
-                        <div class="press-show-tile-desc">The club for people who do something about it — good news, honest numbers, one action a week.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/age-of-ai-400.webp">
-                        <img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">The Age of AI</div>
-                        <div class="press-show-tile-desc">Real people. AI host. The age we're all living through.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/nerra-voices-400.webp">
-                        <img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Nerra Voices</div>
-                        <div class="press-show-tile-desc">Real people. Real work. AI host.</div>
-                    </div>
-                </div>
-                
-                <div class="press-show-tile">
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/offshore-north-400.webp">
-                        <img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="56" height="56" loading="lazy">
-                    </picture>
-                    <div class="press-show-tile-info">
-                        <div class="press-show-tile-name">Offshore North</div>
-                        <div class="press-show-tile-desc">One man. One boat. Around the world, alone.</div>
-                    </div>
-                </div>
+                <p class="mk-sub" style="margin:.4rem 0 .2rem"><b>Available to talk about</b></p>
+                <ul style="margin:0;padding-left:1.1rem"><li>Building a news network with AI under rules people write</li><li>Designing an AI interviewer that gives guests the final say</li><li>Publishing a public record of every claim checked against its source</li><li>What automation can and cannot do for a one-person newsroom</li></ul>
                 
             </div>
-        </section>
-
-        <section class="press-section">
-            <h2>Logo &amp; brand assets</h2>
-            <p>Use the Nerra Network name and gradient mark in any coverage. Please don't
-            modify the gradient colors or re-combine the wordmark with other brands.</p>
-            <div class="press-card">
-                <ul style="margin:0;padding-left:1.2rem;color:var(--nn-text);line-height:1.9;">
-                    <li><strong>Wordmark:</strong> <em>Nerra Network</em> — set in DM Sans Bold</li>
-                    <li><strong>Primary gradient:</strong> <code style="color:var(--nn-cyan);">#6B47FF</code> → <code style="color:var(--nn-cyan);">#00D4FF</code></li>
-                    <li><strong>Logo file:</strong> <a href="assets/nerra-logo-icon.svg" style="color:var(--nn-cyan);">nerra-logo-icon.svg</a> (vector)</li>
-                    <li><strong>Favicon:</strong> Inline SVG on the site root</li>
-                </ul>
+        </div>
+        
+        <div class="mk-card mk-founder">
+            <div class="mk-avatar" aria-hidden="true">DP</div>
+            <div>
+                <h3 style="margin:0">Dan Perra</h3>
+                <p class="mk-role">Co-founder and co-host of The DP Pod</p>
+                <p style="margin-bottom:.6rem">Dan Perra is a commercial airline pilot and longtime technology enthusiast. He co-founded the network with Patrick and co-hosts The DP Pod, their weekly show on good news in science and technology and one practical action a listener can take.</p>
+                
             </div>
-        </section>
+        </div>
+        
+        <p class="mk-sub">Photos, written Q&amp;A and interview requests: <a href="mailto:hello@nerranetwork.com?subject=Founder%20interview">hello@nerranetwork.com</a>.</p>
+    </section>
 
-        <section class="press-section">
-            <h2>Founder</h2>
-            <p><strong>Patrick Novak</strong> — Founder and producer. Vancouver, Canada.
-            Available for interviews, panel discussions, and written Q&amp;A on
-            independent podcasting, AI-assisted content workflows, and the fresh-over-
-            long editorial philosophy that defines Nerra Network.</p>
-        </section>
+    <section class="mk-section" id="boilerplate">
+        <h2>Boilerplate</h2>
+        <p class="mk-sub">Copy-ready descriptions for articles, show notes and introductions. The numbers update as the network grows.</p>
+        
+        <div class="mk-card mk-copy">
+            <div class="mk-copy-head"><b>Short <small>· 29 words</small></b>
+                <button type="button" class="mk-copy-btn" data-mk-copy="bp-short">Copy</button></div>
+            <blockquote id="bp-short">Nerra Network is an independent network of 26 free podcasts on space, AI, markets, world news, science and more, made in Vancouver, Canada. Feed your curiosity, not your anxiety.</blockquote>
+        </div>
+        
+        <div class="mk-card mk-copy">
+            <div class="mk-copy-head"><b>Medium <small>· 91 words</small></b>
+                <button type="button" class="mk-copy-btn" data-mk-copy="bp-medium">Copy</button></div>
+            <blockquote id="bp-medium">Nerra Network is an independent podcast network based in Vancouver, Canada, publishing 26 free shows in English, French and Russian on space, AI, markets, world news, science and more. Every story is sourced and every claim is checked against its source, on a public record anyone can read. The shows are written and voiced with AI under editorial rules set by people, and its interview shows are hosted by Mira, an AI whose guests decide whether their conversation is published at all. Founded in 2024 by Patrick Novak and Dan Perra.</blockquote>
+        </div>
+        
+        <div class="mk-card mk-copy">
+            <div class="mk-copy-head"><b>Long <small>· 155 words</small></b>
+                <button type="button" class="mk-copy-btn" data-mk-copy="bp-long">Copy</button></div>
+            <blockquote id="bp-long">Nerra Network is an independent podcast network based in Vancouver, Canada, publishing 26 free shows in English, French and Russian on space, AI, markets, world news, science and more. Every story is sourced and every claim is checked against its source, on a public record anyone can read. The shows are written and voiced with AI under editorial rules set by people, and its interview shows are hosted by Mira, an AI whose guests decide whether their conversation is published at all. Founded in 2024 by Patrick Novak and Dan Perra. Its flagship shows follow SpaceX and Tesla every day; Nerra Daily gathers the morning's shows into one edition by 7 a.m. Eastern, anchored by Mira. Every episode is free in any podcast app and as a written article with its sources, most shows publish to YouTube, and readers can see which claims were verified and which were not. Feed your curiosity, not your anxiety.</blockquote>
+        </div>
+        
+    </section>
 
-        <section class="press-section">
-            <h2>Contact</h2>
-            <p>For media requests, partnerships, or fact-checking, reach out:</p>
-            <div class="press-contact-row">
-                <a href="mailto:press@nerranetwork.com">📧 press@nerranetwork.com</a>
-                <a href="contact.html">General contact</a>
-                <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork on X</a>
+    <section class="mk-section" id="brand">
+        <h2>Brand assets</h2>
+        <p class="mk-sub">Free to use in coverage of Nerra Network. Please keep the logos unaltered: no recolouring, stretching, or combining with other marks.</p>
+        <div class="mk-actions" style="margin-bottom:var(--sp-5)">
+            <a class="mk-btn mk-btn-primary" href="assets/press/nerra-network-brand-assets.zip" download>Download every logo (.zip)</a>
+        </div>
+        <div class="mk-logos">
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art"><img src="assets/press/nerra-logo-horizontal.png" alt="Horizontal logo, for dark backgrounds" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>Horizontal logo, for dark backgrounds</span><span><a href="assets/press/nerra-logo-horizontal.png" download>PNG</a> · <a href="assets/nerra-logo-horizontal.svg" download>SVG</a></span></div>
             </div>
-        </section>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art light"><img src="assets/press/nerra-logo-horizontal-light.png" alt="Horizontal logo, for light backgrounds" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>Horizontal logo, for light backgrounds</span><span><a href="assets/press/nerra-logo-horizontal-light.png" download>PNG</a> · <a href="assets/nerra-logo-horizontal-light.svg" download>SVG</a></span></div>
+            </div>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art"><img src="assets/press/nerra-logo-stacked.png" alt="Stacked logo" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>Stacked logo</span><span><a href="assets/press/nerra-logo-stacked.png" download>PNG</a> · <a href="assets/nerra-logo-stacked.svg" download>SVG</a></span></div>
+            </div>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art"><img src="assets/press/nerra-logo-icon.png" alt="Icon" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>Icon</span><span><a href="assets/press/nerra-logo-icon.png" download>PNG</a> · <a href="assets/nerra-logo-icon.svg" download>SVG</a></span></div>
+            </div>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art light"><img src="assets/press/nerra-mark-mono.png" alt="One-colour mark" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>One-colour mark</span><span><a href="assets/press/nerra-mark-mono.png" download>PNG</a> · <a href="assets/nerra-mark-mono.svg" download>SVG</a></span></div>
+            </div>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art"><img src="assets/press/age-of-ai-logo.png" alt="The Age of AI logo" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>The Age of AI logo</span><span><a href="assets/press/age-of-ai-logo.png" download>PNG</a> · <a href="assets/age-of-ai-logo.svg" download>SVG</a></span></div>
+            </div>
+            
+            <div class="mk-logo">
+                <div class="mk-logo-art"><img src="assets/press/nerra-voices-logo.png" alt="Nerra Voices logo" loading="lazy"></div>
+                <div class="mk-logo-cap"><span>Nerra Voices logo</span><span><a href="assets/press/nerra-voices-logo.png" download>PNG</a> · <a href="assets/nerra-voices-logo.svg" download>SVG</a></span></div>
+            </div>
+            
+        </div>
+        <h3>Colours and type</h3>
+        <ul class="mk-swatches">
+            <li><i style="background:#6B47FF"></i>Purple #6B47FF</li>
+            <li><i style="background:#00D4FF"></i>Cyan #00D4FF</li>
+            <li><i style="background:#0B0F1A"></i>Night #0B0F1A</li>
+            <li><i style="background:linear-gradient(135deg,#6B47FF,#00D4FF)"></i>Gradient, purple to cyan</li>
+        </ul>
+        <p>Headings are set in DM Sans, body text in Source Serif 4.</p>
+        <h3>Art for coverage</h3>
+        <p>A 1200 × 630 image for articles and social posts. Every show's cover art is on its show page.</p>
+        <a href="assets/share/network.jpg" download><img class="mk-art" src="assets/share/network.jpg" alt="Nerra Network share image" width="1200" height="630" loading="lazy"></a>
+    </section>
 
-        <section class="press-section">
-            <h2>Related</h2>
-            <p>
-                <a href="about.html" style="color:var(--nn-cyan);">About Nerra Network</a> ·
-                <a href="ai-disclosure.html" style="color:var(--nn-cyan);">AI disclosure</a> ·
-                <a href="faq.html" style="color:var(--nn-cyan);">FAQ</a>
-            </p>
-        </section>
-    </div>
+    <section class="mk-section" id="questions">
+        <h2>Questions we are asked</h2>
+        <dl class="mk-faq">
+            <dt>Is the host really an AI?</dt>
+            <dd>Yes. Mira is an AI. Every episode says so, and she introduces herself as the network's AI host when she first writes to a guest. Patrick Novak built her, and he joins an interview as co-host when a guest asks for him.</dd>
+            <dt>Who decides what gets published?</dt>
+            <dd>A human editor reviews every interview before release, and the guest has a week with their own transcript to approve it, cut from it or refuse it. A takedown stays available afterwards.</dd>
+            <dt>Does anyone pay to appear?</dt>
+            <dd>No. There is no fee in either direction, and sponsors have no say over who appears or what is covered.</dd>
+            <dt>How are the news shows made?</dt>
+            <dd>The pipeline fetches the day's reporting, AI writes and voices each episode under editorial rules people wrote, and every claim is checked against its source before publication; a claim that could not be verified is checked again each night for a week. The <a href="ai-disclosure.html">AI disclosure</a> sets out exactly what a person does and does not do.</dd>
+            <dt>Can we quote an episode or use a clip?</dt>
+            <dd>Yes, with credit to the show and a link to the episode. Every episode has a written article and transcript to quote from.</dd>
+        </dl>
+    </section>
+
+    <section class="mk-section" id="contact">
+        <h2>Contact</h2>
+        <p>Media requests, interviews with the founders, fact-checks and partnerships go to one inbox that a person reads.</p>
+        <div class="mk-actions">
+            <a class="mk-btn mk-btn-primary" href="mailto:hello@nerranetwork.com?subject=Media%20enquiry">hello@nerranetwork.com</a>
+            <a class="mk-btn" href="https://x.com/nerranetwork" rel="noopener">@nerranetwork on X</a>
+            <a class="mk-btn" href="contact.html">All contact options</a>
+        </div>
+        <p class="mk-sub" style="margin-top:var(--sp-5)">This page lives at <a href="https://nerranetwork.com/press.html">nerranetwork.com/press.html</a> (also <a href="https://nerranetwork.com/media-kit.html">/media-kit.html</a>) and updates itself as the network grows. More: <a href="about.html">About</a> · <a href="faq.html">FAQ</a> · <a href="sponsor.html">Sponsor</a>.</p>
+    </section>
+
+</div>
+</div>
 
     </main>
 
@@ -1714,6 +1828,23 @@
     });
     </script>
     
+<script>
+(function () {
+    document.addEventListener("click", function (e) {
+        var printBtn = e.target.closest("[data-mk-print]");
+        if (printBtn) { window.print(); return; }
+        var btn = e.target.closest("[data-mk-copy]");
+        if (!btn) return;
+        var el = document.getElementById(btn.getAttribute("data-mk-copy"));
+        if (!el || !navigator.clipboard) return;
+        navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+            btn.textContent = "Copied";
+            setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+        });
+    });
+})();
+</script>
+
 
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js" defer></script>

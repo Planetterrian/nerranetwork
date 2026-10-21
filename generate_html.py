@@ -7362,17 +7362,302 @@ def generate_about_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
+#: Oct 21 2026: the brand files a publicist downloads, in the order the kit
+#: shows them. Every path is a committed file; the zip is built from them.
+MEDIA_KIT_LOGOS = (
+    ("assets/nerra-logo-horizontal.svg", "Horizontal logo, for dark backgrounds", "dark"),
+    ("assets/nerra-logo-horizontal-light.svg", "Horizontal logo, for light backgrounds", "light"),
+    ("assets/nerra-logo-stacked.svg", "Stacked logo", "dark"),
+    ("assets/nerra-logo-icon.svg", "Icon", "dark"),
+    ("assets/nerra-mark-mono.svg", "One-colour mark", "light"),
+    ("assets/age-of-ai-logo.svg", "The Age of AI logo", "dark"),
+    ("assets/nerra-voices-logo.svg", "Nerra Voices logo", "dark"),
+)
+MEDIA_KIT_ZIP = "assets/press/nerra-network-brand-assets.zip"
+
+
+def _media_kit_png(svg_rel: str) -> str:
+    """The PNG rendering of a logo (``scripts/render_logo_pngs.js``). The
+    SVGs set words in DM Sans, which a reader's computer may not have; the
+    PNG is what the kit previews and recommends."""
+    return f"assets/press/{Path(svg_rel).stem}.png"
+#: The share image a journalist can run as art (1200x630, committed by
+#: scripts/build_share_cards.py).
+MEDIA_KIT_ART = "assets/share/network.jpg"
+#: How many past guests each interview show lists, newest first.
+MEDIA_KIT_GUESTS_MAX = 10
+#: How many shows the audience table lists, by 30-day downloads.
+MEDIA_KIT_AUDIENCE_ROWS = 10
+
+#: YouTube Analytics answers ISO codes; the kit prints names.
+_COUNTRY_NAMES = {
+    "US": "United States", "CA": "Canada", "GB": "United Kingdom", "IN": "India",
+    "DE": "Germany", "KR": "South Korea", "JP": "Japan", "AU": "Australia",
+    "FR": "France", "BE": "Belgium", "CH": "Switzerland", "RU": "Russia",
+    "UA": "Ukraine", "KZ": "Kazakhstan", "UZ": "Uzbekistan", "BY": "Belarus",
+    "KG": "Kyrgyzstan", "ID": "Indonesia", "BR": "Brazil", "MX": "Mexico",
+    "NL": "Netherlands", "SG": "Singapore", "PL": "Poland", "ES": "Spain",
+    "IT": "Italy", "SE": "Sweden", "NO": "Norway", "IE": "Ireland",
+    "NZ": "New Zealand", "PH": "Philippines", "PK": "Pakistan", "NG": "Nigeria",
+}
+_CHANNEL_LABELS = {
+    "en": ("@NerraNetwork", "English", "https://www.youtube.com/@NerraNetwork"),
+    "ru": ("@NerraRU", "Russian", "https://www.youtube.com/@NerraRU"),
+    "fr": ("@NerraFR", "French", "https://www.youtube.com/@NerraFR"),
+}
+
+
+def _fmt_count(v):
+    """A measured count with separators; a dash, never 0, when unmeasured."""
+    return "—" if v is None else f"{int(v):,}"
+
+
+def _media_kit_audience() -> dict:
+    """Measured reach for the media kit, from the committed nightly files.
+
+    Same honesty rules as the dashboard and sponsor page: an unmeasured
+    figure is ``None`` (a dash on the page), a week is a COMPLETE OP3 week,
+    and a figure under the network's social-proof floor is not printed as
+    proof. YouTube demographics are YouTube's signed-in viewers only; gender
+    is never printed (small cells are suppressed, which is how the English
+    channel reads 100% one gender)."""
+    from engine import landing_test as _lt
+
+    head = _load_json_quiet(ROOT / "api" / "audience_headline.json") or {}
+    net = head.get("network") or {}
+    yt = _load_json_quiet(ROOT / "api" / "youtube_stats.json") or {}
+    channels = []
+    subs_total = views_total = videos_total = 0
+    measured_channels = 0
+    for code, (handle, lang, url) in _CHANNEL_LABELS.items():
+        ch = (yt.get("channels") or {}).get(code) or {}
+        subs, views, vids = ch.get("subscribers"), ch.get("total_views"), ch.get("video_count")
+        if subs is None and views is None:
+            continue
+        measured_channels += 1
+        subs_total += int(subs or 0)
+        views_total += int(views or 0)
+        videos_total += int(vids or 0)
+        geo = [g for g in (ch.get("geography") or []) if isinstance(g, dict) and g.get("views")]
+        channels.append({
+            "handle": handle, "language": lang, "url": url,
+            "subscribers": _fmt_count(subs), "views": _fmt_count(views),
+            "videos": _fmt_count(vids),
+            "countries": [
+                {"name": _COUNTRY_NAMES.get(g.get("country"), g.get("country") or ""),
+                 "pct": round(float(g.get("pct_of_listed") or 0))}
+                for g in geo[:5]],
+        })
+    en = (yt.get("channels") or {}).get("en") or {}
+    ages = ((en.get("demographics") or {}).get("summary") or {}).get("by_age") or {}
+    age_rows = [{"band": band.replace("65-", "65+"), "pct": round(float(pct))}
+                for band, pct in ages.items() if pct]
+    over_35 = sum(float(pct) for band, pct in ages.items()
+                  if band in ("35-44", "45-54", "55-64", "65-"))
+    ga4 = _load_json_quiet(ROOT / "api" / "ga4_stats.json") or {}
+    site_countries = [c.get("country") for c in (ga4.get("countries") or [])
+                      if isinstance(c, dict) and c.get("country") not in (None, "", "(not set)")][:5]
+    names = {s["slug"]: s for s in _build_all_shows_list()}
+    rows = []
+    for slug, sh in (head.get("shows") or {}).items():
+        meta = names.get(slug)
+        if not meta or not meta.get("has_feed", True):
+            continue
+        if meta.get("access", "public") not in _lt.PUBLIC_ACCESS_MODES:
+            continue
+        dl = sh.get("downloads_30d")
+        if dl is None:
+            continue
+        rows.append({"name": meta["name"], "page": meta.get("show_page") or "",
+                     "sort": dl, "downloads_30d": _fmt_count(dl),
+                     "youtube_views": _fmt_count((sh.get("youtube") or {}).get("views"))
+                     if (sh.get("youtube") or {}).get("views") else "—"})
+    rows.sort(key=lambda r: -r["sort"])
+    subs = net.get("newsletter_subscribers")
+    yt_net = net.get("youtube") or {}
+    short_pct = yt_net.get("short")
+    return {
+        "as_of": head.get("as_of") or "",
+        "downloads_30d": _fmt_count(net.get("downloads_30d")),
+        "last_week": _fmt_count(net.get("last_week")),
+        "prior_week": _fmt_count(net.get("prior_week")),
+        "wow_pct": net.get("wow_pct"),
+        "shows_measured": net.get("shows_measured"),
+        "youtube_subscribers": _fmt_count(subs_total) if measured_channels else "—",
+        "youtube_views": _fmt_count(views_total) if measured_channels else "—",
+        "youtube_videos": _fmt_count(videos_total) if measured_channels else "—",
+        "youtube_views_28d": _fmt_count(yt_net.get("views")) if yt_net.get("views") else "—",
+        "shorts_view_pct": round(short_pct) if isinstance(short_pct, (int, float)) else None,
+        "channels": channels,
+        "ages": age_rows,
+        "pct_over_35": round(over_35) if age_rows else None,
+        "site_countries": site_countries,
+        "newsletter_subscribers": (_fmt_count(subs) if isinstance(subs, int)
+                                   and subs >= MIN_SOCIAL_PROOF_SUBSCRIBERS else None),
+        "shows": rows[:MEDIA_KIT_AUDIENCE_ROWS],
+    }
+
+
+def _media_kit_interview_shows() -> list:
+    """The two interview shows as a publicist books them: what each is, how
+    the hour runs, where the episode goes, and who has been on. Distribution
+    is read from each show's YAML (a flag that is off is never promised);
+    booking links from the Voices registry, which is what Mira sends."""
+    import yaml as _yaml
+    from pipelines.voices.shows import get_show
+    out = []
+    for slug in ("age_of_ai", "nerra_voices"):
+        cfg = NETWORK_SHOWS.get(slug)
+        if not cfg:
+            continue
+        try:
+            show_yaml = _yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8")) or {}
+        except Exception:  # noqa: BLE001
+            show_yaml = {}
+        try:
+            booking = get_show(slug).booking_url
+        except Exception:  # noqa: BLE001
+            booking = ""
+        cards = _interview_episode_cards(slug, cfg)
+        links = _apple_links_for(slug, cfg.get("apple_podcasts_url"))
+        spotify = _spotify_url_for(slug, cfg.get("spotify_url"))
+        where = ["An episode page on nerranetwork.com with the full transcript",
+                 "Every podcast app, through the show's public feed"]
+        if links.get("apple_podcasts_url"):
+            where.append("Apple Podcasts")
+        if spotify:
+            where.append("Spotify")
+        if (show_yaml.get("youtube") or {}).get("enabled"):
+            where.append("YouTube, as a full-length video")
+        if (show_yaml.get("newsletter") or {}).get("enabled"):
+            where.append("The show's email newsletter")
+        out.append({
+            "slug": slug,
+            "name": cfg["name"],
+            "tagline": cfg.get("tagline", ""),
+            "description": cfg.get("description", ""),
+            "show_page": cfg.get("show_page", ""),
+            "apply_page": cfg.get("apply_page", ""),
+            "podcast_image": cfg.get("podcast_image", ""),
+            "episode_length": cfg.get("episode_length", ""),
+            "booking_url": booking,
+            "episode_count": len(cards),
+            "where": where,
+            "apple_podcasts_url": links.get("apple_podcasts_url") or "",
+            "spotify_url": spotify or "",
+            "guests": [{"name": c.get("guest") or "", "identifier": c.get("identifier") or "",
+                        "post_url": c.get("post_url") or "", "date": c.get("date") or ""}
+                       for c in cards[:MEDIA_KIT_GUESTS_MAX] if c.get("guest")],
+        })
+    return out
+
+
+def _media_kit_books() -> list:
+    """Live anthology volumes with their store links (never retired ones)."""
+    try:
+        vols = books_page_volumes(ROOT / "books" / "catalog.json", ROOT / "books" / "volumes")
+    except Exception:  # noqa: BLE001
+        return []
+    out = []
+    for v in vols or []:
+        if v.get("retired"):
+            continue
+        links = v.get("buy_links") or {}
+        out.append({"title": v.get("full_title") or v.get("title") or "",
+                    "subtitle": v.get("subtitle") or "",
+                    "chapters": v.get("chapters"),
+                    "link": links.get("books2read") or links.get("direct") or "books.html"})
+    return out
+
+
+def _media_kit_trust() -> dict:
+    """The claims record the kit quotes: the same totals claims.html prints."""
+    try:
+        totals = _claims_network_ledger(_build_all_shows_list())["totals"]
+    except Exception as exc:  # noqa: BLE001 — a number is never worth a build
+        print(f"Warning: media kit claims totals unavailable: {exc}")
+        return {}
+    if not isinstance(totals.get("claims"), int) or not totals["claims"]:
+        return {}
+    return {"claims": _fmt_count(totals["claims"]),
+            "verified": _fmt_count(totals.get("verified")),
+            "verified_pct": totals.get("verified_share_pct"),
+            "corrections": totals.get("corrections") or 0,
+            "days": totals.get("days") or CLAIMS_PAGES_DAYS,
+            "episodes": _fmt_count(totals.get("episodes"))}
+
+
+def build_media_kit_zip(out_path=None):
+    """The brand files as one download, byte-identical while they are.
+
+    Fixed timestamps and a fixed member order, so a nightly regen rewrites
+    nothing unless a logo changed. Written only when the bytes differ."""
+    import io
+    import zipfile
+    members = []
+    for rel, _label, _bg in MEDIA_KIT_LOGOS:
+        members += [rel, _media_kit_png(rel)]
+    members.append(MEDIA_KIT_ART)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        readme = (
+            "Nerra Network brand assets\n\n"
+            "Free to use in coverage of Nerra Network with a link to "
+            "https://nerranetwork.com. Please keep the logos unaltered: no "
+            "recolouring, stretching or combining with other marks. Use the "
+            "PNG files unless your tool has DM Sans installed: the SVGs set "
+            "their tagline in that font.\n\n"
+            "Colours: purple #6B47FF, cyan #00D4FF, night #0B0F1A.\n"
+            "Type: DM Sans (headings), Source Serif 4 (body).\n\n"
+            "The full media kit, updated as the network grows: "
+            "https://nerranetwork.com/press.html\n")
+        info = zipfile.ZipInfo("README.txt", date_time=(2026, 1, 1, 0, 0, 0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        zf.writestr(info, readme)
+        for rel in members:
+            src = ROOT / rel
+            if not src.exists():
+                continue
+            info = zipfile.ZipInfo(Path(rel).name, date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, src.read_bytes())
+    data = buf.getvalue()
+    path = Path(out_path) if out_path else ROOT / MEDIA_KIT_ZIP
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists() or path.read_bytes() != data:
+        path.write_bytes(data)
+    return path
+
+
 def generate_press_page(*, dry_run=False, output_dir=None):
-    """Generate the press kit / media-resources page."""
+    """Generate the media kit (``press.html``; ``media-kit.html`` forwards).
+
+    Oct 21 2026: rebuilt from a static press page into the kit a publicist
+    or journalist works from. Every number is read from a committed file at
+    render time (audience, YouTube, claims, guests, books), so the nightly
+    ``--static-pages`` regen keeps it current as the network grows; every
+    claim about the network comes from ``engine.brand``."""
+    from engine import brand as _brand
+
     env = _get_jinja_env()
     template = env.get_template("press.html.j2")
+    shows_count = _public_show_count_cached()
+    languages = _listening_languages()
+    shows = [s for s in _public_shows(_build_all_shows_list())]
+    flagships = [s for s in shows if s["slug"] in _brand.FLAGSHIP_SHOW_SLUGS]
+    others = [s for s in shows if s["slug"] not in _brand.FLAGSHIP_SHOW_SLUGS]
+    audience = _media_kit_audience()
+    if not dry_run and output_dir is None:
+        build_media_kit_zip()
 
     context = {
         "path_prefix": "",
-        "page_title": "Press & Media Kit — Nerra Network",
-        "page_description": "Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.",
-        "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our shows.",
-        "meta_keywords": "Nerra Network press kit, media resources, podcast press, Patrick Novak, Vancouver podcast",
+        "page_title": "Media Kit — Nerra Network",
+        "page_description": "The Nerra Network media kit: measured audience, how to book a guest with Mira, founder bios, copy-ready boilerplate and brand assets.",
+        "meta_description": (f"Nerra Network media kit: {shows_count} free shows, measured "
+                             "audience, guest booking for The Age of AI and Nerra Voices, "
+                             "founder bios, boilerplate and logos."),
+        "meta_keywords": "Nerra Network media kit, press kit, podcast media kit, Mira AI host, book a podcast guest, Patrick Novak",
         "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/press.html",
@@ -7381,9 +7666,24 @@ def generate_press_page(*, dry_run=False, output_dir=None):
         "all_shows": _build_all_shows_list(),
         # Free shows only (Oct 18 2026); the members-only desks are named
         # separately in the template.
-        "shows_count": _public_show_count_cached(),
+        "shows_count": shows_count,
         "members_shows_count": _members_show_count(),
         "total_episodes": _count_total_episodes(),
+        "language_names": [_brand.LANGUAGE_NAMES.get(c, c) for c in languages],
+        "boilerplate": _brand.network_boilerplate(shows_count, languages),
+        "founders": _brand.FOUNDERS,
+        "press_email": _brand.PRESS_EMAIL,
+        "audience": audience,
+        "interview_shows": _media_kit_interview_shows(),
+        "trust": _media_kit_trust(),
+        "books": _media_kit_books(),
+        "flagship_shows": flagships,
+        "kit_shows": others,
+        "logos": [{"path": rel, "png": _media_kit_png(rel) if (ROOT / _media_kit_png(rel)).exists() else "",
+                   "label": label, "bg": bg}
+                  for rel, label, bg in MEDIA_KIT_LOGOS if (ROOT / rel).exists()],
+        "zip_path": MEDIA_KIT_ZIP,
+        "art_path": MEDIA_KIT_ART,
     }
 
     html = template.render(**context)
