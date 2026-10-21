@@ -2524,10 +2524,7 @@ def _get_jinja_env():
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
 
     def _network_promise_visitor(_n=None) -> str:
-        return (
-            f"Free news and ideas on {_brand_copy.NETWORK_SUBJECTS}. "
-            "Every story is sourced, every claim is checked against its source, "
-            "and you can read the article or hear the episode it came from.")
+        return _brand_copy.network_promise_visitor()
 
     env.globals["network_promise"] = _network_promise_visitor
     # Live count for pages that still name it (explore / how-to-listen /
@@ -5434,9 +5431,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
     # so /'s og/twitter image alt matches the hero.
     _home_og_alt = (
         f"Nerra Network: {_brand_home.NETWORK_TAGLINE} "
-        f"Free news and ideas on {_brand_home.NETWORK_SUBJECTS}. "
-        "Every story is sourced, every claim is checked against its source, "
-        "and you can read the article or hear the episode it came from. "
+        f"{_brand_home.network_promise_visitor()} "
         "Featuring SpaceX Daily and Tesla Shorts Time.")
     context = {
         "path_prefix": "",
@@ -7629,6 +7624,321 @@ def build_media_kit_zip(out_path=None):
     return path
 
 
+#: The media kit's growth charts (Oct 21 2026). A rate is printed only over a
+#: denominator of at least this many (the funnel report's floor), so a
+#: channel that grew from 2 to 26 is never sold as "+1,200%".
+MEDIA_KIT_RATE_FLOOR = 30
+#: Weeks a chart shows: enough to see the trend, few enough to read on a phone.
+MEDIA_KIT_CHART_WEEKS = 16
+
+
+def _pct(now, then):
+    if not isinstance(now, (int, float)) or not isinstance(then, (int, float)):
+        return None
+    if then < MEDIA_KIT_RATE_FLOOR:
+        return None
+    return round(100.0 * (now - then) / then)
+
+
+def _short_date(d) -> str:
+    return f"{d.strftime('%b')} {d.day}"
+
+
+def _bar_chart_svg(points, *, title: str, unit: str) -> str:
+    """One series of bars as inline SVG: one hue, a recessive grid, a hover
+    title on every bar and a direct label on the last one only. ``points``
+    is ``[(label, value), ...]`` in time order. The table view sits beside
+    it in the template, so the chart never carries a number alone."""
+    import html as _html
+    if not points:
+        return ""
+    w, h = 640, 250
+    left, right, top, bottom = 52, 12, 26, 34
+    pw, ph = w - left - right, h - top - bottom
+    peak = max(v for _l, v in points) or 1
+    # A round step (1, 2, 2.5 or 5 times a power of ten) giving at most
+    # five gridlines above the baseline, so the tallest bar fills the chart.
+    import math
+    mag = 10 ** int(math.floor(math.log10(peak)))
+    step = next(m * mag for m in (0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10)
+                if math.ceil(peak / (m * mag)) <= 5)
+    ticks = max(1, math.ceil(peak / step))
+    ymax = step * ticks
+    n = len(points)
+    slot = pw / n
+    bar = max(2.0, slot - 2.0)  # a 2px surface gap between bars
+    out = [f'<svg class="mk-chart" viewBox="0 0 {w} {h}" role="img" '
+           f'aria-label="{_html.escape(title)}">']
+    for i in range(ticks + 1):
+        y = top + ph - ph * i / ticks
+        val = int(step * i)
+        out.append(f'<line class="mk-grid-line" x1="{left}" x2="{w - right}" y1="{y:.1f}" y2="{y:.1f}"/>')
+        out.append(f'<text class="mk-axis" x="{left - 8}" y="{y + 5:.1f}" text-anchor="end">'
+                   f'{_fmt_axis(val)}</text>')
+    for i, (label, value) in enumerate(points):
+        bh = ph * value / ymax
+        x = left + i * slot + (slot - bar) / 2
+        y = top + ph - bh
+        r = min(4.0, bar / 2, bh)
+        # Rounded data end, square at the baseline.
+        d = (f"M{x:.1f},{top + ph:.1f} V{y + r:.1f} Q{x:.1f},{y:.1f} {x + r:.1f},{y:.1f} "
+             f"H{x + bar - r:.1f} Q{x + bar:.1f},{y:.1f} {x + bar:.1f},{y + r:.1f} V{top + ph:.1f} Z")
+        tip = _html.escape(f"{label}: {value:,} {unit}")
+        out.append(f'<path class="mk-bar-mark" d="{d}"><title>{tip}</title></path>')
+        if i in (0, n - 1) or (n > 6 and i == n // 2):
+            anchor = "start" if i == 0 else ("end" if i == n - 1 else "middle")
+            tx = x if i == 0 else (x + bar if i == n - 1 else x + bar / 2)
+            out.append(f'<text class="mk-axis" x="{tx:.1f}" y="{h - 6}" text-anchor="{anchor}">'
+                       f'{_html.escape(label)}</text>')
+    last_label, last_value = points[-1]
+    lx = left + (n - 1) * slot + (slot + bar) / 2
+    ly = top + ph - ph * last_value / ymax - 8
+    out.append(f'<text class="mk-value" x="{lx:.1f}" y="{max(18, ly):.1f}" text-anchor="end">'
+               f'{last_value:,}</text>')
+    out.append("</svg>")
+    return "".join(out)
+
+
+def _fmt_axis(v: int) -> str:
+    if v >= 1000:
+        k = v / 1000
+        return f"{k:.0f}k" if k == int(k) else f"{k:.1f}k"
+    return str(v)
+
+
+def _media_kit_growth(shows: list) -> dict:
+    """How the audience has grown, from the committed history files.
+
+    Podcast downloads are COMPLETE OP3 weeks only (the current week is
+    partial and never charted); YouTube subscribers are the nightly channel
+    snapshots, carried forward over a missed night per channel. Every rate
+    respects :data:`MEDIA_KIT_RATE_FLOOR`; every figure the page prints is
+    ``None`` (a dash) when its file is missing."""
+    import datetime as _dt
+    from engine import brand as _brand
+
+    def _day(value):
+        try:
+            return _dt.date.fromisoformat(str(value)[:10])
+        except (TypeError, ValueError):
+            return None
+
+    out: dict = {}
+
+    # Podcast downloads by complete week, network-wide.
+    hist = _load_json_quiet(ROOT / "api" / "op3_history.json") or {}
+    updated = _day(hist.get("updated_at"))
+    weekly = []
+    for wk in sorted(hist.get("weeks") or {}):
+        start = _day(wk)
+        if start is None:
+            continue
+        if updated is None or start + _dt.timedelta(days=7) > updated:
+            continue
+        row = (hist["weeks"] or {}).get(wk) or {}
+        weekly.append((start, sum(int(v) for v in row.values() if isinstance(v, (int, float)))))
+    if updated is None and weekly:
+        weekly = weekly[:-1]
+    out["weekly_downloads"] = [{"week": _short_date(d), "iso": d.isoformat(), "value": v}
+                               for d, v in weekly]
+    shown = weekly[-MEDIA_KIT_CHART_WEEKS:]
+    out["downloads_chart"] = _bar_chart_svg(
+        [(_short_date(d), v) for d, v in shown],
+        title="Podcast downloads per week, network-wide", unit="downloads")
+    last4 = sum(v for _d, v in weekly[-4:]) if len(weekly) >= 8 else None
+    prev4 = sum(v for _d, v in weekly[-8:-4]) if len(weekly) >= 8 else None
+    out["downloads_4w"] = _fmt_count(last4)
+    out["downloads_4w_pct"] = _pct(last4, prev4)
+    out["downloads_first"] = ({"week": _short_date(weekly[0][0]), "value": _fmt_count(weekly[0][1])}
+                              if weekly else None)
+    out["downloads_last"] = ({"week": _short_date(weekly[-1][0]), "value": _fmt_count(weekly[-1][1])}
+                             if weekly else None)
+    out["downloads_multiple"] = (round(weekly[-1][1] / weekly[0][1], 1)
+                                 if len(weekly) >= 2 and weekly[0][1] >= MEDIA_KIT_RATE_FLOOR else None)
+
+    # YouTube subscribers: nightly snapshots per channel, carried forward.
+    rows = (_load_json_quiet(ROOT / "api" / "youtube_channel_history.json") or {}).get("rows") or []
+    by_day: dict = {}
+    for r in rows:
+        d = _day(r.get("date"))
+        if d is None or not isinstance(r.get("subscribers"), (int, float)):
+            continue
+        by_day.setdefault(d, {})[r.get("channel")] = int(r["subscribers"])
+    series = []
+    latest: dict = {}
+    for d in sorted(by_day):
+        latest.update(by_day[d])
+        series.append((d, dict(latest)))
+    channel_rows = []
+    if series:
+        end_day, end = series[-1]
+        month_ago = [s for s in series if s[0] <= end_day - _dt.timedelta(days=30)]
+        then = month_ago[-1][1] if month_ago else None
+        for code, (handle, lang, url) in _CHANNEL_LABELS.items():
+            now = end.get(code)
+            if now is None:
+                continue
+            before = (then or {}).get(code)
+            channel_rows.append({"handle": handle, "language": lang, "url": url,
+                                 "now": now, "gain_30d": (now - before) if before is not None else None,
+                                 "pct_30d": _pct(now, before)})
+        # One bar per week: the total on the last snapshot of each week.
+        weekly_subs = []
+        cursor = end_day
+        while cursor >= series[0][0] and len(weekly_subs) < MEDIA_KIT_CHART_WEEKS:
+            snap = [s for s in series if s[0] <= cursor]
+            if not snap:
+                break
+            weekly_subs.append((snap[-1][0], sum(snap[-1][1].values())))
+            cursor -= _dt.timedelta(days=7)
+        weekly_subs.reverse()
+        out["subs_chart"] = _bar_chart_svg(
+            [(_short_date(d), v) for d, v in weekly_subs],
+            title="YouTube subscribers across all three channels, by week", unit="subscribers")
+        out["weekly_subs"] = [{"week": _short_date(d), "value": v} for d, v in weekly_subs]
+        out["subs_now"] = _fmt_count(sum(end.values()))
+        out["subs_first"] = {"date": _short_date(series[0][0]),
+                             "value": _fmt_count(sum(series[0][1].values()))}
+        total_then = sum(then.values()) if then else None
+        out["subs_gain_30d"] = (_fmt_count(sum(end.values()) - total_then)
+                                if total_then is not None else None)
+        out["subs_pct_30d"] = _pct(sum(end.values()), total_then)
+        out["as_of"] = end_day.isoformat()
+    else:
+        out.update({"subs_chart": "", "weekly_subs": [], "subs_now": "—",
+                    "subs_first": None, "subs_gain_30d": None, "subs_pct_30d": None})
+    out["youtube_channels"] = [dict(r, now=_fmt_count(r["now"]),
+                                    gain_30d=(f"{r['gain_30d']:+,}" if r["gain_30d"] is not None else "—"))
+                               for r in channel_rows]
+    ranked = [r for r in channel_rows if r["pct_30d"] is not None]
+    ranked.sort(key=lambda r: -r["pct_30d"])
+    out["fastest_channel"] = ranked[0] if ranked else None
+
+    # YouTube views over the Analytics day series (the view-flow source the
+    # alarms use; the lifetime counter is a lower bound for Shorts).
+    yt = _load_json_quiet(ROOT / "api" / "youtube_stats.json") or {}
+    days: set = set()
+    views = 0
+    for ch in (yt.get("channels") or {}).values():
+        for row in ch.get("day_series") or []:
+            if isinstance(row, dict) and isinstance(row.get("views"), (int, float)):
+                days.add(row.get("day"))
+                views += int(row["views"])
+    out["youtube_views_window"] = _fmt_count(views) if days else "—"
+    out["youtube_window_days"] = len(days)
+
+    # Followers on every channel that reports one; a dash where none does.
+    spotify = _load_json_quiet(ROOT / "api" / "spotify_stats.json") or {}
+    sp_shows = [v for v in (spotify.get("shows") or {}).values() if isinstance(v, dict)]
+    sp_followers = (sum(int(v.get("followers") or 0) for v in sp_shows)
+                    if sp_shows else None)
+    apple = _load_json_quiet(ROOT / "api" / "apple_ratings.json") or {}
+    ap_rows = [v for v in (apple.get("shows") or {}).values() if isinstance(v, dict)]
+    ratings = sum(int(v.get("rating_count") or 0) for v in ap_rows) if ap_rows else None
+    bd = _load_json_quiet(ROOT / "api" / "buttondown_stats.json") or {}
+    newsletter = bd.get("subscriber_count") if isinstance(bd.get("subscriber_count"), int) else None
+    head = (_load_json_quiet(ROOT / "api" / "audience_headline.json") or {}).get("network") or {}
+    channels = [{"name": f"YouTube {r['handle']}", "url": r["url"], "measure": "subscribers",
+                 "now": r["now"], "change": r["gain_30d"]}
+                for r in out["youtube_channels"]]
+    channels += [
+        {"name": "Spotify", "url": "", "measure": "followers, every show listed there",
+         "now": _fmt_count(sp_followers), "change": "—"},
+        {"name": "Apple Podcasts", "url": "", "measure": "ratings (Apple does not publish follower counts)",
+         "now": _fmt_count(ratings), "change": "—"},
+        {"name": "Email newsletters", "url": "join.html", "measure": "subscribers",
+         "now": _fmt_count(newsletter), "change": "—"},
+        {"name": "X @nerranetwork", "url": "https://x.com/nerranetwork", "measure": "followers (not measured yet)",
+         "now": "—", "change": "—"},
+        {"name": "Podcast apps (RSS)", "url": "how-to-listen.html",
+         "measure": "downloads in 30 days (apps do not report subscribers)",
+         "now": _fmt_count(head.get("downloads_30d")), "change": "—"},
+    ]
+    out["channels"] = channels
+    followers = [v for v in (sum(r["now"] for r in channel_rows) if channel_rows else None,
+                             sp_followers, newsletter) if isinstance(v, int)]
+    out["followers_total"] = _fmt_count(sum(followers)) if followers else "—"
+
+    # What comes next: the brand's plans, filled with today's counts.
+    def _live_video_feeds() -> int:
+        import re as _re
+        n = 0
+        cutoff = _dt.date.today() - _dt.timedelta(days=45)
+        for f in ROOT.glob("*.video.rss"):
+            m = _re.search(r"<pubDate>[^<]*?(\d{1,2} \w{3} \d{4})", f.read_text(encoding="utf-8", errors="ignore"))
+            if m:
+                try:
+                    if _dt.datetime.strptime(m.group(1), "%d %b %Y").date() >= cutoff:
+                        n += 1
+                except ValueError:
+                    pass
+        return n
+
+    apple_n = sum(1 for s in shows
+                  if _apple_links_for(s["slug"], s.get("apple_podcasts_url")).get("apple_podcasts_url"))
+    spotify_n = sum(1 for s in shows if _spotify_url_for(s["slug"], s.get("spotify_url")))
+    video_n = _live_video_feeds()
+    from engine.utils import number_to_words
+    fill = {"apple": apple_n, "spotify": spotify_n, "shows": len(shows),
+            "video_words": number_to_words(video_n).capitalize() if video_n else ""}
+    out["next"] = [{"heading": h, "body": body.format(**fill)}
+                   for h, body in _brand.GROWTH_NEXT
+                   if not ("{video_words}" in body and not video_n)]
+    return out
+
+
+#: Pages whose share image a partner is most likely to want (Oct 21 2026).
+MEDIA_KIT_PAGE_CARDS = (
+    ("start-here", "Start here"), ("mira", "Mira, the AI host"),
+    ("claims", "Claims and corrections"), ("how-to-listen", "How to listen"),
+    ("join", "Join"), ("topics", "Topics"),
+)
+def _media_kit_marketing(shows: list) -> dict:
+    """Everything a partner needs to promote the network: each show's cover
+    and share image, page share images, the Apple badge,
+    copy-ready posts, links and handles, and the usage rules. Files are
+    listed only when they exist in the repo, so a link never 404s."""
+    from engine import brand as _brand
+
+    def _exists(rel: str) -> bool:
+        return bool(rel) and (ROOT / rel).is_file()
+
+    def _thumb(cover: str) -> str:
+        stem = Path(cover).with_suffix("")
+        for cand in (f"{stem}-400.webp", cover):
+            if _exists(cand):
+                return cand
+        return ""
+
+    art = []
+    ordered = ([s for s in shows if s["slug"] in _brand.FLAGSHIP_SHOW_SLUGS]
+               + [s for s in shows if s["slug"] not in _brand.FLAGSHIP_SHOW_SLUGS])
+    for s in ordered:
+        cover = s.get("podcast_image") or ""
+        card = f"assets/share/shows/{s['slug']}.jpg"
+        apple = _apple_links_for(s["slug"], s.get("apple_podcasts_url")).get("apple_podcasts_url") or ""
+        art.append({
+            "name": s["name"], "show_page": s.get("show_page") or "",
+            "cover": cover if _exists(cover) else "",
+            "thumb": _thumb(cover) if _exists(cover) else "",
+            "card": card if _exists(card) else "",
+            "feed": f"https://nerranetwork.com/{s['rss_file']}" if s.get("rss_file") else "",
+            "apple": apple, "spotify": _spotify_url_for(s["slug"], s.get("spotify_url")) or "",
+        })
+    pages = [{"label": label, "path": f"assets/share/pages/{stem}.jpg"}
+             for stem, label in MEDIA_KIT_PAGE_CARDS
+             if _exists(f"assets/share/pages/{stem}.jpg")]
+    badge = "assets/badges/listen-on-apple-podcasts.svg"
+    return {
+        "show_art": art,
+        "page_cards": pages,
+        "apple_badge": badge if _exists(badge) else "",
+        "posts": _brand.marketing_posts(),
+        "usage": _brand.BRAND_USAGE,
+        "social": network_social_links(),
+    }
+
+
 def generate_press_page(*, dry_run=False, output_dir=None):
     """Generate the media kit (``press.html``; ``media-kit.html`` forwards).
 
@@ -7647,16 +7957,20 @@ def generate_press_page(*, dry_run=False, output_dir=None):
     flagships = [s for s in shows if s["slug"] in _brand.FLAGSHIP_SHOW_SLUGS]
     others = [s for s in shows if s["slug"] not in _brand.FLAGSHIP_SHOW_SLUGS]
     audience = _media_kit_audience()
+    growth = _media_kit_growth(shows)
+    marketing = _media_kit_marketing(shows)
     if not dry_run and output_dir is None:
         build_media_kit_zip()
 
     context = {
         "path_prefix": "",
         "page_title": "Media Kit — Nerra Network",
-        "page_description": "The Nerra Network media kit: measured audience, how to book a guest with Mira, founder bios, copy-ready boilerplate and brand assets.",
-        "meta_description": (f"Nerra Network media kit: {shows_count} free shows, measured "
-                             "audience, guest booking for The Age of AI and Nerra Voices, "
-                             "founder bios, boilerplate and logos."),
+        "page_description": ("The Nerra Network media kit: measured audience and growth on every "
+                             "channel, how to book a guest with Mira, founder bios, copy-ready "
+                             "posts and boilerplate, logos and art to download."),
+        "meta_description": (f"Nerra Network media kit. {_brand.NETWORK_TAGLINE} "
+                             "Measured audience and growth, guest booking for The Age of AI "
+                             "and Nerra Voices, founder bios, copy-ready posts, logos and art."),
         "meta_keywords": "Nerra Network media kit, press kit, podcast media kit, Mira AI host, book a podcast guest, Patrick Novak",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -7674,6 +7988,8 @@ def generate_press_page(*, dry_run=False, output_dir=None):
         "founders": _brand.FOUNDERS,
         "press_email": _brand.PRESS_EMAIL,
         "audience": audience,
+        "growth": growth,
+        "marketing": marketing,
         "interview_shows": _media_kit_interview_shows(),
         "trust": _media_kit_trust(),
         "books": _media_kit_books(),

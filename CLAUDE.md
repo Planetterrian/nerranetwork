@@ -5057,6 +5057,29 @@ byte-identical while the files are. The horizontal and stacked logos had cut
 off their own wordmark (600 / 0..380 frames for artwork reaching 611.8 /
 -23..406) since the brand refresh; frames widened in both copies and in
 `brand-refresh-2026/build_assets.py`. Guards `tests/test_media_kit_2026_10_21.py`.
+**Same day, operator follow-up — growth, the landing message, and a marketing
+kit.** The hero, the boilerplate and every copy-ready post lead with the
+landing page's words, which `engine.brand.network_promise_visitor()` now owns
+(the `network_promise` Jinja global and the homepage share alt call it).
+**Growth** (`_media_kit_growth`): podcast downloads per COMPLETE OP3 week from
+`api/op3_history.json` (a week is complete when it ended on or before the
+file's `updated_at`), YouTube subscribers from the nightly channel snapshots
+carried forward per channel, YouTube views from the Analytics `day_series`,
+followers wherever a platform reports them (Spotify, Apple ratings, the
+newsletter; X and podcast-app subscribers are a dash). A rate needs a
+denominator of `MEDIA_KIT_RATE_FLOOR` (30): @NerraFR's 2 → 26 is never
+"+1,200%". The two bar charts are inline SVG from `_bar_chart_svg`, one hue,
+a hover title per bar and a table view. **What's next** is
+`engine.brand.GROWTH_NEXT`, stated as work that exists or is under way, never a
+forecast, with its counts filled from the data (`{video_words}` is spelled out
+so it never reads as a second show count — the free-count guard). **Share
+Nerra** (`_media_kit_marketing`): every public show's 3000² cover and 1200×630
+share card, six page cards, links and handles, the Apple badge,
+`brand.marketing_posts()` and `brand.BRAND_USAGE`; a file is listed only when
+it exists. **`assets/site_screens/` is not offered**: those captures predate
+the Oct 18 homepage and still show the retired "ad-free / 0 ads" hero; they
+feed the video outro card until Actions "Capture Site Screenshots" refreshes
+them.
 
 ### The front page and the share cards (Oct 18 2026)
 

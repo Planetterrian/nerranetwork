@@ -104,6 +104,39 @@
         .mk-art { width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--nn-border); display: block; }
         .mk-faq dt { font-family: var(--font-heading); font-weight: 600; color: var(--nn-white); margin-top: var(--sp-4); }
         .mk-faq dd { margin: .35rem 0 0; font-family: var(--font-body); color: var(--nn-text); line-height: 1.6; max-width: 760px; }
+        .mk-wordmark { font-family: var(--font-heading); font-size: clamp(2.4rem, 7vw, 3.8rem); font-weight: 700;
+            line-height: 1.02; color: var(--nn-white); margin: 0 0 var(--sp-3); letter-spacing: -.02em; }
+        .mk-wordmark span { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .mk-tagline { font-family: var(--font-heading); font-size: clamp(1.25rem, 3vw, 1.6rem); font-weight: 600;
+            color: var(--nn-white); margin: 0 0 var(--sp-4); }
+        .mk-headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .9rem; margin: var(--sp-4) 0 var(--sp-2); }
+        .mk-headline b { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.8rem); color: var(--nn-white); line-height: 1; }
+        .mk-headline span { font-family: var(--font-ui); color: var(--nn-text-muted); font-size: .95rem; }
+        .mk-up { color: var(--nn-cyan); font-weight: 600; }
+        .mk-chart-card h3 { margin-top: 0; }
+        .mk-chart { display: block; width: 100%; height: auto; margin: .4rem 0 .2rem; }
+        .mk-chart .mk-bar-mark { fill: var(--nn-cyan); }
+        .mk-chart .mk-bar-mark:hover { fill: var(--nn-white); }
+        .mk-chart .mk-grid-line { stroke: var(--nn-border); stroke-width: 1; }
+        .mk-chart .mk-axis { fill: var(--nn-text-muted); font-family: var(--font-ui); font-size: 16px; }
+        .mk-chart .mk-value { fill: var(--nn-white); font-family: var(--font-ui); font-size: 18px; font-weight: 600; }
+        .mk-details summary { font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text-muted); cursor: pointer; margin-top: .4rem; }
+        .mk-details table { margin-top: .5rem; }
+        .mk-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-3); }
+        .mk-plans .mk-card { margin: 0; }
+        .mk-plans h3 { margin-top: 0; }
+        .mk-plans p { margin: 0; }
+        .mk-art-table img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; display: block; }
+        .mk-art-table td { vertical-align: middle; }
+        .mk-dl { white-space: nowrap; }
+        .mk-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-3); }
+        .mk-cards figure { margin: 0; border: 1px solid var(--nn-border); border-radius: 12px; overflow: hidden; background: var(--nn-card); }
+        .mk-cards img { width: 100%; height: auto; aspect-ratio: 1200 / 630; display: block; }
+        .mk-cards figcaption { padding: .6rem .8rem; font-family: var(--font-ui); font-size: .82rem; color: var(--nn-text);
+            display: flex; justify-content: space-between; gap: .5rem; }
+        .mk-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--sp-4); }
+        .mk-rules ul { margin: 0; padding-left: 1.1rem; }
+        .mk-no li::marker { content: "✕  "; color: var(--nn-text-muted); }
         @media (max-width: 640px) {
             .mk { padding: 0 16px; }
             .mk-stats, .mk-stats.four { grid-template-columns: repeat(2, 1fr); }
@@ -113,6 +146,7 @@
             .mk-show { grid-template-columns: 64px 1fr; }
             .mk-show img { width: 64px; height: 64px; }
             .mk-bars li { grid-template-columns: 6rem 1fr 2.4rem; }
+            .mk-art-table .mk-hide-sm { display: none; }
         }
         @media print {
             .nn-nav, nav, footer, .mk-actions, .mk-toc, .mk-copy-btn, .mobile-menu { display: none !important; }
@@ -136,12 +170,13 @@
 
     <header class="mk-hero">
         <p class="mk-eyebrow">Media kit</p>
-        <h1>Nerra Network. <span>{{ network_tagline }}</span></h1>
+        <h1 class="mk-wordmark">Nerra <span>Network</span></h1>
+        <p class="mk-tagline">{{ network_tagline }}</p>
         <p class="mk-lede">{{ network_promise() }}</p>
         <p class="mk-meta">Figures measured{% if au.as_of %} as of {{ au.as_of }}{% endif %} and refreshed nightly. Free to use in coverage with a link to <a href="https://nerranetwork.com">nerranetwork.com</a>.</p>
         <div class="mk-actions">
             <a class="mk-btn mk-btn-primary" href="#book-a-guest">Book a guest</a>
-            <a class="mk-btn" href="{{ path_prefix }}{{ zip_path }}" download>Download logos (.zip)</a>
+            <a class="mk-btn" href="#marketing">Logos, art and posts</a>
             <button type="button" class="mk-btn" data-mk-print>Save as PDF</button>
             <a class="mk-btn" href="mailto:{{ press_email }}?subject=Media%20enquiry">Email the network</a>
         </div>
@@ -149,7 +184,8 @@
 
     <nav class="mk-toc" aria-label="On this page">
         <a href="#at-a-glance">At a glance</a>
-        <a href="#audience">Audience</a>
+        <a href="#audience">Audience and growth</a>
+        <a href="#growth-next">What's next</a>
         <a href="#book-a-guest">Book a guest</a>
         <a href="#mira">Mira</a>
         <a href="#shows">Shows</a>
@@ -157,6 +193,7 @@
         <a href="#founders">Founders</a>
         <a href="#boilerplate">Boilerplate</a>
         <a href="#brand">Brand assets</a>
+        <a href="#marketing">Share Nerra</a>
         <a href="#questions">Questions</a>
         <a href="#contact">Contact</a>
     </nav>
@@ -168,6 +205,8 @@
             <div class="mk-stat"><div class="mk-stat-v">{{ "{:,}".format(total_episodes) }}</div><div class="mk-stat-l">episodes published</div></div>
             <div class="mk-stat"><div class="mk-stat-v">{{ au.downloads_30d }}</div><div class="mk-stat-l">podcast downloads in the last 30 days</div></div>
             <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views }}</div><div class="mk-stat-l">YouTube views across three channels</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ growth.followers_total }}</div><div class="mk-stat-l">subscribers and followers on the channels that report them</div></div>
+            {% if growth.downloads_4w_pct is not none %}<div class="mk-stat"><div class="mk-stat-v">{{ "%+d"|format(growth.downloads_4w_pct) }}%</div><div class="mk-stat-l">podcast downloads, last four weeks on the four before</div></div>{% endif %}
             <div class="mk-stat"><div class="mk-stat-v">{{ language_names|length }}</div><div class="mk-stat-l">languages: {{ language_names|join(", ") }}</div></div>
             {% if trust %}<div class="mk-stat"><div class="mk-stat-v">{{ trust.claims }}</div><div class="mk-stat-l">claims checked against their sources in {{ trust.days }} days</div></div>{% endif %}
         </div>
@@ -186,11 +225,45 @@
     </section>
 
     <section class="mk-section" id="audience">
-        <h2>Audience</h2>
-        <p class="mk-sub">Measured, never estimated. Podcast downloads come from OP3, the open podcast analytics service; YouTube figures from YouTube Analytics. A dash means a figure is not measured yet.</p>
+        <h2>Audience and growth</h2>
+        <p class="mk-sub">Measured, never estimated. Podcast downloads come from OP3, the open podcast analytics service; YouTube figures from YouTube Analytics; followers from each platform. A dash means a figure is not measured yet.</p>
+        <div class="mk-headline"><b>{{ au.downloads_30d }}</b><span>podcast downloads in 30 days</span><b>+</b><b>{{ growth.youtube_views_window }}</b><span>YouTube views in {% if growth.youtube_window_days %}{{ growth.youtube_window_days }} days{% else %}the last 30 days{% endif %}</span></div>
+        <p class="mk-sub">Total audience across podcast apps and YouTube{% if growth.as_of %}, to {{ growth.as_of }}{% endif %}.</p>
+
+        <div class="mk-two">
+            <div class="mk-card mk-chart-card">
+                <h3>Podcast downloads per week</h3>
+                {% if growth.downloads_last %}<p class="mk-sub" style="margin:0">{{ growth.downloads_last.value }} in the week of {{ growth.downloads_last.week }}{% if growth.downloads_multiple %}, <span class="mk-up">{{ growth.downloads_multiple }}× the week of {{ growth.downloads_first.week }}</span>{% endif %}.</p>{% endif %}
+                {{ growth.downloads_chart | safe }}
+                <details class="mk-details"><summary>Show the numbers</summary>
+                    <table class="mk-table"><thead><tr><th>Week of</th><th class="num">Downloads</th></tr></thead><tbody>
+                    {% for w in growth.weekly_downloads %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
+                    </tbody></table></details>
+            </div>
+            <div class="mk-card mk-chart-card">
+                <h3>YouTube subscribers, three channels</h3>
+                {% if growth.subs_first %}<p class="mk-sub" style="margin:0">{{ growth.subs_now }} now, from {{ growth.subs_first.value }} on {{ growth.subs_first.date }}{% if growth.subs_gain_30d %}; <span class="mk-up">{{ growth.subs_gain_30d }} new in 30 days{% if growth.subs_pct_30d is not none %} ({{ "%+d"|format(growth.subs_pct_30d) }}%){% endif %}</span>{% endif %}.</p>{% endif %}
+                {{ growth.subs_chart | safe }}
+                <details class="mk-details"><summary>Show the numbers</summary>
+                    <table class="mk-table"><thead><tr><th>Week ending</th><th class="num">Subscribers</th></tr></thead><tbody>
+                    {% for w in growth.weekly_subs %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
+                    </tbody></table></details>
+            </div>
+        </div>
+
+        <h3>Subscribers and followers, every channel</h3>
+        <div class="mk-card mk-table-wrap">
+            <table class="mk-table">
+                <thead><tr><th>Channel</th><th>Measure</th><th class="num">Now</th><th class="num">Last 30 days</th></tr></thead>
+                <tbody>
+                {% for c in growth.channels %}
+                    <tr><td>{% if c.url %}<a href="{% if not c.url.startswith('http') %}{{ path_prefix }}{% endif %}{{ c.url }}"{% if c.url.startswith('http') %} rel="noopener"{% endif %}>{{ c.name }}</a>{% else %}{{ c.name }}{% endif %}</td><td>{{ c.measure }}</td><td class="num">{{ c.now }}</td><td class="num">{{ c.change }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
         <div class="mk-stats four">
             <div class="mk-stat"><div class="mk-stat-v">{{ au.last_week }}</div><div class="mk-stat-l">downloads in the last complete week{% if au.wow_pct is not none %} ({{ "%+.0f"|format(au.wow_pct) }}% on the week before){% endif %}</div></div>
-            <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_subscribers }}</div><div class="mk-stat-l">YouTube subscribers</div></div>
             <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views_28d }}</div><div class="mk-stat-l">YouTube views on videos published in the last 28 days</div></div>
             {% if au.shorts_view_pct %}<div class="mk-stat"><div class="mk-stat-v">{{ au.shorts_view_pct }}%</div><div class="mk-stat-l">of each Short watched, on average</div></div>{% endif %}
             {% if au.newsletter_subscribers %}<div class="mk-stat"><div class="mk-stat-v">{{ au.newsletter_subscribers }}</div><div class="mk-stat-l">newsletter subscribers</div></div>{% endif %}
@@ -215,10 +288,10 @@
             <div class="mk-card">
                 <h3 style="margin-top:0">YouTube channels</h3>
                 <table class="mk-table">
-                    <thead><tr><th>Channel</th><th class="num">Subscribers</th><th class="num">Views</th></tr></thead>
+                    <thead><tr><th>Channel</th><th class="num">Lifetime views</th><th class="num">Videos</th></tr></thead>
                     <tbody>
                     {% for c in au.channels %}
-                        <tr><td><a href="{{ c.url }}" rel="noopener">{{ c.handle }}</a> <small style="color:var(--nn-text-muted)">{{ c.language }}</small></td><td class="num">{{ c.subscribers }}</td><td class="num">{{ c.views }}</td></tr>
+                        <tr><td><a href="{{ c.url }}" rel="noopener">{{ c.handle }}</a> <small style="color:var(--nn-text-muted)">{{ c.language }}</small></td><td class="num">{{ c.views }}</td><td class="num">{{ c.videos }}</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -244,6 +317,21 @@
                 {% if au.site_countries %}<p style="margin:0"><b>Website:</b> {{ au.site_countries|join(", ") }}</p>{% endif %}
             </div>
             {% endif %}
+        </div>
+    </section>
+
+    <section class="mk-section" id="growth-next">
+        <h2>Where growth is going</h2>
+        <p class="mk-sub">What the numbers show, and what the network is building next. Plans are stated as work that exists or is under way, never as a forecast.</p>
+        <ul class="mk-check" style="margin-bottom:var(--sp-5)">
+            {% if growth.downloads_4w_pct is not none %}<li>Podcast downloads: {{ growth.downloads_4w }} in the last four complete weeks, {{ "%+d"|format(growth.downloads_4w_pct) }}% on the four weeks before.</li>{% endif %}
+            {% if growth.subs_gain_30d %}<li>YouTube: {{ growth.subs_gain_30d }} new subscribers in 30 days across three channels.{% if growth.fastest_channel %} The fastest-growing is {{ growth.fastest_channel.handle }} ({{ growth.fastest_channel.language }}), up {{ growth.fastest_channel.pct_30d }}%.{% endif %}</li>{% endif %}
+            {% for c in growth.youtube_channels if c.pct_30d is not none %}<li>{{ c.handle }}: {{ c.now }} subscribers, {{ c.gain_30d }} in 30 days ({{ "%+d"|format(c.pct_30d) }}%).</li>{% endfor %}
+        </ul>
+        <div class="mk-plans">
+            {% for n in growth.next %}
+            <div class="mk-card"><h3>{{ n.heading }}</h3><p>{{ n.body }}</p></div>
+            {% endfor %}
         </div>
     </section>
 
@@ -410,9 +498,79 @@
             <li><i style="background:linear-gradient(135deg,#6B47FF,#00D4FF)"></i>Gradient, purple to cyan</li>
         </ul>
         <p>Headings are set in DM Sans, body text in Source Serif 4.</p>
-        <h3>Art for coverage</h3>
-        <p>A 1200 × 630 image for articles and social posts. Every show's cover art is on its show page.</p>
+        <h3>Network image for coverage</h3>
+        <p>A 1200 × 630 image for articles and social posts. <a href="{{ path_prefix }}{{ art_path }}" download>Download it</a>; every show's art is in <a href="#marketing">Share Nerra</a> below.</p>
         <a href="{{ path_prefix }}{{ art_path }}" download><img class="mk-art" src="{{ path_prefix }}{{ art_path }}" alt="Nerra Network share image" width="1200" height="630" loading="lazy"></a>
+    </section>
+
+    {%- set mk = marketing %}
+    <section class="mk-section" id="marketing">
+        <h2>Share Nerra Network</h2>
+        <p class="mk-sub">For anyone who wants to tell people about the network: guests, partners, writers, listeners. Everything here is free to use under the rules at the end of this section.</p>
+
+        <h3>Ready-to-post copy</h3>
+        <div class="mk-two">
+        {% for post in mk.posts %}
+            <div class="mk-card mk-copy">
+                <div class="mk-copy-head"><div><b>{{ post.label }}</b><small style="display:block;margin-top:.15rem">{{ post.where }}</small></div>
+                    <button type="button" class="mk-copy-btn" data-mk-copy="{{ post.key }}">Copy</button></div>
+                <blockquote id="{{ post.key }}">{{ post.text }}</blockquote>
+            </div>
+        {% endfor %}
+        </div>
+
+        <h3>Show art</h3>
+        <p>Each show's square cover (3000 × 3000, the size podcast apps use) and its 1200 × 630 share image, for articles, posts and show notes.</p>
+        <div class="mk-card mk-table-wrap">
+            <table class="mk-table mk-art-table">
+                <thead><tr><th></th><th>Show</th><th>Cover</th><th>Share image</th><th class="mk-hide-sm">Listen</th></tr></thead>
+                <tbody>
+                {% for a in mk.show_art %}
+                    <tr>
+                        <td>{% if a.thumb %}<img src="{{ path_prefix }}{{ a.thumb }}" alt="" width="48" height="48" loading="lazy">{% endif %}</td>
+                        <td><a href="{{ path_prefix }}{{ a.show_page }}">{{ a.name }}</a></td>
+                        <td class="mk-dl">{% if a.cover %}<a href="{{ path_prefix }}{{ a.cover }}" download>JPG</a>{% else %}—{% endif %}</td>
+                        <td class="mk-dl">{% if a.card %}<a href="{{ path_prefix }}{{ a.card }}" download>JPG</a>{% else %}—{% endif %}</td>
+                        <td class="mk-hide-sm">{% if a.apple %}<a href="{{ a.apple }}" rel="noopener">Apple</a>{% endif %}{% if a.apple and a.spotify %} · {% endif %}{% if a.spotify %}<a href="{{ a.spotify }}" rel="noopener">Spotify</a>{% endif %}{% if (a.apple or a.spotify) and a.feed %} · {% endif %}{% if a.feed %}<a href="{{ a.feed }}">RSS</a>{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if mk.page_cards %}
+        <h3>Page images</h3>
+        <p>Share images for the pages a new listener starts from. Each carries its page's address; post it with that link.</p>
+        <div class="mk-cards">
+            {% for c in mk.page_cards %}
+            <figure>
+                <img src="{{ path_prefix }}{{ c.path }}" alt="{{ c.label }} share image" width="1200" height="630" loading="lazy">
+                <figcaption><span>{{ c.label }}</span><a href="{{ path_prefix }}{{ c.path }}" download>Download</a></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h3>Links and handles</h3>
+        <div class="mk-card">
+            <dl class="mk-facts">
+                <dt>Website</dt><dd><a href="https://nerranetwork.com">nerranetwork.com</a></dd>
+                <dt>New listeners</dt><dd><a href="https://nerranetwork.com/start-here.html">nerranetwork.com/start-here.html</a></dd>
+                <dt>Every feed</dt><dd><a href="https://nerranetwork.com/how-to-listen.html">nerranetwork.com/how-to-listen.html</a></dd>
+                <dt>This media kit</dt><dd><a href="https://nerranetwork.com/media-kit.html">nerranetwork.com/media-kit.html</a></dd>
+                {% for soc in mk.social %}<dt>{{ soc.label }}</dt><dd><a href="{{ soc.url }}" rel="noopener">{{ soc.handle }}</a></dd>{% endfor %}
+            </dl>
+            {% if mk.apple_badge %}<p style="margin:var(--sp-4) 0 0"><a href="{{ path_prefix }}{{ mk.apple_badge }}" download><img src="{{ path_prefix }}{{ mk.apple_badge }}" alt="Listen on Apple Podcasts badge" height="40" style="height:40px;width:auto;vertical-align:middle" loading="lazy"></a> <small class="mk-sub">Apple's badge, for a link to a show on Apple Podcasts.</small></p>{% endif %}
+        </div>
+
+        <h3>Using the brand</h3>
+        <div class="mk-rules">
+            <div class="mk-card"><b style="font-family:var(--font-heading);color:var(--nn-white)">Please do</b>
+                <ul class="mk-check" style="margin-top:.6rem">{% for r in mk.usage.yes %}<li>{{ r }}</li>{% endfor %}</ul></div>
+            <div class="mk-card"><b style="font-family:var(--font-heading);color:var(--nn-white)">Please don't</b>
+                <ul class="mk-no" style="margin-top:.6rem">{% for r in mk.usage.no %}<li>{{ r }}</li>{% endfor %}</ul></div>
+        </div>
+        <p class="mk-sub">Something you need that is not here, such as a different size or a founder photo? Write to <a href="mailto:{{ press_email }}?subject=Marketing%20assets">{{ press_email }}</a>.</p>
     </section>
 
     <section class="mk-section" id="questions">
