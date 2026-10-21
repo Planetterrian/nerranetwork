@@ -35,6 +35,23 @@ from engine.utils import calculate_similarity, norm_headline_for_similarity
 
 logger = logging.getLogger(__name__)
 
+#: Oct 21 2026: how long an article the prompt LISTED but the episode did not
+#: air stays out of that show's prompt. The long URL window (the tracker's
+#: whole retention) exists so an AIRED page can never re-air — the 2013
+#: Teslarati page that aired three times. An unused article is only kept off
+#: the next couple of prompts; a story that develops comes back. Before this
+#: the whole prompt list (up to 60 articles) was recorded as "covered" and
+#: blocked for 45 days, and 63-75% of the "already covered" notes cited a
+#: story that never aired (docs/reviews/content_lake_and_story_catalog_2026_10_21.md).
+LISTED_URL_BLOCK_DAYS = 2
+
+#: Tracker files written before Oct 21 2026 carry no ``aired_schema`` and hold
+#: the prompt lists as covered; :meth:`ContentTracker.migrate_to_aired`
+#: rewrites them from the committed digests once.
+AIRED_SCHEMA = 2
+
+_DIGEST_DATE_RE = re.compile(r"_Ep\d+_(\d{8})\.md$")
+
 # ---------------------------------------------------------------------------
 # Default section patterns per show
 # ---------------------------------------------------------------------------
@@ -719,6 +736,7 @@ class ContentTracker:
         self.data: Dict = {
             "show": show_slug,
             "last_updated": None,
+            "aired_schema": AIRED_SCHEMA,
             "episodes": [],
         }
 
@@ -823,6 +841,57 @@ class ContentTracker:
         for ep in self.data["episodes"]:
             if ep.get("date", "") >= cutoff:
                 for u in ep.get("urls", []):
+                    norm = _normalize_url_for_dedup(u)
+                    if norm:
+                        urls.add(norm)
+        return urls
+
+    def migrate_to_aired(self, section_patterns: Dict[str, str]) -> bool:
+        """Rewrite a pre-Oct-21 tracker as what AIRED, from the committed
+        digests next to it (``scripts/rebuild_tracker_aired.py`` explains the
+        rules). Runs once per file: a migrated tracker carries
+        ``aired_schema``. Returns True when it rewrote anything."""
+        if int(self.data.get("aired_schema") or 0) >= AIRED_SCHEMA:
+            return False
+        by_date: Dict[str, List[Path]] = {}
+        for d in (self.output_dir, self.output_dir / "members"):
+            if not d.is_dir():
+                continue
+            for p in d.glob("*_Ep*_*.md"):
+                m = _DIGEST_DATE_RE.search(p.name)
+                if m:
+                    iso = f"{m.group(1)[:4]}-{m.group(1)[4:6]}-{m.group(1)[6:]}"
+                    by_date.setdefault(iso, []).append(p)
+        before = sum(len(ep.get("urls", [])) for ep in self.data.get("episodes", []))
+        for ep in self.data.get("episodes", []):
+            date = ep.get("date", "")
+            old_urls = list(ep.get("urls", [])) + list(ep.get("listed_urls", []))
+            scratch = ContentTracker(self.show_slug, self.output_dir)
+            for path in sorted(by_date.get(date, [])):
+                try:
+                    text = path.read_text(encoding="utf-8")
+                except OSError:
+                    continue
+                scratch.record_episode(text, section_patterns, date=date, record_aired=True)
+            scratch.record_episode("", {}, date=date, record_aired=False, source_urls=old_urls)
+            rec = scratch.data["episodes"][0]
+            ep["headlines"] = rec.get("headlines", [])
+            ep["urls"] = rec.get("urls", [])
+            ep["listed_urls"] = rec.get("listed_urls", [])
+        self.data["aired_schema"] = AIRED_SCHEMA
+        after = sum(len(ep.get("urls", [])) for ep in self.data.get("episodes", []))
+        logger.info(
+            "Content tracker for '%s' migrated to aired-only: %d -> %d covered URLs "
+            "(the rest are listed-only)", self.show_slug, before, after)
+        return True
+
+    def get_recent_listed_urls(self, days: int = LISTED_URL_BLOCK_DAYS) -> set:
+        """Normalized URLs a recent prompt listed and the episode did not air."""
+        cutoff = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+        urls: set = set()
+        for ep in self.data["episodes"]:
+            if ep.get("date", "") >= cutoff:
+                for u in ep.get("listed_urls", []):
                     norm = _normalize_url_for_dedup(u)
                     if norm:
                         urls.add(norm)
@@ -1010,7 +1079,7 @@ class ContentTracker:
         # exact URL sitting in the tracker each time.
         url_window = url_days or max(day_window, 7, int(self.max_days or 0))
         recent_headlines = self.get_recent_headlines(days=day_window)
-        recent_urls = self.get_recent_urls(days=url_window)
+        recent_urls = self.get_recent_urls(days=url_window) | self.get_recent_listed_urls()
 
         if (not recent_headlines and not recent_urls) or not articles:
             return articles
@@ -1068,77 +1137,121 @@ class ContentTracker:
         date: Optional[str] = None,
         source_urls: Optional[List[str]] = None,
         source_titles: Optional[List[str]] = None,
+        *,
+        record_aired: bool = True,
+        source_articles: Optional[List[Dict]] = None,
     ) -> None:
-        """Extract and record content from a generated digest.
+        """Record an episode: what it AIRED, and what its prompt only listed.
 
-        Multiple episodes on the same date are supported: headlines are
-        *merged* (not replaced) so that same-day re-runs don't lose the
-        earlier episode's dedup context.
+        Multiple calls on the same date MERGE (never replace), so a same-day
+        re-run keeps the earlier run's context.
+
+        Oct 21 2026 — the tracker records what aired. ``headlines`` and
+        ``urls`` hold only the stories the digest told (``engine.aired_items``)
+        and the section-pattern headlines; those feed the 45-day URL block,
+        the title filter, the "RECENTLY COVERED" list, the ALREADY-COVERED
+        notes and the hook gate. The prompt's article list (``source_urls`` /
+        ``source_titles`` / ``source_articles``) goes to ``listed_urls``,
+        blocked for :data:`LISTED_URL_BLOCK_DAYS` only. Before this the whole
+        prompt list was merged into ``headlines``/``urls`` as if it had aired.
 
         Args:
-            digest_text: The full digest markdown text.
-            section_patterns: Dict mapping section names to regex patterns.
-            date: Episode date (ISO format). Defaults to today.
-            source_urls: Original article URLs from RSS/X fetcher (optional).
-                Supplements URLs extracted from the digest text, ensuring
-                URL-based dedup works even when the LLM omits source links.
-            source_titles: Original article titles from RSS/X fetcher (optional).
-                Supplements headlines extracted from the digest, ensuring
-                title-based dedup works even when the LLM reformats headlines.
+            digest_text: The digest markdown.
+            section_patterns: Section name -> regex (per show).
+            date: Episode date (ISO). Defaults to today.
+            source_urls / source_titles: the prompt's article list (listed,
+                not aired — kept for the short listed-URL block only).
+            record_aired: False on a FIRST DRAFT (run_show records the draft
+                for its sections and the listed articles, and records what
+                aired once the final digest is on disk).
+            source_articles: the prompt's articles as ``{"url", "title"}``
+                dicts. An article whose URL an aired item cites contributes
+                its original title to ``headlines`` (title matching is more
+                reliable on the publisher's headline than the model's).
         """
+        from engine.aired_items import extract_aired_items
+
         ep_date = date or datetime.date.today().isoformat()
 
         episode_record: Dict = {
             "date": ep_date,
             "headlines": [],
             "urls": [],
+            "listed_urls": [],
             "quote_author": None,
             "sections": {},
         }
 
-        # Extract source URLs from the digest for URL-based dedup
-        for url_match in re.finditer(r"Source:\s*(https?://[^\s)\]]+)", digest_text):
-            url = url_match.group(1).strip().rstrip(",.")
-            if url:
-                episode_record["urls"].append(url)
+        listed: List[str] = [u for u in (source_urls or []) if u]
+        for a in source_articles or []:
+            u = (a or {}).get("url") or ""
+            if u:
+                listed.append(u)
+        listed_titles = list(source_titles or [])
 
-        # Merge in original article URLs from the fetcher (more reliable
-        # than extracting from digest text, which depends on LLM formatting).
-        if source_urls:
-            existing = set(episode_record["urls"])
-            for u in source_urls:
-                if u and u not in existing:
-                    episode_record["urls"].append(u)
-                    existing.add(u)
+        if record_aired:
+            # Source URLs the digest cites (aired by definition).
+            for url_match in re.finditer(r"Source:\s*(https?://[^\s)\]]+)", digest_text):
+                url = url_match.group(1).strip().rstrip(",.")
+                if url:
+                    episode_record["urls"].append(url)
+            aired = extract_aired_items(digest_text)
+            seen_urls = set(episode_record["urls"])
+            for item in aired:
+                for u in item.urls:
+                    if u not in seen_urls:
+                        episode_record["urls"].append(u)
+                        seen_urls.add(u)
 
-        # Extract headlines
-        headlines_pattern = section_patterns.get("headlines")
-        if headlines_pattern:
-            m = re.search(headlines_pattern, digest_text, re.DOTALL | re.IGNORECASE)
-            if m:
-                episode_record["headlines"] = _extract_bold_headlines(m.group(1))
-
-        # Also extract takeover headlines (TST-specific)
-        takeover_pattern = section_patterns.get("takeover_headlines")
-        if takeover_pattern:
-            m = re.search(takeover_pattern, digest_text, re.DOTALL | re.IGNORECASE)
-            if m:
-                episode_record["headlines"].extend(_extract_bold_headlines(m.group(1)))
-
-        # Merge in original RSS article titles for more reliable title-based
-        # cross-episode dedup (LLM-extracted headlines can be reformatted or
-        # include timestamps, making similarity matching unreliable).
-        if source_titles:
+            # Headlines: the section-pattern extraction (unchanged), then
+            # every aired item's title.
+            headlines_pattern = section_patterns.get("headlines")
+            if headlines_pattern:
+                m = re.search(headlines_pattern, digest_text, re.DOTALL | re.IGNORECASE)
+                if m:
+                    episode_record["headlines"] = _extract_bold_headlines(m.group(1))
+            takeover_pattern = section_patterns.get("takeover_headlines")
+            if takeover_pattern:
+                m = re.search(takeover_pattern, digest_text, re.DOTALL | re.IGNORECASE)
+                if m:
+                    episode_record["headlines"].extend(_extract_bold_headlines(m.group(1)))
             existing_norm = {
-                norm_headline_for_similarity(h)
-                for h in episode_record["headlines"] if h
+                norm_headline_for_similarity(h) for h in episode_record["headlines"] if h
             }
-            for t in source_titles:
+
+            def _add_headline(t: str) -> None:
                 if not _is_dedupe_worthy_title(t):
-                    continue
-                if norm_headline_for_similarity(t) not in existing_norm:
+                    return
+                n = norm_headline_for_similarity(t)
+                if n and n not in existing_norm:
                     episode_record["headlines"].append(t)
-                    existing_norm.add(norm_headline_for_similarity(t))
+                    existing_norm.add(n)
+
+            for item in aired:
+                if item.kind != "essay":
+                    _add_headline(item.title)
+
+            # The publisher's own headline for each article an aired item
+            # cites (the model rewrites headlines; the source title matches
+            # tomorrow's re-surfaced copy far better).
+            cited = {_normalize_url_for_dedup(u) for u in episode_record["urls"]}
+            cited.discard("")
+            for a in source_articles or []:
+                a = a or {}
+                if _normalize_url_for_dedup(a.get("url") or "") in cited:
+                    _add_headline(a.get("title") or "")
+
+        aired_norm = {_normalize_url_for_dedup(u) for u in episode_record["urls"]}
+        seen_listed: set = set()
+        for u in listed:
+            n = _normalize_url_for_dedup(u)
+            if n and n not in aired_norm and n not in seen_listed:
+                episode_record["listed_urls"].append(u)
+                seen_listed.add(n)
+        # ``listed_titles`` stay unrecorded: a title the episode did not air
+        # must never read as covered (the ALREADY-COVERED notes and the hook
+        # gate count days from ``headlines``).
+        del listed_titles
 
         # Extract named sections
         for key, pattern in section_patterns.items():
@@ -1163,40 +1276,51 @@ class ContentTracker:
                         episode_record["deep_dive_topic"] = topic
 
         # Merge with existing same-date entry instead of replacing it.
-        # This ensures multiple same-day runs accumulate headlines for
-        # cross-episode dedup rather than losing earlier episodes' data.
         existing = [ep for ep in self.data["episodes"] if ep.get("date") == ep_date]
         if existing:
             prev = existing[0]
-            prev_headlines = set(prev.get("headlines", []))
+            prev.setdefault("headlines", [])
+            prev.setdefault("urls", [])
+            prev.setdefault("listed_urls", [])
+            prev.setdefault("sections", {})
+            prev_headlines = set(prev["headlines"])
             for h in episode_record["headlines"]:
                 if h not in prev_headlines:
                     prev["headlines"].append(h)
-            # Merge URLs
-            prev_urls = set(prev.get("urls", []))
-            if "urls" not in prev:
-                prev["urls"] = list(prev_urls)
-            for u in episode_record.get("urls", []):
+                    prev_headlines.add(h)
+            prev_urls = set(prev["urls"])
+            for u in episode_record["urls"]:
                 if u not in prev_urls:
                     prev["urls"].append(u)
+                    prev_urls.add(u)
+            aired_now = {_normalize_url_for_dedup(u) for u in prev["urls"]}
+            merged_listed = []
+            seen_l: set = set()
+            for u in prev["listed_urls"] + episode_record["listed_urls"]:
+                n = _normalize_url_for_dedup(u)
+                if n and n not in aired_now and n not in seen_l:
+                    merged_listed.append(u)
+                    seen_l.add(n)
+            prev["listed_urls"] = merged_listed
             # Keep sections from the latest run (most current)
             prev["sections"].update(episode_record["sections"])
             if episode_record["quote_author"]:
                 prev["quote_author"] = episode_record["quote_author"]
+            if episode_record.get("deep_dive_topic"):
+                prev["deep_dive_topic"] = episode_record["deep_dive_topic"]
             logger.info(
-                "Merged same-day episode %s: now %d headlines, %d urls, %d sections",
-                ep_date,
-                len(prev["headlines"]),
-                len(prev.get("urls", [])),
-                len(prev["sections"]),
+                "Merged same-day episode %s: now %d aired headlines, %d aired urls, "
+                "%d listed-only urls, %d sections",
+                ep_date, len(prev["headlines"]), len(prev["urls"]),
+                len(prev["listed_urls"]), len(prev["sections"]),
             )
         else:
             self.data["episodes"].append(episode_record)
             logger.info(
-                "Recorded episode %s: %d headlines, %d sections, quote by %s",
-                ep_date,
-                len(episode_record["headlines"]),
-                len(episode_record["sections"]),
+                "Recorded episode %s: %d aired headlines, %d aired urls, "
+                "%d listed-only urls, %d sections, quote by %s",
+                ep_date, len(episode_record["headlines"]), len(episode_record["urls"]),
+                len(episode_record["listed_urls"]), len(episode_record["sections"]),
                 episode_record["quote_author"] or "unknown",
             )
 

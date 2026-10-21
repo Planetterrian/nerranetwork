@@ -324,6 +324,15 @@ def main(argv=None):
     # its summaries JSON like the Age of AI path above.
     total_imported += import_virtual_shows()
 
+    # Oct 21 2026: story ids for every aired item, in the canonical order —
+    # the same ids the story catalog stores (engine/story_catalog.py).
+    try:
+        from engine.content_lake import rebuild_story_ids
+        n_items = rebuild_story_ids()
+        logger.info("Story ids assigned to %d aired items", n_items)
+    except Exception as exc:  # noqa: BLE001 — the episode lake still serves
+        _annotate("warning", f"Story id assignment failed: {exc}")
+
     stats = get_lake_stats()
     logger.info("\n%s", "=" * 60)
     logger.info("BACKFILL COMPLETE")

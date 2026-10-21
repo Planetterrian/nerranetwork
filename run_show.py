@@ -1309,6 +1309,13 @@ def run(args: argparse.Namespace) -> None:
             quote_author_cooldown_days=getattr(ct_cfg, "quote_author_cooldown_days", 30),
         )
         content_tracker.load()
+        # Oct 21 2026: a tracker written before the aired-only change holds
+        # whole prompt lists as "covered"; rewrite it once from the digests.
+        try:
+            if content_tracker.migrate_to_aired(section_patterns):
+                content_tracker.save()
+        except Exception as _mig_exc:  # noqa: BLE001 — dedup memory, never blocks
+            logger.warning("Tracker aired migration failed (non-fatal): %s", _mig_exc)
 
         feed_dicts = [
             {
@@ -2137,6 +2144,9 @@ def run(args: argparse.Namespace) -> None:
         MAX_ARTICLES_FOR_LLM = int(
             getattr(config, "max_prompt_articles", 0) or DEFAULT_MAX_PROMPT_ARTICLES)
         MAX_HOOK_ARTICLES_FOR_LLM = 12
+        # Oct 21 2026: every candidate article, before the prompt cap — the
+        # story catalog keeps what the run fetched and did not use.
+        _catalog_fetched = list(articles)
         if len(articles) > MAX_ARTICLES_FOR_LLM:
             logger.info(
                 "Capping articles from %d to %d to prevent prompt bloat",
@@ -2480,38 +2490,21 @@ def run(args: argparse.Namespace) -> None:
             template_vars["slow_news_context"] = ""
 
         # Cross-show topic awareness from content lake (avoid redundancy across shows)
+        # Oct 21 2026: the articles in today's list that a sibling show has
+        # already told, matched to the lake's aired stories. This block had
+        # never fired (the CI-rebuilt lake had no headlines) and asked for
+        # "avoid redundancy"; it now asks for this show's angle instead.
         try:
-            from engine.content_lake import query_all_shows_range
-            from datetime import timedelta
-            cross_start = (today - timedelta(days=7)).isoformat()
-            cross_end = today.isoformat()
-            recent_cross = query_all_shows_range(cross_start, cross_end)
-            other_show_topics = [
-                ep for ep in recent_cross
-                if ep.get("show_slug") != args.show and ep.get("headlines")
-            ]
-            if other_show_topics:
-                lines = []
-                for ep in other_show_topics[-10:]:  # Last 10 episodes from other shows
-                    show_label = ep.get("show_name", ep.get("show_slug", ""))
-                    date_label = ep.get("date", "")
-                    headlines = ep.get("headlines", [])[:3]
-                    if headlines:
-                        lines.append(f"- {show_label} ({date_label}): {'; '.join(headlines)}")
-                if lines:
-                    template_vars["cross_show_context"] = (
-                        "Topics recently covered by other Nerra Network shows "
-                        "(avoid redundancy):\n" + "\n".join(lines)
-                    )
-                    logger.info("Injecting cross-show context (%d shows) into digest prompt", len(lines))
-            if "cross_show_context" not in template_vars:
-                template_vars["cross_show_context"] = (
-                    "(No recent cross-network coverage to dedupe against today.)"
-                )
-        except Exception as exc:
-            logger.debug("Cross-show context unavailable (non-fatal): %s", exc)
+            from engine.cross_show import render_block, sibling_matches
+            _sib = sibling_matches(articles, args.show, today)
+            template_vars["cross_show_context"] = render_block(_sib)
+            metrics.record("cross_show_matches", len(_sib))
+            if _sib:
+                logger.info("Cross-show context: %d article(s) already told by a sibling show", len(_sib))
+        except Exception as exc:  # noqa: BLE001 — context only, never blocks
+            logger.warning("Cross-show context unavailable (non-fatal): %s", exc)
             template_vars["cross_show_context"] = (
-                "(Cross-network context unavailable — proceed without dedupe signal.)"
+                "(Cross-network context unavailable today.)"
             )
 
         # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
@@ -2662,14 +2655,16 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _cl_exc:  # noqa: BLE001
                 logger.warning("Story cluster metric failed (non-fatal): %s", _cl_exc)
 
-        # Record episode content in the cross-episode tracker
+        # Record the FIRST DRAFT in the cross-episode tracker: its sections
+        # (the slow-news bookkeeping below reads today's record) and the
+        # articles the prompt listed. What AIRED is recorded once the final
+        # digest is on disk (Oct 21 2026 — the draft's stories and the
+        # whole prompt list used to be recorded as covered).
         if section_patterns:
-            _article_urls = [a.get("url", "") for a in articles if a.get("url")]
-            _article_titles = [a.get("title", "") for a in articles if a.get("title")]
             content_tracker.record_episode(
                 x_thread, section_patterns,
-                source_urls=_article_urls,
-                source_titles=_article_titles,
+                record_aired=False,
+                source_articles=[a for a in articles if a.get("url")],
             )
             content_tracker.save()
 
@@ -2975,12 +2970,10 @@ def run(args: argparse.Namespace) -> None:
 
                             # Re-record episode content
                             if section_patterns:
-                                _article_urls = [a.get("url", "") for a in articles if a.get("url")]
-                                _article_titles = [a.get("title", "") for a in articles if a.get("title")]
                                 content_tracker.record_episode(
                                     x_thread, section_patterns,
-                                    source_urls=_article_urls,
-                                    source_titles=_article_titles,
+                                    record_aired=False,
+                                    source_articles=[a for a in articles if a.get("url")],
                                 )
                                 content_tracker.save()
                         else:
@@ -3866,6 +3859,21 @@ def run(args: argparse.Namespace) -> None:
         digest_md.write_text(_scrub(x_thread), encoding="utf-8")
         logger.info("Digest saved: %s", digest_md)
 
+        # Oct 21 2026: the tracker records what AIRED — the final digest's
+        # stories, never the draft's and never the prompt's whole list.
+        if section_patterns:
+            try:
+                content_tracker.record_episode(
+                    x_thread, section_patterns,
+                    record_aired=True,
+                    source_articles=[a for a in (locals().get("articles") or []) if a.get("url")],
+                )
+                content_tracker.save()
+                from engine.aired_items import extract_aired_items as _aired
+                metrics.record("tracker_aired_items", len(_aired(x_thread)))
+            except Exception as _tr_exc:  # noqa: BLE001 — dedup memory, never blocks
+                logger.warning("Tracker aired record failed (non-fatal): %s", _tr_exc)
+
         # Persist the verified claim ledger next to the digest (committed by
         # the same `git add -A digests/` as the episode output). Written even
         # when empty — an empty ledger documents that the gate ran and the
@@ -3947,8 +3955,11 @@ def run(args: argparse.Namespace) -> None:
 
             _et = extract_entities_and_topics(x_thread, args.show)
             _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
-            _headlines = [a.get("title", "") for a in articles if a.get("title")]
-            _source_urls = [a.get("url", "") for a in articles if a.get("url")]
+            # Oct 21 2026: the lake records what aired (the prompt's list
+            # had been written here, and the CI rebuild wrote nothing).
+            from engine.aired_items import aired_titles, aired_urls
+            _headlines = aired_titles(x_thread)
+            _source_urls = aired_urls(x_thread)
             _lake_record = EpisodeRecord(
                 show_slug=args.show,
                 episode_num=episode_num,
@@ -3975,6 +3986,9 @@ def run(args: argparse.Namespace) -> None:
                 _lake_record = None
             else:
                 store_episode(_lake_record)
+                # Oct 21 2026: today's items join the stories the lake knows.
+                from engine.content_lake import rebuild_story_ids
+                rebuild_story_ids(since=today.isoformat())
         except Exception as exc:
             logger.warning("Content lake write failed (non-fatal): %s", exc)
 
@@ -5759,6 +5773,30 @@ def run(args: argparse.Namespace) -> None:
     # step pushes what it adds. Best-effort: a failed push leaves everything
     # for that final commit, exactly as before.
     _checkpoint_publish(args, metrics)
+
+    # Oct 21 2026: the story catalog (engine/catalog.py) — this episode's
+    # aired items and stories, and every article the run fetched. Written
+    # after the audio is out, so a catalog problem can never cost the episode;
+    # the nightly sync heals a write that fails here.
+    if not getattr(args, "rehearse", False) and not args.test:
+        try:
+            from engine import catalog as _catalog
+            if _catalog.configured():
+                _cat = _catalog.record_run(
+                    show_slug=args.show, episode_num=episode_num, date=today.isoformat(),
+                    fetched=locals().get("_catalog_fetched") or locals().get("articles") or [],
+                    listed=locals().get("articles") or [],
+                    page_url=f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html",
+                    audio_url=r2_audio_url or "",
+                )
+                metrics.record("story_catalog", _cat.get("status", ""))
+                metrics.record("story_catalog_articles", int(_cat.get("articles", 0) or 0))
+                metrics.record("story_catalog_articles_aired", int(_cat.get("articles_aired", 0) or 0))
+            else:
+                metrics.record("story_catalog", "unconfigured")
+        except Exception as _cat_exc:  # noqa: BLE001 — never blocks a run
+            logger.warning("Story catalog write failed (non-fatal): %s", _cat_exc)
+            metrics.record("story_catalog", "failed")
 
     if not _video_deferred:
         _run_video_stage(

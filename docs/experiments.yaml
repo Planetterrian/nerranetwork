@@ -5292,6 +5292,33 @@ experiments:
       and the retry prompt names the shortfall above the depth rule. Digest
       side only (the sanctioned length lever). Guards:
       tests/test_slate_2026_10_19.py::TestExpansionAsksForStories.
+  - id: story-catalog-2026-10-21
+    title: "The tracker records what aired; a story catalog with story ids across days and shows"
+    area: content
+    shipped: 2026-10-21
+    readout: 2026-11-04
+    status: reading
+    baseline: >
+      Oct 7-21: each show's tracker recorded the whole prompt list (up to 60
+      articles) as covered — 63-75% of ALREADY-COVERED notes cited a story
+      that never aired, unused URLs were blocked for 45 days, and about 20%
+      of tracker URLs had aired. The CI-rebuilt lake carried no headlines,
+      so the cross-show block read "none" on all 23 prompts every day.
+      Nothing durable recorded what a run fetched and did not air.
+    target: >
+      story_recurrence_notes per episode falls (notes now cite aired stories
+      only); cross_show_matches recorded on every news show and non-zero on
+      the days a sibling told the story; story_catalog = ok on every
+      published run once the catalog is filled; api/story_catalog.json
+      written nightly with missed_stories non-null. ⚠️ AUDIO — the digest
+      INPUT changes on every news show (recurrence notes, the RECENTLY
+      COVERED list, the cross-show block, the 2-day listed-URL block):
+      A/B-listen Tesla, SpaceX and one desk.
+    notes: >
+      Review docs/reviews/content_lake_and_story_catalog_2026_10_21.md;
+      design docs/story_catalog.md. Migration 20261021_story_catalog.sql
+      applied to nerra-voices on Oct 21. Guards:
+      tests/test_story_catalog_2026_10_21.py.
   - id: slate-2026-10-21
     title: "Oct 21 slate: clock times, chapters off the map line, retries that keep the story, a link is not a story"
     area: content

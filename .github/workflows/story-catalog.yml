@@ -1,0 +1,73 @@
+name: Story Catalog
+
+# Oct 21 2026 — the story catalog (engine/catalog.py; review
+# docs/reviews/content_lake_and_story_catalog_2026_10_21.md).
+#
+# Each show run writes its own episode and fetched articles to the catalog
+# after it publishes. This job is the heal and the readout:
+#   1. rebuild the content lake from the committed digests (items + story ids);
+#   2. copy the last three days to the catalog (any runtime write that failed
+#      is repaired here); `full` copies the whole archive (first fill, or after
+#      a matcher change re-derives story ids);
+#   3. delete unaired articles past 90 days;
+#   4. write api/story_catalog.json — stories several shows told, developing
+#      stories, retelling by show, corrections and the other episodes that
+#      told the same story, and the stories three or more outlets carried that
+#      no show aired.
+# Unconfigured (no Supabase secrets) copies nothing and still writes the
+# readout from the lake, with the catalog-only fields null.
+
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Copy the whole archive (first fill, or after a matcher change)"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: story-catalog
+  cancel-in-progress: false
+
+jobs:
+  catalog:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write  # recovery PR if push to main exhausts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.14"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Rebuild the content lake
+        run: python scripts/backfill_content_lake.py
+
+      - name: Sync the catalog and write the readout
+        env:
+          CATALOG_SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          CATALOG_SUPABASE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          FULL_INPUT: ${{ inputs.full }}
+        run: |
+          args="--prune --report"
+          if [ "${FULL_INPUT}" = "true" ]; then
+            args="--full $args"
+          fi
+          # shellcheck disable=SC2086
+          python scripts/sync_story_catalog.py $args
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            api/story_catalog.json
+          commit-message: "Auto-generated: story catalog readout"

@@ -75,6 +75,13 @@ jobs:
           path: ~/.cache/huggingface
           key: whisper-faster-base-v1
 
+      # Oct 21 2026: the content lake gives each episode a prior_coverage.md
+      # (what the network already aired on the subject — never a source).
+      - name: Rebuild the content lake
+        if: ${{ inputs.action == 'produce' }}
+        continue-on-error: true
+        run: python scripts/backfill_content_lake.py
+
       - name: Produce
         if: github.event.inputs.action == 'produce'
         env:

@@ -112,3 +112,27 @@ The first three are a small change and a large one in effect. Every "already cov
 1. **Phase 0.** Change what the tracker records, and shorten the unused-URL block. This changes prompt input on every news show, so A/B-listen it.
 2. **Phase 1 location.** A `catalog` schema in `nerra-voices` (recommended), or a separate project.
 3. **The cross-show block.** Re-enable it with "another show's angle" wording, or remove it. It has never run, so removing it changes no shipped audio.
+
+## 6. Decided and built (Oct 21 2026, same day)
+
+The operator approved Phase 0 and put the catalog in `nerra-voices`. Built:
+
+- **Phase 0, items 1 and 2:** the tracker records what aired, unused URLs are blocked for 2 days, and the existing tracker files migrate themselves once from the committed digests. Dry run before the change: Tesla 1,440 → 599 covered URLs, SpaceX 1,373 → 293, M&A 1,424 → 401, MIT 1,390 → 138.
+- **Phase 0, item 3:** the rebuilt lake carries item titles and links, and the cross-show block names today's articles a sibling told, asking for this show's angle.
+- **Phase 0, item 4: not done.** The four matchers are left as they are; consolidating them changes every annotation and is its own pass.
+- **Phase 1:**
+  - story ids across the archive: 18,528 aired items in roughly 16,000 stories, with about 1,190 told on more than one day and about 420 told by more than one show;
+  - the `catalog_*` tables;
+  - the runtime write after publish;
+  - the nightly heal and readout.
+- **Phase 2 (partly):**
+  - missed stories, and corrections with the other episodes that told the same story, in the readout;
+  - the book corrections gate;
+  - `catalog_dossier.py`;
+  - prior coverage for specials.
+- **Not yet:**
+  - story pages;
+  - Personal and Nerra Daily reading story ids;
+  - embeddings.
+
+Design and rules: [`docs/story_catalog.md`](../story_catalog.md).
