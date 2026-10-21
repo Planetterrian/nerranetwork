@@ -1,0 +1,129 @@
+# Nerra Voices — rehearsal harness (Oct 21 2026, review §7.5).
+#
+# A change to Mira's room (prompt, end-of-turn silence, reasoning effort)
+# is rehearsed against a FIXTURE GUEST — a second voice agent playing a
+# past guest from their approved transcript — before any real guest hears
+# it. Two arms, same fixture, same scheduled behaviours: `proposed` is the
+# prompt compile_mira_prompt writes today on the fixture's real application;
+# `current` is the prompt the last real interview actually ran on. Each room
+# is transcribed per speaker and measured with audio_metrics; the report
+# prints PASS only on the §7.5 rule (proposed beats current on overlap
+# events, self-answered turns and guest words per answer, and does not lose
+# on turn length). A PASS still needs one operator listen before a deploy.
+#
+# This workflow never deploys anything. It needs the fixture-guest scenario
+# deployed once (Deploy Voximplant scenario) and the Worker to leave a
+# session_kind=rehearsal run alone (no editorial passes, no emails).
+name: Nerra Voices — rehearsal
+on:
+  workflow_dispatch:
+    inputs:
+      fixture:
+        description: 'Fixture guest (pipelines/voices/fixtures/rehearsal_guests.yaml)'
+        type: choice
+        options: [roddy, vincent, adrian]
+        default: roddy
+      minutes:
+        description: 'Minutes per room'
+        type: number
+        default: 10
+      repeat:
+        description: 'Rooms per arm'
+        type: number
+        default: 3
+      arms:
+        description: 'Which arms to run'
+        type: choice
+        options: [both, proposed, current]
+        default: both
+      turn_silence_ms:
+        description: 'Proposed arm: end-of-turn silence override (blank = the fire step default)'
+        type: string
+        default: ''
+      reasoning_effort:
+        description: 'Proposed arm: interview_runs.reasoning_effort (blank = the room default)'
+        type: string
+        default: ''
+      tools:
+        description: 'Proposed arm: in-call tools'
+        type: choice
+        options: [default, none]
+        default: default
+  # Nightly only when the operator turns it on: repo variable
+  # VOICES_REHEARSAL_NIGHTLY=true. Each room costs a Voice Agent session on
+  # both sides.
+  schedule:
+    - cron: '23 9 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nerra-voices-rehearsal
+  cancel-in-progress: false
+
+jobs:
+  rehearse:
+    if: ${{ github.event_name != 'schedule' || vars.VOICES_REHEARSAL_NIGHTLY == 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    env:
+      FIXTURE: ${{ inputs.fixture || 'roddy' }}
+      MINUTES: ${{ inputs.minutes || 10 }}
+      REPEAT: ${{ inputs.repeat || 3 }}
+      ARMS: ${{ inputs.arms || 'both' }}
+      OUT_DIR: outputs/rehearsals/${{ github.run_id }}
+      SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+      VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+      VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+      VOXIMPLANT_CALLER_ID: ${{ secrets.VOXIMPLANT_CALLER_ID }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+      REHEARSAL_COUGH_CLIP: ${{ vars.REHEARSAL_COUGH_CLIP }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - uses: ./.github/actions/setup-ffmpeg
+      - name: Rehearse the current configuration
+        if: ${{ env.ARMS != 'proposed' }}
+        run: |
+          python pipelines/voices/rehearsal.py run --arm current \
+            --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" \
+            --out-dir "$OUT_DIR"
+      - name: Rehearse the proposed configuration
+        if: ${{ env.ARMS != 'current' }}
+        run: |
+          args=(--arm proposed --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
+          [ -n "$TURN_SILENCE_MS" ] && args+=(--turn-silence-ms "$TURN_SILENCE_MS")
+          [ -n "$REASONING_EFFORT" ] && args+=(--reasoning-effort "$REASONING_EFFORT")
+          [ "$TOOLS" = "none" ] && args+=(--tools none)
+          python pipelines/voices/rehearsal.py run "${args[@]}"
+        env:
+          TURN_SILENCE_MS: ${{ inputs.turn_silence_ms }}
+          REASONING_EFFORT: ${{ inputs.reasoning_effort }}
+          TOOLS: ${{ inputs.tools || 'default' }}
+      - name: Report
+        if: ${{ always() }}
+        run: |
+          python pipelines/voices/rehearsal.py report "$OUT_DIR" \
+            --summary-file "$OUT_DIR/report.md" --json-out "$OUT_DIR/report.json" || true
+          cat "$OUT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "no rooms measured" >> "$GITHUB_STEP_SUMMARY"
+      - name: Attach the rooms and the report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rehearsal-${{ github.run_id }}
+          path: outputs/rehearsals/
+          retention-days: 14
+          if-no-files-found: ignore

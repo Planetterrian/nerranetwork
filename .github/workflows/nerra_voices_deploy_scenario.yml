@@ -63,6 +63,25 @@ jobs:
         env:
           VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
           VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+      # Rehearsal harness (Oct 21 2026): the fixture-guest scenario rides the
+      # same deploy with the same substitutions, on its own rule whose pattern
+      # never matches an inbound call (docs/age_of_ai_rehearsal.md).
+      - name: Upload the fixture-guest scenario and its rule
+        run: |
+          python - <<'PY'
+          from voximplant.api_clients.voximplant_client import (
+              FIXTURE_SCENARIO_NAME, ensure_fixture_rule, upload_fixture_scenario)
+          print(f"deployed {FIXTURE_SCENARIO_NAME}: {upload_fixture_scenario()}")
+          print("fixture rule:", ensure_fixture_rule())
+          PY
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
+          GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
       # Studio users (Sept 9 2026): the guest/host passwords are derived
       # from ADMIN_TOKEN on both sides; this step writes them onto the
       # Voximplant users so the Worker's one-time-key login always matches.

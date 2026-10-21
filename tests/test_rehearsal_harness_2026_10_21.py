@@ -1,0 +1,310 @@
+"""The Age of AI rehearsal harness (Oct 21 2026, review §7.5).
+
+A spoken change to Mira's room is measured against a fixture guest before
+a real guest hears it. These guards pin: the persona renders from a real
+published digest with no Mira line in it; the report's PASS rule; the
+fixture scenario's contracts (same deploy placeholders, joins as a guest
+leg, never speaks first by default); the workflow and deploy wiring.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import re
+import sys
+from pathlib import Path
+
+import pytest
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+PIPELINES = ROOT / "pipelines" / "voices"
+FIXTURE_JS = ROOT / "voximplant" / "scenarios" / "age_of_ai_fixture_guest.js"
+INTERVIEW_JS = ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js"
+CLIENT = ROOT / "voximplant" / "api_clients" / "voximplant_client.py"
+WORKFLOW = ROOT / ".github" / "workflows" / "nerra_voices_rehearsal.yml"
+DEPLOY = ROOT / ".github" / "workflows" / "nerra_voices_deploy_scenario.yml"
+
+if str(PIPELINES) not in sys.path:
+    sys.path.insert(0, str(PIPELINES))
+
+
+@pytest.fixture(scope="module")
+def rehearsal():
+    spec = importlib.util.spec_from_file_location("rehearsal", PIPELINES / "rehearsal.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _load_client():
+    spec = importlib.util.spec_from_file_location("voximplant_client", CLIENT)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules["voximplant_client"] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+# ---------------------------------------------------------------------------
+# Fixtures and the persona
+# ---------------------------------------------------------------------------
+
+class TestFixtures:
+    def test_three_registers_on_real_digests(self, rehearsal):
+        fixtures = rehearsal.load_fixtures()
+        assert set(fixtures) == {"roddy", "vincent", "adrian"}
+        for fid, fx in fixtures.items():
+            assert (ROOT / fx["digest"]).exists(), fx["digest"]
+            assert fx["voice"] != "ara", "a fixture never uses Mira's voice"
+            assert fx["register"]
+
+    def test_persona_carries_the_guest_and_no_mira_line(self, rehearsal):
+        fixtures = rehearsal.load_fixtures()
+        for fx in fixtures.values():
+            digest = rehearsal.parse_digest(ROOT / fx["digest"])
+            assert digest["name"] == fx["name"]
+            assert digest["guest_lines"], "the register sample needs the guest's own lines"
+            persona = rehearsal.fixture_persona(fx)
+            assert fx["name"].split()[0] in persona
+            assert "{about}" not in persona and "{register_sample}" not in persona
+            md = (ROOT / fx["digest"]).read_text(encoding="utf-8")
+            mira_lines = [re.sub(r"^\[\d+:\d+(?::\d+)?\]\s*Mira:\s*", "", ln).strip()
+                          for ln in md.splitlines() if re.match(r"^\[\d+:\d+(?::\d+)?\]\s*Mira:", ln)]
+            leaked = [ln for ln in mira_lines if len(ln.split()) >= 6 and ln in persona]
+            assert not leaked, f"Mira's lines leaked into the persona: {leaked[:2]}"
+            assert "[0" not in persona, "timestamps never reach the persona"
+            assert len(persona) <= rehearsal.PERSONA_MAX_CHARS
+
+    def test_the_persona_never_names_the_persona_as_a_model(self, rehearsal):
+        text = (PIPELINES / "prompts" / "fixture_guest.txt").read_text(encoding="utf-8")
+        assert "You are {guest_name}" in text
+        assert "fixture" not in text.lower() and "rehearsal" not in text.lower()
+
+
+# ---------------------------------------------------------------------------
+# The §7.5 rule
+# ---------------------------------------------------------------------------
+
+def _rec(arm, **metrics):
+    return {"arm": arm, "fixture": "roddy", "metrics": metrics, "listen_url": f"https://x/{arm}"}
+
+
+class TestVerdict:
+    def test_pass_when_proposed_beats_current_and_keeps_turn_length(self, rehearsal):
+        records = [
+            _rec("current", overlap_events=14, self_answered_turns=3,
+                 guest_words_per_answer_median=40, mira_turn_sec_median=7.6),
+            _rec("current", overlap_events=12, self_answered_turns=2,
+                 guest_words_per_answer_median=44, mira_turn_sec_median=8.0),
+            _rec("proposed", overlap_events=2, self_answered_turns=0,
+                 guest_words_per_answer_median=70, mira_turn_sec_median=14.0),
+            _rec("proposed", overlap_events=1, self_answered_turns=0,
+                 guest_words_per_answer_median=66, mira_turn_sec_median=16.0),
+        ]
+        summary = rehearsal.summarise(records)
+        assert summary["current"]["rooms"] == 2 and summary["proposed"]["rooms"] == 2
+        result = rehearsal.verdict(summary)
+        assert result["result"] == "PASS", result
+        assert all(c["ok"] for c in result["checks"])
+
+    def test_fail_when_any_required_metric_does_not_improve(self, rehearsal):
+        records = [
+            _rec("current", overlap_events=5, self_answered_turns=1,
+                 guest_words_per_answer_median=50, mira_turn_sec_median=14),
+            _rec("proposed", overlap_events=2, self_answered_turns=0,
+                 guest_words_per_answer_median=45, mira_turn_sec_median=15),
+        ]
+        result = rehearsal.verdict(rehearsal.summarise(records))
+        assert result["result"] == "FAIL"
+        failed = [c["metric"] for c in result["checks"] if c["ok"] is False]
+        assert failed == ["guest_words_per_answer_median"]
+
+    def test_fail_when_turn_length_moves_further_from_the_band(self, rehearsal):
+        records = [
+            _rec("current", overlap_events=5, self_answered_turns=1,
+                 guest_words_per_answer_median=50, mira_turn_sec_median=11),
+            _rec("proposed", overlap_events=2, self_answered_turns=0,
+                 guest_words_per_answer_median=60, mira_turn_sec_median=6),
+        ]
+        result = rehearsal.verdict(rehearsal.summarise(records))
+        assert result["result"] == "FAIL"
+        turn = next(c for c in result["checks"] if c["metric"] == "mira_turn_sec_median")
+        assert turn["ok"] is False
+
+    def test_inconclusive_without_both_arms_or_with_a_missing_metric(self, rehearsal):
+        only = [_rec("proposed", overlap_events=1, self_answered_turns=0,
+                     guest_words_per_answer_median=60, mira_turn_sec_median=14)]
+        assert rehearsal.verdict(rehearsal.summarise(only))["result"] == "INCONCLUSIVE"
+        missing = only + [_rec("current", overlap_events=5, self_answered_turns=1,
+                               mira_turn_sec_median=14)]
+        assert rehearsal.verdict(rehearsal.summarise(missing))["result"] == "INCONCLUSIVE"
+
+    def test_report_names_the_listen_rule(self, rehearsal, tmp_path):
+        records = [
+            _rec("current", overlap_events=5, self_answered_turns=1,
+                 guest_words_per_answer_median=50, mira_turn_sec_median=14),
+            _rec("proposed", overlap_events=2, self_answered_turns=0,
+                 guest_words_per_answer_median=60, mira_turn_sec_median=15),
+        ]
+        for i, r in enumerate(records):
+            (tmp_path / f"{r['arm']}_{i}.json").write_text(json.dumps(r), encoding="utf-8")
+        loaded = rehearsal.load_records(tmp_path)
+        assert len(loaded) == 2
+        md = rehearsal.report_markdown(rehearsal.summarise(loaded),
+                                       rehearsal.verdict(rehearsal.summarise(loaded)))
+        assert "**PASS**" in md and "listened" in md and "https://x/proposed" in md
+        assert rehearsal.main(["report", str(tmp_path)]) == 0
+
+
+class TestRunRow:
+    def test_run_row_is_marked_rehearsal_and_carries_the_configuration(self, rehearsal, monkeypatch):
+        import fire_interviews
+        monkeypatch.setattr(fire_interviews, "keyterms_for", lambda app, show, cohost="": ["Roddy"])
+        row = rehearsal.build_run_row(
+            interview={"id": "iv-1", "application_id": "app-1", "duration_min": 10},
+            arm="proposed", fixture={"id": "roddy", "name": "Roddy de la Garza"},
+            prompt="PROMPT", minutes=10, turn_silence_ms=1300,
+            reasoning_effort="low", tools=[])
+        assert row["session_kind"] == "rehearsal"
+        assert row["status"] == "awaiting_guest" and row["host_mode"] is False
+        assert row["turn_detection"] == {"silence_duration_ms": 1300}
+        assert row["reasoning_effort"] == "low" and row["tools"] == []
+        assert row["grok_session_log"]["rehearsal"]["arm"] == "proposed"
+        assert row["planned_minutes"] == 10
+
+
+# ---------------------------------------------------------------------------
+# The fixture scenario
+# ---------------------------------------------------------------------------
+
+class TestFixtureScenario:
+    @pytest.fixture(scope="class")
+    def js(self):
+        return FIXTURE_JS.read_text(encoding="utf-8")
+
+    def test_same_deploy_placeholders_and_nothing_else(self, js):
+        interview = INTERVIEW_JS.read_text(encoding="utf-8")
+        allowed = set(re.findall(r"__[A-Z_]+__", interview))
+        used = set(re.findall(r"__[A-Z_]+__", js))
+        assert used, "the deploy substitutes the secrets into this file too"
+        assert used <= allowed, used - allowed
+        assert not re.search(r"(sk-|xai-)[A-Za-z0-9]{20,}", js)
+
+    def test_joins_as_a_guest_leg_and_reports_it(self, js):
+        assert 'VoxEngine.callConference(ROOM_PREFIX + runId, "guest", "guest", headers)' in js
+        assert '"X-Role": "guest"' in js and '"X-Fixture": "1"' in js
+        assert 'role: "guest"' in js and "fixture: true" in js
+        assert 'LEG_EVENT_URL = API_BASE + "/leg-event"' in js
+
+    def test_never_speaks_first_unless_told(self, js):
+        # The only responseCreate is behind the speaks_first cue.
+        creates = [m.start() for m in re.finditer(r"responseCreate\(", js)]
+        assert len(creates) == 1
+        assert js.rfind("custom.speaks_first", 0, creates[0]) > 0
+
+    def test_behaves_like_a_person(self, js):
+        for kind in ("pause_mid_thought", "cough", "let_me_think", "push_back", "ask_who"):
+            assert kind in js, kind
+        assert "two full seconds" in js and "sorry, you go" in js
+        assert "answer only the last one" in js
+        assert "Never say you are an AI, a fixture or a rehearsal" in js
+
+    def test_its_own_voice_and_a_fixed_end_of_turn(self, js):
+        assert 'String(custom.voice || "sal")' in js
+        assert "DEFAULT_SILENCE_MS = 900" in js
+        assert 'reasoning: { effort: "low" }' in js
+        assert "tools: []" in js
+
+    def test_leaves_on_the_clock(self, js):
+        assert "MAX_MINUTES = 30" in js
+        assert "finish(\"minutes_reached\")" in js
+        assert 'finish("room_ended")' in js
+
+
+# ---------------------------------------------------------------------------
+# The Management client and the workflows
+# ---------------------------------------------------------------------------
+
+class TestClient:
+    def test_start_fixture_guest_names_its_own_rule_and_carries_the_persona(self, monkeypatch):
+        vc = _load_client()
+        seen = {}
+
+        def fake_call(method, **params):
+            seen["method"] = method
+            seen.update(params)
+            return {"result": 1}
+
+        monkeypatch.setattr(vc, "_call", fake_call)
+        vc.start_fixture_guest("run-1", persona="You are Roddy.", voice="sal",
+                               minutes=10, speaks_first=True, fixture_id="roddy",
+                               guest_name="Roddy de la Garza", cough_clip="https://c/cough.mp3")
+        assert seen["method"] == "StartScenarios"
+        assert seen["rule_name"] == vc.FIXTURE_RULE_NAME != vc.RULE_NAME
+        data = json.loads(seen["script_custom_data"])
+        assert data["fixture"] is True and data["run_id"] == "run-1"
+        assert data["persona"] == "You are Roddy." and data["speaks_first"] is True
+        assert data["cough_clip"] == "https://c/cough.mp3" and data["minutes"] == 10
+
+    def test_start_fixture_guest_refuses_an_empty_persona(self, monkeypatch):
+        vc = _load_client()
+        monkeypatch.setattr(vc, "_call", lambda *a, **k: {"result": 1})
+        with pytest.raises(vc.VoximplantError):
+            vc.start_fixture_guest("run-1", persona="  ")
+
+    def test_fixture_rule_pattern_can_never_match_a_call(self):
+        vc = _load_client()
+        assert vc.FIXTURE_RULE_PATTERN == r"^fixture-guest-never-dialled$"
+        assert not re.match(vc.FIXTURE_RULE_PATTERN, "room-abc")
+
+    def test_ensure_fixture_rule_is_idempotent(self, monkeypatch):
+        vc = _load_client()
+        calls = []
+
+        def fake_call(method, **params):
+            calls.append(method)
+            if method == "GetRules":
+                return {"result": [{"rule_name": vc.FIXTURE_RULE_NAME, "rule_id": 9,
+                                    "rule_pattern": vc.FIXTURE_RULE_PATTERN}]}
+            return {"rule_id": 10}
+
+        monkeypatch.setattr(vc, "_call", fake_call)
+        out = vc.ensure_fixture_rule()
+        assert out == {"rule_id": 9, "created": False}
+        assert calls == ["GetRules"]
+
+    def test_upload_fixture_scenario_uses_the_fixture_name(self, monkeypatch):
+        vc = _load_client()
+        seen = {}
+        monkeypatch.setattr(vc, "upload_scenario",
+                            lambda path, scenario_name=None, **kw: seen.update(
+                                {"path": path, "name": scenario_name}) or {"result": 1})
+        vc.upload_fixture_scenario()
+        assert seen["name"] == vc.FIXTURE_SCENARIO_NAME
+        assert Path(seen["path"]).name == "age_of_ai_fixture_guest.js"
+
+
+class TestWorkflows:
+    def test_rehearsal_workflow_inputs_and_rule(self):
+        wf = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+        inputs = wf[True]["workflow_dispatch"]["inputs"] if True in wf else wf["on"]["workflow_dispatch"]["inputs"]
+        assert set(inputs) >= {"fixture", "minutes", "repeat", "arms",
+                               "turn_silence_ms", "reasoning_effort", "tools"}
+        assert inputs["fixture"]["options"] == ["roddy", "vincent", "adrian"]
+        text = WORKFLOW.read_text(encoding="utf-8")
+        assert "vars.VOICES_REHEARSAL_NIGHTLY == 'true'" in text
+        assert "--arm current" in text and "--arm proposed" in text
+        assert "rehearsal.py report" in text and "GITHUB_STEP_SUMMARY" in text
+        # It measures; it never deploys. The only mentions of deploying are
+        # the header's own statement and the pointer to the deploy workflow.
+        assert "upload_scenario" not in text and "upload_fixture_scenario" not in text
+        assert "SetScenarioInfo" not in text and "ensure_fixture_rule" not in text
+
+    def test_deploy_uploads_the_fixture_after_the_interview_scenario(self):
+        wf = DEPLOY.read_text(encoding="utf-8")
+        assert "upload_fixture_scenario" in wf and "ensure_fixture_rule" in wf
+        assert wf.index("upload_fixture_scenario") > wf.index("upload_scenario(path)")
+
+    def test_results_are_never_committed(self):
+        assert "outputs/rehearsals/" in (ROOT / ".gitignore").read_text(encoding="utf-8")
