@@ -1063,7 +1063,8 @@ class TestOnlyTheGuestLeavingIsAnEvent:
         body = self.SCENARIO[self.SCENARIO.index("function resumeForGuest("):]
         body = body[:body.index("// Whole-room mix")]
         assert "ask your last question again IN FULL" in body
-        assert "responseCreate" in body
+        # Oct 21 2026: spoken through requestTurn, so never over the guest.
+        assert "requestTurn(grokAgent)" in body and "responseCreate" not in body
 
     def test_a_guest_arriving_for_the_first_time_is_not_a_rejoin(self):
         body = self.SCENARIO[self.SCENARIO.index("postLegEvent(role, \"joined\")"):]
@@ -1937,7 +1938,10 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
                               self.SCENARIO.index("const SIGN_OFF_RE")]
         assert "YOU ARE NOT NEAR THE END" in block
         assert "elapsed < closingOpensAtMin()" in block
-        assert "You may begin the closing round" in block
+        # Oct 21 2026: once permitted, the ROOM hands her the closing
+        # questions one at a time (startRound); the note says so.
+        assert "you may" in block and "begin the closing round" in block
+        assert "the room hands you each closing question" in block
 
     def test_the_closing_window_matches_the_prompts(self):
         import importlib, sys as _sys

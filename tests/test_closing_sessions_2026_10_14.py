@@ -205,7 +205,12 @@ class TestTheGuestSpeakingAnswersTheLastWord:
 
     def test_the_room_measures_it_when_the_guest_stops(self):
         i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
-        assert "noteGuestSpoke(Date.now() - inboundSpokeAt);" in SCENARIO[i:i + 200]
+        # Oct 21 2026: the length is measured once and shared with the turn
+        # decision (speechSinceMiraMs), so the last-word rule reads the same
+        # number the room decides turns on.
+        stopped = SCENARIO[i:i + 300]
+        assert "const ms = Date.now() - inboundSpokeAt;" in stopped
+        assert "noteGuestSpoke(ms);" in stopped
 
     def test_a_build_without_the_stopped_event_still_hears_them(self):
         i = SCENARIO.index("InputAudioBufferSpeechStarted, function () {")

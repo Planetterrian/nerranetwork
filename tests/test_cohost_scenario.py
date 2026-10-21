@@ -169,7 +169,10 @@ class TestRoom:
         opened = _fn(js, "function openWhenReady(reason)")
         assert "if (openingFired || !sessionReady || !grokAgent) return;" in opened
         assert "openingFired = true;" in opened
-        assert "grokAgent.responseCreate({});" in opened
+        # Oct 21 2026: the opening is a turn like every other — it goes
+        # through requestTurn, which never starts over the guest.
+        assert "requestTurn(grokAgent)" in opened
+        assert "responseCreate" not in opened
         assert "startTimeChecks();" in opened and "armAudioCheck();" in opened
 
     def test_joins_and_leaves_are_announced(self, js):
@@ -183,7 +186,8 @@ class TestRoom:
         assert "responseCreate" not in body
         assert 'noteRoom(role + " joined")' in js
         assert 'noteRoom(role + " left the room")' in js
-        assert "grokAgent.responseCreate({});" in _fn(js, "function resumeForGuest()")
+        resume = _fn(js, "function resumeForGuest()")
+        assert "requestTurn(grokAgent);" in resume and "responseCreate" not in resume
 
     def test_no_direct_bridge_fallback(self, js):
         # Sept 10 2026: the "no speech in 12 s → bridge one leg to the agent"
@@ -383,9 +387,19 @@ class TestSessionRelay:
 
     def test_rotation_is_armed_and_configurable(self, js):
         assert '__GROK_SESSION_MAX_MIN__' in js and "return (raw > 0) ? raw : 30;" in js
-        assert "ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 4)" in js
+        # Oct 21 2026: the timer marks the hand-over DUE six minutes before
+        # the ceiling; a pause she is in performs it, and only the last 90 s
+        # force it. Matt Davis and Jon Cheney each lost an answer to a timer.
+        assert "ROTATE_AFTER_MS_DEFAULT = Math.max(2, GROK_SESSION_MAX_MIN - 6)" in js
+        assert "ROTATE_FORCE_MS = Math.max(3, GROK_SESSION_MAX_MIN - 1.5)" in js
         assert "rotate_after_sec" in js, "a run row must be able to shorten it for a rehearsal"
-        assert "setTimeout(rotateAgent, rotateAfterMs())" in js
+        armed = _fn(js, "function armRotation()")
+        assert "rotationDue = true;" in armed and "rotateAfterMs()" in armed
+        assert "setTimeout(rotateAgent, rotateAfterMs())" not in js
+        done = js[js.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;"):]
+        done = done[:done.index("});")]
+        assert "if (rotationDue && !inboundSpeaking && !rotating) { rotateAgent(); return; }" in done
+        assert "if (rotationDue) {" in _fn(js, "function decideTurn()")
 
     def test_handover_note_tells_her_to_continue(self, js):
         body = _fn(js, "function handoverNote()")

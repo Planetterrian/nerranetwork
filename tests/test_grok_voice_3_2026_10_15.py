@@ -81,7 +81,12 @@ class TestSessionSettings:
     def test_live_interview_pins_high_and_sends_keyterms(self):
         js = SCENARIO.read_text(encoding="utf-8")
         live = js[js.index("const sessionCfg = {"):js.index("agent.sessionUpdate({ session: sessionCfg })")]
-        assert 'reasoning: { effort: "high" }' in live
+        # Oct 21 2026: pinned by the run row (interview_runs.reasoning_effort,
+        # default "high"), never by a connector default, so the rehearsal
+        # harness can trial "low" on a fixture guest before a real one.
+        assert "reasoning: { effort: reasoningEffort() }" in live
+        fn = js[js.index("function reasoningEffort()"):js.index("function reasoningEffort()") + 400]
+        assert 'config.reasoning_effort' in fn and ': "high";' in fn
         assert "sessionAudioConfig()" in live
         fn = js[js.index("function sessionAudioConfig()"):js.index("function turnDetection()")]
         assert "config.keyterms" in fn and "transcription: { keyterms: clean }" in fn

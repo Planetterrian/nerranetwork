@@ -179,6 +179,14 @@ def upload_scenario(path: Path,
     session_max = (os.environ.get("GROK_SESSION_MAX_MIN", "").strip()
                    or DEFAULT_GROK_SESSION_MAX_MIN)
     source = source.replace("__GROK_SESSION_MAX_MIN__", str(session_max))
+    # Request signing (Oct 21 2026): when VOICES_WEBHOOK_SECRET is set the
+    # room signs every request it makes to the Worker (X-Voices-Signature,
+    # hex HMAC-SHA256 of the body) and the Worker, deployed with the same
+    # secret, refuses unsigned ones. Unset leaves the placeholder, which the
+    # scenario reads as "send no header".
+    webhook_secret = os.environ.get("VOICES_WEBHOOK_SECRET", "").strip()
+    if webhook_secret:
+        source = source.replace("__VOICES_WEBHOOK_SECRET__", webhook_secret)
     print(f"scenario deploys with Grok voice model {voice_model}, "
           f"session cap {session_max} min", flush=True)
 

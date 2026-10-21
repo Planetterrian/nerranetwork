@@ -41,8 +41,11 @@ def _flat(text: str) -> str:
 
 class TestSheWaitsForTheRoom:
     def test_the_guest_gets_a_beat_before_she_speaks(self):
-        assert "GUEST_SETTLE_MS = 7 * 1000" in SCENARIO
+        # Oct 21 2026: she never speaks first on join — the guest's first
+        # words, or three seconds of them settling, open her mouth.
+        assert "GUEST_SETTLE_MS = 3 * 1000" in SCENARIO
         assert 'openWhenReady("guest settled")' in _fn("maybeOpen")
+        assert 'openWhenReady("guest spoke first")' in _fn("openAfterGuestSpoke")
 
     def test_the_open_is_held_for_a_co_host_who_is_coming(self):
         body = _fn("maybeOpen")
@@ -419,7 +422,12 @@ class TestSheActuallyStops:
         assert "if (!miraSpeaking) return;" in body
 
     def test_the_flag_is_set_where_she_is_asked_to_speak(self):
-        assert SCENARIO.count("miraSpeaking = true") >= 4
+        # Oct 21 2026: ONE place asks for a turn (requestTurn) and one place
+        # records that a turn started whoever asked (markTurnStarted); every
+        # other "she is speaking" flag went with the direct responseCreate calls.
+        assert SCENARIO.count("miraSpeaking = true") == 2
+        assert "miraSpeaking = true;\n  turnRequested = true;\n  agent.responseCreate({});" in SCENARIO
+        assert SCENARIO.count("responseCreate({})") == 2, "requestTurn and the narration take only"
         assert "miraSpeaking = false;\n        trace(\"grok\", \"response done\");" in SCENARIO
 
     def test_a_connector_without_cancel_does_not_crash_the_room(self):

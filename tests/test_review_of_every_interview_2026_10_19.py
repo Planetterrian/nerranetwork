@@ -157,11 +157,13 @@ class TestTheRoomNeverTalksOverItself:
         # ResponseDone releases it, unless someone is talking.
         done = SCENARIO[SCENARIO.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;"):]
         done = done[:done.index("});")]
-        assert "if (pendingTurn && agent === grokAgent && !roomEnded)" in done
-        assert "if (!inboundSpeaking)" in done
-        # The guest starting to talk drops it.
-        started = SCENARIO[SCENARIO.index("InputAudioBufferSpeechStarted, function () {"):]
-        assert started.index("pendingTurn = false;") < started.index("agent.clearMediaBuffer();")
+        assert "if (agent !== grokAgent || roomEnded) return;" in done
+        assert "if (pendingTurn && !inboundSpeaking) requestTurn(agent);" in done
+        # Oct 21 2026: the guest starting to talk no longer drops it — their
+        # pause gives her the turn (decideTurn honours pendingTurn), and
+        # requestTurn itself parks a turn asked for while they are talking.
+        assert "if (inboundSpeaking) { pendingTurn = true; return; }" in body
+        assert "const owed = pendingTurn;" in _jsfn("decideTurn")
 
     def test_one_sign_off_earns_one_rescue(self):
         assert "const RESCUE_COOLDOWN_MS = 20 * 1000;" in SCENARIO
@@ -178,9 +180,9 @@ class TestTheRoomNeverTalksOverItself:
         assert "|| miraSpeaking)) {" in body
         assert "lastMiraLineAt > guestJoinedAt()" in body
         assert "You have already said hello" in body
-        assert "if (!alreadyGreeted) {" in body
+        assert "if (!alreadyGreeted) requestTurn(grokAgent);" in body
         # Time checks and the mic check still start either way.
-        assert body.index("if (!alreadyGreeted) {") < body.index("startTimeChecks();")
+        assert body.index("if (!alreadyGreeted) requestTurn(grokAgent);") < body.index("startTimeChecks();")
 
     def test_she_records_when_she_last_spoke(self):
         assert "lastMiraLineAt = Date.now();" in _jsfn("remember")
