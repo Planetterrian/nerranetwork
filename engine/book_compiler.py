@@ -1112,6 +1112,51 @@ def validate_chapter_prose(chapters: List[BookChapter]) -> None:
             "digest, never the EPUB:\n  " + "\n  ".join(problems))
 
 
+def validate_chapter_corrections(volume: BookVolume, chapters: List[BookChapter]) -> None:
+    """Hard build gate (Oct 21 2026): a book never prints a corrected error.
+
+    A correction whose ``where`` covers the text (``digest`` / ``both``) is
+    only in a book's prose once its ``replacements`` have been applied to the
+    committed digest (``scripts/apply_corrections.py --apply``) — the web
+    page shows a dated correction box, a book has no such box. The volume is
+    refused when the chapter's episode carries a text correction with no
+    replacement text, or one whose ``find`` text is still in the digest
+    (filed, never applied). Audio-only corrections never block: the
+    audiobook is narrated from the digest, not from the podcast audio."""
+    from engine.corrections import corrections_for
+
+    digest_dir = volume.resolved_digest_dir()
+    problems: List[str] = []
+    for c in chapters:
+        try:
+            text = find_digest(volume, c.episode_num).read_text(encoding="utf-8")
+        except Exception:  # noqa: BLE001 — collect_chapters already read it
+            continue
+        for corr in corrections_for(digest_dir, c.episode_num):
+            if corr.get("where") not in ("digest", "both"):
+                continue
+            reps = corr.get("replacements") or []
+            if not reps and not corr.get("headline"):
+                problems.append(
+                    f"chapter {c.number} (ep {c.episode_num}): correction of "
+                    f"{corr['date']} has no replacement text — add `replacements` "
+                    "and run scripts/apply_corrections.py --apply")
+                continue
+            for r in reps:
+                if r.get("find") and r["find"] in text:
+                    problems.append(
+                        f"chapter {c.number} (ep {c.episode_num}): correction of "
+                        f"{corr['date']} is filed but not applied — still reads "
+                        f"\"{r['find'][:80]}\"")
+                    break
+    if problems:
+        for msg in problems:
+            logger.error("uncorrected chapter — %s", msg)
+        raise ValueError(
+            "a chapter still carries a corrected error — apply the correction "
+            "to the digest, never edit the EPUB:\n  " + "\n  ".join(problems))
+
+
 def _package_opf(volume: BookVolume, chapters: List[BookChapter],
                  *, has_cover: bool,
                  extras: Optional[Dict[str, bool]] = None) -> str:
@@ -1225,6 +1270,7 @@ def build_epub(
     from engine.book_art import to_epub_chapter_jpeg, to_epub_cover_jpeg
 
     validate_chapter_prose(chapters)
+    validate_chapter_corrections(volume, chapters)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     has_cover = bool(cover_png and Path(cover_png).exists())

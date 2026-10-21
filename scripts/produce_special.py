@@ -62,6 +62,17 @@ def write_episode_text(series: S.Series, ep: S.Episode, config, catalog: dict,
     out_dir = S.episode_dir(series, ep)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Oct 21 2026: what the network has already aired on this subject, from
+    # the content lake — for the operator's listen and edit, never a source
+    # and never prompt input (only pages the research READ are sources).
+    try:
+        from engine.story_dossier import prior_coverage_markdown
+        prior = prior_coverage_markdown(f"{ep.title} {' '.join(ep.questions)}")
+        if prior:
+            (out_dir / "prior_coverage.md").write_text(prior, encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001 — orientation only
+        logger.info("[%s] prior coverage unavailable: %s", ep.id, exc)
+
     logger.info("[%s] research: %d questions", ep.id, len(ep.questions))
     articles = S.research_episode(ep)
     (out_dir / "sources.json").write_text(

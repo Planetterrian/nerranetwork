@@ -1,6 +1,7 @@
 """Tests for engine/content_tracker.py — cross-episode content tracking."""
 
 import datetime
+import re
 import json
 import tempfile
 from pathlib import Path
@@ -472,14 +473,20 @@ class TestSourceTitleJunkFilter:
     def test_junk_source_titles_filtered(self, tmp_path):
         tracker = ContentTracker("tesla_shorts_time", tmp_path)
         tracker.load()
+        # Oct 21 2026: a source title reaches ``headlines`` only when an
+        # aired item cites its URL (``source_articles``); the junk filter
+        # still applies to those.
+        cited = re.findall(r"https?://[^\s)\]]+", SAMPLE_TST_DIGEST)
+        assert cited
+        cited = (cited * 5)[:5]
         tracker.record_episode(
             SAMPLE_TST_DIGEST, TST_SECTION_PATTERNS,
-            source_titles=[
-                "Laughing Emojis 🤣🤣",
-                "Video post",
-                "NY is full of liberal retards 🤣",
-                "Same",
-                "Tesla opens new Supercharger corridor across British Columbia",
+            source_articles=[
+                {"url": cited[0], "title": "Laughing Emojis 🤣🤣"},
+                {"url": cited[1], "title": "Video post"},
+                {"url": cited[2], "title": "NY is full of liberal retards 🤣"},
+                {"url": cited[3], "title": "Same"},
+                {"url": cited[4], "title": "Tesla opens new Supercharger corridor across British Columbia"},
             ],
         )
         headlines = tracker.data["episodes"][0]["headlines"]

@@ -5,6 +5,15 @@ products (weekly newsletters, monthly reports, cross-show briefings).
 
 Uses SQLite for reliable concurrent access and efficient querying.  The
 database lives at ``data/content_lake.db`` by default.
+
+Oct 21 2026 — items and story ids. Every episode's aired stories
+(``engine.aired_items``) are stored one row each in ``items``, with the story
+id ``engine.story_catalog`` assigns (the same story across days and shows).
+``store_episode`` derives them from the episode's own digest, so the runtime
+write and the CI rebuild fill the same rows; ``rebuild_story_ids`` re-derives
+every id in the canonical order after a rebuild. The durable copy lives in the
+story catalog (``engine/catalog.py``, Supabase); this lake is its offline,
+rebuildable mirror for build-time readers (prompts, books, search).
 """
 
 from __future__ import annotations
@@ -88,6 +97,30 @@ def init_db(db_path: Path = DB_PATH) -> None:
         CREATE VIRTUAL TABLE IF NOT EXISTS episodes_fts
         USING fts5(title, hook, digest_md, summary, headlines, entities, topics)
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_key TEXT NOT NULL UNIQUE,
+            show_slug TEXT NOT NULL,
+            episode_num INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            section TEXT,
+            title TEXT,
+            body TEXT,
+            urls TEXT,  -- JSON array
+            kind TEXT,
+            story_id TEXT,
+            tokens TEXT,  -- JSON array (salient tokens used for story matching)
+            language TEXT DEFAULT 'en'
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_items_date ON items(date)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_items_story ON items(story_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_items_show_ep ON items(show_slug, episode_num)")
+    conn.execute("""
+        CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(title, body)
+    """)
     conn.commit()
     conn.close()
 
@@ -102,6 +135,19 @@ def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH) -> None:
     Upserts on ``(show_slug, episode_num)`` so re-runs are safe.
     """
     init_db(db_path)
+    aired = []
+    if record.digest_md and not record.headlines:
+        try:
+            from engine.aired_items import extract_aired_items
+            aired = extract_aired_items(record.digest_md)
+            record.headlines = [i.title for i in aired if i.kind != "essay"]
+            if not record.source_urls:
+                seen: set = set()
+                record.source_urls = [u for i in aired for u in i.urls
+                                      if not (u in seen or seen.add(u))]
+        except Exception as exc:  # noqa: BLE001 — items are a bonus
+            logger.warning("[ContentLake] Aired items failed for %s ep%s: %s",
+                           record.show_slug, record.episode_num, exc)
     conn = sqlite3.connect(str(db_path))
     try:
         conn.execute("""
@@ -141,6 +187,7 @@ def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH) -> None:
             json.dumps(record.headlines), json.dumps(record.entities),
             json.dumps(record.topics),
         ))
+        _store_items(conn, record, aired)
         conn.commit()
         logger.info("[ContentLake] Stored %s ep%d (%s)",
                     record.show_slug, record.episode_num, record.date)
@@ -149,6 +196,143 @@ def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH) -> None:
         conn.rollback()
     finally:
         conn.close()
+
+
+def _store_items(conn: sqlite3.Connection, record: EpisodeRecord, aired=None) -> None:
+    """Replace this episode's item rows (story ids are assigned separately)."""
+    from engine.aired_items import extract_aired_items
+    from engine.story_catalog import item_key, item_tokens
+
+    if aired is None or (not aired and record.digest_md):
+        aired = extract_aired_items(record.digest_md or "")
+    old_ids = [r[0] for r in conn.execute(
+        "SELECT id FROM items WHERE show_slug = ? AND episode_num = ?",
+        (record.show_slug, record.episode_num))]
+    for rid in old_ids:
+        conn.execute("DELETE FROM items_fts WHERE rowid = ?", (rid,))
+    conn.execute("DELETE FROM items WHERE show_slug = ? AND episode_num = ?",
+                 (record.show_slug, record.episode_num))
+    for pos, it in enumerate(aired):
+        toks = sorted(item_tokens(it.title, it.body)) if it.kind != "essay" else []
+        cur = conn.execute("""
+            INSERT INTO items (item_key, show_slug, episode_num, date, position,
+                               section, title, body, urls, kind, tokens, language)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (item_key(record.show_slug, record.episode_num, pos), record.show_slug,
+              record.episode_num, record.date, pos, it.section, it.title, it.body,
+              json.dumps(it.urls), it.kind, json.dumps(toks), record.language))
+        conn.execute("INSERT INTO items_fts(rowid, title, body) VALUES (?, ?, ?)",
+                     (cur.lastrowid, it.title, it.body))
+
+
+def _item_rows(conn: sqlite3.Connection, where: str = "", params: tuple = ()) -> list:
+    return conn.execute(
+        "SELECT item_key, show_slug, date, tokens, kind, story_id FROM items "
+        + (f"WHERE {where} " if where else "")
+        + "ORDER BY date, show_slug, episode_num, position", params).fetchall()
+
+
+def rebuild_story_ids(db_path: Path = DB_PATH, since: Optional[str] = None) -> int:
+    """Assign story ids in the canonical order (date, show, episode, item).
+
+    ``since=None`` re-derives every id (the CI rebuild). With ``since`` the
+    window before it is taken in with its stored ids and only items on or
+    after ``since`` are (re)assigned — what a single show run needs. Returns
+    the number of items assigned."""
+    import datetime as _dt
+    from engine.story_catalog import WINDOW_DAYS, StoryAssigner
+
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    try:
+        assigner = StoryAssigner()
+        if since:
+            seed_from = (_dt.date.fromisoformat(since) - _dt.timedelta(days=WINDOW_DAYS)).isoformat()
+            by_date: Dict[str, list] = {}
+            for key, show, date, toks, kind, sid in _item_rows(
+                    conn, "date >= ? AND date < ?", (seed_from, since)):
+                if kind != "essay" and sid:
+                    by_date.setdefault(date, []).append((sid, frozenset(json.loads(toks or "[]")), show))
+            for date in sorted(by_date):
+                assigner.observe(date, by_date[date])
+            rows = _item_rows(conn, "date >= ?", (since,))
+        else:
+            rows = _item_rows(conn)
+        days: Dict[str, list] = {}
+        for key, show, date, toks, kind, _sid in rows:
+            days.setdefault(date, []).append((key, frozenset(json.loads(toks or "[]")), show, kind))
+        n = 0
+        for date in sorted(days):
+            batch = days[date]
+            ids = assigner.assign(date, batch)
+            conn.executemany("UPDATE items SET story_id = ? WHERE item_key = ?",
+                             [(sid, row[0]) for sid, row in zip(ids, batch)])
+            n += len(batch)
+        conn.commit()
+        return n
+    finally:
+        conn.close()
+
+
+def query_items(start_date: str, end_date: str, *, exclude_show: str = "",
+                show_slug: str = "", db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
+    """Aired items between two dates (inclusive), optionally for one show or
+    excluding one."""
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    sql = ("SELECT i.*, e.show_name FROM items i LEFT JOIN episodes e "
+           "ON e.show_slug = i.show_slug AND e.episode_num = i.episode_num "
+           "WHERE i.date >= ? AND i.date <= ?")
+    params: list = [start_date, end_date]
+    if show_slug:
+        sql += " AND i.show_slug = ?"
+        params.append(show_slug)
+    if exclude_show:
+        sql += " AND i.show_slug != ?"
+        params.append(exclude_show)
+    sql += " ORDER BY i.date, i.show_slug, i.episode_num, i.position"
+    rows = [dict(r) for r in conn.execute(sql, params).fetchall()]
+    conn.close()
+    for r in rows:
+        r["urls"] = json.loads(r.get("urls") or "[]")
+        r["tokens"] = json.loads(r.get("tokens") or "[]")
+    return rows
+
+
+def story_timeline(story_id: str, db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
+    """Every aired item of one story, oldest first."""
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    rows = [dict(r) for r in conn.execute(
+        "SELECT i.*, e.show_name FROM items i LEFT JOIN episodes e "
+        "ON e.show_slug = i.show_slug AND e.episode_num = i.episode_num "
+        "WHERE i.story_id = ? ORDER BY i.date, i.show_slug, i.position",
+        (story_id,)).fetchall()]
+    conn.close()
+    for r in rows:
+        r["urls"] = json.loads(r.get("urls") or "[]")
+    return rows
+
+
+def search_items(query: str, limit: int = 50, db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
+    """Full-text search over aired items (title + body), best match first."""
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT i.*, e.show_name FROM items_fts f JOIN items i ON i.id = f.rowid "
+            "LEFT JOIN episodes e ON e.show_slug = i.show_slug AND e.episode_num = i.episode_num "
+            "WHERE items_fts MATCH ? ORDER BY rank LIMIT ?", (query, limit)).fetchall()]
+    except sqlite3.OperationalError as exc:
+        logger.warning("[ContentLake] Item search failed for %r: %s", query, exc)
+        rows = []
+    conn.close()
+    for r in rows:
+        r["urls"] = json.loads(r.get("urls") or "[]")
+    return rows
 
 
 # ---------------------------------------------------------------------------
