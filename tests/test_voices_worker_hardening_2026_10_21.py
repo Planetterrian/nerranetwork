@@ -200,3 +200,14 @@ def test_rehearsal_runs_are_stored_and_never_processed():
     counters = _fn("roomCountersOf")
     for k in ("barge_ins", "server_turns", "self_answers_blocked", "closing_round_complete", "closing_questions_asked"):
         assert k in counters
+
+
+def test_a_hello_event_books_a_five_minute_hello_row():
+    assert "CALCOM_EVENT_SLUG_HELLO?: string;" in WORKER
+    assert "export const HELLO_MINUTES = 5;" in WORKER
+    booked = _fn("handleCalComBooked")
+    assert "isHelloBooking(env, eventSlug, eventTypeId, eventTitle)" in booked
+    assert 'session_kind: "hello", hello_for_interview_id: helloFor' in booked
+    assert "hello ? HELLO_MINUTES : plannedMinutes" in booked
+    assert "five-minute hello" in booked
+    assert "CALCOM_EVENT_SLUG_HELLO" in WRANGLER and "CALCOM_EVENT_SLUG_HELLO" in README

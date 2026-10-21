@@ -65,6 +65,10 @@ export interface Env {
   // "voices" → nerra_voices, anything else → age_of_ai.
   CALCOM_EVENT_SLUG_AGE_OF_AI?: string;
   CALCOM_EVENT_SLUG_NERRA_VOICES?: string;
+  // Oct 21 2026: the five-minute pre-call hello (pipelines/voices, migration
+  // 20261021_pre_call_hello.sql). The Cal.com event-type slug (or numeric id)
+  // that books one; without it a slug or title containing "hello" is one.
+  CALCOM_EVENT_SLUG_HELLO?: string;
   SLACK_WEBHOOK?: string;
   // Oct 21 2026: the room signs what it posts here. The scenario carries the
   // same value (substituted at deploy as __VOICES_WEBHOOK_SECRET__) and sends
@@ -244,6 +248,20 @@ function showFromCalCom(env: Env, eventSlug: string, eventTypeId: string): Show 
   }
   return slug.includes("voices") ? SHOWS.nerra_voices : SHOWS.age_of_ai;
 }
+
+/** Is this booking the five-minute hello? The configured event type wins
+ *  (slug or numeric id, the showFromCalCom pattern); else "hello" in the
+ *  slug or the event title. A closing session is never a hello. */
+export function isHelloBooking(env: Pick<Env, "CALCOM_EVENT_SLUG_HELLO">, eventSlug: string,
+                               eventTypeId: string, title: string): boolean {
+  const slug = eventSlug.trim().toLowerCase();
+  const id = eventTypeId.trim().toLowerCase();
+  const want = (env.CALCOM_EVENT_SLUG_HELLO ?? "").trim().toLowerCase();
+  if (want && (want === slug || (id && want === id))) return true;
+  return /hello/i.test(slug) || /\bhello\b/i.test(title);
+}
+
+export const HELLO_MINUTES = 5;
 
 // ---------------------------------------------------------------------------
 // Small clients
@@ -1398,8 +1416,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // session that records only the closing round of an interview the old
   // time cap cut off. It is always its own row, pointing at the interview
   // it finishes.
+  const eventTitle = String(p.title ?? p.eventTitle ?? p.eventType?.title ?? "");
   const closing = /closing/i.test(eventSlug) ||
-    /finishing our conversation/i.test(String(p.title ?? p.eventTitle ?? p.eventType?.title ?? ""));
+    /finishing our conversation/i.test(eventTitle);
   let continues: string | null = null;
   if (closing) {
     const prev = await sb(env, "GET",
@@ -1407,11 +1426,21 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       `&status=not.in.(scheduled,briefed,cancelled,missed)&order=scheduled_at.desc&limit=1&select=id`);
     continues = prev?.[0]?.id ?? null;
   }
-  const existing = closing
-    ? await sb(env, "GET",
-        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.closing&status=in.(scheduled,briefed)&limit=1`)
-    : await sb(env, "GET",
-        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview&status=in.(scheduled,briefed)&limit=1`);
+  // Oct 21 2026: the five-minute hello two days before the interview. Its
+  // own row (session_kind "hello", five minutes) pointing at the guest's
+  // scheduled interview, so the agenda it produces lands on the right one.
+  const hello = !closing && isHelloBooking(env, eventSlug, eventTypeId, eventTitle);
+  let helloFor: string | null = null;
+  if (hello) {
+    const main = await sb(env, "GET",
+      `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview` +
+      `&status=in.(scheduled,briefed)&order=scheduled_at.asc&limit=1&select=id`);
+    helloFor = main?.[0]?.id ?? null;
+    if (!helloFor) console.warn(`cal-com-booked: hello for ${emailAddr} has no scheduled interview to precede`);
+  }
+  const kind = closing ? "closing" : hello ? "hello" : "interview";
+  const existing = await sb(env, "GET",
+    `interviews?application_id=eq.${apps[0].id}&session_kind=eq.${kind}&status=in.(scheduled,briefed)&limit=1`);
   let interviewId: string;
   if (existing?.length) {
     interviewId = existing[0].id;
@@ -1419,14 +1448,16 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
         cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: closing ? 15 : plannedMinutes, host_mode: false });
+        duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes, host_mode: false,
+        ...(hello ? { hello_for_interview_id: helloFor } : {}) });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
         cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: closing ? 15 : plannedMinutes, host_mode: false,
-        ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}) },
+        duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes, host_mode: false,
+        ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}),
+        ...(hello ? { session_kind: "hello", hello_for_interview_id: helloFor } : {}) },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
@@ -1463,6 +1494,25 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
        ${miraSignature(show)}`, true);
     await slack(env, `${show.shortLabel}: ${apps[0].name} booked a closing session ${pacificTime(startTime)}`);
     return json({ ok: true, show: show.slug, interview_id: interviewId, closing: true });
+  }
+  if (hello) {
+    // The usual confirmation shape — the studio link and the three steps —
+    // and no prep brief: the brief belongs to the interview, and the hello
+    // is where the guest tells Mira what it should reach.
+    await email(env, emailAddr, `Our five-minute hello before ${show.name}`,
+      `<p>Hi ${esc(firstName(apps[0].name))},</p>
+       <p>Thank you for booking the hello. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""},
+       and it is five minutes: I say hello, we check your sound, and you tell me the one or
+       two things you most want our conversation to reach. That becomes the shape of the hour.</p>
+       <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
+       it: the studio opens ${STUDIO_OPENS_BEFORE_TEXT} before we start, and there is nothing to install.</p>
+       ${GUEST_AUDIO_HTML}
+       ${studioStepsHtml(studio)}
+       <p>${manage ? `If you need to move it, <a href="${esc(manage)}">use this link</a>.` : "If you need to move it, use the reschedule link in your calendar confirmation."}</p>
+       ${miraSignature(show)}`, true, publicistCc(apps[0]));
+    await slack(env, `${show.shortLabel}: ${apps[0].name} booked a five-minute hello ${pacificTime(startTime)}` +
+      (helloFor ? "" : " (no scheduled interview found to attach it to)"));
+    return json({ ok: true, show: show.slug, interview_id: interviewId, hello: true, hello_for_interview_id: helloFor });
   }
   await email(env, emailAddr, `You're booked on ${show.name}`,
     `<p>Hi ${esc(firstName(apps[0].name))},</p>

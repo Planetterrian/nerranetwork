@@ -63,7 +63,7 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 |---|---|
 | `POST /voices/apply` | Public guest application form (both apply pages post here with their `show`) |
 | `POST /voices/interview-complete` | Voximplant scenario hangup webhook → `repository_dispatch: interview-complete` (signed, see below). Oct 21 2026: the room's turn-taking counters (`barge_ins`, `server_turns`, `self_answers_blocked`, `closing_round_complete`, `closing_questions_asked`) are kept inside `grok_session_log`; a run whose `session_kind` is `rehearsal` (the rehearsal harness's fixture guest) is stored with `grok_session_log.rehearsal = true` and nothing is dispatched or emailed |
-| `POST /voices/cal-com-booked` | Cal.com booking webhook → schedules the interview + confirmation email |
+| `POST /voices/cal-com-booked` | Cal.com booking webhook → schedules the interview + confirmation email. A `closing` event type books the closing session; Oct 21 2026: the event type named by `CALCOM_EVENT_SLUG_HELLO` (else a slug or title containing "hello") books the five-minute pre-call hello — its own row with `session_kind` `hello`, `duration_min` 5 and `hello_for_interview_id` = the guest's scheduled interview (migration `20261021_pre_call_hello.sql`) — and the guest gets the usual confirmation with the studio link and no prep brief |
 | `GET/POST /voices/review/<token>` | Guest transcript review (gate 2): approve → `repository_dispatch: interview-approved-by-guest`; removal requests → back to Patrick. Oct 21 2026: the page shows `edit_transcript` (the transcript of the edit a listener will hear) when the pipeline wrote one, each timed line is clickable and a click stores `{start_sec, end_sec, line}` in `editorial_packages.guest_redaction_windows`; the production is dispatched BEFORE the package is marked approved (a thrown dispatch leaves the interview at `approved` for housekeeping to retry) |
 | `GET/POST /voices/survey/<token>` | Oct 21 2026: Mira's three-question survey a day after the room (1–5 against a human host, one thing to change, recommend to a peer) → `editorial_packages.survey_*`; the pipeline mints `survey_token` and emails the link whether or not the guest opens the review page |
 | `GET /voices/admin/triage?token=…` | Patrick's application triage UI (~30 s/app), grouped by show |
@@ -149,6 +149,7 @@ wrangler secret put GMAIL_DELEGATED_USER        # the delegated mailbox (patrick
 wrangler secret put CALCOM_BOOKING_URL_NERRA_VOICES   # second Cal.com event; else CALCOM_BOOKING_URL is reused
 wrangler secret put CALCOM_EVENT_SLUG_AGE_OF_AI       # Cal.com event-type slug (or numeric id) → routes the booking webhook
 wrangler secret put CALCOM_EVENT_SLUG_NERRA_VOICES    # ditto; unset = slug containing "voices" → nerra_voices
+wrangler secret put CALCOM_EVENT_SLUG_HELLO           # Oct 21 2026: the five-minute pre-call hello's event type (slug or id); unset = slug/title containing "hello"
 # WebRTC studio + Phase 2 co-host (docs/cohost_phase2_contract.md):
 #   NO studio passwords here. Since Sept 9 2026 the Worker derives the
 #   guest/host passwords from ADMIN_TOKEN and the "Deploy Voximplant
