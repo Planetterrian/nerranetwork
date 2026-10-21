@@ -109,16 +109,22 @@ def test_runner_always_supplies_cross_show_context():
     runner = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
     # The runner sets the variable in three places:
     # 1. With cross-show topics when the lake returns episodes
-    # 2. With "(No recent cross-network coverage...)" when lake is empty
+    # 2. With engine.cross_show.NONE_TEXT when no sibling told today's stories
     # 3. With "(Cross-network context unavailable...)" when lake errors
     assert 'template_vars["cross_show_context"]' in runner, (
         "run_show.py no longer sets template_vars['cross_show_context'] — "
         "every digest prompt that uses {cross_show_context} will KeyError."
     )
     # Both fallback strings must be present so the variable is always
-    # set, never missing.
-    assert "No recent cross-network coverage" in runner, (
-        "Empty-lake fallback for cross_show_context missing in run_show.py"
+    # set, never missing. Oct 21 2026: the empty-window text lives in
+    # engine/cross_show.py (NONE_TEXT), rendered by render_block, which
+    # run_show calls on every run.
+    from engine.cross_show import NONE_TEXT, render_block
+    assert "render_block(" in runner, (
+        "run_show.py no longer renders the cross-show block"
+    )
+    assert render_block([]) == NONE_TEXT and NONE_TEXT.startswith("("), (
+        "Empty-window fallback for cross_show_context missing"
     )
     assert "Cross-network context unavailable" in runner, (
         "Error fallback for cross_show_context missing in run_show.py"
