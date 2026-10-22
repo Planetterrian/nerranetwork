@@ -208,10 +208,13 @@ class TestTheGuestSpeakingAnswersTheLastWord:
         # Oct 21 2026: the length is measured once and shared with the turn
         # decision (speechSinceMiraMs), so the last-word rule reads the same
         # number the room decides turns on.
+        # Oct 22 2026: both VAD paths measure through one handler, which
+        # also ends a hold on the guest's speech.
         stopped = SCENARIO[i:i + 300]
-        assert "const ms = Date.now() - inboundSpokeAt;" in stopped
-        assert "noteGuestSpoke(ms);" in stopped
+        assert "noteSpeechEnded(Date.now() - inboundSpokeAt);" in stopped
+        j = SCENARIO.index("function noteSpeechEnded(ms)")
+        assert "noteGuestSpoke(len);" in SCENARIO[j:j + 300]
 
     def test_a_build_without_the_stopped_event_still_hears_them(self):
         i = SCENARIO.index("InputAudioBufferSpeechStarted, function () {")
-        assert "noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS)" in SCENARIO[i:i + 400]
+        assert "noteSpeechEnded(Math.max(LAST_WORD_MIN_SPEECH_MS, HOLD_REPLY_MIN_SPEECH_MS))" in SCENARIO[i:i + 400]

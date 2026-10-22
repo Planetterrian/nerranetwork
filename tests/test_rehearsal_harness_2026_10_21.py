@@ -13,6 +13,7 @@ import importlib.util
 import json
 import re
 import sys
+import shutil
 from pathlib import Path
 
 import pytest
@@ -119,6 +120,29 @@ class TestVerdict:
         assert result["result"] == "FAIL"
         failed = [c["metric"] for c in result["checks"] if c["ok"] is False]
         assert failed == ["guest_words_per_answer_median"]
+
+    def test_both_arms_at_zero_is_the_floor_not_a_loss(self, rehearsal):
+        # The third rehearsal read FAIL on 0 self-answered turns against 0.
+        records = [
+            _rec("current", overlap_events=7, self_answered_turns=0,
+                 guest_words_per_answer_median=34, mira_turn_sec_median=4.7),
+            _rec("proposed", overlap_events=0, self_answered_turns=0,
+                 guest_words_per_answer_median=44, mira_turn_sec_median=5.1),
+        ]
+        result = rehearsal.verdict(rehearsal.summarise(records))
+        assert result["result"] == "PASS", result
+        selfans = next(c for c in result["checks"] if c["metric"] == "self_answered_turns")
+        assert selfans["ok"] and "both at zero" in selfans["rule"]
+        # Zero is a floor only for a count both arms sit on: a tie above it,
+        # or a proposal that adds one, still fails.
+        for cur, prop in ((2, 2), (0, 1)):
+            records = [
+                _rec("current", overlap_events=7, self_answered_turns=cur,
+                     guest_words_per_answer_median=34, mira_turn_sec_median=4.7),
+                _rec("proposed", overlap_events=0, self_answered_turns=prop,
+                     guest_words_per_answer_median=44, mira_turn_sec_median=5.1),
+            ]
+            assert rehearsal.verdict(rehearsal.summarise(records))["result"] == "FAIL"
 
     def test_fail_when_turn_length_moves_further_from_the_band(self, rehearsal):
         records = [
@@ -296,10 +320,18 @@ class TestWorkflows:
         assert "vars.VOICES_REHEARSAL_NIGHTLY == 'true'" in text
         assert "--arm current" in text and "--arm proposed" in text
         assert "rehearsal.py report" in text and "GITHUB_STEP_SUMMARY" in text
-        # It measures; it never deploys. The only mentions of deploying are
-        # the header's own statement and the pointer to the deploy workflow.
-        assert "upload_scenario" not in text and "upload_fixture_scenario" not in text
-        assert "SetScenarioInfo" not in text and "ensure_fixture_rule" not in text
+        # It measures; it never deploys the live room. Oct 22 2026: the
+        # rehearsal-only fixture guest (and a candidate copy of the interview
+        # scenario on its own prefix) may be uploaded, inside the one step
+        # gated on candidate_scenario / with_hold; the live scenario and its
+        # room rule are never written here.
+        assert "upload_scenario(" not in text and "ensure_room_rule(" not in text
+        assert "SetScenarioInfo" not in text
+        assert text.count("upload_fixture_scenario()") == 1
+        i = text.index("Upload this ref's fixture guest")
+        step = text[i:text.index("- name:", i + 10)]
+        assert "inputs.candidate_scenario || inputs.with_hold" in step
+        assert "upload_fixture_scenario()" in step and "ensure_fixture_rule()" in step
 
     def test_deploy_uploads_the_fixture_after_the_interview_scenario(self):
         wf = DEPLOY.read_text(encoding="utf-8")
@@ -308,3 +340,93 @@ class TestWorkflows:
 
     def test_results_are_never_committed(self):
         assert "outputs/rehearsals/" in (ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Oct 22 2026: the guest channel is found, not assumed
+# ---------------------------------------------------------------------------
+
+def _write_wav(path, envelope_on, rate=8000, seconds=60):
+    """A mono WAV with a 220 Hz tone wherever ``envelope_on(t)`` is true."""
+    import wave
+    import numpy as np
+    t = np.arange(rate * seconds) / rate
+    on = np.array([envelope_on(x) for x in t[::rate // 10]]).repeat(rate // 10)[: len(t)]
+    samples = (np.sin(2 * np.pi * 220 * t) * 8000 * on).astype(np.int16)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(samples.tobytes())
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
+class TestTheRehearsalFindsTheGuestChannel:
+    """The Oct 22 rehearsal transcribed Mira's own words, a few seconds late,
+    as the fixture guest's answers in both arms: on the fixture's leg the
+    stereo sides are the other way round, and the report compared Mira with
+    herself. The side that sounds least like her recording is the guest."""
+
+    @staticmethod
+    def _tracks(tmp_path):
+        # Turns of irregular length, as speech is: Mira, then the guest, then
+        # Mira again. The leg hears Mira three seconds late.
+        import random
+        rng = random.Random(22)
+        turns, t = [], 0.0
+        while t < 60:
+            mira_len, guest_len = rng.uniform(1.5, 6), rng.uniform(2, 9)
+            turns.append((t, t + mira_len, t + mira_len + 0.5, t + mira_len + 0.5 + guest_len))
+            t += mira_len + guest_len + 1.0
+        def mira_on(x):
+            return any(a <= x < b for a, b, _, _ in turns)
+        def guest_on(x):
+            return any(c <= x < d for _, _, c, d in turns)
+        mira = tmp_path / "mira.wav"
+        heard = tmp_path / "heard.wav"
+        guest = tmp_path / "guest.wav"
+        _write_wav(mira, mira_on)
+        _write_wav(heard, lambda x: mira_on(x - 3))
+        _write_wav(guest, guest_on)
+        return mira, heard, guest
+
+    def test_the_guest_is_the_side_unlike_her_recording(self, rehearsal, tmp_path):
+        mira, heard, guest = self._tracks(tmp_path)
+        g, h, side = rehearsal.pick_guest_channel(heard, guest, mira)
+        assert (g, h, side) == (guest, heard, "right")
+        g, h, side = rehearsal.pick_guest_channel(guest, heard, mira)
+        assert (g, h, side) == (guest, heard, "left")
+
+    def test_without_her_recording_the_left_stays_the_guest(self, rehearsal, tmp_path):
+        mira, heard, guest = self._tracks(tmp_path)
+        assert rehearsal.pick_guest_channel(heard, guest, None)[2] == "left"
+
+    def test_transcription_uses_the_picked_side(self):
+        src = (PIPELINES / "rehearsal.py").read_text(encoding="utf-8")
+        body = src[src.index("def transcribe_run("):src.index("def measure_room(")]
+        assert "pick_guest_channel(left_wav, right_wav, mira_raw)" in body
+        assert '"guest": guest_wav' in body
+        assert '"guest_channel": guest_side' in body
+
+
+class TestRemeasure:
+    def test_pairs_parse_and_reject_junk(self, rehearsal):
+        a = "41187302-7fb8-453a-99cd-f1ca8dc4c94a"
+        b = "1ca8839a-3e57-40dd-9db2-b9ac1bdb41a9"
+        assert rehearsal.parse_remeasure(f"current:{a}, proposed:{b}") == [
+            ("current", a), ("proposed", b)]
+        for bad in ("nobody:" + a, "current:not-a-run", "current"):
+            with pytest.raises(ValueError):
+                rehearsal.parse_remeasure(bad)
+
+    def test_the_workflow_remeasures_without_running_rooms(self):
+        wf = WORKFLOW.read_text(encoding="utf-8")
+        assert "remeasure:" in wf
+        assert 'rehearsal.py remeasure --runs "$REMEASURE"' in wf
+        for step in ("Rehearse the current configuration",
+                     "Rehearse the proposed configuration",
+                     "Upload this ref's interview scenario as the candidate",
+                     "Upload this ref's fixture guest"):
+            block = wf[wf.index(step):]
+            block = block[:block.index("run:")]
+            assert "inputs.remeasure == ''" in block, step

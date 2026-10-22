@@ -64,6 +64,12 @@ def _normalise(raw: str) -> str:
     # value carrying them is noise, never a hole to stub.
     if any(ch in path for ch in '<>"\' \t\n'):
         return ""
+    # A trailing ")" is markdown punctuation copied into the link, never part
+    # of a path: 404.html strips it (and "%29", already unquoted here) and
+    # replaces the location, so the visitor lands on the page without it.
+    path = path.rstrip(")")
+    if not path:
+        return ""
     # A directory URL is served by its index.html.
     if path.endswith("/"):
         path += "index.html"

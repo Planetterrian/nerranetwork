@@ -55,7 +55,10 @@ class TestEndOfTurnIsADecision:
         i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
         stopped = SCENARIO[i:i + 700]
         assert "scheduleTurnDecision(TURN_DECIDE_MS);" in stopped
-        assert "speechSinceMiraMs += Math.max(0, ms);" in stopped
+        # Oct 22 2026: one handler measures the speech for every path.
+        assert "noteSpeechEnded(Date.now() - inboundSpokeAt);" in stopped
+        i = SCENARIO.index("function noteSpeechEnded(ms)")
+        assert "speechSinceMiraMs += len;" in SCENARIO[i:i + 300]
 
     def test_a_turn_nobody_asked_for_is_cancelled(self):
         body = _fn("function markTurnStarted(agent)")
@@ -76,8 +79,11 @@ class TestEveryTurnGoesThroughRequestTurn:
         assert "turnRequested = true;" in body
 
     def test_the_only_direct_response_create_is_hers(self):
-        # requestTurn, and the narration take (a session with no guest in it).
-        assert SCENARIO.count("responseCreate({})") == 2
+        # requestTurn (whose body may carry one response's instructions, the
+        # hold check-in), and the narration take (a session with no guest in it).
+        assert SCENARIO.count("responseCreate(") == 2
+        assert SCENARIO.count("responseCreate({})") == 1
+        assert "agent.responseCreate(body);" in _fn("function requestTurn(agent)")
         for fn in ("function openWhenReady(reason)", "function resumeForGuest()",
                    "function silentMicNudge(attempt)", "function greetGuestAndWait()",
                    "function greetHostAndWait()", "async function onToolCall(event)"):

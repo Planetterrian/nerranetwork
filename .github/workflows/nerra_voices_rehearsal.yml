@@ -49,6 +49,18 @@ on:
         type: choice
         options: [default, none]
         default: default
+      candidate_scenario:
+        description: 'Proposed arm runs THIS ref''s interview scenario, uploaded beside the live one (the live scenario is not touched)'
+        type: boolean
+        default: false
+      with_hold:
+        description: 'The fixture steps away to take a call at minute four (both arms)'
+        type: boolean
+        default: false
+      remeasure:
+        description: 'Measure rooms that already ran instead of running new ones: current:<run id>,proposed:<run id>'
+        type: string
+        default: ''
   # Nightly only when the operator turns it on: repo variable
   # VOICES_REHEARSAL_NIGHTLY=true. Each room costs a Voice Agent session on
   # both sides.
@@ -94,25 +106,107 @@ jobs:
           python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
-      - uses: ./.github/actions/setup-ffmpeg
-      - name: Rehearse the current configuration
-        if: ${{ env.ARMS != 'proposed' }}
+      # Oct 22 2026: static ffmpeg, the way test.yml installs it. All three
+      # rehearsals that day died at exit 124 in the apt install (the Azure
+      # mirror served the ffmpeg debs at a few hundred KB/s) before any room
+      # ran. Pinned dated BtbN tag, cached, checksum-verified.
+      - name: Cache static ffmpeg
+        id: cache-ffmpeg
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ffmpeg-static
+          key: ffmpeg-btbn-autobuild-2026-10-22-13-06-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1
+      - name: Install static ffmpeg
+        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
+        timeout-minutes: 6
+        env:
+          BTBN_TAG: autobuild-2026-10-22-13-06
+          BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
         run: |
-          python pipelines/voices/rehearsal.py run --arm current \
-            --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" \
-            --out-dir "$OUT_DIR"
+          set -euo pipefail
+          dest="${{ runner.temp }}/ffmpeg-static"
+          mkdir -p "$dest"
+          base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
+          cd /tmp
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o checksums.sha256 "${base}/checksums.sha256"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}"
+          grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c -
+          tar -xJf "${BTBN_ASSET}" -C /tmp
+          src="/tmp/${BTBN_ASSET%.tar.xz}"
+          cp "$src/bin/ffmpeg" "$src/bin/ffprobe" "$dest/"
+          chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+      - name: Add ffmpeg to PATH
+        run: |
+          echo "${{ runner.temp }}/ffmpeg-static" >> "$GITHUB_PATH"
+          "${{ runner.temp }}/ffmpeg-static/ffmpeg" -version | head -1
+      # Oct 22 2026: a change to the room's code is rehearsed before it is
+      # deployed. This uploads the checked-out scenario as
+      # age_of_ai_interview_candidate, reached only by "candroom-" calls,
+      # which only the fixture guest makes; the live scenario and its rule are
+      # never written here.
+      - name: Upload this ref's interview scenario as the candidate
+        if: ${{ inputs.candidate_scenario && env.ARMS != 'current' && inputs.remeasure == '' }}
+        run: |
+          python - <<'PY'
+          from voximplant.api_clients.voximplant_client import (
+              CANDIDATE_SCENARIO_NAME, ensure_candidate_room_rule, upload_candidate_scenario)
+          print(f"uploaded {CANDIDATE_SCENARIO_NAME}: {upload_candidate_scenario()}")
+          print("candidate room rule:", ensure_candidate_room_rule())
+          PY
+        env:
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
+          GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
+          VOICES_WEBHOOK_SECRET: ${{ secrets.VOICES_WEBHOOK_SECRET }}
+      # The fixture guest is rehearsal-only. A candidate room is reached only
+      # by a fixture that knows the "candroom-" prefix, and the hold beats are
+      # fixture behaviour, so either input refreshes it from this ref (its
+      # default prefix stays "room-").
+      - name: Upload this ref's fixture guest
+        if: ${{ (inputs.candidate_scenario || inputs.with_hold) && inputs.remeasure == '' }}
+        run: |
+          python - <<'PY'
+          from voximplant.api_clients.voximplant_client import (
+              FIXTURE_SCENARIO_NAME, ensure_fixture_rule, upload_fixture_scenario)
+          print(f"uploaded {FIXTURE_SCENARIO_NAME}: {upload_fixture_scenario()}")
+          print("fixture rule:", ensure_fixture_rule())
+          PY
+        env:
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
+          GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
+      - name: Rehearse the current configuration
+        if: ${{ env.ARMS != 'proposed' && inputs.remeasure == '' }}
+        run: |
+          args=(--arm current --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
+          [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
+          python pipelines/voices/rehearsal.py run "${args[@]}"
+        env:
+          WITH_HOLD: ${{ inputs.with_hold }}
       - name: Rehearse the proposed configuration
-        if: ${{ env.ARMS != 'current' }}
+        if: ${{ env.ARMS != 'current' && inputs.remeasure == '' }}
         run: |
           args=(--arm proposed --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ -n "$TURN_SILENCE_MS" ] && args+=(--turn-silence-ms "$TURN_SILENCE_MS")
           [ -n "$REASONING_EFFORT" ] && args+=(--reasoning-effort "$REASONING_EFFORT")
           [ "$TOOLS" = "none" ] && args+=(--tools none)
+          [ "$CANDIDATE" = "true" ] && args+=(--scenario candidate)
+          [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
           python pipelines/voices/rehearsal.py run "${args[@]}"
         env:
+          CANDIDATE: ${{ inputs.candidate_scenario }}
+          WITH_HOLD: ${{ inputs.with_hold }}
           TURN_SILENCE_MS: ${{ inputs.turn_silence_ms }}
           REASONING_EFFORT: ${{ inputs.reasoning_effort }}
           TOOLS: ${{ inputs.tools || 'default' }}
+      # A measurement fix is checked on rooms that already ran: their
+      # recordings stay on Voximplant, and a new room costs a Voice Agent
+      # session on both sides.
+      - name: Re-measure rooms that already ran
+        if: ${{ inputs.remeasure != '' }}
+        run: python pipelines/voices/rehearsal.py remeasure --runs "$REMEASURE" --fixture "$FIXTURE" --out-dir "$OUT_DIR"
+        env:
+          REMEASURE: ${{ inputs.remeasure }}
       - name: Report
         if: ${{ always() }}
         run: |

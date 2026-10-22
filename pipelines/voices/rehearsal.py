@@ -64,6 +64,21 @@ FIXTURES_FILE = HERE / "fixtures" / "rehearsal_guests.yaml"
 PERSONA_TEMPLATE = HERE / "prompts" / "fixture_guest.txt"
 DEFAULT_OUT_DIR = ROOT / "outputs" / "rehearsals"
 ARMS = ("proposed", "current")
+#: Which interview scenario a room runs on (Oct 22 2026). ``deployed`` is the
+#: live one; ``candidate`` is this checkout's scenario uploaded beside it
+#: (voximplant_client.upload_candidate_scenario), reached through its own room
+#: prefix, so a change to the room's CODE is rehearsed before it is deployed.
+SCENARIOS = {"deployed": "room-", "candidate": "candroom-"}
+#: The fixture's scheduled behaviours with a phone call in the middle (Oct 22
+#: 2026, hold mode): the same faults as the default list, and at minute four
+#: the guest steps away to take a call and comes back at six.
+HOLD_BEATS = [
+    {"at_min": 2.0, "kind": "pause_mid_thought"},
+    {"at_min": 4.0, "kind": "take_call"},
+    {"at_min": 6.0, "kind": "end_call"},
+    {"at_min": 7.0, "kind": "push_back"},
+    {"at_min": 8.0, "kind": "ask_who"},
+]
 #: The §7.5 rule: proposed must beat current on these (lower is better for
 #: the first two, higher for the third) ...
 MUST_BEAT = (("overlap_events", "lower"), ("self_answered_turns", "lower"),
@@ -270,7 +285,8 @@ def _iso(t: dt.datetime) -> str:
 
 def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any],
                   prompt: str, minutes: int, turn_silence_ms: Optional[int],
-                  reasoning_effort: str, tools: Optional[list]) -> Dict[str, Any]:
+                  reasoning_effort: str, tools: Optional[list],
+                  scenario: str = "deployed", with_hold: bool = False) -> Dict[str, Any]:
     """The interview_runs row for one rehearsal room. The scenario reads the
     same columns a live run carries; the only marker is session_kind."""
     from fire_interviews import MIRA_TOOLS, keyterms_for, turn_detection
@@ -299,6 +315,7 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
             "reasoning_effort": reasoning_effort,
             "turn_silence_ms": detection["silence_duration_ms"],
             "prompt_chars": len(prompt), "started": _iso(_now()),
+            "scenario": scenario, "with_hold": bool(with_hold),
         }},
     }
     if reasoning_effort:
@@ -324,12 +341,14 @@ def create_run(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def start_fixture(run_id: str, fixture: Dict[str, Any], persona: str, minutes: int,
-                  cough_clip: str = "") -> Dict[str, Any]:
+                  cough_clip: str = "", scenario: str = "deployed",
+                  with_hold: bool = False) -> Dict[str, Any]:
     from voximplant.api_clients.voximplant_client import start_fixture_guest
     return start_fixture_guest(
         run_id, persona=persona, voice=fixture.get("voice") or "sal", minutes=minutes,
         speaks_first=bool(fixture.get("speaks_first")), fixture_id=fixture["id"],
-        guest_name=fixture["name"], cough_clip=cough_clip or None)
+        guest_name=fixture["name"], cough_clip=cough_clip or None,
+        beats=HOLD_BEATS if with_hold else None, room_prefix=SCENARIOS[scenario])
 
 
 def wait_for_room(run_id: str, minutes: int) -> Dict[str, Any]:
@@ -371,6 +390,74 @@ def _words_from(json_path: Path, shift: float) -> List[Dict[str, Any]]:
     return out
 
 
+#: Envelope frames per second for the channel check, and how far either way
+#: the two recordings' clocks may disagree.
+ENVELOPE_HZ = 10
+ECHO_MAX_LAG_SEC = 10.0
+
+
+def _envelope(path: Path) -> "Any":
+    """RMS per 1/ENVELOPE_HZ s of a mono 8 kHz decode of ``path``."""
+    import subprocess
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1",
+                          "-ar", "8000", "-f", "s16le", "-"],
+                         check=True, capture_output=True).stdout
+    samples = np.frombuffer(raw, dtype=np.int16).astype(np.float64)
+    win = 8000 // ENVELOPE_HZ
+    frames = len(samples) // win
+    if frames == 0:
+        return np.zeros(0)
+    return np.sqrt((samples[:frames * win].reshape(frames, win) ** 2).mean(axis=1))
+
+
+def echo_score(track: "Any", mira: "Any", max_lag_sec: float = ECHO_MAX_LAG_SEC) -> float:
+    """The best envelope correlation of ``track`` with Mira's own recording
+    over lags up to ``max_lag_sec`` either way. A channel that carries her
+    voice scores high whatever the clock offset; a channel that carries
+    someone who speaks only while she is quiet scores near zero or below."""
+    import numpy as np
+    best = -1.0
+    max_lag = int(max_lag_sec * ENVELOPE_HZ)
+    for lag in range(-max_lag, max_lag + 1):
+        a = mira[max(0, -lag):]
+        b = track[max(0, lag):]
+        n = min(len(a), len(b))
+        if n < ENVELOPE_HZ * 10:
+            continue
+        a, b = a[:n], b[:n]
+        if a.std() == 0 or b.std() == 0:
+            continue
+        best = max(best, float(np.corrcoef(a, b)[0, 1]))
+    return best
+
+
+def pick_guest_channel(left: Path, right: Path, mira: Optional[Path]) -> tuple:
+    """Which side of the guest leg's stereo recording is the guest's mic.
+
+    ``Call.record({stereo:true})`` puts the leg's mic on one channel and what
+    the leg hears (Mira) on the other, and post-production reads the left as
+    the guest. On the fixture guest's leg the sides are the other way round:
+    the Oct 22 rehearsal transcribed Mira's own words, a few seconds late, as
+    the guest's answers in both arms (left channel against her recording:
+    0.72 envelope correlation; right: 0.11, active only while she was quiet),
+    so every number the report compared was Mira against herself. The side
+    that sounds least like her recording is the guest.
+
+    Returns ``(guest_wav, heard_wav, side)`` with side "left" or "right";
+    without Mira's recording the left stays the guest."""
+    if mira is None:
+        return left, right, "left"
+    m = _envelope(mira)
+    left_score = echo_score(_envelope(left), m)
+    right_score = echo_score(_envelope(right), m)
+    logger.info("guest-leg channels against Mira's recording: left %.2f, right %.2f",
+                left_score, right_score)
+    if right_score < left_score:
+        return right, left, "right"
+    return left, right, "left"
+
+
 def transcribe_run(run: Dict[str, Any], workdir: Path) -> Dict[str, Any]:
     """Per-speaker Whisper words on the room clock for the fixture (guest)
     and Mira. Imports post_interview's fetchers and clock helper by name;
@@ -381,8 +468,9 @@ def transcribe_run(run: Dict[str, Any], workdir: Path) -> Dict[str, Any]:
     from engine.transcripts import generate_transcript
 
     raw = fetch_recording(run, workdir)                      # longest guest leg
-    guest_wav, _heard = split_channels(raw, workdir / "channels")
+    left_wav, right_wav = split_channels(raw, workdir / "channels")
     mira_raw = fetch_leg_recording(run.get("recording_mira_url") or "", workdir, "mira")
+    guest_wav, _heard, guest_side = pick_guest_channel(left_wav, right_wav, mira_raw)
     tracks = {"guest": guest_wav, "mira": mira_raw}
     offsets = room_offsets(run, _track_durations(tracks))
     words_by_role: Dict[str, List[Dict[str, Any]]] = {}
@@ -407,7 +495,7 @@ def transcribe_run(run: Dict[str, Any], workdir: Path) -> Dict[str, Any]:
                            for s, label, text in lines)
     durations = {r: duration_seconds(p) for r, p in tracks.items() if p is not None}
     return {"words_by_role": words_by_role, "transcript": transcript,
-            "durations": durations}
+            "durations": durations, "guest_channel": guest_side}
 
 
 def measure_room(run: Dict[str, Any], words_by_role: Dict[str, List[Dict[str, Any]]],
@@ -427,41 +515,52 @@ def listen_url(run: Dict[str, Any]) -> str:
 
 
 def result_record(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
-                  metrics: Dict[str, Any], transcript: str = "") -> Dict[str, Any]:
+                  metrics: Dict[str, Any], transcript: str = "",
+                  guest_channel: str = "") -> Dict[str, Any]:
     cfg = (run.get("grok_session_log") or {}).get("rehearsal") or {}
     return {
         "arm": arm, "fixture": fixture["id"], "run_id": run.get("id"),
         "measured_at": _iso(_now()), "config": cfg,
         "listen_url": listen_url(run), "metrics": metrics,
-        "transcript": transcript,
+        "guest_channel": guest_channel, "transcript": transcript,
     }
+
+
+def measure_and_write(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
+                      out_dir: Path, index: int) -> Path:
+    """Transcribe a finished room, measure it and write its record."""
+    with tempfile.TemporaryDirectory(prefix="rehearsal_") as tmp:
+        heard = transcribe_run(run, Path(tmp))
+    metrics = measure_room(run, heard["words_by_role"], heard["transcript"])
+    record = result_record(arm=arm, fixture=fixture, run=run, metrics=metrics,
+                           transcript=heard["transcript"],
+                           guest_channel=heard.get("guest_channel", ""))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{arm}_{fixture['id']}_{index}_{str(run['id'])[:8]}.json"
+    path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    logger.info("wrote %s", path)
+    return path
 
 
 def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
             turn_silence_ms: Optional[int], reasoning_effort: str,
             tools: Optional[list], cough_clip: str, out_dir: Path,
-            index: int) -> Path:
+            index: int, scenario: str = "deployed", with_hold: bool = False) -> Path:
     """One room: create the run, send in the fixture, wait, measure, write."""
     pair = ensure_rehearsal_interview(fixture, minutes)
     row = build_run_row(interview=pair["interview"], arm=arm, fixture=fixture,
                         prompt=prompt, minutes=minutes, turn_silence_ms=turn_silence_ms,
-                        reasoning_effort=reasoning_effort, tools=tools)
+                        reasoning_effort=reasoning_effort, tools=tools,
+                        scenario=scenario, with_hold=with_hold)
     run = create_run(row)
     logger.info("rehearsal run %s (%s, %s) created", run["id"], arm, fixture["id"])
     persona = fixture_persona(fixture)
-    start_fixture(run["id"], fixture, persona, minutes, cough_clip)
+    start_fixture(run["id"], fixture, persona, minutes, cough_clip,
+                  scenario=scenario, with_hold=with_hold)
     logger.info("fixture %s is calling into room %s", fixture["id"], run["id"])
     run = wait_for_room(run["id"], minutes)
-    with tempfile.TemporaryDirectory(prefix="rehearsal_") as tmp:
-        heard = transcribe_run(run, Path(tmp))
-    metrics = measure_room(run, heard["words_by_role"], heard["transcript"])
-    record = result_record(arm=arm, fixture=fixture, run=run, metrics=metrics,
-                           transcript=heard["transcript"])
-    out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"{arm}_{fixture['id']}_{index}_{run['id'][:8]}.json"
-    path.write_text(json.dumps(record, indent=2), encoding="utf-8")
-    logger.info("wrote %s", path)
-    return path
+    return measure_and_write(arm=arm, fixture=fixture, run=run, out_dir=out_dir,
+                             index=index)
 
 
 # ---------------------------------------------------------------------------
@@ -518,9 +617,13 @@ def verdict(summary: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
             checks.append({"metric": key, "proposed": pv, "current": cv, "ok": None})
             inconclusive = True
             continue
-        passed = pv < cv if direction == "lower" else pv > cv
+        # Zero is the floor of a "lower" count: when both arms sit on it the
+        # proposal cannot beat current there and has not lost (the third
+        # rehearsal read FAIL on 0 self-answered turns against 0).
+        floor = direction == "lower" and pv == 0 and cv == 0
+        passed = floor or (pv < cv if direction == "lower" else pv > cv)
         checks.append({"metric": key, "proposed": pv, "current": cv, "ok": passed,
-                       "rule": f"proposed {direction}"})
+                       "rule": f"proposed {direction}" + (" (both at zero)" if floor else "")})
         ok = ok and passed
     key, band = MUST_NOT_LOSE
     pv, cv = p.get(key), c.get(key)
@@ -599,8 +702,43 @@ def _cmd_run(args: argparse.Namespace) -> int:
     for i in range(1, args.repeat + 1):
         run_one(arm=args.arm, fixture=fixture, minutes=args.minutes, prompt=prompt,
                 turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
-                tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i)
+                tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
+                scenario=args.scenario, with_hold=args.with_hold)
     print(f"{args.repeat} {args.arm} room(s) measured into {out_dir}")
+    return 0
+
+
+def parse_remeasure(spec: str) -> List[tuple]:
+    """``"current:<run id>,proposed:<run id>"`` -> [(arm, run id), ...]."""
+    pairs = []
+    for item in (spec or "").replace(" ", "").split(","):
+        if not item:
+            continue
+        arm, _, run_id = item.partition(":")
+        if arm not in ARMS or not re.fullmatch(r"[0-9a-fA-F-]{36}", run_id):
+            raise ValueError(f"not an arm:run-id pair: {item!r}")
+        pairs.append((arm, run_id))
+    return pairs
+
+
+def _cmd_remeasure(args: argparse.Namespace) -> int:
+    """Measure rooms that already ran, without running them again: the
+    recordings stay on Voximplant for weeks, a room costs a Voice Agent
+    session on both sides, and a measurement fix should not need a rerun."""
+    from common import sb_select
+    fixtures = load_fixtures()
+    fixture = fixtures.get(args.fixture)
+    if not fixture:
+        print(f"unknown fixture {args.fixture!r}", file=sys.stderr)
+        return 2
+    out_dir = Path(args.out_dir) if args.out_dir else DEFAULT_OUT_DIR / _now().strftime("%Y%m%d")
+    for i, (arm, run_id) in enumerate(parse_remeasure(args.runs), start=1):
+        rows = sb_select("interview_runs", f"id=eq.{run_id}")
+        if not rows or rows[0].get("session_kind") != "rehearsal":
+            print(f"{run_id} is not a rehearsal run", file=sys.stderr)
+            return 2
+        measure_and_write(arm=arm, fixture=fixture, run=rows[0], out_dir=out_dir, index=i)
+    print(f"re-measured into {out_dir}")
     return 0
 
 
@@ -610,9 +748,13 @@ def _cmd_report(args: argparse.Namespace) -> int:
     result = verdict(summary)
     md = report_markdown(summary, result)
     print(md)
+    # A run that died before any room (an apt stall installing ffmpeg) has
+    # no output directory; the report still writes its INCONCLUSIVE line.
     if args.summary_file:
+        Path(args.summary_file).parent.mkdir(parents=True, exist_ok=True)
         Path(args.summary_file).write_text(md, encoding="utf-8")
     if args.json_out:
+        Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(json.dumps(
             {"summary": summary, "verdict": result, "records": len(records)}, indent=2),
             encoding="utf-8")
@@ -637,7 +779,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                    help="use this file as the prompt instead of compiling/looking one up")
     r.add_argument("--cough-clip", default=os.environ.get("REHEARSAL_COUGH_CLIP", ""))
     r.add_argument("--out-dir", default="")
+    r.add_argument("--scenario", choices=tuple(SCENARIOS), default="deployed",
+                   help="candidate = this checkout's room, uploaded beside the live one")
+    r.add_argument("--with-hold", action="store_true",
+                   help="the fixture steps away to take a call at minute four")
     r.set_defaults(func=_cmd_run)
+    m = sub.add_parser("remeasure", help="measure rooms that already ran")
+    m.add_argument("--runs", required=True, help="current:<run id>,proposed:<run id>")
+    m.add_argument("--fixture", required=True)
+    m.add_argument("--out-dir", default="")
+    m.set_defaults(func=_cmd_remeasure)
     p = sub.add_parser("report", help="compare the arms in a results directory")
     p.add_argument("path")
     p.add_argument("--summary-file", default="")

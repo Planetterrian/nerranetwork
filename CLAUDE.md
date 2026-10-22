@@ -2161,7 +2161,8 @@ that bind now:
   who someone is) runs a ten-minute room on the proposed and the current
   configuration through the real scenario; `pipelines/voices/rehearsal.py
   report` reads PASS only when the proposal wins on overlap, self-answered
-  turns and guest words per answer and does not lose on turn length. **A
+  turns and guest words per answer and does not lose on turn length (a count
+  both arms hold at zero is the floor, not a loss). **A
   scenario or prompt change ships to a real guest only on a PASS plus one
   operator listen.**
 - **The edit keeps its promises in code.** A guest's "start that again" or
@@ -2183,6 +2184,98 @@ Operator: deploy the scenario (Actions "Deploy Voximplant scenario", which
 now ships the fixture guest too), `wrangler deploy` in `workers/voices`, apply
 the two migrations, set `VOICES_WEBHOOK_SECRET` on both sides, and run the
 rehearsal before the next booked room. ⚠️ AUDIO on every interview.
+
+### The Age of AI: a server turn, a guest on another call, and a sign-off too soon (Oct 22 2026)
+
+From the Oct 22 room (run c868dac8; guards `tests/test_room_holds_2026_10_22.py`,
+behaviour driven through the real scenario in a node vm by
+`tests/fixtures/room_sim.js`). Rules that bind:
+
+- **A turn the server starts after the guest spoke goes through the room's
+  decision** (`markTurnStarted`): it is cancelled and `scheduleTurnDecision`
+  runs, so `decideTurn` (the only path to `roundAnswered`) sees the answer.
+  The closing round had stuck at question 1 for 25 minutes because
+  `markTurnStarted` reset the flags `decideTurn` reads. Counter
+  `server_turns_rerouted` in the end-of-room webhook (Worker `roomCountersOf`).
+- **Hold mode.** When the guest's words say they are stepping away or taking
+  another call (`HOLD_ENTER_RE`; "let me think" is not one), or Mira says she
+  will wait (`MIRA_HOLD_RE`), the room gives her no turns, holds TIME CHECK
+  and round prompts, and counts no speech as an answer, until they address
+  her again (`HOLD_EXIT_RE`: her name, "sorry about that", "I'm back",
+  "where were we") or three minutes pass (`HOLD_CHECK_IN_MS`), when she says
+  one short line that she is still there, for as long as they are away. Speech
+  is the backstop exit: the guest talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within
+  `HOLD_REPLY_WINDOW_MS` of the end of a check-in (`noteHoldSpeech`, fed by
+  `noteSpeechEnded`, the one handler for both VAD paths). **The check-in is
+  that one response's `instructions` (`response.create`), never a
+  conversation note**: as a note it came out as "welcome back" and the
+  question again into a guest still away, and on their return her first line
+  was the check-in again (third rehearsal, run e08c026c); `exitHold` drops a
+  parked one. On return she
+  re-asks the closing question in play and any held time note is delivered.
+  The trace carries `hold: entered/left`, never the guest's words.
+- **The room hears the guest's words.** Grok Voice 3.0 sends them as the
+  NAMED event `ConversationItemInputAudioTranscriptionCompleted`, re-sent
+  about every second with the whole item so far; the room listened only for
+  an Unknown event, so no guest word ever reached it (the Oct 13 "this room
+  does not get one" note was this) and every word rule had never run live.
+  `noteGuestTranscript` keeps one line per item, updated in place, and runs
+  the hold/stop checks on what is new. Read from the session log of a
+  candidate rehearsal (Actions "Voximplant session logs").
+- **Dead air is broken.** With unrequested server turns cancelled, a silence
+  nobody breaks had no end: 20 s after her line with nobody speaking
+  (`DEAD_AIR_MS`) she puts her last question again, more simply; at most
+  `DEAD_AIR_MAX_NUDGES` (2) per silence, never in a hold or the closing round;
+  counter `dead_air_nudges`. The fixture guest reconnects a dropped socket
+  (`FIXTURE_RECONNECTS_MAX` 3) — one rehearsal lost it to a 1006 at minute
+  two and measured twelve silent minutes.
+- **No sign-off while the round is unfinished**, cut mid-sentence on the
+  transcript deltas (`signOffBlockedByRound`), unless the guest asked to stop
+  (`GUEST_STOP_RE`), the hard cap fired (it closes the round), or the room
+  has already blocked `ROUND_CLOSE_BLOCKS_MAX` (3) — a guest is never trapped.
+- **The grader** (`09_interview_retro.txt`): replying to, or acting on, a
+  conversation the guest is having with someone else is a turn-taking fault,
+  never "patience".
+- **A candidate room is rehearsed before it is deployed.** The rehearsal
+  workflow's `candidate_scenario` input uploads the branch's scenario as
+  `age_of_ai_interview_candidate` with `ROOM_PREFIX` rewritten to
+  `candroom-` (its own rule `^candroom-.*`; `candidate_source` refuses
+  `room-`), and the fixture guest dials that prefix for the proposed arm; the
+  live scenario and rule are never written. Either input also re-uploads this
+  ref's rehearsal-only fixture guest (the deployed one predates the prefix and
+  would quietly dial the live room). `with_hold` adds a phone-call beat to the
+  fixture (`HOLD_BEATS`).
+- **The rehearsal finds the guest's channel; it never assumes the left.** On
+  the fixture guest's leg the stereo sides are the other way round from a real
+  guest's, and the first both-arms rehearsal (run 39852548850) transcribed
+  Mira's own words, seconds late, as the guest's answers in BOTH arms, so its
+  FAIL compared Mira with herself. `pick_guest_channel` takes the side whose
+  loudness tracks her recording least (left 0.83 / right 0.12 on that room)
+  and the record says which (`guest_channel`). The workflow's `remeasure`
+  input (`current:<run id>,proposed:<run id>`) measures rooms that already ran
+  without running new ones. Read a rehearsal's transcript before its verdict.
+- **She never nudges an empty room** (the same rehearsal: two nudges inside
+  the rejoin grace after the fixture's leg dropped).
+- **Her line ends when it has been HEARD, not when it was generated.**
+  `response.done` arrives seconds into a line that plays for half a minute
+  (the welcome: 87 words generated by 21:10:41.9, playing until ~21:11:05).
+  The room had read it as the end of her turn, so the dead-air clock fired
+  while she was still talking, its re-ask repeated the welcome, and the guest
+  heard 58 s of Mira with the welcome twice (session log of run 1ca8839a).
+  `miraAudibleUntil` is estimated from her line's words
+  (`MIRA_MS_PER_WORD` 320, measured ~290 on that room's recording, queued
+  lines pushed back) and cleared wherever the room clears her audio
+  (`miraSilenced` beside every `clearMediaBuffer`); `requestTurn` parks, and
+  `decideTurn` and the dead-air clock wait, until it has passed. A cancelled
+  server turn IS silent (`response.done status=cancelled` within ~50 ms, no
+  audio) — read from the full session log, which the "Voximplant session
+  logs" workflow now attaches whole (it had kept a 60 kB tail, the last two
+  minutes). The hold check-in note asks for a few spoken words: under
+  "Nothing else" it came out as the one word "Silence."
+
+Operator: deploy the scenario only after the candidate rehearsal reads PASS and
+one listen; `wrangler deploy` in `workers/voices` so the new counters are
+stored. ⚠️ AUDIO on every interview.
 
 ### Members-only limited series (Oct 18 2026)
 

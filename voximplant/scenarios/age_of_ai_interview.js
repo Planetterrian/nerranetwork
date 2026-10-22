@@ -672,6 +672,20 @@ let turnWaitedForWords = false;   // decideTurn already waited once for a transc
 let turnWaitedToThink = false;    // decideTurn already waited once on an unfinished clause
 let miraLineIndex = -1;           // transcript index of her last line (the guest delta starts after it)
 let currentResponseText = "";     // what she has said so far on the response in flight
+// Oct 22 2026 (the candidate rehearsal). response.done marks the end of
+// GENERATION: a line that takes forty seconds to say is generated in a few,
+// and the rest plays out of the media buffer. The room had read response.done
+// as the end of her line, so it gave her another turn and started the
+// dead-air clock while she was still talking, and the guest heard the welcome
+// twice in one 58-second monologue. miraAudibleUntil is when her audio ends,
+// estimated from the words of the line (and pushed back when lines queue);
+// cleared whenever the room clears her audio.
+// Measured on that room's own recording: 87 words in ~24 s, 103 in ~30 s
+// (~0.29 s a word). Set a little long, so she is never judged finished early.
+const MIRA_MS_PER_WORD = 320;
+let miraAudibleUntil = 0;
+let responseStartedAt = 0;
+let audibleTimer = null;
 let responseCancelledEarly = false; // this response was cut by the room before it finished
 let rotationDue = false;          // the session hand-over is waiting for a pause
 let rotateForceTimer = null;
@@ -685,6 +699,259 @@ let lastRescueAt = 0;
 const RESCUE_COOLDOWN_MS = 20 * 1000;
 let lastMiraLineAt = 0;           // when she last said anything (remember())
 let endReason = "normal";
+// Oct 22 2026: a turn the server started on its own after the guest spoke is
+// cancelled and decided by the room like any other (markTurnStarted).
+let serverTurnsRerouted = 0;
+let cancelledLinePending = false; // the next line of hers is from a cancelled turn: not remembered
+
+// ---------------------------------------------------------------------------
+// Hold mode (Oct 22 2026)
+// ---------------------------------------------------------------------------
+//
+// A guest took another call in the middle of the interview and the room had
+// no way to know: every pause in that call ended a "turn", and she answered
+// the guest and the caller about forty times over fifteen minutes, about
+// things that were none of the show's business, and once said the sign-off.
+// Now the room listens for the guest stepping away (asking for a moment,
+// taking a call, or Mira saying she will wait) and holds: no turns for her,
+// no time checks, no closing-round prompts, and nothing said counts as an
+// answer, until they turn back to her (her name, an apology for the wait,
+// "I'm back", "where were we") or answer the one short line she may say every
+// HOLD_CHECK_IN_MS that she is still there. Nothing the guest says while away
+// is written to the trace.
+//
+// The words are the first signal and speech is the backstop: the guest
+// talking for HOLD_REPLY_MIN_SPEECH_MS after a check-in is their reply to it,
+// whether or not a transcription arrives. The first candidate rehearsal (Oct
+// 22) ended its hold only on words, while the room was not yet listening to
+// the event that carries them (see noteGuestTranscript), never left it, and
+// sat silent to the end of the room. She keeps checking in for as long as
+// they are away; a hold with a cap on check-ins and no other way out is a
+// room that has stopped.
+const HOLD_CHECK_IN_MS = 3 * 60 * 1000;
+const HOLD_REPLY_WINDOW_MS = 45 * 1000; // speech this soon after her check-in is the reply to it
+const HOLD_REPLY_MIN_SPEECH_MS = 800;   // shorter is a cough or a word to someone else
+// The guest stepping away. Kept narrow: "let me think" is a pause inside an
+// answer, never a hold.
+const HOLD_ENTER_RE = /\b((i (have|need|got|gotta) to|let me|i'?ll( just)?|i'?m going to|i'?m gonna) (take|grab|answer|get) (this|that|a|the|another) (call|phone)|(another|a|the) call (coming|is coming) in|my (phone|other line)('s| is) ringing|(give|bear with) me (just )?(a|one) (moment|minute|second|sec)|bear with me|(hold|hang) on (just )?(a|one) (moment|minute|second|sec)|excuse me (for )?(just )?(a|one) (moment|minute|second|sec)|(i'?ll|i will) be (right )?back|be right back)\b/i;
+// Mira saying she will wait is the same signal from the other side.
+const MIRA_HOLD_RE = /\b(i'?ll wait|i will wait|i'?ll be (right )?here|i'?ll hold|whenever you'?re back)\b/i;
+// The guest turning back to her.
+const HOLD_EXIT_RE = /\b(m(i|ee)ra|sorry about that|sorry (for|about) the (wait|interruption)|(i'?m|i am) back|where were we|thanks for (waiting|your patience|bearing with me)|back to (you|it|our|the)|(okay|ok|all right|alright),? (i'?m|i am) (here|back))\b/i;
+let holdMode = false;
+let holdSince = 0;
+let holdTimer = null;
+let holdCheckIns = 0;
+let holdCheckInAt = 0;
+let holdCheckInRequested = false; // the one turn a hold allows is in flight
+let holdPausesSkipped = 0;
+let holdResumeOwed = false;      // they came back during a closing question: she asks it again
+let heldTimeNote = "";           // a time note that fell inside the hold, delivered after it
+// One response's instructions (response.create, xAI Voice Agent API): they
+// replace her system prompt for that response only and leave nothing behind.
+const HOLD_CHECK_IN_INSTRUCTIONS =
+  "You are Mira, the host of an interview podcast, speaking live with a guest. The guest" +
+  " stepped away from the conversation a few minutes ago, perhaps to take another call," +
+  " and has not come back yet. Say one short, warm sentence telling them you are still" +
+  " here whenever they are ready. That sentence is all you say: no question, no welcome" +
+  " back, nothing about anything you heard while they were away, and no goodbye.";
+let nextTurnInstructions = "";   // for the next response.create only
+let holdsEntered = 0;
+
+// Dead air (Oct 22 2026). With every unrequested server turn cancelled, a
+// silence after her line that nobody breaks lasts until someone hangs up:
+// the candidate rehearsal went quiet two minutes in and stayed quiet for
+// twelve. Twenty seconds after her line with nobody speaking, she puts her
+// last question again, more simply, in one line; at most twice per silence.
+// Never during a hold (the check-ins cover that) or the closing round (it
+// has its own re-ask).
+const DEAD_AIR_MS = 20 * 1000;
+const DEAD_AIR_MAX_NUDGES = 2;
+let deadAirTimer = null;
+let deadAirNudges = 0;
+let deadAirNudgesTotal = 0;
+
+/** Her audio is still playing out of the buffer. */
+function miraAudible() {
+  return Date.now() < miraAudibleUntil;
+}
+
+/** A line of hers has been generated: when will the guest stop hearing it? */
+function noteMiraLineSpoken(text) {
+  const words = (String(text || "").match(/\S+/g) || []).length;
+  if (!words) return;
+  const start = Math.max(responseStartedAt || Date.now(), miraAudibleUntil, 0);
+  miraAudibleUntil = start + words * MIRA_MS_PER_WORD;
+}
+
+/** The room cleared her audio (a barge-in, a cancelled turn): it has stopped. */
+function miraSilenced() {
+  miraAudibleUntil = Math.min(miraAudibleUntil, Date.now());
+}
+
+/** Do this once her audio has played out (now if it already has). */
+function afterMiraAudio(fn) {
+  if (audibleTimer) { clearTimeout(audibleTimer); audibleTimer = null; }
+  const wait = miraAudibleUntil - Date.now();
+  if (wait <= 0) { fn(); return; }
+  audibleTimer = setTimeout(function () { audibleTimer = null; fn(); }, wait);
+}
+
+function cancelDeadAir() {
+  if (deadAirTimer) { clearTimeout(deadAirTimer); deadAirTimer = null; }
+}
+
+/** Her line has ended: start the clock on a silence nobody breaks. */
+function armDeadAir() {
+  cancelDeadAir();
+  if (roomEnded || holdMode || !openingFired || legs.length === 0) return;
+  // The silence starts when she stops being heard, not when her line was made.
+  deadAirTimer = setTimeout(deadAirCheck, DEAD_AIR_MS + Math.max(0, miraAudibleUntil - Date.now()));
+}
+
+function deadAirCheck() {
+  deadAirTimer = null;
+  if (roomEnded || holdMode || !grokAgent || rotating || roundActive || roundClosed) return;
+  // Nobody is in the room to answer (a guest who dropped is given the
+  // rejoin grace); a nudge there is her talking to herself.
+  if (legs.length === 0) return;
+  if (inboundSpeaking || miraSpeaking || pendingTurn || miraAudible()) { armDeadAir(); return; }
+  if (deadAirNudges >= DEAD_AIR_MAX_NUDGES) {
+    trace("turn", "dead air continues; no more nudges until someone speaks");
+    return;
+  }
+  deadAirNudges += 1;
+  deadAirNudgesTotal += 1;
+  trace("turn", "dead air after her line; nudge " + deadAirNudges);
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] Nobody has spoken since your last line." +
+        " In one short line, put your last question to them again, more simply. Nothing" +
+        " else, and no goodbye." }] },
+    });
+  } catch (err) { /* the turn below still gives her the line */ }
+  requestTurn(grokAgent);
+}
+
+function enterHold(why) {
+  if (holdMode || roomEnded || !grokAgent || !openingFired) return;
+  holdMode = true;
+  holdsEntered += 1;
+  holdSince = Date.now();
+  holdCheckIns = 0;
+  holdCheckInAt = 0;
+  holdPausesSkipped = 0;
+  pendingTurn = false;
+  cancelTurnDecision();
+  cancelDeadAir();
+  if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+  trace("hold", "entered: " + why);
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] The guest has stepped away from the" +
+        " interview for a moment. Until they turn back to you, nothing you hear is said" +
+        " to you: do not answer it, do not comment on it, and never repeat or use anything" +
+        " personal you overhear, now or later. Say nothing. The room will tell you when" +
+        " they are back." }] },
+    });
+  } catch (err) { /* the room still withholds her turns */ }
+  armHoldTimer();
+}
+
+function armHoldTimer() {
+  if (holdTimer) clearTimeout(holdTimer);
+  holdTimer = setTimeout(holdCheckIn, HOLD_CHECK_IN_MS);
+}
+
+function holdCheckIn() {
+  holdTimer = null;
+  if (!holdMode || roomEnded || !grokAgent) return;
+  if (inboundSpeaking || miraSpeaking) { holdTimer = setTimeout(holdCheckIn, 15 * 1000); return; }
+  holdCheckIns += 1;
+  holdCheckInAt = Date.now();
+  trace("hold", "check-in " + holdCheckIns + " after " + Math.round((Date.now() - holdSince) / 1000) + "s away");
+  // The check-in is one response's instructions, never a conversation note
+  // (Oct 22 2026 rehearsal): as a note it came out as "welcome back" and the
+  // question again, into a guest who had not come back, and it stayed in her
+  // context after they did, so her first line on their return was the
+  // check-in again instead of an answer to what they had just asked.
+  nextTurnInstructions = HOLD_CHECK_IN_INSTRUCTIONS;
+  holdCheckInRequested = true;
+  try { requestTurn(grokAgent); } catch (err) { /* stays held */ }
+  armHoldTimer();
+}
+
+function exitHold(why) {
+  if (!holdMode) return;
+  holdMode = false;
+  nextTurnInstructions = "";   // a check-in still parked is not said to someone who is back
+  if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+  trace("hold", "left: " + why + " after " + Math.round((Date.now() - holdSince) / 1000) + "s" +
+        (holdPausesSkipped ? " (" + holdPausesSkipped + " pauses held)" : ""));
+  turnWaitedForWords = false;
+  turnWaitedToThink = false;
+  const inRound = roundActive && roundAwaitingAnswer;
+  if (inRound) holdResumeOwed = true;
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] They are back and talking to you again." +
+        " Do not mention or use anything you overheard while they were away. Welcome them" +
+        " back in a few warm words, " +
+        (inRound
+          ? "then ask again, in one short line, the closing question that was in play" +
+            " before they stepped away, and let them answer it."
+          : "then pick up the conversation where the two of you left it.") }] },
+    });
+    if (heldTimeNote) {
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text: heldTimeNote }] },
+      });
+      heldTimeNote = "";
+    }
+  } catch (err) { /* the decision below still gives her the turn */ }
+  if (inRound && !roundRepromptTimer) roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
+  if (!inboundSpeaking) scheduleTurnDecision(TURN_DECIDE_MS);
+}
+
+/**
+ * Speech, with or without words: the guest talking soon after her check-in
+ * is the reply to it. The only way out of a hold the room can count on.
+ */
+function noteHoldSpeech(ms) {
+  if (!holdMode || !holdCheckInAt) return;
+  if (inboundSpokeAt < holdCheckInAt || ms < HOLD_REPLY_MIN_SPEECH_MS) return;
+  if (Date.now() - holdCheckInAt > HOLD_REPLY_WINDOW_MS) return;
+  exitHold("they spoke after her check-in");
+}
+
+/** The end of a stretch of inbound speech, as the VAD measured it. */
+function noteSpeechEnded(ms) {
+  const len = Math.max(0, ms);
+  speechSinceMiraMs += len;
+  noteGuestSpoke(len);
+  noteHoldSpeech(len);
+}
+
+/** A guest line, while held or not: does it start or end a hold? */
+function noteHoldFromGuest(text) {
+  const t = String(text || "");
+  if (holdMode) {
+    if (HOLD_EXIT_RE.test(t)) { exitHold("they turned back to her"); return; }
+    if (holdCheckInAt && Date.now() - holdCheckInAt < HOLD_REPLY_WINDOW_MS) { exitHold("they answered her check-in"); return; }
+    return;
+  }
+  if (HOLD_ENTER_RE.test(t)) enterHold("the guest stepped away");
+}
+
+// The guest saying they have to stop. A sign-off before the closing round is
+// finished is allowed only then, or when the hard cap fired (Oct 22 2026).
+const GUEST_STOP_RE = /\b((i|we) (have|need|got|gotta) to (go|run|leave|stop|hop off|jump off|wrap up)|i'?m (going to|gonna) have to (go|leave|stop|run)|(can|could|should) we (stop|end|wrap( it)? up)( here| there| now)?|let'?s (stop|wrap( it)? up|end( it)?) (here|there|now))\b/i;
+let guestAskedToStop = false;
+let roundCloseBlocks = 0;
+const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through
 
 async function roomAlerting(e, dest) {
   sessionKind = "room";
@@ -747,6 +1014,7 @@ async function openRoom() {
     Logger.write("[aoa " + runId + "] hard cap reached, closing");
     trace("time", "hard cap reached; asking for an immediate close");
     closingPermitted = true; roundClosed = true; roundActive = false; roundPendingStart = false;
+    if (holdMode) exitHold("the hard cap");
     try {
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text:
@@ -857,6 +1125,7 @@ function armNoShowTimer() {
 
 function scheduleTeardown() {
   if (teardownTimer || roomEnded) return;
+  cancelDeadAir();
   trace("room", "empty — ending in " + (REJOIN_GRACE_MS / 1000) + "s unless someone rejoins");
   teardownTimer = setTimeout(function () {
     teardownTimer = null;
@@ -875,13 +1144,56 @@ function textOf(event) {
   return typeof t === "string" ? t.trim() : "";
 }
 
+function itemIdOf(event) {
+  const e = (event && (event.data || event)) || {};
+  const p = e.payload || e;
+  return String(p.item_id || (p.item && p.item.id) || "");
+}
+
+// The guest's words (Oct 22 2026). Grok Voice 3.0 sends the transcription of
+// what the room hears as ConversationItemInputAudioTranscriptionCompleted, a
+// NAMED event, and sends it again about every second while the guest is still
+// talking, each copy carrying the whole item so far. The room listened only
+// for an Unknown event, so from 3.0 on it never heard a guest word: the Oct 13
+// note at noteGuestSpoke, every hold and stop rule, and the unfinished-clause
+// wait all ran blind. One guest line per item, updated in place; the hold and
+// stop rules read only what is new (with a little overlap for a phrase that
+// straddles two copies).
+let lastGuestItemId = "";
+let lastGuestItemIdx = -1;
+let lastGuestItemLen = 0;
+const GUEST_ITEM_OVERLAP = 40;
+
+function noteGuestTranscript(itemId, text) {
+  const t = String(text || "").trim();
+  if (!t) return;
+  if (itemId && itemId === lastGuestItemId && lastGuestItemIdx >= 0
+      && lastGuestItemIdx < transcript.length
+      && transcript[lastGuestItemIdx].indexOf("Guest: ") === 0) {
+    if (t.length <= lastGuestItemLen) return;     // the same copy again
+    const fresh = t.slice(Math.max(0, lastGuestItemLen - GUEST_ITEM_OVERLAP));
+    transcript[lastGuestItemIdx] = "Guest: " + t.slice(0, 400);
+    lastGuestItemLen = t.length;
+    guestWordsChecks(fresh);
+    return;
+  }
+  remember("Guest", t);
+  lastGuestItemId = itemId || "";
+  lastGuestItemIdx = transcript.length - 1;
+  lastGuestItemLen = t.length;
+}
+
 function remember(who, text) {
   if (!text) return;
+  // Oct 22 2026: the words of a turn the room cancelled were never heard as
+  // a turn; recording them would move the start of the guest's delta.
+  if (who === "Mira" && cancelledLinePending) { cancelledLinePending = false; return; }
   transcript.push(who + ": " + String(text).slice(0, 400));
   if (transcript.length > 200) {
     const dropped = transcript.length - 200;
     transcript.splice(0, dropped);
     miraLineIndex = Math.max(-1, miraLineIndex - dropped);
+    lastGuestItemIdx = Math.max(-1, lastGuestItemIdx - dropped);
   }
   if (who === "Mira") {
     lastMiraLineAt = Date.now();
@@ -897,13 +1209,34 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
     try { noteRoundQuestion(text); }
     catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
+    // In a hold she speaks only her check-in; the reply window runs from the
+    // end of that line, not from the moment the room asked for it.
+    if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();
+    try { if (!holdMode && MIRA_HOLD_RE.test(text || "")) enterHold("she said she would wait"); }
+    catch (err) { Logger.write("[aoa " + runId + "] hold check failed: " + err.message); }
     try {
       if (closingPermitted && !roundActive && !roundClosed && !isClosingSession()
           && CLOSING_ROUND_RE.test(text || "")) startRound("she announced it", -1);
     } catch (err) { Logger.write("[aoa " + runId + "] round start check failed: " + err.message); }
   } else {
-    lastWordAnswered = true;
+    // A new guest line ends any in-place updates of the one before it.
+    lastGuestItemId = "";
+    lastGuestItemIdx = -1;
+    guestWordsChecks(text);
   }
+}
+
+/** What the guest's words mean for the room: a hold, a stop, an answer. */
+function guestWordsChecks(text) {
+  try {
+    noteHoldFromGuest(text);
+    if (!guestAskedToStop && GUEST_STOP_RE.test(text || "")) {
+      guestAskedToStop = true;
+      trace("close", "the guest asked to stop");
+    }
+  } catch (err) { Logger.write("[aoa " + runId + "] hold/stop check failed: " + err.message); }
+  // Speech while they are away is not an answer to anything she asked.
+  if (!holdMode) lastWordAnswered = true;
 }
 
 /**
@@ -915,7 +1248,20 @@ function remember(who, text) {
  */
 function requestTurn(agent) {
   if (!agent || roomEnded) return;
+  // Oct 22 2026: while the guest is away she has no turns at all; the check-in
+  // (holdCheckInRequested) is the one exception. A request made meanwhile is
+  // dropped, not parked: the exit note says what to do when they are back.
+  if (holdMode && !holdCheckInRequested) return;
   if (miraSpeaking) { pendingTurn = true; return; }
+  // Oct 22 2026: nor over her own line still playing; the turn goes when the
+  // guest has heard the end of it (unless they start talking first).
+  if (miraAudible()) {
+    pendingTurn = true;
+    afterMiraAudio(function () {
+      if (pendingTurn && !inboundSpeaking && !miraSpeaking && grokAgent) requestTurn(grokAgent);
+    });
+    return;
+  }
   // Oct 21 2026: never over the guest. The decision after their next pause
   // gives her the turn (decideTurn honours pendingTurn without needing new
   // guest words, since the note that asked is already in her context).
@@ -923,7 +1269,9 @@ function requestTurn(agent) {
   pendingTurn = false;
   miraSpeaking = true;
   turnRequested = true;
-  agent.responseCreate({});
+  const body = nextTurnInstructions ? { response: { instructions: nextTurnInstructions } } : {};
+  nextTurnInstructions = "";
+  agent.responseCreate(body);
 }
 
 // ---------------------------------------------------------------------------
@@ -976,6 +1324,10 @@ function scheduleTurnDecision(delayMs) {
 function decideTurn() {
   turnDecisionTimer = null;
   if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
+  // A pause the room hears while her own line is still playing is hers, not
+  // the guest's: decide when it ends.
+  if (miraAudible()) { scheduleTurnDecision(miraAudibleUntil - Date.now() + TURN_DECIDE_MS); return; }
+  if (holdMode) { holdPausesSkipped += 1; return; }
   const owed = pendingTurn;
   const spoke = guestSpokeSinceMira || hostSpokeSinceMira;
   if (!spoke && !owed) {
@@ -1003,6 +1355,13 @@ function decideTurn() {
     rotateAgent();
     return;
   }
+  if (holdResumeOwed) {
+    // They are back mid-round: the question in play is asked again, and what
+    // they said while away was never its answer.
+    holdResumeOwed = false;
+    requestTurn(grokAgent);
+    return;
+  }
   if (roundActive && roundAwaitingAnswer && spoke) {
     roundAnswered();
     return;
@@ -1018,6 +1377,8 @@ function decideTurn() {
 /** The room heard someone start talking: who, and what it means for her. */
 function noteInboundStart() {
   cancelTurnDecision();
+  cancelDeadAir();
+  deadAirNudges = 0;
   turnWaitedForWords = false;
   turnWaitedToThink = false;
   const hostOnly = micStatusSeen && guestMicActive === 0 && hostMicActive > 0;
@@ -1198,9 +1559,7 @@ async function createAgent(note) {
   if (Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) {
     agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped, function () {
       inboundSpeaking = false;
-      const ms = Date.now() - inboundSpokeAt;
-      speechSinceMiraMs += Math.max(0, ms);
-      noteGuestSpoke(ms);
+      noteSpeechEnded(Date.now() - inboundSpokeAt);
       if (agent !== grokAgent) return;
       // The VAD found the pause; the room decides whether it is the end of
       // a turn (see decideTurn). The opening waits for this too.
@@ -1212,7 +1571,7 @@ async function createAgent(note) {
     inboundSpeaking = true; inboundSpokeAt = Date.now();
     // Without a stopped event there is no length to measure; speech after
     // the last-word question is then taken as the answer when it starts.
-    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) { noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS); speechSinceMiraMs += LAST_WORD_MIN_SPEECH_MS; }
+    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) noteSpeechEnded(Math.max(LAST_WORD_MIN_SPEECH_MS, HOLD_REPLY_MIN_SPEECH_MS));
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
@@ -1223,7 +1582,7 @@ async function createAgent(note) {
     // per-leg microphone state says only a host leg is live, she finishes
     // her sentence; he is heard and answered on her next turn.
     if (hostOnly) { if (miraSpeaking) trace("turn", "co-host spoke during her turn; not a barge-in"); return; }
-    agent.clearMediaBuffer();
+    agent.clearMediaBuffer(); miraSilenced();
     if (!miraSpeaking) return;
     miraSpeaking = false;
     try {
@@ -1262,12 +1621,25 @@ async function createAgent(note) {
   try {
     if (Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone,
-        function (ev) { remember("Mira", textOf(ev)); });
+        function (ev) {
+          if (agent === grokAgent && !responseCancelledEarly) noteMiraLineSpoken(textOf(ev));
+          remember("Mira", textOf(ev));
+        });
+    }
+    // Oct 22 2026: the named event is how 3.0 delivers the guest's words
+    // (read from the session log of a candidate rehearsal); the Unknown path
+    // below stays for a connector that does not name it.
+    if (Grok.VoiceAgentAPIEvents.ConversationItemInputAudioTranscriptionCompleted) {
+      agent.addEventListener(Grok.VoiceAgentAPIEvents.ConversationItemInputAudioTranscriptionCompleted,
+        function (ev) {
+          if (agent !== grokAgent) return;
+          noteGuestTranscript(itemIdOf(ev), textOf(ev));
+        });
     }
     if (Grok.VoiceAgentAPIEvents.Unknown) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.Unknown, function (ev) {
         const raw = JSON.stringify((ev && (ev.data || ev)) || {});
-        if (raw.indexOf("input_audio_transcription.completed") >= 0) remember("Guest", textOf(ev));
+        if (raw.indexOf("input_audio_transcription.completed") >= 0) noteGuestTranscript(itemIdOf(ev), textOf(ev));
         if (raw.indexOf("\"response.created\"") >= 0) markTurnStarted(agent);
         // Oct 21 2026: her words as they are spoken, so a sign-off before
         // the window has opened is cancelled mid-sentence, not noted after.
@@ -1303,6 +1675,7 @@ async function createAgent(note) {
         miraSpeaking = false;
         trace("grok", "response done");
         if (agent !== grokAgent || roomEnded) return;
+        armDeadAir();
         // Oct 21 2026: the pause after her turn, before the guest's next
         // word, is where a due hand-over happens (never on a timer).
         if (rotationDue && !inboundSpeaking && !rotating) { rotateAgent(); return; }
@@ -1329,6 +1702,7 @@ function markTurnStarted(agent) {
   miraSpeaking = true;
   currentResponseText = "";
   responseCancelledEarly = false;
+  responseStartedAt = Date.now();
   cancelTurnDecision();
   const requested = turnRequested;
   turnRequested = false;
@@ -1345,15 +1719,52 @@ function markTurnStarted(agent) {
     if (!spoke && openingFired) {
       selfAnswersBlocked += 1;
       miraSpeaking = false;
+      cancelledLinePending = true;
       try {
         if (agent.responseCancel) agent.responseCancel();
         else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
-        agent.clearMediaBuffer();
+        agent.clearMediaBuffer(); miraSilenced();
       } catch (err) { /* best-effort */ }
       trace("turn", "cancelled a turn nobody had asked for (#" + selfAnswersBlocked + "): no guest words since her last line");
       return;
     }
+    // Oct 22 2026, Stan Lewis's room. The closing round began at 34 minutes
+    // and never advanced past its first question, though he answered and
+    // she replied over a hundred times: decideTurn is the only path to
+    // roundAnswered(), and a turn the SERVER started skipped it (the flags it
+    // reads are reset here). So a server turn after the guest spoke is
+    // cancelled too, and the room decides it like any other pause: the
+    // unfinished-clause wait, the hand-over, the closing round, the hold.
+    if (openingFired) {
+      serverTurnsRerouted += 1;
+      miraSpeaking = false;
+      cancelledLinePending = true;
+      try {
+        if (agent.responseCancel) agent.responseCancel();
+        else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
+        agent.clearMediaBuffer(); miraSilenced();
+      } catch (err) { /* best-effort */ }
+      if (serverTurnsRerouted <= 3 || serverTurnsRerouted % 10 === 0) {
+        trace("turn", "server turn after guest speech cancelled; the room decides it (#" + serverTurnsRerouted + ")");
+      }
+      if (!inboundSpeaking) scheduleTurnDecision(TURN_DECIDE_MS);
+      return;
+    }
+  } else if (holdMode && !holdCheckInRequested) {
+    // A requested turn can only be the check-in while held; anything else
+    // that slipped through is stopped before the guest's caller hears it.
+    miraSpeaking = false;
+    cancelledLinePending = true;
+    try {
+      if (agent.responseCancel) agent.responseCancel();
+      else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
+      agent.clearMediaBuffer(); miraSilenced();
+    } catch (err) { /* best-effort */ }
+    trace("hold", "stopped a turn while the guest was away");
+    return;
   }
+  holdCheckInRequested = false;
+  cancelledLinePending = false;
   guestSpokeSinceMira = false;
   hostSpokeSinceMira = false;
   speechSinceMiraMs = 0;
@@ -1908,6 +2319,9 @@ function startTimeChecks() {
   timeCheckTimer = setInterval(function () {
     try {
       if (!grokAgent || roomEnded) return;
+      // Oct 22 2026: no time notes while the guest is away; the next tick
+      // after they are back says where things stand.
+      if (holdMode) return;
       const elapsed = elapsedMin();
       const remainMin = Math.max(0, plannedMin() - elapsed);
       // Sept 20 2026, Meridan Zerner. Mira ran a 45-minute interview for
@@ -1992,13 +2406,14 @@ function startTimeChecks() {
     closingRequired = true; closingPermitted = true;
     roundPendingStart = !roundActive && !roundClosed;
     trace("time", "closing round required (scheduled note)");
+    const note = "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
+      " minutes remain. Once the current answer has finished, the room will hand" +
+      " you the closing questions one at a time; you add only a short reaction" +
+      " between them, and the room tells you when to close.";
+    if (holdMode) { heldTimeNote = note; return; }   // delivered when they are back
     try {
       grokAgent.conversationItemCreate({
-        item: { type: "message", role: "system", content: [{ type: "input_text", text:
-          "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
-          " minutes remain. Once the current answer has finished, the room will hand" +
-          " you the closing questions one at a time; you add only a short reaction" +
-          " between them, and the room tells you when to close." }] },
+        item: { type: "message", role: "system", content: [{ type: "input_text", text: note }] },
       });
     } catch (err) { /* the five-minute notes still run */ }
   }, mustCloseInMs);
@@ -2037,11 +2452,14 @@ function noteLastWordAsk(text) {
 // so much", the room still believed the question was open, and the rescue
 // below sent Mira back in twice. She said "You can hang up now" three times.
 // The room does hear the guest speak, transcribed or not, so speech that
-// starts after the question and lasts half a second is the answer.
+// starts after the question and lasts half a second is the answer. (Oct 22
+// 2026: the transcription was being sent all along, as a named event the room
+// did not listen to; see noteGuestTranscript. The speech rule stays as the
+// backstop for a transcription that fails.)
 const LAST_WORD_MIN_SPEECH_MS = 500;
 
 function noteGuestSpoke(ms) {
-  if (!lastWordAskedAt || lastWordAnswered) return;
+  if (!lastWordAskedAt || lastWordAnswered || holdMode) return;
   if (inboundSpokeAt <= lastWordAskedAt || ms < LAST_WORD_MIN_SPEECH_MS) return;
   lastWordAnswered = true;
   trace("close", "the guest answered the last-word question (" +
@@ -2205,7 +2623,7 @@ function catchEarlySignOff(text) {
   // A close that lands on an unanswered last-word question is wrong whatever
   // the clock says, so that rule runs first and on its own.
   if (catchClosingWithoutTheAnswer(text)) return;
-  if (closingPermitted) return;
+  if (closingPermitted) { catchSignOffBeforeTheRound(text); return; }
   if (!SIGN_OFF_RE.test(text || "")) return;
   const elapsed = elapsedMin();
   if (elapsed >= closingOpensAtMin()) return;
@@ -2252,13 +2670,22 @@ function catchEarlyCloseOnDelta(textSoFar) {
     if (SIGN_OFF_RE.test(t)) why = "a sign-off at " + elapsedMin() + " min of " + plannedMin();
     else if (CLOSING_ROUND_RE.test(t) && !roundActive) why = "the closing round at " + elapsedMin() + " min of " + plannedMin();
   }
+  // Oct 22 2026: at 46 minutes she said the recording was over with the
+  // closing round at its first question and the guest still on the line. A
+  // sign-off waits for the round, whatever the clock says, unless the guest
+  // asked to stop or the hard cap fired (which closes the round).
+  if (!why && SIGN_OFF_RE.test(t) && signOffBlockedByRound()) {
+    roundCloseBlocks += 1;
+    why = "a sign-off with the closing round " +
+          (roundActive ? "at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length : "not yet run");
+  }
   if (!why) return;
   responseCancelledEarly = true;
   miraSpeaking = false;
   try {
     if (grokAgent.responseCancel) grokAgent.responseCancel();
     else if (grokAgent.send) grokAgent.send(JSON.stringify({ type: "response.cancel" }));
-    grokAgent.clearMediaBuffer();
+    grokAgent.clearMediaBuffer(); miraSilenced();
   } catch (err) { /* best-effort; the after-the-fact rule still runs */ }
   trace("close", "cancelled mid-sentence: " + why);
   if (!rescueAllowed()) return;
@@ -2271,14 +2698,62 @@ function catchEarlyCloseOnDelta(textSoFar) {
         " guest is still here. Carry on as if that sentence had not begun:" +
         (lastWordAskedAt && !lastWordAnswered
           ? " you had handed them the last word, so wait in silence for it."
-          : " react in one short line to the last thing they said, then ask the next" +
-            " question one level down into their subject.") }] },
+          : roundActive
+            ? " the closing round is not finished. Let them answer the question in play;" +
+              " the room hands you the next one, and tells you when to close."
+            : (closingPermitted && !roundClosed && !isHelloSession())
+              ? " the closing round has not been run yet. The room hands you its first" +
+                " question now; ask only that."
+              : " react in one short line to the last thing they said, then ask the next" +
+              " question one level down into their subject.") }] },
     });
     if (lastWordAskedAt && !lastWordAnswered) return;   // silence is the behaviour
+    if (roundActive) return;                              // the room drives the round
+    if (closingPermitted && !roundClosed && !isHelloSession()) { startRound("a sign-off came before it"); return; }
     requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] early-close cancel note failed: " + err.message);
   }
+}
+
+/**
+ * Oct 22 2026: the after-the-fact half of the rule above, for a sign-off the
+ * deltas did not catch (no deltas arrived, or the line came whole). She has
+ * said it, so she says she spoke too soon, and the round goes on.
+ */
+function catchSignOffBeforeTheRound(text) {
+  if (!SIGN_OFF_RE.test(text || "") || !signOffBlockedByRound()) return;
+  if (!rescueAllowed()) return;
+  roundCloseBlocks += 1;
+  trace("close", "signed off with the closing round " +
+        (roundActive ? "at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length : "not yet run") +
+        " — the round goes on");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] You have just said the recording is over," +
+        " but the closing round is not finished and they are still here. Say so at once, in" +
+        " one light sentence: you spoke too soon, there are a few more questions." +
+        (roundActive && roundAwaitingAnswer
+          ? " Then ask again, in one short line, the closing question still in play."
+          : " The room hands you the next one.") }] },
+    });
+    if (roundActive) {
+      if (roundAwaitingAnswer) requestTurn(grokAgent);   // her correction; the answer then advances the round
+      else askNextRoundQuestion();
+    } else {
+      startRound("a sign-off came before it");
+    }
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] round sign-off rescue failed: " + err.message);
+  }
+}
+
+/** A sign-off now would end an interview whose closing round is unfinished. */
+function signOffBlockedByRound() {
+  if (roundClosed || guestAskedToStop || isHelloSession()) return false;
+  if (roundCloseBlocks >= ROUND_CLOSE_BLOCKS_MAX) return false;   // never trap a guest
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -2355,6 +2830,7 @@ function askNextRoundQuestion() {
 function roundReprompt() {
   roundRepromptTimer = null;
   if (roomEnded || !grokAgent || !roundActive || !roundAwaitingAnswer) return;
+  if (holdMode) return;   // re-armed when they are back (exitHold)
   if (guestSpokeSinceMira || inboundSpeaking || miraSpeaking) return;
   trace("round", "no answer yet to " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; one gentle re-ask");
   try {
@@ -2396,8 +2872,9 @@ function askRoundLastWord() {
   }
   roundRepromptTimer = setTimeout(function () {
     roundRepromptTimer = null;
-    // Nothing to add, in their own silence: that is an answer too.
-    if (roundActive && roundAwaitingAnswer && !guestSpokeSinceMira && !inboundSpeaking && !miraSpeaking) {
+    // Nothing to add, in their own silence: that is an answer too. Not while
+    // they are away: that silence is not theirs to us.
+    if (roundActive && roundAwaitingAnswer && !holdMode && !guestSpokeSinceMira && !inboundSpeaking && !miraSpeaking) {
       trace("round", "no last word after " + Math.round(ROUND_REPROMPT_MS / 1000) + "s; closing");
       roundAwaitingAnswer = false;
       closeRound();
@@ -2519,7 +2996,7 @@ async function endRoom(reason) {
   endReason = reason;
   [hardCapTimer, micCheckTimer, teardownTimer, openingTimer, audioCheckTimer,
    rotateTimer, rotateForceTimer, noShowTimer, cohostWaitTimer, turnDecisionTimer,
-   roundRepromptTimer].forEach(function (t) { if (t) clearTimeout(t); });
+   roundRepromptTimer, holdTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
@@ -2545,6 +3022,9 @@ async function endRoom(reason) {
       barge_ins: bargeIns,
       server_turns: serverTurns,
       self_answers_blocked: selfAnswersBlocked,
+      server_turns_rerouted: serverTurnsRerouted,
+      holds: holdsEntered,
+      dead_air_nudges: deadAirNudgesTotal,
       closing_round_complete: roundClosed,
       closing_questions_asked: Object.keys(roundAsked).length,
       grok_session_log: grokAgent && grokAgent.getSessionLog ? grokAgent.getSessionLog() : null,

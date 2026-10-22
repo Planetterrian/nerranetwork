@@ -34,16 +34,29 @@ jobs:
       - name: Fetch session logs
         run: |
           python - <<'PY'
-          import os
+          import os, pathlib
           from voximplant.api_clients.voximplant_client import recent_session_logs
+          out = pathlib.Path("outputs/session_logs")
+          out.mkdir(parents=True, exist_ok=True)
           for s in recent_session_logs(hours=float(os.environ["HOURS"]), limit=int(os.environ["LIMIT"])):
+              log = s["log"] or "(no log)"
+              (out / f"{s['session_id']}.log").write_text(log, encoding="utf-8")
               print("=" * 100)
               print("session", s["session_id"], "start", s["start"], "duration", s["duration"], "calls", s["calls"])
               print("-" * 100)
-              print(s["log"] or "(no log)")
+              # The job log carries the head and the tail; the artifact has it all.
+              print(log if len(log) <= 80000 else log[:40000] + "\n[... see the artifact ...]\n" + log[-40000:])
           PY
         env:
           HOURS: ${{ inputs.hours }}
           LIMIT: ${{ inputs.limit }}
           VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
           VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+      - name: Attach the full logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: session-logs-${{ github.run_id }}
+          path: outputs/session_logs/
+          retention-days: 14
+          if-no-files-found: ignore

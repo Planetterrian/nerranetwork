@@ -40,7 +40,10 @@ require(Modules.Grok);
 const SUPABASE_URL = "__SUPABASE_URL__";
 const API_BASE = "https://api.nerranetwork.com/voices";
 const LEG_EVENT_URL = API_BASE + "/leg-event";
-const ROOM_PREFIX = "room-";
+// Oct 22 2026: a rehearsal of a CANDIDATE room calls "candroom-<run id>"
+// (voximplant_client.CANDIDATE_ROOM_PREFIX); nothing else is accepted.
+let ROOM_PREFIX = "room-";
+const ROOM_PREFIXES = ["room-", "candroom-"];
 const GROK_MODEL = ("__GROK_VOICE_MODEL__".indexOf("__") === 0)
   ? "grok-voice-3.0" : "__GROK_VOICE_MODEL__";
 const DEFAULT_MINUTES = 10;
@@ -223,6 +226,20 @@ function beatNote(kind) {
     case "ask_who":
       return "If the host mentions any person by name in the next few minutes, " +
         "ask who that is before answering. If no name comes up, carry on normally.";
+    // Oct 22 2026: a guest who steps away for another call. Everything they
+    // say until end_call is to an imaginary caller about an ordinary errand
+    // (made up, never anyone's real details), never to the host.
+    case "take_call":
+      return "On your next answer, instead of answering: your phone is ringing. Say " +
+        "to the host, in one short line, that you are sorry and have to take this " +
+        "call. Then speak ONLY to the caller, " +
+        "never to the host: an ordinary errand (a delivery time, moving a meeting), " +
+        "in short lines with pauses as if listening to the other side. Ignore " +
+        "anything the host says until a later note says the call is over.";
+    case "end_call":
+      return "The call is over. The next time you speak, turn back to the host: " +
+        "say sorry about that, ask where you were, and then answer the last " +
+        "question the host asked you before the call.";
     default:
       return "";
   }
@@ -272,7 +289,11 @@ async function createFixtureAgent() {
   const client = await Grok.createVoiceAgentAPIClient({
     xAIApiKey: getSecret("XAI_API_KEY"),
     model: GROK_MODEL,
-    onWebSocketClose: function () { if (!done) log("fixture agent socket closed"); },
+    onWebSocketClose: function () {
+      if (done) return;
+      log("fixture agent socket closed");
+      reconnectFixture();
+    },
   });
   client.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
     const silence = Number(custom.silence_ms || DEFAULT_SILENCE_MS);
@@ -298,6 +319,36 @@ async function createFixtureAgent() {
   return client;
 }
 
+// A dropped fixture socket (Oct 22 2026). One candidate rehearsal lost its
+// fixture to a 1006 two minutes in and ran twelve silent minutes measuring
+// nothing. The fixture is the instrument, not the thing under test, so it
+// comes back: a new agent, bridged to the same leg, told to carry on. The
+// beats and the length timer are scheduled once and are not repeated.
+const FIXTURE_RECONNECTS_MAX = 3;
+let fixtureReconnects = 0;
+let beatsScheduled = false;
+
+function reconnectFixture() {
+  if (done || !roomCall) return;
+  if (fixtureReconnects >= FIXTURE_RECONNECTS_MAX) {
+    log("fixture agent lost; no more reconnects");
+    return finish("agent_lost");
+  }
+  fixtureReconnects += 1;
+  sessionReady = false;
+  bridged = false;
+  setTimeout(async function () {
+    if (done) return;
+    try {
+      agent = await createFixtureAgent();
+      log("fixture agent reconnected (" + fixtureReconnects + ")");
+    } catch (err) {
+      log("fixture reconnect failed: " + err.message);
+      return reconnectFixture();
+    }
+  }, 1000);
+}
+
 // Bridge once both the leg and the agent are up, whichever comes second.
 function bridge() {
   if (bridged || !sessionReady || !roomCall || !agent) return;
@@ -309,6 +360,20 @@ function bridge() {
     log("bridge failed: " + err.message);
     return finish("bridge_failed");
   }
+  if (fixtureReconnects > 0) {
+    try {
+      agent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[CUE — do not read aloud] Your line dropped for a moment and you are back. " +
+          "The next time the host speaks, say in one short line that you lost them " +
+          "for a second, then answer as yourself." }] },
+      });
+      // No responseCreate: the fixture never speaks unprompted (a silent room
+      // is the room's to break).
+    } catch (err) { log("reconnect cue failed: " + err.message); }
+  }
+  if (beatsScheduled) return;
+  beatsScheduled = true;
   scheduleBeats();
   if (custom.speaks_first) {
     // Piper Martz said "Hi Mira, thanks for having me" before the opening;
@@ -371,6 +436,7 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
   runId = custom.run_id;
   const headers = { "X-Run-Id": runId, "X-Role": "guest", "X-Call-Mode": "webrtc", "X-Fixture": "1" };
   try {
+    if (ROOM_PREFIXES.indexOf(custom.room_prefix) >= 0) ROOM_PREFIX = custom.room_prefix;
     roomCall = VoxEngine.callConference(ROOM_PREFIX + runId, "guest", "guest", headers);
   } catch (err) {
     log("callConference threw: " + err.message);
