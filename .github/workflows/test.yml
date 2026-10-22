@@ -37,6 +37,9 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-26.04
+    # Oct 22 2026: main run 39810036245 spent ~15 min in setup-python on a
+    # trickle-slow apt ffmpeg mirror (3×300 s → exit 124). Keep a hard job
+    # ceiling so a stalled setup cannot burn a full runner hour.
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -45,19 +48,63 @@ jobs:
           # No git history needed (landmine #1: full clone is ~2.5 GB).
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-python
+      # cache-dependency-path pins the pip cache key to the requirements
+      # files (not the runner image fingerprint alone). No apt ffmpeg here
+      # — see Cached static ffmpeg below (main 39810036245 hung ~15 min on
+      # a trickle mirror installing ffmpeg via apt).
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        timeout-minutes: 10
         with:
           python-version: '3.14'
           requirements-file: 'requirements.txt'
+          cache-dependency-path: |
+            requirements.txt
+            requirements_fascinating_frontiers.txt
+            requirements_planetterrian.txt
           # Oct 9 2026: pytest-xdist runs the suite across the runner's cores.
           extra-packages: "ruff pytest-xdist"
-          # Sep 18 2026: the Nerra Voices leg-placement and mic-bleed
-          # tests (tests/test_it_produces_itself.py) run real ffmpeg on
-          # synthetic audio, and ubuntu-latest does not ship it — main
-          # went red on every push from 09-17 19:40 with
-          # FileNotFoundError: 'ffmpeg'. Same install run-show.yml uses.
-          system-packages: 'ffmpeg'
           skip-checkout: 'true'
+
+      # Static ffmpeg via actions/cache (not apt, not FedericoCarboni —
+      # the latter broke on Sep 14 2026 by scraping an upstream README;
+      # see .github/actions/setup-ffmpeg). Pin a dated BtbN autobuild tag
+      # (not ``latest``); cache key includes the tag; miss downloads the
+      # exact asset and verifies sha256sum -c against that release's
+      # checksums.sha256 under a 6-minute ceiling.
+      - name: Cache static ffmpeg
+        id: cache-ffmpeg
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ffmpeg-static
+          key: ffmpeg-btbn-autobuild-2026-10-22-13-06-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1
+
+      - name: Install static ffmpeg
+        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
+        timeout-minutes: 6
+        env:
+          BTBN_TAG: autobuild-2026-10-22-13-06
+          BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
+        run: |
+          set -euo pipefail
+          dest="${{ runner.temp }}/ffmpeg-static"
+          mkdir -p "$dest"
+          base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
+          cd /tmp
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o checksums.sha256 "${base}/checksums.sha256"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}"
+          grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c -
+          tar -xJf "${BTBN_ASSET}" -C /tmp
+          src="/tmp/${BTBN_ASSET%.tar.xz}"
+          cp "$src/bin/ffmpeg" "$src/bin/ffprobe" "$dest/"
+          chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+
+      - name: Add ffmpeg to PATH
+        run: |
+          echo "${{ runner.temp }}/ffmpeg-static" >> "$GITHUB_PATH"
+          "${{ runner.temp }}/ffmpeg-static/ffmpeg" -version | head -1
 
       - name: Lint with ruff (full)
         run: ruff check engine/ run_show.py scripts/ --fix --exit-non-zero-on-fix

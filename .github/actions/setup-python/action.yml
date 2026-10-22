@@ -34,6 +34,13 @@ inputs:
     description: "Enable pip caching (true/false)"
     required: false
     default: "true"
+  cache-dependency-path:
+    description: >
+      Glob(s) hashed into the pip cache key (setup-python cache-dependency-path).
+      Pin this in the calling workflow so the key stays stable across OS image
+      churn; default is requirements.txt.
+    required: false
+    default: "requirements.txt"
   system-packages:
     description: "Space-separated apt packages to install (e.g. 'ffmpeg')"
     required: false
@@ -53,6 +60,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: ${{ inputs.cache == 'true' && 'pip' || '' }}
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
 
     - name: Install system dependencies
       if: inputs.system-packages != ''
