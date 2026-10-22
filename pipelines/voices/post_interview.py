@@ -53,6 +53,7 @@ from audio.local_tracks import (  # noqa: E402
     place_at, room_pieces, whole_file_delay,
 )
 from audio.bleed import strip_bleed  # noqa: E402
+from audio.room_tone import fill_gate_holes  # noqa: E402
 from audio.mix_tracks import (  # noqa: E402
     duration_seconds, mix_interview, mix_same_clock, mix_three, mix_two,
     split_channels, split_left,
@@ -695,7 +696,17 @@ def build_leg_local(guest: Path, raw: Path, out: Path) -> Path:
     straight from the leg recording to 24-bit, because the declicker crawls
     on audio that has been rounded to 16 bits (150 s per 10 s of Vincent
     Rylan's, against 4 s from the same audio unrounded).
+
+    Oct 22 2026, Stan Lewis: the take's gated stretches are digital
+    silence, and on a noisy microphone the background then switches on and
+    off under every phrase. The edit bed gets the speaker's own room tone
+    in those holes (``audio.room_tone``); the processed tracks keep theirs.
     """
+    try:
+        guest, toned = fill_gate_holes(guest, out.with_name(out.stem + "_toned.wav"))
+        logger.info("leg file: room tone in the gate's holes %s", toned)
+    except Exception:  # noqa: BLE001 — holes are better than no leg file
+        logger.exception("room tone fill failed (non-fatal); using the gated take")
     subprocess.run(
         ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", str(guest), "-i", str(raw),
          "-filter_complex",
