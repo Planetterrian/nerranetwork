@@ -109,11 +109,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep211.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1876,21 +1887,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.mp3", "title": "Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4× faster on CPU.", "desc": "Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4× faster on CPU."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep211_20261022.fr.mp3", "title": "Ep 211 : Des encodeurs Gemma 4 gelés égalent l\u0027ASR arabe commercial en erreur de caractères tout en s\u0027exécutant 3,4×…", "desc": "Des encodeurs Gemma 4 gelés égalent l\u0027ASR arabe commercial en erreur de caractères tout en s\u0027exécutant 3,4× plus vite sur CPU."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -2017,6 +2034,102 @@
 <li>Growing use of preregistered numeric-value benchmarks for low-resource languages to test factual grounding and temporal consistency.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Les encodeurs figés de Gemma 4 égalent la reconnaissance automatique de la parole arabe commerciale sur l&#x27;erreur caractère, tout en tournant trois virgule quatre fois plus vite sur C-P-U.</p>
+<p>Ici Models and Agents, épisode deux cent onze.</p>
+<p>Les profils de routage de SkillEval, la recherche auto-conçue de SearchWeaver, puis un décorticage de l&#x27;optimisation par préférence.</p>
+<p>Des chercheurs ont conservé l&#x27;encodeur audio partagé par Gemma 4 et EmbeddingGemma 2 sur de la parole en arabe saoudien et du Golfe, selon un article sur arXiv.</p>
+<p>Cet encodeur compte trois cent cinq millions de paramètres, et un lecteur figé de classification temporelle connexionniste de vingt-deux virgule six millions de paramètres a été entraîné sur des couches d&#x27;encodeur mélangées.</p>
+<p>Le lecteur restait derrière Cohere Transcribe Arabic, à deux virgule zéro sept milliards de paramètres, en taux d&#x27;erreur mot, sous décodage glouton.</p>
+<p>L&#x27;ajout de trois virgule un millions d&#x27;adaptateurs de rang faible plus un lecteur hybride C-T-C et attention de quarante et un virgule cinq millions de paramètres, avec décodage conjoint d&#x27;un modèle de langue sous-mots, a produit un taux d&#x27;erreur mot statistiquement indiscernable sur un appel public de service client saoudien, dix-neuf virgule vingt pour cent contre dix-neuf virgule vingt-sept pour cent, et sur de la parole émiratie claire.</p>
+<p>Cette pile a affiché un taux d&#x27;erreur caractère significativement plus bas sur les six conditions, et a battu un reconnaisseur affiné SADA de zéro virgule six milliard de paramètres.</p>
+<p>Elle s&#x27;est classée quatrième sur quinze sur un échantillon de centre d&#x27;appels corrigé à l&#x27;aveugle par des humains, derrière trois A-P-I commerciales et devant les autres systèmes auto-hébergeables selon l&#x27;estimation ponctuelle, et un décodeur conjoint optimisé a atteint cent trente-neuf fois le temps réel sur un G-P-U, avec le code et les résultats sur jeux publics publiés.</p>
+<p>SkillEval utilise la méta-cognition des L-L-M pour découvrir des compétences interprétables à partir de questions, puis ajuste des modèles de diagnostic cognitif pour estimer les capacités par compétence.</p>
+<p>Les profils couvrent trois mille huit cent onze L-L-M et neuf mille cinq cent vingt-trois items issus de MATH, BBH, G-P-Q-A, MuSR et IFEval.</p>
+<p>Ces profils sont mieux calibrés que les scores moyens et prédisent mieux la performance sur des items non vus.</p>
+<p>Ils permettent aussi un routage de L-L-M qui réduit le coût d&#x27;inférence de plus de soixante pour cent tout en améliorant la précision, plus des tests adaptatifs informatisés pour les nouveaux modèles.</p>
+<p>Qwen3-1.7B, Qwen3-8B et Gemma-2 2B décodent linéairement les vingt-six facteurs juridiques CATO.</p>
+<p>Des lectures éparses à une seule caractéristique issues d&#x27;autoencodeurs épars couvrent le catalogue entier, avec des A-U-C de test de la meilleure couche allant de zéro virgule quatre-vingt-six à un virgule zéro zéro.</p>
+<p>Cinq caractéristiques sélectionnées approchent la performance du vecteur complet, et l&#x27;étude rapporte soixante-dix-huit coordonnées couche-caractéristique spécifiques au modèle.</p>
+<p>Lift-Bench demande aux modèles de rédiger des documents à partir d&#x27;un sujet et d&#x27;un plan structuré, avec des contraintes limitées à des sections précises.</p>
+<p>Il fournit à la fois des contraintes vérifiables et jugées, plus un jeu Lift-Train apparié, et les modèles de pointe peinent sur les sous-ensembles plus durs.</p>
+<p>L&#x27;entraînement sur Lift-Train réduit la triche à la récompense par rapport à IFTrain courant, et le banc d&#x27;essai, les données d&#x27;entraînement et la chaîne de génération sont publics.</p>
+<p>Les profils de construction globaux sont similaires, mais les structures locales divergent.</p>
+<p>Un analyseur supervisé atteint quatre-vingt-sept virgule cinq pour cent de score d&#x27;attachement étiqueté, tandis que la meilleure configuration L-L-M atteint quatre-vingt-cinq virgule sept pour cent de score d&#x27;attachement étiqueté sur les six variétés, et les annotations et les modèles sont publiés.</p>
+<p>La distillation à support commun construit un support commun explicite ou virtuel à chaque segment aligné et apparie les distributions induites avec un seul objectif.</p>
+<p>Elle gère les alignements un-pour-un et les autres via la règle de chaîne autorégressive plus des événements résiduels.</p>
+<p>Sur les élèves Llama-3.2-1B et Gemma3-1B-PT avec des enseignants Qwen et Phi, elle surpasse les méthodes antérieures inter-tokeniseurs jusqu&#x27;à un virgule huit points et bat le préentraînement continu et la distillation à même tokeniseur.</p>
+<p>Sur Llama-3.1-8B, elle améliore la précision moyenne jusqu&#x27;à quatre virgule deux points pour les élèves de base et un virgule six points pour les élèves ajustés aux instructions.</p>
+<p>Un audit force les membres d&#x27;un cartel à tricher dans des marchés contrefactuels et mesure si des agents de tarification et de négoce entraînés par apprentissage par renforcement punissent l&#x27;écart.</p>
+<p>De petits L-L-M entraînés par R-L apprennent des règles fixes en auto-jeu, la dissuasion contre la punition des rivaux, et l&#x27;appariement contre les tricheurs, mais découvrent rarement des guerres de prix coûteuses.</p>
+<p>Seuls les agents d&#x27;appariement font respecter une collusion ténue, et seulement contre de fortes baisses, tandis que les Q-apprenants ne font respecter que dans la tarification.</p>
+<p>Des chercheurs I-A persistants, aux parcours disciplinaires distincts, aux historiques privés et à l&#x27;allocation de recherche adaptative, surpassent GDN2 à l&#x27;échelle d&#x27;un virgule trois milliard sur la modélisation du langage, le raisonnement de sens commun et les tâches de recherche d&#x27;information.</p>
+<p>Retirer les parcours disciplinaires, les historiques privés ou l&#x27;allocation adaptative produit à chaque fois des découvertes nettement plus faibles.</p>
+<p>SearchWeaver utilise des trajectoires d&#x27;exécution et des récompenses de tâche pour réviser conjointement les artefacts de corpus, les outils exécutables et les instructions d&#x27;usage.</p>
+<p>Avec G-P-T 5.4-nano, les interfaces optimisées font passer la précision des réponses de soixante et onze virgule six pour cent à soixante-dix-huit virgule quatre pour cent sur BrowseComp-Plus.</p>
+<p>Le N-D-C-G moyen à dix passe de quarante-cinq virgule sept à cinquante-cinq virgule zéro sur quatre sous-ensembles BRIGHT.</p>
+<p>MOSAIC fournit neuf cent vingt-trois questions sur des historiques ancrés dans des personnages types de onze à vingt-quatre sessions, couvrant texte, image, vidéo et audio, avec des signaux spatiaux, temporels et prosodiques ciblés.</p>
+<p>Une décomposition appariée montre que la perte de représentation dépend de la modalité, que la lecture résiduelle domine même avec des preuves de référence, et que l&#x27;abstention reste faible.</p>
+<p>KIRA adapte des reconnaisseurs de mots et de phonèmes préentraînés à la parole des enfants.</p>
+<p>Le taux d&#x27;erreur mot passe de treize virgule quatre-vingt-huit pour cent à huit virgule quatre-vingt-quatre pour cent, et le taux d&#x27;erreur phonème passe de quarante et un virgule soixante-six pour cent à vingt-trois virgule zéro zéro pour cent.</p>
+<p>Il implémente des tâches de lecture de mots et de fluidité de lecture à voix haute, avec une interface web destinée aux enseignants qui présente des scores de fluidité et un retour au niveau du phonème.</p>
+<p>SANE encode des exigences comportementales sous forme d&#x27;instructions d&#x27;agent réutilisables, dérive automatiquement des recettes de perturbation spécifiques à l&#x27;évaluateur et des relations de score attendues, puis les valide avec un cadre indépendant de l&#x27;évaluateur.</p>
+<p>Sur cinq domaines, il produit trois virgule sept fois plus de familles de tests validées que le Judge Reliability Harness, à validité comparable.</p>
+<p>Il détecte des lacunes en professionnalisme et en toxicité là où ce harnais n&#x27;en trouve aucune.</p>
+<p>LTEM étend Markdown avec un encodage explicite des étendues et des en-têtes hiérarchiques, tout en restant minimal.</p>
+<p>Sur cinq L-L-M de pointe, il égale la précision du H-T-M-L avec un meilleur compromis précision-jetons, et produit bien moins de réponses invalides que LaTeX pour la génération de tableaux.</p>
+<p>La taxonomie, le banc d&#x27;essai et la spécification sont publiés.</p>
+<p>TrainBridge extrait des intentions d&#x27;optimisation à partir de traces d&#x27;exécution G-P-U pour guidier les réécritures de programmes d&#x27;unité de traitement neuronal, et itère avec le profilage.</p>
+<p>Il délivre une accélération moyenne d&#x27;un facteur un virgule sept sur quatre charges de travail — préentraînement de L-L-M, classification d&#x27;images, et vision-langage — et près d&#x27;un facteur deux virgule zéro sur vingt-sept records de course chronométrée Modded-NanoGPT.</p>
+<p>En un passage plus rapide, un raisonnement fondé d&#x27;abord sur les preuves améliore l&#x27;estimation de fidélité en psychothérapie, et la chaîne distingue les séances C-B-T des séances non C-B-T sur un essai randomisé contrôlé indépendant, tandis que des experts en santé mentale jugent le retour généré exploitable.</p>
+<p>Le préentraînement parallèle seul ne bat pas de façon constante le préentraînement standard, mais une approche en deux étapes, P-P-T puis S-P-T, améliore à la fois la compréhension générale du langage et la performance sur des tâches interlingues, à budgets appariés, en contextes riches et pauvres en ressources.</p>
+<p>La fuite sémantique persiste même sans attribution directe à l&#x27;entité interrogée, et déplace les sorties du modèle vers des stéréotypes de genre à des taux similaires, que le sujet s&#x27;engage avec le concept ou qu&#x27;il apparaisse seulement dans la scène.</p>
+<p>Conserver la distribution cible calculée au contexte complet du tour suivant, dans le décodage spéculatif, permet des règles de reclassement et d&#x27;échantillonnage du premier jeton qui améliorent l&#x27;acceptation attendue par rapport au classement de brouillon, surtout à petits budgets d&#x27;arbre, et peut décoder plus vite quand la passe cible supplémentaire chevauche la rédaction du brouillon.</p>
+<p>Les grilles au niveau de la consigne de DiagSafe atteignent quatre-vingt-quinze virgule trente-quatre pour cent d&#x27;accord avec les annotations humaines et un kappa de Cohen de zéro virgule huit cent soixante-quatre de cohérence inter-juges, tout en révélant des motifs de taux d&#x27;insécurité spécifiques aux modèles et une plus grande susceptibilité en chinois et en contextes multi-tours.</p>
+<p>La chaîne de pensée sans exemple enrichie par le rôle, avec des rôles d&#x27;expert statiques ou dynamiques, améliore la performance jusqu&#x27;à quarante-quatre points par rapport aux références sans exemple, sur vingt L-L-M et sept bancs d&#x27;essai, tandis que des rôles non conventionnels dégradent les résultats et que les plus petits modèles atteignent une maîtrise arithmétique notable.</p>
+<p>GRAFT engage les mots rares pendant que le modèle est indécis, puis régénère, restaurant la part de mots rares de zéro virgule quarante-deux à zéro virgule soixante-dix-sept fois jusqu&#x27;à zéro virgule quatre-vingt-deux à un virgule dix fois le taux humain, un gain relatif de trente-quatre à cent neuf pour cent, sur trois échelles ELF et LangFlow.</p>
+<p>Les modèles de pointe utilisent plus de sujets inanimés avec des verbes animés, des dépendances plus longues, des noms empilés, moins de relatives d&#x27;objet et des n-grammes de basse fréquence que l&#x27;écriture humaine ou les paraphrases par traduction aller-retour, et un affinage sous pénalité de longueur reproduit la divergence.</p>
+<p>Signals and Queries entraîne des classifieurs logistiques par politique sur des plongements d&#x27;exemples activateurs et de négatifs durs, en retirant au moins trente pour cent des politiques candidates avant l&#x27;évaluation L-L-M, tout en préservant un rappel élevé sur neuf mille cent quarante-quatre étiquettes couvrant deux cent cinquante-quatre préfixes de conversation et trente-six politiques aériennes.</p>
+<p>Les représentations d&#x27;accord interne varient d&#x27;un tour à l&#x27;autre et ne suivent pas l&#x27;accord externe au niveau d&#x27;une seule conversation, pourtant, agrégées sur les conversations, elles se couplent à l&#x27;accord de Markov externe via une correspondance en loi de puissance.</p>
+<p>OnQ combine la distillation sur politique avec une K-L dynamique par candidat et relève la moyenne sur neuf bancs d&#x27;essai pour les modèles Qwen3 à deux bits et trois bits, avec les plus gros gains sur le raisonnement à long horizon et moins de troncatures.</p>
+<p>TraDE montre que les réponses à des divulgations de profondeur appariée diffèrent selon la trajectoire précédente, les modèles divergeant le plus des soutiens humains quand les utilisateurs reculent plutôt que de s&#x27;ouvrir.</p>
+<p>DynaWeave transforme des tâches statiques en scénarios dynamiques vérifiables, avec des événements exogènes représentés comme des D-A-G, et un affinage supervisé sur deux mille quatre-vingt-quinze trajectoires relève l&#x27;achèvement de tâche sur CostBench de soixante-sept virgule trente-quatre points et dépasse Gemini-3.1-Pro-Preview sur ToolMaze.</p>
+<p>Omnilingual-MsASR couvre six langues, des enregistrements jusqu&#x27;à trente minutes et jusqu&#x27;à vingt locuteurs, et les L-L-M omni-modaux de tête affichent des taux d&#x27;erreur mot T-C-P fréquemment au-dessus de cent pour cent, ce qui met en lumière la localisation temporelle fine et la désambiguïsation des locuteurs comme défis ouverts.</p>
+<p>Onze des quatorze combinaisons de modèle et de mode de raisonnement sur TenetBench produisent du contenu conflictuel sur la plupart des requêtes qui violent des codes professionnels, le plus souvent sans avertissement, et activer le raisonnement divise par deux les refus pour deux modèles.</p>
+<p>L&#x27;affinage sur des sous-ensembles temporels étiquetés arithmétiques ou sémantiques produit surtout des gains spécifiques au jeu de données, avec un transfert quasi nul à l&#x27;intérieur du même mode, et c&#x27;est la connaissance, pas le raisonnement quantitatif ou logique, qui porte la performance au banc d&#x27;essai.</p>
+<p>Le décodage contrastif par justification améliore la précision des réponses par rapport à la chaîne de pensée standard sur cinq bancs d&#x27;essai de raisonnement, et augmente la dépendance comportementale au contenu de la justification.</p>
+<p>Un rapport annuel d&#x27;intérêt public d&#x27;Anthropic détaille cinq piliers et les actions prises pour les faire avancer.</p>
+<p>Une compétence Codex empaquetée guide les utilisateurs pour vérifier si des sites sont touchés par des failles PHP récemment divulguées.</p>
+<p>Des modèles de pointe ont trouvé des vulnérabilités PHP à l&#x27;échelle d&#x27;Internet avant les attaquants, ouvrant une fenêtre aux défenseurs pour des correctifs coordonnés.</p>
+<p>Une exécution multi-agents G-P-T Rosalind a lié une perturbation de DCTN1 à des hypothèses de transport du cholestérol dans le syndrome de Perry, en trente-deux minutes.</p>
+<p>Simon Willison note que l&#x27;enquête GDC d&#x27;août à septembre inclut Claude Code mais omet Codex.</p>
+<p>La plupart des développeurs interrogés fin deux mille vingt-cinq n&#x27;avaient pas encore adopté les nouveaux agents de code, ajoute-t-il.</p>
+<p>L&#x27;enquête de janvier deux mille vingt-six a été menée en novembre deux mille vingt-cinq sans Claude Code comme option.</p>
+<p>La spécialisation du vocabulaire, sur le blog Hugging Face, réduit le coût d&#x27;inférence de soixante-dix-sept pour cent dans des applications réelles de petits modèles de langage déployés.</p>
+<p>ChatGPT Ads d&#x27;Open A-I s&#x27;étend à vingt-six nouveaux pays, avec plus de cent mille annonceurs ayant déjà utilisé la plateforme.</p>
+<p>Le physicien expérimental et ancien doyen des sciences de Harvard, Christopher Stubbs, rejoint le Long-Term Benefit Trust d&#x27;Anthropic.</p>
+<p>Lancez le code publié de l&#x27;encodeur figé Gemma 4 sur votre propre audio en arabe du Golfe et mesurez la latence C-P-U face à une A-P-I commerciale.</p>
+<p>Appliquez les profils de compétences de SkillEval pour acheminer des requêtes entre un modèle rapide de huit milliards de paramètres et un plus grand modèle de raisonnement, et suivez le coût face à la précision sur votre propre banc d&#x27;essai.</p>
+<p>Testez les tests métamorphiques spécifiques à l&#x27;évaluateur de SANE sur n&#x27;importe quel juge L-L-M que vous maintenez, pour faire émerger des modes de défaillance cachés en professionnalisme ou en toxicité.</p>
+<p>Essayez des tableaux formatés LTEM dans votre chaîne R-A-G si vous perdez actuellement la structure de cellules fusionnées ou d&#x27;en-têtes hiérarchiques avec du Markdown brut.</p>
+<p>Des bancs d&#x27;essai de suivi d&#x27;instructions ciblés, qui séparent la performance sur la tâche principale de l&#x27;adhésion aux contraintes, continuent d&#x27;arriver.</p>
+<p>Les techniques de lecture éparse pour auditer les représentations internes de concepts spécifiques à un domaine, comme les facteurs juridiques, sont promises à un usage plus large.</p>
+<p>Les pertes de préférence lèvent le capot sur un décalage partagé de l&#x27;état caché que le classement ne pénalise jamais.</p>
+<p>Ces pertes opèrent sur des différences relatives entre paires choisies et rejetées, donc tout décalage directionnel partagé qui déplace les deux représentations également ne produit presque aucun signal de gradient.</p>
+<p>Ce décalage partagé, le décalage de mode commun, s&#x27;accumule à travers les positions de jetons et les consignes, parce que chaque mise à jour pousse légèrement toute la distribution d&#x27;état caché dans la même direction.</p>
+<p>Une fois le décalage assez grand, il se projette à travers la matrice de déprojection et crée un seul jeton de haute probabilité qui domine l&#x27;échantillonnage, produisant un effondrement du vocabulaire.</p>
+<p>Le décalage est déjà visible dans des entraînements DPO et SimPO de manuel qui n&#x27;atteignent jamais l&#x27;effondrement, c&#x27;est pourquoi les métriques de classement peuvent continuer à s&#x27;améliorer pendant que la qualité de génération se dégrade en silence.</p>
+<p>Masquer la composante commune hors de la perte pendant l&#x27;entraînement empêche le puits de se former, au prix d&#x27;une petite baisse de l&#x27;objectif de classement.</p>
+<p>Surveillez la norme du décalage d&#x27;état caché centré sur la moyenne, sur un petit jeu de validation après chaque époque ; quand elle dépasse à peu près zéro virgule trois à zéro virgule quatre de la norme d&#x27;activation typique par jeton, la qualité de génération risque de se dégrader même si les scores de classement par paires restent élevés.</p>
+<p>Les équipes qui suivent déjà l&#x27;entropie de sortie ou le taux de répétition peuvent ajouter cette statistique d&#x27;état caché sans passes d&#x27;inférence supplémentaires, et le masquage a sa place dans la perte quand ce seuil de décalage est franchi, pas quand le score de classement est le seul objectif en usage.</p>
+<p>Avant de partir — des bancs d&#x27;essai à valeurs numériques pré-enregistrés pour les langues à faibles ressources sont encore utilisés pour tester l&#x27;ancrage factuel et la cohérence temporelle.</p>
+<p>C&#x27;était Models and Agents pour aujourd&#x27;hui. Si ça vous a été utile, partagez-le avec quelqu&#x27;un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l&#x27;I-A va vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu&#x27;écouter, retrouvez-nous sur YouTube à Nerra Network — le lien est dans les notes de l&#x27;émission.</p>
+<p>Et avant de partir : cette émission fait partie du Nerra Network — une famille de podcasts quotidiens sur la technologie, la science et les marchés, chacun un briefing court et tranchant que vous pouvez finir dans les transports. Si aujourd&#x27;hui a mérité sa place dans votre flux, voici votre prochaine écoute — Prediction Markets Daily, le monde des marchés prédictifs expliqué chaque jour, jamais un pari. Retrouvez chaque émission, gratuitement, sur nerranetwork point com.</p>
+<p>Nouveau sur le réseau ? nerranetwork point com start here choisit le bon briefing quotidien pour vous en environ deux minutes.</p>
+<p>Cet épisode a utilisé une synthèse vocale I-A de ma voix — la sélection éditoriale et l&#x27;analyse sont les miennes.</p>
             </div>
             
 
@@ -2764,17 +2877,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/fascinating_frontiers/ep230.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/tesla/ep642.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Expansion may place entire galaxies permanently beyond any telescope's reach.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Optimus production has begun in Fremont with a target of 20,000 units weekly by 2027.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/fascinating_frontiers/ep229.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/ai_chips/ep031.html" class="blog-related-card" style="--card-show-color: #4338CA">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Simulations show merging neutron stars can boost their magnetic fields more than 300 times in one millisecond.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">AI Chips & Data Centres Daily</span>
+                        <h3>NVIDIA plans a 2.5-times substrate build so AI factory capacity can actually ship.</h3>
                         
                     </a>
                     
