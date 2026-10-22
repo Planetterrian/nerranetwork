@@ -213,6 +213,9 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
         # flows into scene prompts and chapter titles downstream.
         raw = re.sub(r"^(?:title|headline)\s*\d*\s*[:\-—]\s*", "",
                      flatten_markdown_links(raw).strip(), flags=re.IGNORECASE)
+        # Oct 22 2026: Top World writes ``**1. Title: Outlet**`` — the item
+        # number sat INSIDE the bold, so every chapter title opened "1.".
+        raw = re.sub(r"^\d{1,2}[.)]\s+", "", raw)
         if raw.startswith("#"):
             # A markdown heading pasted into a headline slot (M&A Ep148's
             # blockquote hook was literally "# Models & Agents") is the

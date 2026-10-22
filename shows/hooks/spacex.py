@@ -166,7 +166,8 @@ def _fetch_spcx_quote() -> tuple[float, str, str]:
         if not result:
             continue
         price, prev_close = result
-        if source_name == "yfinance_fast_info" and _no_trade_yet(price, prev_close):
+        if source_name == "yfinance_fast_info" and (
+                _no_trade_yet(price, prev_close) or not _regular_session_open()):
             # Oct 13 2026: Ep128 and Ep129 both said "is trading at …
             # unchanged on the session" while the stock moved +0.5% between
             # the runs. The show lands ~05:20 ET, inside the pre-market
@@ -203,6 +204,27 @@ def _fetch_spcx_quote() -> tuple[float, str, str]:
         _persist(price, prev_close, change_str, source_name)
         return price, change_str, source_name
     return 0.0, "", ""
+
+
+def _regular_session_open(now: datetime.datetime | None = None) -> bool:
+    """Weekdays 09:30-16:00 New York. Outside it, a ``fast_info`` last price
+    that equals history's last close IS that close (Oct 22 2026: Ep136-138
+    spoke one price as "closed higher" in the body and "is trading at" in
+    the closing — at 05:50 ET ``last_price`` was the prior session's close
+    and ``previous_close`` the one before it, so ``_no_trade_yet`` could not
+    see it). Inside the session history's last bar is today's, so the
+    comparison would wrongly call a live trade a close; it is skipped."""
+    if now is None:
+        now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        local = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover
+        local = now - datetime.timedelta(hours=4)
+    if local.weekday() >= 5:
+        return False
+    minutes = local.hour * 60 + local.minute
+    return 9 * 60 + 30 <= minutes < 16 * 60
 
 
 def _no_trade_yet(price: float, prev_close) -> bool:

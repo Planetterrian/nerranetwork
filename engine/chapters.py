@@ -34,7 +34,10 @@ _MAP_IDENTITY_SEARCH_LINES = 4
 # read as maps) and the 187 pre-map scripts of Oct 10-19 (see the guard).
 _MAP_CUE_RE = re.compile(
     r"(?:^after\b|\b(?:then|follows?|up after|after the lead|and later|later we)\b"
-    r"|\bat the end\b(?! of))",
+    r"|\bat the end\b(?! of)"
+    # Oct 22 2026: "From there it's…", "From that horizon, …", "… are the
+    # run from here" and "… come next" are maps too (MAB, FF, SpaceX).
+    r"|^from (?:that|there|here)\b|\bfrom here\b|\bcomes? next\b)",
     re.IGNORECASE)
 
 

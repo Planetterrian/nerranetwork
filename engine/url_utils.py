@@ -74,7 +74,12 @@ def sanitize_url(url: Optional[str]) -> Optional[str]:
         return None
     if parsed.scheme not in ("http", "https"):
         return None
-    return cleaned
+    # Oct 22 2026: a parenthesis inside a URL ends a markdown link and every
+    # ``[^\s)]+`` URL regex downstream — an Elsevier PII
+    # (``…/S0092-8674(08)01317-2``) shipped on Planetterrian Ep221 as a link
+    # cut at "(08" with ")01317-2" left in the text. Percent-encoded, the
+    # address is the same one to the server.
+    return cleaned.replace("(", "%28").replace(")", "%29")
 
 
 def is_google_news_url(url: str) -> bool:

@@ -2327,6 +2327,8 @@ def _recompute_summary(tracker: dict) -> None:
     comp_e_ndq = 1.0
     n_era = 0
     era_alphas: list[float] = []
+    era_pnls: list[float] = []
+    era_ndqs: list[float] = []
     era_wins = 0
     for t in closed:
         pnl = t.get("pnl_pct")
@@ -2348,6 +2350,8 @@ def _recompute_summary(tracker: dict) -> None:
                     comp_e_ndq *= 1 + ndq / 100
                     n_era += 1
                     era_alphas.append(pnl - ndq)
+                    era_pnls.append(pnl)
+                    era_ndqs.append(ndq)
                     if pnl > ndq:
                         era_wins += 1
 
@@ -2377,9 +2381,11 @@ def _recompute_summary(tracker: dict) -> None:
     def _finite_num(v):
         return isinstance(v, (int, float)) and math.isfinite(v)
 
+    # Averaged per trade, like the era record (Oct 22 2026): the trades are
+    # parallel $1,000 positions, so a compounded chain overstates both legs.
     benchmark_scores: dict = {}
     for key in BENCHMARK_INDICES:
-        comp_p = comp_i = 1.0
+        sum_p = sum_i = 0.0
         n = 0
         for t in closed:
             pnl = t.get("pnl_pct")
@@ -2395,15 +2401,16 @@ def _recompute_summary(tracker: dict) -> None:
             # verified windows, so the NASDAQ leg equals the headline
             # alpha instead of contradicting it in the same paragraph.
             if _finite_num(pnl) and _finite_num(ret):
-                comp_p *= 1 + pnl / 100
-                comp_i *= 1 + ret / 100
+                sum_p += pnl
+                sum_i += ret
                 n += 1
         if n:
             benchmark_scores[key] = {
-                "portfolio_pct": round((comp_p - 1) * 100, 2),
-                "index_pct": round((comp_i - 1) * 100, 2),
-                "alpha_pct": round((comp_p - comp_i) * 100, 2),
+                "portfolio_pct": round(sum_p / n, 2),
+                "index_pct": round(sum_i / n, 2),
+                "alpha_pct": round((sum_p - sum_i) / n, 2),
                 "trades": n,
+                "basis": "average_per_trade",
             }
     indices_beaten = sum(
         1 for v in benchmark_scores.values() if v["alpha_pct"] > 0)
@@ -2459,10 +2466,21 @@ def _recompute_summary(tracker: dict) -> None:
         "era_name": (load_policy().get("era") or {}).get("name"),
         "era_inception": (load_policy().get("era") or {}).get("inception_date"),
         "era_trades": n_era,
-        "era_alpha_pct": round((comp_e_port - comp_e_ndq) * 100, 2)
+        # The era record is the AVERAGE trade, never a compounded chain
+        # (Oct 22 2026). Every era trade is its own $1,000 position and
+        # many are open at once (four entered on 10-13 and exited on
+        # 10-19), so multiplying their returns as if each trade reinvested
+        # the last one's proceeds described a portfolio the rules never
+        # held: Ep208 aired "minus thirty-three point one percent across
+        # thirty-four trades" for an average trade of -0.97% against the
+        # NASDAQ. The compounded figures stay for history only.
+        "era_basis": "average_per_trade",
+        "era_alpha_pct": round(sum(era_alphas) / n_era, 2) if n_era else None,
+        "era_return_pct": round(sum(era_pnls) / n_era, 2) if n_era else None,
+        "era_nasdaq_pct": round(sum(era_ndqs) / n_era, 2) if n_era else None,
+        "era_pnl_dollars": round(sum(era_pnls) * 10, 2) if n_era else None,
+        "era_compounded_alpha_pct": round((comp_e_port - comp_e_ndq) * 100, 2)
         if n_era else None,
-        "era_return_pct": round((comp_e_port - 1) * 100, 2) if n_era else None,
-        "era_nasdaq_pct": round((comp_e_ndq - 1) * 100, 2) if n_era else None,
         "era_beat_benchmark": era_wins,
         "era_mean_alpha_pct": round(sum(era_alphas) / len(era_alphas), 2)
         if era_alphas else None,
@@ -3341,8 +3359,20 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
             f"position exited at the stop — say so plainly; stop discipline "
             f"working as designed is a teachable win.\n"
         )
+    # Oct 22 2026: the backlog drains oldest-first, so the trade reviewed
+    # here is often NOT the latest close — Ep208 called TD.TO "the last
+    # simulated weekly hold" two closes after it (ENB.TO had closed the
+    # day before at a loss, which the same segment then reported as the
+    # cold streak). The label says which it is, with its close date.
+    later = sum(1 for t in closed if t is not last and (_closed_on(t) or datetime.date.min)
+                > (_closed_on(last) or datetime.date.min))
+    when = _closed_on(last)
+    when_txt = f", closed {when.isoformat()}" if when else ""
+    head = (f"**Last {type_label}{when_txt}:**" if not later else
+            f"**Earlier {type_label}{when_txt} — {later} later trade(s) have "
+            f"closed since; call it an earlier hold, never the last one:**")
     return void_note + (
-        f"**Last {type_label}:** {symbol} — {strategy}\n"
+        f"{head} {symbol} — {strategy}\n"
         f"{hold_note}"
         f"{stop_note}"
         f"**Entry:** ${entry:.2f} ({entry_label}) → **Exit:** ${exit_:.2f} ({exit_label})\n"
@@ -3377,6 +3407,8 @@ def _alpha_scope(summary: dict) -> dict:
             "t": summary.get("era_alpha_t_stat"),
             "significant": summary.get("era_alpha_statistically_significant"),
             "label": "rules-based", "era_start": era_start,
+            "basis": summary.get("era_basis") or "",
+            "pnl_dollars": summary.get("era_pnl_dollars"),
             "era_name": summary.get("era_name"),
         }
     if era_start and not era_n:
@@ -3511,10 +3543,13 @@ def _build_benchmark_block(tracker: dict) -> str:
             )
         else:
             alpha_phrase = _sign(matched_alpha)
+        _how = ("averaged per trade — never a whole-portfolio return, "
+                "since the positions run side by side"
+                if _sc.get("basis") == "average_per_trade" else "compounded")
         matched_line = (
             f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each "
             f"$1,000 trade vs the NASDAQ over the SAME holding window, "
-            f"compounded): {_scope_note}portfolio {_sign(_port)} vs NASDAQ "
+            f"{_how}): {_scope_note}portfolio {_sign(_port)} vs NASDAQ "
             f"{_sign(_idx)} → alpha {alpha_phrase} across {matched_n} "
             f"{_n_label} trades. Speak the alpha, the trade count and "
             f"the parenthetical together — they are one statistic. "
@@ -4471,14 +4506,25 @@ def _build_portfolio_summary(tracker: dict) -> str:
                 f"figure for it.\n"
             )
         elif _sc["alpha"] is not None and _sc["n"]:
+            _avg = _sc.get("basis") == "average_per_trade"
             alpha_line = (
-                f"- Matched-window alpha vs NASDAQ: {_finite(_sc['alpha']):+.1f}% "
+                f"- Matched-window alpha vs NASDAQ{', average per trade' if _avg else ''}: "
+                f"{_finite(_sc['alpha']):+.1f}% "
                 f"across {_sc['n']} {_sc['label']} trades — THE headline "
                 f"number; state it on air every episode, always call it the "
-                f"'matched-window' score, and always say the trade count in "
+                f"'matched-window' score{', say it is the average trade' if _avg else ''}, "
+                f"and always say the trade count in "
                 f"the same sentence so the sample size travels with the "
                 f"claim\n"
             )
+            if _avg and _sc.get("pnl_dollars") is not None:
+                alpha_line += (
+                    f"- Each trade is its own $1,000 position and several run at "
+                    f"once, so this is never a whole-portfolio return: across "
+                    f"those {_sc['n']} positions the record is "
+                    f"{'-' if _finite(_sc['pnl_dollars']) < 0 else '+'}"
+                    f"${abs(_finite(_sc['pnl_dollars'])):,.2f} in total\n"
+                )
             if _sc["scope"] == "era":
                 alpha_line += (
                     f"- This record began {_sc.get('era_start')} under the "

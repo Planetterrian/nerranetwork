@@ -133,6 +133,11 @@ def url_path_date(url: str) -> Optional[_dt.datetime]:
         return None
 
 
+#: ``S0092-8674(08)01317-2`` / ``S0092867408013172`` / percent-encoded.
+_PII_YEAR_RE = re.compile(r"/S\d{4}-?\d{3}[\dX](?:\(|%28)?(\d{2})(?:\)|%29)?\d{5}-?[\dX]",
+                          re.IGNORECASE)
+
+
 def url_slug_date(url: str) -> Optional[_dt.datetime]:
     """The EARLIEST date written into a URL's path words, end of that day.
 
@@ -172,6 +177,16 @@ def url_slug_date(url: str) -> Optional[_dt.datetime]:
                                           tzinfo=_dt.timezone.utc))
             except ValueError:
                 pass
+    # Oct 22 2026: an Elsevier PII carries its year — S0092-8674(08)01317-2
+    # is a 2008 Cell paper, which Planetterrian Ep221 aired as news under a
+    # fresh feed date. The two digits in the parentheses are the year the
+    # manuscript was registered; a paper registered in December can publish
+    # in January, so the article counts as published by the last day of the
+    # FOLLOWING year — a decade-old paper is still stale, a fresh one never.
+    for m in _PII_YEAR_RE.finditer(url or ""):
+        yy = int(m.group(1))
+        year = 1900 + yy if yy >= 80 else 2000 + yy
+        found.append(_dt.datetime(year + 1, 12, 31, tzinfo=_dt.timezone.utc))
     if not found:
         return None
     return min(found) + _dt.timedelta(days=1) - _dt.timedelta(seconds=1)
