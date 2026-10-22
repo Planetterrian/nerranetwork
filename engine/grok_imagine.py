@@ -152,6 +152,10 @@ def _strip_bold_line_source_tail(headline: str) -> str:
         return headline
     head, _, tail = headline.rpartition(":")
     head, tail = head.strip(), tail.strip()
+    if tail.endswith(("?", "!")):
+        # Oct 22 2026: "Cursor vs GitHub Copilot 2027: Which Is Better?" — a
+        # question is the headline's own subtitle; no outlet ends in one.
+        return headline
     if tail and len(tail) <= 25 and len(tail.split()) <= 3 and len(head) >= 12:
         return head
     return headline

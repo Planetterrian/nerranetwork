@@ -90,6 +90,11 @@ new classes in `tests/test_story_catalog_2026_10_21.py` and
 10. **`setup-python` apt install** retries up to four 300 s attempts within
     900 s, instead of one 600 s wait that killed the job. That single wait is
     what lost SpaceX's translations today.
+11. **A question after a colon is a subtitle** (`engine/grok_imagine.py`
+    `_strip_bold_line_source_tail`). SpaceX Ep138 titled a chapter "Cursor vs
+    GitHub Copilot 2027" for the headline "…: Which Is Better?", because the
+    short tail read as an outlet name; no outlet ends in "?" or "!". The
+    committed Ep138 chapter file carries the whole headline now.
 
 ## 4. Read and not changed
 

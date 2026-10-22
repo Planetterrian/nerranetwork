@@ -110,3 +110,16 @@ class TestNumberedHeadlinesLoseTheirNumber:
         from engine.grok_imagine import extract_story_headlines
         heads = extract_story_headlines("1. **1.5 million people flee the floods in Pakistan: Reuters** body")
         assert heads and heads[0].startswith("1.5 million")
+
+
+class TestAQuestionIsASubtitle:
+    def test_a_question_after_the_colon_stays_in_the_chapter_title(self):
+        # SpaceX Ep138 shipped "Cursor vs GitHub Copilot 2027" for the
+        # headline "Cursor vs GitHub Copilot 2027: Which Is Better?".
+        from engine.chapters import _clean_item_title
+        assert (_clean_item_title("Cursor vs GitHub Copilot 2027: Which Is Better?")
+                == "Cursor vs GitHub Copilot 2027: Which Is Better?")
+
+    def test_an_outlet_tail_is_still_dropped(self):
+        from engine.chapters import _clean_item_title
+        assert _clean_item_title("New model beats the benchmark: MarkTechPost") == "New model beats the benchmark"
