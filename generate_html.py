@@ -5743,10 +5743,12 @@ BLOG_ARCHIVE_NOINDEX_FROM_PAGE = 3
 #: Still linked from the site; just not advertised in sitemap.xml.
 #: Funnel landers ``join.html`` and ``personal-interest.html`` stay IN the
 #: sitemap — they are intentional indexed entry points (Oct 22 2026).
+#: ``age-of-ai-apply.html`` and ``nerra-voices-apply.html`` also stay IN
+#: the sitemap on purpose: they are application / sign-up landing pages
+#: Patrick wants indexed (guest-acquisition surfaces for the interview
+#: shows). Do not re-add them here.
 SITEMAP_EXCLUDE_UTILITIES = frozenset({
     "support.html",
-    "age-of-ai-apply.html",
-    "nerra-voices-apply.html",
     "player.html",
 })
 
@@ -5942,8 +5944,11 @@ def generate_sitemap(*, dry_run=False, out=None):
 
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
-    # age-of-ai-studio.html stays OUT deliberately — it is the private join
-    # link for a scheduled interview. player / support / *-apply are
+    # mira.html is the Mira hub; the two *-apply.html pages are the
+    # guest-application forms, one per interview show — intentionally
+    # included so search can find the acquisition surface (Patrick wants
+    # them indexed). age-of-ai-studio.html stays OUT deliberately — it is
+    # the private join link for a scheduled interview. player / support are
     # reachable from the site but excluded here as thin utility surfaces
     # (Oct 22 2026 crawl pass — see SITEMAP_EXCLUDE_UTILITIES). join.html
     # and personal-interest.html stay listed — funnel landers we want indexed.

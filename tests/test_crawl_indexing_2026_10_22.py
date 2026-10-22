@@ -121,6 +121,17 @@ class TestSitemapCrawlPass:
         assert any(u.endswith("/join.html") for u in locs)
         assert any(u.endswith("/personal-interest.html") for u in locs)
 
+    def test_apply_landing_pages_indexed(self, sitemap_xml):
+        """Guest-application / sign-up landers stay in the sitemap on purpose.
+
+        #1522 briefly dropped *-apply with player/support; Patrick wants them
+        indexed as acquisition surfaces for the interview shows.
+        """
+        locs = _locs(sitemap_xml)
+        for name in ("age-of-ai-apply.html", "nerra-voices-apply.html"):
+            assert name not in G.SITEMAP_EXCLUDE_UTILITIES, name
+            assert any(u.endswith("/" + name) for u in locs), name
+
     def test_show_hubs_before_episodes(self, sitemap_xml):
         locs = _locs(sitemap_xml)
         # First URL is the homepage; a show hub appears before any /blog/.../ep.
