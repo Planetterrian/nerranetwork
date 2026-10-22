@@ -142,8 +142,14 @@ class TestReel:
         assert "<iframe" not in home
         for src in re.findall(r'<script[^>]+src="([^"]+)"', home):
             assert "youtube" not in src, src
+            # Oct 22: shorts-reel.js is IntersectionObserver-gated, not a
+            # static <script src> on first paint.
+            assert "shorts-reel.js" not in src, src
         assert "iframe_api" not in home and "ytimg.com" not in home
-        assert 'src="assets/js/shorts-reel.js" defer' in home
+        assert "assets/js/shorts-reel.js" in home
+        assert "IntersectionObserver" in home
+        assert 'id="lt-reel-load"' in home
+        assert 'data-reel-lazy="1"' in home
 
     def test_play_buttons_only_for_parseable_ids(self, home):
         cards = _cards(home)
@@ -166,16 +172,19 @@ class TestReel:
     def test_preview_row_renders_a_muted_inline_loop_with_its_poster(self, home):
         card = next(c for c in _cards(home) if PREVIEW in c)
         video = re.search(r"<video[^>]*>", card).group(0)
-        for attr in ("muted", "loop", "playsinline", 'preload="none"', f'src="{PREVIEW}"',
-                     f'poster="{SCENE}?spacex"', 'aria-hidden="true"'):
+        # Media is data-src until the reel loader hydrates (deferred with JS).
+        for attr in ("muted", "loop", "playsinline", 'preload="none"', f'data-src="{PREVIEW}"',
+                     f'data-poster="{SCENE}?spacex"', 'aria-hidden="true"', "data-reel-media"):
             assert attr in video, attr
         assert "autoplay" not in video
+        assert re.search(r'\ssrc=', video) is None
         others = [c for c in _cards(home) if PREVIEW not in c]
         assert all("<video" not in c for c in others)
 
     def test_a_card_without_a_scene_uses_the_show_cover_never_a_youtube_thumbnail(self, home):
         card = next(c for c in _cards(home) if "Omni View" in c)
         assert 'class="lt-reel-cover"' in card and "lt-reel-frame is-card" in card
+        assert "data-src=" in card and "data-reel-media" in card
 
     def test_the_player_is_an_accessible_dialog(self, home):
         sec = _section(home, "shorts")

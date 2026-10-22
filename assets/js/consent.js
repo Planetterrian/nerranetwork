@@ -334,6 +334,14 @@
         if (!banner) return;
         banner.style.display = 'none';
         banner.setAttribute('hidden', '');
+        try { document.documentElement.classList.remove('nn-consent-needed'); } catch (e) { /* ignore */ }
+    }
+
+    function revealBanner(banner) {
+        if (!banner) return;
+        banner.style.display = '';
+        banner.removeAttribute('hidden');
+        try { document.documentElement.classList.add('nn-consent-needed'); } catch (e) { /* ignore */ }
     }
 
     function saveChoices(choices, banner) {
@@ -360,11 +368,36 @@
         if (dToggle) dToggle.checked = current.ads === 'granted';
     }
 
+    /** Bind Accept / Reject / Choose / Save / Close once per banner node. */
+    function bindBannerHandlers(banner) {
+        if (!banner || banner.getAttribute('data-nn-consent-bound') === '1') return;
+        banner.setAttribute('data-nn-consent-bound', '1');
+        var accept = banner.querySelector('[data-nn-consent="accept-all"]');
+        var reject = banner.querySelector('[data-nn-consent="reject-all"]');
+        var choose = banner.querySelector('[data-nn-consent="choose"]');
+        var save = banner.querySelector('[data-nn-consent="save"]');
+        var close = banner.querySelector('.nn-consent-close');
+        if (accept) accept.addEventListener('click', function () { acceptAll(banner); });
+        if (reject) reject.addEventListener('click', function () { rejectAll(banner); });
+        if (choose) choose.addEventListener('click', function () {
+            var panel = banner.querySelector('[data-nn-consent-panel]');
+            if (panel) panel.hidden = !panel.hidden;
+        });
+        if (save) save.addEventListener('click', function () {
+            var analyticsOn = banner.querySelector('[data-nn-toggle="analytics"]').checked;
+            var adsOn = banner.querySelector('[data-nn-toggle="ads"]').checked;
+            saveChoices({
+                analytics: analyticsOn ? 'granted' : 'denied',
+                ads: adsOn ? 'granted' : 'denied',
+            }, banner);
+        });
+        if (close) close.addEventListener('click', function () { rejectAll(banner); });
+    }
+
     function renderBanner() {
         var existing = document.getElementById('nn-consent-banner');
         if (existing) {
-            existing.style.display = '';
-            existing.removeAttribute('hidden');
+            revealBanner(existing);
             var panel = existing.querySelector('[data-nn-consent-panel]');
             if (panel) panel.hidden = true;
             syncToggles(existing);
@@ -376,6 +409,7 @@
                     '<a class="nn-consent-privacy" href="' + href('privacy-policy.html') + '">' +
                     tExisting.privacyLinkText + '</a>.';
             }
+            bindBannerHandlers(existing);
             return existing;
         }
 
@@ -417,29 +451,9 @@
                 '</div>' +
             '</div>';
         document.body.appendChild(banner);
+        revealBanner(banner);
         syncToggles(banner);
-
-        banner.querySelector('[data-nn-consent="accept-all"]').addEventListener('click', function () {
-            acceptAll(banner);
-        });
-        banner.querySelector('[data-nn-consent="reject-all"]').addEventListener('click', function () {
-            rejectAll(banner);
-        });
-        banner.querySelector('[data-nn-consent="choose"]').addEventListener('click', function () {
-            var panel = banner.querySelector('[data-nn-consent-panel]');
-            panel.hidden = !panel.hidden;
-        });
-        banner.querySelector('[data-nn-consent="save"]').addEventListener('click', function () {
-            var analyticsOn = banner.querySelector('[data-nn-toggle="analytics"]').checked;
-            var adsOn = banner.querySelector('[data-nn-toggle="ads"]').checked;
-            saveChoices({
-                analytics: analyticsOn ? 'granted' : 'denied',
-                ads: adsOn ? 'granted' : 'denied',
-            }, banner);
-        });
-        banner.querySelector('.nn-consent-close').addEventListener('click', function () {
-            rejectAll(banner);
-        });
+        bindBannerHandlers(banner);
         return banner;
     }
 
@@ -546,7 +560,12 @@
     onReady(function () {
         ensureCookieSettingsLink();
         if (!hasChosen()) {
+            // SSR banner is already in the DOM (base.html.j2); bind handlers
+            // and keep html.nn-consent-needed so the compact bar stays visible.
             showBanner();
+        } else {
+            // Returning visitor: ensure the SSR node stays out of the a11y tree.
+            hideBanner(document.getElementById('nn-consent-banner'));
         }
     });
 })();
