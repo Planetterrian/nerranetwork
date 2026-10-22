@@ -48,13 +48,13 @@ jobs:
           # No git history needed (landmine #1: full clone is ~2.5 GB).
           fetch-depth: 1
 
-      # Step timeout bounds the apt-install loop inside the composite (900 s
-      # ceiling today) so a trickle mirror fails the step before the job
-      # timeout. cache-dependency-path pins the pip cache key to the
-      # requirements files (not the runner image fingerprint alone).
+      # cache-dependency-path pins the pip cache key to the requirements
+      # files (not the runner image fingerprint alone). No apt ffmpeg here
+      # — see Cached static ffmpeg below (main 39810036245 hung ~15 min on
+      # a trickle mirror installing ffmpeg via apt).
       - name: Setup Python
         uses: ./.github/actions/setup-python
-        timeout-minutes: 15
+        timeout-minutes: 10
         with:
           python-version: '3.14'
           requirements-file: 'requirements.txt'
@@ -64,13 +64,38 @@ jobs:
             requirements_planetterrian.txt
           # Oct 9 2026: pytest-xdist runs the suite across the runner's cores.
           extra-packages: "ruff pytest-xdist"
-          # Sep 18 2026: the Nerra Voices leg-placement and mic-bleed
-          # tests (tests/test_it_produces_itself.py) run real ffmpeg on
-          # synthetic audio, and ubuntu-latest does not ship it — main
-          # went red on every push from 09-17 19:40 with
-          # FileNotFoundError: 'ffmpeg'. Same install run-show.yml uses.
-          system-packages: 'ffmpeg'
           skip-checkout: 'true'
+
+      # Static ffmpeg via actions/cache (not apt, not FedericoCarboni —
+      # the latter broke on Sep 14 2026 by scraping an upstream README;
+      # see .github/actions/setup-ffmpeg). Cache hit is seconds; miss
+      # downloads a pinned BtbN linux64 gpl build under a 6-minute ceiling.
+      - name: Cache static ffmpeg
+        id: cache-ffmpeg
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/ffmpeg-static
+          key: ffmpeg-n8.1-linux64-gpl-8.1
+
+      - name: Install static ffmpeg
+        if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          dest="${{ runner.temp }}/ffmpeg-static"
+          mkdir -p "$dest"
+          url="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o /tmp/ffmpeg.tar.xz "$url"
+          tar -xJf /tmp/ffmpeg.tar.xz -C /tmp
+          src=$(echo /tmp/ffmpeg-n8.1-*-linux64-gpl-8.1)
+          cp "$src/bin/ffmpeg" "$src/bin/ffprobe" "$dest/"
+          chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+
+      - name: Add ffmpeg to PATH
+        run: |
+          echo "${{ runner.temp }}/ffmpeg-static" >> "$GITHUB_PATH"
+          "${{ runner.temp }}/ffmpeg-static/ffmpeg" -version | head -1
 
       - name: Lint with ruff (full)
         run: ruff check engine/ run_show.py scripts/ --fix --exit-non-zero-on-fix
