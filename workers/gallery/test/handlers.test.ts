@@ -174,6 +174,15 @@ describe("resolveSubscribeTags", () => {
       });
   });
 
+  it("allow-lists Soft Personal above-fold source src-above_fold", () => {
+    expect(resolveSubscribeTags("personal-interest", "src-above_fold"))
+      .toEqual({
+        tags: ["personal-interest", "src-above_fold"],
+        list: "personal-interest",
+        source: "src-above_fold",
+      });
+  });
+
   it("adds nerra-member + SpaceX Daily when Soft Personal opts into newsletter", () => {
     const { tags } = resolveSubscribeTags(
       "personal-interest", "src-nerranetwork", ["SpaceX Daily"],
