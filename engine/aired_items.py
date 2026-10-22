@@ -18,6 +18,16 @@ a link, an Omni View ``### N) Title`` heading — the same shapes
 ``engine.digest_lint.story_item_count`` counts, so the tracker, the lake, the
 story catalog and the ``items_shipped`` metric agree on what a story is. A
 narrative episode (no items) is one ``essay`` item: the hook and every link.
+
+Oct 22 2026: a section that tells ONE story in prose, with no bold or
+numbered item inside it, is a ``section`` item. The first slate read the
+lead story out of the record on Models & Agents, AI Chips and Prediction
+Markets (``### Top Story``), Models & Agents for Beginners (``### The Big
+Story``) and every deep dive, so the tracker could not see that the story
+the hook sold had aired. The lead section takes the episode's hook as its
+title; a ``Name: subtitle`` section takes its subtitle; anything else takes
+its first sentence. Sections that list, schedule or argue about another
+section's story (``_STRUCTURAL_SECTIONS``) are not stories.
 """
 
 from __future__ import annotations
@@ -43,7 +53,27 @@ _NON_STORY_SECTIONS = frozenset({
     "links", "references", "verified claims",
 })
 
+#: Sections that schedule, list, score or argue about another section's
+#: story. They air, but they are not a story of their own, and recording them
+#: would hand the recurrence notes a "headline" that matches every day.
+_STRUCTURAL_SECTIONS = frozenset({
+    "on the calendar", "on the horizon", "the board", "the week's board",
+    "evidence ledger", "progress watch", "getting around", "the counterpoint",
+    "counterpoint", "community buzz", "market watch", "market pulse",
+    "explain like i'm 14", "media-literacy note", "what you need to know",
+    "strategy spotlight", "practice investment of the day", "portfolio performance",
+    "how it works", "weather", "the tape", "listener challenge", "the lever",
+    "do positive dispatch", "plain sailing", "intake", "yesterday's trade",
+})
+#: Section names that hold the episode's lead story.
+_LEAD_SECTIONS = frozenset({"top story", "the big story", "lead", "the lead",
+                            "lead story", "today's lead story"})
+#: Prose under this many words is a note, not a story.
+_SECTION_STORY_MIN_WORDS = 40
+_SECTION_TITLE_MAX_WORDS = 16
+
 _BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_SENTENCE_END_RE = re.compile(r"(?<=[.!?])\s+")
 _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _LEAD_NUM_RE = re.compile(r"^\s*\d+[.)]\s*")
 #: A title written ``Title: Outlet`` or ``Title — Outlet``; the tail is an
@@ -61,8 +91,9 @@ class AiredItem:
     title: str
     body: str
     urls: List[str] = field(default_factory=list)
-    #: ``item`` (developed), ``also_today``, ``heading`` (Omni View) or
-    #: ``essay`` (a narrative episode told as one story).
+    #: ``item`` (developed), ``also_today``, ``heading`` (Omni View),
+    #: ``section`` (a section told as one story) or ``essay`` (a narrative
+    #: episode told as one story).
     kind: str = "item"
 
     def as_dict(self) -> dict:
@@ -109,18 +140,37 @@ def item_title(head: str) -> str:
     return _strip_outlet(inner)
 
 
+def _section_story_title(full: str, body: str, hook: str, is_lead: bool) -> str:
+    """The title of a section told as one story (see the module docstring)."""
+    if is_lead and hook:
+        return hook
+    if ":" in full:
+        sub = full.split(":", 1)[1].strip().strip("*")
+        if len(sub.split()) >= 3:
+            return _plain(sub)
+    text = _plain(re.sub(r"\(?\bSource:.*$", "", body, flags=re.M))
+    first = _SENTENCE_END_RE.split(text, maxsplit=1)[0] if text else ""
+    words = first.split()
+    return " ".join(words[:_SECTION_TITLE_MAX_WORDS]).rstrip(",;:")
+
+
 def extract_aired_items(digest: str) -> List[AiredItem]:
     """Every story the digest told, in order. See the module docstring."""
     out: List[AiredItem] = []
-    for title, body in sections(digest or ""):
+    hook = _plain(hook_line(digest or ""))
+    lead_taken = False
+    for full, body in sections(digest or "", full_titles=True):
+        title = full.split(":")[0].strip().strip("*")
         low = title.strip().lower()
         if low in _NON_STORY_SECTIONS:
             continue
-        if _HEADING_ITEM_RE.match(title):
-            out.append(AiredItem(section=title, title=_strip_outlet(_plain(_LEAD_NUM_RE.sub("", title))),
+        if _HEADING_ITEM_RE.match(full):
+            out.append(AiredItem(section=title, title=_strip_outlet(_plain(_LEAD_NUM_RE.sub("", full))),
                                  body=body.strip(), urls=urls_in(body), kind="heading"))
+            lead_taken = True
             continue
         kind = "also_today" if low == ALSO_TODAY_SECTION.lower() else "item"
+        before = len(out)
         for block in items(body):
             head = block.splitlines()[0]
             if not (_NUMBERED_ITEM_RE.match(head) or (_BOLD_HEAD_RE.match(head) and urls_in(block))):
@@ -132,9 +182,26 @@ def extract_aired_items(digest: str) -> List[AiredItem]:
                 continue
             out.append(AiredItem(section=title, title=t, body=block.strip(),
                                  urls=urls_in(block), kind=kind))
-    if out:
+        if len(out) > before:
+            lead_taken = True
+            continue
+        if (not title or low in _STRUCTURAL_SECTIONS or kind == "also_today"
+                or any(low.startswith(s + " ") for s in _STRUCTURAL_SECTIONS)):
+            continue
+        if len(_plain(body).split()) < _SECTION_STORY_MIN_WORDS:
+            continue
+        lines = [ln for ln in body.splitlines() if ln.strip()]
+        if lines and sum(ln.lstrip().startswith(("- ", "* ", "• ")) for ln in lines) * 2 >= len(lines):
+            continue  # a list of tips or notes, not one story
+        is_lead = low in _LEAD_SECTIONS and not lead_taken
+        st = _section_story_title(full, body, hook, is_lead)
+        if st:
+            out.append(AiredItem(section=title, title=st, body=body.strip(),
+                                 urls=urls_in(body), kind="section"))
+            lead_taken = True
+    # A digest made only of prose sections is a narrative episode: one essay.
+    if any(i.kind != "section" for i in out):
         return out
-    hook = _plain(hook_line(digest or ""))
     if not hook:
         return []
     return [AiredItem(section="", title=hook, body=(digest or "").strip(),

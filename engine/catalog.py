@@ -403,10 +403,12 @@ def record_articles(rows: List[dict]) -> int:
         return 0
     existing: Dict[str, dict] = {}
     keys = [r["url_key"] for r in rows]
-    for i in range(0, len(keys), 80):
+    # 40 keys a request keeps the query string well under a proxy's URL limit
+    # (a normalised article URL runs ~100-150 characters once encoded).
+    for i in range(0, len(keys), 40):
         for r in select("catalog_articles", {
                 "select": "url_key,first_seen,shows,listed_shows,aired,story_id",
-                "url_key": _in_list(keys[i:i + 80])}):
+                "url_key": _in_list(keys[i:i + 40])}):
             existing[r["url_key"]] = r
     merged = []
     for r in rows:
@@ -431,17 +433,38 @@ def record_run(*, show_slug: str, episode_num: int, date: str, fetched: List[dic
     if not configured():
         return {"status": "unconfigured"}
     t0 = time.monotonic()
-    counts = sync_from_lake(show=show_slug, episode=episode_num, db_path=db_path)
+    errors: List[str] = []
+    try:
+        counts = sync_from_lake(show=show_slug, episode=episode_num, db_path=db_path)
+    except Exception as exc:  # noqa: BLE001 — the nightly sync heals it
+        counts = {}
+        errors.append(f"sync: {exc}"[:300])
     if page_url or audio_url:
-        upsert("catalog_episodes", [{"episode_key": episode_key(show_slug, episode_num),
-                                     "page_url": page_url or None,
-                                     "audio_url": audio_url or None}], "episode_key")
+        # A PATCH, never an upsert: an upsert is an INSERT first, and Postgres
+        # checks NOT NULL columns before it merges into the existing row, so
+        # a row carrying only the two links was refused on every run of the
+        # first slate (Oct 22 2026, code 23502) and the articles behind it
+        # were never written.
+        try:
+            _rest("PATCH", "catalog_episodes",
+                  params={"episode_key": f"eq.{episode_key(show_slug, episode_num)}"},
+                  body={"page_url": page_url or None, "audio_url": audio_url or None})
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"links: {exc}"[:300])
     if time.monotonic() - t0 > budget_seconds:
         return {"status": "partial", **counts}
     rows = article_rows(show_slug=show_slug, date=date, fetched=fetched, listed=listed,
                         db_path=db_path)
-    counts["articles"] = record_articles(rows)
+    try:
+        counts["articles"] = record_articles(rows)
+    except Exception as exc:  # noqa: BLE001 — only a run can write these
+        errors.append(f"articles: {exc}"[:300])
+        counts["articles"] = 0
     counts["articles_aired"] = sum(1 for r in rows if r["aired"])
+    if errors:
+        for e in errors:
+            logger.warning("Story catalog: %s", e)
+        return {"status": "partial", "errors": errors, **counts}
     return {"status": "ok", **counts}
 
 
