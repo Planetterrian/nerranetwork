@@ -632,9 +632,13 @@ def _cmd_report(args: argparse.Namespace) -> int:
     result = verdict(summary)
     md = report_markdown(summary, result)
     print(md)
+    # A run that died before any room (an apt stall installing ffmpeg) has
+    # no output directory; the report still writes its INCONCLUSIVE line.
     if args.summary_file:
+        Path(args.summary_file).parent.mkdir(parents=True, exist_ok=True)
         Path(args.summary_file).write_text(md, encoding="utf-8")
     if args.json_out:
+        Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(json.dumps(
             {"summary": summary, "verdict": result, "records": len(records)}, indent=2),
             encoding="utf-8")
