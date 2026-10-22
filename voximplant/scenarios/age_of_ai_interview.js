@@ -755,13 +755,16 @@ function cancelDeadAir() {
 /** Her line has ended: start the clock on a silence nobody breaks. */
 function armDeadAir() {
   cancelDeadAir();
-  if (roomEnded || holdMode || !openingFired) return;
+  if (roomEnded || holdMode || !openingFired || legs.length === 0) return;
   deadAirTimer = setTimeout(deadAirCheck, DEAD_AIR_MS);
 }
 
 function deadAirCheck() {
   deadAirTimer = null;
   if (roomEnded || holdMode || !grokAgent || rotating || roundActive || roundClosed) return;
+  // Nobody is in the room to answer (a guest who dropped is given the
+  // rejoin grace); a nudge there is her talking to herself.
+  if (legs.length === 0) return;
   if (inboundSpeaking || miraSpeaking || pendingTurn) { armDeadAir(); return; }
   if (deadAirNudges >= DEAD_AIR_MAX_NUDGES) {
     trace("turn", "dead air continues; no more nudges until someone speaks");
@@ -1073,6 +1076,7 @@ function armNoShowTimer() {
 
 function scheduleTeardown() {
   if (teardownTimer || roomEnded) return;
+  cancelDeadAir();
   trace("room", "empty — ending in " + (REJOIN_GRACE_MS / 1000) + "s unless someone rejoins");
   teardownTimer = setTimeout(function () {
     teardownTimer = null;

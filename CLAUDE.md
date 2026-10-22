@@ -2239,6 +2239,17 @@ behaviour driven through the real scenario in a node vm by
   ref's rehearsal-only fixture guest (the deployed one predates the prefix and
   would quietly dial the live room). `with_hold` adds a phone-call beat to the
   fixture (`HOLD_BEATS`).
+- **The rehearsal finds the guest's channel; it never assumes the left.** On
+  the fixture guest's leg the stereo sides are the other way round from a real
+  guest's, and the first both-arms rehearsal (run 39852548850) transcribed
+  Mira's own words, seconds late, as the guest's answers in BOTH arms, so its
+  FAIL compared Mira with herself. `pick_guest_channel` takes the side whose
+  loudness tracks her recording least (left 0.83 / right 0.12 on that room)
+  and the record says which (`guest_channel`). The workflow's `remeasure`
+  input (`current:<run id>,proposed:<run id>`) measures rooms that already ran
+  without running new ones. Read a rehearsal's transcript before its verdict.
+- **She never nudges an empty room** (the same rehearsal: two nudges inside
+  the rejoin grace after the fixture's leg dropped).
 
 Operator: deploy the scenario only after the candidate rehearsal reads PASS and
 one listen; `wrangler deploy` in `workers/voices` so the new counters are

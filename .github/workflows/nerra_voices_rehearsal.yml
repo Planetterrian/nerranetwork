@@ -57,6 +57,10 @@ on:
         description: 'The fixture steps away to take a call at minute four (both arms)'
         type: boolean
         default: false
+      remeasure:
+        description: 'Measure rooms that already ran instead of running new ones: current:<run id>,proposed:<run id>'
+        type: string
+        default: ''
   # Nightly only when the operator turns it on: repo variable
   # VOICES_REHEARSAL_NIGHTLY=true. Each room costs a Voice Agent session on
   # both sides.
@@ -143,7 +147,7 @@ jobs:
       # which only the fixture guest makes; the live scenario and its rule are
       # never written here.
       - name: Upload this ref's interview scenario as the candidate
-        if: ${{ inputs.candidate_scenario && env.ARMS != 'current' }}
+        if: ${{ inputs.candidate_scenario && env.ARMS != 'current' && inputs.remeasure == '' }}
         run: |
           python - <<'PY'
           from voximplant.api_clients.voximplant_client import (
@@ -160,7 +164,7 @@ jobs:
       # fixture behaviour, so either input refreshes it from this ref (its
       # default prefix stays "room-").
       - name: Upload this ref's fixture guest
-        if: ${{ inputs.candidate_scenario || inputs.with_hold }}
+        if: ${{ (inputs.candidate_scenario || inputs.with_hold) && inputs.remeasure == '' }}
         run: |
           python - <<'PY'
           from voximplant.api_clients.voximplant_client import (
@@ -172,7 +176,7 @@ jobs:
           GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
           GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
       - name: Rehearse the current configuration
-        if: ${{ env.ARMS != 'proposed' }}
+        if: ${{ env.ARMS != 'proposed' && inputs.remeasure == '' }}
         run: |
           args=(--arm current --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
@@ -180,7 +184,7 @@ jobs:
         env:
           WITH_HOLD: ${{ inputs.with_hold }}
       - name: Rehearse the proposed configuration
-        if: ${{ env.ARMS != 'current' }}
+        if: ${{ env.ARMS != 'current' && inputs.remeasure == '' }}
         run: |
           args=(--arm proposed --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ -n "$TURN_SILENCE_MS" ] && args+=(--turn-silence-ms "$TURN_SILENCE_MS")
@@ -195,6 +199,14 @@ jobs:
           TURN_SILENCE_MS: ${{ inputs.turn_silence_ms }}
           REASONING_EFFORT: ${{ inputs.reasoning_effort }}
           TOOLS: ${{ inputs.tools || 'default' }}
+      # A measurement fix is checked on rooms that already ran: their
+      # recordings stay on Voximplant, and a new room costs a Voice Agent
+      # session on both sides.
+      - name: Re-measure rooms that already ran
+        if: ${{ inputs.remeasure != '' }}
+        run: python pipelines/voices/rehearsal.py remeasure --runs "$REMEASURE" --fixture "$FIXTURE" --out-dir "$OUT_DIR"
+        env:
+          REMEASURE: ${{ inputs.remeasure }}
       - name: Report
         if: ${{ always() }}
         run: |

@@ -74,6 +74,7 @@ run(`
   runId = "sim"; config = { planned_minutes: 45, show_question: "the one bet you are making" };
   grokAgent = __agent; openingFired = true; sessionReady = true;
   firstJoinAt = Date.now() - 35 * 60 * 1000;
+  legs = [{ id: "guest-1", role: "guest", call: {}, joinedAt: firstJoinAt }];
 `);
 
 // --- the room's inputs, as the voice API delivers them ---------------------
@@ -241,6 +242,16 @@ if (which === "server_turns_advance_the_round") {
   events.length = 0;
   advance(21 * 1000);
   out.afterReset = events.slice();
+  out.nudges = run("deadAirNudgesTotal");
+} else if (which === "dead_air_empty_room") {
+  // The Oct 22 candidate rehearsal: the guest's leg dropped and she nudged
+  // the empty room twice during the rejoin grace.
+  roomTurnStarts();
+  miraFinishes("Do you still have it?");
+  run(`legs = []; scheduleTeardown();`);
+  events.length = 0;
+  advance(40 * 1000);
+  out.events = events.slice();
   out.nudges = run("deadAirNudgesTotal");
 } else if (which === "dead_air_waits_for_a_thinker") {
   // A guest who starts talking inside the twenty seconds is never nudged.

@@ -272,6 +272,13 @@ class TestDeadAirIsBroken:
         out = sim("dead_air")
         assert out["afterReset"] == ["create"] and out["nudges"] == 3
 
+    def test_an_empty_room_is_never_nudged(self):
+        # Oct 22 candidate rehearsal: after the guest's leg dropped she
+        # nudged the empty room twice inside the rejoin grace.
+        out = sim("dead_air_empty_room")
+        assert "create" not in out["events"]
+        assert out["nudges"] == 0
+
     def test_a_guest_who_starts_talking_is_never_nudged(self):
         out = sim("dead_air_waits_for_a_thinker")
         assert out["nudges"] == 0

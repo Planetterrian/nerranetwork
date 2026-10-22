@@ -13,6 +13,7 @@ import importlib.util
 import json
 import re
 import sys
+import shutil
 from pathlib import Path
 
 import pytest
@@ -316,3 +317,93 @@ class TestWorkflows:
 
     def test_results_are_never_committed(self):
         assert "outputs/rehearsals/" in (ROOT / ".gitignore").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Oct 22 2026: the guest channel is found, not assumed
+# ---------------------------------------------------------------------------
+
+def _write_wav(path, envelope_on, rate=8000, seconds=60):
+    """A mono WAV with a 220 Hz tone wherever ``envelope_on(t)`` is true."""
+    import wave
+    import numpy as np
+    t = np.arange(rate * seconds) / rate
+    on = np.array([envelope_on(x) for x in t[::rate // 10]]).repeat(rate // 10)[: len(t)]
+    samples = (np.sin(2 * np.pi * 220 * t) * 8000 * on).astype(np.int16)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(samples.tobytes())
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
+class TestTheRehearsalFindsTheGuestChannel:
+    """The Oct 22 rehearsal transcribed Mira's own words, a few seconds late,
+    as the fixture guest's answers in both arms: on the fixture's leg the
+    stereo sides are the other way round, and the report compared Mira with
+    herself. The side that sounds least like her recording is the guest."""
+
+    @staticmethod
+    def _tracks(tmp_path):
+        # Turns of irregular length, as speech is: Mira, then the guest, then
+        # Mira again. The leg hears Mira three seconds late.
+        import random
+        rng = random.Random(22)
+        turns, t = [], 0.0
+        while t < 60:
+            mira_len, guest_len = rng.uniform(1.5, 6), rng.uniform(2, 9)
+            turns.append((t, t + mira_len, t + mira_len + 0.5, t + mira_len + 0.5 + guest_len))
+            t += mira_len + guest_len + 1.0
+        def mira_on(x):
+            return any(a <= x < b for a, b, _, _ in turns)
+        def guest_on(x):
+            return any(c <= x < d for _, _, c, d in turns)
+        mira = tmp_path / "mira.wav"
+        heard = tmp_path / "heard.wav"
+        guest = tmp_path / "guest.wav"
+        _write_wav(mira, mira_on)
+        _write_wav(heard, lambda x: mira_on(x - 3))
+        _write_wav(guest, guest_on)
+        return mira, heard, guest
+
+    def test_the_guest_is_the_side_unlike_her_recording(self, rehearsal, tmp_path):
+        mira, heard, guest = self._tracks(tmp_path)
+        g, h, side = rehearsal.pick_guest_channel(heard, guest, mira)
+        assert (g, h, side) == (guest, heard, "right")
+        g, h, side = rehearsal.pick_guest_channel(guest, heard, mira)
+        assert (g, h, side) == (guest, heard, "left")
+
+    def test_without_her_recording_the_left_stays_the_guest(self, rehearsal, tmp_path):
+        mira, heard, guest = self._tracks(tmp_path)
+        assert rehearsal.pick_guest_channel(heard, guest, None)[2] == "left"
+
+    def test_transcription_uses_the_picked_side(self):
+        src = (PIPELINES / "rehearsal.py").read_text(encoding="utf-8")
+        body = src[src.index("def transcribe_run("):src.index("def measure_room(")]
+        assert "pick_guest_channel(left_wav, right_wav, mira_raw)" in body
+        assert '"guest": guest_wav' in body
+        assert '"guest_channel": guest_side' in body
+
+
+class TestRemeasure:
+    def test_pairs_parse_and_reject_junk(self, rehearsal):
+        a = "41187302-7fb8-453a-99cd-f1ca8dc4c94a"
+        b = "1ca8839a-3e57-40dd-9db2-b9ac1bdb41a9"
+        assert rehearsal.parse_remeasure(f"current:{a}, proposed:{b}") == [
+            ("current", a), ("proposed", b)]
+        for bad in ("nobody:" + a, "current:not-a-run", "current"):
+            with pytest.raises(ValueError):
+                rehearsal.parse_remeasure(bad)
+
+    def test_the_workflow_remeasures_without_running_rooms(self):
+        wf = WORKFLOW.read_text(encoding="utf-8")
+        assert "remeasure:" in wf
+        assert 'rehearsal.py remeasure --runs "$REMEASURE"' in wf
+        for step in ("Rehearse the current configuration",
+                     "Rehearse the proposed configuration",
+                     "Upload this ref's interview scenario as the candidate",
+                     "Upload this ref's fixture guest"):
+            block = wf[wf.index(step):]
+            block = block[:block.index("run:")]
+            assert "inputs.remeasure == ''" in block, step
