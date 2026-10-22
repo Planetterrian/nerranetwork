@@ -423,7 +423,7 @@
             '<div class="nn-consent-inner">' +
                 '<button type="button" class="nn-consent-close" aria-label="' +
                     t.closeAria + '">&times;</button>' +
-                '<h2 class="nn-consent-heading">' + t.heading + '</h2>' +
+                '<h2 class="nn-consent-heading" id="nn-consent-heading">' + t.heading + '</h2>' +
                 '<div class="nn-consent-text">' +
                     bodyBeforePrivacy() +
                     '<a class="nn-consent-privacy" href="' + href('privacy-policy.html') + '">' +
