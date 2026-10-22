@@ -87,6 +87,24 @@ function guestSays(text, ms) {
 // The live room: the voice API sends no transcription of the guest, so the
 // room hears that they spoke and for how long, never what they said.
 function guestSpeaks(ms) { guestSays(null, ms); }
+// Grok Voice 3.0: the transcription of one item arrives about every second
+// while they talk, each copy the whole item so far, then once more at the end.
+let liveItem = 0;
+function guestSaysLive(text, ms) {
+  const id = "item-" + (++liveItem);
+  const words = text.split(" ");
+  const steps = Math.max(1, Math.floor((ms || 3000) / 1000));
+  run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
+  for (let i = 1; i <= steps; i++) {
+    advance(1000);
+    ctx.__id = id; ctx.__text = words.slice(0, Math.ceil(words.length * i / steps)).join(" ");
+    run("noteGuestTranscript(__id, __text);");
+  }
+  run("inboundSpeaking = false; noteSpeechEnded(" + (steps * 1000) + ");");
+  ctx.__id = id; ctx.__text = text;
+  run("noteGuestTranscript(__id, __text); noteGuestTranscript(__id, __text);");
+  run("scheduleTurnDecision(TURN_DECIDE_MS);");
+}
 // Run the clock until the room's next hold check-in fires.
 function untilCheckIn() {
   const seen = trace.filter(function (x) { return x.e === "hold" && /^check-in /.test(x.d); }).length;
@@ -100,7 +118,7 @@ function serverStartsATurn() { run("markTurnStarted(grokAgent);"); }
 function roomTurnStarts() { run("markTurnStarted(grokAgent);"); }   // after a requestTurn
 function miraFinishes(text) {
   ctx.__text = text;
-  run("miraSpeaking = false; remember('Mira', __text);");
+  run("miraSpeaking = false; remember('Mira', __text); armDeadAir();");   // what ResponseDone does
 }
 function state() {
   return run(`({ roundActive, roundIndex, roundAwaitingAnswer, roundClosed, holdMode,
@@ -197,6 +215,65 @@ if (which === "server_turns_advance_the_round") {
   advance(60 * 1000);
   guestSpeaks(3000);                // talking to the caller, outside the reply window
   out.afterLateSpeech = state().holdMode;
+} else if (which === "dead_air") {
+  // The Oct 22 candidate rehearsal: after her line nobody spoke again. The
+  // room breaks the silence twice, then waits for someone to speak.
+  roomTurnStarts();
+  miraFinishes("So tell me how you first came to the work.");
+  events.length = 0;
+  advance(19 * 1000);
+  out.before = events.slice();
+  advance(2000);
+  out.first = events.slice();
+  roomTurnStarts();
+  miraFinishes("How did you start?");
+  advance(21 * 1000);
+  roomTurnStarts();
+  miraFinishes("Where did it begin for you?");
+  events.length = 0;
+  advance(60 * 1000);
+  out.afterMax = events.slice();
+  // Speech resets the count: a fresh silence gets its nudges again.
+  guestSpeaks(3000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("That's a lovely start. What came next?");
+  events.length = 0;
+  advance(21 * 1000);
+  out.afterReset = events.slice();
+  out.nudges = run("deadAirNudgesTotal");
+} else if (which === "dead_air_waits_for_a_thinker") {
+  // A guest who starts talking inside the twenty seconds is never nudged.
+  roomTurnStarts();
+  miraFinishes("What was the hardest year?");
+  events.length = 0;
+  advance(15 * 1000);
+  guestSpeaks(6000);
+  advance(30 * 1000);
+  out.events = events.slice();
+  out.nudges = run("deadAirNudgesTotal");
+} else if (which === "live_transcription") {
+  // The words arrive as 3.0 sends them: one line per item, however many copies.
+  roomTurnStarts();
+  miraFinishes("What did the first year teach you?");
+  const before = run("transcript.length");
+  guestSaysLive("It taught me that the customers were never the problem and the dashboards were.", 5000);
+  out.lines = run("transcript.length") - before;
+  out.lastLine = run("transcript[transcript.length - 1]");
+  advance(3000);
+  out.answered = state();
+  roomTurnStarts();
+  miraFinishes("And the second year?");
+  guestSaysLive("Sorry, I have to take this call, give me a moment.", 3000);
+  out.held = state().holdMode;
+  advance(4000);
+  guestSaysLive("Hi, yes, Thursday works, after two is fine.", 4000);
+  out.stillHeld = state().holdMode;
+  guestSaysLive("Sorry about that, where were we?", 3000);
+  out.back = state().holdMode;
+  guestSaysLive("Actually I'm so sorry, I have to go now, something has come up.", 4000);
+  out.stop = state().guestAskedToStop;
+  out.traceHasNoWords = !JSON.stringify(trace).match(/Thursday|dashboards|something has come up/);
 } else if (which === "sign_off_waits_for_the_round") {
   run("closingPermitted = true; startRound('test', -1);");
   roomTurnStarts();

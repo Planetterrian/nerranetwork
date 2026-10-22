@@ -289,7 +289,11 @@ async function createFixtureAgent() {
   const client = await Grok.createVoiceAgentAPIClient({
     xAIApiKey: getSecret("XAI_API_KEY"),
     model: GROK_MODEL,
-    onWebSocketClose: function () { if (!done) log("fixture agent socket closed"); },
+    onWebSocketClose: function () {
+      if (done) return;
+      log("fixture agent socket closed");
+      reconnectFixture();
+    },
   });
   client.addEventListener(Grok.VoiceAgentAPIEvents.ConversationCreated, function () {
     const silence = Number(custom.silence_ms || DEFAULT_SILENCE_MS);
@@ -315,6 +319,36 @@ async function createFixtureAgent() {
   return client;
 }
 
+// A dropped fixture socket (Oct 22 2026). One candidate rehearsal lost its
+// fixture to a 1006 two minutes in and ran twelve silent minutes measuring
+// nothing. The fixture is the instrument, not the thing under test, so it
+// comes back: a new agent, bridged to the same leg, told to carry on. The
+// beats and the length timer are scheduled once and are not repeated.
+const FIXTURE_RECONNECTS_MAX = 3;
+let fixtureReconnects = 0;
+let beatsScheduled = false;
+
+function reconnectFixture() {
+  if (done || !roomCall) return;
+  if (fixtureReconnects >= FIXTURE_RECONNECTS_MAX) {
+    log("fixture agent lost; no more reconnects");
+    return finish("agent_lost");
+  }
+  fixtureReconnects += 1;
+  sessionReady = false;
+  bridged = false;
+  setTimeout(async function () {
+    if (done) return;
+    try {
+      agent = await createFixtureAgent();
+      log("fixture agent reconnected (" + fixtureReconnects + ")");
+    } catch (err) {
+      log("fixture reconnect failed: " + err.message);
+      return reconnectFixture();
+    }
+  }, 1000);
+}
+
 // Bridge once both the leg and the agent are up, whichever comes second.
 function bridge() {
   if (bridged || !sessionReady || !roomCall || !agent) return;
@@ -326,6 +360,20 @@ function bridge() {
     log("bridge failed: " + err.message);
     return finish("bridge_failed");
   }
+  if (fixtureReconnects > 0) {
+    try {
+      agent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[CUE — do not read aloud] Your line dropped for a moment and you are back. " +
+          "The next time the host speaks, say in one short line that you lost them " +
+          "for a second, then answer as yourself." }] },
+      });
+      // No responseCreate: the fixture never speaks unprompted (a silent room
+      // is the room's to break).
+    } catch (err) { log("reconnect cue failed: " + err.message); }
+  }
+  if (beatsScheduled) return;
+  beatsScheduled = true;
   scheduleBeats();
   if (custom.speaks_first) {
     // Piper Martz said "Hi Mira, thanks for having me" before the opening;

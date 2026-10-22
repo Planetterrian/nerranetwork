@@ -2202,15 +2202,27 @@ behaviour driven through the real scenario in a node vm by
   and round prompts, and counts no speech as an answer, until they address
   her again (`HOLD_EXIT_RE`: her name, "sorry about that", "I'm back",
   "where were we") or three minutes pass (`HOLD_CHECK_IN_MS`), when she says
-  one short line that she is still there, for as long as they are away. **The
-  room receives no transcription of the guest**, so the word rules are
-  backstops: live, a hold starts on her own line and ends on SPEECH, the guest
-  talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within `HOLD_REPLY_WINDOW_MS` of the
-  end of a check-in (`noteHoldSpeech`, fed by `noteSpeechEnded`, the one
-  handler for both VAD paths). The first candidate rehearsal ended its hold
-  only on words and sat silent to the end. On return she re-asks the closing
-  question in play and any held time note is delivered. The trace carries
-  `hold: entered/left`, never the guest's words.
+  one short line that she is still there, for as long as they are away. Speech
+  is the backstop exit: the guest talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within
+  `HOLD_REPLY_WINDOW_MS` of the end of a check-in (`noteHoldSpeech`, fed by
+  `noteSpeechEnded`, the one handler for both VAD paths). On return she
+  re-asks the closing question in play and any held time note is delivered.
+  The trace carries `hold: entered/left`, never the guest's words.
+- **The room hears the guest's words.** Grok Voice 3.0 sends them as the
+  NAMED event `ConversationItemInputAudioTranscriptionCompleted`, re-sent
+  about every second with the whole item so far; the room listened only for
+  an Unknown event, so no guest word ever reached it (the Oct 13 "this room
+  does not get one" note was this) and every word rule had never run live.
+  `noteGuestTranscript` keeps one line per item, updated in place, and runs
+  the hold/stop checks on what is new. Read from the session log of a
+  candidate rehearsal (Actions "Voximplant session logs").
+- **Dead air is broken.** With unrequested server turns cancelled, a silence
+  nobody breaks had no end: 20 s after her line with nobody speaking
+  (`DEAD_AIR_MS`) she puts her last question again, more simply; at most
+  `DEAD_AIR_MAX_NUDGES` (2) per silence, never in a hold or the closing round;
+  counter `dead_air_nudges`. The fixture guest reconnects a dropped socket
+  (`FIXTURE_RECONNECTS_MAX` 3) — one rehearsal lost it to a 1006 at minute
+  two and measured twelve silent minutes.
 - **No sign-off while the round is unfinished**, cut mid-sentence on the
   transcript deltas (`signOffBlockedByRound`), unless the guest asked to stop
   (`GUEST_STOP_RE`), the hard cap fired (it closes the round), or the room

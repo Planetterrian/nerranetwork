@@ -96,7 +96,7 @@ class TestAServerTurnGoesThroughTheDecision:
         body = _fn("async function endRoom(reason)")
         assert "server_turns_rerouted: serverTurnsRerouted" in body
         assert "holds: holdsEntered" in body
-        assert '"server_turns_rerouted", "holds"' in WORKER
+        assert '"server_turns_rerouted", "holds", "dead_air_nudges"' in WORKER
 
 
 class TestHoldMode:
@@ -178,7 +178,8 @@ class TestHoldMode:
         assert "if (holdMode) { heldTimeNote = note; return; }" in _fn("function startTimeChecks()")
         assert "if (holdMode) return;" in _fn("function roundReprompt()")
         assert "if (!lastWordAskedAt || lastWordAnswered || holdMode) return;" in _fn("function noteGuestSpoke(ms)")
-        assert "if (!holdMode) lastWordAnswered = true;" in _fn("function remember(who, text)")
+        assert "if (!holdMode) lastWordAnswered = true;" in _fn("function guestWordsChecks(text)")
+        assert "guestWordsChecks(text);" in _fn("function remember(who, text)")
         assert "roundAwaitingAnswer && !holdMode" in _fn("function askRoundLastWord()")
         # The hard cap always ends a hold, and endRoom clears its timer.
         assert 'if (holdMode) exitHold("the hard cap");' in SCENARIO
@@ -224,6 +225,81 @@ class TestTheHoldEndsWithoutWords:
         assert "noteHoldSpeech(len)" in _fn("function noteSpeechEnded")
         # The window runs from the end of her check-in line.
         assert "if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();" in SCENARIO
+
+
+class TestTheRoomHearsTheGuestsWords:
+    """The Voximplant session log of the first candidate room: Mira's agent
+    received 29 ConversationItemInputAudioTranscriptionCompleted events
+    carrying the guest's words, each item re-sent about every second as it
+    grew, and the room listened only for an Unknown event. No guest word ever
+    reached it, so every rule that reads one had never run live."""
+
+    def test_the_named_event_is_heard(self):
+        assert ("agent.addEventListener(Grok.VoiceAgentAPIEvents."
+                "ConversationItemInputAudioTranscriptionCompleted") in SCENARIO
+        assert "noteGuestTranscript(itemIdOf(ev), textOf(ev));" in SCENARIO
+
+    def test_one_line_per_item_however_many_copies(self):
+        out = sim("live_transcription")
+        assert out["lines"] == 1
+        assert out["lastLine"].startswith("Guest: It taught me")
+
+    def test_the_words_drive_the_hold_and_the_stop(self):
+        out = sim("live_transcription")
+        assert out["held"] is True and out["stillHeld"] is True
+        assert out["back"] is False, "sorry about that, where were we"
+        assert out["stop"] is True
+
+    def test_no_guest_words_reach_the_trace(self):
+        assert sim("live_transcription")["traceHasNoWords"] is True
+
+
+class TestDeadAirIsBroken:
+    """The second candidate rehearsal (Oct 22): two minutes in, after her
+    line, nobody spoke again for twelve minutes. With every unrequested
+    server turn cancelled, a silence nobody breaks has no end."""
+
+    def test_she_puts_the_question_again_after_twenty_seconds_twice(self):
+        out = sim("dead_air")
+        assert out["before"] == [] and out["first"] == ["create"]
+        assert out["afterMax"] == [], "two nudges a silence, then the room waits"
+        turns = [x["d"] for x in out["trace"] if x["e"] == "turn"]
+        assert "dead air continues; no more nudges until someone speaks" in turns
+        assert "const DEAD_AIR_MS = 20 * 1000;" in SCENARIO
+        assert "const DEAD_AIR_MAX_NUDGES = 2;" in SCENARIO
+
+    def test_speech_resets_the_count(self):
+        out = sim("dead_air")
+        assert out["afterReset"] == ["create"] and out["nudges"] == 3
+
+    def test_a_guest_who_starts_talking_is_never_nudged(self):
+        out = sim("dead_air_waits_for_a_thinker")
+        assert out["nudges"] == 0
+
+    def test_never_in_a_hold_or_the_closing_round(self):
+        body = _fn("function deadAirCheck()")
+        assert "holdMode" in body and "roundActive" in body and "roundClosed" in body
+        assert "cancelDeadAir();" in _fn("function enterHold(why)")
+        assert "cancelDeadAir();" in _fn("function noteInboundStart()")
+
+    def test_it_fires_from_the_end_of_her_turn_and_is_reported(self):
+        i = SCENARIO.index("agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;")
+        assert "armDeadAir();" in SCENARIO[i:i + 400]
+        assert "dead_air_nudges: deadAirNudgesTotal" in _fn("async function endRoom(reason)")
+
+
+class TestTheFixtureSurvivesADroppedSocket:
+    """The second candidate rehearsal lost its fixture guest to a 1006 two
+    minutes in (Voximplant session log) and measured twelve silent minutes."""
+
+    def test_a_closed_socket_reconnects_and_the_beats_run_once(self):
+        assert "reconnectFixture();" in FIXTURE
+        assert "const FIXTURE_RECONNECTS_MAX = 3;" in FIXTURE
+        i = FIXTURE.index("function bridge()")
+        body = FIXTURE[i:FIXTURE.index("\n}\n", i)]
+        assert "if (beatsScheduled) return;" in body
+        assert body.index("if (beatsScheduled) return;") < body.index("scheduleBeats();")
+        assert body.index("if (beatsScheduled) return;") < body.index("maxTimer = setTimeout")
 
 
 class TestNeverCloseBeforeTheRound:

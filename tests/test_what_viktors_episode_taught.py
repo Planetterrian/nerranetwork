@@ -146,7 +146,10 @@ class TestTheLastWordIsWaitedFor:
 
     def test_the_guest_speaking_is_what_answers_it(self):
         body = _jsfn("remember")
-        assert "lastWordAnswered = true" in body
+        # Oct 22 2026: the guest's words go through guestWordsChecks, which
+        # remember() and the live transcription path both call.
+        assert "guestWordsChecks(text);" in body
+        assert "lastWordAnswered = true" in _jsfn("guestWordsChecks")
         # The ask has to be noted before the sign-off test, so that asking and
         # closing in one breath is still caught.
         assert body.index("noteLastWordAsk") < body.index("catchEarlySignOff")
