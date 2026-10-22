@@ -37,6 +37,9 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-26.04
+    # Oct 22 2026: main run 39810036245 spent ~15 min in setup-python on a
+    # trickle-slow apt ffmpeg mirror (3×300 s → exit 124). Keep a hard job
+    # ceiling so a stalled setup cannot burn a full runner hour.
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -45,10 +48,20 @@ jobs:
           # No git history needed (landmine #1: full clone is ~2.5 GB).
           fetch-depth: 1
 
-      - uses: ./.github/actions/setup-python
+      # Step timeout bounds the apt-install loop inside the composite (900 s
+      # ceiling today) so a trickle mirror fails the step before the job
+      # timeout. cache-dependency-path pins the pip cache key to the
+      # requirements files (not the runner image fingerprint alone).
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        timeout-minutes: 15
         with:
           python-version: '3.14'
           requirements-file: 'requirements.txt'
+          cache-dependency-path: |
+            requirements.txt
+            requirements_fascinating_frontiers.txt
+            requirements_planetterrian.txt
           # Oct 9 2026: pytest-xdist runs the suite across the runner's cores.
           extra-packages: "ruff pytest-xdist"
           # Sep 18 2026: the Nerra Voices leg-placement and mic-bleed
