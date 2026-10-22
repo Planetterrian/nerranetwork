@@ -276,3 +276,14 @@ class TestTheScenariosParse:
     @pytest.mark.parametrize("path", [SCENARIO_PATH, FIXTURE_PATH, SIM])
     def test_node_check(self, path):
         subprocess.run(["node", "--check", str(path)], check=True)
+
+
+class TestTheFixtureFollowsTheRef:
+    def test_a_candidate_or_hold_rehearsal_uploads_this_refs_fixture(self):
+        # The deployed fixture predates the candidate prefix; without this the
+        # proposed arm would quietly dial the live room.
+        i = REHEARSAL_WF.index("Upload this ref's fixture guest")
+        step = REHEARSAL_WF[i:REHEARSAL_WF.index("- name: Rehearse the current configuration")]
+        assert "inputs.candidate_scenario || inputs.with_hold" in step
+        assert "upload_fixture_scenario()" in step
+        assert REHEARSAL_WF.index("Upload this ref's fixture guest") < REHEARSAL_WF.index("- name: Rehearse the current configuration")

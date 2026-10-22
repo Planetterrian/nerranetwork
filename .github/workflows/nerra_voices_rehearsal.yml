@@ -121,6 +121,22 @@ jobs:
           GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
           GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
           VOICES_WEBHOOK_SECRET: ${{ secrets.VOICES_WEBHOOK_SECRET }}
+      # The fixture guest is rehearsal-only. A candidate room is reached only
+      # by a fixture that knows the "candroom-" prefix, and the hold beats are
+      # fixture behaviour, so either input refreshes it from this ref (its
+      # default prefix stays "room-").
+      - name: Upload this ref's fixture guest
+        if: ${{ inputs.candidate_scenario || inputs.with_hold }}
+        run: |
+          python - <<'PY'
+          from voximplant.api_clients.voximplant_client import (
+              FIXTURE_SCENARIO_NAME, ensure_fixture_rule, upload_fixture_scenario)
+          print(f"uploaded {FIXTURE_SCENARIO_NAME}: {upload_fixture_scenario()}")
+          print("fixture rule:", ensure_fixture_rule())
+          PY
+        env:
+          GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
+          GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
       - name: Rehearse the current configuration
         if: ${{ env.ARMS != 'proposed' }}
         run: |

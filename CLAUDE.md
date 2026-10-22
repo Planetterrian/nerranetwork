@@ -2217,8 +2217,10 @@ behaviour driven through the real scenario in a node vm by
   `age_of_ai_interview_candidate` with `ROOM_PREFIX` rewritten to
   `candroom-` (its own rule `^candroom-.*`; `candidate_source` refuses
   `room-`), and the fixture guest dials that prefix for the proposed arm; the
-  live scenario and rule are never written. `with_hold` adds a phone-call beat
-  to the fixture (`HOLD_BEATS`).
+  live scenario and rule are never written. Either input also re-uploads this
+  ref's rehearsal-only fixture guest (the deployed one predates the prefix and
+  would quietly dial the live room). `with_hold` adds a phone-call beat to the
+  fixture (`HOLD_BEATS`).
 
 Operator: deploy the scenario only after the candidate rehearsal reads PASS and
 one listen; `wrangler deploy` in `workers/voices` so the new counters are

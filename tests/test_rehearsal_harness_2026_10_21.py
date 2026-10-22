@@ -296,10 +296,18 @@ class TestWorkflows:
         assert "vars.VOICES_REHEARSAL_NIGHTLY == 'true'" in text
         assert "--arm current" in text and "--arm proposed" in text
         assert "rehearsal.py report" in text and "GITHUB_STEP_SUMMARY" in text
-        # It measures; it never deploys. The only mentions of deploying are
-        # the header's own statement and the pointer to the deploy workflow.
-        assert "upload_scenario" not in text and "upload_fixture_scenario" not in text
-        assert "SetScenarioInfo" not in text and "ensure_fixture_rule" not in text
+        # It measures; it never deploys the live room. Oct 22 2026: the
+        # rehearsal-only fixture guest (and a candidate copy of the interview
+        # scenario on its own prefix) may be uploaded, inside the one step
+        # gated on candidate_scenario / with_hold; the live scenario and its
+        # room rule are never written here.
+        assert "upload_scenario(" not in text and "ensure_room_rule(" not in text
+        assert "SetScenarioInfo" not in text
+        assert text.count("upload_fixture_scenario()") == 1
+        i = text.index("Upload this ref's fixture guest")
+        step = text[i:text.index("- name:", i + 10)]
+        assert "inputs.candidate_scenario || inputs.with_hold" in step
+        assert "upload_fixture_scenario()" in step and "ensure_fixture_rule()" in step
 
     def test_deploy_uploads_the_fixture_after_the_interview_scenario(self):
         wf = DEPLOY.read_text(encoding="utf-8")
