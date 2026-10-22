@@ -17,8 +17,22 @@
   has gone wrong for guests before, and it's much easier to fix today than
   five minutes before we start.</p>{% endif %}
   {% if steps_html %}{{ steps_html }}{% else %}<p><a href="{{ studio_link or studio_url }}">Join your interview here</a>.</p>{% endif %}
+  {% if identity_unknown %}
+  {# Oct 22 2026 (Stan Lewis): a booking with only a name and a personal
+     address was researched as a different, better-known person with the same
+     first name, and the brief, the questions and Mira's first question were
+     about him. When we cannot be sure who the guest is, we ask them. #}
+  <h3>Before we talk, tell me about you</h3>
+  <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">
+  I'd like to prepare properly, and your booking didn't tell me much about you
+  yet. Could you reply with two or three lines: what you do, what you'd most
+  like to talk about, and a link or two (a website, LinkedIn, a talk or an
+  article) so I research the right person? Whatever you send shapes my
+  questions.</p>
+  {% else %}
   <h3>The angle I'm excited about</h3>
   <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">{{ thesis }}</p>
+  {% endif %}
   {% if agenda_points %}<h3>What you asked me to cover</h3>
   <p>Every one of these will be part of the conversation. I'll ask about them in my own
   words and in whatever order the conversation allows, and ask my own questions around
@@ -26,17 +40,19 @@
   <ul>
   {% for p in agenda_points %}<li>{{ p }}</li>
   {% endfor %}</ul>{% endif %}
-  {% if curious_about %}<h3>Three things I'm curious about</h3>
+  {% if curious_about and not identity_unknown %}<h3>Three things I'm curious about</h3>
   <p>In my own words, so the first question is not a surprise:</p>
   <ul>
   {% for c in curious_about %}<li>{{ c }}</li>
   {% endfor %}</ul>{% endif %}
+  {% if not identity_unknown %}
   <h3>Questions I'm likely to ask</h3>
   <ol>
   {% for q in questions %}
     <li>{{ q.question if q.question is defined else q }}</li>
   {% endfor %}
   </ol>
+  {% endif %}
   <p>No preparation is needed: I follow the conversation, not the list. If
   anything here is wrong about you or your work, or there is something you
   would rather not discuss, reply and tell me, and I'll change it before we

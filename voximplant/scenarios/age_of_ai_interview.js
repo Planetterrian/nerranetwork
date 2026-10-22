@@ -1339,7 +1339,9 @@ function markTurnStarted(agent) {
   // that turn is the question she answers herself.
   if (!requested) {
     serverTurns += 1;
-    if (serverTurns <= 3) trace("turn", "server started a turn on its own (#" + serverTurns + ")");
+    // Oct 22 2026: every tenth as well, so a room where the server ignored
+    // create_response all hour says so in the stored trace.
+    if (serverTurns <= 3 || serverTurns % 10 === 0) trace("turn", "server started a turn on its own (#" + serverTurns + ")");
     if (!spoke && openingFired) {
       selfAnswersBlocked += 1;
       miraSpeaking = false;
@@ -2775,13 +2777,22 @@ function trace(event, detail) {
 // while he was still taking his headphones off. The record of who joined
 // and left, and the room opening, is now kept whatever else is dropped.
 const TRACE_KEEP_LINES = 120;
+// Oct 22 2026, Stan Lewis. 102 of the 123 stored lines were "response
+// done", so the closing round's lines, the server-started turns and the
+// time checks of the first 43 minutes were the ones dropped, and nobody
+// could tell afterwards why the round stalled at its first question. The
+// bookkeeping line goes first; every other earlier line is kept, up to
+// TRACE_KEEP_EARLY of them.
+const TRACE_KEEP_EARLY = 250;
 function traceForStorage() {
   if (traceLines.length <= TRACE_KEEP_LINES) return traceLines;
   const kept = [];
   const tail = traceLines.slice(-TRACE_KEEP_LINES);
   for (let i = 0; i < traceLines.length - TRACE_KEEP_LINES; i++) {
     const line = traceLines[i];
-    if (line.e === "leg" || (line.e === "room" && /^opened|new room session/.test(line.d || ""))) kept.push(line);
+    if (line.e === "leg" || (line.e === "room" && /^opened|new room session/.test(line.d || ""))) { kept.push(line); continue; }
+    if (line.e === "grok" && line.d === "response done") continue;
+    if (kept.length < TRACE_KEEP_EARLY) kept.push(line);
   }
   if (kept.length) kept.push({ t: tail[0].t, e: "room", d: "---- " + (traceLines.length - TRACE_KEEP_LINES - kept.length) + " earlier lines dropped ----" });
   return kept.concat(tail);

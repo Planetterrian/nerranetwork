@@ -728,8 +728,10 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 "The studio is open and I'm ready when you are. We start in about "
                 "ten minutes.")
     else:
-        subject = (f"Our closing session for {show.name} is in about two hours" if closing
-                   else f"Our interview on {show.name} is in about two hours")
+        # Oct 22 2026: named, so two guests' reminders never share a thread.
+        subject = (f"{first_name(app)}, our closing session for {show.name} is in about two hours"
+                   if closing else
+                   f"{first_name(app)}, our interview on {show.name} is in about two hours")
         lead = (f"We're on for {_h.escape(when)}, about two hours from now."
                 if when else "We're on in about two hours.")
     parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]

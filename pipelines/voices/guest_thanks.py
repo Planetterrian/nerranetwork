@@ -11,9 +11,18 @@ do with it.
 Rules:
 
 * **The moments are the guest's own lines, verbatim**, never Mira's and never
-  paraphrased (``memorable_moments``). They are chosen deterministically — the
-  guest's longest turns that carry a number or a proper noun — so a re-run
-  sends the same note and nothing is invented.
+  paraphrased (``memorable_moments``). They are chosen deterministically so a
+  re-run sends the same note and nothing is invented.
+* **Only answers, only safe ones** (Oct 22 2026, Stan Lewis). The first
+  version took the guest's longest lines that carried a number or a name,
+  which is exactly what a phone number, a date of birth and a medical
+  history look like. Stan took a call from the VA in the middle of the hour,
+  and two of the three "things you said that I will remember", sent to him
+  with Patrick and Dan copied, were his side of that call: a scheduling
+  argument and his hyperglycemia. A moment is now a complete sentence or two
+  from his answer to one of Mira's questions; nothing with a health, legal,
+  money or personal-identifier word or a long number in it is ever quoted;
+  and with fewer than two safe moments the note simply thanks him.
 * **Once.** ``editorial_packages.thanks_sent_at`` is stamped and read first.
 * **Never into the pipeline.** ``after_room`` swallows every failure; the
   package is the product and a lost email is a lost email.
@@ -37,8 +46,11 @@ from common import (  # noqa: E402
 
 EDIT_REACHES_YOU_DAYS = 7
 MOMENTS = 3
+MOMENTS_MIN = 2                  # fewer safe ones than this: quote nothing
 MOMENT_MIN_WORDS = 12
+MOMENT_MAX_WORDS = 40
 MOMENT_MAX_CHARS = 320
+ANSWER_WINDOW_SEC = 120          # a line this long after her question is its answer
 
 _LINE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 _NUMBER = re.compile(r"\d")
@@ -47,6 +59,24 @@ _HOUSEKEEPING = re.compile(
     r"\b(can you hear me|i can hear you|headphones?|microphone|mic\b|"
     r"start (that |this )?(over|again)|scratch that|off the record|"
     r"can we cut|hang up|the recording|is this working)\b", re.I)
+# Never quoted back to a guest, whoever is copied: health, legal, money and
+# identity, and anything that sounds like another conversation (a call taken
+# mid-interview is scheduling talk). Conservative on purpose: a lovely line
+# lost costs nothing, a private one quoted costs the guest's trust.
+_SENSITIVE = re.compile(
+    r"\b(social security|ssn|date of birth|birthday|born on|"
+    r"diagnos\w*|prescri\w*|medicat\w*|medical|disease|illness|symptom\w*|"
+    r"diabet\w*|glyc\w*|cancer|tumou?r|surgery|hospital\w*|doctor\w*|clinic\w*|"
+    r"therap\w*|psychiatr\w*|depress\w*|anxiety|addict\w*|rehab|pregnan\w*|"
+    r"disabilit\w*|veterans? affairs|the va\b|cfr\b|claim\w*|lawsuit|attorney|"
+    r"lawyer|court|divorce|custody|arrest\w*|bankrupt\w*|debt|salary|"
+    r"password|account number|credit card|my address|my number|phone number|"
+    r"appointment|schedul\w*|what day|what time|call (you|me) back|"
+    r"monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", re.I)
+_IDENTIFIER = re.compile(
+    r"\d{3}[\s.-]?\d{3}[\s.-]?\d{4}|\d{4,}|@|\b(january|february|march|april|"
+    r"may|june|july|august|september|october|november|december)\s+\d", re.I)
+_SENTENCE = re.compile(r"[^.!?]+[.!?]")
 
 
 def guest_lines(transcript: str, host: str = "Mira") -> List[Tuple[float, str, str]]:
@@ -66,14 +96,63 @@ def guest_lines(transcript: str, host: str = "Mira") -> List[Tuple[float, str, s
     return out
 
 
+def safe_to_quote(text: str) -> bool:
+    """May this sentence be read back to the guest, with others copied?"""
+    return not (_HOUSEKEEPING.search(text) or _SENSITIVE.search(text)
+                or _IDENTIFIER.search(text))
+
+
 def _score(text: str) -> int:
     words = len(text.split())
-    if words < MOMENT_MIN_WORDS or _HOUSEKEEPING.search(text):
+    if words < MOMENT_MIN_WORDS or words > MOMENT_MAX_WORDS or not safe_to_quote(text):
         return 0
-    # A line that carries a figure or a name is a line worth remembering;
-    # length breaks ties, and nothing else is judged.
-    bonus = 1000 if (_NUMBER.search(text) or _PROPER.search(text)) else 0
-    return bonus + min(words, 80)
+    # A line that names something (a place, a company, a person) is a line
+    # worth remembering; length breaks ties. Numbers earn nothing: they are
+    # how phone numbers and dates get in.
+    bonus = 100 if _PROPER.search(text) else 0
+    return bonus + min(words, 50)
+
+
+def _answers(transcript: str, host: str = "Mira") -> List[Tuple[float, str]]:
+    """``[(room_sec, text)]``: the guest's words that answer one of Mira's
+    questions, each answer joined from its consecutive lines. A question is
+    pending from the Mira line that carries the question mark until the guest
+    starts answering it, within ``ANSWER_WINDOW_SEC``; her other lines in
+    between ("take your time") do not cancel it."""
+    out: List[Tuple[float, str]] = []
+    asked_at: Optional[float] = None
+    current: Optional[list] = None
+    for raw in (transcript or "").splitlines():
+        m = _LINE.match(raw.strip())
+        if not m:
+            continue
+        h, mm, ss, who, text = m.groups()
+        at = float((int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm)))
+        who = who.strip().lower()
+        if who.startswith(host.lower()):
+            if current is not None:
+                out.append((current[0], " ".join(current[1])))
+                current = None
+            if "?" in text:
+                asked_at = at
+            continue
+        if who in ("patrick", "patrick novak", "host", "co-host"):
+            continue
+        if current is not None:
+            current[1].append(text.strip())
+        elif asked_at is not None and at - asked_at <= ANSWER_WINDOW_SEC:
+            current = [at, [text.strip()]]
+            asked_at = None
+    if current is not None:
+        out.append((current[0], " ".join(current[1])))
+    return out
+
+
+def _sentences(text: str) -> List[str]:
+    """Whole sentences only, starting with a capital: a fragment that starts
+    mid-thought ("as a peacemaker. And that's...") is never a quote."""
+    found = [x.strip() for x in _SENTENCE.findall(" ".join(text.split()))]
+    return [x for x in found if x[:1].isupper()]
 
 
 def _trim(text: str) -> str:
@@ -87,18 +166,31 @@ def _trim(text: str) -> str:
 
 def memorable_moments(transcript: str, guest_label: str = "",
                       n: int = MOMENTS) -> List[Tuple[float, str]]:
-    """The guest's own lines Mira will say she remembers, in time order."""
+    """The guest's own words Mira will say she remembers, in time order:
+    one or two whole, safe sentences from each of their best answers, at most
+    one per answer. Empty when fewer than ``MOMENTS_MIN`` qualify."""
     rows = []
-    for at, who, text in guest_lines(transcript):
-        if guest_label and who.lower() != guest_label.lower():
-            # A co-host's lines are not the guest's moments.
-            if who.lower() in ("patrick", "patrick novak", "host", "co-host"):
-                continue
-        score = _score(text)
-        if score:
-            rows.append((score, at, text))
+    for at, answer in _answers(transcript):
+        if not safe_to_quote(answer):
+            # One unsafe sentence anywhere in the answer rules the whole
+            # answer out: it is about something that should not be quoted.
+            continue
+        sentences = _sentences(answer)
+        best = None
+        for i in range(len(sentences)):
+            for j in (i + 1, i + 2):
+                span = " ".join(sentences[i:j])
+                if j > len(sentences):
+                    continue
+                score = _score(span)
+                if score and (best is None or score > best[0]):
+                    best = (score, span)
+        if best:
+            rows.append((best[0], at, best[1]))
     rows.sort(key=lambda r: (-r[0], r[1]))
     chosen = sorted(rows[:n], key=lambda r: r[1])
+    if len(chosen) < MOMENTS_MIN:
+        return []
     return [(at, _trim(text)) for _s, at, text in chosen]
 
 
@@ -114,7 +206,8 @@ def thank_you_email(show, app: Dict[str, Any], transcript: str,
     parts = [f"<p>Hi {e(first)},</p>",
              "<p>Thank you for the hour. I am still turning it over.</p>"]
     if moments:
-        parts.append("<p>Three things you said that I will remember:</p><ul>"
+        lead = "Three things" if len(moments) == 3 else "Two things"
+        parts.append(f"<p>{lead} you said that I will remember:</p><ul>"
                      + "".join(f"<li>“{e(t)}”</li>" for _at, t in moments) + "</ul>")
     parts += [
         f"<p>Here is what happens next. The edit is being cut now, and Patrick listens "
@@ -126,7 +219,7 @@ def thank_you_email(show, app: Dict[str, Any], transcript: str,
         "it reaches me.</p>",
         mira_signature_html(show),
     ]
-    subject = f"Thank you for today, {first} — and what happens next"
+    subject = f"Thank you for today, {first}, and what happens next"
     return subject, "".join(parts)
 
 

@@ -115,7 +115,7 @@ class TestBookingMailSaysWhatItIsAbout:
         digest = (ROOT / "pipelines" / "producer" / "digest.py").read_text()
         assert '"subject": interview_subject(b, app, for_guest=False' in digest
         assert "{{ b.subject }}" in (ROOT / "templates" / "email" / "producer_daily_digest.j2").read_text()
-        assert 'f"{_subject_line(interview, app)}"' in (V / "post_interview.py").read_text()
+        assert 'f"{_subject_line(interview, app)}</p>"' in (V / "post_interview.py").read_text()
 
     def test_the_worker_and_the_pipeline_pick_the_same_way(self):
         assert "[fromTopics, pitch, thesis] : [thesis, pitch, fromTopics]" in WORKER

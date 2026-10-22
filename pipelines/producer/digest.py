@@ -135,22 +135,55 @@ def render(data: Dict[str, Any]) -> str:
                         invited=data["invited"], errors=data["errors"], brand=BRAND)
 
 
+def _n(count: int, one: str, many: str) -> str:
+    return f"{count} {one if count == 1 else many}"
+
+
 def subject_line(stats: Dict[str, Any]) -> str:
-    bits = [f"{stats['invited']} invited", f"{stats['approved']} booking links",
-            f"{stats['booked']} booked"]
-    if stats["held"]:
+    """What needs Patrick first, then only what actually happened.
+
+    Oct 22 2026 (Patrick: "emails that don't make sense"): the subject read
+    "0 invited, 0 booking links, 0 booked" on a day Mira had answered a
+    guest, because it listed three fixed counters whatever they were."""
+    bits = []
+    if stats.get("held"):
         bits.append(f"{stats['held']} waiting on you")
-    if stats["errors"]:
-        bits.append(f"{stats['errors']} errors")
+    if stats.get("errors"):
+        bits.append(_n(stats["errors"], "error", "errors"))
+    for key, one, many in (("booked", "booked", "booked"),
+                           ("approved", "booking link sent", "booking links sent"),
+                           ("invited", "invited", "invited"),
+                           ("guest_answered", "guest answered", "guests answered"),
+                           ("followups", "reply sent", "replies sent"),
+                           ("chased", "nudge", "nudges")):
+        if stats.get(key):
+            bits.append(_n(stats[key], one, many))
+    if not bits:
+        return "Mira's daily report: a quiet day, nothing needs you"
     return "Mira's daily report: " + ", ".join(bits)
 
 
-def run_digest(*, hours: int = 24, dry_run: bool = False, to: Optional[str] = None) -> Dict[str, Any]:
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+def quiet(stats: Dict[str, Any]) -> bool:
+    """Nothing happened and nothing needs Patrick."""
+    return not any(stats.get(k) for k in ("held", "errors", "booked", "approved", "invited",
+                                          "guest_answered", "guest_notes", "followups",
+                                          "chased", "lapsed"))
+
+
+def run_digest(*, hours: int = 24, dry_run: bool = False, to: Optional[str] = None,
+               now: Optional[datetime] = None) -> Dict[str, Any]:
+    since = (now or datetime.now(timezone.utc)) - timedelta(hours=hours)
     data = collect(since)
     html = render(data)
     subject = subject_line(data["stats"])
     recipient = to or OPERATOR_EMAIL
+    # Oct 22 2026: a day with nothing in it is not an email, except on
+    # Mondays, so a silent week still says the Producer is running.
+    from zoneinfo import ZoneInfo
+    monday = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo("America/Vancouver")).weekday() == 0
+    if quiet(data["stats"]) and not monday and not to:
+        logger.info("digest: a quiet day, not sent")
+        return {"subject": subject, "stats": data["stats"], "html": html, "sent": False}
     if dry_run:
         logger.info("[dry-run] would email %s: %s\n%s", recipient, subject, html[:1500])
     else:
@@ -162,7 +195,7 @@ def run_digest(*, hours: int = 24, dry_run: bool = False, to: Optional[str] = No
         except Exception as exc:  # noqa: BLE001
             logger.warning("producer_runs insert failed (non-fatal): %s", exc)
     logger.info("digest: %s", subject)
-    return {"subject": subject, "stats": data["stats"], "html": html}
+    return {"subject": subject, "stats": data["stats"], "html": html, "sent": not dry_run}
 
 
 def main(argv: Optional[List[str]] = None) -> int:

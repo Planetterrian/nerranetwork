@@ -948,19 +948,24 @@ def _placement_notes(run: dict | None) -> str:
     only hear as "something is different": a leg placed in pieces because
     its recorder lost time, a microphone relieved of the others' bleed."""
     tracks = ((run or {}).get("grok_session_log") or {}).get("tracks") or {}
+    # Oct 22 2026: said as what to listen for, not as what the pipeline did
+    # ("placed in 3 pieces… 9 dB under its own" told Patrick nothing he could
+    # act on). Times are on the room clock, as the review page shows them.
     lines = []
     for role, pieces in (tracks.get("pieces") or {}).items():
         if len(pieces or []) > 1:
-            jumps = ", ".join(
-                f"{int(p['from'] // 60)}:{int(p['from'] % 60):02d} at {p['delay']:+.1f}s"
-                for p in pieces[1:])
-            lines.append(f"The {role} recording lost time part-way through and was "
-                         f"placed in {len(pieces)} pieces (jumps at {jumps}).")
+            at = " and ".join(f"{int(p['from'] // 60)}:{int(p['from'] % 60):02d}"
+                              for p in pieces[1:])
+            who = "Mira's" if role == "mira" else f"The {role}'s"
+            lines.append(f"Listen around {at}: {who} recording skipped there and "
+                         f"was patched back in place.")
     for role, stat in (tracks.get("bleed") or {}).items():
         if stat and stat.get("bleed"):
-            lines.append(f"The {role} microphone carried the other voices "
-                         f"{stat['own_db'] - stat['bleed_db']:.0f} dB under its own "
-                         f"(no headphones); {stat['muted_sec']:.0f}s of that was muted.")
+            mins = round(float(stat.get("muted_sec") or 0) / 60)
+            lines.append(f"The {role} used speakers rather than headphones, so Mira's "
+                         f"voice was filtered out of their microphone"
+                         + (f" (about {mins} minutes of it)" if mins else "")
+                         + "; if a short answer of theirs sounds clipped, that is why.")
     if not lines:
         return ""
     return "<p style='color:#555'>" + " ".join(lines) + "</p>"
@@ -996,6 +1001,16 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
     if ivs and ivs[0].get("application_id"):
         apps = sb_select("guest_applications", f"id=eq.{ivs[0]['application_id']}")
     guest = (apps[0].get("name") if apps else None) or "the guest"
+    about = ""
+    try:
+        import html as _h
+        from common import interview_subject
+        iv_full = sb_select("interviews", f"id=eq.{interview_id}") if interview_id else []
+        text = interview_subject(iv_full[0] if iv_full else None,
+                                 apps[0] if apps else None, for_guest=False)
+        about = f"<p><em>About:</em> {_h.escape(text)}</p>" if text else ""
+    except Exception:  # noqa: BLE001 — the subject line is a courtesy
+        logger.exception("subject line unavailable (non-fatal)")
     review = ""
     if pkg:
         try:
@@ -1004,22 +1019,26 @@ def _tell_patrick(spec: dict, show, slug: str, url: str, seconds: float,
         except Exception:  # noqa: BLE001
             logger.exception("review token unavailable")
     try:
+        # Oct 22 2026: the one email per episode (post_interview no longer
+        # sends its own "ready for your review" first). What it is, the two
+        # links, anything to listen for, then the grade.
         send_email(
             OPERATOR_EMAIL,
-            f"{show.short_label}: {guest} is cut and ready for your ear",
+            f"{show.short_label}: {guest} is ready for your review",
             "<p>Hi Patrick,</p>"
             + _sync_warning(run)
+            + f"<p>{guest}'s episode is cut: {int(seconds // 60)} minutes "
+            f"{int(seconds % 60):02d}, with the introduction and close.</p>"
+            + about
+            + f'<p><a href="{url}">Listen to the episode</a>'
+            + (f' &middot; <a href="{review}">Review and approve</a>' if review else "")
+            + "</p>"
             + _placement_notes(run)
-            + f"<p>The {guest} episode is assembled — introduction, conversation and "
-            f"close, {int(seconds // 60)} minutes {int(seconds % 60):02d}.</p>"
-            f'<p><a href="{url}">Listen to the episode</a></p>'
-            + (f'<p>When it passes your ear, approve it here and the guest is asked '
-               f'to review it: <a href="{review}">gate 1</a>.</p>' if review else "")
-            + f"<p>Nothing reaches {guest} until you do.</p>"
+            + f"<p>Nothing reaches {guest} until you approve.</p>"
             + _improvements(show.slug, interview_id)
-            + f"<p>Edit: <code>{slug}</code>. To change a cut, edit "
-              f"<code>pipelines/voices/edl/{slug}.json</code> and run the assemble "
-              f"workflow again.</p><p>— Mira</p>")
+            + f"<p style='color:#888;font-size:85%'>To change a cut, edit "
+              f"pipelines/voices/edl/{slug}.json and re-run the assemble workflow.</p>"
+              f"<p>Mira</p>")
         if pkg:
             sb_update("editorial_packages", f"id=eq.{pkg['id']}",
                       {"operator_preview_sent_at": __import__("datetime")

@@ -43,9 +43,14 @@ jobs:
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
       - uses: ./.github/actions/setup-ffmpeg
-      - run: python pipelines/voices/post_interview.py
+      - name: Process the interview
+        id: post
+        run: python pipelines/voices/post_interview.py
         env:
           INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          # Oct 22 2026: one email per episode. The assembler sends it; the
+          # last step below sends the transcript-only version if the cut fails.
+          GATE1_AFTER_ASSEMBLY: "1"
           # ADMIN_TOKEN derives the per-package gate-1 review token that
           # goes in Patrick's email (must match the Worker's).
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
@@ -141,3 +146,20 @@ jobs:
           CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+
+      # Oct 22 2026: the gate-1 email normally comes from the assembler. If
+      # the cut, the narration or the assembly failed after the package was
+      # made, or the assembler's email did not go, Patrick still gets one
+      # email with the review link. It sends nothing when the assembler's
+      # email is already stamped on the package.
+      - name: Make sure Patrick has the review link
+        if: ${{ !cancelled() && steps.post.outcome == 'success' }}
+        run: python pipelines/voices/post_interview.py --gate1-fallback
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id || inputs.run_id }}
+          CUT_FAILED: ${{ job.status != 'success' }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}

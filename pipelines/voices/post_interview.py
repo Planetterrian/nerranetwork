@@ -1544,25 +1544,75 @@ def main() -> int:
         f"({int(duration // 60)} min).{flag_note} "
         f"Review (gate 1): {review_url}"
     ))
+    # Oct 22 2026 (Patrick: "emails that don't make sense"): every episode
+    # sent two emails fifteen minutes apart, this one and the assembler's
+    # "cut and ready for your ear", which carries everything this one does
+    # plus the episode itself. When the workflow goes on to cut and assemble
+    # (GATE1_AFTER_ASSEMBLY=1), the assembler's email is the only one; this
+    # one is sent by the workflow's last step only if the cut never arrived.
+    if os.environ.get("GATE1_AFTER_ASSEMBLY", "").strip() == "1":
+        logger.info("gate-1 email left to the assembler (package %s)", pkg["id"])
+    else:
+        send_gate1_email(pkg, interview, app, show, duration, flags)
+    logger.info("Editorial package %s ready for Patrick", pkg["id"])
+    return 0
+
+
+def send_gate1_email(pkg: dict, interview: dict, app: dict, show, duration: float,
+                     flags: list | None = None, cut_failed: bool = False) -> bool:
+    """The gate-1 email from the transcript page alone: sent when there is no
+    assembled episode to send instead. Never raises; True when it went."""
+    try:
+        review_url = f"{REVIEW_BASE}/{pkg['id']}/{package_review_token(pkg['id'])}"
+    except Exception:  # noqa: BLE001
+        logger.exception("Review token unavailable; sending the bare link")
+        review_url = f"{REVIEW_BASE}/{pkg['id']}"
+    flags = flags or []
     try:
         send_email(
             OPERATOR_EMAIL,
             f"{show.short_label}: {app['name']} is ready for your review",
             f"<p>Hi Patrick,</p>"
-            f"<p>The interview with <strong>{app['name']}</strong> "
-            f"({int(duration // 60)} minutes) is processed and waiting at gate 1."
+            f"<p>The interview with <strong>{app['name']}</strong>"
+            + (f" ({int(duration // 60)} minutes)" if duration else "")
+            + " is ready for you."
             f"{' <strong>Flagged: ' + ', '.join(flags) + '.</strong>' if flags else ''}"
-            f"{_subject_line(interview, app)}"
-            f" The page has the audio, the episode notes, the cleaned transcript "
-            f"and the newsletter draft, with Approve and Kill on the bottom:</p>"
-            f'<p><a href="{review_url}">Review this episode</a></p>'
-            f"<p>Nothing reaches the guest until you approve here.</p>"
-            f"<p>— Mira</p>")
+            f"{_subject_line(interview, app)}</p>"
+            + ("<p><strong>The automatic cut did not finish</strong>, so there is no "
+               "assembled episode yet; the review page has the room recording and the "
+               "transcript. Re-run the cut from GitHub when you want the episode.</p>"
+               if cut_failed else "")
+            + f'<p><a href="{review_url}">Review and approve</a></p>'
+            f"<p>Nothing reaches the guest until you approve.</p>"
+            f"<p>Mira</p>")
+        return True
     except Exception:  # noqa: BLE001 — Slack already carries the link
         logger.exception("Gate 1 email failed (non-fatal)")
-    logger.info("Editorial package %s ready for Patrick", pkg["id"])
+        return False
+
+
+def gate1_fallback() -> int:
+    """The workflow's last step: if the assembler's gate-1 email is not
+    stamped on the package (the cut failed, or its email did not go), send
+    this one instead, once."""
+    run = _run_row()
+    interview, app = _interview_and_app(run)
+    if (interview.get("session_kind") or "interview") != "interview":
+        return 0
+    pkgs = sb_select("editorial_packages",
+                     f"interview_run_id=eq.{run['id']}&status=eq.in_review"
+                     "&order=created_at.desc&limit=1") or []
+    if not pkgs or pkgs[0].get("operator_preview_sent_at"):
+        return 0
+    cut_failed = os.environ.get("CUT_FAILED", "true").strip().lower() != "false"
+    if send_gate1_email(pkgs[0], interview, app, show_for(interview, app),
+                        float(run.get("duration_sec") or 0), cut_failed=cut_failed):
+        sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",
+                  {"operator_preview_sent_at": dt.datetime.now(dt.timezone.utc).isoformat()})
     return 0
 
 
 if __name__ == "__main__":
+    if "--gate1-fallback" in sys.argv:
+        raise SystemExit(gate1_fallback())
     raise SystemExit(main())

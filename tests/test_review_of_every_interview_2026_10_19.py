@@ -329,10 +329,14 @@ class TestItIsTheGuestsHour:
         for cue, answer in (("skip a question", "of course"),
                             ("start an answer again", "go ahead, then silence"),
                             ("something to be cut", "it stays out"),
-                            ("want a moment", "take your time")):
+                            ("want a", "say once that you will wait")):
             assert cue in rule and answer in rule, cue
         assert "never that one again" in rule
-        assert "then nothing for as long as it takes" in rule
+        # Oct 22 2026: a guest took a phone call mid-interview; she waits in
+        # silence and nothing said to anyone else is answered or repeated.
+        assert "take another call" in rule
+        assert "then nothing until they speak to you again" in rule
+        assert "never answered or repeated" in rule
 
     def test_the_booking_email_says_so(self):
         worker = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")

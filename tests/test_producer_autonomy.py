@@ -508,7 +508,8 @@ class TestDigest:
         out = digest.run_digest(hours=24)
         (to, subject, html), = ddb
         assert to == "patricknovak1@gmail.com"
-        assert subject == "Mira's daily report: 1 invited, 1 booking links, 1 booked, 1 waiting on you, 1 errors"
+        assert subject == ("Mira's daily report: 1 waiting on you, 1 error, 1 booked, "
+                           "1 booking link sent, 1 invited, 1 reply sent, 1 nudge")
         assert "Waiting on you (1)" in html and "possible guest?" in html
         assert "https://mail.google.com/mail/u/0/#all/t2" in html
         assert "Dr. Lena Ortiz" in html and "Thursday, September 10 at 10:00 AM Pacific Time" in html
@@ -532,6 +533,22 @@ class TestDigest:
     def test_dry_run_sends_nothing(self, ddb):
         digest.run_digest(hours=24, dry_run=True)
         assert not ddb
+
+    def test_a_quiet_day_is_not_an_email_except_on_monday(self, ddb, monkeypatch):
+        # Oct 22 2026: "0 invited, 0 booking links, 0 booked" every day.
+        monkeypatch.setattr(digest, "sb_select", lambda table, query="": [])
+        tuesday = datetime(2026, 10, 20, 13, 0, tzinfo=timezone.utc)
+        out = digest.run_digest(hours=24, now=tuesday)
+        assert out["sent"] is False and not ddb
+        assert out["subject"] == "Mira's daily report: a quiet day, nothing needs you"
+        monday = datetime(2026, 10, 19, 13, 0, tzinfo=timezone.utc)
+        digest.run_digest(hours=24, now=monday)
+        assert len(ddb) == 1
+
+    def test_the_subject_never_lists_a_zero(self):
+        stats = {k: 0 for k in ("invited", "approved", "booked", "held", "errors")}
+        stats["guest_answered"] = 2
+        assert digest.subject_line(stats) == "Mira's daily report: 2 guests answered"
 
 
 # ---------------------------------------------------------------------------

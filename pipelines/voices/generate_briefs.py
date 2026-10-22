@@ -13,7 +13,7 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    carry_the_show_block, episode_memory_block, guest_agenda_block,
+    OPERATOR_EMAIL, carry_the_show_block, episode_memory_block, guest_agenda_block,
     guest_notes_block, llm, load_prompt,
     logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
@@ -77,19 +77,129 @@ def prior_record(app: dict) -> str:
     return "\n".join(out)
 
 
+# Oct 22 2026, Stan Lewis. His application was made from a Cal.com booking:
+# a name, a personal Gmail address, a phone number, nothing else. The research
+# pass searched "Stan Lewis" for an AI show and found Stanislas "Stan" Polu,
+# the ex-OpenAI founder of Dust. The brief, the thesis, the question list
+# emailed to him, the subject line in his reminder and Mira's first question
+# were all about Polu. Stan is a veteran who mediates for executives; he spent
+# the first minutes answering a question meant for someone else.
+#
+# Two guards. An application with nothing to tell the guest apart from anyone
+# else of that name is not researched at all: the guest is asked, by email,
+# who they are, and Mira opens by asking. And research whose text never
+# names the guest's surname is about someone else and is thrown away.
+FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "hotmail.com", "outlook.com",
+             "live.com", "msn.com", "icloud.com", "me.com", "mac.com", "aol.com",
+             "proton.me", "protonmail.com", "gmx.com", "ymail.com"}
+_NAME_SUFFIX = {"jr", "sr", "ii", "iii", "iv", "phd", "md", "mba", "dr", "esq"}
+
+IDENTITY_UNKNOWN = (
+    "IDENTITY NOT CONFIRMED. Nothing in the application tells this guest apart "
+    "from anyone else with the same name, so nothing was researched: anything "
+    "found would as likely be about someone else. Mira has asked them by email "
+    "who they are and what they want to talk about; anything they sent back is "
+    "in the guest's notes. Open by asking them, warmly, what they do and what "
+    "they came to talk about, and build the hour from their answers. Never "
+    "attribute to them work, a company or a career they have not told you "
+    "about.")
+
+
+def _filled(value) -> bool:
+    if isinstance(value, dict):
+        return any(_filled(v) for v in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return any(_filled(v) for v in value)
+    return bool(str(value or "").strip())
+
+
+def own_domain(app: dict) -> str:
+    """The guest's own email domain, when it is not a free mail service."""
+    domain = str(app.get("email") or "").rsplit("@", 1)[-1].strip().lower()
+    return "" if (not domain or domain in FREE_MAIL or "@" not in str(app.get("email") or "")) else domain
+
+
+def identity_anchors(app: dict) -> list:
+    """What tells this guest apart from anyone else with the same name."""
+    anchors = []
+    for key in ("organization", "title", "bio", "topics", "links", "pitch_summary",
+                "guest_agenda", "guest_notes"):
+        if _filled(app.get(key)):
+            anchors.append(key)
+    if own_domain(app):
+        anchors.append("email_domain")
+    return anchors
+
+
+def surname(name: str) -> str:
+    parts = [p.strip(".,").lower() for p in str(name or "").split()]
+    parts = [p for p in parts if p and p not in _NAME_SUFFIX]
+    return parts[-1] if len(parts) >= 2 else ""
+
+
+def research_names_guest(research: str, name: str) -> bool:
+    """Does the research mention the guest's surname at all? Research about
+    "Stan Lewis" that never says "Lewis" is about somebody else."""
+    last = surname(name)
+    if len(last) < 3:
+        return True          # nothing reliable to check against
+    return last in str(research or "").lower()
+
+
+def _identity_unknown_brief(interview: dict, app: dict, why: str) -> dict:
+    name = str(app.get("name") or "the guest").strip()
+    logger.warning("brief for %s: identity not confirmed (%s); not researched", name, why)
+    try:
+        show = show_for(interview, app)
+        send_email(
+            OPERATOR_EMAIL,
+            f"{show.short_label}: who is {name}? I have asked them",
+            f"<p>Hi Patrick,</p><p>{name}'s interview is booked for "
+            f"{when_text(interview.get('scheduled_at', ''))}, and I can't tell who they are: "
+            f"{why}. Research on a bare name finds whoever is most famous under it, so I "
+            f"have not researched them. I have asked them by email for a few lines and a "
+            f"link, and in the room I will open by asking. If you know who they are, add "
+            f"a line or a link to their application and the next brief run will use it.</p>"
+            f"<p>Mira</p>")
+    except Exception:  # noqa: BLE001 — the guest email still goes
+        logger.exception("identity alert to Patrick failed (non-fatal)")
+    return sb_insert("interview_briefs", {
+        "interview_id": interview["id"],
+        "bio_research": IDENTITY_UNKNOWN,
+        "past_work_summary": IDENTITY_UNKNOWN,
+        "likely_questions": [
+            {"question": "What do you do, in your own words, and how did you come to it?"},
+            {"question": "What did you want to make sure we talk about today?"},
+            {"question": "Where is AI showing up in your work right now, if it is?"},
+        ],
+        "episode_thesis_draft": f"A conversation with {name} about the work they have "
+                                f"chosen, in their own words.",
+    })
+
+
 def generate_brief(interview: dict, app: dict) -> dict:
     show = show_for(interview, app)
     links = json.dumps(app.get("links") or {})
     topics = ", ".join(app.get("topics") or [])
 
+    if not identity_anchors(app):
+        return _identity_unknown_brief(
+            interview, app, "the application has only a name and a personal email "
+                            "address, with no organisation, bio, links or topics")
+    domain = own_domain(app)
     bio_research = llm(
         load_prompt("research_brief.txt", show=show,
                     name=app["name"], title=app.get("title", ""),
-                    organization=app.get("organization", ""),
+                    organization=app.get("organization", "")
+                    or (f"(their email domain is {domain})" if domain else ""),
                     bio=app.get("bio", ""), topics=topics, links=links,
                     prior_record=prior_record(app)),
         temperature=0.3, web_search=True, max_tokens=2500,
     )
+    if not research_names_guest(bio_research, app.get("name", "")):
+        return _identity_unknown_brief(
+            interview, app, f"the research never mentions the name {app.get('name')}, "
+                            f"so it found someone else")
     memory = episode_memory_block(show=show)
     minutes = planned_minutes(interview, app)
     questions_raw = llm(
@@ -192,11 +302,18 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         if isinstance(app.get("guest_agenda"), dict) else [],
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
+        identity_unknown=str(brief.get("bio_research") or "").startswith("IDENTITY NOT CONFIRMED"),
         curious_about=curious_about(brief.get("likely_questions")),
         closing_question=show.closing_question,
     )
+    unknown = str(brief.get("bio_research") or "").startswith("IDENTITY NOT CONFIRMED")
+    # Oct 22 2026: the guest's name is in the subject. Every guest's brief had
+    # the same subject, so in Patrick's copy Gmail threaded Cory's and Jon's
+    # together, and a guest's reply could land in a thread about another.
+    first = first_name(app)
     send_email(app["email"],
-               f"Our interview on {show.name}: what I would like to ask you",
+               (f"{first}, before our interview on {show.name}: tell me about you" if unknown else
+                f"{first}, what I would like to ask you on {show.name}"),
                html, cc_operator=True, cc=[str(app.get("publicist_email") or "")])
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
               {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat(),

@@ -421,6 +421,15 @@
           pollPresence();
           return;
         }
+        // Oct 22 2026: the interview already happened (the page was left
+        // open, or the link was opened again afterwards). Say so and stop;
+        // it used to say "Mira is getting the studio ready" forever.
+        if (s.ended) {
+          document.getElementById("checkMsg").textContent = "This interview has finished. Thank you!";
+          document.getElementById("checkDetail").textContent =
+            "Mira will email you the episode and its transcript to review before anything is published. You can close this page.";
+          return;
+        }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
         // Oct 5 2026 (Jon Cheney): at the start time this said "you're
         // early" for ten minutes. A guest who is on time is never told that.

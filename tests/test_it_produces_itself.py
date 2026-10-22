@@ -194,7 +194,7 @@ class TestPatrickIsToldWhatChanges:
 
     def test_an_episode_with_no_lessons_says_so(self):
         body = _pyfn("improvement_summary", self.LEARNING)
-        assert "Nothing to change from this one" in body
+        assert "No new lessons proposed from this" in body
 
     def test_the_grade_rides_with_it(self):
         body = _pyfn("improvement_summary", self.LEARNING)
@@ -1599,8 +1599,10 @@ class TestPatrickIsToldWhatWasDoneToTheTapes:
             "bleed": {"guest": {"bleed": True, "own_db": -29.5, "bleed_db": -47.1,
                                 "muted_sec": 372.0}}}}}
         note = _placement_notes(run)
-        assert "placed in 2 pieces" in note and "25:55" in note
-        assert "18 dB under its own" in note and "372s" in note
+        # Oct 22 2026: what to listen for, in words Patrick can act on.
+        assert "Listen around 25:55" in note and "Mira's recording skipped" in note
+        assert "speakers rather than headphones" in note and "about 6 minutes" in note
+        assert "dB" not in note and "pieces" not in note
         assert _placement_notes({"grok_session_log": {"tracks": {}}}) == ""
         assemble = (V / "assemble_edit.py").read_text(encoding="utf-8")
         assert "+ _placement_notes(run)" in assemble

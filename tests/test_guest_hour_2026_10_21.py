@@ -53,10 +53,12 @@ class _Show:
 
 
 class TestTheThankYou:
-    def test_the_moments_are_the_guests_own_lines_with_a_figure_or_a_name(self):
+    def test_the_moments_are_the_guests_own_answers_with_a_name(self):
         moments = gt.memorable_moments(TRANSCRIPT, "Jane Doe")
         texts = [t for _at, t in moments]
-        assert len(texts) == 3
+        # Oct 22 2026: only answers to Mira's questions, whole sentences.
+        assert len(texts) == 2
+        assert "Acme Corp" in texts[0] and "Toronto" in texts[1]
         assert all(t in TRANSCRIPT for t in texts)                  # verbatim
         assert not any("sharp distinction" in t for t in texts)      # never Mira's
         assert not any("everyone in Toronto hired" in t for t in texts)  # never the co-host's
@@ -79,7 +81,7 @@ class TestTheThankYou:
         monkeypatch.setattr(gt, "show_for", lambda i, a: _Show())
         iv, app, pkg = {"session_kind": "interview"}, {"name": "Jane Doe", "email": "j@x.io"}, {"id": "p1"}
         assert gt.send_thank_you({}, iv, app, TRANSCRIPT, pkg) is True
-        assert sent == [("j@x.io", "Thank you for today, Jane — and what happens next")]
+        assert sent == [("j@x.io", "Thank you for today, Jane, and what happens next")]
         assert writes[0][0] == "editorial_packages" and "thanks_sent_at" in writes[0][2]
         assert gt.send_thank_you({}, iv, app, TRANSCRIPT, {"id": "p1", "thanks_sent_at": "x"}) is False
         assert len(sent) == 1

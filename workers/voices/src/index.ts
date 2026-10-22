@@ -3556,9 +3556,17 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   // at awaiting_guest, so his old link would have opened a live room.
   const dead = DEAD_INTERVIEW_STATUSES.has(String(iv.status));
   const run = !dead && latest && JOINABLE_RUN_STATUSES.has(String(latest.status)) ? latest : null;
+  // Oct 22 2026: the interview has already happened. Cory O'Daniel, Jason
+  // Shumard and Stan Lewis each left the studio page open after the room
+  // closed; the page kept asking, there was no joinable run (the run was
+  // completed), and every one of them sent Patrick "is in the studio and it
+  // has not opened" and dispatched a fire tick for nothing. A finished run is
+  // not a missing one: the page is told the interview is over, and nobody is
+  // alerted.
+  const ended = !run && Boolean(latest) && String(latest.status) === "completed";
   // Nothing prepared and the guest is here: ask for the run now, and tell
   // Patrick once, so nobody waits in an empty room without him knowing.
-  const waitingForRun = !run && openNow && !(latest && latest.status === "staged");
+  const waitingForRun = !run && !ended && openNow && !(latest && latest.status === "staged");
   if (waitingForRun) await rescueStudio(env, iv, show, role);
   const hostMode = latest ? latest.host_mode !== false : iv.host_mode !== false;
   return json({
@@ -3580,6 +3588,8 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     // The studio would be open by now; it is being prepared. The page says
     // so instead of "you're early".
     opening: waitingForRun,
+    // The interview is over (Oct 22 2026); the page says thank you.
+    ended,
   });
 }
 

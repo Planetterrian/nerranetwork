@@ -1039,6 +1039,9 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
                          + "</li>")
         parts.append("</ul>")
     else:
-        parts.append("<p>Nothing to change from this one, which is the right "
-                     "answer for a clean interview.</p>")
+        # Oct 22 2026: this used to say "Nothing to change from this one, which
+        # is the right answer for a clean interview" under a 4.0. Under the
+        # weekly pass an empty list only means nothing new was proposed.
+        parts.append("<p style='color:#555'>No new lessons proposed from this "
+                     "tape.</p>")
     return "".join(parts)

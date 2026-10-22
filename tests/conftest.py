@@ -24,6 +24,24 @@ sys.path.insert(0, str(DIGESTS_DIR))
 
 
 # ---------------------------------------------------------------------------
+# Tests never send real mail (Oct 22 2026)
+# ---------------------------------------------------------------------------
+# On Oct 19 a local test run with the real keys in the shell emailed Patrick
+# "Sheldon Poon wrote to me: needs you" with a link to thread "t6": both are
+# fixtures from test_the_first_reply_does_the_work.py, whose hold note was
+# not mocked. Every test starts with the providers' keys removed; a test that
+# needs one sets a fake value itself (and mocks the request).
+_REAL_SENDERS = ("RESEND_API_KEY", "POSTMARK_TOKEN", "SLACK_WEBHOOK",
+                 "NOTIFICATION_WEBHOOK_URL", "TWILIO_AUTH_TOKEN", "TELNYX_API_KEY")
+
+
+@pytest.fixture(autouse=True)
+def _no_real_mail(monkeypatch):
+    for key in _REAL_SENDERS:
+        monkeypatch.delenv(key, raising=False)
+
+
+# ---------------------------------------------------------------------------
 # Sample digest / transcript text
 # ---------------------------------------------------------------------------
 
