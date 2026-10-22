@@ -1646,6 +1646,31 @@
                 </div>
             </section>
             {% endif %}
+            {#- Same-show mesh (Oct 22 2026 crawl pass): 3–5 neighbour
+                episode links + the show hub, so crawl paths reach older
+                posts without depending on deep archive page N. Data from
+                generate_html.more_from_show_episodes (Jinja global) — no
+                engine/** change. -#}
+            {% if more_from_show_episodes is defined and episode_num is defined and show_slug %}
+            {% set _more = more_from_show_episodes(show_slug, episode_num, limit=5) %}
+            {% if _more %}
+            <section class="blog-related" id="more-from-show" style="margin-top:1.4rem;">
+                <h2>More from {{ show_name }}</h2>
+                <div class="blog-related-grid">
+                    {% for mp in _more %}
+                    <a href="{{ mp.url }}" class="blog-related-card" style="--card-show-color: {{ show_color }}">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, {{ show_color }}, white 35%)">Ep {{ mp.episode_num }}</span>
+                        <h3>{{ mp.title }}</h3>
+                    </a>
+                    {% endfor %}
+                </div>
+                <p style="margin:.85rem 0 0;font-size:.9rem;">
+                    {% if show_page %}<a href="{{ path_prefix }}{{ show_page }}" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{{ show_name }} show page</a><span aria-hidden="true"> · </span>{% endif %}
+                    <a href="{{ blog_index_url }}" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">All {{ show_name }} episodes</a>
+                </p>
+            </section>
+            {% endif %}
+            {% endif %}
             <!-- Cross-show Recommendations -->
             {% if related_posts %}
             <section class="blog-related">

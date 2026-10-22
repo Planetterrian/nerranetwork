@@ -228,6 +228,9 @@ class TestBlogPagination:
         second = (tesla_blog / "page2.html").read_text(encoding="utf-8")
         assert 'rel="next"' in first and 'rel="prev"' not in first
         assert 'rel="prev"' in second and 'rel="next"' in second
+        # Oct 22 2026: head rel links are absolute (match self-canonical).
+        assert 'rel="next" href="https://nerranetwork.com/blog/tesla/page2.html"' in first
+        assert 'rel="prev" href="https://nerranetwork.com/blog/tesla/index.html"' in second
 
     def test_each_page_is_its_own_canonical(self, tesla_blog):
         """Pointing them all at page 1 tells a crawler the archive is a
