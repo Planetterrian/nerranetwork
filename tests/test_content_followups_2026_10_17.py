@@ -89,14 +89,43 @@ class TestBoardIsNotARepeat:
         assert {a["board_venue"] for a in arts} == {"Polymarket", "Manifold"}
 
     def test_recurrence_skips_board_markets_that_ran_before(self):
-        tracker = json.loads((DIGESTS / "prediction_markets"
-                              / "prediction_markets_content_tracker.json").read_text())
-        episodes = tracker["episodes"]
-        today = [e for e in episodes if e["date"] == "2026-10-17"][0]
-        board = [h for h in today["headlines"]
-                 if h.split(":")[0] in ("Polymarket", "Kalshi", "Manifold")]
+        # Pin Ep025 (2026-10-17) board titles + a minimal prior index.
+        # The live content tracker rotates (that day's entry was rewritten
+        # 40 → 6 headlines by 2026-10-22), so reading digests/ here is not
+        # a stable guard. Digests stay untouched.
+        board = [
+            "Manifold: Does Claude Opus 5.5 make egregious errors?",
+            "Manifold: Will a large language model beat a super grandmaster playing chess by EOY 2028?",
+            "Kalshi: Which party will win the U.S. House?",
+            "Kalshi: 2026 Midterms: Congress Balance of Power?",
+            "Kalshi: 2028 Democratic presidential nominee",
+            "Kalshi: Who will be Trump's next Press Secretary?",
+            "Polymarket: US-Iran ceasefire continues through...?",
+            "Polymarket: Brazil Presidential Election",
+            "Polymarket: Republican Presidential Nominee 2028",
+            "Polymarket: Israel x Iran ceasefire continues through...?",
+        ]
         assert len(board) == 10
-        index = RecurrenceIndex([e for e in episodes if e["date"] < "2026-10-17"])
+        prior = [
+            {"date": "2026-09-23", "headlines": [
+                "Kalshi: Which party will win the U.S. House?",
+                "Kalshi: 2026 Midterms: Congress Balance of Power?",
+                "Kalshi: 2028 Democratic presidential nominee",
+                "Polymarket: Republican Presidential Nominee 2028",
+                "Polymarket: Brazil Presidential Election",
+            ]},
+            {"date": "2026-09-27", "headlines": [
+                "Polymarket: US-Iran ceasefire continues through...?",
+                "Polymarket: Israel x Iran ceasefire continues through...?",
+            ]},
+            {"date": "2026-10-11", "headlines": [
+                "Kalshi reviews small bets that correctly predicted Trump’s next press secretary",
+            ]},
+            {"date": "2026-10-12", "headlines": [
+                "Manifold: Will a large language model beat a super grandmaster playing chess by EOY 2028?",
+            ]},
+        ]
+        index = RecurrenceIndex(prior)
         plain = [{"title": h} for h in board]
         # The defect: nine of ten markets carried "pick a different story".
         assert len(annotate_articles(plain, index)) == 9
