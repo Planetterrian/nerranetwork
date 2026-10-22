@@ -2554,6 +2554,30 @@ def _get_jinja_env():
 # Summaries pages
 # ---------------------------------------------------------------------------
 
+#: Markdown links left as text on summaries SSR cards (Nerra Daily emits
+#: ``[Full episode notes](/blog/<slug>/epNNN.html)``; engine/summaries_ssr
+#: deliberately does not linkify). Without this pass crawlers request the
+#: path including the closing ``)``. Mirrors templates/summaries_page.html.j2
+#: ``linkify`` for relative + https destinations.
+_SUMMARY_MD_LINK_RE = re.compile(
+    r"\[([^\]]+)\]\(((?:https?://|/)[^)\s]+)\)"
+)
+
+
+def _linkify_summary_md_links(html: str) -> str:
+    """Turn residual ``[label](/path)`` text inside SSR summary HTML into anchors."""
+    if not html or "[" not in html:
+        return html
+
+    def _repl(match: re.Match) -> str:
+        label, href = match.group(1), match.group(2)
+        return (
+            f'<a href="{href}" target="_blank" rel="noopener">{label}</a>'
+        )
+
+    return _SUMMARY_MD_LINK_RE.sub(_repl, html)
+
+
 def generate_summaries_page(slug, *, dry_run=False, output_dir=None):
     """Render and write a summaries page for a single show.
 
@@ -2600,8 +2624,11 @@ def generate_summaries_page(slug, *, dry_run=False, output_dir=None):
         # of the network's most-visited show. The script still replaces the
         # whole container on load, so these are a floor rather than a second
         # implementation to keep in sync.
-        "ssr_cards": _summaries_ssr.summary_cards(
-            ROOT / cfg.get("json_path", ""), slug),
+        "ssr_cards": [
+            {**card, "summary_html": _linkify_summary_md_links(card.get("summary_html") or "")}
+            for card in _summaries_ssr.summary_cards(
+                ROOT / cfg.get("json_path", ""), slug)
+        ],
         **_read_show_youtube(slug),
     }
 

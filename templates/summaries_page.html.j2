@@ -569,9 +569,14 @@
         // second regex match the URL inside the href the first had just
         // written, and every summaries page printed
         // `" target="_blank" rel="noopener">x.com` as text (Oct 2026 review).
+        // Relative markdown destinations (`[Full episode notes](/blog/…html)`)
+        // must match too: Nerra Daily digests emit those, and the old pattern
+        // only accepted https?:// — the path stayed as text and crawlers /
+        // autolinkers requested `/blog/…html)` including the markdown closer
+        // (266 GA4 page_not_found events, Sep 20–Oct 17 2026).
         function linkify(text) {
             return text.replace(
-                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<"]*[^\s<".,;:!?)])/g,
+                /\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)|(https?:\/\/[^\s<"]*[^\s<".,;:!?)])/g,
                 (m, label, href, bare) => bare
                     ? '<a href="' + bare + '" target="_blank" rel="noopener">' + bare + '</a>'
                     : '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>');

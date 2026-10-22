@@ -1,5 +1,49 @@
 {% extends "base.html.j2" %}
 
+{% block head_early %}
+    {#- Oct 22 2026: GitHub Pages has no server 301s. Two GA4 shapes land on
+        this page with a recoverable path — a real URL plus a stray trailing
+        ")" / "%29" (266 of 310 page_not_found in Sep 20–Oct 17), and the old
+        DP Pod chrome resolving blog/<show> one directory too deep. Strip or
+        rewrite ONLY those shapes; every other unknown URL still shows 404. -#}
+    <script>
+      (function () {
+        var path = location.pathname || '';
+        var search = location.search || '';
+        var hash = location.hash || '';
+        // Trailing ")" or "%29", possibly repeated (copy/paste of markdown
+        // `[text](/blog/...html)` leaves the closer on the path).
+        var cleaned = path;
+        var stripped = false;
+        while (cleaned.length > 1) {
+          if (cleaned.charAt(cleaned.length - 1) === ')') {
+            cleaned = cleaned.slice(0, -1);
+            stripped = true;
+            continue;
+          }
+          var lower = cleaned.toLowerCase();
+          if (lower.length >= 3 && lower.slice(-3) === '%29') {
+            cleaned = cleaned.slice(0, -3);
+            stripped = true;
+            continue;
+          }
+          break;
+        }
+        if (stripped && cleaned !== path && cleaned.length > 0) {
+          location.replace(cleaned + search + hash);
+          return;
+        }
+        // /blog/dp_pod/blog/<show>/index.html → /blog/<show>/index.html
+        // (and /blog/dp_pod/blog/index.html → /blog/index.html).
+        var m = path.match(/^\/blog\/dp_pod\/blog\/([a-z0-9_]+\/)?index\.html$/i);
+        if (m) {
+          var show = m[1] || '';
+          location.replace('/blog/' + show + 'index.html' + search + hash);
+        }
+      })();
+    </script>
+{% endblock %}
+
 {% block head_extra %}
     {# Error pages must never be indexed — without this the 404 page is a
        crawlable "content" page (June 2026 website review). #}

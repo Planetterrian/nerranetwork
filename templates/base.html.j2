@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {#- Runs before fonts, consent, and analytics. 404.html uses this so a
+        mis-copied path can location.replace before page_not_found fires. -#}
+    {% block head_early %}{% endblock %}
     {#- Oct 18 2026: a page with no description of its own introduces the
         network by its tagline and promise (engine.brand), never by one show. -#}
     {%- set _nn_default_desc = (network_tagline ~ ' ' ~ network_promise()) if network_promise is defined else 'News and podcasts from Nerra Network.' -%}
