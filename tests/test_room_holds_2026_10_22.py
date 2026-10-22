@@ -287,3 +287,13 @@ class TestTheFixtureFollowsTheRef:
         assert "inputs.candidate_scenario || inputs.with_hold" in step
         assert "upload_fixture_scenario()" in step
         assert REHEARSAL_WF.index("Upload this ref's fixture guest") < REHEARSAL_WF.index("- name: Rehearse the current configuration")
+
+
+class TestTheRehearsalInstallsFfmpegWithoutApt:
+    def test_static_ffmpeg_not_the_apt_mirror(self):
+        # Oct 22 2026: three rehearsals died at exit 124 in the apt install
+        # before any room ran; test.yml's pinned static build is used instead.
+        assert "./.github/actions/setup-ffmpeg" not in REHEARSAL_WF
+        assert "BTBN_TAG: autobuild-" in REHEARSAL_WF
+        assert "sha256sum -c -" in REHEARSAL_WF
+        assert REHEARSAL_WF.index("Add ffmpeg to PATH") < REHEARSAL_WF.index("- name: Rehearse the current configuration")
