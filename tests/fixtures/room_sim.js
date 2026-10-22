@@ -121,6 +121,13 @@ function miraFinishes(text) {
   ctx.__text = text;
   run("miraSpeaking = false; remember('Mira', __text); armDeadAir();");   // what ResponseDone does
 }
+// A line as 3.0 delivers it: the transcript is done (and generation with it)
+// long before the guest has heard the end of the audio.
+function miraFinishesLine(text) {
+  ctx.__text = text;
+  run("noteMiraLineSpoken(__text); miraSpeaking = false; remember('Mira', __text); armDeadAir();");
+}
+function words(n) { return Array.from({ length: n }, function (_, i) { return "word" + i; }).join(" ") + "?"; }
 function state() {
   return run(`({ roundActive, roundIndex, roundAwaitingAnswer, roundClosed, holdMode,
     serverTurnsRerouted, pendingTurn, miraSpeaking, holdResumeOwed, guestAskedToStop })`);
@@ -253,6 +260,43 @@ if (which === "server_turns_advance_the_round") {
   advance(40 * 1000);
   out.events = events.slice();
   out.nudges = run("deadAirNudgesTotal");
+} else if (which === "long_line_dead_air") {
+  // Oct 22 2026 candidate rehearsal: a 60-word line plays for ~24 s after it
+  // has been generated; the silence starts when she stops being heard.
+  roomTurnStarts();
+  miraFinishesLine(words(60));
+  events.length = 0;
+  advance(30 * 1000);
+  out.during = events.slice();
+  advance(20 * 1000);
+  out.after = events.slice();
+  out.nudges = run("deadAirNudgesTotal");
+} else if (which === "turn_waits_for_her_audio") {
+  // The room asks for a turn while her last line is still playing: it waits.
+  roomTurnStarts();
+  miraFinishesLine(words(60));
+  events.length = 0;
+  advance(1000);
+  run("requestTurn(grokAgent);");
+  out.immediately = events.slice();
+  out.pending = run("pendingTurn");
+  advance(25 * 1000);
+  out.after = events.slice();
+} else if (which === "pause_inside_her_line") {
+  // A pause the room hears while her own line still plays is not the guest's.
+  roomTurnStarts();
+  miraFinishesLine(words(60));
+  events.length = 0;
+  guestSays("Mm.", 600);
+  run("miraAudibleUntil = Date.now() + 10000;");
+  advance(1500);
+  out.immediately = events.slice();
+} else if (which === "cleared_audio_is_silent") {
+  roomTurnStarts();
+  miraFinishesLine(words(60));
+  out.before = run("miraAudible()");
+  run("miraSilenced();");
+  out.after = run("miraAudible()");
 } else if (which === "dead_air_waits_for_a_thinker") {
   // A guest who starts talking inside the twenty seconds is never nudged.
   roomTurnStarts();

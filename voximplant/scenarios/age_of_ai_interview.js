@@ -672,6 +672,20 @@ let turnWaitedForWords = false;   // decideTurn already waited once for a transc
 let turnWaitedToThink = false;    // decideTurn already waited once on an unfinished clause
 let miraLineIndex = -1;           // transcript index of her last line (the guest delta starts after it)
 let currentResponseText = "";     // what she has said so far on the response in flight
+// Oct 22 2026 (the candidate rehearsal). response.done marks the end of
+// GENERATION: a line that takes forty seconds to say is generated in a few,
+// and the rest plays out of the media buffer. The room had read response.done
+// as the end of her line, so it gave her another turn and started the
+// dead-air clock while she was still talking, and the guest heard the welcome
+// twice in one 58-second monologue. miraAudibleUntil is when her audio ends,
+// estimated from the words of the line (and pushed back when lines queue);
+// cleared whenever the room clears her audio.
+// Measured on that room's own recording: 87 words in ~24 s, 103 in ~30 s
+// (~0.29 s a word). Set a little long, so she is never judged finished early.
+const MIRA_MS_PER_WORD = 320;
+let miraAudibleUntil = 0;
+let responseStartedAt = 0;
+let audibleTimer = null;
 let responseCancelledEarly = false; // this response was cut by the room before it finished
 let rotationDue = false;          // the session hand-over is waiting for a pause
 let rotateForceTimer = null;
@@ -748,6 +762,32 @@ let deadAirTimer = null;
 let deadAirNudges = 0;
 let deadAirNudgesTotal = 0;
 
+/** Her audio is still playing out of the buffer. */
+function miraAudible() {
+  return Date.now() < miraAudibleUntil;
+}
+
+/** A line of hers has been generated: when will the guest stop hearing it? */
+function noteMiraLineSpoken(text) {
+  const words = (String(text || "").match(/\S+/g) || []).length;
+  if (!words) return;
+  const start = Math.max(responseStartedAt || Date.now(), miraAudibleUntil, 0);
+  miraAudibleUntil = start + words * MIRA_MS_PER_WORD;
+}
+
+/** The room cleared her audio (a barge-in, a cancelled turn): it has stopped. */
+function miraSilenced() {
+  miraAudibleUntil = Math.min(miraAudibleUntil, Date.now());
+}
+
+/** Do this once her audio has played out (now if it already has). */
+function afterMiraAudio(fn) {
+  if (audibleTimer) { clearTimeout(audibleTimer); audibleTimer = null; }
+  const wait = miraAudibleUntil - Date.now();
+  if (wait <= 0) { fn(); return; }
+  audibleTimer = setTimeout(function () { audibleTimer = null; fn(); }, wait);
+}
+
 function cancelDeadAir() {
   if (deadAirTimer) { clearTimeout(deadAirTimer); deadAirTimer = null; }
 }
@@ -756,7 +796,8 @@ function cancelDeadAir() {
 function armDeadAir() {
   cancelDeadAir();
   if (roomEnded || holdMode || !openingFired || legs.length === 0) return;
-  deadAirTimer = setTimeout(deadAirCheck, DEAD_AIR_MS);
+  // The silence starts when she stops being heard, not when her line was made.
+  deadAirTimer = setTimeout(deadAirCheck, DEAD_AIR_MS + Math.max(0, miraAudibleUntil - Date.now()));
 }
 
 function deadAirCheck() {
@@ -765,7 +806,7 @@ function deadAirCheck() {
   // Nobody is in the room to answer (a guest who dropped is given the
   // rejoin grace); a nudge there is her talking to herself.
   if (legs.length === 0) return;
-  if (inboundSpeaking || miraSpeaking || pendingTurn) { armDeadAir(); return; }
+  if (inboundSpeaking || miraSpeaking || pendingTurn || miraAudible()) { armDeadAir(); return; }
   if (deadAirNudges >= DEAD_AIR_MAX_NUDGES) {
     trace("turn", "dead air continues; no more nudges until someone speaks");
     return;
@@ -825,8 +866,8 @@ function holdCheckIn() {
   try {
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROOM — system note, do not read aloud] They have been away a few minutes. Say" +
-        " ONE short line: you are still here whenever they are ready. Nothing else, no" +
+        "[ROOM — system note, do not read aloud] They have been away a few minutes. In a" +
+        " few spoken words, tell them you are still here and ready whenever they are. No" +
         " question, nothing about what you heard, and never a goodbye." }] },
     });
     holdCheckInRequested = true;
@@ -1204,6 +1245,15 @@ function requestTurn(agent) {
   // dropped, not parked: the exit note says what to do when they are back.
   if (holdMode && !holdCheckInRequested) return;
   if (miraSpeaking) { pendingTurn = true; return; }
+  // Oct 22 2026: nor over her own line still playing; the turn goes when the
+  // guest has heard the end of it (unless they start talking first).
+  if (miraAudible()) {
+    pendingTurn = true;
+    afterMiraAudio(function () {
+      if (pendingTurn && !inboundSpeaking && !miraSpeaking && grokAgent) requestTurn(grokAgent);
+    });
+    return;
+  }
   // Oct 21 2026: never over the guest. The decision after their next pause
   // gives her the turn (decideTurn honours pendingTurn without needing new
   // guest words, since the note that asked is already in her context).
@@ -1264,6 +1314,9 @@ function scheduleTurnDecision(delayMs) {
 function decideTurn() {
   turnDecisionTimer = null;
   if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
+  // A pause the room hears while her own line is still playing is hers, not
+  // the guest's: decide when it ends.
+  if (miraAudible()) { scheduleTurnDecision(miraAudibleUntil - Date.now() + TURN_DECIDE_MS); return; }
   if (holdMode) { holdPausesSkipped += 1; return; }
   const owed = pendingTurn;
   const spoke = guestSpokeSinceMira || hostSpokeSinceMira;
@@ -1519,7 +1572,7 @@ async function createAgent(note) {
     // per-leg microphone state says only a host leg is live, she finishes
     // her sentence; he is heard and answered on her next turn.
     if (hostOnly) { if (miraSpeaking) trace("turn", "co-host spoke during her turn; not a barge-in"); return; }
-    agent.clearMediaBuffer();
+    agent.clearMediaBuffer(); miraSilenced();
     if (!miraSpeaking) return;
     miraSpeaking = false;
     try {
@@ -1558,7 +1611,10 @@ async function createAgent(note) {
   try {
     if (Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDone,
-        function (ev) { remember("Mira", textOf(ev)); });
+        function (ev) {
+          if (agent === grokAgent && !responseCancelledEarly) noteMiraLineSpoken(textOf(ev));
+          remember("Mira", textOf(ev));
+        });
     }
     // Oct 22 2026: the named event is how 3.0 delivers the guest's words
     // (read from the session log of a candidate rehearsal); the Unknown path
@@ -1636,6 +1692,7 @@ function markTurnStarted(agent) {
   miraSpeaking = true;
   currentResponseText = "";
   responseCancelledEarly = false;
+  responseStartedAt = Date.now();
   cancelTurnDecision();
   const requested = turnRequested;
   turnRequested = false;
@@ -1656,7 +1713,7 @@ function markTurnStarted(agent) {
       try {
         if (agent.responseCancel) agent.responseCancel();
         else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
-        agent.clearMediaBuffer();
+        agent.clearMediaBuffer(); miraSilenced();
       } catch (err) { /* best-effort */ }
       trace("turn", "cancelled a turn nobody had asked for (#" + selfAnswersBlocked + "): no guest words since her last line");
       return;
@@ -1675,7 +1732,7 @@ function markTurnStarted(agent) {
       try {
         if (agent.responseCancel) agent.responseCancel();
         else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
-        agent.clearMediaBuffer();
+        agent.clearMediaBuffer(); miraSilenced();
       } catch (err) { /* best-effort */ }
       if (serverTurnsRerouted <= 3 || serverTurnsRerouted % 10 === 0) {
         trace("turn", "server turn after guest speech cancelled; the room decides it (#" + serverTurnsRerouted + ")");
@@ -1691,7 +1748,7 @@ function markTurnStarted(agent) {
     try {
       if (agent.responseCancel) agent.responseCancel();
       else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
-      agent.clearMediaBuffer();
+      agent.clearMediaBuffer(); miraSilenced();
     } catch (err) { /* best-effort */ }
     trace("hold", "stopped a turn while the guest was away");
     return;
@@ -2618,7 +2675,7 @@ function catchEarlyCloseOnDelta(textSoFar) {
   try {
     if (grokAgent.responseCancel) grokAgent.responseCancel();
     else if (grokAgent.send) grokAgent.send(JSON.stringify({ type: "response.cancel" }));
-    grokAgent.clearMediaBuffer();
+    grokAgent.clearMediaBuffer(); miraSilenced();
   } catch (err) { /* best-effort; the after-the-fact rule still runs */ }
   trace("close", "cancelled mid-sentence: " + why);
   if (!rescueAllowed()) return;

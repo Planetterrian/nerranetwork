@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import subprocess
 from pathlib import Path
 
@@ -112,7 +111,11 @@ class TestHoldMode:
     def test_one_short_line_after_three_minutes(self):
         out = sim("hold_mode")
         assert out["checkIn"]["events"][-1] == "create"
-        assert any("you are still here whenever they are ready" in n for n in out["checkIn"]["notes"])
+        assert any("you are still here and ready whenever they are" in n for n in out["checkIn"]["notes"])
+        # The candidate rehearsal's check-in came out as the one word
+        # "Silence." under "Nothing else": the note asks for spoken words.
+        assert "Nothing else" not in out["checkIn"]["notes"][-1]
+        assert "spoken words" in out["checkIn"]["notes"][-1]
         assert "never a goodbye" in out["checkIn"]["notes"][-1]
         assert "const HOLD_CHECK_IN_MS = 3 * 60 * 1000;" in SCENARIO
 
@@ -423,3 +426,40 @@ class TestTheRehearsalInstallsFfmpegWithoutApt:
         assert "BTBN_TAG: autobuild-" in REHEARSAL_WF
         assert "sha256sum -c -" in REHEARSAL_WF
         assert REHEARSAL_WF.index("Add ffmpeg to PATH") < REHEARSAL_WF.index("- name: Rehearse the current configuration")
+
+
+class TestHerLineEndsWhenItIsHeard:
+    """The candidate rehearsal (run 1ca8839a): response.done marks the end of
+    GENERATION, and a forty-second line is generated in a few seconds. The
+    room read it as the end of her line, gave her another turn and started the
+    dead-air clock while she was still talking: the guest heard the welcome
+    twice in one 58-second monologue, and the dead-air re-ask counted as her
+    answering herself."""
+
+    def test_the_silence_starts_when_her_audio_ends(self):
+        out = sim("long_line_dead_air")
+        assert "create" not in out["during"]   # 30 s in: still talking + 6 s
+        assert "create" in out["after"]
+        assert out["nudges"] == 1
+
+    def test_a_turn_waits_for_her_audio(self):
+        out = sim("turn_waits_for_her_audio")
+        assert "create" not in out["immediately"]
+        assert out["pending"] is True
+        assert "create" in out["after"]
+
+    def test_a_pause_inside_her_line_gives_no_turn(self):
+        out = sim("pause_inside_her_line")
+        assert "create" not in out["immediately"]
+
+    def test_cleared_audio_is_silent(self):
+        out = sim("cleared_audio_is_silent")
+        assert (out["before"], out["after"]) == (True, False)
+
+    def test_every_clear_of_her_audio_marks_her_silent(self):
+        assert SCENARIO.count("clearMediaBuffer();") == SCENARIO.count("clearMediaBuffer(); miraSilenced();")
+
+    def test_the_estimate_comes_from_her_spoken_line(self):
+        body = SCENARIO[SCENARIO.index("ResponseOutputAudioTranscriptDone,"):]
+        body = body[:body.index("});")]
+        assert "noteMiraLineSpoken(textOf(ev))" in body
