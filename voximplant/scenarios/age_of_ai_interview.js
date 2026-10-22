@@ -737,7 +737,13 @@ const HOLD_ENTER_RE = /\b((i (have|need|got|gotta) to|let me|i'?ll( just)?|i'?m 
 // Mira saying she will wait is the same signal from the other side.
 const MIRA_HOLD_RE = /\b(i'?ll wait|i will wait|i'?ll be (right )?here|i'?ll hold|whenever you'?re back)\b/i;
 // The guest turning back to her.
-const HOLD_EXIT_RE = /\b(m(i|ee)ra|sorry about that|sorry (for|about) the (wait|interruption)|(i'?m|i am) back|where were we|thanks for (waiting|your patience|bearing with me)|back to (you|it|our|the)|(okay|ok|all right|alright),? (i'?m|i am) (here|back))\b/i;
+const HOLD_EXIT_RE = /\b(m(i|ee)ra|sorry about that|sorry (for|about) the (wait|interruption)|(i'?m|i am) back|where were we|thanks for (waiting|your patience|bearing with me)|back to (you|it|our|the)|you were (asking|saying)|your question|(as|like) i was saying|(okay|ok|all right|alright),? (i'?m|i am) (here|back))\b/i;
+// "Back." said as its own sentence: the fourth rehearsal's guest came back on
+// "Back. That was my ... Anyway, you were asking ..." and the room, hearing no
+// exit phrase, held her silent for two and a half minutes.
+const HOLD_BACK_RE = /(^|[.!?]\s+)((ok(ay)?|all right|alright),?\s+)?back[.!]/i;
+/** Their words say they are talking to her again. */
+function turnsBack(text) { return HOLD_EXIT_RE.test(text) || HOLD_BACK_RE.test(text); }
 let holdMode = false;
 let holdSince = 0;
 let holdTimer = null;
@@ -939,7 +945,7 @@ function noteSpeechEnded(ms) {
 function noteHoldFromGuest(text) {
   const t = String(text || "");
   if (holdMode) {
-    if (HOLD_EXIT_RE.test(t)) { exitHold("they turned back to her"); return; }
+    if (turnsBack(t)) { exitHold("they turned back to her"); return; }
     if (holdCheckInAt && Date.now() - holdCheckInAt < HOLD_REPLY_WINDOW_MS) { exitHold("they answered her check-in"); return; }
     return;
   }

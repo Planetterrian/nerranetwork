@@ -180,9 +180,26 @@ class TestHoldMode:
         "Okay, I'm back.",
         "Mira, thanks for waiting.",
         "Thanks for your patience.",
+        # The fourth rehearsal's guest came back on these and was held two
+        # and a half minutes more.
+        "Back. That was my plumber. Anyway, you were asking what it looked like.",
+        "Okay, back. Sorry.",
+        "Anyway, as I was saying, the team changed.",
+        "Right, your question about the team.",
     ])
     def test_turning_back_is_heard(self, text):
         assert sim("phrases", [text])["phrases"][0]["exit"], text
+
+    @pytest.mark.parametrize("text", [
+        "Hey, yeah, I'm here.",
+        "No, that's fine. Two o'clock works.",
+        "I'll call you back.",
+        "Can you do three instead? Text me the address.",
+        "Thanks, appreciate it. Talk soon, bye.",
+        "He'd come back from the office late.",
+    ])
+    def test_a_phone_call_does_not_end_the_hold(self, text):
+        assert not sim("phrases", [text])["phrases"][0]["exit"], text
 
     def test_her_saying_she_will_wait_is_a_hold(self):
         out = sim("phrases", ["Of course, I'll wait.", "Take your time with that answer."])
