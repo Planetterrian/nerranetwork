@@ -224,18 +224,11 @@
         </div>
     </section>
 
-    {#- Soft Personal one-field capture — top YouTube-landing show pages
-        (+ age_of_ai). Markup owned by soft_personal_hero_band in
-        _macros.html.j2 so home / show pages cannot drift. Soft form is
-        free interest only — never imply a paid purchase here; the paid
-        path is /join.html. -#}
-    {% if soft_personal_hero and not _is_ru %}
-    {{ soft_personal_hero_band(path_prefix, show_slug, capture_source_site) }}
-    {% elif newsletter_tag %}
+    {% if not soft_personal_hero and newsletter_tag %}
     {#- Compact above-fold newsletter capture (May 2026 audit). Worker-
         backed (not Buttondown popup) so src-* attribution and the
-        north-star path stay intact. Soft Personal hero shows above take
-        this slot on the top YouTube-landing pages. -#}
+        north-star path stay intact. Soft Personal hero shows take the
+        slot under the latest episode player instead (Oct 22 2026). -#}
     <section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
         <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
             <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
@@ -342,6 +335,15 @@
             </div>
         </div>
     </section>
+    {% endif %}
+
+    {#- Soft Personal one-field capture — top YouTube-landing show pages
+        (+ age_of_ai). Moved under the latest episode player (Oct 22 2026
+        above-fold test). Markup owned by soft_personal_hero_band so home /
+        show / blog cannot drift. Exactly ONE #soft-personal-hero; free
+        interest only — paid path is /join.html. Source src-above_fold. -#}
+    {% if soft_personal_hero and not _is_ru %}
+    {{ soft_personal_hero_band(path_prefix, show_slug) }}
     {% endif %}
 
     {% if performance_data and performance_data.available %}

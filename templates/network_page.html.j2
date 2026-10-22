@@ -364,6 +364,14 @@
     </div>
 </div></header>
 
+{#- The homepage's one email ask (Oct 9 2026 "Homepage Soft-only"), moved
+    above the fold under the masthead (Oct 22 2026 placement test). Exactly
+    one #home-soft-personal / #soft-personal-hero — never duplicated lower.
+    Source src-above_fold (macro default) so GA can tell this surface. -#}
+<div class="lt-soft container">
+{{ soft_personal_hero_band(path_prefix, 'network', wrapper_id='home-soft-personal') }}
+</div>
+
 {#- Markets & launches: committed files only, each value under its as-of
     date (engine.newsroom.market_strip). A stale or undated value is absent. -#}
 {%- set mk = markets -%}
@@ -572,14 +580,6 @@
 {% endif %}
 
 {% endif %}{#- p.lead -#}
-
-{#- The homepage's one email ask (Oct 9 2026 "Homepage Soft-only"): Soft
-    Personal interest, never a per-show newsletter form and never a charge.
-    Rendered whatever the stories are, with the capture source engine.funnel
-    owns. -#}
-<div class="lt-soft container">
-{{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
-</div>
 
 {% if p.lead %}
 {#- Today: Nerra Daily (the whole network in one episode, hosted by Mira) and

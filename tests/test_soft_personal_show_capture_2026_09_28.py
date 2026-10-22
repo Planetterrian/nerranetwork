@@ -26,10 +26,7 @@ HERO_SLUGS = (
     "age_of_ai",
 )
 
-SOFT_HERO_COPY = (
-    "Get a quiet nudge with occasional Personal tips. "
-    "No charge, no card. Shows stay free either way."
-)
+SOFT_HERO_COPY = "Occasional Personal tips by email — no charge, no card"
 
 
 def _read(rel: str) -> str:
