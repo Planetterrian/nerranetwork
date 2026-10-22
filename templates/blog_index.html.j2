@@ -2,9 +2,17 @@
 {% from "_macros.html.j2" import soft_personal_interest %}
 
 {% block head_extra %}
-{#- A paginated series tells a crawler so in the head, not only in the body. -#}
-{% if prev_page_url %}<link rel="prev" href="{{ prev_page_url }}">{% endif %}
-{% if next_page_url %}<link rel="next" href="{{ next_page_url }}">{% endif %}
+{#- Self-referencing canonical is set in generate_blog_index_html. Deep
+    archive pages (page 3+) are thin card lists — keep them followable so
+    Google can discover the posts, but do not ask them to rank (Oct 22 2026).
+    Threshold lives on generate_html.BLOG_ARCHIVE_NOINDEX_FROM_PAGE. -#}
+{% if page is defined and page >= (BLOG_ARCHIVE_NOINDEX_FROM_PAGE | default(3)) %}
+    <meta name="robots" content="noindex, follow">
+{% endif %}
+{#- A paginated series tells a crawler so in the head, not only in the body.
+    Absolute hrefs match the self-referencing canonical shape. -#}
+{% if prev_page_url %}<link rel="prev" href="https://nerranetwork.com/blog/{{ show_slug }}/{{ prev_page_url }}">{% endif %}
+{% if next_page_url %}<link rel="next" href="https://nerranetwork.com/blog/{{ show_slug }}/{{ next_page_url }}">{% endif %}
 {#- Only advertise a blog RSS feed that exists on disk. Nerra Voices had
     posts=0 for months but still emitted blog_nerra_voices.rss (404) —
     Sep 2026 audit. Do not invent the feed file from the template. -#}
@@ -114,6 +122,15 @@
             {% endif %}
             <h1>{{ show_name }} Blog</h1>
             <p>{{ description }}</p>
+            {#- Show hub ↔ blog index (Oct 22 2026): the show page already
+                links here; this is the reciprocal crawl path. -#}
+            {% set _hub = (all_shows | selectattr('slug', 'equalto', show_slug) | list | first) if all_shows else none %}
+            <div style="display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;align-items:center;">
+            {% if _hub and _hub.show_page %}
+            <a href="{{ path_prefix }}{{ _hub.show_page }}" class="blog-rss-btn" style="border-color:color-mix(in srgb, var(--show-color) 45%, transparent);">
+                Listen to {{ show_name }}
+            </a>
+            {% endif %}
             {# The per-show blog feed is only written once a show has posts
                AND the feed file exists (Age of AI's link 404'd — Sep 2026
                review; Nerra Voices advertised a missing blog_*.rss — Sep
@@ -124,6 +141,7 @@
                 Subscribe via RSS
             </a>
             {% endif %}
+            </div>
         </div>
     </header>
 

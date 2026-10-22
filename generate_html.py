@@ -2512,6 +2512,11 @@ def _get_jinja_env():
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
+    # Same-show "More from <show>" links on episode posts (Oct 22 2026 crawl
+    # pass). Template-only surface — no engine.blog change — so crawl paths
+    # reach older episodes from any post that regenerates.
+    env.globals["more_from_show_episodes"] = more_from_show_episodes
+    env.globals["BLOG_ARCHIVE_NOINDEX_FROM_PAGE"] = BLOG_ARCHIVE_NOINDEX_FROM_PAGE
     # Oct 18 2026: the tagline and the promise lead every surface that
     # introduces the network; engine.brand owns the words. Visitor-facing
     # ``network_promise`` is count-free (operator Oct 18 follow-up) — never
@@ -5719,11 +5724,112 @@ def generate_llms_txt(*, dry_run=False):
     return text
 
 
+# ---------------------------------------------------------------------------
+# Crawl / indexing helpers (Oct 22 2026)
+# ---------------------------------------------------------------------------
+#
+# Google indexes ~1.7K of this site and sends ~14 organic sessions/month;
+# Search Console also holds hundreds of "Crawled – currently not indexed"
+# rows. These helpers concentrate crawl budget on show hubs and fresh
+# episodes, and give episode pages same-show internal links so older posts
+# are reachable without depending on deep archive page N.
+
+#: Deep blog-archive pages (page 3+) are thin card lists. Keep them
+#: crawlable (``follow``) so Google can discover the posts they list, but
+#: do not ask for them to rank — and do not put them in the sitemap.
+BLOG_ARCHIVE_NOINDEX_FROM_PAGE = 3
+
+#: Conversion / console surfaces that should not compete for crawl budget.
+#: Still linked from the site; just not advertised in sitemap.xml.
+SITEMAP_EXCLUDE_UTILITIES = frozenset({
+    "join.html",
+    "support.html",
+    "personal-interest.html",
+    "age-of-ai-apply.html",
+    "nerra-voices-apply.html",
+    "player.html",
+})
+
+
+def more_from_show_episodes(slug: str, episode_num: int, *, limit: int = 5):
+    """Nearest same-show episode posts for a "More from <show>" block.
+
+    Picks up to *limit* committed ``blog/<slug>/ep*.html`` neighbours by
+    absolute episode distance (never the current episode, never a redirect
+    stub). Returns dicts the blog_post template can render without any
+    engine.blog change.
+    """
+    try:
+        ep_num = int(episode_num)
+    except (TypeError, ValueError):
+        return []
+    if limit <= 0 or not slug:
+        return []
+
+    blog_dir = ROOT / "blog" / slug
+    if not blog_dir.is_dir():
+        return []
+
+    candidates: list[tuple[int, int, Path]] = []  # (|delta|, -ep, path)
+    for ep_file in blog_dir.glob("ep*.html"):
+        m = re.fullmatch(r"ep(\d{3})", ep_file.stem)
+        if not m:
+            continue
+        other = int(m.group(1))
+        if other == ep_num:
+            continue
+        if _is_redirect_stub(ep_file):
+            continue
+        candidates.append((abs(other - ep_num), -other, ep_file))
+
+    candidates.sort()
+    out = []
+    for _, neg_ep, ep_file in candidates[:limit]:
+        other = -neg_ep
+        title = f"Episode {other}"
+        try:
+            head = ep_file.read_text(encoding="utf-8", errors="ignore")[:8000]
+        except OSError:
+            head = ""
+        tm = re.search(r"<title>(.*?)</title>", head, re.S)
+        if tm:
+            raw = re.sub(r"\s+", " ", tm.group(1)).strip()
+            # Titles look like "Hook… — EpN | Show Name"; keep the hook side.
+            raw = re.split(r"\s+[—–-]\s+Ep\d+", raw, maxsplit=1)[0].strip()
+            if raw:
+                title = raw
+        out.append({
+            "episode_num": other,
+            "title": title,
+            "url": f"ep{other:03d}.html",
+        })
+    return out
+
+
+def blog_archive_page_number(name: str) -> int | None:
+    """``page3.html`` → 3; ``index.html`` / anything else → None."""
+    m = re.fullmatch(r"page(\d+)\.html", str(name))
+    return int(m.group(1)) if m else None
+
+
+def sitemap_should_include_blog_archive_page(name: str) -> bool:
+    """Page 1 is ``index.html``; page 2 stays in the sitemap; page 3+ do not."""
+    num = blog_archive_page_number(name)
+    if num is None:
+        return True
+    return num < BLOG_ARCHIVE_NOINDEX_FROM_PAGE
+
+
 def generate_sitemap(*, dry_run=False, out=None):
     """Write sitemap.xml. *out* overrides the destination (tests only —
     regenerating the real file outside the pipeline rewrites every
     `lastmod` from local file state; see the sitemap landmine in
-    CLAUDE.md)."""
+    CLAUDE.md).
+
+    Oct 22 2026 crawl pass: show hubs and newest episodes first; real
+    episode ``lastmod`` from ``datePublished``; deep archive pages (page
+    3+, which are ``noindex,follow``) and thin utility surfaces stay out.
+    """
     from xml.sax.saxutils import escape as _esc
     import os
     from datetime import datetime, timezone
@@ -5731,7 +5837,6 @@ def generate_sitemap(*, dry_run=False, out=None):
 
     base = "https://nerranetwork.com"
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    urls: list[tuple[str, str, str]] = []  # (loc, priority, lastmod)
 
     def _file_lastmod(path):
         """Get file modification date as YYYY-MM-DD."""
@@ -5750,37 +5855,40 @@ def generate_sitemap(*, dry_run=False, out=None):
         path = ROOT / rel
         return _file_lastmod(path) if path.exists() else today
 
-    # Landing page
-    urls.append((f"{base}/", "1.0", _lm_or_today("index.html")))
+    # Buckets keep discovery order honest: hubs before the dated archive.
+    hubs: list[tuple[str, str, str]] = []
+    secondary: list[tuple[str, str, str]] = []
+    episodes: list[tuple[str, str, str]] = []  # sorted newest-first later
 
-    # Show pages, summaries pages, blog indices — file mtime reflects
-    # when each was last regenerated (typically when a new episode
-    # publishes for that show).
+    # Landing page
+    hubs.append((f"{base}/", "1.0", _lm_or_today("index.html")))
+
+    # Show hubs first (high priority), then each show's blog index.
+    # Summaries / narrative trackers are secondary — useful but not the
+    # primary crawl target.
     for slug, cfg in NETWORK_SHOWS.items():
-        urls.append((f"{base}/{cfg['show_page']}", "0.8",
+        hubs.append((f"{base}/{cfg['show_page']}", "0.9",
                      _lm_or_today(cfg["show_page"])))
-        urls.append((f"{base}/{cfg['summaries_page']}", "0.7",
-                     _lm_or_today(cfg["summaries_page"])))
-        urls.append((f"{base}/blog/{slug}/index.html", "0.7",
+        hubs.append((f"{base}/blog/{slug}/index.html", "0.8",
                      _lm_or_today(f"blog/{slug}/index.html")))
-        # Paginated archive pages (Sep 21 2026). Listed from the files that
-        # ACTUALLY EXIST on disk, never from a computed page count: the
-        # sitemap must not advertise a page the generator skipped, which is
-        # the same rule renderable_hubs follows for the topic hubs. Page 1 is
-        # index.html and is already above.
+        secondary.append((f"{base}/{cfg['summaries_page']}", "0.6",
+                          _lm_or_today(cfg["summaries_page"])))
+        # Paginated archive: page 2 only. Page 3+ are noindex,follow thin
+        # lists — advertising them wastes crawl budget (Oct 22 2026).
         for _page in sorted((ROOT / "blog" / slug).glob("page*.html")):
+            if not sitemap_should_include_blog_archive_page(_page.name):
+                continue
             _rel = f"blog/{slug}/{_page.name}"
-            urls.append((f"{base}/{_rel}", "0.5", _lm_or_today(_rel)))
-        # Public narrative tracker page (Tesla + Phase 3 memory shows), when present.
+            secondary.append((f"{base}/{_rel}", "0.4", _lm_or_today(_rel)))
         _narr = "tesla-narrative.html" if slug == "tesla" else (
             cfg["show_page"].replace(".html", "-narrative.html")
             if _sm_get_config(slug) else None
         )
         if _narr and (ROOT / _narr).exists():
-            urls.append((f"{base}/{_narr}", "0.6", _lm_or_today(_narr)))
+            secondary.append((f"{base}/{_narr}", "0.5", _lm_or_today(_narr)))
 
     # Network blog hub
-    urls.append((f"{base}/blog/index.html", "0.7",
+    hubs.append((f"{base}/blog/index.html", "0.8",
                  _lm_or_today("blog/index.html")))
 
     # Language hubs (engine.show_lang): one per non-English site language,
@@ -5788,7 +5896,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     for _row in _site_language_links():
         _hub = _row["path"]
         if _hub and (ROOT / _hub).exists():
-            urls.append((f"{base}/{_hub}", "0.7", _lm_or_today(_hub)))
+            hubs.append((f"{base}/{_hub}", "0.7", _lm_or_today(_hub)))
 
     # Russian funnel landing pages. High priority on purpose: these are
     # the destination every @NerraRU description points at, so they are
@@ -5796,7 +5904,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     for _slug in NETWORK_SHOWS:
         _target = _ru_landing_target(_slug)
         if _target and (ROOT / _target).exists():
-            urls.append((f"{base}/{_target}", "0.8", _lm_or_today(_target)))
+            hubs.append((f"{base}/{_target}", "0.8", _lm_or_today(_target)))
 
     # Evergreen topic hubs (Sep 2026). Listed from engine/topic_hubs.py rather
     # than a glob so a hub the generator SKIPPED for thinness can never be
@@ -5814,7 +5922,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                 _hub_paths.append(f"{_topic_hubs.HUB_DIR}/index.html")
             for _hub_rel in _hub_paths:
                 if (ROOT / _hub_rel).exists():
-                    urls.append((f"{base}/{_hub_rel}", "0.7",
+                    hubs.append((f"{base}/{_hub_rel}", "0.7",
                                  _file_lastmod(ROOT / _hub_rel)))
     except Exception as exc:  # noqa: BLE001 — a sitemap is never worth a crash
         print(f"Warning: topic hubs not added to sitemap: {exc}", file=sys.stderr)
@@ -5822,7 +5930,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     # Legal pages
     for legal in ["privacy-policy.html", "terms-of-service.html", "ai-disclosure.html"]:
         if (ROOT / legal).exists():
-            urls.append((f"{base}/{legal}", "0.4", _file_lastmod(ROOT / legal)))
+            secondary.append((f"{base}/{legal}", "0.3", _file_lastmod(ROOT / legal)))
 
     # Claims & corrections ledger (Oct 1 2026): listed from the SAME list
     # generate_claims_pages writes (claims_page_paths), never a glob, and
@@ -5830,16 +5938,14 @@ def generate_sitemap(*, dry_run=False, out=None):
     # advertised.
     for _rel in claims_page_paths():
         if (ROOT / _rel).exists():
-            urls.append((f"{base}/{_rel}", "0.5", _file_lastmod(ROOT / _rel)))
+            secondary.append((f"{base}/{_rel}", "0.4", _file_lastmod(ROOT / _rel)))
 
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
-    # mira.html is the Mira hub; the two *-apply.html pages are the
-    # guest-application forms, one per interview show, and were reachable only
-    # from a couple of show pages — so the acquisition surface for the
-    # network's most differentiated shows could not be found by search at all.
     # age-of-ai-studio.html stays OUT deliberately — it is the private join
-    # link for a scheduled interview.
+    # link for a scheduled interview. Apply / join / player / Soft Personal
+    # capture pages are reachable from the site but excluded here as thin
+    # utility surfaces (Oct 22 2026 crawl pass — see SITEMAP_EXCLUDE_UTILITIES).
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "mira.html", "explore.html", "age-of-ai-apply.html",
@@ -5852,8 +5958,10 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "spacex-dashboard.html", "tesla-dashboard.html",
                   "offshore-north-dashboard.html",
                   "offshore-north-glossary.html"]:
+        if extra in SITEMAP_EXCLUDE_UTILITIES:
+            continue
         if (ROOT / extra).exists():
-            urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
+            secondary.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
     # Individual blog posts.
     #
@@ -5885,11 +5993,27 @@ def generate_sitemap(*, dry_run=False, out=None):
     if blog_dir.exists():
         for show_dir in sorted(blog_dir.iterdir()):
             if show_dir.is_dir():
-                for ep_file in sorted(show_dir.glob("ep*.html")):
+                for ep_file in show_dir.glob("ep*.html"):
                     rel = f"blog/{show_dir.name}/{ep_file.name}"
                     if rel in _stubs:
                         continue
-                    urls.append((f"{base}/{rel}", "0.6", _post_lastmod(ep_file)))
+                    lastmod = _post_lastmod(ep_file)
+                    # Prefer calendar proximity: anything in the last ~45 days
+                    # reads as "new" for crawl priority.
+                    try:
+                        age_days = (
+                            datetime.now(timezone.utc).date()
+                            - datetime.strptime(lastmod, "%Y-%m-%d").date()
+                        ).days
+                    except ValueError:
+                        age_days = 999
+                    pri = "0.7" if age_days <= 45 else "0.55"
+                    episodes.append((f"{base}/{rel}", pri, lastmod))
+
+    # Newest episodes first (real lastmod), after hubs.
+    episodes.sort(key=lambda row: row[2], reverse=True)
+
+    urls = hubs + episodes + secondary
 
     # Build XML
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',

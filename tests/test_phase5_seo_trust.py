@@ -138,8 +138,11 @@ class TestSitemapSpecialPages:
 
     def test_player_and_mit_performance_listed(self):
         src = self._extras_source()
+        # player.html remains named in the extras loop but is filtered by
+        # SITEMAP_EXCLUDE_UTILITIES (Oct 22 2026 crawl pass).
         assert '"player.html"' in src
         assert '"modern-investing-performance.html"' in src
+        assert "SITEMAP_EXCLUDE_UTILITIES" in src
 
     def test_404_not_listed(self):
         src = self._extras_source()
