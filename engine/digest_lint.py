@@ -71,10 +71,11 @@ def is_lead_section(title: str) -> bool:
     return t in LEAD_SECTIONS or t.startswith("Top ")
 
 
-def sections(digest: str) -> List[Tuple[str, str]]:
+def sections(digest: str, *, full_titles: bool = False) -> List[Tuple[str, str]]:
     """``[(title, body), ...]`` for every ``##``/``###`` section, in order.
     The title is taken up to its first colon (``### Both Sides: X`` → ``Both
-    Sides``)."""
+    Sides``) unless ``full_titles`` — a heading that IS the story (``### 7)
+    Tanzania: Dodoma extends…``) needs all of it."""
     out: List[Tuple[str, str]] = []
     title = ""
     buf: List[str] = []
@@ -83,7 +84,8 @@ def sections(digest: str) -> List[Tuple[str, str]]:
         if m:
             if title or buf:
                 out.append((title, "\n".join(buf).strip()))
-            title = m.group(1).split(":")[0].strip().strip("*")
+            raw = m.group(1) if full_titles else m.group(1).split(":")[0]
+            title = raw.strip().strip("*")
             buf = []
             continue
         buf.append(line)

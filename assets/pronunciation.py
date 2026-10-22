@@ -1635,8 +1635,19 @@ def replace_number_ranges(text: str) -> str:
     # aired "Xeon Efive to two thousand six hundred ninety-six" for
     # E5-2696 and "DDRfour to two thousand one hundred thirty-three" for
     # DDR4-2133; those keep their hyphen for the server-side normaliser.
+    # Oct 22 2026: a model NAME is not a range either. M&A Ep211 aired "On
+    # Llama-three point one to eightB" for Llama-3.1-8B: the guard above
+    # looked only at the character before the first number, which was a
+    # hyphen. A number glued to a letter-and-hyphen or a dot on its left
+    # (``Llama-3.1``, ``Qwen2.5``), or to a letter on its right (``8B``,
+    # ``70B``), belongs to a name, and keeps its hyphen.
     text = re.sub(
-        r"(?<![$€£A-Za-z])(\d+\.?\d*)\s*[-–—]\s*(\d+\.?\d*)(?!\s*%)",
+        # The number is ``\d+(?:\.\d+)?``: ``\d+\.?\d*`` took a sentence's
+        # full stop ("pages 10-20." lost its period, running two sentences
+        # together) and backtracked into "two point five to three5%" for
+        # 2.5-3.5%.
+        r"(?<![$€£A-Za-z.\d])(?<![A-Za-z]-)(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)"
+        r"(?!\d|\.\d)(?![A-Za-z])(?!\s*%)",
         _num_range,
         text,
     )

@@ -104,11 +104,79 @@ class TestAiredItems:
                 continue
             text = p.read_text(encoding="utf-8")
             n = story_item_count(text)
-            got = [i for i in extract_aired_items(text) if i.kind != "essay"]
-            # Field labels are the only items the count reads and we skip.
+            got = [i for i in extract_aired_items(text) if i.kind not in ("essay", "section")]
+            # Field labels are the only items the count reads and we skip;
+            # a one-story ``section`` (Oct 22) is outside what the count reads.
             assert len(got) <= n
             checked += 1
         assert checked >= 20
+
+
+class TestOneStorySections:
+    """Oct 22 2026: the lead "Top Story" and every deep dive were missing
+    from the aired record, and a ``### 7) Country: headline`` heading was
+    recorded as the country alone."""
+
+    LEAD = """# Show
+> **Frozen encoders match commercial Arabic speech recognition**
+Intro paragraph that sets up the day.
+---
+### Top Story
+Researchers tested a frozen audio encoder on Gulf Arabic speech and matched
+commercial systems on character error rate across three public benchmarks,
+using a reader of 22.6M parameters and no change to the encoder weights at all.
+Source: [arxiv.org](https://arxiv.org/abs/1)
+---
+### Headlines
+1. **Second story about chips: Reuters** - body text. Source: https://r.example/2
+---
+### The Teardown: When the Panel Gives the Count Back
+A long explainer on substrate panels and the yield arithmetic behind them, told
+as one story across several sentences so a listener hears the mechanism, the
+numbers and why the supply chain cares about the count coming back to them.
+---
+### On the Calendar
+October 30: an earnings call that matters, with more words to pass the floor of
+forty words easily because a calendar is never a story of its own in this file.
+---
+### Things to Try This
+- Try the released code on your own data and compare the error rates you see.
+- Read the paper's appendix for the benchmark setup and the decoding details.
+- Compare against a commercial service on the same clips, then share results.
+"""
+
+    def test_the_lead_section_is_recorded_under_the_hook(self):
+        got = extract_aired_items(self.LEAD)
+        lead = [i for i in got if i.section == "Top Story"]
+        assert len(lead) == 1 and lead[0].kind == "section"
+        assert lead[0].title.startswith("Frozen encoders match")
+        assert lead[0].urls == ["https://arxiv.org/abs/1"]
+
+    def test_a_deep_dive_takes_its_subtitle(self):
+        got = {i.section: i for i in extract_aired_items(self.LEAD)}
+        assert got["The Teardown"].title == "When the Panel Gives the Count Back"
+
+    def test_structural_and_list_sections_are_not_stories(self):
+        secs = {i.section for i in extract_aired_items(self.LEAD)}
+        assert "On the Calendar" not in secs and "Things to Try This" not in secs
+
+    def test_a_heading_item_keeps_its_whole_title(self):
+        d = "# S\n> **Hook line here**\n### 7) Tanzania: Dodoma Extends Health Coverage to 111,515 Residents\nBody. Source: https://x.example/t\n"
+        (item,) = extract_aired_items(d)
+        assert item.kind == "heading"
+        assert item.title.startswith("Tanzania: Dodoma Extends")
+
+    def test_a_narrative_episode_is_still_one_essay(self):
+        d = ("# UC\n> **India issued eighty million free gas connections**\n### Cold Open\n"
+             + "Words " * 60 + "\n### The Case\n" + "More words " * 60 + "\n")
+        got = extract_aired_items(d)
+        assert [i.kind for i in got] == ["essay"]
+
+    def test_the_lead_airs_in_todays_slate(self):
+        p = ROOT / "digests/models_agents/Models_Agents_Ep211_20261022.md"
+        if not p.exists():
+            pytest.skip("slate file not in this checkout")
+        assert any(i.section == "Top Story" for i in extract_aired_items(p.read_text(encoding="utf-8")))
 
 
 # ------------------------------------------------------- content tracker --
@@ -304,6 +372,61 @@ class TestCatalog:
         assert ("catalog_items", "resolution=merge-duplicates,return=minimal") in posts
         deletes = [k["params"] for m, t, k in calls if m == "DELETE" and t == "catalog_items"]
         assert deletes == [{"episode_key": "eq.spacex:1", "position": "gte.3"}]
+
+    def test_a_run_writes_its_links_by_patch_and_its_articles_after(self, tmp_path, monkeypatch):
+        # Oct 22 2026: every run of the first slate failed here. An upsert is
+        # an INSERT first, so a catalog_episodes row carrying only the page
+        # and audio links broke NOT NULL (23502) and no article was written.
+        from engine import catalog
+        db = tmp_path / "lake.db"
+        content_lake.store_episode(_record("spacex", 1, "2026-10-21", DIGEST), db_path=db)
+        content_lake.rebuild_story_ids(db_path=db)
+        calls = []
+
+        def fake_rest(method, table, **k):
+            calls.append((method, table, k))
+            if method == "POST" and table == "catalog_episodes":
+                for row in k["body"]:
+                    if row.get("show_slug") is None or row.get("date") is None:
+                        raise RuntimeError("POST catalog_episodes: HTTP 400 23502")
+            return []
+
+        monkeypatch.setattr(catalog, "configured", lambda: True)
+        monkeypatch.setattr(catalog, "_rest", fake_rest)
+        monkeypatch.setattr(catalog, "_show_dirs", lambda: {})
+        out = catalog.record_run(
+            show_slug="spacex", episode_num=1, date="2026-10-21", db_path=db,
+            fetched=[{"url": "https://other.example/s", "title": "Starship Flight 15 aims for a tower catch",
+                      "source_name": "Other"}],
+            listed=[], page_url="https://nerranetwork.com/blog/spacex/ep001.html",
+            audio_url="https://audio.nerranetwork.com/spacex/x.mp3")
+        assert out["status"] == "ok", out
+        patches = [k for m, t, k in calls if m == "PATCH" and t == "catalog_episodes"]
+        assert patches and patches[0]["params"] == {"episode_key": "eq.spacex:1"}
+        assert any(m == "POST" and t == "catalog_articles" for m, t, _ in calls)
+
+    def test_one_failed_write_never_drops_the_articles(self, tmp_path, monkeypatch):
+        from engine import catalog
+        db = tmp_path / "lake.db"
+        content_lake.store_episode(_record("spacex", 1, "2026-10-21", DIGEST), db_path=db)
+        content_lake.rebuild_story_ids(db_path=db)
+        posted = []
+
+        def fake_rest(method, table, **k):
+            if method == "PATCH":
+                raise RuntimeError("PATCH catalog_episodes: HTTP 500")
+            posted.append(table)
+            return []
+
+        monkeypatch.setattr(catalog, "configured", lambda: True)
+        monkeypatch.setattr(catalog, "_rest", fake_rest)
+        monkeypatch.setattr(catalog, "_show_dirs", lambda: {})
+        out = catalog.record_run(
+            show_slug="spacex", episode_num=1, date="2026-10-21", db_path=db,
+            fetched=[{"url": "https://other.example/n", "title": "A bakery opens", "source_name": "L"}],
+            listed=[], page_url="https://x/ep001.html")
+        assert out["status"] == "partial" and out["errors"]
+        assert "catalog_articles" in posted
 
     def test_upsert_never_sends_one_key_twice_in_a_statement(self, monkeypatch):
         # Oct 21 2026 first fill: Postgres refused a claims batch carrying one

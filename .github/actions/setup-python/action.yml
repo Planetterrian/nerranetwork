@@ -100,7 +100,21 @@ runs:
         APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60"
         _t0=$(date +%s)
         sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
-        sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }}
+        # Oct 22 2026: a mirror can TRICKLE rather than stall — 60 KB/s,
+        # never silent for 30 s, so no timeout above fires and two 300 s
+        # attempts ran out mid-download (the SpaceX translation job died
+        # here and the episode lost its FR/RU tracks). A killed install
+        # keeps every .deb it finished, so each attempt resumes where the
+        # last one stopped: keep trying while the step is under 15 minutes.
+        _ok=0
+        for _attempt in 1 2 3 4; do
+          if sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }}; then
+            _ok=1; break
+          fi
+          echo "::warning::apt-get install attempt $_attempt did not finish ($(( $(date +%s) - _t0 )) s so far); downloaded packages are kept"
+          [ $(( $(date +%s) - _t0 )) -lt 900 ] || break
+        done
+        [ "$_ok" = 1 ] || { echo "::error::apt-get install did not finish"; exit 124; }
         echo "apt install took $(( $(date +%s) - _t0 )) s"
 
     - name: Install dependencies

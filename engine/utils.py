@@ -361,6 +361,19 @@ NETWORK_EXCLUDE_TITLE_PATTERNS = (
     r"|\b(?:forecast|outlook|report|analysis|size|trends?)\b.*?"
     r"(?:\b(?:to|by|through)\s+20[3-4]\d\b|\b20[12]\d\s*[-–]\s*20[3-4]\d\b))",
     r"\bCAGR\b",
+    # Oct 22 2026: a fund's quarterly holdings filing is not news. SpaceX
+    # Ep138 aired three MarketBeat 13F notices ("SpaceX $SPCX Shares Bought
+    # by Grantvest Financial Group LLC"), one of them in Top News, and they
+    # had grown from none to three a day since Oct 19. Calibrated on every
+    # committed tracker headline: the nine matches are all filings, and a
+    # named investor's purchase (no fund suffix) still passes.
+    r"\$[A-Z]{1,5}\b.*\b(?:shares|stake|position|holdings)\b.*\b(?:bought|sold|acquired|"
+    r"purchased|trimmed|raised|lowered|cut|boosted|increased|decreased|reduced|lifted|grown)\s+by\b",
+    r"\b(?:LLC|L\.L\.C\.|Inc\.?|Ltd\.?|Advisors?|Wealth|Asset Management|Capital Management|"
+    r"Group|Partners|Financial)\s+(?:buys|sells|acquires|purchases|trims|adds)\s+[\d,]+\s+"
+    r"(?:\S+\s+){0,4}shares\b",
+    r"\b(?:LLC|L\.L\.C\.|Inc\.?|Ltd\.?|Advisors?|Wealth|Asset Management|Capital Management)\b"
+    r".*\b(?:opens|takes|initiates|establishes|builds)\s+(?:a\s+)?new\s+(?:position|stake)\b",
 )
 
 

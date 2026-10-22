@@ -47,8 +47,11 @@ LISTED_URL_BLOCK_DAYS = 2
 
 #: Tracker files written before Oct 21 2026 carry no ``aired_schema`` and hold
 #: the prompt lists as covered; :meth:`ContentTracker.migrate_to_aired`
-#: rewrites them from the committed digests once.
-AIRED_SCHEMA = 2
+#: rewrites them from the committed digests once. Schema 3 (Oct 22 2026):
+#: the reader learned untitled one-story sections (the lead "Top Story" on
+#: four shows, every deep dive) and full heading titles, so every tracker
+#: re-reads its digests once more.
+AIRED_SCHEMA = 3
 
 _DIGEST_DATE_RE = re.compile(r"_Ep\d+_(\d{8})\.md$")
 

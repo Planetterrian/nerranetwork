@@ -676,9 +676,10 @@ class TestMultiIndexBenchmark:
         scores = tracker["summary"]["benchmark_scores"]
         assert set(scores) == {"nasdaq", "sp500", "tsx"}
         assert scores["sp500"]["trades"] == 2
-        # portfolio compounded: 1.10*0.98-1 = +7.8%; tsx: 0.99*1.002-1
+        # Oct 22 2026: averaged per trade, never compounded — the trades are
+        # parallel $1,000 positions. tsx: ((10 - -1) + (-2 - 0.2)) / 2
         assert scores["tsx"]["alpha_pct"] == pytest.approx(
-            (1.10 * 0.98 - 0.99 * 1.002) * 100, abs=0.05)
+            ((10.0 + 1.0) + (-2.0 - 0.2)) / 2, abs=0.05)
         assert tracker["summary"]["indices_scored"] == 3
         # Beats nasdaq (7.8 vs 3.02), sp500 (7.8 vs 1.5), tsx (7.8 vs -0.6).
         assert tracker["summary"]["indices_beaten"] == 3
@@ -1845,7 +1846,10 @@ class TestSingleAlphaSource:
     def test_both_blocks_quote_the_verified_figure(self):
         tracker = self._tracker()
         mi._recompute_summary(tracker)
-        verified = tracker["summary"]["verified_window_alpha_pct"]
+        # The on-air figure is the era scope's (Oct 22 2026: the average
+        # trade); here every era trade is a verified one.
+        verified = mi._alpha_scope(tracker["summary"])["alpha"]
+        assert verified == tracker["summary"]["era_alpha_pct"]
         blended = tracker["summary"]["matched_window_alpha_pct"]
         assert verified != blended  # fixture is only meaningful if they differ
 
@@ -2930,3 +2934,55 @@ class TestPodcastPromptCarriesTheCorrection:
         # would stretch Portfolio Performance on every episode forever.
         lower = self._prompt().lower()
         assert "no such passage" in lower and "normal length" in lower
+
+
+class TestEraIsTheAverageTrade:
+    """Oct 22 2026: Ep208 aired "minus thirty-three point one percent across
+    thirty-four rules-based trades" for an average trade of -0.97% against
+    the NASDAQ — the era record multiplied parallel $1,000 positions as if
+    each reinvested the last one's proceeds."""
+
+    def _trade(self, pnl, ndq):
+        return {"status": "closed", "pnl_pct": pnl, "pnl_dollars": pnl * 10,
+                "nasdaq_return_pct": ndq, "alpha_pct": pnl - ndq,
+                "date": _ERA_DATE, "entry_bar_date": _ERA_DATE,
+                "benchmark_returns": {"nasdaq": ndq}}
+
+    def test_thirty_small_losses_are_an_average_not_a_collapse(self):
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [self._trade(-1.2, 0.0) for _ in range(34)]}
+        mi._recompute_summary(tracker)
+        s = tracker["summary"]
+        assert s["era_alpha_pct"] == pytest.approx(-1.2)
+        assert s["era_return_pct"] == pytest.approx(-1.2)
+        assert s["era_pnl_dollars"] == pytest.approx(-408.0)
+        assert s["era_compounded_alpha_pct"] < -30  # kept for history only
+        block = mi._build_portfolio_summary(tracker)
+        assert "average per trade: -1.2%" in block
+        assert "-$408.00 in total" in block
+        assert "-33" not in block and "-34" not in block
+
+
+class TestReviewedTradeIsLabelledByWhenItClosed:
+    """Oct 22 2026: Ep208 called TD.TO "the last simulated weekly hold" while
+    ENB.TO had closed after it; the backlog drains oldest-first."""
+
+    def _closed(self, sym, days_ago, pnl):
+        import datetime as _dt
+        d = (_dt.date.today() - _dt.timedelta(days=days_ago)).isoformat()
+        return {"symbol": sym, "status": "closed", "trade_type": "weekly",
+                "strategy": "s", "entry_price": 100.0, "exit_price": 100 + pnl,
+                "pnl_pct": pnl, "pnl_dollars": pnl * 10, "date": d,
+                "exit_bar_date": d}
+
+    def test_an_earlier_close_is_never_called_the_last(self):
+        tracker = {"trades": [self._closed("TD.TO", 3, 2.0), self._closed("ENB.TO", 1, -0.5)],
+                   "summary": {}}
+        block = mi._build_trade_review(tracker, episode_num=999)
+        assert "TD.TO" in block
+        assert "**Earlier Weekly Hold" in block and "**Last Weekly Hold" not in block
+
+    def test_the_latest_close_keeps_its_label(self):
+        tracker = {"trades": [self._closed("ENB.TO", 1, -0.5)], "summary": {}}
+        block = mi._build_trade_review(tracker, episode_num=999)
+        assert "**Last Weekly Hold" in block

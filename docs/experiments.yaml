@@ -5465,3 +5465,30 @@ experiments:
       publish-day package, a five-minute hello two days before. Operator:
       deploy the scenario, the Worker and the migrations; rehearse before
       the next room. AUDIO on every room.
+  - id: slate-2026-10-22
+    title: "Oct 22 slate: the catalog writes its articles, the aired record keeps lead stories, MIT's record is per trade"
+    area: content
+    shipped: 2026-10-22
+    readout: 2026-11-05
+    status: reading
+    baseline: >
+      Oct 22: every runtime story-catalog write failed (HTTP 400, NOT NULL on a
+      partial upsert), catalog_articles 0 rows; the aired tracker missed the
+      lead story on M&A, AI Chips, Prediction Markets and MAB (prose sections);
+      MIT compounded 34 parallel $1,000 trades into a -33% "record"; SpaceX
+      Ep136-138 spoke one close as live; three 13F holdings notices aired on
+      SpaceX; Top World chapter titles opened "1."; SpaceX lost its FR/RU
+      tracks to a 600 s apt wait.
+    target: >
+      catalog_articles grows every day and no run logs a catalog write error;
+      every episode's lead story is in its aired record; MIT speaks the
+      per-trade average with the dollar total; no SpaceX closing says "is
+      trading at" before 09:30 ET; no 13F notice in any prompt; no chapter
+      title opens on an item number; no multilingual job dies in setup.
+      ⚠️ AUDIO — A/B-listen the first Modern Investing episode.
+    notes: >
+      Review docs/reviews/slate_review_2026_10_22.md. Guards:
+      tests/test_slate_2026_10_22.py, TestOneStorySections
+      (tests/test_story_catalog_2026_10_21.py), TestEraIsTheAverageTrade and
+      TestReviewedTradeIsLabelledByWhenItClosed
+      (tests/test_mit_benchmark_integrity.py).

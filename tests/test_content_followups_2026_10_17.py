@@ -20,7 +20,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import json
 import re
 import sys
 from pathlib import Path
@@ -89,18 +88,23 @@ class TestBoardIsNotARepeat:
         assert {a["board_venue"] for a in arts} == {"Polymarket", "Manifold"}
 
     def test_recurrence_skips_board_markets_that_ran_before(self):
-        tracker = json.loads((DIGESTS / "prediction_markets"
-                              / "prediction_markets_content_tracker.json").read_text())
-        episodes = tracker["episodes"]
-        today = [e for e in episodes if e["date"] == "2026-10-17"][0]
-        board = [h for h in today["headlines"]
-                 if h.split(":")[0] in ("Polymarket", "Kalshi", "Manifold")]
-        assert len(board) == 10
-        index = RecurrenceIndex([e for e in episodes if e["date"] < "2026-10-17"])
-        plain = [{"title": h} for h in board]
-        # The defect: nine of ten markets carried "pick a different story".
-        assert len(annotate_articles(plain, index)) == 9
-        flagged = [{"title": h, "recurrence_exempt": True} for h in board]
+        # Oct 22 2026: this guard read the committed tracker's 10-17 Board
+        # headlines, which the aired-only migration rewrote. A guard on
+        # committed data must tolerate the data moving; the rule it pins is
+        # that a Board market that ran before is never "already covered".
+        questions = [
+            "Polymarket: Which party will win the U.S. House in 2026?",
+            "Kalshi: Will the Fed cut rates at the December meeting?",
+            "Polymarket: Will the government shut down before November 15?",
+            "Manifold: Will a GPT-6 model be released before 2027?",
+            "Kalshi: Will the Senate confirm the nominee before recess?",
+        ]
+        episodes = [{"date": f"2026-10-1{d}", "headlines": list(questions)} for d in (4, 5, 6)]
+        index = RecurrenceIndex(episodes)
+        plain = [{"title": h} for h in questions]
+        # The defect: Board markets carried "pick a different story".
+        assert len(annotate_articles(plain, index)) >= 4
+        flagged = [{"title": h, "recurrence_exempt": True} for h in questions]
         assert annotate_articles(flagged, index) == {}
 
     def test_an_ordinary_article_is_still_annotated(self):
