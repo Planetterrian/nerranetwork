@@ -278,15 +278,19 @@ class TestSignup:
         assert 'data-nn-subscribe="landing"' not in rendered
         assert 'name="tag"' not in rendered
 
-    def test_posts_through_the_shared_handler_with_the_funnel_source(self, rendered):
+    def test_posts_through_the_shared_handler_with_the_above_fold_source(self, rendered):
+        # Oct 22 2026: Soft above-fold placement posts src-above_fold so
+        # capture.by_source / GA4 can tell it from mid-page Soft asks. Still
+        # goes through footer-subscribe.js; Worker SOURCE_TAGS allow-lists it.
         form = self._forms(rendered)[0]
         assert 'type="email"' in form and 'name="email"' in form
         assert "assets/js/footer-subscribe.js" in rendered
         js = (ROOT / "assets" / "js" / "footer-subscribe.js").read_text(encoding="utf-8")
         assert "https://api.nerranetwork.com/api/subscribe" in js
         source = re.search(r'data-source="([^"]+)"', form).group(1)
-        assert source == F.source_tag(F.SOURCE_SITE)
+        assert source == "src-above_fold"
         assert source in _ts_set("SOURCE_TAGS")
+        assert F.source_tag(F.SOURCE_SITE) == "src-nerranetwork"  # site tag unchanged
 
     def test_no_subscriber_count_below_the_social_proof_floor(self, rendered):
         stats = json.loads((ROOT / "api" / "buttondown_stats.json").read_text(encoding="utf-8"))

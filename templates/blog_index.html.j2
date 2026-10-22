@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{% from "_macros.html.j2" import soft_personal_interest %}
+{% from "_macros.html.j2" import soft_personal_hero_band %}
 
 {% block head_extra %}
 {#- Self-referencing canonical is set in generate_blog_index_html. Deep
@@ -147,13 +147,12 @@
         </div>
     </header>
 
-    {#- Soft Personal on SpaceX Daily blog (and any show with soft_personal_cta).
-        Brand: /blog/spacex/ was join-only; soft interest is tips/reminder,
-        never a charge. -#}
+    {#- Soft Personal form on SpaceX Daily blog (and any show with
+        soft_personal_cta). Above the fold under the blog hero (Oct 22 2026
+        placement test). Same #soft-personal-hero + footer-subscribe.js
+        path as show pages; source src-above_fold. Never a charge. -#}
     {% if soft_personal_cta %}
-    <div style="padding:0 var(--sp-6);">
-        {{ soft_personal_interest(path_prefix) }}
-    </div>
+    {{ soft_personal_hero_band(path_prefix, show_slug) }}
     {% endif %}
 
     <!-- Posts -->

@@ -132,6 +132,8 @@ const SOURCE_TAGS = new Set([
   "src-whatsapp",
   "src-telegram",
   "src-email-share",
+  // Oct 22 2026 — Soft Personal above-fold form (home / show / blog index).
+  "src-above_fold",
 ]);
 
 // Per-show newsletter tags a member may opt into from the join/footer
