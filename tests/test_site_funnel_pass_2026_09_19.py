@@ -129,6 +129,9 @@ class TestDeadUrlAudit:
         assert audit._normalise("/a.html; and then some prose") == "a.html"
         assert audit._normalise("/b.html?utm_source=x") == "b.html"
         assert audit._normalise("/blog/tesla/") == "blog/tesla/index.html"
+        # 404.html strips markdown's closing paren off a copied link.
+        assert audit._normalise("/blog/env_intel/ep068.html)") == "blog/env_intel/ep068.html"
+        assert audit._normalise("/blog/x.html%29%29") == "blog/x.html"
         assert audit._normalise("(not set)") == ""
         assert audit._normalise("/") == ""
 
