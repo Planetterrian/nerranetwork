@@ -16,10 +16,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-SOFT_HERO_COPY = (
-    "Get a quiet nudge with occasional Personal tips. "
-    "No charge, no card. Shows stay free either way."
-)
+SOFT_HERO_COPY = "Occasional Personal tips by email — no charge, no card"
 SOFT_PRIVACY_NOTE = (
     "We’ll only email you about Nerra Personal. Unsubscribe anytime."
 )
@@ -119,7 +116,7 @@ class TestSoftPersonalHomeAndAgeOfAi:
         form = soft[0]
         assert form.get("data-list") == "personal-interest"
         assert form.get("data-show") == "network"
-        assert (form.get("data-source") or "").startswith("src-")
+        assert form.get("data-source") == "src-above_fold"
         assert form.get("data-form-id") == "show-network-soft-personal"
 
     def test_rendered_age_of_ai_has_exactly_one_soft_hero(self, tmp_path):

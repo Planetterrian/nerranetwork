@@ -212,19 +212,23 @@
     Posts via assets/js/footer-subscribe.js (data-nn-subscribe=soft-personal)
     to api.nerranetwork.com/api/subscribe with list=personal-interest.
     Each page renders exactly ONE #soft-personal-hero.
+    Above-fold placement (Oct 22 2026 test): pitch is the approved Soft
+    string only; data-source defaults to src-above_fold so GA4
+    soft_personal_interest_submit can tell this surface from mid-page
+    asks (utm_source still overrides in footer-subscribe.js).
     Arguments:
       path_prefix       : relative path back to site root
       show_slug         : data-show + form-id key (e.g. tesla, network)
-      capture_source    : default src-* tag (utm_source overrides in JS)
+      capture_source    : src-* tag (default src-above_fold; utm overrides)
       wrapper_id        : optional outer id (homepage uses home-soft-personal)
 -#}
-{%- macro soft_personal_hero_band(path_prefix='', show_slug='', capture_source='', wrapper_id=none) -%}
+{%- macro soft_personal_hero_band(path_prefix='', show_slug='', capture_source='src-above_fold', wrapper_id=none) -%}
 {%- if wrapper_id -%}<div id="{{ wrapper_id }}">{%- endif -%}
 <section class="nn-soft-personal-hero" id="soft-personal-hero"
          style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
     <div class="container" style="max-width:760px;">
         <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
-            Get a quiet nudge with occasional Personal tips. No charge, no card. Shows stay free either way.
+            Occasional Personal tips by email — no charge, no card
         </p>
         <form method="post" action="#"
               data-nn-subscribe="soft-personal"

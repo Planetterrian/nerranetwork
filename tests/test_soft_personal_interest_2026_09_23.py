@@ -220,10 +220,11 @@ class TestSoftPersonalSurfaceCTAs:
         hero_start = src.index("macro soft_personal_hero_band")
         hero_end = src.index("{%- endmacro -%}", hero_start) + len("{%- endmacro -%}")
         hero = src[hero_start:hero_end]
-        assert "Get a quiet nudge with occasional Personal tips." in hero
+        assert "Occasional Personal tips by email — no charge, no card" in hero
         assert "We’ll only email you about Nerra Personal" in hero
         assert "privacy-policy.html" in hero
         assert "reminder" not in hero.lower()
+        assert "quiet nudge" not in hero.lower()
         # User-visible Soft label must not appear (Jinja comments OK).
         visible = re.sub(r"\{#.*?#\}", "", hero, flags=re.S)
         assert "Soft Personal" not in visible
@@ -259,7 +260,10 @@ class TestSoftPersonalSurfaceCTAs:
     def test_blog_index_and_show_page_wire_the_band(self):
         blog = _read("templates/blog_index.html.j2")
         show = _read("templates/show_page.html.j2")
-        assert "soft_personal_interest" in blog
+        # Blog index uses the same Soft hero form as show pages (Oct 22
+        # above-fold placement); the interest-link macro remains on show
+        # pages for the lower CTA / upsell row.
+        assert "soft_personal_hero_band" in blog
         assert "soft_personal_cta" in blog
         assert "soft_personal_interest" in show
         assert "soft_personal_cta" in show
