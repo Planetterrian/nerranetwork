@@ -121,6 +121,29 @@ class TestVerdict:
         failed = [c["metric"] for c in result["checks"] if c["ok"] is False]
         assert failed == ["guest_words_per_answer_median"]
 
+    def test_both_arms_at_zero_is_the_floor_not_a_loss(self, rehearsal):
+        # The third rehearsal read FAIL on 0 self-answered turns against 0.
+        records = [
+            _rec("current", overlap_events=7, self_answered_turns=0,
+                 guest_words_per_answer_median=34, mira_turn_sec_median=4.7),
+            _rec("proposed", overlap_events=0, self_answered_turns=0,
+                 guest_words_per_answer_median=44, mira_turn_sec_median=5.1),
+        ]
+        result = rehearsal.verdict(rehearsal.summarise(records))
+        assert result["result"] == "PASS", result
+        selfans = next(c for c in result["checks"] if c["metric"] == "self_answered_turns")
+        assert selfans["ok"] and "both at zero" in selfans["rule"]
+        # Zero is a floor only for a count both arms sit on: a tie above it,
+        # or a proposal that adds one, still fails.
+        for cur, prop in ((2, 2), (0, 1)):
+            records = [
+                _rec("current", overlap_events=7, self_answered_turns=cur,
+                     guest_words_per_answer_median=34, mira_turn_sec_median=4.7),
+                _rec("proposed", overlap_events=0, self_answered_turns=prop,
+                     guest_words_per_answer_median=44, mira_turn_sec_median=5.1),
+            ]
+            assert rehearsal.verdict(rehearsal.summarise(records))["result"] == "FAIL"
+
     def test_fail_when_turn_length_moves_further_from_the_band(self, rehearsal):
         records = [
             _rec("current", overlap_events=5, self_answered_turns=1,

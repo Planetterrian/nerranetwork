@@ -617,9 +617,13 @@ def verdict(summary: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
             checks.append({"metric": key, "proposed": pv, "current": cv, "ok": None})
             inconclusive = True
             continue
-        passed = pv < cv if direction == "lower" else pv > cv
+        # Zero is the floor of a "lower" count: when both arms sit on it the
+        # proposal cannot beat current there and has not lost (the third
+        # rehearsal read FAIL on 0 self-answered turns against 0).
+        floor = direction == "lower" and pv == 0 and cv == 0
+        passed = floor or (pv < cv if direction == "lower" else pv > cv)
         checks.append({"metric": key, "proposed": pv, "current": cv, "ok": passed,
-                       "rule": f"proposed {direction}"})
+                       "rule": f"proposed {direction}" + (" (both at zero)" if floor else "")})
         ok = ok and passed
     key, band = MUST_NOT_LOSE
     pv, cv = p.get(key), c.get(key)

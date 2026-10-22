@@ -747,6 +747,15 @@ let holdCheckInRequested = false; // the one turn a hold allows is in flight
 let holdPausesSkipped = 0;
 let holdResumeOwed = false;      // they came back during a closing question: she asks it again
 let heldTimeNote = "";           // a time note that fell inside the hold, delivered after it
+// One response's instructions (response.create, xAI Voice Agent API): they
+// replace her system prompt for that response only and leave nothing behind.
+const HOLD_CHECK_IN_INSTRUCTIONS =
+  "You are Mira, the host of an interview podcast, speaking live with a guest. The guest" +
+  " stepped away from the conversation a few minutes ago, perhaps to take another call," +
+  " and has not come back yet. Say one short, warm sentence telling them you are still" +
+  " here whenever they are ready. That sentence is all you say: no question, no welcome" +
+  " back, nothing about anything you heard while they were away, and no goodbye.";
+let nextTurnInstructions = "";   // for the next response.create only
 let holdsEntered = 0;
 
 // Dead air (Oct 22 2026). With every unrequested server turn cancelled, a
@@ -863,22 +872,21 @@ function holdCheckIn() {
   holdCheckIns += 1;
   holdCheckInAt = Date.now();
   trace("hold", "check-in " + holdCheckIns + " after " + Math.round((Date.now() - holdSince) / 1000) + "s away");
-  try {
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROOM — system note, do not read aloud] They have been away a few minutes. In a" +
-        " few spoken words, tell them you are still here and ready whenever they are. No" +
-        " question, nothing about what you heard, and never a goodbye." }] },
-    });
-    holdCheckInRequested = true;
-    requestTurn(grokAgent);
-  } catch (err) { /* stays held */ }
+  // The check-in is one response's instructions, never a conversation note
+  // (Oct 22 2026 rehearsal): as a note it came out as "welcome back" and the
+  // question again, into a guest who had not come back, and it stayed in her
+  // context after they did, so her first line on their return was the
+  // check-in again instead of an answer to what they had just asked.
+  nextTurnInstructions = HOLD_CHECK_IN_INSTRUCTIONS;
+  holdCheckInRequested = true;
+  try { requestTurn(grokAgent); } catch (err) { /* stays held */ }
   armHoldTimer();
 }
 
 function exitHold(why) {
   if (!holdMode) return;
   holdMode = false;
+  nextTurnInstructions = "";   // a check-in still parked is not said to someone who is back
   if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
   trace("hold", "left: " + why + " after " + Math.round((Date.now() - holdSince) / 1000) + "s" +
         (holdPausesSkipped ? " (" + holdPausesSkipped + " pauses held)" : ""));
@@ -1261,7 +1269,9 @@ function requestTurn(agent) {
   pendingTurn = false;
   miraSpeaking = true;
   turnRequested = true;
-  agent.responseCreate({});
+  const body = nextTurnInstructions ? { response: { instructions: nextTurnInstructions } } : {};
+  nextTurnInstructions = "";
+  agent.responseCreate(body);
 }
 
 // ---------------------------------------------------------------------------

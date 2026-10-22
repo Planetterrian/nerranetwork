@@ -43,9 +43,13 @@ class FakeDate extends Date {
 const trace = [];
 const notes = [];
 const events = [];   // responseCreate / responseCancel / clearMediaBuffer
+const instructions = [];   // per-response instructions sent with responseCreate
 const agent = {
   conversationItemCreate(item) { notes.push(item.item.content[0].text); },
-  responseCreate() { events.push("create"); },
+  responseCreate(body) {
+    events.push("create");
+    instructions.push((body && body.response && body.response.instructions) || "");
+  },
   responseCancel() { events.push("cancel"); },
   clearMediaBuffer() { events.push("clear"); },
   addEventListener() {},
@@ -161,14 +165,14 @@ if (which === "server_turns_advance_the_round") {
   out.whileAway = { events: events.slice(), state: state() };
   ctx.__time = "x"; run("startTimeChecks();");   // interval is a no-op stub; the scheduled note must hold
   advance(4 * 60 * 1000);
-  out.checkIn = { events: events.slice(), notes: notes.slice(-3) };
+  out.checkIn = { events: events.slice(), notes: notes.slice(-3), instructions: instructions.slice(-1)[0] };
   roomTurnStarts();
   miraFinishes("I'm still here whenever you're ready.");
   events.length = 0;
   guestSays("Sorry about that, where were we?", 1500);
   out.back = state();
   advance(5000);
-  out.afterBack = { events: events.slice(), state: state(), notes: notes.slice(-2) };
+  out.afterBack = { events: events.slice(), state: state(), notes: notes.slice(-2), instructions: instructions.slice(-1)[0] };
 } else if (which === "hold_ends_on_speech") {
   // The Oct 22 candidate rehearsal: no guest words ever arrive. The hold
   // starts on her line and must end on the guest's speech after a check-in.

@@ -111,13 +111,27 @@ class TestHoldMode:
     def test_one_short_line_after_three_minutes(self):
         out = sim("hold_mode")
         assert out["checkIn"]["events"][-1] == "create"
-        assert any("you are still here and ready whenever they are" in n for n in out["checkIn"]["notes"])
-        # The candidate rehearsal's check-in came out as the one word
-        # "Silence." under "Nothing else": the note asks for spoken words.
-        assert "Nothing else" not in out["checkIn"]["notes"][-1]
-        assert "spoken words" in out["checkIn"]["notes"][-1]
-        assert "never a goodbye" in out["checkIn"]["notes"][-1]
+        # The check-in is that one response's instructions, not a note in her
+        # context: as a note (third rehearsal) it came out as "welcome back"
+        # and the question again, into a guest still away, and on their
+        # return her first line was the check-in again.
+        said = out["checkIn"]["instructions"]
+        assert "still here whenever they are ready" in said
+        assert "no question, no welcome back" in said and "no goodbye" in said
+        assert not any("still here" in n for n in out["checkIn"]["notes"])
+        # The second rehearsal's note came out as the one word "Silence."
+        assert "Nothing else" not in said and "one short, warm sentence" in said
         assert "const HOLD_CHECK_IN_MS = 3 * 60 * 1000;" in SCENARIO
+
+    def test_the_check_in_leaves_nothing_behind(self):
+        out = sim("hold_mode")
+        # Their return gets an ordinary turn under her own prompt.
+        assert out["afterBack"]["instructions"] == ""
+        exit_hold = SCENARIO.split("function exitHold(why) {", 1)[1].split("\n}\n", 1)[0]
+        assert 'nextTurnInstructions = "";' in exit_hold
+        create = SCENARIO.split("turnRequested = true;", 1)[1].split("\n}\n", 1)[0]
+        assert "{ response: { instructions: nextTurnInstructions } }" in create
+        assert 'nextTurnInstructions = "";' in create
 
     def test_back_means_the_question_in_play_again(self):
         out = sim("hold_mode")

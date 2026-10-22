@@ -79,8 +79,11 @@ class TestEveryTurnGoesThroughRequestTurn:
         assert "turnRequested = true;" in body
 
     def test_the_only_direct_response_create_is_hers(self):
-        # requestTurn, and the narration take (a session with no guest in it).
-        assert SCENARIO.count("responseCreate({})") == 2
+        # requestTurn (whose body may carry one response's instructions, the
+        # hold check-in), and the narration take (a session with no guest in it).
+        assert SCENARIO.count("responseCreate(") == 2
+        assert SCENARIO.count("responseCreate({})") == 1
+        assert "agent.responseCreate(body);" in _fn("function requestTurn(agent)")
         for fn in ("function openWhenReady(reason)", "function resumeForGuest()",
                    "function silentMicNudge(attempt)", "function greetGuestAndWait()",
                    "function greetHostAndWait()", "async function onToolCall(event)"):

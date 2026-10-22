@@ -2161,7 +2161,8 @@ that bind now:
   who someone is) runs a ten-minute room on the proposed and the current
   configuration through the real scenario; `pipelines/voices/rehearsal.py
   report` reads PASS only when the proposal wins on overlap, self-answered
-  turns and guest words per answer and does not lose on turn length. **A
+  turns and guest words per answer and does not lose on turn length (a count
+  both arms hold at zero is the floor, not a loss). **A
   scenario or prompt change ships to a real guest only on a PASS plus one
   operator listen.**
 - **The edit keeps its promises in code.** A guest's "start that again" or
@@ -2205,7 +2206,12 @@ behaviour driven through the real scenario in a node vm by
   one short line that she is still there, for as long as they are away. Speech
   is the backstop exit: the guest talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within
   `HOLD_REPLY_WINDOW_MS` of the end of a check-in (`noteHoldSpeech`, fed by
-  `noteSpeechEnded`, the one handler for both VAD paths). On return she
+  `noteSpeechEnded`, the one handler for both VAD paths). **The check-in is
+  that one response's `instructions` (`response.create`), never a
+  conversation note**: as a note it came out as "welcome back" and the
+  question again into a guest still away, and on their return her first line
+  was the check-in again (third rehearsal, run e08c026c); `exitHold` drops a
+  parked one. On return she
   re-asks the closing question in play and any held time note is delivered.
   The trace carries `hold: entered/left`, never the guest's words.
 - **The room hears the guest's words.** Grok Voice 3.0 sends them as the
