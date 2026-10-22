@@ -452,7 +452,11 @@ def recent_session_logs(hours: float = 2.0, limit: int = 5,
         if url:
             try:
                 resp = requests.get(url, timeout=60)
-                entry["log"] = resp.text[-60000:]
+                # The whole log: the workflow saves it as an artifact. A tail
+                # cut at 60 kB had kept only the last two minutes of a
+                # fifteen-minute rehearsal (Oct 22 2026), and the opening is
+                # usually where the fault is.
+                entry["log"] = resp.text
             except Exception as exc:  # noqa: BLE001
                 entry["log"] = f"(log fetch failed: {exc})"
         out.append(entry)
