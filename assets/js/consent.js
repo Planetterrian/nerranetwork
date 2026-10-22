@@ -332,15 +332,15 @@
 
     function hideBanner(banner) {
         if (!banner) return;
-        banner.style.display = 'none';
-        banner.setAttribute('hidden', '');
+        if (banner.style) banner.style.display = 'none';
+        if (typeof banner.setAttribute === 'function') banner.setAttribute('hidden', '');
         try { document.documentElement.classList.remove('nn-consent-needed'); } catch (e) { /* ignore */ }
     }
 
     function revealBanner(banner) {
         if (!banner) return;
-        banner.style.display = '';
-        banner.removeAttribute('hidden');
+        if (banner.style) banner.style.display = '';
+        if (typeof banner.removeAttribute === 'function') banner.removeAttribute('hidden');
         try { document.documentElement.classList.add('nn-consent-needed'); } catch (e) { /* ignore */ }
     }
 

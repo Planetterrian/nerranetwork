@@ -128,12 +128,15 @@ global.document = {
       href: '',
       textContent: '',
       children: [],
-      setAttribute() {},
-      getAttribute() { return null; },
+      attrs: Object.create(null),
+      setAttribute(k, v) { this.attrs[k] = String(v); if (k === 'id') this.id = String(v); },
+      getAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k) ? this.attrs[k] : null; },
+      hasAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k); },
+      removeAttribute(k) { delete this.attrs[k]; },
       querySelector() { return { addEventListener() {}, checked: false }; },
       appendChild(c) { this.children.push(c); return c; },
       style: {},
-      classList: { add() {} },
+      classList: { add() {}, remove() {} },
       innerHTML: '',
       addEventListener() {},
     };
@@ -141,7 +144,7 @@ global.document = {
   head: { appendChild() {} },
   body: { appendChild() {} },
   addEventListener() {},
-  documentElement: { lang: 'en' },
+  documentElement: { lang: 'en', classList: { add() {}, remove() {} } },
 };
 global.localStorage = localStorage;
 global.TextEncoder = TextEncoder;

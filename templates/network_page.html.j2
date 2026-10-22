@@ -263,9 +263,9 @@
             <li class="lt-reel-card" style="--show-color:{{ v.brand_color }};" data-reel-item>
                 <div class="lt-reel-frame{% if not v.image_url %} is-card{% endif %}">
                     {% if v.image_url %}
-                    <img class="lt-reel-img" data-src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" decoding="async"{% if v.image_orientation != 'portrait' %} data-landscape{% endif %} data-reel-media>
+                    <img class="lt-reel-img" data-src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async"{% if v.image_orientation != 'portrait' %} data-landscape{% endif %} data-reel-media>
                     {% elif v.cover_url %}
-                    <img class="lt-reel-cover" data-src="{{ path_prefix }}{{ v.cover_url }}" alt="{{ v.show_name | e }} cover art" width="160" height="160" decoding="async" data-reel-media>
+                    <img class="lt-reel-cover" data-src="{{ path_prefix }}{{ v.cover_url }}" alt="{{ v.show_name | e }} cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
                     {% endif %}
                     {% if v.preview_url %}
                     <video class="lt-reel-preview" data-src="{{ v.preview_url }}"{% if v.image_url %} data-poster="{{ v.image_url }}"{% endif %} muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
