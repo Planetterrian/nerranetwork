@@ -94,6 +94,22 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript>
 
+    {#- Oct 22 2026: show the SSR consent banner before paint when no
+        choice is stored. consent.js still owns Consent Mode + handlers;
+        this only toggles visibility so the banner is never built after
+        first paint (which made .nn-consent-text the LCP element). -#}
+    <script>
+    (function () {
+      try {
+        if (!localStorage.getItem('nn_consent_v1')) {
+          document.documentElement.classList.add('nn-consent-needed');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('nn-consent-needed');
+      }
+    })();
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
 
@@ -225,6 +241,21 @@
         'nav_books': 'Книги' if _is_ru else 'Books',
         'nav_gallery': 'Галерея' if _is_ru else 'Image Gallery',
         'nav_data': 'Данные и дашборды' if _is_ru else 'Data & Dashboards',
+        'consent_label': 'Cookie на Nerra' if _is_ru else 'Cookies on Nerra',
+        'consent_heading': 'Cookie на Nerra' if _is_ru else 'Cookies on Nerra',
+        'consent_body': (
+            'Некоторые cookie нужны для работы сайта. До вашего выбора Google получает только базовые сигналы без cookie (например, что страница загрузилась), без cookie и идентификаторов, которые вас узнают. С вашего согласия можно также включить: Аналитику — cookie Google Analytics, чтобы мы видели, какие страницы и выпуски полезны, и Измерение рекламы — Google Ads для подсчёта регистраций с нашей рекламы. Когда вы подписываетесь на Personal tips, Измерение рекламы также отправляет Google закодированную (хешированную) версию вашего email. Изменить выбор можно в любой момент через «Настройки cookie» внизу каждой страницы. '
+            if _is_ru else
+            'Some cookies keep the site working. Before you choose, Google gets only basic, cookie-free signals (for example, that a page loaded), with no cookies or IDs that identify you. With your OK you can also turn on: Analytics, which uses Google Analytics cookies to show us which pages and episodes are useful, and Ad measurement, which uses Google Ads to measure sign-ups from our ads. When you sign up for Personal tips, Ad measurement also sends Google a coded (hashed) version of your email. Change your mind any time from Cookie settings at the bottom of every page. '
+        ),
+        'consent_privacy': 'Политика конфиденциальности' if _is_ru else 'Privacy policy',
+        'consent_accept': 'Принять все' if _is_ru else 'Accept all',
+        'consent_reject': 'Отклонить все' if _is_ru else 'Reject all',
+        'consent_choose': 'Выбрать' if _is_ru else 'Choose',
+        'consent_analytics': 'Аналитика' if _is_ru else 'Analytics',
+        'consent_ads': 'Измерение рекламы' if _is_ru else 'Ad measurement',
+        'consent_save': 'Сохранить' if _is_ru else 'Save',
+        'consent_close': 'Закрыть' if _is_ru else 'Close',
         'nav_editorial': 'Редакционная политика' if _is_ru else 'Editorial Process',
         'nav_claims': 'Проверка фактов и исправления' if _is_ru else 'Claims &amp; corrections',
         'nav_support': 'Поддержать сеть' if _is_ru else 'Support the Network',
@@ -831,5 +862,33 @@
       } catch (e) {}
     })();
     </script>
+
+    {#- SSR consent banner (Oct 22 2026). Hidden unless
+        html.nn-consent-needed (head script) or Cookie settings reopen.
+        Compact bottom bar — never the LCP element. Copy matches
+        consent.js; handlers bound by consent.js. -#}
+    <div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="{{ t.consent_label }}" data-nn-consent-ssr="1">
+        <div class="nn-consent-inner">
+            <button type="button" class="nn-consent-close" aria-label="{{ t.consent_close }}">&times;</button>
+            <h2 class="nn-consent-heading" id="nn-consent-heading">{{ t.consent_heading }}</h2>
+            <div class="nn-consent-text">{{ t.consent_body }}<a class="nn-consent-privacy" href="{{ path_prefix }}privacy-policy.html">{{ t.consent_privacy }}</a>.</div>
+            <div class="nn-consent-actions">
+                <button type="button" class="nn-consent-btn" data-nn-consent="accept-all">{{ t.consent_accept }}</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="reject-all">{{ t.consent_reject }}</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="choose">{{ t.consent_choose }}</button>
+            </div>
+            <div class="nn-consent-panel" data-nn-consent-panel hidden>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="analytics">
+                    <span>{{ t.consent_analytics }}</span>
+                </label>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="ads">
+                    <span>{{ t.consent_ads }}</span>
+                </label>
+                <button type="button" class="nn-consent-btn" data-nn-consent="save">{{ t.consent_save }}</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

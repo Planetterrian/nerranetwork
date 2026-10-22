@@ -251,19 +251,24 @@
             <button type="button" class="lt-reel-arrow" data-reel-prev aria-label="Scroll Shorts back" aria-controls="lt-reel-track"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <button type="button" class="lt-reel-arrow" data-reel-next aria-label="Scroll Shorts forward" aria-controls="lt-reel-track"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
+        {#- Oct 22 2026: click-to-load fallback when IntersectionObserver
+            is missing or the visitor wants the reel before scrolling. -#}
+        <p class="lt-reel-load-wrap">
+            <button type="button" class="lt-btn lt-btn--ghost" id="lt-reel-load" data-reel-load hidden>Load Shorts</button>
+        </p>
     </div>
-    <div class="lt-reel" data-reel data-at-start>
+    <div class="lt-reel" data-reel data-at-start data-reel-lazy="1">
         <ol class="lt-reel-track" id="lt-reel-track" data-reel-track aria-label="Shorts, one per show">
             {% for v in reel %}
             <li class="lt-reel-card" style="--show-color:{{ v.brand_color }};" data-reel-item>
                 <div class="lt-reel-frame{% if not v.image_url %} is-card{% endif %}">
                     {% if v.image_url %}
-                    <img class="lt-reel-img" src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async"{% if v.image_orientation != 'portrait' %} data-landscape{% endif %}>
+                    <img class="lt-reel-img" data-src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async"{% if v.image_orientation != 'portrait' %} data-landscape{% endif %} data-reel-media>
                     {% elif v.cover_url %}
-                    <img class="lt-reel-cover" src="{{ path_prefix }}{{ v.cover_url }}" alt="{{ v.show_name | e }} cover art" width="160" height="160" loading="lazy" decoding="async">
+                    <img class="lt-reel-cover" data-src="{{ path_prefix }}{{ v.cover_url }}" alt="{{ v.show_name | e }} cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
                     {% endif %}
                     {% if v.preview_url %}
-                    <video class="lt-reel-preview" src="{{ v.preview_url }}"{% if v.image_url %} poster="{{ v.image_url }}"{% endif %} muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview></video>
+                    <video class="lt-reel-preview" data-src="{{ v.preview_url }}"{% if v.image_url %} data-poster="{{ v.image_url }}"{% endif %} muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
                     {% endif %}
                     <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">{{ v.show_name | e }}</span></span>
                     <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
@@ -1022,9 +1027,63 @@
 
 {% block scripts %}
 {%- if watch and watch.shorts %}
-{#- The Shorts reel and its player (assets/js/shorts-reel.js): first-party,
-    deferred, and it loads nothing from YouTube until a visitor presses Play. #}
-<script src="{{ path_prefix }}assets/js/shorts-reel.js" defer></script>
+{#- Oct 22 2026: load shorts-reel.js only when #shorts scrolls into view
+    (IntersectionObserver), with a click-to-load fallback. Media uses
+    data-src until then so the homepage does not pay for the reel up front.
+    YouTube still loads only on Play. #}
+<script>
+(function () {
+  var loaded = false;
+  var section = document.getElementById('shorts');
+  if (!section) return;
+  var btn = document.getElementById('lt-reel-load');
+  var scriptSrc = {{ (path_prefix ~ 'assets/js/shorts-reel.js') | tojson }};
+
+  function hydrateMedia() {
+    var nodes = section.querySelectorAll('[data-reel-media]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      var src = el.getAttribute('data-src');
+      if (src && !el.getAttribute('src')) el.setAttribute('src', src);
+      var poster = el.getAttribute('data-poster');
+      if (poster && !el.getAttribute('poster')) el.setAttribute('poster', poster);
+      el.removeAttribute('data-src');
+      el.removeAttribute('data-poster');
+    }
+  }
+
+  function loadReel() {
+    if (loaded) return;
+    loaded = true;
+    if (btn) btn.hidden = true;
+    hydrateMedia();
+    var s = document.createElement('script');
+    s.src = scriptSrc;
+    s.defer = true;
+    document.body.appendChild(s);
+  }
+
+  if (btn) {
+    btn.addEventListener('click', loadReel);
+    if (!('IntersectionObserver' in window)) btn.hidden = false;
+  }
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i].isIntersecting) {
+          io.disconnect();
+          loadReel();
+          return;
+        }
+      }
+    }, { rootMargin: '240px 0px' });
+    io.observe(section);
+  } else if (btn) {
+    btn.hidden = false;
+  }
+})();
+</script>
 {%- endif %}
 {#- Oct 19 2026: live quotes from the Worker, Latest headlines re-read from
     this page's newest build, and both rows moving as a tape. -#}

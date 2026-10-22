@@ -1,7 +1,9 @@
 {% extends "base.html.j2" %}
 
 {% block head_extra %}
-    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    {#- Fonts come from base.html.j2 (async media=print onload from #1476).
+        Do not add a second Google Fonts <link> here — that was render-blocking
+        on /personal-interest.html. main.css is already in base. -#}
     <style>
         .spi-hero {
             position: relative;
