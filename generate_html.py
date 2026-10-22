@@ -5739,12 +5739,12 @@ def generate_llms_txt(*, dry_run=False):
 #: do not ask for them to rank — and do not put them in the sitemap.
 BLOG_ARCHIVE_NOINDEX_FROM_PAGE = 3
 
-#: Conversion / console surfaces that should not compete for crawl budget.
+#: Thin utility surfaces that should not compete for crawl budget.
 #: Still linked from the site; just not advertised in sitemap.xml.
+#: Funnel landers ``join.html`` and ``personal-interest.html`` stay IN the
+#: sitemap — they are intentional indexed entry points (Oct 22 2026).
 SITEMAP_EXCLUDE_UTILITIES = frozenset({
-    "join.html",
     "support.html",
-    "personal-interest.html",
     "age-of-ai-apply.html",
     "nerra-voices-apply.html",
     "player.html",
@@ -5943,9 +5943,10 @@ def generate_sitemap(*, dry_run=False, out=None):
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
     # age-of-ai-studio.html stays OUT deliberately — it is the private join
-    # link for a scheduled interview. Apply / join / player / Soft Personal
-    # capture pages are reachable from the site but excluded here as thin
-    # utility surfaces (Oct 22 2026 crawl pass — see SITEMAP_EXCLUDE_UTILITIES).
+    # link for a scheduled interview. player / support / *-apply are
+    # reachable from the site but excluded here as thin utility surfaces
+    # (Oct 22 2026 crawl pass — see SITEMAP_EXCLUDE_UTILITIES). join.html
+    # and personal-interest.html stay listed — funnel landers we want indexed.
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "mira.html", "explore.html", "age-of-ai-apply.html",

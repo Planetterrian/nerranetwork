@@ -115,6 +115,11 @@ class TestSitemapCrawlPass:
         locs = _locs(sitemap_xml)
         for name in G.SITEMAP_EXCLUDE_UTILITIES:
             assert not any(u.endswith("/" + name) for u in locs), name
+        # Funnel landers stay indexed (explicitly NOT in the exclude set).
+        assert "join.html" not in G.SITEMAP_EXCLUDE_UTILITIES
+        assert "personal-interest.html" not in G.SITEMAP_EXCLUDE_UTILITIES
+        assert any(u.endswith("/join.html") for u in locs)
+        assert any(u.endswith("/personal-interest.html") for u in locs)
 
     def test_show_hubs_before_episodes(self, sitemap_xml):
         locs = _locs(sitemap_xml)
