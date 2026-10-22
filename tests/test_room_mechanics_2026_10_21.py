@@ -55,7 +55,10 @@ class TestEndOfTurnIsADecision:
         i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
         stopped = SCENARIO[i:i + 700]
         assert "scheduleTurnDecision(TURN_DECIDE_MS);" in stopped
-        assert "speechSinceMiraMs += Math.max(0, ms);" in stopped
+        # Oct 22 2026: one handler measures the speech for every path.
+        assert "noteSpeechEnded(Date.now() - inboundSpokeAt);" in stopped
+        i = SCENARIO.index("function noteSpeechEnded(ms)")
+        assert "speechSinceMiraMs += len;" in SCENARIO[i:i + 300]
 
     def test_a_turn_nobody_asked_for_is_cancelled(self):
         body = _fn("function markTurnStarted(agent)")

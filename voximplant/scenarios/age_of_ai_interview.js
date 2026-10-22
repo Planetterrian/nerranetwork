@@ -705,9 +705,17 @@ let cancelledLinePending = false; // the next line of hers is from a cancelled t
 // "I'm back", "where were we") or answer the one short line she may say every
 // HOLD_CHECK_IN_MS that she is still there. Nothing the guest says while away
 // is written to the trace.
+//
+// The room receives no transcription of the guest's words (see the Oct 13
+// note at noteGuestSpoke), so in practice a hold starts on Mira's own line
+// and ends on SPEECH: the guest talking for HOLD_REPLY_MIN_SPEECH_MS after a
+// check-in is their reply to it. The first candidate rehearsal (Oct 22) ended
+// its hold only on words, never left it, and sat silent to the end of the
+// room. She keeps checking in for as long as they are away; a hold with a cap
+// on check-ins and no other way out is a room that has stopped.
 const HOLD_CHECK_IN_MS = 3 * 60 * 1000;
-const HOLD_MAX_CHECK_INS = 3;
-const HOLD_REPLY_WINDOW_MS = 30 * 1000; // speech this soon after her check-in is the reply to it
+const HOLD_REPLY_WINDOW_MS = 45 * 1000; // speech this soon after her check-in is the reply to it
+const HOLD_REPLY_MIN_SPEECH_MS = 800;   // shorter is a cough or a word to someone else
 // The guest stepping away. Kept narrow: "let me think" is a pause inside an
 // answer, never a hold.
 const HOLD_ENTER_RE = /\b((i (have|need|got|gotta) to|let me|i'?ll( just)?|i'?m going to|i'?m gonna) (take|grab|answer|get) (this|that|a|the|another) (call|phone)|(another|a|the) call (coming|is coming) in|my (phone|other line)('s| is) ringing|(give|bear with) me (just )?(a|one) (moment|minute|second|sec)|bear with me|(hold|hang) on (just )?(a|one) (moment|minute|second|sec)|excuse me (for )?(just )?(a|one) (moment|minute|second|sec)|(i'?ll|i will) be (right )?back|be right back)\b/i;
@@ -759,7 +767,6 @@ function armHoldTimer() {
 function holdCheckIn() {
   holdTimer = null;
   if (!holdMode || roomEnded || !grokAgent) return;
-  if (holdCheckIns >= HOLD_MAX_CHECK_INS) { trace("hold", "still away; no more check-ins"); return; }
   if (inboundSpeaking || miraSpeaking) { holdTimer = setTimeout(holdCheckIn, 15 * 1000); return; }
   holdCheckIns += 1;
   holdCheckInAt = Date.now();
@@ -807,6 +814,25 @@ function exitHold(why) {
   } catch (err) { /* the decision below still gives her the turn */ }
   if (inRound && !roundRepromptTimer) roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
   if (!inboundSpeaking) scheduleTurnDecision(TURN_DECIDE_MS);
+}
+
+/**
+ * Speech, with or without words: the guest talking soon after her check-in
+ * is the reply to it. The only way out of a hold the room can count on.
+ */
+function noteHoldSpeech(ms) {
+  if (!holdMode || !holdCheckInAt) return;
+  if (inboundSpokeAt < holdCheckInAt || ms < HOLD_REPLY_MIN_SPEECH_MS) return;
+  if (Date.now() - holdCheckInAt > HOLD_REPLY_WINDOW_MS) return;
+  exitHold("they spoke after her check-in");
+}
+
+/** The end of a stretch of inbound speech, as the VAD measured it. */
+function noteSpeechEnded(ms) {
+  const len = Math.max(0, ms);
+  speechSinceMiraMs += len;
+  noteGuestSpoke(len);
+  noteHoldSpeech(len);
 }
 
 /** A guest line, while held or not: does it start or end a hold? */
@@ -1042,6 +1068,9 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
     try { noteRoundQuestion(text); }
     catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
+    // In a hold she speaks only her check-in; the reply window runs from the
+    // end of that line, not from the moment the room asked for it.
+    if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();
     try { if (!holdMode && MIRA_HOLD_RE.test(text || "")) enterHold("she said she would wait"); }
     catch (err) { Logger.write("[aoa " + runId + "] hold check failed: " + err.message); }
     try {
@@ -1365,9 +1394,7 @@ async function createAgent(note) {
   if (Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) {
     agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped, function () {
       inboundSpeaking = false;
-      const ms = Date.now() - inboundSpokeAt;
-      speechSinceMiraMs += Math.max(0, ms);
-      noteGuestSpoke(ms);
+      noteSpeechEnded(Date.now() - inboundSpokeAt);
       if (agent !== grokAgent) return;
       // The VAD found the pause; the room decides whether it is the end of
       // a turn (see decideTurn). The opening waits for this too.
@@ -1379,7 +1406,7 @@ async function createAgent(note) {
     inboundSpeaking = true; inboundSpokeAt = Date.now();
     // Without a stopped event there is no length to measure; speech after
     // the last-word question is then taken as the answer when it starts.
-    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) { noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS); speechSinceMiraMs += LAST_WORD_MIN_SPEECH_MS; }
+    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) noteSpeechEnded(Math.max(LAST_WORD_MIN_SPEECH_MS, HOLD_REPLY_MIN_SPEECH_MS));
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");

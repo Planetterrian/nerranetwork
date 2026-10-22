@@ -2202,9 +2202,15 @@ behaviour driven through the real scenario in a node vm by
   and round prompts, and counts no speech as an answer, until they address
   her again (`HOLD_EXIT_RE`: her name, "sorry about that", "I'm back",
   "where were we") or three minutes pass (`HOLD_CHECK_IN_MS`), when she says
-  one short line that she is still there (at most `HOLD_MAX_CHECK_INS`). On
-  return she re-asks the closing question in play and any held time note is
-  delivered. The trace carries `hold: entered/left`, never the guest's words.
+  one short line that she is still there, for as long as they are away. **The
+  room receives no transcription of the guest**, so the word rules are
+  backstops: live, a hold starts on her own line and ends on SPEECH, the guest
+  talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within `HOLD_REPLY_WINDOW_MS` of the
+  end of a check-in (`noteHoldSpeech`, fed by `noteSpeechEnded`, the one
+  handler for both VAD paths). The first candidate rehearsal ended its hold
+  only on words and sat silent to the end. On return she re-asks the closing
+  question in play and any held time note is delivered. The trace carries
+  `hold: entered/left`, never the guest's words.
 - **No sign-off while the round is unfinished**, cut mid-sentence on the
   transcript deltas (`signOffBlockedByRound`), unless the guest asked to stop
   (`GUEST_STOP_RE`), the hard cap fired (it closes the round), or the room

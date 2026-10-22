@@ -131,7 +131,9 @@ class TestHoldMode:
         holds = [x for x in lines(out) if x.startswith("hold: ")]
         assert holds[0] == "hold: entered: the guest stepped away"
         assert any(x.startswith("hold: check-in 1 after") for x in holds)
-        assert any(x.startswith("hold: left: they turned back to her") for x in holds)
+        # Words or speech: in this scenario the guest's return falls in the
+        # reply window, and the room hears the speech before the words.
+        assert any(x.startswith("hold: left: they") for x in holds)
         joined = " ".join(lines(out)).lower()
         for private in ("delivery", "thursday", "take this call"):
             assert private not in joined
@@ -181,6 +183,47 @@ class TestHoldMode:
         # The hard cap always ends a hold, and endRoom clears its timer.
         assert 'if (holdMode) exitHold("the hard cap");' in SCENARIO
         assert "roundRepromptTimer, holdTimer].forEach" in _fn("async function endRoom(reason)")
+
+
+class TestTheHoldEndsWithoutWords:
+    """The first candidate rehearsal (Oct 22): the hold began on her line,
+    she checked in three times, the guest came back and spoke, and nothing
+    left the hold, because the room receives no transcription of the guest
+    and every exit read words. It then said nothing more, so the closing
+    round never ran. The live path is speech, not text."""
+
+    def test_speech_after_her_check_in_brings_them_back(self):
+        out = sim("hold_ends_on_speech")
+        assert out["entered"]["holdMode"] is True
+        assert out["whileAway"]["events"] == [], "talking to the caller is never a turn"
+        assert out["stillHeld"] is True, "speech outside a reply window is not a return"
+        assert out["back"]["holdMode"] is False and out["back"]["holdResumeOwed"] is True
+        assert out["afterBack"]["events"] == ["create"]
+        assert any("ask again, in one short line, the closing question" in n
+                   for n in out["afterBack"]["notes"])
+        holds = [x["d"] for x in out["trace"] if x["e"] == "hold"]
+        assert any(d.startswith("left: they spoke after her check-in") for d in holds)
+
+    def test_the_round_moves_on_after_the_return(self):
+        out = sim("hold_ends_on_speech")
+        rounds = [x["d"] for x in out["trace"] if x["e"] == "round"]
+        assert "answered 2/8" in rounds and out["afterAnswer"]["roundIndex"] == 2
+
+    def test_she_keeps_checking_in_for_as_long_as_they_are_away(self):
+        out = sim("hold_ends_on_speech")
+        assert out["checkIns"] == 4
+        assert "no more check-ins" not in SCENARIO
+        assert "HOLD_MAX_CHECK_INS" not in SCENARIO
+
+    def test_a_cough_or_a_late_word_to_the_caller_is_not_a_return(self):
+        out = sim("hold_ignores_a_cough")
+        assert out["afterCough"] is True and out["afterLateSpeech"] is True
+
+    def test_the_vad_paths_share_one_speech_handler(self):
+        assert SCENARIO.count("noteSpeechEnded(") >= 3   # definition + both VAD paths
+        assert "noteHoldSpeech(len)" in _fn("function noteSpeechEnded")
+        # The window runs from the end of her check-in line.
+        assert "if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();" in SCENARIO
 
 
 class TestNeverCloseBeforeTheRound:

@@ -80,10 +80,21 @@ run(`
 function guestSays(text, ms) {
   run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
   advance(ms || 2000);
-  run("inboundSpeaking = false; speechSinceMiraMs += " + (ms || 2000) + "; noteGuestSpoke(" + (ms || 2000) + ");");
-  ctx.__text = text;
-  run("remember('Guest', __text);");
-  run("scheduleTurnDecision(TURN_DECIDE_MS);");   // what SpeechStopped does
+  run("inboundSpeaking = false; noteSpeechEnded(" + (ms || 2000) + ");");   // what SpeechStopped does
+  if (text !== null) { ctx.__text = text; run("remember('Guest', __text);"); }
+  run("scheduleTurnDecision(TURN_DECIDE_MS);");
+}
+// The live room: the voice API sends no transcription of the guest, so the
+// room hears that they spoke and for how long, never what they said.
+function guestSpeaks(ms) { guestSays(null, ms); }
+// Run the clock until the room's next hold check-in fires.
+function untilCheckIn() {
+  const seen = trace.filter(function (x) { return x.e === "hold" && /^check-in /.test(x.d); }).length;
+  for (let i = 0; i < 400; i++) {
+    advance(1000);
+    if (trace.filter(function (x) { return x.e === "hold" && /^check-in /.test(x.d); }).length > seen) return;
+  }
+  throw new Error("no check-in within 400 s");
 }
 function serverStartsATurn() { run("markTurnStarted(grokAgent);"); }
 function roomTurnStarts() { run("markTurnStarted(grokAgent);"); }   // after a requestTurn
@@ -132,6 +143,60 @@ if (which === "server_turns_advance_the_round") {
   out.back = state();
   advance(5000);
   out.afterBack = { events: events.slice(), state: state(), notes: notes.slice(-2) };
+} else if (which === "hold_ends_on_speech") {
+  // The Oct 22 candidate rehearsal: no guest words ever arrive. The hold
+  // starts on her line and must end on the guest's speech after a check-in.
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What is the one bet you are making for the next five years?");
+  guestSpeaks(2500);
+  advance(5000);                    // no words arrive; the room waits once, then answered 1/8, asks 2/8
+  roomTurnStarts();
+  miraFinishes("Of course, take the call, I'll wait.");
+  out.entered = state();
+  events.length = 0;
+  for (let i = 0; i < 6; i++) { guestSpeaks(3000); advance(4000); }
+  out.whileAway = { events: events.slice(), state: state() };
+  // Three check-ins she says (each one short line), none answered: the
+  // guest is still talking to the caller, but never inside a reply window.
+  for (let i = 0; i < 3; i++) {
+    untilCheckIn();
+    roomTurnStarts();
+    miraFinishes("I'm still here whenever you're ready.");
+    advance(60 * 1000);
+    guestSpeaks(3000);
+  }
+  out.stillHeld = state().holdMode;
+  // The fourth: they answer it. Speech, no words.
+  untilCheckIn();
+  roomTurnStarts();
+  advance(3000);
+  miraFinishes("I'm still here whenever you're ready.");
+  events.length = 0;
+  advance(4000);
+  guestSpeaks(1500);
+  out.back = state();
+  advance(5000);
+  out.afterBack = { events: events.slice(), state: state(), notes: notes.slice(-2) };
+  // She asks the question in play again; the answer (no words) moves the round on.
+  roomTurnStarts();
+  miraFinishes("Welcome back. So, a book you would recommend?");
+  guestSpeaks(4000);
+  advance(5000);
+  out.afterAnswer = state();
+  out.checkIns = trace.filter(function (x) { return x.e === "hold" && /^check-in /.test(x.d); }).length;
+} else if (which === "hold_ignores_a_cough") {
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("Of course, I'll wait.");
+  untilCheckIn();
+  roomTurnStarts();
+  miraFinishes("I'm still here whenever you're ready.");
+  guestSpeaks(400);                 // a cough
+  out.afterCough = state().holdMode;
+  advance(60 * 1000);
+  guestSpeaks(3000);                // talking to the caller, outside the reply window
+  out.afterLateSpeech = state().holdMode;
 } else if (which === "sign_off_waits_for_the_round") {
   run("closingPermitted = true; startRound('test', -1);");
   roomTurnStarts();
