@@ -41,6 +41,18 @@ SCENARIO_NAME = "age_of_ai_interview"
 FIXTURE_SCENARIO_NAME = "age_of_ai_fixture_guest"
 FIXTURE_RULE_NAME = os.environ.get("VOXIMPLANT_FIXTURE_RULE_NAME", "age-of-ai-fixture-guest")
 FIXTURE_RULE_PATTERN = r"^fixture-guest-never-dialled$"
+# Candidate rooms (Oct 22 2026): the rehearsal harness can only measure the
+# scenario that is deployed, so a change to the room's own code could not be
+# rehearsed before every guest got it. A branch's interview scenario is
+# uploaded beside the live one under its own name, with its own room prefix
+# and rule, and the fixture guest calls into "candroom-<run id>" instead of
+# "room-<run id>". The live scenario, its rule and every real guest's room are
+# untouched; the candidate is only ever reached by a rehearsal.
+CANDIDATE_SCENARIO_NAME = "age_of_ai_interview_candidate"
+CANDIDATE_ROOM_PREFIX = "candroom-"
+CANDIDATE_ROOM_RULE_NAME = os.environ.get("VOXIMPLANT_CANDIDATE_RULE_NAME", "age-of-ai-candidate-room")
+CANDIDATE_ROOM_RULE_PATTERN = r"^candroom-.*"
+_ROOM_PREFIX_LINE = 'const ROOM_PREFIX = "room-";'
 # xAI Voice Agent model for Mira. Oct 15 2026: pinned to `grok-voice-3.0`
 # (released Oct 14 2026; the `grok-voice-latest` alias moved to it the same
 # day and `grok-voice-2.0` is deprecated). xAI's own guidance is to pin a
@@ -145,6 +157,7 @@ def start_fixture_guest(run_id: str, *, persona: str, voice: str = "sal",
                         cough_clip: Optional[str] = None,
                         silence_ms: Optional[int] = None,
                         beats: Optional[List[Dict[str, Any]]] = None,
+                        room_prefix: str = "room-",
                         rule_name: str = FIXTURE_RULE_NAME) -> Dict[str, Any]:
     """Send the FIXTURE GUEST into an interview room (rehearsal harness).
 
@@ -167,6 +180,10 @@ def start_fixture_guest(run_id: str, *, persona: str, voice: str = "sal",
         custom["silence_ms"] = int(silence_ms)
     if beats:
         custom["beats"] = beats
+    if room_prefix not in ("room-", CANDIDATE_ROOM_PREFIX):
+        raise VoximplantError(f"unknown room prefix {room_prefix!r}")
+    if room_prefix != "room-":
+        custom["room_prefix"] = room_prefix
     result = _call(
         "StartScenarios",
         rule_name=rule_name,
@@ -181,7 +198,8 @@ def upload_scenario(path: Path,
                     scenario_name: str = SCENARIO_NAME,
                     supabase_url: Optional[str] = None,
                     supabase_service_key: Optional[str] = None,
-                    xai_api_key: Optional[str] = None) -> Dict[str, Any]:
+                    xai_api_key: Optional[str] = None,
+                    room_prefix: Optional[str] = None) -> Dict[str, Any]:
     """Create or update the scenario source from *path* (deploy step).
 
     ``__SUPABASE_URL__``, ``__SUPABASE_SERVICE_KEY__``, ``__XAI_API_KEY__``
@@ -195,6 +213,8 @@ def upload_scenario(path: Path,
     both were written from spec, not live docs.)
     """
     source = path.read_text(encoding="utf-8")
+    if room_prefix:
+        source = candidate_source(source, room_prefix)
     supabase_url = supabase_url or os.environ.get("SUPABASE_URL", "").strip()
     if not supabase_url:
         raise VoximplantError("SUPABASE_URL required to deploy the scenario")
@@ -246,6 +266,26 @@ def upload_scenario(path: Path,
         return _call("AddScenario",
                      scenario_name=scenario_name,
                      scenario_script=source)
+
+
+def candidate_source(source: str, room_prefix: str = CANDIDATE_ROOM_PREFIX) -> str:
+    """The interview scenario's source with its room prefix changed, so the
+    copy answers only ``<prefix><run id>`` calls. Refuses when the prefix line
+    is not there exactly once (a candidate that still answered ``room-`` calls
+    would be a second live scenario)."""
+    if source.count(_ROOM_PREFIX_LINE) != 1:
+        raise VoximplantError("interview scenario has no single ROOM_PREFIX line to retarget")
+    if room_prefix == "room-" or not room_prefix.endswith("-"):
+        raise VoximplantError(f"bad candidate room prefix {room_prefix!r}")
+    return source.replace(_ROOM_PREFIX_LINE, f'const ROOM_PREFIX = "{room_prefix}";')
+
+
+def upload_candidate_scenario(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Upload THIS checkout's interview scenario as the rehearsal candidate
+    (same deploy-time substitutions, its own name and room prefix). The live
+    ``age_of_ai_interview`` is never touched."""
+    return upload_scenario(path or _SCENARIO_PATH, scenario_name=CANDIDATE_SCENARIO_NAME,
+                           room_prefix=CANDIDATE_ROOM_PREFIX)
 
 
 def upload_fixture_scenario(path: Optional[Path] = None) -> Dict[str, Any]:
@@ -500,3 +540,36 @@ def ensure_fixture_rule(application_name: str = APPLICATION_NAME,
     logger.info("Voximplant rule %s (%s) created for %s: %s", rule_name, pattern,
                 scenario_name, res)
     return {"rule_id": res.get("rule_id"), "created": True}
+
+
+def ensure_candidate_room_rule(application_name: str = APPLICATION_NAME,
+                               scenario_name: str = CANDIDATE_SCENARIO_NAME,
+                               rule_name: str = CANDIDATE_ROOM_RULE_NAME,
+                               pattern: str = CANDIDATE_ROOM_RULE_PATTERN) -> Dict[str, Any]:
+    """Create the candidate-room rule if missing and keep it second, right
+    after the live room rule, so no catch-all rule can take a candidate call
+    and the live room rule is never displaced. Its pattern matches only
+    ``candroom-*``, which nothing but the fixture guest ever dials."""
+    rules = list_rules(application_name)
+    existing = next((r for r in rules if r.get("rule_name") == rule_name), None)
+    created = False
+    if existing is None:
+        res = _call("AddRule", application_name=application_name,
+                    rule_name=rule_name, rule_pattern=pattern,
+                    scenario_name=scenario_name)
+        rule_id = res.get("rule_id")
+        created = True
+        logger.info("Voximplant rule %s (%s) created: %s", rule_name, pattern, res)
+        rules = list_rules(application_name)
+    else:
+        rule_id = existing.get("rule_id")
+    order = [r.get("rule_id") for r in rules]
+    room = next((r.get("rule_id") for r in rules if r.get("rule_name") == ROOM_RULE_NAME), None)
+    want = 1 if room is not None and order and order[0] == room else 0
+    reordered = False
+    if rule_id in order and order.index(rule_id) != want:
+        order.remove(rule_id)
+        order.insert(want, rule_id)
+        _call("ReorderRules", rule_id=";".join(str(i) for i in order))
+        reordered = True
+    return {"rule_id": rule_id, "created": created, "reordered": reordered}

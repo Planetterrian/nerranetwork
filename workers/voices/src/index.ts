@@ -992,7 +992,10 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
  *  were asked. Numbers and booleans only; anything else is dropped. */
 export function roomCountersOf(payload: any): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const k of ["barge_ins", "server_turns", "self_answers_blocked"]) {
+  for (const k of ["barge_ins", "server_turns", "self_answers_blocked",
+                   // Oct 22 2026: server turns the room cancelled and decided
+                   // itself, and how often the guest stepped away (hold mode).
+                   "server_turns_rerouted", "holds"]) {
     if (payload?.[k] !== undefined && Number.isFinite(Number(payload[k]))) out[k] = Number(payload[k]);
   }
   if (typeof payload?.closing_round_complete === "boolean") out.closing_round_complete = payload.closing_round_complete;

@@ -64,6 +64,21 @@ FIXTURES_FILE = HERE / "fixtures" / "rehearsal_guests.yaml"
 PERSONA_TEMPLATE = HERE / "prompts" / "fixture_guest.txt"
 DEFAULT_OUT_DIR = ROOT / "outputs" / "rehearsals"
 ARMS = ("proposed", "current")
+#: Which interview scenario a room runs on (Oct 22 2026). ``deployed`` is the
+#: live one; ``candidate`` is this checkout's scenario uploaded beside it
+#: (voximplant_client.upload_candidate_scenario), reached through its own room
+#: prefix, so a change to the room's CODE is rehearsed before it is deployed.
+SCENARIOS = {"deployed": "room-", "candidate": "candroom-"}
+#: The fixture's scheduled behaviours with a phone call in the middle (Oct 22
+#: 2026, hold mode): the same faults as the default list, and at minute four
+#: the guest steps away to take a call and comes back at six.
+HOLD_BEATS = [
+    {"at_min": 2.0, "kind": "pause_mid_thought"},
+    {"at_min": 4.0, "kind": "take_call"},
+    {"at_min": 6.0, "kind": "end_call"},
+    {"at_min": 7.0, "kind": "push_back"},
+    {"at_min": 8.0, "kind": "ask_who"},
+]
 #: The §7.5 rule: proposed must beat current on these (lower is better for
 #: the first two, higher for the third) ...
 MUST_BEAT = (("overlap_events", "lower"), ("self_answered_turns", "lower"),
@@ -270,7 +285,8 @@ def _iso(t: dt.datetime) -> str:
 
 def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any],
                   prompt: str, minutes: int, turn_silence_ms: Optional[int],
-                  reasoning_effort: str, tools: Optional[list]) -> Dict[str, Any]:
+                  reasoning_effort: str, tools: Optional[list],
+                  scenario: str = "deployed", with_hold: bool = False) -> Dict[str, Any]:
     """The interview_runs row for one rehearsal room. The scenario reads the
     same columns a live run carries; the only marker is session_kind."""
     from fire_interviews import MIRA_TOOLS, keyterms_for, turn_detection
@@ -299,6 +315,7 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
             "reasoning_effort": reasoning_effort,
             "turn_silence_ms": detection["silence_duration_ms"],
             "prompt_chars": len(prompt), "started": _iso(_now()),
+            "scenario": scenario, "with_hold": bool(with_hold),
         }},
     }
     if reasoning_effort:
@@ -324,12 +341,14 @@ def create_run(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def start_fixture(run_id: str, fixture: Dict[str, Any], persona: str, minutes: int,
-                  cough_clip: str = "") -> Dict[str, Any]:
+                  cough_clip: str = "", scenario: str = "deployed",
+                  with_hold: bool = False) -> Dict[str, Any]:
     from voximplant.api_clients.voximplant_client import start_fixture_guest
     return start_fixture_guest(
         run_id, persona=persona, voice=fixture.get("voice") or "sal", minutes=minutes,
         speaks_first=bool(fixture.get("speaks_first")), fixture_id=fixture["id"],
-        guest_name=fixture["name"], cough_clip=cough_clip or None)
+        guest_name=fixture["name"], cough_clip=cough_clip or None,
+        beats=HOLD_BEATS if with_hold else None, room_prefix=SCENARIOS[scenario])
 
 
 def wait_for_room(run_id: str, minutes: int) -> Dict[str, Any]:
@@ -440,16 +459,18 @@ def result_record(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
 def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
             turn_silence_ms: Optional[int], reasoning_effort: str,
             tools: Optional[list], cough_clip: str, out_dir: Path,
-            index: int) -> Path:
+            index: int, scenario: str = "deployed", with_hold: bool = False) -> Path:
     """One room: create the run, send in the fixture, wait, measure, write."""
     pair = ensure_rehearsal_interview(fixture, minutes)
     row = build_run_row(interview=pair["interview"], arm=arm, fixture=fixture,
                         prompt=prompt, minutes=minutes, turn_silence_ms=turn_silence_ms,
-                        reasoning_effort=reasoning_effort, tools=tools)
+                        reasoning_effort=reasoning_effort, tools=tools,
+                        scenario=scenario, with_hold=with_hold)
     run = create_run(row)
     logger.info("rehearsal run %s (%s, %s) created", run["id"], arm, fixture["id"])
     persona = fixture_persona(fixture)
-    start_fixture(run["id"], fixture, persona, minutes, cough_clip)
+    start_fixture(run["id"], fixture, persona, minutes, cough_clip,
+                  scenario=scenario, with_hold=with_hold)
     logger.info("fixture %s is calling into room %s", fixture["id"], run["id"])
     run = wait_for_room(run["id"], minutes)
     with tempfile.TemporaryDirectory(prefix="rehearsal_") as tmp:
@@ -599,7 +620,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     for i in range(1, args.repeat + 1):
         run_one(arm=args.arm, fixture=fixture, minutes=args.minutes, prompt=prompt,
                 turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
-                tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i)
+                tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
+                scenario=args.scenario, with_hold=args.with_hold)
     print(f"{args.repeat} {args.arm} room(s) measured into {out_dir}")
     return 0
 
@@ -637,6 +659,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                    help="use this file as the prompt instead of compiling/looking one up")
     r.add_argument("--cough-clip", default=os.environ.get("REHEARSAL_COUGH_CLIP", ""))
     r.add_argument("--out-dir", default="")
+    r.add_argument("--scenario", choices=tuple(SCENARIOS), default="deployed",
+                   help="candidate = this checkout's room, uploaded beside the live one")
+    r.add_argument("--with-hold", action="store_true",
+                   help="the fixture steps away to take a call at minute four")
     r.set_defaults(func=_cmd_run)
     p = sub.add_parser("report", help="compare the arms in a results directory")
     p.add_argument("path")

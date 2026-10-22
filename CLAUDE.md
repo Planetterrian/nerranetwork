@@ -2184,6 +2184,46 @@ now ships the fixture guest too), `wrangler deploy` in `workers/voices`, apply
 the two migrations, set `VOICES_WEBHOOK_SECRET` on both sides, and run the
 rehearsal before the next booked room. ⚠️ AUDIO on every interview.
 
+### The Age of AI: a server turn, a guest on another call, and a sign-off too soon (Oct 22 2026)
+
+From the Oct 22 room (run c868dac8; guards `tests/test_room_holds_2026_10_22.py`,
+behaviour driven through the real scenario in a node vm by
+`tests/fixtures/room_sim.js`). Rules that bind:
+
+- **A turn the server starts after the guest spoke goes through the room's
+  decision** (`markTurnStarted`): it is cancelled and `scheduleTurnDecision`
+  runs, so `decideTurn` (the only path to `roundAnswered`) sees the answer.
+  The closing round had stuck at question 1 for 25 minutes because
+  `markTurnStarted` reset the flags `decideTurn` reads. Counter
+  `server_turns_rerouted` in the end-of-room webhook (Worker `roomCountersOf`).
+- **Hold mode.** When the guest's words say they are stepping away or taking
+  another call (`HOLD_ENTER_RE`; "let me think" is not one), or Mira says she
+  will wait (`MIRA_HOLD_RE`), the room gives her no turns, holds TIME CHECK
+  and round prompts, and counts no speech as an answer, until they address
+  her again (`HOLD_EXIT_RE`: her name, "sorry about that", "I'm back",
+  "where were we") or three minutes pass (`HOLD_CHECK_IN_MS`), when she says
+  one short line that she is still there (at most `HOLD_MAX_CHECK_INS`). On
+  return she re-asks the closing question in play and any held time note is
+  delivered. The trace carries `hold: entered/left`, never the guest's words.
+- **No sign-off while the round is unfinished**, cut mid-sentence on the
+  transcript deltas (`signOffBlockedByRound`), unless the guest asked to stop
+  (`GUEST_STOP_RE`), the hard cap fired (it closes the round), or the room
+  has already blocked `ROUND_CLOSE_BLOCKS_MAX` (3) — a guest is never trapped.
+- **The grader** (`09_interview_retro.txt`): replying to, or acting on, a
+  conversation the guest is having with someone else is a turn-taking fault,
+  never "patience".
+- **A candidate room is rehearsed before it is deployed.** The rehearsal
+  workflow's `candidate_scenario` input uploads the branch's scenario as
+  `age_of_ai_interview_candidate` with `ROOM_PREFIX` rewritten to
+  `candroom-` (its own rule `^candroom-.*`; `candidate_source` refuses
+  `room-`), and the fixture guest dials that prefix for the proposed arm; the
+  live scenario and rule are never written. `with_hold` adds a phone-call beat
+  to the fixture (`HOLD_BEATS`).
+
+Operator: deploy the scenario only after the candidate rehearsal reads PASS and
+one listen; `wrangler deploy` in `workers/voices` so the new counters are
+stored. ⚠️ AUDIO on every interview.
+
 ### Members-only limited series (Oct 18 2026)
 
 Operator-directed (doc [`docs/specials.md`](docs/specials.md); guards
