@@ -68,27 +68,36 @@ jobs:
 
       # Static ffmpeg via actions/cache (not apt, not FedericoCarboni —
       # the latter broke on Sep 14 2026 by scraping an upstream README;
-      # see .github/actions/setup-ffmpeg). Cache hit is seconds; miss
-      # downloads a pinned BtbN linux64 gpl build under a 6-minute ceiling.
+      # see .github/actions/setup-ffmpeg). Pin a dated BtbN autobuild tag
+      # (not ``latest``); cache key includes the tag; miss downloads the
+      # exact asset and verifies sha256sum -c against that release's
+      # checksums.sha256 under a 6-minute ceiling.
       - name: Cache static ffmpeg
         id: cache-ffmpeg
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/ffmpeg-static
-          key: ffmpeg-n8.1-linux64-gpl-8.1
+          key: ffmpeg-btbn-autobuild-2026-10-22-13-06-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1
 
       - name: Install static ffmpeg
         if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
         timeout-minutes: 6
+        env:
+          BTBN_TAG: autobuild-2026-10-22-13-06
+          BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
         run: |
           set -euo pipefail
           dest="${{ runner.temp }}/ffmpeg-static"
           mkdir -p "$dest"
-          url="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz"
+          base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
+          cd /tmp
           curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
-            -o /tmp/ffmpeg.tar.xz "$url"
-          tar -xJf /tmp/ffmpeg.tar.xz -C /tmp
-          src=$(echo /tmp/ffmpeg-n8.1-*-linux64-gpl-8.1)
+            -o checksums.sha256 "${base}/checksums.sha256"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+            -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}"
+          grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c -
+          tar -xJf "${BTBN_ASSET}" -C /tmp
+          src="/tmp/${BTBN_ASSET%.tar.xz}"
           cp "$src/bin/ffmpeg" "$src/bin/ffprobe" "$dest/"
           chmod +x "$dest/ffmpeg" "$dest/ffprobe"
 
