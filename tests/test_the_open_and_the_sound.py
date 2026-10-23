@@ -426,8 +426,11 @@ class TestSheActuallyStops:
         # records that a turn started whoever asked (markTurnStarted); every
         # other "she is speaking" flag went with the direct responseCreate calls.
         assert SCENARIO.count("miraSpeaking = true") == 2
-        assert "miraSpeaking = true;\n  turnRequested = true;\n  agent.responseCreate({});" in SCENARIO
-        assert SCENARIO.count("responseCreate({})") == 2, "requestTurn and the narration take only"
+        assert "miraSpeaking = true;\n  turnRequested = true;\n" in SCENARIO
+        # requestTurn's body may carry one response's instructions (the hold
+        # check-in, Oct 22 2026); the narration take sends none.
+        assert SCENARIO.count("responseCreate(") == 2, "requestTurn and the narration take only"
+        assert "agent.responseCreate(body);" in SCENARIO
         assert "miraSpeaking = false;\n        trace(\"grok\", \"response done\");" in SCENARIO
 
     def test_a_connector_without_cancel_does_not_crash_the_room(self):
