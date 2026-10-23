@@ -235,7 +235,9 @@ def test_studio_every_role_places_the_same_call():
     # Room model: nobody waits to be called; the host is a participant.
     assert "IncomingCall" not in STUDIO and "armHost" not in STUDIO
     assert 'extraHeaders: { "X-Run-Id": runId, "X-Role": role }' in STUDIO
-    assert 'number: "mira"' in STUDIO
+    # Oct 23 2026: only a rehearsal invite (room=candidate) dials the draft room.
+    assert 'number: candidateRoom ? "mira-candidate" : "mira"' in STUDIO
+    assert 'var candidateRoom = params.get("room") === "candidate";' in STUDIO
     assert "sendVideo: !isHost && camOn" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Connected, onCallConnected)" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Disconnected, onCallEnded)" in STUDIO

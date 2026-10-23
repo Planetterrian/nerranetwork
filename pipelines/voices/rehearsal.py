@@ -619,6 +619,137 @@ def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
 
 
 # ---------------------------------------------------------------------------
+# A person in a candidate room (Oct 23 2026)
+# ---------------------------------------------------------------------------
+#
+# The fixture guest finds what a voice agent can find; Patrick asked to sit in
+# a draft room himself and hear the video and the prompting as a guest does.
+# `invite` makes a rehearsal interview for a real address (session_kind and
+# status `rehearsal`, so no cron, brief, reminder, editorial pass or publish
+# ever touches it), compiles Mira's brief from that person's own latest
+# application, emails them a studio link that dials the candidate scenario
+# (room=candidate), and then waits for the room and measures it like any
+# rehearsal. The live scenario and every real guest's room are untouched.
+
+from shows import DEFAULT_SHOW  # noqa: E402
+
+INVITE_JOIN_WAIT_MIN = 90      # how long the job waits for them to join
+INVITE_NAME_SUFFIX = " (test room)"
+
+
+def _source_application(email: str) -> Dict[str, Any]:
+    """The person's own latest application, which Mira's brief is built on."""
+    from common import sb_select
+    apps = sb_select("guest_applications",
+                     f"email=eq.{requests_quote(email)}&order=created_at.desc&limit=10")
+    apps = [a for a in apps if a.get("status") != "rehearsal"]
+    if not apps:
+        raise RuntimeError(f"no application on file for {email}; a test room is built on one")
+    return apps[0]
+
+
+def ensure_invite_interview(source: Dict[str, Any], minutes: int) -> Dict[str, Any]:
+    """A rehearsal application (copied from ``source``) and a fresh rehearsal
+    interview for this test room. The application is reused across invites."""
+    from common import sb_insert, sb_select
+    email = source["email"]
+    apps = sb_select("guest_applications",
+                     f"email=eq.{requests_quote(email)}&status=eq.rehearsal&limit=1")
+    if apps:
+        app = apps[0]
+    else:
+        app = sb_insert("guest_applications", {
+            "name": str(source.get("name") or "Guest") + INVITE_NAME_SUFFIX, "email": email,
+            "status": "rehearsal", "show": source.get("show") or DEFAULT_SHOW,
+            "organization": source.get("organization") or "",
+            "title": source.get("title") or "", "bio": source.get("bio") or "",
+            "notes": "Rehearsal test room: never screened, booked or published.",
+        })
+    interview = sb_insert("interviews", {
+        "application_id": app["id"], "status": "rehearsal", "session_kind": "rehearsal",
+        "duration_min": minutes, "scheduled_at": _iso(_now()),
+        "show": source.get("show") or DEFAULT_SHOW, "call_mode": "webrtc", "host_mode": False,
+    })
+    return {"app": app, "interview": interview}
+
+
+def invite_prompt(source: Dict[str, Any], minutes: int) -> str:
+    """What compile_mira_prompt writes today for this person, as a guest with
+    no co-host, for a room of ``minutes``."""
+    from fire_interviews import compile_mira_prompt
+    interview = {"application_id": source["id"], "duration_min": minutes,
+                 "show": source.get("show") or DEFAULT_SHOW, "host_mode": False}
+    return compile_mira_prompt(interview, source, {})
+
+
+def invite_link(interview: Dict[str, Any], scenario: str = "candidate") -> str:
+    from shows import show_for
+    link = show_for(interview).studio_url(interview["id"]) + "&role=guest"
+    return link + ("&room=candidate" if scenario == "candidate" else "")
+
+
+def invite_email(name: str, link: str, minutes: int, scenario: str) -> "tuple[str, str]":
+    import html as _h
+    first = (name or "there").split()[0]
+    which = ("the draft of the interview room (the candidate scenario, not the one guests"
+             " get)" if scenario == "candidate" else "the live interview room")
+    subject = "Your test room with Mira is open"
+    body = (
+        f"<p>Hi {_h.escape(first)},</p>"
+        f"<p>Your test interview is ready. This link opens {which}: "
+        f"<a href=\"{_h.escape(link)}\">join the test room</a>.</p>"
+        f"<p>It is planned for {minutes} minutes, and the closing round comes in the last"
+        " few of them. Join from a computer with a camera and a microphone, the way a guest"
+        " would. Nothing from this room is published, and no email goes to anyone else.</p>"
+        "<p>When the room ends, the rehearsal job transcribes it and posts the room log and"
+        " a listen link in its summary.</p>"
+    )
+    return subject, body
+
+
+def wait_for_join(run_id: str, minutes: int) -> Dict[str, Any]:
+    """Poll the run until someone has joined (or it has ended)."""
+    from common import sb_select
+    deadline = time.time() + minutes * 60
+    last: Dict[str, Any] = {}
+    while time.time() < deadline:
+        rows = sb_select("interview_runs", f"id=eq.{run_id}")
+        last = rows[0] if rows else {}
+        if last.get("guest_joined_at") or last.get("status") in ("in_progress", "completed", "failed"):
+            return last
+        time.sleep(POLL_SECONDS)
+    return last
+
+
+def invite_one(*, email: str, minutes: int, scenario: str, out_dir: Path,
+               wait_minutes: int = INVITE_JOIN_WAIT_MIN, send: Any = None) -> Optional[Path]:
+    """Create the test room, email the link, wait for the room, measure it."""
+    from common import send_email
+    source = _source_application(email)
+    pair = ensure_invite_interview(source, minutes)
+    person = {"id": "operator", "name": source.get("name") or "Guest"}
+    row = build_run_row(interview=pair["interview"], arm="proposed", fixture=person,
+                        prompt=invite_prompt(source, minutes), minutes=minutes,
+                        turn_silence_ms=None, reasoning_effort="", tools=None,
+                        scenario=scenario)
+    row["grok_session_log"]["rehearsal"]["invite"] = True
+    run = create_run(row)
+    link = invite_link(pair["interview"], scenario)
+    subject, body = invite_email(person["name"], link, minutes, scenario)
+    (send or send_email)(email, subject, body)
+    # The repository's Actions logs are public: the link (which opens the
+    # room) and the address go only in the email, never in a log line.
+    print(f"Test room {run['id']} is open; the invite has been emailed.")
+    joined = wait_for_join(run["id"], wait_minutes)
+    if not (joined.get("guest_joined_at") or joined.get("status") in ("in_progress", "completed")):
+        print(f"::warning::nobody joined test room {run['id']} within {wait_minutes} min; "
+              "the room stays open (re-measure it later with the remeasure input)")
+        return None
+    run = wait_for_room(run["id"], minutes + 30)
+    return measure_and_write(arm="proposed", fixture=person, run=run, out_dir=out_dir, index=1)
+
+
+# ---------------------------------------------------------------------------
 # Before a room, and what a room says about itself
 # ---------------------------------------------------------------------------
 
@@ -1077,6 +1208,20 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_invite(args: argparse.Namespace) -> int:
+    if "@" not in (args.email or ""):
+        print("::error::invite needs --email", file=sys.stderr)
+        return 2
+    if args.minutes < ROOM_MIN_MINUTES:
+        print(f"::warning::the room reads {args.minutes} planned minutes as a 45-minute "
+              f"interview; under {ROOM_MIN_MINUTES} the closing round never begins")
+    out_dir = Path(args.out_dir) if args.out_dir else DEFAULT_OUT_DIR / _now().strftime("%Y%m%d")
+    path = invite_one(email=args.email.strip(), minutes=args.minutes, scenario=args.scenario,
+                      out_dir=out_dir, wait_minutes=args.wait_minutes)
+    print(f"test room measured into {path}" if path else "test room not measured")
+    return 0
+
+
 def _cmd_preflight(args: argparse.Namespace) -> int:
     result = xai_preflight()
     if not result["ok"]:
@@ -1166,6 +1311,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     r.add_argument("--with-hold", action="store_true",
                    help="the fixture steps away to take a call at minute four")
     r.set_defaults(func=_cmd_run)
+    iv = sub.add_parser("invite", help="email a person a test room, then measure it")
+    iv.add_argument("--email", required=True)
+    iv.add_argument("--minutes", type=int, default=ROOM_MIN_MINUTES)
+    iv.add_argument("--scenario", choices=tuple(SCENARIOS), default="candidate",
+                    help="candidate: the draft room this ref uploads; deployed: the live one")
+    iv.add_argument("--wait-minutes", type=int, default=INVITE_JOIN_WAIT_MIN)
+    iv.add_argument("--out-dir", default="")
+    iv.set_defaults(func=_cmd_invite)
     f = sub.add_parser("preflight", help="stop before any room if xAI refuses requests")
     f.set_defaults(func=_cmd_preflight)
     m = sub.add_parser("remeasure", help="measure rooms that already ran")

@@ -226,7 +226,7 @@ class TestSpecArtifacts:
         text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(
             encoding="utf-8")
         assert "You are Mira" in text
-        assert "HOW TO CLOSE" in text and "four short closing questions" in text
+        assert "HOW TO CLOSE" in text and "with the words to ask it" in " ".join(text.split())
         assert "({{closing_question}})" in text
         assert "is the plan, not a limit" in text
         for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}",

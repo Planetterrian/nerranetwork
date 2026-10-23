@@ -60,7 +60,12 @@ class TestTheClosingRoundVaries:
         # Oct 23 2026: "lightning" is gone from her brief. Rehearsal
         # 39987282078 heard it as a licence for her own quickfire (coffee or
         # tea, ocean or mountains) in place of two of the room's questions.
-        assert "four short closing questions" in flat
+        # Rehearsal 39998790684: told the round held "one about the interview
+        # itself", she wrote her own ("what did you learn about yourself
+        # doing this interview?"). The brief names no question at all now;
+        # the room hands her the words.
+        assert "four short closing questions" not in flat
+        assert "with the words to ask it" in flat
         assert "those questions are the whole round" in flat
         assert "lightning" not in flat.replace("{{lightning_at}}", "")
         assert "hands you each closing question in turn" in flat
@@ -74,8 +79,7 @@ class TestTheClosingRoundVaries:
         flat = _flat(PROMPT)
         # Oct 23 2026 (Patrick): how it felt and the one improvement are one
         # question, and the round ends on a follow-up interview.
-        assert "one about the interview itself" in flat
-        assert "whether they would like a follow-up interview" in flat
+        assert "one about the interview itself" not in flat
         assert "how being interviewed by an AI was, and one improvement" in SCENARIO_JS
         assert "what's one specific thing we could improve?" in SCENARIO_JS
         # Sept 21 2026: that answer is read after the episode and adopted as

@@ -1483,7 +1483,7 @@ function requestTurn(agent) {
     const base = sessionInstructions || (config && config.mira_system_prompt) || "";
     nextTurnInstructions = (base ? base + "\n\n" : "") +
       "[ROOM — for this turn only, do not read aloud] The interview is over and you" +
-      " have thanked them. Say goodbye in a few words. Nothing else.";
+      " have thanked them. Say goodbye in a few words, then stop talking.";
   }
   pendingTurn = false;
   miraSpeaking = true;
@@ -2841,7 +2841,7 @@ const roundUnheardRehands = {};  // label -> times handed again because it was n
 const ROUND_TOPICS = {
   "the show's own question": /\b(bet|prove|proof|understood|understand)\b/i,
   "a book they would recommend": /\b(book|read)/i,
-  "who you should interview next": /\b(interview|next|guest|on the show|talk to|speak (to|with)|hear from)\b/i,
+  "who you should interview next": /\b(next|guest|on the show|talk to|speak (to|with)|hear from)\b/i,
   "the best advice they were ever given": /\b(advice|advise|told you)\b/i,
   "who has inspired them most": /\b(inspir\w*|look up to|influenc\w*)/i,
   "how being interviewed by an AI was, and one improvement": /\b(AI|interviewed by|this format|talking (to|with) (me|an ai)|improv\w*|better|differently)\b/i,
@@ -2862,7 +2862,14 @@ function noteRoundTurnWithoutQuestion(text) {
     roundSpoken[label] = true;           // asked in her own words
     return;
   }
-  if (asked && roundRehandedOnce[label]) { roundAskedUnrecognised[label] = true; return; }
+  // Oct 23 2026 (rehearsal 39998790684): handed the advice question twice,
+  // she asked the follow-up interview question instead; that is another
+  // round question, not this one reworded, so it is never taken as asked.
+  const askedAnother = ROUND_QUESTIONS.some(function (q) { return q[0] !== label && q[1].test(text); });
+  if (asked && roundRehandedOnce[label]) {
+    if (!askedAnother) roundAskedUnrecognised[label] = true;
+    return;
+  }
   roundRehandedOnce[label] = true;
   delete roundAsked[label];
   roundIndex -= 1;          // their next finished answer hands this one again
@@ -3217,7 +3224,7 @@ function roundReprompt() {
         "[ROUND — for this turn only, do not read aloud] They have not answered your last" +
         " question yet (" + roundQuestionText(ROUND_QUESTIONS[roundIndex]) + "). Say one" +
         " short line that makes that question real and easy — the same question, no new" +
-        " one — then wait in silence for as long as it takes.");
+        " one — then stop talking and let them take as long as they need.");
   } catch (err) { /* the next time check still runs */ }
 }
 
@@ -3255,7 +3262,7 @@ function askRoundLastWord() {
         " asked. React in one short line to what they just said if it struck you; then" +
         " hand them the last word: ask whether there is anything they came wanting to say" +
         " that the two of you never reached, and mean it. Do not thank them or close yet." +
-        " Then stop and wait in silence.");
+        " Then stop talking and let them answer.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] last-word hand-off failed: " + err.message);
   }
@@ -3284,7 +3291,7 @@ function closeRound() {
         "[ROUND — for this turn only, do not read aloud] The closing round is complete." +
         " One short turn: thank them warmly for something particular they said today," +
         " then tell them that's the end of the recording and they can hang up now." +
-        " Nothing after that.");
+        " Then stop talking.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] closing thanks failed: " + err.message);
   }

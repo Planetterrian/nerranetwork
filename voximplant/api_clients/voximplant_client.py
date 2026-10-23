@@ -51,7 +51,13 @@ FIXTURE_RULE_PATTERN = r"^fixture-guest-never-dialled$"
 CANDIDATE_SCENARIO_NAME = "age_of_ai_interview_candidate"
 CANDIDATE_ROOM_PREFIX = "candroom-"
 CANDIDATE_ROOM_RULE_NAME = os.environ.get("VOXIMPLANT_CANDIDATE_RULE_NAME", "age-of-ai-candidate-room")
-CANDIDATE_ROOM_RULE_PATTERN = r"^candroom-.*"
+# Oct 23 2026: a person can join a candidate room too. The studio page with
+# ?room=candidate dials CANDIDATE_STUDIO_NUMBER instead of "mira"; the
+# candidate scenario answers it as a participant session (any destination
+# that is not its room prefix) and bridges them into "candroom-<run id>".
+# Only a rehearsal invite (rehearsal.py invite) carries that link.
+CANDIDATE_STUDIO_NUMBER = "mira-candidate"
+CANDIDATE_ROOM_RULE_PATTERN = r"^(candroom-.*|mira-candidate)$"
 _ROOM_PREFIX_LINE = 'const ROOM_PREFIX = "room-";'
 # xAI Voice Agent model for Mira. Oct 15 2026: pinned to `grok-voice-3.0`
 # (released Oct 14 2026; the `grok-voice-latest` alias moved to it the same
@@ -553,7 +559,8 @@ def ensure_candidate_room_rule(application_name: str = APPLICATION_NAME,
     """Create the candidate-room rule if missing and keep it second, right
     after the live room rule, so no catch-all rule can take a candidate call
     and the live room rule is never displaced. Its pattern matches only
-    ``candroom-*``, which nothing but the fixture guest ever dials."""
+    ``candroom-*`` (the fixture guest) and ``mira-candidate`` (a person
+    joining from a rehearsal invite's studio link)."""
     rules = list_rules(application_name)
     existing = next((r for r in rules if r.get("rule_name") == rule_name), None)
     created = False
@@ -567,6 +574,9 @@ def ensure_candidate_room_rule(application_name: str = APPLICATION_NAME,
         rules = list_rules(application_name)
     else:
         rule_id = existing.get("rule_id")
+        if str(existing.get("rule_pattern") or "").lstrip("^") != pattern.lstrip("^"):
+            _call("SetRuleInfo", rule_id=rule_id, rule_pattern=pattern)
+            logger.info("Voximplant rule %s pattern set to %s", rule_name, pattern)
     order = [r.get("rule_id") for r in rules]
     room = next((r.get("rule_id") for r in rules if r.get("rule_name") == ROOM_RULE_NAME), None)
     want = 1 if room is not None and order and order[0] == room else 0

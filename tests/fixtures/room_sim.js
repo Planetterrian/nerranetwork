@@ -607,6 +607,25 @@ if (which === "server_turns_advance_the_round") {
   out.createsAfterThanks = events.filter(function (e) { return e === "create"; }).length - createsBefore;
   out.lastInstructions = instructions[instructions.length - 1];
   out.final = state();
+} else if (which === "another_round_question_in_its_place") {
+  // Rehearsal 39998790684: handed the advice question she reacted and asked
+  // nothing; handed it again, she asked the follow-up interview question.
+  const ask = function (line, answer) {
+    roomTurnStarts(); miraFinishes(line); guestSays(answer, 3000); advance(5000);
+  };
+  run("closingPermitted = true; startRound('test', -1);");
+  ask("What's the one bet you're making for the next twelve months that you cannot prove yet?", "That practice beats performance.");
+  ask("What's a book you would recommend, and in a sentence, why?", "Man's Search for Meaning.");
+  // Handed "who should I interview next", she wrote a question of her own.
+  ask("Frankel fits this whole conversation. What's one thing you learned about yourself through doing this interview?", "I still protect the human parts.");
+  out.afterInvented = state();
+  ask("Who's one person you think I should interview next?", "My old broker.");
+  // Handed the advice question: a reaction only, then the follow-up instead.
+  ask("That protectiveness is the thread through all of it.", "It is.");
+  ask("Good to hear. Would you like a follow-up interview sometime down the road?", "I'd be open to it.");
+  out.afterFollowUp = state();
+  ask("What's the best piece of advice you were ever given?", "The house will still be there tomorrow.");
+  out.final = state();
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),
