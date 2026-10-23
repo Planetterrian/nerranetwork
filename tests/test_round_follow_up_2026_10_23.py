@@ -37,14 +37,14 @@ class TestAFollowUpIsNotTheQuestion:
         lines = round_lines(out)
         assert ("her turn asked something else; who you should interview next "
                 "goes again when they finish") in lines
-        assert "they finished their thought; handing 3/8 again" in lines
+        assert "they finished their thought; handing 3/7 again" in lines
         assert out["handedAgain"] == 2
 
     def test_a_second_miss_moves_on_and_never_loops(self):
         out = sim("round_turn_asks_a_follow_up")
         lines = round_lines(out)
         assert sum(1 for line in lines if line.startswith("her turn asked")) == 1
-        assert "asked 4/8: the best advice they were ever given" in lines
+        assert "asked 4/7: the best advice they were ever given" in lines
         assert out["state"]["roundIndex"] == 3
 
 
@@ -99,7 +99,7 @@ class TestSheIsGivenTheWords:
 
     def test_every_fixed_question_has_its_line_and_the_room_hears_it(self):
         entries = self._entries()
-        assert len(entries) == 8
+        assert len(entries) == 7
         for label, pattern, line in entries:
             if label == "the show's own question":
                 continue    # the show supplies its own wording

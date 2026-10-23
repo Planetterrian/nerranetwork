@@ -45,14 +45,14 @@ class TestASignOffMidSentenceIsCut:
     def test_the_logged_deltas_cancel_the_line(self):
         out = sim("delta_cut_rehands_the_question")
         assert out["events"][:2] == ["cancel", "clear"]
-        assert "cancelled mid-sentence: a sign-off with the closing round at 4/8" in round_lines(out)
+        assert "cancelled mid-sentence: a sign-off with the closing round at 4/7" in round_lines(out)
 
     def test_the_question_in_play_goes_again_as_instructions(self):
         out = sim("delta_cut_rehands_the_question")
         assert out["notesAdded"] == 0
         assert len(out["handed"]) == 1
         handed = out["handed"][0]
-        assert "[ROUND 4 of 8" in handed
+        assert "[ROUND 4 of 7" in handed
         assert "What's the best piece of advice you were ever given?" in handed
         assert "Do not mention the sentence that was cut off." in handed
 
@@ -63,7 +63,7 @@ class TestASignOffMidSentenceIsCut:
         assert not any(line.startswith("her turn asked") for line in round_lines(out))
         # Her real question is answered and the round goes on to question 5.
         assert out["final"]["roundIndex"] == 4
-        assert "answered 4/8" in round_lines(out)
+        assert "answered 4/7" in round_lines(out)
 
 
 class TestASignOffAfterTheFactIsCorrectedInTheSameTurn:

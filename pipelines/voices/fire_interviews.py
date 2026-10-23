@@ -409,12 +409,14 @@ CLOSING_ROUND = (
     ("The person who has inspired them most",
      re.compile(r"inspired you (the )?most|who inspires you|(person|people) who('?s| has| have) inspired",
                 re.I)),
-    ("Whether they would like to be interviewed by you again",
-     re.compile(r"interviewed by me again|(do|doing) this again", re.I)),
-    ("How the experience of being interviewed by an AI was",
-     re.compile(r"experience of being interviewed|being interviewed by an ai", re.I)),
-    ("One specific suggestion for what could be improved",
-     re.compile(r"(thing|suggestion).{0,40}improve|could (we|i|be) improve", re.I)),
+    # Oct 23 2026 (Patrick): how the interview felt and the one improvement
+    # are one question, and the last asks for a follow-up interview.
+    ("How the experience of being interviewed by an AI was, and one specific improvement",
+     re.compile(r"experience of being interviewed|being interviewed by an ai"
+                r"|(thing|suggestion).{0,40}improve|could (we|i|be) improve", re.I)),
+    ("Whether they would like a follow-up interview in six months to a year",
+     re.compile(r"follow-?up (interview|conversation)|interview(ed)? (by me )?again"
+                r"|another interview|(do|doing) this again", re.I)),
 )
 _ROW = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 _COMMON = {"what", "what's", "that", "your", "with", "have", "this", "about", "more",

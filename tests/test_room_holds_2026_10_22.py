@@ -75,8 +75,8 @@ class TestAServerTurnGoesThroughTheDecision:
         assert decided["state"]["roundIndex"] == 1
         assert decided["events"][-1] == "create"
         t = lines(out)
-        assert "round: answered 1/8" in t
-        assert "round: asked 2/8: a book they would recommend" in t
+        assert "round: answered 1/7" in t
+        assert "round: asked 2/7: a book they would recommend" in t
         assert any("the room decides it (#1)" in x for x in t)
 
     def test_the_source_routes_it(self):
@@ -248,8 +248,8 @@ class TestTheHoldEndsWithoutWords:
         # Oct 23 2026: "I'll wait" asked nothing, so the book question is the
         # one in play when they come back; her asking it then is question 2.
         assert any(d.startswith("her turn asked nothing; a book") for d in rounds)
-        assert "asked 2/8: a book they would recommend (her own words)" in rounds
-        assert "answered 2/8" in rounds and out["afterAnswer"]["roundIndex"] == 2
+        assert "asked 2/7: a book they would recommend (her own words)" in rounds
+        assert "answered 2/7" in rounds and out["afterAnswer"]["roundIndex"] == 2
 
     def test_she_keeps_checking_in_for_as_long_as_they_are_away(self):
         out = sim("hold_ends_on_speech")
@@ -356,7 +356,7 @@ class TestNeverCloseBeforeTheRound:
         # Oct 23 2026: the question in play is handed again in the same breath
         # (rehandAfterSignOff), so the cancel is followed by her next turn.
         assert out["inRound"]["events"] == ["cancel", "clear", "create"]
-        assert "close: cancelled mid-sentence: a sign-off with the closing round at 1/8" in lines(out)
+        assert "close: cancelled mid-sentence: a sign-off with the closing round at 1/7" in lines(out)
 
     def test_unless_the_guest_asked_to_stop_or_the_round_closed(self):
         out = sim("sign_off_waits_for_the_round")
