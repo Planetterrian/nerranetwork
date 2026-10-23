@@ -6816,6 +6816,13 @@ to six setups. Rules that bind:
 - **The video sweep restarts a handoff whose one run died before "Render and
   publish the video" started** (`scripts/video_job.retryable_titles`). Any
   other failed run is still re-run by a person.
+- **Past the hold, the Nerra Daily gate waits for a re-run.** Ep064 shipped
+  6 of 15 segments: the first re-run to land woke the gate while nine were
+  still generating. A missing roster show whose run started after the hold
+  and has not reached its own `if: always()` wake step is waited for
+  (`engine.daily_edition.rerunning_shows`); the last re-run builds the
+  edition. A morning straggler is not, so 7:00 ET is unchanged; an
+  unreadable Actions API decides as before.
 - The Cloudflare account is on Workers Paid (operator, Oct 23).
 
 ### Covered means aired, and a story catalog (Oct 21 2026)

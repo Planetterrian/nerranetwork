@@ -195,3 +195,78 @@ class TestTheAccountIsOnWorkersPaid:
             assert "account is on Workers Free" not in text, rel
             assert "account is on the Workers Free" not in text, rel
         assert "Workers Paid now" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+class TestReRunsWait:
+    """Ep064 (Oct 23) shipped 6 of 15 segments: the first re-run to land woke
+    the gate after the hold and it built while nine re-runs were generating."""
+
+    DAY = __import__("datetime").date(2026, 10, 23)
+
+    def _hold(self):
+        from engine.daily_edition import release_window
+        return release_window(self.DAY)[1]
+
+    def _run(self, show, *, created, wake="queued", status="in_progress"):
+        steps = [{"name": "Run show pipeline", "status": "in_progress"},
+                 {"name": "Wake the Nerra Daily gate", "status": wake}]
+        return {"status": status, "created_at": created,
+                "jobs": [{"name": "gate", "status": "completed", "steps": []},
+                         {"name": f"run ({show})", "status": status, "steps": steps}]}
+
+    def test_the_oct_23_replay_waits_for_the_running_shows(self):
+        import datetime as dt
+        from engine.daily_edition import rerunning_shows
+        now = dt.datetime(2026, 10, 23, 14, 46, 30, tzinfo=dt.timezone.utc)
+        missing = ["spacex", "tesla", "models_agents", "omni_view", "mag7",
+                   "modern_investing", "omni_view_world", "prediction_markets"]
+        runs = [self._run(s, created="2026-10-23T14:29:00Z")
+                for s in missing if s != "prediction_markets"]
+        # The run that woke the gate is at its own wake step: it is not waited for.
+        runs.append(self._run("prediction_markets", created="2026-10-23T14:31:00Z",
+                              wake="in_progress"))
+        got = rerunning_shows(runs, missing, hold_until=self._hold(), now_utc=now)
+        assert "prediction_markets" not in got
+        assert set(got) == set(missing) - {"prediction_markets"}
+
+    def test_what_is_never_waited_for(self):
+        import datetime as dt
+        from engine.daily_edition import rerunning_shows
+        now = dt.datetime(2026, 10, 23, 14, 0, tzinfo=dt.timezone.utc)
+        hold = self._hold()
+        straggler = self._run("tesla", created="2026-10-23T10:10:00Z")   # before the hold
+        landed = self._run("spacex", created="2026-10-23T13:00:00Z")     # not missing
+        stale = self._run("mag7", created="2026-10-23T10:55:00Z")        # older than 3 h
+        done = self._run("omni_view", created="2026-10-23T13:00:00Z", status="completed")
+        no_job = {"status": "in_progress", "created_at": "2026-10-23T13:30:00Z",
+                  "jobs": [{"name": "gate", "status": "in_progress"}]}
+        got = rerunning_shows([straggler, landed, stale, done, no_job],
+                              ["tesla", "mag7", "omni_view"], hold_until=hold, now_utc=now)
+        assert got == []
+
+    def test_the_rule_waits_only_past_the_hold_and_only_while_incomplete(self):
+        import datetime as dt
+        from engine.daily_edition import ready_decision
+        hold = self._hold()
+        after = hold + dt.timedelta(hours=4)
+        kw = dict(target_date=self.DAY, expected=15, skipped=0, min_segments=4)
+        assert ready_decision(now_utc=after, landed=6, rerunning=["spacex"], **kw)[0] == "wait"
+        assert ready_decision(now_utc=after, landed=6, rerunning=[], **kw)[0] == "build"
+        assert ready_decision(now_utc=after, landed=15, rerunning=["spacex"], **kw)[0] == "build"
+
+    def test_the_gate_reads_runs_with_the_workflow_token_and_fails_open(self, monkeypatch):
+        import datetime as dt
+        import scripts.build_daily_edition as b
+        monkeypatch.delenv("GH_TOKEN", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        now = dt.datetime(2026, 10, 23, 14, 0, tzinfo=dt.timezone.utc)
+        assert b._rerunning_after_hold(["spacex"], self.DAY, now) == []
+        wf = (ROOT / ".github/workflows/nerra-daily.yml").read_text(encoding="utf-8")
+        assert "actions: read" in wf and "GH_TOKEN: ${{ github.token }}" in wf
+
+    def test_every_show_run_wakes_the_gate_from_the_step_the_gate_reads(self):
+        from engine.daily_edition import RUN_SHOW_JOB_PREFIX, WAKE_STEP
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        i = wf.index(f"- name: {WAKE_STEP}\n")
+        assert "if: always()" in wf[i:i + 900], "a failed re-run must still wake the gate"
+        assert RUN_SHOW_JOB_PREFIX == "run (" and "\n  run:\n" in wf

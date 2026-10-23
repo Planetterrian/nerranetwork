@@ -45,7 +45,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Mapping
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -518,6 +518,65 @@ def release_window(target_date: _dt.date) -> Tuple[_dt.datetime, _dt.datetime]:
             _edition_clock(target_date, HOLD_UNTIL_EASTERN).astimezone(_dt.timezone.utc))
 
 
+#: Oct 23 2026: re-runs wait. The xAI account ran out of credit mid-slate and
+#: the failed shows were re-run hours after the hold; the FIRST re-run to land
+#: woke the gate, which, past the hold, built with whatever had landed — Ep064
+#: shipped with 6 of 15 segments while nine re-runs were still generating. A
+#: roster show still missing whose run-show run started AFTER the hold, and
+#: has not yet reached its own wake step, is waited for: that step is
+#: ``if: always()``, so the run wakes the gate again however it ends. A
+#: morning straggler (its run started before the hold) is not, so the
+#: 7:00 ET release is unchanged.
+RUN_SHOW_JOB_PREFIX = "run ("
+WAKE_STEP = "Wake the Nerra Daily gate"
+#: A run older than this is not waited for (the show run's hard kill is
+#: 80 minutes; a queued-forever run must never hold the edition).
+RERUN_MAX_AGE = _dt.timedelta(hours=3)
+
+
+def _parse_github_time(value) -> Optional[_dt.datetime]:
+    try:
+        return _dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+
+
+def rerunning_shows(
+    runs: Iterable[Mapping],
+    missing: Iterable[str],
+    *,
+    hold_until: _dt.datetime,
+    now_utc: _dt.datetime,
+) -> List[str]:
+    """Missing roster shows whose run started after *hold_until* and will
+    still wake the gate.
+
+    *runs* are run-show workflow runs (GitHub's run objects), each carrying
+    its ``jobs`` list. A run whose show job does not exist yet (its gate job
+    is still deciding) names no show and is not waited for.
+    """
+    missing = set(missing)
+    found = set()
+    for run in runs:
+        if run.get("status") == "completed":
+            continue
+        created = _parse_github_time(run.get("created_at"))
+        if created is None or created < hold_until or now_utc - created > RERUN_MAX_AGE:
+            continue
+        for job in run.get("jobs") or []:
+            name = str(job.get("name") or "")
+            if not name.startswith(RUN_SHOW_JOB_PREFIX) or job.get("status") == "completed":
+                continue
+            slug = name[len(RUN_SHOW_JOB_PREFIX):].rstrip(")").strip()
+            if slug not in missing:
+                continue
+            woke = any(s.get("name") == WAKE_STEP and s.get("status") in ("in_progress", "completed")
+                       for s in job.get("steps") or [])
+            if not woke:
+                found.add(slug)
+    return sorted(found)
+
+
 def ready_decision(
     *,
     now_utc: _dt.datetime,
@@ -526,12 +585,17 @@ def ready_decision(
     landed: int,
     skipped: int,
     min_segments: int,
+    rerunning: Sequence[str] = (),
 ) -> Tuple[str, str]:
     """``("build", why)`` or ``("wait", why)`` for the ``--when-ready`` gate.
 
     *expected* is the day's roster size, *landed* how many of it have an
     episode, *skipped* how many carry a committed skip marker (they are
-    accounted for, not waited on). Pure so the rule is testable.
+    accounted for, not waited on). *rerunning* names the missing roster
+    shows with a run started after the hold that has not yet woken the gate
+    (``rerunning_shows``); past the hold the gate waits for them, because
+    each of those runs wakes it again when it ends. Pure so the rule is
+    testable.
     """
     release, hold_until = release_window(target_date)
     accounted = landed + skipped
@@ -543,6 +607,9 @@ def ready_decision(
     if expected and accounted >= expected:
         return "build", f"every expected show has published or skipped ({tally})"
     if now_utc >= hold_until:
+        if rerunning:
+            return "wait", (f"{tally} accounted — {', '.join(sorted(rerunning))} "
+                            "re-running after the hold; each run wakes the gate when it ends")
         # build_edition still refuses an edition under spec.min_segments;
         # the gate's job is only to stop waiting.
         return "build", f"hold ended at {hold} Eastern — building with {tally} accounted"

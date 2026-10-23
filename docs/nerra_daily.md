@@ -288,3 +288,21 @@ truncated the JSON at twenty-five handoffs and silently used the fallback
 links every day). Register: `nerra-daily-full-lineup-2026-10-02`; guards:
 `tests/test_nerra_daily_full_lineup_2026_10_02.py`.
 
+## Oct 23 2026 — a re-run is waited for
+
+Ep064 shipped with 6 of 15 segments. The xAI account had run out of credit
+mid-slate; when the failed shows were re-run at 14:29 UTC, the first re-run to
+land woke the gate, and past the hold the gate built with whatever had landed
+while nine re-runs were still generating. It was withdrawn and rebuilt with all
+15 at 15:07 UTC.
+
+Now, past the hold, the gate also waits for any missing roster show whose
+run-show run **started after the hold** and has not yet reached its own "Wake
+the Nerra Daily gate" step (`engine.daily_edition.rerunning_shows`). That step
+runs `if: always()`, so every such run wakes the gate again however it ends,
+and the last one builds the edition. A morning straggler (its run started
+before the hold) is not waited for, so the 7:00 ET release is unchanged. A run
+older than three hours (`RERUN_MAX_AGE`) is never waited for. When the Actions
+API cannot be read, the gate decides as it did before. The workflow reads runs
+with its own token (`actions: read`). Guards:
+`tests/test_slate_2026_10_23.py::TestReRunsWait`.

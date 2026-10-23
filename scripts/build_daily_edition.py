@@ -62,6 +62,8 @@ from engine.daily_edition import (  # noqa: E402
     parse_find_text,
     parse_links_json,
     ready_decision,
+    release_window,
+    rerunning_shows,
     segment_trim_cmd,
 )
 
@@ -150,6 +152,47 @@ def _run(cmd: List[str], what: str) -> None:
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError(f"{what} failed: {proc.stderr[-800:]}")
+
+
+def _rerunning_after_hold(missing: List[str], target_date: dt.date,
+                          now_utc: dt.datetime) -> List[str]:
+    """Missing roster shows with a run-show run started after the hold that
+    has not yet woken the gate (``engine.daily_edition.rerunning_shows``).
+
+    Reads the GitHub Actions API with the workflow token. Any failure reads
+    as "none" and the gate behaves as it did before Oct 23 2026, so the
+    7:00 ET release never waits on an unreachable API.
+    """
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    if not (missing and token and repo):
+        return []
+    import requests
+
+    _release, hold_until = release_window(target_date)
+    headers = {"Authorization": f"Bearer {token}",
+               "Accept": "application/vnd.github+json"}
+    base = f"https://api.github.com/repos/{repo}/actions"
+    try:
+        # Every status: a run held by the per-show lock reads pending or
+        # waiting, not queued. rerunning_shows drops the completed ones.
+        resp = requests.get(
+            f"{base}/workflows/run-show.yml/runs", headers=headers, timeout=20,
+            params={"per_page": 100,
+                    "created": f">={hold_until.strftime('%Y-%m-%dT%H:%M:%SZ')}"})
+        resp.raise_for_status()
+        runs = [r for r in resp.json().get("workflow_runs") or []
+                if r.get("status") != "completed"]
+        for run in runs:
+            resp = requests.get(f"{base}/runs/{run['id']}/jobs", headers=headers,
+                                timeout=20, params={"per_page": 50})
+            resp.raise_for_status()
+            run["jobs"] = resp.json().get("jobs") or []
+    except Exception as exc:  # noqa: BLE001 — fail open to the old rule
+        _annotate("warning", f"could not read re-running shows ({exc}); "
+                             "the gate decides without them")
+        return []
+    return rerunning_shows(runs, missing, hold_until=hold_until, now_utc=now_utc)
 
 
 def _download(url: str, dest: Path) -> None:
@@ -736,10 +779,13 @@ def main() -> int:
         now_utc = dt.datetime.now(dt.timezone.utc)
         expected = expected_slugs(spec, target_date)
         landed = sum(1 for s in segments if s.slug in set(expected))
+        _release, hold_until = release_window(target_date)
+        rerunning = (_rerunning_after_hold(missing, target_date, now_utc)
+                     if now_utc >= hold_until else [])
         verdict, why = ready_decision(
             now_utc=now_utc, target_date=target_date,
             expected=len(expected), landed=landed, skipped=len(lineup.skipped),
-            min_segments=spec.min_segments,
+            min_segments=spec.min_segments, rerunning=rerunning,
         )
         if verdict == "wait":
             logger.info("waiting: %s (missing: %s)", why,
