@@ -661,12 +661,26 @@ def _normalize_url_for_dedup(url: str) -> str:
     parameters, http vs https, or with/without trailing slashes.
     We compare netloc + path only, lowercased and normalized.
     """
-    from urllib.parse import urlparse
+    from urllib.parse import parse_qsl, urlparse
 
     p = urlparse(url.strip().lower())
     # Strip 'www.' prefix so www.example.com and example.com match
     netloc = p.netloc.removeprefix("www.")
-    return (netloc + p.path).rstrip("/")
+    key = (netloc + p.path).rstrip("/")
+    # Oct 23 2026: a page whose identity IS its query string keeps it. Every
+    # PLOS One paper (article?id=…), AEA article (articles?id=…), YouTube
+    # video (watch?v=…) and PIB release (…aspx?PRID=…) had one key, so the
+    # tracker's 45-day URL window could drop a different paper as "already
+    # covered". Tracking parameters (utm_*, maca, oc, feature) still go.
+    ident = sorted((k, v) for k, v in parse_qsl(p.query) if k in _IDENTITY_QUERY_KEYS and v)
+    if ident:
+        key += "?" + "&".join(f"{k}={v}" for k, v in ident)
+    return key
+
+
+#: Query parameters that name the page rather than track the click.
+_IDENTITY_QUERY_KEYS = frozenset({"id", "v", "p", "prid", "doi", "articleid", "article",
+                                  "storyid", "newsid", "nid", "docid"})
 
 
 def _extract_deep_dive_topic(text: str) -> Optional[str]:

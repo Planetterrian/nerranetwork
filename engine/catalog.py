@@ -359,15 +359,23 @@ def article_rows(*, show_slug: str, date: str, fetched: List[dict], listed: List
     aired_story: Dict[str, str] = {}
     assigner = StoryAssigner()
     by_date: Dict[str, list] = defaultdict(list)
+    aired_keys: set = set()
     for it in window:
-        if it.get("kind") == "essay" or not it.get("story_id"):
-            continue
-        by_date[it["date"]].append((it["story_id"], frozenset(it.get("tokens") or []), it["show_slug"]))
+        # Oct 23 2026: what this episode aired is read from its URLs alone. It
+        # had required a story id, and the run's second lake write (after the
+        # script) re-inserts the items without one, so every run of the first
+        # day recorded articles_aired = 0 — and an essay's sources never
+        # count at all.
         if it["show_slug"] == show_slug and it["date"] == date:
             for u in it.get("urls") or []:
                 k = _normalize_url_for_dedup(u)
                 if k:
-                    aired_story[k] = it["story_id"]
+                    aired_keys.add(k)
+                    if it.get("story_id") and it.get("kind") != "essay":
+                        aired_story[k] = it["story_id"]
+        if it.get("kind") == "essay" or not it.get("story_id"):
+            continue
+        by_date[it["date"]].append((it["story_id"], frozenset(it.get("tokens") or []), it["show_slug"]))
     for d in sorted(by_date):
         assigner.observe(d, by_date[d])
     listed_keys = {_normalize_url_for_dedup(a.get("url") or "") for a in listed}
@@ -378,7 +386,7 @@ def article_rows(*, show_slug: str, date: str, fetched: List[dict], listed: List
         if not key or key in rows:
             continue
         toks = item_tokens(a.get("title") or "", a.get("description") or "")
-        aired = key in aired_story
+        aired = key in aired_keys
         sid = aired_story.get(key) or assigner.match_story(toks, show_slug)
         pub = (a.get("published_date") or "")[:10]
         try:

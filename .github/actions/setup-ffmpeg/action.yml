@@ -23,6 +23,25 @@ runs:
         # Oct 8 and 9 came from the unbounded form of these two lines).
         APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60"
         sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q || echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
-        sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg || sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg
+        if ! { sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg || sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg; }; then
+          # Oct 23 2026: a stalled Ubuntu mirror cost six show runs their
+          # episodes. Same fallback as the setup-python composite: the
+          # pinned, checksum-verified static build test.yml runs on.
+          echo "::warning::apt could not install ffmpeg; using the pinned static ffmpeg 8.1.3"
+          BTBN_TAG=autobuild-2026-10-22-13-06
+          BTBN_ASSET=ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
+          base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
+          dest="${RUNNER_TEMP}/ffmpeg-static"
+          mkdir -p "$dest"
+          cd "${RUNNER_TEMP}"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 -o checksums.sha256 "${base}/checksums.sha256"
+          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}"
+          grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c -
+          tar -xJf "${BTBN_ASSET}"
+          cp "${BTBN_ASSET%.tar.xz}/bin/ffmpeg" "${BTBN_ASSET%.tar.xz}/bin/ffprobe" "$dest/"
+          chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+          echo "$dest" >> "$GITHUB_PATH"
+          export PATH="$dest:$PATH"
+        fi
         ffmpeg -version | head -1
         ffprobe -version | head -1

@@ -1125,10 +1125,11 @@ today's work, not just explain yesterday's):
   release as a UTC hour: 07:50 PT is 14:50 UTC under PDT and 15:50 under
   PST. The Worker's `EDITION_DISPATCH` fires at 07:50 and 09:01 Pacific
   from the Worker's ONE cron trigger (`"1,7,16,31,37,46,50 6-17 * * *"`,
-  shared with the show slots — Oct 9 2026: the Cloudflare account is on
-  Workers Free, five cron triggers in total, Voices holds three, and the
+  shared with the show slots — Oct 9 2026: the Cloudflare account was then
+  on Workers Free, five cron triggers in total, Voices held three, and the
   deploy with a second scheduler trigger was refused with code 10072, so
-  the edition dispatch had never gone live) and converts to Pacific
+  the edition dispatch had never gone live; the account is on Workers Paid
+  since, see the Oct 9 runner note) and converts to Pacific
   in the handler; GitHub fallbacks 14:55/15:55/16:05/17:05 UTC. Every
   lineup slot lands by ~12:40 UTC, two hours ahead (guarded). Nerra
   Personal follows the edition to ~8am. **A show run's push resolves a
@@ -3294,13 +3295,14 @@ before trusting: an ffmpeg **9-dev** snapshot aborted inside the Voices
 `anlmdn` clean-track chain while the 8.x release line passed the same
 tests, so a future bump of the runner's ffmpeg is a render-smoke question,
 not a label edit. **The scheduler Worker holds ONE cron trigger** —
-`1,7,16,31,37,46,50 6-17 * * *` — because the Cloudflare account is on
-Workers Free (five triggers per account, Voices holds three) and the Oct 8
+`1,7,16,31,37,46,50 6-17 * * *` — because the Cloudflare account was then on
+Workers Free (five triggers per account, Voices held three) and the Oct 8
 deploy with a second trigger was refused with code 10072 after the script
 had uploaded: the show slots kept firing and the 8am edition dispatch never
-went live. The handler decides from the exact firing minute, so a second
-trigger is never needed; do not split it back without moving to Workers
-Paid. Guards: `tests/test_scheduling_punctuality.py`,
+went live. **The account is on Workers Paid now** (operator, Oct 23 2026),
+so a second trigger would deploy; one stays because the handler decides
+from the exact firing minute and no job needs another. Since Oct 17 the one
+trigger is `*/5 * * * *`. Guards: `tests/test_scheduling_punctuality.py`,
 `tests/test_transcripts_pyav_2026_10_08.py`.
 
 **Oct 9 2026, later — four items the operator said yes to** (register
@@ -3316,8 +3318,9 @@ is off** on tesla, spacex and fascinating_frontiers (every ZH feed
 `*.zh.rss` feeds are frozen, not deleted; a zh track needs BOTH the
 language and `zh_approved`). **The Voices Worker holds ONE cron trigger**
 (`*/5 * * * *`; fire-tick every firing, producer-tick on :00/:30, gate 2 at
-17:00 UTC, decided from the firing minute) so the account's five Workers
-Free triggers are not all spent — operator: `wrangler deploy` in
+17:00 UTC, decided from the firing minute; it was written when the account's five
+Workers Free triggers were all spent, and the account is on Workers Paid
+now) — operator: `wrangler deploy` in
 `workers/voices`. **Dependabot groups each ecosystem's bumps into one
 weekly PR**; the `av>=19` ignore stays.
 
@@ -6787,6 +6790,33 @@ that bind:
 
 Operator: re-dispatch SpaceX multilingual, then "Story Catalog" `full: true`.
 ⚠️ AUDIO: MIT's record line.
+
+### The Oct 23 slate: a billing stop, a dead mirror, and the catalog's aired flag (Oct 23 2026)
+
+Review [`docs/reviews/slate_review_2026_10_23.md`](docs/reviews/slate_review_2026_10_23.md);
+register `slate-2026-10-23`; guards `tests/test_slate_2026_10_23.py`. 4 of 21
+shows published: the xAI account ran out of credit at ~09:45 UTC (11 runs,
+every producer-inbox run) and the Ubuntu mirror served nothing for 15 minutes
+to six setups. Rules that bind:
+
+- **The mirror is the last resort** (`.github/actions/setup-python`). The
+  .debs a run downloads are cached per runner image and every later run
+  installs them `--no-download`. When apt still cannot finish, ffmpeg comes
+  from the pinned BtbN 8.1.3 build `test.yml` runs on (the guard keeps the
+  tags equal). `setup-ffmpeg` has the same fallback.
+- **A lake re-store keeps the story ids it did not change**, and run_show
+  re-assigns after its second write. A catalog article is aired when an
+  aired item carries its URL, story id or not (essays included). It had
+  read 0 on every run.
+- **A query string that names the page stays in the dedup key** (`id`, `v`,
+  `p`, `prid`, `doi`, …). Every PLOS One paper had shared one key.
+- **Mira's T-2h reminder checks the xAI account**
+  (`fire_interviews.xai_credit_stop`, the `engine.provider_quota` matcher). A
+  billing stop alerts Patrick by Slack and email with the guest and the time.
+- **The video sweep restarts a handoff whose one run died before "Render and
+  publish the video" started** (`scripts/video_job.retryable_titles`). Any
+  other failed run is still re-run by a person.
+- The Cloudflare account is on Workers Paid (operator, Oct 23).
 
 ### Covered means aired, and a story catalog (Oct 21 2026)
 

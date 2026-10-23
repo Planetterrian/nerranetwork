@@ -62,10 +62,56 @@ runs:
         cache: ${{ inputs.cache == 'true' && 'pip' || '' }}
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
 
-    - name: Install system dependencies
+    # Oct 23 2026: six of the morning's show runs (Planetterrian, FF, Omni
+    # View, Top World, Africa & Middle East, plus one on Oct 22) lost the
+    # whole episode here: the Ubuntu mirror served nothing for fifteen
+    # minutes and four bounded attempts all ran out. Retrying a mirror
+    # cannot fix a mirror, so the network is now the last resort: the .debs
+    # one run downloads are cached per runner IMAGE and every later run on
+    # that image installs them from the cache with no network at all; if a
+    # run must download and apt still cannot finish, ffmpeg comes from the
+    # pinned, checksum-verified static build the test suite already runs on
+    # (test.yml's BTBN tag — tests/test_slate_2026_10_23.py keeps the two
+    # equal) instead of failing the episode.
+    - name: System package cache key
+      id: apt-key
       if: inputs.system-packages != ''
       shell: bash
       run: |
+        pkgs="$(echo "${{ inputs.system-packages }}" | tr -s ' ' '-')"
+        echo "key=apt-debs-v1-${ImageOS:-unknown}-${ImageVersion:-unknown}-${pkgs}" >> "$GITHUB_OUTPUT"
+        echo "dir=${RUNNER_TEMP}/apt-debs" >> "$GITHUB_OUTPUT"
+
+    - name: Restore cached system packages
+      id: apt-cache
+      if: inputs.system-packages != ''
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ steps.apt-key.outputs.dir }}
+        key: ${{ steps.apt-key.outputs.key }}
+
+    - name: Install system dependencies
+      id: apt-install
+      if: inputs.system-packages != ''
+      shell: bash
+      env:
+        APT_DEBS: ${{ steps.apt-key.outputs.dir }}
+        CACHE_HIT: ${{ steps.apt-cache.outputs.cache-hit }}
+        BTBN_TAG: autobuild-2026-10-22-13-06
+        BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
+      run: |
+        _t0=$(date +%s)
+        mkdir -p "$APT_DEBS/partial"
+        chmod 777 "$APT_DEBS" "$APT_DEBS/partial"
+        if [ "$CACHE_HIT" = "true" ] && ls "$APT_DEBS"/*.deb >/dev/null 2>&1; then
+          # Same image, same packages: install the cached files, no mirror.
+          if sudo timeout 240 apt-get -o DPkg::Lock::Timeout=60 install -y -q --no-download "$APT_DEBS"/*.deb; then
+            echo "apt install from the image cache took $(( $(date +%s) - _t0 )) s"
+            echo "source=cache" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::warning::the cached system packages did not install; falling back to the mirror"
+        fi
         # apt update is best-effort: third-party mirrors on the runner
         # image (e.g. dl.google.com chrome-stable) intermittently serve
         # Hash Sum mismatches and exit 100, which killed an entire
@@ -76,28 +122,18 @@ runs:
         # only helps when apt FAILS — on outage day a stalled mirror made
         # `apt-get update` HANG for ~44 minutes with no output until the
         # job-level 45-minute hang guard killed the whole run (spacex run
-        # 33151417188: apt woke up at 08:11:13, finished installing at
-        # 08:11:19, and the guard fired at 08:11:20). With per-command
-        # timeouts a stalled mirror costs ~6 minutes total and the run
-        # proceeds from cached indexes; the 45-minute step guard stays as
-        # the outer backstop.
+        # 33151417188). With per-command timeouts a stalled mirror costs
+        # ~6 minutes total and the run proceeds from cached indexes; the
+        # 45-minute step guard stays as the outer backstop.
         #
-        # Oct 8 2026: five runs (four multilingual, one Nerra Daily) died
-        # here with exit 124 — `apt-get install` stalled past 300 s twice.
-        # apt's own per-connection timeout is 120 s and it does not retry a
-        # stalled fetch, so one hung mirror connection used the whole
-        # budget. APT_OPTS abandons a silent connection after 30 s and
-        # retries the fetch, which is what turns a stall into a delay.
+        # Oct 8 2026: `apt-get install` stalled past 300 s twice. apt's own
+        # per-connection timeout is 120 s and it does not retry a stalled
+        # fetch, so APT_OPTS abandons a silent connection after 30 s and
+        # retries the fetch.
         #
-        # Oct 9 2026, afternoon: two more exit-124s on the new ubuntu-26.04
-        # image (main's test job and a North America rerun, both at
-        # 15:07 UTC) — and the log said NOTHING for the whole 606 s,
-        # because `-qq` hides apt's "Waiting for cache lock" and its
-        # per-file fetch lines. The 30 s Acquire timeout cannot shorten a
-        # wait on the dpkg lock (apt-daily / unattended-upgrades hold it
-        # at image boot), so: wait for those units to finish before the
-        # first apt call, give the lock wait its own bound, and log at
-        # `-q` so the next stall names itself.
+        # Oct 9 2026: `-qq` hid apt's "Waiting for cache lock" for a whole
+        # 606 s stall. Wait for apt-daily / unattended-upgrades before the
+        # first apt call, bound the lock wait, and log at `-q`.
         sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
         for unit in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service; do
           if systemctl is-active --quiet "$unit" 2>/dev/null; then
@@ -105,25 +141,62 @@ runs:
             sudo timeout 120 systemctl stop "$unit" 2>/dev/null || true
           fi
         done
-        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60"
-        _t0=$(date +%s)
-        sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
-        # Oct 22 2026: a mirror can TRICKLE rather than stall — 60 KB/s,
-        # never silent for 30 s, so no timeout above fires and two 300 s
-        # attempts ran out mid-download (the SpaceX translation job died
-        # here and the episode lost its FR/RU tracks). A killed install
-        # keeps every .deb it finished, so each attempt resumes where the
-        # last one stopped: keep trying while the step is under 15 minutes.
+        # Dir::Cache::Archives keeps every downloaded .deb where the cache
+        # save step below finds it.
+        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60 -o Dir::Cache::Archives=$APT_DEBS/"
+        sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q || \
+          echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
+        # Oct 22 2026: a mirror can TRICKLE rather than stall, so no timeout
+        # above fires. A killed install keeps every .deb it finished, so each
+        # attempt resumes where the last stopped, while the step is under
+        # ten minutes.
         _ok=0
         for _attempt in 1 2 3 4; do
           if sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }}; then
             _ok=1; break
           fi
           echo "::warning::apt-get install attempt $_attempt did not finish ($(( $(date +%s) - _t0 )) s so far); downloaded packages are kept"
-          [ $(( $(date +%s) - _t0 )) -lt 900 ] || break
+          [ $(( $(date +%s) - _t0 )) -lt 600 ] || break
         done
-        [ "$_ok" = 1 ] || { echo "::error::apt-get install did not finish"; exit 124; }
-        echo "apt install took $(( $(date +%s) - _t0 )) s"
+        if [ "$_ok" = 1 ]; then
+          sudo chmod -R a+r "$APT_DEBS"
+          echo "apt install took $(( $(date +%s) - _t0 )) s"
+          # Nothing downloaded (already on the image) leaves nothing to cache.
+          if ls "$APT_DEBS"/*.deb >/dev/null 2>&1; then
+            echo "source=mirror" >> "$GITHUB_OUTPUT"
+          else
+            echo "source=image" >> "$GITHUB_OUTPUT"
+          fi
+          exit 0
+        fi
+        if [ "${{ inputs.system-packages }}" != "ffmpeg" ]; then
+          echo "::error::apt-get install did not finish"; exit 124
+        fi
+        echo "::warning::apt could not install ffmpeg from the mirror; this run uses the pinned static ffmpeg 8.1.3 (the build the test suite runs on)"
+        dest="${RUNNER_TEMP}/ffmpeg-static"
+        mkdir -p "$dest"
+        base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
+        cd "${RUNNER_TEMP}"
+        timeout 300 curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+          -o checksums.sha256 "${base}/checksums.sha256" && \
+        timeout 300 curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
+          -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}" && \
+        grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c - || {
+          echo "::error::apt-get install did not finish and the static ffmpeg download failed"; exit 124; }
+        tar -xJf "${BTBN_ASSET}"
+        cp "${BTBN_ASSET%.tar.xz}/bin/ffmpeg" "${BTBN_ASSET%.tar.xz}/bin/ffprobe" "$dest/"
+        chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+        echo "$dest" >> "$GITHUB_PATH"
+        "$dest/ffmpeg" -version | head -1
+        echo "source=static" >> "$GITHUB_OUTPUT"
+
+    - name: Save system packages for this image
+      if: inputs.system-packages != '' && steps.apt-cache.outputs.cache-hit != 'true' && steps.apt-install.outputs.source == 'mirror'
+      continue-on-error: true
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ steps.apt-key.outputs.dir }}
+        key: ${{ steps.apt-key.outputs.key }}
 
     - name: Install dependencies
       shell: bash

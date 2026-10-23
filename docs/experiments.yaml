@@ -5492,3 +5492,27 @@ experiments:
       (tests/test_story_catalog_2026_10_21.py), TestEraIsTheAverageTrade and
       TestReviewedTradeIsLabelledByWhenItClosed
       (tests/test_mit_benchmark_integrity.py).
+  - id: slate-2026-10-23
+    title: "Oct 23 slate: the mirror is the last resort, the catalog sees what aired, Mira checks the account"
+    area: ops
+    shipped: 2026-10-23
+    readout: 2026-11-06
+    status: reading
+    baseline: >
+      Oct 23: 4 of 21 scheduled shows published. The xAI account ran out of
+      credit at ~09:45 UTC (11 runs and every producer-inbox run since failed
+      on a 403 billing stop); before that, six runs (five shows and First
+      Principles' video) lost their episode in setup-python because the
+      Ubuntu mirror served nothing for 15 minutes. The catalog wrote 66
+      articles and marked 0 aired (the run's second lake write dropped every
+      story id). PLOS, AEA, YouTube and PIB URLs each collapsed to one dedup key.
+    target: >
+      No show run or video job dies in setup-python (apt from the image
+      cache; the pinned static ffmpeg when the mirror fails); every run's
+      story_catalog_articles_aired is above 0 on a sourced episode; a
+      setup-failed video job is restarted once by the sweep; a billing stop
+      before a booked interview alerts Patrick at T-2h.
+    notes: >
+      Review docs/reviews/slate_review_2026_10_23.md. Guards:
+      tests/test_slate_2026_10_23.py. Read the "apt install from the image
+      cache" and "static ffmpeg" log lines on the first slate after merge.

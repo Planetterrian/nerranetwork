@@ -4371,6 +4371,10 @@ def run(args: argparse.Namespace) -> None:
                     from engine.content_lake import store_episode as _store_ep
                     _lake_record.podcast_script = podcast_script
                     _store_ep(_lake_record)
+                    # Oct 23 2026: an item the re-store changed has no story
+                    # id until it is assigned again.
+                    from engine.content_lake import rebuild_story_ids as _rebuild_ids
+                    _rebuild_ids(since=today.isoformat())
                 except Exception as exc:
                     logger.warning("Content lake script update failed (non-fatal): %s", exc)
 

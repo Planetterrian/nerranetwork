@@ -11,7 +11,11 @@ and hands the episode's video to ``.github/workflows/render-video.yml``:
             reached main through a recovery PR). A handoff that already has a
             video run of any outcome is left alone — a failed run may have
             uploaded before it died, so it is re-run by a person, never by the
-            sweep (a second upload would be a duplicate public video).
+            sweep (a second upload would be a duplicate public video). The one
+            exception (Oct 23 2026): a single run that died before its render
+            step started cannot have uploaded anything — First Principles'
+            video was lost to a stalled apt mirror in setup — so the sweep
+            starts it once more.
 
 Both need GH_TOKEN (actions: write) and GITHUB_REPOSITORY.
 """
@@ -100,12 +104,53 @@ def dispatch(session, repo: str, show: str, date: str, attempts: int = 3) -> boo
     return False
 
 
-def existing_run_titles(session, repo: str) -> set:
-    """Titles of the recent video runs, any status."""
+def _recent_runs(session, repo: str) -> list:
     r = session.get(f"{API}/repos/{repo}/actions/workflows/{WORKFLOW}/runs",
                     params={"per_page": 100, "event": "workflow_dispatch"}, timeout=30)
     r.raise_for_status()
-    return {str(run.get("display_title") or "") for run in r.json().get("workflow_runs", [])}
+    return r.json().get("workflow_runs", [])
+
+
+def existing_run_titles(session, repo: str, runs: list | None = None) -> set:
+    """Titles of the recent video runs, any status."""
+    runs = _recent_runs(session, repo) if runs is None else runs
+    return {str(run.get("display_title") or "") for run in runs}
+
+
+#: The step that renders and uploads. A run that never started it has
+#: uploaded nothing.
+RENDER_STEP = "Render and publish the video"
+
+
+def never_rendered(jobs: list) -> bool:
+    """True when no job of a run reached the render-and-upload step."""
+    for job in jobs:
+        for step in job.get("steps") or []:
+            if step.get("name") == RENDER_STEP and step.get("conclusion") != "skipped":
+                return False
+    return True
+
+
+def retryable_titles(session, repo: str, runs: list) -> set:
+    """Titles with exactly one run, failed or cancelled before its render step."""
+    by_title: dict = {}
+    for run in runs:
+        by_title.setdefault(str(run.get("display_title") or ""), []).append(run)
+    out = set()
+    for title, rs in by_title.items():
+        if len(rs) != 1:
+            continue
+        run = rs[0]
+        if run.get("status") != "completed" or run.get("conclusion") not in ("failure", "cancelled"):
+            continue
+        try:
+            r = session.get(f"{API}/repos/{repo}/actions/runs/{run['id']}/jobs", timeout=30)
+            r.raise_for_status()
+            if never_rendered(r.json().get("jobs", [])):
+                out.add(title)
+        except Exception as exc:  # noqa: BLE001 — unknown means leave it alone
+            print(f"::warning::could not read the jobs of {title}: {exc}")
+    return out
 
 
 #: The audio job's dispatch starts only a handoff it wrote itself.
@@ -167,11 +212,13 @@ def due_handoffs(now: dt.datetime | None = None) -> list:
     return out
 
 
-def plan_sweep(handoffs, titles, *, max_dispatches: int = SWEEP_MAX_DISPATCHES):
+def plan_sweep(handoffs, titles, *, max_dispatches: int = SWEEP_MAX_DISPATCHES,
+               retryable=frozenset()):
     """Which handoffs the sweep starts, and which it reports as stale."""
     start, stale = [], []
     for show, date, age in handoffs:
-        if run_title(show, date) in titles:
+        title = run_title(show, date)
+        if title in titles and title not in retryable:
             continue
         if age > SWEEP_MAX_AGE_HOURS * 60:
             stale.append((show, date))
@@ -186,15 +233,21 @@ def cmd_sweep(_args) -> int:
         print("No video handoffs waiting.")
         return 0
     session, repo = _session(), _repo()
-    start, stale = plan_sweep(handoffs, existing_run_titles(session, repo))
+    runs = _recent_runs(session, repo)
+    titles = existing_run_titles(session, repo, runs)
+    wanted = {run_title(show, date) for show, date, _age in handoffs}
+    retry = retryable_titles(session, repo, [r for r in runs
+                                             if str(r.get("display_title") or "") in wanted])
+    start, stale = plan_sweep(handoffs, titles, retryable=retry)
     for show, date in stale:
         print(f"::warning::The video handoff for {show} {date} never started and is "
               f"over {SWEEP_MAX_AGE_HOURS} h old; start it by hand if it should still "
               "publish (Actions → Render Episode Video).")
     failed = 0
     for show, date in start:
-        print(f"::notice::Starting the video job for {show} {date} (its dispatch "
-              "never arrived)")
+        why = ("its only run died before rendering" if run_title(show, date) in retry
+               else "its dispatch never arrived")
+        print(f"::notice::Starting the video job for {show} {date} ({why})")
         failed += 0 if dispatch(session, repo, show, date) else 1
     return 1 if failed else 0
 
