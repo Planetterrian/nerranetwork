@@ -91,7 +91,7 @@ class TestTheRoundGoesAsInstructions:
         assert out["roundNotes"] == []
         last = out["instructions"][-1]
         assert last.startswith("BRIEF: the show asks for their bet.")   # the brief stays
-        assert "[ROUND 2 of 8" in last and "a book they would recommend" in last
+        assert "[ROUND 2 of 8" in last and "book you would recommend" in last
 
     def test_no_round_turn_writes_a_conversation_note(self):
         for fn in ("function askNextRoundQuestion(", "function roundReprompt(",

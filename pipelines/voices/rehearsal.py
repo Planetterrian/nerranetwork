@@ -685,7 +685,7 @@ def round_questions(path: Optional[Path] = None) -> List[tuple]:
     block = block[:block.index("];")]
     room = []
     for line in block.splitlines()[1:]:
-        m = re.match(r'^\s*\[\s*"([^"]+)",\s*/(.+)/(\w*)\s*\],?\s*$', line)
+        m = re.match(r'^\s*\[\s*"([^"]+)",\s*/(.+?)/(\w*)\s*(?:,\s*"[^"]*")?\s*\],?\s*$', line)
         if m:
             room.append((m.group(1), m.group(2)))
     try:

@@ -232,7 +232,7 @@ _ROUND_ANSWERED = re.compile(r"^answered(?:\s+(\d+)/(\d+))?", re.I)
 _ROUND_REPEAT = re.compile(r"^asked again\b", re.I)
 _ROUND_OWN = re.compile(r"^asked on her own:\s*(.*)$", re.I)
 _ROUND_LATE = re.compile(r"^said late\b", re.I)
-_ROUND_REHAND = re.compile(r"^her turn asked nothing", re.I)
+_ROUND_REHAND = re.compile(r"^(her turn asked (nothing|something else)|the sign-off took the question's place)", re.I)
 _ROUND_OWN_WORDS = re.compile(r"\s*\(her own words\)\s*$", re.I)
 _SEAM_RE = re.compile(r"(handing over to a fresh session|connection dropped|"
                       r"rescued after a dropped connection|session \d+ bridged)", re.I)

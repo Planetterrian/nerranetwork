@@ -1316,6 +1316,29 @@ function textOf(event) {
   return typeof t === "string" ? t.trim() : "";
 }
 
+// Oct 23 2026: a transcript DELTA carries its words as a plain string in
+// payload.delta (read from the session log of rehearsal 39982637152), which
+// textOf never read — it looks for delta.transcript — so every piece came out
+// empty and the mid-sentence sign-off cut had never fired in a live room:
+// she said "That's the end of the recording. You can hang up now." whole,
+// twice, with the closing round half done. The string is kept as sent (its
+// own leading space joins it to the piece before).
+function deltaOf(event) {
+  const e = (event && (event.data || event)) || {};
+  const p = e.payload || e;
+  if (typeof p.delta === "string") return p.delta;
+  const t = textOf(event);
+  return t ? " " + t : "";
+}
+
+/** One piece of the line she is speaking, from either delta path. */
+function noteMiraDelta(event) {
+  const piece = deltaOf(event);
+  if (!piece) return;
+  currentResponseText = (currentResponseText + piece).replace(/^\s+/, "");
+  catchEarlyCloseOnDelta(currentResponseText);
+}
+
 function itemIdOf(event) {
   const e = (event && (event.data || event)) || {};
   const p = e.payload || e;
@@ -1812,17 +1835,13 @@ async function createAgent(note) {
         if (raw.indexOf("\"response.created\"") >= 0) markTurnStarted(agent);
         // Oct 21 2026: her words as they are spoken, so a sign-off before
         // the window has opened is cancelled mid-sentence, not noted after.
-        if (raw.indexOf("audio_transcript.delta") >= 0 && agent === grokAgent) {
-          const piece = textOf(ev);
-          if (piece) { currentResponseText += (currentResponseText ? " " : "") + piece; catchEarlyCloseOnDelta(currentResponseText); }
-        }
+        if (raw.indexOf("audio_transcript.delta") >= 0 && agent === grokAgent) noteMiraDelta(ev);
       });
     }
     if (Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDelta) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseOutputAudioTranscriptDelta, function (ev) {
         if (agent !== grokAgent) return;
-        const piece = textOf(ev);
-        if (piece) { currentResponseText += (currentResponseText ? " " : "") + piece; catchEarlyCloseOnDelta(currentResponseText); }
+        noteMiraDelta(ev);
       });
     }
     // Oct 19 2026. miraSpeaking was set only when the ROOM asked for a turn
@@ -2692,13 +2711,13 @@ function catchClosingWithoutTheAnswer(text) {
 // the same subject and does not ask it a third time.
 const ROUND_QUESTIONS = [
   ["the show's own question", /(one bet you'?re making|bet you'?re making for the next|cannot prove yet|wish more people understood)/i],
-  ["a book they would recommend", /book (you'?d|you would|you) (recommend|suggest)|recommend a book/i],
-  ["who you should interview next", /interview next|should (i|we) (interview|talk to|speak (to|with)) next/i],
-  ["the best advice they were ever given", /best (piece of )?advice/i],
-  ["who has inspired them most", /inspired you (the )?most|who inspires you/i],
-  ["whether they would be interviewed again", /interviewed by me again/i],
-  ["how being interviewed by an AI was", /experience of being interviewed|being interviewed by an ai/i],
-  ["what could be improved", /(thing|suggestion).{0,40}improve|could (we|i|be) improve/i],
+  ["a book they would recommend", /book (you'?d|you would|you) (recommend|suggest)|recommend a book/i, "What's a book you would recommend, and in a sentence, why?"],
+  ["who you should interview next", /interview next|should (i|we) (interview|talk to|speak (to|with)|have on|invite) next|who (else )?should (i|we) (interview|have on)\b|(i|we) should (interview|talk to|speak (to|with)|have on) next/i, "Who's one person you think I should interview next?"],
+  ["the best advice they were ever given", /best (piece of )?advice/i, "What's the best piece of advice you were ever given?"],
+  ["who has inspired them most", /inspired you (the )?most|who inspires you/i, "Who's the person who has inspired you most?"],
+  ["whether they would be interviewed again", /interviewed by me again/i, "Would you like to be interviewed by me again?"],
+  ["how being interviewed by an AI was", /experience of being interviewed|being interviewed by an ai/i, "How was the experience of being interviewed by an AI?"],
+  ["what could be improved", /(thing|suggestion).{0,40}improve|could (we|i|be) improve/i, "What's one specific thing we could improve?"],
 ];
 const roundAsked = {};          // label -> minute it was first asked (or handed to her)
 const roundSpoken = {};         // label -> true once her own words carried it
@@ -2769,16 +2788,50 @@ function noteRoundQuestion(text) {
 // question a turn late to the end of the round. A turn of the round that
 // carries no question did not ask the one in play: the room hands it to her
 // again when the guest finishes.
+//
+// Oct 23 2026 (rehearsal 0dd50fbe). Handed "who you should interview next",
+// her turn reacted to the guest's book and asked a follow-up about it; the
+// guest's reply was counted as the answer and the question was never put to
+// them. A round turn that asks something, but not the question in play, is
+// handed the same way, ONCE per question: a second miss is taken as the
+// question asked in words the room cannot recognise, so a rewording never
+// loops.
+const roundRehandedOnce = {};    // label -> true once the room handed it again
+// A question that touches the subject of the one in play counts as asking it,
+// even in words its exact pattern misses ("the one bet you are making"): only
+// a question about something else is handed back.
+const ROUND_TOPICS = {
+  "the show's own question": /\b(bet|prove|proof|understood|understand)\b/i,
+  "a book they would recommend": /\b(book|read)/i,
+  "who you should interview next": /\b(interview|next|guest|on the show|talk to|speak (to|with)|hear from)\b/i,
+  "the best advice they were ever given": /\b(advice|advise|told you)\b/i,
+  "who has inspired them most": /\b(inspir\w*|look up to|influenc\w*)/i,
+  "whether they would be interviewed again": /\b(again|come back|another (conversation|round))\b/i,
+  "how being interviewed by an AI was": /\b(AI|interviewed by|this format|talking (to|with) (me|an ai))\b/i,
+  "what could be improved": /\b(improv\w*|better|differently)\b/i,
+};
+
 function noteRoundTurnWithoutQuestion(text) {
   if (roomEnded || !grokAgent || !text) return;
   if (!roundActive || !roundAwaitingAnswer || roundLastWordAsked || roundIndex < 0 || holdMode) return;
-  if (text.indexOf("?") >= 0) return;
+  // A sign-off is the sign-off rules' line: they have already handed the
+  // question in play again (rehandAfterSignOff), and a cut line arrives here
+  // after the re-hand.
+  if (SIGN_OFF_RE.test(text)) return;
   const label = ROUND_QUESTIONS[roundIndex][0];
   if (roundSpoken[label]) return;
+  const asked = text.indexOf("?") >= 0;
+  if (asked && ROUND_TOPICS[label] && ROUND_TOPICS[label].test(text)) {
+    roundSpoken[label] = true;           // asked in her own words
+    return;
+  }
+  if (asked && roundRehandedOnce[label]) return;
+  roundRehandedOnce[label] = true;
   delete roundAsked[label];
   roundIndex -= 1;          // their next finished answer hands this one again
   roundRehand = true;
-  trace("round", "her turn asked nothing; " + label + " goes again when they finish");
+  trace("round", (asked ? "her turn asked something else; " : "her turn asked nothing; ") +
+        label + " goes again when they finish");
 }
 
 // The closing round itself, recognised from Mira's own words: the lightning
@@ -2902,6 +2955,10 @@ function catchEarlyCloseOnDelta(textSoFar) {
   trace("close", "cancelled mid-sentence: " + why);
   if (!rescueAllowed()) return;
   try {
+    // The question the room had handed her goes again as that turn's
+    // instructions; the cut sentence is never mentioned.
+    if (!(lastWordAskedAt && !lastWordAnswered) &&
+        rehandAfterSignOff("Do not mention the sentence that was cut off.")) return;
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system", content: [{ type: "input_text", text:
         "[ROOM — system note, do not read aloud] The room stopped your last" +
@@ -2941,6 +2998,10 @@ function catchSignOffBeforeTheRound(text) {
         (roundActive ? "at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length : "not yet run") +
         " — the round goes on");
   try {
+    // The question in play goes again with the correction in front of it, as
+    // that turn's instructions; no note is left behind to be acted on later.
+    if (rehandAfterSignOff("First say, in one light sentence, that you spoke too soon and" +
+                           " there are a few more questions.")) return;
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system", content: [{ type: "input_text", text:
         "[ROOM — system note, do not read aloud] You have just said the recording is over," +
@@ -2987,6 +3048,7 @@ let roundRepromptTimer = null;
 let roundLastWordAsked = false;
 let roundClosed = false;
 let roundRehand = false;          // her turn asked nothing: the question in play goes again
+let roundLeadIn = "";             // one light sentence she says before the question re-handed after a sign-off
 
 // Oct 23 2026 (rehearsal 0ac88c67, from its session log). A round note added
 // to the conversation and followed at once by response.create took effect a
@@ -3004,13 +3066,35 @@ function roundTurn(line) {
   requestTurn(grokAgent);
 }
 
+/**
+ * Oct 23 2026: a sign-off in place of the question the room had just handed
+ * her. The question in play was never heard, so the room hands it again as
+ * that one response's instructions, with the lead-in (she spoke too soon)
+ * before it. Before this the correction went as a conversation note, which
+ * takes effect a turn late: in rehearsal 39982637152 she said she had spoken
+ * too soon and then asked a question of her own.
+ */
+function rehandAfterSignOff(leadIn) {
+  if (!roundActive || !roundAwaitingAnswer || roundIndex < 0) return false;
+  const label = ROUND_QUESTIONS[roundIndex][0];
+  if (roundSpoken[label]) return false;
+  delete roundAsked[label];
+  roundIndex -= 1;
+  roundAwaitingAnswer = false;
+  roundRehand = false;
+  roundLeadIn = leadIn;
+  trace("round", "the sign-off took the question's place; " + label + " goes again");
+  askNextRoundQuestion();
+  return true;
+}
+
 function roundQuestionText(entry) {
   const label = entry[0];
   if (label === "the show's own question") {
     return (config && config.show_question) ||
       "the show's own closing question, exactly as your instructions give it";
   }
-  return label;
+  return entry[2] || label;
 }
 
 function startRound(why, askedIndex) {
@@ -3041,17 +3125,23 @@ function askNextRoundQuestion() {
   const entry = ROUND_QUESTIONS[next];
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
+  const leadIn = roundLeadIn;
   try {
     roundTurn(
         "[ROUND " + (next + 1) + " of " + ROUND_QUESTIONS.length + " — for this turn only, do not" +
-        " read aloud] You are in the closing round. React in one short, specific line to" +
-        " what they just said if something in it struck you; then ask ONLY this, in your own" +
-        " words: " + roundQuestionText(entry) + ". Nothing else this turn — no second" +
-        " question, no preview of the next one — then stop and let them answer. The room" +
-        " will hand you the next one.");
+        " read aloud] You are in the closing round. " +
+        (roundLeadIn
+          ? roundLeadIn + " Then ask this question, in"
+          : "React in one short, specific line to what they just said if something in it" +
+            " struck you; then ask this question, in") +
+        " these words (their name may go in): \u00ab" + roundQuestionText(entry) + "\u00bb" +
+        " Your turn ends on that question. Do not ask a question of your own instead, a" +
+        " follow-up about their answer, a second question or a preview of the next one;" +
+        " stop and let them answer. The room will hand you the next one.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] round question " + (next + 1) + " failed: " + err.message);
   }
+  if (leadIn) roundLeadIn = "";
   roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
 }
 
