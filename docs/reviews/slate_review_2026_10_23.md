@@ -155,3 +155,77 @@ release is unchanged for morning stragglers. Guards: `TestReRunsWait`.
 **Read, not changed:** post-run validation fails a run on one 8-second timeout
 reading a just-uploaded enclosure. One retry would have saved a $0.33 re-run;
 it stays as is until it recurs.
+
+## 7. How the re-run episodes turned out
+
+Sixteen English episodes published on Oct 23, the re-runs included. Each was
+read in full against its script and digest, and every finding below was
+checked against the committed files before it was kept. A Whisper mishearing
+of a word the script has right is not counted.
+
+**The machinery held on every run.**
+
+- The spoken-text gate passed 16 of 16.
+- Every script arm served its own model, with no fallback.
+- Every run wrote to the story catalog.
+- Today's catalog has 220 of 1,357 articles marked aired. Every run before
+  the morning fix had read 0.
+- The rebuilt Nerra Daily Ep064 is complete:
+  - 15 segments, 138.5 minutes, nothing in `missing_expected`;
+  - every segment's promo tail trimmed;
+  - no handoff realigned or revised.
+- The edition's X post went out at 15:36 UTC, from the 15:30 queue slot.
+  The FF and Planetterrian posts went on their slots, and the other five
+  were queued for the afternoon.
+- All nine video renders committed.
+- Seven long-forms are scheduled from 16:00 UTC, and every show has its
+  hook Short.
+- Three render runs read "cancelled". In each one only the follow-on
+  homepage job was cancelled, superseded in its own concurrency group as
+  designed.
+- Six shows got their translation tracks. Planetterrian and Omni View have
+  multilingual switched off.
+
+**Wrong facts on air, corrections filed** (`corrections.yaml`; text amended
+with `scripts/apply_corrections.py`; the audio is unchanged until it is
+re-synthesized):
+
+| Episode | What aired | What is right |
+|---|---|---|
+| Omni View Ep214 | The Dow fell 800 points "on Friday" | Thursday, Oct 22. The only source is CNBC's Oct 22 live page |
+| Omni View Ep214 | American Express announced a $336M restructuring charge | No source on the Volvo item says so. The sentence is withdrawn |
+| Fascinating Frontiers Ep231 | Pressure at the base of the mantle equals the weight of the whole atmosphere | About 1.3 million atmospheres |
+| Modern Investing Ep209 | Two TSX closes, 35,569 (−1.1%) and 35,973 (−1%) | 35,569. The arithmetic puts 35,973 as the previous session's close. Both numbers were in the digest |
+| SpaceX Ep139 | SPCX "closed higher" | The run was mid-session, so it was trading higher. The verb came from the script model, not the quote line |
+| UC Ep151 | India's vultures fell "to one-thousandth" | That is the white-rumped vulture. The other two species fell about 97%, as the episode itself said later |
+
+UC Ep151's 1994 patent-expiry framing is a claim the gate flagged
+(`unverified_quote_mismatch`). It aired as fact, which is the Oct 1 policy:
+it was published and marked. The public claims record shows the flag.
+
+**Listener-facing, not corrected (P2):**
+
+- **Map sentences.**
+  - Vancouver's map ran to four stories.
+  - MAG 7's map gave its three stories out of order.
+  - Collingwood's map promised "roads" on a day the digest had none.
+  - MAB's map named its deep dive on the lead story.
+  - Tesla's map named "Counterpoint", a segment its prompt tells the script
+    never to announce. The segment aired as the solar-roof story.
+- **Calendar and horizon blocks re-told body facts:** MAG 7 (two items),
+  AI Chips (three items).
+- **Facts told twice:**
+  - SpaceX's Grok Bot story;
+  - Planetterrian's sleep lead;
+  - Collingwood's award;
+  - Omni View's sailor toll;
+  - UC's 4.7% figure.
+- **Self-narration lines:** MAG 7, AI Chips and Omni View, one each.
+- **Prediction Markets aired one sentence, "That is a proposal, not a law on
+  the books", for a story whose body it never told.** The digest's Cruz-bill
+  item was a headline and a Source line with no body. That shape occurred
+  once in 470 October digests, so it gets no new gate.
+
+**Not a defect:** the Tesla map's "Counterpoint" was first read as a promised
+segment that never aired. The digest has its Short Spot, and the Counterpoint
+aired as the solar-roof leak story.
