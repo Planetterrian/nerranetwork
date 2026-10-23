@@ -110,6 +110,11 @@ LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 #: the fixture guest.
 VOICE_COST_PER_MIN = float(os.environ.get("XAI_VOICE_COST_PER_MIN") or 0.05)
 SESSIONS_PER_ROOM = 2
+#: The shortest room that reaches the closing round. The room reads a
+#: planned length under 15 minutes as its 45-minute default (plannedMin), so
+#: the first "12-minute" test room on Oct 23 2026 never opened the round. At
+#: 15 the round is required at minute 10 and takes about three.
+ROOM_MIN_MINUTES = 15
 #: A room shorter than this share of its planned length did not run.
 ROOM_RAN_SHARE = 0.75
 #: Her words carry a handed question this long after the room handed it, or
@@ -1055,6 +1060,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
     else:
         prompt = current_prompt()
     tools: Optional[list] = [] if args.tools == "none" else None
+    if args.minutes < ROOM_MIN_MINUTES:
+        print(f"::warning::the room reads {args.minutes} planned minutes as a 45-minute "
+              f"interview; under {ROOM_MIN_MINUTES} the closing round never begins")
     out_dir = Path(args.out_dir) if args.out_dir else DEFAULT_OUT_DIR / _now().strftime("%Y%m%d")
     for i in range(1, args.repeat + 1):
         try:
@@ -1142,7 +1150,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     r = sub.add_parser("run", help="rehearse one arm on one fixture")
     r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--fixture", required=True)
-    r.add_argument("--minutes", type=int, default=12)
+    r.add_argument("--minutes", type=int, default=ROOM_MIN_MINUTES)
     r.add_argument("--repeat", type=int, default=1)
     r.add_argument("--turn-silence-ms", type=int, default=None,
                    help="override the end-of-turn silence for this arm")

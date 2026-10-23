@@ -2159,8 +2159,9 @@ that bind now:
   guest (`age_of_ai_fixture_guest.js`, a second voice agent playing a past
   guest from their approved transcript, pausing mid-thought, coughing, asking
   who someone is) runs a room through the real scenario. **Since Oct 23 2026
-  a rehearsal is ONE twelve-minute room of the proposed arm** (the round
-  opens at minute 8), judged on the room's own checks (ran, no self-answered
+  a rehearsal is ONE fifteen-minute room of the proposed arm** (the room
+  reads a planned length under 15 as 45, so a shorter room never opens the
+  round; at 15 it is required at minute 10), judged on the room's own checks (ran, no self-answered
   turns, under one overlap per ten minutes, the closing round complete with
   every question in her words and none a turn behind, no dropped session)
   and reported with its ROOM LOG (`rehearsal.room_log`: sessions, turn

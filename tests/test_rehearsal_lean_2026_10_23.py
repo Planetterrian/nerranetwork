@@ -308,11 +308,11 @@ class TestTheWorkflowDefaultsToOneRoom:
 
     def test_defaults(self):
         inputs = self._wf()["workflow_dispatch"]["inputs"]
-        assert inputs["minutes"]["default"] == 12
+        assert inputs["minutes"]["default"] == 15
         assert inputs["repeat"]["default"] == 1
         assert inputs["arms"]["default"] == "proposed"
         text = WORKFLOW.read_text(encoding="utf-8")
-        assert "inputs.minutes || 12" in text and "inputs.repeat || 1" in text
+        assert "inputs.minutes || 15" in text and "inputs.repeat || 1" in text
         assert "inputs.arms || 'proposed'" in text
 
     def test_xai_is_checked_before_anything_is_uploaded_or_placed(self):
@@ -321,8 +321,11 @@ class TestTheWorkflowDefaultsToOneRoom:
         assert pre < text.index("upload_candidate_scenario()")
         assert pre < text.index("--arm current") and pre < text.index("--arm proposed")
 
-    def test_twelve_minutes_reaches_the_closing_round(self):
-        # closingWindowMin = max(4, min(15, round(planned / 3))): a 12-minute
-        # room opens the round at minute 8, with four minutes for it.
+    def test_the_default_room_reaches_the_closing_round(self, rehearsal):
+        # The first "12-minute" test room never opened the round: the room
+        # reads a planned length under 15 as its 45-minute default.
         src = SCENARIO.read_text(encoding="utf-8")
-        assert "Math.max(4, Math.min(15, Math.round(plannedMin() / 3)))" in src
+        assert "asked < 15 || asked > 90) return DEFAULT_PLANNED_MIN" in src
+        assert rehearsal.ROOM_MIN_MINUTES == 15
+        inputs = self._wf()["workflow_dispatch"]["inputs"]
+        assert inputs["minutes"]["default"] >= rehearsal.ROOM_MIN_MINUTES

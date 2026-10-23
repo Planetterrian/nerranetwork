@@ -52,9 +52,12 @@ person.
 ## Running it
 
 Actions → **Nerra Voices — rehearsal**. The defaults are one room of the
-proposed arm, twelve minutes long, on `roddy` (Oct 23 2026). A twelve-minute
-room opens the closing round at minute eight, so one room exercises the
-opening, the turn decisions, the scheduled behaviours and the whole round.
+proposed arm, fifteen minutes long, on `roddy` (Oct 23 2026). Fifteen is
+the shortest room that reaches the closing round: the room reads a planned
+length under 15 minutes as its 45-minute default, so the first twelve-minute
+test room never opened the round. At fifteen the round is required at minute
+ten and takes about three, so one room exercises the opening, the turn
+decisions, the scheduled behaviours and the whole round.
 Tick `candidate_scenario` to rehearse this branch's room code beside the
 live one; `with_hold` adds the phone call at minute four. Choose `both` and
 more rooms only for a prompt or setting change, where the two-arm
@@ -97,7 +100,7 @@ the reminders never select.
 Every room runs two Voice Agent sessions, Mira and the fixture guest. The
 report prints the room minutes and an estimate at
 `XAI_VOICE_COST_PER_MIN` (default $0.05 per session minute; check the
-voice line in the xAI console). One default room is about 25 session
+voice line in the xAI console). One default room is about 30 session
 minutes. The Oct 22-23 pattern (two arms, two or three rooms each, 22
 minutes) was 90-130 session minutes per check, and 34 rooms in two days
 came to about 870.

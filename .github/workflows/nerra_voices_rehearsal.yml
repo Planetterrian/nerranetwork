@@ -24,9 +24,9 @@ on:
         options: [roddy, vincent, adrian]
         default: roddy
       minutes:
-        description: 'Minutes per room (12 reaches the closing round at minute 8)'
+        description: 'Minutes per room (15 is the shortest that reaches the closing round: under 15 the room plans a 45-minute interview)'
         type: number
-        default: 12
+        default: 15
       repeat:
         description: 'Rooms per arm (each room is two Voice Agent sessions)'
         type: number
@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 120
     env:
       FIXTURE: ${{ inputs.fixture || 'roddy' }}
-      MINUTES: ${{ inputs.minutes || 12 }}
+      MINUTES: ${{ inputs.minutes || 15 }}
       REPEAT: ${{ inputs.repeat || 1 }}
       ARMS: ${{ inputs.arms || 'proposed' }}
       OUT_DIR: outputs/rehearsals/${{ github.run_id }}
