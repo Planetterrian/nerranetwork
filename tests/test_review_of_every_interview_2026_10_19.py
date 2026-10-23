@@ -76,7 +76,9 @@ class TestThePromptTeachesRhythm:
 
     def test_the_lightning_round_reacts_between_questions(self):
         flat = _flat(PROMPT)
-        assert "Ask each question you are handed in full as its own turn, and wait for the whole answer" in flat
+        # Oct 23 2026: "in those words" — the room hands her the question's words.
+        assert ("Ask each question you are handed in full as its own turn, "
+                "in those words, and wait for the whole answer") in flat
         assert "react in a few words that prove you heard" in flat
         assert "Never answer one yourself" in flat
 

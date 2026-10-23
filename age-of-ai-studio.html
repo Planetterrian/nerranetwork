@@ -1222,16 +1222,55 @@
     }
 
     await selectCallDevices();
+    // Oct 23 2026: the preview has just released the camera and microphone.
+    // Some systems release a device asynchronously, and a request in the
+    // same instant is refused ("Media access denied"); give them a moment.
+    await new Promise(function (r) { setTimeout(r, 400); });
+    placeCall(!isHost && camOn);
+  }
 
-    // Everyone places the same call. The scenario answers it as a
-    // participant session, records this person, and bridges them into
-    // the interview room (room-<run id>); X-Role labels the leg.
+  // Everyone places the same call. The scenario answers it as a
+  // participant session, records this person, and bridges them into
+  // the interview room (room-<run id>); X-Role labels the leg.
+  var callSentVideo = false, audioOnlyRetried = false;
+  function placeCall(sendVideo) {
+    callSentVideo = sendVideo;
     activeCall = sdk.call({
       number: candidateRoom ? "mira-candidate" : "mira",
-      video: { sendVideo: !isHost && camOn, receiveVideo: false },
+      video: { sendVideo: sendVideo, receiveVideo: false },
       extraHeaders: { "X-Run-Id": runId, "X-Role": role },
     });
     wireCall(activeCall);
+  }
+
+  // Oct 23 2026: a guest's camera refused at call time failed the whole
+  // call ("The call didn't go through (Media access denied)") although the
+  // preview had used it a minute earlier. The conversation is the audio:
+  // a refused camera joins without it, once; a refused microphone says how
+  // to allow it.
+  function isMediaRefusal(e) {
+    return /media|permission|notallowed|notreadable|overconstrained|device/i
+      .test(String((e && (e.reason || e.name || e.message)) || ""));
+  }
+  function onCallFailed(e) {
+    console.warn("[studio] call failed", e && e.code, e && e.reason);
+    if (isMediaRefusal(e) && callSentVideo && !audioOnlyRetried) {
+      audioOnlyRetried = true;
+      camOn = false;
+      var t = document.getElementById("camToggle");
+      if (t) { t.textContent = "Camera unavailable"; t.disabled = true; }
+      setStudioStatus("Your camera didn't start, so you're joining with audio only. That's all the interview needs.", true);
+      try { VoxImplant.Hardware.CameraManager.get().setDefaultVideoSettings({}); } catch (ignored) {}
+      placeCall(false);
+      return;
+    }
+    if (isMediaRefusal(e)) {
+      fail("Your browser didn't let the studio use your microphone. Click the lock icon in the address bar "
+        + "and allow the microphone. On a Mac, also check System Settings, Privacy & Security, Microphone, "
+        + "and close any other app or tab that is using it. Then reload this page.");
+      return;
+    }
+    fail("The call didn't go through (" + (e && e.reason ? e.reason : "unknown") + "). Reload to try again.");
   }
 
   function wireCall(call) {
@@ -1250,9 +1289,7 @@
         });
       });
     } catch (e) { /* the picture stays still */ }
-    call.on(VoxImplant.CallEvents.Failed, function (e) {
-      fail("The call didn't go through (" + (e && e.reason ? e.reason : "unknown") + "). Reload to try again.");
-    });
+    call.on(VoxImplant.CallEvents.Failed, onCallFailed);
   }
 
   function onCallConnected() {
