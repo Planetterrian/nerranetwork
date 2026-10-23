@@ -1234,6 +1234,8 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
     try { noteRoundQuestion(text); }
     catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
+    try { noteRoundTurnWithoutQuestion(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] round turn check failed: " + err.message); }
     // In a hold she speaks only her check-in; the reply window runs from the
     // end of that line, not from the moment the room asked for it.
     if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();
@@ -2549,7 +2551,8 @@ const ROUND_QUESTIONS = [
   ["how being interviewed by an AI was", /experience of being interviewed|being interviewed by an ai/i],
   ["what could be improved", /(thing|suggestion).{0,40}improve|could (we|i|be) improve/i],
 ];
-const roundAsked = {};          // label -> minute it was first asked
+const roundAsked = {};          // label -> minute it was first asked (or handed to her)
+const roundSpoken = {};         // label -> true once her own words carried it
 let roundRepeats = 0;
 
 function noteRoundQuestion(text) {
@@ -2557,6 +2560,29 @@ function noteRoundQuestion(text) {
   ROUND_QUESTIONS.forEach(function (q) {
     const label = q[0];
     if (!q[1].test(text)) return;
+    // The question her last turn left unasked, said now of her own accord:
+    // it is the one in play again, and their answer moves the round on.
+    if (roundRehand && roundActive && ROUND_QUESTIONS[roundIndex + 1]
+        && ROUND_QUESTIONS[roundIndex + 1][0] === label) {
+      roundRehand = false;
+      roundIndex += 1;
+      roundAsked[label] = elapsedMin();
+      roundSpoken[label] = true;
+      trace("round", "asked " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + ": " + label + " (her own words)");
+      return;
+    }
+    // Oct 23 2026: a question the room handed her and she has not yet said
+    // is not a repeat when she says it, even a turn late. The 22-minute
+    // rehearsal (run 4729e7b6) ran one turn behind from its first question
+    // and the room told her three times that she had asked something twice.
+    if (roundAsked[label] !== undefined && !roundSpoken[label]) {
+      roundSpoken[label] = true;
+      if (!(roundActive && roundIndex >= 0 && ROUND_QUESTIONS[roundIndex][0] === label)) {
+        trace("round", "said late: " + label);
+      }
+      return;
+    }
+    roundSpoken[label] = true;
     if (roundAsked[label] !== undefined) {
       roundRepeats += 1;
       trace("round", "asked again: " + label + " (first at " + roundAsked[label] + " min)");
@@ -2585,6 +2611,25 @@ function noteRoundQuestion(text) {
         " any of these again, in any wording." }] },
     });
   });
+}
+
+// Oct 23 2026 (rehearsal 4729e7b6). The round began in a pause in the middle
+// of the guest's sentence; her turn only reacted ("Calling instead of
+// composing.") and asked nothing, the guest finished the sentence, and the
+// room counted that as the answer to question one. She then asked each
+// question a turn late to the end of the round. A turn of the round that
+// carries no question did not ask the one in play: the room hands it to her
+// again when the guest finishes.
+function noteRoundTurnWithoutQuestion(text) {
+  if (roomEnded || !grokAgent || !text) return;
+  if (!roundActive || !roundAwaitingAnswer || roundLastWordAsked || roundIndex < 0 || holdMode) return;
+  if (text.indexOf("?") >= 0) return;
+  const label = ROUND_QUESTIONS[roundIndex][0];
+  if (roundSpoken[label]) return;
+  delete roundAsked[label];
+  roundIndex -= 1;          // their next finished answer hands this one again
+  roundRehand = true;
+  trace("round", "her turn asked nothing; " + label + " goes again when they finish");
 }
 
 // The closing round itself, recognised from Mira's own words: the lightning
@@ -2792,6 +2837,7 @@ let roundIndex = -1;              // index into ROUND_QUESTIONS of the question 
 let roundRepromptTimer = null;
 let roundLastWordAsked = false;
 let roundClosed = false;
+let roundRehand = false;          // her turn asked nothing: the question in play goes again
 
 function roundQuestionText(entry) {
   const label = entry[0];
@@ -2850,6 +2896,13 @@ function roundReprompt() {
   if (roomEnded || !grokAgent || !roundActive || !roundAwaitingAnswer) return;
   if (holdMode) return;   // re-armed when they are back (exitHold)
   if (guestSpokeSinceMira || inboundSpeaking || miraSpeaking) return;
+  if (roundRehand) {
+    // She reacted and asked nothing, and they have nothing to add: ask it now.
+    roundRehand = false;
+    roundAwaitingAnswer = false;
+    askNextRoundQuestion();
+    return;
+  }
   trace("round", "no answer yet to " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; one gentle re-ask");
   try {
     grokAgent.conversationItemCreate({
@@ -2867,7 +2920,12 @@ function roundAnswered() {
   roundAwaitingAnswer = false;
   if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
   if (roundLastWordAsked) { closeRound(); return; }
-  trace("round", "answered " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length);
+  if (roundRehand) {
+    roundRehand = false;
+    trace("round", "they finished their thought; handing " + (roundIndex + 2) + "/" + ROUND_QUESTIONS.length + " again");
+  } else {
+    trace("round", "answered " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length);
+  }
   askNextRoundQuestion();
 }
 
