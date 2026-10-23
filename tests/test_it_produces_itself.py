@@ -57,7 +57,12 @@ class TestTheClosingRoundVaries:
         # Oct 21 2026: the five live in the room (ROUND_QUESTIONS), which
         # hands them to her one at a time; the prompt names the round.
         flat = _flat(PROMPT)
-        assert "the five lightning questions" in flat
+        # Oct 23 2026: "lightning" is gone from her brief. Rehearsal
+        # 39987282078 heard it as a licence for her own quickfire (coffee or
+        # tea, ocean or mountains) in place of two of the room's questions.
+        assert "five short closing questions" in flat
+        assert "those questions are the whole round" in flat
+        assert "lightning" not in flat.replace("{{lightning_at}}", "")
         assert "hands you each closing question in turn" in flat
         for q in ("a book they would recommend", "who you should interview next",
                   "the best advice they were ever given", "who has inspired them most",

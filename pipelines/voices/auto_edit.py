@@ -540,7 +540,8 @@ def _clean_bed(run: dict) -> tuple[bool, str]:
 # the welcome back and the "how are you" stay out, so a listener hears the
 # first conversation run straight on into the round it never finished.
 CLOSING_STARTS = re.compile(
-    r"(lightning round|quick-?fire|book you'?d recommend|book you would recommend"
+    r"(lightning round|closing round|closing questions|quick-?fire"
+    r"|book you'?d recommend|book you would recommend"
     r"|where we left off|pick (it|that|things) (up|back up)|picking up where)", re.I)
 CLOSING_MARK = "[Closing session]"
 
