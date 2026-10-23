@@ -182,7 +182,7 @@ if (which === "server_turns_advance_the_round") {
   roomTurnStarts();
   miraFinishes("What is the one bet you are making for the next five years?");
   guestSpeaks(2500);
-  advance(5000);                    // no words arrive; the room waits once, then answered 1/8, asks 2/8
+  advance(5000);                    // no words arrive; the room waits once, then answered 1/7, asks 2/8
   roomTurnStarts();
   miraFinishes("Of course, take the call, I'll wait.");
   out.entered = state();
@@ -289,7 +289,7 @@ if (which === "server_turns_advance_the_round") {
   out.afterReaction = state();
   guestSays("Yeah, it saves you three rounds of back-and-forth later.", 4000);
   advance(5000);
-  out.roundNotesAfterThought = instructions.filter(function (n) { return n.indexOf("[ROUND 1 of 8") >= 0; }).length;
+  out.roundNotesAfterThought = instructions.filter(function (n) { return n.indexOf("[ROUND 1 of 7") >= 0; }).length;
   out.roundConversationNotes = notes.filter(function (n) { return /^\[ROUND \d/.test(n); }).length;
   roomTurnStarts();
   miraFinishes("Messy now, clean later. What's the one bet you're making for the next twelve months that you cannot prove yet?");
@@ -317,7 +317,7 @@ if (which === "server_turns_advance_the_round") {
   out.afterFollowUp = state();
   guestSays("No, I never did.", 2000);
   advance(5000);
-  out.handedAgain = instructions.filter(function (n) { return n.indexOf("[ROUND 3 of 8") >= 0; }).length;
+  out.handedAgain = instructions.filter(function (n) { return n.indexOf("[ROUND 3 of 7") >= 0; }).length;
   roomTurnStarts();
   miraFinishes("Fair enough. Whose voice would you most like to hear on the show?");
   guestSays("My uncle, honestly.", 2000);
@@ -538,7 +538,7 @@ if (which === "server_turns_advance_the_round") {
   out.handed = instructions.slice(before);
   out.notesAdded = notes.length - notesBefore;
   // The cut line's transcript arrives after the re-hand; it moves nothing.
-  roomTurnStarts();
+  // (Its response was created before the cut, so no new turn starts for it.)
   miraFinishes("That's the whole hour in one sentence, Roddy. Thank you for the window. Anyone can apply to be a guest there. That's the end of the recording. You can");
   out.afterCutLine = state();
   roomTurnStarts();
@@ -560,6 +560,53 @@ if (which === "server_turns_advance_the_round") {
   out.handed = instructions.slice(before);
   out.notesAdded = notes.length - notesBefore;
   out.state = state();
+} else if (which === "round_end_as_rehearsed") {
+  // Rehearsal 39991520039 at the end of the round: handed the interview
+  // question, she went into her goodbye twice; the guest said she had
+  // trailed off; then the round ran on to the thanks, and a lingering guest.
+  const ask = function (line, answer) {
+    roomTurnStarts(); miraFinishes(line); guestSays(answer, 3000); advance(5000);
+  };
+  const signOff = function () {
+    roomTurnStarts();
+    ["Roddy, thank you for the hallway door.", " The rest of The Age of AI lives at nerranetwork dot com.",
+     " That's the end of the recording. You can"].forEach(function (d) {
+      ctx.__ev = { data: { customEvent: "ResponseOutputAudioTranscriptDelta", payload: { delta: d } } };
+      run("noteMiraDelta(__ev);");
+    });
+    miraFinishes("Roddy, thank you for the hallway door. The rest of The Age of AI lives at nerranetwork dot com. That's the end of the recording. You can");
+  };
+  run("closingPermitted = true; startRound('test', -1);");
+  ask("What's the one bet you're making for the next twelve months that you cannot prove yet?", "That the tool gets put down.");
+  ask("What's a book you would recommend, and in a sentence, why?", "Man's Search for Meaning.");
+  ask("Who's one person you think I should interview next?", "My old broker.");
+  ask("What's the best piece of advice you were ever given?", "The house will still be there tomorrow.");
+  ask("Who's the person who has inspired you most?", "My dad.");
+  const before = instructions.length;
+  signOff();                       // in place of question 6; cut, handed again
+  advance(4000);
+  signOff();                       // again; the rescue is cooling down
+  guestSays("Sounds like you trailed off there.", 2000);
+  advance(5000);
+  out.afterTrailedOff = state();
+  ask("How was the experience of being interviewed by an AI, and what's one specific thing we could improve?", "Easier than I expected. Slow down at the start.");
+  ask("Would you like to come back for a follow-up interview in six months to a year, to talk about where your projects have gone and to see how much I've improved?", "I would.");
+  ask("Is there anything you came wanting to say that the two of us never reached?", "The valley teaches you to love two things at once.");
+  out.handed = instructions.slice(before);
+  roomTurnStarts();
+  miraFinishes("Thank you for that, Roddy. That's the end of the recording. You can hang up now.");
+  const createsBefore = events.filter(function (e) { return e === "create"; }).length;
+  guestSays("Take care, Mira. Bye now.", 2000);
+  advance(5000);
+  roomTurnStarts(); miraFinishes("Bye, Roddy.");
+  guestSays("Silence. Yeah. I'm still here.", 2000);
+  advance(5000);
+  run("legs = [];");
+  guestSays("Hello?", 1000);
+  advance(5000);
+  out.createsAfterThanks = events.filter(function (e) { return e === "create"; }).length - createsBefore;
+  out.lastInstructions = instructions[instructions.length - 1];
+  out.final = state();
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

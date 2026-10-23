@@ -38,16 +38,16 @@ class TestATurnThatAsksNothingDidNotAsk:
         out = sim("round_turn_without_question")
         lines = round_lines(out)
         assert any(l.startswith("her turn asked nothing; the show's own question") for l in lines)
-        assert any("handing 1/8 again" in l for l in lines)
+        assert any("handing 1/7 again" in l for l in lines)
         assert out["roundNotesAfterThought"] == 2          # handed twice, asked once
         assert out["roundConversationNotes"] == 0          # never as a conversation note
-        assert not any(l.startswith("answered 1/8") for l in lines[:3])
+        assert not any(l.startswith("answered 1/7") for l in lines[:3])
 
     def test_the_round_then_runs_in_step(self):
         out = sim("round_turn_without_question")
         lines = round_lines(out)
-        assert "answered 1/8" in lines
-        assert "asked 2/8: a book they would recommend" in lines
+        assert "answered 1/7" in lines
+        assert "asked 2/7: a book they would recommend" in lines
         assert out["state"]["roundIndex"] == 1             # the book, the question in play
         assert out["state"]["roundAwaitingAnswer"] is True
 
@@ -59,7 +59,7 @@ class TestATurnThatAsksNothingDidNotAsk:
     def test_a_reaction_and_their_silence_gets_the_question_now(self):
         out = sim("round_reaction_then_silence")
         assert out["events"] == ["create"]
-        assert "[ROUND 1 of 8" in out["lastNote"]
+        assert "[ROUND 1 of 7" in out["lastNote"]
 
 
 class TestTheRuleIsNarrow:
@@ -91,7 +91,7 @@ class TestTheRoundGoesAsInstructions:
         assert out["roundNotes"] == []
         last = out["instructions"][-1]
         assert last.startswith("BRIEF: the show asks for their bet.")   # the brief stays
-        assert "[ROUND 2 of 8" in last and "book you would recommend" in last
+        assert "[ROUND 2 of 7" in last and "book you would recommend" in last
 
     def test_no_round_turn_writes_a_conversation_note(self):
         for fn in ("function askNextRoundQuestion(", "function roundReprompt(",

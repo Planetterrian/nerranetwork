@@ -60,21 +60,24 @@ class TestTheClosingRoundVaries:
         # Oct 23 2026: "lightning" is gone from her brief. Rehearsal
         # 39987282078 heard it as a licence for her own quickfire (coffee or
         # tea, ocean or mountains) in place of two of the room's questions.
-        assert "five short closing questions" in flat
+        assert "four short closing questions" in flat
         assert "those questions are the whole round" in flat
         assert "lightning" not in flat.replace("{{lightning_at}}", "")
         assert "hands you each closing question in turn" in flat
         for q in ("a book they would recommend", "who you should interview next",
                   "the best advice they were ever given", "who has inspired them most",
-                  "whether they would be interviewed again"):
+                  "whether they would like a follow-up interview"):
             assert q in SCENARIO_JS, q
         assert "Never answer one yourself" in flat
 
     def test_she_asks_what_it_was_like_to_be_interviewed_by_her(self):
         flat = _flat(PROMPT)
-        assert "two about the interview itself" in flat
-        assert "how being interviewed by an AI was" in SCENARIO_JS
-        assert "what could be improved" in SCENARIO_JS
+        # Oct 23 2026 (Patrick): how it felt and the one improvement are one
+        # question, and the round ends on a follow-up interview.
+        assert "one about the interview itself" in flat
+        assert "whether they would like a follow-up interview" in flat
+        assert "how being interviewed by an AI was, and one improvement" in SCENARIO_JS
+        assert "what's one specific thing we could improve?" in SCENARIO_JS
         # Sept 21 2026: that answer is read after the episode and adopted as
         # a standing instruction, so she asks for it plainly, every time.
         assert "The improvement they suggest becomes a standing instruction" in flat

@@ -59,25 +59,23 @@ LAGGING_ROUND = [
     (1, "grok", "agent created (model grok-voice-3.0)"),
     (240, "grok", "response done"),
     (903, "round", "room-driven closing round begins (the answer in progress ended)"),
-    (903, "round", "asked 1/8: the show's own question"),
-    (930, "round", "answered 1/8"),
-    (930, "round", "asked 2/8: a book they would recommend"),
-    (944, "round", "answered 2/8"),
-    (944, "round", "asked 3/8: who you should interview next"),
-    (959, "round", "answered 3/8"),
-    (959, "round", "asked 4/8: the best advice they were ever given"),
+    (903, "round", "asked 1/7: the show's own question"),
+    (930, "round", "answered 1/7"),
+    (930, "round", "asked 2/7: a book they would recommend"),
+    (944, "round", "answered 2/7"),
+    (944, "round", "asked 3/7: who you should interview next"),
+    (959, "round", "answered 3/7"),
+    (959, "round", "asked 4/7: the best advice they were ever given"),
     (961, "round", "said late: who you should interview next"),
-    (973, "round", "answered 4/8"),
-    (973, "round", "asked 5/8: who has inspired them most"),
+    (973, "round", "answered 4/7"),
+    (973, "round", "asked 5/7: who has inspired them most"),
     (975, "round", "said late: the best advice they were ever given"),
-    (998, "round", "answered 5/8"),
-    (998, "round", "asked 6/8: whether they would be interviewed again"),
+    (998, "round", "answered 5/7"),
+    (998, "round", "asked 6/7: how being interviewed by an AI was, and one improvement"),
     (999, "round", "said late: who has inspired them most"),
-    (1014, "round", "answered 6/8"),
-    (1014, "round", "asked 7/8: how being interviewed by an AI was"),
-    (1029, "round", "answered 7/8"),
-    (1029, "round", "asked 8/8: what could be improved"),
-    (1044, "round", "answered 8/8"),
+    (1014, "round", "answered 6/7"),
+    (1014, "round", "asked 7/7: whether they would like a follow-up interview"),
+    (1044, "round", "answered 7/7"),
     (1044, "round", "every closing question asked; handing them the last word"),
     (1079, "round", "complete; closing thanks"),
     (1320, "room", "ending: normal"),
@@ -87,7 +85,7 @@ LAGGING_ROUND = [
 class TestTheRoundMetricReadsTheLag:
     def test_said_late_is_not_a_complete_round(self):
         out = am.closing_round(_trace(LAGGING_ROUND))
-        assert out["round_asked"] == 8 and out["round_answered"] == 8
+        assert out["round_asked"] == 7 and out["round_answered"] == 7
         assert out["round_late"] == 3
         assert out["closing_round_complete"] is False
 
@@ -107,21 +105,40 @@ class TestTheRoundMetricReadsTheLag:
         assert out["closing_round_complete"] is False
 
     def test_a_question_handed_again_counts_once(self):
-        lines = [(0, "round", "asked 1/8: a"),
+        lines = [(0, "round", "asked 1/2: a"),
                  (5, "round", "her turn asked nothing; a goes again when they finish"),
-                 (9, "round", "they finished their thought; handing 1/8 again"),
-                 (9, "round", "asked 1/8: a"), (15, "round", "answered 1/8"),
-                 (16, "round", "asked 2/8: b (her own words)"), (20, "round", "answered 2/8")]
+                 (9, "round", "they finished their thought; handing 1/2 again"),
+                 (9, "round", "asked 1/2: a"), (15, "round", "answered 1/2"),
+                 (16, "round", "asked 2/2: b (her own words)"), (20, "round", "answered 2/2")]
         out = am.closing_round(_trace(lines), expected=2)
         assert out["round_asked"] == 2 and out["round_stacked"] == 0
         assert out["round_rehanded"] == 1
         assert out["closing_round_complete"] is True
 
     def test_a_question_she_asked_herself_counts(self):
-        lines = [(0, "round", "asked on her own: a"), (5, "round", "asked 2/8: b"),
-                 (9, "round", "answered 2/8")]
+        lines = [(0, "round", "asked on her own: a"), (5, "round", "asked 2/2: b"),
+                 (9, "round", "answered 2/2")]
         out = am.closing_round(_trace(lines), expected=2)
         assert out["round_asked"] == 2 and out["closing_round_complete"] is True
+
+
+    def test_the_room_count_wins_over_the_callers(self):
+        # Oct 23 2026: the round went from eight questions to seven. A room
+        # that asked all seven is complete whatever count a caller passed.
+        lines = []
+        for n in range(1, 8):
+            lines += [(n * 10, "round", f"asked {n}/7: q{n}"), (n * 10 + 5, "round", f"answered {n}/7")]
+        assert am.closing_round(_trace(lines), expected=8)["closing_round_complete"] is True
+        assert am.closing_round(_trace(lines[:-2]), expected=6)["closing_round_complete"] is False
+
+    def test_a_question_never_heard_is_handed_again_not_stacked(self):
+        lines = [(0, "round", "asked 6/7: f"),
+                 (3, "close", "cancelled mid-sentence: a sign-off with the closing round at 6/7"),
+                 (9, "round", "they spoke, but f never reached them; handing 6/7 again"),
+                 (9, "round", "asked 6/7: f"), (15, "round", "answered 6/7")]
+        out = am.closing_round(_trace(lines), expected=1)
+        assert out["round_stacked"] == 0 and out["round_rehanded"] == 1
+        assert out["round_asked"] == 1 and out["round_answered"] == 1
 
 
 class TestTheRoomLog:
@@ -130,11 +147,11 @@ class TestTheRoomLog:
         src = SCENARIO.read_text(encoding="utf-8")
         block = src[src.index("const ROUND_QUESTIONS = ["):]
         block = block[:block.index("];")]
-        assert len(labels) == 8 and all(f'"{q}"' in block for q in labels)
+        assert len(labels) == 7 and all(f'"{q}"' in block for q in labels)
 
     def test_the_wider_pattern_hears_how_she_asks(self, rehearsal):
         rx = dict(rehearsal.round_questions())
-        assert rx["whether they would be interviewed again"].search("Would you do this again?")
+        assert rx["whether they would like a follow-up interview"].search("Would you do this again?")
         assert rx["who you should interview next"].search("Who should I interview next?")
         assert rx["a book they would recommend"].search("Is there a book you'd recommend?")
 
@@ -149,12 +166,12 @@ class TestTheRoomLog:
         log = rehearsal.room_log(_trace(LAGGING_ROUND), transcript)
         q = {x["question"]: x for x in log["questions"]}
         assert q["a book they would recommend"]["never_heard"]
-        assert q["how being interviewed by an AI was"]["never_heard"]
+        assert q["how being interviewed by an AI was, and one improvement"]["never_heard"]
         assert q["who you should interview next"]["heard_at"] == "15:46"
         assert q["who has inspired them most"]["late"] is True
         assert log["round"]["round_late"] == 3
         assert log["length_min"] == 22.0
-        assert [x["line"] for x in log["round_lines"]][1] == "asked 1/8: the show's own question"
+        assert [x["line"] for x in log["round_lines"]][1] == "asked 1/7: the show's own question"
 
     def test_the_sessions_and_turns_are_counted(self, rehearsal):
         tr = _trace([(0, "room", "opened"), (1, "grok", "agent created (model grok-voice-3.0)"),

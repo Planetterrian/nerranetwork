@@ -90,7 +90,7 @@ class TestTheRoundIsNeverSteered:
         assert out["acks"] == [{"nn": 1, "ack": "move_on", "status": "closing"}]
         assert out["steer"] is None
         assert "GUEST FEEDBACK" not in out["lastInstructions"]
-        assert out["lastInstructions"].startswith("[ROUND 2 of 8")
+        assert out["lastInstructions"].startswith("[ROUND 2 of 7")
 
 
 class TestAHoldDropsAQueuedRequest:

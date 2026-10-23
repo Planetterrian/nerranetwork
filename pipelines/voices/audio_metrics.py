@@ -58,8 +58,11 @@ ECHO_LOOKBACK_WORDS = 30
 #: this many seconds either side of it.
 SEAM_WINDOW_SEC = 2.0
 #: Rounds are asked one per turn; the parent scenario traces each ask as
-#: ``round: asked <n>/8: ...`` (Oct 21) or ``round: asked: <label>`` (Oct 19).
-ROUND_QUESTIONS_DEFAULT = 8
+#: ``round: asked <n>/<N>: ...`` (Oct 21) or ``round: asked: <label>`` (Oct 19).
+#: The count a trace carries (its N) wins; this is the fallback for a trace
+#: without one. Seven since Oct 23 2026 (the two interview questions became
+#: one, and the follow-up interview joined).
+ROUND_QUESTIONS_DEFAULT = 7
 
 _WORD_RE = re.compile(r"[^\W_]+(?:'[^\W_]+)?", re.UNICODE)
 
@@ -232,7 +235,8 @@ _ROUND_ANSWERED = re.compile(r"^answered(?:\s+(\d+)/(\d+))?", re.I)
 _ROUND_REPEAT = re.compile(r"^asked again\b", re.I)
 _ROUND_OWN = re.compile(r"^asked on her own:\s*(.*)$", re.I)
 _ROUND_LATE = re.compile(r"^said late\b", re.I)
-_ROUND_REHAND = re.compile(r"^(her turn asked (nothing|something else)|the sign-off took the question's place)", re.I)
+_ROUND_REHAND = re.compile(r"^(her turn asked (nothing|something else)|the sign-off took the question's place"
+                           r"|they spoke, but .+ never reached them)", re.I)
 _ROUND_OWN_WORDS = re.compile(r"\s*\(her own words\)\s*$", re.I)
 _SEAM_RE = re.compile(r"(handing over to a fresh session|connection dropped|"
                       r"rescued after a dropped connection|session \d+ bridged)", re.I)
@@ -271,6 +275,7 @@ def closing_round(trace: Optional[Sequence[dict]],
     repeats = 0
     rehanded = 0
     saw_answered_lines = False
+    traced_total = 0            # the N of "asked n/N": the room's own count
     awaiting_answer = False     # an ask with no "answered" line yet
     previous_was_ask = False    # the trace line just before this one
     for e in trace or []:
@@ -307,6 +312,8 @@ def closing_round(trace: Optional[Sequence[dict]],
             continue
         m = _ROUND_ASKED.match(detail)
         if m:
+            if m.group(2):
+                traced_total = int(m.group(2))
             label = _ROUND_OWN_WORDS.sub("", (m.group(3) or "").strip()) or f"q{len(asked) + 1}"
             # Two asks with nothing between them, or an ask while the last
             # is still unanswered on a trace that does record answers: the
@@ -329,6 +336,11 @@ def closing_round(trace: Optional[Sequence[dict]],
         # only six times. Each ask that was not immediately followed by
         # another ask is taken as answered; the stacked ones were not.
         answered = asked[: max(0, len(asked) - stacked)]
+    # Oct 23 2026: the room says how many questions its round has. Callers
+    # passed a count from another list (the closing-session list, one short)
+    # or the default, and a change to the round would otherwise read every
+    # room as incomplete, or complete one question early.
+    expected = traced_total or expected
     complete = (len(asked) >= expected and stacked == 0 and late == 0
                 and repeats == 0 and len(answered) >= len(asked))
     return {"closing_round_complete": bool(asked) and complete,

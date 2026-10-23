@@ -2343,6 +2343,22 @@ behaviour driven through the real scenario in a node vm by
   minutes). The hold check-in note asks for a few spoken words: under
   "Nothing else" it came out as the one word "Silence."
 
+- **Seven closing questions** (Oct 23 2026, Patrick): the show's own
+  question, the book, who to interview next, the best advice, who inspired
+  them, how being interviewed by an AI was together with one improvement,
+  and last a follow-up interview in six months to a year. Asked separately at
+  the end, the two interview questions read to her as the end of the show
+  (rehearsal 39991520039: three goodbyes in their place). The scenario,
+  `fire_interviews.CLOSING_ROUND` (same order, without the show's question)
+  and both briefs change together. **A question whose words never reached the
+  guest is not answered by what they say next**: the room hands it again, at
+  most `ROUND_UNHEARD_REHANDS_MAX` (2) times; each round turn says how many
+  questions are still to come; after her closing thanks she has one goodbye
+  and no turn to an empty room (`AFTER_CLOSE_TURNS_MAX`); no time notes once
+  the round is over. `audio_metrics.closing_round` reads the round's size
+  from the room's own `asked n/N` lines. Guards
+  `tests/test_round_end_2026_10_23.py`.
+
 Operator: deploy the scenario only after the candidate rehearsal reads PASS and
 one listen; `wrangler deploy` in `workers/voices` so the new counters are
 stored. ⚠️ AUDIO on every interview.
