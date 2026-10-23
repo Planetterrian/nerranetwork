@@ -94,8 +94,12 @@ class TestEveryTurnGoesThroughRequestTurn:
     def test_the_new_session_owes_no_first_line(self):
         i = SCENARIO.index("session \" + generation + \" bridged — resuming the interview")
         bridged = SCENARIO[i:i + 600]
-        assert "if (handoverTurnOwed) {" in bridged
+        assert "resumeAfterHandover(agent);" in bridged
         assert "responseCreate" not in bridged
+        resume = SCENARIO[SCENARIO.index("function resumeAfterHandover("):]
+        resume = resume[:resume.index("\n}\n")]
+        assert "if (handoverTurnOwed) {" in resume
+        assert "responseCreate" not in resume
 
 
 class TestSheNeverSpeaksFirstOnJoin:

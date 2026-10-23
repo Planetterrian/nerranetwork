@@ -254,6 +254,29 @@ if (which === "server_turns_advance_the_round") {
   advance(21 * 1000);
   out.afterReset = events.slice();
   out.nudges = run("deadAirNudgesTotal");
+} else if (which === "dead_air_after_rescue") {
+  // The Oct 23 rehearsal: her socket dropped just after a line, the rescue
+  // bridged a fresh session, and nobody spoke again for eight minutes.
+  roomTurnStarts();
+  miraFinishesLine(words(30));
+  advance(3000);
+  run("rotating = true; handoverTurnOwed = guestSpokeSinceMira || hostSpokeSinceMira;" +
+      " miraSpeaking = false; miraSilenced(); cancelDeadAir();");   // what recoverAgent does
+  events.length = 0;
+  run("rotating = false; resumeAfterHandover(grokAgent);");          // the bridge
+  advance(19 * 1000);
+  out.before = events.slice();
+  advance(2000);
+  out.after = events.slice();
+  out.nudgeNote = notes.length ? notes[notes.length - 1] : "";
+  // When the guest had spoken before the drop, the new session answers at once.
+  guestSpeaks(3000);
+  run("rotating = true; handoverTurnOwed = guestSpokeSinceMira || hostSpokeSinceMira;" +
+      " miraSpeaking = false; miraSilenced(); cancelDeadAir();");
+  events.length = 0;
+  run("rotating = false; resumeAfterHandover(grokAgent);");
+  advance(1000);
+  out.owed = events.slice();
 } else if (which === "dead_air_empty_room") {
   // The Oct 22 candidate rehearsal: the guest's leg dropped and she nudged
   // the empty room twice during the rejoin grace.
