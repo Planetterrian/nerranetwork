@@ -1,0 +1,111 @@
+OpenAI's new decisions API turns low-cost model calls into reliable structured outputs for any app. This is Models & Agents, episode 212. Compact recurrence, Arabic continual pre-training, and a model fusion benchmark come after this. Then things to try. OpenAI's endpoint accepts any prompt and returns JSON that follows a supplied schema. The company said, without running a full generation. The work targets classification, extraction, or routing rather than open
+ended text. Early users report lower latency and lower token spend than standard chat
+completions on the same tasks. The API is available now through the OpenAI platform alongside
+existing endpoints. BaseVulture reallocates recurrent computation away from gate transforms and toward
+a single dense candidate generation matrix, an archive NLP paper finds. On Tiny Shakespeare it reaches
+is 1.594 validation loss in a 200,000 parameter, one layer setting.
+That result beats matched LSTM and GRU baselines.
+The model remains competitive on the larger text 8 benchmark.
+Its clearest gains appear under constrained hidden state capacity on formal language probes.
+The benefit concentrates in compact regimes, while full gate cells stay stronger at scale.
+Arabic language models gain knowledge through AQL light, which pairs a quality first-curation
+pipeline with partial parameter continual pre-training.
+The method updates RS-Lora adapters, the last eight transformer blocks, and the embedding
+matrix.
+At a matched 1 billion token budget, it lifts a four-benchmark Arabic mean by 3.51 points
+over raw web continual pre-training.
+A 5 billion token controlled run recovers 94% of full parameter gains in 52% of the
+wall clock time.
+The resulting 12 billion parameter model scores 75.3 on the open Arabic LLM leaderboard
+V2, after scaling to 40 billion modern standard Arabic or MSA tokens and instruction tuning.
+Quen3 and Lama bases supply fusion evals controlled expert pools across math, code, science, instruction
+The benchmark measures fusion methods with and without extra training.
+Training free approaches preserve reasoning but degrade tool use at both scales tested.
+MOPD keeps tool use and produces a more balanced profile yet requires additional data preparation and training.
+Fusion Eval reports normalized average and worst case performance plus run time and peak GPU memory on eight public tasks.
+Halucinated citations get separate scores for validity and source recoverability from
+site anchor, which adapts retrieval and field level verification to each source type.
+On an existing detection benchmark, it reaches 0.841F1 with GPT 5.6 Luna and 0.784 with
+an open-weight backbone.
+On the new site-resolved benchmark of 423 real halucinated citations, it achieves 74.7 percent
+and 70.7% end-to-end success, those figures beat web search baselines by 16.3 and 65.3 points
+respectively. A fixed PDDL domain, planning domain definition language, sits at the center
+of Mem plan, which rebuilds the problem each step from parsed observations, candidate hypotheses,
+and interaction memory. Positive graph memory assigns relevance-based costs. Negative memory compiles
+refuted assumptions into exclusion constraints.
+A schema-conditioned interface trained offline handles observation to fact-parsing and symbolic
+action-grounding.
+Experiments on text-world, ALF-world, and robot-twee show gains in task completion and step-efficiency
+while cutting online token-cost versus react-style planning.
+WhatsApp health programs in India, South Africa, and Kenya supplied real-user personas for
+SIM UT, a simulation framework for medical triage chatbots.
+It evaluated medjema against chat GPT and clawed across more than 5,000 multilingual
+turns.
+A recurring failure mode appeared in both model families.
+Correct emergency identification followed by clinically dangerous deescalation once the
+user minimized symptoms without new clinical details.
+The authors recommend simulation-based behavioral evaluation as standard practice before production
+deployment.
+Branch differences and repeated visits feed reflect PO, which builds hints for error recovery
+and organizes sample trajectories into trees for action-level credit assignment.
+On two long horizon tool use benchmarks, it outperforms multiple baselines in most domains
+and records the best average performance.
+The method improves agent's ability to recognize deviations, recover from errors, and continue
+toward task completion.
+METR and Redwood Research spent three weeks inside OpenAI for an embedded review of its
+internal monitoring system. OpenAI set on X. The visit granted deep infrastructure access.
+The findings are being used to strengthen safeguards during system expansion and will inform
+future third-party evaluation work. Planet scale embeddings now cover the entire Earth in a
+box write-up turns database grading signals into reinforcement learning rewards.
+Those rewards are for post-training agents.
+In brief, Lighthouse combines a large language model with rule-based symbolic solving to
+balance answer risk and coverage while accessing more than 18,000 primary sources from South
+Carolina Civil Rights collections, per an archive NLP paper.
+Tao Indian Bank Bench checks both final records and every required procedural step across 1,000
+Indian retail banking tasks, revealing that 6.5 to 12% of sessions judge successful on records
+alone actually skipped required steps. A linguistic inclusion analysis of 1,158 papers finds
+publication growth concentrated on already represented languages, rather than expanding
+coverage of underrepresented ones, with Asian languages receiving 0.7 times their proportional
+share. Self-rewarded moral argumentation training increases decisiveness and reordering invariance
+on moral choice, elephant and moorables, yet leaves sycophancy and reframing vulnerabilities
+intact. Point a classification or extraction job you currently send through chat completions
+at the Decisions API and compare latency and token spend. Spin up Memplan on a small alf-world
+split and count tokens against your current React Loop. Clone site anchor and run its grounding
+pass on a handful of papers from your retrieval augmented writing stack. Further results from
+the open AI and meta embedded evaluation partnership are expected in the coming weeks.
+Additional Arabic LLM adaptation benchmarks using the AQL light pipeline are likely as the 12
+billion parameter model circulates. Procedure aware suites such as Tau Indian bank bench
+may see use when labs measure tool using agents in regulated domains.
+Uniform gate and candidate packages are the default recurrent cell,
+and that is where we pop the hood.
+A conventional cell pays for full recurrent gate matrices
+and a candidate transform as one bundle.
+Most of the parameter budget can sit in a single dense candidate matrix instead.
+Gates then shrink to cheap diagonal interactions.
+Candidate generation keeps an H by H matrix.
+The gate side becomes all of H terms.
+A lightweight second order path also reads hidden state at T minus 2.
+On text 8, loss stays within a few hundreds of a bit per character of full gate baselines.
+Bit per character is the usual language model unit on that benchmark.
+So the gap against full gate cells is small.
+Once hidden size grows, the dense candidate matrix is no longer the bottleneck.
+Streaming and on-device sequence models should measure whether the workload is candidate-limited
+before defaulting to a full LSTM or GRU.
+When it is, reallocating capacity this way yields lower loss and cheaper matrix vector
+work.
+Before we go, Fusion of All's expert pools and code are public, and other labs Fusion
+Method scores could start showing up against that release.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin
+Network, links in the show notes.
+One more thing, if you like today's episode, our sister show Vancouver Daily News is worth
+a spot in your feed.
+What changed in Metro Vancouver today, with the roads and the weather?
+It's one of the Narin Network's daily briefings, all free at NarinNetwork.com, and on the website
+Despite every episode's visuals live in our free image gallery at narennetwork.com gallery,
+royalty-free under creative commons, download with attribution.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
