@@ -2693,7 +2693,7 @@ function catchClosingWithoutTheAnswer(text) {
 const ROUND_QUESTIONS = [
   ["the show's own question", /(one bet you'?re making|bet you'?re making for the next|cannot prove yet|wish more people understood)/i],
   ["a book they would recommend", /book (you'?d|you would|you) (recommend|suggest)|recommend a book/i],
-  ["who you should interview next", /interview next|should (i|we) (interview|talk to|speak (to|with)) next/i],
+  ["who you should interview next", /interview next|should (i|we) (interview|talk to|speak (to|with)|have on|invite) next|who (else )?should (i|we) (interview|have on)\b|(i|we) should (interview|talk to|speak (to|with)|have on) next/i],
   ["the best advice they were ever given", /best (piece of )?advice/i],
   ["who has inspired them most", /inspired you (the )?most|who inspires you/i],
   ["whether they would be interviewed again", /interviewed by me again/i],
@@ -2769,16 +2769,46 @@ function noteRoundQuestion(text) {
 // question a turn late to the end of the round. A turn of the round that
 // carries no question did not ask the one in play: the room hands it to her
 // again when the guest finishes.
+//
+// Oct 23 2026 (rehearsal 0dd50fbe). Handed "who you should interview next",
+// her turn reacted to the guest's book and asked a follow-up about it; the
+// guest's reply was counted as the answer and the question was never put to
+// them. A round turn that asks something, but not the question in play, is
+// handed the same way, ONCE per question: a second miss is taken as the
+// question asked in words the room cannot recognise, so a rewording never
+// loops.
+const roundRehandedOnce = {};    // label -> true once the room handed it again
+// A question that touches the subject of the one in play counts as asking it,
+// even in words its exact pattern misses ("the one bet you are making"): only
+// a question about something else is handed back.
+const ROUND_TOPICS = {
+  "the show's own question": /\b(bet|prove|proof|understood|understand)\b/i,
+  "a book they would recommend": /\b(book|read)/i,
+  "who you should interview next": /\b(interview|next|guest|on the show|talk to|speak (to|with)|hear from)\b/i,
+  "the best advice they were ever given": /\b(advice|advise|told you)\b/i,
+  "who has inspired them most": /\b(inspir\w*|look up to|influenc\w*)/i,
+  "whether they would be interviewed again": /\b(again|come back|another (conversation|round))\b/i,
+  "how being interviewed by an AI was": /\b(AI|interviewed by|this format|talking (to|with) (me|an ai))\b/i,
+  "what could be improved": /\b(improv\w*|better|differently)\b/i,
+};
+
 function noteRoundTurnWithoutQuestion(text) {
   if (roomEnded || !grokAgent || !text) return;
   if (!roundActive || !roundAwaitingAnswer || roundLastWordAsked || roundIndex < 0 || holdMode) return;
-  if (text.indexOf("?") >= 0) return;
   const label = ROUND_QUESTIONS[roundIndex][0];
   if (roundSpoken[label]) return;
+  const asked = text.indexOf("?") >= 0;
+  if (asked && ROUND_TOPICS[label] && ROUND_TOPICS[label].test(text)) {
+    roundSpoken[label] = true;           // asked in her own words
+    return;
+  }
+  if (asked && roundRehandedOnce[label]) return;
+  roundRehandedOnce[label] = true;
   delete roundAsked[label];
   roundIndex -= 1;          // their next finished answer hands this one again
   roundRehand = true;
-  trace("round", "her turn asked nothing; " + label + " goes again when they finish");
+  trace("round", (asked ? "her turn asked something else; " : "her turn asked nothing; ") +
+        label + " goes again when they finish");
 }
 
 // The closing round itself, recognised from Mira's own words: the lightning

@@ -299,6 +299,31 @@ if (which === "server_turns_advance_the_round") {
   miraFinishes("Relationship as the product. What's a book you'd recommend, and in a sentence, why?");
   out.state = state();
   out.secondTimeNotes = notes.filter(function (n) { return n.indexOf("a second time") >= 0; }).length;
+} else if (which === "round_turn_asks_a_follow_up") {
+  // Rehearsal 0dd50fbe: handed question 3, her turn asked a follow-up about
+  // the guest's book instead. Then: she rewords question 3 twice in words the
+  // room cannot recognise, and the round must still move on.
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("That small yards beat big ones.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("Small yards. What's a book you'd recommend?");
+  guestSays("An old Texas history book my dad left on his desk.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("Unfinished on his desk. Did you ever ask him why he left it there?");
+  out.afterFollowUp = state();
+  guestSays("No, I never did.", 2000);
+  advance(5000);
+  out.handedAgain = instructions.filter(function (n) { return n.indexOf("[ROUND 3 of 8") >= 0; }).length;
+  roomTurnStarts();
+  miraFinishes("Fair enough. Whose voice would you most like to hear on the show?");
+  guestSays("My uncle, honestly.", 2000);
+  advance(5000);
+  roomTurnStarts();
+  out.state = state();
 } else if (which === "round_reaction_then_silence") {
   // She reacts and asks nothing, and the guest has nothing to add.
   run("closingPermitted = true; startRound('test', -1);");
