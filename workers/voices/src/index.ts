@@ -999,6 +999,24 @@ export function roomCountersOf(payload: any): Record<string, unknown> {
     if (payload?.[k] !== undefined && Number.isFinite(Number(payload[k]))) out[k] = Number(payload[k]);
   }
   if (typeof payload?.closing_round_complete === "boolean") out.closing_round_complete = payload.closing_round_complete;
+  // Oct 23 2026: the guest's presses on the studio page (good question /
+  // move on / ask me about). Bounded and typed; the rest is dropped.
+  if (Array.isArray(payload?.guest_feedback)) {
+    out.guest_feedback = payload.guest_feedback.slice(0, 60)
+      .filter((f: any) => f && ["good", "move_on", "topic"].includes(String(f.kind)))
+      .map((f: any) => ({
+        kind: String(f.kind),
+        by: f.by === "host" ? "host" : "guest",
+        at_min: Number.isFinite(Number(f.at_min)) ? Number(f.at_min) : null,
+        ...(f.question ? { question: String(f.question).slice(0, 300) } : {}),
+        ...(f.text ? { text: String(f.text).slice(0, 240) } : {}),
+        ...(typeof f.applied === "boolean" ? { applied: f.applied } : {}),
+        ...(typeof f.held === "boolean" ? { held: f.held } : {}),
+      }));
+  }
+  if (payload?.guest_steers_applied !== undefined && Number.isFinite(Number(payload.guest_steers_applied))) {
+    out.guest_steers_applied = Number(payload.guest_steers_applied);
+  }
   if (Array.isArray(payload?.closing_questions_asked)) {
     out.closing_questions_asked = payload.closing_questions_asked.slice(0, 20).map((q: unknown) => String(q).slice(0, 200));
   } else if (payload?.closing_questions_asked !== undefined && Number.isFinite(Number(payload.closing_questions_asked))) {
@@ -3572,6 +3590,15 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const waitingForRun = !run && !ended && openNow && !(latest && latest.status === "staged");
   if (waitingForRun) await rescueStudio(env, iv, show, role);
   const hostMode = latest ? latest.host_mode !== false : iv.host_mode !== false;
+  // Oct 23 2026: the points the guest asked the hour to reach, for the
+  // studio's "Ask me about…" chips. Their own words back to them, only while
+  // a room is joinable.
+  let agenda: string[] = [];
+  if (run && iv.application_id) {
+    const apps = await sb(env, "GET",
+      `guest_applications?id=eq.${iv.application_id}&select=guest_agenda`).catch(() => null);
+    agenda = studioAgenda(apps?.[0]?.guest_agenda);
+  }
   return json({
     ready: Boolean(run),
     run_id: run?.id ?? null,
@@ -3593,7 +3620,15 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     opening: waitingForRun,
     // The interview is over (Oct 22 2026); the page says thank you.
     ended,
+    agenda,
   });
+}
+
+/** Oct 23 2026: guest_agenda.points as short chip labels (at most five). */
+export function studioAgenda(agenda: any): string[] {
+  const points = Array.isArray(agenda?.points) ? agenda.points : [];
+  return points.map((p: unknown) => String(p ?? "").replace(/\s+/g, " ").trim().slice(0, 120))
+    .filter(Boolean).slice(0, 5);
 }
 
 // The studio may open from 15 minutes before the start until three hours
