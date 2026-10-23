@@ -242,6 +242,10 @@ class TestTheHoldEndsWithoutWords:
     def test_the_round_moves_on_after_the_return(self):
         out = sim("hold_ends_on_speech")
         rounds = [x["d"] for x in out["trace"] if x["e"] == "round"]
+        # Oct 23 2026: "I'll wait" asked nothing, so the book question is the
+        # one in play when they come back; her asking it then is question 2.
+        assert any(d.startswith("her turn asked nothing; a book") for d in rounds)
+        assert "asked 2/8: a book they would recommend (her own words)" in rounds
         assert "answered 2/8" in rounds and out["afterAnswer"]["roundIndex"] == 2
 
     def test_she_keeps_checking_in_for_as_long_as_they_are_away(self):
