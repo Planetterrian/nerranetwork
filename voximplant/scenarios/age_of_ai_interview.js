@@ -840,6 +840,25 @@ function deadAirCheck() {
   requestTurn(grokAgent);
 }
 
+/**
+ * A fresh session has taken over the mix (a hand-over or a rescue).
+ * Oct 21 2026: no unprompted first turn. She speaks only if the pause was
+ * theirs handing her the turn (handoverTurnOwed); otherwise she waits for
+ * them like any other turn. Oct 23 2026: while she waits, the dead-air clock
+ * runs. A rescue right after her line (the drop may have cut it off before
+ * it was heard) left a rehearsal room where each side waited for the other
+ * for eight minutes: the clock was armed only when one of her lines ended,
+ * and a fresh session that has not spoken never had one.
+ */
+function resumeAfterHandover(agent) {
+  if (handoverTurnOwed) {
+    handoverTurnOwed = false;
+    try { requestTurn(agent); } catch (err) { /* best-effort */ }
+    return;
+  }
+  armDeadAir();
+}
+
 function enterHold(why) {
   if (holdMode || roomEnded || !grokAgent || !openingFired) return;
   holdMode = true;
@@ -1541,14 +1560,7 @@ async function createAgent(note) {
       } else {
         trace("grok", "session " + generation + " bridged — resuming the interview");
         rotating = false;
-        // Oct 21 2026: no unprompted first turn. The hand-over happened at a
-        // pause the guest left; she speaks only if that pause was theirs
-        // handing her the turn (handoverTurnOwed), otherwise she waits for
-        // them like any other turn.
-        if (handoverTurnOwed) {
-          handoverTurnOwed = false;
-          try { requestTurn(agent); } catch (err) { /* best-effort */ }
-        }
+        resumeAfterHandover(agent);
       }
     } catch (err) {
       Logger.write("[aoa " + runId + "] media-bridge failure: " + err.message);
@@ -2941,6 +2953,7 @@ async function recoverAgent(reason) {
   // session is built, since its bridge event reads the flag.
   handoverTurnOwed = guestSpokeSinceMira || hostSpokeSinceMira;
   miraSpeaking = false;
+  miraSilenced();             // her audio stopped with the socket
   const note = handoverNote();
   let next;
   try {
