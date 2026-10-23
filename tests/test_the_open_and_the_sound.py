@@ -475,7 +475,7 @@ class TestTheCraftRules:
         # Sept 27 2026: a fixed round now, not a menu (Patrick, after Roddy
         # de la Garza). Oct 21 2026: the room hands her each question.
         assert "The closing round is the room's to run" in flat
-        assert "the five lightning questions, two about the interview itself, then their last word" in flat
+        assert "five short closing questions, two about the interview itself, then their last word" in flat
         assert flat.index("HOW TO CLOSE") < flat.index("HOW IT ENDS")
 
     def test_the_co_host_is_a_model_to_learn_from(self):

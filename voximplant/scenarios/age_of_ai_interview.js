@@ -2178,7 +2178,7 @@ function openWhenReady(reason) {
             (anyoneHeard ? " and has already spoken: answer what they said first." : ".") +
             (isClosingSession()
               ? " This is the closing session: welcome them back warmly by name and thank them" +
-                " for coming back, then ask how they are and listen. The lightning round comes" +
+                " for coming back, then ask how they are and listen. The closing round comes" +
                 " after that. "
               : "") +
             (isHelloSession()
