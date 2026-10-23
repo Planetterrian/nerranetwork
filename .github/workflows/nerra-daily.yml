@@ -66,6 +66,9 @@ concurrency:
 
 permissions:
   contents: write
+  # Oct 23 2026: the ready gate reads run-show.yml's in-flight runs so a
+  # re-run after the hold is waited for (engine.daily_edition.rerunning_shows).
+  actions: read
 
 jobs:
   build:
@@ -132,6 +135,7 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           EDITION_DATE: ${{ github.event.inputs.date }}
           EDITION_FORCE: ${{ github.event.inputs.force }}
+          GH_TOKEN: ${{ github.token }}
           # Oct 9 2026: the edition posts to X from the network account
           # (engine.x_post). Unset secrets are a logged skip, recorded in
           # the edition metrics as x_post_skipped: no_credentials.

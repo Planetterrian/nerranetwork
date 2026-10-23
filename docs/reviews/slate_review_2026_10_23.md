@@ -130,3 +130,28 @@ today the fix is console.x.ai → Billing.
 - After this merges, the sweep restarts First Principles' video on its own.
 - Producer inbox: the two threads that failed are retried by the next tick
   once credit is back.
+
+## 6. After the re-runs: Nerra Daily Ep064 shipped partial, then rebuilt
+
+The twelve failed shows were re-run at 14:29 UTC after the operator added
+credit. Eleven published on the first run. Prediction Markets made its episode,
+then failed post-run validation on a single 8-second read timeout fetching the
+MP3 it had just uploaded; it published on a second run. Top World ran once the
+desks were settled.
+
+Nerra Daily Ep064 went out at 14:48 UTC with 6 of 15 segments. A landing
+re-run woke the gate, and past the 06:50 ET hold the gate builds from whatever
+has landed. Its queued X post was cancelled before its 15:00 UTC slot. The
+partial edition was withdrawn (PR #1537: the summaries entry, the feed item,
+the post and the metrics) and rebuilt at 15:07 UTC with all 15 segments, at the
+same episode number and R2 key. The feed item has a new GUID, so an app that
+fetched the 14:48 version may list the episode twice.
+
+**Fixed:** past the hold, the gate now waits for a missing roster show whose
+run started after the hold and has not yet woken the gate. Each such run wakes
+the gate when it ends, so the last re-run builds the edition. The 7:00 ET
+release is unchanged for morning stragglers. Guards: `TestReRunsWait`.
+
+**Read, not changed:** post-run validation fails a run on one 8-second timeout
+reading a just-uploaded enclosure. One retry would have saved a $0.33 re-run;
+it stays as is until it recurs.
