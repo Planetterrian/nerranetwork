@@ -2257,6 +2257,12 @@ behaviour driven through the real scenario in a node vm by
   and the record says which (`guest_channel`). The workflow's `remeasure`
   input (`current:<run id>,proposed:<run id>`) measures rooms that already ran
   without running new ones. Read a rehearsal's transcript before its verdict.
+  **Mira is measured from the side the guest HEARD, never her own record**:
+  Voximplant stops writing her record through a long silence (the fifth
+  rehearsal's three-minute hold vanished, 12:00 against a 14:45 room) and a
+  single offset then put every later turn minutes early, read as seven
+  self-answered turns. Post-production is unaffected (`align_to_room` places
+  her record piece by piece).
 - **She never nudges an empty room** (the same rehearsal: two nudges inside
   the rejoin grace after the fixture's leg dropped).
 - **Her line ends when it has been HEARD, not when it was generated.**

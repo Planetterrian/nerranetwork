@@ -408,6 +408,30 @@ class TestTheRehearsalFindsTheGuestChannel:
         assert '"guest": guest_wav' in body
         assert '"guest_channel": guest_side' in body
 
+    def test_mira_is_measured_from_what_the_guest_heard(self):
+        # Her own record drops a long silence (a hold), so turns measured
+        # from it slide minutes early and read as answering herself.
+        src = (PIPELINES / "rehearsal.py").read_text(encoding="utf-8")
+        body = src[src.index("def transcribe_run("):src.index("def measure_room(")]
+        assert 'tracks = {"guest": guest_wav, "mira": heard_wav}' in body
+        assert 'offsets["mira"] = offsets.get("guest", 0.0)' in body
+        assert '"mira": mira_raw}' not in body.split("tracks = ", 1)[1].split("\n", 1)[0]
+
+    def test_a_dropped_silence_would_make_her_answer_herself(self):
+        # The measurement the fix avoids: the same room, with Mira's turns
+        # shifted early by a vanished three-minute hold.
+        from audio_metrics import self_answered
+        guest = [{"start": 10, "end": 20}, {"start": 26, "end": 40},
+                 {"start": 230, "end": 260},
+                 {"start": 270, "end": 300}]
+        mira = [{"start": 0, "end": 9}, {"start": 21, "end": 25},
+                {"start": 225, "end": 229}, {"start": 261, "end": 268},
+                {"start": 301, "end": 305}]
+        assert self_answered(guest, mira) == 0
+        early = [mira[0], mira[1]] + [{"start": m["start"] - 180, "end": m["end"] - 180}
+                                       for m in mira[2:]]
+        assert self_answered(guest, early) > 0
+
 
 class TestRemeasure:
     def test_pairs_parse_and_reject_junk(self, rehearsal):

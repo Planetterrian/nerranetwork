@@ -470,9 +470,17 @@ def transcribe_run(run: Dict[str, Any], workdir: Path) -> Dict[str, Any]:
     raw = fetch_recording(run, workdir)                      # longest guest leg
     left_wav, right_wav = split_channels(raw, workdir / "channels")
     mira_raw = fetch_leg_recording(run.get("recording_mira_url") or "", workdir, "mira")
-    guest_wav, _heard, guest_side = pick_guest_channel(left_wav, right_wav, mira_raw)
-    tracks = {"guest": guest_wav, "mira": mira_raw}
-    offsets = room_offsets(run, _track_durations(tracks))
+    guest_wav, heard_wav, guest_side = pick_guest_channel(left_wav, right_wav, mira_raw)
+    # Mira is measured from what the guest heard, never from her own record.
+    # Voximplant stops writing her record while she makes no sound for a few
+    # minutes: the fifth rehearsal's three-minute hold vanished from it
+    # (12:00 against a 14:45 room), every later turn of hers landed minutes
+    # before the answer it replied to, and the report counted seven
+    # self-answered turns that were not there. The heard side is the guest
+    # leg's own clock, so it shares the guest's offset.
+    tracks = {"guest": guest_wav, "mira": heard_wav}
+    offsets = room_offsets(run, _track_durations({"guest": guest_wav, "mira": mira_raw}))
+    offsets["mira"] = offsets.get("guest", 0.0)
     words_by_role: Dict[str, List[Dict[str, Any]]] = {}
     lines: List[tuple] = []
     for role, label in (("guest", "Guest"), ("mira", "Mira")):
