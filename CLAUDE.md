@@ -2158,13 +2158,23 @@ that bind now:
 - **A guest is never the test.** `docs/age_of_ai_rehearsal.md`: a fixture
   guest (`age_of_ai_fixture_guest.js`, a second voice agent playing a past
   guest from their approved transcript, pausing mid-thought, coughing, asking
-  who someone is) runs a ten-minute room on the proposed and the current
-  configuration through the real scenario; `pipelines/voices/rehearsal.py
-  report` reads PASS only when the proposal wins on overlap, self-answered
-  turns and guest words per answer and does not lose on turn length (a count
-  both arms hold at zero is the floor, not a loss). **A
-  scenario or prompt change ships to a real guest only on a PASS plus one
-  operator listen.**
+  who someone is) runs a room through the real scenario. **Since Oct 23 2026
+  a rehearsal is ONE twelve-minute room of the proposed arm** (the round
+  opens at minute 8), judged on the room's own checks (ran, no self-answered
+  turns, under one overlap per ten minutes, the closing round complete with
+  every question in her words and none a turn behind, no dropped session)
+  and reported with its ROOM LOG (`rehearsal.room_log`: sessions, turn
+  decisions, holds, the round line by line, each question handed vs heard).
+  34 rooms in two days (~870 Voice Agent minutes) found four faults, every
+  one from the log, none from the medians (guest words per answer ran 31-84
+  on one configuration). `arms: both` keeps the two-arm comparison for a
+  prompt or setting change. `rehearsal.py preflight` stops the job before
+  any room when xAI refuses requests (Oct 23: six rooms placed on an account
+  out of credit), and a room xAI refused stops the rest. **A scenario or
+  prompt change ships to a real guest only on a PASS plus one operator
+  listen.** `closing_round_complete` (live rooms too) is false on a "said
+  late" or "asked again" line; it had read complete on a round that lost
+  three questions.
 - **The edit keeps its promises in code.** A guest's "start that again" or
   "take that out" is found in the transcript and exempt from the 25 s drop
   floor; `edit_transcript` (the transcript of the EDIT, re-stamped on its

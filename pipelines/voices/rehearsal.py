@@ -98,6 +98,36 @@ POLL_SECONDS = 20
 REHEARSAL_EMAIL_DOMAIN = "rehearsal.nerranetwork.com"
 LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 
+# Oct 23 2026: lean rehearsals. Thirty-four rooms in two days (about 870
+# Voice Agent minutes) found four real faults, and every one was read from
+# a room's trace and Mira's words, never from the two-arm medians: the same
+# configuration's guest words per answer ran 31 to 84 across rooms, and
+# Mira's median turn sat at 4-5 s in every fixture room whatever changed.
+# So one room of the proposed arm is the default, it is held to the review
+# §7.7 targets the room can be held to, and the report prints the room log.
+SCENARIO_FILE = ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js"
+#: xAI's Voice Agent rate per session minute (an estimate for the report;
+#: override with XAI_VOICE_COST_PER_MIN). A room runs two sessions: Mira and
+#: the fixture guest.
+VOICE_COST_PER_MIN = float(os.environ.get("XAI_VOICE_COST_PER_MIN") or 0.05)
+SESSIONS_PER_ROOM = 2
+#: A room shorter than this share of its planned length did not run.
+ROOM_RAN_SHARE = 0.75
+#: Her words carry a handed question this long after the room handed it, or
+#: after the next one was handed, and the round is running behind.
+ROUND_LAG_SEC = 45.0
+#: §7.7: under one overlap event per ten minutes.
+OVERLAP_PER_10_MIN_MAX = 1.0
+PREFLIGHT_URL = "https://api.x.ai/v1/chat/completions"
+PREFLIGHT_MODEL = os.environ.get("REHEARSAL_PREFLIGHT_MODEL") or "grok-4.3"
+_REFUSED_RE = re.compile(r"xAI refused the session", re.I)
+_CREDIT_RE = re.compile(r"credit|spending limit", re.I)
+
+
+class RoomsRefused(RuntimeError):
+    """xAI refused every session in a room: the rooms after it would be
+    refused too, so none is placed."""
+
 
 # ---------------------------------------------------------------------------
 # Fixtures: a past guest, from their published episode
@@ -524,13 +554,16 @@ def listen_url(run: Dict[str, Any]) -> str:
 
 def result_record(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
                   metrics: Dict[str, Any], transcript: str = "",
-                  guest_channel: str = "") -> Dict[str, Any]:
+                  guest_channel: str = "", refused: bool = False) -> Dict[str, Any]:
     cfg = (run.get("grok_session_log") or {}).get("rehearsal") or {}
     return {
         "arm": arm, "fixture": fixture["id"], "run_id": run.get("id"),
         "measured_at": _iso(_now()), "config": cfg,
+        "planned_minutes": run.get("planned_minutes") or cfg.get("minutes"),
         "listen_url": listen_url(run), "metrics": metrics,
         "guest_channel": guest_channel, "transcript": transcript,
+        "refused": bool(refused),
+        "room_log": room_log(run.get("scenario_trace") or [], transcript),
     }
 
 
@@ -567,8 +600,311 @@ def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
                   scenario=scenario, with_hold=with_hold)
     logger.info("fixture %s is calling into room %s", fixture["id"], run["id"])
     run = wait_for_room(run["id"], minutes)
+    if room_refused(run.get("scenario_trace") or []):
+        # Nothing to transcribe; the record says why, and no further room is
+        # placed (Oct 23 2026: four rooms in a row were refused at start
+        # while the account was out of credit).
+        record = result_record(arm=arm, fixture=fixture, run=run, metrics={},
+                               refused=True)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / f"{arm}_{fixture['id']}_{index}_{str(run['id'])[:8]}.json"
+        path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+        raise RoomsRefused(f"xAI refused every session in room {run['id']}")
     return measure_and_write(arm=arm, fixture=fixture, run=run, out_dir=out_dir,
                              index=index)
+
+
+# ---------------------------------------------------------------------------
+# Before a room, and what a room says about itself
+# ---------------------------------------------------------------------------
+
+def xai_preflight(api_key: Optional[str] = None, *, post: Any = None) -> Dict[str, Any]:
+    """One tiny text request before any room is placed. A 401/403 (or a 429
+    that names credit) means every Voice Agent session would be refused too:
+    on Oct 23 2026 a rehearsal placed four rooms, and a probe two more, on an
+    account that was out of credit. Anything else (a 5xx, a timeout, a 400
+    on the request shape) is reported and the rehearsal goes ahead."""
+    key = api_key if api_key is not None else (
+        os.environ.get("GROK_API_KEY") or os.environ.get("XAI_API_KEY") or "")
+    if not key:
+        return {"ok": True, "checked": False, "why": "no xAI key here; not checked"}
+    if post is None:
+        import requests
+        post = requests.post
+    try:
+        resp = post(PREFLIGHT_URL, timeout=60,
+                    headers={"Authorization": f"Bearer {key}",
+                             "Content-Type": "application/json"},
+                    json={"model": PREFLIGHT_MODEL, "max_tokens": 16,
+                          "messages": [{"role": "user", "content": "Reply with: ok"}]})
+    except Exception as exc:  # noqa: BLE001 - a network fault is not a refusal
+        return {"ok": True, "checked": False, "why": f"xAI not reached ({exc}); going ahead"}
+    status = int(getattr(resp, "status_code", 0) or 0)
+    body = str(getattr(resp, "text", "") or "")[:400]
+    if status in (401, 403) or (status == 429 and _CREDIT_RE.search(body)):
+        why = ("the account is out of credit or at its spending limit"
+               if _CREDIT_RE.search(body) else "the key was refused")
+        return {"ok": False, "checked": True, "status": status, "why": why, "body": body}
+    if status >= 400:
+        return {"ok": True, "checked": True, "status": status,
+                "why": f"xAI answered {status}; not a refusal, going ahead"}
+    return {"ok": True, "checked": True, "status": status, "why": "xAI accepts requests"}
+
+
+def _grok_lines(trace: List[Dict[str, Any]]) -> List[str]:
+    return [str(e.get("d") or "") for e in trace
+            if isinstance(e, dict) and e.get("e") == "grok"]
+
+
+def room_refused(trace: List[Dict[str, Any]]) -> bool:
+    """Every session the room opened was refused and Mira never answered."""
+    lines = _grok_lines(trace)
+    started = sum(1 for d in lines if d.startswith("agent created")
+                  or d.startswith("rescued after"))
+    refused = sum(1 for d in lines if _REFUSED_RE.search(d))
+    answered = any(d == "response done" for d in lines)
+    return refused > 0 and refused >= started and not answered
+
+
+def round_questions(path: Path = SCENARIO_FILE) -> List[tuple]:
+    """The room's ROUND_QUESTIONS, read from the scenario itself so the
+    report and the room can never name different questions. Each pattern is
+    widened with the matching fire_interviews.CLOSING_ROUND pattern (the
+    same questions in the same order, without the show's own): the room's
+    "interviewed again" pattern does not hear "would you do this again",
+    which is how she usually asks it."""
+    src = path.read_text(encoding="utf-8")
+    block = src[src.index("const ROUND_QUESTIONS = ["):]
+    block = block[:block.index("];")]
+    room = []
+    for line in block.splitlines()[1:]:
+        m = re.match(r'^\s*\[\s*"([^"]+)",\s*/(.+)/(\w*)\s*\],?\s*$', line)
+        if m:
+            room.append((m.group(1), m.group(2)))
+    try:
+        from fire_interviews import CLOSING_ROUND
+        wider = [rx.pattern for _, rx in CLOSING_ROUND]
+    except Exception:  # noqa: BLE001 - the room's own patterns still work
+        wider = []
+    out = []
+    for i, (label, pattern) in enumerate(room):
+        extra = wider[i - 1] if 1 <= i <= len(wider) else ""
+        out.append((label, re.compile(f"(?:{pattern})" + (f"|(?:{extra})" if extra else ""), re.I)))
+    return out
+
+
+def _clock(seconds: Optional[float]) -> Optional[str]:
+    if seconds is None:
+        return None
+    seconds = max(0, int(round(seconds)))
+    return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+
+def _transcript_lines(transcript: str) -> List[tuple]:
+    out = []
+    for raw in (transcript or "").splitlines():
+        m = LINE_RE.match(raw.strip())
+        if not m:
+            continue
+        a, b, c = int(m.group(1)), int(m.group(2)), m.group(3)
+        sec = a * 3600 + b * 60 + int(c) if c else a * 60 + b
+        out.append((float(sec), m.group(4).strip(), m.group(5)))
+    return out
+
+
+def room_log(trace: List[Dict[str, Any]], transcript: str = "") -> Dict[str, Any]:
+    """What the room's own trace and Mira's words say happened: the
+    sessions, the closing round line by line, holds, the turn decisions,
+    and, for each closing question, when the room handed it and when her
+    words carried it. This is what found every fault the rehearsals have
+    found; the medians found none."""
+    from audio_metrics import _trace_time, closing_round
+    events = [e for e in (trace or []) if isinstance(e, dict)]
+    times = [_trace_time(e) for e in events]
+    t0 = next((t for t in times if t is not None), None)
+
+    def at(i: int) -> Optional[float]:
+        t = times[i]
+        return None if (t is None or t0 is None) else (t - t0).total_seconds()
+
+    last = max((x for x in (at(i) for i in range(len(events))) if x is not None), default=None)
+    lines = _grok_lines(events)
+    kinds = [(str(e.get("e") or ""), str(e.get("d") or "")) for e in events]
+    log: Dict[str, Any] = {
+        "length_min": None if last is None else round(last / 60.0, 1),
+        "sessions": {
+            "started": sum(1 for d in lines if d.startswith("agent created")
+                           or d.startswith("rescued after")),
+            "refused": sum(1 for d in lines if _REFUSED_RE.search(d)),
+            "rescued": sum(1 for d in lines if d.startswith("rescued after")),
+            "gave_up": any(d.startswith("gave up") for d in lines),
+        },
+        "ending": next((d[len("ending: "):] for k, d in reversed(kinds)
+                        if k == "room" and d.startswith("ending: ")), None),
+        "holds": {"entered": sum(1 for k, d in kinds if k == "hold" and d.startswith("entered")),
+                  "left": sum(1 for k, d in kinds if k == "hold" and d.startswith("left")),
+                  "check_ins": sum(1 for k, d in kinds if k == "hold" and d.startswith("check-in"))},
+        "turns": {
+            "server_turns_rerouted": sum(1 for k, d in kinds if k == "turn"
+                                         and d.startswith("server turn after guest speech")),
+            "unfinished_clause_waits": sum(1 for k, d in kinds if k == "turn"
+                                           and d.startswith("clause reads unfinished")),
+            "dead_air_nudges": sum(1 for k, d in kinds if k == "turn"
+                                   and d.startswith("dead air")),
+            "unrequested_cancelled": sum(1 for k, d in kinds if k == "turn"
+                                         and d.startswith("cancelled a turn nobody")),
+        },
+        "alerts": [d for k, d in kinds if k == "audio_path" and d.startswith("nothing heard")],
+        "round": closing_round(events),
+        "round_lines": [{"at": _clock(at(i)), "line": d}
+                        for i, (k, d) in enumerate(kinds) if k in ("round", "close")],
+        "questions": [],
+    }
+    handed: Dict[str, float] = {}
+    order: List[str] = []
+    begin = None
+    for i, (k, d) in enumerate(kinds):
+        if k != "round":
+            continue
+        if begin is None:
+            begin = at(i)
+        m = re.match(r"^asked \d+/\d+:\s*(.*?)(?:\s*\(her own words\))?$", d)
+        if m and m.group(1) not in handed and at(i) is not None:
+            handed[m.group(1)] = at(i)
+            order.append(m.group(1))
+    if not (transcript and handed):
+        return log
+    # Her words from just before the round, joined into one stream: Whisper
+    # breaks a sentence across segments ("Who should I interview" / "next?").
+    start_from = (begin or 0.0) - 60.0
+    stream, starts = "", []
+    for sec, who, text in _transcript_lines(transcript):
+        if who.lower() == "mira" and sec >= start_from:
+            starts.append((len(stream), sec))
+            stream += text + " "
+
+    def heard_at(rx) -> Optional[float]:
+        m = rx.search(stream)
+        if not m:
+            return None
+        return max((sec for off, sec in starts if off <= m.start()), default=None)
+
+    for label, rx in round_questions():
+        heard = heard_at(rx)
+        hand = handed.get(label)
+        nxt = None
+        if label in order and order.index(label) + 1 < len(order):
+            nxt = handed[order[order.index(label) + 1]]
+        late = bool(heard is not None and hand is not None and (
+            heard - hand > ROUND_LAG_SEC or (nxt is not None and heard > nxt)))
+        log["questions"].append({"question": label, "handed_at": _clock(hand),
+                                 "heard_at": _clock(heard), "late": late,
+                                 "never_heard": heard is None})
+    return log
+
+
+def room_checks(record: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """One room against the §7.7 targets a room can be held to. ``ok`` is
+    None where the room cannot say (no audio, no closing round reached)."""
+    m = record.get("metrics") or {}
+    log = record.get("room_log") or {}
+    planned = record.get("planned_minutes") or (record.get("config") or {}).get("minutes")
+    length = log.get("length_min")
+    checks: List[Dict[str, Any]] = []
+
+    def add(name, ok, detail):
+        checks.append({"check": name, "ok": ok, "detail": detail})
+
+    if record.get("refused"):
+        add("room ran", False, "xAI refused every session; nothing was measured")
+        return checks
+    ran = None if (length is None or not planned) else length >= ROOM_RAN_SHARE * float(planned)
+    add("room ran", ran, f"{length} of {planned} planned minutes")
+    sa = m.get("self_answered_turns")
+    add("no self-answered turns", None if sa is None else sa == 0, f"{sa}")
+    ov = m.get("overlap_events")
+    rate = None if (ov is None or not length) else ov / (float(length) / 10.0)
+    add("talking over under 1 per 10 min", None if rate is None else rate < OVERLAP_PER_10_MIN_MAX,
+        f"{ov} events" + ("" if rate is None else f" ({rate:.1f} per 10 min)"))
+    rnd = log.get("round") or {}
+    qs = log.get("questions") or []
+    if not rnd.get("round_asked"):
+        add("closing round", None, "the round did not begin")
+    else:
+        lost = [q["question"] for q in qs if q.get("never_heard")]
+        late = [q["question"] for q in qs if q.get("late")]
+        ok = (bool(m.get("closing_round_complete", rnd.get("closing_round_complete")))
+              and not lost and not late)
+        add("closing round", ok,
+            f"{rnd.get('round_answered')}/{rnd.get('round_asked')} answered, "
+            f"{rnd.get('round_late', 0)} said late, {rnd.get('round_repeats', 0)} repeated"
+            + (f"; never in her words: {', '.join(lost)}" if lost else "")
+            + (f"; a turn behind: {', '.join(late)}" if late else ""))
+    sess = log.get("sessions") or {}
+    add("no dropped session", None if not sess else (sess.get("rescued", 0) == 0
+                                                     and not sess.get("gave_up")),
+        f"{sess.get('rescued', 0)} rescue(s)" + (", gave up" if sess.get("gave_up") else ""))
+    return checks
+
+
+def single_arm_verdict(records: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """PASS when every room ran and no room fails a check it can answer.
+    A room that could not answer a check (the round never began) is
+    INCONCLUSIVE on it, never a pass on it."""
+    if not records:
+        return {"result": "INCONCLUSIVE", "why": "no room was measured", "rooms": []}
+    rooms = [{"run_id": r.get("run_id"), "arm": r.get("arm"), "checks": room_checks(r)}
+             for r in records]
+    oks = [c["ok"] for room in rooms for c in room["checks"]]
+    if any(o is False for o in oks):
+        return {"result": "FAIL", "why": "a room failed a check (see the room log)", "rooms": rooms}
+    if any(o is None for o in oks):
+        return {"result": "INCONCLUSIVE", "why": "a room could not answer every check",
+                "rooms": rooms}
+    return {"result": "PASS", "why": "every room ran clean on the room's checks", "rooms": rooms}
+
+
+def voice_minutes(records: List[Dict[str, Any]]) -> float:
+    return sum(float((r.get("room_log") or {}).get("length_min") or 0.0)
+               for r in records) * SESSIONS_PER_ROOM
+
+
+def room_markdown(record: Dict[str, Any]) -> str:
+    """One room's log for the step summary."""
+    log = record.get("room_log") or {}
+    sess = log.get("sessions") or {}
+    turns = log.get("turns") or {}
+    holds = log.get("holds") or {}
+    out = [f"### {record.get('arm')} · {record.get('fixture')} · {str(record.get('run_id'))[:8]}", ""]
+    if record.get("listen_url"):
+        out.append(f"Listen: {record['listen_url']}")
+        out.append("")
+    out.append(f"- length {log.get('length_min')} min of {record.get('planned_minutes')}; "
+               f"ending {log.get('ending')}; sessions {sess.get('started', 0)} started, "
+               f"{sess.get('refused', 0)} refused, {sess.get('rescued', 0)} rescued")
+    out.append(f"- turns: {turns.get('server_turns_rerouted', 0)} server turns rerouted, "
+               f"{turns.get('unfinished_clause_waits', 0)} unfinished-clause waits, "
+               f"{turns.get('dead_air_nudges', 0)} dead-air nudges; holds "
+               f"{holds.get('entered', 0)} in / {holds.get('left', 0)} out")
+    for c in room_checks(record):
+        mark = "—" if c["ok"] is None else ("yes" if c["ok"] else "**no**")
+        out.append(f"- {c['check']}: {mark} ({c['detail']})")
+    qs = log.get("questions") or []
+    if qs:
+        out += ["", "Each closing question: when the room handed it, and the Whisper segment "
+                "where her words first carried it (the room's own patterns; a reworded "
+                "question reads as never, so listen before calling it lost).", "",
+                "| question | handed | in her words |", "|---|---|---|"]
+        for q in qs:
+            heard = q.get("heard_at") or "**never**"
+            if q.get("late"):
+                heard += " (**late**)"
+            out.append(f"| {q['question']} | {q.get('handed_at') or '—'} | {heard} |")
+    if log.get("round_lines"):
+        out += ["", "<details><summary>closing round, as the room traced it</summary>", ""]
+        out += [f"    {x['at']}  {x['line']}" for x in log["round_lines"]]
+        out += ["", "</details>"]
+    return "\n".join(out)
 
 
 # ---------------------------------------------------------------------------
@@ -667,24 +1003,35 @@ def load_records(path: Path) -> List[Dict[str, Any]]:
     return records
 
 
-def report_markdown(summary: Dict[str, Dict[str, Any]], result: Dict[str, Any]) -> str:
+def report_markdown(summary: Dict[str, Dict[str, Any]], result: Dict[str, Any],
+                    records: Optional[List[Dict[str, Any]]] = None) -> str:
     lines = [f"## Rehearsal: **{result['result']}**", "", result.get("why", ""), ""]
-    lines.append("| metric | proposed | current | rule | ok |")
-    lines.append("|---|---|---|---|---|")
     def fmt(v):
         return "—" if v is None else (f"{v:.1f}" if isinstance(v, float) else str(v))
 
-    for ch in result.get("checks", []):
-        ok = "—" if ch.get("ok") is None else ("yes" if ch["ok"] else "no")
-        lines.append(f"| {ch['metric']} | {fmt(ch.get('proposed'))} | {fmt(ch.get('current'))} "
-                     f"| {ch.get('rule', '')} | {ok} |")
-    lines.append("")
+    if result.get("checks"):
+        lines.append("| metric | proposed | current | rule | ok |")
+        lines.append("|---|---|---|---|---|")
+        for ch in result.get("checks", []):
+            ok = "—" if ch.get("ok") is None else ("yes" if ch["ok"] else "no")
+            lines.append(f"| {ch['metric']} | {fmt(ch.get('proposed'))} | {fmt(ch.get('current'))} "
+                         f"| {ch.get('rule', '')} | {ok} |")
+        lines.append("")
     for arm, s in summary.items():
         lines.append(f"- **{arm}**: {s['rooms']} room(s), fixtures {', '.join(s['fixtures'])}"
                      + (f", listen: {s['listen_url']}" if s.get("listen_url") else ""))
+    if records:
+        minutes = voice_minutes(records)
+        lines.append(f"- about {minutes:.0f} Voice Agent minutes "
+                     f"(~${minutes * VOICE_COST_PER_MIN:.2f} at ${VOICE_COST_PER_MIN:.2f}/min, "
+                     "Mira and the fixture each count)")
+        lines.append("")
+        for r in records:
+            lines.append(room_markdown(r))
+            lines.append("")
     lines.append("")
-    lines.append("A PASS ships to a real guest only after the operator has listened to one "
-                 "run of each arm (see the rehearsal doc under docs/).")
+    lines.append("A PASS ships to a real guest only after the operator has listened to the "
+                 "room (see the rehearsal doc under docs/).")
     return "\n".join(lines)
 
 
@@ -708,11 +1055,25 @@ def _cmd_run(args: argparse.Namespace) -> int:
     tools: Optional[list] = [] if args.tools == "none" else None
     out_dir = Path(args.out_dir) if args.out_dir else DEFAULT_OUT_DIR / _now().strftime("%Y%m%d")
     for i in range(1, args.repeat + 1):
-        run_one(arm=args.arm, fixture=fixture, minutes=args.minutes, prompt=prompt,
-                turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
-                tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
-                scenario=args.scenario, with_hold=args.with_hold)
+        try:
+            run_one(arm=args.arm, fixture=fixture, minutes=args.minutes, prompt=prompt,
+                    turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
+                    tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
+                    scenario=args.scenario, with_hold=args.with_hold)
+        except RoomsRefused as exc:
+            print(f"::error::{exc}; no further room was placed")
+            return 3
     print(f"{args.repeat} {args.arm} room(s) measured into {out_dir}")
+    return 0
+
+
+def _cmd_preflight(args: argparse.Namespace) -> int:
+    result = xai_preflight()
+    if not result["ok"]:
+        print(f"::error::xAI refuses requests ({result.get('status')}): {result['why']}. "
+              "No room was placed.")
+        return 3
+    print(f"xAI preflight: {result['why']}")
     return 0
 
 
@@ -753,8 +1114,11 @@ def _cmd_remeasure(args: argparse.Namespace) -> int:
 def _cmd_report(args: argparse.Namespace) -> int:
     records = load_records(Path(args.path))
     summary = summarise(records)
-    result = verdict(summary)
-    md = report_markdown(summary, result)
+    # Both arms: the §7.5 comparison. One arm (the default since Oct 23
+    # 2026): every room against the room's own checks.
+    result = (verdict(summary) if {"proposed", "current"} <= set(summary)
+              else single_arm_verdict(records))
+    md = report_markdown(summary, result, records)
     print(md)
     # A run that died before any room (an apt stall installing ffmpeg) has
     # no output directory; the report still writes its INCONCLUSIVE line.
@@ -776,8 +1140,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     r = sub.add_parser("run", help="rehearse one arm on one fixture")
     r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--fixture", required=True)
-    r.add_argument("--minutes", type=int, default=10)
-    r.add_argument("--repeat", type=int, default=3)
+    r.add_argument("--minutes", type=int, default=12)
+    r.add_argument("--repeat", type=int, default=1)
     r.add_argument("--turn-silence-ms", type=int, default=None,
                    help="override the end-of-turn silence for this arm")
     r.add_argument("--reasoning-effort", default="",
@@ -792,6 +1156,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     r.add_argument("--with-hold", action="store_true",
                    help="the fixture steps away to take a call at minute four")
     r.set_defaults(func=_cmd_run)
+    f = sub.add_parser("preflight", help="stop before any room if xAI refuses requests")
+    f.set_defaults(func=_cmd_preflight)
     m = sub.add_parser("remeasure", help="measure rooms that already ran")
     m.add_argument("--runs", required=True, help="current:<run id>,proposed:<run id>")
     m.add_argument("--fixture", required=True)

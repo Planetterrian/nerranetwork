@@ -223,6 +223,17 @@ def guest_words_per_answer(guest_turns: Sequence[dict]) -> Tuple[Optional[float]
 
 _ROUND_ASKED = re.compile(r"^asked(?:\s+(\d+)/(\d+))?:?\s*(.*)$", re.I)
 _ROUND_ANSWERED = re.compile(r"^answered(?:\s+(\d+)/(\d+))?", re.I)
+# Oct 23 2026: the room's other round lines. "asked again" is a repeat (and,
+# before the Oct 23 fix, her words carrying a handed question a turn late);
+# "said late" is her words carrying a question after the room had handed her
+# the next one; "her turn asked nothing" means the question just handed was
+# not asked and goes again. Counted as asks they made a lagging round read
+# 14 asks and a round that lost three questions read complete.
+_ROUND_REPEAT = re.compile(r"^asked again\b", re.I)
+_ROUND_OWN = re.compile(r"^asked on her own:\s*(.*)$", re.I)
+_ROUND_LATE = re.compile(r"^said late\b", re.I)
+_ROUND_REHAND = re.compile(r"^her turn asked nothing", re.I)
+_ROUND_OWN_WORDS = re.compile(r"\s*\(her own words\)\s*$", re.I)
 _SEAM_RE = re.compile(r"(handing over to a fresh session|connection dropped|"
                       r"rescued after a dropped connection|session \d+ bridged)", re.I)
 
@@ -239,16 +250,26 @@ def _trace_time(event: dict) -> Optional[dt.datetime]:
 
 def closing_round(trace: Optional[Sequence[dict]],
                   expected: int = ROUND_QUESTIONS_DEFAULT) -> Dict[str, Any]:
-    """Was every round question asked, one per turn, and answered?
+    """Was every round question asked, once, one per turn, and answered?
 
     Reads the room's ``round`` trace lines. With the Oct 21 scenario each
     ask is followed by ``answered n/8`` when the guest spoke; the Oct 19
     shape only has the asks, and there two asks with nothing between them
     are the one-per-turn relapse the lightning round kept producing.
+
+    Oct 23 2026: a question is counted once however often it is handed
+    (a turn that asked nothing hands it again), a question she asked of her
+    own accord counts as asked, and the round is complete only with no
+    repeat and nothing said late. Rehearsal 0ac88c67 read complete at 8/8
+    while her words ran a question behind and three were never put to the
+    guest; its only trace of that was three "said late" lines.
     """
     asked: List[str] = []
     answered: List[str] = []
     stacked = 0
+    late = 0
+    repeats = 0
+    rehanded = 0
     saw_answered_lines = False
     awaiting_answer = False     # an ask with no "answered" line yet
     previous_was_ask = False    # the trace line just before this one
@@ -260,22 +281,47 @@ def closing_round(trace: Optional[Sequence[dict]],
         if kind != "round":
             previous_was_ask = False
             continue
+        if _ROUND_REPEAT.match(detail):
+            repeats += 1
+            previous_was_ask = False
+            continue
+        if _ROUND_LATE.match(detail):
+            late += 1
+            previous_was_ask = False
+            continue
+        if _ROUND_REHAND.match(detail):
+            # The question just handed was not asked: it is handed again
+            # when they finish, and that is not a second question stacked
+            # on the first.
+            rehanded += 1
+            awaiting_answer = False
+            previous_was_ask = False
+            continue
+        own = _ROUND_OWN.match(detail)
+        if own:
+            label = own.group(1).strip()
+            if label and label not in asked:
+                asked.append(label)
+                answered.append(label)   # asked in conversation; the room skips it
+            previous_was_ask = False
+            continue
         m = _ROUND_ASKED.match(detail)
         if m:
-            label = (m.group(3) or "").strip() or f"q{len(asked) + 1}"
+            label = _ROUND_OWN_WORDS.sub("", (m.group(3) or "").strip()) or f"q{len(asked) + 1}"
             # Two asks with nothing between them, or an ask while the last
             # is still unanswered on a trace that does record answers: the
             # one-per-turn rule was broken.
             if previous_was_ask or (saw_answered_lines and awaiting_answer):
                 stacked += 1
-            asked.append(label)
+            if label not in asked:
+                asked.append(label)
             awaiting_answer = True
             previous_was_ask = True
             continue
         previous_was_ask = False
         if _ROUND_ANSWERED.match(detail):
             saw_answered_lines = True
-            if asked and awaiting_answer:
+            if asked and awaiting_answer and asked[-1] not in answered:
                 answered.append(asked[-1])
             awaiting_answer = False
     if not saw_answered_lines:
@@ -283,11 +329,12 @@ def closing_round(trace: Optional[Sequence[dict]],
         # only six times. Each ask that was not immediately followed by
         # another ask is taken as answered; the stacked ones were not.
         answered = asked[: max(0, len(asked) - stacked)]
-    complete = (len(asked) >= expected and stacked == 0
-                and len(answered) >= len(asked))
+    complete = (len(asked) >= expected and stacked == 0 and late == 0
+                and repeats == 0 and len(answered) >= len(asked))
     return {"closing_round_complete": bool(asked) and complete,
             "round_asked": len(asked), "round_stacked": stacked,
-            "round_answered": len(answered)}
+            "round_answered": len(answered), "round_late": late,
+            "round_repeats": repeats, "round_rehanded": rehanded}
 
 
 def seams(trace: Optional[Sequence[dict]], guest_turns: Sequence[dict],
