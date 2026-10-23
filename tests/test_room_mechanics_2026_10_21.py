@@ -160,7 +160,11 @@ class TestTheSignOffIsCaughtBeforeItIsSaid:
     def test_the_deltas_are_read(self):
         assert 'raw.indexOf("audio_transcript.delta") >= 0' in SCENARIO
         assert "ResponseOutputAudioTranscriptDelta" in SCENARIO
-        assert SCENARIO.count("catchEarlyCloseOnDelta(currentResponseText)") == 2
+        # Oct 23 2026: both delta paths go through one helper, which reads
+        # payload.delta as the string Grok sends.
+        assert SCENARIO.count("noteMiraDelta(ev)") == 2
+        assert SCENARIO.count("catchEarlyCloseOnDelta(currentResponseText)") == 1
+        assert 'typeof p.delta === "string"' in SCENARIO
 
     def test_a_close_before_the_window_is_cancelled_mid_sentence(self):
         body = _fn("function catchEarlyCloseOnDelta(textSoFar)")
@@ -180,7 +184,8 @@ class TestTheClosingRoundIsAStateMachine:
         assert "roundAsked[ROUND_QUESTIONS[next][0]] !== undefined" in ask, "a question she asked herself is skipped"
         assert "roundAwaitingAnswer = true;" in ask
         assert 'trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);' in ask
-        assert "then ask ONLY this, in your own" in ask
+        assert "ask this question, in" in ask and "these words" in ask
+        assert "Your turn ends on that question." in ask
         # Oct 23 2026: as that response's instructions, never a conversation note.
         assert "roundTurn(" in ask
 

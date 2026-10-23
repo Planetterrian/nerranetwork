@@ -508,6 +508,65 @@ if (which === "server_turns_advance_the_round") {
   out.acks = acks;
   out.steer = run("guestSteer");
   out.state = state();
+} else if (which === "delta_cut_rehands_the_question") {
+  // Rehearsal 39982637152: handed the advice question, she signed off. The
+  // deltas arrive as the session log shows them (payload.delta, a string).
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("That the people side gets more valuable.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("What's a book you would recommend, and in a sentence, why?");
+  guestSays("There isn't one, I learned from my dad.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("Who's one person you think I should interview next?");
+  guestSays("My uncle, honestly.", 2000);
+  advance(5000);
+  roomTurnStarts();                               // the room's turn for question 4
+  events.length = 0;
+  const before = instructions.length;
+  const notesBefore = notes.length;
+  ["That's the whole hour in one sentence,", " Roddy. Thank you for the window.",
+   " Anyone can apply to be a guest there. That's the end of the recording. You can"].forEach(function (d) {
+    ctx.__ev = { data: { customEvent: "ResponseOutputAudioTranscriptDelta",
+                         payload: { delta: d, type: "response.output_audio_transcript.delta" } } };
+    run("noteMiraDelta(__ev);");
+  });
+  out.events = events.slice();
+  out.handed = instructions.slice(before);
+  out.notesAdded = notes.length - notesBefore;
+  // The cut line's transcript arrives after the re-hand; it moves nothing.
+  roomTurnStarts();
+  miraFinishes("That's the whole hour in one sentence, Roddy. Thank you for the window. Anyone can apply to be a guest there. That's the end of the recording. You can");
+  out.afterCutLine = state();
+  roomTurnStarts();
+  miraFinishes("What's the best piece of advice you were ever given?");
+  guestSays("Say yes to things that scare you a little.", 3000);
+  advance(5000);
+  out.final = state();
+} else if (which === "sign_off_after_the_fact_rehands") {
+  // No deltas: the whole sign-off arrives as one line in place of question 2.
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("That small yards beat big ones.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  const before = instructions.length;
+  const notesBefore = notes.length;
+  miraFinishes("Thank you for the yards. That's the end of the recording. You can hang up now.");
+  out.handed = instructions.slice(before);
+  out.notesAdded = notes.length - notesBefore;
+  out.state = state();
+} else if (which === "delta_shapes") {
+  out.pieces = run(`[
+    deltaOf({ data: { payload: { delta: " the end of the recording." } } }),
+    deltaOf({ payload: { delta: "That's" } }),
+    deltaOf({ payload: { delta: { transcript: "older shape" } } }),
+    deltaOf({ payload: {} })
+  ]`);
 } else if (which === "phrases") {
   // Which of the room's phrase rules each line trips (JSON list on stdin-free env).
   const lines = JSON.parse(process.env.ROOM_SIM_PHRASES || "[]");

@@ -28,7 +28,7 @@ def _questions() -> list:
     i = SCENARIO.index("const ROUND_QUESTIONS = [")
     block = SCENARIO[i:SCENARIO.index("];", i)]
     out = []
-    for label, pattern, flags in re.findall(r'\["([^"]+)", /(.+?)/(i?)\]', block):
+    for label, pattern, flags in re.findall(r'\["([^"]+)", /(.+?)/(i?)(?:, "[^"]*")?\]', block):
         out.append((label, re.compile(pattern, re.I if flags else 0)))
     return out
 

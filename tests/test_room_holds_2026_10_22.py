@@ -353,7 +353,9 @@ class TestTheFixtureSurvivesADroppedSocket:
 class TestNeverCloseBeforeTheRound:
     def test_a_sign_off_is_cut_while_the_round_is_open(self):
         out = sim("sign_off_waits_for_the_round")
-        assert out["inRound"]["events"] == ["cancel", "clear"]
+        # Oct 23 2026: the question in play is handed again in the same breath
+        # (rehandAfterSignOff), so the cancel is followed by her next turn.
+        assert out["inRound"]["events"] == ["cancel", "clear", "create"]
         assert "close: cancelled mid-sentence: a sign-off with the closing round at 1/8" in lines(out)
 
     def test_unless_the_guest_asked_to_stop_or_the_round_closed(self):

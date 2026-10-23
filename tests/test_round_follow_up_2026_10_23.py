@@ -84,3 +84,29 @@ class TestAQuestionOnTheSubjectIsNeverHandedBack:
         topics = SCENARIO[i:SCENARIO.index("};", i)]
         for label in labels[:8]:
             assert f'"{label}"' in topics, label
+
+
+class TestSheIsGivenTheWords:
+    """Rehearsal 39982637152: handed a description ("whether they would be
+    interviewed again"), she asked questions of her own ("What did you expect
+    this to be like?") on five of seven turns. Each fixed question now carries
+    the line she says, and the room's own pattern must hear that line."""
+
+    def _entries(self):
+        i = SCENARIO.index("const ROUND_QUESTIONS = [")
+        block = SCENARIO[i:SCENARIO.index("];", i)]
+        return re.findall(r'\["([^"]+)", /(.+?)/i(?:, "([^"]*)")?\]', block)
+
+    def test_every_fixed_question_has_its_line_and_the_room_hears_it(self):
+        entries = self._entries()
+        assert len(entries) == 8
+        for label, pattern, line in entries:
+            if label == "the show's own question":
+                continue    # the show supplies its own wording
+            assert line.endswith("?"), label
+            assert re.search(pattern, line, re.I), label
+
+    def test_the_instruction_carries_the_line_not_the_label(self):
+        i = SCENARIO.index("function roundQuestionText")
+        body = SCENARIO[i:SCENARIO.index("\n}\n", i)]
+        assert "return entry[2] || label;" in body
