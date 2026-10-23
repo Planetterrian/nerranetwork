@@ -2201,8 +2201,11 @@ behaviour driven through the real scenario in a node vm by
   another call (`HOLD_ENTER_RE`; "let me think" is not one), or Mira says she
   will wait (`MIRA_HOLD_RE`), the room gives her no turns, holds TIME CHECK
   and round prompts, and counts no speech as an answer, until they address
-  her again (`HOLD_EXIT_RE`: her name, "sorry about that", "I'm back",
-  "where were we") or three minutes pass (`HOLD_CHECK_IN_MS`), when she says
+  her again (`turnsBack`: her name, "sorry about that", "I'm back",
+  "where were we", "you were asking", or "Back." as its own sentence —
+  the fourth rehearsal's guest came back on "Back. … Anyway, you were
+  asking …" and was held silent for two and a half minutes) or three
+  minutes pass (`HOLD_CHECK_IN_MS`), when she says
   one short line that she is still there, for as long as they are away. Speech
   is the backstop exit: the guest talking ≥ `HOLD_REPLY_MIN_SPEECH_MS` within
   `HOLD_REPLY_WINDOW_MS` of the end of a check-in (`noteHoldSpeech`, fed by
@@ -2254,6 +2257,12 @@ behaviour driven through the real scenario in a node vm by
   and the record says which (`guest_channel`). The workflow's `remeasure`
   input (`current:<run id>,proposed:<run id>`) measures rooms that already ran
   without running new ones. Read a rehearsal's transcript before its verdict.
+  **Mira is measured from the side the guest HEARD, never her own record**:
+  Voximplant stops writing her record through a long silence (the fifth
+  rehearsal's three-minute hold vanished, 12:00 against a 14:45 room) and a
+  single offset then put every later turn minutes early, read as seven
+  self-answered turns. Post-production is unaffected (`align_to_room` places
+  her record piece by piece).
 - **She never nudges an empty room** (the same rehearsal: two nudges inside
   the rejoin grace after the fixture's leg dropped).
 - **Her line ends when it has been HEARD, not when it was generated.**

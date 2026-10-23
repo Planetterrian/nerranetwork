@@ -358,7 +358,7 @@ if (which === "server_turns_advance_the_round") {
   ctx.__lines = lines;
   out.phrases = run(`__lines.map(function (t) { return {
     text: t, enter: HOLD_ENTER_RE.test(t), mira_wait: MIRA_HOLD_RE.test(t),
-    exit: HOLD_EXIT_RE.test(t), stop: GUEST_STOP_RE.test(t), sign_off: SIGN_OFF_RE.test(t) }; })`);
+    exit: turnsBack(t), stop: GUEST_STOP_RE.test(t), sign_off: SIGN_OFF_RE.test(t) }; })`);
 } else {
   throw new Error("unknown scenario " + which);
 }
