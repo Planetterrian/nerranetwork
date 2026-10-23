@@ -101,6 +101,24 @@ class TestABareNameIsNotResearched:
         assert gb.identity_anchors({**self.BARE, "links": {"linkedin": "x"}}) == ["links"]
         assert gb.identity_anchors({**self.BARE, "topics": ["", " "]}) == []
 
+    def test_the_same_name_under_another_address_lends_what_it_told_us(self, monkeypatch):
+        # Oct 23 2026: Stan had pitched from his company address and booked
+        # from Gmail; the pitch, topics and links were on the other row.
+        other = {"id": "a0", "email": "slewis@nwardjourney.com", "topics": ["Team execution"],
+                 "links": {"urls": ["https://go.nwardjourney.com/x"]},
+                 "pitch_summary": "Leadership expert on team execution."}
+        asked = []
+        monkeypatch.setattr(gb, "sb_select", lambda t, q="": asked.append(q) or [other])
+        app = {**self.BARE, "id": "a1"}
+        merged = gb.borrow_identity(app)
+        assert "name=ilike.Sam%20Rowe" in asked[0] and "id=neq.a1" in asked[0]
+        assert merged["pitch_summary"] == other["pitch_summary"]
+        assert merged["topics"] == other["topics"] and merged["email"] == self.BARE["email"]
+        assert gb.identity_anchors(merged)
+        # Two other rows with the same name: nobody is guessed at.
+        monkeypatch.setattr(gb, "sb_select", lambda t, q="": [other, {**other, "id": "a2"}])
+        assert gb.borrow_identity(app) is app
+
     def test_research_that_never_names_them_is_someone_else(self):
         assert not gb.research_names_guest("Stanislas Polu co-founded Dust after OpenAI.", "Stan Lewis")
         assert gb.research_names_guest("Stan Lewis mediates for executives in Texas.", "Stan Lewis")
@@ -113,6 +131,7 @@ class TestABareNameIsNotResearched:
         monkeypatch.setattr(gb, "show_for", lambda i, a: type("S", (), {"short_label": "Age of AI"})())
         monkeypatch.setattr(gb, "send_email", lambda *a, **k: made.append(a[1]))
         monkeypatch.setattr(gb, "sb_insert", lambda t, row: {"id": "b1", **row})
+        monkeypatch.setattr(gb, "sb_select", lambda t, q="": [])
         brief = gb.generate_brief({"id": "i1", "scheduled_at": ""}, self.BARE)
         assert calls == []                                                  # never researched
         assert brief["bio_research"].startswith("IDENTITY NOT CONFIRMED")

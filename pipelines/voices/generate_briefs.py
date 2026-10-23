@@ -146,6 +146,45 @@ def research_names_guest(research: str, name: str) -> bool:
     return last in str(research or "").lower()
 
 
+# Oct 23 2026. Stan Lewis had in fact told us who he was: he pitched by
+# email on Sept 21 from slewis@nwardjourney.com (a pitch, three topics, his
+# landing page and a talk on YouTube), and booked on Sept 29 from
+# nwardjourney@gmail.com, which matched nothing, so the booking made a bare
+# application and the research ran on that. Before calling a guest unknown,
+# look for the same name elsewhere in the applications: one other row with
+# something to go on lends it to this one.
+_IDENTITY_FIELDS = ("organization", "title", "bio", "topics", "links", "pitch_summary")
+
+
+def borrow_identity(app: dict) -> dict:
+    """``app`` with the identity fields of the one other application under
+    the same name that has them, or ``app`` unchanged."""
+    name = " ".join(str(app.get("name") or "").split())
+    if len(name.split()) < 2:
+        return app
+    from urllib.parse import quote
+    try:
+        rows = sb_select("guest_applications",
+                         f"name=ilike.{quote(name)}&id=neq.{app.get('id')}"
+                         "&select=id,email,organization,title,bio,topics,links,pitch_summary")
+    except Exception:  # noqa: BLE001 — the guard below still asks the guest
+        logger.exception("could not look for %s under another address", name)
+        return app
+    useful = [r for r in rows or [] if identity_anchors(r)]
+    if len(useful) != 1:
+        return app
+    other = useful[0]
+    merged = dict(app)
+    for key in _IDENTITY_FIELDS:
+        if not _filled(merged.get(key)) and _filled(other.get(key)):
+            merged[key] = other[key]
+    if not own_domain(merged) and own_domain(other):
+        merged["organization"] = merged.get("organization") or f"(their email domain is {own_domain(other)})"
+    logger.info("brief for %s: using what application %s told us (%s)",
+                name, other["id"], ", ".join(identity_anchors(other)))
+    return merged
+
+
 def _identity_unknown_brief(interview: dict, app: dict, why: str) -> dict:
     name = str(app.get("name") or "the guest").strip()
     logger.warning("brief for %s: identity not confirmed (%s); not researched", name, why)
@@ -182,6 +221,10 @@ def generate_brief(interview: dict, app: dict) -> dict:
     links = json.dumps(app.get("links") or {})
     topics = ", ".join(app.get("topics") or [])
 
+    if not identity_anchors(app):
+        app = borrow_identity(app)
+        links = json.dumps(app.get("links") or {})
+        topics = ", ".join(app.get("topics") or [])
     if not identity_anchors(app):
         return _identity_unknown_brief(
             interview, app, "the application has only a name and a personal email "
