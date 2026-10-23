@@ -105,7 +105,6 @@ LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 # Mira's median turn sat at 4-5 s in every fixture room whatever changed.
 # So one room of the proposed arm is the default, it is held to the review
 # §7.7 targets the room can be held to, and the report prints the room log.
-SCENARIO_FILE = ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js"
 #: xAI's Voice Agent rate per session minute (an estimate for the report;
 #: override with XAI_VOICE_COST_PER_MIN). A room runs two sessions: Mira and
 #: the fixture guest.
@@ -666,14 +665,17 @@ def room_refused(trace: List[Dict[str, Any]]) -> bool:
     return refused > 0 and refused >= started and not answered
 
 
-def round_questions(path: Path = SCENARIO_FILE) -> List[tuple]:
+def round_questions(path: Optional[Path] = None) -> List[tuple]:
     """The room's ROUND_QUESTIONS, read from the scenario itself so the
     report and the room can never name different questions. Each pattern is
     widened with the matching fire_interviews.CLOSING_ROUND pattern (the
     same questions in the same order, without the show's own): the room's
     "interviewed again" pattern does not hear "would you do this again",
     which is how she usually asks it."""
-    src = path.read_text(encoding="utf-8")
+    if path is None:
+        from voximplant.api_clients.voximplant_client import _SCENARIO_PATH
+        path = _SCENARIO_PATH
+    src = Path(path).read_text(encoding="utf-8")
     block = src[src.index("const ROUND_QUESTIONS = ["):]
     block = block[:block.index("];")]
     room = []
