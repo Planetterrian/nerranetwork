@@ -51,19 +51,36 @@ person.
 
 ## Running it
 
-Actions → **Nerra Voices — rehearsal** → fixture, minutes (10), rooms per
-arm (3), arms (both), and for the proposed arm an optional end-of-turn
-silence, reasoning effort and tools setting. The run attaches every room's
-JSON (metrics, config, listen link, transcript) as an artifact and prints
-the verdict table in the step summary. Nightly runs happen only while the
-repo variable `VOICES_REHEARSAL_NIGHTLY` is `true`.
+Actions → **Nerra Voices — rehearsal**. The defaults are one room of the
+proposed arm, fifteen minutes long, on `roddy` (Oct 23 2026). Fifteen is
+the shortest room that reaches the closing round: the room reads a planned
+length under 15 minutes as its 45-minute default, so the first twelve-minute
+test room never opened the round. At fifteen the round is required at minute
+ten and takes about three, so one room exercises the opening, the turn
+decisions, the scheduled behaviours and the whole round.
+Tick `candidate_scenario` to rehearse this branch's room code beside the
+live one; `with_hold` adds the phone call at minute four. Choose `both` and
+more rooms only for a prompt or setting change, where the two-arm
+comparison below is the question.
+
+Before any room is placed the job sends xAI one tiny text request
+(`rehearsal.py preflight`): a 401/403, or a 429 that names credit, stops the
+run with an error and no room is placed. During the run, a room in which xAI
+refused every session (and Mira never answered) is recorded as refused, is
+not transcribed, and no further room is placed.
+
+The run attaches every room's JSON (metrics, room log, config, listen link,
+transcript) as an artifact and prints the report in the step summary.
+Nightly runs happen only while the repo variable `VOICES_REHEARSAL_NIGHTLY`
+is `true`; with the defaults that is one room of the live configuration a
+night.
 
 Locally:
 
 ```
-python pipelines/voices/rehearsal.py run --arm current  --fixture roddy --minutes 10 --repeat 3
-python pipelines/voices/rehearsal.py run --arm proposed --fixture roddy --minutes 10 --repeat 3 \
-    --turn-silence-ms 1300 --reasoning-effort low
+python pipelines/voices/rehearsal.py preflight
+python pipelines/voices/rehearsal.py run --arm proposed --fixture roddy
+python pipelines/voices/rehearsal.py run --arm proposed --fixture roddy --scenario candidate
 python pipelines/voices/rehearsal.py report outputs/rehearsals/<day>
 ```
 
@@ -78,10 +95,54 @@ can never catch an inbound call). The runner creates a `guest_applications`
 `session_kind: rehearsal`, which the fire cron, the screen, the briefs and
 the reminders never select.
 
+## What it costs
+
+Every room runs two Voice Agent sessions, Mira and the fixture guest. The
+report prints the room minutes and an estimate at
+`XAI_VOICE_COST_PER_MIN` (default $0.05 per session minute; check the
+voice line in the xAI console). One default room is about 30 session
+minutes. The Oct 22-23 pattern (two arms, two or three rooms each, 22
+minutes) was 90-130 session minutes per check, and 34 rooms in two days
+came to about 870.
+
+## The room log
+
+Each room's report section is read from the room's own trace and Mira's
+transcribed words (`rehearsal.room_log`):
+
+- the room's length against its plan, how it ended, sessions started,
+  refused and rescued;
+- the turn decisions (server turns rerouted, unfinished-clause waits,
+  dead-air nudges) and holds entered and left;
+- the closing round line by line as the room traced it, and a table of
+  each closing question: when the room handed it and when her words first
+  carried it. A question her words carry after the next one was handed, or
+  more than 45 s after it was handed, is a turn behind; a question her
+  words never carry is lost (the match uses the room's own patterns, so a
+  reworded question reads as lost: listen before calling it).
+
+Every fault the rehearsals found on Oct 22-23 (the silent hold exit, dead
+air after a rescue, the repeated welcome, the round a turn behind) was
+read here, not from the medians.
+
 ## What PASS means
 
-The report takes the median of each metric over an arm's rooms and prints
-**PASS** only when the proposed arm:
+**One arm (the default).** Every room is held to the checks a room can be
+held to, from the review's §7.7 targets:
+
+| check | rule |
+|---|---|
+| room ran | at least 75% of its planned length, not refused |
+| self-answered turns | none |
+| talking over | under one overlap event per ten minutes |
+| closing round | complete (each question once, none said late, none repeated, all answered) and every question in her words, none a turn behind |
+| dropped session | none rescued, none given up |
+
+A failed check is **FAIL**; a check a room cannot answer (the round never
+began) is **INCONCLUSIVE**, never a pass.
+
+**Two arms** (`both`). The report takes the median of each metric over an
+arm's rooms and prints **PASS** only when the proposed arm:
 
 | metric | rule |
 |---|---|
@@ -90,13 +151,14 @@ The report takes the median of each metric over an arm's rooms and prints
 | `guest_words_per_answer_median` | higher than current |
 | `mira_turn_sec_median` | not further from the 12–20 s band than current |
 
-Anything else is **FAIL**; a missing arm or metric is **INCONCLUSIVE**,
-never a pass. The CLI exits non-zero on anything but PASS.
+Read it with care: the same configuration's guest words per answer ran 31
+to 84 across rooms, so a two-room median moves on the fixture, not only on
+the change.
 
-**The rule that binds:** a change to the prompt, the end-of-turn setting,
-the reasoning effort or the rotation policy ships to a real guest only on a
-PASS *and* after the operator has listened to one room of each arm (the
-listen links are in the report). A measurement is not a listen — the Oct 20
+**The rule that binds:** a change to the room, the prompt, the end-of-turn
+setting, the reasoning effort or the rotation policy ships to a real guest
+only on a PASS *and* after the operator has listened to the room (the
+listen link is in the report). A measurement is not a listen — the Oct 20
 `[breath]` tag measured cleanest and was heard as too prominent.
 
 ## What it cannot do
