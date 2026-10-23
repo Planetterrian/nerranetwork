@@ -762,6 +762,7 @@ const HOLD_CHECK_IN_INSTRUCTIONS =
   " here whenever they are ready. That sentence is all you say: no question, no welcome" +
   " back, nothing about anything you heard while they were away, and no goodbye.";
 let nextTurnInstructions = "";   // for the next response.create only
+let sessionInstructions = "";    // what the live session was given (brief + any hand-over note)
 let holdsEntered = 0;
 
 // Dead air (Oct 22 2026). With every unrequested server turn cancelled, a
@@ -1521,6 +1522,7 @@ async function createAgent(note) {
     // and every interview silently fell back to the default voice — which is
     // why Mira on the tape did not match Mira in the narration.
     const preset = String(config.voice_preset || "ara").trim().toLowerCase();
+    sessionInstructions = config.mira_system_prompt + (note || "");
     const sessionCfg = {
         voice: preset,
         // Sept 14 2026 (John Capobianco): "server_vad" with no settings takes
@@ -2839,6 +2841,22 @@ let roundLastWordAsked = false;
 let roundClosed = false;
 let roundRehand = false;          // her turn asked nothing: the question in play goes again
 
+// Oct 23 2026 (rehearsal 0ac88c67, from its session log). A round note added
+// to the conversation and followed at once by response.create took effect a
+// turn late, every time: each of her turns asked the question of the note
+// BEFORE, the room counted answers to questions she had not asked, and the
+// book, the interview-by-an-AI and the what-could-be-improved questions were
+// never put to the guest. The hold check-in had shown the same lag on Oct 22.
+// So every turn the room drives in the round goes as that one response's
+// instructions: her full session instructions (brief, show's question, any
+// hand-over transcript) with the round line after them, leaving nothing
+// behind in the conversation to be acted on a turn later.
+function roundTurn(line) {
+  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+  nextTurnInstructions = (base ? base + "\n\n" : "") + line;
+  requestTurn(grokAgent);
+}
+
 function roundQuestionText(entry) {
   const label = entry[0];
   if (label === "the show's own question") {
@@ -2876,15 +2894,13 @@ function askNextRoundQuestion() {
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
   try {
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROUND " + (next + 1) + " of " + ROUND_QUESTIONS.length + " — system note, do not read" +
-        " aloud] React in one short, specific line to what they just said if something in" +
-        " it struck you; then ask ONLY this, in your own words: " + roundQuestionText(entry) +
-        ". Nothing else this turn — no second question, no preview of the next one — then" +
-        " stop and let them answer. The room will hand you the next one." }] },
-    });
-    requestTurn(grokAgent);
+    roundTurn(
+        "[ROUND " + (next + 1) + " of " + ROUND_QUESTIONS.length + " — for this turn only, do not" +
+        " read aloud] You are in the closing round. React in one short, specific line to" +
+        " what they just said if something in it struck you; then ask ONLY this, in your own" +
+        " words: " + roundQuestionText(entry) + ". Nothing else this turn — no second" +
+        " question, no preview of the next one — then stop and let them answer. The room" +
+        " will hand you the next one.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] round question " + (next + 1) + " failed: " + err.message);
   }
@@ -2905,13 +2921,11 @@ function roundReprompt() {
   }
   trace("round", "no answer yet to " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; one gentle re-ask");
   try {
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROUND — system note, do not read aloud] They have not answered yet. Say one" +
-        " short line that makes the question real and easy — the same question, no new" +
-        " one — then wait in silence for as long as it takes." }] },
-    });
-    requestTurn(grokAgent);
+    roundTurn(
+        "[ROUND — for this turn only, do not read aloud] They have not answered your last" +
+        " question yet (" + roundQuestionText(ROUND_QUESTIONS[roundIndex]) + "). Say one" +
+        " short line that makes that question real and easy — the same question, no new" +
+        " one — then wait in silence for as long as it takes.");
   } catch (err) { /* the next time check still runs */ }
 }
 
@@ -2935,14 +2949,12 @@ function askRoundLastWord() {
   roundAwaitingAnswer = true;
   trace("round", "every closing question asked; handing them the last word");
   try {
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROUND — system note, do not read aloud] That was the last of the closing" +
-        " questions. Now hand them the last word: ask whether there is anything they came" +
-        " wanting to say that the two of you never reached, and mean it. Then stop and" +
-        " wait in silence; the room will tell you when to close." }] },
-    });
-    requestTurn(grokAgent);
+    roundTurn(
+        "[ROUND — for this turn only, do not read aloud] The closing questions are all" +
+        " asked. React in one short line to what they just said if it struck you; then" +
+        " hand them the last word: ask whether there is anything they came wanting to say" +
+        " that the two of you never reached, and mean it. Do not thank them or close yet." +
+        " Then stop and wait in silence.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] last-word hand-off failed: " + err.message);
   }
@@ -2966,14 +2978,11 @@ function closeRound() {
   closingPermitted = true;
   trace("round", "complete; closing thanks");
   try {
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROUND — system note, do not read aloud] The closing round is complete. One" +
-        " short turn: thank them warmly for something particular they said today, then" +
-        " tell them that's the end of the recording and they can hang up now. Nothing" +
-        " after that." }] },
-    });
-    requestTurn(grokAgent);
+    roundTurn(
+        "[ROUND — for this turn only, do not read aloud] The closing round is complete." +
+        " One short turn: thank them warmly for something particular they said today," +
+        " then tell them that's the end of the recording and they can hang up now." +
+        " Nothing after that.");
   } catch (err) {
     Logger.write("[aoa " + runId + "] closing thanks failed: " + err.message);
   }

@@ -40,6 +40,7 @@ class TestATurnThatAsksNothingDidNotAsk:
         assert any(l.startswith("her turn asked nothing; the show's own question") for l in lines)
         assert any("handing 1/8 again" in l for l in lines)
         assert out["roundNotesAfterThought"] == 2          # handed twice, asked once
+        assert out["roundConversationNotes"] == 0          # never as a conversation note
         assert not any(l.startswith("answered 1/8") for l in lines[:3])
 
     def test_the_round_then_runs_in_step(self):
@@ -58,7 +59,7 @@ class TestATurnThatAsksNothingDidNotAsk:
     def test_a_reaction_and_their_silence_gets_the_question_now(self):
         out = sim("round_reaction_then_silence")
         assert out["events"] == ["create"]
-        assert out["lastNote"].startswith("[ROUND 1 of 8")
+        assert "[ROUND 1 of 8" in out["lastNote"]
 
 
 class TestTheRuleIsNarrow:
@@ -76,3 +77,32 @@ class TestTheRuleIsNarrow:
         remember = remember[:remember.index("\n}\n")]
         assert "noteRoundTurnWithoutQuestion(text);" in remember
         assert remember.index("noteRoundQuestion(text);") < remember.index("noteRoundTurnWithoutQuestion(text);")
+
+
+class TestTheRoundGoesAsInstructions:
+    """Rehearsal 0ac88c67's session log: each round note added to the
+    conversation and followed at once by response.create took effect a turn
+    late, so every turn asked the question of the note before, and the book,
+    the AI-interview and the what-could-be-improved questions were never put
+    to the guest."""
+
+    def test_each_question_is_that_responses_instructions(self):
+        out = sim("round_turns_are_instructions")
+        assert out["roundNotes"] == []
+        last = out["instructions"][-1]
+        assert last.startswith("BRIEF: the show asks for their bet.")   # the brief stays
+        assert "[ROUND 2 of 8" in last and "a book they would recommend" in last
+
+    def test_no_round_turn_writes_a_conversation_note(self):
+        for fn in ("function askNextRoundQuestion(", "function roundReprompt(",
+                   "function askRoundLastWord(", "function closeRound("):
+            body = SCENARIO[SCENARIO.index(fn):]
+            body = body[:body.index("\n}\n")]
+            assert "roundTurn(" in body, fn
+            assert "conversationItemCreate" not in body, fn
+
+    def test_the_session_instructions_are_kept_for_the_round(self):
+        assert 'sessionInstructions = config.mira_system_prompt + (note || "");' in SCENARIO
+        body = SCENARIO[SCENARIO.index("function roundTurn("):]
+        body = body[:body.index("\n}\n")]
+        assert "sessionInstructions" in body and "requestTurn(grokAgent)" in body

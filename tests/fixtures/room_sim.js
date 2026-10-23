@@ -287,7 +287,8 @@ if (which === "server_turns_advance_the_round") {
   out.afterReaction = state();
   guestSays("Yeah, it saves you three rounds of back-and-forth later.", 4000);
   advance(5000);
-  out.roundNotesAfterThought = notes.filter(function (n) { return n.indexOf("[ROUND 1 of 8") === 0; }).length;
+  out.roundNotesAfterThought = instructions.filter(function (n) { return n.indexOf("[ROUND 1 of 8") >= 0; }).length;
+  out.roundConversationNotes = notes.filter(function (n) { return /^\[ROUND \d/.test(n); }).length;
   roomTurnStarts();
   miraFinishes("Messy now, clean later. What's the one bet you're making for the next twelve months that you cannot prove yet?");
   guestSays("My bet is that the relationship becomes the product, not the transaction.", 4000);
@@ -304,7 +305,18 @@ if (which === "server_turns_advance_the_round") {
   events.length = 0;
   advance(run("ROUND_REPROMPT_MS") + 1000);
   out.events = events.slice();
-  out.lastNote = notes.length ? notes[notes.length - 1] : "";
+  out.lastNote = instructions.length ? instructions[instructions.length - 1] : "";
+} else if (which === "round_turns_are_instructions") {
+  // Oct 23 2026 (rehearsal 0ac88c67): a round note in the conversation took
+  // effect a turn late. Every room-driven turn of the round goes as that
+  // response's instructions, on top of her session instructions.
+  run("sessionInstructions = 'BRIEF: the show asks for their bet.'; closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("My bet is that the relationship becomes the product.", 4000);
+  advance(5000);
+  out.instructions = instructions.slice();
+  out.roundNotes = notes.filter(function (n) { return n.indexOf("[ROUND") >= 0; });
 } else if (which === "dead_air_empty_room") {
   // The Oct 22 candidate rehearsal: the guest's leg dropped and she nudged
   // the empty room twice during the rejoin grace.

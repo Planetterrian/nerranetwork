@@ -180,8 +180,9 @@ class TestTheClosingRoundIsAStateMachine:
         assert "roundAsked[ROUND_QUESTIONS[next][0]] !== undefined" in ask, "a question she asked herself is skipped"
         assert "roundAwaitingAnswer = true;" in ask
         assert 'trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);' in ask
-        assert "ask ONLY this, in your own words" in ask
-        assert "requestTurn(grokAgent);" in ask
+        assert "then ask ONLY this, in your own" in ask
+        # Oct 23 2026: as that response's instructions, never a conversation note.
+        assert "roundTurn(" in ask
 
     def test_the_guests_finished_answer_advances_it(self):
         decide = _fn("function decideTurn()")
