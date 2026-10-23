@@ -373,6 +373,10 @@
   // Sept 28 2026: ?test=1 is the day-before setup test linked from the prep
   // and reminder emails. Same page, same checks, nothing joins or records.
   var testMode = params.get("test") === "1";
+  // Oct 23 2026: a rehearsal invite's link carries room=candidate, which
+  // dials the candidate scenario (a draft of the room under test) instead of
+  // the live one. A guest's link never carries it.
+  var candidateRoom = params.get("room") === "candidate";
   var micOk = false, micVerdict = "unknown", micDb = null, micFails = 0, joinOverride = false;
   var echoVerdict = "not_run", signinState = "unknown", signinError = "";
 
@@ -1223,7 +1227,7 @@
     // participant session, records this person, and bridges them into
     // the interview room (room-<run id>); X-Role labels the leg.
     activeCall = sdk.call({
-      number: "mira",
+      number: candidateRoom ? "mira-candidate" : "mira",
       video: { sendVideo: !isHost && camOn, receiveVideo: false },
       extraHeaders: { "X-Run-Id": runId, "X-Role": role },
     });

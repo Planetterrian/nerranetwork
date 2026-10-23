@@ -2359,6 +2359,26 @@ behaviour driven through the real scenario in a node vm by
   from the room's own `asked n/N` lines. Guards
   `tests/test_round_end_2026_10_23.py`.
 
+- **Her brief names no closing question** (rehearsal 39998790684): told the
+  round held "four short closing questions, one about the interview itself",
+  she wrote her own ("what did you learn about yourself doing this
+  interview?") and spoke its label ("That's the show's own closing
+  question"). The room hands her each question's words; both briefs say only
+  that, and that there is no thanks or goodbye until the room says to close.
+  A turn that asks ANOTHER round question is never this one reworded, and the
+  "interview next" topic check no longer takes any word "interview". Spoken
+  turns end on "stop talking", never "in silence" or "nothing else" (she says
+  "Silence." and "Nothing.").
+- **A person can sit in a draft room**: Actions "Nerra Voices — rehearsal"
+  with `invite_email` (and `candidate_scenario`) runs `rehearsal.py invite`:
+  a rehearsal-only application and interview (status and session_kind
+  `rehearsal`, no co-host), Mira's brief compiled from that person's own
+  latest application, and an email with a studio link carrying
+  `room=candidate`, which dials `mira-candidate` (routed to the candidate
+  scenario by `CANDIDATE_ROOM_RULE_PATTERN`). The job waits up to 90 minutes
+  for them to join, then measures the room like any rehearsal. The link and
+  the address never go in a log (the repository's Actions logs are public).
+
 Operator: deploy the scenario only after the candidate rehearsal reads PASS and
 one listen; `wrangler deploy` in `workers/voices` so the new counters are
 stored. ⚠️ AUDIO on every interview.

@@ -410,7 +410,7 @@ class TestACandidateRoomIsRehearsedBeforeItShips:
         from voximplant.api_clients import voximplant_client as vc
         assert vc.CANDIDATE_SCENARIO_NAME != vc.SCENARIO_NAME
         assert vc.CANDIDATE_ROOM_RULE_NAME != vc.ROOM_RULE_NAME
-        assert vc.CANDIDATE_ROOM_RULE_PATTERN == r"^candroom-.*"
+        assert vc.CANDIDATE_ROOM_RULE_PATTERN == r"^(candroom-.*|mira-candidate)$"
         i = REHEARSAL_WF.index("Upload this ref's interview scenario as the candidate")
         step = REHEARSAL_WF[i:REHEARSAL_WF.index("- name: Rehearse the current configuration")]
         assert "upload_candidate_scenario()" in step and "ensure_candidate_room_rule()" in step

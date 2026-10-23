@@ -57,6 +57,10 @@ on:
         description: 'The fixture steps away to take a call at minute four (both arms)'
         type: boolean
         default: false
+      invite_email:
+        description: 'Email this address a test room for a PERSON instead of running a fixture (the draft room when candidate_scenario is on). The job waits up to 90 min for them to join, then measures the room.'
+        type: string
+        default: ''
       remeasure:
         description: 'Measure rooms that already ran instead of running new ones: current:<run id>,proposed:<run id>'
         type: string
@@ -78,7 +82,7 @@ jobs:
   rehearse:
     if: ${{ github.event_name != 'schedule' || vars.VOICES_REHEARSAL_NIGHTLY == 'true' }}
     runs-on: ubuntu-26.04
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       FIXTURE: ${{ inputs.fixture || 'roddy' }}
       MINUTES: ${{ inputs.minutes || 15 }}
@@ -171,7 +175,7 @@ jobs:
       # fixture behaviour, so either input refreshes it from this ref (its
       # default prefix stays "room-").
       - name: Upload this ref's fixture guest
-        if: ${{ (inputs.candidate_scenario || inputs.with_hold) && inputs.remeasure == '' }}
+        if: ${{ (inputs.candidate_scenario || inputs.with_hold) && inputs.remeasure == '' && inputs.invite_email == '' }}
         run: |
           python - <<'PY'
           from voximplant.api_clients.voximplant_client import (
@@ -183,7 +187,7 @@ jobs:
           GROK_VOICE_MODEL: ${{ vars.GROK_VOICE_MODEL }}
           GROK_SESSION_MAX_MIN: ${{ vars.GROK_SESSION_MAX_MIN }}
       - name: Rehearse the current configuration
-        if: ${{ env.ARMS != 'proposed' && inputs.remeasure == '' }}
+        if: ${{ env.ARMS != 'proposed' && inputs.remeasure == '' && inputs.invite_email == '' }}
         run: |
           args=(--arm current --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
@@ -191,7 +195,7 @@ jobs:
         env:
           WITH_HOLD: ${{ inputs.with_hold }}
       - name: Rehearse the proposed configuration
-        if: ${{ env.ARMS != 'current' && inputs.remeasure == '' }}
+        if: ${{ env.ARMS != 'current' && inputs.remeasure == '' && inputs.invite_email == '' }}
         run: |
           args=(--arm proposed --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ -n "$TURN_SILENCE_MS" ] && args+=(--turn-silence-ms "$TURN_SILENCE_MS")
@@ -209,6 +213,23 @@ jobs:
       # A measurement fix is checked on rooms that already ran: their
       # recordings stay on Voximplant, and a new room costs a Voice Agent
       # session on both sides.
+      # Oct 23 2026: a person in the room instead of the fixture. The address
+      # and the studio link stay out of the log (public repository): the
+      # address reaches the script through the environment, the link only
+      # through the email.
+      - name: Invite a person to a test room
+        if: ${{ inputs.invite_email != '' && inputs.remeasure == '' }}
+        run: |
+          scenario=deployed
+          [ "$CANDIDATE" = "true" ] && scenario=candidate
+          python pipelines/voices/rehearsal.py invite --email "$INVITE_EMAIL" \
+            --minutes "$MINUTES" --scenario "$scenario" --out-dir "$OUT_DIR"
+        env:
+          INVITE_EMAIL: ${{ inputs.invite_email }}
+          CANDIDATE: ${{ inputs.candidate_scenario }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          VOICES_FROM_EMAIL: ${{ secrets.VOICES_FROM_EMAIL }}
       - name: Re-measure rooms that already ran
         if: ${{ inputs.remeasure != '' }}
         run: python pipelines/voices/rehearsal.py remeasure --runs "$REMEASURE" --fixture "$FIXTURE" --out-dir "$OUT_DIR"
