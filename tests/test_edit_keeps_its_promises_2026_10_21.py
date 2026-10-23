@@ -198,6 +198,20 @@ class TestTheGuestApprovesTheEdit:
         # 12 + 0.7 + 40 + 0.4 + 60 + 1.4 = 114.5 s before the outro.
         assert lines[-1].startswith("[01:54] Mira (narration): Until next time.")
 
+    def test_a_span_the_gap_trim_shortened_never_runs_backwards(self):
+        # Oct 23 2026: 60 s of room came out at 30 s once its long pauses
+        # were closed; the next span's lines must still come after it.
+        cuts = [{"from": "mix:clean", "start": 0.0, "end": 60.0},
+                {"from": "mix:clean", "start": 70.0, "end": 130.0}]
+        text = et.transcript_of_the_edit(TRANSCRIPT, cuts, [30.0, 60.0])
+        stamps = [line[1:6] for line in text.splitlines()]
+        secs = [int(t[:2]) * 60 + int(t[3:]) for t in stamps]
+        assert secs == sorted(secs)
+        assert max(s for s, line in zip(secs, text.splitlines())
+                   if "Say more about that." in line) < 30
+        # The second span starts at 30 s, where the first one actually ended.
+        assert "[00:40] Guest: Pricing went to usage, and that is where the next three years are." in text.splitlines()
+
     def test_the_offset_moves_the_room_lines_too(self):
         cuts = [{"from": "mix:clean", "start": 0.0, "end": 60.0}]
         text = et.transcript_of_the_edit(TRANSCRIPT, cuts, [60.0], room_offset_sec=20.0)

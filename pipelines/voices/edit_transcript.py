@@ -221,9 +221,16 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
         if _is_conversation(cut) and cut.get("start") is not None and cut.get("end") is not None:
             s = float(cut["start"]) + room_offset_sec
             e = float(cut["end"]) + room_offset_sec
+            # Oct 23 2026, Stan Lewis. The assembler closes every pause over
+            # a second (GAP_TRIM), so a 30-minute span can come out at 24.
+            # Stamped at "room minus span start", his last line before the
+            # cut read 30:37 and the first line after it 24:52: the
+            # transcript he was asked to approve ran backwards. Spread the
+            # span over the time it actually takes in the edit.
+            scale = min(1.0, dur / (e - s)) if e > s else 1.0
             for at, who, text in lines:
                 if s <= at < e:
-                    out.append(f"{stamp(clock + (at - s))} {who}: {text}")
+                    out.append(f"{stamp(clock + (at - s) * scale)} {who}: {text}")
             clock += dur
             continue
         clock += dur
