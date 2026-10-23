@@ -1,4 +1,4 @@
-> **Diclofenac given to Indian cattle from 1994 cut vulture numbers to one-thousandth and added over 100,000 human deaths yearly.**
+> **Diclofenac given to Indian cattle from 1994 cut vulture numbers by 97 percent or more and added over 100,000 human deaths yearly.**
 
 ### Segment 1 — The Cold Open
 In 1994, after the patent on the painkiller diclofenac expired, Indian generic manufacturers began selling the drug at low cost for treating cattle. Within a decade the three Gyps vulture species that had once numbered in the tens of millions across the subcontinent fell by roughly 97 percent or more, the white-rumped vulture to about one-thousandth of its earlier abundance. The same carcasses that once disappeared within hours now lay rotting, and districts that had supported the largest vulture populations recorded human death rates more than 4 percent higher than comparable districts that had never hosted many vultures.
