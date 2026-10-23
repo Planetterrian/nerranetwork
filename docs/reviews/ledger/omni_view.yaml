@@ -580,4 +580,135 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook; pins bans and chapter-pattern broaden without weakening hard guardrails.
     agent_cost_usd: 0.1789
+  - date: '2026-10-23'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_10_23.md
+    generated_by: grok-4.5
+    summary: Understanding still opens ~10/10 on the stock “To really understand…” skeleton (de-seed never shipped across three passes), EXAMPLE compliance-deadlines seed remains electable, and “everything turns on whether” (prompt-seeded) hit 5/10 — while digest-verbatim median fell to ~17.5% (hit via grok-4.6 restore) and Progress/chapters stay structurally clean.
+    scored_prior_predictions:
+    - metric: digest-verbatim % median (last 10 _tts vs digest) after anti-paste/CONTENT DISCIPLINE tighten ships
+      verdict: hit
+      evidence: Ep205–214 median ≈17.5% (8–26% except ep206 56%); baseline was ≈54%; grok-4.6 restore primary driver
+    - metric: episodes (last 10) opening Understanding with stock 'To really understand how [NP]' skeleton after de-seed+MEMORY+yaml broaden
+      verdict: miss
+      evidence: Still ~10/10 on To-really-understand family in Ep205–214 transcripts; de-seed never shipped
+    - metric: verbatim EXAMPLE compliance-deadlines closer in any _tts/transcript (last 10) after EXAMPLE rewrite
+      verdict: partial
+      evidence: 0 exact paste in Ep205–214; compliance-deadlines sentence still present in omni_view_podcast.txt EXAMPLE
+    - metric: Progress Watch slots that are lifehacks/buybacks/pure-security-interdictions without deployment-or-indicator rigor (last 10) after eligibility tighten
+      verdict: partial
+      evidence: No buyback/lifehack; soft picks remain Ep206 X suspensions, Ep209 fire containment, Ep214 Macron meeting
+    - metric: episodes with Progress Watch chapter (last 10)
+      verdict: hit
+      evidence: chapters_ep205–214.json all include Progress Watch (10/10 held)
+    - metric: audible 'both sides accept' / 'strongest case|argument for/against' scaffold uses per episode (last 10 max)
+      verdict: partial
+      evidence: both-sides-accept quiet; strongest case on Ep207/211/213; new everything-turns-on-whether on 5/10
+    - metric: successor Understanding opener tic after this de-seed (watch)
+      verdict: hit
+      evidence: Same tic still ≥5/10 and named; no replacement third-gen opener because de-seed never shipped
+    - metric: median _tts.txt words (last 10) — observation only unless operator ships digest-depth change
+      verdict: miss
+      evidence: Median ≈1555 on Ep205–214 (was ≈1470); still ≪1700; no digest-depth lever shipped
+    - metric: episodes (last 10) with _tts.txt ≥1400 — observation only
+      verdict: partial
+      evidence: 9/10 ≥1400 (ep206=1334 only miss); improved from Sep-28 6/10
+    - metric: 'lead-story tellings per episode (manual: hook + body + deep dive + go-deeper + teaser)'
+      verdict: partial
+      evidence: Deep dive still routinely lead mechanism (Ep205/210/214); full 4–5 body-retell quieter than Ep164/165
+    - metric: source_integrity_claims median
+      verdict: partial
+      evidence: Sep-24 floor still in omni_view.yaml; claim-count field not in this context pack
+    shipped: []
+    deferred:
+    - 'Chronic under-length: operator decision only — audit last-10 digest word counts vs min_digest_words 1500 and deepen-expansion hit rate before any digest-depth config change; do NOT re-propose podcast_expand_below_target, min_podcast_words hikes, or prompt word-pressure (multiple misses; network do_not_retry class)'
+    - 'Operator decision: Understanding de-seed + yaml broaden + EXAMPLE rewrite proposed on Aug-23, Aug-29, and Sep-28 with shipped:[] each time — apply the paired bundle or explicitly reject and accept stock openers as permanent chapter anchors'
+    - Reuters/AP Google News proxy label attribution still cosmetic (July-18 carry)
+    - BBC Latin America feed low-volume monitor (July-18 carry)
+    - 'Network tooling: mechanical digest lint for template-saturation counts (strongest-case / everything-turns-on-whether / shared-facts family)'
+    - Sep-05 closing pool pin (three essay-style closings; 6/10 identical heavy-news essay this window) — after flagship A/B readout
+    - Sep-24 source_integrity_claims median readout once metrics expose the field
+    - Confirm ep206 actual llm_script_model in credit_usage (56% verbatim / 1334w / 1.6 commas looks like 4.3 fallback day under the 4.6 pin)
+    - OP3 / YouTube long-form retention as network-funnel topics (long retention 11.3%) — not OV-only editorial blockers this pass
+    - Watch fourth-generation Understanding opener convergence next pass after proposed bans finally ship (successor-tic prediction recorded)
+    predictions:
+    - metric: episodes (last 10) opening Understanding with stock 'To really understand (how)' skeleton after paired de-seed+yaml broaden ships
+      baseline: 10/10 family (Ep205–214)
+      expected: ≤2/10 within 2 weeks of ship; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: verbatim 'everything turns on whether' uses per 10 episodes after prompt de-seed
+      baseline: 5/10 (Ep205,207,208,213,214)
+      expected: ≤1/10 once quoted example removed
+      verdict: pending
+      evidence: null
+    - metric: verbatim EXAMPLE compliance-deadlines closer in any _tts/transcript (last 10) after EXAMPLE rewrite
+      baseline: 0 exact but seed live in podcast EXAMPLE
+      expected: 0 exact and 0 compliance-deadlines paste
+      verdict: pending
+      evidence: null
+    - metric: audible 'strongest case' story openers per 10 episodes after tighten
+      baseline: 3/10 (Ep207,211,213)
+      expected: ≤1/10
+      verdict: pending
+      evidence: null
+    - metric: Progress Watch slots that are meetings-only / pure-security-interdictions / disaster-containment-without-reform (last 10) after negative-shape eligibility
+      baseline: ≥3 soft (Ep206,209,214)
+      expected: '0'
+      verdict: pending
+      evidence: null
+    - metric: episodes with Progress Watch chapter (last 10)
+      baseline: 10/10
+      expected: 10/10 held
+      verdict: pending
+      evidence: null
+    - metric: digest-verbatim % median (last 10) — hold after 4.6 restore
+      baseline: ≈17.5% (Ep205–214)
+      expected: ≤30% median held; flag any ep ≥50% as fallback/paste regression
+      verdict: pending
+      evidence: null
+    - metric: successor Understanding opener tic after de-seed ships (watch)
+      baseline: current tic = To really understand (how) X
+      expected: next review names any new ≥5/10 Understanding opener and de-seeds by shape again
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words (last 10) — observation only unless operator ships digest-depth change
+      baseline: ≈1555
+      expected: n/a-lever-not-shipped (record only unless digest-depth change ships)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep145 shipped this EXAMPLE closer on an unrelated North Korea lead; seed still in-tree through Aug-23/29/Sep-28. De-seed the quotable line + explicit anti-paste rule; no new stock closer to elect.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Prompt item (b) literally quoted “everything turns on whether…” and Ep205/207/208/213/214 elected it (5/10). strongest-case residual on Ep207/211/213. De-seed by shape; no quotable menu examples.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep206 X suspensions / Ep209 fire containment / Ep214 meeting show soft eligibility after disaster-as-progress cooled. Podcast layer must block audio reframes even if digest mis-picks; negative shapes only.
+    - file: shows/prompts/omni_view_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep205–214 still ~10/10 on To-really-understand family; three prior passes proposed de-seed and never shipped. Shape ban + verbatim stock list; keep a path for chapter anchors without electing one quoted opener.
+    - file: shows/omni_view.yaml
+      kind: config
+      ab_listen_required: true
+      rationale: If podcast openers rotate off the stock To-really-understand pair, chapter detection must accept new shapes in the same change set (PT dead-marker class). Audio-adjacent → A/B-listen.
+    - file: shows/prompts/omni_view_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest is where Ep144/Ep158/Ep206/Ep209/Ep214-class mis-picks start; tighten with negative shapes only.
+    - file: shows/prompts/omni_view_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Digest still seeds spoken strongest-case / mechanism scaffolds; remove prompt's own recommended stock phrases that became tics (empirical-ground-both-sides-accept and strongest-case rotation copy).
+    - file: tests/test_omni_view_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard per playbook; pins bans and chapter-pattern broaden without weakening hard guardrails; wiring through real load_config.
+    agent_cost_usd: 0.1868
 do_not_retry: []
