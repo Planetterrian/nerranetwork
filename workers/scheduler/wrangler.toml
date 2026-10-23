@@ -20,9 +20,9 @@ compatibility_date = "2026-05-01"
 workers_dev = true
 
 [triggers]
-# ONE trigger, on purpose (Oct 9 2026): the account is on the Workers Free
-# plan, which allows five cron triggers in total, and the Voices Worker
-# holds three — a second trigger here was refused at deploy
+# ONE trigger, on purpose (Oct 9 2026): the account was then on the Workers
+# Free plan, which allows five cron triggers in total, and the Voices Worker
+# held three — a second trigger here was refused at deploy
 # ("reached the Workers Free limit of 5 cron triggers", code 10072), so the
 # edition dispatch never went live. The handler decides from the exact
 # firing minute, so one broad expression covers every job.
@@ -37,6 +37,7 @@ workers_dev = true
 # a logged no-op (~250 a day, each a few milliseconds). Drift guard:
 # tests/test_scheduling_punctuality.py and
 # tests/test_seven_am_eastern_2026_10_17.py check the trigger fires at every
-# slot in both offsets. Do not split this back into two triggers without
-# moving the account to Workers Paid first.
+# slot in both offsets. The account is on Workers Paid now (Oct 23 2026), so
+# a second trigger would deploy; none is needed while the handler reads the
+# firing minute.
 crons = ["*/5 * * * *"]

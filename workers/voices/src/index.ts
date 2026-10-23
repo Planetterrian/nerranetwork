@@ -4107,8 +4107,8 @@ export default {
     // guest sat in a locked studio on Aug 5 2026). Everything downstream
     // is idempotent, so overlapping with the GitHub fallback cron is safe.
     // Oct 9 2026: ONE cron trigger ("*/5 * * * *") carries all three jobs.
-    // The account is on Workers Free (five cron triggers in total) and the
-    // show scheduler needed one back; the handler reads the firing minute
+    // The account was then on Workers Free (five cron triggers in total) and
+    // the show scheduler needed one back (it is on Workers Paid since); the handler reads the firing minute
     // instead of the trigger string. Every job below is idempotent, so a
     // :00/:30 firing running the five-minute block AND the half-hour block
     // is the same as the two triggers it replaces.

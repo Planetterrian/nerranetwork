@@ -8,8 +8,8 @@
   feed still read ``measured: false`` at ~$2.70/week (pinned in
   tests/test_multilingual.py).
 * The Voices Worker holds ONE cron trigger; its three jobs run by firing
-  minute (pinned in tests/test_producer_autonomy.py). Workers Free allows
-  five per account and the show scheduler needed one back.
+  minute (pinned in tests/test_producer_autonomy.py). Workers Free (the plan
+  then) allowed five per account and the show scheduler needed one back.
 * Dependabot groups each ecosystem's weekly bumps into one PR — five
   separate PRs a week is how #1365 (PyAV 19) was merged with its pin
   comment unread.

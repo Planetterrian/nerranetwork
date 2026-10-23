@@ -13,7 +13,8 @@ the Eastern date, so the 1 November and March clock changes move nothing.
 The Nerra Daily edition (`EDITION_DISPATCH`, 06:35 / 06:50 ET) and the
 @nerranetwork X queue (`X_QUEUE_DISPATCH`, :05 / :35 from 7:05 AM to
 10:05 PM ET) read the same clock. The Worker's ONE cron trigger is
-`*/5 * * * *` (Workers Free: five triggers per account, Voices holds three);
+`*/5 * * * *` (written on Workers Free, five triggers per account; the account is on
+Workers Paid now and one trigger is still all the handler needs);
 every Eastern minute it needs is a multiple of five, which is a multiple of
 five in UTC under both offsets.
 

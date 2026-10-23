@@ -559,7 +559,7 @@ class TestWiring:
     def test_worker_dispatches_producer_tick(self):
         ts = (ROOT / "workers/voices/src/index.ts").read_text()
         # Oct 9 2026: one cron trigger; the half-hour tick is decided from
-        # the firing minute (Workers Free: five triggers per account).
+        # the firing minute (written on Workers Free; one trigger is still all it needs).
         assert "const halfHour = minute % 30 === 0;" in ts
         assert "if (halfHour) {" in ts
         assert 'dispatch(env, "producer-tick"' in ts

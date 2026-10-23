@@ -250,8 +250,9 @@ def test_edition_dispatch_slot():
         r'Array<\[number, number\]>,\s*workflow: "([\w.-]+)",', _TS, re.S)
     assert m, "EDITION_DISPATCH missing from workers/scheduler"
     assert m.group(2) == "nerra-daily.yml"
-    # Oct 9 2026: ONE cron trigger. The account is on Workers Free (five
-    # cron triggers in total, the Voices Worker holds three) and a second
+    # Oct 9 2026: ONE cron trigger. The account was then on Workers Free
+    # (five cron triggers in total, the Voices Worker held three; Workers
+    # Paid since Oct 23) and a second
     # trigger here was refused at deploy, so the edition dispatch never went
     # live. One expression covers every Eastern minute the handler needs;
     # the handler decides from the exact firing minute.
@@ -259,8 +260,8 @@ def test_edition_dispatch_slot():
         encoding="utf-8")
     crons = re.findall(r'^crons = \[(.*)\]', toml, re.M)
     assert crons and crons[0].count('"') == 2, (
-        "the scheduler must hold exactly one cron trigger (Workers Free "
-        "allows five per account and Voices holds three)")
+        "the scheduler holds exactly one cron trigger: the handler decides "
+        "from the firing minute, so a second one is never needed")
     assert crons[0] == '"*/5 * * * *"', crons
     # The edition and the show slots are independent dispatches now, but a
     # slot on an edition minute would still be a scheduling mistake.

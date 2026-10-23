@@ -785,6 +785,49 @@ def send_guest_reminder(interview: dict, app: dict, show, manage: str,
                    cc=[str(app.get("publicist_email") or "")])
 
 
+def xai_credit_stop() -> str:
+    """The provider's words when the xAI account is out of credit, else "".
+
+    Oct 23 2026: the account ran dry at 09:45 UTC and an interview was booked
+    for 20:45 the same day. Mira's live room is a Grok Voice session on that
+    account, so a guest would have joined a room nobody could speak in. One
+    one-token completion at the T-2h reminder is enough to know; any other
+    failure (network, a bad key) answers "" — only a billing stop, read by
+    the same matcher the show runs use, raises the alarm."""
+    key = os.environ.get("GROK_API_KEY") or os.environ.get("XAI_API_KEY") or ""
+    if not key:
+        return ""
+    try:
+        r = requests.post(
+            "https://api.x.ai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}"},
+            json={"model": "grok-4.3", "max_tokens": 1,
+                  "messages": [{"role": "user", "content": "ok"}]},
+            timeout=30)
+    except Exception:  # noqa: BLE001 — a blip is not a billing stop
+        return ""
+    if r.status_code < 400:
+        return ""
+    from engine.provider_quota import is_quota_exhausted
+    return r.text[:400] if is_quota_exhausted(r.text) else ""
+
+
+def credit_alert(interview: dict, app: dict, show, stop: str) -> None:
+    """Tell Patrick the room cannot run, while there is time to fix it."""
+    when = pacific_time(interview.get("scheduled_at") or "")
+    guest = app.get("name") or "the guest"
+    text = (f"{show.name}: the xAI account is out of credit and {guest}'s "
+            f"interview starts {when}. Mira's room runs on that account — add "
+            "credits or raise the spending limit at console.x.ai → Billing "
+            "now, or reschedule the guest. Provider said: " + stop)
+    notify_operator(text, critical=True)
+    try:
+        send_email(OPERATOR_EMAIL, f"Mira cannot run {guest}'s interview: xAI out of credit",
+                   f"<p>{text}</p>")
+    except Exception:  # noqa: BLE001
+        logger.exception("credit alert email failed")
+
+
 def send_reminders() -> None:
     lo, hi = _now() + REMINDER_AHEAD[0], _now() + REMINDER_AHEAD[1]
     due = sb_select(
@@ -805,6 +848,9 @@ def send_reminders() -> None:
             # best-effort; it must never be retried in a loop.
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"reminder_sent_at": _iso(_now())})
+            stop = xai_credit_stop()
+            if stop:
+                credit_alert(interview, app, show, stop)
             # Phase 2: Patrick's T-2h co-host link goes out first (his own
             # SMS/email, never to the guest) — it does not depend on the
             # guest having a phone on file.

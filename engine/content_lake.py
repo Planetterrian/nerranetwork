@@ -205,22 +205,30 @@ def _store_items(conn: sqlite3.Connection, record: EpisodeRecord, aired=None) ->
 
     if aired is None or (not aired and record.digest_md):
         aired = extract_aired_items(record.digest_md or "")
-    old_ids = [r[0] for r in conn.execute(
-        "SELECT id FROM items WHERE show_slug = ? AND episode_num = ?",
-        (record.show_slug, record.episode_num))]
+    old = conn.execute(
+        "SELECT id, item_key, title, story_id FROM items WHERE show_slug = ? AND episode_num = ?",
+        (record.show_slug, record.episode_num)).fetchall()
+    old_ids = [r[0] for r in old]
+    # Oct 23 2026: a re-store (run_show writes again once the script exists)
+    # keeps the story id of an item it did not change. It had re-inserted
+    # every item with none, so the run's catalog write sent NULL story ids
+    # and matched no article as aired until the nightly resync.
+    kept_ids = {(r[1], r[2] or ""): r[3] for r in old if r[3]}
     for rid in old_ids:
         conn.execute("DELETE FROM items_fts WHERE rowid = ?", (rid,))
     conn.execute("DELETE FROM items WHERE show_slug = ? AND episode_num = ?",
                  (record.show_slug, record.episode_num))
     for pos, it in enumerate(aired):
         toks = sorted(item_tokens(it.title, it.body)) if it.kind != "essay" else []
+        key = item_key(record.show_slug, record.episode_num, pos)
         cur = conn.execute("""
             INSERT INTO items (item_key, show_slug, episode_num, date, position,
-                               section, title, body, urls, kind, tokens, language)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (item_key(record.show_slug, record.episode_num, pos), record.show_slug,
+                               section, title, body, urls, kind, tokens, language, story_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (key, record.show_slug,
               record.episode_num, record.date, pos, it.section, it.title, it.body,
-              json.dumps(it.urls), it.kind, json.dumps(toks), record.language))
+              json.dumps(it.urls), it.kind, json.dumps(toks), record.language,
+              kept_ids.get((key, it.title or ""))))
         conn.execute("INSERT INTO items_fts(rowid, title, body) VALUES (?, ?, ?)",
                      (cur.lastrowid, it.title, it.body))
 
