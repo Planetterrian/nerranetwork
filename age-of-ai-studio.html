@@ -96,6 +96,28 @@
   #notInHead { font-weight: 700; margin: 0 0 .4rem; color: var(--warn); }
   #notIn ol { margin: .3rem 0 .5rem; padding-left: 1.3rem; }
   #notIn li.done { text-decoration: line-through; opacity: .7; }
+  /* Oct 23 2026: a picture of Mira to talk to, and the guest's feedback. */
+  .mira-stage { margin: 0 0 1rem; text-align: center; }
+  .mira-stage .frame { position: relative; display: inline-block; border-radius: 16px;
+    padding: 3px; background: var(--line); transition: background .25s, box-shadow .25s; }
+  .mira-stage.speaking .frame { background: var(--accent); box-shadow: 0 0 22px var(--accent); }
+  .mira-stage video, .mira-stage img { display: block; width: 100%; max-width: 300px;
+    aspect-ratio: 480 / 730; object-fit: cover; border-radius: 13px; background: #000; }
+  .mira-stage.small video, .mira-stage.small img { max-width: 150px; }
+  .mira-stage figcaption { color: var(--muted); font-size: .85rem; margin: .5rem auto 0; max-width: 420px; }
+  .feedback { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; }
+  .feedback .fb-head { margin: 0 0 .6rem; }
+  .feedback .fb-head span { color: var(--muted); font-size: .88rem; font-weight: 400; }
+  .feedback button { padding: .55rem 1rem; }
+  .fb-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: .7rem 0 0; align-items: center; }
+  .fb-chips .fb-label { color: var(--muted); font-size: .88rem; }
+  .fb-chips button { font-weight: 500; font-size: .9rem; text-align: left; max-width: 100%; }
+  .fb-form { display: flex; gap: .5rem; flex-wrap: wrap; margin: .8rem 0 0; align-items: end; }
+  .fb-form label { width: 100%; }
+  .fb-form input { flex: 1 1 220px; font: inherit; padding: .55rem .6rem; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--bg2); color: var(--text); }
+  #fbStatus { min-height: 1.4em; margin: .6rem 0 0; font-size: .92rem; color: var(--ok); }
+  #fbStatus.warn { color: var(--warn); }
 </style>
 </head>
 <body>
@@ -133,6 +155,10 @@
         <p id="phoneMsgTop"></p>
       </div>
     </div>
+    <figure class="mira-stage small guest-only">
+      <span class="frame"><img src="assets/mira/mira-studio.jpg" alt="An illustration of Mira, the AI host, at a studio microphone" width="480" height="730"></span>
+      <figcaption>You'll be talking with Mira, the show's AI host. The picture is an illustration; she has no camera and can't see you.</figcaption>
+    </figure>
     <p class="tips" id="studioStatus" style="color:var(--muted)">Signing in to the studio…</p>
     <p class="hostnote host-only hidden">Pick your microphone and press
     <b>Join the room</b>. You can join before or after the guest; Mira hears
@@ -143,7 +169,7 @@
       <li><b>Computer over phone</b>, wired internet or strong Wi-Fi, recent Chrome, Edge, or Safari.</li>
       <!-- Oct 14 2026 (Piper Martz): "we record video for a future YouTube version"
            read as a video interview, and twice there was nothing to look at. -->
-      <li><b>Audio only</b> — Mira is a voice, with nothing on screen, and the episode is audio. Your camera is optional: if it is on it is recorded, but you can leave it off.</li>
+      <li><b>An audio episode</b> — on screen you'll see an illustration of Mira, who is an AI and can't see you. The episode is audio. Your camera is optional: if it is on it is recorded, but you can leave it off.</li>
     </ul>
     <label for="micSel">Microphone</label>
     <select id="micSel"></select>
@@ -218,6 +244,11 @@
 
   <!-- State: in call -->
   <div id="stateCall" class="card hidden">
+    <figure class="mira-stage" id="miraStage">
+      <span class="frame"><video id="miraVideo" src="assets/mira/mira-studio.mp4" poster="assets/mira/mira-studio.jpg"
+        muted loop playsinline preload="auto" aria-label="An illustration of Mira, the AI host, at a studio microphone"></video></span>
+      <figcaption>Mira, your AI host. The picture is an illustration that moves while the room is talking; she can't see you.</figcaption>
+    </figure>
     <p class="status ok" id="callMsg">You're live with Mira.</p>
     <div class="presence host-only hidden">
       <span id="presGuestCall">guest: not yet</span>
@@ -258,11 +289,29 @@
       Interrupt her whenever you like — she can handle it. Ask her questions
       too; the conversation goes both ways.
     </p>
+    <!-- Oct 23 2026: the guest can steer without saying it out loud. The
+         page sends each press to the room on this call; the room answers. -->
+    <div class="feedback" id="feedbackPanel">
+      <p class="fb-head"><b>Steer the conversation</b>
+        <span>Mira gets these privately at her next turn. They're kept with the interview's notes, never in the episode.</span></p>
+      <div class="row">
+        <button class="ghost" type="button" id="fbGood">Good question</button>
+        <button class="ghost" type="button" id="fbMove">Let's move on</button>
+      </div>
+      <div class="fb-chips hidden" id="fbAgenda"><span class="fb-label">Ask me about:</span></div>
+      <form class="fb-form" id="fbForm">
+        <label for="fbText">Or type something you'd like to talk about</label>
+        <input id="fbText" type="text" maxlength="240" autocomplete="off">
+        <button class="ghost" type="submit">Send to Mira</button>
+      </form>
+      <p id="fbStatus" role="status" aria-live="polite"></p>
+    </div>
     <p class="tips guest-only" style="color:var(--muted)">
       <b>How this ends:</b> Mira will thank you and tell you the recording is
       finished. Once she has, press <b>End interview</b> — or just hang up.
-      Nothing you say after that point is in the episode, and nothing
-      publishes until you have heard the finished cut and approved it.
+      Nothing you say after that point is in the episode. You'll get the
+      transcript to review, with a week to approve it, cut from it or refuse
+      it before it publishes, and you can ask for it to come down afterwards.
     </p>
     <p id="localRec">local recording: not started</p>
   </div>
@@ -272,8 +321,8 @@
     <p class="status ok" id="doneHead">That's a wrap — thank you!</p>
     <p class="hidden" id="donePhone"></p>
     <p class="guest-only" id="doneBody">Your conversation is processing. You'll get an email with the full
-    transcript to review before anything is published, and you can request
-    removals there. Talk soon.</p>
+    transcript, with a week to approve it, cut from it or refuse it before it
+    publishes. Talk soon.</p>
     <p class="host-only hidden">The interview is over; post-production is
     dispatched. Your local track has been uploaded (see below).</p>
     <p id="localRecDone" class="hostnote"></p>
@@ -414,6 +463,7 @@
         // (awaiting_guest or in_progress) — for every role, so a second
         // guest or someone rejoining after a drop gets in too.
         var id = s.ready && s.run_id ? s.run_id : null;
+        if (Array.isArray(s.agenda)) agendaPoints = s.agenda.slice(0, 5);
         if (id) {
           runId = id;
           if (s.scheduled_at) scheduledAt = Date.parse(s.scheduled_at);
@@ -427,7 +477,7 @@
         if (s.ended) {
           document.getElementById("checkMsg").textContent = "This interview has finished. Thank you!";
           document.getElementById("checkDetail").textContent =
-            "Mira will email you the episode and its transcript to review before anything is published. You can close this page.";
+            "Mira will email you the transcript, with a week to approve it, cut from it or refuse it before it publishes. You can close this page.";
           return;
         }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
@@ -1183,6 +1233,19 @@
   function wireCall(call) {
     call.on(VoxImplant.CallEvents.Connected, onCallConnected);
     call.on(VoxImplant.CallEvents.Disconnected, onCallEnded);
+    // Oct 23 2026: the room's answers to the feedback panel, and the room's
+    // audio for Mira's picture.
+    try { call.on(VoxImplant.CallEvents.MessageReceived, function (e) { onRoomMessage(e && e.text); }); } catch (e) { /* older SDK */ }
+    try {
+      call.on(VoxImplant.CallEvents.EndpointAdded, function (e) {
+        var ep = e && e.endpoint;
+        if (!ep || !ep.on) return;
+        ep.on(VoxImplant.EndpointEvents.RemoteMediaAdded, function (ev) {
+          var r = ev && ev.mediaRenderer;
+          if (r && r.kind !== "video" && r.stream) startMiraMeter(r.stream);
+        });
+      });
+    } catch (e) { /* the picture stays still */ }
     call.on(VoxImplant.CallEvents.Failed, function (e) {
       fail("The call didn't go through (" + (e && e.reason ? e.reason : "unknown") + "). Reload to try again.");
     });
@@ -1206,11 +1269,14 @@
     fillCallMics();
     startCallMeter(document.getElementById("micSel").value);
     startLocalRecording();
+    renderAgenda();
+    setTimeout(findRoomAudio, 1500);
   }
   function onCallEnded() {
     if (timerHandle) clearInterval(timerHandle);
     activeCall = null;
     stopCallMeter();
+    stopMiraMeter();
     if (phoneSwitched) { stopLocalRecording(); show("stateDone"); return; }
     var flush = stopLocalRecording();
     if (isHost) {
@@ -1242,6 +1308,132 @@
   document.getElementById("hangupBtn").addEventListener("click", function () {
     if (isHost) leaving = true;
     if (activeCall) activeCall.hangup();
+  });
+
+  // ---- 3a. Mira's picture and the feedback panel (Oct 23 2026) ------------
+  // The picture moves while the room is talking (the other people's audio,
+  // which for a guest alone with Mira is Mira) and rests on her still when it
+  // is quiet. Without access to the room's audio it simply stays still.
+  var agendaPoints = [];
+  var miraMeter = null, miraQuietSince = 0;
+  var MIRA_VOICED_RMS = 0.012, MIRA_QUIET_MS = 700;
+  function setMiraSpeaking(on) {
+    var stage = document.getElementById("miraStage");
+    var v = document.getElementById("miraVideo");
+    if (!stage || !v) return;
+    if (on) {
+      stage.classList.add("speaking");
+      if (v.paused) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); }
+    } else {
+      stage.classList.remove("speaking");
+      if (!v.paused) { v.pause(); try { v.currentTime = 0; } catch (e) { /* ignore */ } }
+    }
+  }
+  function startMiraMeter(stream) {
+    if (miraMeter || !stream || !stream.getAudioTracks || !stream.getAudioTracks().length) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new Ctx();
+      var src = ctx.createMediaStreamSource(stream);
+      var an = ctx.createAnalyser(); an.fftSize = 1024;
+      src.connect(an);
+      var buf = new Float32Array(an.fftSize);
+      miraMeter = { ctx: ctx, timer: setInterval(function () {
+        an.getFloatTimeDomainData(buf);
+        var sum = 0; for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        var rms = Math.sqrt(sum / buf.length);
+        if (rms > MIRA_VOICED_RMS) { miraQuietSince = 0; setMiraSpeaking(true); }
+        else {
+          if (!miraQuietSince) miraQuietSince = Date.now();
+          if (Date.now() - miraQuietSince > MIRA_QUIET_MS) setMiraSpeaking(false);
+        }
+      }, 120) };
+      if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+    } catch (e) { miraMeter = null; }
+  }
+  // The SDK plays the room through its own audio element; if the renderer
+  // event did not hand us the stream, read it from that element.
+  function findRoomAudio() {
+    if (miraMeter || !activeCall) return;
+    var els = document.querySelectorAll("audio");
+    for (var i = 0; i < els.length; i++) {
+      var so = els[i].srcObject;
+      if (so && so.getAudioTracks && so.getAudioTracks().length) { startMiraMeter(so); return; }
+    }
+  }
+  function stopMiraMeter() {
+    if (miraMeter) {
+      clearInterval(miraMeter.timer);
+      try { miraMeter.ctx.close(); } catch (e) { /* ignore */ }
+      miraMeter = null;
+    }
+    setMiraSpeaking(false);
+  }
+
+  var FB_TEXT = {
+    noted: "Thanks, noted. Mira keeps going.",
+    queued_move_on: "Got it. When you finish what you're saying, Mira will move to something else.",
+    queued_topic: "Got it. Mira will take you there at her next turn.",
+    applied: "Mira has it now.",
+    closing: "The closing questions have started, so Mira will finish those first.",
+    hold: "Mira is waiting for you. Just start talking when you're back.",
+    empty: "Type what you'd like to talk about first.",
+    full: "That's the limit for this interview. You can always just say it out loud.",
+    not_in_room: "You're not in the room yet.",
+    timeout: "Mira didn't confirm that one. You can always just say it out loud; she'll hear you."
+  };
+  var fbWaiting = null, fbCooldown = 0;
+  function fbStatus(text, warn) {
+    var el = document.getElementById("fbStatus");
+    el.textContent = text || "";
+    el.classList.toggle("warn", !!warn);
+  }
+  function sendFeedback(kind, text) {
+    if (!activeCall || !activeCall.sendMessage) { fbStatus(FB_TEXT.not_in_room, true); return; }
+    if (kind !== "good" && Date.now() < fbCooldown) {
+      fbStatus("Mira has your last request. Give her a moment.", true);
+      return;
+    }
+    try {
+      activeCall.sendMessage(JSON.stringify({ nn: 1, kind: kind, text: text || "" }));
+    } catch (e) { fbStatus(FB_TEXT.timeout, true); return; }
+    if (kind !== "good") fbCooldown = Date.now() + 10000;
+    fbStatus("Sending…");
+    if (fbWaiting) clearTimeout(fbWaiting);
+    fbWaiting = setTimeout(function () { fbWaiting = null; fbStatus(FB_TEXT.timeout, true); }, 6000);
+  }
+  function onRoomMessage(raw) {
+    var m = null;
+    try { m = JSON.parse(String(raw || "")); } catch (e) { return; }
+    if (!m || m.nn !== 1 || !m.status) return;
+    if (fbWaiting) { clearTimeout(fbWaiting); fbWaiting = null; }
+    var key = m.status === "queued" ? "queued_" + m.ack : m.status;
+    var warn = m.status === "closing" || m.status === "hold" || m.status === "empty" ||
+      m.status === "full" || m.status === "not_in_room";
+    if (FB_TEXT[key]) fbStatus(FB_TEXT[key], warn);
+  }
+  function renderAgenda() {
+    var box = document.getElementById("fbAgenda");
+    box.querySelectorAll("button").forEach(function (b) { b.remove(); });
+    agendaPoints.forEach(function (point) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "ghost";
+      b.textContent = point.length > 70 ? point.slice(0, 67) + "…" : point;
+      b.title = point;
+      b.addEventListener("click", function () { sendFeedback("topic", point); });
+      box.appendChild(b);
+    });
+    box.classList.toggle("hidden", !agendaPoints.length);
+  }
+  document.getElementById("fbGood").addEventListener("click", function () { sendFeedback("good"); });
+  document.getElementById("fbMove").addEventListener("click", function () { sendFeedback("move_on"); });
+  document.getElementById("fbForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var input = document.getElementById("fbText");
+    var text = input.value.trim();
+    if (!text) { fbStatus(FB_TEXT.empty, true); return; }
+    sendFeedback("topic", text);
+    input.value = "";
   });
 
   // ---- 3b. In-call silence watchdog and microphone switcher --------------

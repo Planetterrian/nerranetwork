@@ -130,7 +130,10 @@ class TestHoldMode:
         exit_hold = SCENARIO.split("function exitHold(why) {", 1)[1].split("\n}\n", 1)[0]
         assert 'nextTurnInstructions = "";' in exit_hold
         create = SCENARIO.split("turnRequested = true;", 1)[1].split("\n}\n", 1)[0]
-        assert "{ response: { instructions: nextTurnInstructions } }" in create
+        # Oct 23 2026: a guest's feedback steer is the only other source of a
+        # turn's instructions, and only when no room turn is parked.
+        assert "const instructions = nextTurnInstructions || takeGuestSteer();" in create
+        assert "{ response: { instructions: instructions } }" in create
         assert 'nextTurnInstructions = "";' in create
 
     def test_back_means_the_question_in_play_again(self):
