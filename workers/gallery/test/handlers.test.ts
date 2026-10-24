@@ -183,6 +183,57 @@ describe("resolveSubscribeTags", () => {
       });
   });
 
+  it("keeps every pre-above_fold live source byte-identical after the allow-list grew", () => {
+    // Adding src-above_fold must not change how the live site's existing
+    // Soft / newsletter payloads resolve (no source, site, youtube, etc.).
+    // Empty / unknown sources still drop to "" — same as before the tag
+    // was allow-listed.
+    const liveCases: Array<{
+      list: string;
+      source: string | undefined;
+      expectSource: string;
+      expectTags: string[];
+    }> = [
+      {
+        list: "personal-interest",
+        source: undefined,
+        expectSource: "",
+        expectTags: ["personal-interest"],
+      },
+      {
+        list: "personal-interest",
+        source: "src-nerranetwork",
+        expectSource: "src-nerranetwork",
+        expectTags: ["personal-interest", "src-nerranetwork"],
+      },
+      {
+        list: "personal-interest",
+        source: "src-youtube",
+        expectSource: "src-youtube",
+        expectTags: ["personal-interest", "src-youtube"],
+      },
+      {
+        list: "gallery",
+        source: "src-podcast",
+        expectSource: "src-podcast",
+        expectTags: ["gallery-subscriber", "src-podcast"],
+      },
+      {
+        list: "gallery",
+        source: "src-anything",
+        expectSource: "",
+        expectTags: ["gallery-subscriber"],
+      },
+    ];
+    for (const c of liveCases) {
+      expect(resolveSubscribeTags(c.list, c.source)).toEqual({
+        tags: c.expectTags,
+        list: c.list === "gallery" ? "gallery" : c.list,
+        source: c.expectSource,
+      });
+    }
+  });
+
   it("adds nerra-member + SpaceX Daily when Soft Personal opts into newsletter", () => {
     const { tags } = resolveSubscribeTags(
       "personal-interest", "src-nerranetwork", ["SpaceX Daily"],
