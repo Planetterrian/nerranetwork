@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://scholar.princeton.edu/sites/default/files/starr/files/agantstarr_final.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.aeaweb.org/articles?id=10.1257/app.20160162",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "HTTP 404",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "\\b(?:[Ii]n|[Bb]y)\\s+\\d{4},?\\s+the\\s+[A-Z][\\w'&.\\- ]{3,50}?\\s+(?i:issued|published|released|adopted|recommended|established|introduced|required|banned|mandated|approved|suspended)\\b",
+        "match": "In 2018 the Quarterly Journal of Economics published",
+        "sentence": "In 2018 the Quarterly Journal of Economics published results from a field experiment that sent roughly 15,000 fictitious job applications in New Jersey and New York City before and after local ban-the-box rules took effect."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "yet once the box disappeared the callback gap between otherwise identical white and Black applicants rose from 7 percent to 43 percent at the affected firms.",
+      "found that ban-the-box policies reduced employment probabilities by 3.4 percentage points for young Black men without college degrees",
+      "In 2018 the Quarterly Journal of Economics published results from a field experiment that sent roughly 15,000 fictitious job applications in New Jersey and New York City before and after local ban-the-box rules took effect."
+    ],
+    "flagged_count": 3,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "The 2018 Quarterly Journal of Economics paper by Agan and Starr found that the Black-White callback gap rose from 7 percent to 43 percent after ban-the-box policies at affected employers in New Jersey and New York City.",
+      "episode_span": "yet once the box disappeared the callback gap between otherwise identical white and Black applicants rose from 7 percent to 43 percent at the affected firms.",
+      "source_url": "https://scholar.princeton.edu/sites/default/files/starr/files/agantstarr_final.pdf",
+      "supporting_quote": "the Black-White gap rises from roughly 7 to 43 percentage points",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "2",
+      "claim": "Doleac and Hansen’s analysis of Current Population Survey data found that ban-the-box policies reduced employment by 3.4 percentage points for young low-skilled Black men.",
+      "episode_span": "found that ban-the-box policies reduced employment probabilities by 3.4 percentage points for young Black men without college degrees",
+      "source_url": "https://www.aeaweb.org/articles?id=10.1257/app.20160162",
+      "supporting_quote": "BTB policies reduce employment by 3.4 percentage points for young, low-skilled black men",
+      "status": "unverified_not_found",
+      "status_reason": "HTTP 404"
+    },
+    {
+      "id": "3",
+      "claim": "The first ban-the-box law was implemented in Hawaii in 1998.",
+      "episode_span": "The first ban-the-box law appeared in Hawaii in 1998.",
+      "source_url": "https://beta.dol.gov/research-data/clear/studies/unintended-consequences-ban-box-statistical-discrimination-and-employment-outcomes-when-criminal",
+      "source_title": "The unintended consequences of 'ban the box': Statistical discrimination and employment outcomes when criminal histories are hidden",
+      "supporting_quote": "The first BTB law was implemented in Hawaii in 1998.",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "u1",
+      "claim": "In 2018 the Quarterly Journal of Economics published results from a field experiment that sent roughly 15,000 fictitious job applications in New Jersey and New York City before and after local ban-the-box rules took effect.",
+      "episode_span": "In 2018 the Quarterly Journal of Economics published results from a field experiment that sent roughly 15,000 fictitious job applications in New Jersey and New York City before and after local ban-the-box rules took effect.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'In 2018 the Quarterly Journal of Economics published' with no covering verified claim"
+    }
+  ]
+}
