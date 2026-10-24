@@ -146,10 +146,14 @@ class TestSheKnowsTheRoundIsNotOver:
         sixth = [h for h in round_turns if h.startswith("[ROUND 6 of 7")]
         seventh = [h for h in round_turns if h.startswith("[ROUND 7 of 7")]
         assert sixth and seventh
-        assert all("hands you 1 more closing question and then their last word" in h for h in sixth)
-        assert "This is the last closing question" in seventh[0]
+        # Oct 24 2026: said in words that never name the end (naming what not
+        # to do yet was itself the cue, candidate rehearsal 40110915521).
+        assert all("the room hands you 2 more questions." in h for h in sixth)
+        assert "the room hands you one more question." in seventh[0]
         for h in sixth + seventh:
-            assert "no thanks, no goodbye, nothing about the recording ending" in h
+            low = h.lower()
+            for word in ("goodbye", "thanks", "last word", "recording"):
+                assert word not in low, (word, h)
             # Directions first, the question's words last.
             assert h.splitlines()[-1].endswith("?")
 

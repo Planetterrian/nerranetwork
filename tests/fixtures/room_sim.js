@@ -735,6 +735,45 @@ if (which === "server_turns_advance_the_round") {
   advance(5000);
   out.asked = asked();
   out.final = state();
+} else if (which === "rehearsal_40110915521") {
+  // The first candidate rehearsal of the Oct 24 round (run 40110915521): her
+  // whole brief rode on every round turn, closing script included; three
+  // goodbyes were cut, the fourth went through whole, and the guest's
+  // "See you next time" and "Take care" were answered with more questions.
+  run(`config.mira_system_prompt = "## Role & Persona\\nYou are Mira. Today you are conducting a live interview with: Roddy Vance.\\n\\n## Objective\\nGive Roddy the best hour.\\n\\nHOW TO CLOSE. The room hands you each closing question in turn, beginning with (What's the one bet you're making for the next twelve months that you cannot prove yet?), with the words to ask it.\\nHOW IT ENDS. Thank them once. Then the words that's the end of the recording and you can hang up now.";
+       sessionInstructions = config.mira_system_prompt; closingPermitted = true; closingRequired = true; startRound('test', -1);`);
+  const cut = function () {
+    roomTurnStarts();
+    ["Roddy, thank you for this.", " That's the end of the recording. You can"].forEach(function (d) {
+      ctx.__ev = { data: { payload: { delta: d } } }; run("noteMiraDelta(__ev);");
+    });
+    miraFinishes("Roddy, thank you for this. That's the end of the recording. You can"); responseDone();
+    run("lastRescueAt = 0;");
+  };
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("That the desert market holds into spring.", 3000); advance(5000);
+  out.roundTurn = instructions[instructions.length - 1];
+  cut(); guestSays("I didn't catch that.", 2000); advance(5000);
+  cut(); guestSays("You were saying?", 2000); advance(5000);
+  cut(); guestSays("Sorry?", 2000); advance(5000);
+  out.blocksBefore = run("roundCloseBlocks");
+  roomTurnStarts();
+  miraFinishes("The Nerra Network, at nerranetwork dot com. That's the end of the recording. You can hang up now.");
+  responseDone();
+  out.afterWholeSignOff = state();
+  const c = events.filter(function (e) { return e === "create"; }).length;
+  guestSays("Alright. Take care.", 2000); advance(5000);
+  roomTurnStarts(); miraFinishes("Take care, Roddy."); responseDone();
+  guestSays("Hanging up.", 1500); advance(60000);
+  out.createsAfterWholeSignOff = events.filter(function (e) { return e === "create"; }).length - c;
+} else if (which === "guest_goodbye_in_the_round") {
+  run("closingPermitted = true; closingRequired = true; startRound('test', -1);");
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("That the desert market holds into spring.", 3000); advance(5000);
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("Yeah. See you next time.", 2000); advance(5000);
+  out.state = state();
+  out.lastInstructions = instructions[instructions.length - 1];
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

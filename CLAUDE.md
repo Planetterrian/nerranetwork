@@ -2404,7 +2404,14 @@ stored. ⚠️ AUDIO on every interview.
   it too. **No turn with no guest in the room** (`requestTurn`, `roundGuestGone`).
   **The room starts the round when it is DUE** (`closingRequired`, minute 36
   of 45): a show question she asks herself in the window is recorded and
-  skipped, and the window note tells her not to begin it.
+  skipped, and the window note tells her not to begin it. **A round turn
+  carries a short brief of its own** (`roundBrief`: who she is and who the
+  guest is, plus any hand-over note; never the closing script) and directions
+  that never name the end; only the closing thanks carries the whole brief
+  (candidate rehearsal 40110915521: with the whole brief she asked "the last
+  thing you want to say before we finish" at question three). A goodbye past
+  `ROUND_CLOSE_BLOCKS_MAX` ends the interview there, and a guest saying
+  goodbye in the round (`GUEST_LEAVING_RE`) gets her closing thanks.
 
 
 ### The Age of AI: a feedback panel and Mira's picture in the studio (Oct 23 2026)

@@ -248,3 +248,56 @@ class TestTheRoundStartsWhenDue:
         checks = fn("startTimeChecks")
         assert "Do not begin the closing round yourself" in checks
         assert "you may\" +\n          \" begin the closing round with the show's own question" not in checks
+
+
+# ---------------------------------------------------------------------------
+# The first candidate rehearsal of these fixes (run 40110915521, same day)
+# ---------------------------------------------------------------------------
+
+class TestWhatTheFirstRehearsalShowed:
+    """Handed the third question she asked "What's the last thing you want to
+    say before we finish?" and went into her goodbye: every round turn had
+    carried her whole brief, closing script included, and directions that
+    named the end. After three cut goodbyes the fourth went through whole and
+    the room went on handing questions; "See you next time", "Take care" and
+    "Hanging up" were each answered with another one."""
+
+    def test_a_round_turn_carries_who_she_is_not_how_it_ends(self):
+        out = sim("rehearsal_40110915521")
+        turn = out["roundTurn"]
+        assert "You are Mira" in turn and "Roddy Vance" in turn
+        assert "HOW IT ENDS" not in turn and "end of the recording" not in turn
+        assert "## Objective" not in turn
+
+    def test_the_closing_thanks_alone_carries_the_whole_brief(self):
+        assert '"", true);' in fn("closeRound")
+        brief = fn("roundBrief")
+        assert '"\\n## Objective"' in brief and "=== HANDOVER" in brief
+
+    def test_the_directions_never_name_the_end(self):
+        still = fn("roundStillToCome").lower()
+        code = "\n".join(ln for ln in still.splitlines() if not ln.strip().startswith("//"))
+        for word in ("goodbye", "thanks", "last word", "recording"):
+            assert word not in code, word
+
+    def test_a_goodbye_past_the_cap_ends_it_there(self):
+        out = sim("rehearsal_40110915521")
+        assert out["blocksBefore"] == 3
+        assert any("the room had already cut 3 goodbyes" in x for x in lines(out))
+        assert out["afterWholeSignOff"]["roundClosed"] is True
+        assert out["createsAfterWholeSignOff"] == 1   # one goodbye to "Take care", then nothing
+
+    def test_a_guest_saying_goodbye_in_the_round_gets_the_closing_thanks(self):
+        out = sim("guest_goodbye_in_the_round")
+        assert "the guest is saying goodbye at 2/7; closing thanks" in lines(out)
+        assert out["state"]["roundClosed"] is True
+        assert "The closing round is complete." in out["lastInstructions"]
+
+    def test_the_leaving_pattern(self):
+        m = re.search(r"const GUEST_LEAVING_RE = /(.+)/i;", SCENARIO)
+        rx = re.compile(m.group(1), re.I)
+        for said in ("Yeah. See you next time.", "Alright. Take care.", "Hanging up.", "Bye-bye."):
+            assert rx.search(said), said
+        for said in ("We take care of patients first.", "I'd love to see you in six months.",
+                     "Thank you, Mira. I appreciate it."):
+            assert not rx.search(said), said

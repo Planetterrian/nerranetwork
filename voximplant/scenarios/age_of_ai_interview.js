@@ -1434,6 +1434,15 @@ function guestWordsChecks(text) {
     if (signedOffAt && !roundClosed && Date.now() - signedOffAt < SIGN_OFF_FAREWELL_MS &&
         GUEST_FAREWELL_RE.test(text || "")) {
       acceptSignOff("the guest said goodbye");
+    } else if (roundActive && !roundClosed && !holdMode && GUEST_LEAVING_RE.test(text || "")) {
+      // Oct 24 2026 (candidate rehearsal 40110915521): "See you next time",
+      // "Take care", "Hanging up", and the room handed her another question
+      // each time. A guest who is saying goodbye gets her closing thanks.
+      trace("round", "the guest is saying goodbye at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; closing thanks");
+      if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+      roundAwaitingAnswer = false;
+      roundRehandOwed = false;
+      closeRound();
     }
   } catch (err) { Logger.write("[aoa " + runId + "] hold/stop check failed: " + err.message); }
   // Speech while they are away is not an answer to anything she asked.
@@ -3100,13 +3109,22 @@ function catchEarlyCloseOnDelta(textSoFar) {
 let signedOffAt = 0;              // she signed off whole in the round and the room went on
 const SIGN_OFF_FAREWELL_MS = 60 * 1000;
 const GUEST_FAREWELL_RE = /\b(bye(-?bye)?|good-?bye|take care|see you|have a (good|great|nice|lovely) (one|day|night|evening|weekend)|thank you (very|so) much|thanks (very|so) much)\b/i;
+const GUEST_LEAVING_RE = /\b(bye(-?bye)?|good-?bye|take care(?! of)|see you (next time|later|soon)|(i'?m |i am )?hanging up|i'?ll let you go|talk (to you )?(soon|later))\b/i;
 const SIGN_OFF_LEAD_IN = "Say nothing about your last turn and take nothing back. Before they go," +
   " ask the question below as the next thing you say.";
 
 function catchSignOffBeforeTheRound(text) {
   if (!SIGN_OFF_RE.test(text || "")) return;
   if (signedOffAt && !roundClosed) { acceptSignOff("she signed off again"); return; }
-  if (!signOffBlockedByRound()) return;
+  if (!signOffBlockedByRound()) {
+    // The room has stopped holding the round open (the guest asked to stop,
+    // or it has already cut ROUND_CLOSE_BLOCKS_MAX goodbyes): this one stands.
+    if ((roundActive || roundPendingStart) && !roundClosed) {
+      acceptSignOff(guestAskedToStop ? "the guest asked to stop"
+                                     : "the room had already cut " + roundCloseBlocks + " goodbyes");
+    }
+    return;
+  }
   if (!rescueAllowed()) return;
   roundCloseBlocks += 1;
   trace("close", "signed off with the closing round " +
@@ -3161,8 +3179,30 @@ let roundEndedWithGuestGone = false;
 // instructions: her full session instructions (brief, show's question, any
 // hand-over transcript) with the round line after them, leaving nothing
 // behind in the conversation to be acted on a turn later.
-function roundTurn(line, label) {
-  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+// Oct 24 2026 (candidate rehearsal 40110915521, from its session log). With
+// her whole brief on every round turn, the closing script came with it
+// ("HOW IT ENDS ... that's the end of the recording"): handed the third
+// question she asked "What's the last thing you want to say before we
+// finish?" and went into her goodbye from there, as Stuart's room had at the
+// fifth. A round turn carries the part of the brief that says who she is and
+// who the guest is, and any hand-over note (a fresh session's memory of the
+// hour); the closing thanks alone carries the whole brief, since it IS the end.
+function roundBrief() {
+  const base = String(sessionInstructions || (config && config.mira_system_prompt) || "");
+  const handover = base.indexOf("\n\n=== HANDOVER");
+  const brief = handover >= 0 ? base.slice(0, handover) : base;
+  const note = handover >= 0 ? base.slice(handover) : "";
+  let cut = brief.length;
+  ["\n## Objective", "\nALREADY ANSWERED", "\n## Conversation Flow"].forEach(function (m) {
+    const i = brief.indexOf(m);
+    if (i > 0 && i < cut) cut = i;
+  });
+  if (cut === brief.length && brief.length > 1500) cut = 1500;
+  return (brief.slice(0, cut).trim() + note).trim();
+}
+
+function roundTurn(line, label, wholeBrief) {
+  const base = wholeBrief ? (sessionInstructions || (config && config.mira_system_prompt) || "") : roundBrief();
   nextTurnInstructions = (base ? base + "\n\n" : "") + line;
   roundTurnRequested = label || "";
   requestTurn(grokAgent);
@@ -3203,19 +3243,16 @@ function rehandAfterSignOff(leadIn) {
 
 // Oct 23 2026 (rehearsal 39991520039). Near the end of the round she took
 // the interview to be over: handed a question, she said her goodbye three
-// times instead. Each round turn says what is still to come after it, so the
-// question she is handed is never read as the last thing she says.
+// times instead. Each round turn says that more follows after it. Oct 24
+// 2026: in words that never name the end ("last word", "thanks", "goodbye",
+// "the recording"): naming what not to do yet was itself the cue.
 function roundStillToCome(index) {
   let left = 0;
   for (let i = index + 1; i < ROUND_QUESTIONS.length; i++) {
     if (roundAsked[ROUND_QUESTIONS[i][0]] === undefined) left += 1;
   }
-  return (left > 0
-    ? "After their answer the room hands you " + left + " more closing question" +
-      (left > 1 ? "s" : "") + " and then their last word, so the interview does not end on this turn:"
-    : "This is the last closing question; after their answer the room hands them the last word," +
-      " so the interview does not end on this turn:") +
-    " no thanks, no goodbye, nothing about the recording ending.";
+  return "This is the middle of the closing round: after their answer the room hands you " +
+    (left > 0 ? (left + 1) + " more questions." : "one more question.");
 }
 
 /** The show's own closing question in its own words: from her brief. */
@@ -3295,7 +3332,7 @@ function askNextRoundQuestion() {
   roundLeadIn = "";
   try {
     roundTurn(roundDirections((next + 1) + " of " + ROUND_QUESTIONS.length,
-        "You are in the closing round. " + roundStillToCome(next) + " " +
+        roundStillToCome(next) + " " +
         (leadIn
           ? leadIn
           : "If something in what they just said struck you, react to it first in one short" +
@@ -3401,7 +3438,7 @@ function closeRound() {
     roundTurn(roundDirections("close",
         "The closing round is complete. One short turn: thank them warmly for something" +
         " particular they said today, then tell them that's the end of the recording and" +
-        " they can hang up now, and end your turn there."));
+        " they can hang up now, and end your turn there."), "", true);
   } catch (err) {
     Logger.write("[aoa " + runId + "] closing thanks failed: " + err.message);
   }
