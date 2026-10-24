@@ -70,6 +70,12 @@ export interface Env {
   // that books one; without it a slug or title containing "hello" is one.
   CALCOM_EVENT_SLUG_HELLO?: string;
   SLACK_WEBHOOK?: string;
+  // Oct 24 2026: the backup clock. Supabase's pg_cron posts to
+  // /voices/cron-tick one minute after each Cloudflare slot with this bearer
+  // secret (it lives in Supabase Vault as voices_cron_tick_secret and in the
+  // Worker's secrets, never in git). It is NOT ADMIN_TOKEN. Unset = the
+  // endpoint refuses every call and Cloudflare's cron is the only clock.
+  CRON_TICK_SECRET?: string;
   // Oct 21 2026: the room signs what it posts here. The scenario carries the
   // same value (substituted at deploy as __VOICES_WEBHOOK_SECRET__) and sends
   // X-Voices-Signature: sha256=<hex HMAC-SHA256 of the raw body>. Unset =
@@ -3986,6 +3992,200 @@ function withCors(req: Request, res: Response): Response {
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// One tick, two clocks (Oct 24 2026)
+// ---------------------------------------------------------------------------
+//
+// The Worker's one cron trigger ("*/5 * * * *") stopped firing at about
+// 17:15 UTC on Oct 23, during Cloudflare's cron incident, and stayed dead for
+// 23 hours: not brought back by the incident's resolution, a redeploy, or the
+// schedule deleted and re-added with the same expression (re-registered as
+// "0-59/5" on Oct 24, which fired at the next slot). nerra-scheduler's */5 in
+// the same account fired throughout. A guest's T-2h reminder never went out,
+// Mira's inbox ran every few hours instead of every half hour, and nothing
+// said so. It was Cloudflare's fourth cron incident in ten days.
+//
+// So the tick has two clocks. Cloudflare fires at :00/:05/...; Supabase's
+// pg_cron posts /voices/cron-tick one minute later (migration
+// 20261024_voices_backup_clock.sql). Whichever arrives first claims the
+// five-minute slot in cron_ticks and runs the jobs; the other finds the slot
+// taken and does nothing. Every minute-based decision reads the SLOT, never
+// the arrival time, so the backup at :01 runs the :00 jobs. The GitHub
+// schedule on nerra_voices_fire_interview.yml stays the third clock.
+
+export type TickSource = "cloudflare" | "supabase" | "manual";
+export const TICK_SLOT_MS = 5 * 60 * 1000;
+/** A supabase tick with no cloudflare claim in this long means Cloudflare's timer has stopped. */
+export const CLOUDFLARE_QUIET_MS = 20 * 60 * 1000;
+export const CLOCK_STOPPED_TEXT = "Cloudflare's timer has stopped; the backup clock is carrying reminders.";
+export const CLOCK_BACK_TEXT = "Cloudflare's timer is back.";
+
+/** The five-minute UTC slot a firing belongs to. */
+export function tickSlot(d: Date): Date {
+  return new Date(Math.floor(d.getTime() / TICK_SLOT_MS) * TICK_SLOT_MS);
+}
+
+/** "claimed": this clock runs the slot; "taken": another clock already did;
+ *  "unknown": Supabase did not answer, so the tick runs anyway (fail open). */
+async function claimSlot(env: Env, slot: Date, source: TickSource): Promise<"claimed" | "taken" | "unknown"> {
+  try {
+    const rows = await sb(env, "POST", "cron_ticks", { slot: slot.toISOString(), source },
+                          "resolution=ignore-duplicates,return=representation");
+    return Array.isArray(rows) && rows.length > 0 ? "claimed" : "taken";
+  } catch (err: any) {
+    console.error(`cron tick ${slot.toISOString()} (${source}): claim failed, running anyway:`, err?.message ?? err);
+    return "unknown";
+  }
+}
+
+async function clockAlert(env: Env, subject: string, text: string) {
+  await slack(env, text);
+  try {
+    await email(env, operatorEmail(env), subject,
+      `<p>${text}</p><p style="color:#555">The Voices Worker runs each five-minute tick from` +
+      ` whichever clock arrives first: Cloudflare's cron, or Supabase's pg_cron one minute later.` +
+      ` Live state: <a href="https://api.nerranetwork.com/voices/health">/voices/health</a>.</p><p>Mira</p>`);
+  } catch (err: any) {
+    console.error("clock alert email failed:", err?.message ?? err);
+  }
+}
+
+/**
+ * The watchdog. The outage is a row in Supabase (cron_clock_state), never
+ * memory: a supabase tick that claims a slot with no cloudflare claim in the
+ * last CLOUDFLARE_QUIET_MS opens the outage, and only the tick whose PATCH
+ * finds it closed alerts; a cloudflare claim closes it and says so once.
+ */
+async function watchCloudflare(env: Env, slot: Date, source: TickSource) {
+  try {
+    if (source === "cloudflare") {
+      const closed = await sb(env, "PATCH", "cron_clock_state?name=eq.cloudflare&outage_since=not.is.null",
+                              { outage_since: null, recovered_at: new Date().toISOString() },
+                              "return=representation");
+      if (Array.isArray(closed) && closed.length) {
+        await clockAlert(env, CLOCK_BACK_TEXT, CLOCK_BACK_TEXT);
+      }
+      return;
+    }
+    if (source !== "supabase") return;
+    const since = new Date(slot.getTime() - CLOUDFLARE_QUIET_MS).toISOString();
+    const recent = await sb(env, "GET",
+      `cron_ticks?select=slot&source=eq.cloudflare&slot=gte.${encodeURIComponent(since)}&limit=1`);
+    if (Array.isArray(recent) && recent.length) return;
+    const opened = await sb(env, "PATCH", "cron_clock_state?name=eq.cloudflare&outage_since=is.null",
+                            { outage_since: new Date().toISOString() }, "return=representation");
+    if (Array.isArray(opened) && opened.length) {
+      await clockAlert(env, "Cloudflare's timer has stopped", CLOCK_STOPPED_TEXT);
+    }
+  } catch (err: any) {
+    console.error("cron watchdog failed:", err?.message ?? err);
+  }
+}
+
+/** One tick: claim the slot, run its jobs, watch the other clock. */
+export async function runTick(env: Env, fired: Date, source: TickSource): Promise<{ slot: string; ran: boolean }> {
+  const slot = tickSlot(fired);
+  const claim = await claimSlot(env, slot, source);
+  if (claim === "taken") {
+    console.log(`cron tick ${slot.toISOString()} (${source}): another clock already ran this slot`);
+    return { slot: slot.toISOString(), ran: false };
+  }
+  // */5 tick: punctual fire dispatch (Cloudflare crons fire to the
+  // minute; GitHub's own schedule trigger lags up to hours — a real
+  // guest sat in a locked studio on Aug 5 2026). Everything downstream
+  // is idempotent, so overlapping with the GitHub fallback cron is safe.
+  // Oct 9 2026: ONE cron trigger carries all three jobs.
+  // The account was then on Workers Free (five cron triggers in total) and
+  // the show scheduler needed one back (it is on Workers Paid since); the handler reads the firing minute
+  // instead of the trigger string. Every job below is idempotent, so a
+  // :00/:30 firing running the five-minute block AND the half-hour block
+  // is the same as the two triggers it replaces. Oct 24 2026: the minute is
+  // the SLOT's, whichever clock is running it.
+  const minute = slot.getUTCMinutes();
+  const halfHour = minute % 30 === 0;
+  const gate2Hour = slot.getUTCHours() === 17 && minute === 0;
+  {
+    try {
+      // Oct 13 2026: gated on the schedule (fireTickDue); the half-hour
+      // ticks dispatch unconditionally as the catch-all.
+      if (halfHour || await fireTickDue(env)) {
+        await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
+      }
+    } catch (err: any) {
+      console.error("fire-tick dispatch failed:", err?.message ?? err);
+    }
+    try { await reminderFallback(env); }
+    catch (err: any) { console.error("reminder fallback failed:", err?.message ?? err); }
+    // Oct 2 2026 (Jason Fishman): a guest who writes "I'm in, nobody's
+    // here" during their slot waited for the half-hourly inbox run. While
+    // an interview is live the inbox runs every five minutes instead, so
+    // Mira answers within minutes.
+    try {
+      if (await interviewIsLive(env)) await dispatch(env, "producer-tick", { source: "live-interview" });
+    } catch (err: any) {
+      console.error("live producer-tick failed:", err?.message ?? err);
+    }
+  }
+  // :00/:30 tick: the Nerra Producer inbox job. Same landmine as the fire
+  // tick — GitHub delivered the Producer's own */30 schedule roughly
+  // every four hours on Sept 5-6 2026, so a publicist's reply waited
+  // half a day. Cloudflare fires to the minute; the workflow's
+  // concurrency group makes the overlap with GitHub's cron harmless.
+  if (halfHour) {
+    try {
+      // Oct 19 2026: gated on Gmail (producerTickDue) — a runner starts
+      // only when a thread is waiting in either mailbox; fail-open.
+      if (await producerTickDue(env)) {
+        await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
+      } else {
+        console.log("producer-tick: nothing unprocessed in Gmail; no dispatch");
+      }
+    } catch (err: any) {
+      console.error("producer-tick dispatch failed:", err?.message ?? err);
+    }
+  }
+  // 17:00 UTC: gate-2 housekeeping (guest-review reminders / auto-approve).
+  // The slot claim is what keeps its day-4 reminder from going out twice.
+  if (gate2Hour) await gate2Housekeeping(env);
+  if (claim === "claimed") await watchCloudflare(env, slot, source);
+  return { slot: slot.toISOString(), ran: true };
+}
+
+// POST /voices/cron-tick — the backup clock (Supabase pg_cron). Bearer
+// CRON_TICK_SECRET only; ADMIN_TOKEN is refused. The tick runs under
+// waitUntil as well as being awaited, so a caller that stops waiting (pg_net
+// gives up at 25 s) never cuts a tick off halfway through its jobs.
+async function handleCronTick(req: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
+  const secret = (env.CRON_TICK_SECRET || "").trim();
+  const auth = req.headers.get("Authorization") ?? "";
+  const m = /^Bearer\s+(.+)$/i.exec(auth);
+  const given = m ? m[1].trim() : "";
+  const admin = (env.ADMIN_TOKEN || "").trim();
+  if (!secret || !given || (admin && tokenEquals(given, admin)) || !tokenEquals(given, secret)) {
+    return json({ error: "unauthorized" }, 401);
+  }
+  const tick = runTick(env, new Date(), "supabase");
+  if (ctx) ctx.waitUntil(tick.catch(() => {}));
+  return json(await tick);
+}
+
+/** The last slot each clock claimed, and the watchdog's state, for /voices/health. */
+async function clockHealth(env: Env): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {};
+  try {
+    for (const source of ["cloudflare", "supabase", "manual"]) {
+      const rows = await sb(env, "GET",
+        `cron_ticks?select=slot,claimed_at&source=eq.${source}&order=slot.desc&limit=1`);
+      out[source] = Array.isArray(rows) && rows.length ? rows[0] : null;
+    }
+    const state = await sb(env, "GET", "cron_clock_state?select=outage_since,recovered_at&name=eq.cloudflare");
+    out.cloudflare_outage = Array.isArray(state) && state.length ? state[0] : null;
+  } catch (err: any) {
+    out.error = err?.message ?? String(err);
+  }
+  return out;
+}
+
 // GET /voices/health — deploy verification without waiting for a cron
 // tick. Read-only: reports which secrets are set (never their values), the
 // cron schedule, and a live GitHub auth probe (`GET /repos/<repo>` needs
@@ -3998,7 +4198,8 @@ async function handleHealth(env: Env): Promise<Response> {
   const out: Record<string, unknown> = {
     worker: "nerra-voices-api",
     now: new Date().toISOString(),
-    cron: { trigger: "*/5 * * * * (the one trigger; jobs by firing minute)",
+    cron: { trigger: "0-59/5 * * * * (the one trigger; jobs by the five-minute slot)",
+            backup: "Supabase pg_cron 1-59/5 -> POST /voices/cron-tick (first claim of a slot runs it)",
             fire_tick: "every 5 min -> repository_dispatch fire-tick",
             producer_tick: ":00/:30 -> repository_dispatch producer-tick",
             gate2: "17:00 UTC" },
@@ -4022,9 +4223,11 @@ async function handleHealth(env: Env): Promise<Response> {
       // Oct 21 2026: inbound webhooks are signed by the room when this is set.
       webhook_secret: !!(env.VOICES_WEBHOOK_SECRET || "").trim(),
       calcom_webhook_secret: !!(env.CALCOM_WEBHOOK_SECRET || "").trim(),
+      cron_tick_secret: !!(env.CRON_TICK_SECRET || "").trim(),
     },
     shows: Object.keys(SHOWS),
   };
+  if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) out.clocks = await clockHealth(env);
   if (tok) {
     try {
       const resp = await fetch(`https://api.github.com/repos/${REPO}`, {
@@ -4049,7 +4252,14 @@ async function handleHealth(env: Env): Promise<Response> {
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
+    if (req.method === "POST" && new URL(req.url).pathname.replace(/\/+$/, "") === "/voices/cron-tick") {
+      try { return await handleCronTick(req, env, ctx); }
+      catch (err: any) {
+        console.error("cron-tick failed:", err?.message ?? err);
+        return json({ error: "internal error" }, 500);
+      }
+    }
     if (req.method === "OPTIONS") {
       const origin = req.headers.get("Origin");
       return new Response(null, {
@@ -4137,61 +4347,8 @@ export default {
   },
 
   async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
-    // */5 tick: punctual fire dispatch (Cloudflare crons fire to the
-    // minute; GitHub's own schedule trigger lags up to hours — a real
-    // guest sat in a locked studio on Aug 5 2026). Everything downstream
-    // is idempotent, so overlapping with the GitHub fallback cron is safe.
-    // Oct 9 2026: ONE cron trigger ("*/5 * * * *") carries all three jobs.
-    // The account was then on Workers Free (five cron triggers in total) and
-    // the show scheduler needed one back (it is on Workers Paid since); the handler reads the firing minute
-    // instead of the trigger string. Every job below is idempotent, so a
-    // :00/:30 firing running the five-minute block AND the half-hour block
-    // is the same as the two triggers it replaces.
-    const fired = new Date(event.scheduledTime);
-    const minute = fired.getUTCMinutes();
-    const halfHour = minute % 30 === 0;
-    const gate2Hour = fired.getUTCHours() === 17 && minute === 0;
-    {
-      try {
-        // Oct 13 2026: gated on the schedule (fireTickDue); the half-hour
-        // ticks dispatch unconditionally as the catch-all.
-        if (halfHour || await fireTickDue(env)) {
-          await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
-        }
-      } catch (err: any) {
-        console.error("fire-tick dispatch failed:", err?.message ?? err);
-      }
-      try { await reminderFallback(env); }
-      catch (err: any) { console.error("reminder fallback failed:", err?.message ?? err); }
-      // Oct 2 2026 (Jason Fishman): a guest who writes "I'm in, nobody's
-      // here" during their slot waited for the half-hourly inbox run. While
-      // an interview is live the inbox runs every five minutes instead, so
-      // Mira answers within minutes.
-      try {
-        if (await interviewIsLive(env)) await dispatch(env, "producer-tick", { source: "live-interview" });
-      } catch (err: any) {
-        console.error("live producer-tick failed:", err?.message ?? err);
-      }
-    }
-    // :00/:30 tick: the Nerra Producer inbox job. Same landmine as the fire
-    // tick — GitHub delivered the Producer's own */30 schedule roughly
-    // every four hours on Sept 5-6 2026, so a publicist's reply waited
-    // half a day. Cloudflare fires to the minute; the workflow's
-    // concurrency group makes the overlap with GitHub's cron harmless.
-    if (halfHour) {
-      try {
-        // Oct 19 2026: gated on Gmail (producerTickDue) — a runner starts
-        // only when a thread is waiting in either mailbox; fail-open.
-        if (await producerTickDue(env)) {
-          await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
-        } else {
-          console.log("producer-tick: nothing unprocessed in Gmail; no dispatch");
-        }
-      } catch (err: any) {
-        console.error("producer-tick dispatch failed:", err?.message ?? err);
-      }
-    }
-    // 17:00 UTC: gate-2 housekeeping (guest-review reminders / auto-approve).
-    if (gate2Hour) await gate2Housekeeping(env);
+    // Oct 24 2026: the body is runTick, shared with the backup clock
+    // (POST /voices/cron-tick); the slot claim decides which clock runs it.
+    await runTick(env, new Date(event.scheduledTime), "cloudflare");
   },
 };

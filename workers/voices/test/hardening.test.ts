@@ -238,6 +238,8 @@ function housekeepingFetch(opts: { failFirstEmail?: boolean; failDispatch?: bool
       return opts.failFirstEmail && emails === 1 ? "fail" : null;
     }
     if (c.url.endsWith("/dispatches")) return opts.failDispatch ? "fail" : null;
+    // Oct 24 2026: the tick claims its five-minute slot first.
+    if (c.method === "POST" && t === "cron_ticks") return [{ slot: c.body.slot, source: c.body.source }];
     if (c.method === "GET" && t === "editorial_packages") {
       return [
         { id: "p-reminder", interview_id: IV, guest_review_deadline: day4, guest_review_token: "tok1tok1tok1tok1tok1" },
