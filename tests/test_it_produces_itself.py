@@ -1948,10 +1948,12 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
                               self.SCENARIO.index("const SIGN_OFF_RE")]
         assert "YOU ARE NOT NEAR THE END" in block
         assert "elapsed < closingOpensAtMin()" in block
-        # Oct 21 2026: once permitted, the ROOM hands her the closing
-        # questions one at a time (startRound); the note says so.
-        assert "you may" in block and "begin the closing round" in block
-        assert "the room hands you each closing question" in block
+        # Oct 21 2026: the ROOM hands her the closing questions one at a time
+        # (startRound). Oct 24 2026: and starts the round itself when it is
+        # due; the window-open note no longer invites her to begin it.
+        assert "Do not begin the closing round yourself" in block
+        assert "the room hands you its first" in block
+        assert "you may begin the closing round with the show's own question" not in block
 
     def test_the_closing_window_matches_the_prompts(self):
         import importlib, sys as _sys

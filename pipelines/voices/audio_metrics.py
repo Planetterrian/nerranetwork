@@ -238,6 +238,10 @@ _ROUND_LATE = re.compile(r"^said late\b", re.I)
 _ROUND_REHAND = re.compile(r"^(her turn asked (nothing|something else)|the sign-off took the question's place"
                            r"|they spoke, but .+ never reached them)", re.I)
 _ROUND_OWN_WORDS = re.compile(r"\s*\(her own words\)\s*$", re.I)
+# Oct 24 2026: a question handed again once and still not asked is taken as
+# asked so the round moves on; it never reached the guest, so the round it
+# belongs to is not complete.
+_ROUND_TAKEN = re.compile(r"^taken as asked:", re.I)
 _SEAM_RE = re.compile(r"(handing over to a fresh session|connection dropped|"
                       r"rescued after a dropped connection|session \d+ bridged)", re.I)
 
@@ -274,6 +278,7 @@ def closing_round(trace: Optional[Sequence[dict]],
     late = 0
     repeats = 0
     rehanded = 0
+    unheard = 0
     saw_answered_lines = False
     traced_total = 0            # the N of "asked n/N": the room's own count
     awaiting_answer = False     # an ask with no "answered" line yet
@@ -292,6 +297,10 @@ def closing_round(trace: Optional[Sequence[dict]],
             continue
         if _ROUND_LATE.match(detail):
             late += 1
+            previous_was_ask = False
+            continue
+        if _ROUND_TAKEN.match(detail):
+            unheard += 1
             previous_was_ask = False
             continue
         if _ROUND_REHAND.match(detail):
@@ -342,11 +351,12 @@ def closing_round(trace: Optional[Sequence[dict]],
     # room as incomplete, or complete one question early.
     expected = traced_total or expected
     complete = (len(asked) >= expected and stacked == 0 and late == 0
-                and repeats == 0 and len(answered) >= len(asked))
+                and repeats == 0 and unheard == 0 and len(answered) >= len(asked))
     return {"closing_round_complete": bool(asked) and complete,
             "round_asked": len(asked), "round_stacked": stacked,
             "round_answered": len(answered), "round_late": late,
-            "round_repeats": repeats, "round_rehanded": rehanded}
+            "round_repeats": repeats, "round_rehanded": rehanded,
+            "round_unheard": unheard}
 
 
 def seams(trace: Optional[Sequence[dict]], guest_turns: Sequence[dict],

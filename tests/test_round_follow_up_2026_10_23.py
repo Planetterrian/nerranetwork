@@ -109,4 +109,6 @@ class TestSheIsGivenTheWords:
     def test_the_instruction_carries_the_line_not_the_label(self):
         i = SCENARIO.index("function roundQuestionText")
         body = SCENARIO[i:SCENARIO.index("\n}\n", i)]
-        assert "return entry[2] || label;" in body
+        # Oct 24 2026: never the label; with no words to hand, nothing.
+        assert 'return entry[2] || "";' in body
+        assert "return showQuestionText();" in body

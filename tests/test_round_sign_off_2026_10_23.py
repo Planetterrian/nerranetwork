@@ -72,8 +72,10 @@ class TestASignOffAfterTheFactIsCorrectedInTheSameTurn:
         assert out["notesAdded"] == 0
         assert len(out["handed"]) == 1
         handed = out["handed"][0]
-        assert "you spoke too soon" in handed
-        assert "What's a book you would recommend, and in a sentence, why?" in handed
+        # Oct 24 2026 (Stuart's room): nothing is taken back on air.
+        assert "spoke too soon" not in handed
+        assert "take nothing back" in handed
+        assert handed.splitlines()[-1] == "What's a book you would recommend, and in a sentence, why?"
         assert out["state"]["roundIndex"] == 1 and out["state"]["roundAwaitingAnswer"] is True
 
 

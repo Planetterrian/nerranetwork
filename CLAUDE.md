@@ -2382,6 +2382,30 @@ behaviour driven through the real scenario in a node vm by
 Operator: deploy the scenario only after the candidate rehearsal reads PASS and
 one listen; `wrangler deploy` in `workers/voices` so the new counters are
 stored. ⚠️ AUDIO on every interview.
+- **The closing round from a real room (Oct 24 2026, run b579faba, read from
+  its trace, transcript and full session log; guards
+  `tests/test_round_from_stuarts_room_2026_10_24.py`, sim `stuart_room`).**
+  "Her turn asked nothing" is decided ONCE, on the final transcription of the
+  turn the room asked for (`roundTurnInFlight`, set in `markTurnStarted` for a
+  requested turn; a turn with no transcription is taken as asked,
+  `roundTurnDone`). **A question is handed again at most once, whatever the
+  reason** (`ROUND_REHANDS_MAX` 1, `owedRehand`); then it is taken as asked
+  (trace `taken as asked:`, which makes `closing_round_complete` false). **The
+  index never moves back** (`roundRehandOwed` re-hands at the same index; no
+  `roundIndex -= 1`). Every round turn hands **the words of a whole question,
+  last**, after directions with nothing speakable in them (no "silence", no
+  "stop talking"); the show's question comes from her brief
+  (`showQuestionText`), and a question with no words is skipped, never
+  described. A guest who declines a question, or hears "who should I
+  interview next" as one about himself, has answered it (`ROUND_DECLINE_RE`).
+  **Nothing is taken back on air**: a goodbye heard whole is followed by the
+  question in play with no retraction while it can still go again, else the
+  interview ends on it (`acceptSignOff`), and a guest's goodbye after it ends
+  it too. **No turn with no guest in the room** (`requestTurn`, `roundGuestGone`).
+  **The room starts the round when it is DUE** (`closingRequired`, minute 36
+  of 45): a show question she asks herself in the window is recorded and
+  skipped, and the window note tells her not to begin it.
+
 
 ### The Age of AI: a feedback panel and Mira's picture in the studio (Oct 23 2026)
 
