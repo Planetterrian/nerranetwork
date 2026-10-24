@@ -104,55 +104,64 @@ class TestPatricksSevenQuestions:
 
 
 class TestAQuestionNeverHeardIsNotAnswered:
-    def test_the_guest_saying_she_trailed_off_hands_it_again(self):
+    """Oct 24 2026: a question that never reached the guest goes again ONCE
+    (Stuart Berkowitz's room); after that it is taken as asked and the round
+    moves on, so a guest is never held in a loop."""
+
+    def test_the_cut_sign_off_hands_it_again_once(self):
         out = sim("round_end_as_rehearsed")
         lines = round_lines(out)
-        assert ("they spoke, but how being interviewed by an AI was, and one improvement"
-                " never reached them; handing 6/7 again") in lines
-        assert out["afterTrailedOff"]["roundIndex"] == 5
-        assert out["afterTrailedOff"]["roundAwaitingAnswer"] is True
-        # Asked in its words at last, its answer moves the round on.
+        label = "how being interviewed by an AI was, and one improvement"
+        assert ("the sign-off took the question's place; " + label +
+                " goes again when they finish") in lines
+        # "handed" starts after its first hand: exactly one more, never two.
+        assert sum(1 for h in out["handed"] if h.split("\n\n")[-1].startswith("[ROUND 6 of 7")) == 1
+        # The second cut finds it already handed again: taken as asked.
+        assert any(x.startswith("taken as asked: " + label) for x in lines)
         assert "answered 6/7" in lines and "answered 7/7" in lines
-        assert lines.index("answered 6/7") > lines.index(
-            "they spoke, but how being interviewed by an AI was, and one improvement"
-            " never reached them; handing 6/7 again")
+        assert out["afterTrailedOff"]["roundIndex"] == 6
 
-    def test_it_is_handed_again_at_most_twice(self):
+    def test_one_budget_for_every_reason(self):
+        assert "const ROUND_REHANDS_MAX = 1;" in SCENARIO
         fn = SCENARIO[SCENARIO.index("function roundAnswered()"):]
         fn = fn[:fn.index("\nfunction ", 10)]
-        assert "ROUND_UNHEARD_REHANDS_MAX" in fn
-        assert "const ROUND_UNHEARD_REHANDS_MAX = 2;" in SCENARIO
-        # A question she asked twice in words the room cannot recognise is
-        # taken as asked, never handed again for being unheard.
-        assert "!roundAskedUnrecognised[" in fn
+        assert "owedRehand(label, \"they spoke, but it never reached them\")" in fn
+        assert "ROUND_UNHEARD_REHANDS_MAX" not in SCENARIO
+        assert "roundIndex -= 1" not in SCENARIO
 
-    def test_the_metric_counts_it_once(self):
+    def test_the_metric_says_the_round_was_not_complete(self):
         import audio_metrics
         out = sim("round_end_as_rehearsed")
         summary = audio_metrics.closing_round(out["trace"])
         assert summary["round_asked"] == 7
         assert summary["round_stacked"] == 0
-        assert summary["closing_round_complete"] is True
+        assert summary["round_unheard"] == 1
+        assert summary["closing_round_complete"] is False
 
 
 class TestSheKnowsTheRoundIsNotOver:
     def test_each_question_says_what_is_still_to_come(self):
         out = sim("round_end_as_rehearsed")
-        sixth = [h for h in out["handed"] if h.startswith("[ROUND 6 of 7")]
-        seventh = [h for h in out["handed"] if h.startswith("[ROUND 7 of 7")]
+        round_turns = [h.split("\n\n")[-1] for h in out["handed"]]
+        sixth = [h for h in round_turns if h.startswith("[ROUND 6 of 7")]
+        seventh = [h for h in round_turns if h.startswith("[ROUND 7 of 7")]
         assert sixth and seventh
-        assert all("hands you 1 more closing question, then their last word" in h for h in sixth)
+        assert all("hands you 1 more closing question and then their last word" in h for h in sixth)
         assert "This is the last closing question" in seventh[0]
         for h in sixth + seventh:
             assert "no thanks, no goodbye, nothing about the recording ending" in h
+            # Directions first, the question's words last.
+            assert h.splitlines()[-1].endswith("?")
 
 
 class TestNothingAfterTheGoodbye:
     def test_one_goodbye_then_silence(self):
         out = sim("round_end_as_rehearsed")
         assert out["createsAfterThanks"] == 1
-        assert out["lastInstructions"].endswith("Say goodbye in a few words, then stop talking.")
-        assert round_lines(out).count("the interview is over; no turn after her goodbye") == 2
+        assert out["lastInstructions"].endswith("Say goodbye in a few words and end your turn there.")
+        assert round_lines(out).count("the interview is over; no turn after her goodbye") == 1
+        # Once they have gone, no turn at all (Oct 24 2026).
+        assert "no guest in the room; no turn" in round_lines(out)
 
     def test_no_time_notes_after_the_round(self):
         tick = SCENARIO[SCENARIO.index("function startTimeChecks()"):]
@@ -182,10 +191,15 @@ class TestAQuestionOfHerOwnIsNotTheRoundQuestion:
     def test_another_round_question_never_counts_as_this_one(self):
         out = sim("another_round_question_in_its_place")
         lines = round_lines(out)
-        assert ("they spoke, but the best advice they were ever given never reached them;"
-                " handing 4/7 again") in lines
-        assert out["afterFollowUp"]["roundIndex"] == 3
-        assert "answered 4/7" in lines and out["final"]["roundIndex"] == 4
+        # Handed the advice question she reacted only: handed again, once.
+        assert ("her turn asked nothing; the best advice they were ever given goes again"
+                " when they finish") in lines
+        # Handed again, she asked the follow-up question instead: that is
+        # never this one reworded, and with its one re-hand spent the advice
+        # question is taken as asked (Oct 24 2026), never a third time.
+        assert any(x.startswith("taken as asked: the best advice they were ever given") for x in lines)
+        assert out["afterFollowUp"]["roundIndex"] == 4
+        assert "answered 4/7" in lines
 
     def test_the_topic_check_does_not_take_any_interview_word(self):
         topics = SCENARIO[SCENARIO.index("const ROUND_TOPICS = {"):]
@@ -200,12 +214,17 @@ class TestNoStageWordsInHerTurns:
     turn tells her to wait in silence or say nothing else (rehearsals
     39991520039 and 39998790684, and the Oct 22 hold check-in)."""
 
-    def test_round_and_goodbye_turns_end_on_stop_talking(self):
-        for fn in ("askRoundLastWord", "closeRound", "roundReprompt"):
+    def test_round_and_goodbye_turns_carry_no_speakable_stage_words(self):
+        # Oct 24 2026 (Stuart's room): she said "Silence." and read a label
+        # aloud. No round turn says "silence" or "stop talking"; each ends on
+        # the words she is to say.
+        for fn in ("askNextRoundQuestion", "askRoundLastWord", "closeRound", "roundReprompt"):
             body = SCENARIO[SCENARIO.index(f"function {fn}("):]
             body = body[:body.index("\nfunction ", 10)]
-            assert "in silence" not in body and "Nothing after" not in body, fn
-        assert "Say goodbye in a few words, then stop talking." in SCENARIO
+            body = "\n".join(ln for ln in body.splitlines() if not ln.strip().startswith("//"))
+            assert "silence" not in body.lower(), fn
+            assert "stop talking" not in body, fn
+        assert "Say goodbye in a few words and end your turn there." in SCENARIO
         assert "Nothing else.\";" not in SCENARIO
 
 

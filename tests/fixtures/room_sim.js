@@ -77,7 +77,9 @@ ctx.__agent = agent;
 const acks = [];      // what the room sent back to the studio page
 ctx.__acks = acks;
 run(`
-  runId = "sim"; config = { planned_minutes: 45, show_question: "the one bet you are making" };
+  runId = "sim"; config = { planned_minutes: 45, mira_system_prompt: "HOW TO CLOSE. The room hands you each" +
+    " closing question in turn, beginning with (What's the one bet you're making for the next twelve" +
+    " months that you cannot prove yet?), with the words to ask it." };
   grokAgent = __agent; openingFired = true; sessionReady = true;
   firstJoinAt = Date.now() - 35 * 60 * 1000;
   legs = [{ id: "guest-1", role: "guest", call: { sendMessage: function (t) { __acks.push(JSON.parse(t)); } }, joinedAt: firstJoinAt }];
@@ -133,6 +135,10 @@ function miraFinishesLine(text) {
   ctx.__text = text;
   run("noteMiraLineSpoken(__text); miraSpeaking = false; remember('Mira', __text); armDeadAir();");
 }
+// The question the room's last turn handed her: the last line of its instructions.
+function handed() { const t = instructions[instructions.length - 1] || ""; return t.slice(t.lastIndexOf("\n") + 1); }
+function responseDone() { run("miraSpeaking = false; roundTurnDone(); armDeadAir();"); }
+function asked() { return trace.filter(function (x) { return x.e === "round" && /^asked \d+\//.test(x.d); }).map(function (x) { return +/^asked (\d+)/.exec(x.d)[1]; }); }
 function words(n) { return Array.from({ length: n }, function (_, i) { return "word" + i; }).join(" ") + "?"; }
 function state() {
   return run(`({ roundActive, roundIndex, roundAwaitingAnswer, roundClosed, holdMode,
@@ -589,7 +595,6 @@ if (which === "server_turns_advance_the_round") {
   guestSays("Sounds like you trailed off there.", 2000);
   advance(5000);
   out.afterTrailedOff = state();
-  ask("How was the experience of being interviewed by an AI, and what's one specific thing we could improve?", "Easier than I expected. Slow down at the start.");
   ask("Would you like to come back for a follow-up interview in six months to a year, to talk about where your projects have gone and to see how much I've improved?", "I would.");
   ask("Is there anything you came wanting to say that the two of us never reached?", "The valley teaches you to love two things at once.");
   out.handed = instructions.slice(before);
@@ -625,6 +630,110 @@ if (which === "server_turns_advance_the_round") {
   ask("Good to hear. Would you like a follow-up interview sometime down the road?", "I'd be open to it.");
   out.afterFollowUp = state();
   ask("What's the best piece of advice you were ever given?", "The house will still be there tomorrow.");
+  out.final = state();
+} else if (which === "stuart_room") {
+  // Oct 23 2026, run b579faba (a 45-minute room), replayed from its session
+  // log: what she said, turn by turn, in the order the room heard it.
+  const herTurn = function (text) {     // a turn the room decided, then its final transcription
+    run("requestTurn(grokAgent);"); roomTurnStarts();
+    if (text !== null) miraFinishes(text);
+    responseDone();
+  };
+  run("firstJoinAt = Date.now() - 30 * 60 * 1000; closingPermitted = true; closingRequired = false; startTimeChecks();");
+  guestSays("It cost me about five hundred dollars so far.", 3000);
+  herTurn("Five hundred dollars and a smile that stays. What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  out.afterOwnShowQuestion = state();
+  guestSays("That doctors will use an evaluated tool once it is ready to go.", 4000);
+  advance(5000);
+  herTurn("A ready-to-go tool. What would change first for a patient?");
+  out.roundTurnsBeforeDue = instructions.filter(function (n) { return n.indexOf("[ROUND ") >= 0; }).length;
+  // The conversation goes on until the round is due (minute 36 of 45).
+  advance(6 * 60 * 1000);
+  out.requiredAt = run("elapsedMin()");
+  guestSays("They would get a PDF their doctor can act on.", 3000);
+  advance(5000);
+  out.roundStartedAt = run("elapsedMin()");
+  out.firstHanded = handed();
+  // The book: she asked a follow-up of her own in its place.
+  roomTurnStarts();
+  miraFinishes("STEM love notes as a delivery system. What's the last word you'd want a doctor to hear from one of those PDFs?");
+  responseDone();
+  guestSays("That they are making educated guesses.", 3000);
+  advance(5000);
+  out.bookHandedAgain = handed();
+  roomTurnStarts(); miraFinishes("That's a generous read. " + handed()); responseDone();
+  guestSays("Thinking Fast and Slow.", 3000);
+  advance(5000);
+  // Who to interview next: he hears it as a question about himself.
+  out.interviewNextHanded = handed();
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("I'm not generally interviewing people. People are interviewing me.", 3000);
+  advance(5000);
+  // The advice: a reaction only; handed again, a goodbye heard whole.
+  roomTurnStarts(); miraFinishes("That's the one."); responseDone();
+  guestSays("Okay.", 1500);
+  advance(5000);
+  out.adviceHandedAgain = handed();
+  roomTurnStarts();
+  miraFinishes("Fair point. Stuart, thank you for building something that treats every assumption as inspectable. That's the end of the recording. You can hang up now.");
+  responseDone();
+  out.afterSignOff = state();
+  const createsAfterSignOff = events.filter(function (e) { return e === "create"; }).length;
+  guestSays("and see if it can help you.", 3000);
+  advance(5000);
+  roomTurnStarts(); miraFinishes("Thank you, Stuart."); responseDone();
+  guestSays("Thank you very much. Bye-bye.", 2000);
+  advance(5000);
+  run("legs = [];");                      // he hangs up
+  guestSays("Hello?", 1000);
+  advance(60000);
+  out.createsAfterSignOff = events.filter(function (e) { return e === "create"; }).length - createsAfterSignOff;
+  out.asked = asked();
+  out.instructions = instructions.filter(function (n) { return n.indexOf("[ROUND ") >= 0 || n.indexOf("[ROOM — for this turn") >= 0; });
+  out.final = state();
+} else if (which === "sign_off_then_goodbye") {
+  // A goodbye heard whole in place of a fresh question: the question is asked
+  // next with nothing taken back; the guest says goodbye, and that is the end.
+  run("closingPermitted = true; closingRequired = true; startRound('test', -1);");
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("That doctors will use it.", 3000);
+  advance(5000);
+  roomTurnStarts();
+  const before = instructions.length;
+  miraFinishes("Thank you, Stuart. That's the end of the recording. You can hang up now.");
+  responseDone();
+  out.handed = instructions.slice(before);
+  guestSays("Thank you very much. Bye-bye.", 2000);
+  advance(5000);
+  out.afterGoodbye = state();
+  out.createsAfter = 0;
+  const c = events.filter(function (e) { return e === "create"; }).length;
+  roomTurnStarts(); miraFinishes("Bye, Stuart."); responseDone();
+  guestSays("Bye.", 1000);
+  advance(60000);
+  out.createsAfter = events.filter(function (e) { return e === "create"; }).length - c;
+} else if (which === "round_turn_judged_on_its_own_line") {
+  // The judgement reads the final transcription of the turn the room asked
+  // for: never a cancelled server turn's line, never twice for one turn.
+  run("closingPermitted = true; closingRequired = true; startRound('test', -1);");
+  roomTurnStarts(); miraFinishes(handed()); responseDone();
+  guestSays("That doctors will use it.", 3000);
+  advance(5000);
+  serverStartsATurn();                    // cancelled at once: the guest spoke
+  miraFinishes("That's a generous read of the profession.");   // its line, if one arrives
+  out.afterCancelledLine = state();
+  roomTurnStarts();                       // the round turn itself
+  miraFinishes("Love notes. " + handed());
+  miraFinishes("Silence.");               // a second line of the same turn
+  responseDone();
+  out.rehands = trace.filter(function (x) { return x.e === "round" && /goes again/.test(x.d); }).length;
+  guestSays("Thinking Fast and Slow.", 3000);
+  advance(5000);
+  // A round turn with no transcription at all is taken as asked.
+  roomTurnStarts(); responseDone();
+  guestSays("Carl Sagan.", 3000);
+  advance(5000);
+  out.asked = asked();
   out.final = state();
 } else if (which === "delta_shapes") {
   out.pieces = run(`[

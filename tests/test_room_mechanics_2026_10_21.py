@@ -184,8 +184,10 @@ class TestTheClosingRoundIsAStateMachine:
         assert "roundAsked[ROUND_QUESTIONS[next][0]] !== undefined" in ask, "a question she asked herself is skipped"
         assert "roundAwaitingAnswer = true;" in ask
         assert 'trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);' in ask
-        assert "ask this question, in" in ask and "these words" in ask
-        assert "Your turn ends on that question." in ask
+        # Oct 24 2026: directions first, then the question's words last.
+        joined = re.sub(r'"\s*\+\s*"', "", ask)
+        assert "Then ask the question below, in these words" in joined
+        assert "and end your turn on it" in joined
         # Oct 23 2026: as that response's instructions, never a conversation note.
         assert "roundTurn(" in ask
 
@@ -208,8 +210,11 @@ class TestTheClosingRoundIsAStateMachine:
         assert "roundClosed = true;" in close and "lastWordAnswered = true;" in close
         assert "that's the end of the recording" in close
 
-    def test_a_question_she_asks_herself_once_permitted_hands_the_round_to_the_room(self):
+    def test_a_question_she_asks_herself_once_the_round_is_due_hands_it_to_the_room(self):
+        # Oct 24 2026 (Stuart's room): only once the round is DUE; before
+        # that the question is recorded and the conversation goes on.
         body = _fn("function noteRoundQuestion(text)")
+        assert "if (closingRequired && !roundActive && !roundClosed" in body
         assert "startRound(\"she began it with \" + label, ROUND_QUESTIONS.indexOf(q));" in body
         start = _fn("function startRound(why, askedIndex)")
         assert "if (askedIndex >= 0) {" in start and "roundAwaitingAnswer = true;" in start

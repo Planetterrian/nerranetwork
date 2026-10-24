@@ -1412,7 +1412,7 @@ function remember(who, text) {
     try { if (!holdMode && MIRA_HOLD_RE.test(text || "")) enterHold("she said she would wait"); }
     catch (err) { Logger.write("[aoa " + runId + "] hold check failed: " + err.message); }
     try {
-      if (closingPermitted && !roundActive && !roundClosed && !isClosingSession()
+      if (closingRequired && !roundActive && !roundClosed && !isClosingSession()
           && CLOSING_ROUND_RE.test(text || "")) startRound("she announced it", -1);
     } catch (err) { Logger.write("[aoa " + runId + "] round start check failed: " + err.message); }
   } else {
@@ -1431,6 +1431,10 @@ function guestWordsChecks(text) {
       guestAskedToStop = true;
       trace("close", "the guest asked to stop");
     }
+    if (signedOffAt && !roundClosed && Date.now() - signedOffAt < SIGN_OFF_FAREWELL_MS &&
+        GUEST_FAREWELL_RE.test(text || "")) {
+      acceptSignOff("the guest said goodbye");
+    }
   } catch (err) { Logger.write("[aoa " + runId + "] hold/stop check failed: " + err.message); }
   // Speech while they are away is not an answer to anything she asked.
   if (!holdMode) lastWordAnswered = true;
@@ -1447,9 +1451,20 @@ let closingThanksQueued = false;   // closeRound has asked for the closing thank
 let closingThanksSent = false;     // ...and it has gone to her
 let afterCloseTurns = 0;
 const AFTER_CLOSE_TURNS_MAX = 1;
+let turnRoundLabel = "";           // the closing question of the turn just sent, if it carries one
 
 function requestTurn(agent) {
   if (!agent || roomEnded) return;
+  // Oct 24 2026 (Stuart's room): after he hung up the room handed her a
+  // closing question and a re-ask, to nobody. No guest, no turn: a rejoin
+  // asks for her turn itself once they are back.
+  if (!guestInRoom()) {
+    pendingTurn = false;
+    nextTurnInstructions = "";
+    roundTurnRequested = "";
+    trace("turn", "no guest in the room; no turn");
+    return;
+  }
   // Oct 22 2026: while the guest is away she has no turns at all; the check-in
   // (holdCheckInRequested) is the one exception. A request made meanwhile is
   // dropped, not parked: the exit note says what to do when they are back.
@@ -1483,7 +1498,7 @@ function requestTurn(agent) {
     const base = sessionInstructions || (config && config.mira_system_prompt) || "";
     nextTurnInstructions = (base ? base + "\n\n" : "") +
       "[ROOM — for this turn only, do not read aloud] The interview is over and you" +
-      " have thanked them. Say goodbye in a few words, then stop talking.";
+      " have thanked them. Say goodbye in a few words and end your turn there.";
   }
   pendingTurn = false;
   miraSpeaking = true;
@@ -1492,6 +1507,8 @@ function requestTurn(agent) {
   const instructions = nextTurnInstructions || takeGuestSteer();
   const body = instructions ? { response: { instructions: instructions } } : {};
   nextTurnInstructions = "";
+  turnRoundLabel = roundTurnRequested;
+  roundTurnRequested = "";
   agent.responseCreate(body);
 }
 
@@ -1886,6 +1903,7 @@ async function createAgent(note) {
         miraSpeaking = false;
         trace("grok", "response done");
         if (agent !== grokAgent || roomEnded) return;
+        roundTurnDone();
         armDeadAir();
         // Oct 21 2026: the pause after her turn, before the guest's next
         // word, is where a due hand-over happens (never on a timer).
@@ -1976,6 +1994,8 @@ function markTurnStarted(agent) {
   }
   holdCheckInRequested = false;
   cancelledLinePending = false;
+  roundTurnInFlight = turnRoundLabel;
+  turnRoundLabel = "";
   guestSpokeSinceMira = false;
   hostSpokeSinceMira = false;
   speechSinceMiraMs = 0;
@@ -2573,13 +2593,16 @@ function startTimeChecks() {
           closingPermitted = true;
           trace("time", "closing round permitted at " + elapsed + " min");
         }
+        // Oct 24 2026 (Stuart's room): "you may begin the closing round with
+        // the show's own question" at minute 30 of 45 was taken, and the
+        // round ran from 31 with nine minutes of the planned hour unused.
+        // The room starts the round itself when it is due.
         note += " Before the closing round, make sure every point under THE" +
           " SUBJECT THEY CAME FOR has been reached; if one has not, go there" +
-          " first. When the current thread reaches a natural end you may" +
-          " begin the closing round with the show's own question; from there" +
-          " the room hands you each closing question one at a time, and you" +
-          " add only the reaction between them. There is no hurry, but every" +
-          " guest gets all of it.";
+          " first. Do not begin the closing round yourself: at about minute " +
+          (plannedMin() - closingRoundMin()) + " the room hands you its first" +
+          " question, the show's own, and then each one after it. Until then" +
+          " stay with their subject.";
       } else if (remainMin > 0) {
         // Oct 5 2026, Piper Martz: the round takes about eight minutes and
         // used to be required only in the last three, five minutes before
@@ -2759,10 +2782,8 @@ function noteRoundQuestion(text) {
     if (!q[1].test(text)) return;
     // The question her last turn left unasked, said now of her own accord:
     // it is the one in play again, and their answer moves the round on.
-    if (roundRehand && roundActive && ROUND_QUESTIONS[roundIndex + 1]
-        && ROUND_QUESTIONS[roundIndex + 1][0] === label) {
-      roundRehand = false;
-      roundIndex += 1;
+    if (roundRehandOwed && roundActive && roundIndex >= 0 && ROUND_QUESTIONS[roundIndex][0] === label) {
+      roundRehandOwed = false;
       roundAsked[label] = elapsedMin();
       roundSpoken[label] = true;
       trace("round", "asked " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + ": " + label + " (her own words)");
@@ -2797,7 +2818,13 @@ function noteRoundQuestion(text) {
     if (roundActive && roundAwaitingAnswer && roundIndex >= 0 && ROUND_QUESTIONS[roundIndex][0] === label) return; // the room asked it
     roundAsked[label] = elapsedMin();
     trace("round", "asked on her own: " + label);
-    if (closingPermitted && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()) {
+    // Oct 24 2026 (Stuart Berkowitz's room, run b579faba). At minute 30 of 45
+    // the window opened, she asked the show's question in passing, and the
+    // room took that as the start of the round: the remaining questions came
+    // from minute 31 and she was saying goodbye at 34. A question she asks
+    // herself is recorded (never asked again); the room starts the round
+    // only when it is due (closingRequired), and starts it at the next one.
+    if (closingRequired && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()) {
       startRound("she began it with " + label, ROUND_QUESTIONS.indexOf(q));
       return;
     }
@@ -2822,19 +2849,47 @@ function noteRoundQuestion(text) {
 // her turn reacted to the guest's book and asked a follow-up about it; the
 // guest's reply was counted as the answer and the question was never put to
 // them. A round turn that asks something, but not the question in play, is
-// handed the same way, ONCE per question: a second miss is taken as the
-// question asked in words the room cannot recognise, so a rewording never
-// loops.
-const roundRehandedOnce = {};    // label -> true once the room handed it again
-const roundAskedUnrecognised = {};   // label -> her second miss, taken as the question reworded
+// handed the same way.
+//
 // Oct 23 2026 (rehearsal 39991520039). Handed the interview questions, she
 // went into her goodbye; the room cut it, the guest said "sounds like you
 // trailed off there", and that was counted as the answer to a question they
-// never heard, twice. A question whose words never reached the guest is not
-// answered by what they say next: the room hands it again, at most this
-// many times, and then moves on so no guest is held in the round.
-const ROUND_UNHEARD_REHANDS_MAX = 2;
-const roundUnheardRehands = {};  // label -> times handed again because it was never heard
+// never heard. A question whose words never reached the guest is not
+// answered by what they say next: the room hands it again.
+//
+// Oct 24 2026 (Stuart Berkowitz's room, run b579faba). "Her turn asked
+// nothing" fired seven times in six minutes, and every path that handed a
+// question again stepped the round's index back by one. Two of them ran on
+// one question (a sign-off, then the same line read as asking nothing), so
+// the round went from 6/8 back to 5/8 and the room handed her an answered
+// question after the guest had gone. Now: the judgement is made once, on the
+// final transcription of the turn the room asked for (roundTurnInFlight),
+// never on a cancelled turn or a line of some other turn; a question is
+// handed again at most ONCE, whatever the reason (asked nothing, asked
+// something else, never reached them, a sign-off in its place), and then it
+// is taken as asked; and the index never moves back (roundRehandOwed re-hands
+// the question in play at the same index).
+const ROUND_REHANDS_MAX = 1;
+const roundRehands = {};         // label -> times the room handed it again
+let roundTurnRequested = "";     // the question the room's next turn carries
+let roundTurnInFlight = "";      // the question of the turn now being spoken
+
+/**
+ * The question in play goes again at the next hand, unless it has already
+ * gone again once; then it is taken as asked and the round moves on.
+ */
+function owedRehand(label, why) {
+  if ((roundRehands[label] || 0) >= ROUND_REHANDS_MAX) {
+    roundSpoken[label] = true;
+    trace("round", "taken as asked: " + label + " (" + why + "; it was handed again once already)");
+    return false;
+  }
+  roundRehands[label] = (roundRehands[label] || 0) + 1;
+  roundRehandOwed = true;
+  trace("round", why + "; " + label + " goes again when they finish");
+  return true;
+}
+
 // A question that touches the subject of the one in play counts as asking it,
 // even in words its exact pattern misses ("the one bet you are making"): only
 // a question about something else is handed back.
@@ -2850,32 +2905,34 @@ const ROUND_TOPICS = {
 
 function noteRoundTurnWithoutQuestion(text) {
   if (roomEnded || !grokAgent || !text) return;
+  // Only the final transcription of the round turn the room asked for.
+  const inFlight = roundTurnInFlight;
+  roundTurnInFlight = "";
+  if (!inFlight) return;
   if (!roundActive || !roundAwaitingAnswer || roundLastWordAsked || roundIndex < 0 || holdMode) return;
-  // A sign-off is the sign-off rules' line: they have already handed the
-  // question in play again (rehandAfterSignOff), and a cut line arrives here
-  // after the re-hand.
+  // A sign-off is the sign-off rules' line (catchSignOffBeforeTheRound).
   if (SIGN_OFF_RE.test(text)) return;
   const label = ROUND_QUESTIONS[roundIndex][0];
-  if (roundSpoken[label]) return;
+  if (label !== inFlight || roundSpoken[label]) return;
   const asked = text.indexOf("?") >= 0;
   if (asked && ROUND_TOPICS[label] && ROUND_TOPICS[label].test(text)) {
     roundSpoken[label] = true;           // asked in her own words
     return;
   }
-  // Oct 23 2026 (rehearsal 39998790684): handed the advice question twice,
-  // she asked the follow-up interview question instead; that is another
-  // round question, not this one reworded, so it is never taken as asked.
-  const askedAnother = ROUND_QUESTIONS.some(function (q) { return q[0] !== label && q[1].test(text); });
-  if (asked && roundRehandedOnce[label]) {
-    if (!askedAnother) roundAskedUnrecognised[label] = true;
-    return;
-  }
-  roundRehandedOnce[label] = true;
-  delete roundAsked[label];
-  roundIndex -= 1;          // their next finished answer hands this one again
-  roundRehand = true;
-  trace("round", (asked ? "her turn asked something else; " : "her turn asked nothing; ") +
-        label + " goes again when they finish");
+  owedRehand(label, asked ? "her turn asked something else" : "her turn asked nothing");
+}
+
+/**
+ * Her round turn ended with no transcription of it at all. Nothing says she
+ * did not ask the question, so it is taken as asked (Oct 24 2026: the room
+ * decides from her final words, and with none it does not guess).
+ */
+function roundTurnDone() {
+  const inFlight = roundTurnInFlight;
+  roundTurnInFlight = "";
+  if (!inFlight || responseCancelledEarly || !roundActive || roundSpoken[inFlight]) return;
+  roundSpoken[inFlight] = true;
+  trace("round", "no transcription of her turn; " + inFlight + " taken as asked");
 }
 
 // The closing round itself, recognised from Mira's own words: the lightning
@@ -3014,7 +3071,7 @@ function catchEarlyCloseOnDelta(textSoFar) {
           : roundActive
             ? " the closing round is not finished. Let them answer the question in play;" +
               " the room hands you the next one, and tells you when to close."
-            : (closingPermitted && !roundClosed && !isHelloSession())
+            : (closingRequired && !roundClosed && !isHelloSession())
               ? " the closing round has not been run yet. The room hands you its first" +
                 " question now; ask only that."
               : " react in one short line to the last thing they said, then ask the next" +
@@ -3022,7 +3079,7 @@ function catchEarlyCloseOnDelta(textSoFar) {
     });
     if (lastWordAskedAt && !lastWordAnswered) return;   // silence is the behaviour
     if (roundActive) return;                              // the room drives the round
-    if (closingPermitted && !roundClosed && !isHelloSession()) { startRound("a sign-off came before it"); return; }
+    if (closingRequired && !roundClosed && !isHelloSession()) { startRound("a sign-off came before it"); return; }
     requestTurn(grokAgent);
   } catch (err) {
     Logger.write("[aoa " + runId + "] early-close cancel note failed: " + err.message);
@@ -3031,39 +3088,38 @@ function catchEarlyCloseOnDelta(textSoFar) {
 
 /**
  * Oct 22 2026: the after-the-fact half of the rule above, for a sign-off the
- * deltas did not catch (no deltas arrived, or the line came whole). She has
- * said it, so she says she spoke too soon, and the round goes on.
+ * deltas did not catch (no deltas arrived, or the line came whole).
+ *
+ * Oct 24 2026 (Stuart Berkowitz's room): she was made to say "I spoke too
+ * soon; there are a few more questions" after a goodbye he had heard whole,
+ * and twice more after he had said "Bye-bye" and left. A sign-off the guest
+ * heard is never taken back on air. While they are still here and the
+ * question in play has not gone again, it is asked next, with nothing said
+ * about the goodbye; otherwise the interview ends on her sign-off.
  */
+let signedOffAt = 0;              // she signed off whole in the round and the room went on
+const SIGN_OFF_FAREWELL_MS = 60 * 1000;
+const GUEST_FAREWELL_RE = /\b(bye(-?bye)?|good-?bye|take care|see you|have a (good|great|nice|lovely) (one|day|night|evening|weekend)|thank you (very|so) much|thanks (very|so) much)\b/i;
+const SIGN_OFF_LEAD_IN = "Say nothing about your last turn and take nothing back. Before they go," +
+  " ask the question below as the next thing you say.";
+
 function catchSignOffBeforeTheRound(text) {
-  if (!SIGN_OFF_RE.test(text || "") || !signOffBlockedByRound()) return;
+  if (!SIGN_OFF_RE.test(text || "")) return;
+  if (signedOffAt && !roundClosed) { acceptSignOff("she signed off again"); return; }
+  if (!signOffBlockedByRound()) return;
   if (!rescueAllowed()) return;
   roundCloseBlocks += 1;
   trace("close", "signed off with the closing round " +
-        (roundActive ? "at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length : "not yet run") +
-        " — the round goes on");
-  try {
-    // The question in play goes again with the correction in front of it, as
-    // that turn's instructions; no note is left behind to be acted on later.
-    if (rehandAfterSignOff("First say, in one light sentence, that you spoke too soon and" +
-                           " there are a few more questions.")) return;
-    grokAgent.conversationItemCreate({
-      item: { type: "message", role: "system", content: [{ type: "input_text", text:
-        "[ROOM — system note, do not read aloud] You have just said the recording is over," +
-        " but the closing round is not finished and they are still here. Say so at once, in" +
-        " one light sentence: you spoke too soon, there are a few more questions." +
-        (roundActive && roundAwaitingAnswer
-          ? " Then ask again, in one short line, the closing question still in play."
-          : " The room hands you the next one.") }] },
-    });
-    if (roundActive) {
-      if (roundAwaitingAnswer) requestTurn(grokAgent);   // her correction; the answer then advances the round
-      else askNextRoundQuestion();
-    } else {
-      startRound("a sign-off came before it");
-    }
-  } catch (err) {
-    Logger.write("[aoa " + runId + "] round sign-off rescue failed: " + err.message);
+        (roundActive ? "at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length : "not yet run"));
+  if (!guestInRoom()) { acceptSignOff("the guest has gone"); return; }
+  if (roundActive) {
+    if (rehandAfterSignOff(SIGN_OFF_LEAD_IN)) { signedOffAt = Date.now(); return; }
+    acceptSignOff("the question in play had already gone again");
+    return;
   }
+  roundLeadIn = SIGN_OFF_LEAD_IN;
+  signedOffAt = Date.now();
+  startRound("a sign-off came before it");
 }
 
 /** A sign-off now would end an interview whose closing round is unfinished. */
@@ -3087,12 +3143,13 @@ function signOffBlockedByRound() {
 let roundActive = false;
 let roundPendingStart = false;    // the round begins at the guest's next finished answer
 let roundAwaitingAnswer = false;
-let roundIndex = -1;              // index into ROUND_QUESTIONS of the question in play
+let roundIndex = -1;              // index into ROUND_QUESTIONS of the question in play; never moves back
 let roundRepromptTimer = null;
 let roundLastWordAsked = false;
 let roundClosed = false;
-let roundRehand = false;          // her turn asked nothing: the question in play goes again
-let roundLeadIn = "";             // one light sentence she says before the question re-handed after a sign-off
+let roundRehandOwed = false;      // the question in play goes again at the next hand (same index)
+let roundLeadIn = "";             // directions she follows before the question re-handed after a sign-off
+let roundEndedWithGuestGone = false;
 
 // Oct 23 2026 (rehearsal 0ac88c67, from its session log). A round note added
 // to the conversation and followed at once by response.create took effect a
@@ -3104,58 +3161,92 @@ let roundLeadIn = "";             // one light sentence she says before the ques
 // instructions: her full session instructions (brief, show's question, any
 // hand-over transcript) with the round line after them, leaving nothing
 // behind in the conversation to be acted on a turn later.
-function roundTurn(line) {
+function roundTurn(line, label) {
   const base = sessionInstructions || (config && config.mira_system_prompt) || "";
   nextTurnInstructions = (base ? base + "\n\n" : "") + line;
+  roundTurnRequested = label || "";
   requestTurn(grokAgent);
+}
+
+// Oct 24 2026 (Stuart Berkowitz's room). The round lines were labels and
+// stage directions ("who you should interview next", "then silence") and she
+// spoke them: "Silence.", "Who you should interview next." The guest, a
+// researcher, answered "I'm not generally interviewing people." Every turn
+// the room drives in the round now hands her the words of a whole, natural
+// question, with the directions first and the question last, and the
+// directions carry no line she could say: no "silence", no "stop talking".
+const ROUND_LAST_WORD_LINE =
+  "Before we finish, is there anything you came wanting to say that we haven't reached yet?";
+
+function roundDirections(n, rest) {
+  return "[ROUND " + n + " — directions for this one turn, not words to say] " + rest;
 }
 
 /**
  * Oct 23 2026: a sign-off in place of the question the room had just handed
  * her. The question in play was never heard, so the room hands it again as
- * that one response's instructions, with the lead-in (she spoke too soon)
- * before it. Before this the correction went as a conversation note, which
- * takes effect a turn late: in rehearsal 39982637152 she said she had spoken
- * too soon and then asked a question of her own.
+ * that one response's instructions. Oct 24 2026: with no retraction on air
+ * (Stuart's room heard "I spoke too soon" three times, the last two after
+ * he had said goodbye and hung up), and only if the question has not already
+ * gone again once.
  */
 function rehandAfterSignOff(leadIn) {
-  if (!roundActive || !roundAwaitingAnswer || roundIndex < 0) return false;
+  if (!roundActive || !roundAwaitingAnswer || roundIndex < 0 || !guestInRoom()) return false;
   const label = ROUND_QUESTIONS[roundIndex][0];
   if (roundSpoken[label]) return false;
-  delete roundAsked[label];
-  roundIndex -= 1;
+  if (!owedRehand(label, "the sign-off took the question's place")) return false;
   roundAwaitingAnswer = false;
-  roundRehand = false;
   roundLeadIn = leadIn;
-  trace("round", "the sign-off took the question's place; " + label + " goes again");
   askNextRoundQuestion();
   return true;
 }
 
 // Oct 23 2026 (rehearsal 39991520039). Near the end of the round she took
 // the interview to be over: handed a question, she said her goodbye three
-// times instead. Each round turn now says what is still to come after it,
-// so the question she is handed is never read as the last thing she says.
+// times instead. Each round turn says what is still to come after it, so the
+// question she is handed is never read as the last thing she says.
 function roundStillToCome(index) {
   let left = 0;
   for (let i = index + 1; i < ROUND_QUESTIONS.length; i++) {
     if (roundAsked[ROUND_QUESTIONS[i][0]] === undefined) left += 1;
   }
   return (left > 0
-    ? " After their answer the room hands you " + left + " more closing question" +
-      (left > 1 ? "s" : "") + ", then their last word."
-    : " This is the last closing question; after their answer the room hands them the last word.") +
-    " The interview does not end on this turn: no thanks, no goodbye, nothing about the" +
-    " recording ending. The room tells you when to close.";
+    ? "After their answer the room hands you " + left + " more closing question" +
+      (left > 1 ? "s" : "") + " and then their last word, so the interview does not end on this turn:"
+    : "This is the last closing question; after their answer the room hands them the last word," +
+      " so the interview does not end on this turn:") +
+    " no thanks, no goodbye, nothing about the recording ending.";
 }
 
+/** The show's own closing question in its own words: from her brief. */
+function showQuestionText() {
+  if (config && config.show_question && /\?\s*$/.test(config.show_question)) return config.show_question;
+  const brief = String(sessionInstructions || (config && config.mira_system_prompt) || "");
+  const m = /beginning with \(\s*([^()]{8,300}?\?)\s*\)/.exec(brief) ||
+            /ask it \(\s*([^()]{8,300}?\?)\s+among them/.exec(brief);
+  return m ? m[1].replace(/\s+/g, " ").trim() : "";
+}
+
+/** The words of a closing question, or "" when the room has none to hand. */
 function roundQuestionText(entry) {
-  const label = entry[0];
-  if (label === "the show's own question") {
-    return (config && config.show_question) ||
-      "the show's own closing question, exactly as your instructions give it";
+  if (entry[0] === "the show's own question") return showQuestionText();
+  return entry[2] || "";
+}
+
+/** A guest is in the room (a co-host alone is not someone to ask). */
+function guestInRoom() {
+  return legs.some(function (l) { return l.role === "guest"; });
+}
+
+/** The guest has gone: the round stops where it is, and she says nothing more. */
+function roundGuestGone() {
+  if (guestInRoom()) return false;
+  if (!roundEndedWithGuestGone) {
+    roundEndedWithGuestGone = true;
+    if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+    trace("round", "the guest has left; the round stops at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length);
   }
-  return entry[2] || label;
+  return true;
 }
 
 function startRound(why, askedIndex) {
@@ -3177,9 +3268,23 @@ function startRound(why, askedIndex) {
 
 function askNextRoundQuestion() {
   if (roomEnded || !grokAgent || !roundActive) return;
+  if (roundGuestGone()) return;
   if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
-  let next = roundIndex + 1;
-  while (next < ROUND_QUESTIONS.length && roundAsked[ROUND_QUESTIONS[next][0]] !== undefined) next += 1;
+  let next;
+  if (roundRehandOwed && roundIndex >= 0) {
+    next = roundIndex;                 // the same question, at the same index
+  } else {
+    next = roundIndex + 1;
+    while (next < ROUND_QUESTIONS.length &&
+           (roundAsked[ROUND_QUESTIONS[next][0]] !== undefined || !roundQuestionText(ROUND_QUESTIONS[next]))) {
+      if (roundAsked[ROUND_QUESTIONS[next][0]] === undefined) {
+        trace("round", "no words for " + ROUND_QUESTIONS[next][0] + " in her brief; skipped");
+        roundAsked[ROUND_QUESTIONS[next][0]] = elapsedMin();
+      }
+      next += 1;
+    }
+  }
+  roundRehandOwed = false;
   if (next >= ROUND_QUESTIONS.length) { askRoundLastWord(); return; }
   roundIndex = next;
   roundAwaitingAnswer = true;
@@ -3187,22 +3292,21 @@ function askNextRoundQuestion() {
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
   const leadIn = roundLeadIn;
+  roundLeadIn = "";
   try {
-    roundTurn(
-        "[ROUND " + (next + 1) + " of " + ROUND_QUESTIONS.length + " — for this turn only, do not" +
-        " read aloud] You are in the closing round. " +
-        (roundLeadIn
-          ? roundLeadIn + " Then ask this question, in"
-          : "React in one short, specific line to what they just said if something in it" +
-            " struck you; then ask this question, in") +
-        " these words (their name may go in): \u00ab" + roundQuestionText(entry) + "\u00bb" +
-        " Your turn ends on that question. Do not ask a question of your own instead, a" +
-        " follow-up about their answer, a second question or a preview of the next one;" +
-        " stop and let them answer." + roundStillToCome(next));
+    roundTurn(roundDirections((next + 1) + " of " + ROUND_QUESTIONS.length,
+        "You are in the closing round. " + roundStillToCome(next) + " " +
+        (leadIn
+          ? leadIn
+          : "If something in what they just said struck you, react to it first in one short" +
+            " sentence of your own.") +
+        " Then ask the question below, in these words (their name may go in), and end your" +
+        " turn on it: never a question of your own in its place, a follow-up about their" +
+        " answer, a second question or a preview of the next one.\n" +
+        roundQuestionText(entry)), entry[0]);
   } catch (err) {
     Logger.write("[aoa " + runId + "] round question " + (next + 1) + " failed: " + err.message);
   }
-  if (leadIn) roundLeadIn = "";
   roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
 }
 
@@ -3210,41 +3314,46 @@ function roundReprompt() {
   roundRepromptTimer = null;
   if (roomEnded || !grokAgent || !roundActive || !roundAwaitingAnswer) return;
   if (holdMode) return;   // re-armed when they are back (exitHold)
+  if (roundGuestGone()) return;
   if (guestSpokeSinceMira || inboundSpeaking || miraSpeaking) return;
-  if (roundRehand) {
+  if (roundRehandOwed) {
     // She reacted and asked nothing, and they have nothing to add: ask it now.
-    roundRehand = false;
     roundAwaitingAnswer = false;
     askNextRoundQuestion();
     return;
   }
+  const words = roundQuestionText(ROUND_QUESTIONS[roundIndex]);
+  if (!words) return;
   trace("round", "no answer yet to " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; one gentle re-ask");
   try {
-    roundTurn(
-        "[ROUND — for this turn only, do not read aloud] They have not answered your last" +
-        " question yet (" + roundQuestionText(ROUND_QUESTIONS[roundIndex]) + "). Say one" +
-        " short line that makes that question real and easy — the same question, no new" +
-        " one — then stop talking and let them take as long as they need.");
+    roundTurn(roundDirections("re-ask",
+        "They have not answered your last question yet. Ask the same question again," +
+        " gently and in fewer words if you like, and end your turn on it; no new question.\n" +
+        words), ROUND_QUESTIONS[roundIndex][0]);
   } catch (err) { /* the next time check still runs */ }
 }
+
+// Oct 24 2026 (Stuart's room): handed "who you should interview next", he
+// answered "I'm not generally interviewing people. People are interviewing
+// me." A guest who declines a closing question, or hears it as one about
+// themselves, has answered it: the room moves on and never hands it again.
+const ROUND_DECLINE_RE = /\b(i'?m not (generally |really |usually )?(interviewing|an interviewer)|i don'?t (generally |really |usually )?interview (people|anyone|anybody)|(people|they) (are )?interview(ing)? me|(can'?t|cannot|couldn'?t) think of (anyone|anybody|one|any)|(no ?one|nobody|nothing) (really )?comes to mind|i'?ll pass|pass on that|skip (that|this) one|i'?d rather not (say|answer))\b/i;
 
 function roundAnswered() {
   if (!roundActive || !roundAwaitingAnswer) return;
   roundAwaitingAnswer = false;
   if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+  if (roundGuestGone()) return;
   if (roundLastWordAsked) { closeRound(); return; }
-  if (roundRehand) {
-    roundRehand = false;
-    trace("round", "they finished their thought; handing " + (roundIndex + 2) + "/" + ROUND_QUESTIONS.length + " again");
-  } else if (roundIndex >= 0 && !roundSpoken[ROUND_QUESTIONS[roundIndex][0]] &&
-             !roundAskedUnrecognised[ROUND_QUESTIONS[roundIndex][0]] &&
-             (roundUnheardRehands[ROUND_QUESTIONS[roundIndex][0]] || 0) < ROUND_UNHEARD_REHANDS_MAX) {
-    const label = ROUND_QUESTIONS[roundIndex][0];
-    roundUnheardRehands[label] = (roundUnheardRehands[label] || 0) + 1;
-    delete roundAsked[label];
-    roundIndex -= 1;
-    trace("round", "they spoke, but " + label + " never reached them; handing " +
-          (roundIndex + 2) + "/" + ROUND_QUESTIONS.length + " again");
+  const label = roundIndex >= 0 ? ROUND_QUESTIONS[roundIndex][0] : "";
+  if (label && ROUND_DECLINE_RE.test(guestDelta())) {
+    roundRehandOwed = false;
+    roundSpoken[label] = true;
+    trace("round", "answered " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + " (they declined " + label + ")");
+  } else if (roundRehandOwed) {
+    trace("round", "they finished their thought; handing " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + " again");
+  } else if (label && !roundSpoken[label] && owedRehand(label, "they spoke, but it never reached them")) {
+    trace("round", "handing " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + " again");
   } else {
     trace("round", "answered " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length);
   }
@@ -3253,16 +3362,17 @@ function roundAnswered() {
 
 function askRoundLastWord() {
   if (roundLastWordAsked || roomEnded || !grokAgent) return;
+  if (roundGuestGone()) return;
   roundLastWordAsked = true;
   roundAwaitingAnswer = true;
   trace("round", "every closing question asked; handing them the last word");
   try {
-    roundTurn(
-        "[ROUND — for this turn only, do not read aloud] The closing questions are all" +
-        " asked. React in one short line to what they just said if it struck you; then" +
-        " hand them the last word: ask whether there is anything they came wanting to say" +
-        " that the two of you never reached, and mean it. Do not thank them or close yet." +
-        " Then stop talking and let them answer.");
+    roundTurn(roundDirections("last word",
+        "The closing questions are all asked. If something in what they just said struck" +
+        " you, react to it first in one short sentence of your own." +
+        " Then hand them the last word with the question below, and end your turn on it:" +
+        " no thanks and no goodbye yet.\n" +
+        ROUND_LAST_WORD_LINE));
   } catch (err) {
     Logger.write("[aoa " + runId + "] last-word hand-off failed: " + err.message);
   }
@@ -3284,17 +3394,44 @@ function closeRound() {
   roundActive = false;
   lastWordAnswered = true;
   closingPermitted = true;
+  if (!guestInRoom()) { trace("round", "complete; the guest has gone, so no closing thanks"); return; }
   trace("round", "complete; closing thanks");
   closingThanksQueued = true;
   try {
-    roundTurn(
-        "[ROUND — for this turn only, do not read aloud] The closing round is complete." +
-        " One short turn: thank them warmly for something particular they said today," +
-        " then tell them that's the end of the recording and they can hang up now." +
-        " Then stop talking.");
+    roundTurn(roundDirections("close",
+        "The closing round is complete. One short turn: thank them warmly for something" +
+        " particular they said today, then tell them that's the end of the recording and" +
+        " they can hang up now, and end your turn there."));
   } catch (err) {
     Logger.write("[aoa " + runId + "] closing thanks failed: " + err.message);
   }
+}
+
+/**
+ * Oct 24 2026 (Stuart's room). A sign-off the guest has heard whole is not
+ * taken back on air. When the round cannot go on without that (the question
+ * in play has already gone again once, the guest said goodbye, or there is
+ * nothing in play), the interview ends where she ended it: the round closes,
+ * her goodbye counts as the closing thanks, and the after-close rules hold
+ * (one goodbye if they speak, nothing to an empty room).
+ */
+function acceptSignOff(why) {
+  if (roundClosed) return;
+  roundClosed = true;
+  roundActive = false;
+  roundAwaitingAnswer = false;
+  roundPendingStart = false;
+  roundRehandOwed = false;
+  if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+  closingPermitted = true;
+  closingThanksQueued = true;
+  closingThanksSent = true;
+  signedOffAt = 0;
+  pendingTurn = false;
+  nextTurnInstructions = "";
+  roundTurnRequested = "";
+  trace("close", "the interview ends on her sign-off (" + why + "), at " +
+        (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; nothing taken back");
 }
 
 /**
