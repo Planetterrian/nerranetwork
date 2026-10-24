@@ -71,6 +71,41 @@ WRAP_OPEN_RE = re.compile(r"<([a-z-]+)>")
 WRAP_CLOSE_RE = re.compile(r"</([a-z-]+)>")
 
 
+# Oct 24 2026, Piper Martz. Her company is Aampe, said "amp", and Mira read it
+# as "am-pee" in the introduction; the close read the site as "tablista
+# kesmedia dot com" because the script had a stray space in it. Piper heard
+# both on her review page. The script keeps the real spelling, because the
+# transcript of the edit is read from it; what Mira is asked to SAY goes
+# through a lexicon first. pipelines/voices/pronunciations.json holds names
+# that come up on any show ({"written": "spoken"}); a spec's own
+# "pronunciations" holds one guest's (a site, a surname) and wins over it.
+PRONUNCIATIONS_PATH = Path(__file__).parent / "pronunciations.json"
+
+
+def lexicon(spec: dict | None = None) -> Dict[str, str]:
+    """``{written: spoken}`` for this spec: the shared file, then its own."""
+    out: Dict[str, str] = {}
+    path = PRONUNCIATIONS_PATH
+    if path.exists():
+        try:
+            out.update(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            logger.exception("could not read %s", path)
+    out.update((spec or {}).get("pronunciations") or {})
+    return {str(k): str(v) for k, v in out.items()
+            if str(k).strip() and not str(k).startswith("_") and str(v).strip()}
+
+
+def spoken(text: str, words: Dict[str, str]) -> str:
+    """The text as Mira should say it: every written form in ``words``
+    replaced by its spoken form, longest first, whole words only (so "Aampe"
+    changes in "Aampe's" but never inside another word or a web address)."""
+    for written in sorted(words, key=len, reverse=True):
+        text = re.sub(rf"(?<![\w.]){re.escape(written)}(?!\w|\.\w)",
+                      lambda _m, say=words[written]: say, text)
+    return text
+
+
 def spoken_words(text: str) -> int:
     """Words she will actually say — tags produce sound, not words."""
     return len(TAG_RE.sub(" ", text or "").split())
@@ -272,13 +307,25 @@ def narrate(slug: str) -> Dict[str, str]:
     if os.environ.get("NARRATION_ENGINE", "agent").lower() == "tts":
         logger.warning("NARRATION_ENGINE=tts — this will NOT match the "
                        "interview voice; use it only if the agent is down")
+        words = lexicon(spec)
+        spec = {**spec, "segments": [
+            {**seg, "text": spoken(seg.get("text") or "", words)}
+            for seg in segments]}
         return _narrate_with_tts(spec, show, slug, voice)
 
+    words = lexicon(spec)
+    # NARRATION_SEGMENTS=intro,outro re-voices only those segments (Oct 24
+    # 2026: one mispronounced name should not mean re-reading the lead too).
+    only = {s.strip() for s in os.environ.get("NARRATION_SEGMENTS", "").split(",")
+            if s.strip()}
     out: Dict[str, str] = {}
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         for seg in segments:
-            seg_id, text = seg["id"], (seg.get("text") or "").strip()
+            seg_id = seg["id"]
+            if only and seg_id not in only:
+                continue
+            text = spoken((seg.get("text") or "").strip(), words)
             if not text:
                 logger.warning("segment %s is empty — skipped", seg_id)
                 continue
