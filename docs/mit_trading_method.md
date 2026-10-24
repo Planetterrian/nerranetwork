@@ -1,8 +1,10 @@
 # Modern Investing Techniques — the method, in full
 
-*Published 2026-08-18. The machine-readable version the code actually
-reads is [`shows/_trading_policy.yaml`](../shows/_trading_policy.yaml); this
-page is the same rules in prose.*
+*Published 2026-08-18, corrected 2026-10-24. The machine-readable version
+the code actually reads is
+[`shows/_trading_policy.yaml`](../shows/_trading_policy.yaml); this page is
+the same rules in prose, plus a plain account of where the record has fallen
+short of them.*
 
 Every episode of Modern Investing Techniques makes one simulated
 investment and reports how the previous ones turned out. This page exists
@@ -13,8 +15,14 @@ not a record.
 
 ## The rules
 
-**Position size.** $1,000 per trade, one position at a time. Simulated —
-no real money is involved, and this is not financial advice.
+**Position size.** $1,000 per trade, one new position per episode. Because
+a weekly hold lasts five sessions and the show publishes daily, several
+positions are open at once (five is normal, seven has happened), each
+scored on its own. The record is therefore the **average trade** against
+the index over its own sessions — never a compounded chain, which would
+describe a portfolio that reinvested each trade's proceeds in the next and
+which these rules never held. Simulated — no real money is involved, and
+this is not financial advice.
 
 **Entry.** The pick is announced pre-market. The trade enters at the
 **open of the first trading session on or after the announcement**. Never
@@ -23,10 +31,23 @@ than priced on a guess.
 
 **Exit.** Whichever of these comes first:
 
-1. **The stop is hit.** Every pick states a stop-loss on air. If any
-   session's low reaches it, the trade exits there. A gap straight through
-   the stop fills at the open, not at the stop — because that is what
-   would actually happen to you.
+1. **The stop is hit.** Every pick states a stop-loss as a price or a
+   percent below entry. If any session's low after the entry session
+   reaches it, the trade exits there (the entry session itself is not
+   judged, because a daily bar cannot show whether its low came before or
+   after the open). A gap straight through the stop fills at the open, not
+   at the stop — because that is what would actually happen to you.
+
+   *What actually happened, through 2026-10-24:* the sim enforces only a
+   stop it can read from the published pick, and it could read one on
+   **9 of the 41** rules-based picks. The others stated a "maximum
+   acceptable loss" the parser did not recognise, or no level at all; the
+   worst trade of the era (XNDU, −27.1%) ran to its horizon with no stop on
+   record. No stop was ever reached on the nine that had one. Since
+   2026-10-24 a maximum-loss sentence counts as the stop, every pick carries
+   a required `Stop-Loss:` line, and a pick without a readable stop is
+   regenerated before it ships. The ledger's `stop_stated` column says, per
+   trade, whether a stop was in force.
 2. **The horizon is reached.** A weekly hold is exactly **five sessions**:
    in at the first session's open, out at the fifth session's close. A
    flash trade is one session, open to close.
@@ -64,8 +85,12 @@ says so on air rather than implying an edge it has not earned.
 ## Options positions
 
 The show teaches covered calls and cash-secured puts constantly — and for
-its first 61 simulated trades it never placed one. That gap is closed, but
-only in a way that keeps the record reproducible.
+its first 61 simulated trades it never placed one. The mechanism to close that
+gap exists, in a way that keeps the record reproducible — but as of
+2026-10-24 **no options position has been placed in 103 simulated trades**.
+From that date, when ten picks run without one, the next pick must use a
+covered call or cash-secured put on a US-listed name whose chain can be
+quoted.
 
 An option's premium cannot be reconstructed after the fact from free data.
 So the contract is **quoted live when the pick is made** — a real listed
@@ -107,6 +132,8 @@ Two honesty limits, stated on air whenever an options trade is discussed:
 | Horizon | Sessions to be held, fixed at entry |
 | **Structure** | Shares, covered call, or cash-secured put |
 | **Rules in effect** | Which of the show's own learned rules it was obeying |
+| **Stop stated** | Whether the pick carried a stop the record could enforce |
+| **Sessions held**, **entry factors** | How long it was actually held; the entry day's volume and trend condition, measured from the bars |
 
 ## Check the homework
 
@@ -129,14 +156,36 @@ lost money.
 
 ## How confidence is kept honest
 
-Across the 50 trades closed before the restart, 48 were rated "Medium",
+Across the 51 trades closed before the restart, 49 were rated "Medium",
 2 "Low" and none "High". A rating that never varies carries no
 information, and it was feeding the show's own analysis as though it did.
 
-Now the rating is scored. Each episode is shown its realized outcome per
-confidence bucket, and if High-confidence picks stop outperforming
-Low-confidence ones, the show is required to say so on air and tighten
-what earns a High.
+The rating is meant to be scored: each episode is shown its realized
+outcome per confidence bucket, and if High-confidence picks stop
+outperforming Low-confidence ones, the show is required to say so on air
+and tighten what earns a High.
+
+*What actually happened, through 2026-10-24:* **all 44 rules-based picks
+were rated Medium.** The grade has had nothing to grade, and the warning
+above has never been able to fire. Since 2026-10-24 a run of five Medium
+picks makes the next rating High or Low by the rubric's factor count; the
+ledger's `confidence` column shows whether that has worked.
+
+## What the market said at each entry
+
+The show's most repeated rule is "require volume above the 20-day average
+before entering". Whether the rule was *shown to the writer* on pick day is
+recorded on every trade; since 2026-10-24 the record also measures whether
+the condition *held*: the entry day's volume against its 20-session
+average, and the entry open against the 50-session average close, computed
+from the same daily bars anyone can download (`entry_volume_ratio_20d`,
+`entry_vs_50dma_pct` in the ledger). The show reports alpha with and
+without each condition, calls a gap a finding only at ten trades a side
+with the mean and the median agreeing, and says so on air when a pick leans
+on a factor the record shows is not paying. On the first 36 rules-based
+trades the volume condition was *not* paying: entries on above-average
+volume averaged −2.9% against the index (5 of 14 beat it), entries below it
++0.6% (12 of 22).
 
 ## What "beating the NASDAQ" would actually take
 

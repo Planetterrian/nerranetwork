@@ -919,6 +919,45 @@ def lint_deep_dive_fetched_source(digest: str, context: Optional[dict] = None) -
 # ---------------------------------------------------------------------------
 
 #: Lints that read the run's article list (``context``) as well as the digest.
+# --- pick_stop_loss (Oct 24 2026) --------------------------------------------
+# Modern Investing's published method says every pick states a stop-loss and
+# the sim exits at it. Through Oct 24 the sim could read a stop on 9 of 41
+# era picks: the digest wrote "Maximum acceptable loss 8 percent" (now
+# parsed) or dropped the Risk Assessment line altogether (Ep210 shipped an
+# AI Analysis block with only a Confidence line). A new pick the sim cannot
+# attach a stop to is a structural defect and rides the regeneration.
+
+_PICK_RE = re.compile(r"\*\*Today's Pick:\*\*\s*\[?([A-Z]{1,5}(?:[.-][A-Z]{1,4})?)\]?\s*[-—]")
+
+
+def pick_without_stop(digest: str) -> Optional[str]:
+    """The ticker of a new pick whose section states no parseable stop,
+    else None (no pick, a no-trade day, or a stop the sim can read)."""
+    m = _PICK_RE.search(digest or "")
+    if not m:
+        return None
+    # The parser is the sim's own, so the lint and the enforcement agree.
+    from shows.hooks.modern_investing import _extract_stop_loss
+    if _extract_stop_loss(digest):
+        return None
+    return m.group(1)
+
+
+def lint_pick_stop_loss(digest: str) -> Optional[LintFinding]:
+    sym = pick_without_stop(digest)
+    metrics = {"pick_without_stop": 0 if sym is None else 1}
+    if sym is None:
+        return LintFinding("pick_stop_loss", "", metrics)
+    return LintFinding(
+        "pick_stop_loss",
+        f"the Practice Investment names {sym} and states no stop-loss the "
+        f"record can enforce — the pick carries a **Stop-Loss:** line giving "
+        f"a price or a percent below entry, derived from the invalidation, "
+        f"and the Risk Assessment repeats it",
+        metrics,
+    )
+
+
 CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source"})
 
 LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
@@ -933,6 +972,7 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "dose_terms": lint_dose_terms,
     "spotlight_card": lint_spotlight_card,
     "hook_supported": lint_hook_supported,
+    "pick_stop_loss": lint_pick_stop_loss,
     "board_venue_mix": lint_board_venue_mix,
     "deep_dive_fetched_source": lint_deep_dive_fetched_source,
 }

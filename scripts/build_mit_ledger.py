@@ -41,6 +41,9 @@ FIELDS = [
     "pnl_pct", "pnl_dollars", "stopped_out",
     "nasdaq_return_pct", "alpha_pct",
     "void_reason", "rules_in_effect", "reviewed_in_episode",
+    # Oct 24 2026: the measured record of each entry (see
+    # ``_entry_factors`` in the hook) and the sessions actually held.
+    "sessions_held", "entry_volume_ratio_20d", "entry_vs_50dma_pct",
 ]
 
 OPTION_FIELDS = [
@@ -65,6 +68,16 @@ def _flatten(trade: dict, era_start) -> dict:
     stop = trade.get("stop_loss") or {}
     row["stop_pct"] = stop.get("pct")
     row["stop_price"] = stop.get("price")
+    # Whether the pick stated a stop the sim could enforce at all — the
+    # method page's "every pick states a stop-loss" is checkable per row.
+    row["stop_stated"] = bool(stop.get("pct") or stop.get("price"))
+    # A closed trade that was never stopped out says so (false), so a
+    # reader can tell "no breach" from "never evaluated" (null).
+    if row.get("status") == "closed" and row.get("stopped_out") is None:
+        row["stopped_out"] = False
+    # Pre-era trades whose recorded prices reconcile to no market bar carry
+    # no entry bar; the flag names them instead of leaving it to inference.
+    row["window_verified"] = bool(trade.get("entry_bar_date")) if row.get("status") == "closed" else None
     row["in_current_era"] = bool(
         era_start and str(trade.get("date") or "") >= str(era_start))
     return row
@@ -91,6 +104,7 @@ def build(tracker: dict) -> dict:
             "advice."
         ),
         "methodology": "https://nerranetwork.com/modern-investing-performance.html",
+        "rules_prose": "https://nerranetwork.com/docs/mit_trading_method.md",
         "rules_file": "shows/_trading_policy.yaml",
         "era": {
             "name": summary.get("era_name"),

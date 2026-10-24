@@ -354,23 +354,23 @@
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6);">
                 <div class="glass-card" style="padding:var(--sp-5);">
                     <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">1</div>
-                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Monday: Pick</div>
-                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">AI analysis selects one investment for a simulated weekly hold. Buy at Monday's market open. $1,000 per trade.</div>
+                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Every episode: one pick</div>
+                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">AI analysis names one simulated $1,000 position with its stop-loss, its invalidation and a graded confidence. It enters at the open of the first session after the pick — never earlier. Several positions run side by side.</div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-5);">
                     <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">2</div>
-                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Tue-Thu: Track</div>
-                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">Daily updates on position progress. If the thesis is working, why. If not, what we're watching. Rare Flash Trades for exceptional catalysts.</div>
+                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Five sessions, or the stop</div>
+                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">A weekly hold is exactly five sessions, out at the fifth close — unless the stated stop is hit first, in which case it exits there. No discretionary exits. Rare same-day Flash Trades for exceptional catalysts.</div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-5);">
                     <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">3</div>
-                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Friday: Evaluate</div>
-                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">Close at Friday's close. Report P&L vs NASDAQ. Extract the lesson. Wins and losses analyzed with equal rigour.</div>
+                    <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Scored against the index</div>
+                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">Each closed trade is compared with the NASDAQ over the same sessions, reviewed once on air against its own forecast, and published in the trade ledger — wins, losses and voided picks alike.</div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-5);">
                     <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">4</div>
                     <div style="font-weight:600;color:var(--nn-white);margin-bottom:var(--sp-2);">Learn & Improve</div>
-                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">Every trade outcome feeds back into the system. Lesson rules are auto-extracted and obeyed by future episodes. The show gets smarter over time.</div>
+                    <div style="font-size:0.88rem;color:var(--nn-text-muted);line-height:1.5;">Every closed trade feeds back: which stated factors paid, which strategy families beat the index, whether the confidence grades held up. The rules the record supports stay; the ones it does not are named on air.</div>
                 </div>
             </div>
             <p style="font-size:0.82rem;color:var(--nn-text-muted);text-align:center;margin-bottom:var(--sp-4);">
@@ -404,8 +404,20 @@
                         {% if performance_data.benchmark.ytd_pct is not none %}{{ "{:+.2f}".format(performance_data.benchmark.ytd_pct) }}%{% else %}—{% endif %}
                     </div>
                 </div>
+                {% set _es = performance_data.summary %}
+                {% if _es.era_trades %}
                 <div class="glass-card" style="padding:var(--sp-4);">
-                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Portfolio YTD</div>
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">The record · alpha vs NASDAQ</div>
+                    <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;color:{% if (_es.era_alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                        {{ "{:+.2f}".format(_es.era_alpha_pct or 0) }}% per trade
+                    </div>
+                    <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
+                        {{ _es.era_trades }} rules-based trades since {{ _es.era_inception }}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="glass-card" style="padding:var(--sp-4);">
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">History · average trade</div>
                     <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;">
                         {% set p_ytd = (performance_data.alpha.ytd_pct or 0) + (performance_data.benchmark.ytd_pct or 0) %}
                         {{ "{:+.2f}".format(p_ytd) }}%
@@ -417,7 +429,7 @@
                     </div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
-                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Alpha vs NASDAQ</div>
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">History · gap vs NASDAQ buy-and-hold</div>
                     {% set alpha_ytd = performance_data.alpha.ytd_pct or 0 %}
                     <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;color:{% if alpha_ytd >= 0 %}#10b981{% else %}#ef4444{% endif %};">
                         {{ "{:+.2f}".format(alpha_ytd) }}% YTD
@@ -427,7 +439,7 @@
                     </div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
-                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Win rate</div>
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">History · win rate</div>
                     <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;">
                         {{ "{:.0f}".format(performance_data.summary.win_rate_pct or 0) }}%
                     </div>

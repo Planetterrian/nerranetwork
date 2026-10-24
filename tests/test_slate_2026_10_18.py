@@ -178,8 +178,10 @@ class TestMitStopParser:
         ("Stop loss at one hundred sixteen dollars representing five point three percent downside",
          {"pct": 5.3}),
         ("Stop would trigger on a close below the September low of $58.40", {"price": 58.4}),
-        ("Stop-loss set at the 20-day moving average; maximum acceptable loss capped at 6-8%", None),
-        ("Maximum loss capped at eight percent if the stop at the fifty day moving average breaks", None),
+        # Oct 24 2026: a stated maximum loss IS the stop (the outer bound of
+        # a band) — 15 of the 18 era digests whose stop went unread had one.
+        ("Stop-loss set at the 20-day moving average; maximum acceptable loss capped at 6-8%", {"pct": 8.0}),
+        ("Maximum loss capped at eight percent if the stop at the fifty day moving average breaks", {"pct": 8.0}),
     ])
     def test_narrated_stops(self, mi, risk, want):
         digest = f"### Practice Investment of the Day\n- **Risk Assessment:** {risk}\n"

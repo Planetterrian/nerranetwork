@@ -31,7 +31,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import pytest
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
@@ -113,7 +112,9 @@ class TestNaNImmunity:
         bars = mi._bars_from_history(_FakeHist())
         # July 2026 stop-enforcement pass: bars carry a best-effort 4th
         # element (intraday low; None when the column is absent).
-        assert bars == [(datetime.date(2026, 6, 1), 430.0, 432.5, None)]
+        # Oct 24 2026: a best-effort 5th element too (entry-day volume for
+        # the measured factors; None when the column is absent).
+        assert bars == [(datetime.date(2026, 6, 1), 430.0, 432.5, None, None)]
 
     def test_sector_exposure_finite(self):
         tracker = _tracker_with_trades([

@@ -1310,6 +1310,80 @@ reviews:
       ab_listen_required: true
       rationale: 'P1: Ep181 shipped ''current street is 1 win'' and ''fold at the open''; Ep178 ''RRSNP'' — listener-facing garble without phonetic hacks (landmine #17).'
     agent_cost_usd: 0.1962
+  - date: '2026-10-24'
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_10_24.md
+    reviewer: claude-code (operator-directed deep review)
+    summary: >-
+      The record reconciles (36 era trades, -0.76% average alpha, 17 beat) but its rules were partly in force: a readable stop on 9 of 41 picks (XNDU -27% ran to horizon; GM recorded a $60 stop for "6 percent"), 44/44 Medium, 0 options in 103 trades, the lifetime blend inside the trade review, the review's alpha line invented (6 of 8 wrong), the headline's basis change aired silently, and the rule scoreboard scoring exposure to a rule's text rather than whether its condition held. Measured on the bars: above-average entry volume -2.86% alpha (14) vs +0.57% below (22).
+    scored_prior_predictions:
+    - metric: episodes whose chapters jump Practice Investment earlier than Market Pulse
+      verdict: hit
+      evidence: Ep206-210 chapter files carry Market Pulse before Practice Investment
+    - metric: Portfolio Performance airings that recite pre-era best/worst
+      verdict: miss
+      evidence: Ep199-209 read the lifetime block every episode; the prompt block led with it (fixed 10-24)
+    - metric: segments per episode that teach volume>20-day confirmation
+      verdict: miss
+      evidence: '"twenty-day average" 27 mentions in Ep199-210; Spotlight closed on it in 6 of 12'
+    - metric: median script words last-10
+      verdict: hit
+      evidence: 1,640-2,250 words on the grok-4.6 script stage since Ep198
+    - metric: mit_new_trade_share_10ep
+      verdict: hit
+      evidence: 0.9 on 10-24
+    - metric: simulated trades using an options structure
+      verdict: miss
+      evidence: 0 of 103 (third window)
+    - metric: picks with a confidence rating that is not Medium
+      verdict: miss
+      evidence: 0 of 44 era picks
+    - metric: sources on x.com per episode
+      verdict: partial
+      evidence: Ep206-210 Practice Investment sources 2 of 5 on x.com
+    shipped:
+      - "stop parser: maximum-loss phrasing, percent-first precedence, position size never a stop; pre-check sanity guard; open stops re-read from the committed digest each run; required **Stop-Loss:** line + pick_stop_loss lint"
+      - "measured entry factors (volume ratio 20d, vs 50-session average, sessions held) recorded at close, backfilled 8/run, scored on alpha in the digest prompt and the public ledger"
+      - "trade review: lifetime figures out, stated confidence/invalidation/stop in, sessions not calendar days, the tracker's NASDAQ window + alpha handed over"
+      - "Portfolio Performance: era record first, history labelled, best/worst out, two-airing basis-change note"
+      - "confidence budget (5 Mediums -> High or Low) and options cadence (10 share picks -> an options structure)"
+      - "extractor reads **Sector:** and an exchange prefix; callback stamped once per trade; validator requires Investor Education + Portfolio Performance; performance page and show page lead with the era; method doc corrected (A/B: three prompts)"
+    deferred:
+      - "Operator: recompute_mit_benchmarks.py --apply (public pages now label what it would change)"
+      - "A mechanically computed confidence grade — only if the forced variation carries no information after ~20 picks"
+      - "Hydro One Ep205 is not added to the record after the fact"
+    predictions:
+    - metric: mit_stop_stated_share_10ep (dashboard) on 2026-11-14
+      baseline: "0.5 (5 of the last 10 picks on 10-24; 9 of 41 era picks overall)"
+      expected: ">= 0.9"
+      verdict: pending
+      evidence: null
+    - metric: mit_non_medium_share_10ep (dashboard) on 2026-11-14
+      baseline: "0.0 (44 of 44 Medium)"
+      expected: ">= 0.2"
+      verdict: pending
+      evidence: null
+    - metric: options structures among the first 15 picks after merge
+      baseline: "0 of 103"
+      expected: ">= 1 with a recorded live premium (or option_quote_failed recorded and said on air)"
+      verdict: pending
+      evidence: null
+    - metric: spoken trade-review alpha equal to the tracker's alpha_pct (hand-check 5 episodes)
+      baseline: "2 of 8 right in Ep199-210"
+      expected: "5 of 5"
+      verdict: pending
+      evidence: null
+    - metric: era closed trades carrying entry_volume_ratio_20d and sessions_held on 2026-11-01
+      baseline: "0 of 36"
+      expected: "all closed era trades"
+      verdict: pending
+      evidence: null
+    - metric: Portfolio Performance airings that lead with the lifetime 87-trade figures or recite best/worst (hand-check 5)
+      baseline: "10 of 10 (Ep200-209)"
+      expected: "0 of 5"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry:
   - idea: Fourth on-air significance-qualifier mechanism after three misses (operator accept-or-abandon only)
     evidence: flagged 2026-09-25 (Grok review)

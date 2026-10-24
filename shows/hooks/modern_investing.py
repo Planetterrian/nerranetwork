@@ -13,6 +13,7 @@ import datetime
 import json
 import logging
 import math
+import statistics
 import os
 import re
 import uuid
@@ -264,8 +265,22 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
             "evaluation and all tracker writes."
         )
     else:
+        # Re-read open trades' stops from their committed digests with the
+        # current parser (Oct 24 2026), then evaluate.
+        try:
+            _refresh_open_stops(tracker, output_dir)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("stop refresh failed: %s", exc)
         # Evaluate yesterday's open trade (if any)
         _evaluate_open_trade(tracker, tracker_path)
+        # Measured entry factors for the era's earlier closes, a few a run
+        # (Oct 24 2026) — persisted by the save below.
+        try:
+            _n = _backfill_entry_factors(tracker)
+            if _n:
+                logger.info("entry factors backfilled on %d closed trade(s)", _n)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("entry-factor backfill failed: %s", exc)
 
     # Build yesterday's trade review text. This may stamp
     # ``reviewed_in_episode`` on the latest closed trade (double-review
@@ -283,7 +298,7 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         _save_tracker(tracker, tracker_path)
 
     # Build portfolio summary
-    context["portfolio_summary"] = _build_portfolio_summary(tracker)
+    context["portfolio_summary"] = _build_portfolio_summary(tracker, episode_num)
 
     # Fetch market indices
     context["market_indices"] = _fetch_market_indices()
@@ -333,13 +348,16 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         lessons = _load_lessons_learned(lessons_path)
         block = _build_lessons_learned_block(lessons)
         scoreboard = _build_rule_scoreboard(lessons, tracker)
-        return f"{block}\n\n{scoreboard}" if scoreboard else block
+        factors = _build_factor_scoreboard(tracker)
+        parts = [block] + [x for x in (scoreboard, factors) if x]
+        return "\n\n".join(parts)
 
     _section("taught_lessons_block",
              lambda: _build_taught_lessons_block(_load_taught_lessons(taught_path)))
     _section("sector_warning", lambda: _build_sector_warning_block(tracker))
     _section("lessons_learned_block", _lessons_block)
-    _section("narrative_callback", lambda: _build_narrative_callback(tracker))
+    _section("narrative_callback",
+             lambda: _build_narrative_callback(tracker, episode_num))
 
     # Evergreen deep-dive rotation — surfaces the previously-unused
     # segment library (shows/segments/modern_investing.json) so the show
@@ -353,6 +371,10 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         return _build_deep_dive_hint_block(segment_hint)
 
     _section("deep_dive_hint", _deep_dive_hint)
+    if not readonly:
+        # The callback stamp above rides this save (the deep-dive save is
+        # conditional on a segment being picked).
+        _save_tracker(tracker, tracker_path)
 
     # Recent strategies for freshness enforcement
     closed_trades = [t for t in tracker["trades"] if t.get("status") == "closed"]
@@ -381,7 +403,11 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
                       # No-trade budget (Sep 18 2026): counted from the
                       # committed signals, so a week of "no trade today"
                       # makes the next pick mandatory.
-                      lambda: _no_trade_budget_block(output_dir, episode_num)):
+                      lambda: _no_trade_budget_block(output_dir, episode_num),
+                      # Confidence and options budgets (Oct 24 2026): the
+                      # same shape, counted from the recorded picks.
+                      lambda: _confidence_budget_block(tracker),
+                      lambda: _options_cadence_block(tracker)):
             try:
                 part = build()
             except Exception as exc:  # noqa: BLE001
@@ -435,6 +461,15 @@ def _build_strategy_performance(tracker: dict) -> str:
     closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("pnl_pct") is not None]
     if len(closed) < 3:
         return "Not enough closed trades to analyze strategy patterns yet."
+    # Oct 24 2026: with the era past ten closed trades this block reads the
+    # era alone — it had been averaging 87 lifetime trades (48 of them
+    # "other") and telling the pick prompt to FAVOR tech on a 19-trade
+    # sample that was mostly pre-rules exits.
+    era_closed = [t for t in closed if _in_era(t)]
+    scope_note = ""
+    if len(era_closed) >= 10:
+        closed = era_closed
+        scope_note = " — rules-based era only"
 
     # A trade can close with no benchmark (alpha_pct None — Oct 6 2026:
     # HPS.A, priced 40 days late, had no NASDAQ bars in the benchmark
@@ -480,7 +515,7 @@ def _build_strategy_performance(tracker: dict) -> str:
     best = max(scored, key=lambda t: _alpha(t) or 0.0)
     worst = min(scored, key=lambda t: _alpha(t) or 0.0)
 
-    lines = ["STRATEGY PERFORMANCE ANALYSIS (use this to improve trade selection):"]
+    lines = [f"STRATEGY PERFORMANCE ANALYSIS (use this to improve trade selection{scope_note}):"]
 
     # Sector breakdown. Statistical discipline (July 2026): a ✓/✗ verdict
     # on 2-3 trades is noise-chasing — the loop was steering picks off
@@ -1189,7 +1224,7 @@ def _trade_symbol_candidates(trade: dict) -> list[str]:
 
 
 def _bars_from_history(hist) -> list[tuple]:
-    """Convert a yfinance history frame to ``[(bar_date, open, close, low)]``.
+    """Convert a yfinance history frame to ``[(bar_date, open, close, low, volume)]``.
 
     Bars with a non-finite open or close are dropped — yfinance returns
     NaN floats for halted/missing bars (the DELL/HIMS shape) and a NaN
@@ -1215,8 +1250,16 @@ def _bars_from_history(hist) -> list[tuple]:
                 low = None
         except (KeyError, TypeError, ValueError):
             low = None
+        # Oct 24 2026: the entry day's volume feeds the measured-factor
+        # record (``_entry_factors``) — best-effort, None when absent.
+        try:
+            volume = float(row["Volume"])
+            if not math.isfinite(volume):
+                volume = None
+        except (KeyError, TypeError, ValueError):
+            volume = None
         bar_date = idx.date() if hasattr(idx, "date") else idx
-        bars.append((bar_date, open_, close, low))
+        bars.append((bar_date, open_, close, low, volume))
     return bars
 
 
@@ -1478,6 +1521,8 @@ def _write_trade_signal(
             "trade_type": trade.get("trade_type", "weekly"),
             "confidence": trade.get("confidence", "Unknown"),
             "strategy": trade.get("strategy", ""),
+            "structure": trade.get("structure", "long_equity"),
+            "invalidation": trade.get("invalidation", ""),
             "target_range": trade.get("target_range", ""),
             "sector": trade.get("sector", ""),
             "pick_date": trade.get("date", today_iso),
@@ -1566,7 +1611,13 @@ _SPELLED_NUM = (
 # "stop-loss set at eight percent below entry" / "stop 8% below entry" /
 # "stop-loss set 8 percent below entry" — 40 of the last 45 Practice
 # Investment sections recorded no stop, so the sim never enforced one.
-_STOP_WORD = r"\bstop(?:[- ]?loss)?\b"
+# Oct 24 2026: 15 of the 18 era digests whose stop went unparsed DID state
+# one — as "Maximum acceptable loss 8 percent", "max loss capped at 6%",
+# "Stop set at the 200-day moving average; maximum acceptable loss 6-8%".
+# The sim enforced a stop on 9 of 41 era picks while the published method
+# says every pick has one. A maximum-loss sentence IS the stop.
+_STOP_WORD = (r"\b(?:stop(?:[- ]?loss)?|max(?:imum)?(?: acceptable| modeled| modelled)? "
+              r"(?:loss|drawdown)|loss (?:is )?capped)\b")
 _STOP_PRICE_RE = re.compile(
     _STOP_WORD + r"[^.;\n%$]{0,60}?\$\s*([\d,]+(?:\.\d+)?)", re.IGNORECASE)
 _STOP_PCT_RE = re.compile(
@@ -1618,17 +1669,62 @@ def _extract_stop_loss(digest_text: str) -> dict | None:
     if m:
         section = m.group(0)
     price_m = _STOP_PRICE_RE.search(section)
+    pct_m = _STOP_PCT_RE.search(section)
+    # Oct 24 2026: the price form used to win outright, so "stop-loss set
+    # 6 percent below entry to limit loss to roughly $60 on the $1,000
+    # position" (GM, Ep206) recorded a $60 stop on an $82.75 stock — a 27%
+    # stop published in the ledger where the show said 6%. Whichever form
+    # the sentence states FIRST is the stop, and the position size never is.
+    if pct_m and (price_m is None or pct_m.start() <= price_m.start()):
+        pct = _spelled_to_number(pct_m.group(1))
+        if pct is not None and 0 < pct < 50:
+            return {"pct": pct}
     if price_m:
         try:
-            return {"price": float(price_m.group(1).replace(",", ""))}
+            price = float(price_m.group(1).replace(",", ""))
         except ValueError:
-            pass
-    pct_m = _STOP_PCT_RE.search(section)
+            price = None
+        if price is not None and price > 0 and price != 1000.0:
+            return {"price": price}
     if pct_m:
         pct = _spelled_to_number(pct_m.group(1))
         if pct is not None and 0 < pct < 50:
             return {"pct": pct}
     return None
+
+
+def _refresh_open_stops(tracker: dict, output_dir: Path) -> int:
+    """Re-read each OPEN trade's stop from its committed digest.
+
+    The parser is the record's only source of a stop, and it has been
+    corrected twice (Oct 18, Oct 24); a pick recorded under the older
+    parser keeps the older reading until it closes unless the record is
+    re-read. Returns the number of trades whose stop changed."""
+    changed = 0
+    for t in tracker.get("trades", []):
+        if t.get("status") != "open" or t.get("option"):
+            continue
+        ep = t.get("episode_num")
+        if not isinstance(ep, int) or ep <= 0:
+            continue
+        files = [f for f in Path(output_dir).glob(f"*_Ep{ep:03d}_*.md")
+                 if "reader" not in f.name]
+        if not files:
+            continue
+        try:
+            digest = files[0].read_text(encoding="utf-8")
+        except OSError:
+            continue
+        stop = _extract_stop_loss(digest)
+        if stop != t.get("stop_loss"):
+            logger.info("Ep%s %s: stop re-read from the digest %s -> %s",
+                        ep, t.get("symbol"), t.get("stop_loss"), stop)
+            if stop is None:
+                t.pop("stop_loss", None)
+            else:
+                t["stop_loss"] = stop
+            changed += 1
+    return changed
 
 
 def _stop_breach(bars, entry_bar, exit_bar, stop_price: float):
@@ -1651,6 +1747,274 @@ def _stop_breach(bars, entry_bar, exit_bar, stop_price: float):
             fill = min(stop_price, bar[1])  # gap-through fills at the open
             return bar[0], round(fill, 2)
     return None
+
+
+# ---------------------------------------------------------------------------
+# Measured entry factors (Oct 24 2026)
+# ---------------------------------------------------------------------------
+# The rule scoreboard scores whether a rule's TEXT was shown to the writer
+# on pick day. After 36 era trades its four active rules were one
+# constraint in four scopes ("volume above the 20-day average before
+# entering…"), each stamped on ~29 trades and absent from ~7 by rotation,
+# so every with/without comparison was two readings of the same sample. The
+# market's own record of each entry is measurable from the daily bars the
+# sim already fetches: was the entry day's volume above its 20-session
+# average, and was the entry above the 50-session average close. Those two
+# facts are recorded on every closed trade and scored against alpha — the
+# recursive loop's first measurement of what its favourite rule actually
+# buys, rather than of whether it was repeated.
+_FACTOR_VOLUME_WINDOW = 20
+_FACTOR_MA_WINDOW = 50
+#: Closed era trades given their factors per run, so a backfill of the
+#: existing record costs a few bar fetches a day and never a run's budget.
+_FACTOR_BACKFILL_PER_RUN = 8
+_FACTOR_MIN_ARM = 5
+
+
+def _sessions_between(entry_date, exit_date, bars=None) -> int | None:
+    """Sessions held, entry and exit bars inclusive.
+
+    From the bars when they are given (the truth, holidays included); from
+    the weekday count otherwise — the backfill for trades closed before
+    ``sessions_held`` was recorded."""
+    if entry_date is None or exit_date is None or exit_date < entry_date:
+        return None
+    if bars:
+        n = sum(1 for b in bars if entry_date <= b[0] <= exit_date)
+        if n:
+            return n
+    n = 0
+    d = entry_date
+    while d <= exit_date:
+        if d.weekday() < 5:
+            n += 1
+        d += datetime.timedelta(days=1)
+    return n
+
+
+def _entry_factors(bars, entry_bar) -> dict:
+    """``entry_volume_ratio_20d`` and ``entry_vs_50dma_pct`` for an entry bar.
+
+    None for a factor the bars cannot support (fewer prior sessions than
+    the window, no volume column) — a factor is never guessed."""
+    out = {"entry_volume_ratio_20d": None, "entry_vs_50dma_pct": None}
+    if not bars or entry_bar is None:
+        return out
+    prior = [b for b in bars if b[0] < entry_bar[0]]
+    vols = [b[4] for b in prior[-_FACTOR_VOLUME_WINDOW:]
+            if len(b) > 4 and isinstance(b[4], (int, float)) and b[4] > 0]
+    entry_vol = entry_bar[4] if len(entry_bar) > 4 else None
+    if (len(vols) >= _FACTOR_VOLUME_WINDOW and isinstance(entry_vol, (int, float))
+            and entry_vol > 0):
+        out["entry_volume_ratio_20d"] = round(entry_vol / (sum(vols) / len(vols)), 2)
+    closes = [b[2] for b in prior[-_FACTOR_MA_WINDOW:]]
+    if len(closes) >= _FACTOR_MA_WINDOW and closes and entry_bar[1]:
+        ma = sum(closes) / len(closes)
+        if ma > 0:
+            out["entry_vs_50dma_pct"] = round((entry_bar[1] / ma - 1) * 100, 2)
+    return out
+
+
+def _record_entry_factors(trade: dict, bars, entry_bar, exit_bar) -> None:
+    """Stamp the measured factors and the sessions held on a closed trade.
+
+    Fetches a longer window when *bars* holds fewer than fifty sessions
+    before the entry (a fresh close is evaluated on a 15-day window)."""
+    if entry_bar is None:
+        return
+    hist = bars
+    prior = [b for b in (bars or []) if b[0] < entry_bar[0]]
+    if len(prior) < _FACTOR_MA_WINDOW:
+        try:
+            longer = _fetch_bars_for_trade(trade, period="6mo")
+        except Exception as exc:  # noqa: BLE001 — factors are best-effort
+            logger.warning("factor window fetch failed for %s: %s",
+                           trade.get("symbol"), exc)
+            longer = None
+        if longer:
+            hist = longer
+            entry_bar = next((b for b in longer if b[0] == entry_bar[0]), entry_bar)
+    trade.update(_entry_factors(hist, entry_bar))
+    if exit_bar is not None:
+        trade["sessions_held"] = _sessions_between(entry_bar[0], exit_bar[0], bars)
+    trade["factors_version"] = 1
+
+
+def _backfill_entry_factors(tracker: dict, *, limit: int = _FACTOR_BACKFILL_PER_RUN) -> int:
+    """Give closed era trades recorded before the factors existed theirs.
+
+    A few per run (oldest first); returns the count stamped. A trade whose
+    bars cannot be fetched is stamped ``factors_version: 0`` so it is not
+    retried every run."""
+    done = 0
+    for t in tracker.get("trades", []):
+        if done >= limit:
+            break
+        if (t.get("status") != "closed" or not _in_era(t)
+                or t.get("factors_version") is not None
+                or not t.get("entry_bar_date") or not t.get("exit_bar_date")):
+            continue
+        try:
+            entry_d = datetime.date.fromisoformat(t["entry_bar_date"])
+            exit_d = datetime.date.fromisoformat(t["exit_bar_date"])
+        except ValueError:
+            continue
+        bars = None
+        try:
+            bars = _fetch_bars_for_trade(t, period="6mo")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("factor backfill fetch failed for %s: %s", t.get("symbol"), exc)
+        entry_bar = next((b for b in (bars or []) if b[0] == entry_d), None)
+        if entry_bar is None:
+            t["factors_version"] = 0
+            done += 1
+            continue
+        t.update(_entry_factors(bars, entry_bar))
+        t["sessions_held"] = _sessions_between(entry_d, exit_d, bars)
+        t["factors_version"] = 1
+        done += 1
+    return done
+
+
+def _factor_arms(tracker: dict, key: str, threshold: float):
+    """``(above, below)`` alpha lists for a measured factor over the era."""
+    above: list[float] = []
+    below: list[float] = []
+    for t in tracker.get("trades", []):
+        if t.get("status") != "closed" or not _in_era(t):
+            continue
+        a = t.get("alpha_pct")
+        v = t.get(key)
+        if not (isinstance(a, (int, float)) and math.isfinite(a)
+                and isinstance(v, (int, float)) and math.isfinite(v)):
+            continue
+        (above if v >= threshold else below).append(a)
+    return above, below
+
+
+_FACTORS = (
+    ("entry_volume_ratio_20d", 1.0,
+     "entry-day volume at or above its 20-session average",
+     "below it"),
+    ("entry_vs_50dma_pct", 0.0,
+     "entry open above the 50-session average close",
+     "below it"),
+)
+
+
+def _build_factor_scoreboard(tracker: dict) -> str:
+    """What the market said about each rules-based entry, scored on alpha.
+
+    Says "not measurable yet" below ``_FACTOR_MIN_ARM`` trades on either
+    side, and never calls a gap under one point on under ten trades a
+    finding — the honesty rules of the rule scoreboard, applied to a
+    measurement that can actually vary between trades."""
+    lines = []
+    for key, threshold, with_label, without_label in _FACTORS:
+        above, below = _factor_arms(tracker, key, threshold)
+        if not above and not below:
+            continue
+        if len(above) < _FACTOR_MIN_ARM or len(below) < _FACTOR_MIN_ARM:
+            lines.append(
+                f"- {with_label}: not measurable yet ({len(above)} trades with, "
+                f"{len(below)} without; {_FACTOR_MIN_ARM} needed on each side)")
+            continue
+        avg_a = sum(above) / len(above)
+        avg_b = sum(below) / len(below)
+        med_a = statistics.median(above)
+        med_b = statistics.median(below)
+        beat_a = sum(1 for a in above if a > 0)
+        beat_b = sum(1 for a in below if a > 0)
+        # A verdict needs ten trades a side, a one-point gap in the MEAN
+        # and a median that agrees in sign — one -26% trade (XNDU, Ep192)
+        # moves a 14-trade mean by two points on its own.
+        gap = avg_a - avg_b
+        med_gap = med_a - med_b
+        if (abs(gap) >= 1.0 and min(len(above), len(below)) >= 10
+                and med_gap != 0 and (med_gap > 0) == (gap > 0)):
+            verdict = (" → the factor has EARNED its place in the pick"
+                       if gap > 0 else
+                       " → the factor is NOT paying; say so if a pick leans on it")
+        else:
+            verdict = " → a gap this size on this many trades is noise, not a finding"
+        lines.append(
+            f"- {with_label}: avg alpha {avg_a:+.2f}% (median {med_a:+.2f}%) over "
+            f"{len(above)} trades ({beat_a} beat the index); {without_label}: "
+            f"{avg_b:+.2f}% (median {med_b:+.2f}%) over {len(below)} "
+            f"({beat_b} beat){verdict}")
+    if not lines:
+        return ""
+    return (
+        "MEASURED ENTRY FACTORS (what the market recorded at each rules-based "
+        "entry — not whether a rule was shown to the writer; computed from the "
+        "daily bars, so a listener can recompute them):\n" + "\n".join(lines)
+    )
+
+
+# Confidence budget (Oct 24 2026). Every one of the 44 era picks was rated
+# Medium — the rubric, the calibration read-back and the September "do not
+# repeat that" line moved nothing, so the grade the method page promises
+# to score has had nothing to score. Same mechanism as the no-trade budget,
+# which worked where the prose did not: counted from the committed picks,
+# and when the window is all Medium the next pick must commit.
+_CONFIDENCE_BUDGET_WINDOW = 5
+
+
+def _confidence_budget_block(tracker: dict) -> str:
+    picks = [t for t in tracker.get("trades", [])
+             if t.get("status") != "voided" and t.get("confidence")
+             and t.get("confidence") != "Unknown"]
+    recent = picks[-_CONFIDENCE_BUDGET_WINDOW:]
+    if len(recent) < _CONFIDENCE_BUDGET_WINDOW:
+        return ""
+    medium = sum(1 for t in recent if str(t["confidence"]).capitalize() == "Medium")
+    header = (f"CONFIDENCE BUDGET: {medium} of the last {len(recent)} picks were "
+              f"rated Medium.")
+    if medium == len(recent):
+        return header + (
+            " The budget is SPENT — today's Confidence Level MUST be High or "
+            "Low, decided by the rubric's factor count (three or more aligned "
+            "factors, each named, is High; one is Low), with the factors "
+            "listed in the justification. A sixth consecutive Medium is not "
+            "available: a rating that never varies cannot be graded, and the "
+            "grade is the lesson.")
+    return header + (
+        " Commit to High or Low whenever the factor count says so — the "
+        "rating is graded when the trade closes.")
+
+
+# Options cadence (Oct 24 2026). 0 of 102 simulated trades used an options
+# structure across two readouts that predicted at least one in ten; the
+# prompt's "use one only when the setup calls for it" was read as never.
+# When ten picks run without one, the next pick is an options structure on
+# a US-listed name whose chain can be quoted — the structure is the lesson,
+# and the premium is still a live quote or the pick records shares.
+_OPTIONS_CADENCE_WINDOW = 10
+
+
+def _options_cadence_block(tracker: dict) -> str:
+    picks = [t for t in tracker.get("trades", []) if t.get("status") != "voided"]
+    recent = picks[-_OPTIONS_CADENCE_WINDOW:]
+    if len(recent) < _OPTIONS_CADENCE_WINDOW:
+        return ""
+    used = sum(1 for t in recent
+               if t.get("option") or t.get("structure") in OPTION_STRUCTURES)
+    header = (f"OPTIONS CADENCE: {used} of the last {len(recent)} picks used a "
+              f"covered call or cash-secured put.")
+    if used:
+        return header + " Use a structure again only when the thesis is income or a willingness to own lower."
+    return header + (
+        " None did, and the show teaches both structures constantly. Today's "
+        "Practice Investment MUST be a Covered Call or a Cash-Secured Put on a "
+        "US-listed name with a liquid listed options chain (a TSX chain cannot "
+        "be quoted), where the structure fits the thesis — a covered call on a "
+        "name you would be content to have called away near the strike, a "
+        "cash-secured put on a name you would be content to own lower. Write "
+        "**Structure:** accordingly and teach the structure's mechanics in the "
+        "pick: strike, expiry, premium, capital committed, both outcomes at "
+        "expiry, and that early assignment is not modelled. The contract is "
+        "quoted live when the pick is recorded; if the chain cannot be quoted "
+        "the sim records shares and the next episode says so.")
 
 
 def _trade_pick_date(trade: dict) -> datetime.date | None:
@@ -1894,6 +2258,11 @@ def _stop_already_breached(trade: dict, bars, pick_date) -> bool:
     elif isinstance(stop.get("pct"), (int, float)):
         stop_price = entry_price * (1 - float(stop["pct"]) / 100)
     else:
+        return False
+    # The same sanity rule as _close_trade (Oct 24 2026): a "stop" at or
+    # above the entry is a parse artifact, and without this guard it closed
+    # the trade on session two through the horizon path with no stop flag.
+    if not (0 < stop_price < entry_price):
         return False
     for bar in window[1:]:
         low = bar[3] if len(bar) > 3 else None
@@ -2161,6 +2530,13 @@ def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
 
     entry_date, entry_price = entry_bar[0], entry_bar[1]
     exit_date, exit_price = exit_bar[0], exit_bar[2]
+
+    # Measured entry factors + sessions held (Oct 24 2026) — best-effort,
+    # never a reason not to close.
+    try:
+        _record_entry_factors(trade, bars, entry_bar, exit_bar)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("entry factors failed for %s: %s", symbol, exc)
 
     # Stop-loss enforcement (July 2026 fidelity pass): the digest narrates
     # a stop on every pick but the sim let losers ride to the scheduled
@@ -3320,10 +3696,6 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
         return void_note + (
             f"**Last {type_label}:** {symbol}\n"
             f"**Result:** Market data was unavailable for evaluation.\n"
-            f"**Running Total:** ${summary.get('cumulative_pnl', 0):.2f}\n"
-            f"**Win Rate:** {summary.get('wins', 0)} wins / "
-            f"{summary.get('total_trades', 0)} total trades "
-            f"({summary.get('win_rate_pct', 0):.0f}%)\n"
         )
 
     # State the hold length that actually happened (August 2026 review).
@@ -3335,22 +3707,70 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     # "five-day window" that the pick's own target range was written
     # against. Handing the real span to the model stops the mismatch at
     # the source instead of asking it to remember.
+    # Oct 24 2026: the hold is counted in SESSIONS, the unit the rulebook
+    # uses. "6 calendar day(s) (Wednesday → Tuesday)" aired beside "a fixed
+    # five-session hold" on every review and read as a contradiction.
     hold_note = ""
     try:
         if last.get("entry_bar_date") and last.get("exit_bar_date"):
             _in = datetime.date.fromisoformat(last["entry_bar_date"])
             _out = datetime.date.fromisoformat(last["exit_bar_date"])
-            _days = (_out - _in).days
+            _sessions = last.get("sessions_held")
+            if not isinstance(_sessions, int):
+                _sessions = _sessions_between(_in, _out)
+            _horizon = last.get("horizon_sessions") or horizon_sessions(trade_type)
+            if last.get("stopped_out"):
+                _shape = "stopped out before the horizon"
+            elif _sessions == _horizon:
+                _shape = "the full horizon"
+            else:
+                _shape = f"the rule is {_horizon}"
             hold_note = (
-                f"**Actual hold:** {_days} calendar day(s) of market data "
-                f"({_in.strftime('%A')} → {_out.strftime('%A')}). Describe "
-                f"the window you actually held — never call it a five-day "
-                f"or full-week hold unless the dates say so.\n"
+                f"**Hold:** {_sessions} session{'s' if _sessions != 1 else ''} "
+                f"({_in.strftime('%A')} open → {_out.strftime('%A')} close) — "
+                f"{_shape}. Describe the sessions actually held, never calendar days.\n"
             )
     except ValueError:
         pass
+    # The forecast the pick made, so the review grades it (Oct 24 2026):
+    # the segment had the result and nothing to judge it against, and the
+    # "Lesson Learned" that followed was a rule copied from the ledger.
+    forecast_note = ""
+    if last.get("confidence") and last.get("confidence") != "Unknown":
+        forecast_note += f"**Stated confidence:** {last['confidence']}\n"
+    if last.get("invalidation"):
+        forecast_note += (f"**Stated invalidation:** {last['invalidation']} — say "
+                          f"whether it fired, came close, or never mattered.\n")
+    _stop = last.get("stop_loss")
+    if isinstance(_stop, dict) and (_stop.get("price") or _stop.get("pct")):
+        _stop_txt = (f"${_finite(_stop['price']):.2f}" if _stop.get("price")
+                     else f"{_finite(_stop['pct']):g}% below entry")
+        if not last.get("stopped_out"):
+            forecast_note += f"**Stated stop:** {_stop_txt} — not reached.\n"
+    elif last.get("structure", "long_equity") == "long_equity":
+        forecast_note += ("**Stated stop:** none the sim could read, so the "
+                          "horizon was the only exit — say so.\n")
 
     direction = "gained" if pnl_pct >= 0 else "lost"
+    # Oct 24 2026: the block gave the model entry, exit and P&L and NOTHING
+    # about the index over the same sessions, so the "Alpha vs NASDAQ"
+    # line was written from nothing — six of the eight spoken verdicts in
+    # Ep199-210 were wrong (ATZ.TO "+3.1% alpha" against a recorded
+    # +7.51%; the day's -0.10% NASDAQ move pasted onto two six-day
+    # windows). The tracker's numbers are the only ones that may be spoken.
+    _ndq = last.get("nasdaq_return_pct")
+    _alpha = last.get("alpha_pct")
+    if (isinstance(_ndq, (int, float)) and math.isfinite(_ndq)
+            and isinstance(_alpha, (int, float)) and math.isfinite(_alpha)):
+        bench_note = (
+            f"**NASDAQ over the same sessions:** {_ndq:+.2f}% → "
+            f"**alpha {_alpha:+.2f}%** — the index {'rose' if _ndq > 0 else 'fell' if _ndq < 0 else 'was flat'} "
+            f"over this trade's own window; use THESE two numbers for the Alpha vs "
+            f"NASDAQ line, never the day's index move.\n")
+    else:
+        bench_note = ("**NASDAQ over the same sessions:** not recorded for this "
+                      "trade — say the benchmark comparison is unavailable; never "
+                      "estimate it.\n")
     stop_note = ""
     if last.get("stopped_out"):
         stop_note = (
@@ -3374,18 +3794,20 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     head = (f"**Last {type_label}{when_txt}:**" if not later else
             f"**Earlier {type_label}{when_txt} ({later} later "
             f"trade{'s' if later != 1 else ''} closed since):**")
+    # No running total, win rate or streak here (Oct 24 2026): those were
+    # the LIFETIME figures (87 trades, $-14.73, 52%) and the model carried
+    # them from this block onto the air beside the era alpha every episode
+    # — the blend the Aug 18 restart exists to prevent. The record belongs
+    # to Portfolio Performance alone.
+    del summary
     return void_note + (
         f"{head} {symbol} — {strategy}\n"
         f"{hold_note}"
+        f"{forecast_note}"
         f"{stop_note}"
         f"**Entry:** ${entry:.2f} ({entry_label}) → **Exit:** ${exit_:.2f} ({exit_label})\n"
         f"**Result:** {direction} {abs(pnl_pct):.2f}% (${pnl_dollars:+.2f} on $1,000 position)\n"
-        f"**Running Total:** ${summary.get('cumulative_pnl', 0):.2f} across "
-        f"{summary.get('total_trades', 0)} trades\n"
-        f"**Win Rate:** {summary.get('wins', 0)} wins / "
-        f"{summary.get('total_trades', 0)} total trades "
-        f"({summary.get('win_rate_pct', 0):.0f}%)\n"
-        f"**Current Streak:** {_format_streak(summary.get('current_streak', 0))}\n"
+        f"{bench_note}"
     )
 
 
@@ -4445,14 +4867,22 @@ def _record_segment_used(tracker: dict, segment_id: str) -> None:
         del used[:-60]
 
 
-def _build_narrative_callback(tracker: dict) -> str:
-    """Pick one closed trade from 14-30 days ago, formatted as a recall line.
-    The daily podcast weaves this in naturally on Fridays and monthlies.
+def _build_narrative_callback(tracker: dict, episode_num: int | None = None) -> str:
+    """Pick one closed trade from 14-35 days ago, formatted as a recall line.
+
+    Each trade is recalled ONCE (Oct 24 2026): the freshest trade in the
+    window was the same trade until a newer one aged in, so Ep207-209 opened
+    their Market Pulse on AMD, AVGO and AVGO again — a tic, and a second
+    telling of a result the trade review had already given. The stamp
+    ``callback_in_episode`` is persisted by the caller's save.
     """
     today = datetime.date.today()
     candidates = []
     for t in tracker.get("trades", []):
         if t.get("status") != "closed":
+            continue
+        _done = t.get("callback_in_episode")
+        if _done is not None and _done != episode_num:
             continue
         d = t.get("date")
         if not isinstance(d, str):
@@ -4469,6 +4899,8 @@ def _build_narrative_callback(tracker: dict) -> str:
     # Prefer the freshest that's still clearly in the callback window.
     candidates.sort(key=lambda x: x[0])
     days, trade = candidates[0]
+    if episode_num is not None and not _hooks_readonly():
+        trade["callback_in_episode"] = episode_num
     symbol = trade.get("symbol", "???")
     pnl = trade.get("pnl_pct")
     sector = trade.get("sector", "?")
@@ -4484,7 +4916,39 @@ def _build_narrative_callback(tracker: dict) -> str:
     )
 
 
-def _build_portfolio_summary(tracker: dict) -> str:
+#: Episodes that carry the one-off note that the era headline moved from a
+#: compounded chain to the average trade (Oct 22 2026). Ep208 aired "minus
+#: thirty-three point one percent across thirty-four rules-based trades" and
+#: Ep209 "minus zero point eight percent across thirty-six" with nothing in
+#: between — two closes cannot move a figure 32 points, and a headline that
+#: changes basis silently is the shape the Aug 20 correction exists for.
+BASIS_NOTE_EPISODES = 2
+
+
+def _basis_change_note(tracker: dict, episode_num: int | None) -> str:
+    meta = tracker.setdefault("metadata", {})
+    aired = [e for e in (meta.get("basis_note_episodes") or []) if isinstance(e, int)]
+    if episode_num is None or episode_num <= 0:
+        return ""
+    if episode_num not in aired:
+        if len(aired) >= BASIS_NOTE_EPISODES:
+            return ""
+        if not _hooks_readonly():
+            meta["basis_note_episodes"] = aired + [episode_num]
+    return (
+        "- ONE-TIME NOTE (speak it once, in Portfolio Performance, before the "
+        "number): until October 22 the show quoted the era record as a "
+        "COMPOUNDED figure — the trades' returns multiplied as if each one "
+        "reinvested the last, which put a number near minus thirty percent on "
+        "air. The positions run side by side, so that chain described a "
+        "portfolio the rules never held; the record is now the AVERAGE trade "
+        "against the index over its own sessions, and that is why the "
+        "headline moved by thirty points between two episodes with two "
+        "ordinary closes in between. Nothing in the trades changed.\n"
+    )
+
+
+def _build_portfolio_summary(tracker: dict, episode_num: int | None = None) -> str:
     """Build the Portfolio Performance summary for the digest prompt."""
     summary = tracker.get("summary", {})
     total = summary.get("total_trades", 0)
@@ -4584,7 +5048,47 @@ def _build_portfolio_summary(tracker: dict) -> str:
     # for the nearest impressive number and attaches it to the current
     # method.
     _era_n = summary.get("era_trades", 0)
-    _hist = "" if _era_n else (
+    if _era_n:
+        # Oct 24 2026: with the era live, the block led with "Lifetime
+        # totals: 87 trades, 52%, $-14.73" and the era alpha came fourth;
+        # Ep200-210 all spoke the lifetime figures as the scoreboard. The
+        # record now comes first and the lifetime block is labelled.
+        _beat = summary.get("era_beat_benchmark")
+        _ret = summary.get("era_return_pct")
+        _ndq = summary.get("era_nasdaq_pct")
+        _t = summary.get("era_alpha_t_stat")
+        record = (
+            f"Portfolio Performance (simulated, $1,000 per trade):\n"
+            f"THE RECORD — {summary.get('era_name') or 'the rules-based era'}, "
+            f"began {summary.get('era_inception')}; these are the ONLY figures "
+            f"spoken as the show's record:\n"
+            f"{alpha_line}"
+        )
+        if isinstance(_beat, int) and _ret is not None and _ndq is not None:
+            record += (
+                f"- {_beat} of {_era_n} trades beat the index over their own "
+                f"window; the average trade returned {_finite(_ret):+.2f}% "
+                f"against the NASDAQ's {_finite(_ndq):+.2f}% over the same "
+                f"sessions\n"
+            )
+        if isinstance(_t, (int, float)):
+            record += (
+                f"- t-statistic {_t:+.2f} on the per-trade alpha — "
+                f"{'distinguishable from luck' if abs(_t) >= 2 else 'not yet distinguishable from luck; say the result is early'}\n"
+            )
+        record += _basis_change_note(tracker, episode_num)
+        record += (
+            f"HISTORY ONLY — every simulated trade since March 2026, including "
+            f"the pre-rules exits. Never beside the alpha as the scoreboard, "
+            f"never its best or worst trade; at most ONE sentence, after the "
+            f"record, calling it the full history:\n"
+            f"- {total} trades, {summary.get('win_rate_pct', 0):.0f}% win rate "
+            f"({summary.get('wins', 0)}W / {summary.get('losses', 0)}L / "
+            f"{summary.get('breakeven', 0)}BE), cumulative P&L "
+            f"${_finite(summary.get('cumulative_pnl')):+.2f}\n"
+        )
+        return record
+    _hist = (
         " — HISTORY ONLY, produced under the pre-2026-08-18 exit rules; "
         "never present these as the current method's results"
     )
@@ -4633,7 +5137,10 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
     # "BTC-USD — Bitcoin" was truncated to "BTC", which _probe_pick then
     # validated against the WRONG INSTRUMENT (an equity at $28.80 vs the
     # spoken Bitcoin pick with a $64,500 stop).
-    _SYM = r"([A-Z]{1,5}(?:[.-][A-Z]{1,4})?)"
+    # Oct 24 2026: Ep205 wrote "TSX:H — Hydro One" and the pick announced on
+    # air (stop, target, teaser) was lost as no_pick_extracted. An exchange
+    # prefix is accepted and dropped; the Market line carries the venue.
+    _SYM = r"(?:(?:TSX|TSXV|TSX-V|NYSE|NASDAQ|CSE|NEO):\s*)?([A-Z]{1,5}(?:[.-][A-Z]{1,4})?)"
     ticker_match = re.search(
         r"\*\*Today's Pick:\*\*\s*\[?" + _SYM + r"\]?\s*[-—]",
         digest_text,
@@ -4715,6 +5222,18 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
     strategy_family_raw = (
         family_match.group(1).strip().lower() if family_match else "")
 
+    # Sector (Oct 24 2026): the digest has written a required ``**Sector:**``
+    # line since August and nothing read it — 27 of 44 era picks were
+    # classified "other" from a symbol table, so the concentration rule and
+    # the sector record measured a bucket, not a sector.
+    sector_match = re.search(
+        r"\*\*Sector:\*\*\s*\[?([a-z_]+)", digest_text, re.IGNORECASE)
+    sector = ""
+    if sector_match:
+        raw_sector = sector_match.group(1).strip().lower()
+        if raw_sector in SECTOR_TAGS:
+            sector = raw_sector
+
     structure_match = re.search(
         r"\*\*Structure:\*\*\s*\[?([A-Za-z \-_]+)", digest_text)
     structure = ""
@@ -4752,6 +5271,7 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         "target_range": target,
         "invalidation": invalidation,
         "structure": structure or "long_equity",
+        "sector": sector,
         "strategy_family": strategy_family_raw,
         "trade_type": trade_type,
         "policy_version": load_policy().get("version"),

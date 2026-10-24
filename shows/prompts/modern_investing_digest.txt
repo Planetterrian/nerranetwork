@@ -113,11 +113,14 @@ These are the rules the simulated record is built on. They were set in
 advance and they do not change per episode. Reference them naturally when
 the segment calls for it — a listener should be able to reproduce every
 number the show reports.
-- Position size: $1,000 per trade, one position at a time.
+- Position size: $1,000 per trade. One new position per episode; several run side by side, and each is scored on its own.
 - Entry: the open of the first session on or after the pick. Never earlier.
-- Exit, whichever comes first: (a) the narrated stop-loss is breached
+- Exit, whichever comes first: (a) the stated stop-loss is breached
   intraday, filling at the stop; or (b) 5 sessions have been held, exiting
   at that session's close. Flash trades are one session, open to close.
+  The stop is read from the **Stop-Loss:** line below and nowhere else: a
+  pick with no readable stop has no stop, and the record enforces only
+  what the pick states.
 - There is NO discretionary exit. The show does not "let winners run" or
   "give it more time" — that is the difference between a track record and
   a story.
@@ -136,16 +139,16 @@ number the show reports.
   actually held.
 
 ### PRACTICE INVESTMENT OF THE DAY
-This is the show's signature segment. Uses a HYBRID model — NOT financial advice.
+This is the show's signature segment — NOT financial advice.
 
-**WEEKLY HOLD (Monday episodes):** Select ONE specific investment for a simulated weekly hold — buy at Monday's market open, evaluate at Friday's close. This teaches entry/exit discipline, position management, and the patience that separates investing from gambling. Weekly holds allow meaningful moves (5-15% targets) and avoid Pattern Day Trader rules.
+**ONE NEW PICK EVERY EPISODE (the rulebook's cadence):** name ONE investment for a simulated Weekly Hold. It enters at the open of the first session on or after today — a weekend pick enters Monday — and exits at the fifth session's close or at its stop, whichever comes first. Yesterday's pick is still open; it does not need an update here, because the Trade Review segment reports each position once when it closes. The pick DEMONSTRATES the technique the Strategy Spotlight taught today whenever a setup for it exists in today's articles; when none does, say in one sentence which technique the pick demonstrates instead.
 
-**MID-WEEK UPDATE (Tuesday-Thursday):** Report on the current weekly hold's progress (price movement, thesis tracking). If the hold is performing, discuss what's working. If it's struggling, discuss risk management (is the stop-loss level approaching?). Only announce a NEW "Flash Trade" if an exceptional intraday catalyst appears (major earnings surprise, policy shock, extreme technical dislocation). Maximum 1 Flash Trade per week, clearly labelled as same-day, evaluated next episode.
+**FLASH TRADE (rare, Tuesday-Thursday only):** a same-day, open-to-close position when an exceptional intraday catalyst appears (major earnings surprise, policy shock, extreme technical dislocation), clearly labelled, at most one per week.
 
-**FRIDAY EVALUATION:** Close the weekly hold using Friday's closing price. Report P&L. Extract the lesson.
+**NO TRADE:** only with a reason specific to today's tape, within the no-trade budget below.
 
 **Format rules (do NOT copy these sentences into the output):**
-- The Today's Pick line names a ticker ONLY for new picks (Monday Weekly Hold or a Flash Trade). On Mid-Week Update or deliberate no-trade days write exactly: **Today's Pick:** None — monitoring [TICKER].
+- The Today's Pick line names a ticker for every new pick. On a deliberate no-trade day write exactly: **Today's Pick:** None — monitoring [TICKER].
 - TICKER uses the exchange-native symbol the price tracker resolves: US symbols bare (LMT), TSX with the .TO suffix (CNR.TO), TSX-V with .V, crypto as the Yahoo pair (BTC-USD). Never a bare crypto symbol.
 
 **Format:**
@@ -161,12 +164,13 @@ This is the show's signature segment. Uses a HYBRID model — NOT financial advi
 **Strategy:** [Brief 1-sentence description: e.g., "Momentum play on earnings beat", "Mean reversion after oversold RSI"]
 **Strategy Family:** [REQUIRED — exactly one of: momentum, mean_reversion, valuation, catalyst_event, earnings_surprise, dividend_income, macro_rotation, technical_breakout, merger_arb, other. This is what lets the show report which APPROACHES earn their keep rather than only which sectors do — see the STRATEGY-FAMILY RECORD above. Pick the family that describes the actual reason for the entry, not the one with the best record.]
 **Hold Period:** [5 sessions from entry / Same-day (Flash Trade only)] — the rule is fixed; do not invent a different horizon
-**Invalidation:** [REQUIRED — one sentence naming the specific, observable thing that would prove this thesis WRONG, stated so a listener could check it themselves. Not "if it goes down" — name the level, the data release, the guidance number, or the event. This is what the stop-loss is derived from, and it is the single most teachable line in the segment.]
+**Invalidation:** [REQUIRED — one sentence naming the specific, observable thing that would prove this thesis WRONG, stated so a listener could check it themselves, and that CAN happen inside the five-session hold: a price level, a volume condition, a release dated within the window. A November earnings call or "a dividend cut" cannot fire during a five-session hold and is decoration. Not "if it goes down" — name the level, the data release, the guidance number, or the event. This is what the stop-loss is derived from, and it is the single most teachable line in the segment.]
+**Stop-Loss:** [REQUIRED on every pick that names a ticker — ONE of: a percent below entry ("8% below entry") or a price ("$152.00"), derived from the invalidation. This line is what the record enforces: if any session's low reaches it the position exits there. A pick without it has no stop and is regenerated. Never the position size, never a range.]
 **Lesson Tags:** [REQUIRED — comma-separated from: bid_ask_spread, order_flow_slippage, sector_rotation, sector_concentration, risk_management, position_sizing, tax_loss_harvesting, tfsa_rrsp_mechanics, momentum_entry, mean_reversion, catalyst_confirmation, catalyst_fade, earnings_surprise, technical_breakout, technical_support, valuation_discipline, macro_rotation, geopolitical_premium, insider_buying, analyst_upgrade, activist_defense, dividend_compounding, dollar_cost_averaging, covered_call, fx_hedging, portfolio_rebalancing. DO NOT use any tag listed in the cooldown block above.]
 **AI Analysis:**
 - **Catalyst:** [What specific event or data point drives this pick — earnings, sector rotation, technical setup, news catalyst]
 - **Technical Setup:** [Key technical indicators — be specific: RSI (14-day, note if >70 overbought or <30 oversold), position relative to 20/50/200-day moving averages, volume vs 20-day average, nearest support/resistance levels with prices]
-- **Risk Assessment:** [What could go wrong, stop-loss level, maximum acceptable loss percentage]
+- **Risk Assessment:** [What could go wrong; repeat the stop-loss from the line above and the dollar loss it caps on $1,000]
 - **Target:** [Realistic weekly price target range, e.g., "+3% to +7%" for weekly holds; "+1% to +3%" for Flash Trades]
 - **Confidence Level:** [Low / Medium / High — a GRADED FORECAST, not a formality. High = the catalyst is already confirmed and the setup is one the record has scored well on; Medium = the thesis is sound but the catalyst is pending; Low = a reasonable idea you would size smaller. Check the CONFIDENCE CALIBRATION block above: your own realized hit-rate per bucket is reported back to you every episode, and a rating you never vary is worth nothing. Include a 1-sentence justification citing the specific factors.]
 
@@ -188,7 +192,7 @@ If this is Episode 1 or no previous trade data is available, skip this section e
 
 If the trade data above is empty, skip the Yesterday's Trade Review section. Otherwise, present the data above in the briefing format and ADD:
 **Alpha vs NASDAQ:** [REQUIRED — compare the trade's P&L over the holding window to the NASDAQ Composite move over the same window. Use the numbers from the tracker (``nasdaq_return_pct`` and ``alpha_pct`` fields) when available. Example: "Trade gained 4.44% while NASDAQ gained 2.1% over the same 5-day window — +2.34% alpha." Be honest when alpha is negative.]
-**Lesson Learned:** [1-2 sentences: What worked, what didn't, what to adjust in the analysis framework. Be honest about losses — they teach more than wins. End the block with a single sentence of the form "Rule: <action-oriented constraint>" capturing the generalisable rule — this line is parsed by post_generate into the lessons_learned ledger. Example: "Rule: Never carry a gold miner through a pending Iran deal resolution."]
+**Lesson Learned:** [1-2 sentences GRADING THE FORECAST the pick made: did the stated invalidation fire, come close, or never matter; did the stated confidence fit the outcome; did the stop earn its place. This is about THIS trade's own facts, never a restatement of a rule already in effect — the data above lists the stated confidence, invalidation and stop so the review can judge them. Add a final sentence "Rule: <action-oriented constraint>" ONLY when this trade teaches something the RULES IN EFFECT and the MEASURED ENTRY FACTORS do not already say; most reviews carry no Rule line, and a Rule that paraphrases an existing one is wrong.]
 **Lesson Tags:** [REQUIRED — comma-separated tags from the same vocabulary as the Practice Investment section; avoid tags inside their cooldown window.]
 
 **PORTFOLIO PERFORMANCE (use these exact numbers):**
@@ -204,15 +208,16 @@ If the trade data above is empty, skip the Yesterday's Trade Review section. Oth
 **HOOK:** [One sentence (under 120 characters) about today's most actionable market development. **Lead with the listener's stake — what does this mean for a Canadian investor TODAY** — then the underlying fact. Specific, not hype. No URLs, no emoji.]
 <<include: _shared/hook_shape.txt>>
 
-**Market Pulse:** 4-6 sentences. Where are markets right now? Key index levels (S&P 500, NASDAQ, TSX Composite). What's driving sentiment today? Then ALWAYS add the macro frame a daily listener needs (June 2026 review: this section was bare index levels — competitors open with the macro narrative): the nearest central-bank decision (Bank of Canada AND the Fed — date and what's priced in), where we are in earnings season if relevant, and which sector is leading/lagging this week. One sentence each, drawn from the articles — never invented.
+**Market Pulse:** 4-6 sentences. Where are markets right now? Key index levels (S&P 500, NASDAQ, TSX Composite) — on a Saturday or Sunday these are Friday's closes and are called that. What's driving sentiment today? Then ALWAYS add the macro frame a daily listener needs (June 2026 review: this section was bare index levels — competitors open with the macro narrative): the nearest central-bank decision (Bank of Canada AND the Fed — date and what's priced in), where we are in earnings season if relevant, and which sector is leading/lagging this week. One sentence each, drawn from the articles — never invented.
 
 ━━━━━━━━━━━━━━━━━━━━
 ### Strategy Spotlight
-The most important investing lesson or strategy from today's news, explained with enough depth for listeners to apply it. 6-8 sentences:
-- What the strategy IS (clear, jargon-explained definition)
-- How today's market conditions make it relevant
-- Specific example of how to implement it (which tools, which metrics, which platforms)
-- Historical context: when has this strategy worked best? What are the risks?
+ONE investing technique, taught completely — the segment a listener could act on tomorrow. It must differ from the technique of the last 5 episodes (RECENT PRACTICE INVESTMENT STRATEGIES above), and it carries ONE worked example built from today's articles: the security, the numbers the technique reads (the multiple, the yield, the level, the premium), the step performed in a named account or screener, and the outcome the technique is looking for. 6-8 sentences:
+- What the technique IS (clear, jargon-explained definition) and the decision it makes for an investor
+- The worked example from today's articles, with its numbers
+- How to implement it (which tools, which metrics, which platforms) — the exact steps
+- When it has worked and when it fails — the risk named as a mechanism, with a dated example where the articles carry one
+The pick's own stop, target and sizing belong in the Practice Investment section, never here.
 Source: [EXACT URL]
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -240,7 +245,7 @@ Write 6-8 sentences following this "Market Mechanics" framework:
 
 ━━━━━━━━━━━━━━━━━━━━
 ### Portfolio Performance
-[REQUIRED in EVERY episode after Episode 1 — this is the show's signature segment and the reason a listener trusts the rest of it. Report the running simulated record using the exact figures from the PORTFOLIO PERFORMANCE block supplied above: total trades, win rate, cumulative P&L, and the matched-window alpha WITH its trade count in the same sentence. 2-4 sentences.
+[REQUIRED in EVERY episode after Episode 1 — this is the show's signature segment and the reason a listener trusts the rest of it. Report THE RECORD from the PORTFOLIO PERFORMANCE block supplied above, in this order: the matched-window alpha WITH its trade count in the same sentence, how many of those trades beat the index, the dollar total across the positions, and whether the result is yet distinguishable from luck. The lifetime history line may follow as at most one sentence that calls it the full history; never its best or worst trade, never beside the alpha as if it were the same number. 2-4 sentences.
 
 The figures are always supplied. If this section is missing from your output the show tells listeners its performance feed is down — which is false and destroys the credibility the segment exists to build. NEVER write that portfolio data is unavailable, pending, not in today's feed, or will be reported once the tracker updates. If a specific number is genuinely absent from the block above, report the numbers that ARE there and say nothing about the missing one.]
 
