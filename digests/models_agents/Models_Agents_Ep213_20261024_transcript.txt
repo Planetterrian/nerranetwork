@@ -1,0 +1,125 @@
+Munchot's 2.8 trillion KimiK 3.1 Pro hits frontier coding in agents, with open weights due November 4th. This is Models & Agents, episode 213. In video's on-device voice model, QTI's World Model Codex, and Deep Seeks leaner open weights come next, followed by things to try. Munchot posted KimiK 3.1 Pro as a multimodal mixture of experts, or MOE, post-trained cut of KimiK 3, with 104 billion active parameters,
+parameters, and a 1 million token context window, according to Layton.Space.
+The lab ran large-scale joint reinforcement learning across hundreds of domains after
+tuning the reinforcement learning framework, long-context inference, sandbox infrastructure,
+and rollout scheduling.
+Scores come in at 65.7% on Terminal Bench 4.0, 51.7 on SWE Marathon, and 64.4 on Office
+QA Pro version 2.
+and the model matches or beats Claude Opus 5.5 and GPT 6 Astra on several coding and
+finance tasks.
+API access is live today, with a high speed variant that runs 2-3 times faster and costs
+twice as much.
+Pricing is $2 per million input tokens and $10 per million output tokens, matching GPT
+6.1 sole and coming in at half the cost of Claude Opus 5.5.
+Artificial analysis put the model at 55, a head of Claude Fable 5.1, GPT-6 Astra, and
+Gemini 4 are gone, and moonshot also shipped Kimi hosted agents, a managed harness with
+round-the-clock execution for long-running multi-agent work.
+Nemotron 3.5 Bolt E4B landed from NVIDIA as an 8 billion total, 4 billion effective
+of model post-trained from Gemma4E4B using only RLVR and reinforcement learning from
+human feedback, or RLHF, MarkTech post reports.
+It targets local voice assistance, game non-player characters, and robot interfaces on RTX, Jetson
+and Spark hardware, with a 64,000 token context window.
+The Q4KM build fits in 3.1 to 4.3 gigabytes of VRAM and leads 15 of 21 benchmarks against
+Gemma 4E4B, and Quinn 3.54B, including 84.8 on IHE Val.
+The research team skipped supervised fine-tuning, which helped tool calling but made replies
+worse and more verbose.
+They instead ran every training sample in both reasoning and non-reasoning modes, held
+a 2-to-1 mix of non-reasoning to reasoning samples, and applied length penalties inside
+the Gen-RM environment.
+The drop includes a D flash drafter for speculative decoding, plus public data sets, and the full
+training recipe.
+And a Ricci mini demo on Jetson Orin Nano pairs Bolt with Cosmos 3 Edge for Vision, while
+Bolt handles speech replies and tool calls.
+Qtai released Cadre, a family of seven open causal diffusion video auto encoders built
+for interactive world models.
+Stacks that sit on Cadre run at 20 frames per second on 1H100, and react in under 200
+30 milliseconds. DeepSeq released a new open-weight model that uses one-quarter the high-band
+with memory, or HBM, and one-eighth the solid-state drive storage of prior versions, while still
+posting higher intelligence, Tom's hardware reports. Hallucination rates rise on agentic
+workloads compared with proprietary frontier systems. Laminar went from build to production
+at ramp in six weeks as an internal AI agent harness, TechGig reports. The harness supports
+towards multi-agent collaboration and long-running execution.
+Anthropic released Claude Duet, a new agent pointed at muse and dots on agent work,
+computer world reports.
+Duet is built around multi-step tool use and planning.
+Researchers watched autonomous AI agents invent novel games on their own when they were
+given nothing to do, according to Oda Loop.
+That behavior showed up in sandbox environments with no human-specified goals.
+Purdue University Northwest is giving all first-year students Google Gemini
+licenses for the 2026 to 2027 year. Those licenses sit inside an AI
+literacy pilot that will become a graduation requirement. The program runs
+through Purdue's partnership with Google Public Sector and pilots an AI
+competency requirement that Purdue West Lafayette already set for its
+incoming fall 2026 class. The University announced. Chancellor Kenneth C.
+Holford noted that preparing students for an AI-driven workforce is a top priority and
+that graduates must understand how to use these tools effectively, ethically, and responsibly.
+Simon Willison wrote that he tested KimiK 3.1 Pro via the moonshot API at three reasoning
+levels.
+He shared output examples from those runs.
+He added the LLM OpenAI endpoint command to LLM 0.32 in August to run prompts against
+any open AI compatible endpoint while saving reasoning traces to separate files.
+A quick study prompt uses Sobel Edge Detection and a Canvas element to rapidly paint versions
+of uploaded photos.
+It runs inside Clawed Opus 5.5.
+The artifact needs no external libraries beyond Google Fonts and builds on an earlier
+experiment that simulated watercolor illustration with p5.js.
+In a shorter stack, OpenAI found an unauthenticated remote code execution
+flaw in the Broadly Compression Library during red teaming and disclosed it,
+leading to patches in node.js, bun, envoy, and a new Broadly release.
+The same lab will train frontier models in fully offline environments following recent cyber
+incidents, Bloomberg reports. BBVA and NVIDIA are jointly exploring security
+architectures for AI agents, according to the papers.
+US agencies are recommending strict access limits and human oversight requirements for
+AI agents.
+Mary Talk reports, try the Kimi K 3.1 Pro high-speed API endpoint on a long horizon coding
+job.
+Download Nemotron 3.5 Bolt E4B, quantize it to Q4KM, and run it locally on an RTX 4060 or
+Jetson Orin Nano for a voice agent prototype.
+Test QTI CIDA auto encoders if you are building interactive world models that need tight visual
+reactivity on a single H100.
+Run the quick study canvas prompt inside Claude Opus 5.5 for a fast image-to-painting pass.
+Offline training environments are expected to keep spreading at major labs.
+More agent harnesses and security frameworks are expected as enterprises test production
+multi-agent systems.
+Additional small model releases targeting four gigabyte VRAM hardware are expected for
+on-device agents and robots.
+End-to-end speech-to-speech models have no discrete tokens for structured tool calls, so
+let's pop the hood on why production voice agents still split the work.
+A front-end duplex speech-to-text model listens and emits a delegation token when it detects
+a tool need.
+That front-end then streams the automatic speech recognition, or ASR, transcript to a separate
+text LLM backend that actually runs the function call.
+Tool results return through a lightweight pre-fill and repeat path, and the front end turns
+them into spoken audio without breaking natural turn-taking.
+The split adds roughly 50 to 100 milliseconds of coordination latency.
+Full interruption handling stays intact, and teams can swap in any text LLM for the tool
+logic.
+Full duplex benchmarks show 92 to 97% tool-call recall.
+end-to-end audio latency stays under 800 milliseconds on current hardware.
+A cascaded streaming pipeline using deepgram for speech-to-text,
+VLLM served LLMs with function calling,
+and 11 labs for text-to-speech measured 755 milliseconds
+time-to-first audio in best-case tests.
+The modular design also supports Monte Carlo sampling
+for Shapley value analysis across hundreds of agent tool configurations
+on benchmarks such as MMAU and MMAR.
+The front-end backend pattern is the one to use
+when the agent must call external APIs or keep compliance logs
+and pure end-to-end models remain preferable
+only for simple conversational voice
+where no external state is required.
+Before we go, air-gapped training rooms
+at other frontier labs are the developing follow-through
+from this week's cyber incidents.
+That's models and agents for today.
+If you found this useful, share it with someone
+who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's
+update.
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+watch than listen, find us on YouTube at Narin Network, links in the show notes, quick
+tip from the network, try calling wood weekly next, the week around the South Georgian Bay
+every Friday, every Narin Network show is free at NarinNetwork.com.
+The Age of AI, an AI host interviews real builders in a live studio, and every guest decides
+whether their conversation is published.
+Apply at narennetwork.com, Age of AI Apply.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.
