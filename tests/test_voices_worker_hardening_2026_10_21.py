@@ -122,7 +122,7 @@ def test_production_is_dispatched_before_the_package_is_marked_approved():
     assert body.index('"interview-approved-by-guest"') < body.index('status: "approved_by_guest"')
     submit = _fn("handleGuestReviewSubmit")
     assert "approveAndDispatch(" in submit
-    assert "dispatched: false" in submit
+    assert "dispatched = false" in submit and "{ dispatched }" in submit
     # the old order is gone
     assert '{ status: "approved_by_guest", guest_reviewed_at: now });\n    await sb(env, "PATCH", `interviews' not in WORKER
 

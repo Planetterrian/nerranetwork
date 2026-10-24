@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker, {
+  guestDecision, guestReceipt, guestReviewState, openRequests, operatorReviewState,
   CALCOM_SIGNATURE_HEADER, HELLO_MINUTES, LIVE_INTERVIEW_STATUSES, SIGNATURE_HEADER,
   isHelloBooking,
   STUDIO_OPENS_BEFORE_TEXT, hmacHex, lessonDecisionAllowed, mergeWindows,
@@ -340,7 +341,7 @@ describe("guest approval on the review page", () => {
     const resp = await worker.route(
       post(`/voices/editorial-decision?token=${e.ADMIN_TOKEN}`, { package_id: PKG, decision: "approve" }), e);
     expect(resp.status).toBe(200);
-    expect(await resp.json()).toEqual({ ok: true, already: "approved_by_patrick" });
+    expect(await resp.json()).toMatchObject({ ok: true, already: "approved_by_patrick" });
     expect(calls.filter((c) => c.method === "PATCH").length).toBe(0);
     expect(calls.filter((c) => c.url.startsWith("https://api.resend.com/")).length).toBe(0);
   });
@@ -645,5 +646,179 @@ describe("hello bookings", () => {
     expect(created?.body.duration_min).toBe(45);
     const mail = calls.find((c) => c.url.startsWith("https://api.resend.com/"));
     expect(mail?.body.html).toContain("short brief");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Oct 24 2026 — the review process says what was chosen and what happened.
+// Piper Martz's pronunciation note could only go as "removal requests", the
+// page promised an email that never came, and Patrick's page said "Saved."
+// ---------------------------------------------------------------------------
+
+describe("review choices are explicit, shown back, recorded and confirmed", () => {
+  const GTOK = "tokentokentokentoken";
+  function pkgFetch(pkg: Record<string, unknown>, failDispatch = false) {
+    let current: any = { id: PKG, interview_id: IV, guest_review_token: "tok", guest_redaction_windows: [], ...pkg };
+    return fakeFetch((c) => {
+      const t = sbTable(c.url);
+      if (c.url.endsWith("/dispatches")) return failDispatch ? "fail" : null;
+      if (c.method === "PATCH" && t === "editorial_packages") { current = { ...current, ...c.body }; return [current]; }
+      if (c.method === "GET" && t === "editorial_packages") return [current];
+      if (c.method === "GET" && t === "interviews") return [{ id: IV, application_id: "app", show: "nerra_voices" }];
+      if (c.method === "GET" && t === "guest_applications") return [{ id: "app", name: "Piper Martz", email: "g@x.y" }];
+      return [];
+    });
+  }
+  const resendTo = (calls: Call[]) => calls.filter((c) => c.url.startsWith("https://api.resend.com/")).map((c) => ({ to: c.body.to[0], subject: c.body.subject, html: c.body.html }));
+
+  it("marked lines always make it a change request; the old approve flag still works", () => {
+    expect(guestDecision({ decision: "approve" }, 2)).toBe("changes");
+    expect(guestDecision({ decision: "correction" }, 0)).toBe("correction");
+    expect(guestDecision({ approve: true }, 0)).toBe("approve");
+    expect(guestDecision({ approve: false }, 0)).toBe("changes");
+  });
+
+  it("the guest's page opens on where things stand", () => {
+    const deadline = "2026-10-31T19:31:42Z";
+    expect(guestReviewState({ status: "approved_by_patrick", guest_review_deadline: deadline }).code).toBe("waiting");
+    expect(guestReviewState({ status: "approved_by_patrick", guest_review_deadline: deadline }).detail).toContain("October 31");
+    const corr = guestReviewState({ status: "in_review", guest_reviewed_at: deadline,
+      guest_redactions: [{ kind: "correction", approves: true, note: "Aampe is said amp", resolved: false, at: deadline }] });
+    expect(corr.code).toBe("correction_pending");
+    expect(corr.detail).toContain("Aampe is said amp");
+    expect(corr.detail).toContain("will not need to review");
+    const ch = guestReviewState({ status: "in_review", guest_redaction_windows: [{}, {}],
+      guest_redactions: [{ kind: "removal", note: "2 marked line(s) carry time windows", lines: 2, resolved: false, at: deadline }] });
+    expect(ch.code).toBe("changes_pending");
+    expect(ch.detail).toContain("2 lines marked for cutting");
+    expect(ch.detail).not.toContain("time windows");
+    const made = guestReviewState({ status: "approved_by_patrick", guest_review_deadline: deadline,
+      guest_redactions: [{ kind: "removal", note: "x", resolved: true, resolved_at: deadline }] });
+    expect(made.code).toBe("changes_made");
+    expect(guestReviewState({ status: "approved_by_guest", guest_reviewed_at: deadline }).code).toBe("approved");
+    expect(openRequests({ guest_redactions: [{ resolved: true }, { resolved: false, note: "a" }] }).length).toBe(1);
+  });
+
+  it("a correction records the approval, waits for Patrick, and is confirmed to the guest and to Patrick", async () => {
+    const { fn, calls } = pkgFetch({ status: "approved_by_patrick" });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post(`/voices/review/${GTOK}`,
+      { decision: "correction", correction: "Aampe is said amp, not am-pee" }), env());
+    expect(resp.status).toBe(200);
+    const data: any = await resp.json();
+    expect(data).toMatchObject({ ok: true, decision: "correction", emailed: "g@x.y" });
+    expect(data.state.code).toBe("correction_pending");
+    expect(data.recorded).toContainEqual(["Your correction", "Aampe is said amp, not am-pee"]);
+    const patch = calls.find((c) => c.method === "PATCH" && c.body.guest_redactions);
+    expect(patch?.body.status).toBe("in_review");
+    expect(patch?.body.guest_redactions.at(-1)).toMatchObject({ kind: "correction", approves: true, resolved: false });
+    expect(calls.some((c) => c.url.endsWith("/dispatches"))).toBe(false);
+    const mails = resendTo(calls);
+    expect(mails.find((m) => m.to === "g@x.y")?.subject).toContain("Got it");
+    expect(mails.find((m) => m.to === "g@x.y")?.html).toContain("Aampe is said amp");
+    expect(mails.some((m) => m.to !== "g@x.y" && /approved, with one correction/.test(m.subject))).toBe(true);
+  });
+
+  it("an approval is answered with what was recorded and a copy by email", async () => {
+    const { fn, calls } = pkgFetch({ status: "approved_by_patrick" });
+    vi.stubGlobal("fetch", fn);
+    const data: any = await (await worker.route(post(`/voices/review/${GTOK}`,
+      { decision: "approve", followup: "return_6", materials: "my site" }), env())).json();
+    expect(data).toMatchObject({ ok: true, decision: "approve", dispatched: true, emailed: "g@x.y" });
+    expect(data.state.code).toBe("approved");
+    expect(data.recorded[0]).toEqual(["Your choice", "Approve it as it is"]);
+    expect(resendTo(calls).some((m) => /approved the episode/.test(m.subject))).toBe(true);
+  });
+
+  it("a choice that cannot be acted on is refused before anything is written", async () => {
+    const { fn, calls } = pkgFetch({ status: "approved_by_patrick" });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post(`/voices/review/${GTOK}`,
+      { decision: "correction", correction: "  ", materials: "bio" }), env());
+    expect(resp.status).toBe(400);
+    expect(calls.filter((c) => c.method === "PATCH" || c.method === "POST").length).toBe(0);
+  });
+
+  it("a second submit is shown the choice already recorded, and writes nothing", async () => {
+    const { fn, calls } = pkgFetch({ status: "approved_by_guest", guest_reviewed_at: "2026-10-24T19:00:00Z" });
+    vi.stubGlobal("fetch", fn);
+    const resp = await worker.route(post(`/voices/review/${GTOK}`, { decision: "approve" }), env());
+    expect(resp.status).toBe(409);
+    expect(await resp.json()).toMatchObject({ already: true, state: { code: "approved" } });
+    expect(calls.filter((c) => c.method === "PATCH").length).toBe(0);
+  });
+
+  it("a returning guest's page shows what they chose, not a bare thank-you", async () => {
+    const { fn } = pkgFetch({ status: "approved_by_guest", guest_reviewed_at: "2026-10-24T19:00:00Z", guest_followup: "return_12" });
+    vi.stubGlobal("fetch", fn);
+    const page = await (await worker.route(new Request(`https://api.nerranetwork.com/voices/review/${GTOK}`), env())).text();
+    expect(page).toContain("You approved this episode");
+    expect(page).toContain("Come back in about a year");
+  });
+
+  it("gate 1's approve after a change request marks it done, says so to the guest, and tells Patrick who was emailed", async () => {
+    const { fn, calls } = pkgFetch({ status: "in_review", patrick_reviewed_at: "2026-10-17T00:00:00Z",
+      guest_redactions: [{ kind: "removal", note: "Cut the bit about my brother", lines: 0, resolved: false, at: "2026-10-20T00:00:00Z" }] });
+    vi.stubGlobal("fetch", fn);
+    const e = env();
+    const data: any = await (await worker.route(post(`/voices/editorial-decision?token=${e.ADMIN_TOKEN}`,
+      { package_id: PKG, decision: "approve" }), e)).json();
+    expect(data).toMatchObject({ ok: true, status: "approved_by_patrick", emailed_to: "g@x.y", resolved: 1 });
+    expect(data.message).toContain("g@x.y");
+    const patch = calls.find((c) => c.method === "PATCH" && sbTable(c.url) === "editorial_packages");
+    expect(patch?.body.guest_redactions[0]).toMatchObject({ resolved: true, resolved_by: "patrick" });
+    const mail = resendTo(calls).find((m) => m.to === "g@x.y");
+    expect(mail?.subject).toContain("Your changes are made");
+    expect(mail?.html).toContain("Cut the bit about my brother");
+  });
+
+  it("'Correction made' lets the guest's approval stand, dispatches production and tells the guest", async () => {
+    const { fn, calls } = pkgFetch({ status: "in_review", guest_review_deadline: "2026-10-31T00:00:00Z",
+      guest_redactions: [{ kind: "correction", approves: true, note: "Aampe is said amp", resolved: false, at: "2026-10-20T01:04:28Z" }] });
+    vi.stubGlobal("fetch", fn);
+    const e = env();
+    const data: any = await (await worker.route(post(`/voices/editorial-decision?token=${e.ADMIN_TOKEN}`,
+      { package_id: PKG, decision: "correction_made" }), e)).json();
+    expect(data).toMatchObject({ ok: true, status: "approved_by_guest", dispatched: true, emailed_to: "g@x.y" });
+    expect(calls.some((c) => c.url.endsWith("/dispatches"))).toBe(true);
+    expect(calls.some((c) => c.method === "PATCH" && c.body.status === "approved_by_guest")).toBe(true);
+    expect(resendTo(calls).find((m) => m.to === "g@x.y")?.subject).toContain("Done: your correction");
+  });
+
+  it("'Correction made' with no correction open changes nothing", async () => {
+    const { fn, calls } = pkgFetch({ status: "approved_by_patrick" });
+    vi.stubGlobal("fetch", fn);
+    const e = env();
+    const resp = await worker.route(post(`/voices/editorial-decision?token=${e.ADMIN_TOKEN}`,
+      { package_id: PKG, decision: "correction_made" }), e);
+    expect(resp.status).toBe(409);
+    expect(calls.filter((c) => c.method === "PATCH").length).toBe(0);
+  });
+
+  it("Patrick's page shows the state box and the buttons for it", async () => {
+    const e = env();
+    let r = pkgFetch({ status: "in_review", guest_redactions: [{ kind: "correction", approves: true, note: "Aampe is said amp", resolved: false, at: "2026-10-20T01:04:28Z" }] });
+    vi.stubGlobal("fetch", r.fn);
+    let html = await (await worker.route(new Request(`https://api.nerranetwork.com/voices/admin/review/${PKG}?token=${e.ADMIN_TOKEN}`), e)).text();
+    expect(html).toContain("Correction made: their approval stands");
+    expect(html).not.toContain("Approve: email the guest");
+    expect(html).toContain('data-state="correction_pending"');
+    r = pkgFetch({ status: "approved_by_patrick", patrick_reviewed_at: "2026-10-24T19:31:42Z", guest_review_deadline: "2026-10-31T19:31:42Z" });
+    vi.stubGlobal("fetch", r.fn);
+    html = await (await worker.route(new Request(`https://api.nerranetwork.com/voices/admin/review/${PKG}?token=${e.ADMIN_TOKEN}`), e)).text();
+    expect(html).not.toContain("b_approve");
+    expect(html).toContain("Mira emailed the review link to Piper Martz (g@x.y)");
+    expect(html).not.toContain("'Saved.'");
+  });
+
+  it("Patrick's page opens on the state and offers only the buttons that make sense", () => {
+    const corr = operatorReviewState({ status: "in_review", guest_redactions: [{ kind: "correction", approves: true, note: "n", resolved: false, at: "2026-10-20T01:04:28Z" }] }, "Piper", "p@x.y");
+    expect(corr.code).toBe("correction_pending");
+    const sent = operatorReviewState({ status: "approved_by_patrick", patrick_reviewed_at: "2026-10-24T19:31:42Z", guest_review_deadline: "2026-10-31T19:31:42Z" }, "Jason", "j@x.y");
+    expect(sent.code).toBe("with_guest");
+    expect(sent.headline).toContain("j@x.y");
+    expect(sent.detail).toContain("October 31");
+    expect(guestReceipt({ guest_reviewed_at: "2026-10-24T19:00:00Z", guest_redactions: [{ note: "fix", kind: "correction" }] }, "correction"))
+      .toContainEqual(["Your correction", "fix"]);
   });
 });

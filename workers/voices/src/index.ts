@@ -1644,33 +1644,47 @@ async function handleTriageReassign(req: Request, env: Env): Promise<Response> {
 
 async function handleEditorialDecision(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
-  if (!body?.package_id || !["approve", "kill", "archive"].includes(body.decision)) {
-    return json({ error: "package_id + decision(approve|kill|archive) required" }, 400);
+  if (!body?.package_id || !["approve", "kill", "archive", "correction_made"].includes(body.decision)) {
+    return json({ error: "package_id + decision(approve|kill|archive|correction_made) required" }, 400);
   }
   // Scoped to the package being decided: a review link can approve or kill
   // its own episode and nothing else.
   const denied = await requirePackageAccess(req, env, String(body.package_id));
   if (denied) return denied;
   if (body.decision === "archive") {
-    return archivePackage(env, String(body.package_id), String(body.notes ?? "").trim() || "archived from the review page");
+    const resp = await archivePackage(env, String(body.package_id), String(body.notes ?? "").trim() || "archived from the review page");
+    if (!resp.ok) return resp;
+    return json({ ...(await resp.json<any>()), message: "Archived: kept, never published. Nothing was sent to the guest." });
   }
   // Oct 21 2026: a second Approve used to resend the guest's review email
   // and push their seven-day deadline out again. Approve is idempotent now:
   // a package already past gate 1 keeps its deadline and its email.
   const before = (await sb(env, "GET",
-    `editorial_packages?id=eq.${body.package_id}&select=id,status&limit=1`))?.[0];
+    `editorial_packages?id=eq.${body.package_id}&limit=1`))?.[0];
   if (!before) return json({ error: "package not found" }, 404);
+  if (body.decision === "correction_made") return correctionMade(env, before, body);
   if (body.decision === "approve"
       && ["approved_by_patrick", "approved_by_guest", "published"].includes(String(before.status))) {
-    return json({ ok: true, already: before.status });
+    return json({ ok: true, already: before.status,
+      message: `Already approved${before.patrick_reviewed_at ? ` on ${pacificTime(before.patrick_reviewed_at)}` : ""}. ` +
+        "Nothing was sent again and the guest's deadline is unchanged." });
   }
+  const now = new Date().toISOString();
+  // Oct 24 2026: approving after the guest asked for changes means the
+  // changes are made. Their requests are marked resolved, and the email
+  // tells them what this version has, instead of the standard text alone.
+  const open = body.decision === "approve" ? openRequests(before).filter((r) => r.kind !== "correction") : [];
   const status = body.decision === "approve" ? "approved_by_patrick" : "killed";
   const rows = await sb(env, "PATCH", `editorial_packages?id=eq.${body.package_id}`, {
     status,
-    patrick_reviewed_at: new Date().toISOString(),
+    patrick_reviewed_at: now,
     patrick_notes: body.notes ?? null,
     ...(body.decision === "approve"
       ? { guest_review_deadline: new Date(Date.now() + 7 * 864e5).toISOString() }
+      : {}),
+    ...(open.length
+      ? { guest_redactions: (before.guest_redactions ?? []).map((r: any) =>
+          r && !r.resolved && r.kind !== "correction" ? { ...r, resolved: true, resolved_at: now, resolved_by: "patrick" } : r) }
       : {}),
   }, "return=representation");
   const pkg = rows?.[0];
@@ -1693,15 +1707,28 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
       ? note.split(/\n{2,}/).map((para: string) =>
           `<p>${esc(para.trim()).replace(/\n/g, "<br>")}</p>`).join("")
       : "";
-    await email(env, app.email, `Thank you — your ${show.shortLabel} episode is ready for you`,
+    const asked = open.map((r) => String(r.note ?? "").trim()).filter((n) => n && !/^\d+ marked line/.test(n));
+    const markedLines = open.reduce((n, r) => n + (Number(r.lines ?? 0) || 0), 0);
+    const changesHtml = open.length
+      ? `<p>This version has the changes you asked for${asked.length ? ":" : "."}</p>` +
+        (asked.length ? `<blockquote style="border-left:3px solid #ccc;margin:0 0 1em;padding-left:1em">${asked.map((a) => esc(a)).join("<br>")}</blockquote>` : "") +
+        (markedLines ? `<p>The ${markedLines} line${markedLines === 1 ? "" : "s"} you marked ${markedLines === 1 ? "is" : "are"} cut from the audio and the transcript.</p>` : "")
+      : "";
+    await email(env, app.email, open.length
+        ? `Your changes are made: your ${show.shortLabel} episode is ready to hear again`
+        : `Thank you — your ${show.shortLabel} episode is ready for you`,
       `<p>Hi ${esc(firstName(app.name))},</p>
        ${noteHtml}
-       <p>Thank you for the time you gave me. Your episode is edited and
-       ready, and nothing goes out until you have heard it and said yes.</p>
+       ${changesHtml}
+       <p>${open.length
+         ? "Have another listen. Nothing goes out until you have heard it and said yes."
+         : "Thank you for the time you gave me. Your episode is edited and ready, and nothing goes out until you have heard it and said yes."}</p>
        <p><a href="${esc(link)}">Listen to the episode and read the transcript</a></p>
-       <p>On that page you can approve it as it stands, or quote anything
-       you'd rather I cut and it comes out of both the audio and the
-       transcript.</p>
+       <p>At the bottom of that page you pick one of three things: approve it
+       as it stands, approve it with a small correction (like a name said
+       wrong or a figure to fix), or ask for changes before anything is
+       published. You see your choice once more before it is sent, the page
+       shows you what was recorded, and I email you a copy.</p>
        <p>Two other things are on the page, and I mean them. If the
        conversation didn't catch you at your best, you can ask to record it
        again from scratch; I would rather re-record than publish something
@@ -1715,16 +1742,72 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        to find next: a short biography in your own words, your site or
        book, papers or talks worth reading. Whatever you put there goes in
        the post.</p>
-       <p>If I don't hear from you within seven days I'll take that as
-       approval, and I'll remind you at day four. You can always ask for
-       changes after publication too.</p>
+       <p>If I don't hear from you by ${esc(pacificTime(pkg.guest_review_deadline, null, true))}, I'll take
+       that as approval, and I'll remind you a few days before. You can always ask
+       for changes after publication too.</p>
        ${miraSignature(show)}`, true, publicistCc(app));
-    await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
-  } else {
-    await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
-    await slack(env, `${show.shortLabel}: Patrick KILLED package ${pkg.id}`);
+    await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent` +
+      (open.length ? ` (their ${open.length} request(s) marked done)` : ""));
+    return json({ ok: true, status, emailed_to: app.email,
+      deadline: pkg.guest_review_deadline, resolved: open.length,
+      message: `Approved at ${pacificTime(now)}. Mira emailed ${app.name ?? "the guest"} (${app.email}) ` +
+        `${open.length ? "the new cut, with the changes they asked for listed" : "the review link"}. ` +
+        `Their deadline: ${pacificTime(pkg.guest_review_deadline, null, true)}.` });
   }
-  return json({ ok: true });
+  await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
+  await slack(env, `${show.shortLabel}: Patrick KILLED package ${pkg.id}`);
+  return json({ ok: true, status, message: "Killed. Nothing was sent to the guest." });
+}
+
+/** Oct 24 2026: the guest approved with one correction (a name said wrong,
+ *  a figure). Patrick makes it, re-assembles, listens, and presses
+ *  "Correction made": the guest's approval then stands, production is
+ *  dispatched, and Mira tells the guest it is done. They review nothing
+ *  twice for a pronunciation. */
+async function correctionMade(env: Env, pkg: any, body: any): Promise<Response> {
+  const corr = openRequests(pkg).find((r) => r.kind === "correction" && r.approves);
+  if (!corr) return json({ ok: false, error: "There is no open correction on this episode." }, 409);
+  const now = new Date().toISOString();
+  // approved_by_patrick first, so a failed dispatch below is retried by
+  // gate-2 housekeeping (it re-dispatches packages whose interview is approved).
+  await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, {
+    status: "approved_by_patrick",
+    patrick_notes: body.notes ?? pkg.patrick_notes ?? null,
+    guest_review_deadline: pkg.guest_review_deadline ?? now,
+    guest_redactions: (pkg.guest_redactions ?? []).map((r: any) =>
+      r && !r.resolved && r.kind === "correction" ? { ...r, resolved: true, resolved_at: now, resolved_by: "patrick" } : r),
+  });
+  const { app, show } = await interviewWithApp(env, pkg.interview_id);
+  let dispatched = true;
+  try {
+    await approveAndDispatch(env, { ...pkg, guest_reviewed_at: pkg.guest_reviewed_at ?? corr.at ?? now },
+      pkg.interview_id, now);
+  } catch (err: any) {
+    dispatched = false;
+    await slack(env, `:warning: ${show.shortLabel}: correction made on ${pkg.id} but the production dispatch failed (${String(err?.message ?? err).slice(0, 120)}); gate-2 housekeeping retries daily.`);
+  }
+  let emailed = "";
+  if (app?.email) {
+    const note = String(body.note_to_guest ?? "").trim();
+    try {
+      await email(env, app.email, `Done: your correction to your ${show.shortLabel} episode`,
+        `<p>Hi ${esc(firstName(app.name))},</p>
+         ${note ? `<p>${esc(note).replace(/\n/g, "<br>")}</p>` : ""}
+         <p>Your correction is made:</p>
+         <blockquote style="border-left:3px solid #ccc;margin:0 0 1em;padding-left:1em">${esc(String(corr.note ?? ""))}</blockquote>
+         <p>Your approval stands, so there is nothing more for you to do.
+         Patrick publishes the episode next, and I will email you when it is live.</p>
+         <p>The <a href="https://api.nerranetwork.com/voices/review/${esc(pkg.guest_review_token)}">review page</a> shows where things stand at any time.</p>
+         ${miraSignature(show)}`, true, publicistCc(app));
+      emailed = app.email;
+    } catch (err: any) { console.error("correction-made email failed:", err?.message ?? err); }
+  }
+  await slack(env, `${show.shortLabel}: correction made on ${pkg.id}; the guest's approval stands` +
+    (dispatched ? " — production dispatched" : ""));
+  return json({ ok: true, status: dispatched ? "approved_by_guest" : "approved_by_patrick", dispatched, emailed_to: emailed,
+    message: `Correction marked made at ${pacificTime(now)}. ${app?.name ?? "The guest"}'s approval stands; ` +
+      `${dispatched ? "production is dispatched" : "the production dispatch failed and housekeeping retries it daily"}. ` +
+      `${emailed ? `Mira emailed ${emailed} to say it is done.` : "No email address on file, so nobody was emailed."}` });
 }
 
 /** Promote or drop one proposed lesson. Scoped by the package's review token
@@ -1890,12 +1973,191 @@ async function handleManageSubmit(req: Request, env: Env, token: string): Promis
     ${note ? "<p>Thanks for the note — we have passed it on.</p>" : ""}`));
 }
 
+// -- Where a review stands (Oct 24 2026) ---------------------------------------
+// Piper Martz's only note on her episode was a pronunciation. The page's only
+// button for it was "Submit removal requests"; it told her "we will apply the
+// removals and confirm by email", and then nothing she could see happened for
+// four days: no email, no change on the page, and nobody was nudged. Patrick's
+// own page answered every click with one word, "Saved." So: every review page
+// now opens on where things stand, every choice is shown back before it is
+// sent, what was recorded is read back from the database and shown on the
+// page and emailed, and Patrick's page says what his click did and to whom.
+
+export type ReviewRequest = {
+  kind?: string; note?: string; resolved?: boolean; at?: string;
+  approves?: boolean; lines?: number; resolved_at?: string;
+};
+
+/** The guest's requests on a package that nobody has resolved yet. */
+export function openRequests(pkg: any): ReviewRequest[] {
+  const list = Array.isArray(pkg?.guest_redactions) ? pkg.guest_redactions : [];
+  return list.filter((r: any) => r && typeof r === "object" && !r.resolved);
+}
+
+/** The most recent request that was resolved, if any. */
+export function lastResolved(pkg: any): ReviewRequest | null {
+  const list = (Array.isArray(pkg?.guest_redactions) ? pkg.guest_redactions : [])
+    .filter((r: any) => r && r.resolved && r.resolved_at);
+  return list.length ? list[list.length - 1] : null;
+}
+
+export type GuestDecision = "approve" | "correction" | "changes";
+
+/** What the guest chose. Lines marked for cutting make it a change request
+ *  whatever was pressed (as before); the old {approve: bool} body still works. */
+export function guestDecision(body: any, markedLines: number): GuestDecision {
+  const asked = String(body?.decision ?? "");
+  let d: GuestDecision = asked === "correction" || asked === "changes" || asked === "approve"
+    ? asked as GuestDecision : (body?.approve ? "approve" : "changes");
+  if (markedLines > 0 && d !== "changes") d = "changes";
+  return d;
+}
+
+export type ReviewState = { code: string; headline: string; detail: string };
+
+const dayOf = (iso: unknown) => pacificTime(iso, null, true);
+const quoteOf = (s: unknown, max = 240) => {
+  const t = String(s ?? "").replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max - 1)}…` : t;
+};
+
+/** Where things stand, in the guest's terms, for the top of their page and
+ *  for the copy Mira emails them. Pure, so it is tested on its own. */
+export function guestReviewState(pkg: any): ReviewState {
+  const status = String(pkg?.status ?? "");
+  const open = openRequests(pkg);
+  if (status === "archived") return { code: "archived", headline: "This recording has been retired.",
+    detail: "It will not be published. If a new recording is planned, you will get a new link for it." };
+  if (status === "killed") return { code: "killed", headline: "This episode will not be published.",
+    detail: "Questions? Reply to any of Mira's emails." };
+  if (status === "published") return { code: "published", headline: "Your episode is published.",
+    detail: "Thank you. If you want anything changed now, reply to any of Mira's emails." };
+  if (status === "approved_by_guest") return { code: "approved",
+    headline: `You approved this episode${pkg?.guest_reviewed_at ? ` on ${dayOf(pkg.guest_reviewed_at)}` : ""}.`,
+    detail: "Nothing more is needed from you. Patrick publishes it next, and Mira will email you when it is live. " +
+      "You can still ask for a change by replying to any of her emails." };
+  const correction = open.find((r) => r.kind === "correction" && r.approves);
+  if (correction) return { code: "correction_pending",
+    headline: `You approved this on ${dayOf(correction.at || pkg?.guest_reviewed_at)}, with one correction.`,
+    detail: `Your correction: “${quoteOf(correction.note)}”. Patrick has it. Once it is made, your approval stands ` +
+      "and Mira will email you to say so. You will not need to review the episode again." };
+  if (open.length) {
+    const r = open[0];
+    const lines = Number(r.lines ?? 0) || (Array.isArray(pkg?.guest_redaction_windows) ? pkg.guest_redaction_windows.length : 0);
+    const what = [r.note && !/^\d+ marked line/.test(String(r.note)) ? `“${quoteOf(r.note)}”` : "",
+      lines ? `${lines} line${lines === 1 ? "" : "s"} marked for cutting` : ""].filter(Boolean).join(" and ");
+    return { code: "changes_pending",
+      headline: `You asked for changes on ${dayOf(r.at || pkg?.guest_reviewed_at)}.`,
+      detail: `${what ? `What you asked for: ${what}. ` : ""}Patrick has them. When the new cut is ready, Mira will ` +
+        "email you to listen again. Nothing is published until you have heard it." };
+  }
+  const done = lastResolved(pkg);
+  if (status === "approved_by_patrick" && done) return { code: "changes_made",
+    headline: `Your changes are made (${dayOf(done.resolved_at)}).`,
+    detail: "Listen again below, then choose. Nothing is published until you do." +
+      (pkg?.guest_review_deadline ? ` If we have not heard from you by ${dayOf(pkg.guest_review_deadline)}, we will take that as approval.` : "") };
+  if (status === "approved_by_patrick") return { code: "waiting",
+    headline: "Waiting for you. Nothing is published until you choose.",
+    detail: pkg?.guest_review_deadline
+      ? `If we have not heard from you by ${dayOf(pkg.guest_review_deadline)}, we will take that as approval.`
+      : "Take your time." };
+  return { code: "with_patrick", headline: "This episode is with Patrick for a final check.",
+    detail: "Mira will email you when it is ready for you to hear." };
+}
+
+/** Where things stand, in Patrick's terms, for the top of the gate-1 page. */
+export function operatorReviewState(pkg: any, guestName: string, guestEmail: string): ReviewState {
+  const status = String(pkg?.status ?? "");
+  const name = guestName || "The guest";
+  const open = openRequests(pkg);
+  const when = (iso: unknown) => pacificTime(iso);
+  const correction = open.find((r) => r.kind === "correction" && r.approves);
+  if (correction) return { code: "correction_pending",
+    headline: `${name} approved on ${when(correction.at || pkg?.guest_reviewed_at)}, with one correction.`,
+    detail: `Their correction: “${quoteOf(correction.note, 500)}”. Make it, re-run the assemble workflow, listen, then press ` +
+      "“Correction made”: their approval then stands, production starts, and Mira tells them it is done." };
+  if (open.length) {
+    const r = open[0];
+    const lines = Number(r.lines ?? 0) || (Array.isArray(pkg?.guest_redaction_windows) ? pkg.guest_redaction_windows.length : 0);
+    return { code: "changes_pending",
+      headline: `${name} asked for changes on ${when(r.at || pkg?.guest_reviewed_at)}.`,
+      detail: `${r.note ? `“${quoteOf(r.note, 500)}” ` : ""}${lines ? `${lines} marked line${lines === 1 ? "" : "s"} ` +
+        "come out automatically on the next assemble. " : ""}Make any other change, re-run the assemble ` +
+        "workflow, listen, then press “Changes made: send the guest the new cut”." };
+  }
+  if (status === "approved_by_guest") return { code: "approved",
+    headline: `${name} approved on ${when(pkg?.guest_reviewed_at)}. Production has been dispatched.`,
+    detail: `Publishing is yours: gh workflow run nerra_voices_publish.yml -f interview_id=${pkg?.interview_id ?? ""}` };
+  if (status === "approved_by_patrick") return { code: "with_guest",
+    headline: `You approved this on ${when(pkg?.patrick_reviewed_at)}. Mira emailed the review link to ${name}` +
+      `${guestEmail ? ` (${guestEmail})` : ""}.`,
+    detail: pkg?.guest_review_deadline
+      ? `Waiting for them. If they do not answer, it counts as approved on ${dayOf(pkg.guest_review_deadline)}.`
+      : "Waiting for them." };
+  if (status === "published") return { code: "published", headline: "Published.", detail: "" };
+  if (status === "killed") return { code: "killed", headline: "Killed. The guest was not emailed.", detail: "" };
+  if (status === "archived") return { code: "archived", headline: "Archived: kept, never published.", detail: "" };
+  return { code: "waiting", headline: "Waiting for you (gate 1). Nothing has gone to the guest.",
+    detail: "Approve sends the guest their review email from Mira. Kill and Archive send them nothing." };
+}
+
+const STATE_COLORS: Record<string, [string, string]> = {
+  waiting: ["#fffbeb", "#b45309"], with_patrick: ["#f7fafc", "#4a5568"], with_guest: ["#eff6ff", "#1d4ed8"],
+  correction_pending: ["#fff7ed", "#c2410c"], changes_pending: ["#fff7ed", "#c2410c"],
+  changes_made: ["#eff6ff", "#1d4ed8"], approved: ["#f0fdf4", "#166534"], published: ["#f0fdf4", "#166534"],
+  archived: ["#f7fafc", "#4a5568"], killed: ["#fef2f2", "#991b1b"],
+};
+
+/** The status box both review pages open on. */
+export function stateBoxHtml(s: ReviewState, id = "state"): string {
+  const [bg, fg] = STATE_COLORS[s.code] ?? ["#f7fafc", "#1a202c"];
+  return `<div id="${id}" data-state="${esc(s.code)}" style="background:${bg};border-left:6px solid ${fg};` +
+    `border-radius:8px;padding:.8rem 1rem;margin:1rem 0"><div style="font-weight:700;color:${fg}">${esc(s.headline)}</div>` +
+    (s.detail ? `<div style="margin-top:.3rem">${esc(s.detail)}</div>` : "") + `</div>`;
+}
+
+const DECISION_LABEL: Record<GuestDecision, string> = {
+  approve: "Approve it as it is",
+  correction: "Approve, with a small correction",
+  changes: "Ask for changes before it is published",
+};
+
+const FOLLOWUP_LABEL: Record<string, string> = {
+  return_6: "Come back in about six months", return_12: "Come back in about a year",
+  return_other: "Come back, at a different time", redo: "Record the conversation again from scratch",
+  none: "Nothing for now",
+};
+
+/** What the database now holds for a guest's submission, as rows for the
+ *  page's receipt and the email copy. Built from the package as re-read
+ *  after the writes, not from what the browser sent. */
+export function guestReceipt(pkg: any, decision: GuestDecision): Array<[string, string]> {
+  const rows: Array<[string, string]> = [["Your choice", DECISION_LABEL[decision]]];
+  if (pkg?.guest_reviewed_at) rows.push(["Recorded", pacificTime(pkg.guest_reviewed_at)]);
+  const req = (Array.isArray(pkg?.guest_redactions) ? pkg.guest_redactions : []).slice(-1)[0];
+  if (decision !== "approve" && req?.note && !/^\d+ marked line/.test(String(req.note))) {
+    rows.push([decision === "correction" ? "Your correction" : "What you asked for", quoteOf(req.note, 2000)]);
+  }
+  const windows = Array.isArray(pkg?.guest_redaction_windows) ? pkg.guest_redaction_windows : [];
+  if (decision === "changes" && windows.length) {
+    rows.push([`Lines marked for cutting (${windows.length})`,
+      windows.map((w: any) => quoteOf(w?.line, 160)).join("\n")]);
+  }
+  rows.push(["Your answer to Mira's question", pkg?.guest_experience ? "Received, thank you" : "None"]);
+  rows.push(["For your episode's post", pkg?.guest_materials ? "Received, thank you" : "Nothing sent"]);
+  rows.push(["Coming back", FOLLOWUP_LABEL[String(pkg?.guest_followup ?? "none")] ?? "Nothing for now"]);
+  return rows;
+}
+
+export function receiptHtml(rows: Array<[string, string]>): string {
+  return `<table style="border-collapse:collapse;margin:.5rem 0">${rows.map(([k, v]) =>
+    `<tr><td style="padding:.25rem .8rem .25rem 0;vertical-align:top;color:#4a5568;white-space:nowrap">${esc(k)}</td>` +
+    `<td style="padding:.25rem 0;white-space:pre-wrap">${esc(v)}</td></tr>`).join("")}</table>`;
+}
+
 async function handleGuestReviewPage(env: Env, token: string): Promise<Response> {
   const pkg = await pkgByToken(env, token);
   if (!pkg) return html("<h1>Link not found</h1>", 404);
-  if (["approved_by_guest", "published"].includes(pkg.status)) {
-    return html("<h1>Already approved — thank you!</h1>");
-  }
   if (pkg.status === "archived") {
     return html(page("This recording has been retired",
       "<p>This recording will not be published, so there is nothing to review here. " +
@@ -1903,6 +2165,18 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
       "Reply to any of Mira's emails.</p>"));
   }
   const { show } = await interviewWithApp(env, pkg.interview_id);
+  const state = guestReviewState(pkg);
+  // Oct 24 2026: a guest who comes back to the link sees where things stand
+  // and what they chose, not a bare "Already approved".
+  const closed = ["approved", "published", "archived", "killed"].includes(state.code);
+  const pending = ["correction_pending", "changes_pending"].includes(state.code);
+  if (closed) {
+    const rows = state.code === "approved" || state.code === "published"
+      ? guestReceipt(pkg, "approve") : [];
+    return html(page(`Your ${esc(show.shortLabel)} episode`,
+      stateBoxHtml(state) + (rows.length ? `<h3>What you chose</h3>${receiptHtml(rows)}` : ""),
+      show.brandColor));
+  }
   // A failed cleaning pass stores "" rather than null, so "??" happily
   // rendered the empty string and John Capobianco's review page went out
   // with no transcript on it at all (Sept 15 2026). Fall back on anything
@@ -1932,6 +2206,7 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
   const transcriptText = editTranscript
     || (pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim();
   const transcriptHtml = reviewTranscriptHtml(transcriptText);
+  const deadline = pkg.guest_review_deadline ? pacificTime(pkg.guest_review_deadline, null, true) : "";
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
@@ -1940,42 +2215,39 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
 pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;max-height:60vh;overflow:auto}
 .ln{cursor:pointer;display:block;padding:.1rem .3rem;border-radius:4px}.ln:hover{background:#edf2f7}
 .ln.cut{background:#fed7d7;text-decoration:line-through}
-textarea{width:100%;min-height:90px}button{background:${show.brandColor};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin-right:.6rem}
-.secondary{background:#4a5568}</style>
+textarea{width:100%;min-height:90px}button{background:${show.brandColor};color:#fff;border:0;border-radius:8px;padding:.7rem 1.4rem;font-size:1rem;cursor:pointer;margin:.3rem .6rem .3rem 0}
+button:disabled{opacity:.5;cursor:default}.secondary{background:#4a5568}
+.choice{display:block;border:2px solid #e2e8f0;border-radius:10px;padding:.8rem 1rem;margin:.6rem 0;cursor:pointer}
+.choice:has(input:checked){border-color:${show.brandColor};background:#f7fafc}
+.choice b{display:inline-block;margin-left:.3rem}.choice small{display:block;color:#4a5568;margin:.2rem 0 0 1.7rem}
+.extra{margin:.5rem 0 0 1.7rem;display:none}.choice:has(input:checked) .extra{display:block}
+#confirm,#receipt{border-radius:10px;padding:1rem 1.2rem;margin:1rem 0;display:none}
+#confirm{background:#fffbeb;border:2px solid #b45309}#receipt{background:#f0fdf4;border:2px solid #166534}
+#problem{color:#991b1b;font-weight:600}</style>
 <h1>Your ${esc(show.shortLabel)} conversation</h1>
-<p>Here is the recording and the transcript — this is what would publish.
-Have a listen, then approve it as-is, or tell us what to remove: click any
-line below to mark it for cutting, or quote a passage in the box, and we'll
-cut it from both the audio and the transcript before anything goes out.</p>
+${stateBoxHtml(state)}
+<p>Here is the recording and the transcript: this is what would be published.
+Listen, read, and then make your choice at the bottom of the page.
+Nothing is published until you have chosen${deadline ? ` (or until ${esc(deadline)}, when silence counts as approval)` : ""}.</p>
 ${listenUrl
   ? `<audio controls preload="none" src="${esc(listenUrl)}" style="width:100%;margin:1rem 0"></audio>`
-  : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or approve on the transcript alone.</em></p>`}
+  : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or choose on the transcript alone.</em></p>`}
 <h3>Transcript</h3>
 ${editTranscript
   ? `<p><em>This is the transcript of the edit a listener will hear, not of the whole recording.</em></p>`
   : ""}
-<p style="color:#4a5568;font-size:.95rem">Click a line to mark it for cutting; click again to unmark. <span id="marked">Nothing marked.</span></p>
+<p style="color:#4a5568;font-size:.95rem">Want something cut? Click its line to mark it; click again to unmark. <span id="marked">Nothing marked.</span></p>
 <pre id="transcript">${transcriptHtml}</pre>
-<h3>Request removals (optional)</h3>
-<textarea id="redactions" placeholder="Anything a marked line cannot say: quote a passage, or describe the cut, with a word on why if you like."></textarea>
+${pending ? `<p><em>Your request is with Patrick, so there is nothing to choose here right now. To add to it, reply to any of Mira's emails.</em></p>` : `
 <h3>One question from Mira (optional)</h3>
 <p>${esc(askGuest)}</p>
 <textarea id="experience" placeholder="Anything at all, including what irritated you. I read every answer, and it changes how I interview the next guest."></textarea>
-<p>
-<span id="actions">
-<button id="approveBtn" onclick="submitReview(true)">Approve for publication</button>
-<button id="removeBtn" class="secondary" onclick="submitReview(false)">Submit removal requests</button>
-</span>
-<span id="done" style="display:none;font-weight:600;color:#166534"></span>
-</p>
-<h3>Your episode's post</h3>
-<p>When this publishes we write a full post for it. Anything you'd like a
-listener to find next goes in — a short biography in your own words, your
-book or site, papers, talks, the project you were describing. Paste it here
-and we'll link it.</p>
-<textarea id="materials" placeholder="A short bio, links to your work, papers or talks worth reading next — anything you'd like in the post."></textarea>
-<h3>Before you go</h3>
-<p>Two things we'd rather offer than have you feel stuck with:</p>
+<h3>Your episode's post (optional)</h3>
+<p>When this is published we write a full post for it. Anything you'd like a
+listener to find next goes in: a short biography in your own words, your
+book or site, papers, talks, the project you were describing.</p>
+<textarea id="materials" placeholder="A short bio, links to your work, papers or talks worth reading next."></textarea>
+<h3>Coming back (optional)</h3>
 <p>
 <label><input type="radio" name="followup" value="return_6"> Come back in about six months and tell us what changed</label><br>
 <label><input type="radio" name="followup" value="return_12"> Come back in about a year</label><br>
@@ -1983,14 +2255,34 @@ and we'll link it.</p>
 <label><input type="radio" name="followup" value="redo"> I'd rather record this conversation again from scratch</label><br>
 <label><input type="radio" name="followup" value="none" checked> Nothing for now</label>
 </p>
-<textarea id="followupNote" placeholder="Anything you'd like us to know — a better time, what you'd want to talk about, or what you'd do differently in a re-record."></textarea>
-<p id="status"></p>
+<textarea id="followupNote" placeholder="Anything you'd like us to know: a better time, what you'd want to talk about, or what you'd do differently in a re-record."></textarea>
+<h3 id="decide">Your choice</h3>
+<div id="choices">
+<label class="choice"><input type="radio" name="decision" value="approve"><b>Approve it as it is</b>
+<small>It goes to Patrick to publish. Nothing else is needed from you.</small></label>
+<label class="choice"><input type="radio" name="decision" value="correction"><b>Approve, with a small correction</b>
+<small>A name said wrong, a figure or a title to fix. Your approval stands once the correction is made, and you won't need to review again.</small>
+<div class="extra"><textarea id="correction" placeholder="What should be corrected? For example: my company Aampe is said 'amp', not 'am-pee'."></textarea></div></label>
+<label class="choice"><input type="radio" name="decision" value="changes"><b>Ask for changes before it is published</b>
+<small>Something should come out, or be redone. Mark lines in the transcript and/or describe it here. You'll hear the new cut before anything is published.</small>
+<div class="extra"><textarea id="redactions" placeholder="Anything a marked line cannot say: quote a passage, or describe the change, with a word on why if you like."></textarea></div></label>
+</div>
+<p id="problem"></p>
+<p id="reviewBtnRow"><button id="reviewBtn" onclick="reviewChoice()">Review my choice</button></p>
+<div id="confirm"><b>Please check this is right, then send it.</b>
+<table id="confirmRows" style="border-collapse:collapse;margin:.5rem 0"></table>
+<button id="sendBtn" onclick="sendChoice()">Send my choice</button>
+<button class="secondary" id="backBtn" onclick="changeChoice()">Change something</button></div>
+<div id="receipt"><b id="receiptHead"></b><p id="receiptDetail"></p>
+<table id="receiptRows" style="border-collapse:collapse;margin:.5rem 0"></table>
+<p id="receiptMail"></p></div>`}
 <script>
 // Sept 17 2026, Dr. Wolfberg: he pressed Approve, the request went through,
 // and the only acknowledgement was a line at the very bottom of a long page
-// he never scrolled to. The answer now appears where the button was.
-// Oct 21 2026: a click on a timed line marks it for cutting; the window
-// (start, end = next line's start) rides with the submit.
+// he never scrolled to. Oct 24 2026, Piper Martz: a pronunciation note could
+// only be sent as "removal requests", and what the page promised never came.
+// Now: one explicit choice, shown back before it is sent, and the receipt is
+// what the server recorded (read back from the database), where the button was.
 const markedEl = document.getElementById('marked');
 function markedWindows(){
   return Array.from(document.querySelectorAll('.ln.cut')).map(function(el){
@@ -1999,47 +2291,91 @@ function markedWindows(){
 }
 document.getElementById('transcript').addEventListener('click', function(ev){
   const el = ev.target.closest('.ln');
-  if (!el) return;
+  if (!el || !document.getElementById('choices')) return;
   el.classList.toggle('cut');
   const n = document.querySelectorAll('.ln.cut').length;
-  markedEl.textContent = n ? (n + ' line' + (n === 1 ? '' : 's') + ' marked for cutting.') : 'Nothing marked.';
+  markedEl.textContent = n ? (n + ' line' + (n === 1 ? '' : 's') + ' marked for cutting. That makes your choice "Ask for changes".') : 'Nothing marked.';
+  if (n) document.querySelector('input[name=decision][value=changes]').checked = true;
 });
-async function submitReview(approve){
-  // Lines marked for cutting are a removal request, whichever button was pressed.
-  if (approve && markedWindows().length) approve = false;
-  const picked = document.querySelector('input[name=followup]:checked');
-  const approveBtn = document.getElementById('approveBtn');
-  const removeBtn = document.getElementById('removeBtn');
-  approveBtn.disabled = removeBtn.disabled = true;
-  (approve ? approveBtn : removeBtn).textContent = 'Sending\u2026';
-  let ok = false;
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function picked(){ const el = document.querySelector('input[name=decision]:checked'); return el ? el.value : ''; }
+const LABELS = {approve: 'Approve it as it is', correction: 'Approve, with a small correction', changes: 'Ask for changes before it is published'};
+const FOLLOW = {return_6: 'Come back in about six months', return_12: 'Come back in about a year', return_other: 'Come back, at a different time', redo: 'Record the conversation again from scratch', none: 'Nothing for now'};
+function fill(table, rows){
+  table.innerHTML = '';
+  rows.forEach(function(r){
+    const tr = document.createElement('tr');
+    const k = document.createElement('td'); k.textContent = r[0];
+    k.style.cssText = 'padding:.25rem .8rem .25rem 0;vertical-align:top;color:#4a5568;white-space:nowrap';
+    const v = document.createElement('td'); v.textContent = r[1]; v.style.cssText = 'padding:.25rem 0;white-space:pre-wrap';
+    tr.appendChild(k); tr.appendChild(v); table.appendChild(tr);
+  });
+}
+function problem(msg){ document.getElementById('problem').textContent = msg || ''; }
+function reviewChoice(){
+  const d = picked(); const lines = markedWindows();
+  if (!d) { problem('Please pick one of the three choices above.'); return; }
+  if (lines.length && d !== 'changes') { problem('You have ' + lines.length + ' line(s) marked for cutting. Choose "Ask for changes", or click the marked lines again to unmark them.'); return; }
+  if (d === 'correction' && !val('correction')) { problem('Please say what should be corrected.'); return; }
+  if (d === 'changes' && !lines.length && !val('redactions')) { problem('Please mark the lines to cut, or describe the change.'); return; }
+  problem('');
+  const fu = document.querySelector('input[name=followup]:checked');
+  const rows = [['Your choice', LABELS[d]]];
+  if (d === 'correction') rows.push(['Your correction', val('correction')]);
+  if (d === 'changes' && val('redactions')) rows.push(['What you are asking for', val('redactions')]);
+  if (d === 'changes' && lines.length) rows.push(['Lines marked for cutting (' + lines.length + ')', lines.map(function(l){ return l.line; }).join('\\n')]);
+  rows.push(["Your answer to Mira's question", val('experience') ? 'Included' : 'None']);
+  rows.push(["For your episode's post", val('materials') ? 'Included' : 'Nothing']);
+  rows.push(['Coming back', FOLLOW[fu ? fu.value : 'none']]);
+  fill(document.getElementById('confirmRows'), rows);
+  document.getElementById('confirm').style.display = 'block';
+  document.getElementById('reviewBtnRow').style.display = 'none';
+  document.getElementById('confirm').scrollIntoView({block: 'center', behavior: 'smooth'});
+}
+function changeChoice(){
+  document.getElementById('confirm').style.display = 'none';
+  document.getElementById('reviewBtnRow').style.display = 'block';
+}
+async function sendChoice(){
+  const d = picked(); const fu = document.querySelector('input[name=followup]:checked');
+  const sendBtn = document.getElementById('sendBtn'); const backBtn = document.getElementById('backBtn');
+  sendBtn.disabled = backBtn.disabled = true; sendBtn.textContent = 'Sending\\u2026';
+  let data = null;
   try {
-    const resp = await fetch(location.pathname, {method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
-        windows: markedWindows(),
-        followup: picked ? picked.value : 'none',
-        followup_note: document.getElementById('followupNote').value,
-        experience: document.getElementById('experience').value,
-        materials: document.getElementById('materials').value})});
-    ok = resp.ok;
-  } catch (e) { ok = false; }
-  const msg = ok
-    ? (approve ? 'Approved \u2014 thank you! Your episode is on its way.' : 'Received \u2014 we will apply the removals and confirm by email.')
-    : 'Something went wrong \u2014 please reply to our email instead.';
-  document.getElementById('status').textContent = msg;
-  const done = document.getElementById('done');
-  done.textContent = msg;
-  done.style.color = ok ? '#166534' : '#991B1B';
-  done.style.display = 'inline';
-  if (ok) {
-    document.getElementById('actions').style.display = 'none';
-  } else {
-    approveBtn.disabled = removeBtn.disabled = false;
-    approveBtn.textContent = 'Approve for publication';
-    removeBtn.textContent = 'Submit removal requests';
+    const resp = await fetch(location.pathname, {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({decision: d, approve: d !== 'changes', correction: val('correction'),
+        redactions: val('redactions'), windows: markedWindows(), followup: fu ? fu.value : 'none',
+        followup_note: val('followupNote'), experience: val('experience'), materials: val('materials')})});
+    data = await resp.json().catch(function(){ return null; });
+  } catch (e) { data = null; }
+  if (data && data.already) {
+    document.getElementById('confirm').style.display = 'none';
+    document.getElementById('choices').style.display = 'none';
+    document.getElementById('decide').textContent = 'Your choice was already recorded';
+    document.getElementById('receiptHead').textContent = (data.state && data.state.headline) || 'Already recorded.';
+    document.getElementById('receiptDetail').textContent = ((data.state && data.state.detail) || '') + ' Nothing new was sent.';
+    document.getElementById('receipt').style.display = 'block';
+    return;
   }
-  done.scrollIntoView({block: 'center', behavior: 'smooth'});
+  if (!data || !data.ok) {
+    sendBtn.disabled = backBtn.disabled = false; sendBtn.textContent = 'Send my choice';
+    problem(((data && data.error) ? data.error + ' ' : '') + 'Nothing was recorded. Please try again, or reply to any of Mira\\'s emails.');
+    return;
+  }
+  document.getElementById('confirm').style.display = 'none';
+  document.getElementById('choices').style.display = 'none';
+  document.getElementById('decide').textContent = 'Your choice is recorded';
+  document.getElementById('receiptHead').textContent = (data.state && data.state.headline) || 'Recorded.';
+  document.getElementById('receiptDetail').textContent = (data.state && data.state.detail) || '';
+  fill(document.getElementById('receiptRows'), data.recorded || []);
+  document.getElementById('receiptMail').textContent = data.emailed
+    ? 'A copy of this is on its way to ' + data.emailed + '.' : '';
+  // Nothing below can be sent any more; say so by disabling it.
+  Array.from(document.querySelectorAll('textarea, input')).forEach(function(el){ el.disabled = true; });
+  const st = document.getElementById('state');
+  if (st && data.state) { st.firstChild.textContent = data.state.headline; if (st.children[1]) st.children[1].textContent = data.state.detail; }
+  const r = document.getElementById('receipt'); r.style.display = 'block';
+  r.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
 </script>`);
 }
@@ -2069,6 +2405,22 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
   if (pkg.status === "archived") return json({ error: "this recording has been retired and will not be published" }, 409);
   const body = await req.json<any>().catch(() => ({}));
   const now = new Date().toISOString();
+  // Oct 24 2026: a choice already made is shown back, not made twice, and a
+  // choice that cannot be acted on is refused before anything is written.
+  const already = guestReviewState(pkg);
+  if (["approved", "published", "killed", "correction_pending", "changes_pending"].includes(already.code)) {
+    return json({ ok: false, already: true, state: already, error: "Your choice was already recorded." }, 409);
+  }
+  {
+    const w = redactionWindows(body?.windows);
+    const d = guestDecision(body, w.length);
+    if (d === "correction" && !String(body?.correction ?? "").trim()) {
+      return json({ ok: false, error: "Please say what should be corrected." }, 400);
+    }
+    if (d === "changes" && !String(body?.redactions ?? "").trim() && !w.length) {
+      return json({ ok: false, error: "Please mark the lines to cut, or describe the change." }, 400);
+    }
+  }
   const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
 
   // A guest who would come back, or who would rather do it again, is worth
@@ -2127,31 +2479,80 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
       { guest_redaction_windows: mergeWindows(existing, windows) });
   }
 
-  if (body.approve) {
+  // Oct 24 2026: three explicit choices (approve, approve with one
+  // correction, ask for changes); what was recorded is read back and shown
+  // on the page, emailed to the guest, and emailed to Patrick.
+  const decision = guestDecision(body, windows.length);
+  const correction = String(body?.correction ?? "").slice(0, 2000).trim();
+  const requests = String(body.redactions ?? "").trim();
+  const history = (Array.isArray(pkg.guest_redactions) ? pkg.guest_redactions : []).filter((r: any) => r?.resolved);
+  let dispatched: boolean | undefined;
+  if (decision === "approve") {
     // The guest's "yes" is recorded first, so a thrown dispatch can never
     // lose it; production is marked approved only once GitHub has the event.
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, { guest_reviewed_at: now });
     try {
       await approveAndDispatch(env, { ...pkg, guest_reviewed_at: now }, pkg.interview_id, now);
+      dispatched = true;
+      await slack(env, `${show.shortLabel}: guest APPROVED package ${pkg.id} — production dispatched`);
     } catch (err: any) {
       console.error(`guest approval dispatch failed for ${pkg.id}: ${err?.message ?? err}`);
+      dispatched = false;
       await slack(env, `:warning: ${show.shortLabel}: guest APPROVED package ${pkg.id} but the production dispatch failed (${String(err?.message ?? err).slice(0, 120)}); gate-2 housekeeping retries daily.`);
-      return json({ ok: true, dispatched: false });
     }
-    await slack(env, `${show.shortLabel}: guest APPROVED package ${pkg.id} — production dispatched`);
+  } else if (decision === "correction") {
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, {
+      guest_reviewed_at: now,
+      guest_redactions: [...history, { kind: "correction", note: correction, approves: true, resolved: false, at: now }],
+      status: "in_review",
+    });
+    await slack(env, `${show.shortLabel}: guest approved package ${pkg.id} with one correction — needs Patrick:\n${correction.slice(0, 500)}`);
   } else {
-    const requests = String(body.redactions ?? "").trim();
     const noted = windows.length
       ? `${requests}${requests ? "\n" : ""}${windows.length} marked line(s) carry time windows (guest_redaction_windows).`
       : requests;
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`, {
       guest_reviewed_at: now,
-      guest_redactions: [{ note: noted, resolved: false }],
+      guest_redactions: [...history, { kind: "removal", note: noted, lines: windows.length, resolved: false, at: now }],
       status: "in_review",
     });
     await slack(env, `${show.shortLabel}: guest requested removals on package ${pkg.id} — needs Patrick:\n${noted.slice(0, 500)}`);
   }
-  return json({ ok: true });
+
+  // Read back what the database now holds; that, not what the browser sent,
+  // is what the guest is shown and sent.
+  const after = (await pkgByToken(env, token)) ?? pkg;
+  const state = guestReviewState(decision === "approve" ? { ...after, status: "approved_by_guest", guest_reviewed_at: after.guest_reviewed_at ?? now } : after);
+  const recorded = guestReceipt(after, decision);
+  const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
+  let emailed = "";
+  if (app?.email) {
+    try {
+      await email(env, app.email, `Got it: your choice on your ${show.shortLabel} episode`,
+        `<p>Hi ${esc(firstName(app.name))},</p>
+         <p>This is a copy of what you chose on your review page, so you have it in writing.</p>
+         ${receiptHtml(recorded)}
+         <p><b>${esc(state.headline)}</b> ${esc(state.detail)}</p>
+         <p>Your <a href="${esc(link)}">review page</a> always shows where things stand.</p>
+         ${miraSignature(show)}`, true, publicistCc(app));
+      emailed = app.email;
+    } catch (err: any) { console.error("guest receipt email failed:", err?.message ?? err); }
+  }
+  try {
+    const verb = decision === "approve" ? "approved the episode"
+      : decision === "correction" ? "approved, with one correction" : "asked for changes";
+    const op = operatorReviewState(after, String(app?.name ?? ""), String(app?.email ?? ""));
+    const gate1 = `https://api.nerranetwork.com/voices/admin/review/${pkg.id}/${await packageReviewToken(env, pkg.id)}`;
+    await email(env, operatorEmail(env), `${show.shortLabel}: ${app?.name ?? "the guest"} ${verb}`,
+      `<p>${esc(app?.name ?? "The guest")} ${esc(verb)} on the review page.</p>
+       ${receiptHtml(recorded)}
+       ${decision === "approve"
+         ? `<p>${dispatched ? "Production is dispatched." : "The production dispatch failed; gate-2 housekeeping retries it daily."}
+            Publishing is yours: <code>gh workflow run nerra_voices_publish.yml -f interview_id=${esc(String(pkg.interview_id))}</code></p>`
+         : `<p><b>${esc(op.headline)}</b> ${esc(op.detail)}</p>`}
+       <p><a href="${esc(gate1)}">Open the episode's review page</a></p>`);
+  } catch (err: any) { console.error("operator decision email failed:", err?.message ?? err); }
+  return json({ ok: true, decision, ...(dispatched === undefined ? {} : { dispatched }), state, recorded, emailed });
 }
 
 /** One transcript line as the review page renders it: the [mm:ss] or
@@ -2931,6 +3332,13 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
   // Oct 21 2026: a review link decides its own interview's proposals; the
   // standing list is read-only unless the admin token opened the page.
   const isAdmin = !requireAdmin(req, env);
+  // Oct 24 2026: the page opens on where the episode stands and what the
+  // last click did; the buttons offered are the ones that make sense now.
+  const opState = operatorReviewState(pkg, String(app?.name ?? ""), String(app?.email ?? ""));
+  const canApprove = ["waiting", "changes_pending"].includes(opState.code);
+  const approveLabel = opState.code === "changes_pending"
+    ? "Changes made: send the guest the new cut" : "Approve: email the guest their review link";
+  const editTx = String(pkg.edit_transcript ?? "").trim();
   const lessonRow = (l: any, kind: "proposed" | "active") => `
     <li style="margin:.5rem 0">
       <b>${esc(String(l.category ?? ""))}</b> — ${esc(String(l.lesson ?? ""))}
@@ -2947,10 +3355,14 @@ pre{white-space:pre-wrap;background:#f7fafc;border:1px solid #e2e8f0;border-radi
 textarea{width:100%;min-height:80px}button{padding:.6rem 1.2rem;margin-right:.6rem}
 h1{border-left:6px solid ${show.brandColor};padding-left:.6rem}</style>
 <h1>${esc(show.name)} — editorial review (gate 1)</h1>
-<p>Guest: <b>${esc(app?.name ?? "unknown")}</b> · Status: <b>${esc(pkg.status)}</b>${pkg.audio_quality_flag ? ` · ⚠️ ${esc(pkg.audio_quality_flag)}` : ""}</p>
+<p>Guest: <b>${esc(app?.name ?? "unknown")}</b>${app?.email ? ` (${esc(app.email)})` : ""} · Status: <b>${esc(pkg.status)}</b>${pkg.audio_quality_flag ? ` · ⚠️ ${esc(pkg.audio_quality_flag)}` : ""}</p>
+${stateBoxHtml(opState)}
 ${reviewAudioUrl(run) ? `<audio controls preload="none" src="${esc(reviewAudioUrl(run)!)}" style="width:100%"></audio>` : ""}
 <h3>Episode notes</h3><pre>${esc(pkg.episode_notes ?? "")}</pre>
-<h3>Cleaned transcript</h3><pre>${esc(pkg.transcript_cleaned ?? "")}</pre>
+${editTx
+  ? `<h3>Transcript of the edit</h3><p><em>What the guest is shown and what listeners hear.</em></p><pre>${esc(editTx)}</pre>
+     <details><summary>The room's transcript (the whole recording)</summary><pre>${esc(pkg.transcript_cleaned ?? "")}</pre></details>`
+  : `<h3>Cleaned transcript</h3><pre>${esc(pkg.transcript_cleaned ?? "")}</pre>`}
 <h3>Newsletter draft</h3><pre>${esc(pkg.newsletter_draft ?? "")}</pre>
 <h3>How this interview went, by the numbers</h3>
 <p>${metricLine}</p>
@@ -2967,23 +3379,59 @@ ${activeLessons.length
 <p>Anything you want said to the guest goes here, and Mira puts it at the top
 of the mail she sends them. Leave it empty for the standard note.</p>
 <textarea id="to_guest" placeholder="A word to the guest — an apology, a thank-you, what changed since they recorded"></textarea>
-<p><button onclick="decide('approve')">Approve → guest review</button>
-<button onclick="decide('kill')">Kill episode</button>
-<button onclick="decide('archive')">Archive (keep, never publish)</button></p>
-<p id="status"></p>
+<p id="buttons">
+${opState.code === "correction_pending"
+  ? `<button id="b_correction_made" onclick="decide('correction_made')">Correction made: their approval stands</button>` : ""}
+${canApprove ? `<button id="b_approve" onclick="decide('approve')">${esc(approveLabel)}</button>` : ""}
+${["published", "killed", "archived", "approved"].includes(opState.code) ? "" : `<button id="b_kill" onclick="decide('kill')">Kill episode</button>
+<button id="b_archive" onclick="decide('archive')">Archive (keep, never publish)</button>`}</p>
+<div id="status" style="display:none;border-radius:8px;padding:.8rem 1rem;margin:1rem 0"></div>
 <script>
 const token = new URL(location).searchParams.get('token')
   // Sept 27 2026: the emailed link is /voices/admin/review/<id>/<token>, and the
   // browser keeps that path, so the token has to be read from it too, or every
   // Approve from an email fails with "check the token" (Roddy de la Garza).
   || ((p) => p.length === 40 ? p : '')(location.pathname.split('/').filter(Boolean).pop() || '');
+// Oct 24 2026: every click is answered with what it did ("Mira emailed
+// Jason the review link at 12:31; his deadline is Oct 31"), read from the
+// server's reply; Kill and Archive ask twice; the page then reloads so the
+// status box at the top shows the new state.
+const armed = {};
+function show(msg, good){
+  const el = document.getElementById('status');
+  el.textContent = msg; el.style.display = 'block';
+  el.style.background = good ? '#f0fdf4' : '#fef2f2';
+  el.style.border = '2px solid ' + (good ? '#166534' : '#991b1b');
+  el.scrollIntoView({block: 'center', behavior: 'smooth'});
+}
 async function decide(decision){
-  const resp = await fetch('/voices/editorial-decision?token='+token, {method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({package_id:'${pkg.id}', decision,
-      notes: document.getElementById('notes').value,
-      note_to_guest: document.getElementById('to_guest').value})});
-  document.getElementById('status').textContent = resp.ok ? 'Saved.' : 'Failed — check the token.';
+  if ((decision === 'kill' || decision === 'archive') && !armed[decision]) {
+    armed[decision] = true;
+    const b = document.getElementById('b_' + decision);
+    if (b) b.textContent = decision === 'kill' ? 'Click again to kill it (the guest gets nothing)' : 'Click again to archive it';
+    setTimeout(function(){ armed[decision] = false; if (b) b.textContent = decision === 'kill' ? 'Kill episode' : 'Archive (keep, never publish)'; }, 6000);
+    return;
+  }
+  const buttons = Array.from(document.querySelectorAll('#buttons button'));
+  buttons.forEach(function(b){ b.disabled = true; });
+  show('Working\u2026', true);
+  let data = null, ok = false;
+  try {
+    const resp = await fetch('/voices/editorial-decision?token='+token, {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({package_id:'${pkg.id}', decision,
+        notes: document.getElementById('notes').value,
+        note_to_guest: document.getElementById('to_guest').value})});
+    data = await resp.json().catch(function(){ return null; });
+    ok = resp.ok && data && data.ok;
+  } catch (e) { ok = false; }
+  if (!ok) {
+    buttons.forEach(function(b){ b.disabled = false; });
+    show('That did not go through, and nothing changed. ' + ((data && data.error) || 'Check the link (the token may be wrong) and try again.'), false);
+    return;
+  }
+  show((data && data.message) || 'Done.', true);
+  setTimeout(function(){ location.reload(); }, 4000);
 }
 async function lesson(id, status){
   const resp = await fetch('/voices/lesson-decision?token='+token, {method:'POST',

@@ -13,7 +13,8 @@ def _body(start, end):
 
 
 def test_archive_is_a_decision_on_the_review_page():
-    assert '["approve", "kill", "archive"].includes(body.decision)' in WORKER
+    # Oct 24 2026: "correction_made" joined them (a guest's one correction).
+    assert '["approve", "kill", "archive", "correction_made"].includes(body.decision)' in WORKER
     assert "decide('archive')" in WORKER
 
 

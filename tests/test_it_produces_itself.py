@@ -1631,12 +1631,15 @@ class TestTheGuestSeesTheirApprovalLand:
     WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
 
     def test_the_answer_appears_where_the_button_was(self):
-        body = self.WORKER[self.WORKER.index("async function submitReview"):]
+        # Oct 24 2026: one explicit choice, shown back before it is sent;
+        # the receipt (what the server recorded) replaces the choices.
+        body = self.WORKER[self.WORKER.index("async function sendChoice"):]
         body = body[:body.index("</script>")]
-        assert "approveBtn.disabled = removeBtn.disabled = true" in body
-        assert "document.getElementById('actions').style.display = 'none'" in body
-        assert "done.scrollIntoView" in body
-        assert "approveBtn.textContent = 'Approve for publication'" in body  # re-enabled on failure
+        assert "sendBtn.disabled = backBtn.disabled = true" in body
+        assert "document.getElementById('choices').style.display = 'none'" in body
+        assert "r.scrollIntoView" in body
+        assert "fill(document.getElementById('receiptRows'), data.recorded || [])" in body
+        assert "sendBtn.disabled = backBtn.disabled = false" in body  # re-enabled on failure
 
 
 class TestATruncatedTranscriptCanBeRedoneOnItsOwn:
