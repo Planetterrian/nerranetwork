@@ -87,10 +87,12 @@ class TestSourcingFloorOnTheNewsShows:
                 assert not c.get(key), (slug, key)
 
     def test_hook_shape_experiment_is_not_disturbed(self):
-        # The Sep 22 spoken-open experiment reads the three arm shows against
-        # the control shows; this pass adds no hook_shape include anywhere.
-        for slug in ("models_agents", "planetterrian", "omni_view", "env_intel",
-                     "modern_investing", "models_agents_beginners"):
+        # The Sep 22 spoken-open experiment read the three arm shows against
+        # the control shows; this pass added no hook_shape include anywhere.
+        # Oct 24 2026: the experiment ended and the four control prompts took
+        # the include (tests/test_review_items_9_13_2026_10_09.py); these two
+        # were never part of it.
+        for slug in ("planetterrian", "models_agents_beginners"):
             p = ROOT / "shows" / "prompts" / f"{slug}_digest.txt"
             if p.exists():
                 assert "hook_shape" not in p.read_text(encoding="utf-8"), slug
