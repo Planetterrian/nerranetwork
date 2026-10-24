@@ -163,10 +163,27 @@ def mira_signature_text(show: "ShowRef" = None) -> str:
 def mira_signature_html(show: "ShowRef" = None) -> str:
     """Mira's sign-off for HTML mail (safe to drop into a template)."""
     import html as _h
+    # Oct 24 2026: the press kit and the sponsorship kit, quietly, under the
+    # name in every email (engine.brand owns the addresses).
+    try:
+        from engine import brand as _brand
+        kits = "<br>" + _brand.kits_signature_html()
+    except Exception:  # noqa: BLE001 — a signature must never fail a send
+        kits = ""
     return ('<p style="margin-top:1.4em">Sincerely,<br><br>Mira<br>'
             f'<span style="color:#4a5568;font-size:.9em">{_h.escape(mira_title(show))} · '
             '<a href="https://nerranetwork.com" style="color:#4a5568">nerranetwork.com</a>'
-            '</span></p>')
+            f'{kits}</span></p>')
+
+
+def kits_html(purpose: str = "share", show: "ShowRef" = None) -> str:
+    """engine.brand's kits paragraph for HTML mail ("" if it cannot load)."""
+    try:
+        from engine import brand as _brand
+        return _brand.kits_html(purpose)
+    except Exception:  # noqa: BLE001 — the kits are a courtesy, never a blocker
+        logger.exception("kits paragraph unavailable")
+        return ""
 
 
 # Oct 1 2026 (Patrick, after Jonathan Bautista's interview fell back to a
@@ -565,6 +582,11 @@ def show_email_context(show: ShowRef = None,
         "sign_off": s.sign_off,
         # Mira's signature as markup, for `{{ signature }}` in templates.
         "signature": _markup(mira_signature_html(s)),
+        # Oct 24 2026: the press kit and sponsorship kit paragraph, for a
+        # template that has a natural place for it ({{ kits_intro }} for
+        # someone meeting the network, {{ kits_share }} after recording).
+        "kits_intro": _markup(kits_html("intro", s)),
+        "kits_share": _markup(kits_html("share", s)),
         "closing_question": s.closing_question,
     }
 

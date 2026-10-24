@@ -562,6 +562,50 @@ def kits_sentence() -> str:
             f"is at {SPONSOR_KIT_URL}.")
 
 
+#: The two kits in guest mail (Oct 24 2026, operator: put the press kit and
+#: the sponsorship kit in the emails, pleasantly, so people can look at them
+#: and pass them on, to suggest a sponsor or to market an episode). Two
+#: moments: "intro" for someone meeting the network (an invitation), "share"
+#: for a guest who has recorded (the thank-you and the publish-day note).
+#: Every message says the interview shows never carry a sponsor. The Worker's
+#: invitation carries a copy of "intro" (KITS_INTRO_HTML in
+#: workers/voices/src/index.ts); tests keep the two in step.
+KITS_COPY = {
+    "intro": ("If you'd like to know more about the network first, the {press} has a "
+              "short description, our logos and our audience numbers. And if anyone "
+              "you know would like to reach the people who listen, the {sponsor} is "
+              "the thing to pass along; the interview shows themselves never carry a "
+              "sponsor."),
+    "share": ("If you'd like to tell people about our conversation, the {press} has "
+              "what you need: a description of the network ready to paste, our logos "
+              "and our audience numbers. And if you know a company that would like to "
+              "reach the people who listen, the {sponsor} is worth passing along. The "
+              "interview shows themselves never carry a sponsor; sponsors appear on the "
+              "network's other shows."),
+}
+
+
+def kits_html(purpose: str = "share", color: str = "") -> str:
+    """The kits as one paragraph of HTML mail, the two names linked."""
+    import html as _h
+    style = f' style="color:{_h.escape(color)}"' if color else ""
+    return "<p>" + _h.escape(KITS_COPY[purpose], quote=False).format(
+        press=f'<a href="{MEDIA_KIT_URL}"{style}>press kit</a>',
+        sponsor=f'<a href="{SPONSOR_KIT_URL}"{style}>sponsorship kit</a>') + "</p>"
+
+
+def kits_text(purpose: str = "intro") -> str:
+    """The kits as plain text, each name followed by its address."""
+    return KITS_COPY[purpose].format(press=f"press kit ({MEDIA_KIT_URL})",
+                                     sponsor=f"sponsorship kit ({SPONSOR_KIT_URL})")
+
+
+def kits_signature_html() -> str:
+    """The line under Mira's name in every HTML email: the two kits, quietly."""
+    return (f'<a href="{MEDIA_KIT_URL}" style="color:#4a5568">Press kit</a> · '
+            f'<a href="{SPONSOR_KIT_URL}" style="color:#4a5568">Sponsorship kit</a>')
+
+
 MIRA_SHOW_SLUGS = ("nerra_daily", "age_of_ai", "nerra_voices")
 
 #: The news shows Mira reads (Sep 2026 launch cohort). Deliberately NOT in

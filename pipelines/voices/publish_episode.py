@@ -42,7 +42,7 @@ from common import (  # noqa: E402
     ROOT, VoiceShow, logger, notify_operator, sb_select, sb_update, show_for,
     guest_links,
     guest_links_markdown,
-    send_email, mira_signature_html,
+    send_email, mira_signature_html, kits_html,
 )
 
 
@@ -414,12 +414,9 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
         # Oct 21 2026 (operator): the two kits, last and in one paragraph.
         # The media kit is what a guest's publicist asks for next; the
         # sponsorship kit is an offer, never a pitch, and the interview
-        # shows themselves carry no sponsor.
-        "<p>If you or your publicist want our audience numbers, logos or a line "
-        f"about the network for a post of your own, the media kit has them: "
-        f"{link(_brand.MEDIA_KIT_URL)}. And if your company would ever like to reach "
-        f"the people who listen, the sponsorship kit is at {link(_brand.SPONSOR_KIT_URL)}; "
-        "the interview shows themselves never carry a sponsor.</p>",
+        # shows themselves carry no sponsor. Oct 24 2026: the same words
+        # as every other guest mail (engine.brand.KITS_COPY, "share").
+        kits_html("share", show),
         "<p>Thank you again for the conversation.</p>",
         mira_signature_html(show),
     ]

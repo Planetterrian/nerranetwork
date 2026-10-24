@@ -716,6 +716,9 @@ describe("review choices are explicit, shown back, recorded and confirmed", () =
     const mails = resendTo(calls);
     expect(mails.find((m) => m.to === "g@x.y")?.subject).toContain("Got it");
     expect(mails.find((m) => m.to === "g@x.y")?.html).toContain("Aampe is said amp");
+    // Oct 24 2026: every Mira email signs off with the two kits.
+    expect(mails.find((m) => m.to === "g@x.y")?.html).toContain("https://nerranetwork.com/press.html");
+    expect(mails.find((m) => m.to === "g@x.y")?.html).toContain("https://nerranetwork.com/sponsor.html");
     expect(mails.some((m) => m.to !== "g@x.y" && /approved, with one correction/.test(m.subject))).toBe(true);
   });
 

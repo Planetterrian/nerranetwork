@@ -582,6 +582,12 @@ class TestInviteTemplate:
             "to be sure we cover, reply with them, up to five, and I'll reach every one in the "
             "conversation. There is a short application form at "
             f"{AGE_OF_AI_APPLY} if you'd like to send more background, but it isn't required.\n\n"
+            # Oct 24 2026: the press kit and the sponsorship kit (engine.brand).
+            "If you'd like to know more about the network first, the press kit "
+            "(https://nerranetwork.com/press.html) has a short description, our logos and our "
+            "audience numbers. And if anyone you know would like to reach the people who listen, "
+            "the sponsorship kit (https://nerranetwork.com/sponsor.html) is the thing to pass "
+            "along; the interview shows themselves never carry a sponsor.\n\n"
             "Let me know if you have any questions.\n\n"
             "Sincerely,\n\n"
             "Mira\n"

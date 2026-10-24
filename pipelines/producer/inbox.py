@@ -128,7 +128,18 @@ def invite_context(classification: Dict[str, Any], sender_name: str,
         # The link now goes in the first email.
         "booking_url": _followup.booking_url(show.slug),
         "pitched_show_name": policy.pitched_show_name(classification.get("pitched_show")),
+        # Oct 24 2026: the press kit and the sponsorship kit, in plain text
+        # (engine.brand.KITS_COPY, "intro").
+        "kits_text": _kits_text(),
     }
+
+
+def _kits_text() -> str:
+    try:
+        from engine import brand as _brand
+        return _brand.kits_text("intro")
+    except Exception:  # noqa: BLE001 — the kits are a courtesy, never a blocker
+        return ""
 
 
 def render_invite(classification: Dict[str, Any], sender_name: str,

@@ -41,7 +41,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from common import (  # noqa: E402
-    logger, mira_signature_html, sb_update, send_email, show_for,
+    kits_html, logger, mira_signature_html, sb_update, send_email, show_for,
 )
 
 EDIT_REACHES_YOU_DAYS = 7
@@ -215,6 +215,9 @@ def thank_you_email(show, app: Dict[str, Any], transcript: str,
         f"by about {e(reaches)}, with a link to approve it, cut anything from it, or "
         f"refuse it; nothing publishes before you have had a week with it. Anything "
         f"you asked to have out in the room is already out of the edit.</p>",
+        # Oct 24 2026 (operator): the press kit and the sponsorship kit, for
+        # a guest who wants to tell people, or knows a company to suggest.
+        kits_html("share", show),
         "<p>If something from today is on your mind before then, reply to this and "
         "it reaches me.</p>",
         mira_signature_html(show),

@@ -232,11 +232,28 @@ function miraAddress(env: Env): string {
 function miraFrom(env: Env): string {
   return `Mira <${miraAddress(env)}>`;
 }
+// Oct 24 2026 (operator): the press kit and the sponsorship kit go in the
+// mail, pleasantly, so people can look at them and pass them on, to suggest a
+// sponsor or to market an episode. engine/brand.py owns the addresses and
+// the words (MEDIA_KIT_URL, SPONSOR_KIT_URL, KITS_COPY); these are copies,
+// and tests/test_kits_in_the_mail_2026_10_24.py keeps them in step.
+export const MEDIA_KIT_URL = "https://nerranetwork.com/press.html";
+export const SPONSOR_KIT_URL = "https://nerranetwork.com/sponsor.html";
+/** KITS_COPY["intro"]: for someone meeting the network (the invitation). */
+export const KITS_INTRO_HTML =
+  `<p>If you'd like to know more about the network first, the <a href="${MEDIA_KIT_URL}">press kit</a> has a ` +
+  `short description, our logos and our audience numbers. And if anyone ` +
+  `you know would like to reach the people who listen, the <a href="${SPONSOR_KIT_URL}">sponsorship kit</a> is ` +
+  `the thing to pass along; the interview shows themselves never carry a ` +
+  `sponsor.</p>`;
+
 function miraSignature(show?: Show): string {
   const title = show ? `Host of ${show.name}, Nerra Network` : "Nerra Network";
   return `<p style="margin-top:1.4em">Sincerely,<br><br>Mira<br>` +
     `<span style="color:#4a5568;font-size:.9em">${esc(title)} · ` +
-    `<a href="https://nerranetwork.com" style="color:#4a5568">nerranetwork.com</a></span></p>`;
+    `<a href="https://nerranetwork.com" style="color:#4a5568">nerranetwork.com</a><br>` +
+    `<a href="${MEDIA_KIT_URL}" style="color:#4a5568">Press kit</a> · ` +
+    `<a href="${SPONSOR_KIT_URL}" style="color:#4a5568">Sponsorship kit</a></span></p>`;
 }
 
 /** Which show a Cal.com booking belongs to. Explicit env mapping first
@@ -1594,6 +1611,7 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
        publishes. Past conversations are at
        <a href="${esc(SITE + "/" + show.page)}">${esc(SITE + "/" + show.page)}</a> if you'd
        like a sense of the show first.</p>
+       ${KITS_INTRO_HTML}
        ${miraSignature(show)}`, true);
   }
   if (app && body.decision === "declined" && app.email) {
