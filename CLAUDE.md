@@ -3473,10 +3473,10 @@ over 150 characters, every one on a prompt that supplied its own over-limit
 specimen (the shows including `_shared/hook_shape.txt` ran 0–1 in 14). The
 two narrative prompts (UC, FPD — 15 of the 43) include it now and their
 Example specimens are gone (⚠️ AUDIO, the hook is the spoken open);
-**omni_view, models_agents, modern_investing and env_intel are the CONTROL
-of the Sep 22 spoken-open experiment and their hook prompts wait, specimens
-included, for its Oct 13 readout** — the include goes on them the day it is
-scored, never before (`TestStructuralRegen::test_control_shows_wait_for_the_oct_13_readout`);
+omni_view, models_agents, modern_investing and env_intel were the CONTROL
+of the Sep 22 spoken-open experiment and waited for its readout; it was
+ended unscored on Oct 24 and they include the snippet now, specimens gone
+(`TestStructuralRegen::test_former_control_shows_carry_the_shape_and_no_specimen`);
 23 on an empty section —
 Tesla's Short Spot is `optional` because the cross-section dedupe empties
 it BEFORE the validator and the retry's Short Spot was deduped again (6 of
@@ -6941,9 +6941,11 @@ due show published, 10/10 videos, Nerra Daily complete. Rules that bind:
   17 committed digests carried a link cut at one.
 
 Rejected after measuring: dropping an empty bold item line (it also removed
-disclaimers and "Read more" labels on 31 digests). Operator decision open:
-the spoken-open control shows (Omni View, MIT) regenerate their digest for
-an over-long hook on 13 of 16 days while that readout cannot read.
+disclaimers and "Read more" labels on 31 digests). Same day, operator-
+directed: the spoken-open experiment was ENDED unscored (n=1 retention curve
+per arm) and its four control prompts took `_shared/hook_shape.txt`; Omni
+View and MIT had regenerated their digest for an over-long hook on 13 of
+16 days while they waited. ⚠️ AUDIO — A/B-listen the first episode of each.
 
 ### Covered means aired, and a story catalog (Oct 21 2026)
 

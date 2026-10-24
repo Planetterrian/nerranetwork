@@ -55,7 +55,10 @@ class TestArmPrompts:
             p.name for p in (ROOT / "shows" / "prompts").glob("*_digest.txt")
             if INCLUDE in p.read_text(encoding="utf-8")
             and p.name[:-len("_digest.txt")] not in cohort)
-        assert with_it == sorted(f"{s}_digest.txt" for s in ARM)
+        # Oct 24 2026: the experiment ended and the control shows took the
+        # include too (tests/test_review_items_9_13_2026_10_09.py).
+        former_control = ("omni_view", "models_agents", "modern_investing", "env_intel")
+        assert with_it == sorted(f"{s}_digest.txt" for s in ARM + former_control)
 
     def test_specimen_hooks_are_gone_from_the_arm(self):
         for slug in ARM:

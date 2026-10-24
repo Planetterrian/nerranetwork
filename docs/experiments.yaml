@@ -2886,7 +2886,7 @@ experiments:
     area: retention
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
     metric: long_open_hold_5pct_arm
     baseline: 0.49
     target: >
@@ -2918,6 +2918,17 @@ experiments:
       gate itself works: over-length hooks 1/61 on the arm against 35/66
       on the control. Re-read 10-27; the control shows' include waits
       for that readout.
+      ENDED 2026-10-24 (operator-directed), not scored: retention curves are
+      fetched for the top five EN long-forms a night, so the 10-27 re-read
+      would have been no larger than n=1 per arm, and both arms had changed
+      script model on 10-11. The gate's own effect is the result: over-length
+      hooks 1/61 on the arm against 35/66 on the control, and the control's
+      waiting cost a full digest regeneration on 13 of 16 days on Omni View
+      and MIT. The four control digest prompts (omni_view, models_agents,
+      modern_investing, env_intel) now include _shared/hook_shape.txt and
+      their WEAK/STRONG specimen hooks are gone. Prompt change: A/B-listen
+      the first episode of each (landmine #17); read
+      digest_structural_regen_reasons for the hook share on those four.
 
   - id: ai-chips-launch-2026-09
     title: AI Chips & Data Centres Daily launch

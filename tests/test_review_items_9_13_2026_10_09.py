@@ -37,11 +37,10 @@ HOOK_INCLUDE_SHOWS = {
     "unintended_consequences": "unintended_consequences_episode.txt",
     "first_principles": "first_principles_episode.txt",
 }
-# The Sep 22 spoken-open experiment (long_open_hold_5pct_arm vs _control,
-# readout Oct 13) reads tesla / spacex / FF against these; their hook
-# prompts stay exactly as they are until it is scored, over-limit
-# specimens included. Second-largest regen source after it: omni_view
-# 12/14, modern_investing 5, models_agents 5, env_intel 2/2.
+# The Sep 22 spoken-open experiment's control shows. They waited, over-limit
+# specimens included, until the experiment was ended on Oct 24 2026; they
+# were the second-largest regen source (omni_view 12/14, modern_investing 5,
+# models_agents 5, env_intel 2/2).
 CONTROL_SHOWS_WAITING = ("omni_view", "models_agents", "modern_investing", "env_intel")
 ROTATED_SHOWS = ("vancouver", "ai_chips", "mag7", "peptides", "longevity")
 
@@ -103,9 +102,14 @@ class TestStructuralRegen:
         assert "characters" not in hook_line, (slug, "the include owns the length")
 
     @pytest.mark.parametrize("slug", CONTROL_SHOWS_WAITING)
-    def test_control_shows_wait_for_the_oct_13_readout(self, slug):
+    def test_former_control_shows_carry_the_shape_and_no_specimen(self, slug):
+        # Oct 24 2026: the spoken-open experiment was ended (its readout had
+        # one retention curve per arm) and the four control prompts took the
+        # include; Omni View and MIT had regenerated their digest for an
+        # over-long hook on 13 of 16 days while they waited.
         text = (ROOT / "shows" / "prompts" / f"{slug}_digest.txt").read_text(encoding="utf-8")
-        assert "hook_shape" not in text, (slug, "not before the spoken-open readout")
+        assert "<<include: _shared/hook_shape.txt>>" in text, slug
+        assert "Compare: WEAK" not in text and "vs STRONG" not in text, slug
 
     def test_dashboard_reads_the_share(self):
         import scripts.generate_dashboard as gd
