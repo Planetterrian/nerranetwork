@@ -3368,9 +3368,12 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
                 > (_closed_on(last) or datetime.date.min))
     when = _closed_on(last)
     when_txt = f", closed {when.isoformat()}" if when else ""
+    # Oct 24 2026: the label states the fact and gives no instruction. The
+    # model copies this header into the published digest, so Ep210's
+    # trade review printed the old label's instruction to the writer.
     head = (f"**Last {type_label}{when_txt}:**" if not later else
-            f"**Earlier {type_label}{when_txt} — {later} later trade(s) have "
-            f"closed since; call it an earlier hold, never the last one:**")
+            f"**Earlier {type_label}{when_txt} ({later} later "
+            f"trade{'s' if later != 1 else ''} closed since):**")
     return void_note + (
         f"{head} {symbol} — {strategy}\n"
         f"{hold_note}"

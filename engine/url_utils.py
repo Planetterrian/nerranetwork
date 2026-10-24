@@ -82,6 +82,43 @@ def sanitize_url(url: Optional[str]) -> Optional[str]:
     return cleaned.replace("(", "%28").replace(")", "%29")
 
 
+_TEXT_URL_RE = re.compile(r"https?://[^\s<>\]\"']+")
+
+
+def encode_url_parens_in_text(text: str) -> str:
+    """Percent-encode the parentheses INSIDE every URL in ``text``.
+
+    Oct 24 2026: the fetch-time encoding above (Oct 22) covers the URLs the
+    pipeline fetched; the model can still write the raw address into the
+    digest. Planetterrian Ep223 shipped ``Source: [cell.com](https://www.cell.
+    com/cell-metabolism/fulltext/S1550-4131(26))00412-4``. A URL keeps a
+    parenthesis only while it is balanced; the first unmatched ``)`` ends it
+    (the close of a markdown link or of prose around the URL), so a URL with
+    no ``(`` is returned unchanged."""
+    if not text or "(" not in text:
+        return text
+
+    def _fix(m: "re.Match[str]") -> str:
+        raw = m.group(0)
+        depth, end = 0, len(raw)
+        for i, ch in enumerate(raw):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                if depth == 0:
+                    end = i
+                    break
+                depth -= 1
+        url, rest = raw[:end], raw[end:]
+        if "(" not in url:
+            return raw
+        if depth:  # an unclosed "(" — leave it alone rather than guess
+            return raw
+        return url.replace("(", "%28").replace(")", "%29") + rest
+
+    return _TEXT_URL_RE.sub(_fix, text)
+
+
 def is_google_news_url(url: str) -> bool:
     """Return True if *url* is a Google News redirect (vs a publisher URL).
 

@@ -423,6 +423,7 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     downstream surface (blog, RSS show notes, GitHub Pages summary,
     email) sees the same source. Order matters:
 
+      0. Parentheses inside a URL → %28 / %29 (Oct 24 2026)
       1. Box-drawing rules → markdown ``---``
       2. Hook line → markdown blockquote
       3. Shorten Google News tracking URLs in "Source: …" lines
@@ -433,6 +434,8 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     Each transform is a no-op when its trigger pattern isn't present,
     so calling this for every show is safe.
     """
+    from engine.url_utils import encode_url_parens_in_text
+    body = encode_url_parens_in_text(body)
     body = replace_box_rules_with_md_hr(body)
     body = promote_hook_to_blockquote(body)
     body = shorten_source_urls(body)

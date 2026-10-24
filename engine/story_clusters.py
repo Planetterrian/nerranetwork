@@ -183,6 +183,23 @@ def cluster_retold_in_digest(
     return len(retold_clusters(digest_text, articles, clusters))
 
 
+#: A word in at least this share of a digest's own item headlines is the
+#: show's furniture for the retold check ("tesla" sits in 15 of 19 on a
+#: Tesla digest). Half, not ``COMMON_DF``: a story told as three items of
+#: nine would make its own words "common" at 30%.
+TITLE_FURNITURE_DF = 0.5
+TITLE_FURNITURE_MIN_TITLES = 8
+
+
+def _title_furniture(title_toks: Sequence[frozenset]) -> frozenset:
+    """Tokens that say nothing about WHICH story an item tells: the show's
+    furniture words and bare numbers ("000", "2026", "3")."""
+    common = (common_tokens(title_toks, df=TITLE_FURNITURE_DF)
+              if len(title_toks) >= TITLE_FURNITURE_MIN_TITLES else frozenset())
+    digits = frozenset(t for s in title_toks for t in s if t.isdigit())
+    return common | digits
+
+
 def retold_clusters(
     digest_text: str,
     articles: Sequence[dict],
@@ -190,25 +207,39 @@ def retold_clusters(
 ) -> List[List[str]]:
     """For every cluster that surfaced as more than one digest item, the
     headlines of those items (digest order). ``cluster_retold_in_digest``
-    is the length of this list."""
+    is the length of this list.
+
+    Oct 24 2026: a cluster is retold only when ONE of its stories is told as
+    several items. Each member joined the cluster on the words it shares
+    with the lead (its core); an item tells that story when it carries the
+    core's words, the show's furniture and bare numbers removed. Tesla
+    Ep644 mapped each member to whichever headline shared three words with
+    it ("tesla", "2026", "000" count) — a roundup lead whose teaser touched
+    the merger committees, Optimus output and Japan's V2L adapter made those
+    three different stories one "retold" cluster, and the regeneration it
+    triggered cut the digest from 1,591 prose words to 1,210 to fix nothing."""
     titles = digest_item_titles(digest_text)
     if not titles or not clusters:
         return []
     title_toks = [salient_tokens(t) for t in titles]
+    furniture = _title_furniture(title_toks)
+    title_toks = [t - furniture for t in title_toks]
     out: List[List[str]] = []
     for group in clusters:
+        members = [i for i in group if 0 <= i < len(articles)]
+        if len(members) < 2:
+            continue
+        lead, rest = members[0], members[1:]
+        lead_toks = _article_tokens(articles[lead]) - furniture
         hit_items = set()
-        for idx in group:
-            if not 0 <= idx < len(articles):
+        for idx in rest:
+            core = (lead_toks & _article_tokens(articles[idx])) - furniture
+            if len(core) < 2:
                 continue
-            art = salient_tokens(str(articles[idx].get("title") or ""))
-            best, best_n = None, 0
-            for k, tt in enumerate(title_toks):
-                n = len(art & tt)
-                if n > best_n:
-                    best, best_n = k, n
-            if best is not None and best_n >= 3:
-                hit_items.add(best)
+            need = min(3, len(core))
+            hits = {k for k, tt in enumerate(title_toks) if len(core & tt) >= need}
+            if len(hits) > 1:
+                hit_items |= hits
         if len(hit_items) > 1:
             out.append([titles[k] for k in sorted(hit_items)])
     return out

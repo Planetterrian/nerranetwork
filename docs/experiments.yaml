@@ -5523,3 +5523,30 @@ experiments:
       marked 220 of 1,357 articles aired (0 before the fix), and six wrong
       facts were corrected (Omni View 214 x2, FF 231, MIT 209, SpaceX 139,
       UC 151).
+
+  - id: slate-2026-10-24
+    title: "Oct 24 slate: a retold story is one story told twice, and the trade label states a fact"
+    area: content
+    shipped: 2026-10-24
+    readout: 2026-11-07
+    status: reading
+    baseline: >
+      Oct 24: every due show published, 10/10 videos, Nerra Daily complete.
+      Tesla Ep644's story-cluster check read three unrelated stories as one
+      retold story (a roundup lead), and the retry it triggered cut the digest
+      from 1,591 to 1,210 prose words and was kept (script 1,037 of 1,400).
+      False positives on 3 of Tesla's last 7 cluster regenerations. MIT read
+      the trade-review label's instruction on air; SpaceX aired a 13F notice
+      past the title filter; 17 committed digests carry a URL cut at a
+      parenthesis.
+    target: >
+      Tesla's story_clusters_retold_in_digest fires only on a story told as
+      two items (spot-check each firing); no cluster-only retry ships without
+      lowering the count; no MarketBeat /instant-alerts/filing- URL in any
+      prompt; no published Source link cut at a parenthesis.
+    notes: >
+      Review docs/reviews/slate_review_2026_10_24.md. Guards:
+      tests/test_slate_2026_10_24.py. Corrections filed: FF 232, FPD 140
+      (both need re-synthesis), UC 152 (digest). Operator decision recorded:
+      the spoken-open control shows (Omni View, MIT) regenerate their digest
+      for an over-long hook on 13 of 16 days while the readout cannot read.
