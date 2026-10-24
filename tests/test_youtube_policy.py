@@ -119,11 +119,25 @@ class TestTierRules:
         assert tier_a == "A"  # active long stays on
         tier_c, *_ = mod.compute_tier([], [5.0] * 4, "C")
         assert tier_c == "C"  # active long stays off
-        # 3 videos < MIN_VIDEOS_CONFIDENT is still insufficient.
+        # 3 videos < MIN_VIDEOS_CONFIDENT is still insufficient to READ the
+        # dimension on a show whose long is ON (a demotion needs four)...
         tier_held, long_vpd, _s, reason = mod.compute_tier(
-            [9.0] * 3, [5.0] * 4, "C")
+            [0.1] * 3, [5.0] * 4, "A")
+        assert tier_held == "A" and long_vpd is None
+        assert "held" in reason
+        # ...and one probe long never promotes a show whose long is OFF.
+        tier_held, long_vpd, _s, reason = mod.compute_tier(
+            [9.0] * 1, [5.0] * 4, "C")
         assert tier_held == "C" and long_vpd is None
         assert "held" in reason
+        # Oct 24 2026: two probe longs clearing the floor DO promote — the
+        # weekly probe can never reach four in fourteen days, so the old
+        # rule held every shorts-only show off long-form forever
+        # (tests/test_youtube_x_review_2026_10_24.py pins the contract).
+        tier_probe, long_vpd, _s, reason = mod.compute_tier(
+            [9.0] * 3, [5.0] * 4, "C")
+        assert tier_probe == "A" and long_vpd == 9.0
+        assert "probe" in reason
 
 
 class TestHysteresis:
