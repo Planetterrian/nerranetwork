@@ -564,7 +564,9 @@ class TestWiring:
         assert "if (halfHour) {" in ts
         assert 'dispatch(env, "producer-tick"' in ts
         toml = (ROOT / "workers/voices/wrangler.toml").read_text()
-        assert 'crons = ["*/5 * * * *"]' in toml
+        # Oct 24 2026: "0-59/5" is "*/5" re-registered after Cloudflare
+        # stopped firing the old trigger (see the note in wrangler.toml).
+        assert 'crons = ["0-59/5 * * * *"]' in toml
         assert '"*/30 * * * *"' not in toml and '"0 17 * * *"' not in toml
         assert 'producer_tick: ":00/:30 -> repository_dispatch producer-tick"' in ts
 

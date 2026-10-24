@@ -39,7 +39,14 @@ routes = [
 # edition dispatch was refused at deploy for want of one. The handler
 # reads the firing minute (every 5 min: fire-tick; :00/:30: producer-tick;
 # 17:00 UTC: gate 2), so the three jobs run exactly as before.
-crons = ["*/5 * * * *"]
+# Oct 24 2026: written "0-59/5", the same minutes as "*/5". The "*/5"
+# trigger stopped firing at 17:15 UTC on Oct 23, during Cloudflare's cron
+# incident, and never came back: not after the incident was resolved, a
+# redeploy, or the schedule deleted and re-added with the same expression.
+# nerra-scheduler's own "*/5" in the same account kept firing throughout.
+# The new expression was a fresh registration and fired at the next slot.
+# Keep it unless "*/5" is proven to fire again; a deploy writes this line.
+crons = ["0-59/5 * * * *"]
 
 # Phase 2 co-host (Sept 2026): local browser recordings (guest + host
 # MediaRecorder chunks and their manifest.json) are written straight to R2
