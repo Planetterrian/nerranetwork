@@ -45,6 +45,12 @@ class TestObservedMisspellings:
                 "NaraDaily stitches the whole network into one morning listen",
                 "Nerra Daily stitches the whole network into one morning listen",
             ),
+            # The other products glue the same way (First Principles Ep140,
+            # re-synthesized 2026-10-24).
+            (
+                "NARAPersonal builds your own morning edition",
+                "Nerra Personal builds your own morning edition",
+            ),
             # Separated form — the dominant variant (~500 occurrences).
             (
                 "this show is part of the NARA Network, a family of daily podcasts",
@@ -323,7 +329,10 @@ class TestBackCatalogueIsClean:
             # The brand's other spoken nouns (2026-09-20): this pattern only
             # knew "network", so "Nara personal" passed the .txt check and
             # was caught two surfaces later by the JSON word array.
-            r"|\bnaran?\b[\s\-]{1,3}(?:personal|daily|voices)\b",
+            r"|\bnaran?\b[\s\-]{1,3}(?:personal|daily|voices)\b"
+            # ...and glued to them: "NARAPersonal" (FPD Ep140, 2026-10-24)
+            # passed this check and was caught in the JSON words.
+            r"|\bnaran?(?:personal|daily|voices)\b",
             re.I,
         )
         offenders = []
