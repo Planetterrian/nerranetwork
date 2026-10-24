@@ -307,7 +307,9 @@ class TestBuildTradeReview:
         assert "gained" in review
         assert "2.00%" in review
         assert "$200.00" in review
-        assert "100%" in review
+        # Oct 24 2026: the lifetime win rate left this block — it is the
+        # record's number and belongs to Portfolio Performance alone.
+        assert "Win Rate" not in review and "Running Total" not in review
 
     def test_with_closed_flash_trade(self):
         tracker = {

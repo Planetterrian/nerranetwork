@@ -5535,6 +5535,34 @@ experiments:
       facts were corrected (Omni View 214 x2, FF 231, MIT 209, SpaceX 139,
       UC 151).
 
+  - id: mit-deep-review-2026-10-24
+    title: "Modern Investing: the stop is enforced, the factors are measured, the record leads"
+    area: quality
+    shipped: 2026-10-24
+    readout: 2026-11-14
+    status: reading
+    metric: mit_stop_stated_share_10ep
+    baseline: 0.5
+    target: >
+      Share of the last ten recorded picks carrying a stop the sim can
+      enforce at or above 0.9 (the pick_stop_loss lint regenerates a pick
+      without one). Read beside it: mit_non_medium_share_10ep off 0.0 (the
+      confidence budget forces a High or Low after five Mediums), at least
+      one options structure in the first fifteen picks after merge (the
+      options cadence), every closed era trade carrying
+      entry_volume_ratio_20d / sessions_held within a week (the backfill
+      stamps eight a run), and the spoken trade-review alpha equal to the
+      tracker's on every episode spot-checked.
+    notes: >
+      Review docs/reviews/modern_investing_review_2026_10_24.md; guards
+      tests/test_mit_review_2026_10_24.py. Measured on 10-24: a readable stop
+      on 9 of 41 era picks, 44 of 44 Medium, 0 options in 103 trades, 6 of 8
+      spoken alpha verdicts wrong, the lifetime 87-trade blend inside the
+      trade review. The measured-factor scoreboard read on the first 36 era
+      trades: entries on above-average volume -2.86% alpha (14), below it
+      +0.57% (22) — the show's most repeated rule is not paying. ⚠️ AUDIO —
+      three prompts changed; A/B-listen the first two episodes.
+
   - id: slate-2026-10-24
     title: "Oct 24 slate: a retold story is one story told twice, and the trade label states a fact"
     area: content

@@ -897,8 +897,11 @@ class TestPerformancePageMultiIndex:
     def test_template_carries_matched_window_and_sweep(self):
         src = (_ROOT / "templates/mit_performance_page.html.j2").read_text(
             encoding="utf-8")
-        assert "Matched-Window Alpha vs NASDAQ" in src
-        assert "Buy-and-Hold Gap vs NASDAQ" in src
+        # Oct 24 2026: the era record leads; the blended compounded figure
+        # and the buy-and-hold gap are labelled history.
+        assert "The record: alpha vs NASDAQ, average trade" in src
+        assert "History: compounded matched-window alpha" in src
+        assert "History: buy-and-hold gap vs NASDAQ" in src
         assert "not capital-matched" in src
         assert "Major-Index Sweep" in src
 
@@ -1704,8 +1707,11 @@ class TestHonestHoldLength:
                         "win_rate_pct": 100.0, "current_streak": 1},
         }
         review = mi._build_trade_review(tracker, episode_num=200)
-        assert "Actual hold:** 1 calendar day" in review
-        assert "never call it a five-day" in review
+        # Oct 24 2026: the hold is counted in sessions (the rulebook's unit)
+        # and the block names the rule the hold fell short of.
+        assert "Hold:** 2 sessions (Wednesday open → Thursday close)" in review
+        assert "the rule is 5" in review
+        assert "calendar day" not in review.split("Describe")[0]
 
 
 class TestSourceDecayAlarm:

@@ -2464,6 +2464,31 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
         round(sum(1 for a in last10 if a == "new_trade") / len(last10), 2)
         if len(last10) >= 5 else None)
 
+    # Modern Investing pick quality (Oct 24 2026), from the tracker's last
+    # ten non-voided picks: the share that stated a stop the sim can
+    # enforce (9 of 41 era picks on 10-24) and the share rated other than
+    # Medium (0 of 44). None under 5 picks — never a fake zero.
+    try:
+        _trk = json.loads((root / "digests" / "modern_investing"
+                           / "investment_tracker.json").read_text(encoding="utf-8"))
+        _picks = [t for t in (_trk.get("trades") or [])
+                  if t.get("status") != "voided"][-10:]
+    except (OSError, ValueError, TypeError):
+        _picks = []
+    if len(_picks) >= 5:
+        out["mit_stop_stated_share_10ep"] = round(sum(
+            1 for t in _picks
+            if isinstance(t.get("stop_loss"), dict)
+            and (t["stop_loss"].get("pct") or t["stop_loss"].get("price"))
+        ) / len(_picks), 2)
+        out["mit_non_medium_share_10ep"] = round(sum(
+            1 for t in _picks
+            if str(t.get("confidence") or "").capitalize() not in ("Medium", "Unknown", "")
+        ) / len(_picks), 2)
+    else:
+        out["mit_stop_stated_share_10ep"] = None
+        out["mit_non_medium_share_10ep"] = None
+
     # Channel views WoW from the day series.
     for ch in ("en", "ru"):
         ds = ((stats.get("channels") or {}).get(ch) or {}).get("day_series") or []

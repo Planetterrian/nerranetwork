@@ -82,33 +82,54 @@
       
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin: var(--sp-6) 0;">
         {% set s = tracker.summary if tracker else none %}
+        {# Oct 24 2026: the record the show SPEAKS — the rules-based era,
+           average trade vs the index over its own sessions — leads the
+           page. It had been shown nowhere; the first tile was the blended,
+           compounded figure the Oct 22 rule says never to speak. #}
+        {% if s and s.era_trades %}
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">The record: alpha vs NASDAQ, average trade</div>
+          <div style="font-size:2.2rem; font-weight:700; color: {% if (s.era_alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+            {{ "{:+.2f}".format(s.era_alpha_pct or 0) }}%
+          </div>
+          <div style="font-size:0.85rem;">{{ s.era_name or "Rules-based era" }} since {{ s.era_inception }} · {{ s.era_trades }} closed trades, each $1,000 vs the index over its own sessions · {{ s.era_beat_benchmark if s.era_beat_benchmark is not none else "—" }} beat the index{% if s.era_alpha_t_stat is not none %} · t = {{ "{:+.2f}".format(s.era_alpha_t_stat) }}{% if (s.era_alpha_t_stat | abs) < 2 %} (not yet distinguishable from luck){% endif %}{% endif %}</div>
+        </div>
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">The record: average trade vs the index</div>
+          <div style="font-size:2.2rem; font-weight:700;">
+            {{ "{:+.2f}".format(s.era_return_pct or 0) }}% <span style="font-size:1rem; color:var(--nn-text-muted);">vs {{ "{:+.2f}".format(s.era_nasdaq_pct or 0) }}%</span>
+          </div>
+          <div style="font-size:0.85rem;">{{ "${:+,.2f}".format(s.era_pnl_dollars or 0) }} across {{ s.era_trades }} parallel $1,000 positions</div>
+        </div>
+        {% endif %}
         {% if s and s.matched_window_alpha_pct is defined and s.matched_window_trades %}
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Matched-Window Alpha vs NASDAQ</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">History: compounded matched-window alpha</div>
           <div style="font-size:2.2rem; font-weight:700; color: {% if (s.matched_window_alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
             {{ "{:+.2f}".format(s.matched_window_alpha_pct or 0) }}%
           </div>
-          <div style="font-size:0.85rem;">Each trade vs the index over the same holding window — the honest head-to-head ({{ s.matched_window_trades }} trades)</div>
+          <div style="font-size:0.85rem;">Every trade since March 2026 ({{ s.matched_window_trades }}), compounded as if one followed another and including {{ s.unverified_window_trades or 0 }} pre-rules trades whose windows were reconstructed — history, not the method's result</div>
         </div>
         {% endif %}
 
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Buy-and-Hold Gap vs NASDAQ</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">History: buy-and-hold gap vs NASDAQ</div>
           <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.inception_to_date_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
             {{ "{:+.2f}".format(performance_data.alpha.inception_to_date_pct or 0) }}%
           </div>
-          <div style="font-size:0.85rem;">Since inception · not capital-matched (one $1,000 position at a time vs a fully-invested index)</div>
+          <div style="font-size:0.85rem;">Since March 2026 · the average trade's return minus the index's buy-and-hold return — not capital-matched (several $1,000 positions run in parallel; the index compounds fully invested)</div>
         </div>
 
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">YTD Alpha</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">History: YTD gap vs NASDAQ</div>
           <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.ytd_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
             {{ "{:+.2f}".format(performance_data.alpha.ytd_pct or 0) }}%
           </div>
+          <div style="font-size:0.85rem;">Same basis as the buy-and-hold gap, year to date</div>
         </div>
 
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Win Rate</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">History: win rate, every trade</div>
           <div style="font-size:2.2rem; font-weight:700;">
             {{ "{:.0f}".format(performance_data.summary.win_rate_pct or 0) }}%
           </div>
@@ -116,7 +137,7 @@
         </div>
 
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Total Simulated Trades</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">History: total simulated trades</div>
           <div style="font-size:2.2rem; font-weight:700;">{{ performance_data.summary.total_trades or 0 }}</div>
         </div>
       </div>
@@ -124,7 +145,7 @@
       {% if s and s.benchmark_scores and s.benchmark_scores | length > 1 %}
       <div style="border-top: 1px solid var(--nn-border, rgba(128,128,128,0.25)); padding-top: var(--sp-4); margin-top: var(--sp-4);">
         <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase; margin-bottom: 0.5rem;">
-          Major-Index Sweep (matched windows) — currently beating {{ s.indices_beaten or 0 }} of {{ s.indices_scored or 0 }} major indices
+          Major-Index Sweep (matched windows, average per trade over the verified-window trades) — currently beating {{ s.indices_beaten or 0 }} of {{ s.indices_scored or 0 }} major indices
         </div>
         <div style="display:flex; gap: var(--sp-6); flex-wrap: wrap;">
           {% for key, label in [("nasdaq", "NASDAQ Composite"), ("sp500", "S&P 500"), ("tsx", "TSX Composite")] %}

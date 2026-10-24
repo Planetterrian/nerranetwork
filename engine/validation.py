@@ -690,12 +690,34 @@ def mi_validation_config() -> ValidationConfig:
                 ),
                 min_items=1,
             ),
+            # Oct 24 2026 (MIT review): Investor Education, the Trade Review
+            # and Portfolio Performance were never validated — Ep208 shipped
+            # with no Investor Education at all ("---\n---") and the script
+            # improvised a lesson from the Listener Challenge.
+            SectionRule(
+                name="Investor Education",
+                pattern=(
+                    r"(?:### Investor Education|## Investor Education)"
+                    r"(.*?)"
+                    r"(?=━━|### Practice Investment|## Practice Investment|$)"
+                ),
+                min_items=1,
+            ),
             SectionRule(
                 name="Practice Investment",
                 pattern=(
                     r"(?:### Practice Investment|## Practice Investment)"
                     r"(.*?)"
                     r"(?=━━|### Yesterday|## Yesterday|### Tools|$)"
+                ),
+                min_items=1,
+            ),
+            SectionRule(
+                name="Portfolio Performance",
+                pattern=(
+                    r"(?:### Portfolio Performance|## Portfolio Performance)"
+                    r"(.*?)"
+                    r"(?=━━|### Tools|## Tools|### Quick Hits|## Quick Hits|$)"
                 ),
                 min_items=1,
             ),
