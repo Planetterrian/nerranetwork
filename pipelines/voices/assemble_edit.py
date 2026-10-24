@@ -221,6 +221,82 @@ BALANCE_GLUE = "acompressor=threshold=-16dB:ratio=1.8:attack=20:release=250:knee
 # together — trimming each side separately would slide them apart.
 GAP_TRIM = ("silenceremove=stop_periods=-1:stop_duration=1.0:"
             "stop_threshold=-40dB:detection=rms")
+# Oct 24 2026, Jason Shumard and Stuart Berkowitz. Patrick heard Mira's
+# questions cut off and the guests' answers missing their first words.
+# GAP_TRIM above is ffmpeg's silenceremove, and it starts copying again only
+# once the level is back over -40 dB, so the soft start of a word after a
+# long pause (the "h" of "How", the breath into "What") went out with the
+# silence. Measured on a rising onset after a two-second pause, it dropped a
+# tenth of a second of the word. Mira thinks for more than a second before
+# most questions, so most of her questions started clipped. close_gaps does
+# the same job without touching either edge of a pause: a silence over
+# MAX_GAP_SEC keeps GAP_LEAD_SEC after the last word and GAP_TAIL_SEC before
+# the next one, and only its middle comes out, with a short crossfade. It
+# still runs on the folded output, never on one side alone. GAP_TRIM is kept
+# for reference and is no longer applied.
+GAP_THRESHOLD_DB = -40.0
+MAX_GAP_SEC = 1.0
+GAP_LEAD_SEC = 0.55
+GAP_TAIL_SEC = 0.40
+GAP_WINDOW_SEC = 0.02
+GAP_FADE_SEC = 0.01
+
+
+def close_gaps(wav: Path) -> dict:
+    """Shorten every silence longer than MAX_GAP_SEC in a mono 16-bit WAV, in
+    place, keeping both edges of it. Returns {"closed": n, "removed_sec": s}."""
+    import wave
+    import numpy as np
+    with wave.open(str(wav), "rb") as w:
+        params = w.getparams()
+        raw = w.readframes(w.getnframes())
+    if params.sampwidth != 2 or params.nchannels != 1:
+        logger.warning("close_gaps: %s is not mono 16-bit; left alone", wav.name)
+        return {"closed": 0, "removed_sec": 0.0}
+    x = np.frombuffer(raw, dtype=np.int16)
+    sr = params.framerate
+    hop = max(1, int(GAP_WINDOW_SEC * sr))
+    frames = len(x) // hop
+    if frames < 2:
+        return {"closed": 0, "removed_sec": 0.0}
+    rms = np.sqrt(np.mean(x[:frames * hop].astype(np.float64).reshape(frames, hop) ** 2, axis=1))
+    quiet = 20.0 * np.log10(np.maximum(rms, 1e-9) / 32768.0) < GAP_THRESHOLD_DB
+    keep_from, cuts, i = 0, [], 0
+    while i < frames:
+        if not quiet[i]:
+            i += 1
+            continue
+        j = i
+        while j < frames and quiet[j]:
+            j += 1
+        s, e = i * hop, (j * hop if j < frames else len(x))
+        if (e - s) / sr > MAX_GAP_SEC:
+            a, b = s + int(GAP_LEAD_SEC * sr), e - int(GAP_TAIL_SEC * sr)
+            if b > a:
+                cuts.append((a, b))
+        i = j
+    if not cuts:
+        return {"closed": 0, "removed_sec": 0.0}
+    fade = max(1, int(GAP_FADE_SEC * sr))
+    out, keep_from = [], 0
+    y = x.astype(np.float32)
+    for a, b in cuts:
+        head = y[keep_from:a].copy()
+        tail_len = min(fade, len(head), len(x) - b)
+        if tail_len > 0:
+            ramp = np.linspace(1.0, 0.0, tail_len, dtype=np.float32)
+            head[-tail_len:] = head[-tail_len:] * ramp + y[b:b + tail_len] * (1.0 - ramp)
+            keep_from = b + tail_len
+        else:
+            keep_from = b
+        out.append(head)
+    out.append(y[keep_from:])
+    z = np.clip(np.concatenate(out), -32768, 32767).astype(np.int16)
+    with wave.open(str(wav), "wb") as w:
+        w.setparams(params._replace(nframes=len(z)))
+        w.writeframes(z.tobytes())
+    removed = (len(x) - len(z)) / sr
+    return {"closed": len(cuts), "removed_sec": round(removed, 2)}
 
 
 def _run_sources(run: dict, show) -> Dict[str, str]:
@@ -411,9 +487,9 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
                 f"{left_extra}[lg];"
                 f"[r]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gr)}"
                 f"{right_extra}[rg];"
-                f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}"
-                + ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]",
+                f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}[o]",
                 "-map", "[o]"]
+        close = bool(cut.get("gaps", True))
     else:
         chain = []
         channel = cut.get("channel")
@@ -446,12 +522,13 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
                 CHANNEL_FILTERS.get(str(channel or ""), ""))))
         # Narration is already trimmed above; a conversation needs the dead
         # air taken out of it and its real pauses left alone.
-        if not narration and cut.get("gaps", True):
-            chain.append(GAP_TRIM)
+        close = bool(not narration and cut.get("gaps", True))
         cmd += ["-af", ",".join(chain)]
 
     cmd += ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
+    if close:
+        logger.info("gaps closed in %s: %s", out.name, close_gaps(out))
     return out
 
 
@@ -518,11 +595,12 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
         chains.append(f"[{i}:a]{pick},{side}{extra}[c{i}]")
         labels.append(f"[c{i}]")
     fold = ("".join(labels) + f"amix=inputs={len(srcs)}:duration=longest:"
-            f"normalize=0,{BALANCE_GLUE}"
-            + ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]")
+            f"normalize=0,{BALANCE_GLUE}[o]")
     cmd += ["-filter_complex", ";".join(chains) + ";" + fold, "-map", "[o]",
             "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
+    if cut.get("gaps", True):
+        logger.info("gaps closed in %s: %s", out.name, close_gaps(out))
     return out
 
 

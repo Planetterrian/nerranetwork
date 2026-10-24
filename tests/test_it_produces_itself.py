@@ -396,17 +396,20 @@ class TestTheDeadAirGoes:
     ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
 
     def test_a_silence_is_capped(self):
-        assert "GAP_TRIM = (" in self.ASSEMBLE
-        assert "stop_duration=1.0" in self.ASSEMBLE
-        assert "stop_threshold=-40dB" in self.ASSEMBLE
+        # Oct 24 2026: close_gaps replaced silenceremove (GAP_TRIM), which
+        # clipped the start of every word after a long pause.
+        assert "MAX_GAP_SEC = 1.0" in self.ASSEMBLE
+        assert "GAP_THRESHOLD_DB = -40.0" in self.ASSEMBLE
+        assert "def close_gaps(" in self.ASSEMBLE
 
     def test_it_runs_after_the_fold_not_before(self):
-        assert 'f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}"' in self.ASSEMBLE
-        assert '+ ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]"' in self.ASSEMBLE
+        assert 'f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}[o]"' in self.ASSEMBLE
+        assert "close_gaps(out)" in self.ASSEMBLE
         assert "would slide them apart" in self.ASSEMBLE
+        assert "+ GAP_TRIM" not in self.ASSEMBLE and "chain.append(GAP_TRIM)" not in self.ASSEMBLE
 
     def test_narration_is_left_alone(self):
-        assert 'if not narration and cut.get("gaps", True):' in self.ASSEMBLE
+        assert 'close = bool(not narration and cut.get("gaps", True))' in self.ASSEMBLE
 
     def test_an_edit_can_turn_it_off(self):
         # Three conversation paths honour the switch: the stereo fold, the
