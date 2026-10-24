@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 23 Oct 2026 15:17:10 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 24 Oct 2026 10:12:55 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,141 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 213: Moonshot's Kimi K3.1 Pro brings frontier-level coding and agent performance to a 2.8T MoE…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Moonshot's Kimi K3.1 Pro brings frontier-level coding and agent performance to a 2.8T MoE model with open weights due November 4.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Moonshot released Kimi K3.1 Pro, a 2.8T-parameter MoE model with 104B active parameters and 1M context that reaches near-frontier results on coding and agent benchmarks while promising open weights on November 4. NVIDIA released Nemotron 3.5 Bolt E4B, an 8B/4B-effective small model post-trained from Gemma 4 E4B for local voice agents, game characters, and robots on 4GB VRAM hardware. Kyutai released CADRE, a family of causal diffusion video autoencoders that enable 20 fps world models with under 230 ms reaction latency on a single H100.
+
+Top Story
+Moonshot released Kimi K3.1 Pro, a multimodal 2.8T-parameter MoE model with 104B active parameters and a 1M-token context window. The model is a post-trained version of Kimi K3 that applies large-scale joint RL across hundreds of domains after optimizing the RL framework, long-context inference, sandbox infrastructure, and rollout scheduling. It reports 65.7% on Terminal-Bench 4.0, 51.7 on SWE-Marathon, and 64.4 on OfficeQA Pro v2 while matching or exceeding Claude Opus 5.5 and GPT-6 Astra on several coding and finance tasks. API access is live today with a Highspeed variant that generates 2–3× faster at twice the price; full weights are scheduled for release on November 4. Pricing stands at $2 per million input tokens and $10 per million output tokens, matching GPT-6.1 Sol and half the cost of Claude Opus 5.5. Artificial Analysis scored the model at 55, ahead of Claude Fable 5.1, GPT-6 Astra, and Gemini 4 Argon. Moonshot also shipped Kimi Hosted Agents, a managed harness offering 24/7 execution for long-running multi-agent work. Builders working on long-horizon coding agents or financial modeling should test the standard and Highspeed endpoints now while the open weights are still weeks away. Source: &lt;a href="https://latent.space/p/ainews-kimi-31/"&gt;latent.space&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;NVIDIA Releases Nemotron 3.5 Bolt E4B 4GB: An Open Small Language Model for Local Voice Agents, Game Characters and Robots: MarkTechPost&lt;/b&gt;
+NVIDIA released Nemotron 3.5 Bolt E4B, an 8B-total / 4B-effective model post-trained from Gemma 4 E4B using only RLVR and RLHF. It targets local voice assistants, game NPCs, and robot interfaces on RTX, Jetson, and Spark hardware with a 64K context window. The Q4_K_M build uses 3.1–4.3 GB VRAM and tops 15 of 21 benchmarks against Gemma 4 E4B and Qwen3.5-4B, including 84.8 on IHEval. The research team skipped supervised fine-tuning because it improved tool calling but hurt conversational quality and verbosity; instead they ran every training sample in both reasoning and non-reasoning modes while keeping a 2:1 ratio of non-reasoning to reasoning samples and applying length penalties inside the GenRM environment. The release ships a DFlash drafter for speculative decoding along with public datasets and the full training recipe. A Reachy Mini robot demo on Jetson Orin Nano pairs the model with Cosmos 3 Edge for vision while Bolt handles speech replies and tool calls. Source: &lt;a href="https://www.marktechpost.com/2026/10/23/nvidia-nemotron-3-5-bolt-e4b-4gb/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Kyutai CADRE: Video Autoencoders That Cut World Model Lag Below 230 ms: MarkTechPost&lt;/b&gt;
+Kyutai released CADRE, a family of seven open causal diffusion video autoencoders for interactive world models. Models built on CADRE run at 20 fps on one H100 and react in under 230 ms. Source: &lt;a href="https://www.marktechpost.com/2026/10/23/kyutai-cadre-video-autoencoders-interactive-world-models/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Deepseek's latest AI model is smarter than ever, but its low running costs come at a price — uses only one-quarter of the HBM and one-eighth of SSD storage but still battles hallucinations in agentic workloads: Tom's Hardware&lt;/b&gt;
+DeepSeek released a new open-weight model that uses one-quarter the HBM and one-eighth the SSD storage of prior versions while maintaining higher intelligence. The model shows increased hallucination rates in agentic workloads compared with proprietary frontier systems. Source: &lt;a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/deepseeks-latest-ai-model-is-smarter-than-ever-but-its-low-running-costs-come-at-a-price-open-weight-model-is-fit-for-agentic-workloads-but-is-more-prone-to-hallucination-than-proprietary-competitors"&gt;tomshardware.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Ramp builds AI agent harness Laminar in six weeks for internal use: TechGig&lt;/b&gt;
+Ramp built and deployed Laminar, an internal AI agent harness, in six weeks to manage its own agent workflows. The harness supports multi-agent collaboration and long-running execution. Source: &lt;a href="https://techgig.com/news/ai/ramp-builds-ai-agent-harness-laminar-in-six-weeks-for-internal-use/135137662"&gt;techgig.com&lt;/a&gt;
+
+&lt;b&gt;Anthropic targets Muse and Dots with new AI agent, Claude Duet: Computerworld&lt;/b&gt;
+Anthropic released Claude Duet, a new agent aimed at competing with Muse and Dots on agentic tasks. The agent focuses on multi-step tool use and planning. Source: &lt;a href="https://www.computerworld.com/article/4239880/anthropic-challenges-muse-and-dots-with-its-new-ai-agent-claude-duet.html"&gt;computerworld.com&lt;/a&gt;
+
+&lt;b&gt;Researchers Discover Autonomous AI Agents Inventing Novel Games When Left Idle Without Tasks: OODA Loop&lt;/b&gt;
+Researchers observed autonomous AI agents spontaneously inventing novel games when given no explicit tasks. The behavior emerged in sandbox environments without human-specified goals. Source: &lt;a href="https://oodaloop.com/briefs/technology/researchers-discover-autonomous-ai-agents-inventing-novel-games-when-left-idle-without-tasks/"&gt;oodaloop.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Purdue University Northwest Provides First-Year Students Google Gemini Licenses to Support Artificial Intelligence Literacy: Purdue University Northwest&lt;/b&gt;
+Purdue University Northwest is giving all first-year students Google Gemini licenses for the 2026-27 year as part of an AI literacy pilot that will become a graduation requirement. The program runs through Purdue’s partnership with Google Public Sector and serves as a pilot for an AI competency requirement that Purdue West Lafayette already introduced for its incoming fall 2026 class. Chancellor Kenneth C. Holford noted that preparing students for an AI-driven workforce is a top priority and that graduates must understand how to use these tools effectively, ethically, and responsibly. Source: &lt;a href="https://www.pnw.edu/purdue-university-northwest-provides-first-year-students-google-gemini-licenses-to-support-artificial-intelligence-literacy/"&gt;pnw.edu&lt;/a&gt;
+
+&lt;b&gt;More notes on Kimi K3.1 open weights model: Simon Willison (AI builder)&lt;/b&gt;
+Simon Willison tested Kimi K3.1 Pro via the Moonshot API at three reasoning levels and shared output examples alongside pricing of $2/$10 per million tokens. The model scored 55 on Artificial Analysis, ahead of Claude Fable 5.1, GPT-6 Astra, and Gemini 4 Argon. He added the llm openai endpoint command to LLM 0.32 in August to run prompts against any OpenAI-compatible endpoint while saving reasoning traces to separate files. Source: &lt;a href="https://simonwillison.net/2026/Oct/23/kimi-k31-pro/"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;Quick Study: Simon Willison (2026-10-23)&lt;/b&gt;
+Simon Willison released a Quick Study prompt that uses Sobel edge detection and a canvas element to rapidly paint versions of uploaded photos inside Claude Opus 5.5. The artifact requires no external libraries beyond Google Fonts and builds on an earlier experiment that simulated watercolor illustration with P5.js. Source: &lt;a href="https://simonwillison.net/2026/Oct/23/quick-study-painter/"&gt;simonwillison.net&lt;/a&gt;
+
+Also Today
+&lt;b&gt;OpenAI Finds Brotli Vulnerability in Red-Teaming Exercise: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt;: OpenAI discovered an unauthenticated remote code execution flaw in the Brotli compression library during red-teaming and disclosed it, leading to patches in Node.js, Bun, Envoy, and a new Brotli release. Source: &lt;a href="https://x.com/OpenAI/status/2113766354386084338"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI to Train AI Models Without Internet After Cyber Incidents: Bloomberg.com&lt;/b&gt;: OpenAI will train frontier models in fully offline environments following recent cyber incidents. Source: &lt;a href="https://www.blogger.com/news/articles/2026-10-23/openai-to-train-ai-models-without-internet-after-cyber-incidents"&gt;blogger.com&lt;/a&gt;
+
+&lt;b&gt;BBVA and NVIDIA explore AI agent security: The Paypers&lt;/b&gt;: BBVA and NVIDIA are jointly exploring security architectures for AI agents. Source: &lt;a href="https://thepaypers.com/fraud-and-fincrime/news/bbva-teams-up-with-nvidia-to-explore-ai-agent-security-architecture"&gt;thepaypers.com&lt;/a&gt;
+
+&lt;b&gt;Agencies Urge AI Agent Access Limits, Weigh Human Oversight: MeriTalk&lt;/b&gt;: U.S. agencies are recommending strict access limits and human oversight requirements for AI agents. Source: &lt;a href="https://www.meritalk.com/articles/agencies-urge-ai-agent-access-limits-weigh-human-oversight/"&gt;meritalk.com&lt;/a&gt;
+
+Under the Hood: Frontend-Backend Tool Calling for Full-Duplex Speech Models
+Pure end-to-end speech-to-speech models lack discrete tokens for structured tool calls, so most production voice agents still split the work. A frontend duplex speech-to-text model listens and emits a delegation token when it detects a tool need, then streams the ASR transcript to a separate text LLM backend that actually executes the function call. Tool results return through a lightweight prefill-and-repeat path that the frontend synthesizes into spoken audio without breaking the natural turn-taking rhythm. The split adds roughly 50–100 ms of coordination latency but preserves full interruption handling and lets teams swap in any text LLM for tool logic. Full-duplex benchmarks show the architecture reaching 92–97 % tool-call recall while keeping end-to-end audio latency under 800 ms on current hardware. A cascaded streaming pipeline using Deepgram for STT, vLLM-served LLMs with function calling, and ElevenLabs for TTS measured 755 ms time-to-first-audio in best-case tests. The modular design also supports Monte Carlo sampling for Shapley-value analysis across hundreds of agent-tool configurations on benchmarks such as MMAU and MMAR. Teams should adopt the frontend-backend pattern whenever the agent must call external APIs or maintain compliance logs; pure end-to-end models remain preferable only for simple conversational voice where no external state is required.
+
+Things to Try This Week
+• Try the Kimi K3.1 Pro Highspeed API endpoint for long-horizon coding tasks where 2–3× faster generation at double price is acceptable.
+• Download and quantize Nemotron 3.5 Bolt E4B to Q4_K_M and run it locally on an RTX 4060 or Jetson Orin Nano for voice-agent prototypes that fit in 4 GB VRAM.
+• Test Kyutai CADRE autoencoders if you are building interactive world models that need sub-230 ms visual reactivity on a single H100.
+• Run the Quick Study canvas prompt inside Claude Opus 5.5 to explore rapid image-to-painting workflows without external libraries.
+
+On the Horizon
+• Kimi K3.1 Pro full open weights scheduled for release on November 4, 2026.
+• Continued rollout of offline training environments at major labs following OpenAI’s recent policy shift.
+• More agent harnesses and security frameworks expected as enterprises test production multi-agent systems.
+• Additional small-model releases targeting 4 GB VRAM hardware for on-device agents and robots.</description>
+      <guid isPermaLink="false">models-agents-video-ep213-20261024</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep213_20261024.mp4" length="243231821" type="video/mp4" />
+      <pubDate>Sat, 24 Oct 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep213_20261024.jpg" />
+      <itunes:duration>09:57</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Moonshot's Kimi K3.1 Pro brings frontier-level coding and agent performance to a 2.8T MoE model with open weights due November 4.**
+
+**What You Need to Know:** Moonshot released Kimi K3.1 Pro, a 2.8T-parameter MoE model with 104B active parameters and 1M context that reaches near-frontier results on coding and agent benchmarks while promising open weights on November 4. NVIDIA released Nemotron 3.5 Bolt E4B, an 8B/4B-effective small model post-trained from Gemma 4 E4B for local voice agents, game characters, and robots on 4GB VRAM hardware. Kyutai released CADRE, a family of causal diffusion video autoencoders that enable 20 fps world models with under 230 ms reaction latency on a single H100.
+---
+### Top Story
+Moonshot released Kimi K3.1 Pro, a multimodal 2.8T-parameter MoE model with 104B active parameters and a 1M-token context window. The model is a post-trained version of Kimi K3 that applies large-scale joint RL across hundreds of domains after optimizing the RL framework, long-context inference, sandbox infrastructure, and rollout scheduling. It reports 65.7% on Terminal-Bench 4.0, 51.7 on SWE-Marathon, and 64.4 on OfficeQA Pro v2 while matching or exceeding Claude Opus 5.5 and GPT-6 Astra on several coding and finance tasks. API access is live today with a Highspeed variant that generates 2–3× faster at twice the price; full weights are scheduled for release on November 4. Pricing stands at $2 per million input tokens and $10 per million output tokens, matching GPT-6.1 Sol and half the cost of Claude Opus 5.5. Artificial Analysis scored the model at 55, ahead of Claude Fable 5.1, GPT-6 Astra, and Gemini 4 Argon. Moonshot also shipped Kimi Hosted Agents, a managed harness offering 24/7 execution for long-running multi-agent work. Builders working on long-horizon coding agents or financial modeling should test the standard and Highspeed endpoints now while the open weights are still weeks away. Source: [latent.space](https://latent.space/p/ainews-kimi-31/)
+---
+### Model Updates
+**NVIDIA Releases Nemotron 3.5 Bolt E4B 4GB: An Open Small Language Model for Local Voice Agents, Game Characters and Robots: MarkTechPost**
+NVIDIA released Nemotron 3.5 Bolt E4B, an 8B-total / 4B-effective model post-trained from Gemma 4 E4B using only RLVR and RLHF. It targets local voice assistants, game NPCs, and robot interfaces on RTX, Jetson, and Spark hardware with a 64K context window. The Q4_K_M build uses 3.1–4.3 GB VRAM and tops 15 of 21 benchmarks against Gemma 4 E4B and Qwen3.5-4B, including 84.8 on IHEval. The research team skipped supervised fine-tuning because it improved tool calling but hurt conversational quality and verbosity; instead they ran every training sample in both reasoning and non-reasoning modes while keeping a 2:1 ratio of non-reasoning to reasoning samples and applying length penalties inside the GenRM environment. The release ships a DFlash drafter for speculative decoding along with public datasets and the full training recipe. A Reachy Mini robot demo on Jetson Orin Nano pairs the model with Cosmos 3 Edge for vision while Bolt handles speech replies and tool calls. Source: [marktechpost.com](https://www.marktechpost.com/2026/10/23/nvidia-nemotron-3-5-bolt-e4b-4gb/)
+
+**Kyutai CADRE: Video Autoencoders That Cut World Model Lag Below 230 ms: MarkTechPost**
+Kyutai released CADRE, a family of seven open causal diffusion video autoencoders for interactive world models. Models built on CADRE run at 20 fps on one H100 and react in under 230 ms. Source: [marktechpost.com](https://www.marktechpost.com/2026/10/23/kyutai-cadre-video-autoencoders-interactive-world-models/)
+
+**Deepseek's latest AI model is smarter than ever, but its low running costs come at a price — uses only one-quarter of the HBM and one-eighth of SSD storage but still battles hallucinations in agentic workloads: Tom's Hardware**
+DeepSeek released a new open-weight model that uses one-quarter the HBM and one-eighth the SSD storage of prior versions while maintaining higher intelligence. The model shows increased hallucination rates in agentic workloads compared with proprietary frontier systems. Source: [tomshardware.com](https://www.tomshardware.com/tech-industry/artificial-intelligence/deepseeks-latest-ai-model-is-smarter-than-ever-but-its-low-running-costs-come-at-a-price-open-weight-model-is-fit-for-agentic-workloads-but-is-more-prone-to-hallucination-than-proprietary-competitors)
+---
+### Agent &amp; Tool Developments
+**Ramp builds AI agent harness Laminar in six weeks for internal use: TechGig**
+Ramp built and deployed Laminar, an internal AI agent harness, in six weeks to manage its own agent workflows. The harness supports multi-agent collaboration and long-running execution. Source: [techgig.com](https://techgig.com/news/ai/ramp-builds-ai-agent-harness-laminar-in-six-weeks-for-internal-use/135137662)
+
+**Anthropic targets Muse and Dots with new AI agent, Claude Duet: Computerworld**
+Anthropic released Claude Duet, a new agent aimed at competing with Muse and Dots on agentic tasks. The agent focuses on multi-step tool use and planning. Source: [computerworld.com](https://www.computerworld.com/article/4239880/anthropic-challenges-muse-and-dots-with-its-new-ai-agent-claude-duet.html)
+
+**Researchers Discover Autonomous AI Agents Inventing Novel Games When Left Idle Without Tasks: OODA Loop**
+Researchers observed autonomous AI agents spontaneously inventing novel games when given no explicit tasks. The behavior emerged in sandbox environments without human-specified goals. Source: [oodaloop.com](https://oodaloop.com/briefs/technology/researchers-discover-autonomous-ai-agents-inventing-novel-games-when-left-idle-without-tasks/)
+---
+### Practical &amp; Community
+**Purdue University Northwest Provides First-Year Students Google Gemini Licenses to Support Artificial Intelligence Literacy: Purdue University Northwest**
+Purdue University Northwest is giving all first-year students Google Gemini licenses for the 2026-27 year as part of an AI literacy pilot that will become a graduation requirement. The program runs through Purdue’s partnership with Google Public Sector and serves as a pilot for an AI competency requirement that Purdue West Lafayette already introduced for its incoming fall 2026 class. Chancellor Kenneth C. Holford noted that preparing students for an AI-driven workforce is a top priority and that graduates must understand how to use these tools effectively, ethically, and responsibly. Source: [pnw.edu](https://www.pnw.edu/purdue-university-northwest-provides-first-year-students-google-gemini-licenses-to-support-artificial-intelligence-literacy/)
+
+**More notes on Kimi K3.1 open weights model: Simon Willison (AI builder)**
+Simon Willison tested Kimi K3.1 Pro via the Moonshot API at three reasoning levels and shared output examples alongside pricing of $2/$10 per million tokens. The model scored 55 on Artificial Analysis, ahead of Claude Fable 5.1, GPT-6 Astra, and Gemini 4 Argon. He added the llm openai endpoint command to LLM 0.32 in August to run prompts against any OpenAI-compatible endpoint while saving reasoning traces to separate files. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/23/kimi-k31-pro/)
+
+**Quick Study: Simon Willison (2026-10-23)**
+Simon Willison released a Quick Study prompt that uses Sobel edge detection and a canvas element to rapidly paint versions of uploaded photos inside Claude Opus 5.5. The artifact requires no external libraries beyond Google Fonts and builds on an earlier experiment that simulated watercolor illustration with P5.js. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/23/quick-study-painter/)
+---
+### Also Today
+**OpenAI Finds Brotli Vulnerability in Red-Teaming Exercise: [@OpenAI](https://x.com/OpenAI) (X)**: OpenAI discovered an unauthenticated remote code execution flaw in the Brotli compression library during red-teaming and disclosed it, leading to patches in Node.js, Bun, Envoy, and a new Brotli release. Source: [x.com](https://x.com/OpenAI/status/2113766354386084338)
+
+**OpenAI to Train AI Models Without Internet After Cyber Incidents: Bloomberg.com**: OpenAI will train frontier models in fully offline environments following recent cyber incidents. Source: [blogger.com](https://www.blogger.com/news/articles/2026-10-23/openai-to-train-ai-models-without-internet-after-cyber-incidents)
+
+**BBVA and NVIDIA explore AI agent security: The Paypers**: BBVA and NVIDIA are jointly exploring security architectures for AI agents. Source: [thepaypers.com](https://thepaypers.com/fraud-and-fincrime/news/bbva-teams-up-with-nvidia-to-explore-ai-agent-security-architecture)
+
+**Agencies Urge AI Agent Access Limits, Weigh Human Oversight: MeriTalk**: U.S. agencies are recommending strict access limits and human oversight requirements for AI agents. Source: [meritalk.com](https://www.meritalk.com/articles/agencies-urge-ai-agent-access-limits-weigh-human-oversight/)
+---
+### Under the Hood: Frontend-Backend Tool Calling for Full-Duplex Speech Models
+Pure end-to-end speech-to-speech models lack discrete tokens for structured tool calls, so most production voice agents still split the work. A frontend duplex speech-to-text model listens and emits a delegation token when it detects a tool need, then streams the ASR transcript to a separate text LLM backend that actually executes the function call. Tool results return through a lightweight prefill-and-repeat path that the frontend synthesizes into spoken audio without breaking the natural turn-taking rhythm. The split adds roughly 50–100 ms of coordination latency but preserves full interruption handling and lets teams swap in any text LLM for tool logic. Full-duplex benchmarks show the architecture reaching 92–97 % tool-call recall while keeping end-to-end audio latency under 800 ms on current hardware. A cascaded streaming pipeline using Deepgram for STT, vLLM-served LLMs with function calling, and ElevenLabs for TTS measured 755 ms time-to-first-audio in best-case tests. The modular design also supports Monte Carlo sampling for Shapley-value analysis across hundreds of agent-tool configurations on benchmarks such as MMAU and MMAR. Teams should adopt the frontend-backend pattern whenever the agent must call external APIs or maintain compliance logs; pure end-to-end models remain preferable only for simple conversational voice where no external state is required.
+---
+### Things to Try This Week
+- Try the Kimi K3.1 Pro Highspeed API endpoint for long-horizon coding tasks where 2–3× faster generation at double price is acceptable.
+- Download and quantize Nemotron 3.5 Bolt E4B to Q4_K_M and run it locally on an RTX 4060 or Jetson Orin Nano for voice-agent prototypes that fit in 4 GB VRAM.
+- Test Kyutai CADRE autoencoders if you are building interactive world models that need sub-230 ms visual reactivity on a single H100.
+- Run the Quick Study canvas prompt inside Claude Opus 5.5 to explore rapid image-to-painting workflows without external libraries.
+---
+### On the Horizon
+- Kimi K3.1 Pro full open weights scheduled for release on November 4, 2026.
+- Continued rollout of offline training environments at major labs following OpenAI’s recent policy shift.
+- More agent harnesses and security frameworks expected as enterprises test production multi-agent systems.
+- Additional small-model releases targeting 4 GB VRAM hardware for on-device agents and robots.
+</itunes:summary>
+      <itunes:episode>213</itunes:episode>
+      <itunes:title>Ep 213: Moonshot's Kimi K3.1 Pro brings frontier-level coding and agent performance to a 2.8T MoE…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep213_20261024_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep213.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 212: OpenAI’s new Decisions API turns low-cost model calls into reliable structured outputs for…</title>
       <description>Models &amp; Agents
@@ -3585,128 +3720,17 @@ Continuous diffusion language models denoise continuous representations without 
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep184_20260925_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep184.json" type="application/json+chapters" /></item>
     <item>
-      <title>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; COMED adds a lightweight controller after an anchor model that decides when to bring in peer models only on ambiguous cases. Today's arXiv batch also releases new benchmarks for kinship term generation, legal canon classification, and extractive legal summarization across 24 languages.
-
-Top Story
-COMED introduces a post-anchor controller that accepts confident answers from a single model, probes peers only on ambiguous cases, and escalates to collaboration when rescue value exceeds harm. The method decomposes performance into rescued errors versus collaboration-induced harms and shows selective escalation improves results in all sixteen open-weight settings tested. On MedQA the approach adds up to 10.7 percentage points while invoking fewer models and decoding fewer tokens than dense collaboration. On the HLE benchmark COMED raises GPT-5.5 from 23.1 percent to 28.1 percent, beating both the anchor alone and full dense collaboration. The controller relies on anchor self-consistency, router margin, and a lightweight peer probe to make the decision. Source: &lt;a href="https://arxiv.org/abs/2609.26913"&gt;arxiv.org&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Recognized but Not Produced: A Generation Benchmark for Culturally Specific Kinship Terms — arXiv NLP&lt;/b&gt;
-Five open-weight models were tested on generating kinship terms in Hindi, Tamil, and Korean. GPT OSS120B selected the correct term in 90.67 percent of valid cells yet produced an accepted term in only 36.00 percent of the same cells. Llama 3.370B showed 77.92 percent selection accuracy versus 24.24 percent generation accuracy. Accuracy on explicitly specified L3 prompts ranged from 72.29 percent for GLM-5.1 to 24.24 percent for Llama-3.370B. The paternal-lineage advantage appeared strongly in Hindi but was weak or reversed in Korean. Source: &lt;a href="https://arxiv.org/abs/2609.26942"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Classifying Interpretive Canons at the Sentence Level: A Benchmark from the German Federal Constitutional Court — arXiv NLP&lt;/b&gt;
-A sentence-level dataset of German Federal Constitutional Court decisions was annotated for seven interpretive canons in the Larenz-Savigny tradition. Four LLMs from three families were evaluated under expert-written prompts and Genetic-Pareto optimized prompts. Mean F1 across the seven binary subtasks ranged between 70.4 and 79.2. Grammatical interpretation proved easiest to identify while systematic interpretation proved hardest. GEPA-optimized prompts did not systematically outperform the hand-written expert prompts. Source: &lt;a href="https://arxiv.org/abs/2609.26945"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LEGO: Synergizing Expert GraphRAG and Expert Chain-of-Thought for Legal Reasoning — arXiv NLP&lt;/b&gt;
-LEGO combines an expert-annotated civil code graph with greedy normative-coverage retrieval and a structured Provision-Fact-Conclusion reasoning format. With a Qwen3-8B backbone the system reached 40.53 percent exact-match accuracy on LawExamQA_Civil. It outperformed evaluated RAG and CoT baselines and matched larger models while remaining robust on multi-hop questions. Ablation studies confirmed complementary contributions from both the GraphRAG and CoT modules. Source: &lt;a href="https://arxiv.org/abs/2609.27009"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;EduBehaviors: Assertion-based Schemas for Auditable Coding of Educational Dialogues — arXiv NLP&lt;/b&gt;
-The framework uses LLMs to measure repeated observable behaviors then trains a classifier on those behaviors for construct-level labels. On the TalkMoves dataset the best configuration achieved 0.673 macro-F1 and 0.688 Cohen's kappa. The approach proved competitive with direct prompting while providing mechanistic insight into label decisions. Two open tools for operationalizing the framework were released. Source: &lt;a href="https://arxiv.org/abs/2609.27043"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;UniDataAgent: An Ontology-Grounded Agent for Enterprise Question-to-Report Automation — arXiv NLP&lt;/b&gt;
-UniDataAgent separates ontology acquisition from online execution using expert-authored business skills and constrained generation. Ontology construction for 27 enterprise tables took hours instead of a week. Report generation dropped from several working days to minutes. Strict accuracy on real business questions reached 95.0 percent versus 72.5 percent for document RAG. The system has already been deployed inside an enterprise. Source: &lt;a href="https://arxiv.org/abs/2609.27257"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LOCKR: A Hidden-State Trajectory-Guided Planner for Detecting and Repairing Stable-but-Wrong Lock-In in Diffusion Language Models — arXiv NLP&lt;/b&gt;
-LOCKR uses hidden-state trajectories to detect early lock-in on incorrect answers during iterative denoising. Across two diffusion models and three mathematical reasoning benchmarks it delivered absolute accuracy gains of 2.21 to 5.37 percentage points. Repair rates ranged from 22 percent to 41 percent. Hidden trajectories outperformed surface signals for both detection and repair selection. Source: &lt;a href="https://arxiv.org/abs/2609.27220"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Planned Test-Time Scaling with Coordinated Reasoning Paths — arXiv NLP&lt;/b&gt;
-PTTS replaces independent sampling with a planner that generates distinct solution outlines for each branch before an executor completes them. PTTS-ZS improved pass@64 by up to 6.7 points over repeated sampling. PTTS-RL raised the gain to 13.4 points across five mathematical reasoning benchmarks with Qwen3-1.7B and 4B models. The method requires no changes to the underlying executor models. Source: &lt;a href="https://arxiv.org/abs/2609.27374"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;The Illinois Social Attitudes Aggregate Corpus (ISAAC): An Open Tool and Reproducible Pipeline for Analyzing Social Group Discourse at Scale — arXiv NLP&lt;/b&gt;
-ISAAC contains 527 million English Reddit posts spanning 2007 to 2023 and filtered for six social group distinctions. A human-audited pipeline kept irrelevant content below 10 percent. Each post carries region estimates plus validated labels for moralization, sentiment, emotion, and linguistic generalization. The corpus is accessible via website, SQL playground, Python package, and Hugging Face. Source: &lt;a href="https://arxiv.org/abs/2609.27059"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;What Changes When Fact-Verification Scores Improve? Evidence and Answer Accounting Across Trained Verifiers and LLMs — arXiv NLP&lt;/b&gt;
-Replacing DCUF evidence with UnifEE evidence raised strict score by 9.61 percentage points on FEVEROUS while answer accuracy rose only 1.96 points. The evidence-only contribution accounted for 7.92 to 9.08 points when answers were held fixed. Increasing context from 256 to 2,048 tokens raised the fixed-answer evidence gain by 3.10 to 3.84 points for two 8B models. Source: &lt;a href="https://arxiv.org/abs/2609.27064"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Phonemizing User-Generated Text: A Benchmark, Taxonomy, and Compositional Approach — arXiv NLP&lt;/b&gt;
-UGTPhon provides the first G2P benchmark for user-generated text in English, Vietnamese, and Korean. Existing models showed canonical-to-non-canonical gaps reaching 66.8 PER points. A compositional approach using canonical-form lookup and staged decoding reduced non-canonical errors across ByT5 and Qwen2.5-0.5B backbones. The 0.5B model performed competitively with larger few-shot frontier LLMs. Source: &lt;a href="https://arxiv.org/abs/2609.27205"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;AraGenre 2026: A Hierarchical Definition-Guided Arabic Genre Classification Shared Task — arXiv NLP&lt;/b&gt;
-The task supplied natural-language definitions for 74 previously unseen specific genres in a zero-shot setting. Thakaa ranked first with 0.7352 hierarchical macro F1. HoangPhong followed at 0.7169 and NAMAA at 0.7013. Broad-genre recognition was strong while fine-grained classification showed a substantial gap under linguistic variation. Source: &lt;a href="https://arxiv.org/abs/2609.27387"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Working-Set Inference for Recurrent Language Models
-Recurrent language models keep applying the same blocks across depth, yet most teams still recompute full attention at every step. Attention support and distributions actually stabilize well before hidden states finish refining. WISE therefore runs unrestricted global attention only in the early recurrent steps to discover a sparse working set, then reuses that block-structured support for the remaining steps while still allowing dynamic within-support attention. The approach preserves full-attention quality through 2K context with measurable loss only at 4K. An optimized sparse implementation delivers up to 1.76 times attention speedup at 4K and 1.36 times speedup across a full 32-step trajectory. Teams facing long recurrent traces should adopt working-set reuse once context exceeds roughly 1K tokens; below that threshold the discovery overhead outweighs the reuse gain.
-
-Things to Try This Week
-• Test COMED-style selective escalation on medical or scientific queries using your current router plus a lightweight peer probe to see token savings firsthand.
-• Run the UGTPhon compositional G2P approach on sample user-generated text in English or Vietnamese to measure the non-canonical error reduction.
-• Explore the ISAAC corpus SQL playground or Hugging Face release if you analyze social group discourse at scale.
-
-On the Horizon
-• More results from the NADI 2026 multidialectal Arabic speech tasks are expected in the coming weeks.
-• Additional papers on test-time scaling and hidden-state trajectory repair are likely in the next arXiv cycles.
-• Further enterprise ontology-agent deployments may surface as UniDataAgent-style systems move beyond pilot use.</description>
+      <title>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.</title>
+      <description>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.</description>
       <guid isPermaLink="false">models-agents-video-ep183-20260924</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep183_20260924.mp4" length="256086062" type="video/mp4" />
       <pubDate>Thu, 24 Sep 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep183_20260924.jpg" />
       <itunes:duration>10:11</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.**
-
-**What You Need to Know:** COMED adds a lightweight controller after an anchor model that decides when to bring in peer models only on ambiguous cases. Today's arXiv batch also releases new benchmarks for kinship term generation, legal canon classification, and extractive legal summarization across 24 languages.
----
-### Top Story
-COMED introduces a post-anchor controller that accepts confident answers from a single model, probes peers only on ambiguous cases, and escalates to collaboration when rescue value exceeds harm. The method decomposes performance into rescued errors versus collaboration-induced harms and shows selective escalation improves results in all sixteen open-weight settings tested. On MedQA the approach adds up to 10.7 percentage points while invoking fewer models and decoding fewer tokens than dense collaboration. On the HLE benchmark COMED raises GPT-5.5 from 23.1 percent to 28.1 percent, beating both the anchor alone and full dense collaboration. The controller relies on anchor self-consistency, router margin, and a lightweight peer probe to make the decision. Source: [arxiv.org](https://arxiv.org/abs/2609.26913)
----
-### Model Updates
-**Recognized but Not Produced: A Generation Benchmark for Culturally Specific Kinship Terms — arXiv NLP**
-Five open-weight models were tested on generating kinship terms in Hindi, Tamil, and Korean. GPT OSS120B selected the correct term in 90.67 percent of valid cells yet produced an accepted term in only 36.00 percent of the same cells. Llama 3.370B showed 77.92 percent selection accuracy versus 24.24 percent generation accuracy. Accuracy on explicitly specified L3 prompts ranged from 72.29 percent for GLM-5.1 to 24.24 percent for Llama-3.370B. The paternal-lineage advantage appeared strongly in Hindi but was weak or reversed in Korean. Source: [arxiv.org](https://arxiv.org/abs/2609.26942)
-
-**Classifying Interpretive Canons at the Sentence Level: A Benchmark from the German Federal Constitutional Court — arXiv NLP**
-A sentence-level dataset of German Federal Constitutional Court decisions was annotated for seven interpretive canons in the Larenz-Savigny tradition. Four LLMs from three families were evaluated under expert-written prompts and Genetic-Pareto optimized prompts. Mean F1 across the seven binary subtasks ranged between 70.4 and 79.2. Grammatical interpretation proved easiest to identify while systematic interpretation proved hardest. GEPA-optimized prompts did not systematically outperform the hand-written expert prompts. Source: [arxiv.org](https://arxiv.org/abs/2609.26945)
-
-**LEGO: Synergizing Expert GraphRAG and Expert Chain-of-Thought for Legal Reasoning — arXiv NLP**
-LEGO combines an expert-annotated civil code graph with greedy normative-coverage retrieval and a structured Provision-Fact-Conclusion reasoning format. With a Qwen3-8B backbone the system reached 40.53 percent exact-match accuracy on LawExamQA_Civil. It outperformed evaluated RAG and CoT baselines and matched larger models while remaining robust on multi-hop questions. Ablation studies confirmed complementary contributions from both the GraphRAG and CoT modules. Source: [arxiv.org](https://arxiv.org/abs/2609.27009)
-
-**EduBehaviors: Assertion-based Schemas for Auditable Coding of Educational Dialogues — arXiv NLP**
-The framework uses LLMs to measure repeated observable behaviors then trains a classifier on those behaviors for construct-level labels. On the TalkMoves dataset the best configuration achieved 0.673 macro-F1 and 0.688 Cohen's kappa. The approach proved competitive with direct prompting while providing mechanistic insight into label decisions. Two open tools for operationalizing the framework were released. Source: [arxiv.org](https://arxiv.org/abs/2609.27043)
----
-### Agent &amp; Tool Developments
-**UniDataAgent: An Ontology-Grounded Agent for Enterprise Question-to-Report Automation — arXiv NLP**
-UniDataAgent separates ontology acquisition from online execution using expert-authored business skills and constrained generation. Ontology construction for 27 enterprise tables took hours instead of a week. Report generation dropped from several working days to minutes. Strict accuracy on real business questions reached 95.0 percent versus 72.5 percent for document RAG. The system has already been deployed inside an enterprise. Source: [arxiv.org](https://arxiv.org/abs/2609.27257)
-
-**LOCKR: A Hidden-State Trajectory-Guided Planner for Detecting and Repairing Stable-but-Wrong Lock-In in Diffusion Language Models — arXiv NLP**
-LOCKR uses hidden-state trajectories to detect early lock-in on incorrect answers during iterative denoising. Across two diffusion models and three mathematical reasoning benchmarks it delivered absolute accuracy gains of 2.21 to 5.37 percentage points. Repair rates ranged from 22 percent to 41 percent. Hidden trajectories outperformed surface signals for both detection and repair selection. Source: [arxiv.org](https://arxiv.org/abs/2609.27220)
-
-**Planned Test-Time Scaling with Coordinated Reasoning Paths — arXiv NLP**
-PTTS replaces independent sampling with a planner that generates distinct solution outlines for each branch before an executor completes them. PTTS-ZS improved pass@64 by up to 6.7 points over repeated sampling. PTTS-RL raised the gain to 13.4 points across five mathematical reasoning benchmarks with Qwen3-1.7B and 4B models. The method requires no changes to the underlying executor models. Source: [arxiv.org](https://arxiv.org/abs/2609.27374)
----
-### Practical &amp; Community
-**The Illinois Social Attitudes Aggregate Corpus (ISAAC): An Open Tool and Reproducible Pipeline for Analyzing Social Group Discourse at Scale — arXiv NLP**
-ISAAC contains 527 million English Reddit posts spanning 2007 to 2023 and filtered for six social group distinctions. A human-audited pipeline kept irrelevant content below 10 percent. Each post carries region estimates plus validated labels for moralization, sentiment, emotion, and linguistic generalization. The corpus is accessible via website, SQL playground, Python package, and Hugging Face. Source: [arxiv.org](https://arxiv.org/abs/2609.27059)
-
-**What Changes When Fact-Verification Scores Improve? Evidence and Answer Accounting Across Trained Verifiers and LLMs — arXiv NLP**
-Replacing DCUF evidence with UnifEE evidence raised strict score by 9.61 percentage points on FEVEROUS while answer accuracy rose only 1.96 points. The evidence-only contribution accounted for 7.92 to 9.08 points when answers were held fixed. Increasing context from 256 to 2,048 tokens raised the fixed-answer evidence gain by 3.10 to 3.84 points for two 8B models. Source: [arxiv.org](https://arxiv.org/abs/2609.27064)
-
-**Phonemizing User-Generated Text: A Benchmark, Taxonomy, and Compositional Approach — arXiv NLP**
-UGTPhon provides the first G2P benchmark for user-generated text in English, Vietnamese, and Korean. Existing models showed canonical-to-non-canonical gaps reaching 66.8 PER points. A compositional approach using canonical-form lookup and staged decoding reduced non-canonical errors across ByT5 and Qwen2.5-0.5B backbones. The 0.5B model performed competitively with larger few-shot frontier LLMs. Source: [arxiv.org](https://arxiv.org/abs/2609.27205)
-
-**AraGenre 2026: A Hierarchical Definition-Guided Arabic Genre Classification Shared Task — arXiv NLP**
-The task supplied natural-language definitions for 74 previously unseen specific genres in a zero-shot setting. Thakaa ranked first with 0.7352 hierarchical macro F1. HoangPhong followed at 0.7169 and NAMAA at 0.7013. Broad-genre recognition was strong while fine-grained classification showed a substantial gap under linguistic variation. Source: [arxiv.org](https://arxiv.org/abs/2609.27387)
----
-### Under the Hood: Working-Set Inference for Recurrent Language Models
-Recurrent language models keep applying the same blocks across depth, yet most teams still recompute full attention at every step. Attention support and distributions actually stabilize well before hidden states finish refining. WISE therefore runs unrestricted global attention only in the early recurrent steps to discover a sparse working set, then reuses that block-structured support for the remaining steps while still allowing dynamic within-support attention. The approach preserves full-attention quality through 2K context with measurable loss only at 4K. An optimized sparse implementation delivers up to 1.76 times attention speedup at 4K and 1.36 times speedup across a full 32-step trajectory. Teams facing long recurrent traces should adopt working-set reuse once context exceeds roughly 1K tokens; below that threshold the discovery overhead outweighs the reuse gain.
----
-### Things to Try This Week
-- Test COMED-style selective escalation on medical or scientific queries using your current router plus a lightweight peer probe to see token savings firsthand.
-- Run the UGTPhon compositional G2P approach on sample user-generated text in English or Vietnamese to measure the non-canonical error reduction.
-- Explore the ISAAC corpus SQL playground or Hugging Face release if you analyze social group discourse at scale.
----
-### On the Horizon
-- More results from the NADI 2026 multidialectal Arabic speech tasks are expected in the coming weeks.
-- Additional papers on test-time scaling and hidden-state trajectory repair are likely in the next arXiv cycles.
-- Further enterprise ontology-agent deployments may surface as UniDataAgent-style systems move beyond pilot use.
-</itunes:summary>
+      <itunes:summary>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.</itunes:summary>
       <itunes:episode>183</itunes:episode>
-      <itunes:title>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to…</itunes:title>
+      <itunes:title>Ep 183: Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep183_20260924_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep183.json" type="application/json+chapters" /></item>
     <item>
@@ -3723,19 +3747,5 @@ Recurrent language models keep applying the same blocks across depth, yet most t
       <itunes:title>Ep 182: Claude Opus 5.5 launches today with early tests showing it edging out competing models in practical tasks.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep182_20260923_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep182.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 181: Open weights just crowned a new leader as Xiaomi's MiMo-V2.6-Pro 1T-A42B takes the top spot after training for three million dollars.</title>
-      <description>Ep 181: Open weights just crowned a new leader as Xiaomi's MiMo-V2.6-Pro 1T-A42B takes the top spot after training for three million dollars.</description>
-      <guid isPermaLink="false">models-agents-video-ep181-20260922</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep181_20260922.mp4" length="198496172" type="video/mp4" />
-      <pubDate>Tue, 22 Sep 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep181_20260922.jpg" />
-      <itunes:duration>10:12</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 181: Open weights just crowned a new leader as Xiaomi's MiMo-V2.6-Pro 1T-A42B takes the top spot after training for three million dollars.</itunes:summary>
-      <itunes:episode>181</itunes:episode>
-      <itunes:title>Ep 181: Open weights just crowned a new leader as Xiaomi's MiMo-V2.6-Pro 1T-A42B takes the top spot after training for three million dollars.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep181_20260922_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep181.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
