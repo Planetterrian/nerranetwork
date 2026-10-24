@@ -386,6 +386,14 @@ NETWORK_EXCLUDE_TITLE_PATTERNS = (
 NETWORK_EXCLUDE_URL_PATTERNS = (
     r"datacenterdynamics\.com/[a-z]{2}/marketwatch/",
     r"/(?:sponsored|sponsored-content|partner-content|paid-post|paidpost|brandvoice|brand-studio|advertorial)(?:/|-|$)",
+    # Oct 24 2026: a fund's 13F holdings notice, matched where the headline
+    # patterns cannot see it. SpaceX Ep140 aired "Brookstone Capital
+    # Management increases its holdings" ("SpaceX $SPCX Stock: Brookstone
+    # Capital Management Increases Holdings") and "24,777 Shares in SpaceX
+    # $SPCX Purchased by …" passed too. MarketBeat files every one under
+    # /instant-alerts/filing-: 81 of 81 such tracker URLs are holdings
+    # filings; its analyst, price and insider alerts use other prefixes.
+    r"marketbeat\.com/instant-alerts/filing-",
 )
 
 
@@ -508,7 +516,7 @@ def drop_excluded_titles(articles: list, patterns: list) -> tuple:
         url = str(art.get("url") or art.get("link") or "")
         if url and any(c.search(url) for c in url_res):
             dropped += 1
-            logger.info("Excluded paid placement: %s", url[:120])
+            logger.info("Excluded by URL (paid placement or holdings filing): %s", url[:120])
             continue
         kept.append(art)
     return kept, dropped

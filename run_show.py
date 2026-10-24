@@ -3266,7 +3266,8 @@ def run(args: argparse.Namespace) -> None:
                             from engine.digest_lint import new_lint_names
                             _new_lints = new_lint_names(_lint_findings, _after)
                         if _cluster_regen and not _new_lints and _cluster_retry_worse(
-                                _candidate, articles, _article_clusters, _retold_clusters, metrics):
+                                _candidate, articles, _article_clusters, _retold_clusters, metrics,
+                                must_improve=_struct_defects == [_lint_findings[-1].note]):
                             _new_lints = ["story_cluster_retold"]
                         if _new_lints:
                             logger.warning(
@@ -7272,10 +7273,17 @@ _SOURCE_SCAFFOLD_RE = re.compile(
 HOOK_RECURRENCE_MIN_DAYS = 2
 
 
-def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics) -> bool:
+def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics,
+                         *, must_improve: bool = False) -> bool:
     """True when a structural retry spent on retold story clusters tells
     MORE clusters as several items than the original did (Oct 17 2026,
-    story-clusters-2026-10-01 readout); records the retry's count."""
+    story-clusters-2026-10-01 readout); records the retry's count.
+
+    ``must_improve`` (Oct 24 2026): when the retold cluster was the ONLY
+    reason for the retry, a retry that retells as many clusters is not a
+    repair and the original ships. Tesla Ep644's retry kept the same
+    "retold" cluster and came back 381 prose words shorter (1,591 -> 1,210);
+    it was kept because it was no worse."""
     from engine.story_clusters import dropped_clusters, retold_clusters
 
     after = len(retold_clusters(candidate, articles, clusters))
@@ -7285,6 +7293,8 @@ def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics) 
     # Tesla-SpaceX merger committees this way).
     dropped = dropped_clusters(candidate, retold_before)
     metrics.record("story_clusters_dropped_by_retry", len(dropped))
+    if must_improve and after >= len(retold_before):
+        return True
     return after > len(retold_before) or bool(dropped)
 
 # Mid-line / sentence-final attribution: "… within a human lifetime.
