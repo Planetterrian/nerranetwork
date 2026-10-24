@@ -64,6 +64,15 @@ logger = logging.getLogger("update_youtube_policy")
 # ---- Tunables -------------------------------------------------------------
 WINDOW_DAYS = 14            # velocity window (days before the stats snapshot)
 MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
+# Oct 24 2026: a show whose long-form is OFF publishes at most one probe
+# long a week (engine.youtube_policy's weekly probe), so it can never reach
+# four in a 14-day window and the long dimension was held off FOREVER —
+# Planetterrian's probe longs converted 13.2 subscribers per 1,000 views
+# (the EN median is 2.1) and the show stayed on tier C for a month. With
+# long OFF, two probes in the window are enough to turn it back ON when
+# their average clears the floor; they are never enough to turn it off,
+# and a show with long ON still needs four to be read at all.
+LONG_PROBE_MIN_VIDEOS = 2
 # July 18 2026 (operator decision): the long-form floor is CHANNEL-specific.
 # RU long-form earned 435 views across 68 videos (~9% retention) while RU
 # Shorts carried 7,028 — an RU long_vpd of ~1.2 is noise, not
@@ -365,6 +374,14 @@ def compute_tier(
     long_vpd = _avg(long_vpds) if len(long_vpds) >= MIN_VIDEOS_CONFIDENT else None
     short_vpd = _avg(short_vpds) if len(short_vpds) >= MIN_VIDEOS_CONFIDENT else None
 
+    probe_promoted = False
+    if (long_vpd is None and not active_long
+            and len(long_vpds) >= LONG_PROBE_MIN_VIDEOS):
+        probe_avg = _avg(long_vpds)
+        if probe_avg >= long_floor:
+            long_vpd = probe_avg
+            probe_promoted = True
+
     publish_long = (long_vpd >= long_floor) if long_vpd is not None else active_long
     shorts = (shorts_for_vpd(short_vpd)
               if short_vpd is not None else active_shorts)
@@ -373,6 +390,9 @@ def compute_tier(
     if long_vpd is None:
         reasons.append(f"long held ({len(long_vpds)} videos < "
                        f"{MIN_VIDEOS_CONFIDENT} in {WINDOW_DAYS}d)")
+    elif probe_promoted:
+        reasons.append(f"long_vpd {long_vpd:.2f} >= {long_floor} on "
+                       f"{len(long_vpds)} probe long(s)")
     else:
         reasons.append(f"long_vpd {long_vpd:.2f} "
                        f"{'>=' if publish_long else '<'} {long_floor}")

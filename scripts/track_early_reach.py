@@ -106,6 +106,28 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
                 rec["views_by_age"][key] = int(v.get("views") or 0)
                 rec["subs_by_age"][key] = int(v.get("subscribers_gained") or 0)
                 added += 1
+            # Oct 24 2026: retention by age. A single ``average_view_percentage``
+            # snapshot is not age-neutral — EN long-forms read 1.6% at age
+            # <= 2 days, 7.8% at 7-9 and 14.4% at 14-20 on the Oct 23 file,
+            # because a new video's views are the Shorts-feed taps that
+            # leave in seconds — so a render or prompt change judged on the
+            # current snapshot reads as a retention collapse for two weeks.
+            # Record the figure at each age, first observation wins, so a
+            # change is scored at a FIXED age like reach already is.
+            _avp = v.get("average_view_percentage")
+            _avd = v.get("average_view_duration_s")
+            if _avp is not None or _avd is not None:
+                avp_by_age = rec.setdefault("avp_by_age", {})
+                avd_by_age = rec.setdefault("avd_by_age", {})
+                if key not in avp_by_age:
+                    try:
+                        avp_by_age[key] = round(float(_avp), 2) if _avp is not None else None
+                    except (TypeError, ValueError):
+                        avp_by_age[key] = None
+                    try:
+                        avd_by_age[key] = int(float(_avd)) if _avd is not None else None
+                    except (TypeError, ValueError):
+                        avd_by_age[key] = None
     cutoff = (gen - _dt.timedelta(days=PRUNE_DAYS)).isoformat()
     for vid in [k for k, r in videos.items() if str(r.get("published") or "") < cutoff]:
         del videos[vid]

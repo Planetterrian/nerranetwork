@@ -189,6 +189,18 @@ _MIN_FIRST_CHAPTER_S = 10.0
 _INTRO_LABELS = {"en": "Intro", "ru": "Вступление", "fr": "Intro"}
 
 
+def _drop_leading_hook(body: str, hook: str) -> str:
+    """*body* without an opening paragraph that repeats *hook*."""
+    hook_norm = " ".join(_strip_markdown(hook or "").split()).strip(" .")
+    if not hook_norm or not body:
+        return body
+    paragraphs = body.strip().split("\n\n")
+    first = " ".join(paragraphs[0].split()).strip(" .")
+    if first.lower() == hook_norm.lower():
+        return "\n\n".join(paragraphs[1:]).strip()
+    return body
+
+
 def _format_chapter_block(chapters: List[Dict], *, language: str = "en") -> str:
     """Render chapters as the YouTube-compatible ``0:00 Title`` block.
 
@@ -229,10 +241,43 @@ def _format_chapter_block(chapters: List[Dict], *, language: str = "en") -> str:
         label = _INTRO_LABELS.get((language or "en").lower()[:2], "Intro")
         parsed.insert(0, (0.0, label))
 
+    parsed = _merge_short_chapters(parsed)
+    if len(parsed) < 2:
+        return ""
+
     rendered = [f"{_format_chapter_timestamp(s)} {t}" for s, t in parsed]
     if not rendered or not rendered[0].startswith("0:00"):
         return ""
     return "\n".join(rendered)
+
+
+def _merge_short_chapters(parsed: List[tuple]) -> List[tuple]:
+    """Drop every chapter that would run under ``_MIN_FIRST_CHAPTER_S``.
+
+    YouTube's rule is not only about the opening chapter: ANY chapter
+    shorter than 10 seconds makes the player ignore the whole block, and
+    the first-chapter clamp above never looked past it. Measured Oct 24
+    2026: 141 of the last 400 committed chapter files carried a later
+    sub-10 s gap — Tesla's "Tomorrow Teaser" sits 7-9 s before "Closing"
+    on every episode, and "Introduction" at 10 s is followed by "Top
+    Stories" at 19 s — so 59% of long-forms since Oct 10 shipped a
+    chapter list the seek bar never showed.
+
+    The chapter whose span is too short is the EARLIER one of the pair
+    (its span ends where the next begins), so it is the one dropped and
+    the chapter before it runs on. The 0:00 anchor is the exception: it
+    must stay at 0:00, so a chapter inside its first 10 s is dropped
+    instead. Titles are never rewritten.
+    """
+    kept: List[tuple] = []
+    for start, title in parsed:
+        if kept and start - kept[-1][0] < _MIN_FIRST_CHAPTER_S:
+            if kept[-1][0] == 0.0:
+                continue
+            kept[-1] = (start, title)
+            continue
+        kept.append((start, title))
+    return kept
 
 
 # ---------------------------------------------------------------------------
@@ -539,6 +584,11 @@ def build_long_form_metadata(
     )
     if template_body:
         body = template_body
+        # Oct 24 2026: the template opened on ``{hook}`` and the pieces
+        # list below opens on the hook too, so every long-form description
+        # since July began with the same sentence twice. A body that starts
+        # with the hook loses it here, whatever template a show points at.
+        body = _drop_leading_hook(body, hook)
     else:
         body_source = _strip_markdown(digest_text or "")
         paragraphs = [p.strip() for p in body_source.split("\n\n") if p.strip()]
@@ -554,13 +604,18 @@ def build_long_form_metadata(
     # after the hook so it's always visible. Body/chapters/credits
     # follow.
     show_label = rss_title or getattr(config, "name", "this show")
-    subscribe_line = (
-        f"🎧 Subscribe to {show_label} on the Nerra Network: {utm_link}"
-    )
     # Oct 1 2026: the description's only "subscribe" pointed at the
     # website; nothing asked for the channel subscribe YouTube ranks on.
     # The ``?sub_confirmation=1`` link opens the confirm dialog directly.
-    subscribe_line += f"\n🔔 Subscribe on YouTube: {channel_subscribe_url(channel)}"
+    # Oct 24 2026: this line is now the SECOND line of the description,
+    # directly under the hook — the one place a phone shows without "Show
+    # more" — and the website line that carried the same ``utm_link``
+    # twice (🎧 "Subscribe … on the Nerra Network" and 🌐 "Show page") is
+    # one line now: the show page, labelled for what it is.
+    subscribe_line = (
+        f"🔔 Subscribe to {show_label} on YouTube: "
+        f"{channel_subscribe_url(channel)}"
+    )
     # Show-page line at the top of the description. This USED to carry
     # the bare canonical URL (readability rationale in git history) with
     # only the subscribe line tagged — but the Aug 15 2026 funnel audit
@@ -654,12 +709,12 @@ def build_long_form_metadata(
     pieces: List[str] = []
     if hook:
         pieces.append(hook.strip())
+    pieces.append(subscribe_line)
     if _hashtag_line:
         pieces.append(_hashtag_line)
     if _topics_block:
         pieces.append(_topics_block)
     pieces.append(show_page_line)
-    pieces.append(subscribe_line)
     if discovery_line:
         pieces.append(discovery_line)
     if body:
@@ -700,12 +755,10 @@ def build_long_form_metadata(
     disclosure = video_disclosure_for(config)
     if disclosure:
         tail_pieces.append(disclosure)
-    pinned = build_pinned_comment_text(
-        config, hook=hook, episode_num=episode_num, today_str=today_str,
-        rss_link=rss_link, audio_url=audio_url,
-    )
-    if pinned:
-        tail_pieces.append("—\nSuggested pinned comment:\n" + pinned)
+    # Oct 24 2026: the description used to END on "Suggested pinned
+    # comment:" followed by the comment text — an operator note shipped to
+    # every viewer since July. run_show posts the real comment through
+    # ``build_pinned_comment_text`` itself; the description carries none.
 
     # Final safety strip — YouTube rejects any description containing
     # ``<`` or ``>`` with HTTP 400 ``invalidDescription``. ``_strip_markdown``

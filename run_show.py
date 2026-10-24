@@ -10407,6 +10407,38 @@ def _show_cover_path(config) -> str:
     return next((str(c) for c in candidates if c.exists()), "")
 
 
+def _x_episode_link(slug: str, episode_num: int) -> str:
+    """The episode's blog page, funnel-tagged for the X teaser body.
+
+    Oct 24 2026: every teaser branch below hand-built
+    ``https://nerranetwork.com/blog/<slug>/epNNN.html`` with no tag — the
+    rule at the top of CLAUDE.md, broken on the one surface @teslashortstime
+    posts from — so Oct 10-24's 102 queued posts and the Tesla account's
+    daily link produced 1 GA4 session from t.co and no campaign at all.
+    ``kind="post"`` is the asset (one X post of one episode);
+    ``placement=body`` is the teaser itself, as the cross-promo reply is
+    ``reply``.
+    """
+    from engine import funnel as _funnel
+    return _funnel.episode_link(
+        f"{_funnel.NETWORK_BASE_URL}/blog/{slug}/ep{int(episode_num):03d}.html",
+        slug, int(episode_num),
+        channel="en", kind="post",
+        source=_funnel.SOURCE_X, medium=_funnel.MEDIUM_SOCIAL,
+        placement=_funnel.PLACEMENT_BODY,
+    )
+
+
+def _x_network_link(path: str, slug: str, episode_num: int) -> str:
+    """A network page linked from the X teaser body (MIT's performance page)."""
+    from engine import funnel as _funnel
+    return _funnel.network_link(
+        path, slug, int(episode_num), surface="",
+        source=_funnel.SOURCE_X, medium=_funnel.MEDIUM_SOCIAL,
+        placement=_funnel.PLACEMENT_BODY,
+    )
+
+
 def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict) -> str:
     """Build a short X teaser post for the episode.
 
@@ -10447,7 +10479,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"🚀⚡ Tesla Shorts Time Ep {episode_num}{price_str}\n\n"
             f"{hook_line}"
             f"🎧 Listen + show notes: "
-            f"https://nerranetwork.com/blog/tesla/ep{episode_num:03d}.html"
+            f"{_x_episode_link(slug, episode_num)}"
         )
     elif slug in ("omni_view", "fascinating_frontiers", "planetterrian"):
         # June 2026 network pass: these teasers were identical every day
@@ -10467,7 +10499,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"{_branding[slug]} Ep {episode_num}\n\n"
             f"{hook_line}"
             f"🎧 Listen + notes: "
-            f"https://nerranetwork.com/blog/{slug}/ep{episode_num:03d}.html"
+            f"{_x_episode_link(slug, episode_num)}"
         )
     elif slug == "modern_investing":
         # June 2026 quality pass: MIT previously fell to the generic
@@ -10482,9 +10514,9 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"📈💰 Modern Investing Techniques Ep {episode_num}\n\n"
             f"{hook_line}"
             f"🎧 Listen + notes: "
-            f"https://nerranetwork.com/blog/modern_investing/ep{episode_num:03d}.html\n"
+            f"{_x_episode_link(slug, episode_num)}\n"
             f"📊 Live portfolio vs NASDAQ: "
-            f"https://nerranetwork.com/modern-investing-performance.html"
+            f"{_x_network_link('modern-investing-performance.html', slug, episode_num)}"
         )
     else:
         # Generic fallback (June 2026 network pass): lead with the
@@ -10496,10 +10528,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
         try:
             from generate_html import NETWORK_SHOWS
             if slug in NETWORK_SHOWS:
-                blog_url = (
-                    f"https://nerranetwork.com/blog/{slug}/"
-                    f"ep{episode_num:03d}.html"
-                )
+                blog_url = _x_episode_link(slug, episode_num)
         except Exception:
             blog_url = ""
         if hook_text or blog_url:

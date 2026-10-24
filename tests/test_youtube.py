@@ -782,7 +782,10 @@ def test_long_form_description_subscribe_uses_show_name():
         audio_url="",
     )
     assert "Subscribe to Tesla Shorts Time Daily" in meta["description"]
-    assert "🎧" in meta["description"]
+    # Oct 24 2026: the subscribe line asks for the YouTube subscribe (🔔)
+    # and sits directly under the hook; the website is one 🌐 line.
+    assert "🔔" in meta["description"]
+    assert "sub_confirmation=1" in meta["description"]
 
 
 # ---------------------------------------------------------------------------
