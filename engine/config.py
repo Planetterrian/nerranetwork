@@ -1197,6 +1197,12 @@ class YouTubeConfig:
     # in. Hook Short, EN path only. Experiment shorts-punch-frame.
     shorts_punch_frame: bool = False
 
+    # Oct 25 2026 — a persistent "Subscribe · <cadence> episodes" pill on
+    # the EN Shorts from ~3 s to the end card (YouTube/X review item 4:
+    # half of a Short's viewers leave before the end card asks). EN path
+    # only — the RU/FR dubs render their own Shorts and are the control.
+    shorts_subscribe_pill: bool = False
+
     # End-screen CTA card on Shorts (May 2026). When enabled, the last
     # ``shorts_end_card_duration_seconds`` of the Shorts MP4 overlay a
     # translucent black panel with a "WATCH FULL EPISODE / Tap Subscribe ↗"
@@ -1243,7 +1249,7 @@ class YouTubeConfig:
     # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
     # The long-form and the hook Short upload private with ``publishAt`` at
     # the show's slot in engine/release_schedule.py (hook Short 7:00 ET +
-    # 15 min x rank; long-form 12:00 / 18:00 ET waves) instead of going
+    # 15 min x rank; long-form in the same slot since Oct 25) instead of going
     # public the minute the run ends (~4-6 AM ET). A passed slot publishes
     # now. Dataclass default False so legacy callers are byte-identical;
     # the network default lives in shows/_defaults.yaml.

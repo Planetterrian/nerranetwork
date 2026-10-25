@@ -1924,6 +1924,47 @@ def _short_form_punch_stage(
     return chain, label_in
 
 
+# ---- Persistent subscribe pill (Oct 25 2026, YouTube/X review item 4) ----
+# EN Shorts hold a median 16 s of a 32-35 s clip, so about half the viewers
+# never reach the end card that asks for the subscribe. The pill asks from
+# ~3 s to the end card instead: top-left, on the brand pill's row (the brand
+# pill is 220x60 at top-right), clear of the punch frame (h*0.40), the hook
+# (h*0.55), the fact cards (~62%), the caption card (MarginV=340) and the
+# URL pill (bottom). It names the cadence the show keeps (engine.cadence).
+_SUBSCRIBE_PILL_START_S = 3.0
+_SUBSCRIBE_PILL_MIN_SECONDS = 2.0
+_SUBSCRIBE_PILL_FONTSIZE = 30
+_SUBSCRIBE_PILL_BOX = "0xCC0000@0.90"
+_SUBSCRIBE_PILL_MAX_CHARS = 32
+
+
+def _short_form_subscribe_stage(
+    post_label: str, text: Optional[str], *,
+    end_s: float,
+) -> Tuple[str, str]:
+    """drawtext for the persistent subscribe pill; ``("", post_label)`` when
+    there is no text (or no room before *end_s*) so the graph is
+    byte-identical with the knob off."""
+    text = " ".join(str(text or "").split())
+    if not text or len(text) > _SUBSCRIBE_PILL_MAX_CHARS:
+        return "", post_label
+    start = _SUBSCRIBE_PILL_START_S
+    if end_s - start < _SUBSCRIBE_PILL_MIN_SECONDS:
+        return "", post_label
+    font_path = _drawtext_escape(_find_font())
+    chain = (
+        f";{post_label}drawtext=fontfile='{font_path}':"
+        f"text='{_drawtext_escape(text)}':"
+        f"fontsize={_SUBSCRIBE_PILL_FONTSIZE}:fontcolor=white:"
+        f"x=38:y=54-text_h/2:"
+        f"box=1:boxcolor={_SUBSCRIBE_PILL_BOX}:boxborderw=14:"
+        f"alpha='clip((t-{start:.2f})/0.4,0,1)':"
+        f"enable='between(t,{start:.2f},{end_s:.2f})'"
+        f"[subpill]"
+    )
+    return chain, "[subpill]"
+
+
 def _long_form_subtitles_stage(post_label: str,
                                subtitles_path: str) -> str:
     """The terminal subtitles stage for the long-form composite.
@@ -2073,8 +2114,12 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              progress_bar: bool = False,
                              caption_margin_v: Optional[int] = None,
                              fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
-                             punch_text: Optional[str] = None) -> str:
+                             punch_text: Optional[str] = None,
+                             subscribe_pill: Optional[str] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
+
+    ``subscribe_pill`` (Oct 25 2026) draws a persistent subscribe pill
+    top-left from ~3 s to the end card; ``None`` is byte-identical.
 
     ``fact_cards`` / ``punch_text`` (Sep 22 2026) add the Shorts fact
     cards and the opening punch frame; both default to ``None`` and
@@ -2175,6 +2220,16 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"shortest=1[pbar]"
         )
         post_brand_label = "[pbar]"
+
+    if subscribe_pill:
+        _pill_end = total_duration
+        if end_card:
+            _pill_end = (0.0 if total_duration <= end_card_duration
+                         else max(0.0, total_duration - end_card_duration))
+        pill_chain, post_brand_label = _short_form_subscribe_stage(
+            post_brand_label, subscribe_pill, end_s=_pill_end,
+        )
+        chain += pill_chain
 
     punch_chain, post_brand_label = _short_form_punch_stage(
         post_brand_label, punch_text, width=width, height=height,
@@ -2940,7 +2995,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     bg_loop: bool = True,
                     progress_bar: bool = False,
                     fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
-                    punch_text: Optional[str] = None) -> List[str]:
+                    punch_text: Optional[str] = None,
+                    subscribe_pill: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -3011,7 +3067,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  caption_margin_v=caption_margin_v,
                                  progress_bar=progress_bar,
                                  fact_cards=fact_cards,
-                                 punch_text=punch_text),
+                                 punch_text=punch_text,
+                                 subscribe_pill=subscribe_pill),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -3442,6 +3499,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       progress_bar: bool = True,
                       fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
                       punch_text: Optional[str] = None,
+                      subscribe_pill: Optional[str] = None,
                       min_clips: int = 2,
                       still_max_hold_s: Optional[float] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
@@ -3516,6 +3574,9 @@ def build_short_video(audio_path: Path, cover_path: Path,
         running the Shorts motion A/B does not have its CONTROL arm
         upgraded mid-experiment (which would bias the test toward
         "motion isn't worth paying for").
+    subscribe_pill:
+        Oct 25 2026 — the persistent subscribe pill's text (top-left,
+        ~3 s to the end card); ``None`` keeps the render byte-identical.
     fact_cards, punch_text:
         Sep 22 2026 — clip-relative ``[(start, figure, label), …]``
         (``engine.fact_cards.fact_cards_for_window``) painted as Shorts
@@ -3669,6 +3730,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
         progress_bar=progress_bar,
         fact_cards=fact_cards,
         punch_text=punch_text,
+        subscribe_pill=subscribe_pill,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "

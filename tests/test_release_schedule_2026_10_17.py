@@ -1,7 +1,8 @@
 """Oct 17 2026 — the network is timed to an East-coast morning.
 
 Nerra Daily goes out at 7:00 AM New York time; each show's hook Short follows
-from 7:00 ET in release order, its long-form in two waves (12:00 / 18:00 ET),
+from 7:00 ET in release order, its long-form in the same slot (Oct 24 2026 —
+the noon / 18:00 ET waves are gone),
 its X post from 7:30 ET, its newsletter at 7:00 ET. ``engine/release_schedule``
 owns every one of those times; the YouTube upload, the X queue and the
 newsletter send read it. A passed slot means "publish now" and so does any
@@ -120,34 +121,32 @@ class TestHookShort:
 
 # ---------------------------------------------------------- the long-form --
 class TestLongForm:
-    def test_two_waves_split_the_ranked_shows(self):
-        run = et(2026, 10, 19, 5)
-        got = {s: wall(rs.youtube_long_time(s, run, peers=EN_YT))[-5:] for s in EN_YT}
-        # 12 shows -> six at noon, six at 6 PM.
-        assert [got[s] for s in EN_YT[:6]] == ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30"]
-        assert [got[s] for s in EN_YT[6:]] == ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30"]
+    """Oct 24 2026: the long-form goes public in the hook Short's slot."""
 
-    def test_odd_counts_give_the_extra_show_to_the_first_wave(self):
-        peers = EN_YT[:3]
-        run = et(2026, 10, 19, 5)
-        assert [wall(rs.youtube_long_time(s, run, peers=peers))[-5:] for s in peers] == \
-            ["12:00", "12:30", "18:00"]
-
-    def test_long_follows_the_short(self):
+    def test_long_shares_the_short_slot(self):
         run = et(2026, 10, 19, 5)
         for s in EN_YT:
-            assert rs.youtube_long_time(s, run, peers=EN_YT) > rs.youtube_short_time(s, run, peers=EN_YT)
+            assert rs.youtube_long_time(s, run, peers=EN_YT) == \
+                rs.youtube_short_time(s, run, peers=EN_YT)
 
-    def test_a_passed_wave_means_now_and_a_later_one_still_holds(self):
-        run = et(2026, 10, 19, 15, 0)  # a manual rerun at 3 PM
-        assert rs.youtube_long_time("spacex", run, peers=EN_YT) is None
-        assert wall(rs.youtube_long_time("planetterrian", run, peers=EN_YT))[-5:] == "18:00"
+    def test_no_wave_constants_remain(self):
+        assert not hasattr(rs, "LONG_FIRST_WAVE") and not hasattr(rs, "LONG_SECOND_WAVE")
+        assert rs.LONG_AFTER_SHORT == dt.timedelta(0)
+
+    def test_a_passed_slot_means_now_and_a_later_one_still_holds(self):
+        run = et(2026, 10, 19, 7, 10)
+        assert rs.youtube_long_time("spacex", run, peers=EN_YT) is None   # 7:00
+        assert wall(rs.youtube_long_time("planetterrian", run, peers=EN_YT))[-5:] == "08:30"
+
+    def test_vancouver_keeps_its_pacific_morning(self):
+        run = dt.datetime(2026, 10, 19, 5, 15, tzinfo=P)
+        assert wall(rs.youtube_long_time("vancouver", run), P)[-5:] == "07:00"
 
     def test_dst_boundary(self):
         a = rs.youtube_long_time("spacex", et(2026, 10, 31, 5), peers=EN_YT)
         b = rs.youtube_long_time("spacex", et(2026, 11, 2, 5), peers=EN_YT)
-        assert a == dt.datetime(2026, 10, 31, 16, 0, tzinfo=UTC)
-        assert b == dt.datetime(2026, 11, 2, 17, 0, tzinfo=UTC)
+        assert a == dt.datetime(2026, 10, 31, 11, 0, tzinfo=UTC)
+        assert b == dt.datetime(2026, 11, 2, 12, 0, tzinfo=UTC)
 
 
 # ----------------------------------------------------------------------- X --
@@ -352,4 +351,4 @@ def test_queue_comment_round_trip_for_a_long_form(tmp_path, now_h):
     when = rs.youtube_long_time("spacex", et(2026, 10, 19, now_h), peers=EN_YT)
     assert queue_comment(tmp_path, video_id="L", channel="en", text="t", publish_at=when)
     data = json.loads((tmp_path / "scheduled_comments.json").read_text())
-    assert data["pending"][0]["publish_at"] == "2026-10-19T16:00:00Z"
+    assert data["pending"][0]["publish_at"] == "2026-10-19T11:00:00Z"

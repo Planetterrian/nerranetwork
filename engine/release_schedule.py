@@ -9,8 +9,12 @@ reads as a schedule instead of a burst at 5 AM:
 - **YouTube hook Short** at 7:00 ET + 15 min x the show's rank among the
   YouTube-enabled shows on its channel (7:00, 7:15, 7:30 ...). Vancouver is a
   local show and gets its own local morning instead: 7:00 Pacific.
-- **YouTube long-form** in two waves: the first half of the ranked shows at
-  12:00, 12:30 ... ET, the second half at 18:00, 18:30 ... ET.
+- **YouTube long-form** in the hook Short's slot (Oct 24 2026, operator-
+  directed; this replaced the Oct 17 noon / 18:00 ET waves). 97% of a
+  Short's views arrive by day 3, most in its first hours, and the waves kept
+  the long private through that whole window, so the Short could point only
+  at the website. In the same slot the Short links the live long-form and
+  its "Full episode" comment posts with it.
 - **X**: Nerra Daily holds 7:00 ET; the shows prefer 7:30 ET onward, every
   30 min in rank order, inside the 7:00 AM - 10:00 PM ET posting window
   (engine/x_queue.py owns the grid and the "slot taken" fallback).
@@ -60,9 +64,11 @@ LOCAL_NEWSLETTER_SLOTS = {"vancouver": (PACIFIC, dt.time(6, 0))}
 
 SHORT_FIRST = dt.time(7, 0)
 SHORT_SPACING = dt.timedelta(minutes=15)
-LONG_FIRST_WAVE = dt.time(12, 0)
-LONG_SECOND_WAVE = dt.time(18, 0)
-LONG_SPACING = dt.timedelta(minutes=30)
+# The long-form goes public this long after the hook Short. Zero on purpose:
+# a long-form scheduled even a minute later is still private when the Short
+# goes public, and the Short then links the website instead of the episode
+# (run_show ``_long_hidden_from``).
+LONG_AFTER_SHORT = dt.timedelta(0)
 X_EDITION_SLOT = dt.time(7, 0)
 X_FIRST_SHOW = dt.time(7, 30)
 X_SPACING = dt.timedelta(minutes=30)
@@ -133,19 +139,14 @@ def youtube_long_time(slug: str, now: dt.datetime, *,
                       peers: Optional[Iterable[str]] = None) -> Optional[dt.datetime]:
     """When the long-form goes public, or ``None`` = now.
 
-    The first half of the ranked shows (rounded up) take 12:00, 12:30 ... ET,
-    the rest 18:00, 18:30 ... ET.
+    The hook Short's slot plus :data:`LONG_AFTER_SHORT` (zero), so the two go
+    public together and the Short can link the episode from its first view.
+    A passed slot means now, like every other surface.
     """
-    now = _aware(now)
-    order = ranked(peers, include=slug)
-    rank = order.index(slug)
-    first_half = (len(order) + 1) // 2
-    if rank < first_half:
-        wall, step = LONG_FIRST_WAVE, rank
-    else:
-        wall, step = LONG_SECOND_WAVE, rank - first_half
-    day = now.astimezone(EASTERN).date()
-    return _future(_at(day, wall, EASTERN, LONG_SPACING * step), now, YOUTUBE_MIN_LEAD)
+    short = youtube_short_time(slug, now, peers=peers)
+    if short is None:
+        return None
+    return _future(short + LONG_AFTER_SHORT, now, YOUTUBE_MIN_LEAD)
 
 
 # ------------------------------------------------------------------------ X --
