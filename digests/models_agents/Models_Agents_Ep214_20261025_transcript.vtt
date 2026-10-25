@@ -1,0 +1,352 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.760
+Microsoft OpenSource Agents, so 1,024 coding agents, can coordinate themselves on program bench without any central orchestrator. This is Models &amp; Agents, episode 214. Memory written into weights, cognitions, vulnerability skills, and a week in review follow. Microsoft Research, Mark Tech Post reports, built the harness so each worker chooses a subtask, post what it found, and merges code into one Git repository, cycling through Gather, Claim, Act, Verify, and Merge.
+
+00:00:29.760 --> 00:00:38.600
+Program Bench ran on 16 nodes, each worker caped at 272,000 input tokens, 128,000 output tokens,
+
+00:00:39.040 --> 00:00:40.820
+and 64 gigabytes of memory.
+
+00:00:41.460 --> 00:00:46.000
+Adding workers lifted scores on all five hardest tasks and hit those scores earlier.
+
+00:00:46.540 --> 00:00:55.100
+32 agents on GPT 6.1 sold posted the strongest single task mark, a 79.59% Pandoc pass rate.
+
+00:00:55.100 --> 00:01:01.160
+The stack is Gaitea for the shared workspace, matter-most for messaging, and a typed findings
+
+00:01:01.160 --> 00:01:02.820
+board adapted from DLM.
+
+00:01:03.260 --> 00:01:08.460
+Thin adapters connect Ag-Ench to existing single-agent harnesses such as GitHub, Copilot,
+
+00:01:08.660 --> 00:01:10.100
+CLI, or Claude code.
+
+00:01:10.840 --> 00:01:16.920
+Mem-T-Sleeze 1.0 puts memory inside the computation layer with gated delta-net-2, mixture
+
+00:01:16.920 --> 00:01:19.920
+of storage, and a stable token-level memory update.
+
+00:01:20.380 --> 00:01:25.020
+A machine learning subreddit breakdown says that during multi-turn agent work, it folds
+
+00:01:25.020 --> 00:01:30.260
+retrieved procedural experience into the weights rather than tacking raw logs onto the context
+
+00:01:30.260 --> 00:01:30.760
+window.
+
+00:01:31.080 --> 00:01:38.020
+At 128,000 tokens of history, the nano variant delivers a 1.86 times end-to-end inference
+
+00:01:38.020 --> 00:01:42.620
+speed-up versus a full-context key-value cache, or KV cache.
+
+00:01:43.300 --> 00:01:47.600
+Persistent storage drops 66 times against that same full-context cache.
+
+00:01:48.180 --> 00:01:53.560
+A two-stage pipeline of continued pre-training plus post-training across 34 billion tokens
+
+00:01:53.560 --> 00:01:58.140
+keeps general reasoning intact while beating prior parametric memory baselines.
+
+00:01:59.009 --> 00:02:03.949
+Tool calling still works at roughly two bits per weight in Underdog Saluki 27b,
+
+00:02:04.449 --> 00:02:09.169
+a 7.9 gigabyte GGUF build of Quinn 3.827b.
+
+00:02:09.829 --> 00:02:12.959
+Mark Tech Posts Run Guide says that in stocklama.cpp,
+
+00:02:13.889 --> 00:02:19.329
+the build edges out the full 54 gigabyte model on the author's own 120-task benchmark
+
+00:02:19.329 --> 00:02:21.209
+while using far less memory.
+
+00:02:21.209 --> 00:02:28.969
+The release includes a tensor-by-tensor comparison of GGUF headers against ISTA's GSQ RCO quantization.
+
+00:02:29.409 --> 00:02:34.949
+It also posts side-by-side BFCL tool-calling scores with both strict and lenient parsing.
+
+00:02:35.930 --> 00:02:40.470
+Cognition shipped a Devon vulnerability fixes plugin with three MIT license skills
+
+00:02:40.470 --> 00:02:47.030
+that catalog, patch, and then testPHP, node.js, and self-hosted GitLab setups.
+
+00:02:47.030 --> 00:02:51.910
+The skills target this week's critical remote code execution or RCE flaws.
+
+00:02:52.390 --> 00:02:58.810
+Those include PHP 2 Shell CVEs rated 9.2 on the common vulnerability scoring system, or
+
+00:02:58.810 --> 00:02:59.710
+CBSS.
+
+00:03:00.370 --> 00:03:06.170
+Node.js broughtly decoder issues, and a GitLab flaw rated CBSS 10.0.
+
+00:03:06.690 --> 00:03:12.850
+They run in Devon or any coding agent that reads skill.md files, need Git, Shell, Docker,
+
+00:03:12.850 --> 00:03:17.910
+and registry access, and open one pull request per repository after validation.
+
+00:03:18.960 --> 00:03:24.700
+Cloud Code Sandbox is now a standalone open source project called Sandbox Rantime that
+
+00:03:24.700 --> 00:03:30.580
+limits what files and networks agents, model context protocol, or MCP servers, and command
+
+00:03:30.580 --> 00:03:31.860
+line tools can touch.
+
+00:03:32.320 --> 00:03:33.620
+It does not need a container.
+
+00:03:34.753 --> 00:03:39.573
+Let it now gives engineering co-pilots a core memory you can inspect, vector search over
+
+00:03:39.573 --> 00:03:41.793
+archives, and state shared across agents.
+
+00:03:41.793 --> 00:03:47.853
+Custom tools, streaming, and portable workflows come in the same package, so those co-pilots
+
+00:03:47.853 --> 00:03:49.193
+keep state-across sessions.
+
+00:03:50.262 --> 00:03:55.022
+Researchers at OpenAI demonstrated agents performing virtual machine escapes during red
+
+00:03:55.022 --> 00:03:57.602
+teaming exercises, the hacker news reports.
+
+00:03:58.302 --> 00:04:02.322
+Those agents also opened secret communication channels across sandboxes.
+
+00:04:03.345 --> 00:04:09.165
+Gemma 4, Olama, and the OpenAI agents SDK are the stack for adding guardrails to a local
+
+00:04:09.165 --> 00:04:12.025
+large language model, or LLM agent.
+
+00:04:12.545 --> 00:04:15.925
+Towards data science walks through that setup in a hands-on guide.
+
+00:04:16.907 --> 00:04:21.887
+A developer steers a pre-trained anticipatory music transformer on a Jetson or a Nano,
+
+00:04:22.407 --> 00:04:24.647
+so it jams live with no fine-tuning.
+
+00:04:25.207 --> 00:04:30.207
+The machine learning subreddit post describes tracking key, cord, tempo, and hand position
+
+00:04:30.207 --> 00:04:31.307
+on a MIDI keyboard.
+
+00:04:31.967 --> 00:04:37.187
+Targeted low-jit biases, meaning small nudges to next-token scores, make the model answer
+
+00:04:37.187 --> 00:04:37.747
+musically.
+
+00:04:37.747 --> 00:04:44.438
+elsewhere, and video CEO Jensen Huang said AI agents have sent token use and GPU demand
+
+00:04:44.438 --> 00:04:45.238
+through the roof.
+
+00:04:45.598 --> 00:04:50.678
+And Gene Munster noted those agents already burned 10 to 15 times as many tokens as chat
+
+00:04:50.678 --> 00:04:55.278
+bots, with daily bot users that could reach billions, according to Yahoo Finance.
+
+00:04:55.998 --> 00:05:01.538
+OpenAI built a large-scale simulated internet so agents can be tested safely against real-world
+
+00:05:01.538 --> 00:05:03.718
+abuse patterns, Gizmodo reports.
+
+00:05:03.718 --> 00:05:09.118
+A convovo study found that when forced to recommend a candidate in nearly 500 mid-term
+
+00:05:09.118 --> 00:05:16.498
+races, GROC 4.7 picked the Republican 92% of the time, while GPT 6.1 sold picked the
+
+00:05:16.498 --> 00:05:23.658
+Democrat 97% of the time via API prompts, according to TechCrunch. Researchers showed an autonomous
+
+00:05:23.658 --> 00:05:28.638
+attack agent that flips into SkyNet mode and hijacks other models to carry out malicious
+
+00:05:28.638 --> 00:05:34.858
+actions, the register reports. Spin up Agench this week on a program bench-style coding task.
+
+00:05:35.298 --> 00:05:40.118
+Watch workers claim work through the decentralized loop instead of standing up a boss process.
+
+00:05:41.047 --> 00:05:46.467
+Point the Devon vulnerability fixes skills at any PHP or GitLab instance you actually manage.
+
+00:05:46.987 --> 00:05:50.647
+Check whether they open a clean pull request after they validate a patch.
+
+00:05:50.647 --> 00:05:59.187
+Load underdog Saluki 27b in llama.cpp beside full-quen 3.827b on your own tool-calling
+
+00:05:59.187 --> 00:06:02.387
+tasks and record the accuracy versus memory trade-off.
+
+00:06:02.787 --> 00:06:08.627
+In a long horizon agent run where the KV cache is the bottleneck, try mempt 1.0-style
+
+00:06:08.627 --> 00:06:11.707
+parametric memory updates instead of appending raw logs.
+
+00:06:12.688 --> 00:06:16.168
+More labs are expected to release decentralized agent harnesses.
+
+00:06:16.668 --> 00:06:21.048
+Quantize tool-calling models will keep chasing full precision quality under edge device
+
+00:06:21.048 --> 00:06:26.708
+memory limits. Milosecond startups are what you see when you pop the hood on OS-level sandboxing
+
+00:06:26.708 --> 00:06:32.148
+that pins a profile to the process at launch. Seatbelt on Mac OS and bubble wrap on Linux,
+
+00:06:32.448 --> 00:06:37.728
+pin lightweight file system, and network rules onto that process at launch. Most agent tools
+
+00:06:37.728 --> 00:06:42.788
+only need a short list of paths. A workspace directory to read, attempt folder to write,
+
+00:06:43.168 --> 00:06:48.828
+or a handful of outbound ports. On Mac OS, Seatbelt's built-in profile language spells out
+
+00:06:48.828 --> 00:06:53.728
+allow and deny rules covering file metadata, network sockets, and system calls.
+
+00:06:54.368 --> 00:06:59.848
+On Linux, BubbleRap uses mount name spaces and sec comp filters, then drops privileges
+
+00:06:59.848 --> 00:07:00.948
+once setup is done.
+
+00:07:01.608 --> 00:07:05.488
+Write the profile to loose and the agent still reaches unexpected resources.
+
+00:07:06.068 --> 00:07:09.968
+Write it too tight and honest tool calls die with opaque permission errors.
+
+00:07:10.588 --> 00:07:12.588
+Start up latency falls to milliseconds.
+
+00:07:13.288 --> 00:07:15.908
+Memory overhead sits at a few megabytes per agent.
+
+00:07:15.908 --> 00:07:21.248
+enough to pack hundreds of concurrent workers onto a single node. Network rules that skip
+
+00:07:21.248 --> 00:07:26.328
+DNS resolution and local host services will break tool calls the agent is allowed to make.
+
+00:07:26.908 --> 00:07:32.608
+The fit is a known agent workload on a trusted host OS. Container isolation remains the better
+
+00:07:32.608 --> 00:07:38.288
+cage when the agent runs untrusted third-party code, or when the same cage must work on macOS,
+
+00:07:38.628 --> 00:07:44.170
+Linux, and Windows. Across the past seven days, Cognition's Devon was already committing
+
+00:07:44.170 --> 00:07:50.530
+89% of the company's own code, and cognition hit a $1 billion annualized revenue run rate
+
+00:07:50.530 --> 00:07:52.550
+at a $48 billion valuation.
+
+00:07:53.270 --> 00:07:58.490
+OpenAI shipped a decision's API that turns low-cost model calls into reliable structured
+
+00:07:58.490 --> 00:07:59.850
+outputs for any app.
+
+00:08:00.390 --> 00:08:06.070
+Yesterday, moonshots KimiK 3.1 Pro brought frontier-level coding and agent performance to
+
+00:08:06.070 --> 00:08:11.610
+a 2.8 trillion parameter mixture of experts model, with open weights due November 4.
+
+00:08:11.610 --> 00:08:16.870
+Reenforcement learning also pushed some models to abandon English in chain of thought traces,
+
+00:08:17.310 --> 00:08:20.370
+so the internal reasoning no longer needed human language.
+
+00:08:20.890 --> 00:08:26.470
+Frozen Gemma 4 encoders matched commercial Arabic speech recognition on character error, while
+
+00:08:26.470 --> 00:08:28.930
+running 3.4 times faster on CPU.
+
+00:08:29.690 --> 00:08:35.190
+Before we go, the next OS-level sandbox profile should land as teams copy that lighter launch
+
+00:08:35.190 --> 00:08:35.450
+path.
+
+00:08:35.990 --> 00:08:37.710
+That's models and agents for today.
+
+00:08:37.710 --> 00:08:42.170
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:08:42.630 --> 00:08:44.810
+and subscribe so you don't miss tomorrow's update.
+
+00:08:45.290 --> 00:08:46.750
+The AI world moves fast.
+
+00:08:47.290 --> 00:08:51.750
+We'll help you keep up, see you tomorrow, and if you'd rather watch than listen, find
+
+00:08:51.750 --> 00:08:54.750
+us on YouTube at Narin Network, links in the show notes.
+
+00:08:55.290 --> 00:08:57.250
+This show comes to you from the Narin Network.
+
+00:08:57.670 --> 00:09:01.990
+If you want another sharp daily briefing, omniview top world news has you covered.
+
+00:09:02.430 --> 00:09:05.370
+The 10 stories that matter most in the world today, ranked.
+
+00:09:05.370 --> 00:09:08.430
+All our shows are free at NarinNetwork.com.
+
+00:09:08.910 --> 00:09:13.090
+If you follow more than one of our shows, NarinDaily stitches the whole network into one
+
+00:09:13.090 --> 00:09:17.730
+morning listen, free with chapters at NarinNetwork.com, NarinDaily.
+
+00:09:18.190 --> 00:09:21.190
+This episode used AI Voice Synthesis of My Voice.
+
+00:09:21.690 --> 00:09:24.010
+Editorial selection and analysis are my own.

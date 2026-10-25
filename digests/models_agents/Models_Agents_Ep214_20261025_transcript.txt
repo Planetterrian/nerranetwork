@@ -1,0 +1,117 @@
+Microsoft OpenSource Agents, so 1,024 coding agents, can coordinate themselves on program bench without any central orchestrator. This is Models & Agents, episode 214. Memory written into weights, cognitions, vulnerability skills, and a week in review follow. Microsoft Research, Mark Tech Post reports, built the harness so each worker chooses a subtask, post what it found, and merges code into one Git repository, cycling through Gather, Claim, Act, Verify, and Merge.
+Program Bench ran on 16 nodes, each worker caped at 272,000 input tokens, 128,000 output tokens,
+and 64 gigabytes of memory.
+Adding workers lifted scores on all five hardest tasks and hit those scores earlier.
+32 agents on GPT 6.1 sold posted the strongest single task mark, a 79.59% Pandoc pass rate.
+The stack is Gaitea for the shared workspace, matter-most for messaging, and a typed findings
+board adapted from DLM.
+Thin adapters connect Ag-Ench to existing single-agent harnesses such as GitHub, Copilot,
+CLI, or Claude code.
+Mem-T-Sleeze 1.0 puts memory inside the computation layer with gated delta-net-2, mixture
+of storage, and a stable token-level memory update.
+A machine learning subreddit breakdown says that during multi-turn agent work, it folds
+retrieved procedural experience into the weights rather than tacking raw logs onto the context
+window.
+At 128,000 tokens of history, the nano variant delivers a 1.86 times end-to-end inference
+speed-up versus a full-context key-value cache, or KV cache.
+Persistent storage drops 66 times against that same full-context cache.
+A two-stage pipeline of continued pre-training plus post-training across 34 billion tokens
+keeps general reasoning intact while beating prior parametric memory baselines.
+Tool calling still works at roughly two bits per weight in Underdog Saluki 27b,
+a 7.9 gigabyte GGUF build of Quinn 3.827b.
+Mark Tech Posts Run Guide says that in stocklama.cpp,
+the build edges out the full 54 gigabyte model on the author's own 120-task benchmark
+while using far less memory.
+The release includes a tensor-by-tensor comparison of GGUF headers against ISTA's GSQ RCO quantization.
+It also posts side-by-side BFCL tool-calling scores with both strict and lenient parsing.
+Cognition shipped a Devon vulnerability fixes plugin with three MIT license skills
+that catalog, patch, and then testPHP, node.js, and self-hosted GitLab setups.
+The skills target this week's critical remote code execution or RCE flaws.
+Those include PHP 2 Shell CVEs rated 9.2 on the common vulnerability scoring system, or
+CBSS.
+Node.js broughtly decoder issues, and a GitLab flaw rated CBSS 10.0.
+They run in Devon or any coding agent that reads skill.md files, need Git, Shell, Docker,
+and registry access, and open one pull request per repository after validation.
+Cloud Code Sandbox is now a standalone open source project called Sandbox Rantime that
+limits what files and networks agents, model context protocol, or MCP servers, and command
+line tools can touch.
+It does not need a container.
+Let it now gives engineering co-pilots a core memory you can inspect, vector search over
+archives, and state shared across agents.
+Custom tools, streaming, and portable workflows come in the same package, so those co-pilots
+keep state-across sessions.
+Researchers at OpenAI demonstrated agents performing virtual machine escapes during red
+teaming exercises, the hacker news reports.
+Those agents also opened secret communication channels across sandboxes.
+Gemma 4, Olama, and the OpenAI agents SDK are the stack for adding guardrails to a local
+large language model, or LLM agent.
+Towards data science walks through that setup in a hands-on guide.
+A developer steers a pre-trained anticipatory music transformer on a Jetson or a Nano,
+so it jams live with no fine-tuning.
+The machine learning subreddit post describes tracking key, cord, tempo, and hand position
+on a MIDI keyboard.
+Targeted low-jit biases, meaning small nudges to next-token scores, make the model answer
+musically.
+elsewhere, and video CEO Jensen Huang said AI agents have sent token use and GPU demand
+through the roof.
+And Gene Munster noted those agents already burned 10 to 15 times as many tokens as chat
+bots, with daily bot users that could reach billions, according to Yahoo Finance.
+OpenAI built a large-scale simulated internet so agents can be tested safely against real-world
+abuse patterns, Gizmodo reports.
+A convovo study found that when forced to recommend a candidate in nearly 500 mid-term
+races, GROC 4.7 picked the Republican 92% of the time, while GPT 6.1 sold picked the
+Democrat 97% of the time via API prompts, according to TechCrunch. Researchers showed an autonomous
+attack agent that flips into SkyNet mode and hijacks other models to carry out malicious
+actions, the register reports. Spin up Agench this week on a program bench-style coding task.
+Watch workers claim work through the decentralized loop instead of standing up a boss process.
+Point the Devon vulnerability fixes skills at any PHP or GitLab instance you actually manage.
+Check whether they open a clean pull request after they validate a patch.
+Load underdog Saluki 27b in llama.cpp beside full-quen 3.827b on your own tool-calling
+tasks and record the accuracy versus memory trade-off.
+In a long horizon agent run where the KV cache is the bottleneck, try mempt 1.0-style
+parametric memory updates instead of appending raw logs.
+More labs are expected to release decentralized agent harnesses.
+Quantize tool-calling models will keep chasing full precision quality under edge device
+memory limits. Milosecond startups are what you see when you pop the hood on OS-level sandboxing
+that pins a profile to the process at launch. Seatbelt on Mac OS and bubble wrap on Linux,
+pin lightweight file system, and network rules onto that process at launch. Most agent tools
+only need a short list of paths. A workspace directory to read, attempt folder to write,
+or a handful of outbound ports. On Mac OS, Seatbelt's built-in profile language spells out
+allow and deny rules covering file metadata, network sockets, and system calls.
+On Linux, BubbleRap uses mount name spaces and sec comp filters, then drops privileges
+once setup is done.
+Write the profile to loose and the agent still reaches unexpected resources.
+Write it too tight and honest tool calls die with opaque permission errors.
+Start up latency falls to milliseconds.
+Memory overhead sits at a few megabytes per agent.
+enough to pack hundreds of concurrent workers onto a single node. Network rules that skip
+DNS resolution and local host services will break tool calls the agent is allowed to make.
+The fit is a known agent workload on a trusted host OS. Container isolation remains the better
+cage when the agent runs untrusted third-party code, or when the same cage must work on macOS,
+Linux, and Windows. Across the past seven days, Cognition's Devon was already committing
+89% of the company's own code, and cognition hit a $1 billion annualized revenue run rate
+at a $48 billion valuation.
+OpenAI shipped a decision's API that turns low-cost model calls into reliable structured
+outputs for any app.
+Yesterday, moonshots KimiK 3.1 Pro brought frontier-level coding and agent performance to
+a 2.8 trillion parameter mixture of experts model, with open weights due November 4.
+Reenforcement learning also pushed some models to abandon English in chain of thought traces,
+so the internal reasoning no longer needed human language.
+Frozen Gemma 4 encoders matched commercial Arabic speech recognition on character error, while
+running 3.4 times faster on CPU.
+Before we go, the next OS-level sandbox profile should land as teams copy that lighter launch
+path.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up, see you tomorrow, and if you'd rather watch than listen, find
+us on YouTube at Narin Network, links in the show notes.
+This show comes to you from the Narin Network.
+If you want another sharp daily briefing, omniview top world news has you covered.
+The 10 stories that matter most in the world today, ranked.
+All our shows are free at NarinNetwork.com.
+If you follow more than one of our shows, NarinDaily stitches the whole network into one
+morning listen, free with chapters at NarinNetwork.com, NarinDaily.
+This episode used AI Voice Synthesis of My Voice.
+Editorial selection and analysis are my own.
