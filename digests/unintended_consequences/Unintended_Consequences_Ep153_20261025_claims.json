@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 0,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://www.oecd.org/environment/country-reviews/Highlights_OECD-EPR-Israel-2023.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.ldd.go.th/livingland/files/assets/basic-html/page-97.html",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "fetch failed: HTTPSConnectionPool(host='www.ldd.go.th', port=443): Max retries exceeded with url: /livingland/files/assets/basic-html/page-97.html (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.ldd.go.th', port=443) at 0x77754b6b60d0>, 'Connection to www.ldd.go.th timed out. (connect timeout=20)'))",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6266060/",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\bmost accounts\\b",
+        "match": "most accounts",
+        "sentence": "By most accounts more than 80 percent of collected effluent was eventually directed to agriculture, the highest rate recorded among OECD countries."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "By most accounts more than 80 percent of collected effluent was eventually directed to agriculture, the highest rate recorded among OECD countries.",
+      "The Volcani Institute compared orchards after ten years of drip irrigation with treated wastewater and found avocado and citrus yields 20 to 30 percent lower than trees watered with freshwater in the same fields.",
+      "The 2010 Public Health Regulations, developed by the Inbar Committee under the Ministry of Environmental Protection, set the first comprehensive national standards for effluent quality, including limits on salinity parameters."
+    ],
+    "flagged_count": 4,
+    "verified_count": 0
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Israel reclaims more than 80 percent of its effluents for agricultural irrigation according to the State Comptroller audit of 2024.",
+      "episode_span": "By most accounts more than 80 percent of collected effluent was eventually directed to agriculture, the highest rate recorded among OECD countries.",
+      "source_url": "https://www.oecd.org/environment/country-reviews/Highlights_OECD-EPR-Israel-2023.pdf",
+      "supporting_quote": "Israel reuses more than 80% of its treated wastewater for agriculture, the highest share among OECD countries.",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "2",
+      "claim": "After ten years of drip irrigation with treated wastewater, avocado and citrus yields were 20–30 percent lower than freshwater-irrigated trees according to Volcani Institute comparisons.",
+      "episode_span": "The Volcani Institute compared orchards after ten years of drip irrigation with treated wastewater and found avocado and citrus yields 20 to 30 percent lower than trees watered with freshwater in the same fields.",
+      "source_url": "https://www.ldd.go.th/livingland/files/assets/basic-html/page-97.html",
+      "source_title": "Living Land — Land Development Department (Thailand)",
+      "supporting_quote": "Cites Volcani Institute (Ministry of Agriculture) study comparing orchards after 10 years of drip effluent irrigation: avocado and citrus yields 20–30% lower than freshwater-irrigated trees in the same orchards",
+      "confidence": "high",
+      "status": "unverified_unreachable",
+      "status_reason": "fetch failed: HTTPSConnectionPool(host='www.ldd.go.th', port=443): Max retries exceeded with url: /livingland/files/assets/basic-html/page-97.html (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.ldd.go.th', port=443) at 0x77754b6b60d0>, 'Connection to www.ldd.go.th timed out. (connect timeout=20)'))"
+    },
+    {
+      "id": "3",
+      "claim": "The 2010 Public Health Regulations, developed by the Inbar Committee, set national effluent quality standards including limits on salinity parameters for agricultural reuse.",
+      "episode_span": "The 2010 Public Health Regulations, developed by the Inbar Committee under the Ministry of Environmental Protection, set the first comprehensive national standards for effluent quality, including limits on salinity parameters.",
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6266060/",
+      "supporting_quote": "The Inbar Committee standards were adopted in 2010 as Public Health Regulations setting limits on salinity parameters.",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "u1",
+      "claim": "By most accounts more than 80 percent of collected effluent was eventually directed to agriculture, the highest rate recorded among OECD countries.",
+      "episode_span": "By most accounts more than 80 percent of collected effluent was eventually directed to agriculture, the highest rate recorded among OECD countries.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'most accounts' with no covering verified claim"
+    }
+  ]
+}
