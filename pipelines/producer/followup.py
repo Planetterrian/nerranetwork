@@ -43,7 +43,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    mira_signature_text, parse_json_lenient, sb_select, sb_update,
+    has_public_profile, mira_signature_text, parse_json_lenient, profile_links_in,
+    public_profiles, sb_select, sb_update,
 )
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
@@ -118,6 +119,31 @@ def _strip_quoted(body: str) -> str:
     return "\n".join(lines).strip()
 
 
+def profile_on_file(app: Dict[str, Any]) -> str:
+    """What the prompt is told about the guest's public profile (Oct 25 2026)."""
+    found = public_profiles(app)
+    labels = {"x": "X", "linkedin": "LinkedIn", "company_profile": "company page"}
+    return ", ".join(f"{labels[k]} {v}" for k, v in found.items()) or "none"
+
+
+def take_profiles_from(inbound: Dict[str, Any], app: Dict[str, Any]) -> Dict[str, str]:
+    """X or LinkedIn profiles the other side just wrote, merged into
+    ``app["links"]``. Returns what was new, for the row's patch."""
+    found = profile_links_in(_strip_quoted(inbound.get("body") or inbound.get("snippet") or ""))
+    have = public_profiles(app)
+    new = {k: v for k, v in found.items() if k not in have}
+    if new:
+        links = app.get("links")
+        if isinstance(links, list):
+            links = {"urls": links}
+        elif isinstance(links, str):
+            links = {"raw": links}
+        elif not isinstance(links, dict):
+            links = {}
+        app["links"] = {**links, **new}
+    return new
+
+
 def build_prompt(thread: Dict[str, Any], app: Dict[str, Any], own_email: str,
                  policy: Any) -> str:
     from engine import brand as _brand
@@ -137,6 +163,7 @@ def build_prompt(thread: Dict[str, Any], app: Dict[str, Any], own_email: str,
         "guest_name": app.get("name") or "the guest",
         "contact_name": app.get("publicist_name") or app.get("name") or "",
         "contact_email": app.get("publicist_email") or app.get("email") or "",
+        "public_profile_on_file": profile_on_file(app),
     }
     # Minimal jinja-ish conditional used by the prompt for the pitched show.
     if pitched:
@@ -303,6 +330,14 @@ def decide_followup(plan: Dict[str, Any], app: Dict[str, Any], *, mode: str,
         return {"action": "draft", "reason": f"confidence {plan['confidence']:.2f} < {MIN_CONFIDENCE:.2f}"}
     if (app.get("status") or "") in ("declined", "lapsed") and plan["intent"] != "ready_to_book":
         return {"action": "draft", "reason": f"row is {app.get('status')}; re-opening needs Patrick"}
+    if plan["intent"] == "ready_to_book" and not has_public_profile(app):
+        # Oct 25 2026: no booking link without one public profile (X,
+        # LinkedIn or a page on their company's site). The prompt tells Mira
+        # to ask for one; this holds the reply if she did not.
+        return {"action": "draft",
+                "reason": "ready to book but no public profile on file (X, LinkedIn or a company "
+                          "page): ask for one first; a company page they sent goes in "
+                          "links.company_profile"}
     patch: Dict[str, Any] = {}
     if plan["intent"] == "ready_to_book":
         patch["status"] = "approved"
@@ -322,6 +357,8 @@ def handle_followup(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     """Run the whole follow-up path for one thread. Returns a log line."""
     own = gmail.user
     inbound_auto = bool(inbound.get("auto_submitted"))
+    # A profile they just sent counts before Mira decides what to say.
+    new_profiles = {} if inbound_auto else take_profiles_from(inbound, app)
     plan = ({"intent": "auto_reply", "confidence": 1.0, "reply_text": None,
              "summary": "autoresponder"} if inbound_auto
             else plan_followup(thread, app, own, policy))
@@ -358,6 +395,9 @@ def handle_followup(*, thread: Dict[str, Any], inbound: Dict[str, Any],
             body = ensure_booking_link(body, booking_url(app.get("show") or ""), app.get("show"))
 
     patch: Dict[str, Any] = {"producer_last_inbound_at": _now()}
+    if new_profiles:
+        patch["links"] = app["links"]
+        line["profiles_added"] = sorted(new_profiles)
     if decision["action"] == "send":
         gmail.send_reply(body_text=body, **reply_kwargs)
         patch.update(decision.get("status_patch") or {})

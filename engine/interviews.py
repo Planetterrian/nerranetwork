@@ -142,6 +142,9 @@ def parse_interview_digest(md_text: str) -> dict:
         "takeaway": "",
         "talking_points": [],
         "guest_links": [],
+        # Oct 25 2026: the photo from the guest's public profile, from the
+        # summaries record (pipelines/voices/profile_photo.py); "" when none.
+        "guest_photo": "",
         "has_transcript": False,
         "cohost": "",
     }
@@ -308,6 +311,9 @@ def interview_context(
         ]
         if links:
             ctx["guest_links"] = links
+    photo = str(record.get("guest_photo") or "").strip()
+    if photo.startswith("https://"):
+        ctx["guest_photo"] = photo
 
     ctx["chapters"] = supported_chapters(
         record.get("chapters") or [],
@@ -634,6 +640,8 @@ def interview_episode_cards(
             "cohost": cohost_display_name(parsed.get("cohost", "")),
             "takeaway": parsed.get("takeaway", ""),
             "hook": record.get("hook", ""),
+            "photo": (record.get("guest_photo") or "")
+                     if str(record.get("guest_photo") or "").startswith("https://") else "",
             "post_url": f"blog/{slug}/ep{num:03d}.html" if isinstance(num, int) else "",
         })
 

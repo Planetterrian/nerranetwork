@@ -37,8 +37,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    mira_signature_text, notify_operator, sb_insert, sb_select, sb_update,
-    show_email_context,
+    has_public_profile, mira_signature_text, notify_operator, sb_insert, sb_select,
+    sb_update, show_email_context,
 )
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
@@ -113,6 +113,9 @@ def invite_context(classification: Dict[str, Any], sender_name: str,
         candidate = first_name(sender_name)
         if candidate and candidate.lower() != first_name(guest).lower():
             publicist = candidate
+    booking = _followup.booking_url(show.slug)
+    needs_profile = bool(booking) and not has_public_profile(
+        {"links": {"urls": list(classification.get("links") or [])}})
     return {
         "show_slug": show.slug,
         "publicist_first_name": publicist or "There",
@@ -126,7 +129,12 @@ def invite_context(classification: Dict[str, Any], sender_name: str,
         # link". Forty pitched guests were invited that way and chased twice;
         # none was ever booked. Of those who replied, the link converted.
         # The link now goes in the first email.
-        "booking_url": _followup.booking_url(show.slug),
+        "booking_url": "" if needs_profile else booking,
+        # Oct 25 2026: one public profile (X, LinkedIn or a page on their
+        # company's site) before the booking link. A pitch that carries one
+        # gets the link in the first email as before; one that does not is
+        # asked for it, and the follow-up sends the link when it arrives.
+        "needs_profile": needs_profile,
         "pitched_show_name": policy.pitched_show_name(classification.get("pitched_show")),
         # Oct 24 2026: the press kit and the sponsorship kit, in plain text
         # (engine.brand.KITS_COPY, "intro").

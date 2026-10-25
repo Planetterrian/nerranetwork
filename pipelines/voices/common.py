@@ -755,7 +755,7 @@ def _r2_client():
     ), cfg["bucket"]
 
 
-def r2_upload(local_path: Path, remote_key: str) -> str:
+def r2_upload(local_path: Path, remote_key: str, content_type: str = "") -> str:
     """Upload to the network's R2 audio bucket; returns the public URL.
 
     Uses the same env vars as the show pipeline (R2_* — see
@@ -770,6 +770,7 @@ def r2_upload(local_path: Path, remote_key: str) -> str:
         access_key=cfg["access"], secret_key=cfg["secret"],
         public_base_url=(os.environ.get("R2_PUBLIC_BASE_URL", "")
                          or "https://audio.nerranetwork.com"),
+        content_type=content_type,
     )
 
 
@@ -948,7 +949,9 @@ def _label_for(url: str, hint: str = "") -> str:
     if hint:
         # A guest's own site is best announced as its domain: "gopippa.ai"
         # tells a listener where they are going; "Website" does not.
-        if hint.lower() in ("website", "site", "homepage"):
+        # Oct 25 2026: the profile page on their company's site reads the
+        # same way, "aampe.com" rather than "Company Profile".
+        if hint.lower() in ("website", "site", "homepage", "company_profile"):
             return host
         return _LINK_LABELS.get(hint.lower(), hint.replace("_", " ").title())
     # Match whole host labels, not substrings: "example.com" contains "x"
@@ -992,6 +995,91 @@ def guest_links(app: Dict[str, Any]) -> List[Dict[str, str]]:
         out.append(link)
     out.sort(key=lambda l: any(h in l["url"].lower() for h in _SOCIAL_HOSTS))
     return out
+
+
+_X_NOT_A_HANDLE = {"home", "i", "intent", "share", "search", "explore", "settings",
+                   "messages", "notifications", "hashtag", "login", "signup", "compose"}
+
+
+def _x_profile(url: str) -> str:
+    m = re.match(r"^https?://(?:www\.|mobile\.)?(?:x|twitter)\.com/([A-Za-z0-9_]{1,15})(?:[/?#]|$)",
+                 url or "", re.I)
+    if not m or m.group(1).lower() in _X_NOT_A_HANDLE:
+        return ""
+    return f"https://x.com/{m.group(1)}"
+
+
+def _linkedin_profile(url: str) -> str:
+    m = re.match(r"^https?://(?:[a-z]{2,3}\.|www\.)?linkedin\.com/(in|pub)/([^?#]+?)/?(?:[?#]|$)",
+                 url or "", re.I)
+    if not m:
+        return ""
+    path = m.group(2) if m.group(1).lower() == "pub" else m.group(2).split("/")[0]
+    return f"https://www.linkedin.com/{m.group(1).lower()}/{path}"
+
+
+def public_profiles(app: Dict[str, Any]) -> Dict[str, str]:
+    """The guest's public profiles: ``{"x", "linkedin", "company_profile"}``,
+    only the ones they have.
+
+    Oct 25 2026: the apply form asks for at least one (the Worker's
+    publicProfiles writes links.x / links.linkedin / links.company_profile).
+    Rows from before then, and rows the Producer made from a pitch, carry the
+    same profiles inside free text, so an X or LinkedIn profile anywhere in
+    the links counts too. A company page only counts when it was given as
+    one: a bare company site says nothing about the person.
+    """
+    raw = app.get("links") or {}
+    out: Dict[str, str] = {}
+    if isinstance(raw, dict):
+        for key in ("x", "twitter"):
+            url = _x_profile(_clean_url(raw.get(key), "x")) if raw.get(key) else ""
+            if url:
+                out.setdefault("x", url)
+        if raw.get("linkedin"):
+            url = _linkedin_profile(_clean_url(raw.get("linkedin"), "linkedin"))
+            if url:
+                out["linkedin"] = url
+        if raw.get("company_profile"):
+            url = _clean_url(raw.get("company_profile"), "company_profile")
+            if url:
+                out["company_profile"] = url
+    for link in guest_links(app):
+        if "x" not in out and _x_profile(link["url"]):
+            out["x"] = _x_profile(link["url"])
+        if "linkedin" not in out and _linkedin_profile(link["url"]):
+            out["linkedin"] = _linkedin_profile(link["url"])
+    return out
+
+
+_URLISH_RE = re.compile(r"(?:https?://|www\.|(?<![\w.])(?:[a-z]{2,3}\.)?(?:linkedin|x|twitter)\.com/)[^\s<>\"')\]]+",
+                        re.I)
+
+
+def profile_links_in(text: str) -> Dict[str, str]:
+    """X and LinkedIn profiles written anywhere in ``text`` (an email reply),
+    as ``{"x": url, "linkedin": url}``. A company page cannot be told from
+    any other link in free text, so it is left to the form or to Patrick."""
+    out: Dict[str, str] = {}
+    for match in _URLISH_RE.findall(text or ""):
+        url = match.rstrip(".,;:!?")
+        if not url.lower().startswith("http"):
+            url = "https://" + url
+        if "x" not in out and _x_profile(url):
+            out["x"] = _x_profile(url)
+        if "linkedin" not in out and _linkedin_profile(url):
+            out["linkedin"] = _linkedin_profile(url)
+    return out
+
+
+def has_public_profile(app: Dict[str, Any]) -> bool:
+    return bool(public_profiles(app))
+
+
+def x_handle(app: Dict[str, Any]) -> str:
+    """The guest's X handle without the @, or ``""``."""
+    url = public_profiles(app).get("x", "")
+    return url.rsplit("/", 1)[-1] if url else ""
 
 
 def guest_links_markdown(app: Dict[str, Any], heading: str = "") -> str:

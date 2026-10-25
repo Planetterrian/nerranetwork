@@ -56,7 +56,10 @@ def _app(**over) -> Dict[str, Any]:
             "pitched_show": "models_agents", "publicist_name": "Sam Reyes",
             "publicist_email": "sam@reyespr.com", "producer_followup_count": 0,
             "producer_action": "sent", "producer_acted_at": "2026-09-01T16:00:00+00:00",
-            "email_thread_id": "t1"}
+            "email_thread_id": "t1",
+            # Oct 25 2026: no booking link without a public profile; this
+            # pitch carried her LinkedIn.
+            "links": {"urls": ["https://www.linkedin.com/in/lena-ortiz"]}}
     base.update(over)
     return base
 
@@ -302,7 +305,9 @@ class TestPitchFields:
         assert out["links"] == ["https://fieldwork.ai", "https://linkedin.com/in/lena"]
 
     def test_missing_fields_tolerated(self):
-        out = classify.validate_classification(_classification())
+        bare = _classification()
+        bare.pop("links")   # the shared pitch carries a LinkedIn since Oct 25 2026
+        out = classify.validate_classification(bare)
         assert out["bio"] is None and out["topics"] == [] and out["links"] == []
 
     def test_row_carries_them(self, db, slack, grok):

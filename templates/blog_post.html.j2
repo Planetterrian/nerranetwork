@@ -944,6 +944,17 @@
             font-size: clamp(2rem, 5.2vw, 3rem);
             line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
         }
+        .nn-iv-who { display: flex; align-items: center; gap: 1.1rem; margin: 0 0 1rem; }
+        .nn-iv-who .nn-iv-identifier { margin-bottom: 0; }
+        .nn-iv-photo {
+            width: 104px; height: 104px; flex-shrink: 0; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--show-color);
+            background: var(--nn-surface);
+        }
+        @media (max-width: 520px) {
+            .nn-iv-photo { width: 76px; height: 76px; }
+            .nn-iv-who { gap: 0.8rem; }
+        }
         .nn-iv-identifier {
             font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
             color: var(--show-color-text, var(--show-color));
@@ -1057,9 +1068,20 @@
             <span>Episode {{ episode_num }}</span>
         </div>
 
+        {#- Oct 25 2026: the photo from the guest's public profile, beside
+            their name (pipelines/voices/profile_photo.py keeps it on R2). -#}
+        {% if interview.guest_photo %}
+        <div class="nn-iv-who">
+            <img class="nn-iv-photo" src="{{ interview.guest_photo | e }}" alt="{{ interview.guest_name | e }}" width="104" height="104" decoding="async">
+            <div>
+        {% endif %}
         <h1 class="nn-iv-name"><span class="nn-i18n-title">{{ interview.guest_name }}</span></h1>
         {% if interview.guest_identifier %}
         <p class="nn-iv-identifier">{{ interview.guest_identifier }}</p>
+        {% endif %}
+        {% if interview.guest_photo %}
+            </div>
+        </div>
         {% endif %}
         {% if hook %}
         <p class="nn-iv-standfirst">{{ hook }}</p>

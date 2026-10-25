@@ -655,9 +655,147 @@ function oneOf(value: unknown, allowed: string[]): string | null {
   return allowed.includes(v) ? v : null;
 }
 
+// ---------------------------------------------------------------------------
+// Public profiles (Oct 25 2026)
+//
+// Every applicant names at least one public profile: their X account, their
+// LinkedIn profile, or their profile page on their company's own website.
+// Patrick asked for it so an application can be checked against something
+// the applicant did not write for us, and so the episode page can link to
+// the guest and carry their public photo (pipelines/voices/profile_photo.py
+// finds the photo; the post shows it beside their name). The keys written
+// here, links.x / links.linkedin / links.company_profile, are read back by
+// public_profiles in pipelines/voices/common.py.
+// ---------------------------------------------------------------------------
+
+export type PublicProfiles = { x: string | null; linkedin: string | null; company_profile: string | null };
+type Normalised = { url: string | null; error: string | null };
+
+export const PUBLIC_PROFILE_REQUIRED =
+  "Please give at least one public profile: your X account, your LinkedIn profile, or your " +
+  "profile page on your company's website. We use it to confirm who you are, and your episode " +
+  "page links to it.";
+
+const PROFILE_SOCIAL_HOSTS = ["x.com", "twitter.com", "linkedin.com", "facebook.com", "instagram.com",
+  "threads.net", "bsky.app", "tiktok.com", "youtube.com"];
+// Paths on x.com that are not anybody's account.
+const X_NOT_A_HANDLE = new Set(["home", "i", "intent", "share", "search", "explore", "settings",
+  "messages", "notifications", "hashtag", "login", "signup", "compose"]);
+const X_HANDLE_RE = /^[A-Za-z0-9_]{1,15}$/;
+
+function asUrl(raw: string): URL | null {
+  const text = raw.trim();
+  if (!text || /\s/.test(text)) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    if (!/^https?:$/.test(u.protocol) || !u.hostname.includes(".")) return null;
+    return u;
+  } catch { return null; }
+}
+
+const hostIs = (u: URL, domain: string) =>
+  u.hostname.toLowerCase() === domain || u.hostname.toLowerCase().endsWith(`.${domain}`);
+
+/** "@piper", "piper", "x.com/piper", "https://twitter.com/piper?s=21" → https://x.com/piper. */
+export function normaliseX(raw: unknown): Normalised {
+  const text = String(raw ?? "").trim();
+  if (!text) return { url: null, error: null };
+  const bare = text.replace(/^@/, "");
+  let handle = X_HANDLE_RE.test(bare) ? bare : "";
+  if (!handle) {
+    const u = asUrl(text);
+    if (u && (hostIs(u, "x.com") || hostIs(u, "twitter.com"))) {
+      const first = u.pathname.split("/").filter(Boolean)[0] ?? "";
+      if (X_HANDLE_RE.test(first) && !X_NOT_A_HANDLE.has(first.toLowerCase())) handle = first;
+    }
+  }
+  return handle ? { url: `https://x.com/${handle}`, error: null }
+    : { url: null, error: "That X account doesn't look right. Use @yourhandle or the link to your profile." };
+}
+
+/** A personal LinkedIn profile (/in/… or the older /pub/…), tracking stripped. */
+export function normaliseLinkedIn(raw: unknown): Normalised {
+  const text = String(raw ?? "").trim();
+  if (!text) return { url: null, error: null };
+  const u = asUrl(text);
+  const parts = u ? u.pathname.split("/").filter(Boolean) : [];
+  if (u && hostIs(u, "linkedin.com") && parts[0] === "in" && parts[1]) {
+    return { url: `https://www.linkedin.com/in/${parts[1]}`, error: null };
+  }
+  if (u && hostIs(u, "linkedin.com") && parts[0] === "pub" && parts[1]) {
+    return { url: `https://www.linkedin.com/${parts.join("/")}`, error: null };
+  }
+  return { url: null, error: "Use the link to your own LinkedIn profile (it has /in/ in it), for example linkedin.com/in/yourname." };
+}
+
+/** The page about the guest on their company's own site. */
+export function normaliseCompanyProfile(raw: unknown): Normalised {
+  const text = String(raw ?? "").trim();
+  if (!text) return { url: null, error: null };
+  const u = asUrl(text);
+  if (!u) {
+    return { url: null, error: "The company profile link doesn't look like a web address. Paste the full link to the page about you." };
+  }
+  if (PROFILE_SOCIAL_HOSTS.some((h) => hostIs(u, h))) {
+    return { url: null, error: "For the company profile, use the page about you on your company's own website. Your X and LinkedIn links have their own boxes." };
+  }
+  u.hash = "";
+  return { url: u.toString().replace(/\/$/, ""), error: null };
+}
+
+/** The guest's public profiles from the apply form, or the reason to send it back.
+ *  Lenient where it can be: a LinkedIn or X link pasted into the company box
+ *  or into "other links" is moved to its own key rather than refused, which
+ *  also keeps an apply page cached from before Oct 25 (one free-text links
+ *  box) working for anyone who put either there. */
+export function publicProfiles(form: any): { profiles: PublicProfiles; error: string | null } {
+  const links = form?.links && typeof form.links === "object" ? form.links : {};
+  const pick = (k: string) => String(links[k] ?? form?.[k] ?? "").trim();
+  let xRaw = pick("x"), liRaw = pick("linkedin"), coRaw = pick("company_profile");
+  const coUrl = coRaw ? asUrl(coRaw) : null;
+  if (coUrl && hostIs(coUrl, "linkedin.com") && !liRaw && normaliseLinkedIn(coRaw).url) { liRaw = coRaw; coRaw = ""; }
+  if (coUrl && (hostIs(coUrl, "x.com") || hostIs(coUrl, "twitter.com")) && !xRaw && normaliseX(coRaw).url) { xRaw = coRaw; coRaw = ""; }
+  const others = String(typeof form?.links === "string" ? form.links : links.raw ?? "")
+    .split(/[\s,]+/).filter(Boolean);
+  if (!liRaw) liRaw = others.find((o) => { const u = asUrl(o); return !!u && hostIs(u, "linkedin.com") && !!normaliseLinkedIn(o).url; }) ?? "";
+  if (!xRaw) xRaw = others.find((o) => { const u = asUrl(o); return !!u && (hostIs(u, "x.com") || hostIs(u, "twitter.com")) && !!normaliseX(o).url; }) ?? "";
+  const x = normaliseX(xRaw), li = normaliseLinkedIn(liRaw), co = normaliseCompanyProfile(coRaw);
+  const profiles = { x: x.url, linkedin: li.url, company_profile: co.url };
+  const error = x.error || li.error || co.error
+    || (profiles.x || profiles.linkedin || profiles.company_profile ? null : PUBLIC_PROFILE_REQUIRED);
+  return { profiles, error };
+}
+
+/** The links column for a new application: the profiles under their own keys,
+ *  anything else the guest listed kept as free text. */
+export function applicationLinks(profiles: PublicProfiles, formLinks: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(profiles)) if (v) out[k] = v;
+  const raw = typeof formLinks === "string" ? formLinks
+    : formLinks && typeof formLinks === "object" ? String((formLinks as any).raw ?? "") : "";
+  if (raw.trim()) out.raw = raw.trim().slice(0, 500);
+  return out;
+}
+
+/** Profile links (and the photo, once found) for the triage page and Patrick's mail. */
+export function profilesHtml(app: any): string {
+  const l = app?.links && typeof app.links === "object" ? app.links : {};
+  const items = ([["X", l.x], ["LinkedIn", l.linkedin], ["Company profile", l.company_profile]] as Array<[string, unknown]>)
+    .filter(([, u]) => typeof u === "string" && /^https?:\/\//.test(u as string))
+    .map(([label, u]) => `<a href="${esc(String(u))}" target="_blank" rel="noopener">${label}</a>`);
+  const photo = typeof app?.profile_photo_url === "string" && app.profile_photo_url
+    ? `<img src="${esc(app.profile_photo_url)}" alt="" width="40" height="40" style="border-radius:50%;vertical-align:middle;margin-right:.4rem">` : "";
+  return items.length
+    ? `<br><small class="prov">${photo}<b>Public profiles:</b> ${items.join(" · ")}</small>`
+    : `<br><small style="color:#991B1B"><b>No public profile given</b> (X, LinkedIn or a company page): ask for one before booking.</small>`;
+}
+
 async function handleApply(req: Request, env: Env): Promise<Response> {
   const form = await req.json<any>().catch(() => null);
   if (!form?.name || !form?.email) return json({ error: "name and email are required" }, 400);
+  // Oct 25 2026: at least one public profile, or the form says what is missing.
+  const { profiles, error: profileError } = publicProfiles(form);
+  if (profileError) return json({ error: profileError, field: "public_profile" }, 400);
   // `show` comes from the apply page (age-of-ai-apply.html posts age_of_ai,
   // nerra-voices-apply.html posts nerra_voices); anything else → default.
   const show = showFor({ show: form.show });
@@ -674,7 +812,7 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     title: form.title ? String(form.title).slice(0, 200) : null,
     bio: form.bio ? String(form.bio).slice(0, 4000) : null,
     topics: Array.isArray(form.topics) ? form.topics.slice(0, 10) : null,
-    links: form.links ?? null,
+    links: applicationLinks(profiles, form.links),
     // What the guest wants the conversation to be (Sept 13 2026). These three
     // shape Mira's brief, the number of questions she prepares, and the clock
     // she paces to. A guest who asks for twenty minutes and gets forty-five
@@ -708,11 +846,17 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   let merged = false;
   const invited = await sb(env, "GET",
     `guest_applications?email=ilike.${encodeURIComponent(emailAddr)}&status=eq.invited` +
-    `&order=created_at.desc&limit=1&select=id,show`);
+    `&order=created_at.desc&limit=1&select=id,show,links`);
   if (invited?.length) {
     const patch: Record<string, unknown> = { status: "pending" };
     for (const [k, v] of Object.entries(fields)) {
       if (v !== null && v !== undefined && v !== "") patch[k] = v;
+    }
+    // The Producer's stub may already hold links from the pitch ({urls: [...]});
+    // keep them beside what the guest gave on the form.
+    const prior = invited[0].links;
+    if (prior && typeof prior === "object" && !Array.isArray(prior)) {
+      patch.links = { ...prior, ...(fields.links as Record<string, string>) };
     }
     const rows = await sb(env, "PATCH", `guest_applications?id=eq.${invited[0].id}`,
       patch, "return=representation");
@@ -776,6 +920,7 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
          ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
          ${esc(String(form.bio ?? "").slice(0, 400))}</p>
          <p><em>Wants to talk about:</em> ${esc((Array.isArray(form.topics) ? form.topics : []).join(", "))}</p>
+         <p>${profilesHtml({ links: fields.links }).replace(/^<br>/, "")}</p>
          <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${await triageToken(env)}">
          Review and approve or decline here</a>. If approved, I'll send them
          my booking link and take it from there — you'll be copied on
@@ -2770,7 +2915,7 @@ async function handleAdminTriage(req: Request, env: Env): Promise<Response> {
     <li><b>${esc(a.name)}</b> — ${esc(a.title ?? "")} ${esc(a.organization ?? "")}
       ${a.wants_cohost ? '<small class="prov">· asked for Patrick as co-host</small>' : ""}
       <br><small>${esc((a.topics ?? []).join(", "))}</small>${provenance(a)}
-      <br>${esc(a.bio ?? "").slice(0, 500)}${screenHtml(a)}
+      <br>${esc(a.bio ?? "").slice(0, 500)}${profilesHtml(a)}${screenHtml(a)}
       <br><button onclick="decide('${a.id}','approved')">Approve</button>
       <button onclick="decide('${a.id}','declined')">Decline</button>
       <span class="move">Move to

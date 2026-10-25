@@ -30,7 +30,7 @@ import os  # noqa: E402
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, guest_links, llm, load_prompt, notify_operator,
-    parse_json_lenient, sb_select, sb_update, send_email,
+    parse_json_lenient, public_profiles, sb_select, sb_update, send_email,
 )
 from pipelines.voices.shows import show_for  # noqa: E402
 
@@ -52,6 +52,38 @@ def provenance(app: dict) -> str:
     return "; ".join(bits)
 
 
+PROFILE_LABELS = (("x", "X"), ("linkedin", "LinkedIn"), ("company_profile", "Company profile"))
+
+
+def profiles_text(app: dict) -> str:
+    """The public profiles for the screen prompt (Oct 25 2026)."""
+    found = public_profiles(app)
+    return ", ".join(f"{label}: {found[k]}" for k, label in PROFILE_LABELS if k in found) \
+        or "(none given)"
+
+
+def profiles_html(app: dict) -> str:
+    """The profiles and the photo the episode page will use, for Patrick's
+    note. Oct 25 2026: every application names at least one so the person
+    can be checked against something they did not write for us."""
+    e = _html.escape
+    found = public_profiles(app)
+    if not found:
+        return ("<p style='color:#991B1B'><b>No public profile given</b> (X, LinkedIn or a "
+                "page on their company's site). Ask for one before booking.</p>")
+    links = " · ".join(f"<a href=\"{e(found[k])}\">{label}</a>"
+                       for k, label in PROFILE_LABELS if k in found)
+    photo = app.get("profile_photo_url") or ""
+    if photo:
+        return (f"<p><img src=\"{e(photo)}\" alt=\"\" width=\"72\" height=\"72\" "
+                f"style=\"border-radius:50%;vertical-align:middle;margin-right:.6em\">"
+                f"<b>Public profiles:</b> {links}<br><small>That photo goes on their episode "
+                f"page beside these links. If it is the wrong person, tell me and I will "
+                f"swap it.</small></p>")
+    return (f"<p><b>Public profiles:</b> {links}<br><small>I could not find a photo on "
+            f"them; the episode page will go without one unless one is added.</small></p>")
+
+
 def screen(app: dict) -> dict:
     show = show_for(app)
     topics = app.get("topics") or []
@@ -64,6 +96,7 @@ def screen(app: dict) -> dict:
         bio=app.get("bio") or "(none given)",
         topics="\n".join(f"- {t}" for t in topics) or "(none given)",
         links=", ".join(f"{l['label']}: {l['url']}" for l in guest_links(app)) or "(none)",
+        public_profiles=profiles_text(app),
         provenance=provenance(app),
     )
     raw = llm(prompt, temperature=0.2, web_search=True, max_tokens=1500)
@@ -114,6 +147,7 @@ def assessment_email(app: dict, result: dict) -> tuple[str, str]:
         + items("What I could not", result["concerns"])
         + (f"<p><b>If we have them on, I would open with:</b> {e(result['ask_first'])}</p>"
            if result.get("ask_first") else "")
+        + profiles_html(app)
         + f"<p><em>In their words:</em> {e(str(app.get('bio') or '')[:600])}</p>"
         f"<p><em>Wants to talk about:</em> {e(', '.join(str(t) for t in topics))}</p>"
         f"<p><a href=\"{triage_link()}\">Approve or decline here</a>. If you approve, "
@@ -137,6 +171,10 @@ def screen_one(app: dict) -> dict:
         notify_operator(show.slack(
             f"application screened THIN: {app.get('name')} — {result['summary']} "
             f"(concerns: {'; '.join(result['concerns']) or 'none listed'})"))
+    # The photo for their episode page, found now so Patrick sees it before
+    # he approves. Never fatal.
+    from profile_photo import ensure_photo
+    ensure_photo(app)
     if app.get("status") == "pending":
         subject, body = assessment_email(app, result)
         try:

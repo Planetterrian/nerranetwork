@@ -304,14 +304,21 @@ def long_form_reply_text(label: str, episode_num: int) -> str:
     return f"The full episode: {label}, episode {int(episode_num)}."
 
 
-def teaser_text(title: str, link: str) -> str:
-    """``<title>\n\n<link>`` with the title clipped to the X text budget."""
-    head = clip_words(" ".join((title or "").split()), X_TEASER_TEXT_MAX)
-    return f"{head}\n\n{link}".strip()
+def teaser_text(title: str, link: str, mention: str = "") -> str:
+    """``<title>\n\n<link>`` with the title clipped to the X text budget.
+
+    Oct 25 2026: ``mention`` (an X handle) adds "With @handle" above the
+    link, so the interview shows tag their guest; the title gives way.
+    """
+    handle = mention.strip().lstrip("@") if mention else ""
+    tag = f"With @{handle}" if handle else ""
+    budget = X_TEASER_TEXT_MAX - (len(tag) + 2 if tag else 0)
+    head = clip_words(" ".join((title or "").split()), budget)
+    return "\n\n".join(part for part in (head, tag, link) if part).strip()
 
 
 def post_teaser(*, env_prefix: str, title: str, link: str,
-                label: str) -> Tuple[bool, str]:
+                label: str, mention: str = "") -> Tuple[bool, str]:
     """Post one teaser. Returns ``(posted, reason)``.
 
     ``reason`` is ``""`` on success, ``no_credentials`` when the prefix is
@@ -325,7 +332,7 @@ def post_teaser(*, env_prefix: str, title: str, link: str,
     try:
         from engine.publisher import post_to_x
         url = post_to_x(
-            teaser_text(title, link),
+            teaser_text(title, link, mention),
             consumer_key=creds["consumer_key"],
             consumer_secret=creds["consumer_secret"],
             access_token=creds["access_token"],

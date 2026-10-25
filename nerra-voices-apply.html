@@ -53,6 +53,11 @@
   .privacy-note { font-size: .85rem; opacity: .85; margin-top: .6rem; }
   textarea { min-height: 110px; }
   ::placeholder { color: rgba(153, 246, 228, 0.45); }
+  /* Oct 25 2026: the public-profile group, at least one of three required. */
+  fieldset.profiles { border: 1px solid var(--line); border-radius: 14px;
+                      padding: .4rem 1.1rem 1.1rem; margin: 1.4rem 0 0; min-width: 0; }
+  fieldset.profiles legend { font-weight: 700; padding: 0 .4rem; }
+  fieldset.profiles.missing { border-color: var(--amber); }
   .hint { font-size: .85rem; color: var(--mint); margin-top: .25rem; opacity: .85; }
   button { margin-top: 1.6rem; background: var(--teal); color: var(--white); border: 0;
            border-radius: 12px; padding: .9rem 1.7rem; font: inherit; font-size: 1.05rem;
@@ -119,8 +124,24 @@
     <label for="topics">What should Mira ask you about? *</label>
     <textarea id="topics" name="topics" required maxlength="1000" placeholder="One topic per line — e.g. 'what a night shift in the ER is really like', 'why I left the firm to make furniture', 'the part of the job nobody warns you about'"></textarea>
 
-    <label for="links">Links (optional)</label>
-    <input id="links" name="links" maxlength="500" placeholder="Website, LinkedIn, portfolio — comma separated">
+    <fieldset class="profiles" aria-describedby="profilesHint">
+      <legend>Where can we see you in public? *</legend>
+      <p class="hint" id="profilesHint">At least one of these three. We use it to confirm who
+      you are. Your episode page links to it and shows your public profile photo, and when the
+      episode is posted on X we tag your account.</p>
+
+      <label for="x_profile">X account</label>
+      <input id="x_profile" name="x_profile" maxlength="200" placeholder="@yourhandle" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+      <label for="linkedin_profile">LinkedIn profile</label>
+      <input id="linkedin_profile" name="linkedin_profile" maxlength="300" placeholder="linkedin.com/in/yourname" inputmode="url" autocapitalize="off" spellcheck="false">
+
+      <label for="company_profile">Your profile on your company's website</label>
+      <input id="company_profile" name="company_profile" maxlength="500" placeholder="The team or about page that names you" inputmode="url" autocapitalize="off" spellcheck="false">
+    </fieldset>
+
+    <label for="links">Other links (optional)</label>
+    <input id="links" name="links" maxlength="500" placeholder="Website, portfolio, publications — comma separated">
 
     <label for="desired_minutes">How long would you like the interview to be?</label>
     <select id="desired_minutes" name="desired_minutes">
@@ -218,11 +239,23 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
   const result = document.getElementById('result');
   btn.disabled = true; result.textContent = '';
   const val = id => document.getElementById(id).value.trim();
+  // Oct 25 2026: at least one public profile. The server checks too and says
+  // what is wrong with a link it cannot read.
+  const profiles = document.querySelector('fieldset.profiles');
+  if (!val('x_profile') && !val('linkedin_profile') && !val('company_profile')) {
+    profiles.classList.add('missing');
+    result.textContent = 'Please add at least one public profile: your X account, your LinkedIn profile, or your profile page on your company\'s website.';
+    document.getElementById('x_profile').focus();
+    btn.disabled = false;
+    return;
+  }
+  profiles.classList.remove('missing');
   const payload = {
     name: val('name'), email: val('email'), phone: val('phone'),
     title: val('title'), organization: val('organization'), bio: val('bio'),
     topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
-    links: { raw: val('links') },
+    links: { x: val('x_profile'), linkedin: val('linkedin_profile'),
+             company_profile: val('company_profile'), raw: val('links') },
     desired_minutes: val('desired_minutes') ? parseInt(val('desired_minutes'), 10) : null,
     depth: val('depth') || null,
     personal_depth: val('personal_depth') || null,
@@ -237,6 +270,15 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    if (resp.status === 400) {
+      // The server says which link it could not read; show its words.
+      const data = await resp.json().catch(() => ({}));
+      if (data && data.error) {
+        if (data.field === 'public_profile') profiles.classList.add('missing');
+        result.textContent = data.error;
+        return;
+      }
+    }
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     result.textContent = 'Application received! We read every one — if it\'s a fit, a booking link lands in your inbox.';
     e.target.reset();

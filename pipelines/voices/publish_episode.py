@@ -42,8 +42,9 @@ from common import (  # noqa: E402
     ROOT, VoiceShow, logger, notify_operator, sb_select, sb_update, show_for,
     guest_links,
     guest_links_markdown,
-    send_email, mira_signature_html, kits_html,
+    send_email, mira_signature_html, kits_html, x_handle,
 )
+from profile_photo import ensure_photo  # noqa: E402
 
 
 #: The line above every published transcript (Oct 7 2026). It said "reviewed
@@ -553,6 +554,11 @@ def publish_one(interview_id: str) -> int:
                 f"https://nerranetwork.com/blog/{show.slug}/ep{episode_num:03d}.html"),
         )
 
+    # Oct 25 2026: the photo from the guest's public profile, beside their
+    # name on the post. Found when the application was screened; looked for
+    # once more here if it was not. Never stops the publish.
+    photo = ensure_photo(app) or ""
+
     # Summaries JSON (site + dashboards read this shape network-wide).
     summaries_path = show.summaries_path
     summaries_path.parent.mkdir(parents=True, exist_ok=True)
@@ -568,6 +574,7 @@ def publish_one(interview_id: str) -> int:
         "audio_url": audio_url,
         "guest": app["name"],
         "guest_links": guest_links(app),
+        "guest_photo": photo,
         "chapters": vouched_chapters(pkg),
     })
     summaries_path.write_text(
@@ -606,7 +613,7 @@ def publish_one(interview_id: str) -> int:
                           digest_path)
     maybe_publish_youtube(show, cfg, episode_num, today, title, description,
                           audio_url, app.get("name") or "")
-    maybe_post_x(show, cfg, episode_num, title)
+    maybe_post_x(show, cfg, episode_num, title, mention=x_handle(app))
 
     notify_operator(show.slack(
         f"Ep{episode_num} PUBLISHED: {app['name']} — RSS updated, "
@@ -692,7 +699,8 @@ def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
                          show.slug, episode_num)
 
 
-def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str) -> None:
+def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str,
+                 mention: str = "") -> None:
     """Post the episode's title and page link to X, if the show enables it.
 
     Oct 9 2026: ``publishing.x_enabled`` / ``x_env_prefix`` on the show YAML
@@ -700,6 +708,9 @@ def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str) -> None:
     every other show's X post lives (the same hole the newsletter and
     YouTube flags had until Sep 20). ``engine.x_post`` reads the four
     ``<prefix>*`` credentials; unset is a logged skip, never a failure.
+
+    Oct 25 2026: ``mention`` is the guest's X handle from their application
+    (the form tells them their account is tagged when the episode posts).
     """
     pub = getattr(cfg, "publishing", None) if cfg is not None else None
     if pub is None or not getattr(pub, "x_enabled", False):
@@ -713,6 +724,7 @@ def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str) -> None:
         posted, reason = post_teaser(
             env_prefix=getattr(pub, "x_env_prefix", "") or "",
             title=title, link=link, label=f"{show.name} Ep{episode_num}",
+            mention=mention,
         )
         if not posted:
             logger.warning("::warning::X post for %s Ep%d did not go out (%s)",
@@ -940,6 +952,15 @@ def refresh_post(interview_id: str) -> int:
     if not episode_num or entry is None:
         raise RuntimeError(f"no published record of Ep{episode_num} for "
                            f"{app['name']} in {show.summaries_path}")
+    # Oct 25 2026: a refresh also brings the record's links and photo up to
+    # date, which is how an episode published before then gets its photo.
+    photo = ensure_photo(app) or entry.get("guest_photo") or ""
+    links = guest_links(app) or entry.get("guest_links") or []
+    if photo != entry.get("guest_photo", "") or links != entry.get("guest_links"):
+        entry["guest_photo"] = photo
+        entry["guest_links"] = links
+        show.summaries_path.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     when = dt.date.fromisoformat(str(entry["date"])[:10])
     write_episode_digest(show, episode_num, when, entry["title"],
                          interview, app, pkg, entry["audio_url"])

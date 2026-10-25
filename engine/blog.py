@@ -1422,7 +1422,9 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
                    show_config: dict | None = None,
                    *, transcript_url: str = "", audio_url: str = "",
                    translations: dict | None = None,
-                   guest_name: str = "") -> str:
+                   guest_name: str = "",
+                   guest_image: str = "",
+                   guest_same_as: list | None = None) -> str:
     """Build Schema.org JSON-LD: BlogPosting + PodcastEpisode (as array).
 
     PodcastEpisode enables Google's podcast features in Search results, links
@@ -1461,6 +1463,12 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
     # An interview is ABOUT a person, and the person is what a reader
     # searches for. Named on both blocks; the author stays the show.
     guest_entity = {"@type": "Person", "name": guest_name} if guest_name else None
+    # Oct 25 2026: the photo from their public profile and the profiles
+    # themselves, so a search engine can tell which person this is.
+    if guest_entity and guest_image:
+        guest_entity["image"] = guest_image
+    if guest_entity and guest_same_as:
+        guest_entity["sameAs"] = list(guest_same_as)
     if guest_entity:
         blog_posting["about"] = guest_entity
 
@@ -1853,6 +1861,12 @@ def generate_blog_post_html(
         transcript_url=_transcript_url, audio_url=_audio_url,
         translations=metadata.get("translations", {}) or {},
         guest_name=(interview or {}).get("guest_name", ""),
+        guest_image=(interview or {}).get("guest_photo", ""),
+        # sameAs is for pages that ARE the person (their X account, their
+        # LinkedIn profile), not their company's site or its socials.
+        guest_same_as=[link["url"] for link in (interview or {}).get("guest_links") or []
+                       if re.match(r"^https://(?:www\.)?(?:x\.com/[A-Za-z0-9_]{1,15}/?$|"
+                                   r"linkedin\.com/in/)", str(link.get("url", "")))],
     )
 
     # A show can swap the post template from its registry entry, the same way

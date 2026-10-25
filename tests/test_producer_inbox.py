@@ -193,6 +193,9 @@ def _classification(**over) -> Dict[str, Any]:
         "topic_summary": "AI agents in construction site management",
         "is_ai_related": True, "recommended_show": "age_of_ai",
         "pitched_show": "models_agents", "mentions_money_or_legal": False,
+        # Oct 25 2026: the booking link goes in the first email only when the
+        # pitch carries a public profile; this one carries her LinkedIn.
+        "links": ["https://www.linkedin.com/in/lena-ortiz"],
     }
     base.update(over)
     return base

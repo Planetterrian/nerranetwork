@@ -244,7 +244,10 @@ class TestInterviewPost:
         assert blocks, "no JSON-LD array on the post"
         data = json.loads(blocks[0])
         for entry in data:
-            assert entry.get("about") == {"@type": "Person", "name": "Hogan Shrum"}
+            # Oct 25 2026: the Person also carries sameAs, his own profiles
+            # only (his LinkedIn, not the company's site or socials).
+            assert entry.get("about") == {"@type": "Person", "name": "Hogan Shrum",
+                                          "sameAs": ["https://www.linkedin.com/in/hoganshrum"]}
 
     def test_the_bio_is_labelled_as_the_guests_own_words(self, ep4):
         assert "In their own words" in ep4
