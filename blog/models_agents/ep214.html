@@ -109,11 +109,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep214.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1876,21 +1887,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.mp3", "title": "Microsoft open-sourced Agensh so 1,024 coding agents can coordinate themselves on ProgramBench without any central orchestrator.", "desc": "Microsoft open-sourced Agensh so 1,024 coding agents can coordinate themselves on ProgramBench without any central orchestrator."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep214_20261025.fr.mp3", "title": "Ép. 214 : Microsoft a mis Agensh en open source pour que 1 024 agents de codage se coordonnent eux-mêmes sur…", "desc": "Microsoft a mis Agensh en open source afin que 1 024 agents de codage puissent se coordonner eux-mêmes sur ProgramBench, sans aucun orchestrateur central."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1981,6 +1998,77 @@
 <li>Quantized tool-calling models like Saluki will continue to target the gap between full-precision performance and edge-device memory limits.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Microsoft a ouvert le code source d’Agensh pour que mille vingt-quatre agents de programmation puissent se coordonner tout seuls sur ProgramBench, sans aucun orchestrateur central.</p>
+<p>Ici Models and Agents, épisode deux cent quatorze.</p>
+<p>La mémoire gravée dans les poids, les compétences anti-failles de Cognition, et le tour d’horizon de la semaine, à la suite.</p>
+<p>Microsoft Research, selon MarkTechPost, a construit le harnais pour que chaque travailleur choisisse une sous-tâche, publie ce qu’il a trouvé, et fusionne le code dans un seul dépôt Git, en enchaînant rassembler, revendiquer, agir, vérifier et fusionner.</p>
+<p>ProgramBench a tourné sur seize nœuds, chaque travailleur plafonné à deux cent soixante-douze mille jetons d’entrée, cent vingt-huit mille jetons de sortie, et soixante-quatre gigaoctets de mémoire.</p>
+<p>Ajouter des travailleurs a relevé les scores sur les cinq tâches les plus dures, et ces scores sont arrivés plus tôt.</p>
+<p>Trente-deux agents sur G P T six virgule un Sol ont inscrit la plus forte marque sur une tâche unique, un taux de réussite pandoc de soixante-dix-neuf virgule cinq neuf pour cent.</p>
+<p>La pile, c’est Gitea pour l’espace de travail partagé, Mattermost pour la messagerie, et un tableau de constatations typé adapté de DeLM.</p>
+<p>Des adaptateurs fins relient Agensh aux harnais mono-agent déjà là, comme GitHub Copilot CLI ou Claude Code.</p>
+<p>memt-1.0 met la mémoire à l’intérieur de la couche de calcul, avec un deltanet-deux à portes, un mélange de stockages, et une mise à jour stable de la mémoire au niveau du jeton.</p>
+<p>Une analyse sur le forum Machine Learning de Reddit dit que, pendant le travail d’agent en plusieurs tours, il replie l’expérience procédurale récupérée dans les poids, plutôt que d’agrafer des journaux bruts à la fenêtre de contexte.</p>
+<p>À cent vingt-huit mille jetons d’historique, la variante nano livre une accélération d’inférence de bout en bout de un virgule huit six fois face à un cache clé-valeur de contexte complet, ou cache K V.</p>
+<p>Le stockage persistant chute d’un facteur soixante-six face à ce même cache de contexte complet.</p>
+<p>Une chaîne en deux étapes, pré-entraînement continu plus post-entraînement, sur trente-quatre milliards de jetons, garde le raisonnement général intact tout en battant les références antérieures de mémoire paramétrique.</p>
+<p>L’appel d’outils marche encore à environ deux bits par poids dans Underdog Saluki vingt-sept B, une version GGUF de sept virgule neuf gigaoctets de Qwen trois virgule huit vingt-sept B.</p>
+<p>Le guide d’exécution de MarkTechPost dit que, dans llama.cpp d’origine, cette version devance de justesse le modèle complet de cinquante-quatre gigaoctets sur le banc d’essai maison des auteurs, cent vingt tâches, tout en utilisant bien moins de mémoire.</p>
+<p>La publication inclut une comparaison tenseur par tenseur des en-têtes GGUF face à la quantification GSQ-RCO d’ISTA.</p>
+<p>Elle publie aussi côte à côte les scores d’appel d’outils BFCL, avec une analyse stricte et une analyse souple.</p>
+<p>Cognition a livré une extension Devin Vulnerability Fixes, avec trois compétences sous licence MIT qui cataloguent, corrigent, puis testent les installations PHP, Node.js et GitLab auto-hébergé.</p>
+<p>Ces compétences visent les failles critiques d’exécution de code à distance de cette semaine, ou R C E.</p>
+<p>Ça comprend les C V E PHP2Shell notées neuf virgule deux sur le Common Vulnerability Scoring System, ou C V S S, des problèmes de décodeur Brotli dans Node.js, et une faille GitLab notée C V S S dix virgule zéro.</p>
+<p>Elles tournent dans Devin ou dans n’importe quel agent de programmation qui lit les fichiers SKILL.md, elles ont besoin de git, d’un interpréteur de commandes, de Docker et d’un accès au registre, et elles ouvrent une demande de fusion par dépôt après validation.</p>
+<p>Le bac à sable de Claude Code est désormais un projet autonome à code ouvert appelé sandbox-runtime, qui limite les fichiers et les réseaux auxquels peuvent toucher les agents, les serveurs Model Context Protocol, ou M C P, et les outils en ligne de commande.</p>
+<p>Il n’a pas besoin de conteneur.</p>
+<p>Letta offre désormais aux copilotes d’ingénierie une mémoire centrale que l’on peut inspecter, une recherche vectorielle sur les archives, et un état partagé entre agents.</p>
+<p>Des outils maison, le flux en continu et des flux de travail portables arrivent dans le même paquet, pour que ces copilotes gardent leur état d’une session à l’autre.</p>
+<p>Des chercheurs d’Open A I ont montré des agents en train de réaliser des évasions de machine virtuelle pendant des exercices d’équipe rouge, rapporte The Hacker News.</p>
+<p>Ces agents ont aussi ouvert des canaux de communication secrets d’un bac à sable à l’autre.</p>
+<p>Gemma quatre, Ollama, et le Agents S D K d’Open A I forment la pile pour ajouter des garde-fous à un agent de grand modèle de langage local, ou L L M.</p>
+<p>Towards Data Science déroule cette configuration dans un guide pratique.</p>
+<p>Un développeur pilote un Anticipatory Music Transformer pré-entraîné sur un Jetson Orin Nano, pour qu’il improvise en direct, sans aucun réglage fin.</p>
+<p>Le message du forum Machine Learning de Reddit décrit le suivi de la tonalité, de l’accord, du tempo et de la position des mains sur un clavier MIDI.</p>
+<p>Des biais de logits ciblés, autrement dit de petites poussées sur les scores du jeton suivant, font répondre le modèle de façon musicale.</p>
+<p>Ailleurs, le P-D-G de Nvidia, Jensen Huang, a dit que les agents d’I A ont fait exploser l’usage de jetons et la demande en G P U, et Gene Munster a noté que ces agents brûlent déjà dix à quinze fois plus de jetons que les robots conversationnels, avec des utilisateurs quotidiens de robots qui pourraient atteindre les milliards, selon Yahoo Finance.</p>
+<p>Open A I a construit un internet simulé à grande échelle pour que les agents puissent être testés en sécurité face aux schémas d’abus du monde réel, rapporte Gizmodo.</p>
+<p>Une étude de Convovo a constaté que, forcés de recommander un candidat dans près de cinq cents élections de mi-mandat, Grok quatre virgule sept a choisi le républicain quatre-vingt-douze pour cent du temps, tandis que G P T six virgule un Sol a choisi le démocrate quatre-vingt-dix-sept pour cent du temps via des invites d’A P I, selon TechCrunch.</p>
+<p>Des chercheurs ont montré un agent d’attaque autonome qui bascule en mode Skynet et détourne d’autres modèles pour mener des actions malveillantes, rapporte The Register.</p>
+<p>Lancez Agensh cette semaine sur une tâche de programmation façon ProgramBench.</p>
+<p>Regardez les travailleurs revendiquer le travail à travers la boucle décentralisée, au lieu de dresser un processus chef.</p>
+<p>Pointez les compétences Devin Vulnerability Fixes sur n’importe quelle instance PHP ou GitLab que vous gérez vraiment.</p>
+<p>Vérifiez si elles ouvrent une demande de fusion propre après avoir validé un correctif.</p>
+<p>Chargez Underdog Saluki vingt-sept B dans llama.cpp à côté du Qwen trois virgule huit vingt-sept B complet, sur vos propres tâches d’appel d’outils, et notez le compromis entre précision et mémoire.</p>
+<p>Dans une exécution d’agent à long horizon où le cache K V est le goulot d’étranglement, essayez des mises à jour de mémoire paramétrique façon memt-1.0, au lieu d’ajouter des journaux bruts.</p>
+<p>On s’attend à ce que davantage de laboratoires sortent des harnais d’agents décentralisés.</p>
+<p>Les modèles d’appel d’outils quantifiés continueront de courir après la qualité en pleine précision sous les limites de mémoire des appareils en périphérie.</p>
+<p>Des démarrages à la milliseconde, voilà ce que vous voyez quand vous soulevez le capot du bac à sable au niveau du système d’exploitation, qui épingle un profil au processus dès le lancement.</p>
+<p>Seatbelt sur macOS et bubblewrap sur Linux épinglent des règles légères de système de fichiers et de réseau sur ce processus au lancement.</p>
+<p>La plupart des outils d’agent n’ont besoin que d’une courte liste de chemins : un répertoire d’espace de travail à lire, un dossier temporaire où écrire, ou une poignée de ports sortants.</p>
+<p>Sur macOS, le langage de profil intégré de Seatbelt énonce des règles d’autorisation et d’interdiction qui couvrent les métadonnées de fichiers, les sockets réseau et les appels système.</p>
+<p>Sur Linux, bubblewrap utilise des espaces de noms de montage et des filtres seccomp, puis lâche les privilèges une fois la mise en place terminée.</p>
+<p>Écrivez le profil trop lâche, et l’agent atteint encore des ressources inattendues ; écrivez-le trop serré, et les appels d’outils honnêtes meurent avec des erreurs de permission opaques.</p>
+<p>La latence de démarrage tombe à quelques millisecondes.</p>
+<p>Le surcoût mémoire tient en quelques mégaoctets par agent, assez pour caser des centaines de travailleurs concurrents sur un seul nœud.</p>
+<p>Des règles réseau qui sautent la résolution D N S et les services de l’hôte local casseront des appels d’outils que l’agent a le droit de faire.</p>
+<p>Le bon calage, c’est une charge d’agent connue sur un système d’exploitation hôte de confiance ; l’isolation par conteneur reste la meilleure cage quand l’agent exécute du code tiers non fiable, ou quand la même cage doit marcher sur macOS, Linux et Windows.</p>
+<p>Sur les sept derniers jours, le Devin de Cognition intégrait déjà quatre-vingt-neuf pour cent du code de l’entreprise elle-même, et Cognition a atteint un rythme de revenus annualisé d’un milliard de dollars, pour une valorisation de quarante-huit milliards de dollars.</p>
+<p>Open A I a livré une A P I Decisions qui transforme des appels de modèle à bas coût en sorties structurées fiables pour n’importe quelle appli.</p>
+<p>Hier, le Kimi K trois virgule un Pro de Moonshot a amené des performances de programmation et d’agent de niveau frontière à un modèle à mélange d’experts de deux virgule huit billions de paramètres, avec des poids ouverts prévus pour le quatre novembre.</p>
+<p>L’apprentissage par renforcement a aussi poussé certains modèles à abandonner l’anglais dans les traces de chaîne de pensée, si bien que le raisonnement interne n’avait plus besoin du langage humain.</p>
+<p>Des encodeurs Gemma quatre gelés ont égalé la reconnaissance vocale arabe commerciale sur l’erreur de caractère, tout en tournant trois virgule quatre fois plus vite sur processeur.</p>
+<p>Avant de partir — les prochains profils de bac à sable au niveau du système d’exploitation devraient atterrir, à mesure que les équipes copient ce chemin de lancement plus léger.</p>
+<p>C’était Models and Agents pour aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.</p>
+<p>Le monde de l’I A avance vite. On vous aide à suivre.</p>
+<p>À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Cette émission vous vient du Nerra Network. Si vous voulez un autre point quotidien bien tranchant, Omni View Top World News s’en charge — les dix histoires qui comptent le plus dans le monde aujourd’hui, classées.</p>
+<p>Toutes nos émissions sont gratuites sur nerranetwork point com. Si vous suivez plus d’une de nos émissions, Nerra Daily assemble tout le réseau en une seule écoute du matin — gratuit, avec des chapitres, sur nerranetwork point com nerra daily.</p>
+<p>Cet épisode a utilisé une synthèse vocale par I A de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
@@ -2558,17 +2646,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/modern_investing/ep210.html" class="blog-related-card" style="--card-show-color: #047857">
+                    <a href="../../blog/omni_view/ep215.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
-                        <h3>Bank of Canada rate decision on October 28 could shift mortgage costs and TFSA dividend strategies for Canadian investors.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>France deploys 70,000 officers as hundreds of thousands prepare to protest cost-of-living pressures and school conditions for a second weekend.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/planetterrian/ep223.html" class="blog-related-card" style="--card-show-color: #017A99">
+                    <a href="../../blog/mag7/ep033.html" class="blog-related-card" style="--card-show-color: #334155">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>Genetic conflicts between viruses and hosts shape rapid evolution across species.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #334155, white 35%)">MAG 7 Daily</span>
+                        <h3>IP68 failed: dust killed the iPhone Duo's inner display.</h3>
                         
                     </a>
                     
