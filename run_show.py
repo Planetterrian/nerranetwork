@@ -6295,7 +6295,7 @@ def _run_video_stage(
 
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
-    # Oct 18 2026: a long-form scheduled for noon/18:00 ET is private until
+    # Oct 18 2026: a scheduled long-form (since Oct 25, the Short's slot) is private until
     # then. The X teaser and the blog's "Watch on YouTube" button linked it
     # straight away ("Video unavailable" for 5-12 hours); the feed already
     # says when it goes public. Neither links it while it is scheduled.
@@ -7771,8 +7771,8 @@ def _publish_youtube(
     # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
     # The long-form and the hook Short upload now, private with publishAt
     # at the show's slot in engine/release_schedule.py (hook Short 7:00 ET
-    # + 15 min x rank among this channel's YouTube shows; long-form 12:00 /
-    # 18:00 ET waves). Only a PUBLIC show is scheduled (publishAt would make
+    # + 15 min x rank among this channel's YouTube shows; long-form in the
+    # same slot since Oct 25 2026). Only a PUBLIC show is scheduled (publishAt would make
     # an unlisted/private upload public). Best-effort by contract: any
     # failure here, a passed slot, or YouTube refusing the publishAt means
     # the video publishes now, exactly as before.
@@ -9499,7 +9499,13 @@ def _publish_youtube(
             # release slot; later Shorts are staggered from IT, so they
             # always follow it.
             _short1_at = None
-            if _release_on and shorts_plan:
+            if _release_on and shorts_plan and _long_publish_at is not None:
+                # Oct 24 2026: the long-form was scheduled into this show's
+                # slot already; the hook Short takes the SAME instant, never a
+                # second reading of the clock, so the long is public when the
+                # Short is and the Short links it.
+                _short1_at = _long_publish_at
+            elif _release_on and shorts_plan:
                 try:
                     from engine.release_schedule import youtube_short_time
                     _short1_at = youtube_short_time(
@@ -9835,6 +9841,25 @@ def _publish_youtube(
                         _short_punch = (yt_punch_text or "").strip() or None
                         result["shorts_punch_frame_rendered"] = bool(_short_punch)
 
+                    # ---- Persistent subscribe pill (Oct 25 2026) ----
+                    # Every EN Short asks for the subscribe from ~3 s, in
+                    # the cadence the show keeps; half of a Short's viewers
+                    # leave before the end card. Dubs stay the control.
+                    _short_pill = None
+                    if (_yt_channel == "en"
+                            and bool(getattr(config.youtube,
+                                             "shorts_subscribe_pill", False))):
+                        try:
+                            from engine.cadence import episodes_phrase as _pill_cad
+                            _short_pill = (
+                                "Subscribe \u00b7 "
+                                + _pill_cad(getattr(config, "slug", ""))
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning("Shorts subscribe pill skipped: %s", exc)
+                            _short_pill = None
+                        result["shorts_subscribe_pill_rendered"] = bool(_short_pill)
+
                     if _hook_motion is not None and _hook_motion_clip is None:
                         # The retry did not land a clip: say which arm the
                         # Short actually opens on (SpaceX's b-roll pool
@@ -9856,6 +9881,7 @@ def _publish_youtube(
                         final_mp3, cover_path, this_short_video_path,
                         fact_cards=_short_fact_cards,
                         punch_text=_short_punch,
+                        subscribe_pill=_short_pill,
                         clip_paths=(_variant.clip_paths
                                     or ([_hook_motion_clip] if _hook_motion_clip else None)
                                     or _short_broll or None),

@@ -229,7 +229,7 @@ and the old homepage guards, ported — below).
 | Markets & launches | `api/mag7_quotes.json` (closes with `bar_date`), `api/spcx.json`, `api/tsla.json` (fallback only), `api/spacex_launches.json` `next` | Every value under its as-of date; older than 3 days = absent; a launch whose NET has passed = absent (server-side, and the script removes it client-side). TSLA from the quote file is labelled a "last quote", never "trading at". |
 | Corrections | `engine.corrections.load_corrections` on every public show | Newest three, full text, each linking the corrected article; none = no block. |
 | Claims record | `_claims_network_ledger` — the function `claims.html` calls | Unchanged from v2. |
-| Today on Nerra | `engine.daily_edition.RELEASE_EASTERN`, `engine.release_schedule` (`NEWSLETTER_SLOT`, `SHORT_FIRST`, `SHORT_SPACING`, `LONG_FIRST_WAVE`, `LONG_SECOND_WAVE`) | No typed times; the script ticks rows that have gone out today. |
+| Today on Nerra | `engine.daily_edition.RELEASE_EASTERN`, `engine.release_schedule` (`NEWSLETTER_SLOT`, `SHORT_FIRST`, `SHORT_SPACING`; the long-form shares the Short's slot) | No typed times; the script ticks rows that have gone out today. |
 
 ### Developing stories — calibration
 

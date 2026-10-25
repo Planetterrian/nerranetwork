@@ -5633,3 +5633,55 @@ experiments:
       subscribe pill on Shorts, per-show playlists flagged in Studio. RU reach
       is a Studio question (restrictions / reused-content notices), not a
       pipeline one.
+  - id: long-with-short-2026-10-25
+    title: "The long-form goes public in the hook Short's slot, not the noon / 18:00 ET waves"
+    area: youtube
+    shipped: 2026-10-25
+    readout: 2026-11-15
+    status: reading
+    metric: short_reach_d3_median_en_7d
+    baseline: >
+      Measured Oct 24 (docs/reviews/youtube_x_review_2026_10_24.md): 67% of
+      a Short's day-7 views arrive by day 2 and 97% by day 3, and the Oct 17
+      waves kept the long-form private until 12:00-20:30 ET, so on the
+      Short's first hours its description linked the website and its "Full
+      episode" comment waited for the long. EN long-form converts 1.67-2.08
+      subscribers per 1,000 views against 1.32-2.16 on EN Shorts.
+    target: >
+      Every scheduled hook Short and its long-form carry the same
+      publish_at in the video index; the Short's description carries the
+      long-form URL on every episode with a long; EN long-form views at age
+      3 rise against the four weeks before (read beside the reach metric,
+      which says whether the Short itself moved).
+    notes: >
+      Operator decision 1 of the Oct 24 review; reverses the Oct 17 waves.
+      engine.release_schedule.youtube_long_time returns the Short's slot
+      (LONG_AFTER_SHORT 0) and run_show hands the long's instant to the hook
+      Short, never a second reading of the clock. Timing only, no audio.
+      Guards tests/test_long_with_short_and_pill_2026_10_25.py,
+      tests/test_release_schedule_2026_10_17.py::TestLongForm.
+  - id: shorts-subscribe-pill-2026-10-25
+    title: "A persistent subscribe pill on every EN Short from 3 s to the end card"
+    area: youtube
+    shipped: 2026-10-25
+    readout: 2026-11-15
+    status: reading
+    metric: short_subs_per_1k_views_14d_en
+    baseline: >
+      EN Shorts hold a median 16 s of a 32-35 s clip, so about half of the
+      viewers leave before the 3 s end card, the only place a Short asked
+      for the subscribe. EN Short subscribers ran 1.32-2.16 per 1,000 views
+      over the 60 days to Oct 24.
+    target: >
+      short_subs_per_1k_views_14d_en above 2.2 at readout with
+      shorts_subscribe_pill_rendered true on every EN Short; RU/FR dubs
+      (no pill) are the control and are read on the same window.
+    notes: >
+      Operator decision 4 of the Oct 24 review. Top-left drawtext on the
+      brand pill's row, "Subscribe · <cadence> episodes" from engine.cadence,
+      fading in at 3 s and gone when the end card starts; off is
+      byte-identical (youtube.shorts_subscribe_pill, on in _defaults.yaml).
+      Render only, outside landmine #17. The podcast-playlist flag is a
+      Studio step with no API; The DP Pod and The Age of AI have no
+      podcast_playlist_id yet. Guards
+      tests/test_long_with_short_and_pill_2026_10_25.py.

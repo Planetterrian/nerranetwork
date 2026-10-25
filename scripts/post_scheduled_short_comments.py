@@ -11,7 +11,7 @@ comment whose publish time has passed, using the channel's own
 credentials, and removes it from the sidecar.
 
 Oct 17 2026: scheduled LONG-FORMS queue their comment here too (the
-release schedule makes them public at 12:00 / 18:00 ET), and the
+release schedule makes them public in the hook Short's slot), and the
 half-hourly X-queue job runs this with ``--stateless`` so the comment goes
 up within half an hour of the video; every sweep checks the video for the
 comment before posting, because that job does not commit the sidecar.

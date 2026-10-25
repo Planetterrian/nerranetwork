@@ -1906,7 +1906,10 @@ GUID** (`update_rss_feed(keep_existing_guid=True)` — the GUID carries a
 timestamp, and a new one makes every app download the episode twice).
 **`engine/release_schedule.py` owns when each surface goes public**, in
 Eastern wall time, from one `RELEASE_ORDER` (news and markets first): hook
-Short 7:00 ET + 15 min per rank, long-form from noon and from 18:00, X
+Short 7:00 ET + 15 min per rank, long-form in the SAME slot (Oct 25 2026,
+operator-directed — the noon / 18:00 waves kept the long private through the
+Short's first day, when 97% of its views arrive; run_show hands the long's
+instant to the hook Short so the Short links it), X
 preferred slot from 7:30 (7:00 reserved for Nerra Daily), daily newsletters
 scheduled for 7:00 through Buttondown (`status: "scheduled"`), Vancouver on
 Pacific mornings. A passed slot means now; a refused `publishAt` re-uploads
@@ -5534,6 +5537,18 @@ metadata:
   13.2 subs per 1,000.
 - Checked and not true: the gallery-retention `by_kind` block is populated on
   every show.
+
+**Oct 25 2026 — two of the decisions, shipped** (register
+`long-with-short-2026-10-25`, `shorts-subscribe-pill-2026-10-25`; guards
+`tests/test_long_with_short_and_pill_2026_10_25.py`): **the long-form goes
+public in the hook Short's slot** (`release_schedule.LONG_AFTER_SHORT` is 0 on
+purpose — a long even a minute later is still private when the Short goes
+public, and the Short then links the website), and **every EN Short carries a
+persistent "Subscribe · <cadence> episodes" pill** from 3 s to the end card
+(top-left on the brand pill's row, cadence from `engine.cadence`,
+`youtube.shorts_subscribe_pill`, off byte-identical; the dubs are the control;
+metric `shorts_subscribe_pill_rendered`). The podcast-playlist flag has no
+API; The DP Pod and The Age of AI still have no `podcast_playlist_id`.
 
 Operator decisions (⚠️ the spoken ones are AUDIO): the long-form publishes at
 or after the Short's slot (97% of a Short's views arrive by day 3 and the

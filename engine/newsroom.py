@@ -557,11 +557,8 @@ def todays_schedule(now: dt.datetime) -> List[Dict[str, str]]:
     return [
         _row("Nerra Daily", "The day's English shows in one episode, hosted by Mira.", edition),
         _row("Newsletters", "Each show's daily email.", _rs.NEWSLETTER_SLOT, lead="At"),
-        _row("Shorts", f"Each show's hook Short on YouTube, one every {short_gap} minutes.",
-             _rs.SHORT_FIRST),
-        _row("Full episodes on YouTube", "The first wave of long-form videos.",
-             _rs.LONG_FIRST_WAVE),
-        _row("Evening wave", "The rest of the long-form videos.", _rs.LONG_SECOND_WAVE),
+        _row("YouTube", f"Each show's hook Short and its full episode, one show every "
+             f"{short_gap} minutes.", _rs.SHORT_FIRST),
     ]
 
 
