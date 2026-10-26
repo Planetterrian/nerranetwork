@@ -1,0 +1,165 @@
+Kolibri activates three point four six billion parameters per token, putting open English-German serving on the cost frontier.
+
+This is Models and Agents, episode two hundred fifteen.
+
+A Latin encoder, a schema-coherence inventory, and a critic reused as a confidence estimator follow, then the engineering teardown.
+
+Kolibri is a new English-German mixture-of-experts transformer, which routes each token through only a subset of the network, according to the arXiv report.
+
+Total size is seventy-eight point one billion parameters.
+
+Training used twenty-four trillion tokens, and German made up more than twenty percent of that mix by bytes.
+
+Supervised fine-tuning and reinforcement learning followed, on more than one point two million in-house tasks spanning reasoning, tool use, instruction following, code, and retrieval.
+
+Only four point four percent of the weights fire for each token.
+
+A controlled Model Factory pipeline handled data curation, training infrastructure, post-training, and evaluation, aimed at sovereign and regulated-domain use, and the weights ship under Apache two point zero.
+
+Latin now has a ModernBERT-based encoder called LAMB, pretrained in two phases with a morphologically informed masking regimen.
+
+MarkTechPost reports pretraining consumed more than seventy-four billion Latin tokens.
+
+LAMB outperforms all other evaluated models on sixteen of seventeen subtasks across five tasks.
+
+It comes within zero point eight percentage points of state of the art on the remaining subtask.
+
+The release includes Acervus, with twenty-four billion BERT WordPiece tokens.
+
+It also includes Corpus Trinum, the first Latin semantic triplet dataset, containing over one hundred million strong and weak triplets.
+
+Schema Coherence Inventory provides ninety-six forced-choice items, in an arXiv paper.
+
+Items sit at eight levels of Beck's cognitive model, a clinical hierarchy of beliefs, and are scored by length-normalized log-likelihood, a probability score that needs no generation or parsing.
+
+Six validation studies ran across one hundred seven conditions on five backbones from one point seven billion to fourteen billion parameters.
+
+Belief adapters proved target-specific on every backbone, with a gain of seventeen point seven points.
+
+A condition's inventory profile identifies its own free generations in twenty-four of thirty cases, against five expected by chance.
+
+Nine clinically trained raters recover the keyed belief at seventy-nine point five percent accuracy.
+
+Free Lunch for L L M's Confidence shows an external model trained only on a policy's behavioral traces can estimate that policy's confidence as accurately as the policy itself, without accessing internal representations.
+
+Under a correctness-based outcome, confidence estimation and critic training are mathematically equivalent, both predicting from a trajectory how likely a response is to be correct.
+
+The reused critic is the best confidence estimator on every in-distribution split and the best-calibrated on fourteen of sixteen splits across math, code, tool calling, and general reasoning, without hurting task performance.
+
+SPECMEM maintains a live per-user tool-call memory with least-recently-used, or LRU, eviction and a side-effect gate that defers irreversible calls until verification.
+
+Ablations show the gain comes almost entirely from keeping the store live rather than from local per-user scoping.
+
+Modality-specific perception agents post evidence-cited observations to a shared board for conversational emotion reasoning.
+
+An integration agent produces an emotion description and label set with citations, and a multimodal large language model critic can request one revision.
+
+On the MER twenty twenty-five dataset, F-score rose between zero point six and two point two points depending on the backbone, across VideoLLaMA three-two B, Phi three point five vision instruct, Qwen two point five V L seven B Instruct, and Intern V L two point five thirty-eight B.
+
+The pipeline beat both a frozen static setup and undifferentiated reflection baselines.
+
+Solo dot io introduced agentshield to protect existing infrastructure from A I agents an organization does not control, AiThority reports.
+
+The tool targets security and governance gaps that appear when those outside agents touch internal systems.
+
+Tsinghua released AKV as an SGLang-based cache engineering server, according to MarkTechPost.
+
+L L M agents can drop and reposition key-value cache rather than summarizing prior turns.
+
+Average cost fell twenty-seven point seven percent across four agent benchmarks, with performance preserved.
+
+LLENS runs inside the closed network of Hokkaido University Hospital using the open-weight Kimi K two point six model, in an arXiv study.
+
+The stack sits on one host with eight NVIDIA H two hundred G P U's.
+
+On one hundred eighty questions over hospital documents it reaches ninety-seven point two percent mean accuracy with interactive document-tool access.
+
+That is fifteen point nine percentage points above fixed retrieval, with the largest gains on filtering and counting questions.
+
+X-Dubbing jointly solves time-aware speech-to-text translation and video-aware text-to-speech using a language-agnostic timing budget.
+
+It produces faithful translations that remain naturally speakable within source timing.
+
+Isochrony, meaning the speech still fits the original timing, and audio-visual correspondence both improve over recent baselines, and the system does not need paired dubbing data.
+
+MISCONCEPTDIALOGUE ran five open-weight L L M tutors against L L M simulated students.
+
+The run covered over five thousand dialogues.
+
+Benchmark-style exact-match scoring reports forty-two point one percent remediation success on the same dialogues where a human-calibrated L L M as-judge reports eighty-one point three percent.
+
+That thirty-nine point two percentage-point spread is larger than the combined effects of tutor model, teaching strategy, and supplied diagnostic information.
+
+Graph-based reasoning recasts structured generation as an ambiguity-aware inference problem that reasons over a set of plausible structured outputs rather than predicting a single solution.
+
+Reasoning over semantic alignment and relational consistency improves accuracy, stability, and robustness under varying levels of ambiguity on structured generation benchmarks.
+
+RIVER decomposes agent outputs into atomic claims and tracks convergence, exploration, and retention.
+
+Tests used five interaction strategies on forty controlled news-generation cases.
+
+Repeatedly pooled interaction promotes convergence but narrows the information space, while distributed relay yields broader, less shared information.
+
+SCI-AGENT-EXAM benchmarks agents on scientific research tasks.
+
+It comprises one hundred twenty expert-curated tasks across eleven scientific fields and seven research task types.
+
+G P T six Astra achieves the highest overall score of eighty point nine.
+
+Only twenty-six point zero percent of its runs exceed the zero point nine five success threshold.
+
+The results reveal distinct capability profiles and variation in execution efficiency and stability.
+
+In brief, an audit of two hundred eighty-eight responses posted an overall F1 of zero point nine one six, yet prompt-specific scorer errors ran from two point six percent to thirty-three point three percent, and a nine point three point lift from asserting certainty shrank to two point three points once both raters scored it.
+
+CoRPS-Dial builds pre-consultation dialogues with a persona-driven patient agent and a process-guided doctor agent, then applies post-hoc checks for role consistency, workflow completeness, and textual consistency, lifting alignment with real dialogues on coverage, clinical compliance, and naturalness.
+
+ProfileSim jointly models user demographics, Big Five personality traits, and business intents reverse-engineered from real call logs, then refines that base with Group Relative Policy Optimization under hierarchical dialogue-level and utterance-level rewards.
+
+Deploy the open weights of Kolibri if you need English-German performance and full control over data residency.
+
+Run the Schema Coherence Inventory items against any persona-conditioned model you use for simulated patients or affective agents, to check whether assigned beliefs actually organize behavior.
+
+Try AKV on SGLang-based agent workloads where history summarization is currently the dominant cost driver.
+
+Score a sample of tutor dialogues with both exact-match and a human-calibrated judge, and look at the gap.
+
+More open-weight mixture-of-experts releases are expected to target the three-to-four billion active-parameter regime.
+
+Additional agent memory frameworks will likely adopt live per-user stores with explicit side-effect gating.
+
+Frozen draft stores start going stale the moment user behavior drifts, so let's pop the hood on speculative decoding with live per-user memory.
+
+Speculative decoding already reuses past token sequences as drafts, which is how a model guesses several tokens ahead and then verifies them.
+
+Most deployments freeze that draft store at build time, so acceptance rates decay as each user's tool-calling habits change.
+
+SPECMEM writes every verified tool call back into a bounded per-user least-recently-used store during live operation.
+
+The memory becomes a continuously updated cache of that user's recurring patterns.
+
+A side-effect gate runs a deterministic check before any irreversible action is allowed to be drafted.
+
+That removes the failure mode where a high-confidence but dangerous call slips through on a stale draft.
+
+Because the store is scoped per user, cross-user leakage disappears without extra isolation layers.
+
+On multi-session, multi-user query streams served by three open-weight models, it holds a twenty-seven percent gap in mean accepted tokens against a frozen store that steadily loses acceptance.
+
+Wall-clock speedup reaches one point seven four times, because fewer tokens are decoded autoregressively once the store stabilizes.
+
+The tradeoff is extra memory per active user and the need to persist the store across sessions.
+
+Forgetting to gate irreversible actions turns the optimization into a correctness regression.
+
+Teams should adopt live memory when they already log tool calls and can afford per-user state, and otherwise a static high-quality seed store plus periodic refresh remains simpler.
+
+Before we go — the next interactive evaluation paper may lead with per-prompt scorer error rather than one overall accuracy number.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork dot com.
+
+And if you would rather hear only your shows, in your order, Nerra Personal builds you a private daily edition — the details are at nerranetwork dot com join.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
