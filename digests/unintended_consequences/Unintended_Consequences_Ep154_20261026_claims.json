@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "2",
+        "url": "https://www.gao.gov/assets/gao-11-473.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://www.thecanadianencyclopedia.ca/en/article/acid-rain",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "empty or non-text body",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the G",
+        "sentence": "Across the border the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office",
+      "In 1985 Ontario launched its Countdown Acid Rain programme, requiring Inco and three other major sources to cut provincial sulphur dioxide emissions more than 60 percent by 1994",
+      "Across the border the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office."
+    ],
+    "flagged_count": 3,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Inco completed the 381-metre Superstack at its Sudbury smelter in 1972.",
+      "episode_span": "In 1972 the Inco nickel smelter in Sudbury, Ontario, completed a chimney 381 metres tall",
+      "source_url": "https://en.wikipedia.org/wiki/Inco_Superstack",
+      "source_title": "Inco Superstack",
+      "supporting_quote": "The Inco Superstack in Sudbury, Ontario, with a height of 381 metres (1,250 ft), is the tallest chimney in Canada and in the Western Hemisphere",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "2",
+      "claim": "Only two U.S. stacks over 500 feet existed in 1970 but more than 180 by 1985.",
+      "episode_span": "the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office",
+      "source_url": "https://www.gao.gov/assets/gao-11-473.pdf",
+      "supporting_quote": "In 1970, there were only two stacks taller than 500 feet; by 1985, there were more than 180.",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "3",
+      "claim": "Ontario's Countdown Acid Rain programme in 1985 required major emitters including Inco to cut SO2 emissions more than 60 percent by 1994.",
+      "episode_span": "In 1985 Ontario launched its Countdown Acid Rain programme, requiring Inco and three other major sources to cut provincial sulphur dioxide emissions more than 60 percent by 1994",
+      "source_url": "https://www.thecanadianencyclopedia.ca/en/article/acid-rain",
+      "supporting_quote": "Ontario's Countdown Acid Rain program required the four major sources to reduce SO2 emissions by 60 percent by 1994.",
+      "status": "unverified_not_found",
+      "status_reason": "empty or non-text body"
+    },
+    {
+      "id": "u1",
+      "claim": "Across the border the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office.",
+      "episode_span": "Across the border the number of stacks taller than 500 feet rose from two in 1970 to more than 180 by 1985, according to the Government Accountability Office.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to the G' with no covering verified claim"
+    }
+  ]
+}
