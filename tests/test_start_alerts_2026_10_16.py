@@ -35,11 +35,12 @@ START = "2026-10-15T20:30:00+00:00"                                       # 1:30
 
 class DB:
     def __init__(self, *, start=START, run_status="staged", joined=None, phone="+12145550100",
-                 call_mode="webrtc", setup_check=None):
+                 call_mode="webrtc", setup_check=None, seen=None):
         self.iv = {"id": "iv-mz", "application_id": "app-mz", "show": "nerra_voices",
                    "status": "briefed", "scheduled_at": start, "call_mode": call_mode,
                    "start_notice_at": None, "late_alert_at": None, "guest_timezone": None,
-                   "setup_check": setup_check, "caller_id": "+16045550000"}
+                   "setup_check": setup_check, "caller_id": "+16045550000",
+                   "studio_seen_at": seen}
         self.app = {"id": "app-mz", "name": "Meridan Zerner", "email": "meridan@example.com",
                     "phone": phone, "show": "nerra_voices"}
         self.run = {"id": "run-1", "status": run_status, "guest_joined_at": joined} if run_status else None
@@ -141,12 +142,14 @@ class TestFiveMinutesBefore:
         assert F.send_start_notices() == 1
         assert world["mail"] and world["sms"] == []
 
-    def test_a_phone_interview_is_told_to_expect_the_call(self, world):
+    def test_a_row_still_marked_phone_gets_the_studio(self, world):
+        # Oct 27 2026: phone-call interviews were retired; nobody is told
+        # to expect a call.
         world["use"](DB(call_mode="pstn"))
         world["now"] = _at(-4)
         F.send_start_notices()
-        assert "I'll call you" in world["mail"][0]["subject"]
-        assert "call you from" in world["sms"][0]["text"]
+        assert "studio is open" in world["mail"][0]["subject"]
+        assert "call you" not in world["sms"][0]["text"] and "studio" in world["sms"][0]["text"]
 
     def test_the_text_has_no_em_dash(self, world):
         world["now"] = _at(-4)
@@ -163,15 +166,18 @@ class TestFiveMinutesAfter:
         assert mail["to"] == F.OPERATOR_EMAIL
         assert "Meridan Zerner hasn't opened the studio" in mail["subject"]
         assert "tel:+12145550100" in mail["html"] and "meridan@example.com" in mail["html"]
-        assert "Have Mira call them now" in mail["html"]
+        assert "Send them their studio link for their phone" in mail["html"]
+        assert "/voices/admin/text-guest?interview=iv-mz" in mail["html"]
+        assert "call-guest" not in mail["html"] and "by phone" not in mail["html"]
         sms = world["sms"][0]
         assert sms["to"] == "+16045550199" and "Meridan Zerner" in sms["text"]
 
-    def test_the_call_link_is_the_one_the_worker_checks(self, world):
-        sig = hmac.new(b"test-admin-token", b"call-guest:iv-mz", hashlib.sha256).hexdigest()[:40]
-        assert F.call_guest_link("iv-mz").endswith(f"interview=iv-mz&sig={sig}")
+    def test_the_phone_link_is_the_one_the_worker_checks(self, world):
+        sig = hmac.new(b"test-admin-token", b"text-guest:iv-mz", hashlib.sha256).hexdigest()[:40]
+        assert F.text_guest_link("iv-mz").endswith(f"interview=iv-mz&sig={sig}")
+        assert "/voices/admin/text-guest?" in F.text_guest_link("iv-mz")
         worker = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text()
-        assert "adminSig(env, `call-guest:${interviewId}`)" in worker
+        assert "adminSig(env, `text-guest:${interviewId}`)" in worker
         assert ".slice(0, 40)" in worker
 
     def test_only_once(self, world):
@@ -195,10 +201,25 @@ class TestFiveMinutesAfter:
         world["now"] = _at(5.5)
         assert F.send_late_alerts() == 0
 
-    def test_not_for_a_phone_interview(self, world):
+    def test_a_row_still_marked_phone_is_alerted_like_any_other(self, world):
+        # Oct 27 2026: every interview is the studio, so none is skipped.
         world["use"](DB(call_mode="pstn"))
         world["now"] = _at(5.5)
+        assert F.send_late_alerts() == 1
+
+    def test_not_while_the_page_is_open(self, world):
+        # Oct 27 2026: the page polls every ten seconds and the Worker stamps
+        # studio_seen_at; an open page's own stuck alert covers it.
+        world["use"](DB(run_status="awaiting_guest", seen="2026-10-15T20:35:00+00:00"))
+        world["now"] = _at(5.5)
         assert F.send_late_alerts() == 0
+
+    def test_a_page_opened_once_and_closed_is_alerted(self, world):
+        # A tab opened at T-10 (which turned the run awaiting_guest) and then
+        # closed used to silence the alert for good.
+        world["use"](DB(run_status="awaiting_guest", seen="2026-10-15T20:20:00+00:00"))
+        world["now"] = _at(5.5)
+        assert F.send_late_alerts() == 1
 
 
 class TestWiring:

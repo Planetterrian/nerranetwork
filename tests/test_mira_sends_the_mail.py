@@ -71,8 +71,11 @@ class TestTheGuestMailPatrickSeesToo:
     def test_the_day_four_reminder(self):
         assert " ".join(self._call("episode is waiting for you").split()).endswith("`, true, publicistCc(app)")
 
-    def test_the_rebook_note(self):
-        assert " ".join(self._call("pick a new time for ${show.name}").split()).endswith("`, true")
+    def test_the_pick_another_time_note(self):
+        # Oct 27 2026: the phone retry ladder's "pick a new time" note is gone
+        # with the phone calls; the studio's own "Pick another time" note
+        # copies Patrick the same way.
+        assert " ".join(self._call("Let's find another time for ${show.name}").split()).endswith("`, true")
 
     def test_no_guest_mail_is_sent_with_nobody_copied(self):
         # Every email(env, <a guest address>, ...) either copies the operator

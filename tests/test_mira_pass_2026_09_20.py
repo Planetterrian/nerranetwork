@@ -96,12 +96,16 @@ class TestTheClaimHasOneOwner:
                 f"{phrase!r} is the pre-2026-09-09 flow: the default is now a "
                 "browser studio room and the outbound call is the fallback"
             )
+        # Oct 27 2026: the outbound PSTN leg is gone altogether, which only
+        # makes the claim truer: no surface may describe a phone call.
         scenario = (ROOT / "voximplant" / "scenarios"
                     / "age_of_ai_interview.js").read_text(encoding="utf-8")
-        assert "the fallback mode" in scenario, (
-            "if the outbound PSTN leg stops being the fallback, revisit the "
-            "claim's basis — this test is the tripwire"
+        assert "callPSTN" not in scenario, (
+            "a phone-call leg is back in the scenario; revisit the claim's "
+            "basis — this test is the tripwire"
         )
+        for phrase in ("phone call", "take a call"):
+            assert phrase not in blob
 
     def test_basis_and_footnote_always_ship_together(self):
         from engine import brand

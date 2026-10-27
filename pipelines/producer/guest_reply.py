@@ -156,16 +156,17 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
         standing = f"booked for {when_text(upcoming.get('scheduled_at'), upcoming.get('guest_timezone'))}, not yet recorded"
         lines.append(f"- The interview is on {when_text(upcoming.get('scheduled_at'), upcoming.get('guest_timezone'))}. "
                      f"It lasts about {app.get('desired_minutes') or 45} minutes.")
-        if (upcoming.get("call_mode") or "webrtc") == "webrtc":
-            lines.append(f"- Their personal studio link (it opens ten minutes before the start): {studio}")
-            lines.append(f"- The 30-second microphone and headphones test, any time before: {studio}&test=1")
-            lines.append("- Join from a computer with headphones or earbuds. If the computer gives "
-                         "trouble, they can open the same link in their phone's browser with earbuds "
-                         "in (far better sound than a call); a call from you, via the studio's "
-                         "'Have Mira call my phone' button, is the last resort.")
-            links += [studio, f"{studio}&test=1"]
-        else:
-            lines.append("- You will call their phone at that time.")
+        # Oct 27 2026: every interview is the browser studio. Phone
+        # interviews are no longer offered; never offer to call anyone.
+        lines.append(f"- Their personal studio link (it opens fifteen minutes before the start): {studio}")
+        lines.append(f"- The 30-second microphone and headphones test, any time before: {studio}&test=1")
+        lines.append("- Join from a computer with headphones or earbuds. If the computer gives "
+                     "trouble, they can open the same link in their phone's browser with earbuds "
+                     "in: it is the same studio. If neither works, the studio has a button to pick "
+                     "another time.")
+        lines.append("- Interviews happen in the studio only. You never interview anyone by phone "
+                     "call and never offer to call them: a phone line sounds too thin for the show.")
+        links += [studio, f"{studio}&test=1"]
         if upcoming.get("manage_token"):
             manage = f"https://api.nerranetwork.com/voices/manage/{quote(upcoming['manage_token'], safe='')}"
             lines.append(f"- To move or cancel, one tap: {manage}")
@@ -425,7 +426,7 @@ def tell_patrick(*, guest_name: str, show_name: str, inbound: Dict[str, Any],
 # their slots. Both were held for Patrick, and Jason's reached him thirteen
 # minutes later. A guest who can't get in during their slot is answered at
 # once, from facts, without waiting on a model: the studio link, the steps,
-# the phone's browser, and the call as the last resort.
+# and the phone's browser (Oct 27 2026: there is no phone call any more).
 LIVE_BEHIND_MIN = 60
 LIVE_AHEAD_MIN = 20
 _LIVE_TROUBLE = re.compile(
@@ -517,10 +518,6 @@ def introductions(app: Dict[str, Any], inbound: Dict[str, Any], *,
 
 def live_trouble_reply(app: Dict[str, Any], iv: Dict[str, Any], show: Any) -> str:
     studio = f"{show.studio_url(iv['id'])}&role=guest"
-    if (iv.get("call_mode") or "webrtc") != "webrtc":
-        return (f"Hi {first_name(app.get('name'))},\n\nThank you, I'm calling your phone for our "
-                f"interview, so please keep it nearby. If you'd rather join from your computer, "
-                f"here's your studio link: {studio}\n\nI'm here and ready.")
     return (
         f"Hi {first_name(app.get('name'))},\n\nI'm here and ready, and I'm sorry for the trouble. "
         "If you're in a video room from a calendar invite, that isn't my studio, so we can't meet "
@@ -529,8 +526,30 @@ def live_trouble_reply(app: Dict[str, Any], iv: Dict[str, Any], show: Any) -> st
         "2. Press Check my microphone and read the sentence out loud until it says Sounds good.\n"
         "3. Press Join your interview. You're in when you hear me say hello.\n\n"
         "If your computer gives you trouble, open the same link in your phone's browser with "
-        "earbuds in. It sounds far better than a phone call. As a last resort, the studio's "
-        "Have Mira call my phone button has me calling you straight away.")
+        "earbuds in: it's the same studio. If neither works, the studio has a button to pick "
+        "another time, and nothing is lost.")
+
+
+#: A guest's own words that say something went wrong with the interview
+#: itself (Oct 27 2026). Matched only to decide that a cancel or a move is
+#: Patrick's to answer, never to write anything. Both a word about the studio
+#: or the sound AND a word about it going wrong: "that time doesn't work for
+#: me" and "I can't join on Thursday" are ordinary moves, and a guest who
+#: needs to move always gets the way to do it at once (Oct 7 2026).
+_TROUBLE_CONTEXT = re.compile(
+    r"\b(tech|technical|tech-?wise|studio|audio|sound|mic|microphone|connection|internet"
+    r"|wi-?fi|glitch\w*|echo|static|lag\w*|froze|frozen|crash\w*|scam|voice|voices"
+    r"|hear|heard|hearing|disconnect\w*|dropp(ed|ing)|cut (out|off))\b", re.I)
+_TROUBLE_WRONG = re.compile(
+    r"\b(problems?|issues?|troubles?|didn'?t work|doesn'?t work|wasn'?t working|not working"
+    r"|broken|bad|terrible|awful|poor|kept|couldn'?t|can'?t|cannot|failed|fail\w*"
+    r"|dropp(ed|ing)|frustrat\w*|waste|glitch\w*|crash\w*|froze|frozen|lag\w*"
+    r"|another|two|disconnect\w*|cut (out|off)|scam)\b", re.I)
+
+
+def our_trouble(text: str) -> bool:
+    text = text or ""
+    return bool(_TROUBLE_CONTEXT.search(text) and _TROUBLE_WRONG.search(text))
 
 
 def _never_auto(inbound: Dict[str, Any], policy: Any) -> bool:
@@ -598,7 +617,8 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
                        f"<p>Hi Patrick,</p><p>{_html.escape(app.get('name') or 'A guest')} wrote during their interview "
                        f"slot that they couldn't get in, so I answered straight away with their studio "
                        f"link and the steps. I'll keep an eye out; if they still aren't in a few minutes "
-                       f"after the start, you'll get the usual email with a one-click phone switch.</p>"
+                       f"after the start, you'll get the usual email with a one-click link to send them "
+                       f"their studio link for their phone.</p>"
                        f"<p>What they wrote: <em>{_html.escape(own_words(inbound.get('body') or '')[:400])}</em></p><p>Mira</p>")
         except Exception as exc:  # noqa: BLE001 — the guest has their answer
             logger.warning("live-help note to Patrick failed: %s", exc)
@@ -619,6 +639,17 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
             line["note_filed"] = True
         except Exception as exc:  # noqa: BLE001 — the reply still goes; Patrick is told
             logger.warning("filing the guest note failed: %s", exc)
+
+    # Oct 27 2026 (Elliot Justin): "I don't have time for tech problems.
+    # Let's skip this." was read as a plain cancel, and Mira answered by
+    # repeating his complaint back to him with a one-tap cancel link. A guest
+    # who wants out because something went wrong on OUR side is Patrick's to
+    # answer, personally.
+    if p["intent"] in ("cancel", "reschedule") and our_trouble(own_words(inbound.get("body") or "")):
+        line["held_after_trouble"] = True
+        p = {**p, "intent": "needs_patrick",
+             "summary": ("they want to " + ("cancel" if p["intent"] == "cancel" else "move it")
+                         + " after something went wrong on our side: " + (p.get("summary") or ""))[:160]}
 
     reason = ""
     body = ""

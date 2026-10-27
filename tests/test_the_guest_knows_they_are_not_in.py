@@ -12,6 +12,11 @@ What changes, and these tests hold it in place:
      interview to a phone call (GET confirms, POST dials: mail scanners
      prefetch links).
   5. A browser that refuses the microphone gets the phone offer too.
+
+Oct 27 2026: phone-call interviews were retired. "The phone" in 1 and 5 is
+now the same studio in the phone's BROWSER, plus a button to pick another
+time; Patrick's one-click link (4) sends the guest their studio link for
+their phone instead of dialling them.
 """
 from __future__ import annotations
 
@@ -33,10 +38,14 @@ class TestTheStudioSaysTheGuestIsNotIn:
         assert "You're not in the interview yet." in STUDIO
         assert 'id="notInStep1"' in STUDIO and 'id="notInStep2"' in STUDIO
 
-    def test_phone_offered_from_the_start_and_on_error(self):
-        assert 'id="phoneBtnTop"' in STUDIO and 'id="phoneBtnErr"' in STUDIO
-        assert '["Setup", "Call", "Top", "Err"].forEach' in STUDIO
-        assert '"phoneMsg" + where' in STUDIO
+    def test_phone_browser_and_another_time_offered_from_the_start_and_on_error(self):
+        assert 'id="troubleTop"' in STUDIO and 'id="troubleErr"' in STUDIO
+        assert 'id="troubleSetup"' in STUDIO and 'id="troubleCall"' in STUDIO
+        assert '["Top", "Setup", "Call", "Err"].forEach(troubleBox);' in STUDIO
+        box = _body(STUDIO, "function troubleBox(where)", '["Top", "Setup", "Call", "Err"].forEach(troubleBox);')
+        assert "Join from my phone instead" in box and "Pick another time" in box
+        assert "/studio-reschedule" in box and "/studio-text" in box
+        assert "studio-phone" not in STUDIO and "Have Mira call" not in STUDIO
 
     def test_counts_minutes_after_start(self):
         upd = _body(STUDIO, "function updateNotIn()", "function stopNotIn()")
@@ -58,7 +67,7 @@ class TestTheStudioSaysTheGuestIsNotIn:
 
     def test_microphone_refused_offers_phone(self):
         assert "micAccess = false;" in STUDIO
-        assert 'getElementById("phoneBoxErr").classList.remove("hidden")' in STUDIO
+        assert 'getElementById("troubleErr").classList.remove("hidden")' in STUDIO
 
 
 class TestPatrickHearsAboutAStuckGuest:
@@ -68,19 +77,22 @@ class TestPatrickHearsAboutAStuckGuest:
         assert "stuck_alerted_at" in chk
         assert "if (!alertedBefore) await alertStuckGuest(" in chk
 
-    def test_email_has_signed_phone_link(self):
+    def test_email_has_signed_link_for_their_phone(self):
         alert = _body(WORKER, "async function alertStuckGuest(", "async function handleStudioCheck(")
-        assert "callGuestLink(env, iv.id)" in alert
+        assert "textGuestLink(env, iv.id)" in alert
+        assert "phone call" not in alert and "callGuestLink" not in WORKER
         assert "has the studio open but isn't in the interview" in alert
         assert "pacificTime(iv.scheduled_at)" in alert
 
-    def test_call_guest_confirms_before_dialing(self):
-        h = _body(WORKER, "async function handleCallGuest(", "async function archivePackage(")
-        assert "sig !== await callGuestSig(env, interviewId)" in h
+    def test_text_guest_confirms_before_sending(self):
+        h = _body(WORKER, "async function handleTextGuest(", "async function archivePackage(")
+        assert "sig !== await textGuestSig(env, interviewId)" in h
         assert 'if (req.method !== "POST")' in h
         assert '<form method="post">' in h
-        assert 'by: "patrick"' in h
-        assert 'path === "/voices/admin/call-guest") return handleCallGuest(req, env);' in WORKER
+        assert "handleStudioText(" in h
+        assert 'path === "/voices/admin/text-guest") return handleTextGuest(req, env);' in WORKER
+        # The old call link answers 410 and dials nobody.
+        assert 'path === "/voices/admin/call-guest") return handleCallGuestRetired();' in WORKER
 
     def test_archive_token_unchanged(self):
         assert 'return adminSig(env, "nerra-archive");' in WORKER

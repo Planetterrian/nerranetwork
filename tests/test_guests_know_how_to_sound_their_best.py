@@ -4,6 +4,10 @@ headphones and a good microphone sounds clear and full, and listeners enjoy
 those interviews most. Every email leading up to an interview now says so in
 the same words, and gives the same three steps into the studio, with the
 phone as the fallback rather than the plan.
+
+Oct 27 2026 (Patrick): phone-call interviews are gone altogether. The way out
+of a computer that won't cooperate is the same studio in the phone's
+BROWSER, or another time; no email offers a call.
 """
 from __future__ import annotations
 
@@ -42,14 +46,16 @@ APP = {"name": "Priyanka Sharma", "email": "p@example.com"}
 
 def test_the_audio_paragraph_says_why():
     a = common.GUEST_AUDIO_HTML
-    assert "Phone audio is compressed" in a
     assert "headphones" in a and "good microphone" in a
+    # Oct 27 2026: no comparison with "phone audio" now that the phone's
+    # browser is the recommended way out of a stuck computer.
+    assert "Phone audio" not in a
     assert "listeners tell us those are the interviews they enjoy most" in a
 
 
 def test_the_worker_copy_matches():
     flat = common.GUEST_AUDIO_HTML
-    for phrase in ("Phone audio is compressed", "listeners tell us those are the interviews ",
+    for phrase in ("A computer with headphones", "listeners tell us those are the ",
                    "USB microphone is even better"):
         assert phrase in flat and phrase in WORKER
     assert "${GUEST_AUDIO_HTML}" in WORKER and "${studioStepsHtml(studio)}" in WORKER
@@ -59,13 +65,17 @@ def test_steps_are_numbered_and_phone_is_the_fallback():
     s = str(common.studio_steps_html("https://x/studio?a=1&b=2"))
     assert "Check my microphone" in s and "Sounds good" in s and "Join your interview" in s
     assert "&amp;b=2" in s
-    assert "Have Mira call my phone" in s
-    assert "Have Mira call my phone" not in str(common.studio_steps_html("x", phone_fallback=False))
+    assert "open the same link on your phone" in s and "pick another time" in s
+    assert "not by phone call" in s
+    assert "Have Mira call" not in s
+    assert "pick another time" not in str(common.studio_steps_html("x", phone_fallback=False))
+    # The Worker's copy of the steps says the same.
+    assert "pick another time, so nothing is lost. Interviews happen in the studio only" in WORKER
 
 
 def test_two_hour_reminder_has_audio_steps_and_test_nudge():
     subject, body = fi.reminder_email(_iv(), APP, _Show(), "https://m")
-    assert "Phone audio is compressed" in body
+    assert "listeners tell us" in body
     assert "Check my microphone" in body
     assert "&test=1" in body and "Please take 30 seconds now" in body
     assert "Pacific" in body or "PT" in body or "PDT" in body
@@ -82,9 +92,12 @@ def test_studio_open_email_repeats_the_steps():
     assert "Check my microphone" in body and "Headphones on" in body
 
 
-def test_phone_mode_still_invites_the_computer():
+def test_a_row_still_marked_phone_gets_the_studio():
+    # Oct 27 2026: no interview is a phone interview any more.
     _, body = fi.reminder_email(_iv(call_mode="pstn"), APP, _Show(), "")
-    assert "sounds noticeably better than a phone line" in body
+    assert "Check my microphone" in body and "I'll call" not in body
+    subject, soon = fi.reminder_email(_iv(call_mode="pstn"), APP, _Show(), "", soon=True)
+    assert "studio is open" in subject and "call your phone" not in soon
 
 
 def test_brief_and_booking_templates_carry_it():
@@ -95,4 +108,5 @@ def test_brief_and_booking_templates_carry_it():
 
 def test_sms_mentions_the_sound():
     src = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
-    assert "phone audio is much thinner" in src
+    assert "join from a computer with headphones and a good mic" in src
+    assert "I'll be calling" not in src

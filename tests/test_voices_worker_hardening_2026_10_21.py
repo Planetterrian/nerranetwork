@@ -103,9 +103,12 @@ def test_lesson_decision_checks_ownership():
 # Studio phone, gate 2, dispatch ordering, /join
 # ---------------------------------------------------------------------------
 
-def test_studio_phone_dials_only_a_live_interview():
+def test_studio_buttons_act_only_on_a_live_interview():
+    # Oct 27 2026: the phone button is retired (410 for everything); the
+    # studio's "Pick another time" keeps the same rule.
     assert 'export const LIVE_INTERVIEW_STATUSES = new Set(["scheduled", "briefed", "in_progress"]);' in WORKER
-    assert "if (!LIVE_INTERVIEW_STATUSES.has(String(iv.status)))" in _fn("handleStudioPhone")
+    assert "if (!LIVE_INTERVIEW_STATUSES.has(String(iv.status)))" in _fn("handleStudioReschedule")
+    assert "410" in WORKER[WORKER.index("function handleStudioPhoneRetired("):][:600]
 
 
 def test_gate2_housekeeping_isolates_each_package():

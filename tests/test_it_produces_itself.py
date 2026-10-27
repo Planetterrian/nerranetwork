@@ -2275,11 +2275,15 @@ class TestTheStudioChecksForHeadphonesRatherThanAskingNicely:
 
     def test_it_never_locks_the_guest_out(self):
         """A guest who cannot find headphones must still be able to record."""
-        join = self.STUDIO[self.STUDIO.index('getElementById("joinBtn")'):]
-        join = join[:join.index("function join(")] if "function join(" in join else join[:4000]
-        assert "Never block the" in join
-        assert "costs us the episode" in join
-        assert "return" not in join.split("echoCheck();")[0].split("if (!isHost && !echoChecked)")[-1]
+        join = self.STUDIO[self.STUDIO.index('getElementById("joinBtn").addEventListener("click"'):]
+        join = join[:join.index("var joinStep")]
+        # Oct 27 2026: the check now finishes before the join releases the
+        # microphone (it used to measure a stopped stream), but it is capped
+        # and its verdict never gates anything.
+        assert "It never blocks the" in join and "the verdict is advice" in join
+        assert "setTimeout(resolve, 4000);" in join
+        echo = join[join.index("if (!isHost && !echoChecked)"):join.index("before.then(")]
+        assert "return" not in echo
 
     def test_the_verdict_reaches_the_operator(self):
         assert 'path === "/voices/studio-echo"' in self.WORKER

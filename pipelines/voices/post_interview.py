@@ -172,6 +172,41 @@ def handle_missed(run: dict, interview: dict, app: dict) -> int:
     return 0
 
 
+#: Oct 27 2026 (Elliot Justin): a 73-second session went through the whole
+#: pipeline and became an empty editorial package waiting for Patrick's
+#: review. An interview session shorter than this is not an interview. (The
+#: Worker already reopens the studio for one; this is the second guard, for a
+#: run that reaches post-production anyway.) Hellos and closing sessions are
+#: short by design and are not held to it.
+MIN_INTERVIEW_SEC = 300
+
+
+def too_short(run: dict, interview: dict) -> bool:
+    if (interview.get("session_kind") or "interview") != "interview":
+        return False
+    if (run.get("session_kind") or "interview") != "interview":
+        return False
+    try:
+        seconds = int(float(run.get("duration_sec")))
+    except (TypeError, ValueError):
+        return False                 # unknown length: process it and see
+    return 0 < seconds < MIN_INTERVIEW_SEC
+
+
+def handle_too_short(run: dict, interview: dict, app: dict) -> int:
+    """No package, no email to the guest: the interview is marked missed and
+    Patrick is told, so he can reschedule it himself."""
+    show = show_for(interview, app)
+    sb_update("interviews", f"id=eq.{interview['id']}", {"status": "missed"})
+    notify_operator(show.slack(
+        f"{app.get('name') or 'the guest'}'s session lasted {run.get('duration_sec')} seconds, "
+        "which is not an interview, so no episode was made and nothing was sent to them. "
+        "The interview is marked missed; reschedule it if you'd like."), critical=True)
+    logger.info("run %s lasted %ss — too short for an interview, no package",
+                run["id"], run.get("duration_sec"))
+    return 0
+
+
 def _ext_of(url: str, default: str = "mp3") -> str:
     # Keep the source container extension: WebRTC recordings are MP4
     # (video + stereo audio), PSTN are MP3. ffmpeg sniffs by content, but
@@ -1207,6 +1242,9 @@ def main() -> int:
         logger.info("no guest ever joined run %s — recording this as a no-show",
                     run["id"])
         return handle_missed(run, interview, app)
+
+    if too_short(run, interview):
+        return handle_too_short(run, interview, app)
 
     with tempfile.TemporaryDirectory(prefix=f"{show.slug}_post_") as tmp:
         workdir = Path(tmp)

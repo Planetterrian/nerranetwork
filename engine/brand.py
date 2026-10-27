@@ -652,7 +652,7 @@ MIRA_FIRST_CLAIM = (
 )
 
 # The basis. Every clause is something this pipeline actually does, every one
-# is true whether the guest joins from a browser or answers a phone call, and
+# is true however the guest joins the studio (computer or phone browser), and
 # the combination is the claim. Sep 22 2026: "nothing reaches a feed until
 # the guest has approved it" came out of this paragraph because it was not
 # what the code does — gate 2 auto-approves after seven days of silence
@@ -848,8 +848,10 @@ MIRA_INTERVIEW_STEPS = [
                              "Mira means to explore and the ground she will "
                              "cover, so nothing in the conversation is a "
                              "surprise."),
-    ("You talk to Mira", "Open the studio link, pick a microphone, join — or "
-                         "take a call on your phone if you would rather. "
+    # Oct 27 2026: no phone calls; the studio, on a computer or a phone's browser.
+    ("You talk to Mira", "Open the studio link on a computer with headphones, "
+                         "check your microphone, join; your phone's browser "
+                         "with earbuds works too. "
                          "Mira hears you and answers in real time. It is a "
                          "conversation, not a questionnaire, and it runs "
                          "under an hour."),

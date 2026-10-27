@@ -577,11 +577,12 @@ class TestFireHostLink:
         src = (PIPELINES / "fire_interviews.py").read_text(encoding="utf-8")
         assert '"host_mode": host_mode,' in src
         assert '"host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",' in src
-        assert 'when=("in 10 min" if call_mode == "webrtc" else "in 2 min")' in src
-        # Sept 9 2026: the browser studio unlocks 10 minutes early; phones
-        # keep the tight window.
-        assert "STUDIO_UNLOCK_AHEAD_MIN = 12" in src and "FIRE_WINDOW_AHEAD_MIN = 5" in src
-        assert "if when and when > phone_hi" in src
+        # Oct 27 2026: every interview is the studio; the co-host is always
+        # told "in 10 min" and nothing keeps a phone window.
+        assert 'notify_host(interview, app, show, when="in 10 min")' in src
+        # Sept 9 2026: the browser studio unlocks 10 minutes early.
+        assert "STUDIO_UNLOCK_AHEAD_MIN = 12" in src
+        assert "phone_hi" not in src and "start_interview_scenario" not in src
         assert 'notify_host(interview, app, show, when="in about 2 hours")' in src
 
     def test_host_mode_enabled_semantics(self):

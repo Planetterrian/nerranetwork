@@ -67,11 +67,15 @@ class TestRouting:
         assert "conf.add(" not in js, "Conference.add needs the rule's video-conference flag"
         assert "CONF_ENDPOINT_MODE" not in js
 
-    def test_pstn_guest_is_a_participant(self, js):
+    def test_a_phone_call_start_is_refused(self, js):
+        # Oct 27 2026: phone-call interviews were retired. A StartScenarios
+        # with a bare run_id (the old PSTN fallback) dials nobody and posts
+        # nothing that could mark the interview missed.
         started = js.split("AppEvents.Started, async function")[1].split("\n});")[0]
-        assert "VoxEngine.callPSTN(config.guest_phone, config.caller_id)" in started
-        assert 'participantConnected(call, "guest", config, /* withVideo = */ false)' in started
-        assert "call_failed:" in started
+        assert "callPSTN" not in js
+        assert "phone interviews are no longer offered" in started
+        assert "fireWebhook" not in started
+        assert "narrationSession(custom)" in started and "probeSession(custom)" in started
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +147,7 @@ class TestRoom:
         assert "scheduleTeardown()" in body
 
     def test_rejoin_grace(self, js):
+        # Under Voximplant's 60 s no-call session limit (Sept 10 2026).
         assert "REJOIN_GRACE_MS = 45 * 1000" in js
         body = _fn(js, "function scheduleTeardown()")
         assert 'if (legs.length === 0) endRoom("normal")' in body

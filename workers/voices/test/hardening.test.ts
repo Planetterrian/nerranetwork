@@ -207,9 +207,12 @@ describe("lesson decisions", () => {
 // ---------------------------------------------------------------------------
 
 describe("/voices/studio-phone", () => {
-  it("refuses every status outside the live window", async () => {
+  // Oct 27 2026: phone interviews are gone. The endpoint a cached studio page
+  // still calls answers 410 for every interview, live or not, and touches
+  // nothing.
+  it("is retired: 410 for every status, and nothing is written or dispatched", async () => {
     expect([...LIVE_INTERVIEW_STATUSES].sort()).toEqual(["briefed", "in_progress", "scheduled"]);
-    for (const status of ["completed", "processing", "guest_review", "approved", "published", "recorded"]) {
+    for (const status of ["briefed", "in_progress", "completed", "published"]) {
       const { fn, calls } = fakeFetch((c) => {
         const t = sbTable(c.url);
         if (t === "interviews") return [{ id: IV, status, scheduled_at: new Date().toISOString(), application_id: "x", show: "age_of_ai" }];
@@ -218,8 +221,10 @@ describe("/voices/studio-phone", () => {
       });
       vi.stubGlobal("fetch", fn);
       const resp = await worker.route(post("/voices/studio-phone", { interview: IV }), env());
-      expect(resp.status, status).toBe(409);
-      expect(calls.filter((c) => c.method === "PATCH").length, status).toBe(0);
+      expect(resp.status, status).toBe(410);
+      const out: any = await resp.json();
+      expect(out.error).toMatch(/phone's browser/);
+      expect(calls.length, status).toBe(0);
     }
   });
 });

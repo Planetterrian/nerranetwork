@@ -67,7 +67,7 @@
   .hostnote { color: var(--muted); font-size: .95rem; }
   .footer { color: var(--muted); font-size: .8rem; letter-spacing: .08em; margin-top: 2.5rem; text-transform: uppercase; }
   a { color: var(--accent); }
-  /* Sept 28 2026: microphone check, silence warning, phone switch. */
+  /* Sept 28 2026: microphone check and silence warning. */
   .check { border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; margin: .4rem 0 1rem; }
   .check.pass { border-color: var(--ok); }
   .check.fail { border-color: var(--warn); }
@@ -80,15 +80,13 @@
   .banner b { color: #3b2a00; }
   .banner select { background: #fff; color: #1a1a1a; border-color: #d8b24c; }
   .banner .help { color: #3b2a00; }
-  .phonebox { margin-top: .6rem; }
-  .phonebox input { font: inherit; padding: .55rem .6rem; border-radius: 8px; border: 1px solid var(--line); width: 100%; max-width: 260px; margin: .3rem .5rem .3rem 0; }
-  .phone { background: #0f766e; color: #fff; }
-  #phoneMsg, #phoneMsgCall, #phoneMsgTop, #phoneMsgErr { font-size: .92rem; margin: .4rem 0 0; }
-  /* Oct 2 2026: the phone's browser before a phone line. */
-  .mobilebox { margin: .5rem 0; }
-  .mobilebox .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
-  .mobilebox p { font-size: .92rem; margin: .3rem 0; }
-  button.lastresort { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
+  /* Oct 27 2026: no phone calls. The way out of a computer that won't
+     cooperate is the same studio in the phone's browser, or another time. */
+  .trouble { margin-top: .6rem; }
+  .trouble p { font-size: .92rem; margin: .3rem 0; }
+  .trouble .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
+  .trouble .tmsg { font-size: .92rem; }
+  button.later { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
   /* Oct 1 2026: "you're not in the interview yet" until the guest is in. */
   #notIn { border: 2px solid var(--warn); border-radius: 10px; padding: .9rem 1rem; margin: .6rem 0 1rem; }
   #notIn.late { background: #fff4d6; color: #3b2a00; border-color: #d8b24c; }
@@ -138,7 +136,7 @@
          time, never got past the microphone check, and wrote "I'm in the
          room but no one is joining". Until the guest is actually in, the
          page says plainly that they are not, what the two steps are, and
-         offers the phone from the start. -->
+         offers the phone's browser (and another time) from the start. -->
     <div class="guest-only" id="notIn" role="status">
       <p id="notInHead">You're not in the interview yet.</p>
       <p style="margin:0">Two steps and you're in with Mira:</p>
@@ -146,13 +144,8 @@
         <li id="notInStep1">Press <b>Check my microphone</b> below and read the sentence until it says "Sounds good".</li>
         <li id="notInStep2">Press <b>Join your interview</b>. Mira starts as soon as you're in.</li>
       </ol>
-      <div class="phonebox" id="phoneBoxTop">
+      <div class="trouble" id="troubleTop">
         <span style="font-size:.92rem">Computer giving you trouble?</span>
-        <button class="phone" type="button" id="phoneBtnTop">Have Mira call my phone</button>
-        <div class="hidden" id="phoneAskTop"><input type="tel" id="phoneInTop"
-          placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-          id="phoneGoTop">Call me</button></div>
-        <p id="phoneMsgTop"></p>
       </div>
     </div>
     <figure class="mira-stage small guest-only">
@@ -191,14 +184,8 @@
         microphone and raise the Volume.</li>
         <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
         not your phone, and that any mute switch on the headset is off.</li>
-        <li><b>Still stuck?</b> Join from your phone's browser instead (earbuds in), or, as a last resort, Mira can call you.
-        <div class="phonebox" id="phoneBoxSetup">
-          <button class="phone" type="button" id="phoneBtnSetup">Have Mira call my phone</button>
-          <div class="hidden" id="phoneAskSetup"><input type="tel" id="phoneInSetup"
-            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-            id="phoneGoSetup">Call me</button></div>
-          <p id="phoneMsg"></p>
-        </div></li>
+        <li><b>Still stuck?</b>
+        <div class="trouble" id="troubleSetup"></div></li>
       </ol>
     </div>
     <div class="guest-only" id="echoRow" style="margin:.5rem 0">
@@ -235,7 +222,7 @@
       <span id="presGuest">guest: not yet</span>
       <span id="presHost">host: not yet</span>
     </div>
-    <p class="hostnote">The interview keeps going without you. Your link stays
+    <p class="hostnote" id="readyNote">The interview keeps going without you. Your link stays
     valid for the whole session — rejoin whenever you like.</p>
     <div class="row">
       <button class="ghost hidden" id="rearmBtn">Rejoin the room</button>
@@ -272,14 +259,8 @@
         <li>Pick a different microphone below. It switches straight away, no need to rejoin.</li>
       </ol>
       <div class="hidden" id="phoneOffer">
-        <p style="margin:.5rem 0 0">Still nothing? Carry on from your phone's browser (earbuds in), or, as a last resort, Mira can call you.</p>
-        <div class="phonebox">
-          <button class="phone" type="button" id="phoneBtnCall">Have Mira call my phone</button>
-          <div class="hidden" id="phoneAskCall"><input type="tel" id="phoneInCall"
-            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-            id="phoneGoCall">Call me</button></div>
-          <p id="phoneMsgCall"></p>
-        </div>
+        <p style="margin:.5rem 0 0">Still nothing?</p>
+        <div class="trouble" id="troubleCall"></div>
       </div>
     </div>
     <label for="micSelCall">Microphone</label>
@@ -334,14 +315,7 @@
     <p class="tips" style="color:var(--muted)">Try reloading the page. If it
     persists, email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>
     and we'll sort it out.</p>
-    <div class="phonebox hidden" id="phoneBoxErr">
-      <p style="margin:0">Or join from your phone's browser instead (earbuds in). As a last resort, Mira can call you.</p>
-      <button class="phone" type="button" id="phoneBtnErr">Have Mira call my phone</button>
-      <div class="hidden" id="phoneAskErr"><input type="tel" id="phoneInErr"
-        placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-        id="phoneGoErr">Call me</button></div>
-      <p id="phoneMsgErr"></p>
-    </div>
+    <div class="trouble hidden" id="troubleErr"></div>
   </div>
 
   <div class="footer" id="footerLine">Real people · AI host · Nerra Network</div>
@@ -378,6 +352,11 @@
   // the live one. A guest's link never carries it.
   var candidateRoom = params.get("room") === "candidate";
   var micOk = false, micVerdict = "unknown", micDb = null, micFails = 0, joinOverride = false;
+  // Oct 27 2026: what the stuck report says about the Join button, and how a
+  // guest's disconnect is read (their own End, the room closing, or a drop).
+  var joinAttempted = false, joinError = "", guestEnded = false, roomEndReason = "";
+  var pageOpenedAt = Date.now();
+  var DEAD_INTERVIEW = ["cancelled", "missed", "no_show", "killed", "archived", "failed"];
   var echoVerdict = "not_run", signinState = "unknown", signinError = "";
 
   // ---- 0. Show branding (Sept 2026) ---------------------------------------
@@ -475,6 +454,14 @@
           pollPresence();
           return;
         }
+        // Oct 27 2026: a cancelled or missed interview is not "getting
+        // ready"; it is not on, and the guest is told how to get a new time.
+        if (DEAD_INTERVIEW.indexOf(String(s.interview_status || "")) >= 0) {
+          document.getElementById("checkMsg").textContent = "This interview isn't on right now.";
+          document.getElementById("checkDetail").textContent =
+            "It was cancelled or missed. If you'd like a new time, reply to Mira's last email and she'll set one up.";
+          return;
+        }
         // Oct 22 2026: the interview already happened (the page was left
         // open, or the link was opened again afterwards). Say so and stop;
         // it used to say "Mira is getting the studio ready" forever.
@@ -550,7 +537,7 @@
         micAccess = false;
         fail("Your browser hasn't let the studio use your microphone, so you can't join yet. "
           + "Click the lock icon in the address bar, allow the microphone, and reload this page.");
-        if (!isHost && !testMode) document.getElementById("phoneBoxErr").classList.remove("hidden");
+        if (!isHost && !testMode) document.getElementById("troubleErr").classList.remove("hidden");
       });
   }
   // Sept 9 2026: a username with stray whitespace makes Voximplant's
@@ -601,15 +588,31 @@
       });
     });
   }
-  function switchDevices() {
+  // Oct 27 2026 (Elliot Justin): turning the camera off reset his passed
+  // microphone check and locked Join again, with a message about a "new
+  // microphone" he never picked. Only a change of MICROPHONE asks for the
+  // check again; the camera reopens the stream and nothing else. A refused
+  // device (a camera busy in another app) falls back to audio only instead
+  // of leaving the page with a dead stream.
+  function switchDevices(changed) {
     var micId = document.getElementById("micSel").value;
     var camId = document.getElementById("camSel").value;
-    var constraints = { audio: micId ? { deviceId: { exact: micId } } : true };
+    var audio = micId ? { deviceId: { exact: micId } } : true;
+    var constraints = { audio: audio };
     if (camOn) constraints.video = camId ? { deviceId: { exact: camId } } : true;
     if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
-    navigator.mediaDevices.getUserMedia(constraints).then(function (s) {
+    navigator.mediaDevices.getUserMedia(constraints).catch(function (err) {
+      if (!constraints.video) throw err;
+      camOn = false;
+      var t = document.getElementById("camToggle");
+      if (t) { t.textContent = "Camera unavailable"; t.disabled = true; }
+      return navigator.mediaDevices.getUserMedia({ audio: audio });
+    }).then(function (s) {
       localStream = s; wirePreview(); meterMic();
+    }).catch(function () {
+      setMicMsg("That microphone couldn't be opened. Pick another one from the list, or close any other app using it.", "var(--warn)");
     });
+    if (changed !== "mic") return;
     if (micOk || micVerdict !== "unknown") {
       micOk = false; micVerdict = "unknown";
       setMicMsg("New microphone selected. Press Check my microphone again.", "var(--muted)");
@@ -617,12 +620,12 @@
       updateJoinGate();
     }
   }
-  document.getElementById("micSel").addEventListener("change", switchDevices);
-  document.getElementById("camSel").addEventListener("change", switchDevices);
+  document.getElementById("micSel").addEventListener("change", function () { switchDevices("mic"); });
+  document.getElementById("camSel").addEventListener("change", function () { switchDevices("camera"); });
   document.getElementById("camToggle").addEventListener("click", function () {
     camOn = !camOn;
     this.textContent = camOn ? "Turn camera off" : "Turn camera on";
-    switchDevices();
+    switchDevices("camera");
   });
   function meterMic() {
     if (analyserRAF) cancelAnimationFrame(analyserRAF);
@@ -657,12 +660,13 @@
   // lives in. If the microphone hears it, the microphone will hear Mira too.
   var ECHO_HZ = 1180;          // a bin of its own, well inside every mic's range
   var echoChecked = false;
-  function echoCheck() {
+  function echoCheck(onDone) {
+    var finished = typeof onDone === "function" ? onDone : function () {};
     var msg = document.getElementById("echoMsg");
     var btn = document.getElementById("echoBtn");
-    if (!localStream) { msg.textContent = "Pick a microphone first."; return; }
+    if (!localStream) { msg.textContent = "Pick a microphone first."; finished(); return; }
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) { msg.textContent = ""; return; }
+    if (!AC) { msg.textContent = ""; finished(); return; }
     btn.disabled = true;
     msg.style.color = "var(--muted)";
     msg.textContent = "Listening… stay quiet for a moment.";
@@ -697,6 +701,7 @@
       btn.disabled = false;
       btn.textContent = "Check again";
       try { ctx.close(); } catch (e) { /* ignore */ }
+      finished();
       // Tell the operator's side what we found, so a guest who joins anyway
       // is not a surprise when the tape comes back.
       try {
@@ -734,7 +739,7 @@
       });
     });
   }
-  document.getElementById("echoBtn").addEventListener("click", echoCheck);
+  document.getElementById("echoBtn").addEventListener("click", function () { echoCheck(); });
 
   // ---- 2c. Microphone check: Join waits for one real sentence ------------
   // Sept 28 2026, Elliot. His microphone sent -40 to -55 dB for the first
@@ -834,6 +839,7 @@
       var payload = { interview: interviewId, role: role, test: testMode,
           mic: forceMic || micVerdict, mic_db: micDb, echo: echoVerdict,
           signin: signinState, signin_error: signinError,
+          join_attempted: joinAttempted, join_error: joinError, join_override: joinOverride,
           device: deviceLabel(), ua: navigator.userAgent };
       if (extra) Object.keys(extra).forEach(function (k) { payload[k] = extra[k]; });
       fetch(API + "/studio-check", {
@@ -850,10 +856,11 @@
     document.getElementById("checkDetail").textContent = "";
     document.querySelectorAll("#stateSetup .row, #joinGate, #consentNote, #notIn")
       .forEach(function (el) { el.classList.add("hidden"); });
-    // No phone switch from a test: that button dials now.
-    document.getElementById("phoneBoxSetup").innerHTML =
-      "<p style='margin:.3rem 0 0'>Reply to your booking email and we'll set the interview up as a phone call"
-      + (when ? " for " + when.toLocaleString() : "") + ".</p>";
+    // The test never joins anything; the way out is said in words.
+    document.getElementById("troubleSetup").innerHTML =
+      "<p style='margin:.3rem 0 0'>Try the same link on your phone with earbuds in: it's the same studio. "
+      + "If neither works, reply to your booking email and we'll find another time"
+      + (when ? " than " + when.toLocaleString() : "") + ".</p>";
     document.getElementById("testResult").classList.remove("hidden");
     startSetup();
   }
@@ -882,57 +889,11 @@
     } else {
       sum.textContent = "Almost there: " + issues.join("; and ") + ".";
       sum.style.color = "var(--warn)";
-      detail.textContent = "Fix it and run the checks again here. We've let Patrick know, so if it won't cooperate, reply to your booking email and we'll switch you to a phone call.";
+      detail.textContent = "Fix it and run the checks again here, or try this same link on your phone with earbuds in. We've let Patrick know, so if neither works, reply to your booking email and we'll find another time.";
     }
     var key = [micVerdict, echoVerdict, signinState].join("/");
     if (key !== lastReported) { lastReported = key; reportCheck(); }
   }
-
-  // ---- 2e. "Have Mira call my phone" ---------------------------------------
-  // Offered in the microphone help before joining and in the silence banner
-  // during the call. The Worker flips the interview to a phone call and
-  // dispatches the dial at once; with no usable number on file it asks.
-  var phoneSwitched = false;
-  function requestPhone(where) {
-    var msg = document.getElementById(where === "Setup" ? "phoneMsg" : "phoneMsg" + where);
-    var input = document.getElementById("phoneIn" + where);
-    var ask = document.getElementById("phoneAsk" + where);
-    var body = { interview: interviewId, run_id: runId };
-    if (!ask.classList.contains("hidden") && input.value.trim()) body.phone = input.value.trim();
-    msg.style.color = "inherit";
-    msg.textContent = "One moment…";
-    fetch(API + "/studio-phone", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    }).then(function (r) { return r.json(); }).then(function (res) {
-      if (res.need_phone) {
-        ask.classList.remove("hidden");
-        document.getElementById("phoneBtn" + where).classList.add("hidden");
-        msg.textContent = res.error || "What number should Mira call? Include the country code.";
-        input.focus();
-        return;
-      }
-      if (!res.ok) { msg.textContent = res.error || "That didn't work. Reply to your booking email and we'll call you."; return; }
-      phoneSwitched = true;
-      var text = "Mira will call your phone ending in " + res.phone_last4 + " within a few minutes. "
-        + "Find a quiet spot and answer when it rings. You can close this page.";
-      document.getElementById("doneHead").textContent = "Switching to your phone";
-      document.getElementById("donePhone").textContent = text;
-      document.getElementById("donePhone").classList.remove("hidden");
-      document.getElementById("doneBody").classList.add("hidden");
-      stopCallMeter();
-      if (activeCall) { try { activeCall.hangup(); } catch (e) { /* ignore */ } }
-      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
-      show("stateDone");
-    }).catch(function () {
-      msg.textContent = "That didn't go through. Reply to your booking email and we'll call you.";
-    });
-  }
-  ["Setup", "Call", "Top", "Err"].forEach(function (w) {
-    var b = document.getElementById("phoneBtn" + w);
-    if (b) b.addEventListener("click", function () { requestPhone(w); });
-    var g = document.getElementById("phoneGo" + w);
-    if (g) g.addEventListener("click", function () { requestPhone(w); });
-  });
 
   // ---- 2f. "You're not in the interview yet" -----------------------------
   // Oct 1 2026, Jonathan Bautista. The page was open at his start time, Join
@@ -941,7 +902,7 @@
   // our side knew either. Until the guest is in: the banner above says so in
   // plain words, counts the minutes once the slot has started, and offers
   // the phone. Three minutes after the start the page tells the Worker once,
-  // and Patrick gets an email with a one-click switch to a phone call.
+  // and Patrick gets an email saying what they are stuck on.
   var STUCK_AFTER_MS = 3 * 60 * 1000;
   var scheduledAt = null, micAccess = null, stuckReported = false, notInTimer = null, everConnected = false;
   function minutesLate() {
@@ -966,9 +927,11 @@
     if (notInTimer) { clearInterval(notInTimer); notInTimer = null; }
   }
   function notInTick() {
-    if (everConnected || activeCall || phoneSwitched) { stopNotIn(); return; }
+    if (everConnected || activeCall || movedToPhone) { stopNotIn(); return; }
     updateNotIn();
-    if (!stuckReported && scheduledAt && Date.now() - scheduledAt >= STUCK_AFTER_MS) {
+    // Three minutes from the start, or from opening the page if they came
+    // late: a guest who arrives at T+5 is not "stuck" fifteen seconds later.
+    if (!stuckReported && scheduledAt && Date.now() - Math.max(scheduledAt, pageOpenedAt) >= STUCK_AFTER_MS) {
       stuckReported = true;
       reportCheck(undefined, { stuck: true, minutes_late: minutesLate(), mic_access: micAccess });
     }
@@ -996,32 +959,42 @@
     sc.onload = cb; sc.onerror = function () { cb(); };
     document.head.appendChild(sc);
   }
-  function mobileBox(where) {
-    var callBtn = document.getElementById("phoneBtn" + where);
-    if (!callBtn || onMobile || isHost) return;
-    callBtn.classList.add("lastresort");
-    callBtn.textContent = "Last resort: have Mira call my phone";
-    var box = document.createElement("div");
-    box.className = "mobilebox";
-    box.innerHTML = '<button class="primary" type="button">Join from my phone instead</button>'
-      + '<div class="hidden"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
-      + '<div class="qr"></div><p><button class="ghost" type="button">Text me the link</button> '
-      + '<span class="mmsg"></span></p>'
-      + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button">leave on this computer</button>.</p>' : '')
-      + '</div>';
-    callBtn.parentNode.insertBefore(box, callBtn);
-    var buttons = box.querySelectorAll("button");
-    var panel = box.querySelector("div");
-    buttons[0].addEventListener("click", function () {
-      panel.classList.remove("hidden"); buttons[0].classList.add("hidden");
+  // ---- 2g'. When the computer won't cooperate (Oct 27 2026) ---------------
+  // There are no phone calls any more: a phone line stops at 3.4 kHz and every
+  // phone episode sounded thin beside the studio ones, and the last one
+  // (Elliot Justin, Oct 26) had a scam call on top of it. Two ways out of a
+  // stuck computer: the same studio in the phone's browser, or another time.
+  var movedToPhone = false;
+  function troubleBox(where) {
+    var box = document.getElementById("trouble" + where);
+    if (!box || isHost || testMode) return;
+    var html = onMobile
+      ? "<p>Try this same link in another browser on this phone (Chrome or Safari), with earbuds in.</p>"
+      : '<p>Join from your phone\'s browser instead, earbuds in: it\'s the same studio and sounds just as good.</p>'
+        + '<button class="primary" type="button" data-act="phone">Join from my phone instead</button>'
+        + '<div class="hidden" data-panel="phone"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
+        + '<div class="qr"></div><p><button class="ghost" type="button" data-act="text">Text me the link</button> '
+        + '<span class="tmsg" data-msg="text"></span></p>'
+        + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button" data-act="leave">leave on this computer</button>.</p>' : "")
+        + "</div>";
+    html += '<p><button class="later" type="button" data-act="later">Still not working? Pick another time</button> '
+      + '<span class="tmsg" data-msg="later"></span></p>';
+    var wrap = document.createElement("div");
+    wrap.innerHTML = html;
+    box.appendChild(wrap);
+    function el(sel) { return wrap.querySelector(sel); }
+    var phoneBtn = el('[data-act="phone"]');
+    if (phoneBtn) phoneBtn.addEventListener("click", function () {
+      el('[data-panel="phone"]').classList.remove("hidden"); phoneBtn.classList.add("hidden");
       loadQr(function () {
-        var q = box.querySelector(".qr");
+        var q = el(".qr");
         if (window.QRCode) { q.innerHTML = ""; new window.QRCode(q, { text: guestStudioUrl(), width: 180, height: 180 }); }
         else { q.textContent = guestStudioUrl(); }
       });
     });
-    buttons[1].addEventListener("click", function () {
-      var msg = box.querySelector(".mmsg");
+    var textBtn = el('[data-act="text"]');
+    if (textBtn) textBtn.addEventListener("click", function () {
+      var msg = el('[data-msg="text"]');
       msg.textContent = "Sending…";
       fetch(API + "/studio-text", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ interview: interviewId }) })
@@ -1031,8 +1004,9 @@
             : res.ok ? "Sent to your email. Open it on your phone." : (res.error || "That didn't go through; scan the code instead.");
         }).catch(function () { msg.textContent = "That didn't go through; scan the code instead."; });
     });
-    if (buttons[2]) buttons[2].addEventListener("click", function () {
-      phoneSwitched = true;
+    var leaveBtn = el('[data-act="leave"]');
+    if (leaveBtn) leaveBtn.addEventListener("click", function () {
+      movedToPhone = true;
       document.getElementById("doneHead").textContent = "Carrying on from your phone";
       document.getElementById("donePhone").textContent = "You've left on this computer. Keep going on your phone; you can close this page.";
       document.getElementById("donePhone").classList.remove("hidden");
@@ -1042,25 +1016,45 @@
       if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
       show("stateDone");
     });
+    el('[data-act="later"]').addEventListener("click", function () {
+      var msg = el('[data-msg="later"]');
+      msg.textContent = "One moment…";
+      fetch(API + "/studio-reschedule", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interview: interviewId }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          msg.textContent = res.ok
+            ? "I've emailed you a link to pick another time. Nothing is lost, and you can close this page."
+            : (res.error || "That didn't go through. Reply to my last email and I'll find you another time.");
+        }).catch(function () { msg.textContent = "That didn't go through. Reply to my last email and I'll find you another time."; });
+    });
   }
-  ["Top", "Setup", "Call", "Err"].forEach(mobileBox);
+  ["Top", "Setup", "Call", "Err"].forEach(troubleBox);
 
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
     var btn = this;
-    // Offer the check to a guest who has not run it, once. Never block the
-    // join on it: a guest who cannot find their headphones must still be able
-    // to do the interview, and a locked door costs us the episode.
-    if (!isHost && !echoChecked) {
-      echoChecked = true;
-      try { echoCheck(); } catch (e) { /* advisory only */ }
-    }
     if (!isHost && !micOk && !joinOverride) return;   // the gate (see 2c)
     btn.disabled = true; btn.textContent = "Connecting…";
-    join().catch(function (e) {
+    joinAttempted = true;
+    // Offer the headphones check to a guest who has not run it, once, and let
+    // it FINISH before the join releases the microphone. Oct 27 2026: it used
+    // to run on a stream join() had just stopped, so it heard nothing and
+    // reported "clean" whatever the guest was wearing. It never blocks the
+    // join: the verdict is advice.
+    var before = Promise.resolve();
+    if (!isHost && !echoChecked) {
+      echoChecked = true;
+      before = new Promise(function (resolve) {
+        try { echoCheck(resolve); } catch (e) { resolve(); }
+        setTimeout(resolve, 4000);
+      });
+    }
+    before.then(function () { return join(); }).catch(function (e) {
       console.error("[studio] join failed at step", joinStep, e);
+      joinError = explainJoinError(e);
       btn.disabled = false; btn.textContent = isHost ? "Join the room" : "Join your interview";
-      fail(explainJoinError(e));
+      fail(joinError);
     });
   });
 
@@ -1114,11 +1108,13 @@
   }
   document.getElementById("rearmBtn").addEventListener("click", function () {
     leaving = false;
+    roomEndReason = "";
     var btn = document.getElementById("joinBtn");
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
-      btn.disabled = false; btn.textContent = "Join the room";
-      fail(explainJoinError(e));
+      joinError = explainJoinError(e);
+      btn.disabled = false; btn.textContent = isHost ? "Join the room" : "Join your interview";
+      fail(joinError);
     });
   });
 
@@ -1179,9 +1175,20 @@
     throw new Error("no one-time login key from Voximplant");
   }
 
+  var sdkWatched = false;
   async function studioLogin() {
     if (loggedIn) return;
     sdk = VoxImplant.getInstance();
+    // Oct 27 2026: the sign-in was made once, at T-15, and never noticed the
+    // connection dying under it (a laptop asleep, a change of Wi-Fi), so Join
+    // called on a dead line. A closed connection now means "sign in again".
+    if (!sdkWatched) {
+      sdkWatched = true;
+      try {
+        sdk.on(VoxImplant.Events.ConnectionClosed, function () { loggedIn = false; });
+        sdk.on(VoxImplant.Events.ConnectionFailed, function () { loggedIn = false; });
+      } catch (e) { /* older SDK: join() checks sdk.connected() instead */ }
+    }
     try {
       await step("init", "Opening microphone…",
         sdk.init({ micRequired: false, videoSupport: !isHost, progressTone: false, showDebugInfo: false }));
@@ -1216,8 +1223,10 @@
     if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
     if (analyserRAF) cancelAnimationFrame(analyserRAF);
 
+    if (loggedIn && sdk && sdk.connected && !sdk.connected()) loggedIn = false;
     if (!loggedIn) {
       if (preLoginPromise) { try { await preLoginPromise; } catch (ignored) {} }
+      if (loggedIn && sdk && sdk.connected && !sdk.connected()) loggedIn = false;
       if (!loggedIn) await studioLogin();
     }
 
@@ -1254,6 +1263,10 @@
   }
   function onCallFailed(e) {
     console.warn("[studio] call failed", e && e.code, e && e.reason);
+    // Oct 27 2026: a failed call left activeCall set, which silenced the
+    // "not in yet" banner and the stuck report for a guest on the error page.
+    activeCall = null;
+    joinError = "call failed: " + ((e && (e.reason || e.code)) || "unknown");
     if (isMediaRefusal(e) && callSentVideo && !audioOnlyRetried) {
       audioOnlyRetried = true;
       camOn = false;
@@ -1318,7 +1331,7 @@
     activeCall = null;
     stopCallMeter();
     stopMiraMeter();
-    if (phoneSwitched) { stopLocalRecording(); show("stateDone"); return; }
+    if (movedToPhone) { stopLocalRecording(); show("stateDone"); return; }
     var flush = stopLocalRecording();
     if (isHost) {
       // The co-host left (or dropped). The room goes on without him; the
@@ -1331,12 +1344,44 @@
       show("stateReady");
       return;
     }
+    // Oct 27 2026: every guest disconnect used to read "That's a wrap",
+    // including a dropped connection and a room that ended on a fault the
+    // Worker reopens for a rejoin. Only the guest's own End, or the room
+    // closing for good, is the end now; anything else offers Rejoin, and the
+    // presence poll still moves to the end if the interview really is over.
+    var closedForGood = roomEndReason === "hard_cap" || roomEndReason === "no_show";
+    // Ending it yourself in the first five minutes is not the end of the
+    // interview either (the Worker reopens the studio): offer the way back.
+    var endedEarly = guestEnded && callStart && Date.now() - callStart < 5 * 60 * 1000;
+    if ((!guestEnded || endedEarly) && !closedForGood) {
+      var fault = roomEndReason && !closedForGood;
+      document.getElementById("readyMsg").textContent = endedEarly
+        ? "You left the interview after a few minutes. If that was a mistake, press Rejoin; Mira is still there."
+        : fault
+        ? "The interview room hit a problem on our side. Press Rejoin and a fresh room opens."
+        : "Your connection to the interview dropped. Press Rejoin to go straight back in.";
+      guestEnded = false;
+      document.getElementById("readyNote").textContent =
+        "Your link stays valid while the interview is on, and your microphone check still counts.";
+      var rearm = document.getElementById("rearmBtn");
+      rearm.textContent = "Rejoin the interview";
+      rearm.classList.remove("hidden");
+      show("stateReady");
+      if (!pollHandle) pollPresence();
+      return;
+    }
     show("stateDone");
     flush.then(function () {
       document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
     });
   }
   function finishDone() {
+    // A guest who never got in has not had "a wrap" (Oct 27 2026).
+    if (!isHost && !everConnected) {
+      document.getElementById("doneHead").textContent = "This interview session has closed";
+      document.getElementById("doneBody").textContent =
+        "Mira couldn't start the interview with you this time. Check your email from her, or reply to it and she'll find you another time.";
+    }
     show("stateDone");
     document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
   }
@@ -1348,6 +1393,7 @@
   });
   document.getElementById("hangupBtn").addEventListener("click", function () {
     if (isHost) leaving = true;
+    else guestEnded = true;
     if (activeCall) activeCall.hangup();
   });
 
@@ -1446,6 +1492,9 @@
   function onRoomMessage(raw) {
     var m = null;
     try { m = JSON.parse(String(raw || "")); } catch (e) { return; }
+    // Oct 27 2026: the room tells each leg it is closing, and why, before it
+    // hangs up, so a dropped connection and a closed room read differently.
+    if (m && m.nn === 1 && m.room === "ended") { roomEndReason = String(m.reason || "ended"); return; }
     if (!m || m.nn !== 1 || !m.status) return;
     if (fbWaiting) { clearTimeout(fbWaiting); fbWaiting = null; }
     var key = m.status === "queued" ? "queued_" + m.ack : m.status;
@@ -1481,7 +1530,7 @@
   // Sept 28 2026 (Elliot). Nothing on the page said "Mira can't hear you";
   // the only signal was her asking whether he was there. Now:
   //   15 s with no voice since joining  -> yellow banner + mic switcher
-  //   30 s                              -> "Have Mira call my phone" + Patrick emailed
+  //   30 s                              -> "Join from my phone instead" + Patrick emailed
   // After they have been heard once, a later silence gets more room (60 s /
   // 90 s): listening to Mira is not a fault. A muted guest who is talking
   // gets told they are muted.

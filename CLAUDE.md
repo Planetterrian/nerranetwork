@@ -960,8 +960,14 @@ today's work, not just explain yesterday's):
   Voximplant scenario bridged to a Grok Voice Agent, dual-track records the
   conversation, and the episode is produced from the real recording.
   **Since 2026-09-09 every interview is a ROOM** — the guest (and an optional
-  co-host) joins from `age-of-ai-studio.html`, picks a mic and presses Join,
-  and the **outbound PSTN call is the FALLBACK mode**, not the default. An
+  co-host) joins from `age-of-ai-studio.html`, picks a mic and presses Join.
+  **Since 2026-10-27 there are NO phone-call interviews at all** (Patrick:
+  the sound is too poor for the show). A guest whose computer won't
+  cooperate opens the same link in their phone's browser, or presses "Pick
+  another time" (`/voices/studio-reschedule`); `/voices/studio-phone` and
+  `/voices/admin/call-guest` answer 410, the scenario refuses a PSTN start,
+  and nothing in `fire_interviews.py` dials. Never reintroduce a phone call,
+  in code or in copy. An
   earlier version of this paragraph said Mira "phones" guests, and that claim
   had also reached `engine/brand.py` as the BASIS of the network's
   first-of-its-kind claim; corrected 2026-09-20. Do not describe the show as
@@ -975,8 +981,8 @@ today's work, not just explain yesterday's):
   `api.nerranetwork.com/voices/*`, a documented deviation from the spec's
   Vercel sketch) + `supabase/migrations/20260704_nerra_voices_schema.sql`
   (separate Supabase instance; 6 tables are the state machine) +
-  `voximplant/scenarios/age_of_ai_interview.js` (the central glue: outbound
-  PSTN → Grok Voice bridge → stereo recorder → hangup webhook; 50-min hard
+  `voximplant/scenarios/age_of_ai_interview.js` (the central glue: browser
+  room → Grok Voice bridge → stereo recorder → hangup webhook; 50-min hard
   cap). Flow: apply form → Patrick triage (~30 s) → Cal.com booking → T-1d
   LLM prep brief emailed to guest → T-2h SMS → fire (5-min cron,
   drift-tolerant window, idempotent) → live call → post-processing (R2, mix,
