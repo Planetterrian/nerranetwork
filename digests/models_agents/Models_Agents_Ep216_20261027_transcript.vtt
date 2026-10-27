@@ -1,0 +1,418 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.760
+OpenAI's GPT 6.1 Terra delivers faster computer use agents at half the prior token price. This is Models &amp; Agents, Episode 216. Open ESM weights go public, agent memory papers cut token spend, then things to try. OpenAI is rolling GPT 6.1 Terra out to chat GPT work, codex, and the API under the name GPT 6.1- Terra. The model understands screen content, performs actions across applications,
+
+00:00:28.760 --> 00:00:30.340
+and writes naturally.
+
+00:00:30.920 --> 00:00:33.860
+It matches GPT-6 Astra on Agents last exam
+
+00:00:33.860 --> 00:00:35.700
+at one-tenth the price per token.
+
+00:00:36.400 --> 00:00:38.820
+Tasks finish over three times faster on average
+
+00:00:38.820 --> 00:00:41.620
+than both Astra and GPT-6.1 sole.
+
+00:00:42.280 --> 00:00:44.240
+In chat GPT work and Codex,
+
+00:00:44.360 --> 00:00:45.980
+the usage allowance stretches further
+
+00:00:45.980 --> 00:00:48.140
+than with GPT-5.6 Terra.
+
+00:00:48.780 --> 00:00:50.400
+Developers can access it immediately
+
+00:00:50.400 --> 00:00:53.060
+through the API or chat GPT interfaces
+
+00:00:53.060 --> 00:00:54.300
+for agent-style work.
+
+00:00:55.323 --> 00:00:57.083
+Energy steering meets token generation
+
+00:00:57.083 --> 00:01:01.183
+in Open ESM, one architecture described in an archive paper.
+
+00:01:01.783 --> 00:01:05.283
+The model first optimizes a latent state over an energy landscape
+
+00:01:05.283 --> 00:01:08.003
+then uses that refined state for generation.
+
+00:01:08.683 --> 00:01:11.203
+Pre-training ran on three large-scale corpora.
+
+00:01:11.823 --> 00:01:14.463
+Evaluation covered 26 downstream tasks,
+
+00:01:14.763 --> 00:01:17.623
+where the models outperform GPTs on most of them
+
+00:01:17.623 --> 00:01:19.543
+and show promising scaling behavior.
+
+00:01:20.103 --> 00:01:21.883
+The team fully releases model weights
+
+00:01:21.883 --> 00:01:24.623
+and training infrastructure on GitHub and Hugging Face.
+
+00:01:24.623 --> 00:01:30.849
+Next token training gets a meaning reward in conceptizer. A fixed vocabulary of about
+
+00:01:30.849 --> 00:01:37.489
+9,000 contextual synonym concepts sits alongside ordinary tokens. The model receives a reward
+
+00:01:37.489 --> 00:01:43.389
+for meaning rather than only the exact next token. Tests on 1 billion to 8 billion parameter
+
+00:01:43.389 --> 00:01:48.509
+models across three families post the lowest held out perplexity at concept target positions.
+
+00:01:49.149 --> 00:01:54.649
+The same runs record the highest probability on contextual synonyms. Downstream gains appear
+
+00:01:54.649 --> 00:01:59.169
+on knowledge and sentiment tasks, while common sense performance stays comparable.
+
+00:02:00.257 --> 00:02:05.557
+Nepali vocabulary work uses a small rejects edit to the pre-tokenizer that keeps every
+
+00:02:05.557 --> 00:02:09.397
+token ID of text without combining marks or divanigari characters.
+
+00:02:10.037 --> 00:02:16.577
+The repair, with 32,000 new merges, reduces Nepali token count to 1.01 times English.
+
+00:02:17.297 --> 00:02:23.657
+Nepali tokens drop by about 54% versus standard vocabulary extension on Lama 3 and QN3.
+
+00:02:23.657 --> 00:02:31.537
+Continued pre-training on Lama 3.21B and QN3 0.6B still leaves the original tokenizer
+
+00:02:31.537 --> 00:02:35.337
+winning on held out Napoli bits per bite under every tested recipe.
+
+00:02:36.384 --> 00:02:39.924
+Indic language tokenization is the target of Adapt Talk Indic.
+
+00:02:40.464 --> 00:02:45.544
+Unicode normalize pre-processing and explicit Indic conjunct handling sit alongside script
+
+00:02:45.544 --> 00:02:46.284
+aware routing.
+
+00:02:47.024 --> 00:02:49.844
+Learned bite-level boundary prediction completes the stack.
+
+00:02:49.844 --> 00:02:58.964
+mean fertility, tokens per word more or less hits 1.43 on Bengali, and 1.388 on Hindi, well
+
+00:02:58.964 --> 00:03:06.484
+below sentence piece bite pair encoding, or BPE. Downstream scores average 57.69 on evaluated
+
+00:03:06.484 --> 00:03:13.942
+index settings, versus 50.82 for the sentence piece baseline. Recursive semantic divergence measures
+
+00:03:13.942 --> 00:03:19.402
+expected cumulative semantic disagreement between independent rollouts of the same agent from the same
+
+00:03:19.402 --> 00:03:25.102
+state using natural language inference. As a reward signal, it cuts task progress variation
+
+00:03:25.102 --> 00:03:35.262
+from 132% to 91% on tau2-bench. On tools and box, that variation falls from 90% to 44%.
+
+00:03:35.262 --> 00:03:40.422
+The metric needs no ground truth labels. It estimates future divergence from the current state.
+
+00:03:40.882 --> 00:03:47.250
+Performance improves across benchmarks and scales. Slicemem uses a compact classifier for
+
+00:03:47.250 --> 00:03:52.730
+salience guided admission. A semantic dependency extractor converts turns into concise memory
+
+00:03:52.730 --> 00:03:58.910
+entries without generative, large language model, or LLM calls. On Memora Weekly and Long
+
+00:03:58.910 --> 00:04:06.650
+Mem EVAL-S with QN 330B backbones, it matches the generative baseline MemOS. Total LLM token
+
+00:04:06.650 --> 00:04:15.070
+consumption falls by 92.4% on 1 and 99.5% on the other. Cross-entry reconciliation is deferred
+
+00:04:15.070 --> 00:04:20.888
+to an offline stage. FlexA Mem writes each unit of history once into an immutable store.
+
+00:04:21.348 --> 00:04:26.568
+Every call gets a fresh, compact timeline plus detail, rendered by a fixed rule that
+
+00:04:26.568 --> 00:04:33.188
+fits remaining budget without an LLM call. On app world, at a 4,000 token context, it outperforms
+
+00:04:33.188 --> 00:04:41.988
+the second best method by 11.5%. On 147 unused tasks, it beats A Mem with summary by 12.2%.
+
+00:04:41.988 --> 00:04:45.968
+The timeline carries completion while recovery mainly saves steps.
+
+00:04:46.988 --> 00:04:51.508
+Diffusion language models are the setting for trace query, which predicts a small set
+
+00:04:51.508 --> 00:04:55.568
+of near-future trajectory relevant positions from full denoising trajectories.
+
+00:04:56.068 --> 00:04:57.748
+It queries only those candidates.
+
+00:04:58.288 --> 00:05:03.308
+That yields the strongest quality computation trade-off among cash-based approaches for diffusion
+
+00:05:03.308 --> 00:05:04.048
+LM's.
+
+00:05:04.548 --> 00:05:08.148
+The method generalizes across tasks, model variants, and families.
+
+00:05:08.948 --> 00:05:10.148
+Code is released on GitHub.
+
+00:05:10.148 --> 00:05:15.763
+club. Historical document transcription gets an entity-aware evaluation of optical character
+
+00:05:15.763 --> 00:05:21.923
+recognition or OCR, judged at the entity level rather than raw character match. The benchmark
+
+00:05:21.923 --> 00:05:29.743
+covers 175 documents from the Barudi archive. Annotators marked 5209 entity mentions by hand.
+
+00:05:30.443 --> 00:05:36.963
+QN 3.6 achieves the highest entity coverage across tolerances. Several lower exact match systems
+
+00:05:36.963 --> 00:05:40.263
+recovers substantially when small character errors are tolerated.
+
+00:05:40.623 --> 00:05:43.663
+The benchmark and annotations will be released upon acceptance.
+
+00:05:44.861 --> 00:05:49.301
+Automatic speech recognition fine-tuning is the problem whispering wisely attacks with
+
+00:05:49.301 --> 00:05:53.381
+embedding-based case-center subset selection on whispers pre-trained encoder.
+
+00:05:53.921 --> 00:05:59.201
+On Hebrew and Danish, the approach often beats random sampling, especially at smaller subset
+
+00:05:59.201 --> 00:05:59.721
+sizes.
+
+00:06:00.281 --> 00:06:05.161
+Those case-center subsets capture broader lexical diversity, which helps when transcribed
+
+00:06:05.161 --> 00:06:06.161
+audio is limited.
+
+00:06:06.161 --> 00:06:12.347
+Speaking-style captioning gets its first standardized instruction following benchmark in style-instruct
+
+00:06:12.347 --> 00:06:12.827
+caps.
+
+00:06:13.267 --> 00:06:18.287
+The framework scores metadata groundedness, hallucination, instruction following, and
+
+00:06:18.287 --> 00:06:19.707
+speaker-style consistency.
+
+00:06:20.347 --> 00:06:25.887
+Across nine state-of-the-art audio-language models, instruction-diverse training substantially improves
+
+00:06:25.887 --> 00:06:27.627
+groundedness and controllability.
+
+00:06:28.556 --> 00:06:34.916
+Chest-computed tomography reports generated by LLMs are the target of EV ground CT, which extracts
+
+00:06:34.916 --> 00:06:39.376
+positive finding sentences and predicts a three-dimensional evidence mask for each one.
+
+00:06:39.956 --> 00:06:47.576
+Sentence-grounded verification raises evidence-supported precision from 0.263 to 0.365 on a held out
+
+00:06:47.576 --> 00:06:55.136
+100-case subset. The unsupported positive finding rate falls from 0.737 to 0.635.
+
+00:06:56.226 --> 00:07:01.526
+Elsewhere, industry experts tell business standard that AI agents could transform banking operations
+
+00:07:01.526 --> 00:07:05.806
+while remaining risks sit around security, compliance, and oversight.
+
+00:07:06.466 --> 00:07:12.726
+Individuals and teams beginning to experiment with AI agents get practical first steps in a Washington Post analysis.
+
+00:07:13.566 --> 00:07:20.546
+Oil and gas operations could see agentic AI connect workflows and accelerate decisions, according to oil and gas journal.
+
+00:07:21.126 --> 00:07:30.046
+Anthropic filed an S1 registration statement with the Securities and Exchange Commission or SEC for its proposed initial public offering or IPO.
+
+00:07:30.046 --> 00:07:36.686
+CodeRabbit uses GPT 6.1 soil to investigate security risks across complex code bases
+
+00:07:36.686 --> 00:07:40.406
+and review proposed fixes according to the OpenAI blog.
+
+00:07:41.046 --> 00:07:47.286
+GrapTile uses GPT 6 Astra to test user workflows, strengthen security, and reduce rework
+
+00:07:47.286 --> 00:07:48.346
+inside CodeX.
+
+00:07:48.966 --> 00:07:56.006
+OpenAI signals data covers 165 work activities across nearly 100 countries and shows how chat
+
+00:07:56.006 --> 00:07:58.446
+GPT usage for work evolves over time.
+
+00:07:58.446 --> 00:08:04.662
+Test GPT 6.1 Terra through the OpenAI API or chat GPT work on
+
+00:08:04.662 --> 00:08:08.662
+agentic computer use tasks, where speed and token costs dominate.
+
+00:08:09.342 --> 00:08:13.222
+Pull the released OpenESM weights on hugging face and try energy steered
+
+00:08:13.222 --> 00:08:17.682
+pre-training on your own corpora. When you fine-tune Whisper on Hebrew or
+
+00:08:17.682 --> 00:08:22.582
+Danish with limited transcribed audio, use that K center subset selection instead
+
+00:08:22.582 --> 00:08:27.202
+of a random slice. If you work in Bengali or Hindi and your tokenizer is
+
+00:08:27.202 --> 00:08:32.602
+to chatty, run Adapt Talk Indic, and compare fertility against sentence-piece BPE.
+
+00:08:33.562 --> 00:08:38.902
+Continued GPT 6.1 family releases are expected to push further on the cost intelligence
+
+00:08:38.902 --> 00:08:40.282
+curve for agent workloads.
+
+00:08:41.002 --> 00:08:46.082
+Additional entity-aware OCR benchmarks for historical documents are anticipated once the
+
+00:08:46.082 --> 00:08:48.142
+Barudi Archive annotations are public.
+
+00:08:49.175 --> 00:08:54.615
+Soft prompt compression paid a quadratic transformer tax on every extra token, so it is time
+
+00:08:54.615 --> 00:08:56.515
+to pop the hood on the Boa compressor.
+
+00:08:56.515 --> 00:09:02.355
+Boa replaces that transformer backbone with a Mamba state space model that encodes arbitrary
+
+00:09:02.355 --> 00:09:05.115
+length context in a single linear time pass.
+
+00:09:05.315 --> 00:09:10.075
+That pass produces a representation which conditions a frozen target LLM.
+
+00:09:10.495 --> 00:09:15.055
+The state space model is trained by distillation, so its compressed representation produces
+
+00:09:15.055 --> 00:09:19.575
+the same next token logits as the target LLM ingesting the full context.
+
+00:09:20.175 --> 00:09:25.475
+Because the compressor runs online on every query instead of once offline, it removes the
+
+00:09:25.475 --> 00:09:30.195
+latency overhead that previously confined soft prompt methods to repeated query settings.
+
+00:09:30.675 --> 00:09:35.615
+At identical compression ratios, the approach matches or exceeds prior offline transformer
+
+00:09:35.615 --> 00:09:36.595
+based baselines.
+
+00:09:37.255 --> 00:09:40.115
+Compression time drops by roughly an order of magnitude.
+
+00:09:40.655 --> 00:09:45.935
+It continues to scale to 16 times compression and longer contexts without the quadratic cost
+
+00:09:45.935 --> 00:09:50.775
+that grows with transformer based compressors, and without adding per query overhead.
+
+00:09:50.775 --> 00:09:56.395
+The practical limit appears when the target LLM's own context window becomes the bottleneck
+
+00:09:56.395 --> 00:09:57.935
+rather than the compressor itself.
+
+00:09:58.595 --> 00:10:02.495
+Teams facing repeated long-context queries should test BoA first.
+
+00:10:03.095 --> 00:10:07.675
+Teams that compress once and reuse across many queries can still prefer the older offline
+
+00:10:07.675 --> 00:10:08.075
+methods.
+
+00:10:08.695 --> 00:10:14.075
+Before we go, the next GPT 6.1 family drop is the one I'll be reading the moment it lands.
+
+00:10:14.775 --> 00:10:16.415
+That's models and agents for today.
+
+00:10:16.415 --> 00:10:20.995
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:10:21.475 --> 00:10:23.735
+and subscribe so you don't miss tomorrow's update.
+
+00:10:24.335 --> 00:10:29.195
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+
+00:10:29.195 --> 00:10:32.195
+watch than listen, find us on YouTube at Narin Network.
+
+00:10:32.795 --> 00:10:34.695
+Links in the show notes, one more thing.
+
+00:10:35.295 --> 00:10:39.515
+If you like today's episode, our sister show OmniView is worth a spot in your feed.
+
+00:10:40.035 --> 00:10:43.635
+A balanced daily world news briefing that takes every side seriously.
+
+00:10:43.635 --> 00:10:48.595
+Lastly, it's one of the Narin Network's daily briefings, all free at NarinNetwork.com.
+
+00:10:48.955 --> 00:10:52.575
+The do-positive pod is the club for people who do something about it.
+
+00:10:53.035 --> 00:10:57.695
+Episodes in the dispatch wall at NarinNetwork.com, the DPPOD.
+
+00:10:58.195 --> 00:11:01.195
+This episode used AI voice synthesis of my voice.
+
+00:11:01.715 --> 00:11:04.075
+Editorial selection and analysis are my own.

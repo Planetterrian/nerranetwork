@@ -1,0 +1,139 @@
+OpenAI's GPT 6.1 Terra delivers faster computer use agents at half the prior token price. This is Models & Agents, Episode 216. Open ESM weights go public, agent memory papers cut token spend, then things to try. OpenAI is rolling GPT 6.1 Terra out to chat GPT work, codex, and the API under the name GPT 6.1- Terra. The model understands screen content, performs actions across applications,
+and writes naturally.
+It matches GPT-6 Astra on Agents last exam
+at one-tenth the price per token.
+Tasks finish over three times faster on average
+than both Astra and GPT-6.1 sole.
+In chat GPT work and Codex,
+the usage allowance stretches further
+than with GPT-5.6 Terra.
+Developers can access it immediately
+through the API or chat GPT interfaces
+for agent-style work.
+Energy steering meets token generation
+in Open ESM, one architecture described in an archive paper.
+The model first optimizes a latent state over an energy landscape
+then uses that refined state for generation.
+Pre-training ran on three large-scale corpora.
+Evaluation covered 26 downstream tasks,
+where the models outperform GPTs on most of them
+and show promising scaling behavior.
+The team fully releases model weights
+and training infrastructure on GitHub and Hugging Face.
+Next token training gets a meaning reward in conceptizer. A fixed vocabulary of about
+9,000 contextual synonym concepts sits alongside ordinary tokens. The model receives a reward
+for meaning rather than only the exact next token. Tests on 1 billion to 8 billion parameter
+models across three families post the lowest held out perplexity at concept target positions.
+The same runs record the highest probability on contextual synonyms. Downstream gains appear
+on knowledge and sentiment tasks, while common sense performance stays comparable.
+Nepali vocabulary work uses a small rejects edit to the pre-tokenizer that keeps every
+token ID of text without combining marks or divanigari characters.
+The repair, with 32,000 new merges, reduces Nepali token count to 1.01 times English.
+Nepali tokens drop by about 54% versus standard vocabulary extension on Lama 3 and QN3.
+Continued pre-training on Lama 3.21B and QN3 0.6B still leaves the original tokenizer
+winning on held out Napoli bits per bite under every tested recipe.
+Indic language tokenization is the target of Adapt Talk Indic.
+Unicode normalize pre-processing and explicit Indic conjunct handling sit alongside script
+aware routing.
+Learned bite-level boundary prediction completes the stack.
+mean fertility, tokens per word more or less hits 1.43 on Bengali, and 1.388 on Hindi, well
+below sentence piece bite pair encoding, or BPE. Downstream scores average 57.69 on evaluated
+index settings, versus 50.82 for the sentence piece baseline. Recursive semantic divergence measures
+expected cumulative semantic disagreement between independent rollouts of the same agent from the same
+state using natural language inference. As a reward signal, it cuts task progress variation
+from 132% to 91% on tau2-bench. On tools and box, that variation falls from 90% to 44%.
+The metric needs no ground truth labels. It estimates future divergence from the current state.
+Performance improves across benchmarks and scales. Slicemem uses a compact classifier for
+salience guided admission. A semantic dependency extractor converts turns into concise memory
+entries without generative, large language model, or LLM calls. On Memora Weekly and Long
+Mem EVAL-S with QN 330B backbones, it matches the generative baseline MemOS. Total LLM token
+consumption falls by 92.4% on 1 and 99.5% on the other. Cross-entry reconciliation is deferred
+to an offline stage. FlexA Mem writes each unit of history once into an immutable store.
+Every call gets a fresh, compact timeline plus detail, rendered by a fixed rule that
+fits remaining budget without an LLM call. On app world, at a 4,000 token context, it outperforms
+the second best method by 11.5%. On 147 unused tasks, it beats A Mem with summary by 12.2%.
+The timeline carries completion while recovery mainly saves steps.
+Diffusion language models are the setting for trace query, which predicts a small set
+of near-future trajectory relevant positions from full denoising trajectories.
+It queries only those candidates.
+That yields the strongest quality computation trade-off among cash-based approaches for diffusion
+LM's.
+The method generalizes across tasks, model variants, and families.
+Code is released on GitHub.
+club. Historical document transcription gets an entity-aware evaluation of optical character
+recognition or OCR, judged at the entity level rather than raw character match. The benchmark
+covers 175 documents from the Barudi archive. Annotators marked 5209 entity mentions by hand.
+QN 3.6 achieves the highest entity coverage across tolerances. Several lower exact match systems
+recovers substantially when small character errors are tolerated.
+The benchmark and annotations will be released upon acceptance.
+Automatic speech recognition fine-tuning is the problem whispering wisely attacks with
+embedding-based case-center subset selection on whispers pre-trained encoder.
+On Hebrew and Danish, the approach often beats random sampling, especially at smaller subset
+sizes.
+Those case-center subsets capture broader lexical diversity, which helps when transcribed
+audio is limited.
+Speaking-style captioning gets its first standardized instruction following benchmark in style-instruct
+caps.
+The framework scores metadata groundedness, hallucination, instruction following, and
+speaker-style consistency.
+Across nine state-of-the-art audio-language models, instruction-diverse training substantially improves
+groundedness and controllability.
+Chest-computed tomography reports generated by LLMs are the target of EV ground CT, which extracts
+positive finding sentences and predicts a three-dimensional evidence mask for each one.
+Sentence-grounded verification raises evidence-supported precision from 0.263 to 0.365 on a held out
+100-case subset. The unsupported positive finding rate falls from 0.737 to 0.635.
+Elsewhere, industry experts tell business standard that AI agents could transform banking operations
+while remaining risks sit around security, compliance, and oversight.
+Individuals and teams beginning to experiment with AI agents get practical first steps in a Washington Post analysis.
+Oil and gas operations could see agentic AI connect workflows and accelerate decisions, according to oil and gas journal.
+Anthropic filed an S1 registration statement with the Securities and Exchange Commission or SEC for its proposed initial public offering or IPO.
+CodeRabbit uses GPT 6.1 soil to investigate security risks across complex code bases
+and review proposed fixes according to the OpenAI blog.
+GrapTile uses GPT 6 Astra to test user workflows, strengthen security, and reduce rework
+inside CodeX.
+OpenAI signals data covers 165 work activities across nearly 100 countries and shows how chat
+GPT usage for work evolves over time.
+Test GPT 6.1 Terra through the OpenAI API or chat GPT work on
+agentic computer use tasks, where speed and token costs dominate.
+Pull the released OpenESM weights on hugging face and try energy steered
+pre-training on your own corpora. When you fine-tune Whisper on Hebrew or
+Danish with limited transcribed audio, use that K center subset selection instead
+of a random slice. If you work in Bengali or Hindi and your tokenizer is
+to chatty, run Adapt Talk Indic, and compare fertility against sentence-piece BPE.
+Continued GPT 6.1 family releases are expected to push further on the cost intelligence
+curve for agent workloads.
+Additional entity-aware OCR benchmarks for historical documents are anticipated once the
+Barudi Archive annotations are public.
+Soft prompt compression paid a quadratic transformer tax on every extra token, so it is time
+to pop the hood on the Boa compressor.
+Boa replaces that transformer backbone with a Mamba state space model that encodes arbitrary
+length context in a single linear time pass.
+That pass produces a representation which conditions a frozen target LLM.
+The state space model is trained by distillation, so its compressed representation produces
+the same next token logits as the target LLM ingesting the full context.
+Because the compressor runs online on every query instead of once offline, it removes the
+latency overhead that previously confined soft prompt methods to repeated query settings.
+At identical compression ratios, the approach matches or exceeds prior offline transformer
+based baselines.
+Compression time drops by roughly an order of magnitude.
+It continues to scale to 16 times compression and longer contexts without the quadratic cost
+that grows with transformer based compressors, and without adding per query overhead.
+The practical limit appears when the target LLM's own context window becomes the bottleneck
+rather than the compressor itself.
+Teams facing repeated long-context queries should test BoA first.
+Teams that compress once and reuse across many queries can still prefer the older offline
+methods.
+Before we go, the next GPT 6.1 family drop is the one I'll be reading the moment it lands.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+watch than listen, find us on YouTube at Narin Network.
+Links in the show notes, one more thing.
+If you like today's episode, our sister show OmniView is worth a spot in your feed.
+A balanced daily world news briefing that takes every side seriously.
+Lastly, it's one of the Narin Network's daily briefings, all free at NarinNetwork.com.
+The do-positive pod is the club for people who do something about it.
+Episodes in the dispatch wall at NarinNetwork.com, the DPPOD.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
