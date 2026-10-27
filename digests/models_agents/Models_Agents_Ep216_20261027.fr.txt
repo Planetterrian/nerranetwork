@@ -1,0 +1,183 @@
+Le GPT six virgule un Terra d'OpenAI fournit des agents d'utilisation de l'ordinateur plus rapides, à la moitié du prix par jeton d'avant.
+
+C'est Models and Agents, épisode deux cent seize.
+
+Les poids OpenESM passent dans le public, des articles sur la mémoire des agents réduisent la dépense en jetons, puis des choses à essayer.
+
+OpenAI déploie GPT six virgule un Terra sur ChatGPT Work, Codex, et l'API sous le nom GPT six virgule un-terra.
+
+Le modèle comprend le contenu de l'écran, exécute des actions à travers les applications, et écrit de façon naturelle.
+
+Il égale GPT six Astra sur Agents' Last Exam, à un dixième du prix par jeton.
+
+Les tâches se terminent plus de trois fois plus vite en moyenne que chez Astra et chez GPT six virgule un Sol.
+
+Dans ChatGPT Work et Codex, le quota d'utilisation va plus loin qu'avec GPT cinq virgule six Terra.
+
+Les développeurs peuvent y accéder tout de suite via l'API ou les interfaces ChatGPT pour le travail de type agent.
+
+Le guidage par énergie rencontre la génération de jetons dans OpenESM, une architecture décrite dans un article arXiv.
+
+Le modèle optimise d'abord un état latent sur un paysage énergétique, puis se sert de cet état affiné pour la génération.
+
+Le pré-entraînement s'est fait sur trois corpus à grande échelle.
+
+L'évaluation a couvert vingt-six tâches en aval, où les modèles surpassent les GPT sur la plupart d'entre elles et montrent un comportement d'échelle prometteur.
+
+L'équipe publie intégralement les poids du modèle et l'infrastructure d'entraînement sur GitHub et Hugging Face.
+
+L'entraînement du jeton suivant reçoit une récompense de sens dans Conceptizer.
+
+Un vocabulaire fixe d'environ neuf mille concepts de synonymes contextuels se place à côté des jetons ordinaires.
+
+Le modèle reçoit une récompense pour le sens plutôt que seulement pour le jeton suivant exact.
+
+Des tests sur des modèles d'un milliard à huit milliards de paramètres, à travers trois familles, affichent la plus basse perplexité hors échantillon aux positions cibles de concept.
+
+Les mêmes essais enregistrent la plus haute probabilité sur les synonymes contextuels.
+
+Des gains en aval apparaissent sur les tâches de connaissance et de sentiment, tandis que la performance de sens commun reste comparable.
+
+Le travail de vocabulaire népalais utilise une petite modification d'expression régulière du pré-tokeniseur qui conserve chaque identifiant de jeton du texte sans signes combinants ni caractères dévanagari.
+
+La réparation, avec trente-deux mille nouvelles fusions, réduit le nombre de jetons népalais à un virgule zéro un fois celui de l'anglais.
+
+Les jetons népalais chutent d'environ cinquante-quatre pour cent par rapport à l'extension standard de vocabulaire sur Llama-3 et Qwen3.
+
+Le pré-entraînement continué sur Llama-3.2-1B et Qwen3-0.6B laisse encore le tokeniseur d'origine gagner sur les bits par octet népalais hors échantillon, sous chaque recette testée.
+
+La tokenisation des langues indiques est la cible d'AdaptTok-Indic.
+
+Un prétraitement normalisé Unicode et une gestion explicite des conjonctes indiques se placent à côté d'un routage sensible à l'écriture.
+
+Une prédiction apprise des frontières au niveau de l'octet complète la pile.
+
+La fertilité moyenne — les jetons par mot, à peu près — atteint un virgule quatre cent trente-deux sur le bengali et un virgule trois cent quatre-vingt-huit sur l'hindi, bien en dessous de l'encodage par paires d'octets SentencePiece, ou BPE.
+
+Les scores en aval moyennent cinquante-sept virgule soixante-neuf sur les réglages indiques évalués, contre cinquante virgule quatre-vingt-deux pour la référence SentencePiece.
+
+La divergence sémantique récursive mesure le désaccord sémantique cumulé attendu entre des trajectoires indépendantes du même agent à partir du même état, en utilisant l'inférence en langue naturelle.
+
+Comme signal de récompense, elle réduit la variation de progression de tâche de cent trente-deux pour cent à quatre-vingt-onze pour cent sur tau2-bench.
+
+Sur toolsandbox, cette variation tombe de quatre-vingt-dix pour cent à quarante-quatre pour cent.
+
+La métrique n'a besoin d'aucune étiquette de vérité terrain.
+
+Elle estime la divergence future à partir de l'état actuel.
+
+La performance s'améliore sur les bancs d'essai et avec l'échelle.
+
+SLICE-Mem utilise un classifieur compact pour une admission guidée par la saillance.
+
+Un extracteur de dépendances sémantiques convertit les tours de parole en entrées de mémoire concises, sans appels à un grand modèle de langage génératif, ou L L M.
+
+Sur Memora Weekly et LongMemEval-S avec des modèles de base Qwen3-30B, il égale la référence générative MemOS.
+
+La consommation totale de jetons L L M chute de quatre-vingt-douze virgule quatre pour cent sur l'un et de quatre-vingt-dix-neuf virgule cinq pour cent sur l'autre.
+
+La réconciliation entre entrées est reportée à une étape hors ligne.
+
+FlexA-Mem écrit chaque unité d'historique une seule fois dans un stockage immuable.
+
+Chaque appel reçoit une frise compacte fraîche plus le détail, rendue par une règle fixe qui s'adapte au budget restant sans appel à un L L M.
+
+Sur AppWorld, à un contexte de quatre mille jetons, il surpasse la deuxième meilleure méthode de onze virgule cinq pour cent.
+
+Sur cent quarante-sept tâches non utilisées, il bat A-Mem avec résumé de douze virgule deux pour cent.
+
+La frise porte l'achèvement, tandis que la récupération économise surtout des étapes.
+
+Les modèles de langage par diffusion sont le cadre de TraceQuery, qui prédit un petit ensemble de positions pertinentes pour la trajectoire proche, à partir des trajectoires de débruitage complet.
+
+Il n'interroge que ces candidats.
+
+Cela donne le meilleur compromis qualité-calcul parmi les approches à base de cache pour les L L M de diffusion.
+
+La méthode se généralise à travers les tâches, les variantes de modèles, et les familles.
+
+Le code est publié sur GitHub.
+
+La transcription de documents historiques reçoit une évaluation sensible aux entités de la reconnaissance optique de caractères, ou O C R, jugée au niveau de l'entité plutôt que par correspondance brute de caractères.
+
+Le banc d'essai couvre cent soixante-quinze documents des archives Berrutti.
+
+Les annotateurs ont marqué cinq mille deux cent neuf mentions d'entités à la main.
+
+Qwen trois virgule six atteint la plus haute couverture d'entités à travers les tolérances.
+
+Plusieurs systèmes à correspondance exacte plus basse rattrapent nettement quand de petites erreurs de caractères sont tolérées.
+
+Le banc d'essai et les annotations seront publiés dès l'acceptation.
+
+L'affinage de la reconnaissance automatique de la parole est le problème que Whispering Wisely attaque avec une sélection de sous-ensemble k-centre basée sur les plongements, sur l'encodeur pré-entraîné de Whisper.
+
+Sur l'hébreu et le danois, l'approche bat souvent l'échantillonnage aléatoire, surtout aux plus petites tailles de sous-ensemble.
+
+Ces sous-ensembles k-centre capturent une diversité lexicale plus large, ce qui aide quand l'audio transcrit est limité.
+
+Le sous-titrage du style de parole reçoit son premier banc d'essai standardisé de suivi d'instructions dans StyleInstructCaps.
+
+Le cadre note l'ancrage des métadonnées, l'hallucination, le suivi d'instructions, et la consistance du style du locuteur.
+
+À travers neuf modèles audio-langage de pointe, un entraînement diversifié en instructions améliore nettement l'ancrage et la contrôlabilité.
+
+Les comptes-rendus de tomodensitométrie thoracique générés par des L L M sont la cible d'EviGround-CT, qui extrait les phrases de constatations positives et prédit un masque de preuve en trois dimensions pour chacune.
+
+La vérification ancrée sur les phrases fait monter la précision soutenue par la preuve de zéro virgule deux cent soixante-trois à zéro virgule trois cent soixante-cinq sur un sous-ensemble de cent cas tenu à l'écart.
+
+Le taux de constatations positives non soutenues tombe de zéro virgule sept cent trente-sept à zéro virgule six cent trente-cinq.
+
+Ailleurs, des experts de l'industrie disent à Business Standard que les agents d'IA pourraient transformer les opérations bancaires, tandis que les risques restants tournent autour de la sécurité, de la conformité, et de la supervision.
+
+Les personnes et les équipes qui commencent à expérimenter avec les agents d'IA reçoivent des premiers pas pratiques dans une analyse du Washington Post.
+
+Les opérations pétrolières et gazières pourraient voir l'IA agentique relier les flux de travail et accélérer les décisions, selon Oil and Gas Journal.
+
+Anthropic a déposé une déclaration d'enregistrement S-1 auprès de la Securities and Exchange Commission, ou S E C, pour son projet d'introduction en bourse, ou I P O.
+
+CodeRabbit se sert de GPT six virgule un Sol pour enquêter sur les risques de sécurité à travers des bases de code complexes et passer en revue les correctifs proposés, selon le blog d'OpenAI.
+
+Greptile se sert de GPT six Astra pour tester les flux de travail utilisateurs, renforcer la sécurité, et réduire les reprises à l'intérieur de Codex.
+
+Les données OpenAI Signals couvrent cent soixante-cinq activités de travail à travers près de cent pays et montrent comment l'usage de ChatGPT pour le travail évolue dans le temps.
+
+Testez GPT six virgule un Terra via l'API OpenAI ou ChatGPT Work sur des tâches agentiques d'utilisation de l'ordinateur où la vitesse et le coût en jetons dominent.
+
+Récupérez les poids OpenESM publiés sur Hugging Face et essayez le pré-entraînement guidé par l'énergie sur vos propres corpus.
+
+Quand vous affinez Whisper sur l'hébreu ou le danois avec un audio transcrit limité, utilisez cette sélection de sous-ensemble k-centre au lieu d'une tranche aléatoire.
+
+Si vous travaillez en bengali ou en hindi et que votre tokeniseur est trop bavard, lancez AdaptTok-Indic et comparez la fertilité contre le BPE SentencePiece.
+
+On attend que les sorties suivantes de la famille GPT six virgule un poussent plus loin sur la courbe coût-intelligence pour les charges de travail agent.
+
+D'autres bancs d'essai O C R sensibles aux entités pour les documents historiques sont attendus une fois que les annotations des archives Berrutti seront publiques.
+
+La compression par invites souples payait une taxe Transformer quadratique sur chaque jeton de plus, alors il est temps d'ouvrir le capot du Boa Compressor.
+
+Boa remplace cette colonne vertébrale Transformer par un modèle d'espace d'états Mamba qui encode un contexte de longueur arbitraire en une seule passe à temps linéaire.
+
+Cette passe produit une représentation qui conditionne un L L M cible gelé.
+
+Le modèle d'espace d'états est entraîné par distillation pour que sa représentation compressée produise les mêmes scores du jeton suivant que le L L M cible qui avale le contexte complet.
+
+Parce que le compresseur tourne en ligne sur chaque requête au lieu d'une fois hors ligne, il enlève le surcoût de latence qui confinait auparavant les méthodes d'invites souples aux cas de requêtes répétées.
+
+À des ratios de compression identiques, l'approche égale ou dépasse les références Transformer hors ligne antérieures.
+
+Le temps de compression chute d'à peu près un ordre de grandeur.
+
+Elle continue de monter jusqu'à une compression de seize fois et à des contextes plus longs, sans le coût quadratique qui grandit avec les compresseurs basés sur Transformer, et sans ajouter de surcoût par requête.
+
+La limite pratique apparaît quand la propre fenêtre de contexte du L L M cible devient le goulot d'étranglement, plutôt que le compresseur lui-même.
+
+Les équipes confrontées à des requêtes répétées à long contexte devraient tester Boa d'abord ; les équipes qui compressent une fois et réutilisent sur beaucoup de requêtes peuvent encore préférer les méthodes hors ligne plus anciennes.
+
+Avant de vous quitter, la prochaine sortie de la famille GPT six virgule un, c'est celle que je lirai dès qu'elle atterrira.
+
+Voilà pour Models and Agents aujourd'hui. Si ça vous a été utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'IA avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Encore une chose — si l'épisode d'aujourd'hui vous a plu, notre émission sœur Omni View mérite une place dans votre flux : un tour d'horizon quotidien équilibré de l'actualité mondiale qui prend chaque camp au sérieux. C'est l'un des tours d'horizon quotidiens de Nerra Network, tous gratuits sur nerranetwork point com. The Do Positive Pod, c'est le club pour les gens qui passent à l'action — les épisodes et le Dispatch Wall sur nerranetwork point com thedppod.
+
+Cet épisode a utilisé la synthèse vocale par IA de ma voix — la sélection éditoriale et l'analyse sont les miennes.
