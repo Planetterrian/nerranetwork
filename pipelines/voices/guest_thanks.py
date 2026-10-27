@@ -102,6 +102,19 @@ def safe_to_quote(text: str) -> bool:
                 or _IDENTIFIER.search(text))
 
 
+# Oct 27 2026, Glenn Broder. Of the three lines his thank-you quoted back to
+# him, one was a run-on that ended "...meaning the deadwood and I want to
+# define that." (the definition came in the next sentence) and one hedged
+# itself mid-way ("I think it I don't know if it's the greatest word but").
+# Spoken thinking is fine in an episode; read back in an email it looks like
+# we picked badly. Lines that stall, double back or point at a sentence that
+# is not there score below any clean line.
+_DISFLUENT = re.compile(
+    r"\b(i don'?t know if|i mean|kind of a|sort of a|you know|i guess|"
+    r"(\w+) \2\b)|\b(i|it|the|a|to|and) (i|it|the|a|to|and) (i|it|the|a|to|and)\b", re.I)
+_DANGLING_END = re.compile(r"\b(that|this|these|those|is|was|the|a|of|to|and|but|so)[.!?]$", re.I)
+
+
 def _score(text: str) -> int:
     words = len(text.split())
     if words < MOMENT_MIN_WORDS or words > MOMENT_MAX_WORDS or not safe_to_quote(text):
@@ -110,6 +123,8 @@ def _score(text: str) -> int:
     # worth remembering; length breaks ties. Numbers earn nothing: they are
     # how phone numbers and dates get in.
     bonus = 100 if _PROPER.search(text) else 0
+    if _DISFLUENT.search(text) or _DANGLING_END.search(text.strip()):
+        return 0
     return bonus + min(words, 50)
 
 

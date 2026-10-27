@@ -228,10 +228,173 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
             # transcript he was asked to approve ran backwards. Spread the
             # span over the time it actually takes in the edit.
             scale = min(1.0, dur / (e - s)) if e > s else 1.0
+            removed = cut.get("_gaps_removed")
             for at, who, text in lines:
                 if s <= at < e:
-                    out.append(f"{stamp(clock + (at - s) * scale)} {who}: {text}")
+                    # Oct 27 2026: when the assembler says which silences it
+                    # took out, place each line exactly; otherwise spread.
+                    rel = (_map_rel(at - s, removed) if removed is not None
+                           else (at - s) * scale)
+                    out.append(f"{stamp(clock + rel)} {who}: {text}")
             clock += dur
             continue
         clock += dur
     return "\n".join(out).strip() + ("\n" if out else "")
+
+
+# ---------------------------------------------------------------------------
+# The edit's clock (Oct 27 2026)
+# ---------------------------------------------------------------------------
+#
+# Glenn Broder's chapters were written on the room's clock and would have been
+# published as they were: his episode opens with fifty seconds of cold open and
+# introduction in place of the room's first forty-five, and the assembler takes
+# the long silences out of the conversation, so by the end every chapter mark
+# pointed nearly three minutes late. The assembler now records which silences
+# it removed from each piece (close_gaps), and the clock below maps any moment
+# of the room to the moment of the published file that carries it.
+
+def _map_rel(rel: float, removed) -> float:
+    """Seconds into a piece's source -> seconds into the piece as built, given
+    the ``[[from, to], ...]`` stretches the assembler took out of it."""
+    shift = 0.0
+    for a, b in sorted(removed or []):
+        if rel < a:
+            break
+        if rel < b:              # inside a removed silence: where it was closed
+            return a - shift
+        shift += b - a
+    return rel - shift
+
+
+def edit_clock(cuts: List[dict], durations: Iterable[float],
+               room_offset_sec: float = 0.0) -> List[List[float]]:
+    """``[[room_from, room_to, edit_from], ...]`` (a fourth number is a scale
+    when the piece's silences were closed without a record of where): every
+    stretch of the room that is in the edit, and where it starts in the edit."""
+    durs = [float(d) for d in durations]
+    out: List[List[float]] = []
+    clock = 0.0
+    for cut, dur in zip(cuts, durs):
+        if (cut.get("gap") is None and _is_conversation(cut)
+                and cut.get("start") is not None and cut.get("end") is not None):
+            s = float(cut["start"]) + room_offset_sec
+            e = float(cut["end"]) + room_offset_sec
+            removed = cut.get("_gaps_removed")
+            if removed is not None:
+                u, shift = 0.0, 0.0
+                for a, b in sorted(removed):
+                    if a > u:
+                        out.append([round(s + u, 2), round(s + a, 2), round(clock + u - shift, 2)])
+                    shift += b - a
+                    u = b
+                if e - s > u:
+                    out.append([round(s + u, 2), round(e, 2), round(clock + u - shift, 2)])
+            elif e > s:
+                scale = min(1.0, dur / (e - s))
+                seg = [round(s, 2), round(e, 2), round(clock, 2)]
+                if scale < 0.999:
+                    seg.append(round(scale, 4))
+                out.append(seg)
+        clock += dur
+    return out
+
+
+def room_to_edit(clock: List[List[float]], t: float) -> Optional[float]:
+    """Where moment ``t`` of the room is in the edit. A moment the edit
+    dropped (a closed silence, a cut) maps to whatever comes next; a moment
+    the edit holds twice (a cold-open clip that is also in the conversation)
+    maps to the longer stretch, the conversation."""
+    best = None
+    for seg in clock or []:
+        a, b, ea = float(seg[0]), float(seg[1]), float(seg[2])
+        sc = float(seg[3]) if len(seg) > 3 else 1.0
+        if a <= t < b and (best is None or b - a > best[0]):
+            best = (b - a, ea + (t - a) * sc)
+    if best is not None:
+        return best[1]
+    after = [seg for seg in clock or [] if float(seg[0]) >= t]
+    if not after:
+        return None
+    nxt = min(after, key=lambda seg: (float(seg[0]), -(float(seg[1]) - float(seg[0]))))
+    return float(nxt[2])
+
+
+def chapters_on_edit_clock(chapters, clock: List[List[float]]) -> list:
+    """Chapter marks written on the room's clock, moved to the edit's. The
+    first chapter starts the episode (it carries the cold open and the
+    introduction); a chapter whose start the edit dropped moves to what
+    follows; a chapter that would not start after the one before goes."""
+    if not isinstance(chapters, list) or not chapters or not clock:
+        return chapters if isinstance(chapters, list) else []
+    end = max(float(seg[2]) + (float(seg[1]) - float(seg[0])) * (float(seg[3]) if len(seg) > 3 else 1.0)
+              for seg in clock)
+    out: List[dict] = []
+    for i, ch in enumerate(chapters):
+        if not isinstance(ch, dict):
+            continue
+        try:
+            t = float(ch.get("start", 0))
+        except (TypeError, ValueError):
+            continue
+        at = 0.0 if not out else room_to_edit(clock, t)
+        if at is None or (out and at <= out[-1]["start"] + 5):
+            continue
+        out.append({**ch, "start": round(at)})
+    for a, b in zip(out, out[1:]):
+        a["end"] = b["start"]
+    if out:
+        out[-1]["end"] = round(end)
+    return out
+
+
+
+_STAMP = re.compile(r"^\[?\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.\d+)?\s*\]?$")
+
+
+def stamp_seconds(value) -> Optional[float]:
+    """Seconds from "16:04", "[16:04]", "1:02:33" or a number; None if neither."""
+    if isinstance(value, (int, float)):
+        return float(value)
+    m = _STAMP.match(str(value or "").strip())
+    if not m:
+        try:
+            return float(str(value).strip())
+        except (TypeError, ValueError):
+            return None
+    h, mm, ss = m.groups()
+    return float(int(h or 0) * 3600 + int(mm) * 60 + int(ss))
+
+
+def normalise_chapters(chapters, transcript: str = "") -> list:
+    """Chapter marks as numbers of seconds on the room's clock, in order, the
+    first at 0, each ending where the next starts. The chapter pass is asked
+    for the opening line's [MM:SS] stamp as written (Oct 27 2026): asked for
+    seconds, the auto edit read Glenn Broder's 16:00.9 as 1600.9 seconds. A
+    number past the end of the transcript is read as minutes and seconds."""
+    if not isinstance(chapters, list):
+        return chapters
+    last = max((at for at, _w, _t in parse_lines(transcript)), default=None)
+    out = []
+    for ch in chapters:
+        if not isinstance(ch, dict):
+            continue
+        at = stamp_seconds(ch.get("start"))
+        if at is None:
+            continue
+        if last is not None and at > last + 60 and at >= 100 and int(at) % 100 < 60:
+            at = float(int(at) // 100 * 60 + int(at) % 100) + (at - int(at))
+        out.append({**ch, "start": round(at)})
+    out.sort(key=lambda c: c["start"])
+    dedup = []
+    for ch in out:
+        if dedup and ch["start"] <= dedup[-1]["start"]:
+            continue
+        dedup.append(ch)
+    if dedup:
+        dedup[0]["start"] = 0
+    for a, b in zip(dedup, dedup[1:]):
+        a["end"] = b["start"]
+    if dedup:
+        dedup[-1]["end"] = round(last) if last is not None else dedup[-1].get("end", dedup[-1]["start"])
+    return dedup

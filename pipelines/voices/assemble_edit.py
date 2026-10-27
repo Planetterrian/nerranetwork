@@ -244,7 +244,10 @@ GAP_FADE_SEC = 0.01
 
 def close_gaps(wav: Path) -> dict:
     """Shorten every silence longer than MAX_GAP_SEC in a mono 16-bit WAV, in
-    place, keeping both edges of it. Returns {"closed": n, "removed_sec": s}."""
+    place, keeping both edges of it. Returns {"closed": n, "removed_sec": s,
+    "removed": [[from, to], ...]}: the stretches taken out, in seconds from the
+    start of the file as it was (Oct 27 2026: the edit clock is built from
+    these, so chapters and the transcript land where the words are)."""
     import wave
     import numpy as np
     with wave.open(str(wav), "rb") as w:
@@ -276,8 +279,9 @@ def close_gaps(wav: Path) -> dict:
                 cuts.append((a, b))
         i = j
     if not cuts:
-        return {"closed": 0, "removed_sec": 0.0}
+        return {"closed": 0, "removed_sec": 0.0, "removed": []}
     fade = max(1, int(GAP_FADE_SEC * sr))
+    taken: list = []
     out, keep_from = [], 0
     y = x.astype(np.float32)
     for a, b in cuts:
@@ -289,6 +293,8 @@ def close_gaps(wav: Path) -> dict:
             keep_from = b + tail_len
         else:
             keep_from = b
+        # From a to where copying resumes: the output is shorter by exactly this.
+        taken.append([round(a / sr, 3), round(keep_from / sr, 3)])
         out.append(head)
     out.append(y[keep_from:])
     z = np.clip(np.concatenate(out), -32768, 32767).astype(np.int16)
@@ -296,7 +302,7 @@ def close_gaps(wav: Path) -> dict:
         w.setparams(params._replace(nframes=len(z)))
         w.writeframes(z.tobytes())
     removed = (len(x) - len(z)) / sr
-    return {"closed": len(cuts), "removed_sec": round(removed, 2)}
+    return {"closed": len(cuts), "removed_sec": round(removed, 2), "removed": taken}
 
 
 def _run_sources(run: dict, show) -> Dict[str, str]:
@@ -600,7 +606,12 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
             "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
     if cut.get("gaps", True):
-        logger.info("gaps closed in %s: %s", out.name, close_gaps(out))
+        closed = close_gaps(out)
+        # Kept on this run's copy of the cut (never the file) for edit_clock:
+        # where each stretch of the room lands in the episode.
+        cut["_gaps_removed"] = closed.get("removed") or []
+        logger.info("gaps closed in %s: %d, %.1fs", out.name,
+                    closed.get("closed", 0), closed.get("removed_sec", 0.0))
     return out
 
 
@@ -835,6 +846,10 @@ def assemble(slug: str) -> dict:
             logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))
 
         piece_durations = [_duration(piece) for piece in pieces]
+        # Oct 27 2026: the room-to-episode clock, so the chapters (written on
+        # the room's clock) are published where the episode actually is.
+        from edit_transcript import edit_clock
+        clock = edit_clock(cuts, piece_durations, room_offset)
         episode = work / "episode.mp3"
         inputs: List[str] = []
         labels: List[str] = []
@@ -905,6 +920,7 @@ def assemble(slug: str) -> dict:
     tracks = dict(log.get("tracks") or {})
     tracks["preview"] = url
     tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1),
+                      "clock": clock,
                       # publish_episode refuses to ship this file if the guest
                       # has marked a window since it was built.
                       "windows_applied": applied,

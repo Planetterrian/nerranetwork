@@ -205,6 +205,33 @@ def echo_open_rate(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> O
     return round(echoes / judged, 3) if judged else None
 
 
+#: A label opener: a first sentence this short, with no question in it, before
+#: the question of the turn ("Deadwood showing itself. Where does that leave...").
+LABEL_MAX_WORDS = 8
+_GREETING = {"hello", "hi", "hey", "welcome", "thanks", "thank", "sure", "yes", "right", "okay", "ok"}
+
+
+def label_open_rate(mira_turns: Sequence[dict]) -> Optional[float]:
+    """Share of Mira's question turns that open on a few words summing up the
+    answer before the question (Oct 27 2026, Glenn Broder's hour: nearly every
+    turn did, "Collective fattening." among them; echo_open_rate saw 0%
+    because the words were hers, not his)."""
+    judged = 0
+    labels = 0
+    for m in mira_turns:
+        text = " ".join(m["words"]).strip()
+        if "?" not in text:
+            continue
+        judged += 1
+        first = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)
+        if len(first) < 2 or first[0].endswith("?"):
+            continue
+        head = _norm_words(first[0])
+        if 1 <= len(head) <= LABEL_MAX_WORDS and head[0] not in _GREETING:
+            labels += 1
+    return round(labels / judged, 3) if judged else None
+
+
 def guest_words_per_answer(guest_turns: Sequence[dict]) -> Tuple[Optional[float], Optional[float]]:
     """Median words per guest turn, and last-third median / first-third."""
     counts = [len(t["words"]) for t in guest_turns]
@@ -441,6 +468,7 @@ def measure_audio(words_by_role: Dict[str, List[dict]],
         out["turn_gap_ms_p90"] = _percentile(gaps, 0.9)
         out["self_answered_turns"] = self_answered(guest_turns, mira_turns)
         out["echo_open_rate"] = echo_open_rate(guest_turns, mira_turns)
+        out["label_open_rate"] = label_open_rate(mira_turns)
         out["interruptions_audio"] = sum(1 for g in gaps if g < INTERRUPTION_MS)
         out["dead_air_turns_audio"] = sum(1 for g in gaps if g > DEAD_AIR_MS)
     if trace:
@@ -483,6 +511,7 @@ TARGETS: Dict[str, Tuple[str, float]] = {
     "mira_turn_sec_median_low": ("up", 12.0),
     "mira_turn_sec_median_high": ("down", 20.0),
     "echo_open_rate": ("down", 0.10),
+    "label_open_rate": ("down", 0.35),
     "guest_words_trend": ("up", 1.0),
     "seams": ("down", 0.0),
 }

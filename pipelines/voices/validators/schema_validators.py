@@ -119,8 +119,12 @@ def validate_social_copy(value: Any) -> None:
     for platform in ("twitter", "linkedin", "instagram"):
         _require(platform in value and str(value[platform]).strip(),
                  f"missing/empty {platform!r} copy")
-    _require(len(str(value["twitter"])) <= 280,
-             "twitter copy exceeds 280 characters")
+    # {episode_url} becomes a link of about 50 characters when it publishes.
+    twitter = str(value["twitter"]).replace("{episode_url}", "x" * 50)
+    _require(len(twitter) <= 280, "twitter copy exceeds 280 characters")
+    for platform in ("twitter", "linkedin"):
+        _require("{episode_url}" in str(value[platform]),
+                 f"{platform} copy has no {{episode_url}} for the episode's link")
 
 
 def validate_cross_show_callouts(value: Any) -> None:

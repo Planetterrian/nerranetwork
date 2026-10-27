@@ -1098,7 +1098,13 @@ function noteHoldFromGuest(text) {
 
 // The guest saying they have to stop. A sign-off before the closing round is
 // finished is allowed only then, or when the hard cap fired (Oct 22 2026).
-const GUEST_STOP_RE = /\b((i|we) (have|need|got|gotta) to (go|run|leave|stop|hop off|jump off|wrap up)|i'?m (going to|gonna) have to (go|leave|stop|run)|(can|could|should) we (stop|end|wrap( it)? up)( here| there| now)?|let'?s (stop|wrap( it)? up|end( it)?) (here|there|now))\b/i;
+// Oct 27 2026, Glenn Broder: "...all the tests that we need to run when we're
+// actually working with these clients" read as the guest asking to stop, at
+// fourteen minutes, and the room stopped holding the closing round open for
+// the rest of the hour. "I have to go" / "we need to run" only count when the
+// thought ends there (a full stop, a comma, "now", "in five minutes", "for a
+// meeting"), never when the sentence carries on into what has to be run.
+const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should) we (?:stop|end|wrap(?: it)? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: it)? up|end(?: it)?) (?:here|there|now)\b)/i;
 let guestAskedToStop = false;
 let roundCloseBlocks = 0;
 const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through
@@ -2862,6 +2868,14 @@ function noteRoundQuestion(text) {
 // is taken as asked; and the index never moves back (roundRehandOwed re-hands
 // the question in play at the same index).
 const ROUND_REHANDS_MAX = 1;
+// Oct 27 2026, Glenn Broder: the show's own question, the one his prep email
+// promised, was handed, she asked one of her own instead; handed again, she
+// only reacted to his last answer; and it was taken as asked without ever
+// being put to him. That one question gets a second chance, and a question
+// handed again is handed with no room for a reaction before it.
+const ROUND_REHANDS_MAX_FOR = { "the show's own question": 2 };
+const REHAND_LEAD_IN = "This question did not reach them last time. Say nothing before it:" +
+  " your whole turn is the question below, in these words.";
 const roundRehands = {};         // label -> times the room handed it again
 let roundTurnRequested = "";     // the question the room's next turn carries
 let roundTurnInFlight = "";      // the question of the turn now being spoken
@@ -2871,9 +2885,11 @@ let roundTurnInFlight = "";      // the question of the turn now being spoken
  * gone again once; then it is taken as asked and the round moves on.
  */
 function owedRehand(label, why) {
-  if ((roundRehands[label] || 0) >= ROUND_REHANDS_MAX) {
+  const most = ROUND_REHANDS_MAX_FOR[label] || ROUND_REHANDS_MAX;
+  if ((roundRehands[label] || 0) >= most) {
     roundSpoken[label] = true;
-    trace("round", "taken as asked: " + label + " (" + why + "; it was handed again once already)");
+    trace("round", "taken as asked: " + label + " (" + why + "; it was handed again " +
+          (most === 1 ? "once" : most + " times") + " already)");
     return false;
   }
   roundRehands[label] = (roundRehands[label] || 0) + 1;
@@ -3291,8 +3307,10 @@ function askNextRoundQuestion() {
   if (roundGuestGone()) return;
   if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
   let next;
+  let rehand = false;
   if (roundRehandOwed && roundIndex >= 0) {
     next = roundIndex;                 // the same question, at the same index
+    rehand = true;
   } else {
     next = roundIndex + 1;
     while (next < ROUND_QUESTIONS.length &&
@@ -3311,7 +3329,7 @@ function askNextRoundQuestion() {
   const entry = ROUND_QUESTIONS[next];
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
-  const leadIn = roundLeadIn;
+  const leadIn = roundLeadIn || (rehand ? REHAND_LEAD_IN : "");
   roundLeadIn = "";
   try {
     roundTurn(roundDirections((next + 1) + " of " + ROUND_QUESTIONS.length,

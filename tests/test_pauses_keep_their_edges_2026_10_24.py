@@ -63,7 +63,7 @@ def test_a_short_pause_is_left_alone(tmp_path):
     x = np.concatenate([_word(0.5), np.zeros(int(0.9 * SR)), _word(0.5)])
     f = tmp_path / "s.wav"
     _write(f, x)
-    assert ae.close_gaps(f) == {"closed": 0, "removed_sec": 0.0}
+    assert ae.close_gaps(f) == {"closed": 0, "removed_sec": 0.0, "removed": []}
     assert len(_read(f)) == len(x)
 
 

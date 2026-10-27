@@ -958,7 +958,8 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
             text = (seg.get("text") or "").strip()
             if not text or _is_hallucination(seg, text):
                 continue
-            merged.append((float(seg.get("start", 0.0)) + shift, label, text))
+            for at, part in split_on_pauses(seg):
+                merged.append((at + shift, label, part))
             if words_out is not None:
                 bucket = words_out.setdefault(label, [])
                 for w in seg.get("words") or []:
@@ -974,12 +975,107 @@ def diarized_tracks(tracks: list[tuple[str, Path]], workdir: Path,
                     max(0.0, min(1.0, 1.0 + float(seg["avg_logprob"]))))
     merged.sort(key=lambda s: s[0])
     merged = _drop_echoes(merged)
+    merged = tidy_lines(merged)
     lines = [f"[{int(s // 60):02d}:{int(s % 60):02d}] {label}: {text}"
              for s, label, text in merged]
     if header:
         lines.insert(0, header)
     mean_conf = sum(confidences) / len(confidences) if confidences else 1.0
     return "\n".join(lines), mean_conf
+
+
+# Oct 27 2026, Glenn Broder. Whisper is run on each speaker's track alone, and
+# on the guest's track the stretch where Mira was talking is silence, so one
+# Whisper segment often runs straight across her turn: "...from that point on I
+# was hooked. The amount of money that the" (before her question) and
+# "governments were actually going to invest" (after it) came back as one
+# line stamped before she spoke. Merged by segment start, the transcript had
+# her cutting him off mid-sentence in 21 of her 37 turns, when the call
+# recording shows she waited about four seconds every time. A segment is
+# split wherever the speaker stops for longer than this, using the word
+# timings the same pass already produces, before the speakers are merged.
+SPLIT_PAUSE_SEC = 1.5
+
+
+def split_on_pauses(seg: dict, pause: float = SPLIT_PAUSE_SEC) -> list[tuple[float, str]]:
+    """``[(start, text)]`` for one Whisper segment, split at every silence
+    between two words longer than ``pause``. A segment without word timings
+    comes back whole."""
+    text = (seg.get("text") or "").strip()
+    words = [w for w in (seg.get("words") or [])
+             if isinstance(w, dict) and w.get("start") is not None and w.get("end") is not None
+             and str(w.get("word") or "").strip()]
+    if len(words) < 2:
+        return [(float(seg.get("start", 0.0)), text)]
+    parts: list[tuple[float, str]] = []
+    cur = [words[0]]
+    for prev, w in zip(words, words[1:]):
+        try:
+            gap = float(w["start"]) - float(prev["end"])
+        except (TypeError, ValueError):
+            gap = 0.0
+        if gap > pause:
+            parts.append(cur)
+            cur = [w]
+        else:
+            cur.append(w)
+    parts.append(cur)
+    if len(parts) == 1:
+        return [(float(seg.get("start", 0.0)), text)]
+    out = []
+    for chunk in parts:
+        said = "".join(str(w.get("word") or "") for w in chunk).strip()
+        said = " ".join(said.split())
+        if said:
+            out.append((float(chunk[0]["start"]), said))
+    return out or [(float(seg.get("start", 0.0)), text)]
+
+
+# Splitting at pauses leaves the odd stub: Whisper's segment boundaries fall
+# mid-sentence ("Well, I" / "actually started to get very involved"), and a
+# word or two can land on the wrong side of the other speaker's turn ("If" /
+# her question / "I could interview anybody"). These rejoin them, and keep a
+# line short enough that the review page can still cut inside an answer.
+TIDY_JOIN_SEC = 3.0
+TIDY_STUB_WORDS = 3
+TIDY_REACH_SEC = 20.0
+TIDY_MAX_CHARS = 280
+_ENDS_SENTENCE = re.compile(r"[.?!\u2026]['\"\u201d)]*$")
+
+
+def tidy_lines(lines: list[tuple[float, str, str]]) -> list[tuple[float, str, str]]:
+    """Rejoin a speaker's line to their next one when it was cut mid-sentence:
+    the next line follows within ``TIDY_JOIN_SEC`` with nobody between and
+    either starts in lower case or this line is a stub of a few words; and a
+    stub of ``TIDY_STUB_WORDS`` or fewer with someone else's line after it
+    moves to the start of the same speaker's next line, if that comes within
+    ``TIDY_REACH_SEC``. Lines never grow past ``TIDY_MAX_CHARS``."""
+    out = [list(x) for x in lines]
+    i = 0
+    while i < len(out) - 1:
+        at, who, text = out[i]
+        words = text.split()
+        unfinished = not _ENDS_SENTENCE.search(text.strip())
+        nxt = out[i + 1]
+        if (nxt[1] == who and unfinished and nxt[0] - at <= TIDY_JOIN_SEC + len(words) * 0.6
+                and (nxt[2][:1].islower() or len(words) <= TIDY_STUB_WORDS)
+                and len(text) + len(nxt[2]) < TIDY_MAX_CHARS):
+            out[i][2] = (text + " " + nxt[2]).strip()
+            del out[i + 1]
+            continue
+        if nxt[1] != who and unfinished and 0 < len(words) <= TIDY_STUB_WORDS:
+            for j in range(i + 1, len(out)):
+                if out[j][0] - at > TIDY_REACH_SEC:
+                    break
+                if out[j][1] == who:
+                    out[j][2] = (text + " " + out[j][2]).strip()
+                    del out[i]
+                    break
+            else:
+                i += 1
+            continue
+        i += 1
+    return [tuple(x) for x in out]
 
 
 def diarized_transcript(raw: Path, workdir: Path) -> tuple[str, float]:
@@ -1153,6 +1249,9 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
                        temperature=0.3, max_tokens=budget)
             try:
                 candidate = parse_json_lenient(text) if field in JSON_PASSES else text
+                if field == "chapter_markers":
+                    from edit_transcript import normalise_chapters
+                    candidate = normalise_chapters(candidate, transcript)
                 validate_pass_output(field, candidate,
                                      raw=transcript if field == "transcript_cleaned" else None)
                 output = candidate
@@ -1213,7 +1312,7 @@ def audio_metrics_basis_text(metrics: dict) -> str:
     if metrics.get("metrics_basis") == "audio":
         return ("AUDIO. overlap_sec, overlap_events, turn_gap_ms_*, "
                 "mira_turn_sec_*, guest_words_per_answer_median, guest_words_trend, "
-                "self_answered_turns and echo_open_rate were measured from each "
+                "self_answered_turns, echo_open_rate and label_open_rate were measured from each "
                 "speaker's own recording with word timestamps. Believe them over "
                 "your reading of the transcript. interruptions, repeated_questions "
                 "and mira_mean_turn_sec are the older transcript estimates kept "
@@ -1366,6 +1465,12 @@ def main() -> int:
         # Whatever the bleed gate left of Mira in someone else's microphone
         # stops here, before anyone reads it as something the guest said.
         transcript, echoed_lines = strip_echo_lines(transcript, "Mira")
+        # Oct 27 2026 (Glenn Broder): names and terms the recogniser misheard
+        # are put right here, as checked one-for-one replacements, so the
+        # transcript the guest approves, the edit transcript, the notes and
+        # the thank-you quotes all start from the corrected words.
+        from terms import correct_transcript
+        transcript, _term_changes = correct_transcript(transcript, app, show)
         mixed_url = r2_upload(mixed, show.r2_key("raw", f"{run['id']}_{stamp}_mixed.wav"))
         # A review copy both humans can actually stream. The mixed WAV is
         # ~250 MB for a 45-minute call, which is a cruel thing to put in
@@ -1532,7 +1637,9 @@ def main() -> int:
                      **{k: (metrics.get("notes") or {}).get(k)
                         for k in ("dead_air_basis", "longest_silence_sec",
                                   "silences")
-                        if (metrics.get("notes") or {}).get(k) is not None}},
+                        if (metrics.get("notes") or {}).get(k) is not None},
+                     # Oct 27 2026: measured, not a column.
+                     "label_open_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("label_open_rate")},
                     ensure_ascii=False),
                 audio_basis=audio_metrics_basis_text(metrics),
                 cleaned_transcript=cleaned,

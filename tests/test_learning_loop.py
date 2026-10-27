@@ -440,7 +440,9 @@ class TestEveryoneOnOneClock:
 
     def test_the_merge_applies_the_shift(self):
         src = (ROOT / "pipelines" / "voices" / "post_interview.py").read_text(encoding="utf-8")
-        assert 'float(seg.get("start", 0.0)) + shift' in src
+        # Oct 27 2026: segments are split at pauses first; every piece shifts.
+        assert "for at, part in split_on_pauses(seg):" in src
+        assert "merged.append((at + shift, label, part))" in src
         assert "offsets=offsets" in src
 
     def test_both_clean_paths_pass_offsets(self):
