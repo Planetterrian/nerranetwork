@@ -326,10 +326,14 @@ class TestValidators:
 
     def test_social_copy_twitter_length(self):
         from validators.schema_validators import validate_pass_output
-        base = {"twitter": "x" * 200, "linkedin": "y", "instagram": "z"}
+        base = {"twitter": "x" * 200 + " {episode_url}", "linkedin": "y {episode_url}",
+                "instagram": "z"}
         validate_pass_output("social_copy", base)
         with pytest.raises(ValueError, match="280"):
-            validate_pass_output("social_copy", {**base, "twitter": "x" * 300})
+            validate_pass_output("social_copy", {**base, "twitter": "x" * 300 + " {episode_url}"})
+        # Oct 27 2026: the listen link is the episode's, filled in at publish.
+        with pytest.raises(ValueError, match="episode_url"):
+            validate_pass_output("social_copy", {**base, "linkedin": "Listen here: https://linkedin.com/in/x"})
 
     def test_show_fits_rejects_unknown_slugs(self):
         from validators.schema_validators import validate_pass_output

@@ -778,6 +778,13 @@ def _digest_item_titles(digest_text: str) -> List[str]:
             if not m:
                 continue
             numbered, bold, rest = m.group(1), m.group(2).strip(), m.group(3)
+            # Oct 28 2026: the number may sit INSIDE the bold
+            # ("**1. Satellites close to … — r/space**"); every Fascinating
+            # Frontiers Ep235 chapter title opened "1.", "3.", "11.". The
+            # number is the item's place in the list, never its title.
+            inner = re.match(r"^\d{1,2}[.)]\s+(?=\S)", bold)
+            if inner:
+                numbered, bold = numbered or inner.group(0), bold[inner.end():]
             if bold.endswith(":"):
                 # ``**Title:** Outlet`` — a title only when the rest is an
                 # outlet name, never a label introducing a sentence.
@@ -872,6 +879,27 @@ def _section_marker_title(section: str, section_markers: list) -> str:
             n = _norm_heading(name)
             if n and (head == n or head.startswith(n + " ") or head.startswith(n + ":")):
                 return title
+    # Oct 28 2026: a heading the marker's own SPOKEN pattern names is that
+    # marker's section when the pattern matches the whole heading. SpaceX's "### Engineering Deep Dive" is chaptered by
+    # the "engineering deep dive|engineering angle…" marker titled "The
+    # Engineering Angle"; with neither name matching, the heading itself
+    # became a second chapter title, and Ep143 carried "Engineering Deep
+    # Dive" at 0:42 — inside the lead, whose Raptor 4 story the deep dive
+    # explains — beside the real "The Engineering Angle" at 6:58.
+    for marker in section_markers or []:
+        if _marker_field(marker, "where") in ("start", "end"):
+            continue
+        pattern = _marker_field(marker, "pattern")
+        if not pattern:
+            continue
+        try:
+            # The WHOLE heading, never a word inside it: the spoken patterns
+            # are loose ("regulatory", "news") and a search mapped Env
+            # Intel's "Regulatory Calendar" onto another marker's title.
+            if re.fullmatch(pattern, head, re.IGNORECASE):
+                return _marker_field(marker, "title")
+        except re.error:
+            continue
     return ""
 
 

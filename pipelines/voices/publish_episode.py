@@ -157,6 +157,24 @@ def _bullets(text: str) -> str:
     return "\n".join(out)
 
 
+def on_the_edit_clock(pkg: dict, run: dict | None) -> dict:
+    """The package with its chapter marks moved from the room's clock to the
+    published file's (Oct 27 2026, Glenn Broder: written on the room's clock,
+    every mark of his would have pointed up to three minutes late). The
+    assembler records the clock beside the edit it built; without one the
+    marks stand as written."""
+    clock = ((((run or {}).get("grok_session_log") or {}).get("tracks") or {})
+             .get("edit") or {}).get("clock")
+    chapters = pkg.get("chapter_markers")
+    if not clock or not chapters:
+        return pkg
+    from edit_transcript import chapters_on_edit_clock
+    moved = chapters_on_edit_clock(chapters, clock)
+    logger.info("chapters on the edit's clock: %s",
+                [(c.get("start"), c.get("title")) for c in moved])
+    return {**pkg, "chapter_markers": moved}
+
+
 def vouched_chapters(pkg: dict) -> list:
     """The package's chapter markers that its own transcript can vouch for.
 
@@ -436,6 +454,21 @@ def _md_link_html(line: str) -> str:
                   e(line))
 
 
+def fill_social_links(pkg: dict, url: str) -> None:
+    """Put the episode's address into the package's launch copy, where the
+    social pass wrote {episode_url} (Oct 27 2026). Never raises."""
+    try:
+        copy = pkg.get("social_copy")
+        if not isinstance(copy, dict) or not url:
+            return
+        filled = {k: (str(v).replace("{episode_url}", url) if isinstance(v, str) else v)
+                  for k, v in copy.items()}
+        if filled != copy:
+            sb_update("editorial_packages", f"id=eq.{pkg['id']}", {"social_copy": filled})
+    except Exception:  # noqa: BLE001 — the episode is out either way
+        logger.exception("social copy links not filled (non-fatal)")
+
+
 def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int) -> None:
     """Send :func:`published_email` once; a failure never unpublishes anything."""
     if pkg.get("publish_package_sent_at"):
@@ -479,6 +512,7 @@ def publish_one(interview_id: str) -> int:
                     f"&status=eq.approved_by_guest")[0]
     run = sb_select("interview_runs",
                     f"id=eq.{pkg['interview_run_id']}")[0]
+    pkg = on_the_edit_clock(pkg, run)
     show = show_for(interview, app)
 
     assert_windows_applied(pkg, run)
@@ -624,6 +658,7 @@ def publish_one(interview_id: str) -> int:
     # deploys it after this script returns, so the page may lag the email by
     # a few minutes. The link is right; the guest will not race it.
     tell_the_guest(show, app, pkg, episode_num)
+    fill_social_links(pkg, show.post_url(episode_num))
     return 0
 
 
@@ -942,6 +977,8 @@ def refresh_post(interview_id: str) -> int:
     pkg = sb_select("editorial_packages",
                     f"interview_id=eq.{interview_id}&status=eq.published"
                     "&order=created_at.desc&limit=1")[0]
+    runs = sb_select("interview_runs", f"id=eq.{pkg.get('interview_run_id')}")
+    pkg = on_the_edit_clock(pkg, runs[0] if runs else None)
     show = show_for(interview, app)
     episode_num = int(interview.get("episode_number") or 0)
     data = {"episodes": []}

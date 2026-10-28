@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
     OPERATOR_EMAIL, carry_the_show_block, episode_memory_block, guest_agenda_block,
@@ -296,31 +297,54 @@ def setup_test_url(show, interview_id: str) -> str:
 CURIOUS_ABOUT_MAX = 3
 
 
-def curious_about(questions) -> list:
+def curious_about(questions, guest_name: str = "") -> list:
     """The three things Mira is curious about, in her words, for the prep
     email (Oct 21 2026: the brief goes both ways, so the first question is
     not a surprise and the hour has a shape the guest helped choose).
 
-    Written from the question set the brief already carries, with no model
-    call: each prepared question's ``why`` line says what it should
-    surface; the first three become one sentence each. A set without
-    ``why`` lines falls back to the questions themselves."""
+    Oct 27 2026, Glenn Broder. These were made from each question's ``why``,
+    which is the question writer's note to Mira, and his email read "I'm
+    curious about grounds the opening in his actual teaching sequence and
+    gives a concrete entry point" — a note about him, in the third person,
+    sent to him. Each question now carries a ``curious`` line written to the
+    guest; a ``why`` is used only when it reads as one (it starts like "how",
+    "what", "whether", and never talks about the guest as "he", "she" or by
+    name). A line that reads wrong is left out; none at all leaves the
+    section out."""
     out = []
     for q in questions or []:
-        text = ""
-        if isinstance(q, dict):
-            text = " ".join(str(q.get("why") or q.get("question") or "").split())
-        else:
-            text = " ".join(str(q or "").split())
-        text = text.strip().rstrip(".")
-        if not text:
+        if not isinstance(q, dict):
             continue
-        if text[:1].isupper() and not text[:2].isupper():
-            text = text[0].lower() + text[1:]
-        out.append(f"I'm curious about {text}.")
+        for key in ("curious", "why"):
+            text = " ".join(str(q.get(key) or "").split()).strip().rstrip(".")
+            if text and text[:1].isupper() and not text[:2].isupper():
+                text = text[0].lower() + text[1:]
+            if text and reads_to_the_guest(text, guest_name):
+                out.append(f"I'm curious about {text}.")
+                break
         if len(out) >= CURIOUS_ABOUT_MAX:
             break
     return out
+
+
+_CURIOUS_STARTS = {"how", "what", "why", "where", "when", "whether", "which", "who",
+                   "your", "you", "the", "a", "an", "any"}
+_THIRD_PERSON = re.compile(r"\b(he|she|him|his|her|hers|himself|herself|the guest|guest's)\b", re.I)
+
+
+def reads_to_the_guest(text: str, guest_name: str = "") -> bool:
+    """Does "I'm curious about <text>." read as Mira talking TO the guest?"""
+    words = text.split()
+    if not words or len(words) > 30:
+        return False
+    if words[0].lower().strip(",") not in _CURIOUS_STARTS:
+        return False
+    if _THIRD_PERSON.search(text):
+        return False
+    for part in (guest_name or "").split():
+        if len(part) > 2 and re.search(r"\b" + re.escape(part) + r"\b", text, re.I):
+            return False
+    return True
 
 
 def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
@@ -346,7 +370,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
         identity_unknown=str(brief.get("bio_research") or "").startswith("IDENTITY NOT CONFIRMED"),
-        curious_about=curious_about(brief.get("likely_questions")),
+        curious_about=curious_about(brief.get("likely_questions"), app.get("name", "")),
         closing_question=show.closing_question,
     )
     unknown = str(brief.get("bio_research") or "").startswith("IDENTITY NOT CONFIRMED")

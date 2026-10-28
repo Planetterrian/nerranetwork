@@ -15,7 +15,9 @@ Episode thesis going in: {{episode_thesis}}
 
 The transcript below is on the ROOM clock: [MM:SS] is minutes and seconds
 from the moment the room opened, not from when anyone started talking.
-Every time you give me a number below, give it in those same seconds.
+Every time you give me a number below, give it in those same seconds:
+[16:04] is 964 seconds (16 x 60 + 4), never 1604. Glenn Broder's cut, Oct 27
+2026, opened on the wrong clip because 16:00.9 was given as 1600.9.
 
 {{transcript}}
 
@@ -27,7 +29,7 @@ Return ONE JSON object and nothing else — no prose, no code fences:
   "end_sec": 0,
   "end_why": "one line",
   "drop": [{"from_sec": 0, "to_sec": 0, "why": "one line"}],
-  "cold_open": {"from_sec": 0, "to_sec": 0, "lead": "one sentence"},
+  "cold_open": {"from_sec": 0, "to_sec": 0, "quote": "the clip's words, verbatim", "lead": "one sentence"},
   "intro": "...",
   "outro": "...",
   "rationale": "two or three sentences on the shape of the edit",
@@ -139,6 +141,9 @@ who is talking. So give:
   "and so..." or "yeah, exactly"), no Mira in it. Room-clock seconds as
   everywhere else. The line's start time is when the guest starts it; give
   to_sec at the end of the sentence you want, not the start of the next.
+- cold_open.quote: the clip's words exactly as the transcript has them.
+  The clip is checked against where these words are, so they must be the
+  words between from_sec and to_sec and nothing else.
 - cold_open.lead: ONE sentence Mira says BEFORE the clip that tells the
   listener whose voice they are about to hear and why it matters, without
   repeating what the clip says. "Doctor Michael Brandt operates on faces for
@@ -214,7 +219,11 @@ ABOUT the guest, not to them):
   or product, never a social handle and never a URL path. Say ONLY a domain
   that appears in the links above, character for character. If there are no
   links above, skip this sentence entirely and say nothing about where to
-  find them. Never assemble a domain out of the guest's name because it
+  find them. If their only links are profiles (LinkedIn, X), say that is
+  where to find them and that the link is in the episode notes ("You can
+  find Glenn on LinkedIn; the link is in the episode notes"), never a site
+  built from their name or their company's (Glenn Broder, Oct 27 2026:
+  "humanjudgment.ai", which is not his). Any other address is removed. Never assemble a domain out of the guest's name because it
   sounds like one they would own: Meridan Zerner's close, Sept 20 2026, sent
   listeners to "meridanzernar.com", which nobody owns, while her application
   carried no link at all. A wrong address in a published episode cannot be

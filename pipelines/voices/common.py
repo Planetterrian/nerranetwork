@@ -195,10 +195,9 @@ def kits_html(purpose: str = "share", show: "ShowRef" = None) -> str:
 GUEST_AUDIO_HTML = (
     '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">'
     "<strong>For the best sound:</strong> please join from a computer, wearing "
-    "headphones or earbuds, ideally with a good microphone. Phone audio is compressed "
-    "and sounds noticeably thinner, while a computer with headphones and a good "
-    "microphone sounds clear and full, and listeners tell us those are the interviews "
-    "they enjoy most. AirPods or a headset connected to your computer work well, and a "
+    "headphones or earbuds, ideally with a good microphone. A computer with headphones "
+    "and a good microphone sounds clear and full, and listeners tell us those are the "
+    "interviews they enjoy most. AirPods or a headset connected to your computer work well, and a "
     "USB microphone is even better. Headphones also stop your microphone picking up my "
     "voice from your speakers; without them my questions end up in your recording as if "
     "you had said them.</p>"
@@ -212,8 +211,9 @@ def guest_audio_html():
 
 
 def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
-    """The three steps into the studio, numbered, with the phone as the
-    fallback rather than the plan. Safe to drop into a Jinja template."""
+    """The three steps into the studio, numbered, and what to do if the
+    computer won't cooperate (``phone_fallback``: the phone's BROWSER, never a
+    phone call, Oct 27 2026). Safe to drop into a Jinja template."""
     import html as _h
     from markupsafe import Markup
     link = _h.escape(studio_link or "", quote=True)
@@ -225,10 +225,13 @@ def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
            "<li>Press <strong>Join your interview</strong>. You're in when you hear me "
            "say hello.</li></ol>")
     if phone_fallback:
+        # Oct 27 2026: phone interviews are gone (Patrick: the sound is too
+        # poor). The Worker's studioStepsHtml carries the same words.
         out += ("<p>If your computer gives you trouble, open the same link on your phone, "
-                "earbuds in: it sounds far better than a phone call. A call from me, with the "
-                "studio's <strong>Have Mira call my phone</strong> button, is the last resort, "
-                "so we never lose the slot.</p>")
+                "earbuds in: it's the same studio and sounds just as good. If neither works, "
+                "the studio has a button to pick another time, so nothing is lost. Interviews "
+                "happen in the studio only, not by phone call, because a phone line sounds too "
+                "thin for the show.</p>")
     return Markup(out)
 
 

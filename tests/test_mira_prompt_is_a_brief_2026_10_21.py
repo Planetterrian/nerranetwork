@@ -288,13 +288,26 @@ class TestResearchMakesHerCuriousNotSuspicious:
         lines = gb.curious_about([
             {"question": "Q1?", "why": "How the budget was actually decided"},
             {"question": "Q2?", "why": "what broke on the first deployment."},
-            "Q3?", "Q4?"])
+            {"question": "Q3?", "why": "x", "curious": "how you know a team is ready"},
+            "Q4?"])
         assert len(lines) == 3
         assert lines[0] == "I'm curious about how the budget was actually decided."
         assert lines[1] == "I'm curious about what broke on the first deployment."
+        assert lines[2] == "I'm curious about how you know a team is ready."
         tpl = (ROOT / "templates" / "email" / "voices_prep_brief.j2").read_text(encoding="utf-8")
-        assert "Three things I'm curious about" in tpl and "curious_about" in tpl
+        assert "What I'm curious about" in tpl and "curious_about" in tpl
         assert "curious_about=curious_about(" in (V / "generate_briefs.py").read_text(encoding="utf-8")
+
+    def test_a_note_about_the_guest_is_never_sent_to_the_guest(self):
+        # Oct 27 2026, Glenn Broder's prep email.
+        import generate_briefs as gb
+        lines = gb.curious_about([
+            {"question": "Q1?", "why": "Grounds the opening in his actual teaching sequence and gives a concrete entry point"},
+            {"question": "Q2?", "why": "Directly surfaces the core distinction the guest wants explored"},
+            {"question": "Q3?", "why": "how Glenn runs the false-guidance test"},
+            {"question": "Q4?", "why": "x", "curious": "what the first application step looks like in your workshops"},
+        ], "Glenn Broder")
+        assert lines == ["I'm curious about what the first application step looks like in your workshops."]
 
     def test_reasoning_effort_is_a_run_setting(self, monkeypatch):
         import fire_interviews as fi

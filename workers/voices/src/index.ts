@@ -27,10 +27,12 @@
  *   POST /voices/upload-chunk         studio: local MediaRecorder chunk → R2 (Phase 2)
  *   POST /voices/upload-done          studio: local recording manifest → R2 + run row
  *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test / guest stuck outside
- *   GET|POST /voices/admin/call-guest admin: signed link → switch a stuck guest to a phone call
+ *   GET|POST /voices/admin/text-guest admin: signed link → send a stuck guest their link for their phone
+ *   GET|POST /voices/admin/call-guest retired Oct 27 2026 (phone interviews are no longer offered)
  *   GET|POST /voices/join             Cal.com event location: email → the guest's own studio
  *   POST /voices/studio-silence       studio or scenario: guest unheard → email Patrick once
- *   POST /voices/studio-phone         studio: guest's "Have Mira call my phone" → PSTN now
+ *   POST /voices/studio-phone         retired Oct 27 2026: answers 410, phone interviews are gone
+ *   POST /voices/studio-reschedule    studio: "Still not working? Pick another time" → email the guest their move link
  *   POST /voices/studio-text          studio: text + email the studio link to open on a phone
  *   GET  /voices/host-link            admin: Patrick's co-host studio link
  *   GET  /voices/health               deploy verification
@@ -933,7 +935,8 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   return json({ ok: true, id, show: show.slug, merged, screening });
 }
 
-const PLATFORM_FAULT_REASONS = new Set(["grok_dropped", "agent_startup_failed", "media_bridge_failed"]);
+const PLATFORM_FAULT_REASONS = new Set(["grok_dropped", "agent_startup_failed", "media_bridge_failed",
+  "room_startup_failed"]);
 
 async function handleInterviewComplete(req: Request, env: Env): Promise<Response> {
   const { body: payload, denied } = await readSignedJson(req, env, true);
@@ -972,21 +975,17 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
     });
     return json({ ok: true, rehearsal: true });
   }
-  // Sept 28 2026: the guest pressed "Have Mira call my phone". Their browser
-  // room ends when they hang up, and its completion must not reopen the
-  // studio (short call) or send a few minutes of silence to post-production
-  // (long call): the phone run is the interview now. Keep the recordings
-  // for the record and stop there.
-  if (existingRows?.[0]?.disconnect_reason === "guest_requested_phone") {
-    await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
-      duration_sec: payload.duration_sec ?? null,
-      grok_session_log: { ...existingLog,
-        ...(payload.voximplant_record_url ? { voximplant_record_url: payload.voximplant_record_url } : {}),
-        ...(payload.voximplant_mix_record_url ? { voximplant_mix_record_url: payload.voximplant_mix_record_url } : {}),
-        browser_room_ended: { at: new Date().toISOString(), reason: payload.disconnect_reason ?? payload.reason ?? null } },
-    });
-    return json({ ok: true, superseded_by_phone: true });
-  }
+  // Oct 27 2026: phone interviews are gone, so every room is a browser room.
+  // A room that failed to START posts {status: failed, reason: "startup: ..."}
+  // with no call_mode (scenarios deployed before today); that is the room's
+  // fault, not a guest who didn't answer, and is handled as one below.
+  const browserRoom = payload.call_mode !== "pstn";
+  const endReason = String(payload.disconnect_reason ?? payload.reason ?? "");
+  const roomStartFailed = payload.status === "failed" && /^startup\b/.test(endReason);
+  // Only an interview session is held to the five-minute floor. Oct 27 2026:
+  // a five-minute hello under about 4:15 was read as a failed join, so the
+  // agenda it exists to produce was never made.
+  const runKind = String(existingRows?.[0]?.session_kind ?? "interview");
   const patch: Record<string, unknown> = {
     status: payload.status === "failed" ? "failed" : "completed",
     disconnect_reason: payload.disconnect_reason ?? payload.reason ?? null,
@@ -1020,20 +1019,20 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
   // Room model (Sept 10 2026): a room that ended on a PLATFORM fault
   // (Grok connector closed, agent never started, media bridge failed) is
   // not a failed join by the guest — reopen the studio so the next join
-  // starts a fresh room, count nothing against the browser path, and
-  // never flip the interview to a phone call over it.
-  const platformFault = PLATFORM_FAULT_REASONS.has(String(payload.disconnect_reason ?? ""));
-  if (payload.call_mode === "webrtc" && platformFault) {
+  // starts a fresh room, and count nothing against the guest. A room that
+  // failed to start at all (Oct 27 2026) is the same kind of fault.
+  const platformFault = PLATFORM_FAULT_REASONS.has(String(payload.disconnect_reason ?? "")) || roomStartFailed;
+  if (browserRoom && platformFault) {
     await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
       status: "awaiting_guest", duration_sec: null, disconnect_reason: null,
       grok_session_log: { ...existingLog, last_platform_fault: {
-        reason: payload.disconnect_reason, duration_sec: dur, at: new Date().toISOString() } },
+        reason: payload.disconnect_reason ?? endReason, duration_sec: dur, at: new Date().toISOString() } },
     });
     try {
       await email(env, operatorEmail(env),
-        `Studio: room ended on a platform fault (${payload.disconnect_reason})`,
+        `Studio: room ended on a platform fault (${payload.disconnect_reason ?? endReason})`,
         `<p>Hi Patrick,</p><p>The interview room for run ${esc(String(payload.run_id))} ended after
-         ${dur} seconds because of <strong>${esc(String(payload.disconnect_reason))}</strong>
+         ${dur} seconds because of <strong>${esc(String(payload.disconnect_reason ?? endReason))}</strong>
          (the AI voice connection, not anyone's browser). The studio is open again: everyone
          can press Join on the same links and a fresh room starts. If it repeats, the xAI
          connector is having a bad moment; wait a minute and try again.</p><p>— Mira</p>`);
@@ -1042,40 +1041,47 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
     }
     return json({ ok: true, platform_fault: true, reopened: true });
   }
-  if (payload.call_mode === "webrtc" && payload.status !== "failed" && dur < 300) {
+  if (browserRoom && runKind === "interview" && payload.status !== "failed" && dur < 300) {
     const runRows = await sb(env, "GET",
-      `interview_runs?id=eq.${payload.run_id}&select=interview_id,grok_session_log`);
+      `interview_runs?id=eq.${payload.run_id}&select=interview_id,grok_session_log,guest_joined_at`);
     const runRow = runRows?.[0] ?? {};
     const attempts = Number(runRow.grok_session_log?.aborted_attempts ?? 0) + 1;
     const ivRows = runRow.interview_id ? await sb(env, "GET",
       `interviews?id=eq.${runRow.interview_id}&select=application_id,show`) : [];
     const show = showFor(ivRows?.[0]);
 
-    if (attempts >= 2 && runRow.interview_id) {
-      // AUTO PHONE FALLBACK (Aug 6 2026, after Dan Perra's four-attempt
-      // studio ordeal): two failed browser joins = the browser path is
-      // broken for this guest today. Flip the interview to PSTN, fail
-      // this run so the fire tick (<=5 min, Worker cron) creates a fresh
-      // one and dials the guest's phone. Everyone gets told; nobody has
-      // to do anything.
-      await sb(env, "PATCH", `interviews?id=eq.${runRow.interview_id}`,
-        { status: "briefed", call_mode: "pstn" });
-      await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`,
-        { status: "failed", disconnect_reason: "studio_join_failed_x2_auto_pstn" });
-      const apps = ivRows?.[0]?.application_id ? await sb(env, "GET",
-        `guest_applications?id=eq.${ivRows[0].application_id}&select=name,email`) : [];
+    // Oct 27 2026: two failed joins used to switch the interview to a phone
+    // call. Phone interviews are gone, so the studio simply stays open, and
+    // on the second failure the guest is told the two ways that work: the
+    // same link in their phone's browser, or another time.
+    let guestEmailed = false;
+    // Only a guest who was actually in the room (Patrick testing on his own
+    // as co-host is not "the guest's studio dropping").
+    if (attempts === 2 && runRow.interview_id && runRow.guest_joined_at) {
+      const ivFull = (await sb(env, "GET",
+        `interviews?id=eq.${runRow.interview_id}&select=id,manage_token,application_id,show`))?.[0] ?? {};
+      const apps = ivFull.application_id ? await sb(env, "GET",
+        `guest_applications?id=eq.${ivFull.application_id}&select=name,email`) : [];
       if (apps?.[0]?.email) {
-        await email(env, apps[0].email,
-          "Change of plan: I'll call your phone instead",
-          `<p>Hi ${esc(firstName(apps[0].name))},</p><p>The browser studio isn't
-           cooperating with your setup today, and that is ours to solve, not
-           yours. Let's not fight it: <strong>I'll call your phone within the
-           next five minutes.</strong> Find a quiet spot and answer when you see
-           the call. Everything else works exactly the same.</p>${miraSignature(show)}`,
-          true);
+        const studio = studioUrl(show, runRow.interview_id, "guest");
+        const move = ivFull.manage_token
+          ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(ivFull.manage_token)}`
+          : bookingUrl(env, show);
+        try {
+          await email(env, apps[0].email,
+            "Our studio session ended early twice: two ways that work",
+            `<p>Hi ${esc(firstName(apps[0].name))},</p><p>Our studio session has ended early twice
+             today. If the studio is misbehaving on your computer, that is ours to solve, not
+             yours. Two things that work:</p>
+             <ol><li><strong>Open <a href="${esc(studio)}">your studio link</a> on your phone</strong>,
+             earbuds in. It's the same studio and sounds just as good, and I'm still waiting there.</li>
+             <li>If that doesn't work either, <a href="${esc(move)}">pick another time</a>. Nothing is
+             lost.</li></ol>${miraSignature(show)}`, true);
+          guestEmailed = true;
+        } catch (err: any) {
+          console.error("second-drop guest email failed:", err?.message ?? err);
+        }
       }
-      await slack(env, `${show.shortLabel}: 2 failed studio joins — auto-switched to PSTN; Mira dials within 5 minutes.`);
-      return json({ ok: true, auto_pstn_fallback: true });
     }
 
     await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, {
@@ -1089,14 +1095,14 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
           record_url: payload.voximplant_record_url ?? null,
           at: new Date().toISOString() } },
     });
-    await slack(env, `${show.shortLabel}: studio call ended after ${dur}s (attempt ${attempts}) — studio reopened for retry; one more failure auto-switches to phone.`);
+    await slack(env, `${show.shortLabel}: studio call ended after ${dur}s (attempt ${attempts}) — studio reopened for retry${guestEmailed ? "; guest emailed the phone-browser link and a move link" : ""}.`);
     try {
       await email(env, operatorEmail(env),
         `${show.shortLabel}: guest's studio call dropped early — retry is open`,
         `<p>Hi Patrick,</p><p>A studio session ended after only ${dur} seconds
          (attempt ${attempts}) — a failed join. The studio is reopened for
-         the guest; if the next attempt fails too, I'll automatically switch
-         them to a phone call. No action needed.</p><p>— Mira</p>`);
+         the guest.${guestEmailed ? " Because it has happened twice, I've emailed them the link to open on their phone's browser and a link to pick another time." : attempts === 1 ? " If it happens again, I'll email them the link for their phone's browser and a link to pick another time." : ""}
+         No action needed unless you'd like to reach out yourself.</p><p>— Mira</p>`);
     } catch (err: any) {
       console.error("aborted-join email failed:", err?.message ?? err);
     }
@@ -1105,50 +1111,10 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
 
   await sb(env, "PATCH", `interview_runs?id=eq.${payload.run_id}`, patch);
 
-  // Retry ladder for failed dials (spec §7 row 1, implemented July 2026):
-  // a no-answer/failed call resets the interview to `briefed`, so the fire
-  // cron's grace window re-dials on its next tick. Second strike marks the
-  // interview `missed` and emails the guest a reschedule link — no silent
-  // dead ends, no infinite redial of someone who isn't answering.
-  const reason = String(payload.reason ?? payload.disconnect_reason ?? "");
-  const isFailedDial = payload.status === "failed" &&
-    (reason.includes("call_failed") || reason.includes("startup"));
-  if (isFailedDial) {
-    try {
-      const runs = await sb(env, "GET",
-        `interview_runs?id=eq.${payload.run_id}&select=interview_id`);
-      const ivId = runs?.[0]?.interview_id;
-      if (ivId) {
-        const ivs = await sb(env, "GET",
-          `interviews?id=eq.${ivId}&select=no_show_count,application_id,show`);
-        const strikes = (ivs?.[0]?.no_show_count ?? 0) + 1;
-        const show = showFor(ivs?.[0]);
-        if (strikes < 2) {
-          await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
-            { status: "briefed", no_show_count: strikes });
-          await slack(env, `${show.shortLabel}: call attempt ${strikes} failed (${reason.slice(0, 120)}) — will retry within the fire grace window.`);
-        } else {
-          await sb(env, "PATCH", `interviews?id=eq.${ivId}`,
-            { status: "missed", no_show_count: strikes });
-          const apps = await sb(env, "GET",
-            `guest_applications?id=eq.${ivs[0].application_id}&select=name,email`);
-          if (apps?.[0]?.email) {
-            const rebook = bookingUrl(env, show);
-            await email(env, apps[0].email,
-              `Sorry we missed each other: pick a new time for ${show.name}`,
-              `<p>Hi ${esc(firstName(apps[0].name))},</p><p>I called twice for our ` +
-              `${esc(show.name)} interview but couldn't get through. No problem at all; ` +
-              `pick a new time that suits you and I'll be there:</p><p><a href="${esc(rebook)}">` +
-              `Choose a new time</a></p>${miraSignature(show)}`, true);
-          }
-          await slack(env, `${show.shortLabel}: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
-        }
-      }
-    } catch (err: any) {
-      console.error("retry-ladder error:", err?.message ?? err);
-    }
-    return json({ ok: true });
-  }
+  // Oct 27 2026: the retry ladder for failed phone dials is gone with the
+  // phone path (no call is ever dialled now). Its "startup" match caught room
+  // startup failures and, on the second, emailed browser guests "I called
+  // twice but couldn't get through"; those are platform faults above.
 
   await dispatch(env, "interview-complete", { run_id: payload.run_id });
   return json({ ok: true });
@@ -1418,6 +1384,11 @@ async function handleCalComRescheduled(env: Env, p: any): Promise<Response | nul
     guest_timezone: attendeeTimeZone(p) ?? iv.guest_timezone ?? null,
     cal_booking_uid: String(p.uid ?? "") || null,
     studio_kick_at: null, studio_alert_at: null,
+    // Oct 27 2026: a move after the T-5 notice or a late alert used to leave
+    // them stamped, so the new slot got neither. (A stuck alert is matched to
+    // its slot where it is read.)
+    start_notice_at: null, late_alert_at: null, studio_seen_at: null,
+    studio_reschedule_sent_at: null,
   });
   const studio = studioUrl(show, iv.id, "guest");
   await setCalendarLocation(env, show, String(p.uid ?? ""), studio, app.name ?? "guest");
@@ -1636,6 +1607,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
         cal_booking_uid: String(p.uid ?? "") || null,
+        // Oct 27 2026: a new time starts its alerts afresh.
+        start_notice_at: null, late_alert_at: null, studio_seen_at: null,
+        studio_reschedule_sent_at: null, studio_kick_at: null, studio_alert_at: null,
         guest_timezone: attendeeTimeZone(p),
         duration_min: closing ? 15 : hello ? HELLO_MINUTES : plannedMinutes, host_mode: false,
         ...(hello ? { hello_for_interview_id: helloFor } : {}) });
@@ -2985,16 +2959,18 @@ async function triageToken(env: Env): Promise<string> {
   return adminSig(env, "nerra-triage");
 }
 
-/** Oct 1 2026: the "call their phone" link in Patrick's stuck-guest email.
- *  GET shows a confirm button (mail scanners prefetch links, and this one
- *  dials); POST checks the signature and switches the interview to a phone
- *  call through the same path as the guest's own button. */
-async function callGuestSig(env: Env, interviewId: string): Promise<string> {
-  return adminSig(env, `call-guest:${interviewId}`);
+/** Oct 27 2026: Patrick's one-click "send them the link for their phone",
+ *  in the stuck-guest email. It replaces the "call their phone" link of Oct 1:
+ *  phone interviews are gone. GET shows a confirm button (mail scanners
+ *  prefetch links, and this one sends a text); POST checks the signature and
+ *  sends the same text and email as the guest's own "Text me the link".
+ *  pipelines/voices/fire_interviews.py text_guest_link builds the same link. */
+async function textGuestSig(env: Env, interviewId: string): Promise<string> {
+  return adminSig(env, `text-guest:${interviewId}`);
 }
 
-async function callGuestLink(env: Env, interviewId: string): Promise<string> {
-  return `https://api.nerranetwork.com/voices/admin/call-guest?interview=${interviewId}&sig=${await callGuestSig(env, interviewId)}`;
+async function textGuestLink(env: Env, interviewId: string): Promise<string> {
+  return `https://api.nerranetwork.com/voices/admin/text-guest?interview=${interviewId}&sig=${await textGuestSig(env, interviewId)}`;
 }
 
 // Oct 1 2026: the same audio paragraph and steps as pipelines/voices/common.py
@@ -3016,10 +2992,9 @@ const GUEST_YOUR_HOUR_HTML =
 const GUEST_AUDIO_HTML =
   '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">' +
   "<strong>For the best sound:</strong> please join from a computer, wearing " +
-  "headphones or earbuds, ideally with a good microphone. Phone audio is compressed " +
-  "and sounds noticeably thinner, while a computer with headphones and a good " +
-  "microphone sounds clear and full, and listeners tell us those are the interviews " +
-  "they enjoy most. AirPods or a headset connected to your computer work well, and a " +
+  "headphones or earbuds, ideally with a good microphone. A computer with headphones " +
+  "and a good microphone sounds clear and full, and listeners tell us those are the " +
+  "interviews they enjoy most. AirPods or a headset connected to your computer work well, and a " +
   "USB microphone is even better. Headphones also stop your microphone picking up my " +
   "voice from your speakers; without them my questions end up in your recording as if " +
   "you had said them.</p>";
@@ -3029,9 +3004,10 @@ function studioStepsHtml(studio: string): string {
     `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ${STUDIO_OPENS_BEFORE_TEXT} before we start.</li>` +
     "<li>Press <strong>Check my microphone</strong> and read the sentence out loud until it says <strong>Sounds good</strong>.</li>" +
     "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
-    "<p>If your computer gives you trouble, open the same link on your phone, earbuds in: it " +
-    "sounds far better than a phone call. A call from me, with the studio's <strong>Have Mira " +
-    "call my phone</strong> button, is the last resort, so we never lose the slot.</p>";
+    "<p>If your computer gives you trouble, open the same link on your phone, earbuds in: it's " +
+    "the same studio and sounds just as good. If neither works, the studio has a button to " +
+    "pick another time, so nothing is lost. Interviews happen in the studio only, not by " +
+    "phone call, because a phone line sounds too thin for the show.</p>";
 }
 
 async function setCalendarLocation(env: Env, show: Show, uid: string, studio: string, who: string) {
@@ -3158,18 +3134,15 @@ async function reminderFallback(env: Env): Promise<number> {
       const when = pacificTime(iv.scheduled_at, iv.guest_timezone);
       const manage = iv.manage_token
         ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}` : "";
-      const phoneMode = (iv.call_mode || "webrtc") !== "webrtc";
       await email(env, app.email, `Our interview on ${show.name} is coming up`,
         `<p>Hi ${esc(firstName(app.name))},</p>
          <p>We're on for <strong>${esc(when)}</strong>, a little over an hour from now.</p>
          ${subjectHtml(interviewSubject(iv, app, true))}
-         ${phoneMode
-           ? "<p>I'll call the number you gave us. Find a quiet spot and answer when it rings.</p>"
-           : GUEST_AUDIO_HTML + studioStepsHtml(studio)}
+         ${GUEST_AUDIO_HTML + studioStepsHtml(studio)}
          ${manage ? `<p>If today doesn't work after all, <a href="${esc(manage)}">move or cancel it here</a>.</p>` : ""}
          ${miraSignature(show)}`, true, publicistCc(app));
       const phone = phoneE164(app.phone);
-      if (phone && !phoneMode) {
+      if (phone) {
         await sendSms(env, phone,
           `Mira here, from ${show.name}. We're on in about an hour. From a computer with ` +
           `headphones: open ${studio}, press Check my microphone, then Join.` +
@@ -3178,7 +3151,7 @@ async function reminderFallback(env: Env): Promise<number> {
       await email(env, operatorEmail(env),
         `${show.shortLabel}: the reminder for ${app.name ?? "a guest"} came from the Worker`,
         `<p>GitHub never sent the two-hour reminder for the interview at ${esc(when)}, so the
-         Worker sent it (email${phone && !phoneMode ? " and text" : ""}). If this keeps happening,
+         Worker sent it (email${phone ? " and text" : ""}). If this keeps happening,
          GitHub Actions is having a bad day.</p>`);
       sent++;
     } catch (err: any) {
@@ -3197,30 +3170,36 @@ async function reminderFallback(env: Env): Promise<number> {
  *  so it asks first. FAIL-OPEN: a Supabase error dispatches, and the
  *  :00/:30 ticks always dispatch, so a row this query cannot see waits at
  *  most thirty minutes — never a guest in a locked studio. */
-const FIRE_TICK_LOOKBACK_MS = 48 * 3600000;   // sweep_browser_no_shows window
 const FIRE_TICK_LOOKAHEAD_MS = 140 * 60000;   // REMINDER_AHEAD upper bound + drift
 // Oct 19 2026: an interview is the fire script's to act on only around its
 // slot — the reminder ahead of it, the fire window, the live run (50-minute
 // hard cap). The 48-hour lookback on INTERVIEWS held the gate open all day
 // for two interviews whose runs had already fired ("already has an active
-// run — skipping", 148 dispatches on Oct 19); the run-table clause below
-// still covers the no-show sweep's two days.
+// run — skipping", 148 dispatches on Oct 19).
 const FIRE_TICK_INTERVIEW_LOOKBACK_MS = 3 * 3600000;
+// Oct 28 2026: the run-table clause read runs CREATED in the last two days,
+// and every run is staged about a day before its slot, so each booking held
+// the gate open for two whole days: run d0cdb835 (staged Oct 26 18:02 for
+// Oct 27 18:00) and then run 35cdf6f4 (staged Oct 27 17:32 for Oct 28
+// 17:30) kept it open all of Oct 27, 232 Worker dispatches that almost all
+// logged "already has an active run — skipping". A run is read around its own
+// slot (scheduled_for), the same window as the interview; the no-show sweep
+// acts 40 minutes after the start, inside it, and a staged prompt is
+// refreshed on the half-hour ticks, which always dispatch.
 
-async function fireTickDue(env: Env): Promise<boolean> {
+export async function fireTickDue(env: Env): Promise<boolean> {
   try {
-    const lo = new Date(Date.now() - FIRE_TICK_LOOKBACK_MS).toISOString();
     const ilo = new Date(Date.now() - FIRE_TICK_INTERVIEW_LOOKBACK_MS).toISOString();
     const hi = new Date(Date.now() + FIRE_TICK_LOOKAHEAD_MS).toISOString();
     const due = await sb(env, "GET",
       `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${ilo}&scheduled_at=lte.${hi}&select=id&limit=1`);
     if (due?.length) return true;
-    // Bounded like the no-show sweep: on Oct 13 2026 the table held two
+    // Bounded to the run's own slot: on Oct 13 2026 the table held two
     // awaiting_guest rows from September and a staged row from the day
     // before, none of which the fire script acts on, and an unbounded read
     // would have held the gate open forever.
     const runs = await sb(env, "GET",
-      `interview_runs?status=in.(staged,awaiting_guest,fired)&created_at=gte.${lo}&select=id&limit=1`);
+      `interview_runs?status=in.(staged,awaiting_guest,fired)&scheduled_for=gte.${ilo}&scheduled_for=lte.${hi}&select=id&limit=1`);
     return !!runs?.length;
   } catch (err: any) {
     console.error("fire-tick gate failed (dispatching anyway):", err?.message ?? err);
@@ -3375,36 +3354,50 @@ async function handleStudioText(req: Request, env: Env): Promise<Response> {
   return json({ ok: true, texted, emailed: true, phone_last4: phone ? phone.slice(-4) : null });
 }
 
-async function handleCallGuest(req: Request, env: Env): Promise<Response> {
-  const url = new URL(req.url);
-  const interviewId = url.searchParams.get("interview") ?? "";
-  const sig = url.searchParams.get("sig") ?? "";
-  const page = (title: string, body: string) => new Response(
+function adminPage(title: string, body: string, status = 200): Response {
+  return new Response(
     `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
      <title>${esc(title)}</title><body style="font:16px/1.5 system-ui,sans-serif;max-width:520px;margin:3rem auto;padding:0 1rem">
      <h1 style="font-size:1.3rem">${esc(title)}</h1>${body}</body>`,
-    { headers: { "content-type": "text/html; charset=utf-8" } });
-  if (!UUID_RE.test(interviewId) || sig !== await callGuestSig(env, interviewId)) {
-    return page("Link not valid", "<p>This link is incomplete or has been changed.</p>");
+    { status, headers: { "content-type": "text/html; charset=utf-8" } });
+}
+
+/** The old "call their phone" links in emails sent before Oct 27 2026. */
+function handleCallGuestRetired(): Response {
+  return adminPage("Phone interviews are no longer offered",
+    "<p>This link used to switch a guest to a phone call. Phone interviews are no longer offered: " +
+    "the sound is too poor for the show. The guest's studio page offers to carry on from their " +
+    "phone's browser, or to pick another time.</p>", 410);
+}
+
+async function handleTextGuest(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const interviewId = url.searchParams.get("interview") ?? "";
+  const sig = url.searchParams.get("sig") ?? "";
+  if (!UUID_RE.test(interviewId) || sig !== await textGuestSig(env, interviewId)) {
+    return adminPage("Link not valid", "<p>This link is incomplete or has been changed.</p>");
   }
   const { iv, app } = await interviewGuest(env, interviewId);
-  if (!iv || !app) return page("Interview not found", "<p>No interview matches this link.</p>");
+  if (!iv || !app) return adminPage("Interview not found", "<p>No interview matches this link.</p>");
   const who = esc(String(app.name ?? "the guest"));
   if (req.method !== "POST") {
-    return page(`Call ${who}'s phone?`,
-      `<p>Mira will call ${who} on ${esc(String(app.phone ?? "the number on file"))} within a minute or two
-       and do the interview by phone. Their browser session, if any, is closed.</p>
+    return adminPage(`Send ${who} their link for their phone?`,
+      `<p>Mira will text ${who} their studio link${app.phone ? ` on ${esc(String(app.phone))}` : ""} and
+       email it to ${esc(String(app.email ?? "them"))}, to open in their phone's browser with earbuds in.
+       It's the same studio.</p>
        <form method="post"><button style="font:inherit;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#0F766E;color:#fff">
-       Call ${who} now</button></form>`);
+       Send it</button></form>`);
   }
-  const res = await handleStudioPhone(new Request(req.url, {
+  const res = await handleStudioText(new Request(req.url, {
     method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ interview: interviewId, by: "patrick" }),
+    body: JSON.stringify({ interview: interviewId }),
   }), env);
   const out = await res.json<any>().catch(() => ({}));
-  if (out.ok) return page("Calling now", `<p>Mira is calling ${who} on the number ending in ${esc(String(out.phone_last4))}. ${who} has been emailed to expect the call.</p>`);
-  if (out.need_phone) return page("No phone number on file", `<p>There's no usable number for ${who}. Reply to them and ask for one.</p>`);
-  return page("Couldn't switch to phone", `<p>${esc(String(out.error ?? "Unknown error"))}</p>`);
+  if (out.ok) {
+    return adminPage("Sent", `<p>${out.texted ? `Texted to the number ending in ${esc(String(out.phone_last4))} and emailed.`
+      : "Emailed (no usable phone number for a text)."} ${who} can open it on their phone.</p>`);
+  }
+  return adminPage("Couldn't send it", `<p>${esc(String(out.error ?? "Unknown error"))}</p>`);
 }
 
 async function archivePackage(env: Env, packageId: string, reason: string): Promise<Response> {
@@ -3887,7 +3880,8 @@ async function handleStudioEcho(req: Request, env: Env): Promise<Response> {
 // endpoints close that gap:
 //   /studio-check    the pre-join mic check and the day-before setup test
 //   /studio-silence  "nothing heard from the guest" — emails Patrick, once
-//   /studio-phone    the guest's own "Have Mira call my phone" button
+//   /studio-reschedule  the guest's own "Still not working? Pick another time"
+//   (/studio-phone, the guest's "Have Mira call my phone", retired Oct 27 2026)
 
 /** The guest behind an interview, for the operator emails. */
 async function interviewGuest(env: Env, interviewId: string): Promise<{
@@ -3927,28 +3921,40 @@ async function alertStuckGuest(env: Env, iv: any, app: any, show: any, record: a
   const who = app?.name ? String(app.name) : "A guest";
   const when = iv.scheduled_at ? pacificTime(iv.scheduled_at) : "an unscheduled slot";
   const late = Math.max(0, Math.round(Number(body?.minutes_late) || 0));
-  const where = record.mic === "ok"
-    ? "Their microphone check passed, but they haven't pressed Join."
-    : record.mic === "quiet" || record.mic === "silent"
-      ? `Their microphone check failed (${record.mic}${record.mic_db !== null ? `, ${record.mic_db} dB` : ""}), so Join is still locked.`
-      : body?.mic_access === false
-        ? "Their browser hasn't given the studio the microphone, so they can't run the check."
-        : "They haven't run the microphone check yet, so Join is still locked.";
+  // Oct 27 2026: say what is actually true. A guest who pressed Join and
+  // failed is not one who "hasn't pressed Join"; one who skipped the check is
+  // not locked out; and a check that passed and was then reset (Elliot
+  // Justin's camera) reads as "not run yet".
+  const joinError = String(body?.join_error ?? "").slice(0, 200);
+  const where = body?.join_attempted === true && joinError
+    ? `They pressed Join and it failed: ${joinError}.`
+    : body?.join_attempted === true
+      ? "They pressed Join, but they aren't in the room."
+      : body?.join_override === true
+        ? "They skipped the microphone check, so Join is open, but they haven't pressed it."
+        : record.mic === "ok"
+          ? "Their microphone check passed, but they haven't pressed Join."
+          : record.mic === "quiet" || record.mic === "silent"
+            ? `Their microphone check failed (${record.mic}${record.mic_db !== null ? `, ${record.mic_db} dB` : ""}), so Join is still locked.`
+            : body?.mic_access === false
+              ? "Their browser hasn't given the studio the microphone, so they can't run the check."
+              : "Their microphone check hasn't passed on this page yet, so Join is still locked.";
   const signin = record.signin === "failed"
     ? ` The studio sign-in also failed on their network (${esc(record.signin_error || "no detail")}).` : "";
   const phone = app?.phone ? String(app.phone) : "";
   let link = "";
-  try { link = await callGuestLink(env, iv.id); } catch { /* no ADMIN_TOKEN: no link */ }
+  try { link = await textGuestLink(env, iv.id); } catch { /* no ADMIN_TOKEN: no link */ }
   try {
     await email(env, operatorEmail(env),
       `${show.shortLabel}: ${who} has the studio open but isn't in the interview`,
       `<p>Hi Patrick,</p><p>${esc(who)} has the studio page open for their interview (${esc(when)}),
        but ${late ? `${late} minutes after the start` : "after the start"} they still aren't in the room with me.
        ${esc(where)}${signin}</p>
-       <p>The page is showing them the two steps and the "Have Mira call my phone" button.</p>
-       ${phone && link ? `<p>If you'd rather not wait, I can call them now on ${esc(phone)}:
-       <a href="${link}">switch ${esc(who)} to a phone call</a>.</p>`
-         : phone ? `<p>Their phone: ${esc(phone)}.</p>` : "<p>There's no phone number on file for them.</p>"}
+       <p>The page is showing them the two steps, a button to carry on from their phone's
+       browser, and a button to pick another time.</p>
+       ${link ? `<p>If you'd like to nudge them: <a href="${link}">send ${esc(who)} their studio link
+       for their phone</a> (a text${phone ? ` to ${esc(phone)}` : ""} and an email).</p>` : ""}
+       ${phone ? `<p>Their phone, to reach them yourself: ${esc(phone)}.</p>` : "<p>There's no phone number on file for them.</p>"}
        <p>Device: ${esc(record.device || "unknown")}<br>Browser: ${esc(record.ua || "unknown")}<br>
        Guest email: ${esc(app?.email ?? "unknown")}</p>
        <p>— Mira</p>`);
@@ -3984,9 +3990,17 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   // started, and he never got past the microphone check to Join. Nothing
   // reached Mira, so nothing told anyone. The page now reports a guest who
   // is still outside the room a few minutes after the start, and Patrick
-  // is emailed once, with a link that switches the interview to a phone call.
+  // is emailed once, with what they are stuck on.
   const stuck = body?.stuck === true && !test && record.role === "guest";
-  const alertedBefore: string | null = iv.setup_check?.stuck_alerted_at ?? null;
+  if (stuck) {
+    (record as any).join_attempted = body?.join_attempted === true;
+    (record as any).join_error = String(body?.join_error ?? "").slice(0, 200);
+  }
+  // Oct 27 2026: an alert raised for an earlier slot (the interview has
+  // since moved) does not silence this one.
+  const priorAlert: string | null = iv.setup_check?.stuck_alerted_at ?? null;
+  const alertedBefore: string | null = priorAlert && iv.scheduled_at
+    && Date.parse(priorAlert) >= Date.parse(iv.scheduled_at) - STUDIO_OPENS_BEFORE_MS ? priorAlert : null;
   const stuckAlertedAt = stuck && !alertedBefore ? record.at : alertedBefore;
   const history = Array.isArray(iv.setup_check?.history) ? iv.setup_check.history.slice(-9) : [];
   await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
@@ -4014,9 +4028,9 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
         `<p>Hi Patrick,</p><p>${esc(who)} ran the ${test ? "setup test" : "microphone check"} for their
          interview (${esc(when)}) and ${problems.map(esc).join("; ")}.</p>
          <p>Device: ${esc(record.device || "unknown")}<br>Browser: ${esc(record.ua || "unknown")}</p>
-         <p>They saw plain-language help on the page. If it is not fixed by the next test, a phone
-         interview is the safe option: they can press "Have Mira call my phone" in the studio, or
-         you can switch the interview to phone before the slot.</p>
+         <p>They saw plain-language help on the page. If it is not fixed by the next test, the
+         safe options are the same link in their phone's browser with earbuds in, or another time.
+         Phone interviews are no longer offered.</p>
          <p>Guest email: ${esc(app?.email ?? "unknown")}${app?.phone ? ` · phone ${esc(String(app.phone))}` : " · no phone on file"}</p>
          <p>— Mira</p>`);
     } catch (err: any) {
@@ -4070,8 +4084,8 @@ async function handleStudioSilence(req: Request, env: Env): Promise<Response> {
       `${show.shortLabel}: Mira can't hear ${who} — live now`,
       `<p>Hi Patrick,</p><p>${lead} Their microphone is almost certainly the wrong one or turned
        down.</p><p>What they see: a yellow box telling them Mira can't hear them, a microphone
-       switcher, and after thirty seconds a "Have Mira call my phone" button. Mira is telling them
-       the same thing out loud.</p><p>If you want to step in: join as co-host
+       switcher, and after thirty seconds a button to carry on from their phone's browser. Mira is
+       telling them the same thing out loud.</p><p>If you want to step in: join as co-host
        (<a href="${esc(hostStudioUrl(env, show, iv?.id ?? ""))}">your studio link</a>), or reply to
        them at ${esc(app?.email ?? "their email")}${app?.phone ? `, or call ${esc(String(app.phone))}` : ""}.</p>
        <p>— Mira</p>`);
@@ -4082,74 +4096,56 @@ async function handleStudioSilence(req: Request, env: Env): Promise<Response> {
   return json({ ok: true, alerted: true });
 }
 
-/** POST /voices/studio-phone {interview, run_id?, phone?} — the guest asked
- *  Mira to call them instead. Same machinery as the automatic fallback
- *  after two failed joins: the interview becomes a phone interview, the
- *  browser run is closed, and the fire tick (dispatched right now rather
- *  than at the next five-minute mark) dials. Returns need_phone when there
- *  is no usable number on file, so the page can ask for one. */
-async function handleStudioPhone(req: Request, env: Env): Promise<Response> {
+/** POST /voices/studio-phone — retired Oct 27 2026. Phone interviews are no
+ *  longer offered: a phone line stops at 3.4 kHz, and the last one (Elliot
+ *  Justin) had a scam call on top of it. A studio page cached from before
+ *  today still has the button; it is told what to do instead. */
+function handleStudioPhoneRetired(): Response {
+  return json({ error: "We don't do interviews by phone call any more. Open the same studio link " +
+    "on your phone's browser with earbuds in, or reply to my email and we'll find another time.",
+    retired: true }, 410);
+}
+
+/** POST /voices/studio-reschedule {interview} — Oct 27 2026. The studio's
+ *  "Still not working? Pick another time": emails the guest, at the address
+ *  on file and nowhere else, their link to move the interview, and tells
+ *  Patrick. Once per ten minutes, so a page left open cannot repeat it. */
+async function handleStudioReschedule(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const interviewId = String(body?.interview ?? "").trim();
   if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
-  const { iv, app, show } = await interviewGuest(env, interviewId);
-  if (!iv || !app) return json({ error: "not found" }, 404);
-  // Oct 21 2026: only an interview inside its live window may be dialled.
-  // This button used to accept anything but four finished statuses, so a
-  // recorded interview in post-production could be flipped back to
-  // "briefed" and the guest phoned.
+  const ivs = await sb(env, "GET",
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,show,application_id,manage_token,studio_reschedule_sent_at`);
+  const iv = ivs?.[0];
+  if (!iv) return json({ error: "not found" }, 404);
   if (!LIVE_INTERVIEW_STATUSES.has(String(iv.status))) {
-    return json({ error: "this interview is not live" }, 409);
+    return json({ error: "This interview isn't on right now. Reply to my last email and I'll find you a time." }, 409);
   }
-  // This button dials NOW. It belongs to the studio on the day; a guest on
-  // the day-before setup test is told to reply to their email instead.
-  const startsAt = iv.scheduled_at ? Date.parse(iv.scheduled_at) : NaN;
-  if (Number.isFinite(startsAt) && startsAt - Date.now() > 20 * 60 * 1000) {
-    return json({ error: "Your interview hasn't started yet. Reply to your booking email and we'll set it up as a phone call." }, 409);
-  }
-  const given = phoneE164(body?.phone);
-  if (body?.phone && !given) return json({ error: "That number doesn't look dialable. Include the country code, e.g. +1 604 555 0123.", need_phone: true }, 400);
-  const phone = given ?? phoneE164(app.phone);
-  if (!phone) return json({ need_phone: true });
-  if (given && given !== phoneE164(app.phone)) {
-    await sb(env, "PATCH", `guest_applications?id=eq.${app.id}`, { phone: given });
-  }
-  // The live browser run, if any, is closed as "guest asked for the phone",
-  // so its completion webhook (the room ends when they hang up) cannot
-  // reopen the studio or send a short recording to post-production.
-  const runs = await sb(env, "GET",
-    `interview_runs?interview_id=eq.${interviewId}&status=not.in.(failed,cancelled,completed)` +
-    `&select=id,grok_session_log`);
-  const now = new Date().toISOString();
-  for (const r of runs ?? []) {
-    await sb(env, "PATCH", `interview_runs?id=eq.${r.id}`, {
-      status: "failed", disconnect_reason: "guest_requested_phone",
-      grok_session_log: { ...(r.grok_session_log ?? {}),
-        phone_switch: { at: now, original_scheduled_at: iv.scheduled_at } },
-    });
-  }
-  // The fire step only dials inside [scheduled_at - 5 min, scheduled_at + 30 min];
-  // a guest who asks twenty-five minutes in must still be called.
-  await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
-    { status: "briefed", call_mode: "pstn", scheduled_at: now });
-  let dispatched = true;
-  try { await dispatch(env, "fire-tick", { source: "studio-phone", interview_id: interviewId }); }
-  catch (err: any) { dispatched = false; console.error("studio-phone dispatch failed:", err?.message ?? err); }
-  const last4 = phone.slice(-4);
+  const last = iv.studio_reschedule_sent_at ? Date.parse(iv.studio_reschedule_sent_at) : 0;
+  if (Date.now() - last < 10 * 60 * 1000) return json({ ok: true, already_sent: true });
+  const app = iv.application_id ? (await sb(env, "GET",
+    `guest_applications?id=eq.${iv.application_id}&select=name,email,show,publicist_email`))?.[0] : null;
+  if (!app?.email) return json({ error: "There's no email on file. Reply to my last email and I'll find you a time." }, 409);
+  const show = showFor(iv, app);
+  const move = iv.manage_token
+    ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}`
+    : bookingUrl(env, show);
   try {
-    await email(env, app.email, "I'll call your phone now",
-      `<p>Hi ${esc(firstName(app.name))},</p><p>Thank you for switching. I'll call your phone
-       ending in ${esc(last4)} within the next few minutes. Find a quiet spot, answer when it
-       rings, and we'll carry on from there. Everything else works exactly the same.</p>
-       ${miraSignature(show)}`, true);
+    await email(env, app.email, `Let's find another time for ${show.name}`,
+      `<p>Hi ${esc(firstName(app.name))},</p><p>I'm sorry the studio didn't cooperate today. That is
+       ours to solve, not yours. <a href="${esc(move)}"><strong>Pick another time here</strong></a>;
+       nothing is lost, and everything you told us is kept for the conversation.</p>
+       <p>On the day, a computer with headphones sounds best, and your phone's browser with earbuds
+       in works just as well if the computer won't cooperate.</p>${miraSignature(show)}`, true);
   } catch (err: any) {
-    console.error("studio-phone guest email failed:", err?.message ?? err);
+    console.error("studio-reschedule email failed:", err?.message ?? err);
+    return json({ error: "That didn't go through. Reply to my last email and I'll find you another time." }, 502);
   }
-  const byWho = body?.by === "patrick"
-    ? `Patrick switched ${app.name ?? "the guest"} to a phone call`
-    : `${app.name ?? "guest"} pressed "Have Mira call my phone"`;
-  await slack(env, `:telephone_receiver: ${show.shortLabel}: ${byWho} — switched to PSTN (…${last4})${dispatched ? ", fire tick dispatched" : ", next cron tick dials"}.`);
-  return json({ ok: true, phone_last4: last4, dispatched });
+  // Stamped once it has gone, so a failed send can be retried at once.
+  await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
+    { studio_reschedule_sent_at: new Date().toISOString() }).catch(() => null);
+  await slack(env, `:calendar: ${show.shortLabel}: ${app.name ?? "the guest"} couldn't get the studio working and asked for another time (move link emailed).`);
+  return json({ ok: true });
 }
 
 async function handleStudioState(req: Request, env: Env): Promise<Response> {
@@ -4158,9 +4154,20 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const role: StudioRole = url.searchParams.get("role") === "host" ? "host" : "guest";
   if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
   const ivs = await sb(env, "GET",
-    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id,host_mode,studio_kick_at,studio_alert_at`);
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id,host_mode,studio_kick_at,studio_alert_at,studio_seen_at`);
   const iv = ivs?.[0];
   if (!iv) return json({ error: "not found" }, 404);
+  // Oct 27 2026: the late alert used to assume a page that had opened the
+  // room once was still open. The guest's page polls every ten seconds; the
+  // newest poll is stamped (at most once a minute) so the alert can tell an
+  // open page from a tab that was closed at T-10.
+  if (role === "guest" && LIVE_INTERVIEW_STATUSES.has(String(iv.status))) {
+    const seen = iv.studio_seen_at ? Date.parse(iv.studio_seen_at) : 0;
+    if (Date.now() - seen > 60 * 1000) {
+      await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
+        { studio_seen_at: new Date().toISOString() }).catch(() => null);
+    }
+  }
   // Pre-migration interviews carry no show; fall back to the application's.
   let show = showFor(iv);
   if (!isShow(iv.show) && iv.application_id) {
@@ -4915,7 +4922,8 @@ export default {
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
       if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(req, env);
-      if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuest(req, env);
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuestRetired();
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/text-guest") return handleTextGuest(req, env);
       if ((req.method === "GET" || req.method === "POST") && path === "/voices/join") return handleJoin(req, env);
       const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);
       if (archive && req.method === "GET") return handleArchivePage(req, env, archive[1]);
@@ -4941,7 +4949,8 @@ export default {
       if (req.method === "POST" && path === "/voices/studio-echo") return handleStudioEcho(req, env);
       if (req.method === "POST" && path === "/voices/studio-check") return handleStudioCheck(req, env);
       if (req.method === "POST" && path === "/voices/studio-silence") return handleStudioSilence(req, env);
-      if (req.method === "POST" && path === "/voices/studio-phone") return handleStudioPhone(req, env);
+      if (req.method === "POST" && path === "/voices/studio-phone") return handleStudioPhoneRetired();
+      if (req.method === "POST" && path === "/voices/studio-reschedule") return handleStudioReschedule(req, env);
       if (req.method === "POST" && path === "/voices/studio-text") return handleStudioText(req, env);
       if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);

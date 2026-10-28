@@ -74,9 +74,12 @@ def test_inbox_runs_every_five_minutes_while_live():
     assert 'if (await interviewIsLive(env)) await dispatch(env, "producer-tick", { source: "live-interview" });' in WORKER
 
 
-def test_phone_browser_comes_before_a_call():
+def test_phone_browser_and_another_time_never_a_call():
+    # Oct 27 2026: phone-call interviews were retired; the studio offers the
+    # phone's browser and another time, never a call.
     studio = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
     assert "Join from my phone instead" in studio
-    assert "Last resort: have Mira call my phone" in studio
+    assert "Pick another time" in studio
+    assert "call my phone" not in studio.lower()
     assert 'path === "/voices/studio-text") return handleStudioText(req, env);' in WORKER
     assert "SendSmsMessage" in WORKER

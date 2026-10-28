@@ -98,7 +98,11 @@ interview gates. Cal.com's booking webhook is verified against
 `X-Cal-Signature-256` (hex HMAC-SHA256 of the raw body) when
 `CALCOM_WEBHOOK_SECRET` is set. `GET /voices/health` reports both flags.
 
-Other hardening the same day: `/voices/studio-phone` dials only an
+Oct 27 2026: phone-call interviews were retired; `/voices/studio-phone` and
+`/voices/admin/call-guest` now answer 410, and `/voices/studio-reschedule`
+emails a stuck guest their move link.
+
+Other hardening (Oct 21): `/voices/studio-phone` dialled only an
 interview at `scheduled`, `briefed` or `in_progress` (it could flip a
 recorded interview back to `briefed`); gate-2 housekeeping runs each
 package in its own try, so one bounced reminder no longer stops the rest,

@@ -2311,7 +2311,7 @@ def run(args: argparse.Namespace) -> None:
         # its real date. Bounded page opens (``date_probe_max``; 0 = off),
         # best-effort, never blocks a run. Metrics name their consumer:
         # scripts/review_snapshot.py + the ledger's freshness predictions.
-        _probe_max = int(getattr(config, "date_probe_max", 12) or 0)
+        _probe_max = int(getattr(config, "date_probe_max", 40) or 0)
         if _probe_max and articles:
             try:
                 from engine.article_dates import (

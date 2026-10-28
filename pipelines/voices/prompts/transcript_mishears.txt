@@ -1,0 +1,22 @@
+You are checking a speech-to-text transcript of a podcast interview for MISHEARINGS: places where the recogniser wrote a word that sounds like what was said but is not it.
+
+Guest: {{guest_name}} ({{guest_title}}, {{guest_organization}})
+About the guest: {{guest_bio}}
+Show: {{show_name}}, hosted by Mira (an AI) on the Nerra Network.
+
+Transcript ([MM:SS] Speaker: text):
+{{transcript}}
+
+List only the mishearings that the context makes certain. Examples of the kind:
+- a name or product spelled right in one place and misheard in another ("jungle gem" where the guest says "jungle gym" elsewhere; "Tell Moodic logic" where "Talmudic logic" appears);
+- a well-known person or company rendered as a sound-alike ("Jensen Wang" for Jensen Huang, "open AI" for OpenAI);
+- a word that makes no sense as heard but whose sound-alike is plainly meant ("the anecdote for the problems" -> "the antidote for the problems"; "our matrix are very practical" -> "our metrics are very practical").
+
+Never list:
+- the speaker's own grammar, word choice, repetitions or unfinished sentences — people talk like that and the transcript records it;
+- anything you are not certain of;
+- punctuation or capitalisation alone;
+- anything in a speaker label or timestamp.
+
+Reply with JSON only, an array (empty if there is nothing certain):
+[{"heard": "exact words copied from one line, 1 to 6 words, enough to be unambiguous", "meant": "what was said", "why": "a few words"}]

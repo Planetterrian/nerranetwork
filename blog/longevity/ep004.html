@@ -32,7 +32,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript>
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript><script>
+    (function () {
+      try {
+        if (!localStorage.getItem('nn_consent_v1')) {
+          document.documentElement.classList.add('nn-consent-needed');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('nn-consent-needed');
+      }
+    })();
+    </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
@@ -1037,6 +1047,17 @@
             font-size: clamp(2rem, 5.2vw, 3rem);
             line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
         }
+        .nn-iv-who { display: flex; align-items: center; gap: 1.1rem; margin: 0 0 1rem; }
+        .nn-iv-who .nn-iv-identifier { margin-bottom: 0; }
+        .nn-iv-photo {
+            width: 104px; height: 104px; flex-shrink: 0; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--show-color);
+            background: var(--nn-surface);
+        }
+        @media (max-width: 520px) {
+            .nn-iv-photo { width: 76px; height: 76px; }
+            .nn-iv-who { gap: 0.8rem; }
+        }
         .nn-iv-identifier {
             font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
             color: var(--show-color-text, var(--show-color));
@@ -1578,7 +1599,7 @@
                         <a href="../../editorial.html">Editorial Process</a>
                         <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
-                        <a href="../../press.html">Press Kit</a>
+                        <a href="../../press.html">Media Kit</a>
                         <a href="../../support.html">Support the Network</a>
                     </div>
                 </li>
@@ -2425,30 +2446,69 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </div>
             </section>
             
+            
+            
+            <section class="blog-related" id="more-from-show" style="margin-top:1.4rem;">
+                <h2>More from Longevity Weekly</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="ep005.html" class="blog-related-card" style="--card-show-color: #3F6212">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Ep 5</span>
+                        <h3>A tissue study of twenty-eight women found ovaries still…</h3>
+                    </a>
+                    
+                    <a href="ep003.html" class="blog-related-card" style="--card-show-color: #3F6212">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Ep 3</span>
+                        <h3>Eleven-gene reprogramming was given to people before any…</h3>
+                    </a>
+                    
+                    <a href="ep006.html" class="blog-related-card" style="--card-show-color: #3F6212">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Ep 6</span>
+                        <h3>A clinical trial found daily fiber eased knee osteoarthritis…</h3>
+                    </a>
+                    
+                    <a href="ep002.html" class="blog-related-card" style="--card-show-color: #3F6212">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Ep 2</span>
+                        <h3>Fourteen randomized trials showed resistance training raised…</h3>
+                    </a>
+                    
+                    <a href="ep001.html" class="blog-related-card" style="--card-show-color: #3F6212">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Ep 1</span>
+                        <h3>Phase 3 trials showed positive results for an autoimmune…</h3>
+                    </a>
+                    
+                </div>
+                <p style="margin:.85rem 0 0;font-size:.9rem;">
+                    <a href="../../longevity.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">Longevity Weekly show page</a><span aria-hidden="true"> · </span>
+                    <a href="../../blog/longevity/index.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">All Longevity Weekly episodes</a>
+                </p>
+            </section>
+            
+            
             <!-- Cross-show Recommendations -->
             
             <section class="blog-related">
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/planetterrian/ep219.html" class="blog-related-card" style="--card-show-color: #017A99">
+                    <a href="../../blog/planetterrian/ep226.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>A nanoscale platform now tracks single proteins moving inside living neurons in real time.</h3>
+                        <h3>Collaborative study shows drought-avoiding desert plants fared better than drought-tolerating ones during extreme heat at Uluru.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/fascinating_frontiers/ep228.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/fascinating_frontiers/ep235.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>A European service station on the Moon will keep experiments running for years by storing solar power for the two-week lunar night.</h3>
+                        <h3>Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep136.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep143.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Vinyl plank flooring reaches eight dollars per square foot against roughly two dollars in raw materials.</h3>
+                        <h3>Alizarin prices fell from fifteen dollars a pound to fifty-five cents after the 1869 synthesis.</h3>
                         
                     </a>
                     
@@ -2586,8 +2646,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../topics/index.html">Browse by topic</a>
                     <a href="../../faq.html">FAQ</a>
                     <a href="../../contact.html">Contact</a>
-                    <a href="../../press.html">Press Kit</a>
-                    <a href="../../sponsor.html">Sponsor</a>
+                    <a href="../../press.html">Media Kit</a>
+                    <a href="../../sponsor.html">Advertise & Sponsor</a>
                     <a href="../../editorial.html">Editorial Process</a>
                     <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
@@ -2915,6 +2975,28 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
           }).catch(function () {});
       } catch (e) {}
     })();
-    </script>
+    </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
+        <div class="nn-consent-inner">
+            <button type="button" class="nn-consent-close" aria-label="Close">&times;</button>
+            <h2 class="nn-consent-heading" id="nn-consent-heading">Cookies on Nerra</h2>
+            <div class="nn-consent-text">Some cookies keep the site working. Before you choose, Google gets only basic, cookie-free signals (for example, that a page loaded), with no cookies or IDs that identify you. With your OK you can also turn on: Analytics, which uses Google Analytics cookies to show us which pages and episodes are useful, and Ad measurement, which uses Google Ads to measure sign-ups from our ads. When you sign up for Personal tips, Ad measurement also sends Google a coded (hashed) version of your email. Change your mind any time from Cookie settings at the bottom of every page. <a class="nn-consent-privacy" href="../../privacy-policy.html">Privacy policy</a>.</div>
+            <div class="nn-consent-actions">
+                <button type="button" class="nn-consent-btn" data-nn-consent="accept-all">Accept all</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="reject-all">Reject all</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="choose">Choose</button>
+            </div>
+            <div class="nn-consent-panel" data-nn-consent-panel hidden>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="analytics">
+                    <span>Analytics</span>
+                </label>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="ads">
+                    <span>Ad measurement</span>
+                </label>
+                <button type="button" class="nn-consent-btn" data-nn-consent="save">Save</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

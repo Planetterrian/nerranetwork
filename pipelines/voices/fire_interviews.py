@@ -5,15 +5,16 @@ Duties per tick:
 
 1. **T-2h SMS reminder** — interviews ~2h out get one SMS from Mira's
    caller ID (``reminder_sent_at`` guards the once-only).
-2. **Fire** — interviews whose ``scheduled_at`` falls inside the next
-   5-minute window: compile Mira's system prompt from the brief, create the
-   ``interview_runs`` row, and start the Voximplant scenario with the run id
-   as customData.
+2. **Stage** — compile Mira's system prompt from the brief and create the
+   ``interview_runs`` row the browser studio opens when the guest arrives.
+   Every interview is the browser studio: phone interviews were retired on
+   Oct 27 2026 (the sound is too poor for the show), and nothing here dials
+   a guest's phone.
 3. **T-5 min** — the guest gets a text and an email: we start in five
    minutes, here is the way in (``start_notice_at``).
 4. **T+5 min** — a guest who still hasn't opened the studio: Patrick gets a
-   text and an email with their number and a one-click "have Mira call
-   them" link (``late_alert_at``). Oct 16 2026, after Meridan Zerner.
+   text and an email with their number and a one-click "send them the link
+   for their phone" (``late_alert_at``). Oct 16 2026, after Meridan Zerner.
 
 GitHub cron is best-effort (spec §5.2 note): the firing window is computed
 here as [now - grace, now + 5 min] so a delayed tick still fires anything
@@ -41,7 +42,8 @@ from learning import lessons_block, variety_block  # noqa: E402
 from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
 from interview_shape import planned_minutes, shape_block  # noqa: E402
 
-FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
+FIRE_WINDOW_AHEAD_MIN = 5          # the co-host room opens at T-5..T-0 (was also the
+                                   # phone-call window until Oct 27 2026)
 STUDIO_UNLOCK_AHEAD_MIN = 12       # browser studio: run row (= unlock) at T-12, so
                                    # guests and the co-host can sign in, test the
                                    # mic and be in the room 10 minutes early
@@ -718,16 +720,12 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
     short-notice version sent when the studio opens."""
     import html as _h
     studio = show.studio_url(interview["id"]) + "&role=guest"
-    phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
     when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
     first = _h.escape(first_name(app))
     closing = is_closing_session(interview)
     if soon:
-        subject = (f"I'll call you in a few minutes for {show.name}" if phone_mode
-                   else f"Your {show.name} studio is open")
-        lead = ("I'm about to call your phone for our interview. Find a quiet spot "
-                "and answer when it rings." if phone_mode else
-                "The studio is open and I'm ready when you are. We start in about "
+        subject = f"Your {show.name} studio is open"
+        lead = ("The studio is open and I'm ready when you are. We start in about "
                 "ten minutes.")
     else:
         # Oct 22 2026: named, so two guests' reminders never share a thread.
@@ -742,12 +740,7 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
     if about:
         label = "The conversation we're finishing" if closing else "What we'll talk about"
         parts.append(f"<p><strong>{label}:</strong> {_h.escape(about)}</p>")
-    if phone_mode:
-        parts.append("<p>I'll call the number you gave us. If you're able to join from a "
-                     "computer with headphones instead, it sounds noticeably better than a "
-                     f'phone line: <a href="{studio}">your studio link</a> works right up to '
-                     "the start.</p>")
-    elif soon:
+    if soon:
         # Oct 1 2026: the last email before the interview repeats the way in,
         # step by step. Jonathan had the page open and never got past step 2.
         parts.append("<p>Headphones on, and from your computer for the best sound.</p>")
@@ -877,33 +870,22 @@ def send_reminders() -> None:
                                app.get("phone"))
                 notify_operator(show.slack(
                     f"{app.get('name') or 'guest'} has no usable phone number "
-                    f"({app.get('phone')!r}) — reminder SMS and the phone "
-                    "fallback are unavailable for this interview; the emailed "
-                    "studio link still works."))
+                    f"({app.get('phone')!r}) — no reminder texts for this "
+                    "interview; the emailed studio link still works."))
                 continue
             from voximplant.api_clients.voximplant_client import send_sms
             caller_id = interview.get("caller_id") or os.environ.get(
                 "VOXIMPLANT_CALLER_ID", "")
-            if (interview.get("call_mode") or "webrtc") == "webrtc":
-                text = (
-                    f"Mira here, from {show.name} (Nerra Network). Your "
-                    "interview starts in about two hours. For the best sound, "
-                    "join from a computer with headphones and a good mic "
-                    "(phone audio is much thinner). Open your link, press "
-                    "Check my microphone until it says Sounds good, then "
-                    f"Join: {show.studio_url(interview['id'])}"
-                    + (f" — can't make it? {manage}" if manage else "")
-                    + " — Mira"
-                )
-            else:
-                text = (
-                    f"Mira here, from {show.name} (Nerra Network). Your "
-                    "interview starts in about two hours — I'll be calling "
-                    f"you from this number ({caller_id}). Find a quiet spot "
-                    "and we'll make something great."
-                    + (f" Can't make it? {manage}" if manage else "")
-                    + " — Mira"
-                )
+            # Oct 27 2026: every interview is the studio; no "I'll call you".
+            text = (
+                f"Mira here, from {show.name} (Nerra Network). Your "
+                "interview starts in about two hours. For the best sound, "
+                "join from a computer with headphones and a good mic. "
+                "Open your link, press Check my microphone until it says "
+                f"Sounds good, then Join: {show.studio_url(interview['id'])}"
+                + (f" — can't make it? {manage}" if manage else "")
+                + " — Mira"
+            )
             send_sms(phone, text, source_number=caller_id or None)
             logger.info("Reminder SMS sent for interview %s", interview["id"])
         except Exception:  # noqa: BLE001 — a reminder failure must not stop firing
@@ -915,7 +897,6 @@ def fire_due_interviews() -> int:
     lo = _now() - dt.timedelta(minutes=FIRE_GRACE_BEHIND_MIN)
     unlock_hi = _now() + dt.timedelta(minutes=max(FIRE_WINDOW_AHEAD_MIN, STUDIO_UNLOCK_AHEAD_MIN))
     hi = _now() + STAGE_AHEAD
-    phone_hi = _now() + dt.timedelta(minutes=FIRE_WINDOW_AHEAD_MIN)
     # status=in.(briefed,scheduled): short-notice bookings (inside the daily
     # prep cron's 12-36h lookahead) arrive still `scheduled` with no brief —
     # they get an inline brief below instead of silently never firing
@@ -928,18 +909,19 @@ def fire_due_interviews() -> int:
     failures = 0
     for interview in due:
         when = _parse(interview["scheduled_at"])
-        # A browser interview without a co-host is staged ahead and opened by
-        # the Worker when the guest arrives. Everything else keeps its window.
-        studio = ((interview.get("call_mode") or "webrtc") == "webrtc"
-                  and not host_mode_enabled(interview))
+        # Oct 27 2026: every interview is the browser studio. A row that
+        # still says pstn (set by hand, or from before today) is staged as a
+        # studio like any other; nothing here dials a phone.
+        if (interview.get("call_mode") or "webrtc") != "webrtc":
+            logger.warning("Interview %s says call_mode=%r; phone interviews are "
+                           "retired, staging the studio", interview["id"],
+                           interview.get("call_mode"))
+        # An interview without a co-host is staged ahead and opened by the
+        # Worker when the guest arrives; one with a co-host opens at T-12.
+        studio = not host_mode_enabled(interview)
         in_window = not when or when <= unlock_hi
         if not studio and not in_window:
             continue
-        # Phone interviews keep the tight window: dialling a guest's phone
-        # ten minutes early is not "unlocking a studio".
-        if (interview.get("call_mode") or "webrtc") != "webrtc":
-            if when and when > phone_hi:
-                continue
         # Idempotency: a delayed/parallel tick must not double-call.
         # A run that was cancelled or failed is history, not an active run:
         # a guest who rebooked onto the same interview row must still be
@@ -1021,21 +1003,13 @@ def fire_due_interviews() -> int:
                                      interview["id"])
             phone = to_e164(app.get("phone"))
             if not phone:
-                if (interview.get("call_mode") or "webrtc") != "webrtc":
-                    raise RuntimeError(
-                        f"guest phone {app.get('phone')!r} is not a usable "
-                        "number and this interview is phone-mode")
-                # Browser interview: a bad number only costs the SMS and the
-                # phone fallback, so let the studio go ahead and say so.
-                logger.warning("Interview %s: guest phone %r unusable — studio "
-                               "only, no phone fallback", interview["id"],
-                               app.get("phone"))
+                # A missing or bad number only costs the reminder texts.
+                logger.warning("Interview %s: guest phone %r unusable — no "
+                               "reminder texts", interview["id"], app.get("phone"))
+            # Mira's number sends the reminder texts; no call is placed from it.
+            # Oct 27 2026: it is no longer required to stage a studio.
             caller_id = interview.get("caller_id") or os.environ.get(
                 "VOXIMPLANT_CALLER_ID", "")
-            if not caller_id:
-                raise RuntimeError("no caller_id (set VOXIMPLANT_CALLER_ID)")
-
-            call_mode = (interview.get("call_mode") or "webrtc").strip()
             host_mode = host_mode_enabled(interview)
             run = insert_interview_run({
                 "interview_id": interview["id"],
@@ -1056,7 +1030,7 @@ def fire_due_interviews() -> int:
                 "keyterms": keyterms_for(app, show, cohost_name()),
                 "tools": mira_tools(interview, app),
                 "guest_phone": phone,
-                "caller_id": caller_id,
+                "caller_id": caller_id or "",
                 "scheduled_for": interview["scheduled_at"],
                 # Phase 2 co-host: the scenario dials this Voximplant user
                 # into the conference (host_user column, migration
@@ -1064,44 +1038,24 @@ def fire_due_interviews() -> int:
                 "host_mode": host_mode,
                 "host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",
                 **room_clips(show),
-                **({"status": "staged"} if studio
-                   else {"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
+                **({"status": "staged"} if studio else {"status": "awaiting_guest"}),
             })
             if host_mode:
-                notify_host(interview, app, show,
-                            when=("in 10 min" if call_mode == "webrtc" else "in 2 min"))
+                notify_host(interview, app, show, when="in 10 min")
 
             if studio:
                 logger.info("Interview %s (run %s, %s) staged; the studio opens "
                             "when the guest arrives: %s", interview["id"], run["id"],
                             show.slug, show.studio_url(interview["id"]))
                 continue
-            if call_mode == "webrtc":
-                # WebRTC (default): no outbound dial. The run row is the
-                # studio's green light — the guest's browser polls
-                # /voices/studio-state, sees ready, and joins; the scenario
-                # starts on the inbound call (CallAlerting) and flips the
-                # run to in_progress itself.
-                logger.info(
-                    "Interview %s (run %s, %s) awaiting guest in the studio: "
-                    "%s", interview["id"], run["id"], show.slug,
-                    show.studio_url(interview["id"]))
-                continue
-
-            from voximplant.api_clients.voximplant_client import (
-                start_interview_scenario,
-            )
-            result = start_interview_scenario(run["id"])
-            sb_update("interview_runs", f"id=eq.{run['id']}", {
-                "status": "fired",
-                "fired_at": _iso(_now()),
-                "voximplant_session_id": json.dumps(
-                    result.get("result", result))[:512],
-            })
-            sb_update("interviews", f"id=eq.{interview['id']}",
-                      {"status": "in_progress"})
-            logger.info("Fired interview %s (run %s) for %s",
-                        interview["id"], run["id"], app["name"])
+            # No outbound dial, ever. The run row is the studio's green
+            # light: the guest's browser polls /voices/studio-state, sees
+            # ready, and joins; the scenario starts on the inbound call
+            # (CallAlerting) and flips the run to in_progress itself.
+            logger.info(
+                "Interview %s (run %s, %s) awaiting guest in the studio: "
+                "%s", interview["id"], run["id"], show.slug,
+                show.studio_url(interview["id"]))
         except Exception as exc:  # noqa: BLE001
             if not in_window:
                 # Staging hours ahead: the next tick tries again. Only a
@@ -1150,26 +1104,16 @@ def start_notice_email(interview: dict, app: dict, show) -> "tuple[str, str]":
     """Five minutes before the start (Oct 16 2026, Patrick)."""
     import html as _h
     studio = show.studio_url(interview["id"]) + "&role=guest"
-    phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
     when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
     what = "closing session" if is_closing_session(interview) else "interview"
     first = _h.escape(first_name(app))
-    if phone_mode:
-        subject = f"I'll call you in about 5 minutes for {show.name}"
-        body = (f"<p>Hi {first},</p><p>Our {what} starts in about five minutes"
-                + (f" ({_h.escape(when)})" if when else "")
-                + ". I'll call the number you gave us, so find a quiet spot and answer "
-                "when it rings.</p>"
-                f'<p>If you can, joining from a computer with headphones sounds much better than '
-                f'a phone line: <a href="{studio}">your studio link</a> works right up to the start.</p>')
-    else:
-        subject = f"We start in 5 minutes: your {show.name} studio is open"
-        body = (f"<p>Hi {first},</p><p>Our {what} starts in about five minutes"
-                + (f" ({_h.escape(when)})" if when else "")
-                + ", and the studio is open. I'm ready when you are.</p>"
-                f'<p style="font-size:1.1em"><a href="{studio}"><strong>Join your interview here</strong></a></p>'
-                "<p>Headphones on, and from your computer for the best sound.</p>"
-                + str(studio_steps_html(studio)))
+    subject = f"We start in 5 minutes: your {show.name} studio is open"
+    body = (f"<p>Hi {first},</p><p>Our {what} starts in about five minutes"
+            + (f" ({_h.escape(when)})" if when else "")
+            + ", and the studio is open. I'm ready when you are.</p>"
+            f'<p style="font-size:1.1em"><a href="{studio}"><strong>Join your interview here</strong></a></p>'
+            "<p>Headphones on, and from your computer for the best sound.</p>"
+            + str(studio_steps_html(studio)))
     body += ("<p>One reminder: it's your hour. Skip anything, take me anywhere, start "
              "any answer again, and anything you'd rather not have in the episode comes "
              "out afterwards.</p>"
@@ -1181,10 +1125,6 @@ def start_notice_email(interview: dict, app: dict, show) -> "tuple[str, str]":
 def start_notice_sms(interview: dict, show, caller_id: str = "") -> str:
     studio = show.studio_url(interview["id"])
     what = "closing session" if is_closing_session(interview) else "interview"
-    if (interview.get("call_mode") or "webrtc") != "webrtc":
-        return (f"Mira here, from {show.name}. Our {what} starts in about 5 minutes. "
-                f"I'll call you from {'this number' if not caller_id else caller_id}, "
-                "so find a quiet spot. See you soon. Mira")
     return (f"Mira here, from {show.name}. Our {what} starts in about 5 minutes and the "
             f"studio is open: {studio} Headphones on, press Check my microphone, then "
             "Join. See you there. Mira")
@@ -1228,18 +1168,20 @@ def send_start_notices() -> int:
     return sent
 
 
-def call_guest_link(interview_id: str) -> str:
-    """Patrick's one-click "have Mira call them". Must match callGuestLink()
-    in workers/voices/src/index.ts: hex(HMAC_SHA256(ADMIN_TOKEN,
-    "call-guest:" + id))[:40]. "" without ADMIN_TOKEN."""
+def text_guest_link(interview_id: str) -> str:
+    """Patrick's one-click "send them the link for their phone" (Oct 27 2026;
+    it replaced "have Mira call them" when phone interviews were retired).
+    Must match textGuestLink() in workers/voices/src/index.ts:
+    hex(HMAC_SHA256(ADMIN_TOKEN, "text-guest:" + id))[:40]. "" without
+    ADMIN_TOKEN."""
     import hashlib
     import hmac
     token = os.environ.get("ADMIN_TOKEN", "").strip()
     if not token:
         return ""
-    sig = hmac.new(token.encode("utf-8"), f"call-guest:{interview_id}".encode("utf-8"),
+    sig = hmac.new(token.encode("utf-8"), f"text-guest:{interview_id}".encode("utf-8"),
                    hashlib.sha256).hexdigest()[:40]
-    return f"https://api.nerranetwork.com/voices/admin/call-guest?interview={interview_id}&sig={sig}"
+    return f"https://api.nerranetwork.com/voices/admin/text-guest?interview={interview_id}&sig={sig}"
 
 
 def late_alert(interview: dict, app: dict, show, minutes: int) -> "tuple[str, str, str]":
@@ -1249,7 +1191,7 @@ def late_alert(interview: dict, app: dict, show, minutes: int) -> "tuple[str, st
     when = pacific_time(interview.get("scheduled_at", ""))
     phone = to_e164(app.get("phone")) or ""
     studio = show.studio_url(interview["id"]) + "&role=guest"
-    call = call_guest_link(interview["id"]) if phone else ""
+    send_link = text_guest_link(interview["id"])
     notice = "the five-minute text and email" if interview.get("start_notice_at") else "the reminders"
     subject = f"{show.short_label}: {who} hasn't opened the studio, {minutes} minutes in"
     parts = [f"<p>Hi Patrick,</p><p>{_h.escape(who)}'s interview was at {_h.escape(when)}. "
@@ -1257,16 +1199,16 @@ def late_alert(interview: dict, app: dict, show, minutes: int) -> "tuple[str, st
              f"{notice}.</p><p>What you can do now:</p><ul>"]
     if phone:
         parts.append(f'<li>Call or text them yourself: <a href="tel:{phone}">{_h.escape(phone)}</a></li>')
-    if call:
-        parts.append(f'<li><a href="{call}">Have Mira call them now</a> and do the interview by phone.</li>')
+    if send_link:
+        parts.append(f'<li><a href="{send_link}">Send them their studio link for their phone</a> '
+                     "(a text and an email), in case the computer is the problem.</li>")
     if app.get("email"):
         parts.append(f"<li>Email them: {_h.escape(app['email'])}</li>")
     parts.append(f'<li>Their studio link, to send on: <a href="{studio}">{studio}</a></li></ul>'
                  f"<p>If nobody arrives, I'll send them the reschedule email {NO_SHOW_AFTER_MIN} "
                  "minutes after the start.</p><p>Mira</p>")
     sms = (f"{show.short_label}: {who} hasn't opened the studio, {minutes} min after the start."
-           + (f" Phone {phone}." if phone else " No phone on file.")
-           + (f" Have Mira call them: {call}" if call else ""))
+           + (f" Phone {phone}." if phone else " No phone on file."))
     return subject, "".join(parts), sms
 
 
@@ -1277,7 +1219,7 @@ def send_late_alerts() -> int:
     now = _now()
     lo, hi = now - LATE_ALERT_AFTER[1], now - LATE_ALERT_AFTER[0]
     due = sb_select("interviews",
-                    "status=in.(briefed,scheduled)&call_mode=eq.webrtc&late_alert_at=is.null"
+                    "status=in.(briefed,scheduled)&late_alert_at=is.null"
                     f"&scheduled_at=gte.{_iso(lo)}&scheduled_at=lte.{_iso(hi)}")
     sent = 0
     for interview in due:
@@ -1287,10 +1229,20 @@ def send_late_alerts() -> int:
                         or run.get("status") not in ("staged", "awaiting_guest")):
                 continue
             check = interview.get("setup_check") if isinstance(interview.get("setup_check"), dict) else {}
-            if check.get("stuck_alerted_at"):
+            stuck_at = _parse(check.get("stuck_alerted_at"))
+            start_at = _parse(interview.get("scheduled_at"))
+            # Oct 27 2026: only an alert raised for THIS slot counts; one from
+            # before the interview moved used to silence this one for good.
+            if stuck_at and (not start_at or stuck_at >= start_at - dt.timedelta(minutes=15)):
                 continue                       # the page already told him
-            if run and run.get("status") == "awaiting_guest":
-                continue                       # the page is open: its own alert covers it
+            # Oct 27 2026: "awaiting_guest" only meant the page was opened
+            # once (a tab closed at T-10 stayed "open" forever, and a co-host
+            # run is created awaiting_guest). The page polls every ten
+            # seconds and the Worker stamps studio_seen_at; a page seen in the
+            # last two minutes is open, and its own stuck alert covers it.
+            seen = _parse(interview.get("studio_seen_at"))
+            if seen and now - seen < dt.timedelta(minutes=2):
+                continue
             if not _claim(interview["id"], "late_alert_at"):
                 continue
             app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
@@ -1322,13 +1274,13 @@ NO_SHOW_AFTER_MIN = 40
 def sweep_browser_no_shows() -> int:
     """Oct 5 2026, Stan Lewis. A browser interview whose guest never opened
     the studio left its run at awaiting_guest forever: nobody wrote to him,
-    nobody told Patrick, and the interview sat at "briefed". The phone path
-    has always had a no-show (the call goes unanswered); this is the same
-    thing for the studio, forty minutes after the start with no one in."""
+    nobody told Patrick, and the interview sat at "briefed". Forty minutes
+    after the start with no one in, it is a no-show. Oct 27 2026: a guest who
+    WAS in the room, and did not come back after it was reopened, is not."""
     cutoff = _iso(_now() - dt.timedelta(minutes=NO_SHOW_AFTER_MIN))
     oldest = _iso(_now() - dt.timedelta(days=2))
     due = sb_select("interviews",
-                    "status=in.(briefed,scheduled)&call_mode=eq.webrtc"
+                    "status=in.(briefed,scheduled)"
                     f"&scheduled_at=lte.{cutoff}&scheduled_at=gte.{oldest}")
     handled = 0
     for interview in due:
@@ -1338,11 +1290,38 @@ def sweep_browser_no_shows() -> int:
             run = runs[0] if runs else None
             if not run or run.get("status") not in ("awaiting_guest", "staged"):
                 continue
-            sb_update("interview_runs", f"id=eq.{run['id']}",
-                      {"status": "failed", "disconnect_reason": "no_show"})
             app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
             app = app_rows[0] if app_rows else {}
             show = show_for(interview, app)
+            asked = _parse(interview.get("studio_reschedule_sent_at"))
+            start_at = _parse(interview.get("scheduled_at"))
+            if asked and start_at and asked >= start_at - dt.timedelta(minutes=30):
+                # Oct 27 2026: the guest pressed "Pick another time" in the
+                # studio and has their move link. Not a no-show: no email, no
+                # strike. The interview waits for the new time they pick.
+                sb_update("interview_runs", f"id=eq.{run['id']}",
+                          {"status": "failed", "disconnect_reason": "reschedule_requested"})
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} asked for another time from the studio and "
+                    "hasn't picked one yet; their move link is in their inbox."))
+                handled += 1
+                continue
+            if run.get("guest_joined_at"):
+                # Oct 27 2026: the guest WAS in the room. The run was reopened
+                # (a dropped connection or a fault on our side) and they did
+                # not come back. That is not a no-show: nothing goes to the
+                # guest, and Patrick decides.
+                sb_update("interview_runs", f"id=eq.{run['id']}",
+                          {"status": "failed", "disconnect_reason": "abandoned_after_join"})
+                sb_update("interviews", f"id=eq.{interview['id']}", {"status": "missed"})
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} was in the room earlier, but it closed and they "
+                    "didn't come back. Nothing was sent to them; the recording so far is kept on "
+                    "the run. Decide whether to reschedule."), critical=True)
+                handled += 1
+                continue
+            sb_update("interview_runs", f"id=eq.{run['id']}",
+                      {"status": "failed", "disconnect_reason": "no_show"})
             no_shows = int(interview.get("no_show_count") or 0) + 1
             status = "missed" if no_shows < 2 else "cancelled"
             sb_update("interviews", f"id=eq.{interview['id']}",

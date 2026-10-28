@@ -18,6 +18,10 @@ on:
         description: 'PCM output rate for Mira (0 = leave as is; 24000/48000 to test)'
         type: string
         default: '0'
+      segments:
+        description: 'Only these segment ids, comma-separated (e.g. outro). Empty = all of them'
+        type: string
+        default: ''
       engine:
         description: 'agent = Mira reads it herself (matches the show); tts = fallback only'
         type: choice
@@ -48,6 +52,7 @@ jobs:
           NARRATION_AUDIO_RATE: ${{ inputs.audio_rate }}
           NARRATION_SLUG: ${{ inputs.slug }}
           NARRATION_ENGINE: ${{ inputs.engine }}
+          NARRATION_SEGMENTS: ${{ inputs.segments }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}

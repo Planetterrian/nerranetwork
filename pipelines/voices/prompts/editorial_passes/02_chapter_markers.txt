@@ -5,11 +5,13 @@ Cleaned transcript ([MM:SS] SPEAKER: text):
 {{cleaned_transcript}}
 
 Output a JSON array only (no prose, no code fences):
-[{"start": <seconds>, "end": <seconds>, "title": "..."}]
+[{"start": "MM:SS", "title": "..."}]
 
 Rules:
-- 5-9 chapters covering the whole runtime, in order, no overlaps.
-- start/end in SECONDS derived from the [MM:SS] timestamps.
+- 5-9 chapters covering the whole conversation, in order.
+- "start" is the [MM:SS] stamp of the transcript line that OPENS the chapter, copied exactly as it is written in the transcript (for example "16:04"), never converted to seconds. A chapter opens where its subject starts: usually Mira's question that turns the conversation to it, not the answer's middle and not the line where the subject is summed up.
+- The first chapter starts at "00:00".
+- No chapter longer than about a fifth of the conversation; when the talk stays on one subject for longer, split it at the next real turn in it.
 - Titles are listener-facing and come FROM THIS TRANSCRIPT: each names the concrete thing discussed in that span (the subject, the decision, the claim or the example the guest actually made), in the guest's own terms. Never a generic label such as an introduction or a wrap-up, and never a topic that does not appear in the transcript above.
 - Name a speaker in a title only if that speaker has lines in the span.
-- First chapter starts at 0. Include a final chapter for the lightning round + closing bet if present.
+- Give the closing questions their own chapter when there are any (title it after what the guest said in them, e.g. the book or the person they named).

@@ -16,8 +16,10 @@ class TestTheMirrorIsTheLastResort:
         assert "actions/cache/restore@v6" in COMPOSITE
         assert "actions/cache/save@v6" in COMPOSITE
         assert "${ImageOS:-unknown}-${ImageVersion:-unknown}" in COMPOSITE
-        # A hit installs the cached files with no download at all.
-        assert 'install -y -q --no-download "$APT_DEBS"/*.deb' in COMPOSITE
+        # A hit installs the cached files with no download at all — through
+        # dpkg since Oct 28 (apt's --no-download resolved against the image's
+        # stale lists and fell back on every hit; tests/test_slate_2026_10_28.py).
+        assert 'dpkg --force-confold -i "$APT_DEBS"/*.deb' in COMPOSITE
         assert "Dir::Cache::Archives=$APT_DEBS/" in COMPOSITE
         # Only a mirror install that downloaded something is saved.
         assert "steps.apt-install.outputs.source == 'mirror'" in COMPOSITE

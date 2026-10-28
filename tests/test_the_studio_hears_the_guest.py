@@ -61,14 +61,21 @@ class TestJoinWaitsForARealMicrophoneCheck:
 
     def test_help_is_plain_and_there_is_a_way_through(self):
         for words in ("Pick another microphone", "Input volume", "not your phone",
-                      "Have Mira call my phone"):
+                      "Join from my phone instead", "Pick another time"):
             assert words in STUDIO
+        assert "Have Mira call my phone" not in STUDIO   # Oct 27 2026: no phone calls
         assert "micFails < 2" in STUDIO          # "Join anyway" after two honest tries
         assert 'reportCheck("skipped")' in STUDIO
 
     def test_changing_microphone_needs_a_new_check(self):
-        sw = _body(STUDIO, "function switchDevices()", "document.getElementById(\"micSel\").addEventListener")
+        sw = _body(STUDIO, "function switchDevices(changed)", "document.getElementById(\"micSel\").addEventListener")
         assert "micOk = false" in sw
+        # Oct 27 2026 (Elliot Justin): only a change of MICROPHONE resets the
+        # check; the camera (its select or the toggle) never does.
+        assert sw.index('if (changed !== "mic") return;') < sw.index("micOk = false")
+        wiring = _body(STUDIO, 'document.getElementById("micSel").addEventListener', "function meterMic()")
+        assert 'switchDevices("mic")' in wiring
+        assert wiring.count('switchDevices("camera")') == 2
 
 
 class TestSilenceInTheCall:
@@ -84,7 +91,9 @@ class TestSilenceInTheCall:
         nudge = _body(SCENARIO, "function silentMicNudge(", "\n}\n")
         assert 'Do NOT ask \\"are you there?\\"' in nudge
         line = _body(SCENARIO, "function silentMicHelpLine(", "\n}\n")
-        assert "yellow box" in line and "Have Mira call my phone" in line
+        assert "yellow box" in line and "phone's browser" in line
+        for offer in ("call my phone", "call you", "ring you"):   # Oct 27 2026: no phone calls
+            assert offer not in line.lower()
         assert "postSilenceAlert(" in nudge
         assert "const SILENT_MIC_AFTER_MS = 25 * 1000;" in SCENARIO
 
@@ -95,27 +104,21 @@ class TestSilenceInTheCall:
 
 class TestTheWorker:
     def test_routes(self):
-        for route in ("studio-check", "studio-silence", "studio-phone"):
+        for route in ("studio-check", "studio-silence", "studio-phone", "studio-reschedule"):
             assert f'path === "/voices/{route}"' in WORKER
 
     def test_silence_emails_patrick_once_per_run(self):
-        body = _body(WORKER, "async function handleStudioSilence(", "async function handleStudioPhone(")
+        body = _body(WORKER, "async function handleStudioSilence(", "function handleStudioPhoneRetired(")
         assert "if (alerts.length) return json({ ok: true, already_alerted: true });" in body
         assert "operatorEmail(env)" in body
 
-    def test_phone_switch_uses_the_fallback_machinery(self):
-        body = _body(WORKER, "async function handleStudioPhone(", "async function handleStudioState(")
-        assert 'call_mode: "pstn"' in body
-        assert 'disconnect_reason: "guest_requested_phone"' in body
-        assert 'dispatch(env, "fire-tick"' in body
-        assert "need_phone: true" in body
-        # Never dial from the day-before test.
-        assert "20 * 60 * 1000" in body
-
-    def test_the_old_room_cannot_undo_the_switch(self):
-        done = _body(WORKER, "async function handleInterviewComplete(", "const platformFault")
-        assert '=== "guest_requested_phone"' in done
-        assert "superseded_by_phone: true" in done
+    def test_the_phone_switch_is_retired(self):
+        # Oct 27 2026: nothing in the Worker can make an interview a phone
+        # interview any more.
+        body = _body(WORKER, "function handleStudioPhoneRetired(", "async function handleStudioReschedule(")
+        assert "410" in body
+        assert 'call_mode: "pstn"' not in WORKER
+        assert 'path === "/voices/studio-phone") return handleStudioPhoneRetired();' in WORKER
 
     def test_failed_setup_test_emails_patrick(self):
         body = _body(WORKER, "async function handleStudioCheck(", "async function handleStudioSilence(")

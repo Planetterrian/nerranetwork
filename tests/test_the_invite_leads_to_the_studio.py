@@ -26,7 +26,7 @@ def test_booking_puts_the_studio_link_in_the_invite():
 
 
 def test_join_page_finds_the_studio():
-    j = _body("async function handleJoin(", "async function handleCallGuest(")
+    j = _body("async function handleJoin(", "function adminPage(")
     # Oct 21 2026: the studio opens from this page only for the guest's own
     # manage token; a typed address gets the link by email however close to
     # the start it is (it used to redirect anyone inside the last half hour).

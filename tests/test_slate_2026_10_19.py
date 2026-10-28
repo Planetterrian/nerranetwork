@@ -120,8 +120,9 @@ class TestFireTickWindow:
         i = self.TS.index("async function fireTickDue(")
         body = self.TS[i:i + 1500]
         assert "scheduled_at=gte.${ilo}" in body
-        # The no-show sweep's two-day read of the RUN table is untouched.
-        assert "created_at=gte.${lo}" in body
+        # Oct 28 2026: the RUN table is read around the run's own slot too
+        # (a run staged a day ahead held the gate open for two days).
+        assert "scheduled_for=gte.${ilo}" in body
 
 
 class TestVideoJobDispatchesTheSweep:

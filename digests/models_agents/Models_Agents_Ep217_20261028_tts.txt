@@ -1,0 +1,177 @@
+Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.
+
+This is Models and Agents, episode two hundred seventeen.
+
+Instruction-tuned number habits, new Icelandic encoders, and an open medical decision model come next, then Things to Try.
+
+DeepMind has begun rolling Genie 4 out to trusted testers, the lab said.
+
+The interactive world model nests simulations inside other simulations.
+
+It builds on prior Genie versions by adding richer sensory and planning capabilities that let users create and interact with dynamic environments.
+
+Developers and researchers interested in simulation, robotics, or game-like world building can sign up on a waitlist, with wider access planned soon.
+
+The model runs at interactive speeds.
+
+Instruction tuning installs round-number avoidance and sharpens endpoint avoidance, making number distributions less uniform, according to a paper on arXiv.
+
+The comparison used fifteen matched base and tuned open-weight model pairs.
+
+Base models return the endpoints one and N at zero point three zero to zero point six zero of the interior rate, while tuned models almost never do.
+
+Tuned models also avoid multiples of ten almost completely.
+
+The study evaluated eighteen model lines at five ranges up to N equals one hundred under twenty-nine decoding configurations.
+
+No shared modal integer above N equals ten showed up across more than forty-two percent of tuned conditions.
+
+Iceland now has open-data ModernBERT encoders trained for the language, including a from-scratch model and a warm start from English.
+
+The one-billion-parameter model trained from scratch on nine billion open tokens outperforms the prior IceBERT reference on all eleven evaluated tasks.
+
+A warm-started version from an English Ettin encoder of the same shape ranks highest on every task.
+
+Warm-start transfer from English layers works at base size and above even when the target vocabulary is transplanted.
+
+The one-billion-parameter model remains the first monolingual Icelandic encoder of that scale.
+
+MedJev is an open System-One model — fast, intuitive decision making — that runs locally on a laptop.
+
+It reaches seventy-two point five percent on MedQA, seventy-five point four percent on the United States Medical Licensing Examination, or USMLE, and eighty point one percent on the New England Journal of Medicine, or NEJM.
+
+Expected calibration error, a measure of how well confidence matches accuracy, stays within zero point zero two eight to zero point zero six three on those knowledge tasks.
+
+On patient-level prediction from MIMIC IV it exceeds XGBoost on in-hospital mortality with an area under the receiver operating curve, or AUROC, of zero point nine two six, but trails supervised models on operational outcomes such as emergency-department triage admission.
+
+A two-parameter recalibration method using fifty to two hundred local labels reduces expected calibration error to zero point zero zero seven on patient-level tasks.
+
+Manipulation and navigation share one high-level decision model in OmniBrain-0, a lightweight unified embodied agent.
+
+Training uses embodied pretraining, domain-specialized distillation, and multi-teacher on-policy distillation.
+
+Rubric-Guided Recursive Self-Improvement turns execution evidence into refined rubrics and verified trajectories before reconsolidation.
+
+Evaluation covers LIBERO-Pro, RoboCasa365, RoboTwin two point zero, R2R-CE, and multiple real-world manipulation tasks.
+
+Inference and execution overhead come in substantially lower than its closed-source teacher.
+
+Annual S E C ten-K filings become inference-time context in FinLLM-KG, which injects temporally grounded company-level facts into any causal large language model, or L L M, without weight updates.
+
+The framework supplies either natural-language profiles or relevance-ranked triples.
+
+It attributes each sentiment score to individual sentences and retrieved triples for inspectability.
+
+Portfolio performance improves over state-of-the-art baselines in simulation.
+
+Agent handoffs now have a dedicated continuity test called the Handoff State Continuity Benchmark, or HSC-Bench.
+
+It contains one thousand thirty-nine tasks that measure how well a receiving model recovers repository evidence and continues from prior conversational, tool, and file state.
+
+Structured handoff state improves evidence recovery for every tested model and continuation performance for most models.
+
+The strongest receivers differ between the two tracks.
+
+TrawMem reframes agent memory as task-oriented role-adaptive workspaces.
+
+It organizes interaction histories into local threads and builds those workspaces by assigning roles and jointly selecting complementary memories across Event, Affect, and Time views.
+
+On LoCoMo and MemGallery it delivers macro-F1 gains of two point two three to three point one four points over prior memory systems.
+
+It uses five point one to twelve point eight percent fewer context tokens on two backbones.
+
+Multilingual multi-hop document question answering gets a learned skill-orchestration policy in DocSkill.
+
+The policy is trained via bounded Monte Carlo Tree Search, or MCTS, demonstrations and Direct Preference Optimization, or DPO, to select, revisit, or skip skills as evidence state evolves.
+
+On the new MMHop-DocBench of sixty thousand question-answer pairs across ten languages, the Qwen3-VL-8B instantiation reaches forty-one point zero accuracy and forty-nine point two F1.
+
+That exceeds the strongest baseline by five point five and six point three points.
+
+CAMR, short for Compatibility-Aware Memory Replay, jointly controls current-example supervision and historical replay for continual learning in large language models.
+
+Compatibility checks and a learned memory gate choose among learning with replay, reinforcing compatible examples, or skipping mastered duplicates.
+
+On WikiBigEdit it reaches ninety-three point six six percent Original Match after only three thousand facts.
+
+It leads all evaluated methods on four TRACE tasks while preserving earlier-task performance.
+
+Bengali speech research just got Lipi-Ghor, a large-scale diarized multi-domain corpus.
+
+It supplies eight hundred eighty-five hours of speaker-diarized long-form audio from nine hundred ninety-eight YouTube videos across seventeen domains, together with SSTT annotations and a human-verified gold split.
+
+The construction pipeline is released as reusable code for any language with captioned YouTube presence.
+
+Four automatic speech recognition, or ASR, models show consistent degradation on emotive, dialectal, and long-form content.
+
+Homoglyph and invisible-character watermarks still leave a cross-lingual fairness gap even without a tokenizer in the loop.
+
+Capacity varies three point three-fold across forty language varieties in twenty-four scripts, with script accounting for ninety-six percent of the variation.
+
+Ordinary copy-paste widens the gap so that a detector needs roughly two code points for English or Persian but ninety-three for Lao.
+
+ETAMem decouples and aligns heterogeneous memory for long-term conversational agents.
+
+It parses conversations into atomic units, separates affective information, and maintains three hierarchical views — Event, Affect, and Time — with adaptively calibrated thresholds.
+
+On LoCoMo and LongMemEval-S it improves accuracy by twelve point four six percent and seven point nine six percent relative to state-of-the-art baselines while keeping competitive token efficiency.
+
+An embedding-based retrieval plus L L M filtering approach now hunts evidence inside a large randomized-evaluation corpus.
+
+It finds ninety-two percent of the evidence a systematic review would include in a seven thousand three hundred fifty-four-trial corpus, compared with forty-five percent for label search alone.
+
+The two-stage design supports broad candidate retrieval followed by query-specific filtering at rising per-query cost with depth.
+
+Across the rest of the slate, ReCoPII produces relation-grounded contextual personally identifiable information, or PII, masking data for Korean documents that yields eighty-eight point four two percent annotator agreement on KEEP labels versus twenty-six point two seven percent for author-based augmentation and supports joint fine-tuning that limits over-masking to at most five point zero four percent within a fixed leakage budget.
+
+Analysis of ten thousand four hundred twenty congressional e-newsletters finds Democrats and Republicans surround the same election-integrity terms with entirely different neighboring language, with divergence growing on certification after twenty twenty and on rigged and stolen after that year.
+
+A label-preserving perturbation framework detects input ambiguity before disambiguation and outperforms output-side uncertainty baselines and L L M paraphrase baselines across open-domain, conversational, and visual question-answering datasets.
+
+A single JAIS six point seven billion parameter backbone fine-tuned with four-bit quantized low-rank adaptation, or QLoRA, ranks first on both the binary safe-unsafe track at macro-F1 zero point nine eight four and the seven-way harm-domain track at macro-F1 zero point seven nine zero of the ArGuard two thousand twenty-six shared task while remaining accurate across six Arabic dialects.
+
+LOTUS summarizes variable-length token representations with statistical descriptors then applies low-rank multilinear decomposition to train a lightweight hallucination classifier that improves over recent state-of-the-art baselines across multiple L L M's and question-answering benchmarks.
+
+Anthropic's new OneGov agreement extends Claude access to federal, state, local, tribal, and territorial governments at forty percent off under a single contract.
+
+Anthropic scientists have formed research partnerships with six organizations developing new medicines and begun internal drug-discovery efforts, sharing early results on how Claude supports stages of drug development.
+
+Liquid A I released guidance on building specialized multimodal models with LFM3, according to the Hugging Face blog.
+
+AllenAI examines whether L L M's can reliably judge whether a research idea is novel.
+
+Load MedJev on your laptop and run zero-shot medical question answering or patient-level prediction when you want low compute and calibrated outputs before any fine-tune.
+
+Point the released Lipi-Ghor pipeline at captioned YouTube channels in your language and build a diarized long-form speech corpus without sitting through manual transcription.
+
+Drop your current agent stack onto the HSC-Bench handoff tasks and score how well repository evidence and conversational state survive when one model hands work to another.
+
+Pipe company-level triples into whatever causal L L M you already use for financial sentiment, FinLLM-KG style, so the extra context arrives at inference with almost no added cost.
+
+Additional results from Anthropic's drug-development research partnerships are scheduled for the coming months.
+
+Further ArGuard shared-task submissions and analyses for Arabic harmful-prompt detection are still coming.
+
+Open Icelandic ModernBERT-scale encoders and evaluation harnesses are slated to keep arriving.
+
+Controlled symbolic probes are how you pop the hood on which attention heads actually carry a count effect.
+
+The method varies only the count and order of two symbols inside otherwise fixed prompts, then measures how much each attention head shifts the logit difference — the score gap — between two answer tokens.
+
+It first identifies candidate heads whose ablation removes most of the count effect and whose mean-output patching recovers the effect in both directions, then applies conditional bounds to decide which heads survive finite-sample noise.
+
+In Pythia four hundred ten million this process isolates sets of one to twelve heads that remove sixty-five point five to ninety-one point six percent of the count effect while preserving influence on count comparisons never seen during selection.
+
+When the same heads are ablated on a natural-language task that asks which state is supported by more reports, accuracy drops eight point two points versus zero point eight points for random sets of the same size and layer.
+
+The technique supplies a compact, causally validated shortlist rather than a diffuse importance map.
+
+Reach for it when you need to know which specific heads carry a particular reasoning behavior before editing, pruning, or monitoring those heads in production; the main practical limit is that the symbolic probe must be carefully balanced so the measured effect truly isolates the variable of interest.
+
+Before we go, the ArGuard two thousand twenty-six task is still collecting Arabic harmful-prompt detection submissions and write-ups.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science. Every Nerra Network show is free at nerranetwork dot com. Our interviews are hosted by Mira, the network's A I documentarian, and the guest decides whether the conversation is published at all — how that works is at nerranetwork dot com mira.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

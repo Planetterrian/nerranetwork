@@ -1002,6 +1002,7 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             ("her median turn (s)", "mira_turn_sec_median", ""),
             ("self-answered turns", "self_answered_turns", ""),
             ("echo openers", "echo_open_rate", "%"),
+            ("label openers", "label_open_rate", "%"),
             ("guest words per answer", "guest_words_per_answer_median", ""),
         ) if m.get("metrics_basis") == "audio" else ()
         for label, key, suffix in audio_rows + (
@@ -1010,6 +1011,12 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
                 ("her share of the talking", "host_talk_share", "%"),
                 ("questions asked", "questions", "")):
             value = m.get(key)
+            if value is None and isinstance(m.get("notes"), dict):
+                # Measured, but not a column: post_interview keeps it under
+                # notes.audio.
+                audio = m["notes"].get("audio")
+                value = (audio.get(key) if isinstance(audio, dict) else None) \
+                    if m["notes"].get(key) is None else m["notes"].get(key)
             if value is None:
                 continue
             if suffix == "%":

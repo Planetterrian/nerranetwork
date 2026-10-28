@@ -61,6 +61,23 @@ EARLY_DROP_MIN_SEC = 2.0
 COLD_OPEN_SEC = (4.0, 20.0)
 
 
+def recorded_on(run: dict, interview: dict) -> dt.date:
+    """The day the conversation happened, in Pacific Time. Oct 27 2026: the
+    slug was dated from the run row's creation, which happens the day before
+    (Glenn Broder, recorded Oct 27, cut as glenn_broder_2026_10_26)."""
+    from zoneinfo import ZoneInfo
+    for value in ((run or {}).get("guest_joined_at"), (interview or {}).get("scheduled_at"),
+                  (run or {}).get("fired_at"), (run or {}).get("created_at")):
+        try:
+            t = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone.utc)
+        return t.astimezone(ZoneInfo("America/Vancouver")).date()
+    return dt.date.today()
+
+
 def _slug(name: str, when: dt.date) -> str:
     base = re.sub(r"[^a-z0-9]+", "_", (name or "guest").lower()).strip("_")
     return f"{base}_{when:%Y_%m_%d}"
@@ -395,7 +412,167 @@ def plan(ctx: dict) -> dict:
     if not isinstance(out, dict) or "intro" not in out or "outro" not in out:
         raise SystemExit("auto_edit pass did not return intro and outro")
     out["intro"] = _drop_borrowed_open(str(out["intro"]), transcript)
+    out = on_the_room_clock(out, transcript)
+    for key in ("intro", "outro"):
+        out[key] = only_their_domains(str(out.get(key) or ""), app)
+    if isinstance(out.get("cold_open"), dict) and out["cold_open"].get("lead"):
+        out["cold_open"]["lead"] = only_their_domains(str(out["cold_open"]["lead"]), app)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Numbers on the room's clock, and only the guest's own addresses (Oct 27 2026)
+# ---------------------------------------------------------------------------
+#
+# Glenn Broder's cut opened on "...of school districts. And I have yet to get a
+# good answer to that question." The model meant his line at [16:00.9] and
+# wrote 1600.9: minutes and seconds read as seconds, a clip from 26:40 instead.
+# Its own rationale described the right line, so the clip is now anchored on
+# the words: the model gives the clip's words with its times, and the times
+# are checked against where those words are in the transcript.
+#
+# The same cut's close sent listeners to "humanjudgment.ai", which is not his
+# and was in none of his links (his only link was LinkedIn). The prompt already
+# said not to; this makes it so.
+
+from edit_transcript import parse_lines, stamp_seconds  # noqa: E402
+
+ANCHOR_SLACK_SEC = 20.0
+
+
+def _norm_words(text: str) -> list:
+    return re.findall(r"[a-z0-9']+", (text or "").lower())
+
+
+def _find_quote(quote: str, transcript: str, who_not: str = "Mira") -> float | None:
+    """The room second where the guest's line carrying ``quote`` starts (the
+    best match of its first eight words), or None."""
+    want = _norm_words(quote)[:8]
+    if len(want) < 3:
+        return None
+    best = None
+    lines = [l for l in parse_lines(transcript) if not l[1].lower().startswith(who_not.lower())]
+    for i, (at, _who, text) in enumerate(lines):
+        # A quote can start at the end of one line and run into the next.
+        here = _norm_words(text + " " + (lines[i + 1][2] if i + 1 < len(lines) else ""))
+        for j in range(len(here)):
+            run = here[j:j + len(want)]
+            hits = sum(1 for a, b in zip(run, want) if a == b)
+            if hits >= max(3, int(len(want) * 0.75)) and (best is None or hits > best[0]):
+                best = (hits, at)
+    return best[1] if best else None
+
+
+def _mmss(x: float) -> float:
+    whole = int(x)
+    return float(whole // 100 * 60 + whole % 100) + (x - whole)
+
+
+def _looks_mmss(x: float) -> bool:
+    return x >= 100 and int(x) % 100 < 60
+
+
+def on_the_room_clock(out: dict, transcript: str) -> dict:
+    """Every time the model gave, as seconds on the room's clock: "MM:SS"
+    strings converted; a number past the end of the room read as minutes and
+    seconds; the cold open moved onto the words it quotes."""
+    last = max((at for at, _w, _t in parse_lines(transcript)), default=None)
+
+    def sec(v):
+        x = stamp_seconds(v)
+        if x is None:
+            return v
+        if last is not None and x > last + 60 and _looks_mmss(x):
+            x = _mmss(x)
+        return x
+    for key in ("start_sec", "end_sec"):
+        if key in out:
+            out[key] = sec(out[key])
+    for d in out.get("drop") or []:
+        if isinstance(d, dict):
+            for key in ("from_sec", "to_sec"):
+                if key in d:
+                    d[key] = sec(d[key])
+    co = out.get("cold_open")
+    if isinstance(co, dict):
+        try:
+            a, b = float(sec(co.get("from_sec"))), float(sec(co.get("to_sec")))
+        except (TypeError, ValueError):
+            out["cold_open"] = None
+            return out
+        anchor = _find_quote(str(co.get("quote") or ""), transcript)
+        if anchor is not None and abs(a - anchor) > ANCHOR_SLACK_SEC:
+            if _looks_mmss(a) and abs(_mmss(a) - anchor) <= ANCHOR_SLACK_SEC:
+                logger.warning("auto_edit: cold open %.1f-%.1f read as minutes and "
+                               "seconds (%.1f-%.1f): that is where its words are",
+                               a, b, _mmss(a), _mmss(b))
+                a, b = _mmss(a), _mmss(b)
+            else:
+                logger.warning("auto_edit: cold open %.1f-%.1f is not where its words "
+                               "are (%.1f) — moved onto them", a, b, anchor)
+                a, b = anchor, anchor + max(4.0, min(b - a, COLD_OPEN_SEC[1]))
+        elif anchor is None and co.get("quote"):
+            logger.warning("auto_edit: the cold open's words are not in the transcript "
+                           "— no cold open rather than the wrong one")
+            out["cold_open"] = None
+            return out
+        co["from_sec"], co["to_sec"] = a, b
+    return out
+
+
+_DOMAIN = re.compile(r"\b((?:[a-z0-9-]+\.)+(?:com|ai|io|org|net|co|ca|dev|app|tech|me|"
+                     r"xyz|us|uk|info|biz|tv|fm|news|studio|media|so|gg))\b", re.I)
+_SPOKEN = re.compile(r"\b([a-z0-9-]+(?:\s+[a-z0-9-]+){0,3})\s+dot\s+(com|ai|io|org|net|co|ca|"
+                     r"dev|app|tech|me|xyz|us|uk|info|tv|fm)\b", re.I)
+_SOCIAL = {"linkedin.com": "LinkedIn", "x.com": "X", "twitter.com": "X",
+           "instagram.com": "Instagram", "youtube.com": "YouTube"}
+
+
+def _registrable(host: str) -> str:
+    host = host.lower().strip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def only_their_domains(text: str, app: dict) -> str:
+    """``text`` with any sentence that names a website the guest never gave us
+    replaced by where they can actually be found (their profile, through the
+    episode notes), or dropped when they gave us nothing."""
+    if not text:
+        return text
+    from urllib.parse import urlparse
+    links = guest_links(app or {})
+    allowed = {"nerranetwork.com"}
+    social = None
+    for l in links:
+        host = _registrable(urlparse(str(l.get("url") or "")).netloc)
+        if host:
+            allowed.add(host)
+            if host in _SOCIAL and social is None:
+                social = _SOCIAL[host]
+    first = (str((app or {}).get("name") or "").split() or ["them"])[0]
+    fallback = (f"You can find {first} on {social}; the link is in the episode notes."
+                if social else
+                (f"You can find {first} through the links in the episode notes." if links else ""))
+
+    def named(sentence: str) -> list:
+        found = [m.group(1) for m in _DOMAIN.finditer(sentence)]
+        found += ["".join(m.group(1).split()).lower() + "." + m.group(2).lower()
+                  for m in _SPOKEN.finditer(sentence)]
+        return [_registrable(d) for d in found]
+    out = []
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        bad = [d for d in named(sentence) if d not in allowed
+               and not any(d.endswith("." + a) for a in allowed)]
+        if bad:
+            logger.warning("auto_edit: narration named %s, which is not one of the "
+                           "guest's links — replaced", ", ".join(bad))
+            if fallback and fallback not in out:
+                out.append(fallback)
+            continue
+        out.append(sentence)
+    return " ".join(x for x in out if x).strip()
 
 
 def _spoken(transcript: str, until_sec: float = 180.0) -> list[str]:
@@ -734,8 +911,7 @@ def build(run_id: str) -> dict:
     run, interview, app = ctx["run"], ctx["interview"], ctx["app"]
     decided = plan(ctx)
 
-    recorded = (run.get("created_at") or "")[:10] or dt.date.today().isoformat()
-    when = dt.date.fromisoformat(recorded)
+    when = recorded_on(run, interview)
     slug = _slug(app.get("name", ""), when)
     # A hand-written edit in the repo is somebody's judgement and outranks
     # this one. Never overwrite it — cut alongside it and let a human choose.

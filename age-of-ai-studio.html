@@ -25,6 +25,10 @@
     color: var(--text); min-height: 100vh;
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  /* Oct 27 2026: the setup and the call use a computer's width; the
+     one-message states stay a readable column (see show()). */
+  .wrap.wide { max-width: 1080px; padding-top: 1.5rem; }
+  .wrap.wide .sub { margin-bottom: 1.25rem; }
   h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
   .sub { color: var(--muted); margin: 0 0 2rem; }
   .card {
@@ -41,7 +45,7 @@
     padding: .8rem 1.6rem; font-weight: 600;
   }
   .primary { background: var(--accent); color: #fff; }
-  .primary:disabled { opacity: .45; cursor: default; }
+  .primary:disabled { background: var(--line); color: var(--muted); cursor: default; }
   .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
   .danger { background: var(--err); color: #fff; }
   select {
@@ -51,8 +55,8 @@
   }
   label { font-size: .85rem; color: var(--muted); }
   video#preview {
-    width: 100%; max-height: 300px; background: #000; border-radius: 10px;
-    object-fit: cover; transform: scaleX(-1);
+    display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 260px; background: #000;
+    border-radius: 10px; object-fit: cover; transform: scaleX(-1);
   }
   #miclevel { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin: .4rem 0 1rem; }
   #miclevel > div { height: 100%; width: 0%; background: var(--ok); transition: width .08s linear; }
@@ -67,7 +71,7 @@
   .hostnote { color: var(--muted); font-size: .95rem; }
   .footer { color: var(--muted); font-size: .8rem; letter-spacing: .08em; margin-top: 2.5rem; text-transform: uppercase; }
   a { color: var(--accent); }
-  /* Sept 28 2026: microphone check, silence warning, phone switch. */
+  /* Sept 28 2026: microphone check and silence warning. */
   .check { border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; margin: .4rem 0 1rem; }
   .check.pass { border-color: var(--ok); }
   .check.fail { border-color: var(--warn); }
@@ -80,15 +84,17 @@
   .banner b { color: #3b2a00; }
   .banner select { background: #fff; color: #1a1a1a; border-color: #d8b24c; }
   .banner .help { color: #3b2a00; }
-  .phonebox { margin-top: .6rem; }
-  .phonebox input { font: inherit; padding: .55rem .6rem; border-radius: 8px; border: 1px solid var(--line); width: 100%; max-width: 260px; margin: .3rem .5rem .3rem 0; }
-  .phone { background: #0f766e; color: #fff; }
-  #phoneMsg, #phoneMsgCall, #phoneMsgTop, #phoneMsgErr { font-size: .92rem; margin: .4rem 0 0; }
-  /* Oct 2 2026: the phone's browser before a phone line. */
-  .mobilebox { margin: .5rem 0; }
-  .mobilebox .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
-  .mobilebox p { font-size: .92rem; margin: .3rem 0; }
-  button.lastresort { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
+  /* Oct 27 2026: no phone calls. The way out of a computer that won't
+     cooperate is the same studio in the phone's browser, or another time. */
+  .trouble { margin-top: .6rem; }
+  .trouble p { font-size: .92rem; margin: .3rem 0; }
+  .trouble .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
+  .trouble .tmsg { font-size: .92rem; }
+  button.later { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
+  #troubleTop > div { display: flex; flex-wrap: wrap; gap: .5rem .6rem; align-items: center; margin-top: .2rem; }
+  #troubleTop > div > p { margin: 0; }
+  #troubleTop > div > p:first-child, #troubleTop [data-panel] { flex-basis: 100%; }
+  #troubleTop [data-act="phone"], #troubleTop button.later { padding: .5rem 1rem; font-size: .9rem; }
   /* Oct 1 2026: "you're not in the interview yet" until the guest is in. */
   #notIn { border: 2px solid var(--warn); border-radius: 10px; padding: .9rem 1rem; margin: .6rem 0 1rem; }
   #notIn.late { background: #fff4d6; color: #3b2a00; border-color: #d8b24c; }
@@ -96,16 +102,28 @@
   #notInHead { font-weight: 700; margin: 0 0 .4rem; color: var(--warn); }
   #notIn ol { margin: .3rem 0 .5rem; padding-left: 1.3rem; }
   #notIn li.done { text-decoration: line-through; opacity: .7; }
-  /* Oct 23 2026: a picture of Mira to talk to, and the guest's feedback. */
-  .mira-stage { margin: 0 0 1rem; text-align: center; }
-  .mira-stage .frame { position: relative; display: inline-block; border-radius: 16px;
-    padding: 3px; background: var(--line); transition: background .25s, box-shadow .25s; }
+  /* Oct 23 2026: a picture of Mira to talk to, and the guest's feedback.
+     Oct 27 2026: in the call Mira and the guest are two tiles side by side,
+     4:3 on a computer and 3:4 on a phone; in the setup Mira is a small
+     portrait at the foot of the card. */
+  .stage-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+    max-width: calc(90vh + 12px); margin: 0 auto .4rem; }
+  .stage-row.solo { grid-template-columns: 1fr; max-width: 420px; }
+  .tile { position: relative; margin: 0; min-width: 0; }
+  .tile .frame { display: block; border-radius: 16px; padding: 3px; background: var(--line);
+    transition: background .25s, box-shadow .25s; }
   .mira-stage.speaking .frame { background: var(--accent); box-shadow: 0 0 22px var(--accent); }
-  .mira-stage video, .mira-stage img { display: block; width: 100%; max-width: 300px;
-    aspect-ratio: 480 / 730; object-fit: cover; border-radius: 13px; background: #000; }
-  .mira-stage.small video, .mira-stage.small img { max-width: 150px; }
-  .mira-stage figcaption { color: var(--muted); font-size: .85rem; margin: .5rem auto 0; max-width: 420px; }
-  .feedback { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; }
+  .tile video, .tile .cam-off { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+    border-radius: 13px; background: #000; }
+  #miraVideo { object-position: 50% 22%; }
+  #selfview { transform: scaleX(-1); }
+  .tile .cam-off { display: flex; align-items: center; justify-content: center; text-align: center;
+    background: var(--bg2); color: var(--muted); font-size: .9rem; padding: 1rem; }
+  .tile .tag { position: absolute; left: 12px; bottom: 11px; margin: 0; padding: .1rem .6rem;
+    border-radius: 999px; background: rgba(0, 0, 0, .6); color: #fff; font-size: .8rem; font-weight: 600; }
+  .stage-note { color: var(--muted); font-size: .85rem; text-align: center; margin: .3rem 0 .9rem; }
+  .feedback { border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; margin: 0 0 1rem;
+    background: rgba(255, 255, 255, .03); }
   .feedback .fb-head { margin: 0 0 .6rem; }
   .feedback .fb-head span { color: var(--muted); font-size: .88rem; font-weight: 400; }
   .feedback button { padding: .55rem 1rem; }
@@ -116,8 +134,82 @@
   .fb-form label { width: 100%; }
   .fb-form input { flex: 1 1 220px; font: inherit; padding: .55rem .6rem; border-radius: 8px;
     border: 1px solid var(--line); background: var(--bg2); color: var(--text); }
-  #fbStatus { min-height: 1.4em; margin: .6rem 0 0; font-size: .92rem; color: var(--ok); }
+  #fbStatus { margin: .5rem 0 0; font-size: .92rem; color: var(--ok); }
+  #fbStatus:empty { display: none; }
   #fbStatus.warn { color: var(--warn); }
+  /* Oct 27 2026 (Patrick's test room): the setup in the order it is done. */
+  .setup-grid { display: grid; grid-template-columns: 1fr; gap: 0 2rem; }
+  .setup-col > label { color: var(--text); font-weight: 600; font-size: .92rem; }
+  #camToggle { margin-top: .6rem; padding: .55rem 1rem; font-size: .9rem; }
+  .join-area { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+  #joinBtn { font-size: 1.05rem; padding: .9rem 2rem; }
+  #joinBtn.ready:not(:disabled) { background: var(--ok); color: #05261a;
+    animation: joinGlow 2.4s ease-in-out infinite; box-shadow: 0 0 18px rgba(61, 220, 132, .55); }
+  @keyframes joinGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(61, 220, 132, .45); }
+    50% { box-shadow: 0 0 0 4px rgba(61, 220, 132, .25), 0 0 28px rgba(61, 220, 132, .7); }
+  }
+  @media (prefers-reduced-motion: reduce) { #joinBtn.ready:not(:disabled) { animation: none; } }
+  .status-line { margin: 0 0 .8rem; font-size: .95rem; color: var(--muted); }
+  .status-line.ok { color: var(--ok); }
+  .status-line.err { color: var(--err); }
+  .status-line.ready { color: var(--text); font-weight: 600; background: rgba(61, 220, 132, .14);
+    border: 1px solid var(--ok); border-radius: 10px; padding: .65rem .9rem; }
+  .status-line.ready::before { content: "\2713"; color: var(--ok); font-weight: 700; margin-right: .5rem; }
+  .mira-intro { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .mi-top { display: flex; gap: 1rem; align-items: center; margin-bottom: .8rem; }
+  .mira-thumb { flex: 0 0 116px; margin: 0; }
+  .mira-thumb .frame { display: block; padding: 3px; border-radius: 14px; background: var(--line); }
+  .mira-thumb img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover;
+    object-position: 50% 18%; border-radius: 11px; }
+  .mi-head { margin: 0 0 .25rem; font-weight: 700; font-size: 1.05rem; }
+  .mi-cap { margin: 0; color: var(--muted); font-size: .92rem; }
+  .mira-intro .tips { margin: 0; padding-left: 1.2rem; }
+  /* The call: steering, the two pictures, then the controls. */
+  .call-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: .6rem 1rem; padding: .8rem 0; margin: 0 0 .9rem;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .call-bar .status { margin: 0; }
+  #callMsg::before { content: ""; display: inline-block; width: .6rem; height: .6rem; border-radius: 50%;
+    background: var(--err); margin-right: .5rem; vertical-align: .05em; }
+  .mic-grid { display: grid; grid-template-columns: 1fr; gap: 0 2rem; }
+  #micLevelCall { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin: .4rem 0 .9rem; }
+  @media (min-width: 860px) {
+    .setup-grid { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .mic-grid { grid-template-columns: 1fr 1fr; align-items: end; }
+    .fb-form { flex-wrap: nowrap; align-items: center; }
+    .fb-form label { width: auto; flex: 0 0 auto; }
+    .mira-intro .tips { columns: 2; column-gap: 2.5rem; }
+    .mira-intro .tips li { break-inside: avoid; }
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 1.25rem 1rem 3rem; }
+    .card { padding: 1.1rem; }
+    h1 { font-size: 1.35rem; }
+    .sub { margin-bottom: 1.25rem; }
+    .tile video, .tile .cam-off { aspect-ratio: 3 / 4; }
+    #miraVideo { object-position: 50% 28%; }
+    .tile .tag { left: 9px; bottom: 9px; }
+    .mira-thumb { flex-basis: 84px; }
+    #joinBtn { width: 100%; }
+    .call-bar .row { width: 100%; justify-content: space-between; flex-wrap: nowrap; gap: .5rem; }
+    .call-bar .row button { padding: .7rem 1rem; }
+    /* The steering panel stays short on a phone so both pictures and the
+       controls fit on the first screen. */
+    .feedback { padding: .75rem; }
+    .feedback .fb-head span { display: block; font-size: .8rem; line-height: 1.4; margin-top: .15rem; }
+    .feedback .row { flex-wrap: nowrap; gap: .5rem; }
+    .feedback .row button { flex: 1 1 0; padding: .55rem .4rem; }
+    .fb-chips { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
+    .fb-chips .fb-label, .fb-chips button { flex: 0 0 auto; white-space: nowrap; }
+    .fb-form { flex-wrap: nowrap; margin-top: .6rem; }
+    .fb-form label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .fb-form input { flex: 1 1 auto; min-width: 0; }
+    .fb-form button { flex: 0 0 auto; white-space: nowrap; padding: .55rem .8rem; }
+    .fb-chips { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent);
+      mask-image: linear-gradient(to right, #000 82%, transparent); }
+    .wrap.in-call .sub { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -132,13 +224,17 @@
   </div>
 
   <!-- State: setup -->
+  <!-- Oct 27 2026 (Patrick's test room): the page opened on a tall picture
+       of Mira with every control underneath it. The controls come first now,
+       side by side on a computer and stacked on a phone, and Mira with what
+       to expect sits at the foot of the card. -->
   <div id="stateSetup" class="card hidden">
     <p class="status ok" id="setupMsg">Your interview is ready — let's get you sounding great.</p>
     <!-- Oct 1 2026 (Jonathan Bautista): he had this page open at his start
          time, never got past the microphone check, and wrote "I'm in the
          room but no one is joining". Until the guest is actually in, the
          page says plainly that they are not, what the two steps are, and
-         offers the phone from the start. -->
+         offers the phone's browser (and another time) from the start. -->
     <div class="guest-only" id="notIn" role="status">
       <p id="notInHead">You're not in the interview yet.</p>
       <p style="margin:0">Two steps and you're in with Mira:</p>
@@ -146,86 +242,90 @@
         <li id="notInStep1">Press <b>Check my microphone</b> below and read the sentence until it says "Sounds good".</li>
         <li id="notInStep2">Press <b>Join your interview</b>. Mira starts as soon as you're in.</li>
       </ol>
-      <div class="phonebox" id="phoneBoxTop">
+      <div class="trouble" id="troubleTop">
         <span style="font-size:.92rem">Computer giving you trouble?</span>
-        <button class="phone" type="button" id="phoneBtnTop">Have Mira call my phone</button>
-        <div class="hidden" id="phoneAskTop"><input type="tel" id="phoneInTop"
-          placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-          id="phoneGoTop">Call me</button></div>
-        <p id="phoneMsgTop"></p>
       </div>
     </div>
-    <figure class="mira-stage small guest-only">
-      <span class="frame"><img src="assets/mira/mira-studio.jpg" alt="An illustration of Mira, the AI host, at a studio microphone" width="480" height="730"></span>
-      <figcaption>You'll be talking with Mira, the show's AI host. The picture is an illustration; she has no camera and can't see you.</figcaption>
-    </figure>
-    <p class="tips" id="studioStatus" style="color:var(--muted)">Signing in to the studio…</p>
     <p class="hostnote host-only hidden">Pick your microphone and press
     <b>Join the room</b>. You can join before or after the guest; Mira hears
     everyone in the room. No camera is used for the co-host.</p>
-    <ul class="tips guest-only">
-      <li><b>Quiet room</b> — close the door, kill fans and background music.</li>
-      <li><b>Headphones or AirPods</b> — the single biggest upgrade. A dedicated mic is even better.</li>
-      <li><b>Computer over phone</b>, wired internet or strong Wi-Fi, recent Chrome, Edge, or Safari.</li>
-      <!-- Oct 14 2026 (Piper Martz): "we record video for a future YouTube version"
-           read as a video interview, and twice there was nothing to look at. -->
-      <li><b>An audio episode</b> — on screen you'll see an illustration of Mira, who is an AI and can't see you. The episode is audio. Your camera is optional: if it is on it is recorded, but you can leave it off.</li>
-    </ul>
-    <label for="micSel">Microphone</label>
-    <select id="micSel"></select>
-    <div id="miclevel"><div></div></div>
-    <!-- Sept 28 2026 (Elliot): the meter above moved a sliver and he took
-         that as "my microphone works". Join now waits for a real check:
-         one sentence, spoken normally, measured. -->
-    <div class="guest-only check" id="micCheck">
-      <p style="margin:0"><b>Microphone check.</b> Press the button, then say this at your normal
-      speaking volume:</p>
-      <p class="say" style="margin:.4rem 0">"Hi Mira, this is my microphone check, and I'm looking forward to our conversation."</p>
-      <button class="ghost" id="micCheckBtn" type="button">Check my microphone</button>
-      <p id="micCheckMsg"></p>
-      <ol class="help hidden" id="micHelp">
-        <li><b>Pick another microphone</b> from the list above and check again. Headsets and
-        AirPods usually show up by name.</li>
-        <li><b>Turn the input up.</b> Mac: System Settings, Sound, Input, choose your microphone
-        and drag Input volume to the right. Windows: Settings, System, Sound, Input, choose your
-        microphone and raise the Volume.</li>
-        <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
-        not your phone, and that any mute switch on the headset is off.</li>
-        <li><b>Still stuck?</b> Join from your phone's browser instead (earbuds in), or, as a last resort, Mira can call you.
-        <div class="phonebox" id="phoneBoxSetup">
-          <button class="phone" type="button" id="phoneBtnSetup">Have Mira call my phone</button>
-          <div class="hidden" id="phoneAskSetup"><input type="tel" id="phoneInSetup"
-            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-            id="phoneGoSetup">Call me</button></div>
-          <p id="phoneMsg"></p>
-        </div></li>
-      </ol>
+    <div class="setup-grid">
+      <section class="setup-col" id="setupMic">
+        <label for="micSel">Microphone</label>
+        <select id="micSel"></select>
+        <div id="miclevel"><div></div></div>
+        <!-- Sept 28 2026 (Elliot): the meter above moved a sliver and he took
+             that as "my microphone works". Join now waits for a real check:
+             one sentence, spoken normally, measured. -->
+        <div class="guest-only check" id="micCheck">
+          <p style="margin:0"><b>Microphone check.</b> Press the button, then say this at your normal
+          speaking volume:</p>
+          <p class="say" style="margin:.4rem 0">"Hi Mira, this is my microphone check, and I'm looking forward to our conversation."</p>
+          <button class="ghost" id="micCheckBtn" type="button">Check my microphone</button>
+          <p id="micCheckMsg"></p>
+          <ol class="help hidden" id="micHelp">
+            <li><b>Pick another microphone</b> from the list above and check again. Headsets and
+            AirPods usually show up by name.</li>
+            <li><b>Turn the input up.</b> Mac: System Settings, Sound, Input, choose your microphone
+            and drag Input volume to the right. Windows: Settings, System, Sound, Input, choose your
+            microphone and raise the Volume.</li>
+            <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
+            not your phone, and that any mute switch on the headset is off.</li>
+            <li><b>Still stuck?</b>
+            <div class="trouble" id="troubleSetup"></div></li>
+          </ol>
+        </div>
+        <div class="guest-only" id="echoRow" style="margin:.5rem 0">
+          <button class="ghost" id="echoBtn" type="button">Check my headphones</button>
+          <span id="echoMsg" style="margin-left:.6rem;color:var(--muted)"></span>
+        </div>
+      </section>
+      <section class="setup-col guest-only" id="setupCam">
+        <label for="camSel">Camera (optional)</label>
+        <select id="camSel"></select>
+        <video id="preview" autoplay playsinline muted></video>
+        <button class="ghost" id="camToggle" type="button">Turn camera off</button>
+      </section>
     </div>
-    <div class="guest-only" id="echoRow" style="margin:.5rem 0">
-      <button class="ghost" id="echoBtn" type="button">Check my headphones</button>
-      <span id="echoMsg" style="margin-left:.6rem;color:var(--muted)"></span>
+    <div class="join-area">
+      <!-- Oct 27 2026: quiet while the guest sets up (the studio sign-in runs
+           in the background and speaks up only if it fails), then a
+           highlighted "you're all set" beside a bright Join once the
+           microphone check passes. -->
+      <p class="status-line hidden" id="studioStatus" role="status" aria-live="polite"></p>
+      <div class="row" id="joinRow">
+        <button class="primary" id="joinBtn">Join your interview</button>
+      </div>
+      <p class="guest-only" id="joinGate" style="color:var(--muted);font-size:.9rem;margin:.5rem 0 0">
+        Join unlocks once the microphone check passes.
+        <button class="linkish hidden" id="joinAnyway" type="button">Join anyway</button></p>
+      <!-- Day-before setup test (?test=1): nothing joins, nothing records. -->
+      <div class="hidden check" id="testResult">
+        <p id="testSummary">Run the microphone check and the headphones check above.</p>
+        <p class="tips" id="testDetail" style="color:var(--muted);margin:.4rem 0 0"></p>
+      </div>
+      <p class="tips guest-only" id="consentNote" style="color:var(--muted);margin-bottom:0">
+        By joining you'll hear a short recording-consent notice from Mira, then
+        the conversation begins. Plan for about 45 minutes.
+      </p>
     </div>
-    <div class="guest-only">
-      <label for="camSel">Camera</label>
-      <select id="camSel"></select>
-      <video id="preview" autoplay playsinline muted></video>
+    <div class="mira-intro guest-only">
+      <div class="mi-top">
+        <figure class="mira-thumb"><span class="frame"><img src="assets/mira/mira-studio.jpg" alt="An illustration of Mira, the AI host, at a studio microphone" width="480" height="730"></span></figure>
+        <div>
+          <p class="mi-head">Meet Mira, your host</p>
+          <p class="mi-cap">You'll be talking with Mira, the show's AI host. The picture is an illustration; she has no camera and can't see you.</p>
+        </div>
+      </div>
+      <ul class="tips">
+        <li><b>Quiet room</b> — close the door, kill fans and background music.</li>
+        <li><b>Headphones or AirPods</b> — the single biggest upgrade. A dedicated mic is even better.</li>
+        <li><b>Computer over phone</b>, wired internet or strong Wi-Fi, recent Chrome, Edge, or Safari.</li>
+        <!-- Oct 14 2026 (Piper Martz): "we record video for a future YouTube version"
+             read as a video interview, and twice there was nothing to look at. -->
+        <li><b>An audio episode</b> — on screen you'll see an illustration of Mira, who is an AI and can't see you. The episode is audio. Your camera is optional: if it is on it is recorded, but you can leave it off.</li>
+      </ul>
     </div>
-    <div class="row" style="margin-top:1rem">
-      <button class="primary" id="joinBtn">Join your interview</button>
-      <button class="ghost guest-only" id="camToggle">Turn camera off</button>
-    </div>
-    <p class="guest-only" id="joinGate" style="color:var(--muted);font-size:.9rem;margin:.5rem 0 0">
-      Join unlocks once the microphone check passes.
-      <button class="linkish hidden" id="joinAnyway" type="button">Join anyway</button></p>
-    <!-- Day-before setup test (?test=1): nothing joins, nothing records. -->
-    <div class="hidden check" id="testResult">
-      <p id="testSummary">Run the microphone check and the headphones check above.</p>
-      <p class="tips" id="testDetail" style="color:var(--muted);margin:.4rem 0 0"></p>
-    </div>
-    <p class="tips guest-only" id="consentNote" style="color:var(--muted);margin-bottom:0">
-      By joining you'll hear a short recording-consent notice from Mira, then
-      the conversation begins. Plan for about 45 minutes.
-    </p>
   </div>
 
   <!-- State: co-host out of the room (left or dropped) — rejoin -->
@@ -235,7 +335,7 @@
       <span id="presGuest">guest: not yet</span>
       <span id="presHost">host: not yet</span>
     </div>
-    <p class="hostnote">The interview keeps going without you. Your link stays
+    <p class="hostnote" id="readyNote">The interview keeps going without you. Your link stays
     valid for the whole session — rejoin whenever you like.</p>
     <div class="row">
       <button class="ghost hidden" id="rearmBtn">Rejoin the room</button>
@@ -243,52 +343,24 @@
   </div>
 
   <!-- State: in call -->
+  <!-- Oct 27 2026 (Patrick's test room): the call opened on a large picture
+       of Mira with the steering panel at the bottom, and the guest never saw
+       themselves. Now the steering is at the top, and Mira and the guest are
+       side by side under it, both in view the whole time, with the controls
+       beneath. A silence warning, when there is one, comes first of all. -->
   <div id="stateCall" class="card hidden">
-    <figure class="mira-stage" id="miraStage">
-      <span class="frame"><video id="miraVideo" src="assets/mira/mira-studio.mp4" poster="assets/mira/mira-studio.jpg"
-        muted loop playsinline preload="auto" aria-label="An illustration of Mira, the AI host, at a studio microphone"></video></span>
-      <figcaption>Mira, your AI host. The picture is an illustration that moves while the room is talking; she can't see you.</figcaption>
-    </figure>
-    <p class="status ok" id="callMsg">You're live with Mira.</p>
-    <div class="presence host-only hidden">
-      <span id="presGuestCall">guest: not yet</span>
-      <span id="presHostCall">host: not yet</span>
-    </div>
-    <div class="row">
-      <span id="callTimer">00:00</span>
-      <button class="ghost" id="muteBtn">Mute</button>
-      <button class="danger" id="hangupBtn">End interview</button>
-    </div>
-    <p class="hostnote host-only hidden">Say <b>"hold on"</b> (or "let's pause")
-    to make Mira stop talking and wait for you.</p>
-    <label>Your microphone (this should move when you speak — if it
-    doesn't, Mira can't hear you)</label>
-    <div id="micLevelCall"><div style="height:8px;width:0%;background:var(--ok);border-radius:4px;transition:width .08s linear"></div></div>
     <div class="banner hidden" id="silenceBanner" role="alert">
       <p style="margin:0" id="silenceHead"><b>Mira can't hear you yet.</b> Your microphone is sending
       almost no sound.</p>
       <ol class="help">
-        <li id="silenceMuted">Check you're not on mute: the Mute button above, and any mute switch on your headset.</li>
-        <li>Pick a different microphone below. It switches straight away, no need to rejoin.</li>
+        <li id="silenceMuted">Check you're not on mute: the Mute button under the pictures, and any mute switch on your headset.</li>
+        <li>Pick a different microphone from the Microphone list under the pictures. It switches straight away, no need to rejoin.</li>
       </ol>
       <div class="hidden" id="phoneOffer">
-        <p style="margin:.5rem 0 0">Still nothing? Carry on from your phone's browser (earbuds in), or, as a last resort, Mira can call you.</p>
-        <div class="phonebox">
-          <button class="phone" type="button" id="phoneBtnCall">Have Mira call my phone</button>
-          <div class="hidden" id="phoneAskCall"><input type="tel" id="phoneInCall"
-            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-            id="phoneGoCall">Call me</button></div>
-          <p id="phoneMsgCall"></p>
-        </div>
+        <p style="margin:.5rem 0 0">Still nothing?</p>
+        <div class="trouble" id="troubleCall"></div>
       </div>
     </div>
-    <label for="micSelCall">Microphone</label>
-    <select id="micSelCall"></select>
-    <video id="selfview" class="hidden"></video>
-    <p class="tips guest-only" style="color:var(--muted)">
-      Interrupt her whenever you like — she can handle it. Ask her questions
-      too; the conversation goes both ways.
-    </p>
     <!-- Oct 23 2026: the guest can steer without saying it out loud. The
          page sends each press to the room on this call; the room answers. -->
     <div class="feedback" id="feedbackPanel">
@@ -301,11 +373,52 @@
       <div class="fb-chips hidden" id="fbAgenda"><span class="fb-label">Ask me about:</span></div>
       <form class="fb-form" id="fbForm">
         <label for="fbText">Or type something you'd like to talk about</label>
-        <input id="fbText" type="text" maxlength="240" autocomplete="off">
+        <input id="fbText" type="text" maxlength="240" autocomplete="off" placeholder="A topic for Mira">
         <button class="ghost" type="submit">Send to Mira</button>
       </form>
       <p id="fbStatus" role="status" aria-live="polite"></p>
     </div>
+    <div class="stage-row" id="stageRow">
+      <figure class="tile mira-stage" id="miraStage">
+        <span class="frame"><video id="miraVideo" src="assets/mira/mira-studio.mp4" poster="assets/mira/mira-studio.jpg"
+        muted loop playsinline preload="auto" aria-label="An illustration of Mira, the AI host, at a studio microphone"></video></span>
+        <figcaption class="tag">Mira</figcaption>
+      </figure>
+      <figure class="tile guest-only" id="youTile">
+        <span class="frame"><video id="selfview" class="hidden" autoplay playsinline muted aria-label="You, from your camera"></video><span class="cam-off" id="camOffNote">Your camera is off. That's fine: the episode is audio.</span></span>
+        <figcaption class="tag">You</figcaption>
+      </figure>
+    </div>
+    <p class="stage-note">Mira is an illustration that moves while the room is talking; she can't see you.</p>
+    <div class="call-bar">
+      <p class="status ok" id="callMsg">You're live with Mira.</p>
+      <div class="row">
+        <span id="callTimer">00:00</span>
+        <button class="ghost" id="muteBtn">Mute</button>
+        <button class="danger" id="hangupBtn">End interview</button>
+      </div>
+    </div>
+    <div class="presence host-only hidden">
+      <span id="presGuestCall">guest: not yet</span>
+      <span id="presHostCall">host: not yet</span>
+    </div>
+    <p class="hostnote host-only hidden">Say <b>"hold on"</b> (or "let's pause")
+    to make Mira stop talking and wait for you.</p>
+    <div class="mic-grid">
+      <div>
+        <label>Your microphone (this should move when you speak — if it
+        doesn't, Mira can't hear you)</label>
+        <div id="micLevelCall"><div style="height:8px;width:0%;background:var(--ok);border-radius:4px;transition:width .08s linear"></div></div>
+      </div>
+      <div>
+        <label for="micSelCall">Microphone</label>
+        <select id="micSelCall"></select>
+      </div>
+    </div>
+    <p class="tips guest-only" style="color:var(--muted)">
+      Interrupt her whenever you like — she can handle it. Ask her questions
+      too; the conversation goes both ways.
+    </p>
     <p class="tips guest-only" style="color:var(--muted)">
       <b>How this ends:</b> Mira will thank you and tell you the recording is
       finished. Once she has, press <b>End interview</b> — or just hang up.
@@ -334,14 +447,7 @@
     <p class="tips" style="color:var(--muted)">Try reloading the page. If it
     persists, email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>
     and we'll sort it out.</p>
-    <div class="phonebox hidden" id="phoneBoxErr">
-      <p style="margin:0">Or join from your phone's browser instead (earbuds in). As a last resort, Mira can call you.</p>
-      <button class="phone" type="button" id="phoneBtnErr">Have Mira call my phone</button>
-      <div class="hidden" id="phoneAskErr"><input type="tel" id="phoneInErr"
-        placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
-        id="phoneGoErr">Call me</button></div>
-      <p id="phoneMsgErr"></p>
-    </div>
+    <div class="trouble hidden" id="troubleErr"></div>
   </div>
 
   <div class="footer" id="footerLine">Real people · AI host · Nerra Network</div>
@@ -378,6 +484,11 @@
   // the live one. A guest's link never carries it.
   var candidateRoom = params.get("room") === "candidate";
   var micOk = false, micVerdict = "unknown", micDb = null, micFails = 0, joinOverride = false;
+  // Oct 27 2026: what the stuck report says about the Join button, and how a
+  // guest's disconnect is read (their own End, the room closing, or a drop).
+  var joinAttempted = false, joinError = "", guestEnded = false, roomEndReason = "";
+  var pageOpenedAt = Date.now();
+  var DEAD_INTERVIEW = ["cancelled", "missed", "no_show", "killed", "archived", "failed"];
   var echoVerdict = "not_run", signinState = "unknown", signinError = "";
 
   // ---- 0. Show branding (Sept 2026) ---------------------------------------
@@ -414,6 +525,7 @@
   function applyRoleUi() {
     document.querySelectorAll(".host-only").forEach(function (el) { el.classList.toggle("hidden", !isHost); });
     document.querySelectorAll(".guest-only").forEach(function (el) { el.classList.toggle("hidden", isHost); });
+    document.getElementById("stageRow").classList.toggle("solo", isHost);
     if (isHost) {
       document.getElementById("setupMsg").textContent = "Co-host studio — pick your microphone and join the room.";
       document.getElementById("joinBtn").textContent = "Join the room";
@@ -426,8 +538,16 @@
   function show(id) {
     ["stateCheck", "stateSetup", "stateReady", "stateCall", "stateDone", "stateError"]
       .forEach(function (s) { document.getElementById(s).classList.toggle("hidden", s !== id); });
+    var wrap = document.querySelector(".wrap");
+    if (wrap) wrap.classList.toggle("wide", id === "stateSetup" || id === "stateCall");
+    if (wrap) wrap.classList.toggle("in-call", id === "stateCall");
+    // A new screen starts at its top (the call opened scrolled to where Join
+    // had been, below the steering panel).
+    if (id !== shownState) { shownState = id; try { window.scrollTo(0, 0); } catch (e) { /* ignore */ } }
   }
+  var shownState = null;
   function fail(msg) {
+    joinInFlight = false;
     document.getElementById("errMsg").textContent = msg;
     show("stateError");
   }
@@ -473,6 +593,14 @@
           if (s.scheduled_at) scheduledAt = Date.parse(s.scheduled_at);
           startSetup();
           pollPresence();
+          return;
+        }
+        // Oct 27 2026: a cancelled or missed interview is not "getting
+        // ready"; it is not on, and the guest is told how to get a new time.
+        if (DEAD_INTERVIEW.indexOf(String(s.interview_status || "")) >= 0) {
+          document.getElementById("checkMsg").textContent = "This interview isn't on right now.";
+          document.getElementById("checkDetail").textContent =
+            "It was cancelled or missed. If you'd like a new time, reply to Mira's last email and she'll set one up.";
           return;
         }
         // Oct 22 2026: the interview already happened (the page was left
@@ -550,7 +678,7 @@
         micAccess = false;
         fail("Your browser hasn't let the studio use your microphone, so you can't join yet. "
           + "Click the lock icon in the address bar, allow the microphone, and reload this page.");
-        if (!isHost && !testMode) document.getElementById("phoneBoxErr").classList.remove("hidden");
+        if (!isHost && !testMode) document.getElementById("troubleErr").classList.remove("hidden");
       });
   }
   // Sept 9 2026: a username with stray whitespace makes Voximplant's
@@ -559,20 +687,39 @@
     var c = String(u || "").trim().replace(/[^A-Za-z0-9_.-]/g, "");
     return c || "guest";
   }
-  function setStudioStatus(text, ok) {
+  // Oct 27 2026 (Patrick's test room): "Signed in to the studio. Press Join
+  // when you're ready." showed before the guest had checked anything, and
+  // read as permission to skip the setup. The sign-in still runs in the
+  // background from the start; a guest hears about it only if it fails.
+  // Once the microphone check passes the line becomes a highlighted
+  // "you're all set" over a bright Join. Hosts and the setup test see the
+  // sign-in as before.
+  var studioQuiet = false;
+  function setStudioStatus(text, ok, quietForGuest) {
     var el = document.getElementById("studioStatus");
     if (!el) return;
+    studioQuiet = !!quietForGuest && !isHost && !testMode;
+    if (studioQuiet) { renderReadyLine(); return; }
     el.textContent = text;
-    el.style.color = ok === true ? "var(--ok, #6ee7b7)" : ok === false ? "var(--err, #fca5a5)" : "var(--muted)";
+    el.className = "status-line" + (ok === true ? " ok" : ok === false ? " err" : "");
+  }
+  function renderReadyLine() {
+    var el = document.getElementById("studioStatus");
+    if (!el || !studioQuiet) return;
+    var ready = micOk || joinOverride;
+    el.className = "status-line" + (micOk ? " ready" : ready ? "" : " hidden");
+    el.textContent = !ready ? ""
+      : micOk ? "You're all set. Press Join your interview and Mira will start."
+      : "Press Join your interview when you're ready. If Mira can't hear you, this page will tell you.";
   }
   var preLoginPromise = null;
   function preLogin() {
     if (loggedIn || preLoginPromise) return preLoginPromise;
-    setStudioStatus("Signing in to the studio…");
+    setStudioStatus("Signing in to the studio…", undefined, true);
     preLoginPromise = studioLogin().then(function () {
       signinState = "ok";
       setStudioStatus(testMode ? "Connection to the studio: working."
-        : "Signed in to the studio. Press Join when you're ready.", true);
+        : "Signed in to the studio. Press Join when you're ready.", true, true);
       testUpdate();
     }).catch(function (e) {
       console.error("[studio] pre-login failed at step", joinStep, e);
@@ -601,15 +748,31 @@
       });
     });
   }
-  function switchDevices() {
+  // Oct 27 2026 (Elliot Justin): turning the camera off reset his passed
+  // microphone check and locked Join again, with a message about a "new
+  // microphone" he never picked. Only a change of MICROPHONE asks for the
+  // check again; the camera reopens the stream and nothing else. A refused
+  // device (a camera busy in another app) falls back to audio only instead
+  // of leaving the page with a dead stream.
+  function switchDevices(changed) {
     var micId = document.getElementById("micSel").value;
     var camId = document.getElementById("camSel").value;
-    var constraints = { audio: micId ? { deviceId: { exact: micId } } : true };
+    var audio = micId ? { deviceId: { exact: micId } } : true;
+    var constraints = { audio: audio };
     if (camOn) constraints.video = camId ? { deviceId: { exact: camId } } : true;
     if (localStream) localStream.getTracks().forEach(function (t) { t.stop(); });
-    navigator.mediaDevices.getUserMedia(constraints).then(function (s) {
+    navigator.mediaDevices.getUserMedia(constraints).catch(function (err) {
+      if (!constraints.video) throw err;
+      camOn = false;
+      var t = document.getElementById("camToggle");
+      if (t) { t.textContent = "Camera unavailable"; t.disabled = true; }
+      return navigator.mediaDevices.getUserMedia({ audio: audio });
+    }).then(function (s) {
       localStream = s; wirePreview(); meterMic();
+    }).catch(function () {
+      setMicMsg("That microphone couldn't be opened. Pick another one from the list, or close any other app using it.", "var(--warn)");
     });
+    if (changed !== "mic") return;
     if (micOk || micVerdict !== "unknown") {
       micOk = false; micVerdict = "unknown";
       setMicMsg("New microphone selected. Press Check my microphone again.", "var(--muted)");
@@ -617,12 +780,12 @@
       updateJoinGate();
     }
   }
-  document.getElementById("micSel").addEventListener("change", switchDevices);
-  document.getElementById("camSel").addEventListener("change", switchDevices);
+  document.getElementById("micSel").addEventListener("change", function () { switchDevices("mic"); });
+  document.getElementById("camSel").addEventListener("change", function () { switchDevices("camera"); });
   document.getElementById("camToggle").addEventListener("click", function () {
     camOn = !camOn;
     this.textContent = camOn ? "Turn camera off" : "Turn camera on";
-    switchDevices();
+    switchDevices("camera");
   });
   function meterMic() {
     if (analyserRAF) cancelAnimationFrame(analyserRAF);
@@ -657,12 +820,13 @@
   // lives in. If the microphone hears it, the microphone will hear Mira too.
   var ECHO_HZ = 1180;          // a bin of its own, well inside every mic's range
   var echoChecked = false;
-  function echoCheck() {
+  function echoCheck(onDone) {
+    var finished = typeof onDone === "function" ? onDone : function () {};
     var msg = document.getElementById("echoMsg");
     var btn = document.getElementById("echoBtn");
-    if (!localStream) { msg.textContent = "Pick a microphone first."; return; }
+    if (!localStream) { msg.textContent = "Pick a microphone first."; finished(); return; }
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) { msg.textContent = ""; return; }
+    if (!AC) { msg.textContent = ""; finished(); return; }
     btn.disabled = true;
     msg.style.color = "var(--muted)";
     msg.textContent = "Listening… stay quiet for a moment.";
@@ -697,6 +861,7 @@
       btn.disabled = false;
       btn.textContent = "Check again";
       try { ctx.close(); } catch (e) { /* ignore */ }
+      finished();
       // Tell the operator's side what we found, so a guest who joins anyway
       // is not a surprise when the tape comes back.
       try {
@@ -734,7 +899,7 @@
       });
     });
   }
-  document.getElementById("echoBtn").addEventListener("click", echoCheck);
+  document.getElementById("echoBtn").addEventListener("click", function () { echoCheck(); });
 
   // ---- 2c. Microphone check: Join waits for one real sentence ------------
   // Sept 28 2026, Elliot. His microphone sent -40 to -55 dB for the first
@@ -814,11 +979,13 @@
     if (isHost || testMode) { btn.disabled = false; return; }
     var open = micOk || joinOverride;
     btn.disabled = !open;
+    btn.classList.toggle("ready", open);
     document.getElementById("joinGate").classList.toggle("hidden", open);
     // A way through for the guest whose microphone is fine but whose voice
     // the check misjudges. Offered only after two honest attempts.
     document.getElementById("joinAnyway").classList.toggle("hidden", micFails < 2);
     updateNotIn();
+    renderReadyLine();
   }
   document.getElementById("joinAnyway").addEventListener("click", function () {
     joinOverride = true; micVerdict = micVerdict === "unknown" ? "skipped" : micVerdict;
@@ -834,6 +1001,7 @@
       var payload = { interview: interviewId, role: role, test: testMode,
           mic: forceMic || micVerdict, mic_db: micDb, echo: echoVerdict,
           signin: signinState, signin_error: signinError,
+          join_attempted: joinAttempted, join_error: joinError, join_override: joinOverride,
           device: deviceLabel(), ua: navigator.userAgent };
       if (extra) Object.keys(extra).forEach(function (k) { payload[k] = extra[k]; });
       fetch(API + "/studio-check", {
@@ -848,12 +1016,13 @@
     var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
     document.getElementById("setupMsg").textContent = "Setup test: about 30 seconds. Nothing is recorded.";
     document.getElementById("checkDetail").textContent = "";
-    document.querySelectorAll("#stateSetup .row, #joinGate, #consentNote, #notIn")
+    document.querySelectorAll("#joinRow, #joinGate, #consentNote, #notIn")
       .forEach(function (el) { el.classList.add("hidden"); });
-    // No phone switch from a test: that button dials now.
-    document.getElementById("phoneBoxSetup").innerHTML =
-      "<p style='margin:.3rem 0 0'>Reply to your booking email and we'll set the interview up as a phone call"
-      + (when ? " for " + when.toLocaleString() : "") + ".</p>";
+    // The test never joins anything; the way out is said in words.
+    document.getElementById("troubleSetup").innerHTML =
+      "<p style='margin:.3rem 0 0'>Try the same link on your phone with earbuds in: it's the same studio. "
+      + "If neither works, reply to your booking email and we'll find another time"
+      + (when ? " than " + when.toLocaleString() : "") + ".</p>";
     document.getElementById("testResult").classList.remove("hidden");
     startSetup();
   }
@@ -882,57 +1051,11 @@
     } else {
       sum.textContent = "Almost there: " + issues.join("; and ") + ".";
       sum.style.color = "var(--warn)";
-      detail.textContent = "Fix it and run the checks again here. We've let Patrick know, so if it won't cooperate, reply to your booking email and we'll switch you to a phone call.";
+      detail.textContent = "Fix it and run the checks again here, or try this same link on your phone with earbuds in. We've let Patrick know, so if neither works, reply to your booking email and we'll find another time.";
     }
     var key = [micVerdict, echoVerdict, signinState].join("/");
     if (key !== lastReported) { lastReported = key; reportCheck(); }
   }
-
-  // ---- 2e. "Have Mira call my phone" ---------------------------------------
-  // Offered in the microphone help before joining and in the silence banner
-  // during the call. The Worker flips the interview to a phone call and
-  // dispatches the dial at once; with no usable number on file it asks.
-  var phoneSwitched = false;
-  function requestPhone(where) {
-    var msg = document.getElementById(where === "Setup" ? "phoneMsg" : "phoneMsg" + where);
-    var input = document.getElementById("phoneIn" + where);
-    var ask = document.getElementById("phoneAsk" + where);
-    var body = { interview: interviewId, run_id: runId };
-    if (!ask.classList.contains("hidden") && input.value.trim()) body.phone = input.value.trim();
-    msg.style.color = "inherit";
-    msg.textContent = "One moment…";
-    fetch(API + "/studio-phone", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-    }).then(function (r) { return r.json(); }).then(function (res) {
-      if (res.need_phone) {
-        ask.classList.remove("hidden");
-        document.getElementById("phoneBtn" + where).classList.add("hidden");
-        msg.textContent = res.error || "What number should Mira call? Include the country code.";
-        input.focus();
-        return;
-      }
-      if (!res.ok) { msg.textContent = res.error || "That didn't work. Reply to your booking email and we'll call you."; return; }
-      phoneSwitched = true;
-      var text = "Mira will call your phone ending in " + res.phone_last4 + " within a few minutes. "
-        + "Find a quiet spot and answer when it rings. You can close this page.";
-      document.getElementById("doneHead").textContent = "Switching to your phone";
-      document.getElementById("donePhone").textContent = text;
-      document.getElementById("donePhone").classList.remove("hidden");
-      document.getElementById("doneBody").classList.add("hidden");
-      stopCallMeter();
-      if (activeCall) { try { activeCall.hangup(); } catch (e) { /* ignore */ } }
-      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
-      show("stateDone");
-    }).catch(function () {
-      msg.textContent = "That didn't go through. Reply to your booking email and we'll call you.";
-    });
-  }
-  ["Setup", "Call", "Top", "Err"].forEach(function (w) {
-    var b = document.getElementById("phoneBtn" + w);
-    if (b) b.addEventListener("click", function () { requestPhone(w); });
-    var g = document.getElementById("phoneGo" + w);
-    if (g) g.addEventListener("click", function () { requestPhone(w); });
-  });
 
   // ---- 2f. "You're not in the interview yet" -----------------------------
   // Oct 1 2026, Jonathan Bautista. The page was open at his start time, Join
@@ -941,7 +1064,7 @@
   // our side knew either. Until the guest is in: the banner above says so in
   // plain words, counts the minutes once the slot has started, and offers
   // the phone. Three minutes after the start the page tells the Worker once,
-  // and Patrick gets an email with a one-click switch to a phone call.
+  // and Patrick gets an email saying what they are stuck on.
   var STUCK_AFTER_MS = 3 * 60 * 1000;
   var scheduledAt = null, micAccess = null, stuckReported = false, notInTimer = null, everConnected = false;
   function minutesLate() {
@@ -966,9 +1089,11 @@
     if (notInTimer) { clearInterval(notInTimer); notInTimer = null; }
   }
   function notInTick() {
-    if (everConnected || activeCall || phoneSwitched) { stopNotIn(); return; }
+    if (everConnected || activeCall || movedToPhone) { stopNotIn(); return; }
     updateNotIn();
-    if (!stuckReported && scheduledAt && Date.now() - scheduledAt >= STUCK_AFTER_MS) {
+    // Three minutes from the start, or from opening the page if they came
+    // late: a guest who arrives at T+5 is not "stuck" fifteen seconds later.
+    if (!stuckReported && scheduledAt && Date.now() - Math.max(scheduledAt, pageOpenedAt) >= STUCK_AFTER_MS) {
       stuckReported = true;
       reportCheck(undefined, { stuck: true, minutes_late: minutesLate(), mic_access: micAccess });
     }
@@ -996,32 +1121,42 @@
     sc.onload = cb; sc.onerror = function () { cb(); };
     document.head.appendChild(sc);
   }
-  function mobileBox(where) {
-    var callBtn = document.getElementById("phoneBtn" + where);
-    if (!callBtn || onMobile || isHost) return;
-    callBtn.classList.add("lastresort");
-    callBtn.textContent = "Last resort: have Mira call my phone";
-    var box = document.createElement("div");
-    box.className = "mobilebox";
-    box.innerHTML = '<button class="primary" type="button">Join from my phone instead</button>'
-      + '<div class="hidden"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
-      + '<div class="qr"></div><p><button class="ghost" type="button">Text me the link</button> '
-      + '<span class="mmsg"></span></p>'
-      + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button">leave on this computer</button>.</p>' : '')
-      + '</div>';
-    callBtn.parentNode.insertBefore(box, callBtn);
-    var buttons = box.querySelectorAll("button");
-    var panel = box.querySelector("div");
-    buttons[0].addEventListener("click", function () {
-      panel.classList.remove("hidden"); buttons[0].classList.add("hidden");
+  // ---- 2g'. When the computer won't cooperate (Oct 27 2026) ---------------
+  // There are no phone calls any more: a phone line stops at 3.4 kHz and every
+  // phone episode sounded thin beside the studio ones, and the last one
+  // (Elliot Justin, Oct 26) had a scam call on top of it. Two ways out of a
+  // stuck computer: the same studio in the phone's browser, or another time.
+  var movedToPhone = false;
+  function troubleBox(where) {
+    var box = document.getElementById("trouble" + where);
+    if (!box || isHost || testMode) return;
+    var html = onMobile
+      ? "<p>Try this same link in another browser on this phone (Chrome or Safari), with earbuds in.</p>"
+      : '<p>Join from your phone\'s browser instead, earbuds in: it\'s the same studio and sounds just as good.</p>'
+        + '<button class="primary" type="button" data-act="phone">Join from my phone instead</button>'
+        + '<div class="hidden" data-panel="phone"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
+        + '<div class="qr"></div><p><button class="ghost" type="button" data-act="text">Text me the link</button> '
+        + '<span class="tmsg" data-msg="text"></span></p>'
+        + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button" data-act="leave">leave on this computer</button>.</p>' : "")
+        + "</div>";
+    html += '<p><button class="later" type="button" data-act="later">Still not working? Pick another time</button> '
+      + '<span class="tmsg" data-msg="later"></span></p>';
+    var wrap = document.createElement("div");
+    wrap.innerHTML = html;
+    box.appendChild(wrap);
+    function el(sel) { return wrap.querySelector(sel); }
+    var phoneBtn = el('[data-act="phone"]');
+    if (phoneBtn) phoneBtn.addEventListener("click", function () {
+      el('[data-panel="phone"]').classList.remove("hidden"); phoneBtn.classList.add("hidden");
       loadQr(function () {
-        var q = box.querySelector(".qr");
+        var q = el(".qr");
         if (window.QRCode) { q.innerHTML = ""; new window.QRCode(q, { text: guestStudioUrl(), width: 180, height: 180 }); }
         else { q.textContent = guestStudioUrl(); }
       });
     });
-    buttons[1].addEventListener("click", function () {
-      var msg = box.querySelector(".mmsg");
+    var textBtn = el('[data-act="text"]');
+    if (textBtn) textBtn.addEventListener("click", function () {
+      var msg = el('[data-msg="text"]');
       msg.textContent = "Sending…";
       fetch(API + "/studio-text", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ interview: interviewId }) })
@@ -1031,8 +1166,9 @@
             : res.ok ? "Sent to your email. Open it on your phone." : (res.error || "That didn't go through; scan the code instead.");
         }).catch(function () { msg.textContent = "That didn't go through; scan the code instead."; });
     });
-    if (buttons[2]) buttons[2].addEventListener("click", function () {
-      phoneSwitched = true;
+    var leaveBtn = el('[data-act="leave"]');
+    if (leaveBtn) leaveBtn.addEventListener("click", function () {
+      movedToPhone = true;
       document.getElementById("doneHead").textContent = "Carrying on from your phone";
       document.getElementById("donePhone").textContent = "You've left on this computer. Keep going on your phone; you can close this page.";
       document.getElementById("donePhone").classList.remove("hidden");
@@ -1042,25 +1178,45 @@
       if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
       show("stateDone");
     });
+    el('[data-act="later"]').addEventListener("click", function () {
+      var msg = el('[data-msg="later"]');
+      msg.textContent = "One moment…";
+      fetch(API + "/studio-reschedule", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interview: interviewId }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          msg.textContent = res.ok
+            ? "I've emailed you a link to pick another time. Nothing is lost, and you can close this page."
+            : (res.error || "That didn't go through. Reply to my last email and I'll find you another time.");
+        }).catch(function () { msg.textContent = "That didn't go through. Reply to my last email and I'll find you another time."; });
+    });
   }
-  ["Top", "Setup", "Call", "Err"].forEach(mobileBox);
+  ["Top", "Setup", "Call", "Err"].forEach(troubleBox);
 
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
     var btn = this;
-    // Offer the check to a guest who has not run it, once. Never block the
-    // join on it: a guest who cannot find their headphones must still be able
-    // to do the interview, and a locked door costs us the episode.
-    if (!isHost && !echoChecked) {
-      echoChecked = true;
-      try { echoCheck(); } catch (e) { /* advisory only */ }
-    }
     if (!isHost && !micOk && !joinOverride) return;   // the gate (see 2c)
     btn.disabled = true; btn.textContent = "Connecting…";
-    join().catch(function (e) {
+    joinAttempted = true; joinInFlight = true;
+    // Offer the headphones check to a guest who has not run it, once, and let
+    // it FINISH before the join releases the microphone. Oct 27 2026: it used
+    // to run on a stream join() had just stopped, so it heard nothing and
+    // reported "clean" whatever the guest was wearing. It never blocks the
+    // join: the verdict is advice.
+    var before = Promise.resolve();
+    if (!isHost && !echoChecked) {
+      echoChecked = true;
+      before = new Promise(function (resolve) {
+        try { echoCheck(resolve); } catch (e) { resolve(); }
+        setTimeout(resolve, 4000);
+      });
+    }
+    before.then(function () { return join(); }).catch(function (e) {
       console.error("[studio] join failed at step", joinStep, e);
+      joinError = explainJoinError(e);
       btn.disabled = false; btn.textContent = isHost ? "Join the room" : "Join your interview";
-      fail(explainJoinError(e));
+      fail(joinError);
     });
   });
 
@@ -1072,10 +1228,15 @@
   // user's password) is spelled out instead of swallowed.
   var joinStep = "start";
   var STEP_TIMEOUT_MS = 15000;
+  // Oct 27 2026 (Patrick's test room): the background sign-in at page open
+  // wrote its steps onto the Join button and left it reading "Signing in…"
+  // through the whole setup. Only a join the person pressed shows its steps
+  // on the button.
+  var joinInFlight = false;
   function step(name, label, promise) {
     joinStep = name;
     var btn = document.getElementById("joinBtn");
-    if (btn) btn.textContent = label;
+    if (btn && joinInFlight) btn.textContent = label;
     console.log("[studio] step:", name);
     return Promise.race([
       promise,
@@ -1114,11 +1275,14 @@
   }
   document.getElementById("rearmBtn").addEventListener("click", function () {
     leaving = false;
+    roomEndReason = "";
     var btn = document.getElementById("joinBtn");
     btn.disabled = true; btn.textContent = "Connecting…";
+    joinInFlight = true;
     join().catch(function (e) {
-      btn.disabled = false; btn.textContent = "Join the room";
-      fail(explainJoinError(e));
+      joinError = explainJoinError(e);
+      btn.disabled = false; btn.textContent = isHost ? "Join the room" : "Join your interview";
+      fail(joinError);
     });
   });
 
@@ -1179,9 +1343,20 @@
     throw new Error("no one-time login key from Voximplant");
   }
 
+  var sdkWatched = false;
   async function studioLogin() {
     if (loggedIn) return;
     sdk = VoxImplant.getInstance();
+    // Oct 27 2026: the sign-in was made once, at T-15, and never noticed the
+    // connection dying under it (a laptop asleep, a change of Wi-Fi), so Join
+    // called on a dead line. A closed connection now means "sign in again".
+    if (!sdkWatched) {
+      sdkWatched = true;
+      try {
+        sdk.on(VoxImplant.Events.ConnectionClosed, function () { loggedIn = false; });
+        sdk.on(VoxImplant.Events.ConnectionFailed, function () { loggedIn = false; });
+      } catch (e) { /* older SDK: join() checks sdk.connected() instead */ }
+    }
     try {
       await step("init", "Opening microphone…",
         sdk.init({ micRequired: false, videoSupport: !isHost, progressTone: false, showDebugInfo: false }));
@@ -1216,8 +1391,10 @@
     if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); localStream = null; }
     if (analyserRAF) cancelAnimationFrame(analyserRAF);
 
+    if (loggedIn && sdk && sdk.connected && !sdk.connected()) loggedIn = false;
     if (!loggedIn) {
       if (preLoginPromise) { try { await preLoginPromise; } catch (ignored) {} }
+      if (loggedIn && sdk && sdk.connected && !sdk.connected()) loggedIn = false;
       if (!loggedIn) await studioLogin();
     }
 
@@ -1254,6 +1431,10 @@
   }
   function onCallFailed(e) {
     console.warn("[studio] call failed", e && e.code, e && e.reason);
+    // Oct 27 2026: a failed call left activeCall set, which silenced the
+    // "not in yet" banner and the stuck report for a guest on the error page.
+    activeCall = null;
+    joinError = "call failed: " + ((e && (e.reason || e.code)) || "unknown");
     if (isMediaRefusal(e) && callSentVideo && !audioOnlyRetried) {
       audioOnlyRetried = true;
       camOn = false;
@@ -1294,7 +1475,9 @@
 
   function onCallConnected() {
     everConnected = true; stopNotIn();
+    joinInFlight = false;
     show("stateCall");
+    showSelfView();
     muted = false; document.getElementById("muteBtn").textContent = "Mute";
     callStart = Date.now();
     if (timerHandle) clearInterval(timerHandle);
@@ -1318,7 +1501,8 @@
     activeCall = null;
     stopCallMeter();
     stopMiraMeter();
-    if (phoneSwitched) { stopLocalRecording(); show("stateDone"); return; }
+    hideSelfView();
+    if (movedToPhone) { stopLocalRecording(); show("stateDone"); return; }
     var flush = stopLocalRecording();
     if (isHost) {
       // The co-host left (or dropped). The room goes on without him; the
@@ -1331,12 +1515,44 @@
       show("stateReady");
       return;
     }
+    // Oct 27 2026: every guest disconnect used to read "That's a wrap",
+    // including a dropped connection and a room that ended on a fault the
+    // Worker reopens for a rejoin. Only the guest's own End, or the room
+    // closing for good, is the end now; anything else offers Rejoin, and the
+    // presence poll still moves to the end if the interview really is over.
+    var closedForGood = roomEndReason === "hard_cap" || roomEndReason === "no_show";
+    // Ending it yourself in the first five minutes is not the end of the
+    // interview either (the Worker reopens the studio): offer the way back.
+    var endedEarly = guestEnded && callStart && Date.now() - callStart < 5 * 60 * 1000;
+    if ((!guestEnded || endedEarly) && !closedForGood) {
+      var fault = roomEndReason && !closedForGood;
+      document.getElementById("readyMsg").textContent = endedEarly
+        ? "You left the interview after a few minutes. If that was a mistake, press Rejoin; Mira is still there."
+        : fault
+        ? "The interview room hit a problem on our side. Press Rejoin and a fresh room opens."
+        : "Your connection to the interview dropped. Press Rejoin to go straight back in.";
+      guestEnded = false;
+      document.getElementById("readyNote").textContent =
+        "Your link stays valid while the interview is on, and your microphone check still counts.";
+      var rearm = document.getElementById("rearmBtn");
+      rearm.textContent = "Rejoin the interview";
+      rearm.classList.remove("hidden");
+      show("stateReady");
+      if (!pollHandle) pollPresence();
+      return;
+    }
     show("stateDone");
     flush.then(function () {
       document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
     });
   }
   function finishDone() {
+    // A guest who never got in has not had "a wrap" (Oct 27 2026).
+    if (!isHost && !everConnected) {
+      document.getElementById("doneHead").textContent = "This interview session has closed";
+      document.getElementById("doneBody").textContent =
+        "Mira couldn't start the interview with you this time. Check your email from her, or reply to it and she'll find you another time.";
+    }
     show("stateDone");
     document.getElementById("localRecDone").textContent = document.getElementById("localRec").textContent;
   }
@@ -1348,8 +1564,48 @@
   });
   document.getElementById("hangupBtn").addEventListener("click", function () {
     if (isHost) leaving = true;
+    else guestEnded = true;
     if (activeCall) activeCall.hangup();
   });
+
+  // ---- 3c. The guest beside Mira (Oct 27 2026) ---------------------------
+  // Patrick's test room: the guest saw Mira but never themselves. The SDK's
+  // local renderer wraps the camera track the call is already sending, so
+  // this opens no second camera (a second capture of the same camera can
+  // freeze the first one on an iPhone). It is only asked for when the call
+  // is sending video; with the camera off, the tile says so.
+  function showSelfView() {
+    var v = document.getElementById("selfview");
+    var note = document.getElementById("camOffNote");
+    if (!v || !note || isHost) return;
+    function noPicture(text) {
+      v.classList.add("hidden");
+      try { v.srcObject = null; } catch (e) { /* ignore */ }
+      note.textContent = text;
+      note.classList.remove("hidden");
+    }
+    if (!callSentVideo) { noPicture("Your camera is off. That's fine: the episode is audio."); return; }
+    var unavailable = "Your camera is on, but its picture can't be shown here.";
+    try {
+      VoxImplant.Hardware.StreamManager.get().showLocalVideo(false).then(function (r) {
+        if (!r || !r.stream || !r.stream.getVideoTracks || !r.stream.getVideoTracks().length) {
+          noPicture(unavailable); return;
+        }
+        v.srcObject = r.stream;
+        v.classList.remove("hidden");
+        note.classList.add("hidden");
+        var pr = v.play(); if (pr && pr.catch) pr.catch(function () {});
+      }).catch(function () { noPicture(unavailable); });
+    } catch (e) { noPicture(unavailable); }
+  }
+  function hideSelfView() {
+    var v = document.getElementById("selfview");
+    if (v) { try { v.srcObject = null; } catch (e) { /* ignore */ } v.classList.add("hidden"); }
+    try {
+      var pr = VoxImplant.Hardware.StreamManager.get().hideLocalVideo();
+      if (pr && pr.catch) pr.catch(function () {});
+    } catch (e) { /* nothing to hide */ }
+  }
 
   // ---- 3a. Mira's picture and the feedback panel (Oct 23 2026) ------------
   // The picture moves while the room is talking (the other people's audio,
@@ -1446,6 +1702,9 @@
   function onRoomMessage(raw) {
     var m = null;
     try { m = JSON.parse(String(raw || "")); } catch (e) { return; }
+    // Oct 27 2026: the room tells each leg it is closing, and why, before it
+    // hangs up, so a dropped connection and a closed room read differently.
+    if (m && m.nn === 1 && m.room === "ended") { roomEndReason = String(m.reason || "ended"); return; }
     if (!m || m.nn !== 1 || !m.status) return;
     if (fbWaiting) { clearTimeout(fbWaiting); fbWaiting = null; }
     var key = m.status === "queued" ? "queued_" + m.ack : m.status;
@@ -1481,7 +1740,7 @@
   // Sept 28 2026 (Elliot). Nothing on the page said "Mira can't hear you";
   // the only signal was her asking whether he was there. Now:
   //   15 s with no voice since joining  -> yellow banner + mic switcher
-  //   30 s                              -> "Have Mira call my phone" + Patrick emailed
+  //   30 s                              -> "Join from my phone instead" + Patrick emailed
   // After they have been heard once, a later silence gets more room (60 s /
   // 90 s): listening to Mira is not a fault. A muted guest who is talking
   // gets told they are muted.
@@ -1543,7 +1802,7 @@
   function showSilence(isMuted, offerPhone) {
     var b = document.getElementById("silenceBanner");
     document.getElementById("silenceHead").innerHTML = isMuted
-      ? "<b>You're on mute.</b> Mira can't hear you. Press Unmute above."
+      ? "<b>You're on mute.</b> Mira can't hear you. Press Unmute under the pictures."
       : "<b>Mira can't hear you yet.</b> Your microphone is sending almost no sound.";
     b.classList.remove("hidden");
     if (offerPhone && !isHost) document.getElementById("phoneOffer").classList.remove("hidden");

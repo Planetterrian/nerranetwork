@@ -1,0 +1,183 @@
+Open A I’s G P T 6.1 Terra delivers faster computer-use agents at half the prior token price.
+
+This is Models and Agents, episode two hundred sixteen.
+
+OpenESM weights go public, agent-memory papers cut token spend, then Things to Try.
+
+Open A I is rolling G P T 6.1 Terra out to ChatGPT Work, Codex, and the A P I under the name G P T 6.1-terra.
+
+The model understands screen content, performs actions across applications, and writes naturally.
+
+It matches G P T 6 Astra on Agents' Last Exam at one-tenth the price per token.
+
+Tasks finish over three times faster on average than both Astra and G P T 6.1 Sol.
+
+In ChatGPT Work and Codex the usage allowance stretches further than with G P T 5.6 Terra.
+
+Developers can access it immediately through the A P I or ChatGPT interfaces for agent-style work.
+
+Energy steering meets token generation in OpenESM, one architecture described in an arXiv paper.
+
+The model first optimizes a latent state over an energy landscape, then uses that refined state for generation.
+
+Pre-training ran on three large-scale corpora.
+
+Evaluation covered twenty-six downstream tasks, where the models outperform GPTs on most of them and show promising scaling behavior.
+
+The team fully releases model weights and training infrastructure on GitHub and Hugging Face.
+
+Next-token training gets a meaning reward in Conceptizer.
+
+A fixed vocabulary of about nine thousand contextual-synonym concepts sits alongside ordinary tokens.
+
+The model receives a reward for meaning rather than only the exact next token.
+
+Tests on one-billion to eight-billion-parameter models across three families post the lowest held-out perplexity at concept-target positions.
+
+The same runs record the highest probability on contextual synonyms.
+
+Downstream gains appear on knowledge and sentiment tasks, while commonsense performance stays comparable.
+
+Nepali vocabulary work uses a small regex edit to the pre-tokenizer that keeps every token ID of text without combining marks or Devanagari characters.
+
+The repair, with thirty-two thousand new merges, reduces Nepali token count to one point zero one times English.
+
+Nepali tokens drop by about fifty-four percent versus standard vocabulary extension on Llama-3 and Qwen3.
+
+Continued pretraining on Llama-3.2-1B and Qwen3-0.6B still leaves the original tokenizer winning on held-out Nepali bits per byte under every tested recipe.
+
+Indic language tokenization is the target of AdaptTok-Indic.
+
+Unicode-normalized preprocessing and explicit Indic conjunct handling sit alongside script-aware routing.
+
+Learned byte-level boundary prediction completes the stack.
+
+Mean fertility — tokens per word, more or less — hits one point four three two on Bengali and one point three eight eight on Hindi, well below SentencePiece byte-pair encoding, or BPE.
+
+Downstream scores average fifty-seven point six nine on evaluated Indic settings versus fifty point eight two for the SentencePiece baseline.
+
+Recursive Semantic Divergence measures expected cumulative semantic disagreement between independent rollouts of the same agent from the same state using natural language inference.
+
+As a reward signal it cuts task-progress variation from one hundred thirty-two percent to ninety-one percent on tau2-bench.
+
+On toolsandbox that variation falls from ninety percent to forty-four percent.
+
+The metric needs no ground-truth labels.
+
+It estimates future divergence from the current state.
+
+Performance improves across benchmarks and scales.
+
+SLICE-Mem uses a compact classifier for salience-guided admission.
+
+A semantic-dependency extractor converts turns into concise memory entries without generative large language model, or L L M, calls.
+
+On Memora Weekly and LongMemEval-S with Qwen3-30B backbones it matches the generative baseline MemOS.
+
+Total L L M token consumption falls by ninety-two point four percent on one and ninety-nine point five percent on the other.
+
+Cross-entry reconciliation is deferred to an offline stage.
+
+FlexA-Mem writes each unit of history once into an immutable store.
+
+Every call gets a fresh compact timeline plus detail, rendered by a fixed rule that fits remaining budget without an L L M call.
+
+On AppWorld at a four thousand token context it outperforms the second-best method by eleven point five percent.
+
+On one hundred forty-seven unused tasks it beats A-Mem with summary by twelve point two percent.
+
+The timeline carries completion while recovery mainly saves steps.
+
+Diffusion language models are the setting for TraceQuery, which predicts a small set of near-future trajectory-relevant positions from full-denoising trajectories.
+
+It queries only those candidates.
+
+That yields the strongest quality-computation trade-off among cache-based approaches for diffusion L L M's.
+
+The method generalizes across tasks, model variants, and families.
+
+Code is released on GitHub.
+
+Historical document transcription gets an entity-aware evaluation of optical character recognition, or OCR, judged at the entity level rather than raw character match.
+
+The benchmark covers one hundred seventy-five documents from the Berrutti Archive.
+
+Annotators marked five thousand two hundred nine entity mentions by hand.
+
+Qwen 3.6 achieves the highest entity coverage across tolerances.
+
+Several lower exact-match systems recover substantially when small character errors are tolerated.
+
+The benchmark and annotations will be released upon acceptance.
+
+Automatic speech recognition fine-tuning is the problem Whispering Wisely attacks with embedding-based k-center subset selection on Whisper's pretrained encoder.
+
+On Hebrew and Danish the approach often beats random sampling, especially at smaller subset sizes.
+
+Those k-center subsets capture broader lexical diversity, which helps when transcribed audio is limited.
+
+Speaking-style captioning gets its first standardized instruction-following benchmark in StyleInstructCaps.
+
+The framework scores metadata groundedness, hallucination, instruction following, and speaker-style consistency.
+
+Across nine state-of-the-art audio-language models, instruction-diverse training substantially improves groundedness and controllability.
+
+Chest computed tomography reports generated by L L M's are the target of EviGround-CT, which extracts positive finding sentences and predicts a three-dimensional evidence mask for each one.
+
+Sentence-grounded verification raises evidence-supported precision from zero point two six three to zero point three six five on a held-out one hundred-case subset.
+
+The unsupported positive finding rate falls from zero point seven three seven to zero point six three five.
+
+Elsewhere, industry experts tell Business Standard that A I agents could transform banking operations, while remaining risks sit around security, compliance, and oversight.
+
+Individuals and teams beginning to experiment with A I agents get practical first steps in a Washington Post analysis.
+
+Oil and gas operations could see agentic A I connect workflows and accelerate decisions, according to Oil and Gas Journal.
+
+Anthropic filed an S-1 registration statement with the Securities and Exchange Commission, or S E C, for its proposed initial public offering, or I P O.
+
+CodeRabbit uses G P T 6.1 Sol to investigate security risks across complex codebases and review proposed fixes, according to the Open A I blog.
+
+Greptile uses G P T 6 Astra to test user workflows, strengthen security, and reduce rework inside Codex.
+
+Open A I Signals data covers one hundred sixty-five work activities across nearly one hundred countries and shows how ChatGPT usage for work evolves over time.
+
+Test G P T 6.1 Terra through the Open A I A P I or ChatGPT Work on agentic computer-use tasks where speed and token cost dominate.
+
+Pull the released OpenESM weights on Hugging Face and try energy-steered pre-training on your own corpora.
+
+When you fine-tune Whisper on Hebrew or Danish with limited transcribed audio, use that k-center subset selection instead of a random slice.
+
+If you work in Bengali or Hindi and your tokenizer is too chatty, run AdaptTok-Indic and compare fertility against SentencePiece BPE.
+
+Continued G P T 6.1 family releases are expected to push further on the cost-intelligence curve for agent workloads.
+
+Additional entity-aware OCR benchmarks for historical documents are anticipated once the Berrutti Archive annotations are public.
+
+Soft-prompt compression paid a quadratic Transformer tax on every extra token, so it is time to pop the hood on the Boa Compressor.
+
+Boa replaces that Transformer backbone with a Mamba state-space model that encodes arbitrary-length context in a single linear-time pass.
+
+That pass produces a representation which conditions a frozen target L L M.
+
+The state-space model is trained by distillation so its compressed representation produces the same next-token logits as the target L L M ingesting the full context.
+
+Because the compressor runs online on every query instead of once offline, it removes the latency overhead that previously confined soft-prompt methods to repeated-query settings.
+
+At identical compression ratios the approach matches or exceeds prior offline Transformer-based baselines.
+
+Compression time drops by roughly an order of magnitude.
+
+It continues to scale to sixteen times compression and longer contexts without the quadratic cost that grows with Transformer-based compressors, and without adding per-query overhead.
+
+The practical limit appears when the target L L M's own context window becomes the bottleneck rather than the compressor itself.
+
+Teams facing repeated long-context queries should test Boa first; teams that compress once and reuse across many queries can still prefer the older offline methods.
+
+Before we go, the next G P T 6.1 family drop is the one I'll be reading the moment it lands.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Omni View is worth a spot in your feed: a balanced daily world-news briefing that takes every side seriously. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com. The Do Positive Pod is the club for people who do something about it — episodes and the Dispatch Wall at nerranetwork dot com thedppod.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

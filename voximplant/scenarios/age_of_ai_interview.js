@@ -12,11 +12,10 @@
  * Two kinds of session run this one file (the platform starts a new
  * session per inbound call; VoxEngine.callConference is what merges them):
  *
- *  PARTICIPANT session — one per person (and one for a PSTN guest):
+ *  PARTICIPANT session — one per person:
  *    - inbound WebRTC call from age-of-ai-studio.html with X-Run-Id /
- *      X-Role headers (default mode), or
- *    - outbound PSTN call to the guest's phone (StartScenarios with
- *      customData {"run_id"}) — the fallback mode.
+ *      X-Role headers. (The outbound PSTN mode was retired Oct 27 2026:
+ *      phone interviews are no longer offered.)
  *    It answers, plays the recording-consent disclosure to a guest,
  *    records that person (Call.record stereo: L = their mic, R = what they
  *    hear) plus the guest camera (separate video recorder), then joins the
@@ -97,6 +96,8 @@ const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (
 // Voximplant ends a session that has had no call for 60 s (session
 // limits) — a 90 s grace never fired its webhook and left runs stuck
 // in_progress (Sept 10 2026). Stay under the limit.
+// (Oct 27 2026: the studio's Rejoin button keeps the guest's microphone
+// check, so a dropped guest is back well inside this.)
 const REJOIN_GRACE_MS = 45 * 1000; // room stays up this long after the last human leaves
 const OPENING_WAIT_MS = 20 * 1000; // Mira opens when a guest is in, or after 20 s with only the host
 // Sept 14 2026 (John Capobianco). The trace of that room: guest leg attached
@@ -196,9 +197,11 @@ let sessionKind = null;    // "participant" | "room"
 let webhookFired = false;
 
 // ---------------------------------------------------------------------------
-// Entry 1: outbound PSTN (fallback mode) — StartScenarios with customData.
+// Entry 1: StartScenarios with customData — narration takes and probes.
 // Inbound sessions also fire AppEvents.Started (with no customData); they
-// simply return here and are handled by CallAlerting below.
+// simply return here and are handled by CallAlerting below. The outbound
+// PSTN interview (a bare run_id) was retired Oct 27 2026: phone interviews
+// are no longer offered, and nothing dials a guest's phone.
 // ---------------------------------------------------------------------------
 
 VoxEngine.addEventListener(AppEvents.Started, async function () {
@@ -209,32 +212,11 @@ VoxEngine.addEventListener(AppEvents.Started, async function () {
   if (custom.narrate) return narrationSession(custom); // Mira reading a scripted pickup
   if (!custom.run_id) return; // inbound session — CallAlerting takes over.
   if (custom.probe) return probeSession(custom); // synthetic participant (diagnostics)
-
-  sessionKind = "participant";
-  callMode = "pstn";
-  runId = custom.run_id;
-  let config;
-  try {
-    config = await fetchInterviewConfig(runId);
-    if (!config) throw new Error("no interview_runs row for " + runId);
-  } catch (e) {
-    Logger.write("[aoa] startup failure: " + e.message);
-    await fireWebhook({ run_id: runId, status: "failed", reason: "startup: " + e.message });
-    return VoxEngine.terminate();
-  }
-
-  const call = VoxEngine.callPSTN(config.guest_phone, config.caller_id);
-  call.addEventListener(CallEvents.Connected, function () {
-    participantConnected(call, "guest", config, /* withVideo = */ false);
-  });
-  call.addEventListener(CallEvents.Failed, async function (event) {
-    // Guest didn't answer / call failed → Worker retry ladder re-dials.
-    await fireWebhook({
-      run_id: runId, status: "failed", call_mode: callMode,
-      reason: "call_failed: " + (event.reason || event.code || "unknown"),
-    });
-    VoxEngine.terminate();
-  });
+  // A bare run_id was the phone-call fallback. It is refused without a
+  // webhook: no guest is ever dialled, and nothing is marked missed.
+  Logger.write("[aoa] refused a phone-call start for run " + custom.run_id +
+               ": phone interviews are no longer offered");
+  VoxEngine.terminate();
 });
 
 // ---------------------------------------------------------------------------
@@ -463,7 +445,9 @@ async function participantConnected(call, role, config, withVideo) {
     // 2. Recording-consent disclosure — pre-generated Mira clip from R2
     //    (spec §11.2). Guests only; played on their own leg before they
     //    enter the room so it never interrupts a conversation in progress.
-    if (role === "guest" && config.recording_disclosure_url) {
+    // Oct 27 2026: once per run. A guest coming back after a dropped
+    // connection has heard it and is mid-conversation.
+    if (role === "guest" && config.recording_disclosure_url && !config.guest_joined_at) {
       call.startPlayback(config.recording_disclosure_url);
       await waitForEvent(call, CallEvents.PlaybackFinished);
     }
@@ -1114,7 +1098,13 @@ function noteHoldFromGuest(text) {
 
 // The guest saying they have to stop. A sign-off before the closing round is
 // finished is allowed only then, or when the hard cap fired (Oct 22 2026).
-const GUEST_STOP_RE = /\b((i|we) (have|need|got|gotta) to (go|run|leave|stop|hop off|jump off|wrap up)|i'?m (going to|gonna) have to (go|leave|stop|run)|(can|could|should) we (stop|end|wrap( it)? up)( here| there| now)?|let'?s (stop|wrap( it)? up|end( it)?) (here|there|now))\b/i;
+// Oct 27 2026, Glenn Broder: "...all the tests that we need to run when we're
+// actually working with these clients" read as the guest asking to stop, at
+// fourteen minutes, and the room stopped holding the closing round open for
+// the rest of the hour. "I have to go" / "we need to run" only count when the
+// thought ends there (a full stop, a comma, "now", "in five minutes", "for a
+// meeting"), never when the sentence carries on into what has to be run.
+const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should) we (?:stop|end|wrap(?: it)? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: it)? up|end(?: it)?) (?:here|there|now)\b)/i;
 let guestAskedToStop = false;
 let roundCloseBlocks = 0;
 const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through
@@ -1143,7 +1133,10 @@ async function openRoom() {
     if (!config) throw new Error("no interview_runs row for " + runId);
   } catch (err) {
     Logger.write("[aoa " + runId + "] room startup failure: " + err.message);
-    await fireWebhook({ run_id: runId, status: "failed", reason: "startup: " + err.message });
+    // Oct 27 2026: say it is the room that failed, so the Worker reopens the
+    // studio instead of treating it as a guest who didn't answer.
+    await fireWebhook({ run_id: runId, status: "failed", call_mode: callMode,
+                        disconnect_reason: "room_startup_failed", reason: "startup: " + err.message });
     setTimeout(function () { VoxEngine.terminate(); }, 500);
     return false;
   }
@@ -2471,20 +2464,16 @@ function postSilenceAlert(seconds) {
 }
 
 function silentMicHelpLine(attempt) {
-  if (callMode === "pstn") {
-    return attempt === 1
-      ? "\"I can't hear you yet. If your phone is on mute, or on speaker far away, bring it " +
-        "close and unmute, then just say hello.\""
-      : "\"Still nothing on my end. I'll stay on the line; if it doesn't come through, hang up " +
-        "and I'll call you straight back.\"";
-  }
+  // Oct 27 2026: no phone calls. The way out of a silent microphone is
+  // another microphone, or the same studio on the guest's phone.
   return attempt === 1
     ? "\"I can't hear you yet, so your microphone isn't reaching me. There's a yellow box on " +
       "your screen: pick a different microphone from the list in it, and check you're not on " +
-      "mute. If that doesn't fix it, press 'Have Mira call my phone' and I'll ring you " +
-      "straight away.\""
-    : "\"Still nothing from your microphone on my end. The quickest fix is the 'Have Mira call " +
-      "my phone' button in the yellow box. Press it and I'll call you right now.\"";
+      "mute. If that doesn't fix it, the box has a button to carry on from your phone's " +
+      "browser instead.\""
+    : "\"Still nothing from your microphone on my end. The quickest fix is in the yellow box: " +
+      "carry on from your phone's browser, with earbuds in, or try another browser. I'll be " +
+      "right here.\"";
 }
 
 function silentMicNudge(attempt) {
@@ -2879,6 +2868,14 @@ function noteRoundQuestion(text) {
 // is taken as asked; and the index never moves back (roundRehandOwed re-hands
 // the question in play at the same index).
 const ROUND_REHANDS_MAX = 1;
+// Oct 27 2026, Glenn Broder: the show's own question, the one his prep email
+// promised, was handed, she asked one of her own instead; handed again, she
+// only reacted to his last answer; and it was taken as asked without ever
+// being put to him. That one question gets a second chance, and a question
+// handed again is handed with no room for a reaction before it.
+const ROUND_REHANDS_MAX_FOR = { "the show's own question": 2 };
+const REHAND_LEAD_IN = "This question did not reach them last time. Say nothing before it:" +
+  " your whole turn is the question below, in these words.";
 const roundRehands = {};         // label -> times the room handed it again
 let roundTurnRequested = "";     // the question the room's next turn carries
 let roundTurnInFlight = "";      // the question of the turn now being spoken
@@ -2888,9 +2885,11 @@ let roundTurnInFlight = "";      // the question of the turn now being spoken
  * gone again once; then it is taken as asked and the round moves on.
  */
 function owedRehand(label, why) {
-  if ((roundRehands[label] || 0) >= ROUND_REHANDS_MAX) {
+  const most = ROUND_REHANDS_MAX_FOR[label] || ROUND_REHANDS_MAX;
+  if ((roundRehands[label] || 0) >= most) {
     roundSpoken[label] = true;
-    trace("round", "taken as asked: " + label + " (" + why + "; it was handed again once already)");
+    trace("round", "taken as asked: " + label + " (" + why + "; it was handed again " +
+          (most === 1 ? "once" : most + " times") + " already)");
     return false;
   }
   roundRehands[label] = (roundRehands[label] || 0) + 1;
@@ -3308,8 +3307,10 @@ function askNextRoundQuestion() {
   if (roundGuestGone()) return;
   if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
   let next;
+  let rehand = false;
   if (roundRehandOwed && roundIndex >= 0) {
     next = roundIndex;                 // the same question, at the same index
+    rehand = true;
   } else {
     next = roundIndex + 1;
     while (next < ROUND_QUESTIONS.length &&
@@ -3328,7 +3329,7 @@ function askNextRoundQuestion() {
   const entry = ROUND_QUESTIONS[next];
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
-  const leadIn = roundLeadIn;
+  const leadIn = roundLeadIn || (rehand ? REHAND_LEAD_IN : "");
   roundLeadIn = "";
   try {
     roundTurn(roundDirections((next + 1) + " of " + ROUND_QUESTIONS.length,
@@ -3570,6 +3571,16 @@ async function endRoom(reason) {
   trace("room", "ending: " + reason);
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
   if (mixRecorder) { try { mixRecorder.stop(); } catch (ignored) {} }
+  // Oct 27 2026: tell each page the room is closing, and why, before hanging
+  // up, so a guest's studio can tell a closed room (thank you) from a fault
+  // the Worker reopens (rejoin) and from their own dropped connection.
+  if (legs.length) {
+    legs.forEach(function (l) {
+      try { if (l.call && l.call.sendMessage) l.call.sendMessage(JSON.stringify({ nn: 1, room: "ended", reason: reason })); }
+      catch (ignored) {}
+    });
+    await sleep(400);
+  }
   legs.slice().forEach(function (l) { try { l.call.hangup(); } catch (ignored) {} });
   await sleep(1000); // let the Mira recorder report its Stopped URL
   try {
