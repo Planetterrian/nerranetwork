@@ -160,10 +160,22 @@ class _SkipVideo(Exception):
     """Internal sentinel: bail out of the video stage to the image fallback."""
 
 
-# Only set alarm on platforms that support it (not Windows)
-if hasattr(signal, "SIGALRM"):
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(_PIPELINE_TIMEOUT)
+def arm_pipeline_watchdog() -> None:
+    """Start the pipeline clock and arm the SIGALRM watchdog.
+
+    Oct 28 2026: this used to run at IMPORT. Every test that imports
+    run_show armed a 900 s alarm in its pytest worker, and on a two-core
+    runner the suite died fifteen minutes in with "PIPELINE TIMEOUT" inside
+    an unrelated test (a show-page render). A run arms it when it starts
+    (``__main__``, and ``scripts/rehearse_video.py``, which renders what the
+    video job renders); importing the module arms nothing.
+    """
+    global _PIPELINE_STARTED_AT
+    _PIPELINE_STARTED_AT = time.monotonic()
+    # Only set alarm on platforms that support it (not Windows)
+    if hasattr(signal, "SIGALRM"):
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(_PIPELINE_TIMEOUT)
 
 
 # ---------------------------------------------------------------------------
@@ -10655,6 +10667,7 @@ def _build_cross_promo_reply(config, today, episode_num=None) -> str:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    arm_pipeline_watchdog()
     args = parse_args()
     try:
         if args.video_phase:

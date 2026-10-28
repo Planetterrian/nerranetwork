@@ -803,6 +803,26 @@ class TestPromoCutHardening:
         from engine.daily_edition import _PRIMARY_PROMO_PATTERNS
         assert any(p.search(phrase) for p in _PRIMARY_PROMO_PATTERNS), phrase
 
+    def test_part_of_frame_without_the_brand_still_cuts_on_the_frame(self):
+        # SpaceX Ep142, 2026-10-26: Whisper dropped "Nerra Network — a family
+        # of daily pod" and wrote "this show is part of the cast on tech,
+        # science, and markets". The frame's scripted lead clause is the
+        # anchor; the show's own "Before we go" teaser stays in the segment.
+        body = ["real content about the booster and the tower " * 12,
+                "Before we go nineteen Air Force C-17s are slated to carry Starshield by March",
+                "That's the day at SpaceX that's a wrap I'll see you tomorrow"]
+        tail = ["And before you go this show is part of the",
+                "cast on tech science and markets",
+                "Each one a short sharp briefing you can finish on the commute",
+                "Find every show free at www narranetwork com",
+                "This episode used AI voice synthesis of my voice"]
+        t = self._synthetic(body + tail, 480.0)
+        hit = find_promo_cut(t)
+        assert hit and hit["kind"] == "promo" and hit.get("anchor") == "frame", hit
+        frame_start = t["segments"][len(body)]["words"][0]["start"]
+        teaser_end = t["segments"][len(body) - 1]["words"][-1]["end"]
+        assert teaser_end <= hit["raw_seconds"] <= frame_start
+
     def test_every_recent_lineup_transcript_hits_a_frame(self):
         # Network-wide: every committed transcript from the last ~3 weeks
         # must trim on FRAME evidence (a plug frame or the scripted YouTube
