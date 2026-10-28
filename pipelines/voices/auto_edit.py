@@ -68,8 +68,12 @@ def recorded_on(run: dict, interview: dict) -> dt.date:
     from zoneinfo import ZoneInfo
     for value in ((run or {}).get("guest_joined_at"), (interview or {}).get("scheduled_at"),
                   (run or {}).get("fired_at"), (run or {}).get("created_at")):
+        if not value:
+            continue
+        # "+00" as Postgres prints it is not ISO on every Python: make it "+00:00".
+        text = re.sub(r"([+-]\d{2})$", r"\1:00", str(value).strip().replace("Z", "+00:00"))
         try:
-            t = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            t = dt.datetime.fromisoformat(text)
         except (TypeError, ValueError):
             continue
         if t.tzinfo is None:
@@ -1069,9 +1073,12 @@ def _cold_open(decided: dict, clean: bool, leg, start: float, end: float):
     if not lead or not (lo <= b - a <= hi) or not (start <= a < b <= end):
         logger.warning("auto_edit: cold open %.1f-%.1f unusable — intro stands alone", a, b)
         return "", None
-    return lead, {"from": "track:guest", "start": round(max(0.0, a - 0.1), 2),
-                  "end": round(b + 0.3, 2), "gaps": False, "trim_edges": True,
-                  "note": "Cold open: the guest in their own voice."}
+    clip = {"from": "track:guest", "start": round(max(0.0, a - 0.1), 2),
+            "end": round(b + 0.3, 2), "gaps": False, "trim_edges": True,
+            "note": "Cold open: the guest in their own voice."}
+    if str(co.get("quote") or "").strip():
+        clip["text"] = " ".join(str(co["quote"]).split())
+    return lead, clip
 
 
 def _interruptions(run: dict, leg) -> list:

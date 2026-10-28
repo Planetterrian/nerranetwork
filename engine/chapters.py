@@ -1009,6 +1009,7 @@ def _title_candidates(story_headlines: List[str], digest_text: str) -> List[str]
 def _story_break_insertions(
     ctx, digest_text: str, section_markers: list, story_headlines: List[str],
     lo_word: int, hi_word: int, max_chars: int = HEADLINE_TITLE_MAX,
+    known_sections_only: bool = False,
 ) -> list:
     """Chapters where the episode's stories begin, titled by the story.
 
@@ -1025,6 +1026,14 @@ def _story_break_insertions(
     item's headline, whole, or for an essay section the marker that names the
     section (else its heading, whole). No title, no chapter: the text stays
     in the chapter before it. Returns ``[(word_idx, char_offset, title)]``.
+
+    Oct 28 2026: on a ``known_sections_only`` show an essay section is named
+    by its marker or not at all, never by its raw heading. SpaceX Ep143 told
+    its lead story in the deep dive's own sentences, the detector filed those
+    lines under the essay, and the episode shipped an "Engineering Deep Dive"
+    chapter inside the lead story — a title outside the show's known set,
+    for a section whose marker ("The Engineering Angle") already starts it
+    where it is spoken.
     """
     if ctx is None:
         return []
@@ -1081,7 +1090,7 @@ def _story_break_insertions(
                 title = _section_marker_title(unit.section, section_markers)
         else:
             title = _section_marker_title(unit.section, section_markers)
-            if not title:
+            if not title and not known_sections_only:
                 level, heading = headings.get(unit.section, (0, ""))
                 if (level >= 2 and unit.section != first_heading
                         and 4 <= len(heading) <= max_chars
@@ -1221,6 +1230,7 @@ _TAIL_TITLES = ("closing", "sign-off", "tomorrow teaser", "teaser",
 def _apply_story_chapters(
     chapters: List["Chapter"], ctx, digest_text: str, section_markers: list,
     story_headlines: List[str], total_words: int, total_chars: int,
+    known_sections_only: bool = False,
 ) -> tuple:
     """``(chapters, placed)``: *chapters* with a chapter at every titled
     story change in the body (``_story_break_insertions``). *placed* is True
@@ -1236,7 +1246,8 @@ def _apply_story_chapters(
                      if c.title.strip().lower() in _TAIL_TITLES), total_words)
     inserts = _story_break_insertions(
         ctx, digest_text, section_markers, story_headlines,
-        chapters[0].word_start, body_end)
+        chapters[0].word_start, body_end,
+        known_sections_only=known_sections_only)
     if not inserts:
         return chapters, False
     bounds = [[c.word_start, c.char_start, c.title] for c in chapters]
@@ -1646,7 +1657,8 @@ def parse_chapters(
         try:
             chapters, story_done = _apply_story_chapters(
                 chapters, story_ctx, digest_text, section_markers,
-                story_headlines or [], total_words, total_chars)
+                story_headlines or [], total_words, total_chars,
+                known_sections_only=known_sections_only)
         except Exception as exc:  # noqa: BLE001 — chapters are metadata
             logger.warning("Story chapters skipped for %s: %s",
                            show_name or "show", exc)

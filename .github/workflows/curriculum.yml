@@ -1,0 +1,67 @@
+# Curriculum / queue-runway invariants — always run.
+#
+# test.yml skips on generated-only pushes to main (paths-ignore). Those
+# pushes are exactly when a curriculum or topic-queue shortfall can land
+# unnoticed: the daily pipeline drains subjects/topics and commits only
+# digests/blog/html, so the full suite never sees the red check. This
+# workflow has NO paths filter so a green main cannot hide a runway miss.
+name: Curriculum invariants
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: curriculum-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  curriculum:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        timeout-minutes: 10
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      # Floor, not exact match: additions must not red the job, deletions must.
+      # A dead --deselect is silent; a vanished positional selector exits 4;
+      # this catches quiet removals from the three targets below.
+      # --override-ini=addopts= clears pyproject's addopts="-v --tb=short":
+      # with -v, --collect-only -q prints a tree with no "::" and grep -c
+      # would read 0 forever. Bare -q emits one node id per line.
+      - name: Assert the selectors still collect every invariant
+        run: |
+          set -euo pipefail
+          count=$(python -m pytest \
+            tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets \
+            tests/test_network_quality_pass.py::TestNarrativeQueueRunway \
+            tests/test_queue_restock.py \
+            --collect-only -q --override-ini=addopts= | grep -c '::' || true)
+          echo "collected $count curriculum node ids (floor 46)"
+          if [ "$count" -lt 46 ]; then
+            echo "::error::curriculum invariants dropped to $count node ids, below the 46 floor. If tests were removed deliberately, lower the floor in the same commit and say why."
+            exit 1
+          fi
+
+      # ONE job owns every curriculum invariant. Serial, no -x: every
+      # invariant reports in one run. Selectors verified via
+      # --collect-only -q (46 node ids under these three targets).
+      - name: Run curriculum invariants
+        run: |
+          python -m pytest \
+            tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets \
+            tests/test_network_quality_pass.py::TestNarrativeQueueRunway \
+            tests/test_queue_restock.py \
+            -q --tb=short

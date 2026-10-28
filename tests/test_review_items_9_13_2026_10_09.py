@@ -268,13 +268,73 @@ class TestXOutcome:
         src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
         assert src.index("_append_summary(spec, target_date, digest_md") < src.index("post_edition_to_x(spec, episode_num, title") < src.index("x_posted=x_posted,")
 
-    def test_voices_publisher_posts_and_the_workflows_carry_the_secrets(self):
-        src = (ROOT / "pipelines" / "voices" / "publish_episode.py").read_text(encoding="utf-8")
-        # Oct 27 2026 the call gained mention=x_handle(app) (the guest's own
-        # handle); the guard pins the call and its order, not its tail.
-        call = "maybe_post_x(show, cfg, episode_num, title"
-        assert "def maybe_post_x(" in src and call in src
-        assert src.index("maybe_publish_youtube(show, cfg, episode_num, today") < src.index(call)
+    # Oct 28 2026: these pinned the call's source text and went red the day
+    # the call gained the guest's handle (Oct 25). They test what the
+    # Voices publisher does with the post now, and where it runs.
+
+    @staticmethod
+    def _voices():
+        voices = str(ROOT / "pipelines" / "voices")
+        if voices not in sys.path:
+            sys.path.insert(0, voices)
+        import publish_episode as pe
+        return pe
+
+    def test_voices_publisher_posts_the_episode_and_tags_the_guest(self, monkeypatch):
+        from types import SimpleNamespace
+        from urllib.parse import parse_qs, urlparse
+
+        from engine import x_post
+        from engine.funnel import parse_campaign_id
+        pe = self._voices()
+        show = pe.show_for({"show": "age_of_ai"})
+        cfg = load_config(ROOT / "shows" / "age_of_ai.yaml")
+        calls = []
+        monkeypatch.setattr(x_post, "post_teaser",
+                            lambda **kw: calls.append(kw) or (True, ""))
+
+        pe.maybe_post_x(show, cfg, 9, "What a lawyer signs", mention="pipermartz")
+
+        (kw,) = calls
+        assert kw["env_prefix"] == "NERRANETWORK_X_"
+        assert kw["title"] == "What a lawyer signs"
+        assert kw["mention"] == "pipermartz"
+        link = urlparse(kw["link"])
+        assert link._replace(query="").geturl() == show.post_url(9)
+        campaign = parse_campaign_id(parse_qs(link.query)["utm_campaign"][0])
+        assert campaign is not None and campaign.episode == 9
+
+        # A show with X off posts nothing; a failed post never raises.
+        pe.maybe_post_x(show, SimpleNamespace(publishing=SimpleNamespace(x_enabled=False)),
+                        9, "What a lawyer signs")
+        assert len(calls) == 1
+
+        def boom(**kw):
+            raise RuntimeError("X is down")
+        monkeypatch.setattr(x_post, "post_teaser", boom)
+        pe.maybe_post_x(show, cfg, 9, "What a lawyer signs")
+
+    def test_voices_publisher_posts_after_the_episode_is_out(self):
+        import ast
+        pe = self._voices()
+        tree = ast.parse(Path(pe.__file__).read_text(encoding="utf-8"))
+        fn = next(n for n in tree.body
+                  if isinstance(n, ast.FunctionDef) and n.name == "publish_one")
+        calls = {}
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                calls.setdefault(node.func.id, []).append(node)
+        (x_call,) = calls["maybe_post_x"]
+        published = min(c.lineno for c in calls["sb_update"]
+                        if any(isinstance(a, ast.Dict) and any(
+                            isinstance(v, ast.Constant) and v.value == "published"
+                            for v in a.values) for a in c.args))
+        youtube = min(c.lineno for c in calls["maybe_publish_youtube"])
+        assert published < youtube < x_call.lineno
+        mention = next(k.value for k in x_call.keywords if k.arg == "mention")
+        assert isinstance(mention, ast.Call) and mention.func.id == "x_handle"
+
+    def test_the_workflows_carry_the_x_secrets(self):
         for wf in ("nerra-daily.yml", "nerra_voices_publish.yml"):
             text = (ROOT / ".github" / "workflows" / wf).read_text(encoding="utf-8")
             for k in ("CONSUMER_KEY", "CONSUMER_SECRET", "ACCESS_TOKEN", "ACCESS_TOKEN_SECRET"):

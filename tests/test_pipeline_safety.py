@@ -249,3 +249,53 @@ class TestLongFormRenderBudget:
         for key in ("long_form_render_duration_s", "long_form_skipped_budget",
                     "long_form_render_budget_s"):
             assert f'"{key}"' in src, f"{key} never reaches the metrics file"
+
+
+# ---------------------------------------------------------------------------
+# The watchdog arms with the run, not with the import (Oct 28 2026)
+# ---------------------------------------------------------------------------
+#
+# run_show armed its 900 s SIGALRM at import, so every test process that
+# imported it carried a live alarm: on a two-core runner the suite died
+# fifteen minutes in with "PIPELINE TIMEOUT" inside a show-page render that
+# had nothing to do with the pipeline.
+
+_HAS_ALARM = pytest.mark.skipif(
+    not hasattr(__import__("signal"), "SIGALRM"), reason="no SIGALRM here")
+
+
+@_HAS_ALARM
+class TestWatchdogArmsWithTheRun:
+    def test_importing_run_show_arms_nothing(self):
+        import subprocess
+        code = "import signal, run_show; print('pending', signal.alarm(0))"
+        out = subprocess.run([sys.executable, "-c", code], cwd=PROJECT_ROOT,
+                             capture_output=True, text=True, timeout=300)
+        assert out.returncode == 0, out.stderr[-2000:]
+        assert out.stdout.strip().splitlines()[-1] == "pending 0", out.stdout[-500:]
+
+    def test_a_run_arms_it_with_its_own_clock(self):
+        import signal
+
+        import run_show
+        before = signal.getsignal(signal.SIGALRM)
+        try:
+            run_show.arm_pipeline_watchdog()
+            pending = signal.alarm(0)
+            assert 0 < pending <= run_show._PIPELINE_TIMEOUT
+            assert signal.getsignal(signal.SIGALRM) is run_show._timeout_handler
+            # The budget counts from the run's start, not from the import.
+            assert run_show._pipeline_budget_remaining() > run_show._PIPELINE_TIMEOUT - 30
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, before)
+
+    def test_the_entry_points_arm_it_before_anything_else(self):
+        import ast
+        tree = ast.parse((PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8"))
+        main = next(n for n in tree.body if isinstance(n, ast.If)
+                    and ast.unparse(n.test) == "__name__ == '__main__'")
+        assert ast.unparse(main.body[0]) == "arm_pipeline_watchdog()"
+        rehearsal = (PROJECT_ROOT / "scripts" / "rehearse_video.py").read_text(encoding="utf-8")
+        assert rehearsal.index("import run_show") < rehearsal.index(
+            "run_show.arm_pipeline_watchdog()") < rehearsal.index("run_show._run_video_stage(")
