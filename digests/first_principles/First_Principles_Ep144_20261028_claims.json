@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 2,
+    "claims_anchored": 2,
+    "claims_verified": 0,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://www.cosmeticsandskin.com/featured/detergent-shampoos.php",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "HTTP 404",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4152784/",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "Procter & Gamble introduced the first alkyl-sulfate liquid shampoo, Drene, in 1934 because soap performed poorly in hard water",
+      "A typical formulation listed by UL Prospector contains 73 to 90 percent deionized water, 8 to 15 percent primary surfactant such as sodium lauryl ether sulfate, 2 to 6 percent secondary surfactant"
+    ],
+    "flagged_count": 2,
+    "verified_count": 0
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Procter & Gamble introduced the first alkyl-sulfate liquid shampoo, Drene, in 1934.",
+      "episode_span": "Procter & Gamble introduced the first alkyl-sulfate liquid shampoo, Drene, in 1934 because soap performed poorly in hard water",
+      "source_url": "https://www.cosmeticsandskin.com/featured/detergent-shampoos.php",
+      "supporting_quote": "In 1934 Procter & Gamble introduced Drene, the first shampoo to use a synthetic detergent",
+      "status": "unverified_not_found",
+      "status_reason": "HTTP 404"
+    },
+    {
+      "id": "2",
+      "claim": "A typical modern shampoo formulation contains 73-90% deionized water, 8-15% primary surfactant, and 2-6% secondary surfactant.",
+      "episode_span": "A typical formulation listed by UL Prospector contains 73 to 90 percent deionized water, 8 to 15 percent primary surfactant such as sodium lauryl ether sulfate, 2 to 6 percent secondary surfactant",
+      "source_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4152784/",
+      "supporting_quote": "shampoos contain 70–90% water, 10–20% surfactants",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    }
+  ]
+}
