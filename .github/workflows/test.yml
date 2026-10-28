@@ -32,8 +32,9 @@ on:
   # schedule: must stay at this top level (sibling of push/pull_request),
   # unfiltered by paths-ignore — nesting it under push: would inherit the
   # skip and the backstop would never fire.
-  # 13:17 UTC = 06:17 Pacific Monday (matches restock-topic-queues.yml's
-  # 37 13 * * * UTC precedent); do not convert this back to 06 UTC.
+  # 13:17 UTC Mondays = 06:17 PT in winter (PST), 07:17 PT during daylight
+  # saving (PDT). Matches restock-topic-queues.yml's 37 13 * * * UTC
+  # precedent; do not convert this back to 06 UTC.
   schedule:
     - cron: '17 13 * * 1'
 
@@ -199,5 +200,5 @@ jobs:
       # NO --deselect — the whole suite including curriculum invariants runs.
       - name: Run full suite (weekly backstop)
         if: github.event_name == 'schedule'
-        run: python -m pytest tests/ -x -q --tb=short -n auto
+        run: python -m pytest tests/ -q --tb=short -n auto
 
