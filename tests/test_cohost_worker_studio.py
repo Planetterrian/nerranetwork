@@ -133,11 +133,16 @@ def test_upload_chunk_contract():
     assert "req.arrayBuffer()" in body
     assert "env.VOICES_R2.put(key, body, { httpMetadata: { contentType } })" in body
     assert "return json({ ok: true, key, size: body.byteLength })" in body
-    assert '`${String(seq).padStart(5, "0")}.webm`' in body
+    # Oct 28 2026: the extension follows the take (an audio take is always
+    # .webm; Safari's camera records MP4).
+    assert '`${String(seq).padStart(5, "0")}.${ext}`' in body
+    assert "const ext = chunkExt(kind, contentType);" in body
     key = _fn("function localKey")
     # Sept 10 2026: a per-join take id keeps a rejoin from overwriting the
     # first half's chunks. Absent (old clients), the layout is unchanged.
-    assert "`${show.r2Prefix}/local/${runId}/${role}/${take}${name}`" in key
+    # Oct 28 2026: a video take has its own lane beside the audio take.
+    assert "`${show.r2Prefix}/local/${runId}/${lane}/${take}${name}`" in key
+    assert 'const lane = kind === "video" ? `${role}-video` : role;' in key
     assert 'const take = sid ? `${sid}/` : "";' in key
     gate = _fn("async function localUploadGate")
     assert "adminTokenOk(" not in gate, "room model: host uploads need no token"
@@ -151,7 +156,7 @@ def test_upload_done_writes_manifest_key_and_reports_missing():
     body = _fn("async function handleUploadDone")
     assert "env.VOICES_R2.head(key)" in body
     assert "missing.push(key)" in body
-    assert 'localKey(gate.show, runId, gate.role, "manifest.json", sid)' in body
+    assert 'localKey(gate.show, runId, gate.role, "manifest.json", sid, kind)' in body
     for field in ("mime:", "started_at:", "duration_ms:", "completed_at:", "chunks: keys", "missing,"):
         assert field in body, field
     assert "[`local_${gate.role}_url`]: manifestKey" in body, "store the KEY, not a URL"
@@ -241,7 +246,10 @@ def test_studio_every_role_places_the_same_call():
     # The guest sends video, the host never does (the first try; a refused
     # camera retries audio-only, test_studio_camera_fallback_2026_10_23).
     assert "placeCall(!isHost && camOn)" in STUDIO
-    assert "video: { sendVideo: sendVideo, receiveVideo: false }" in STUDIO
+    # Oct 28 2026: when the studio records the camera itself (video_take),
+    # the call carries no video at all.
+    assert "video: { sendVideo: callSentVideo, receiveVideo: false }" in STUDIO
+    assert "callSentVideo = sendVideo && !videoTake;" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Connected, onCallConnected)" in STUDIO
     assert "call.on(VoxImplant.CallEvents.Disconnected, onCallEnded)" in STUDIO
     assert "Rejoin the room" in STUDIO

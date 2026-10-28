@@ -1497,6 +1497,20 @@ def main() -> int:
             except Exception:  # noqa: BLE001 — the processed tracks still stand
                 logger.exception("leg file with the guest's own take not built (non-fatal)")
 
+        # Oct 28 2026: the guest's camera, recorded in their browser, placed
+        # on the guest leg's clock for the video version (video_take.py).
+        video_track = None
+        try:
+            from video_take import build_video_track
+            video_track = build_video_track(
+                run, tracks["guest"], workdir / "video",
+                upload=r2_upload,
+                key_for=lambda name: show.r2_key("raw", f"{run['id']}_{stamp}_{name}"))
+        except Exception:  # noqa: BLE001 — the audio episode is the product
+            logger.exception("guest video take not built (non-fatal)")
+        if video_track:
+            video_url = video_track["takes"][0]["url"]
+
         session_log = dict(run.get("grok_session_log") or {})
         session_log["tracks"] = {"sources": tracks["sources"],
                                  "processed": processed, "durable": durable,
@@ -1507,6 +1521,8 @@ def main() -> int:
                                  "bleed": tracks.get("bleed") or {}}
         if leg_local:
             session_log["tracks"]["leg_local"] = leg_local
+        if video_track:
+            session_log["tracks"]["video"] = video_track
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,

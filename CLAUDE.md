@@ -2456,6 +2456,102 @@ Operator: `wrangler deploy` in `workers/voices` (agenda + stored presses).
 Deploy the scenario only on a candidate rehearsal PASS plus a listen. The
 page is live on merge.
 
+### The Age of AI: her pause explained, the guest on video, research she starts herself (Oct 28 2026)
+
+Operator-directed after the Oct 28 test room (median 4.4 s from the guest's
+last word to Mira's first; Mira said she cannot look anything up). Guards
+`tests/test_what_viktors_episode_taught.py::TestEachShowHasItsOwnRoomClips`,
+`tests/test_guest_video_2026_10_28.py`,
+`tests/test_mira_researches_on_her_own_2026_10_28.py`,
+`tests/test_turn_cues_2026_10_28.py`, `workers/voices/test/guest_video.test.ts`.
+Rules that bind:
+
+- **The pause is explained before the guest enters.** Each show's consent
+  notice (`pipelines/voices/narration/<show>_room_2026_10_28.json`, voiced to
+  `<show>/narration/<show>_room_2026_10_28/disclosure.mp3`) asks consent
+  FIRST, then says her wait after an answer is on purpose and is taken out of
+  the published episode. The prompt, the studio tips, the booking mail and
+  the prep brief say the same. The edit's `close_gaps` (MAX_GAP_SEC ≤ 1.0)
+  is what keeps that promise; the guard pins both.
+- **The guest's camera is recorded in the browser, never through the call.**
+  The Voximplant recorder is not a source (Glenn Broder: ~16 kbps of 1080p,
+  502 gaps over 2 s; the Oct 28 test room: no packets). The studio (section
+  4b) records 720p/2.5 Mbps with the raw mic in 5 s chunks to the Worker's
+  `kind=video` lane (`<prefix>/local/<run>/guest-video/<sid>/`), listed on
+  the run as `grok_session_log.local_video_takes.guest`. **A video take never
+  touches `local_<role>_url`** (the audio pointer the mix is built from).
+  The page records only when studio-state says `video_take` (the guest, on a
+  run whose `grok_session_log.local_video` is true); it then sends no video
+  to the call. `video_take.py` assembles each take and places it on the
+  guest leg's clock by its own microphone (`room_pieces`, same as an audio
+  take) into `tracks.video`; best-effort, an audio episode either way.
+- **The switch.** `voices.local_video` (shows.py default and
+  `shows/nerra_voices.yaml`) is **false until a test room with a person on
+  camera passes and the operator has watched it**; every rehearsal/test-room
+  run row carries `local_video: true` regardless.
+- **The video version is cut exactly as the sound was**
+  (`render_video.py`): the edit's `clock` (`[room_from, room_to, edit_from(,
+  scale)]`, room times carry `tracks.edit.room_offset_sec`) gives every
+  frame; a stretch with a scale (pauses closed blind) or one the camera did
+  not see shows the guest's name card; 1920x1080, guest left, Mira's studio
+  loop right, the speaker's tile bordered in the show colour. Stored as
+  `tracks.edit.video_url` with `video_of` = the edit URL; **publish uses it
+  only while `video_of` is still the edit being published** and never when
+  the guest ticked audio only (`editorial_packages.guest_video_ok = false`,
+  migration `20261028_guest_video_choice.sql`, offered on the review page only
+  when a picture exists). YouTube gets the video instead of the waveform, X a
+  ≤140 s clip of the first clip suggestion (moved to the edit's clock), the
+  episode page a `<video>` player (our own `audio.nerranetwork.com/*.mp4`
+  only). Workflows: a `video` job after post-interview and assemble-edit
+  (`continue-on-error`), and **Cut the video version of an interview** by
+  hand (`preview` for a test room).
+- **Research the room starts on its own.** `fact_check_claim` has been off
+  her tool list since Oct 21, so nothing searched. Now the room starts the
+  lookups (`maybeAutoResearch`, on each of her remembered lines): one on the
+  guest after her first line (recent news, never the biography), then one
+  per answer of ≥ 30 words at most every 150 s, eight a room, two in flight.
+  Same xAI Responses call (grok-latest, web + X search). A finding reaches
+  her as ONE sourced note (`researchNoteText`) that never starts a turn,
+  never corrects the guest, and is let go when the moment has passed; a
+  finding that would contradict the guest is `found: false`. Never in a
+  hello or closing session, a hold or the closing round (a late finding is
+  kept back). **The trace never carries the guest's words** (an answer is
+  "an answer of N words"); findings go to the webhook as `research_notes` /
+  `research_lookups` (Worker `roomCountersOf`, bounded) and to the rehearsal
+  room log. Off for one room: `grok_session_log.auto_research = false`.
+- **When has the guest finished? Measured, not guessed**
+  (`pipelines/voices/turn_cues.py`, report in
+  [`docs/reviews/turn_cues_2026_10_28.md`](docs/reviews/turn_cues_2026_10_28.md)).
+  Every pause in the guest's speech is labelled by what happened next (they
+  went on; they stopped ≥ 1 s and waited; or the room decided for them, set
+  aside) and scored against the voice, the last words (faster-whisper,
+  `--words`) and the camera (`--video`; a test room's takes are placed on the
+  fly from its stereo recording). On 22 rooms (10,433 holds, 643 ends): the
+  voice at the pause (pitch slope, final pitch, energy fade, lengthening)
+  does NOT tell done from thinking (held-out AUC 0.55-0.61), so no prosody
+  rule goes into the room; how long a guest pauses mid-answer is a property
+  of the guest (most rooms ≤ 11 pauses over 2 s an hour, run c868dac8 80),
+  which is why one fixed timer interrupted some guests and not others; the
+  words barely help either (the room's own clause rule reads every real end
+  as finished and catches 11% of long thinking pauses — guests think between
+  sentences). What the data supports is a wait learned from the guest's own
+  pauses (`adaptive_policy`: same safety as 3 s, 0.2 s sooner on average,
+  1.5-2 s for a guest who never pauses long) — a room change, so candidate
+  rehearsal and a listen first. No room has had a usable picture yet; run
+  `turn_cues.py --run <test room> --video --words` on the first test rooms
+  with the camera on (`render_video.py --preview` shows the operator that
+  camera, uncut) before any camera cue is built. ⚠️ Nothing here changes the
+  room's timing.
+
+Operator: push; `wrangler deploy` in `workers/voices` (video lane, studio
+`video_take`, review-page choice, booking copy, research counters); the
+migration is applied. Scenario (research): the candidate rehearsal, a listen,
+then "Deploy Voximplant scenario". Video: a test room with the camera on, the
+workflow "Cut the video version of an interview" on that run with `preview`
+ticked (a test room is never post-processed, so the preview is the room
+uncut, emailed, published nowhere), watch it, then set `local_video: true`
+for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
+
 ### Members-only limited series (Oct 18 2026)
 
 Operator-directed (doc [`docs/specials.md`](docs/specials.md); guards

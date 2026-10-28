@@ -119,7 +119,12 @@ transcribed words (`rehearsal.room_log`):
   carried it. A question her words carry after the next one was handed, or
   more than 45 s after it was handed, is a turn behind; a question her
   words never carry is lost (the match uses the room's own patterns, so a
-  reworded question reads as lost: listen before calling it).
+  reworded question reads as lost: listen before calling it);
+- the room's quiet research (Oct 28 2026) line by line: each lookup it
+  started (the guest, or an answer named only by its length), each finding
+  it handed her, and each one that arrived in a hold or the closing round
+  and was kept back. The end-of-room webhook stores the findings as
+  `research_notes`; listen for whether she used one, and how.
 
 Every fault the rehearsals found on Oct 22-23 (the silent hold exit, dead
 air after a rescue, the repeated welcome, the round a turn behind) was
@@ -168,6 +173,10 @@ listen link is in the report). A measurement is not a listen — the Oct 20
   not grade warmth or whether a question landed with a human.
 - The cough is a clip; without `REHEARSAL_COUGH_CLIP` that beat is skipped.
 - The co-host is never in a rehearsal room.
+- The fixture guest has no camera. The video version (Oct 28 2026) is
+  tested in a test room with a person on camera: every rehearsal run row
+  carries `grok_session_log.local_video: true`, so the studio records the
+  camera there whatever the show's switch says.
 - The Worker must treat a `session_kind: rehearsal` run as one to record and
   leave alone (no editorial passes, no gate-1 email, no guest email). Until
   it does, a rehearsal room's completion webhook would dispatch

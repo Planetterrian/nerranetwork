@@ -1,0 +1,53 @@
+name: Cut the video version of an interview
+# Oct 28 2026: re-run the video version on its own (render_video.py), e.g.
+# after the guest's video choice or a new edit. The assemble and
+# post-interview workflows run it themselves after every assembly.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'interview_runs id (or leave empty and give the EDL slug)'
+        type: string
+        default: ''
+      slug:
+        description: 'pipelines/voices/edl/<slug>.json'
+        type: string
+        default: ''
+      preview:
+        description: 'A test room: its camera beside Mira, uncut, emailed to the operator (published nowhere)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  video:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-ffmpeg
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Cut the video version
+        run: python pipelines/voices/render_video.py --run "$RUN_ID" --edl "$EDL_SLUG"
+        env:
+          RUN_ID: ${{ inputs.run_id }}
+          EDL_SLUG: ${{ inputs.slug }}
+          PREVIEW: ${{ inputs.preview }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          OPERATOR_EMAIL: ${{ secrets.OPERATOR_EMAIL || 'patricknovak1@gmail.com' }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}

@@ -921,6 +921,9 @@ def assemble(slug: str) -> dict:
     tracks["preview"] = url
     tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1),
                       "clock": clock,
+                      # Oct 28 2026: the clock's room times carry this; the
+                      # video renderer takes it off to reach the guest leg.
+                      "room_offset_sec": room_offset,
                       # publish_episode refuses to ship this file if the guest
                       # has marked a window since it was built.
                       "windows_applied": applied,

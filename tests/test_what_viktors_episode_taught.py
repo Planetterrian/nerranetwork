@@ -400,32 +400,69 @@ FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
 NV_SYSTEM = json.loads((V / "narration" / "nerra_voices_room.json").read_text(encoding="utf-8"))
 
 
+# Oct 28 2026: both shows' consent notices were re-voiced (Patrick, after his
+# test room) to say that Mira's pause after an answer is on purpose and edited
+# out, and that a camera that is on is recorded for the video version. Each
+# notice still names its own show and still asks for consent first.
+ROOM_NOTICES = {"age_of_ai": "age_of_ai_room_2026_10_28",
+                "nerra_voices": "nerra_voices_room_2026_10_28"}
+
+
+def _notice(slug):
+    spec = json.loads((V / "narration" / f"{ROOM_NOTICES[slug]}.json").read_text(encoding="utf-8"))
+    return spec, {s["id"]: s["text"] for s in spec["segments"]}
+
+
 class TestEachShowHasItsOwnRoomClips:
     def test_nerra_voices_names_its_own(self):
         from pipelines.voices.shows import get_show
         nv = get_show("nerra_voices")
-        assert nv.disclosure_clip.endswith("/nerra_voices/narration/nerra_voices_room/disclosure.mp3")
+        assert nv.disclosure_clip.endswith(
+            "/nerra_voices/narration/nerra_voices_room_2026_10_28/disclosure.mp3")
         assert nv.apology_clip.endswith("/nerra_voices/narration/nerra_voices_room/apology.mp3")
 
-    def test_the_age_of_ai_keeps_the_clips_it_was_voiced_for(self):
+    def test_the_age_of_ai_has_its_own_notice_and_keeps_the_shared_apology(self):
         from pipelines.voices.shows import get_show
         aoa = get_show("age_of_ai")
-        assert aoa.disclosure_clip == "" and aoa.apology_clip == ""
+        assert aoa.disclosure_clip.endswith(
+            "/age_of_ai/narration/age_of_ai_room_2026_10_28/disclosure.mp3")
+        assert aoa.apology_clip == ""
 
-    def test_the_text_names_the_right_show_and_still_asks_consent(self):
+    @pytest.mark.parametrize("slug, name, other", [
+        ("age_of_ai", "The Age of AI", "Nerra Voices"),
+        ("nerra_voices", "Nerra Voices", "Age of AI"),
+    ])
+    def test_the_notice_names_its_show_asks_consent_and_explains_the_pause(self, slug, name, other):
+        spec, seg = _notice(slug)
+        text = " ".join(seg["disclosure"].split())
+        assert spec["show"] == slug and spec["loudness"] == -23
+        assert f"the AI host of {name}" in text and other not in text
+        # Consent first, before anything else is explained.
+        assert text.index("consent") < text.index("wait a few seconds")
+        assert "camera" in text and "video version" in text
+        assert "on purpose" in text and "finish your thought" in text
+        assert "taken out of the published episode" in text
+        assert " call" not in text  # no phone interviews since Oct 27
+
+    def test_the_old_nerra_voices_apology_still_says_the_right_show(self):
         seg = {s["id"]: s["text"] for s in NV_SYSTEM["segments"]}
         assert NV_SYSTEM["show"] == "nerra_voices"
-        assert "the AI host of Nerra Voices" in seg["disclosure"]
-        assert "Age of AI" not in seg["disclosure"]
-        assert "recorded" in seg["disclosure"] and "consent" in seg["disclosure"]
         assert "Age of AI" not in seg["apology"]
 
-    def test_the_narration_upload_lands_where_the_config_points(self):
+    @pytest.mark.parametrize("slug", ["age_of_ai", "nerra_voices"])
+    def test_the_narration_upload_lands_where_the_config_points(self, slug):
         # narrate.py uploads to show.r2_key("narration", slug, "<id>.mp3").
         from pipelines.voices.shows import get_show
-        nv = get_show("nerra_voices")
-        for seg_id, url in (("disclosure", nv.disclosure_clip), ("apology", nv.apology_clip)):
-            assert url.endswith(nv.r2_key("narration", "nerra_voices_room", f"{seg_id}.mp3"))
+        show = get_show(slug)
+        assert show.disclosure_clip.endswith(
+            show.r2_key("narration", ROOM_NOTICES[slug], "disclosure.mp3"))
+
+    def test_the_pause_it_promises_to_cut_is_cut(self):
+        # The notice promises the pauses come out of the episode; the edit
+        # shortens every silence over a second to about one.
+        import assemble_edit
+        assert assemble_edit.MAX_GAP_SEC <= 1.0
+        assert assemble_edit.GAP_LEAD_SEC + assemble_edit.GAP_TAIL_SEC <= 1.0
 
 
 class TestTheRoomNeverPlaysAMissingClip:
@@ -449,11 +486,16 @@ class TestTheRoomNeverPlaysAMissingClip:
         assert clips["recording_disclosure_url"].endswith("disclosure.mp3")
         assert clips["grok_drop_apology_url"].endswith("apology.mp3")
 
-    def test_a_show_without_its_own_keeps_the_default(self, monkeypatch):
+    def test_a_clip_a_show_does_not_name_keeps_the_default(self, monkeypatch):
+        # The Age of AI names its own notice (Oct 28 2026) but no apology, so
+        # the room keeps the shared apology the database column defaults to.
         import fire_interviews
         from pipelines.voices.shows import get_show
         monkeypatch.setattr(fire_interviews, "_clip_is_there", lambda url: True)
-        assert fire_interviews.room_clips(get_show("age_of_ai")) == {}
+        clips = fire_interviews.room_clips(get_show("age_of_ai"))
+        assert set(clips) == {"recording_disclosure_url"}
+        assert clips["recording_disclosure_url"].endswith(
+            "/age_of_ai_room_2026_10_28/disclosure.mp3")
 
     def test_unreachable_counts_as_absent(self):
         body = FIRE[FIRE.index("def _clip_is_there("):FIRE.index("def room_clips(")]

@@ -194,8 +194,9 @@ class TestARejoinNeverOverwritesTheFirstHalf:
         key = WORKER[WORKER.index("function localKey("):]
         key = key[:key.index("\n}\n") + 3]
         assert "const take = sid ? `${sid}/` : \"\";" in key
-        assert '`${String(seq).padStart(5, "0")}.webm`, sid)' in WORKER
-        assert '"manifest.json", sid)' in WORKER
+        # Oct 28 2026: the take's kind picks its lane (audio or video).
+        assert '`${String(seq).padStart(5, "0")}.${ext}`, sid, kind)' in WORKER
+        assert '"manifest.json", sid, kind)' in WORKER
 
     def test_every_take_is_recorded_not_just_the_last(self):
         assert "local_takes" in WORKER

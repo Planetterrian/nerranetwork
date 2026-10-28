@@ -1129,7 +1129,9 @@ export function roomCountersOf(payload: any): Record<string, unknown> {
   for (const k of ["barge_ins", "server_turns", "self_answers_blocked",
                    // Oct 22 2026: server turns the room cancelled and decided
                    // itself, and how often the guest stepped away (hold mode).
-                   "server_turns_rerouted", "holds", "dead_air_nudges"]) {
+                   "server_turns_rerouted", "holds", "dead_air_nudges",
+                   // Oct 28 2026: the lookups the room started on its own.
+                   "research_lookups"]) {
     if (payload?.[k] !== undefined && Number.isFinite(Number(payload[k]))) out[k] = Number(payload[k]);
   }
   if (typeof payload?.closing_round_complete === "boolean") out.closing_round_complete = payload.closing_round_complete;
@@ -1146,6 +1148,21 @@ export function roomCountersOf(payload: any): Record<string, unknown> {
         ...(f.text ? { text: String(f.text).slice(0, 240) } : {}),
         ...(typeof f.applied === "boolean" ? { applied: f.applied } : {}),
         ...(typeof f.held === "boolean" ? { held: f.held } : {}),
+      }));
+  }
+  // Oct 28 2026: what the room's quiet research handed Mira (the guest's
+  // name or the topic looked up, the finding and its source), bounded.
+  if (Array.isArray(payload?.research_notes)) {
+    out.research_notes = payload.research_notes.slice(0, 12)
+      .filter((n: any) => n && ["guest", "answer", "claim"].includes(String(n.kind)) && n.finding)
+      .map((n: any) => ({
+        kind: String(n.kind),
+        at_sec: Number.isFinite(Number(n.at_sec)) ? Number(n.at_sec) : null,
+        took_sec: Number.isFinite(Number(n.took_sec)) ? Number(n.took_sec) : null,
+        subject: String(n.subject ?? "").slice(0, 160),
+        finding: String(n.finding).slice(0, 300),
+        source: String(n.source ?? "").slice(0, 120),
+        delivered: n.delivered === true,
       }));
   }
   if (payload?.guest_steers_applied !== undefined && Number.isFinite(Number(payload.guest_steers_applied))) {
@@ -1686,8 +1703,11 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      it: the studio opens ${STUDIO_OPENS_BEFORE_TEXT} before we start, and there is nothing to install.</p>
      ${GUEST_AUDIO_HTML}
      <p>You can run the <a href="${setupTest}">30-second setup test</a> any time before
-     the day. It confirms I'll hear you clearly. This is an audio conversation: I'm a voice,
-     with nothing on screen, and your camera is optional.</p>
+     the day. It confirms I'll hear you clearly. I'm a voice, and I can't see you. Your camera
+     is optional: if it's on, it's recorded for the video version of the episode, and you can
+     leave it off or ask for audio only when you review.</p>
+     <p>When you finish speaking I wait a few seconds before I answer, so you always have
+     time to finish a thought; the pauses are taken out of the episode.</p>
      ${studioStepsHtml(studio)}
      <p>We have about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. I pace the
      conversation to that and start wrapping up near the end rather than cutting you off.</p>
@@ -2344,6 +2364,9 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
     || (pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim();
   const transcriptHtml = reviewTranscriptHtml(transcriptText);
   const deadline = pkg.guest_review_deadline ? pacificTime(pkg.guest_review_deadline, null, true) : "";
+  // Oct 28 2026: a guest whose camera was recorded chooses here whether the
+  // episode also goes out as a video. Not asked when there is no video.
+  const videoChoice = guestHasVideo(run);
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
@@ -2393,6 +2416,7 @@ book or site, papers, talks, the project you were describing.</p>
 <label><input type="radio" name="followup" value="none" checked> Nothing for now</label>
 </p>
 <textarea id="followupNote" placeholder="Anything you'd like us to know: a better time, what you'd want to talk about, or what you'd do differently in a re-record."></textarea>
+${videoChoice ? VIDEO_CHOICE_HTML : ""}
 <h3 id="decide">Your choice</h3>
 <div id="choices">
 <label class="choice"><input type="radio" name="decision" value="approve"><b>Approve it as it is</b>
@@ -2464,6 +2488,8 @@ function reviewChoice(){
   rows.push(["Your answer to Mira's question", val('experience') ? 'Included' : 'None']);
   rows.push(["For your episode's post", val('materials') ? 'Included' : 'Nothing']);
   rows.push(['Coming back', FOLLOW[fu ? fu.value : 'none']]);
+  const ao = document.getElementById('audioOnly');
+  if (ao) rows.push(['Video', ao.checked ? 'Audio only: leave my video out' : 'Video version welcome']);
   fill(document.getElementById('confirmRows'), rows);
   document.getElementById('confirm').style.display = 'block';
   document.getElementById('reviewBtnRow').style.display = 'none';
@@ -2482,7 +2508,8 @@ async function sendChoice(){
     const resp = await fetch(location.pathname, {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({decision: d, approve: d !== 'changes', correction: val('correction'),
         redactions: val('redactions'), windows: markedWindows(), followup: fu ? fu.value : 'none',
-        followup_note: val('followupNote'), experience: val('experience'), materials: val('materials')})});
+        followup_note: val('followupNote'), experience: val('experience'), materials: val('materials'),
+        audio_only: document.getElementById('audioOnly') ? document.getElementById('audioOnly').checked : undefined})});
     data = await resp.json().catch(function(){ return null; });
   } catch (e) { data = null; }
   if (data && data.already) {
@@ -2604,6 +2631,16 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
       { guest_followup: followup, guest_followup_at: now });
     await slack(env, `${show.shortLabel}: ${app?.name ?? "guest"} chose "${followup}"` +
       (body?.followup_note ? ` — ${String(body.followup_note).slice(0, 300)}` : ""));
+  }
+
+  // Oct 28 2026: the guest's video choice (asked only when their camera was
+  // recorded). null = never asked; the publish step sends no video on false.
+  if (typeof body?.audio_only === "boolean") {
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+      { guest_video_ok: !body.audio_only });
+    if (body.audio_only) {
+      await slack(env, `${show.shortLabel}: ${app?.name ?? "guest"} asked for audio only (no video version).`);
+    }
   }
 
   // Oct 21 2026: a cut the guest marks on a transcript line carries its
@@ -4180,7 +4217,8 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   // awaiting_guest or in_progress. The run row IS the unlocked studio.
   const latestRows = await sb(env, "GET",
     `interview_runs?interview_id=eq.${interviewId}&order=created_at.desc&limit=1` +
-    `&select=id,status,host_mode,guest_joined_at,host_joined_at,host_left_at`);
+    `&select=id,status,host_mode,guest_joined_at,host_joined_at,host_left_at,` +
+    `local_video:grok_session_log->local_video`);
   const latest = latestRows?.[0] ?? null;
   // Oct 5 2026 (Jon Cheney): the studio opens when the guest arrives. The
   // run is prepared ahead as `staged`; the first person to open the page
@@ -4245,7 +4283,31 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     // The interview is over (Oct 22 2026); the page says thank you.
     ended,
     agenda,
+    // Oct 28 2026: record the guest's camera in the browser. Only a run the
+    // fire step (or a rehearsal) marked local_video, and only for the guest:
+    // an older page ignores the flag, and an older Worker never sends it, so
+    // a page never sends video chunks to a Worker that would file them as
+    // the audio take.
+    video_take: videoTakeFor(role, run),
   });
+}
+
+/** Oct 28 2026: the guest's camera was recorded in the browser for this run. */
+export function guestHasVideo(run: any): boolean {
+  const takes = run?.grok_session_log?.local_video_takes?.guest;
+  return (Array.isArray(takes) && takes.some((t: any) => Number(t?.chunks) > 0))
+    || Boolean(run?.grok_session_log?.tracks?.video?.url);
+}
+
+const VIDEO_CHOICE_HTML = `<h3>Video (optional)</h3>
+<p>Your camera was on, so this episode can also go out as a video on YouTube, X and
+nerranetwork.com, with you beside Mira's picture. If you would rather it did not,
+tick the box and the episode is published as audio only.</p>
+<p><label><input type="checkbox" id="audioOnly"> Publish the audio only: leave my video out</label></p>`;
+
+/** Oct 28 2026: whether the studio records this person's camera locally. */
+export function videoTakeFor(role: StudioRole, run: any): boolean {
+  return role === "guest" && Boolean(run) && run.local_video === true;
 }
 
 /** Oct 23 2026: guest_agenda.points as short chip labels (at most five). */
@@ -4455,9 +4517,23 @@ async function runWithShow(env: Env, runId: string):
  *  and the earlier take was gone. Old clients send none; those keep the flat
  *  layout so their manifests still resolve. */
 function localKey(show: Show, runId: string, role: StudioRole, name: string,
-                  sid?: string | null): string {
+                  sid?: string | null, kind: TakeKind = "audio"): string {
   const take = sid ? `${sid}/` : "";
-  return `${show.r2Prefix}/local/${runId}/${role}/${take}${name}`;
+  const lane = kind === "video" ? `${role}-video` : role;
+  return `${show.r2Prefix}/local/${runId}/${lane}/${take}${name}`;
+}
+
+/** Oct 28 2026: the studio records the guest's camera in the browser (the
+ *  Voximplant video recorder had kept ~16 kbps of 1080p and most frames were
+ *  unreadable). A video take lives beside the audio take, in its own lane,
+ *  and NEVER touches local_<role>_url: that pointer is the audio take the
+ *  mix is built from. */
+export type TakeKind = "audio" | "video";
+export const takeKind = (raw: unknown): TakeKind => (String(raw ?? "") === "video" ? "video" : "audio");
+
+/** The chunk extension for a take's MIME type (Safari records MP4). */
+export function chunkExt(kind: TakeKind, mime: unknown): string {
+  return kind === "video" && /^video\/mp4/i.test(String(mime ?? "")) ? "mp4" : "webm";
 }
 
 const SID_RE = /^[A-Za-z0-9_-]{1,32}$/;
@@ -4502,8 +4578,13 @@ async function handleUploadChunk(req: Request, env: Env): Promise<Response> {
   const body = await req.arrayBuffer();
   if (body.byteLength === 0) return json({ error: "empty chunk" }, 400);
   if (body.byteLength > LOCAL_CHUNK_MAX_BYTES) return json({ error: "chunk too large (10 MB max)" }, 413);
+  const kind = takeKind(url.searchParams.get("kind"));
   const contentType = (req.headers.get("Content-Type") || "audio/webm").split(";")[0].trim() || "audio/webm";
-  const key = localKey(gate.show, runId, gate.role, `${String(seq).padStart(5, "0")}.webm`, sid);
+  if (kind === "video" && !/^video\//i.test(contentType)) {
+    return json({ error: "a video chunk must be video/*" }, 415);
+  }
+  const ext = chunkExt(kind, contentType);
+  const key = localKey(gate.show, runId, gate.role, `${String(seq).padStart(5, "0")}.${ext}`, sid, kind);
   await env.VOICES_R2.put(key, body, { httpMetadata: { contentType } });
   return json({ ok: true, key, size: body.byteLength });
 }
@@ -4523,21 +4604,24 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
   const chunks = Number(body?.chunks);
   if (!Number.isInteger(chunks) || chunks < 0 || chunks > 100000) return json({ error: "chunks (int) required" }, 400);
   const sid = cleanSid(body?.sid);
+  const kind = takeKind(body?.kind);
+  const ext = chunkExt(kind, body?.mime);
   const keys: string[] = [];
-  for (let i = 0; i < chunks; i++) keys.push(localKey(gate.show, runId, gate.role, `${String(i).padStart(5, "0")}.webm`, sid));
+  for (let i = 0; i < chunks; i++) keys.push(localKey(gate.show, runId, gate.role, `${String(i).padStart(5, "0")}.${ext}`, sid, kind));
   const missing: string[] = [];
   let bytes = 0;
   for (const key of keys) {
     const head = await env.VOICES_R2.head(key);
     if (!head) missing.push(key); else bytes += head.size;
   }
-  const manifestKey = localKey(gate.show, runId, gate.role, "manifest.json", sid);
+  const manifestKey = localKey(gate.show, runId, gate.role, "manifest.json", sid, kind);
   const manifest = {
     run_id: runId,
     role: gate.role,
+    kind,
     show: gate.show.slug,
     sid,
-    mime: String(body?.mime ?? "audio/webm;codecs=opus"),
+    mime: String(body?.mime ?? (kind === "video" ? "video/webm" : "audio/webm;codecs=opus")),
     started_at: body?.started_at ?? null,
     duration_ms: Number(body?.duration_ms ?? 0) || 0,
     completed_at: new Date().toISOString(),
@@ -4552,6 +4636,20 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
   // reconnect can be reassembled from all of them instead of just the last.
   const existing = (await sb(env, "GET",
     `interview_runs?id=eq.${runId}&select=grok_session_log`))?.[0]?.grok_session_log ?? {};
+  if (kind === "video") {
+    // Listed for post_interview (local_video_takes), never the audio pointer.
+    const vtakes = { ...(existing.local_video_takes ?? {}) };
+    const vfor: any[] = Array.isArray(vtakes[gate.role]) ? vtakes[gate.role] : [];
+    if (!vfor.some((t) => t?.manifest === manifestKey)) {
+      vfor.push({ manifest: manifestKey, sid, mime: manifest.mime, started_at: manifest.started_at,
+                  duration_ms: manifest.duration_ms, chunks: keys.length,
+                  missing: missing.length, bytes });
+    }
+    vtakes[gate.role] = vfor;
+    await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
+      { grok_session_log: { ...existing, local_video_takes: vtakes } });
+    return json({ ok: true, key: manifestKey, kind, chunks: keys.length, missing, bytes });
+  }
   const takes = { ...(existing.local_takes ?? {}) };
   const forRole: any[] = Array.isArray(takes[gate.role]) ? takes[gate.role] : [];
   if (!forRole.some((t) => t?.manifest === manifestKey)) {

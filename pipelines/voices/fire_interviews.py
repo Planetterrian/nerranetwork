@@ -1038,6 +1038,9 @@ def fire_due_interviews() -> int:
                 "host_mode": host_mode,
                 "host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",
                 **room_clips(show),
+                # Oct 28 2026: the studio records the guest's camera in the
+                # browser when the show says so (Worker studio-state reads it).
+                **({"grok_session_log": {"local_video": True}} if show.local_video else {}),
                 **({"status": "staged"} if studio else {"status": "awaiting_guest"}),
             })
             if host_mode:

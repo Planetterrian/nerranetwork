@@ -323,7 +323,10 @@
         <li><b>Computer over phone</b>, wired internet or strong Wi-Fi, recent Chrome, Edge, or Safari.</li>
         <!-- Oct 14 2026 (Piper Martz): "we record video for a future YouTube version"
              read as a video interview, and twice there was nothing to look at. -->
-        <li><b>An audio episode</b> — on screen you'll see an illustration of Mira, who is an AI and can't see you. The episode is audio. Your camera is optional: if it is on it is recorded, but you can leave it off.</li>
+        <!-- Oct 28 2026 (Patrick): the camera, when on, is recorded for the
+             video version, and Mira's pause before she answers is on purpose. -->
+        <li><b>Mira pauses before she answers</b> — a few seconds after you finish, so you always have time to finish your thought. The pauses are taken out of the published episode.</li>
+        <li><b>Camera optional</b> — on screen you'll see an illustration of Mira, who is an AI and can't see you. If your camera is on, it's recorded for the video version of the episode on YouTube, X and nerranetwork.com. You can leave it off, and when you review the episode you can ask for audio only.</li>
       </ul>
     </div>
   </div>
@@ -471,6 +474,10 @@
   var isHost = role === "host";
   var runId = null, sdk = null, activeCall = null, localStream = null;
   var camOn = !isHost, muted = false, timerHandle = null, callStart = null;
+  // Oct 28 2026: the Worker marks a run whose guest camera is recorded HERE,
+  // in the browser (section 4b). Only a Worker that knows the video lane
+  // sends it, so this page never sends video chunks one would file as audio.
+  var videoTake = false;
   var analyserRAF = null;
   var armed = false;              // legacy (dial-out host); kept for the presence poll
   var loggedIn = false;
@@ -578,6 +585,7 @@
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
         if (s.show) brand(s.show, s.show_name);
+        videoTake = s.video_take === true && !isHost;
         if (testMode) return startTest(s);
         setPresence(s);
         if (isHost && s.host_mode === false) {
@@ -1411,10 +1419,13 @@
   // the interview room (room-<run id>); X-Role labels the leg.
   var callSentVideo = false, audioOnlyRetried = false;
   function placeCall(sendVideo) {
-    callSentVideo = sendVideo;
+    // With a browser video take the call carries no camera: the room has no
+    // use for it (Mira can't see), its recorder kept nothing worth showing,
+    // and one capture of the camera is safer than two on Safari.
+    callSentVideo = sendVideo && !videoTake;
     activeCall = sdk.call({
       number: candidateRoom ? "mira-candidate" : "mira",
-      video: { sendVideo: sendVideo, receiveVideo: false },
+      video: { sendVideo: callSentVideo, receiveVideo: false },
       extraHeaders: { "X-Run-Id": runId, "X-Role": role },
     });
     wireCall(activeCall);
@@ -1493,6 +1504,7 @@
     fillCallMics();
     startCallMeter(document.getElementById("micSel").value);
     startLocalRecording();
+    startLocalVideo();
     renderAgenda();
     setTimeout(findRoomAudio, 1500);
   }
@@ -1502,8 +1514,8 @@
     stopCallMeter();
     stopMiraMeter();
     hideSelfView();
-    if (movedToPhone) { stopLocalRecording(); show("stateDone"); return; }
-    var flush = stopLocalRecording();
+    if (movedToPhone) { stopLocalRecording(); stopLocalVideo(); show("stateDone"); return; }
+    var flush = Promise.all([stopLocalRecording(), stopLocalVideo()]);
     if (isHost) {
       // The co-host left (or dropped). The room goes on without him; the
       // link is still valid, so offer to rejoin. The presence poll flips
@@ -1584,7 +1596,19 @@
       note.textContent = text;
       note.classList.remove("hidden");
     }
-    if (!callSentVideo) { noPicture("Your camera is off. That's fine: the episode is audio."); return; }
+    if (videoTake) {
+      var vs = vrec.stream;
+      if (!camOn || !vs || !vs.getVideoTracks().length) {
+        noPicture(camOn ? "Your camera is starting…" : "Your camera is off. That's fine: the conversation is audio.");
+        return;
+      }
+      v.srcObject = vs;
+      v.classList.remove("hidden");
+      note.classList.add("hidden");
+      var pv = v.play(); if (pv && pv.catch) pv.catch(function () {});
+      return;
+    }
+    if (!callSentVideo) { noPicture("Your camera is off. That's fine: the conversation is audio."); return; }
     var unavailable = "Your camera is on, but its picture can't be shown here.";
     try {
       VoxImplant.Hardware.StreamManager.get().showLocalVideo(false).then(function (r) {
@@ -1834,6 +1858,8 @@
     // The local high-quality take follows the microphone: the old device's
     // take is closed and a new one starts (each join/take has its own id).
     stopLocalRecording().then(function () { if (activeCall) startLocalRecording(); });
+    // The video take carries the same microphone as its sync reference.
+    stopLocalVideo().then(function () { if (activeCall) startLocalVideo(); });
   });
 
   // ---- 4. Local high-quality recording (Riverside model, Phase 2) ---------
@@ -1952,10 +1978,123 @@
       .then(function () { rec.recorder = null; rec.stream = null; rec.stopping = null; });
     return rec.stopping;
   }
+  // ---- 4b. Local video take (Oct 28 2026) -----------------------------------
+  // Patrick wants the episodes on video. The Voximplant recorder kept about
+  // 16 kbps of 1080p and most of its frames were unreadable, so the guest's
+  // camera is recorded here instead, the way the audio take is: 720p at
+  // 2.5 Mbps with the microphone alongside (the audio is only the sync
+  // reference post-production lines the picture up by), cut into 5 s chunks
+  // that stream to the Worker's video lane as they are made. Nothing here is
+  // fatal: no take means an audio episode, as before.
+  var VIDEO_MIMES = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm",
+                     "video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4"];
+  var vrec = { recorder: null, stream: null, seq: 0, uploaded: 0, failed: 0, sid: null, mime: "",
+               queue: Promise.resolve(), startedAt: null, stopping: null, done: false };
+  function pickVideoMime() {
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
+    for (var i = 0; i < VIDEO_MIMES.length; i++) {
+      if (MediaRecorder.isTypeSupported(VIDEO_MIMES[i])) return VIDEO_MIMES[i];
+    }
+    return "";
+  }
+  function videoUploadUrl(seq) {
+    return API + "/upload-chunk?run_id=" + encodeURIComponent(runId) + "&role=" + role
+      + "&kind=video&seq=" + seq + (vrec.sid ? "&sid=" + encodeURIComponent(vrec.sid) : "");
+  }
+  function uploadVideoChunk(blob, seq) {
+    var attempt = 0;
+    var type = (vrec.mime || "video/webm").split(";")[0];
+    function tryOnce() {
+      attempt++;
+      return fetch(videoUploadUrl(seq), { method: "POST", headers: { "Content-Type": type }, body: blob })
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          vrec.uploaded++;
+        })
+        .catch(function (e) {
+          if (attempt < 3) {
+            return new Promise(function (res) { setTimeout(res, 1000 * attempt); }).then(tryOnce);
+          }
+          vrec.failed++;
+          console.warn("[studio] video chunk", seq, "upload failed after 3 attempts", e);
+        });
+    }
+    return tryOnce();
+  }
+  function startLocalVideo() {
+    if (!videoTake || isHost || !camOn || vrec.recorder || !runId) return;
+    var mime = pickVideoMime();
+    if (!mime) { console.warn("[studio] this browser cannot record video"); return; }
+    var camId = document.getElementById("camSel").value;
+    var micId = document.getElementById("micSel").value;
+    var video = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } };
+    if (camId) video.deviceId = { exact: camId };
+    var audio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
+    if (micId) audio.deviceId = { exact: micId };
+    navigator.mediaDevices.getUserMedia({ video: video, audio: audio }).then(function (stream) {
+      if (!activeCall) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      vrec.stream = stream;
+      var recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000,
+                                                 audioBitsPerSecond: 64000 });
+      vrec.recorder = recorder; vrec.mime = mime;
+      vrec.startedAt = new Date().toISOString();
+      vrec.sid = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      vrec.seq = 0; vrec.uploaded = 0; vrec.failed = 0; vrec.done = false;
+      recorder.addEventListener("dataavailable", function (ev) {
+        if (!ev.data || !ev.data.size) return;
+        var seq = vrec.seq++;
+        var blob = ev.data;
+        vrec.queue = vrec.queue.then(function () { return uploadVideoChunk(blob, seq); });
+      });
+      recorder.start(5000);
+      showSelfView();
+    }).catch(function (e) {
+      console.warn("[studio] camera recording unavailable", e);
+      showSelfView();
+    });
+  }
+  function videoDonePayload() {
+    return { run_id: runId, role: role, kind: "video", chunks: vrec.seq, mime: vrec.mime,
+             sid: vrec.sid || null, started_at: vrec.startedAt,
+             duration_ms: vrec.startedAt ? Date.now() - Date.parse(vrec.startedAt) : 0 };
+  }
+  function stopLocalVideo() {
+    if (!vrec.recorder) {
+      if (vrec.stream) { vrec.stream.getTracks().forEach(function (t) { t.stop(); }); vrec.stream = null; }
+      return Promise.resolve();
+    }
+    if (vrec.stopping) return vrec.stopping;
+    var recorder = vrec.recorder;
+    var stopped = new Promise(function (resolve) {
+      if (recorder.state === "inactive") return resolve();
+      recorder.addEventListener("stop", function () { resolve(); });
+      try { recorder.stop(); } catch (e) { resolve(); }
+    });
+    vrec.stopping = stopped
+      .then(function () { return vrec.queue; })
+      .then(function () {
+        if (vrec.stream) vrec.stream.getTracks().forEach(function (t) { t.stop(); });
+        return fetch(API + "/upload-done", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(videoDonePayload()),
+        });
+      })
+      .then(function () { vrec.done = true; })
+      .catch(function (e) { console.warn("[studio] video upload-done failed", e); })
+      .then(function () { vrec.recorder = null; vrec.stream = null; vrec.stopping = null; });
+    return vrec.stopping;
+  }
+
   // Tab closing mid-flush: the Worker still gets an upload-done (text/plain
   // keeps sendBeacon preflight-free; the Worker parses the body as JSON
   // regardless) and writes a manifest listing whatever chunks landed.
   window.addEventListener("pagehide", function () {
+    if (vrec.recorder && !vrec.done && runId && navigator.sendBeacon) {
+      try {
+        navigator.sendBeacon(API + "/upload-done",
+          new Blob([JSON.stringify(videoDonePayload())], { type: "text/plain" }));
+      } catch (e) { /* best-effort */ }
+    }
     if (!rec.recorder || rec.done || !runId || !navigator.sendBeacon) return;
     try {
       navigator.sendBeacon(API + "/upload-done",

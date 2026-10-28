@@ -1087,6 +1087,19 @@
         <p class="nn-iv-standfirst">{{ hook }}</p>
         {% endif %}
 
+        {#- Oct 28 2026: the video version, the guest beside Mira, when the
+            guest's camera was on and they did not ask for audio only. -#}
+        {% if interview.video_url %}
+        <div class="nn-iv-player nn-iv-video">
+            <div class="nn-iv-player-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                Watch the conversation
+            </div>
+            <video controls preload="none" playsinline src="{{ interview.video_url | e }}" style="width:100%;border-radius:10px;background:#0b1020;aspect-ratio:16/9">
+                <a href="{{ interview.video_url | e }}">Download the video</a>
+            </video>
+        </div>
+        {% endif %}
         {# The player, above the fold. Until this shipped, an interview post
            had no <audio> element anywhere on it. #}
         {% if audio_url %}

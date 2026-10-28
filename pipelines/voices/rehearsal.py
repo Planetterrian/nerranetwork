@@ -344,7 +344,9 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
         "scheduled_for": _iso(_now()),
         "host_mode": False,
         "status": "awaiting_guest",
-        "grok_session_log": {"rehearsal": {
+        # Oct 28 2026: a person in a test room has their camera recorded in
+        # the browser, the material the turn-cue analysis is built from.
+        "grok_session_log": {"local_video": True, "rehearsal": {
             "arm": arm, "fixture": fixture["id"], "minutes": minutes,
             "reasoning_effort": reasoning_effort,
             "turn_silence_ms": detection["silence_duration_ms"],
@@ -893,6 +895,10 @@ def room_log(trace: List[Dict[str, Any]], transcript: str = "") -> Dict[str, Any
                                          and d.startswith("cancelled a turn nobody")),
         },
         "alerts": [d for k, d in kinds if k == "audio_path" and d.startswith("nothing heard")],
+        # Oct 28 2026: the room's own quiet research, line by line (lookups
+        # started, findings handed to her, findings that arrived too late).
+        "research": [{"at": _clock(at(i)), "line": d}
+                     for i, (k, d) in enumerate(kinds) if k == "research"],
         "round": closing_round(events),
         "round_lines": [{"at": _clock(at(i)), "line": d}
                         for i, (k, d) in enumerate(kinds) if k in ("round", "close")],
@@ -1038,6 +1044,10 @@ def room_markdown(record: Dict[str, Any]) -> str:
             if q.get("late"):
                 heard += " (**late**)"
             out.append(f"| {q['question']} | {q.get('handed_at') or '—'} | {heard} |")
+    if log.get("research"):
+        out += ["", "<details><summary>quiet research, as the room traced it</summary>", ""]
+        out += [f"    {x['at']}  {x['line']}" for x in log["research"]]
+        out += ["", "</details>"]
     if log.get("round_lines"):
         out += ["", "<details><summary>closing round, as the room traced it</summary>", ""]
         out += [f"    {x['at']}  {x['line']}" for x in log["round_lines"]]

@@ -145,6 +145,9 @@ def parse_interview_digest(md_text: str) -> dict:
         # Oct 25 2026: the photo from the guest's public profile, from the
         # summaries record (pipelines/voices/profile_photo.py); "" when none.
         "guest_photo": "",
+        # Oct 28 2026: the video version (the guest beside Mira), from the
+        # summaries record (pipelines/voices/render_video.py); "" when none.
+        "video_url": "",
         "has_transcript": False,
         "cohost": "",
     }
@@ -314,6 +317,9 @@ def interview_context(
     photo = str(record.get("guest_photo") or "").strip()
     if photo.startswith("https://"):
         ctx["guest_photo"] = photo
+    video = str(record.get("video_url") or "").strip()
+    if video.startswith("https://audio.nerranetwork.com/") and video.split("?")[0].endswith(".mp4"):
+        ctx["video_url"] = video
 
     ctx["chapters"] = supported_chapters(
         record.get("chapters") or [],

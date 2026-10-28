@@ -73,6 +73,18 @@ _AGE_OF_AI_VOICES_DEFAULTS: Dict[str, Any] = {
     # an empty link. CALCOM_BOOKING_URL* env vars still override.
     "booking_url": "https://cal.com/patrick-novak-lkcqo4/age-of-ai-interview",
     "closing_booking_url": "https://cal.com/patrick-novak-lkcqo4/age-of-ai-closing",
+    # Oct 28 2026: the consent notice the room plays before a guest enters,
+    # voiced from pipelines/voices/narration/age_of_ai_room_2026_10_28.json:
+    # her pause after an answer is on purpose and edited out, and the camera
+    # (when on) is recorded for the video version. Until the clip exists the
+    # fire step keeps the shared notice (fire_interviews.room_clips).
+    "disclosure_clip": ("https://audio.nerranetwork.com/age_of_ai/narration/"
+                        "age_of_ai_room_2026_10_28/disclosure.mp3"),
+    # Oct 28 2026: record the guest's camera in the browser for the video
+    # version (age-of-ai-studio.html 4b, video_take.py). Off for real guests
+    # until a test room passes and Patrick has watched one; test rooms record
+    # it regardless (rehearsal.build_run_row).
+    "local_video": False,
 }
 
 
@@ -114,6 +126,8 @@ class VoiceShow:
     # The room's own clips (consent notice, drop apology). "" = the shared
     # defaults on interview_runs, which were voiced for The Age of AI.
     disclosure_clip: str = ""
+    #: Oct 28 2026: the studio records the guest's camera for the video version.
+    local_video: bool = False
     apology_clip: str = ""
     # The show's Cal.com pages (voices: booking_url / closing_booking_url).
     booking_url: str = ""
@@ -236,6 +250,7 @@ def get_show(slug: Optional[str] = None) -> VoiceShow:
         spotify_url=(f"https://open.spotify.com/show/{cfg['spotify_show_id']}"
                      if cfg.get("spotify_show_id") else ""),
         disclosure_clip=str(voices.get("disclosure_clip") or "").strip(),
+        local_video=voices.get("local_video") is True,
         apology_clip=str(voices.get("apology_clip") or "").strip(),
         booking_url=str(voices.get("booking_url") or "").strip(),
         closing_booking_url=str(voices.get("closing_booking_url") or "").strip(),

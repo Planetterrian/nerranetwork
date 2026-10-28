@@ -126,6 +126,69 @@ def episode_audio(run: dict) -> str:
     )
 
 
+def episode_video(run: dict | None, pkg: dict | None) -> str:
+    """The video version to publish beside the audio, or "".
+
+    Oct 28 2026. render_video.py cuts it from the guest's camera, following
+    the edit frame for frame, and records which edit it follows. It is used
+    only while that edit is still the one being published (a re-assembly
+    after a guest's change needs a new cut), and never when the guest asked
+    for audio only on the review page."""
+    if pkg and pkg.get("guest_video_ok") is False:
+        return ""
+    edit = ((((run or {}).get("grok_session_log") or {}).get("tracks") or {})
+            .get("edit") or {})
+    url = str(edit.get("video_url") or "").strip()
+    if not url or str(edit.get("video_of") or "") != str(edit.get("url") or ""):
+        return ""
+    return url
+
+
+#: X takes a video of up to 140 seconds on any account.
+X_CLIP_MAX_SEC = 140.0
+X_CLIP_DEFAULT_SEC = 60.0
+
+
+def x_clip_window(pkg: dict, run: dict | None) -> tuple | None:
+    """``(start, seconds)`` on the published file of the moment to post on X:
+    the first clip suggestion, moved from the room's clock to the edit's."""
+    clips = [c for c in (pkg.get("clip_suggestions") or [])
+             if isinstance(c, dict) and c.get("start") is not None]
+    if not clips:
+        return None
+    clip = clips[0]
+    start, end = float(clip["start"]), clip.get("end")
+    clock = ((((run or {}).get("grok_session_log") or {}).get("tracks") or {})
+             .get("edit") or {}).get("clock")
+    if clock:
+        from edit_transcript import room_to_edit
+        moved = room_to_edit(clock, start)
+        moved_end = room_to_edit(clock, float(end)) if end is not None else None
+        if moved is None:
+            return None
+        length = (moved_end - moved) if moved_end and moved_end > moved else X_CLIP_DEFAULT_SEC
+        start = moved
+    else:
+        length = (float(end) - start) if end is not None and float(end) > start else X_CLIP_DEFAULT_SEC
+    return max(0.0, start), min(X_CLIP_MAX_SEC, max(10.0, length))
+
+
+def x_video_clip(video_url: str, window: tuple, out: Path) -> Path | None:
+    """Cut the X clip from the video version (re-encoded, so it starts on
+    the exact frame). Best-effort: None means a text post."""
+    start, seconds = window
+    try:
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-i", video_url,
+                        "-t", f"{seconds:.2f}", "-c:v", "libx264", "-preset", "veryfast",
+                        "-crf", "21", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+                        "-movflags", "+faststart", str(out)],
+                       check=True, capture_output=True, timeout=900)
+    except Exception:  # noqa: BLE001
+        logger.exception("X clip not cut (non-fatal)")
+        return None
+    return out if out.exists() and out.stat().st_size > 10_000 else None
+
+
 def assert_windows_applied(pkg: dict, run: dict) -> None:
     """Refuse to ship audio the guest's marked cuts were not applied to."""
     from edit_transcript import normalise_windows, windows_hash
@@ -592,6 +655,7 @@ def publish_one(interview_id: str) -> int:
     # name on the post. Found when the application was screened; looked for
     # once more here if it was not. Never stops the publish.
     photo = ensure_photo(app) or ""
+    video = episode_video(run, pkg)
 
     # Summaries JSON (site + dashboards read this shape network-wide).
     summaries_path = show.summaries_path
@@ -610,6 +674,8 @@ def publish_one(interview_id: str) -> int:
         "guest_links": guest_links(app),
         "guest_photo": photo,
         "chapters": vouched_chapters(pkg),
+        # Oct 28 2026: the video version, played on the episode's page.
+        **({"video_url": video} if video else {}),
     })
     summaries_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -646,8 +712,9 @@ def publish_one(interview_id: str) -> int:
                           interview.get("episode_thesis") or "",
                           digest_path)
     maybe_publish_youtube(show, cfg, episode_num, today, title, description,
-                          audio_url, app.get("name") or "")
-    maybe_post_x(show, cfg, episode_num, title, mention=x_handle(app))
+                          audio_url, app.get("name") or "", video_url=video)
+    maybe_post_x(show, cfg, episode_num, title, mention=x_handle(app),
+                 video_url=video, clip=x_clip_window(pkg, run) if video else None)
 
     notify_operator(show.slack(
         f"Ep{episode_num} PUBLISHED: {app['name']} — RSS updated, "
@@ -735,7 +802,8 @@ def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
 
 
 def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str,
-                 mention: str = "") -> None:
+                 mention: str = "", video_url: str = "",
+                 clip: tuple | None = None) -> None:
     """Post the episode's title and page link to X, if the show enables it.
 
     Oct 9 2026: ``publishing.x_enabled`` / ``x_env_prefix`` on the show YAML
@@ -756,11 +824,23 @@ def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str,
         link = episode_link(show.post_url(episode_num), show.slug, episode_num,
                             kind="episode", placement=PLACEMENT_BODY,
                             source=SOURCE_X)
-        posted, reason = post_teaser(
-            env_prefix=getattr(pub, "x_env_prefix", "") or "",
-            title=title, link=link, label=f"{show.name} Ep{episode_num}",
-            mention=mention,
-        )
+        label = f"{show.name} Ep{episode_num}"
+        env_prefix = getattr(pub, "x_env_prefix", "") or ""
+        posted, reason = False, ""
+        # Oct 28 2026: with a video version, the post carries a moment of it.
+        if video_url and clip:
+            from engine.x_post import post_media, teaser_text
+            with tempfile.TemporaryDirectory(prefix=f"{show.slug}_x_") as tmp:
+                cut = x_video_clip(video_url, clip, Path(tmp) / "moment.mp4")
+                if cut is not None:
+                    posted, reason, _url, _used = post_media(
+                        env_prefix=env_prefix, text=teaser_text(title, link, mention),
+                        media_paths=[cut], label=label)
+        if not posted and reason != "no_media":
+            posted, reason = post_teaser(
+                env_prefix=env_prefix, title=title, link=link, label=label,
+                mention=mention,
+            )
         if not posted:
             logger.warning("::warning::X post for %s Ep%d did not go out (%s)",
                            show.slug, episode_num, reason)
@@ -818,7 +898,7 @@ def render_episode_video(show: VoiceShow, audio_url: str, out: Path,
 
 def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                           title: str, description: str, audio_url: str,
-                          guest_name: str) -> None:
+                          guest_name: str, video_url: str = "") -> None:
     """Upload the episode's waveform video to YouTube, if the show enables it.
 
     Deliberately minimal: one long-form upload of the video the produce step
@@ -832,7 +912,9 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
     if cfg is None or not getattr(getattr(cfg, "youtube", None), "enabled", False):
         return
     yt = cfg.youtube
-    video_url = waveform_video_url(audio_url)
+    # Oct 28 2026: the video version (the guest beside Mira) when there is
+    # one for this edit; else the waveform video, as before.
+    video_url = video_url or waveform_video_url(audio_url)
     # Oct 11 2026: render here when the produce step left no video. The
     # edit path (assemble_edit — every ``_edit_`` episode, Ep5 onward)
     # never renders one, so the derived URL 404'd on every publish and the

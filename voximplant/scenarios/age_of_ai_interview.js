@@ -1404,6 +1404,9 @@ function remember(who, text) {
     if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();
     try { if (!holdMode && MIRA_HOLD_RE.test(text || "")) enterHold("she said she would wait"); }
     catch (err) { Logger.write("[aoa " + runId + "] hold check failed: " + err.message); }
+    // Oct 28 2026: the room's own quiet research (maybeAutoResearch).
+    try { maybeAutoResearch(); }
+    catch (err) { Logger.write("[aoa " + runId + "] auto research failed: " + err.message); }
     try {
       if (closingRequired && !roundActive && !roundClosed && !isClosingSession()
           && CLOSING_ROUND_RE.test(text || "")) startRound("she announced it", -1);
@@ -3609,6 +3612,9 @@ async function endRoom(reason) {
       guest_steers_applied: guestSteersApplied,
       closing_round_complete: roundClosed,
       closing_questions_asked: Object.keys(roundAsked).length,
+      // Oct 28 2026: what the room looked up, and what it handed her.
+      research_lookups: researchLookups,
+      research_notes: researchNotes,
       grok_session_log: grokAgent && grokAgent.getSessionLog ? grokAgent.getSessionLog() : null,
     });
   } catch (err) {
@@ -3678,32 +3684,53 @@ function parseFinding(text) {
     const obj = JSON.parse(m[0]);
     if (obj && obj.found === true && obj.finding && String(obj.finding).trim()) {
       return { finding: String(obj.finding).trim().slice(0, 600),
-               source: String(obj.source || "").trim().slice(0, 120) };
+               source: String(obj.source || "").trim().slice(0, 120),
+               topic: String(obj.topic || "").trim().slice(0, 120) };
     }
   } catch (err) { /* not JSON: treat as nothing found */ }
   return null;
 }
 
-function researchInBackground(claim, context) {
+function researchInBackground(claim, context, opts) {
+  opts = opts || {};
+  const kind = opts.kind || "claim";
   const key = claim.toLowerCase().replace(/[^a-z0-9 ]+/g, "").trim().slice(0, 120);
   if (!key || researchSeen[key] || researchInFlight >= RESEARCH_MAX_IN_FLIGHT) {
-    trace("research", "skipped: " + claim.slice(0, 80));
-    return;
+    trace("research", "skipped (" + kind + ")" + (kind === "answer" ? "" : ": " + claim.slice(0, 80)));
+    return false;
+  }
+  let auth;
+  try { auth = "Authorization: Bearer " + getSecret("XAI_API_KEY"); }
+  catch (err) {
+    trace("research", "no key (silent)");
+    return false;
   }
   researchSeen[key] = true;
   researchInFlight += 1;
-  trace("research", "started: " + claim.slice(0, 120));
-  Net.httpRequestAsync("https://api.x.ai/v1/responses", {
-    method: "POST",
-    headers: ["Content-Type: application/json",
-              "Authorization: Bearer " + getSecret("XAI_API_KEY")],
-    postData: JSON.stringify({
-      model: RESEARCH_MODEL,
-      input: [{ role: "user", content: researchPrompt(claim, context) }],
-      tools: [{ type: "web_search" }, { type: "x_search" }],
-    }),
-    timeout: 60,
-  }).then(function (res) {
+  researchLookups += 1;
+  const startedAt = Date.now();
+  // The trace never carries the guest's own words: an answer is named by
+  // its length (the lookup's topic comes back with the finding).
+  const label = kind === "answer" ? "an answer of " + countWords(claim) + " words" : claim.slice(0, 120);
+  trace("research", "started (" + kind + "): " + label);
+  let pending;
+  try {
+    pending = Net.httpRequestAsync("https://api.x.ai/v1/responses", {
+      method: "POST",
+      headers: ["Content-Type: application/json", auth],
+      postData: JSON.stringify({
+        model: RESEARCH_MODEL,
+        input: [{ role: "user", content: opts.prompt || researchPrompt(claim, context) }],
+        tools: [{ type: "web_search" }, { type: "x_search" }],
+      }),
+      timeout: 60,
+    });
+  } catch (err) {
+    researchInFlight -= 1;
+    trace("research", "failed (silent): " + (err && err.message));
+    return false;
+  }
+  pending.then(function (res) {
     researchInFlight -= 1;
     if (!(res && res.code >= 200 && res.code < 300)) {
       trace("research", "HTTP " + (res && res.code) + " (silent)");
@@ -3711,21 +3738,23 @@ function researchInBackground(claim, context) {
     }
     const found = parseFinding(responseText(res.text));
     if (!found) {
-      trace("research", "nothing found (silent): " + claim.slice(0, 80));
+      trace("research", "nothing found (silent): " + label.slice(0, 80));
       return;
     }
     if (!grokAgent || roomEnded) return;
+    // A finding the room went looking for on its own that lands in a hold or
+    // once the closing round has begun has missed its moment.
+    const late = kind !== "claim" && (holdMode || roundActive || roundClosed);
+    noteResearchFinding(kind, claim, found, startedAt, !late);
+    if (late) {
+      trace("research", "found, not delivered (" + (holdMode ? "hold" : "closing round") + ")");
+      return;
+    }
     trace("research", "found: " + found.finding.slice(0, 150));
     try {
       grokAgent.conversationItemCreate({
-        item: { type: "message", role: "system", content: [{ type: "input_text", text:
-          "[RESEARCH NOTE — system note, do not read this label aloud] Background " +
-          "research on what the guest said (\"" + claim.slice(0, 200) + "\") found: " +
-          found.finding + (found.source ? " (Source: " + found.source + ")" : "") +
-          ". If it still fits the conversation, you may bring it up naturally in " +
-          "one sentence on a coming turn, as something that adds to their point, " +
-          "and name the source. Never interrupt the guest to deliver it, never " +
-          "say you searched or checked, and if the moment has passed let it go." }] },
+        item: { type: "message", role: "system", content: [{ type: "input_text",
+          text: researchNoteText(kind, claim, found) }] },
       });
     } catch (err) {
       Logger.write("[aoa " + runId + "] research note inject failed: " + err.message);
@@ -3733,6 +3762,177 @@ function researchInBackground(claim, context) {
   }, function (err) {
     researchInFlight -= 1;
     trace("research", "failed (silent): " + (err && err.message));
+  });
+  return true;
+}
+
+/** The note a finding reaches her as. Never a response: she uses it on a
+ *  turn the room gives her, or not at all. */
+function researchNoteText(kind, subject, found) {
+  const label = "[RESEARCH NOTE — system note, do not read this label aloud] ";
+  const fact = found.finding + (found.source ? " (Source: " + found.source + ")" : "");
+  const quiet = "Never interrupt the guest to deliver it, never say you searched, " +
+    "checked or looked anything up, and never use it to correct or contradict them. " +
+    "If the moment has passed, let it go.";
+  if (kind === "guest") {
+    return label + "Recent news on your guest or their work: " + fact + ". If the " +
+      "conversation comes near it, you may fold it into one question, naming the " +
+      "source. " + quiet;
+  }
+  if (kind === "answer") {
+    return label + "Background on something the guest just mentioned" +
+      (found.topic ? " (" + found.topic + ")" : "") + ": " + fact + ". If it still fits, you may bring " +
+      "it in naturally in one sentence on a coming turn, as something that adds " +
+      "to their point, and name the source. " + quiet;
+  }
+  return label + "Background research on what the guest said (\"" + subject.slice(0, 200) +
+    "\") found: " + fact + ". If it still fits the conversation, you may bring it up " +
+    "naturally in one sentence on a coming turn, as something that adds to their point, " +
+    "and name the source. Never interrupt the guest to deliver it, never say you " +
+    "searched or checked, and if the moment has passed let it go.";
+}
+
+// ---------------------------------------------------------------------------
+// Research the room starts on its own (Oct 28 2026)
+// ---------------------------------------------------------------------------
+//
+// Patrick's test room, Oct 28: asked whether she could look something up,
+// Mira said she has no live search, and she was right. The search above ran
+// only when she called fact_check_claim, which has been off her tool list
+// since Oct 21, so no room had researched anything since. He wants her to do
+// a little research quietly during the conversation and bring in what she
+// finds without interrupting the flow or the guest. So the room starts the
+// lookups itself, scoped:
+//   * once, after her first line: the most recent public news on the guest
+//     or their work (the prep brief is her background; this is what is new);
+//   * after an answer of some substance, at most one every two and a half
+//     minutes: one concrete thing the guest named, looked up for a fact that
+//     adds to their point.
+// The search runs off the conversation's clock and a finding reaches her as
+// one sourced note (researchNoteText) she may use on a coming turn or let go.
+// Nothing found means nothing is said, a finding that would contradict the
+// guest is not a finding, and a note never starts a turn: it is a
+// conversation item, and her turns still go through requestTurn. Never in a
+// hello or closing session, a hold, or the closing round. Every finding is
+// reported in the end-of-room webhook (research_notes) so the edit review can
+// see what she was handed and whether she used it.
+// Off for one room: grok_session_log.auto_research = false on the run row.
+
+const AUTO_RESEARCH_MAX = 8;              // lookups per room, the guest lookup included
+const AUTO_RESEARCH_GAP_MS = 150000;      // one answer lookup per 2.5 minutes at most
+const AUTO_RESEARCH_MIN_WORDS = 30;       // a shorter answer has nothing to look up
+const RESEARCH_NOTES_MAX = 12;            // findings reported in the webhook
+let autoResearchCount = 0;
+let autoResearchLastAt = 0;
+let guestResearchStarted = false;
+let researchLookups = 0;
+const researchNotes = [];
+
+function autoResearchOn() {
+  if (!config) return false;
+  try {
+    if (config.grok_session_log && config.grok_session_log.auto_research === false) return false;
+  } catch (err) { return false; }
+  return !isHelloSession() && !isClosingSession();
+}
+
+/** "Name, Title at Organisation" from the line the fire step writes into
+ *  her prompt, or "" when the prompt has none. */
+function guestIdentity() {
+  const m = /Today you are conducting a live interview with:[ \t]*([^\n]+)/.exec(
+    String((config && config.mira_system_prompt) || ""));
+  if (!m) return "";
+  const who = m[1].trim().replace(/\.\s*$/, "").slice(0, 200);
+  if (!who || /\{\{|^the guest\b/i.test(who)) return "";
+  return who;
+}
+
+function guestResearchPrompt(who) {
+  return "A live podcast interview with " + who + " is starting. Search the web " +
+    "and X for the most recent, specific public news about this person or the " +
+    "work of their organisation, from the last twelve months: a launch, a " +
+    "result, a paper, a talk, a deal, a figure. Not their biography.\n\n" +
+    "Reply with ONE JSON object and nothing else:\n" +
+    '{"found": true|false, "finding": "one spoken sentence a host could ' +
+    'use: the specific news, with its date", "source": "the publication or ' +
+    'organisation name"}\n' +
+    "found is true ONLY if you are sure the news is about this exact person or " +
+    "their organisation and you found it in reliable reporting or their own " +
+    "channels. A namesake, an old story or a general profile is found false. " +
+    "Never speculate.";
+}
+
+function answerResearchPrompt(answer, question) {
+  return "A guest on a live podcast interview just gave this answer.\n\n" +
+    (question ? "The host asked: " + question.slice(0, 300) + "\n" : "") +
+    "The guest said: " + answer.slice(0, 1500) + "\n\n" +
+    "Pick ONE concrete thing they named that reporting could add to: a " +
+    "company, product, study, event, law, figure or place. Never their own " +
+    "story, experience or opinion. Search the web and X for one specific, " +
+    "recent fact about it (a number, a date, a result, a related case) that " +
+    "adds to their point.\n\n" +
+    "Reply with ONE JSON object and nothing else:\n" +
+    '{"found": true|false, "topic": "the thing you looked up", "finding": ' +
+    '"one spoken sentence a host could say", "source": "the publication or ' +
+    'organisation name"}\n' +
+    "found is true ONLY if you found specific, reliable information about that " +
+    "exact thing that adds to or supports what the guest said. If it is " +
+    "inconclusive, only general, or would contradict them, found is false. " +
+    "Never speculate.";
+}
+
+/** The guest's answer that ended with the line she has just said, and the
+ *  question of hers it answered. */
+function lastExchange() {
+  let i = transcript.length - 2;           // the line before hers
+  const answer = [];
+  while (i >= 0 && transcript[i].indexOf("Guest: ") === 0) {
+    answer.unshift(transcript[i].slice(7));
+    i -= 1;
+  }
+  const question = i >= 0 && transcript[i].indexOf("Mira: ") === 0 ? transcript[i].slice(6) : "";
+  return { answer: answer.join(" ").trim(), question: question };
+}
+
+function countWords(text) {
+  const t = String(text || "").trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
+/** Called each time one of her lines is remembered: the guest's answer has
+ *  just ended, and she has already answered it. */
+function maybeAutoResearch() {
+  if (!autoResearchOn() || holdMode || roundActive || roundClosed) return;
+  if (autoResearchCount >= AUTO_RESEARCH_MAX) return;
+  if (!guestResearchStarted) {
+    guestResearchStarted = true;
+    const who = guestIdentity();
+    if (who && researchInBackground(who, "", { kind: "guest", prompt: guestResearchPrompt(who) })) {
+      autoResearchCount += 1;
+    }
+    return;
+  }
+  if (autoResearchLastAt && Date.now() - autoResearchLastAt < AUTO_RESEARCH_GAP_MS) return;
+  const ex = lastExchange();
+  if (countWords(ex.answer) < AUTO_RESEARCH_MIN_WORDS) return;
+  if (researchInBackground(ex.answer, ex.question,
+      { kind: "answer", prompt: answerResearchPrompt(ex.answer, ex.question) })) {
+    autoResearchCount += 1;
+    autoResearchLastAt = Date.now();
+  }
+}
+
+function noteResearchFinding(kind, subject, found, startedAt, delivered) {
+  if (researchNotes.length >= RESEARCH_NOTES_MAX) return;
+  researchNotes.push({
+    at_sec: firstJoinAt ? Math.round((Date.now() - firstJoinAt) / 1000) : 0,
+    took_sec: Math.round((Date.now() - startedAt) / 1000),
+    kind: kind,
+    // The guest's name, or the topic looked up: never the guest's own words.
+    subject: String(kind === "answer" ? (found.topic || "") : subject || "").slice(0, 160),
+    finding: String(found.finding || "").slice(0, 300),
+    source: String(found.source || "").slice(0, 120),
+    delivered: !!delivered,
   });
 }
 

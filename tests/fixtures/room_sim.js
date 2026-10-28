@@ -774,6 +774,69 @@ if (which === "server_turns_advance_the_round") {
   guestSays("Yeah. See you next time.", 2000); advance(5000);
   out.state = state();
   out.lastInstructions = instructions[instructions.length - 1];
+} else if (which === "auto_research" || which === "auto_research_off" ||
+           which === "auto_research_hello" || which === "auto_research_late") {
+  // Oct 28 2026: the room's own quiet research. The xAI search is stubbed:
+  // every lookup "finds" something, synchronously (or, for _late, when the
+  // test says so), so what the room does with a finding can be read here.
+  const lookups = [];
+  const deferred = [];
+  const realNet = ctx.Net.httpRequestAsync;
+  ctx.Net.httpRequestAsync = function (url, opts) {
+    if (String(url).indexOf("api.x.ai/v1/responses") < 0) return realNet(url, opts);
+    const body = JSON.parse(opts.postData);
+    lookups.push({ model: body.model, tools: body.tools.map(function (t) { return t.type; }),
+                   prompt: body.input[0].content });
+    const n = lookups.length;
+    const res = { code: 200, text: JSON.stringify({ output_text: JSON.stringify({
+      found: true, topic: "Topic " + n, finding: "Finding number " + n + ", dated March 2026.",
+      source: "Source " + n }) }) };
+    return { then: function (ok) { if (which === "auto_research_late") deferred.push(function () { ok(res); }); else ok(res); } };
+  };
+  run(`getSecret = function () { return "test-key"; };
+       config.mira_system_prompt = "Role.\\nToday you are conducting a live interview with: Ada Lovelace, Chief Scientist at Analytical Engines.\\nMore.";`);
+  if (which === "auto_research_off") run("config.grok_session_log = { auto_research: false };");
+  if (which === "auto_research_hello") run("config.session_kind = 'hello';");
+  const creates = function () { return events.filter(function (e) { return e === "create"; }).length; };
+  const notesBefore = notes.length;
+  const long = "We rebuilt the claims workflow at Northwind Insurance around a model from Anthropic and the backlog " +
+    "fell from nine weeks to eleven days, which nobody at the regulator in Ottawa believed until they audited it twice";
+  const c0 = creates();
+  miraFinishes("Welcome to the show, Ada. What are you building right now?");   // the guest lookup
+  out.afterOpening = { lookups: lookups.length, creates: creates() - c0 };
+  guestSays("Engines, mostly, and a few looms.", 2000); advance(4000);
+  miraFinishes("Tell me about the looms.");                                      // too short to look up
+  out.afterShort = lookups.length;
+  guestSays(long, 12000); advance(4000);
+  const c1 = creates();
+  miraFinishes("Eleven days. What did the audit look at?");                      // an answer lookup
+  out.afterLong = { lookups: lookups.length, creates: creates() - c1 };
+  guestSays(long + " again", 12000); advance(30000);
+  miraFinishes("And the second audit?");                                         // inside the gap
+  out.insideGap = lookups.length;
+  advance(150000);
+  guestSays("The second thing we learned was that the adjusters in Halifax trusted the queue only after " +
+    "Lloyd's of London published its own review of the same model in February, and that review is still " +
+    "the document everyone in the industry quotes", 12000); advance(4000);
+  miraFinishes("What would you change?");                                        // after the gap
+  out.afterGap = lookups.length;
+  run("enterHold('test');");
+  advance(200000);
+  guestSays(long + " in a hold", 12000); advance(4000);
+  miraFinishes("I'll wait.");                                                    // no lookups in a hold
+  out.inHold = lookups.length;
+  run("exitHold('test');");
+  if (which === "auto_research_late") {
+    run("closingPermitted = true; startRound('test', -1);");
+    const before = notes.length;
+    deferred.forEach(function (f) { f(); });
+    out.lateNotes = notes.length - before;
+  }
+  out.lookups = lookups;
+  out.notes = notes.slice(notesBefore);
+  out.researchNotes = run("researchNotes");
+  out.researchLookups = run("researchLookups");
+  out.guestIdentity = run("guestIdentity()");
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),
