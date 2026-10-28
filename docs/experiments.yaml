@@ -5718,3 +5718,36 @@ experiments:
       FPD 143, UC 155, FF 235, MAB 209, Prediction Markets 35 (audio), Tesla
       647. The survey fix sends the owed backlog (7 guests, rooms 1-14 days
       old) on the first fire run after merge.
+
+  - id: landing-personal-youtube-2026-10-28
+    title: "Front page, Nerra Personal, YouTube: the member cookie, the blog's video links, the dub Shorts, the lead above the fold"
+    area: site
+    shipped: 2026-10-28
+    readout: 2026-11-18
+    status: reading
+    metric: long_form_avp_en_age7_median
+    baseline: >
+      0 of 1,036 flagship blog posts linked their YouTube video (every site
+      rebuild dropped the button); no RU or FR dub Short had its custom
+      thumbnail (the call raised TypeError into a silent except) and 77 RU /
+      55 FR window Shorts since Oct 10 opened on the episode's lead headline
+      over another story; the front page's lead headline started at 1008 px
+      (1440x900) and 976 px (390x844); episode_play, subscribe_click,
+      checkout starts, sample plays and clicks to YouTube were unmeasured;
+      the Personal Worker let a newsletter cookie read a paid record and
+      sent a new member nothing. EN long-form retention at age 7: 7.1%
+      (Oct 27 file).
+    target: >
+      Watch buttons on every flagship post whose episode has a public video
+      after the next nightly; dub Shorts upload with a custom thumbnail (no
+      "Short N thumbnail failed" warning); visits.episode_plays,
+      checkout_starts and youtube_watch_clicks non-null in api/funnel.json
+      within three nightlies; long_form_avp_en_age7_median read weekly
+      against 7.1.
+    notes: >
+      Review docs/reviews/landing_personal_youtube_2026_10_28.md. Guards:
+      tests/test_landing_personal_youtube_2026_10_28.py,
+      workers/gallery/test/member_security.test.ts. Operator: wrangler deploy
+      in workers/gallery BEFORE STRIPE_SECRET_KEY goes on the Worker; enable
+      the Stripe portal and the customer.subscription.updated event; set the
+      Payment Links' redirect to account.html.

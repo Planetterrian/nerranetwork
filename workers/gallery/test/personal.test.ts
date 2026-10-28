@@ -460,10 +460,22 @@ describe("membership plumbing", () => {
 // and the customer-portal route.
 // ---------------------------------------------------------------------------
 
+// A member signed in from an emailed link (jwt `v: 1`) — the only session
+// that may use a paid record since Oct 28 2026 (mayUseRecord).
 async function memberCookie(env: Env, email: string) {
+  const token = await signJwt(
+    { sub: email, scope: "gallery-subscriber", v: 1, ttlSeconds: 3600 },
+    env.JWT_SECRET,
+  );
+  return `nn_gallery=${encodeURIComponent(token)}`;
+}
+
+// The cookie POST /api/subscribe signs for any typed address: unverified.
+async function formCookie(env: Env, email: string, now?: number) {
   const token = await signJwt(
     { sub: email, scope: "gallery-subscriber", ttlSeconds: 3600 },
     env.JWT_SECRET,
+    now,
   );
   return `nn_gallery=${encodeURIComponent(token)}`;
 }

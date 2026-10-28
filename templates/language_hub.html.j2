@@ -150,10 +150,13 @@
 <section class="lt-top container" aria-label="{{ hub.lead_label }}">
     {% set s = p.lead %}
     <article class="lt-lead" style="--show-color:{{ s.brand_color }};">
-        {{ media(s, eager=true) }}
-        <div class="lt-lead-body">
+        {#- The headline leads its picture, as on the English front page. -#}
+        <div class="lt-lead-head">
             {{ kicker(s) }}
             <h2 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h2>
+        </div>
+        {{ media(s, eager=true) }}
+        <div class="lt-lead-body">
             {{ meta(s, listen=false) }}
             {{ listen_row(s) }}
         </div>

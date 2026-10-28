@@ -63,7 +63,9 @@ export default {
     const url = new URL(request.url);
     const route = `${request.method} ${url.pathname}`;
     try {
-      const feedMatch = request.method === "GET"
+      // HEAD too (Oct 28 2026): podcast apps check an enclosure with HEAD
+      // before streaming it, and Apple validates a feed's audio that way.
+      const feedMatch = (request.method === "GET" || request.method === "HEAD")
         ? url.pathname.match(FEED_PATH_RE)
         : null;
       if (feedMatch) {
@@ -101,7 +103,7 @@ export default {
         case "POST /api/account/rebuild":
           return await handleRebuild(request, env);
         case "POST /api/stripe/webhook":
-          return await handleStripeWebhook(request, env);
+          return await handleStripeWebhook(request, env, DEPS);
         case "GET /api/admin/personal-specs":
           return await handleAdminSpecs(request, env);
         case "GET /api/admin/show-demand":

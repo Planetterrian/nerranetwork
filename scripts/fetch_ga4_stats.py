@@ -66,8 +66,19 @@ CONVERSION_EVENTS = ["newsletter_signup", "generate_lead", "gallery_subscribe"]
 # when a visitor follows a Short to its show page — the reel's discovery
 # outcome; play_short_unavailable when YouTube refuses to play one embedded
 # (the player then offers "Watch on YouTube"). Engagement, never a capture.
+# Oct 28 2026: episode_play (first play of any episode player) and
+# subscribe_click (out to Apple / Spotify / RSS) have been sent by
+# assets/js/tracking.js since June 2026 and were never asked for, so
+# whether a visitor listened was unmeasured everywhere — the fifth "a result
+# key is not a metric" instance. play_personal_sample is the Personal sample
+# edition's player (join + personal-interest pages); begin_checkout is a
+# click on a Personal Payment Link (intent, never a member — the member count
+# is api/member_metrics.json). watch_on_youtube is a click from the site to
+# an episode's video (the blog's Watch button and any other YouTube link).
 ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
-                     "play_short", "select_short_show", "play_short_unavailable"]
+                     "play_short", "select_short_show", "play_short_unavailable",
+                     "episode_play", "subscribe_click", "play_personal_sample",
+                     "begin_checkout", "watch_on_youtube"]
 
 
 def _session():
@@ -229,7 +240,9 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
             },
             "orderBys": [{"metric": {"metricName": "eventCount"},
                           "desc": True}],
-            "limit": 100,
+            # episode_play fires on every blog post and show page, so the
+            # event x page rows outgrow 100 quickly (Oct 28 2026).
+            "limit": 1000,
         }))
     except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
         logger.warning("GA4 engagement report unavailable: %s", exc)

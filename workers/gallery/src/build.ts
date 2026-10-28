@@ -28,7 +28,7 @@ import type { Env } from "./types";
 
 export const BATCH_REPO = "Planetterrian/nerra-personal-batch";
 export const BATCH_WORKFLOW = "personal-feeds.yml";
-/** Rebuilds of an already-built date per subscriber per UTC day. The
+/** Rebuilds of an already-built date per subscriber per (Eastern) day. The
  *  first build of a day (activation, or a day the sweep missed) is free. */
 export const REBUILDS_PER_DAY = 2;
 /** How long "building…" is believed without a new episodes.json row. A
@@ -53,8 +53,18 @@ export interface TodayStatus {
   available: boolean;
 }
 
+/** Today's edition date, EASTERN (Oct 28 2026). The network publishes on
+ *  Eastern time (CLAUDE.md, "The schedule runs on Eastern time"); the UTC
+ *  date flips at 8 pm Eastern, so every evening the account page said "No
+ *  edition yet today" beside the morning's edition, and a member who paid
+ *  after 8 pm got a build for a date with no episodes (skipped: their feed
+ *  stayed empty until the next morning's sweep). */
 export function todayIso(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 function buildKey(token: string): string {

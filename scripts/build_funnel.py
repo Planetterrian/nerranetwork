@@ -246,6 +246,16 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
         "by_destination": {},
         "totals": {"sessions": 0},
     }
+    # Oct 28 2026: the on-site engagement counts are their own report and
+    # say for themselves whether it was read; they ride on every answer, so
+    # a consumer never meets a missing key when the landing report is absent.
+    out["upsell_clicks"] = _upsell_clicks(ga4)
+    out["soft_personal_submits"] = _soft_personal_submits(ga4)
+    out["episode_plays"] = _episode_plays(ga4)
+    out["directory_clicks"] = _directory_clicks(ga4)
+    out["personal_sample_plays"] = _sample_plays(ga4)
+    out["checkout_starts"] = _checkout_starts(ga4)
+    out["youtube_watch_clicks"] = _site_event_counts(ga4, "watch_on_youtube")
     if not out["configured"]:
         return out
     wanted = {}
@@ -270,9 +280,32 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
             entry["users"] += int(row.get("activeUsers") or 0)
         out["totals"]["sessions"] += sessions
     out["by_destination"] = dict(sorted(agg.items()))
-    out["upsell_clicks"] = _upsell_clicks(ga4)
-    out["soft_personal_submits"] = _soft_personal_submits(ga4)
     return out
+
+
+def _site_event_counts(ga4: Optional[dict], event_name: str) -> Dict[str, Any]:
+    """One engagement event's count by page, from the GA4 ``site_events``
+    report. ``null`` when the report could not be read, ``0`` when it was
+    read and nobody fired it — the same rule the rest of this file follows.
+    Never folded into the capture stage: an engagement is not a subscriber.
+    """
+    rows = (ga4 or {}).get("site_events")
+    if not isinstance(rows, list):
+        return {"configured": False, "total": None, "by_page": {}}
+    by_page: Dict[str, int] = {}
+    total = 0
+    for row in rows:
+        if (row.get("eventName") or "") != event_name:
+            continue
+        count = int(row.get("eventCount") or 0)
+        page = row.get("pagePath") or "(unknown)"
+        by_page[page] = by_page.get(page, 0) + count
+        total += count
+    return {
+        "configured": True,
+        "total": total,
+        "by_page": dict(sorted(by_page.items(), key=lambda kv: -kv[1])),
+    }
 
 
 def _upsell_clicks(ga4: Optional[dict]) -> Dict[str, Any]:
@@ -280,26 +313,9 @@ def _upsell_clicks(ga4: Optional[dict]) -> Dict[str, Any]:
 
     Deliberately not folded into the capture stage: a click on "make this
     yours" is intent toward the PAID product, and adding it to subscriber
-    counts would report an intention as a conversion. ``null`` when the
-    report could not be read, ``0`` when it was read and nobody clicked —
-    the same rule the rest of this file follows.
+    counts would report an intention as a conversion.
     """
-    rows = (ga4 or {}).get("site_events")
-    if not isinstance(rows, list):
-        return {"configured": False, "total": None, "by_page": {}}
-    by_page: Dict[str, int] = {}
-    total = 0
-    for row in rows:
-        if (row.get("eventName") or "") != "select_personal_upsell":
-            continue
-        count = int(row.get("eventCount") or 0)
-        by_page[(row.get("pagePath") or "(unknown)")] = count
-        total += count
-    return {
-        "configured": True,
-        "total": total,
-        "by_page": dict(sorted(by_page.items(), key=lambda kv: -kv[1])),
-    }
+    return _site_event_counts(ga4, "select_personal_upsell")
 
 
 def _soft_personal_submits(ga4: Optional[dict]) -> Dict[str, Any]:
@@ -307,24 +323,33 @@ def _soft_personal_submits(ga4: Optional[dict]) -> Dict[str, Any]:
 
     Distinct from ``newsletter_signup`` / gallery subscribe / paid join.
     Never folded into capture: Soft is not a newsletter conversion.
-    ``null`` when unmeasured, ``0`` when measured and empty.
     """
-    rows = (ga4 or {}).get("site_events")
-    if not isinstance(rows, list):
-        return {"configured": False, "total": None, "by_page": {}}
-    by_page: Dict[str, int] = {}
-    total = 0
-    for row in rows:
-        if (row.get("eventName") or "") != "soft_personal_interest_submit":
-            continue
-        count = int(row.get("eventCount") or 0)
-        by_page[(row.get("pagePath") or "(unknown)")] = count
-        total += count
-    return {
-        "configured": True,
-        "total": total,
-        "by_page": dict(sorted(by_page.items(), key=lambda kv: -kv[1])),
-    }
+    return _site_event_counts(ga4, "soft_personal_interest_submit")
+
+
+def _episode_plays(ga4: Optional[dict]) -> Dict[str, Any]:
+    """First plays of an episode player, by page (``assets/js/tracking.js``
+    has sent ``episode_play`` since June 2026; until Oct 28 2026 the fetcher
+    never asked for it, so whether a visitor ever pressed play was
+    unmeasured on every page)."""
+    return _site_event_counts(ga4, "episode_play")
+
+
+def _directory_clicks(ga4: Optional[dict]) -> Dict[str, Any]:
+    """Clicks out to Apple Podcasts / Spotify / an RSS feed, by page
+    (``subscribe_click``, sent by tracking.js and read since Oct 28 2026)."""
+    return _site_event_counts(ga4, "subscribe_click")
+
+
+def _sample_plays(ga4: Optional[dict]) -> Dict[str, Any]:
+    """Plays of the Nerra Personal sample edition, by page."""
+    return _site_event_counts(ga4, "play_personal_sample")
+
+
+def _checkout_starts(ga4: Optional[dict]) -> Dict[str, Any]:
+    """Clicks on a Personal Payment Link, by page — intent to pay, never a
+    member (members are counted in api/member_metrics.json)."""
+    return _site_event_counts(ga4, "begin_checkout")
 
 
 # ---------------------------------------------------------------------------

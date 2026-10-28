@@ -911,6 +911,18 @@ def ensure_specials(spec: PersonalSpec, client) -> bool:
     return True
 
 
+def _eastern_today() -> dt.date:
+    """The edition date: EASTERN, like every schedule in the network
+    (Oct 28 2026 — the UTC date flips at 8 pm Eastern, onto a day whose
+    episodes do not exist until the next morning)."""
+    from zoneinfo import ZoneInfo
+    return dt.datetime.now(ZoneInfo("America/New_York")).date()
+
+
+def _available_count(spec, segments_by_slug: Dict[str, "Segment"]) -> int:
+    return sum(1 for s in spec.shows if s in segments_by_slug)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--specs", default="",
@@ -918,7 +930,7 @@ def main() -> int:
     parser.add_argument("--fetch", action="store_true",
                         help="Fetch specs from the Worker admin endpoint")
     parser.add_argument("--date", default="",
-                        help="Edition date YYYY-MM-DD (default: today UTC)")
+                        help="Edition date YYYY-MM-DD (default: today, Eastern)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Assemble but upload nothing")
     parser.add_argument("--only", default="",
@@ -932,7 +944,7 @@ def main() -> int:
         parser.error("one of --specs / --fetch is required")
 
     target_date = (dt.date.fromisoformat(args.date) if args.date
-                   else dt.datetime.now(dt.timezone.utc).date())
+                   else _eastern_today())
     specs = load_specs(args)
     if args.only:
         specs = [s for s in specs if s.token == args.only.strip().lower()]
@@ -952,6 +964,21 @@ def main() -> int:
     all_segments, _missing = discover_segments(
         personal_edition_spec(), ROOT, target_date, include_members=True)
     segments_by_slug = {s.slug: s for s in all_segments}
+    # Oct 28 2026: an on-demand build (activation, "Build my edition now")
+    # asked for a day the morning slate has not published yet — between
+    # midnight and ~4 am Eastern — builds nothing and leaves a new member's
+    # feed empty. One member, too few segments: build the previous day,
+    # which has every show it is going to have.
+    if args.only and specs and _available_count(specs[0], segments_by_slug) < 2:
+        earlier = target_date - dt.timedelta(days=1)
+        prev_segments, _ = discover_segments(
+            personal_edition_spec(), ROOT, earlier, include_members=True)
+        prev_by_slug = {s.slug: s for s in prev_segments}
+        if _available_count(specs[0], prev_by_slug) >= 2:
+            logger.info("%s…: %s has %d of the lineup's shows so far — "
+                        "building %s instead", specs[0].token[:8], target_date,
+                        _available_count(specs[0], segments_by_slug), earlier)
+            target_date, segments_by_slug = earlier, prev_by_slug
     needed = sorted({slug for spec in specs for slug in spec.shows})
     cache_root = Path(tempfile.gettempdir()) / f"np_cache_{target_date:%Y%m%d}"
     cache = build_segment_cache(needed, segments_by_slug, cache_root)

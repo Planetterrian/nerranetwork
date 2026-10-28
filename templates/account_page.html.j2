@@ -72,6 +72,9 @@
         .nn-lineup-row.off { opacity: 0.55; }
 
         .nn-feedurl { font-family: var(--font-mono, monospace); font-size: 0.78rem; word-break: break-all; background: var(--nn-bg, rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; border-radius: 8px; }
+        .nn-addapp { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; margin: 0.7rem 0 0; font-size: 0.88rem; }
+        .nn-addapp a { display: inline-block; padding: 0.4rem 0.75rem; border: 1px solid var(--nn-border); border-radius: 999px; font-weight: 600; text-decoration: none; }
+        .nn-addapp a:hover, .nn-addapp a:focus-visible { border-color: var(--nn-cyan, #00D4FF); }
 
         /* Add-on toggle cards */
         .nn-addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 0.6rem; margin-top: var(--sp-3); }
@@ -157,7 +160,13 @@
         <div class="nn-dash-grid">
             <div class="nn-card" id="nn-signin">
                 <h2>Sign in</h2>
-                <p class="nn-muted">Enter the email you joined with and we'll
+                {#- Oct 28 2026: shown when this browser holds a cookie from a
+                    signup form, not from an emailed link — the Worker no longer
+                    opens a member record to that (personal.ts mayUseRecord). -#}
+                <p class="nn-muted" id="nn-verify-note" hidden>To keep your
+                   account private, it opens only from a link we email you.
+                   Send one to the address below and open it on this device.</p>
+                <p class="nn-muted" id="nn-signin-lede">Enter the email you joined with and we'll
                    send you a sign-in link.</p>
                 <form onsubmit="NN.login(this);return false;" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
                     <label for="nn-account-email" class="sr-only">Email address</label>
@@ -305,7 +314,7 @@
                           here opened a FRESH checkout, which would have
                           created a second subscription. A free account has
                           nothing to switch, so it goes to checkout. #}
-                       <a href="#" id="nn-switch-portal" hidden onclick="NN.portal();return false;">switch plans →</a>{% if stripe_personal_local_url and stripe_personal_local_url != '#' %}<a href="{{ stripe_personal_local_url }}" id="nn-switch-checkout" data-checkout hidden>start Personal News Network →</a>{% endif %}.
+                       <a href="#" id="nn-switch-portal" hidden onclick="NN.portal();return false;">switch plans →</a>{% if stripe_personal_local_url and stripe_personal_local_url != '#' %}<a href="{{ stripe_personal_local_url }}" data-nn-tier="personal_local" id="nn-switch-checkout" data-checkout hidden>start Personal News Network →</a>{% endif %}.
                        The markets minute is included on every paid tier.</p>
                     <p style="margin-top:var(--sp-4);"><button onclick="NN.save()">Save preferences</button>
                        <span id="nn-save-status" class="nn-muted"></span></p>
@@ -324,8 +333,19 @@
                            morning. Add this private feed to any podcast app — it's
                            yours alone; sharing the URL shares your subscription.</p>
                         <p class="nn-feedurl" id="nn-feed-url"></p>
-                        <button class="ghost" onclick="NN.copyFeed()">Copy feed URL</button>
+                        <button class="ghost" id="nn-copy-feed" onclick="NN.copyFeed()">Copy feed URL</button>
                         <button class="ghost" id="nn-portal-btn" hidden onclick="NN.portal()" style="margin-left:0.4rem;">Manage plan &amp; billing</button>
+                        {#- Oct 28 2026: one tap into the app a member already
+                            uses — each app's own subscribe link for this feed
+                            (filled in by load(); the copy button stays the
+                            fallback for every other app). -#}
+                        <p class="nn-addapp" id="nn-addapp" aria-label="Add to a podcast app">
+                            <span class="nn-muted">Add to:</span>
+                            <a id="nn-add-apple" href="#" rel="nofollow">Apple Podcasts</a>
+                            <a id="nn-add-overcast" href="#" rel="nofollow">Overcast</a>
+                            <a id="nn-add-pocketcasts" href="#" rel="nofollow">Pocket Casts</a>
+                            <a id="nn-add-castro" href="#" rel="nofollow">Castro</a>
+                        </p>
                         <p class="nn-muted" id="nn-ends-note" hidden style="margin-top:0.6rem;"></p>
                         <div class="nn-build" id="nn-build" hidden>
                             <span class="dot" id="nn-build-dot"></span>
@@ -357,9 +377,9 @@
                            where you left off.</p>
                         {% if stripe_personal_url and stripe_personal_url != '#' %}
                         <p>
-                            <a href="{{ stripe_personal_url }}" data-checkout><button>Restart Personal — $4.99/mo</button></a>
+                            <a href="{{ stripe_personal_url }}" data-nn-tier="personal" data-checkout><button>Restart Personal — $4.99/mo</button></a>
                             {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                            <a href="{{ stripe_personal_local_url }}" data-checkout><button class="ghost" style="margin-top:0.4rem;">Personal News Network — $8.99/mo</button></a>
+                            <a href="{{ stripe_personal_local_url }}" data-nn-tier="personal_local" data-checkout><button class="ghost" style="margin-top:0.4rem;">Personal News Network — $8.99/mo</button></a>
                             {% endif %}
                         </p>
                         {% endif %}
@@ -370,9 +390,9 @@
                            episode within a day.</p>
                         {% if stripe_personal_url and stripe_personal_url != '#' %}
                         <p style="display:grid;gap:0.4rem;">
-                            <a href="{{ stripe_personal_url }}" data-checkout><button style="width:100%;">Personal — $4.99/mo</button></a>
+                            <a href="{{ stripe_personal_url }}" data-nn-tier="personal" data-checkout><button style="width:100%;">Personal — $4.99/mo</button></a>
                             {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                            <a href="{{ stripe_personal_local_url }}" data-checkout><button class="ghost" style="width:100%;">Personal News Network — $8.99/mo</button></a>
+                            <a href="{{ stripe_personal_local_url }}" data-nn-tier="personal_local" data-checkout><button class="ghost" style="width:100%;">Personal News Network — $8.99/mo</button></a>
                             {% endif %}
                         </p>
                         <p class="nn-muted">Your purchase attaches to this account
@@ -395,8 +415,14 @@
                         <li><strong>Every Nerra book</strong> as an EPUB download, yours to keep</li>
                     </ul>
                     <button class="ghost" id="nn-pnn-switch" hidden onclick="NN.portal()">Switch to Personal News Network — $8.99/mo</button>
+                    {#- Oct 28 2026: an active member is never shown a checkout
+                        (it starts a second subscription). Without the billing
+                        portal, the switch is done by hand. -#}
+                    <p class="nn-muted" id="nn-pnn-help" hidden style="margin:0.6rem 0 0;">To switch plans, email
+                       <a href="mailto:{{ contact_email }}?subject=Switch%20to%20Personal%20News%20Network">{{ contact_email }}</a>
+                       and we move your subscription over, prorated.</p>
                     {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-                    <a href="{{ stripe_personal_local_url }}" data-checkout id="nn-pnn-checkout" hidden><button class="ghost">Start Personal News Network — $8.99/mo</button></a>
+                    <a href="{{ stripe_personal_local_url }}" data-nn-tier="personal_local" data-checkout id="nn-pnn-checkout" hidden><button class="ghost">Start Personal News Network — $8.99/mo</button></a>
                     {% endif %}
                     <p class="nn-muted" style="margin:0.6rem 0 0;">Prorated; switch back any time.</p>
                 </div>
@@ -853,6 +879,14 @@ var NN = (function () {
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (data) {
         el('nn-status').textContent = '';
+        if (data.verify_required) {
+          // Signed in by a form: offer the emailed link, prefilled.
+          el('nn-guest').hidden = false;
+          el('nn-verify-note').hidden = false;
+          el('nn-signin-lede').hidden = true;
+          if (data.email) { el('nn-account-email').value = data.email; }
+          return;
+        }
         el('nn-member').hidden = false;
         state.all = data.shows || [];
         var prefs = (data.member && data.member.preferences) || {};
@@ -889,7 +923,15 @@ var NN = (function () {
         el('nn-feed-active').hidden = !feedUrl;
         el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
         el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
-        if (feedUrl) { el('nn-feed-url').textContent = feedUrl; loadEditions(feedUrl); }
+        if (feedUrl) {
+          el('nn-feed-url').textContent = feedUrl;
+          loadEditions(feedUrl);
+          var bare = feedUrl.replace(/^https?:\/\//, '');
+          el('nn-add-apple').href = 'podcast://' + bare;
+          el('nn-add-overcast').href = 'overcast://x-callback-url/add?url=' + encodeURIComponent(feedUrl);
+          el('nn-add-pocketcasts').href = 'pktc://subscribe/' + bare;
+          el('nn-add-castro').href = 'castros://subscribe/' + bare;
+        }
         renderBuild(data.member && data.member.today);
         var pill = el('nn-tier-badge');
         if (status === 'active') {
@@ -920,7 +962,8 @@ var NN = (function () {
         el('nn-portal-btn').hidden = !(portal && status === 'active');
         var switchPortal = el('nn-switch-portal'), switchCheckout = el('nn-switch-checkout');
         if (switchPortal) { switchPortal.hidden = !(portal && status === 'active'); }
-        if (switchCheckout) { switchCheckout.hidden = (portal && status === 'active'); }
+        // Oct 28 2026: never a checkout for an active member, portal or not.
+        if (switchCheckout) { switchCheckout.hidden = (status === 'active'); }
         var endsAt = data.member && data.member.ends_at;
         var trialEnds = data.member && data.member.trial_ends_at;
         el('nn-ends-note').hidden = !(endsAt || trialEnds);
@@ -938,7 +981,9 @@ var NN = (function () {
         el('nn-pnn-card').hidden = !(status === 'active' && tier === 'personal');
         el('nn-pnn-switch').hidden = !(portal && status === 'active');
         var pnnCheckout = el('nn-pnn-checkout');
-        if (pnnCheckout) { pnnCheckout.hidden = (portal && status === 'active'); }
+        if (pnnCheckout) { pnnCheckout.hidden = (status === 'active'); }
+        var pnnHelp = el('nn-pnn-help');
+        if (pnnHelp) { pnnHelp.hidden = !(status === 'active' && !portal); }
         attachCheckoutRefs();
         // Library: links answer only for active PNN (the Worker gates the
         // bytes; this just decides what the page shows).
@@ -1002,7 +1047,9 @@ var NN = (function () {
           ? (state.today && state.today.available && state.today.built_at && state.today.rebuilds_left > 0
               ? 'Saved — rebuild today’s edition to hear the change now, or it reaches tomorrow’s'
               : 'Saved — changes reach tomorrow’s edition')
-          : 'Save failed (are personal accounts live yet?)';
+          : (r.status === 403
+              ? 'Not saved — open the sign-in link we email you, then save again'
+              : 'Save failed (are personal accounts live yet?)');
         if (r.ok) { greet(el('nn-name').value); markClean(); }
         if (typeof done === 'function') { done(); }
       }).catch(function () { el('nn-save-status').textContent = 'Save failed'; if (typeof done === 'function') { done(); } });
@@ -1029,7 +1076,16 @@ var NN = (function () {
         .catch(function () { btn.disabled = false; renderBuild(state.today); });
     },
     copyFeed: function () {
-      navigator.clipboard.writeText(el('nn-feed-url').textContent);
+      var btn = el('nn-copy-feed');
+      var done = function (msg) {
+        if (!btn) { return; }
+        btn.textContent = msg;
+        setTimeout(function () { btn.textContent = 'Copy feed URL'; }, 2500);
+      };
+      try {
+        navigator.clipboard.writeText(el('nn-feed-url').textContent)
+          .then(function () { done('Copied'); }, function () { done('Select the URL above to copy it'); });
+      } catch (e) { done('Select the URL above to copy it'); }
     },
     logout: function () {
       fetch(API + '/api/logout', { method: 'POST', credentials: 'include' })

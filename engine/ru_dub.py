@@ -946,51 +946,30 @@ def publish_ru_dub(
                     _stagger_times = []
 
             short_urls_out: list = []
+            # Oct 28 2026: the dub's own Whisper words, so each Short ends on
+            # its last full sentence like the EN Shorts do (fixed 35 s cut
+            # mid-word before; the EN measurement was four in five).
+            _dub_words: list = []
+            if tr_json is not None:
+                try:
+                    from engine.visual_reuse import load_transcript_words
+                    _dub_words = load_transcript_words(tr_json)
+                except Exception:  # noqa: BLE001 — best-effort
+                    _dub_words = []
             for short_idx, (start_offset, opening_text,
                             window_label) in enumerate(short_plan):
                 try:
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = tmp / f"ru_short_ep{episode_num:03d}{suffix}.mp4"
-
-                    ass_path = None
-                    if tr_json is not None:
-                        try:
-                            from engine.captions import transcript_to_ass_window
-                            ass_candidate = (
-                                tmp / f"ru_short_ep{episode_num:03d}{suffix}.ass")
-                            transcript_to_ass_window(
-                                tr_json, ass_candidate,
-                                window_start_seconds=start_offset,
-                                window_duration_seconds=short_dur,
-                                audio_offset_seconds=0.0)
-                            if (ass_candidate.exists()
-                                    and ass_candidate.stat().st_size > 0
-                                    and "Dialogue:" in ass_candidate.read_text(
-                                        encoding="utf-8", errors="replace")):
-                                ass_path = ass_candidate
-                                result["ru_short_captions"] = "ass"
-                        except Exception as exc:  # noqa: BLE001
-                            logger.warning(
-                                "ru_dub: ASS captions failed for short %d "
-                                "(%s)", short_idx + 1, exc)
-
-                    build_short_video(
-                        audio, cover, short_mp4,
-                        start_offset=start_offset,
-                        duration=short_dur,
-                        hook=ru_title,
-                        scene_paths=short_scenes if len(short_scenes) >= 2 else None,
-                        show_name=config.name,
-                        subtitles_path=ass_path,
-                        end_card=True,
-                        end_card_main_text=_RU_END_CARD_MAIN,
-                        end_card_sub_text=_RU_END_CARD_SUB,
-                        end_card_image_path=end_card_png)
+                    from engine.shorts_selector import end_on_sentence
+                    this_dur = end_on_sentence(
+                        _dub_words, start_offset, short_dur, audio_offset_s=0.0)
 
                     # Titles: Short #1 keeps the optimized-derived headline;
                     # Short #2 leads with ITS window's opening text (already
                     # Russian — it's the RU transcript) so the two Shorts
                     # are genuinely distinct in the feed.
+                    _window_body = ""
                     if short_idx == 0 or not opening_text:
                         short_title = _ru_short_title(ru_title)
                         if short_idx > 0:
@@ -1009,9 +988,51 @@ def publish_ru_dub(
                         body = _window_short_headline(
                             _wtext, opening_text, "ru", _limit)
                         if body:
+                            _window_body = body
                             short_title = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
                             short_title = _ru_second_short_title(ru_title)
+                    # Oct 28 2026: the 0-3 s on-screen headline is the
+                    # SHORT's story. Every window Short used to open on the
+                    # episode's lead headline while its audio told another
+                    # story (77 RU Shorts since Oct 10); a window Short with
+                    # no headline of its own shows none.
+                    _overlay = ru_title if short_idx == 0 else (_window_body or None)
+
+                    ass_path = None
+                    if tr_json is not None:
+                        try:
+                            from engine.captions import transcript_to_ass_window
+                            ass_candidate = (
+                                tmp / f"ru_short_ep{episode_num:03d}{suffix}.ass")
+                            transcript_to_ass_window(
+                                tr_json, ass_candidate,
+                                window_start_seconds=start_offset,
+                                window_duration_seconds=this_dur,
+                                audio_offset_seconds=0.0)
+                            if (ass_candidate.exists()
+                                    and ass_candidate.stat().st_size > 0
+                                    and "Dialogue:" in ass_candidate.read_text(
+                                        encoding="utf-8", errors="replace")):
+                                ass_path = ass_candidate
+                                result["ru_short_captions"] = "ass"
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning(
+                                "ru_dub: ASS captions failed for short %d "
+                                "(%s)", short_idx + 1, exc)
+
+                    build_short_video(
+                        audio, cover, short_mp4,
+                        start_offset=start_offset,
+                        duration=this_dur,
+                        hook=_overlay,
+                        scene_paths=short_scenes if len(short_scenes) >= 2 else None,
+                        show_name=config.name,
+                        subtitles_path=ass_path,
+                        end_card=True,
+                        end_card_main_text=_RU_END_CARD_MAIN,
+                        end_card_sub_text=_RU_END_CARD_SUB,
+                        end_card_image_path=end_card_png)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]
@@ -1031,12 +1052,22 @@ def publish_ru_dub(
                                 generate_shorts_thumbnail,
                             )
                             _cand = tmp / f"ru_short{short_idx + 1}_thumb.jpg"
+                            # Oct 28 2026: the call passed the output path as
+                            # the episode number and no date, raised
+                            # TypeError into the except below, and every RU
+                            # Short since Aug 2026 went up with YouTube's
+                            # auto-picked frame.
                             generate_shorts_thumbnail(
                                 short_scenes[short_idx % len(short_scenes)],
-                                _cand, show_name=config.name)
+                                episode_num=episode_num, date_str=date_str,
+                                output_path=_cand,
+                                hook=_overlay or ru_title,
+                                show_name=config.name)
                             if _cand.exists():
                                 _short_thumb = _cand
-                        except Exception:  # noqa: BLE001
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning("ru_dub: Short %d thumbnail failed (%s)",
+                                           short_idx + 1, exc)
                             _short_thumb = None
                     sup = upload_video(
                         short_mp4, credentials=creds,

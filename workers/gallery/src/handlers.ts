@@ -556,7 +556,14 @@ export async function handleLogin(
       env.BUTTONDOWN_API_KEY,
       email,
     );
-    if (check.ok && check.exists) {
+    // Oct 28 2026: a member who paid straight from the join page has a
+    // KV member record and may never have been on the Buttondown list —
+    // they were told "check your inbox" and nothing came. Either source
+    // of truth is enough to send the link.
+    const isMember = env.RATE_LIMIT_KV
+      ? Boolean(await env.RATE_LIMIT_KV.get(`member:${email}`))
+      : false;
+    if ((check.ok && check.exists) || isMember) {
       const token = await signJwt(
         { sub: email, scope: "magic-login", ttlSeconds: MAGIC_TTL_SECONDS },
         env.JWT_SECRET,
@@ -618,6 +625,8 @@ export async function handleMagic(
     {
       sub: verify.claims.sub,
       scope: "gallery-subscriber",
+      // The link reached this inbox: a verified session (jwt.ts `v`).
+      v: 1,
       ttlSeconds: SUBSCRIBER_TTL_SECONDS,
     },
     env.JWT_SECRET,

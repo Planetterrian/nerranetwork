@@ -218,6 +218,9 @@ jobs:
       - name: Aggregate paid-member counts
         env:
           PERSONAL_ADMIN_TOKEN: ${{ secrets.PERSONAL_ADMIN_TOKEN }}
+          # Oct 28 2026: the counts-only token the show runs already hold —
+          # without the admin token this is what measures membership.
+          PERSONAL_DEMAND_TOKEN: ${{ secrets.PERSONAL_DEMAND_TOKEN }}
           # Revenue and trial state. Without this the script still runs and
           # still writes member counts; mrr_usd and trialing simply stay
           # null, which reads as "unmeasured" and never as "$0".

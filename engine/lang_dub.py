@@ -679,51 +679,27 @@ def publish_lang_dub(
                     _stagger_times = []
 
             short_urls_out: List[str] = []
+            # Oct 28 2026: the dub's own Whisper words, so each Short ends on
+            # its last full sentence like the EN Shorts (a fixed 35 s cut
+            # mid-word before).
+            _dub_words: list = []
+            if tr_json is not None:
+                try:
+                    from engine.visual_reuse import load_transcript_words
+                    _dub_words = load_transcript_words(tr_json)
+                except Exception:  # noqa: BLE001 — best-effort
+                    _dub_words = []
             for short_idx, (start_offset, opening_text,
                             window_label) in enumerate(short_plan):
                 try:
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = (tmp / f"{lang.code}_short_ep"
                                        f"{episode_num:03d}{suffix}.mp4")
+                    from engine.shorts_selector import end_on_sentence
+                    this_dur = end_on_sentence(
+                        _dub_words, start_offset, short_dur, audio_offset_s=0.0)
 
-                    ass_path = None
-                    if tr_json is not None:
-                        try:
-                            from engine.captions import (
-                                transcript_to_ass_window,
-                            )
-                            cand = (tmp / f"{lang.code}_short_ep"
-                                          f"{episode_num:03d}{suffix}.ass")
-                            transcript_to_ass_window(
-                                tr_json, cand,
-                                window_start_seconds=start_offset,
-                                window_duration_seconds=short_dur,
-                                audio_offset_seconds=0.0)
-                            if (cand.exists() and cand.stat().st_size > 0
-                                    and "Dialogue:" in cand.read_text(
-                                        encoding="utf-8",
-                                        errors="replace")):
-                                ass_path = cand
-                                result["short_captions"] = "ass"
-                        except Exception as exc:  # noqa: BLE001
-                            logger.warning(
-                                "lang_dub[%s]: captions failed for short "
-                                "%d (%s)", lang.code, short_idx + 1, exc)
-
-                    build_short_video(
-                        audio, cover, short_mp4,
-                        start_offset=start_offset,
-                        duration=short_dur,
-                        hook=title,
-                        scene_paths=(short_scenes
-                                     if len(short_scenes) >= 2 else None),
-                        show_name=config.name,
-                        subtitles_path=ass_path,
-                        end_card=True,
-                        end_card_main_text=lang.end_card_main,
-                        end_card_sub_text=lang.end_card_sub,
-                        end_card_image_path=end_card_png)
-
+                    _window_body = ""
                     if short_idx == 0 or not opening_text:
                         st = _short_title(title, lang)
                         if short_idx > 0:
@@ -744,9 +720,52 @@ def publish_lang_dub(
                         body = _window_short_headline(
                             _wtext, opening_text, lang.code, _limit)
                         if body:
+                            _window_body = body
                             st = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
                             st = _second_short_title(title, lang)
+                    # Oct 28 2026: the 0-3 s on-screen headline is the
+                    # SHORT's story; a window Short no longer opens on the
+                    # episode's lead headline over another story's audio.
+                    _overlay = title if short_idx == 0 else (_window_body or None)
+
+                    ass_path = None
+                    if tr_json is not None:
+                        try:
+                            from engine.captions import (
+                                transcript_to_ass_window,
+                            )
+                            cand = (tmp / f"{lang.code}_short_ep"
+                                          f"{episode_num:03d}{suffix}.ass")
+                            transcript_to_ass_window(
+                                tr_json, cand,
+                                window_start_seconds=start_offset,
+                                window_duration_seconds=this_dur,
+                                audio_offset_seconds=0.0)
+                            if (cand.exists() and cand.stat().st_size > 0
+                                    and "Dialogue:" in cand.read_text(
+                                        encoding="utf-8",
+                                        errors="replace")):
+                                ass_path = cand
+                                result["short_captions"] = "ass"
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning(
+                                "lang_dub[%s]: captions failed for short "
+                                "%d (%s)", lang.code, short_idx + 1, exc)
+
+                    build_short_video(
+                        audio, cover, short_mp4,
+                        start_offset=start_offset,
+                        duration=this_dur,
+                        hook=_overlay,
+                        scene_paths=(short_scenes
+                                     if len(short_scenes) >= 2 else None),
+                        show_name=config.name,
+                        subtitles_path=ass_path,
+                        end_card=True,
+                        end_card_main_text=lang.end_card_main,
+                        end_card_sub_text=lang.end_card_sub,
+                        end_card_image_path=end_card_png)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]
@@ -765,12 +784,21 @@ def publish_lang_dub(
                             )
                             _cand = (tmp / f"{lang.code}_short"
                                      f"{short_idx + 1}_thumb.jpg")
+                            # Oct 28 2026: the call was missing the episode
+                            # number and date, raised TypeError into the except
+                            # below, and no dub Short ever got this thumbnail.
                             generate_shorts_thumbnail(
                                 short_scenes[short_idx % len(short_scenes)],
-                                _cand, show_name=config.name)
+                                episode_num=episode_num, date_str=date_str,
+                                output_path=_cand,
+                                hook=_overlay or title,
+                                show_name=config.name)
                             if _cand.exists():
                                 _short_thumb = _cand
-                        except Exception:  # noqa: BLE001
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning("lang_dub[%s]: Short %d thumbnail "
+                                           "failed (%s)", lang.code,
+                                           short_idx + 1, exc)
                             _short_thumb = None
                     sup = upload_video(
                         short_mp4, credentials=creds,

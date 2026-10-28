@@ -341,14 +341,20 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
 
 
 def more_headlines(content: str, hook: str, limit: int = MORE_HEADLINES) -> List[str]:
-    """Up to *limit* of the digest's own story headlines, the hook excluded."""
+    """Up to *limit* of the digest's own story headlines, the hook's story
+    excluded — by words, not by spelling: the digest titles the hook's story
+    in its own words, and that headline is the hook a second time
+    (``engine.newsroom.same_story``)."""
     from engine.grok_imagine import extract_story_headlines
+    from engine.newsroom import same_story
 
     hook_key = _norm(hook)
     out: List[str] = []
     for headline in extract_story_headlines(content or "", max_count=limit + 4):
         key = _norm(headline)
         if not key or key == hook_key or key in hook_key or hook_key in key:
+            continue
+        if same_story(headline, hook):
             continue
         out.append(headline)
         if len(out) >= limit:
@@ -468,6 +474,36 @@ def _varied(stories: Sequence[Dict[str, Any]], limit: int, *, seen: set) -> List
     return (first + later)[:limit]
 
 
+def merge_retellings(ordered: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """*ordered* with a story another show already told folded into it.
+
+    Two shows lead on one story more often than not on a slow day — on Oct
+    28 2026 Planetterrian's "top story" and Longevity's Science lead were the
+    same inulin-fiber knee trial, two cards apart. The first telling in the
+    page's order (newest, then audience rank) keeps its place and gains an
+    ``also_by`` list naming the other show's episode; the later telling is
+    dropped from the lead, top stories and sections. The Latest list is
+    built from the unmerged order: it is the record of what published.
+    """
+    from engine.newsroom import same_story
+
+    kept: List[Dict[str, Any]] = []
+    for story in ordered:
+        twin = next((k for k in kept
+                     if k["slug"] != story["slug"] and k.get("hook") and story.get("hook")
+                     and same_story(k["hook"], story["hook"])), None)
+        if twin is None:
+            kept.append(story)
+            continue
+        twin.setdefault("also_by", []).append({
+            "show_name": story["show_name"],
+            "show_page": story["show_page"],
+            "post_url": story.get("post_url") or "",
+            "brand_color": story.get("brand_color") or "",
+        })
+    return kept
+
+
 def assemble(stories: Iterable[Dict[str, Any]], *,
              audience_order: Sequence[str] = (),
              live_hub_ids: Iterable[str] = (),
@@ -498,6 +534,8 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
         return {"lead": None, "flagships": [], "top": [], "latest": [],
                 "sections": [], "more": [], "edition_date": "",
                 "story_count": 0, "today_count": 0}
+    published = ordered
+    ordered = merge_retellings(ordered)
 
     featured = sorted((s for s in ordered if s["slug"] in flagship_order),
                       key=lambda s: flagship_order[s["slug"]])
@@ -542,18 +580,18 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
         })
     leftovers.sort(key=_order_key(rank))
 
-    newest = ordered[0]["date_obj"]
+    newest = published[0]["date_obj"]
     return {
         "lead": lead,
         "flagships": featured,
         "top": top,
-        "latest": ordered[:LATEST_LIMIT],
+        "latest": published[:LATEST_LIMIT],
         "sections": sections,
         "more": leftovers,
         "edition_date": (f"{newest.strftime('%A, %B')} {newest.day}, {newest.year}"
                          if newest else ""),
-        "story_count": len(ordered),
-        "today_count": sum(1 for s in ordered if s.get("date_obj") == newest),
+        "story_count": len(published),
+        "today_count": sum(1 for s in published if s.get("date_obj") == newest),
     }
 
 
