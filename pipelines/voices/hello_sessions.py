@@ -94,16 +94,25 @@ def invite_email(show, app: Dict[str, Any], interview: Dict[str, Any]) -> tuple:
     return f"Five minutes before we record, {first}?", body
 
 
+def _iso(t: dt.datetime) -> str:
+    """A UTC instant safe to put raw in a PostgREST query string."""
+    return t.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def send_hello_invites(now: Optional[dt.datetime] = None) -> int:
     """Invite every guest whose interview is two to four days out and who has
     no agenda yet. Returns the number sent."""
     now = now or dt.datetime.now(dt.timezone.utc)
     lo, hi = now + INVITE_AHEAD[0], now + INVITE_AHEAD[1]
+    # Oct 28 2026: this query had returned HTTP 400 on every run since it
+    # shipped. ``interviews`` keeps its slot in ``scheduled_at``
+    # (``scheduled_for`` is ``interview_runs``'), and an unencoded "+00:00"
+    # reaches PostgREST as a space — the July 17 fire-tick bug again.
     rows = sb_select(
         "interviews",
         "status=in.(briefed,scheduled)&session_kind=eq.interview"
-        f"&hello_invited_at=is.null&scheduled_for=gte.{lo.isoformat()}"
-        f"&scheduled_for=lte.{hi.isoformat()}")
+        f"&hello_invited_at=is.null&scheduled_at=gte.{_iso(lo)}"
+        f"&scheduled_at=lte.{_iso(hi)}")
     sent = 0
     for interview in rows:
         try:

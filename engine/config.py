@@ -1446,7 +1446,7 @@ class ShowConfig:
     # X-linked articles. The page's own date then feeds the stale gate
     # and the prompt's newest-first order. 0 = off. A clean-feed day
     # opens nothing; see engine/article_dates.py.
-    date_probe_max: int = 12
+    date_probe_max: int = 40
     # Sep 30 2026 (network review): opt-in rotation memory for sentence
     # FRAMES — the show's last scripts are mined for openers that recur
     # with different tails and the podcast prompt gets a do-not-open-with
@@ -1730,7 +1730,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         preferred_domains=[str(x).strip().lower() for x in (data.get("preferred_domains") or []) if str(x).strip()],
         x_lookback_hours=int(data.get("x_lookback_hours", 24) or 24),
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
-        date_probe_max=int(data.get("date_probe_max", 12) if data.get("date_probe_max") is not None else 12),
+        date_probe_max=int(data.get("date_probe_max", 40) if data.get("date_probe_max") is not None else 40),
         frame_memory=bool(data.get("frame_memory", False)),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),

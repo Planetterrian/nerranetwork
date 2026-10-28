@@ -1278,8 +1278,13 @@ def replace_times(text: str) -> str:
         except (ValueError, AttributeError):
             return m.group(0)
 
+    # Oct 28 2026: a time never starts glued to a letter or a digit, or to a
+    # "*" that is glued to one (an allele, "DRB1*01:03"; bold markdown
+    # "**7:30**" is still a time).
+    # Planetterrian Ep226 aired the HLA allele "HLA-DRB1*01:03" as "one oh
+    # three A M" — an allele, a version or a ratio inside a token is no clock.
     text = re.sub(
-        r"(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*(AM|PM|am|pm|A\.M\.|P\.M\.|a\.m\.|p\.m\.))?",
+        r"(?<!\w)(?<!\w\*)(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*(AM|PM|am|pm|A\.M\.|P\.M\.|a\.m\.|p\.m\.))?",
         _time,
         text,
     )
@@ -1505,6 +1510,17 @@ def replace_large_numbers_with_k(text: str) -> str:
     # meals" for Nutrition5k. Split it into "Nutrition 5 K" so the
     # server-side normaliser speaks the digits and the letter.
     text = re.sub(r"(?<=[A-Za-z])(\d+)k\b", r" \1 K", text)
+    # Oct 28 2026: a display resolution is a NAME too. MAG 7 Ep035 aired
+    # "four thousand video at up to sixty frames a second" for 4K video, and
+    # "Apple TV 4K" read as "Apple TV four thousand". Only a capital K on one
+    # digit, next to a screen or video word (or after "TV"), so "$4K bonus"
+    # and "4K subscribers" stay quantities.
+    text = re.sub(
+        r"\b([2-8])K\b(?=\s+(?:video|videos|display|displays|TV|TVs|monitor|monitors|"
+        r"screen|screens|resolution|HDR|OLED|camera|cameras|recording|footage|"
+        r"streaming|content|Blu-ray|UHD|at\s+(?:up\s+to\s+)?\d))",
+        r"\1 K", text)
+    text = re.sub(r"(?<=\bTV )([2-8])K\b", r"\1 K", text)
     # "2.5k" -> "two thousand five hundred"
     text = re.sub(r"(?<![A-Za-z])(\d+\.?\d*)k\b", _k_number, text, flags=re.IGNORECASE)
     return text

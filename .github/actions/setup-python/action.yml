@@ -105,7 +105,12 @@ runs:
         chmod 777 "$APT_DEBS" "$APT_DEBS/partial"
         if [ "$CACHE_HIT" = "true" ] && ls "$APT_DEBS"/*.deb >/dev/null 2>&1; then
           # Same image, same packages: install the cached files, no mirror.
-          if sudo timeout 240 apt-get -o DPkg::Lock::Timeout=60 install -y -q --no-download "$APT_DEBS"/*.deb; then
+          # Oct 28 2026: dpkg, never `apt-get install --no-download`. apt
+          # resolves the request against the image's own (stale) package
+          # lists, which name older versions than the cached files, so it
+          # asked for archives it did not have and fell back to the mirror on
+          # all 50 cache hits of Oct 27. dpkg installs exactly the cached set.
+          if sudo timeout 240 dpkg --force-confold -i "$APT_DEBS"/*.deb >/dev/null; then
             echo "apt install from the image cache took $(( $(date +%s) - _t0 )) s"
             echo "source=cache" >> "$GITHUB_OUTPUT"
             exit 0
@@ -152,7 +157,9 @@ runs:
         # ten minutes.
         _ok=0
         for _attempt in 1 2 3 4; do
-          if sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }}; then
+          # -f: a cache install that stopped half-way leaves dpkg with unmet
+          # dependencies, which apt refuses to work around without it.
+          if sudo timeout 300 apt-get $APT_OPTS install -y -q -f ${{ inputs.system-packages }}; then
             _ok=1; break
           fi
           echo "::warning::apt-get install attempt $_attempt did not finish ($(( $(date +%s) - _t0 )) s so far); downloaded packages are kept"
