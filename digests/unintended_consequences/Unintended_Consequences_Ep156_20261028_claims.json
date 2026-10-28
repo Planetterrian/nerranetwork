@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://www.govinfo.gov/content/pkg/USCODE-1994-title42/html/USCODE-1994-title42-chap85-subchapIV-A-sec7651c.htm",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://www.eia.gov/electricity/archive/0582.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "empty or non-text body",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "The statute offered a two-year compliance extension to 1997 for any unit that installed high-efficiency scrubbers, and it awarded 3.5 million extension allowances through a lottery administered by the EPA.",
+      "The Energy Information Administration later recorded that American Electric Power and the Tennessee Valley Authority together received more than 1.4 million of those extension allowances."
+    ],
+    "flagged_count": 2,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "The 1990 Clean Air Act Amendments created a two-year compliance extension to 1997 for Phase I units installing high-efficiency scrubbers and awarded 3.5 million extension allowances.",
+      "episode_span": "The statute offered a two-year compliance extension to 1997 for any unit that installed high-efficiency scrubbers, and it awarded 3.5 million extension allowances through a lottery administered by the EPA.",
+      "source_url": "https://www.govinfo.gov/content/pkg/USCODE-1994-title42/html/USCODE-1994-title42-chap85-subchapIV-A-sec7651c.htm",
+      "supporting_quote": "Administrator shall allocate 3,500,000 allowances to units which have installed",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "2",
+      "claim": "Phase I of the Acid Rain Program, effective 1 January 1995, applied to 261 generating units at 110 plants with a 2.5 lb/mmBtu emissions rate limit.",
+      "episode_span": "Phase I took effect on 1 January 1995 and applied to 261 generating units at 110 plants.",
+      "source_url": "https://www.epa.gov/clean-air-act-overview/1990-clean-air-act-amendment-summary-title-iv",
+      "source_title": "1990 Clean Air Act Amendment Summary: Title IV",
+      "supporting_quote": "The first phase, effective January 1, 1995, requires 110 powerplants to reduce their emissions to a level equivalent to the product of an emissions rate of 2.5 lbs of SO2 /mmBtu",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "3",
+      "claim": "American Electric Power and the Tennessee Valley Authority together received more than 1.4 million of the 3.5 million extension allowances.",
+      "episode_span": "The Energy Information Administration later recorded that American Electric Power and the Tennessee Valley Authority together received more than 1.4 million of those extension allowances.",
+      "source_url": "https://www.eia.gov/electricity/archive/0582.pdf",
+      "supporting_quote": "AEP and TVA received over 1.4 million extension allowances combined",
+      "status": "unverified_not_found",
+      "status_reason": "empty or non-text body"
+    }
+  ]
+}
