@@ -5258,6 +5258,116 @@ def _newsroom_corrections(public):
     return rows
 
 
+#: Episodes per show in ``api/personal_front.json``: today's, plus two to
+#: catch up on.
+PERSONAL_FRONT_PER_SHOW = 3
+
+
+def personal_front_payload(shows, *, gallery_root, now, root=None):
+    """The member front page's data: ``api/personal_front.json``.
+
+    My Nerra (account.html) is a static page that lays out the member's own
+    lineup as a front page in the browser, so it reads the homepage's own
+    story data from a file instead of a second copy of the rules. Per show:
+    its name, colour, cover and page, and the newest
+    :data:`PERSONAL_FRONT_PER_SHOW` episodes as :func:`engine.landing_test.story_json`
+    rows (full hook, the episode's scene, its other headlines, the feed's
+    measured duration). A members-only show gets its card fields and no
+    episodes: its digests live in ``members/`` and no public file reads
+    them. Every Personal show is listed, public or not, so the page can
+    draw a card for every show a member can pick.
+    """
+    from engine import access as _access
+    from engine import landing_test as _lt
+    from engine import newsroom as _nr
+    from engine.interviews import feed_durations as _feed_durations
+    from engine.personal_edition import PERSONAL_SHOW_SLUGS
+    from engine.publisher import apply_op3_prefix as _op3
+
+    root = Path(root) if root else ROOT
+    by_slug = {s["slug"]: s for s in shows}
+    public = {s["slug"] for s in _english_shows(_public_shows(shows))}
+    hub_for = _lt.hub_by_slug([s for s in shows if s["slug"] in public])
+
+    def _audio(url):
+        if url.startswith("https://audio.nerranetwork.com/"):
+            return _op3(url)
+        return url if url.startswith("https://") else ""
+
+    def _post(slug, number):
+        return _blog_url_for_episode(slug, episode_num=number) if number else ""
+
+    order = list(PERSONAL_SHOW_SLUGS) + [s["slug"] for s in shows
+                                         if s["slug"] in public
+                                         and s["slug"] not in PERSONAL_SHOW_SLUGS]
+    out_shows = {}
+    for slug in order:
+        show = by_slug.get(slug)
+        cfg = NETWORK_SHOWS.get(slug) or {}
+        if show is None:
+            continue
+        cover = show.get("podcast_image") or ""
+        cover_base = cover[:-4] if cover.endswith(".jpg") else ""
+        entry = {
+            "name": show.get("name") or slug,
+            "brand_color": show.get("brand_color") or "#6B47FF",
+            "show_page": show.get("show_page") or "",
+            "cover_url": cover,
+            "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
+            "schedule": show.get("schedule") or "",
+            "tagline": show.get("tagline") or "",
+            "personal": slug in PERSONAL_SHOW_SLUGS,
+            "members_only": False,
+            "stories": [],
+        }
+        reg = _registry_show_config(slug)
+        if reg is not None:
+            try:
+                entry["members_only"] = bool(_access.is_gated(reg))
+            except ValueError:
+                entry["members_only"] = True
+        if slug not in public or entry["members_only"] or not cfg.get("json_path"):
+            out_shows[slug] = entry
+            continue
+        durations = _feed_durations(root / cfg["rss_file"]) if cfg.get("rss_file") else {}
+        _slice = gallery_root / f"{slug}.json"
+        gallery = _lt.load_gallery_index(gallery_root, slug)
+        for record in _lt.recent_records(root / cfg["json_path"], PERSONAL_FRONT_PER_SHOW):
+            story = _lt.build_story(
+                show, record, blog_url_for=_post, audio_url_for=_audio,
+                gallery=gallery, hub=hub_for.get(slug),
+                prompts_for=(lambda n, d, _p=_slice, _s=slug:
+                             _lt.scene_prompts(_p, _s, n, d)))
+            if story is None:
+                continue
+            story["stamp"] = _nr.stamp(record.get("date"), _nr.published_at(record), now)
+            entry["stories"].append(_lt.story_json(
+                story, record=record,
+                duration_s=durations.get(story.get("episode_num"))))
+        out_shows[slug] = entry
+    return {
+        "generated_at": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "per_show": PERSONAL_FRONT_PER_SHOW,
+        "shows": out_shows,
+    }
+
+
+def write_personal_front(shows, *, gallery_root, now, output_dir=None):
+    """Write ``api/personal_front.json``; never raises (a member page's data
+    is never worth the homepage)."""
+    try:
+        payload = personal_front_payload(shows, gallery_root=gallery_root, now=now)
+        out = (Path(output_dir) if output_dir else ROOT) / "api" / "personal_front.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+                       encoding="utf-8")
+        print(f"Wrote {out}")
+        return out
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::api/personal_front.json not written: {exc}")
+        return None
+
+
 def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
                           gallery_dir=None, now=None):
     """Write the homepage, ``index.html``: the network as a news front page.
@@ -5546,6 +5656,10 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         return None
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path} ({len(html):,} bytes)")
+    # Oct 28 2026: My Nerra lays out each member's own lineup from the same
+    # story data, refreshed with every homepage build.
+    write_personal_front(shows, gallery_root=gallery_root, now=now,
+                         output_dir=output_dir)
     return out_path
 
 
@@ -7311,6 +7425,7 @@ def _personal_shows_list():
             "cover": cover,
             "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
             "access_note": _access_note,
+            "brand_color": meta.get("brand_color") or "#6B47FF",
         })
     return personal_shows
 

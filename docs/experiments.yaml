@@ -5751,3 +5751,26 @@ experiments:
       in workers/gallery BEFORE STRIPE_SECRET_KEY goes on the Worker; enable
       the Stripe portal and the customer.subscription.updated event; set the
       Payment Links' redirect to account.html.
+  - id: my-nerra-front-page-2026-10-28
+    title: "My Nerra: the member's own front page, a play-your-lineup player, a studio with a live preview of tomorrow's edition"
+    area: site
+    shipped: 2026-10-28
+    readout: 2026-11-25
+    status: reading
+    baseline: >
+      account.html was a settings console: a native <audio> per episode with
+      clipped feed titles, the lineup as a checkbox list, add-on pills that
+      wrapped, an unstyled textarea and select, topics locked to Personal
+      News Network, and no view of what the member's edition would hold.
+      Sample plays and episode plays from the page were never sent (one
+      detached Audio object now plays everything, so tracking.js could not
+      see it).
+    target: >
+      play_personal_sample and episode_play from location /account.html
+      non-zero in GA4 within two weeks; begin_checkout from /account.html
+      counted; no "My Nerra" support mail about the page.
+    notes: >
+      Data: api/personal_front.json (generate_html.personal_front_payload,
+      written with every homepage build; committed by run-show finalize,
+      nerra-daily, render-video and nightly). Guards:
+      tests/test_my_nerra_2026_10_28.py. No Worker change.

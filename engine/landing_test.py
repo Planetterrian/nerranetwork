@@ -193,6 +193,61 @@ def latest_record(json_path: Path) -> Optional[dict]:
     return records[-1]
 
 
+def recent_records(json_path: Path, limit: int = 3) -> List[dict]:
+    """The newest *limit* episode records, newest first.
+
+    The ordering rule is :func:`latest_record`'s (episode number when every
+    record carries one, otherwise document order reversed), so
+    ``recent_records(p, 1)[0]`` is ``latest_record(p)``. A show's summaries
+    file is not in date order (SpaceX's last record is Ep115 of 300), so
+    neither the file order nor the date alone can be trusted.
+    """
+    path = Path(json_path)
+    if not path.is_file() or limit <= 0:
+        return []
+    try:
+        records = _records(json.loads(path.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        return []
+    if all(_episode_number(r) is not None for r in records):
+        ordered = sorted(records, key=_episode_number, reverse=True)
+    else:
+        ordered = list(reversed(records))
+    return ordered[:limit]
+
+
+#: Headlines kept per story on the member front page (``story_json``): the
+#: card prints three, and the topic matcher reads them all.
+PERSONAL_HEADLINES = 8
+
+#: The keys of a :func:`build_story` dict that the member page reads. The
+#: rest (``date_obj``, the ticker text, the hub id) are the homepage's.
+_STORY_JSON_KEYS = ("slug", "show_name", "show_page", "brand_color", "hook",
+                    "episode_num", "date_raw", "date", "post_url", "audio_url",
+                    "image_url", "image_orientation", "cover_url", "cover_webp",
+                    "hub_heading", "guest", "lang")
+
+
+def story_json(story: Dict[str, Any], *, record: dict,
+               duration_s: Optional[int] = None) -> Dict[str, Any]:
+    """A :func:`build_story` dict as plain JSON for ``api/personal_front.json``.
+
+    ``headlines`` carries up to :data:`PERSONAL_HEADLINES` of the episode's
+    own story headlines (the hook's story excluded), read again from the
+    record because the homepage keeps only three. ``stamp`` is the
+    homepage's publication stamp without its build-time ``is_today``, which
+    the page recomputes against the reader's clock.
+    """
+    out = {k: story.get(k) for k in _STORY_JSON_KEYS}
+    content = record.get("content") or record.get("summary") or ""
+    out["headlines"] = more_headlines(content, story.get("hook") or "",
+                                      limit=PERSONAL_HEADLINES)
+    stamp = story.get("stamp") or {}
+    out["stamp"] = {k: stamp.get(k) for k in ("iso", "label", "short", "day", "has_time")}
+    out["duration_s"] = int(duration_s) if duration_s else None
+    return out
+
+
 def record_by_number(json_path: Path, number: int) -> Optional[dict]:
     """The summaries record for episode *number*, or ``None``."""
     path = Path(json_path)
