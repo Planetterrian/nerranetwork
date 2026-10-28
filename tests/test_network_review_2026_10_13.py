@@ -367,7 +367,8 @@ class TestSmallGuards:
         gate = src[src.index("async function fireTickDue"):src.index("async function interviewIsLive")]
         assert "catch" in gate and "return true;" in gate.split("catch")[-1]
         assert "status=in.(scheduled,briefed,in_progress)" in gate
-        # The runs read is bounded like the no-show sweep: stale
-        # awaiting_guest / staged rows (Sep 9, Sep 28, Oct 12 2026) would
-        # otherwise hold the gate open forever.
-        assert "interview_runs?status=in.(staged,awaiting_guest,fired)&created_at=gte.${lo}" in gate
+        # The runs read is bounded: stale awaiting_guest / staged rows (Sep 9,
+        # Sep 28, Oct 12 2026) would otherwise hold the gate open forever.
+        # Since Oct 28 it is bounded by the run's own slot, not its creation
+        # (tests/test_slate_2026_10_28.py).
+        assert "interview_runs?status=in.(staged,awaiting_guest,fired)&scheduled_for=gte.${ilo}&scheduled_for=lte.${hi}" in gate

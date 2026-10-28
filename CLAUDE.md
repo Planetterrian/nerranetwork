@@ -7181,10 +7181,13 @@ shows published, 10/10 videos, Nerra Daily complete. Rules that bind:
   ("4K video" had aired as "four thousand video").
 
 Eight corrections filed. A members-only episode has no correction mechanism
-yet: the North America Ep029 item is the operator's. Open: the fire tick is
-held open all day by `interview_runs` (Worker), Mira's compiled prompt is over
-budget for the next two guests (needs a rehearsal), and MIT's script runs past
-the single-call `<fast>` ceiling.
+yet: the North America Ep029 item is the operator's. **The fire-tick gate
+reads a run by its slot (`scheduled_for`), never its creation**: every run is
+staged a day ahead, so the old 48-hour `created_at` read held the gate open
+for two days per booking (232 dispatches on Oct 27; 65 on the replay;
+`workers/voices/test/fire_tick_window.test.ts`). Open: Mira's compiled prompt
+is over budget for the next two guests (needs a rehearsal), and MIT's script
+runs past the single-call `<fast>` ceiling.
 
 ### Covered means aired, and a story catalog (Oct 21 2026)
 

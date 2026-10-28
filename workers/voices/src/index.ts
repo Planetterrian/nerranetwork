@@ -3170,30 +3170,36 @@ async function reminderFallback(env: Env): Promise<number> {
  *  so it asks first. FAIL-OPEN: a Supabase error dispatches, and the
  *  :00/:30 ticks always dispatch, so a row this query cannot see waits at
  *  most thirty minutes — never a guest in a locked studio. */
-const FIRE_TICK_LOOKBACK_MS = 48 * 3600000;   // sweep_browser_no_shows window
 const FIRE_TICK_LOOKAHEAD_MS = 140 * 60000;   // REMINDER_AHEAD upper bound + drift
 // Oct 19 2026: an interview is the fire script's to act on only around its
 // slot — the reminder ahead of it, the fire window, the live run (50-minute
 // hard cap). The 48-hour lookback on INTERVIEWS held the gate open all day
 // for two interviews whose runs had already fired ("already has an active
-// run — skipping", 148 dispatches on Oct 19); the run-table clause below
-// still covers the no-show sweep's two days.
+// run — skipping", 148 dispatches on Oct 19).
 const FIRE_TICK_INTERVIEW_LOOKBACK_MS = 3 * 3600000;
+// Oct 28 2026: the run-table clause read runs CREATED in the last two days,
+// and every run is staged about a day before its slot, so each booking held
+// the gate open for two whole days: run d0cdb835 (staged Oct 26 18:02 for
+// Oct 27 18:00) and then run 35cdf6f4 (staged Oct 27 17:32 for Oct 28
+// 17:30) kept it open all of Oct 27, 232 Worker dispatches that almost all
+// logged "already has an active run — skipping". A run is read around its own
+// slot (scheduled_for), the same window as the interview; the no-show sweep
+// acts 40 minutes after the start, inside it, and a staged prompt is
+// refreshed on the half-hour ticks, which always dispatch.
 
-async function fireTickDue(env: Env): Promise<boolean> {
+export async function fireTickDue(env: Env): Promise<boolean> {
   try {
-    const lo = new Date(Date.now() - FIRE_TICK_LOOKBACK_MS).toISOString();
     const ilo = new Date(Date.now() - FIRE_TICK_INTERVIEW_LOOKBACK_MS).toISOString();
     const hi = new Date(Date.now() + FIRE_TICK_LOOKAHEAD_MS).toISOString();
     const due = await sb(env, "GET",
       `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${ilo}&scheduled_at=lte.${hi}&select=id&limit=1`);
     if (due?.length) return true;
-    // Bounded like the no-show sweep: on Oct 13 2026 the table held two
+    // Bounded to the run's own slot: on Oct 13 2026 the table held two
     // awaiting_guest rows from September and a staged row from the day
     // before, none of which the fire script acts on, and an unbounded read
     // would have held the gate open forever.
     const runs = await sb(env, "GET",
-      `interview_runs?status=in.(staged,awaiting_guest,fired)&created_at=gte.${lo}&select=id&limit=1`);
+      `interview_runs?status=in.(staged,awaiting_guest,fired)&scheduled_for=gte.${ilo}&scheduled_for=lte.${hi}&select=id&limit=1`);
     return !!runs?.length;
   } catch (err: any) {
     console.error("fire-tick gate failed (dispatching anyway):", err?.message ?? err);
