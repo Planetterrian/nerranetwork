@@ -2500,7 +2500,8 @@ Rules that bind:
   the guest ticked audio only (`editorial_packages.guest_video_ok = false`,
   migration `20261028_guest_video_choice.sql`, offered on the review page only
   when a picture exists). YouTube gets the video instead of the waveform, X a
-  ≤140 s clip of the first clip suggestion (moved to the edit's clock), the
+  ≤140 s clip of the first clip suggestion (moved to the edit's clock; the
+  first vertical Short since later that day), the
   episode page a `<video>` player (our own `audio.nerranetwork.com/*.mp4`
   only). Workflows: a `video` job after post-interview and assemble-edit
   (`continue-on-error`), and **Cut the video version of an interview** by
@@ -2575,9 +2576,9 @@ Rules that bind:
   headset's microphone is offered with one click, never taken, because it
   drops to phone-call quality (the reason phone calls left the show); a
   "Default" selection is pinned to the device it meant before the list is
-  rebuilt; an unplugged microphone falls back; AirPods already on when the
-  page opens get the computer's microphone offered. Run by
-  `tests/fixtures/studio_devices_sim.js`.
+  rebuilt; an unplugged microphone falls back. Run by
+  `tests/fixtures/studio_devices_sim.js`. (Later the same day the studio
+  ranks microphones; see below.)
 - **Background blur** (section 4d): MediaPipe's selfie segmenter
   (`@mediapipe/tasks-vision@0.10.14`, loaded only when a guest turns blur on)
   on a 256x144 copy of each frame, the person drawn sharp over a blurred
@@ -2595,6 +2596,70 @@ workflow "Cut the video version of an interview" on that run with `preview`
 ticked (a test room is never post-processed, so the preview is the room
 uncut, emailed, published nowhere), watch it, then set `local_video: true`
 for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
+
+**Later the same day, Patrick on the first video preview** (guards
+`tests/test_video_sync_and_shorts_2026_10_28.py`,
+`tests/test_second_test_room_2026_10_28.py::TestTheStudioFollowsTheHeadset`,
+`tests/test_mira_researches_on_her_own_2026_10_28.py`):
+
+- **Mira moves only while she speaks** ("it had her talking when she was not,
+  and that looks really bad": the loop had played the whole hour). Who
+  speaks when is MEASURED from the audio, never the transcript
+  (`speech_on_edit`): her processed track's speech runs moved onto the edit's
+  clock (through `tracks.edit.clock` and `room_offset_sec`), plus speech in
+  the edit itself where it plays her narration (`tracks.edit.pieces`, which
+  `assemble_edit.pieces_of` now records: narration / mira / guest / room /
+  gap; an older edit reads narration as whatever the clock does not cover);
+  a cut of the guest's own track silences her, one of hers silences the
+  guest. Her face: rest, the loop from its first frame while she talks
+  (pauses under 0.45 s are breaths), five frames easing back to rest when she
+  stops (`mira_plan`, `render_mira_track`; every part all-keyframe, joined
+  exactly). On the test room: 87% of her talking frames move, 0.6% of her
+  quiet ones. The speaker's border uses the same measurement (1 s floor
+  hold); the transcript is the fallback only when the tracks cannot be read.
+  Her tile is head-and-shoulders from her portrait (`mira_crop`), like a
+  camera.
+- **Two shapes from one edit.** The long form stays 1920x1080 side by side
+  (YouTube, the episode page). **Shorts**: up to three 1080x1920 clips, the
+  guest stacked over Mira, show name on top, word-by-word captions
+  (`engine.transcripts` + `engine.captions.transcript_to_ass_window`, the
+  network's Shorts style) clear of the phone apps' bottom furniture, cut from
+  the clip pass's moments moved to the edit's clock (`clip_windows`: 15-90 s,
+  none overlapping). Stored as `tracks.edit.shorts` with `shorts_of`; publish
+  uses them only for that edit and never for an audio-only guest
+  (`episode_shorts`). YouTube: the first public with the episode, the rest at
+  the channel's next Shorts slots (`engine.shorts_stagger`), `kind: short`
+  in the video index, each linking the long video and saying the host is an
+  AI. X posts the first Short (the 16:9 cut is the fallback). The test-room
+  preview renders both shapes (a first-minute Short).
+- **The best microphone** (studio 4c, `micScore`): a dedicated microphone >
+  a wired/USB headset > an unnamed USB device > the computer's own > a
+  webcam's > Bluetooth (phone-call quality); software devices (Zoom, Teams,
+  BlackHole, Krisp, OBS, Continuity) are never chosen for anyone. On opening
+  the page takes the best one unless the person picked (a step only to a
+  known better kind, or off Bluetooth/webcam); a device plugged in later is
+  taken when it ranks at least as high as the one in use, else offered; an
+  unplugged one falls back to the best left. AirPods already on: the
+  computer's microphone is taken, Mira stays in the AirPods.
+- **Research answers in seconds and knows the guest.** Live: at default effort
+  a lookup took 60-70 s; `reasoning.effort: "low"` 8-12 s, same findings (a
+  model that refuses the setting is asked again without it). The fire step
+  seeds the run with the guest's own pages (`room_log_seed`:
+  `grok_session_log.guest_links`, ≤ 5 http(s) URLs) and the guest lookup
+  names them; with them the lookup found Michael Kamins' podcast of six days
+  earlier, without them nothing.
+- **Does the camera tell when the guest has finished?** Not yet known. The
+  room never sees the picture (the camera is recorded in the browser), so
+  any cue would have to be computed in the studio page and sent to the room.
+  On the one test room with a placed camera (17 pauses) motion at the pause
+  separates nothing; `turn_cues.py --video` needs ~5 rooms with the camera on
+  (~100 long pauses) before a cue is worth building. ⚠️ Nothing changes the
+  room's timing.
+
+Operator: push (the studio page and the pipeline go live with it; the Worker
+is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
+research changes, then "Deploy Voximplant scenario"; no new secret (Shorts go
+up with the publish workflow's YouTube credentials).
 
 ### Members-only limited series (Oct 18 2026)
 

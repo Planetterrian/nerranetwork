@@ -787,7 +787,7 @@
       // A list rebuilt because a headset came or went keeps what was picked.
       if (keepMic && hasOption(mic, keepMic)) mic.value = keepMic;
       if (keepCam && hasOption(cam, keepCam)) cam.value = keepCam;
-      if (!knownInputs) { rememberDevices(devs); suggestBetterMic(devs); }
+      if (!knownInputs) { rememberDevices(devs); pickBestMic(devs); }
       if (activeCall) fillCallMics();
       return devs;
     });
@@ -827,7 +827,10 @@
       updateJoinGate();
     }
   }
-  document.getElementById("micSel").addEventListener("change", function () { switchDevices("mic"); });
+  document.getElementById("micSel").addEventListener("change", function () {
+    micPickedByHand = true;
+    switchDevices("mic");
+  });
   document.getElementById("camSel").addEventListener("change", function () { switchDevices("camera"); });
   document.getElementById("camToggle").addEventListener("click", function () {
     camOn = !camOn;
@@ -1884,6 +1887,7 @@
     to.value = from.value;
   }
   document.getElementById("micSelCall").addEventListener("change", function () {
+    micPickedByHand = true;
     switchCallMic(this.value);
   });
   function switchCallMic(id) {
@@ -2197,6 +2201,55 @@
     var label = String((d && d.label) || "");
     return BLUETOOTH_RE.test(label) && !/\busb\b/i.test(label);
   }
+  // The best microphone on the machine (Oct 28 2026, Patrick: "move to the
+  // best microphone possible"). From the label, in this order: a dedicated
+  // microphone (USB or through an interface), a wired or USB headset, a
+  // USB device we cannot name, the computer's own, a webcam's, a Bluetooth
+  // headset's (phone-call quality once it opens). Software devices (Zoom,
+  // Teams, BlackHole, Krisp, OBS, a phone over Continuity) are never chosen
+  // for anyone. When the page opens it takes the best one unless the
+  // person picks; a device plugged in later is taken when it ranks at least
+  // as high as the one in use.
+  var NEVER_AUTO_RE = /zoom|teams|blackhole|krisp|\bobs\b|loopback|virtual|soundflower|vb-audio|voicemeeter|steam streaming|\bcamo\b|nvidia broadcast|iphone|ipad|continuity|aggregate|multi-output/i;
+  var STUDIO_MIC_RE = /yeti|snowball|\bblue\b|shure|\bmv7|\bsm7|r[o\u00f8]de|podmic|procaster|nt-usb|at20[0-9]{2}|audio-technica|atr2100|elgato wave|quadcast|samson|fifine|focusrite|scarlett|\bmotu\b|apogee|audient|\bvolt\b|universal audio|behringer|tascam|maono|seiren|podtrak|\bxlr\b|condenser|usb microphone/i;
+  var HEADSET_RE = /headset|external microphone|earpods|evolve|plantronics|\bpoly\b|blackwire|sennheiser|\bepos\b|hyperx|steelseries|arctis|razer|corsair|logitech h\d|logitech g\d|headphone/i;
+  var BUILTIN_RE = /built-?in|internal|macbook|imac|realtek|microphone array|smart sound|studio display|surface|conexant|cirrus/i;
+  var WEBCAM_RE = /webcam|camera|\bcam\b|\bc9[0-9]{2}\b|brio|kiyo|facecam/i;
+  function micScore(d) {
+    var label = deviceName(d || {});
+    if (!d || !d.label || NEVER_AUTO_RE.test(label)) return 0;
+    if (isBluetooth(d)) return 10;
+    if (STUDIO_MIC_RE.test(label)) return 50;
+    if (HEADSET_RE.test(label)) return 40;
+    if (WEBCAM_RE.test(label)) return 20;
+    if (/\busb\b/i.test(label)) return 35;
+    if (BUILTIN_RE.test(label)) return 30;
+    return 25;
+  }
+  function micOptionScore(id) {
+    var sel = document.getElementById("micSel");
+    var o = Array.prototype.filter.call(sel.options, function (x) { return x.value === id; })[0];
+    return o ? micScore({ label: o.textContent }) : 0;
+  }
+  function bestMic(devs) {
+    return devs.filter(function (d) { return d.kind === "audioinput" && realDevice(d) && micScore(d) > 0; })
+      .sort(function (a, b) { return micScore(b) - micScore(a); })[0] || null;
+  }
+  var micPickedByHand = false;
+  // When the page opens: the best microphone, unless the person has picked
+  // one. Only a step to a known better kind (a microphone, a headset, a USB
+  // device), or off a Bluetooth or webcam microphone, is taken.
+  function pickBestMic(devs) {
+    var sel = document.getElementById("micSel");
+    if (!sel || micPickedByHand) return;
+    var best = bestMic(devs);
+    if (!best || best.deviceId === sel.value) return;
+    var now = micOptionScore(sel.value), score = micScore(best);
+    if (score <= now || (score < 35 && now > 20)) return;
+    var bt = now === 10 || isBluetooth({ label: selectedMicName() });
+    selectMic(best.deviceId, "Using " + deviceName(best) + ", the best microphone on this computer" +
+      (bt ? ". Your headphones still play Mira." : ". You can pick another from the list."));
+  }
   var knownInputs = null, knownOutputs = null, defaultMicLabel = "", followTimer = null;
   function realDevice(d) {
     return !!d.deviceId && d.deviceId !== "default" && d.deviceId !== "communications";
@@ -2270,25 +2323,21 @@
       "<br><button class=\"ghost\" type=\"button\" id=\"useBtMic\">Use " + name + "'s microphone instead</button>");
     var b = document.getElementById("useBtMic");
     if (b) b.addEventListener("click", function () {
+      micPickedByHand = true;
       selectMic(d.deviceId, "Switched to " + deviceName(d) + ".");
     });
   }
-  // Headphones already on when the page opened: a Bluetooth microphone is
-  // what the system hands over, so the better one is offered once.
-  function suggestBetterMic(devs) {
-    var sel = document.getElementById("micSel");
-    if (!sel || !isBluetooth({ label: selectedMicName() })) return;
-    var better = devs.filter(function (d) {
-      return d.kind === "audioinput" && realDevice(d) && !isBluetooth(d);
-    })[0];
-    if (!better) return;
-    deviceNote("You're on <b>" + escapeHtml(selectedMicName()) + "</b>. Keep them on for listening," +
-      " but " + escapeHtml(deviceName(better)) + " will sound better than a Bluetooth headset's" +
-      " microphone.<br><button class=\"ghost\" type=\"button\" id=\"useBetterMic\">Use " +
-      escapeHtml(deviceName(better)) + "</button>");
-    var b = document.getElementById("useBetterMic");
+  // A microphone plugged in that ranks below the one in use (a webcam's,
+  // beside a USB microphone) is offered, not taken.
+  function offerMic(d) {
+    var name = escapeHtml(deviceName(d));
+    deviceNote("<b>" + name + "</b> connected. You're still on " +
+      escapeHtml(selectedMicName()) + ", which should sound better." +
+      "<br><button class=\"ghost\" type=\"button\" id=\"useNewMic\">Use " + name + " instead</button>");
+    var b = document.getElementById("useNewMic");
     if (b) b.addEventListener("click", function () {
-      selectMic(better.deviceId, "Switched to " + deviceName(better) + ". Your headphones still play Mira.");
+      micPickedByHand = true;
+      selectMic(d.deviceId, "Switched to " + deviceName(d) + ".");
     });
   }
   function onDevicesChanged() {
@@ -2326,12 +2375,16 @@
           followOutput({ deviceId: "default" });
           preferredOutputId = "";
         }
-        var wired = addedIn.filter(function (d) { return !isBluetooth(d); })[0];
+        var inUse = micOptionScore(sel.value);
+        var wired = bestMic(addedIn.filter(function (d) { return !isBluetooth(d); }));
         var bt = addedIn.filter(isBluetooth)[0];
-        if (wired) { selectMic(wired.deviceId, "Switched to " + deviceName(wired) + "."); return; }
+        if (wired && micScore(wired) >= inUse) {
+          selectMic(wired.deviceId, "Switched to " + deviceName(wired) + "."); return;
+        }
+        if (wired) { offerMic(wired); return; }
         if (bt) { offerBluetoothMic(bt); return; }
         if (current && current !== "default" && !stillThere && !hasOption(sel, current)) {
-          var next = devs.filter(function (d) { return d.kind === "audioinput"; })[0];
+          var next = bestMic(devs) || devs.filter(function (d) { return d.kind === "audioinput"; })[0];
           if (next) selectMic(next.deviceId, "Your microphone was disconnected, so the studio switched to " + deviceName(next) + ".");
         }
       });

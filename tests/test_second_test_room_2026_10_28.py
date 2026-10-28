@@ -227,9 +227,44 @@ class TestTheStudioFollowsTheHeadset:
         out = devices("unplugged")
         assert "Your microphone was disconnected" in out["note"]
 
-    def test_airpods_already_on_get_a_better_microphone_offered(self):
+    def test_airpods_already_on_keep_mira_and_the_computer_takes_the_microphone(self):
+        # Oct 28 2026, later: "move to the best microphone possible". A
+        # Bluetooth microphone is the lowest rank, so it is no longer offered
+        # away: the better one is taken, and the headphones still play Mira.
         out = devices("airpods_already_on")
-        assert "useBetterMic" in out["note"] and "MacBook Pro Microphone" in out["note"]
+        assert out["mic"] == "builtin"
+        assert "Using MacBook Pro Microphone (Built-in), the best microphone" in out["note"]
+        assert "headphones still play Mira" in out["note"]
+
+    def test_the_best_microphone_is_taken_when_the_page_opens(self):
+        out = devices("best_at_open")
+        assert out["mic"] == "yeti"
+        assert "Using Yeti Stereo Microphone, the best microphone on this computer" in out["note"]
+
+    def test_software_microphones_are_never_chosen_for_anyone(self):
+        out = devices("software_never")
+        assert out["mic"] == "builtin"
+
+    def test_a_pick_by_hand_is_kept_when_the_page_lists_devices(self):
+        out = devices("picked_by_hand")
+        assert out["mic"] == "default" and out["note"] == ""
+
+    def test_a_webcam_plugged_in_beside_a_better_microphone_is_offered_not_taken(self):
+        out = devices("webcam_beside_yeti")
+        assert out["mic"] == "yeti"
+        assert "Logitech BRIO</b> connected" in out["note"] and "useNewMic" in out["note"]
+        assert not any("switchDevices" in e for e in out["log"])
+
+    def test_a_better_microphone_plugged_in_is_taken_even_after_a_pick(self):
+        out = devices("yeti_plugged_in_after_a_pick")
+        assert out["mic"] == "yeti" and "Switched to Yeti Stereo Microphone." in out["note"]
+
+    def test_the_ranking_puts_a_microphone_over_a_headset_over_the_computer(self):
+        a = STUDIO.index("function micScore(d)")
+        body = STUDIO[a:STUDIO.index("\n  }", a)]
+        order = [body.index(k) for k in ("return 0;", "return 10;", "return 50;", "return 40;",
+                                         "return 20;", "return 35;", "return 30;")]
+        assert order == sorted(order)
 
     def test_the_page_listens_for_device_changes(self):
         assert 'navigator.mediaDevices.addEventListener("devicechange"' in STUDIO

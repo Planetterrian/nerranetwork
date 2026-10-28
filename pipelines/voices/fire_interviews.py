@@ -560,6 +560,26 @@ def is_closing_session(interview: dict) -> bool:
 TURN_SILENCE_MS = 1800
 
 
+def room_log_seed(show, app: dict) -> dict:
+    """What the room reads off grok_session_log when it opens: whether the
+    studio records the guest's camera (Oct 28 2026, the show's switch), and
+    the guest's own public pages, which tell the room's lookups who this
+    guest is (Oct 28 2026: with them the opening lookup found Michael
+    Kamins' podcast of six days earlier; without, nothing)."""
+    from common import guest_links
+    seed: dict = {}
+    if getattr(show, "local_video", False):
+        seed["local_video"] = True
+    try:
+        links = [str(link.get("url") or "") for link in guest_links(app or {})]
+    except Exception:  # noqa: BLE001 — a malformed links column is no links
+        links = []
+    links = [u for u in links if u.startswith(("http://", "https://")) and len(u) <= 200][:5]
+    if links:
+        seed["guest_links"] = links
+    return seed
+
+
 def turn_detection() -> dict:
     """End-of-turn silence Mira waits for, per run (MIRA_TURN_SILENCE_MS)."""
     try:
@@ -1040,7 +1060,7 @@ def fire_due_interviews() -> int:
                 **room_clips(show),
                 # Oct 28 2026: the studio records the guest's camera in the
                 # browser when the show says so (Worker studio-state reads it).
-                **({"grok_session_log": {"local_video": True}} if show.local_video else {}),
+                **({"grok_session_log": run_log} if (run_log := room_log_seed(show, app)) else {}),
                 **({"status": "staged"} if studio else {"status": "awaiting_guest"}),
             })
             if host_mode:

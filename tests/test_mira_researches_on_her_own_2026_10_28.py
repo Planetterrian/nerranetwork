@@ -36,9 +36,11 @@ NODE = shutil.which("node")
 needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed")
 
 
-def sim(which: str) -> dict:
+def sim(which: str, env: dict | None = None) -> dict:
+    import os
     out = subprocess.run([NODE, str(SIM), str(SCENARIO_PATH), which],
-                         capture_output=True, text=True, timeout=60)
+                         capture_output=True, text=True, timeout=60,
+                         env={**os.environ, **(env or {})})
     assert out.returncode == 0, out.stderr[-2000:]
     return json.loads(out.stdout)
 
@@ -58,6 +60,36 @@ class TestTheRoomLooksThingsUp:
         assert "Ada Lovelace, Chief Scientist at Analytical Engines" in first["prompt"]
         assert "Not their biography" in first["prompt"]
         assert room["guestIdentity"] == "Ada Lovelace, Chief Scientist at Analytical Engines"
+
+    def test_lookups_answer_in_seconds_and_know_the_guest_by_their_own_pages(self, room):
+        # Measured live Oct 28 2026: at the default effort a lookup took 60-70
+        # s (the moment had passed); at low, 8-12 s with the same findings.
+        # With the guest's own pages the opening lookup found Michael Kamins'
+        # podcast of six days earlier; without them, nothing.
+        first = room["lookups"][0]
+        assert first["reasoning"] == {"effort": "low"}
+        assert "Their own pages: https://adalovelace.example/, https://x.com/ada." in first["prompt"]
+        assert "javascript:" not in first["prompt"]
+        assert "their own pages, when given, settle who they are" in first["prompt"]
+
+    def test_a_model_that_refuses_the_effort_setting_is_asked_again_without_it(self):
+        out = sim("auto_research", env={"ROOM_SIM_REFUSE_EFFORT": "1"})
+        assert [x["reasoning"] for x in out["lookups"][:2]] == [{"effort": "low"}, None]
+        assert out["researchLookups"] == 3 and len(out["notes"]) == 8
+
+    def test_the_fire_step_seeds_the_room_with_the_guests_pages(self):
+        import fire_interviews as fi
+
+        class Show:
+            local_video = False
+        app = {"links": {"website": "https://adalovelace.example", "x": "https://x.com/ada",
+                         "raw": "javascript:alert(1)"}}
+        seed = fi.room_log_seed(Show, app)
+        assert seed["guest_links"][:2] == ["https://adalovelace.example", "https://x.com/ada"]
+        assert all(u.startswith("https://") for u in seed["guest_links"])
+        assert fi.room_log_seed(Show, {}) == {}
+        assert 'room_log_seed(show, app)' in (ROOT / "pipelines" / "voices"
+                                               / "fire_interviews.py").read_text(encoding="utf-8")
 
     def test_a_substantial_answer_is_looked_up_and_a_short_one_is_not(self, room):
         assert room["afterShort"] == 1

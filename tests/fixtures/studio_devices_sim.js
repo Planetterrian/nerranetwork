@@ -60,7 +60,7 @@ ctx.listDevices = function (known) {
     .map(function (d) { return { value: d.deviceId, textContent: d.label }; });
   if (keep && ctx.hasOption(mic, keep)) mic.value = keep;
   else mic.value = mic.options.length ? mic.options[0].value : "";
-  if (!ctx.knownInputs) { vm.runInContext("rememberDevices(__devs); suggestBetterMic(__devs);", Object.assign(ctx, { __devs: devs })); }
+  if (!ctx.knownInputs) { vm.runInContext("rememberDevices(__devs); pickBestMic(__devs);", Object.assign(ctx, { __devs: devs })); }
   if (ctx.activeCall) ctx.fillCallMics();
   return Promise.resolve(devs);
 };
@@ -74,6 +74,10 @@ const AIRPODS_OUT = { kind: "audiooutput", deviceId: "airpods-out", label: "Patr
 const DEF_AIRPODS = { kind: "audioinput", deviceId: "default", label: "Default - Patrick's AirPods Pro" };
 const USB_IN = { kind: "audioinput", deviceId: "usb-in", label: "Jabra Evolve2 30 USB (0b0e:3061)" };
 const WIRED_IN = { kind: "audioinput", deviceId: "wired-in", label: "External Microphone" };
+const YETI = { kind: "audioinput", deviceId: "yeti", label: "Yeti Stereo Microphone (046d:0ab7)" };
+const WEBCAM = { kind: "audioinput", deviceId: "cam", label: "Logitech BRIO (046d:085e)" };
+const ZOOM = { kind: "audioinput", deviceId: "zoom", label: "ZoomAudioDevice" };
+const KRISP = { kind: "audioinput", deviceId: "krisp", label: "Krisp Microphone" };
 
 async function settle() { for (let i = 0; i < 10; i++) await Promise.resolve(); await new Promise(function (r) { setImmediate(r); }); }
 async function connect(next) { devices = next; deviceListener(); await settle(); }
@@ -114,6 +118,38 @@ function state() {
     devices = [DEF_AIRPODS, BUILTIN, AIRPODS_IN, AIRPODS_OUT];
     els.micSel.value = "";
     await ctx.listDevices();
+    out.after = state();
+  } else if (which === "best_at_open") {
+    ctx.knownInputs = null;
+    devices = [DEF_BUILTIN, BUILTIN, WEBCAM, ZOOM, YETI, SPEAKERS];
+    els.micSel.value = "";
+    await ctx.listDevices();
+    out.after = state();
+  } else if (which === "software_never") {
+    ctx.knownInputs = null;
+    devices = [{ kind: "audioinput", deviceId: "default", label: "Default - Krisp Microphone" },
+               KRISP, ZOOM, BUILTIN, SPEAKERS];
+    els.micSel.value = "";
+    await ctx.listDevices();
+    out.after = state();
+  } else if (which === "picked_by_hand") {
+    ctx.knownInputs = null;
+    run("micPickedByHand = true;");
+    devices = [DEF_BUILTIN, BUILTIN, YETI, SPEAKERS];
+    els.micSel.value = "";
+    await ctx.listDevices();
+    out.after = state();
+  } else if (which === "webcam_beside_yeti") {
+    ctx.knownInputs = null;
+    devices = [DEF_BUILTIN, BUILTIN, YETI, SPEAKERS];
+    els.micSel.value = "";
+    await ctx.listDevices();
+    log.length = 0;
+    await connect([DEF_BUILTIN, BUILTIN, YETI, WEBCAM, SPEAKERS]);
+    out.after = state();
+  } else if (which === "yeti_plugged_in_after_a_pick") {
+    run("micPickedByHand = true;");
+    await connect([DEF_BUILTIN, BUILTIN, YETI, SPEAKERS]);
     out.after = state();
   } else {
     throw new Error("unknown " + which);

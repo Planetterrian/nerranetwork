@@ -144,6 +144,21 @@ def episode_video(run: dict | None, pkg: dict | None) -> str:
     return url
 
 
+def episode_shorts(run: dict | None, pkg: dict | None) -> list:
+    """The vertical Shorts cut from this edit (``[{"url", "start",
+    "seconds", "title"}]``), or [] (Oct 28 2026). Same rules as the long
+    form: never for a guest who asked for audio only, and only while the
+    edit they were cut from is the one being published."""
+    if pkg and pkg.get("guest_video_ok") is False:
+        return []
+    edit = ((((run or {}).get("grok_session_log") or {}).get("tracks") or {})
+            .get("edit") or {})
+    if not edit.get("url") or str(edit.get("shorts_of") or "") != str(edit.get("url")):
+        return []
+    return [s for s in edit.get("shorts") or []
+            if isinstance(s, dict) and str(s.get("url") or "").startswith("http")]
+
+
 #: X takes a video of up to 140 seconds on any account.
 X_CLIP_MAX_SEC = 140.0
 X_CLIP_DEFAULT_SEC = 60.0
@@ -711,10 +726,14 @@ def publish_one(interview_id: str) -> int:
     maybe_send_newsletter(show, cfg, episode_num, today,
                           interview.get("episode_thesis") or "",
                           digest_path)
-    maybe_publish_youtube(show, cfg, episode_num, today, title, description,
-                          audio_url, app.get("name") or "", video_url=video)
+    long_id = maybe_publish_youtube(show, cfg, episode_num, today, title, description,
+                                    audio_url, app.get("name") or "", video_url=video)
+    shorts = episode_shorts(run, pkg)
+    maybe_publish_shorts(show, cfg, episode_num, today, shorts,
+                         app.get("name") or "", long_video_id=long_id or "")
     maybe_post_x(show, cfg, episode_num, title, mention=x_handle(app),
-                 video_url=video, clip=x_clip_window(pkg, run) if video else None)
+                 video_url=video, clip=x_clip_window(pkg, run) if video else None,
+                 short_url=shorts[0]["url"] if shorts else "")
 
     notify_operator(show.slack(
         f"Ep{episode_num} PUBLISHED: {app['name']} — RSS updated, "
@@ -803,7 +822,7 @@ def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
 
 def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str,
                  mention: str = "", video_url: str = "",
-                 clip: tuple | None = None) -> None:
+                 clip: tuple | None = None, short_url: str = "") -> None:
     """Post the episode's title and page link to X, if the show enables it.
 
     Oct 9 2026: ``publishing.x_enabled`` / ``x_env_prefix`` on the show YAML
@@ -827,11 +846,15 @@ def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str,
         label = f"{show.name} Ep{episode_num}"
         env_prefix = getattr(pub, "x_env_prefix", "") or ""
         posted, reason = False, ""
-        # Oct 28 2026: with a video version, the post carries a moment of it.
-        if video_url and clip:
+        # Oct 28 2026: with a video version, the post carries a moment of it:
+        # the first vertical Short (captioned, made for a phone) when one was
+        # cut, else the same moment cut from the long form.
+        if short_url or (video_url and clip):
             from engine.x_post import post_media, teaser_text
             with tempfile.TemporaryDirectory(prefix=f"{show.slug}_x_") as tmp:
-                cut = x_video_clip(video_url, clip, Path(tmp) / "moment.mp4")
+                cut = (_download(short_url, Path(tmp) / "short.mp4") if short_url else None)
+                if cut is None and video_url and clip:
+                    cut = x_video_clip(video_url, clip, Path(tmp) / "moment.mp4")
                 if cut is not None:
                     posted, reason, _url, _used = post_media(
                         env_prefix=env_prefix, text=teaser_text(title, link, mention),
@@ -898,7 +921,7 @@ def render_episode_video(show: VoiceShow, audio_url: str, out: Path,
 
 def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                           title: str, description: str, audio_url: str,
-                          guest_name: str, video_url: str = "") -> None:
+                          guest_name: str, video_url: str = "") -> str:
     """Upload the episode's waveform video to YouTube, if the show enables it.
 
     Deliberately minimal: one long-form upload of the video the produce step
@@ -910,7 +933,7 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
     the episode shows up in the feedback loop without any further wiring.
     """
     if cfg is None or not getattr(getattr(cfg, "youtube", None), "enabled", False):
-        return
+        return ""
     yt = cfg.youtube
     # Oct 28 2026: the video version (the guest beside Mira) when there is
     # one for this edit; else the waveform video, as before.
@@ -947,7 +970,7 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
         if credentials is None:
             logger.warning("::warning::YouTube skipped for %s Ep%d: no channel "
                            "credentials in the environment", show.slug, episode_num)
-            return
+            return ""
 
         # show.page_url is already absolute (shows.py builds it from the
         # registry). Every published link goes through engine.funnel — see
@@ -970,7 +993,7 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
             if render_locally:
                 local = render_episode_video(show, audio_url, local, guest_name)
                 if local is None:
-                    return
+                    return ""
             else:
                 with requests.get(video_url, stream=True, timeout=1800) as resp:
                     resp.raise_for_status()
@@ -991,7 +1014,7 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
         if not video_id:
             logger.warning("::warning::YouTube upload returned no video id for "
                            "%s Ep%d", show.slug, episode_num)
-            return
+            return ""
         playlist = getattr(yt, "podcast_playlist_id", "") or ""
         if playlist:
             try:
@@ -1002,14 +1025,109 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                               guest_name, getattr(yt, "channel", "en") or "en")
         logger.info("YouTube: %s Ep%d uploaded as %s",
                     show.slug, episode_num, video_id)
+        return video_id
     except Exception:  # noqa: BLE001 — the episode is already published
         logger.exception("YouTube upload failed for %s Ep%d (non-fatal)",
                          show.slug, episode_num)
+        return ""
+
+
+def _download(url: str, dest: Path) -> "Path | None":
+    """``url`` saved at ``dest``, or None."""
+    try:
+        with requests.get(url, stream=True, timeout=1800) as resp:
+            resp.raise_for_status()
+            with dest.open("wb") as fh:
+                for chunk in resp.iter_content(1 << 16):
+                    fh.write(chunk)
+    except Exception:  # noqa: BLE001 — every caller has a way on without it
+        logger.exception("could not fetch %s", url)
+        return None
+    return dest if dest.exists() and dest.stat().st_size > 10_000 else None
+
+
+def short_title(short: dict, guest_name: str, show_name: str) -> str:
+    """A Short's YouTube title: its moment's headline (else the guest's
+    name and the show's), with ``#Shorts``, inside the title limit
+    (engine.titles owns it)."""
+    from engine.titles import YOUTUBE_TITLE_MAX, clip_words
+    head = str(short.get("title") or "").strip() or f"{guest_name} on {show_name}"
+    return f"{clip_words(head, YOUTUBE_TITLE_MAX - len(' #Shorts'))} #Shorts"
+
+
+def maybe_publish_shorts(show: VoiceShow, cfg, episode_num: int, when: dt.date,
+                         shorts: list, guest_name: str, long_video_id: str = "") -> int:
+    """Upload the episode's vertical Shorts (Oct 28 2026), if the show
+    enables YouTube. The first goes public now; the rest are scheduled at the
+    channel's next Shorts slots (engine.shorts_stagger, the network's own
+    rule), so one episode's moments spread through the day. Each links the
+    full conversation and says the host is an AI. Recorded as ``kind:
+    short`` in the video index. Returns how many went up; never raises."""
+    if not shorts or cfg is None or not getattr(getattr(cfg, "youtube", None), "enabled", False):
+        return 0
+    yt = cfg.youtube
+    done = 0
+    try:
+        from engine.funnel import PLACEMENT_DESCRIPTION, episode_link
+        from engine.shorts_stagger import resolve_slot_hours, stagger_publish_times
+        from engine.youtube import get_channel_credentials_from_env, upload_video
+        channel = getattr(yt, "channel", "en") or "en"
+        credentials = get_channel_credentials_from_env(channel)
+        if credentials is None:
+            logger.warning("::warning::Shorts skipped for %s Ep%d: no channel "
+                           "credentials in the environment", show.slug, episode_num)
+            return 0
+        page = episode_link(show.page_url, show.slug, episode_num, kind="short",
+                            placement=PLACEMENT_DESCRIPTION)
+        later = stagger_publish_times(dt.datetime.now(dt.timezone.utc), len(shorts) - 1,
+                                      slot_hours=resolve_slot_hours(yt, channel))
+        full = (f"https://www.youtube.com/watch?v={long_video_id}" if long_video_id else page)
+        with tempfile.TemporaryDirectory(prefix=f"{show.slug}_shorts_") as tmp:
+            for k, short in enumerate(shorts):
+                try:
+                    local = _download(short["url"], Path(tmp) / f"short{k + 1}.mp4")
+                    if local is None:
+                        continue
+                    title = short_title(short, guest_name, cfg.name)
+                    description = "\n\n".join((
+                        f"{guest_name} on {cfg.name}, episode {episode_num}.",
+                        f"The full conversation: {full}",
+                        f"Every show: {page}",
+                        f"{cfg.name} is hosted by Mira, an AI. Every guest approves "
+                        "their own transcript before it is published.",
+                        "#Shorts #AI #podcast",
+                    ))
+                    result = upload_video(
+                        local, credentials=credentials, title=title,
+                        description=description,
+                        tags=list(getattr(yt, "tags", None) or [])[:15],
+                        category_id=int(getattr(yt, "category_id", 24) or 24),
+                        privacy_status="private" if k else
+                        (getattr(yt, "privacy_status", "public") or "public"),
+                        contains_synthetic_media=True,
+                        publish_at=later[k - 1] if k else None,
+                    )
+                    video_id = getattr(result, "video_id", "") or ""
+                    if not video_id:
+                        continue
+                    when_public = (later[k - 1].date() if k else when)
+                    _record_youtube_video(show, episode_num, when_public, title, video_id,
+                                          guest_name, channel, kind="short")
+                    done += 1
+                    logger.info("YouTube Short %d for %s Ep%d: %s%s", k + 1, show.slug,
+                                episode_num, video_id,
+                                f" (public {later[k - 1]:%Y-%m-%d %H:%M} UTC)" if k else "")
+                except Exception:  # noqa: BLE001 — one Short never stops the next
+                    logger.exception("Short %d failed for %s Ep%d (non-fatal)",
+                                     k + 1, show.slug, episode_num)
+    except Exception:  # noqa: BLE001 — the episode is already published
+        logger.exception("Shorts failed for %s Ep%d (non-fatal)", show.slug, episode_num)
+    return done
 
 
 def _record_youtube_video(show: VoiceShow, episode_num: int, when: dt.date,
                           title: str, video_id: str, guest_name: str,
-                          channel: str) -> None:
+                          channel: str, kind: str = "long") -> None:
     """Append to the per-show video index the rest of the network already reads."""
     index = ROOT / show.audio_subdir / "youtube_videos.json"
     data = {"schema_version": 2, "videos": []}
@@ -1026,7 +1144,7 @@ def _record_youtube_video(show: VoiceShow, episode_num: int, when: dt.date,
         "video_id": video_id,
         "show_slug": show.slug,
         "episode": episode_num,
-        "kind": "long",
+        "kind": kind,
         "title": title,
         "hook": guest_name,
         "published": when.isoformat(),

@@ -86,6 +86,29 @@ run(`
 `);
 
 // --- the room's inputs, as the voice API delivers them ---------------------
+// A promise the sim can settle synchronously (the scenario chains .then on
+// Net.httpRequestAsync; a real Promise would settle only after the sim ends).
+function syncPromise() {
+  let settled = false, value, waiters = [];
+  const p = {
+    then: function (ok) {
+      const next = syncPromise();
+      const go = function (v) {
+        const r = ok ? ok(v) : v;
+        if (r && typeof r.then === "function") r.then(function (x) { next.resolve(x); });
+        else next.resolve(r);
+      };
+      if (settled) go(value); else waiters.push(go);
+      return next;
+    },
+    resolve: function (v) {
+      if (settled) return;
+      settled = true; value = v;
+      waiters.splice(0).forEach(function (w) { w(v); });
+    },
+  };
+  return p;
+}
 function __acksOut() { return acks.slice(); }
 function guestSays(text, ms) {
   run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
@@ -787,15 +810,21 @@ if (which === "server_turns_advance_the_round") {
     if (String(url).indexOf("api.x.ai/v1/responses") < 0) return realNet(url, opts);
     const body = JSON.parse(opts.postData);
     lookups.push({ model: body.model, tools: body.tools.map(function (t) { return t.type; }),
-                   prompt: body.input[0].content });
+                   prompt: body.input[0].content, reasoning: body.reasoning || null });
     const n = lookups.length;
-    const res = { code: 200, text: JSON.stringify({ output_text: JSON.stringify({
-      found: true, topic: "Topic " + n, finding: "Finding number " + n + ", dated March 2026.",
-      source: "Source " + n }) }) };
-    return { then: function (ok) { if (which === "auto_research_late") deferred.push(function () { ok(res); }); else ok(res); } };
+    // A model that refuses the effort setting answers 400 (the room asks again without it).
+    const res = (process.env.ROOM_SIM_REFUSE_EFFORT === "1" && body.reasoning)
+      ? { code: 400, text: "{}" }
+      : { code: 200, text: JSON.stringify({ output_text: JSON.stringify({
+          found: true, topic: "Topic " + n, finding: "Finding number " + n + ", dated March 2026.",
+          source: "Source " + n }) }) };
+    const sp = syncPromise();
+    if (which === "auto_research_late") deferred.push(function () { sp.resolve(res); }); else sp.resolve(res);
+    return sp;
   };
   run(`getSecret = function () { return "test-key"; };
-       config.mira_system_prompt = "Role.\\nToday you are conducting a live interview with: Ada Lovelace, Chief Scientist at Analytical Engines.\\nMore.";`);
+       config.mira_system_prompt = "Role.\\nToday you are conducting a live interview with: Ada Lovelace, Chief Scientist at Analytical Engines.\\nMore.";
+       config.grok_session_log = { guest_links: ["https://adalovelace.example/", "javascript:alert(1)", "https://x.com/ada"] };`);
   if (which === "auto_research_off") run("config.grok_session_log = { auto_research: false };");
   if (which === "auto_research_hello") run("config.session_kind = 'hello';");
   const creates = function () { return events.filter(function (e) { return e === "create"; }).length; };
@@ -850,7 +879,9 @@ if (which === "server_turns_advance_the_round") {
     const res = { code: 200, text: JSON.stringify({ output_text: JSON.stringify(found
       ? { found: true, topic: "Patrick Novak", finding: "He launched the Nerra Network in 2026.", source: "Nerra Network" }
       : { found: false }) }) };
-    return { then: function (ok) { ok(res); } };
+    const sp = syncPromise();
+    sp.resolve(res);
+    return sp;
   };
   run(`getSecret = function () { return "test-key"; };
        config.mira_system_prompt = "Role.\\nToday you are conducting a live interview with: Patrick Novak, founder of the Nerra Network.\\nMore.";`);

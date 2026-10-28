@@ -3680,6 +3680,12 @@ async function endRoom(reason) {
 // she can use on her next turn; nothing found means nothing is said at all.
 
 const RESEARCH_MODEL = "grok-latest";      // Patrick: always the latest Grok
+// Oct 28 2026, measured on the room's own prompts: at the model's default
+// effort a lookup took 60-70 s and twenty searches; at "low" it took 8-12 s
+// and found the same things (the US-China AI money Glenn Broder named; the
+// podcast Michael Kamins gave six days earlier). A finding that lands inside
+// the same answer is one she can still use.
+const RESEARCH_EFFORT = "low";
 const RESEARCH_MAX_IN_FLIGHT = 2;
 let researchInFlight = 0;
 const researchSeen = {};
@@ -3752,17 +3758,26 @@ function researchInBackground(claim, context, opts) {
   const label = kind === "answer" ? "an answer of " + countWords(claim) + " words"
     : kind === "request" ? "a request of " + countWords(claim) + " words" : claim.slice(0, 120);
   trace("research", "started (" + kind + "): " + label);
-  let pending;
-  try {
-    pending = Net.httpRequestAsync("https://api.x.ai/v1/responses", {
+  function ask(withEffort) {
+    const body = {
+      model: RESEARCH_MODEL,
+      input: [{ role: "user", content: opts.prompt || researchPrompt(claim, context) }],
+      tools: [{ type: "web_search" }, { type: "x_search" }],
+    };
+    if (withEffort) body.reasoning = { effort: RESEARCH_EFFORT };
+    return Net.httpRequestAsync("https://api.x.ai/v1/responses", {
       method: "POST",
       headers: ["Content-Type: application/json", auth],
-      postData: JSON.stringify({
-        model: RESEARCH_MODEL,
-        input: [{ role: "user", content: opts.prompt || researchPrompt(claim, context) }],
-        tools: [{ type: "web_search" }, { type: "x_search" }],
-      }),
+      postData: JSON.stringify(body),
       timeout: 60,
+    });
+  }
+  let pending;
+  try {
+    // A model that refuses the effort setting gets the request once more
+    // without it, rather than a room with no research.
+    pending = ask(true).then(function (res) {
+      return res && res.code === 400 ? ask(false) : res;
     });
   } catch (err) {
     researchInFlight -= 1;
@@ -3771,6 +3786,7 @@ function researchInBackground(claim, context, opts) {
   }
   pending.then(function (res) {
     researchInFlight -= 1;
+    trace("research", "answered in " + Math.round((Date.now() - startedAt) / 1000) + " s");
     if (!(res && res.code >= 200 && res.code < 300)) {
       trace("research", "HTTP " + (res && res.code) + " (silent)");
       if (kind === "request") nothingReliable();
@@ -3909,19 +3925,32 @@ function guestIdentity() {
   return who;
 }
 
-function guestResearchPrompt(who) {
-  return "A live podcast interview with " + who + " is starting. Search the web " +
-    "and X for the most recent, specific public news about this person or the " +
-    "work of their organisation, from the last twelve months: a launch, a " +
-    "result, a paper, a talk, a deal, a figure. Not their biography.\n\n" +
+/** The guest's own public pages, as the fire step wrote them onto the run
+ *  (grok_session_log.guest_links): they settle who the guest is. */
+function guestLinks() {
+  try {
+    const links = (config && config.grok_session_log && config.grok_session_log.guest_links) || [];
+    return (Array.isArray(links) ? links : [])
+      .map(function (u) { return String(u || "").trim(); })
+      .filter(function (u) { return /^https?:\/\/[^\s]+$/i.test(u) && u.length <= 200; })
+      .slice(0, 5);
+  } catch (err) { return []; }
+}
+
+function guestResearchPrompt(who, links) {
+  return "A live podcast interview with " + who + " is starting." +
+    (links && links.length ? " Their own pages: " + links.join(", ") + "." : "") +
+    " Search the web and X for the most recent specific thing about this person or their" +
+    " organisation: something they launched, published, posted or said in a talk or" +
+    " interview, a result, a figure or a milestone, from their own pages and posts or from" +
+    " reporting. The newer the better; the last six months if anything is there. Not their" +
+    " biography: the host already has that.\n\n" +
     "Reply with ONE JSON object and nothing else:\n" +
-    '{"found": true|false, "finding": "one spoken sentence a host could ' +
-    'use: the specific news, with its date", "source": "the publication or ' +
-    'organisation name"}\n' +
-    "found is true ONLY if you are sure the news is about this exact person or " +
-    "their organisation and you found it in reliable reporting or their own " +
-    "channels. A namesake, an old story or a general profile is found false. " +
-    "Never speculate.";
+    '{"found": true|false, "finding": "one spoken sentence a host could use: the specific ' +
+    'thing, with its date", "source": "the publication, page or account"}\n' +
+    "found is true ONLY if you are sure it is about this exact person or their organisation" +
+    " (their own pages, when given, settle who they are). A namesake or a general profile is" +
+    " found false. Never speculate.";
 }
 
 function answerResearchPrompt(answer, question) {
@@ -3969,7 +3998,7 @@ function maybeAutoResearch() {
   if (!guestResearchStarted) {
     guestResearchStarted = true;
     const who = guestIdentity();
-    if (who && researchInBackground(who, "", { kind: "guest", prompt: guestResearchPrompt(who) })) {
+    if (who && researchInBackground(who, "", { kind: "guest", prompt: guestResearchPrompt(who, guestLinks()) })) {
       autoResearchCount += 1;
     }
     return;

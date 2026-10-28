@@ -295,9 +295,12 @@ class TestTheTestRoomPreview:
         monkeypatch.setattr(common, "r2_upload", lambda path, key: uploads.append(
             (key, Path(path).stat().st_size)) or f"https://audio.test/{key}")
         monkeypatch.setattr(requests, "get", lambda url, **kw: Resp())
-        url = rv.preview_for_run("r1")
-        assert url == "https://audio.test/age_of_ai/raw/r1_preview_video.mp4"
-        assert uploads and uploads[0][1] > 10000
+        # The Short's captions come from Whisper; not under test here.
+        monkeypatch.setattr(rv, "short_captions", lambda *a, **k: None)
+        urls = rv.preview_for_run("r1")
+        assert urls == {"long": "https://audio.test/age_of_ai/raw/r1_preview_video.mp4",
+                        "short": "https://audio.test/age_of_ai/raw/r1_preview_short.mp4"}
+        assert uploads and all(size > 10000 for _key, size in uploads)
 
     def test_the_workflow_can_ask_for_it(self):
         text = (WORKFLOWS / "nerra_voices_render_video.yml").read_text(encoding="utf-8")
@@ -372,7 +375,18 @@ class TestTheStudio:
         from shows import get_show
         assert get_show("age_of_ai").local_video is False
         assert get_show("nerra_voices").local_video is False
-        assert '**({"grok_session_log": {"local_video": True}} if show.local_video else {})' in FIRE
+        # The run row is seeded from the show's switch (with the guest's own
+        # pages, for the room's lookups).
+        assert "room_log_seed(show, app)" in FIRE
+        import fire_interviews as fi
+
+        class On:
+            local_video = True
+
+        class Off:
+            local_video = False
+        assert fi.room_log_seed(On, {}) == {"local_video": True}
+        assert fi.room_log_seed(Off, {}) == {}
         import rehearsal
         src = Path(rehearsal.__file__).read_text(encoding="utf-8")
         assert '"grok_session_log": {"local_video": True, "rehearsal": {' in src

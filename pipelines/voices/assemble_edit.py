@@ -739,6 +739,32 @@ def _end_on_the_last_word(cut: dict, src) -> None:
                 float(end) - found)
     cut["end"] = round(found, 2)
 
+def piece_kind(cut: dict) -> str:
+    """What a cut plays: ``narration`` (Mira's scripted lines), ``mira`` /
+    ``guest`` (one speaker's own track; a co-host's counts as ``guest``, Mira
+    is not heard in it), ``room`` (the conversation) or ``gap``."""
+    if cut.get("gap") is not None:
+        return "gap"
+    ref = str(cut.get("from", ""))
+    if ref.startswith("narration:"):
+        return "narration"
+    if ref == "track:mira":
+        return "mira"
+    if ref.startswith("track:"):
+        return "guest"
+    return "room"
+
+
+def pieces_of(cuts: List[dict], durations: List[float]) -> List[dict]:
+    """``[{"from", "to", "kind"}]`` on the edit's clock, one per cut."""
+    out, at = [], 0.0
+    for cut, dur in zip(cuts, durations):
+        out.append({"from": round(at, 2), "to": round(at + float(dur), 2),
+                    "kind": piece_kind(cut)})
+        at += float(dur)
+    return out
+
+
 def assemble(slug: str) -> dict:
     spec_path = EDL_DIR / f"{slug}.json"
     # See narrate._stored_spec: an auto cut's EDL lives on the runner that
@@ -850,6 +876,10 @@ def assemble(slug: str) -> dict:
         # the room's clock) are published where the episode actually is.
         from edit_transcript import edit_clock
         clock = edit_clock(cuts, piece_durations, room_offset)
+        # Oct 28 2026: what each stretch of the edit is, so the video knows
+        # where Mira is heard alone (her narration) and where she cannot be
+        # (a cut of the guest's own track).
+        edit_pieces = pieces_of(cuts, piece_durations)
         episode = work / "episode.mp3"
         inputs: List[str] = []
         labels: List[str] = []
@@ -921,6 +951,7 @@ def assemble(slug: str) -> dict:
     tracks["preview"] = url
     tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1),
                       "clock": clock,
+                      "pieces": edit_pieces,
                       # Oct 28 2026: the clock's room times carry this; the
                       # video renderer takes it off to reach the guest leg.
                       "room_offset_sec": room_offset,
