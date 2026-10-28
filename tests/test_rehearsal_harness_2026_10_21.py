@@ -185,6 +185,7 @@ class TestRunRow:
     def test_run_row_is_marked_rehearsal_and_carries_the_configuration(self, rehearsal, monkeypatch):
         import fire_interviews
         monkeypatch.setattr(fire_interviews, "keyterms_for", lambda app, show, cohost="": ["Roddy"])
+        monkeypatch.setattr(fire_interviews, "_clip_is_there", lambda url: True)
         row = rehearsal.build_run_row(
             interview={"id": "iv-1", "application_id": "app-1", "duration_min": 10},
             arm="proposed", fixture={"id": "roddy", "name": "Roddy de la Garza"},
@@ -196,6 +197,9 @@ class TestRunRow:
         assert row["reasoning_effort"] == "low" and row["tools"] == []
         assert row["grok_session_log"]["rehearsal"]["arm"] == "proposed"
         assert row["planned_minutes"] == 10
+        # Oct 28 2026: the test room plays the notice a guest of this show hears.
+        assert row["recording_disclosure_url"].endswith("/disclosure.mp3")
+        assert "_room_2026_10_28/" in row["recording_disclosure_url"]
 
 
 # ---------------------------------------------------------------------------

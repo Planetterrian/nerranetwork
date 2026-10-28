@@ -47,6 +47,12 @@
   .primary { background: var(--accent); color: #fff; }
   .primary:disabled { background: var(--line); color: var(--muted); cursor: default; }
   .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  /* Oct 28 2026: background blur, and the note when a headset connects. */
+  .blur-row { display: flex; align-items: center; gap: .5rem; margin: .6rem 0 0; color: var(--muted); font-size: .92rem; cursor: pointer; }
+  .blur-row input { width: auto; margin: 0; }
+  .blur-msg { margin: .3rem 0 0; color: var(--muted); font-size: .85rem; min-height: 1em; }
+  .device-note { margin: .5rem 0 0; padding: .55rem .7rem; border: 1px solid var(--line); border-radius: 8px; font-size: .9rem; }
+  .device-note button { margin: .4rem 0 0; }
   .danger { background: var(--err); color: #fff; }
   select {
     font: inherit; background: var(--bg2); color: var(--text);
@@ -253,6 +259,7 @@
       <section class="setup-col" id="setupMic">
         <label for="micSel">Microphone</label>
         <select id="micSel"></select>
+        <p class="device-note hidden" id="deviceNote" role="status" aria-live="polite"></p>
         <div id="miclevel"><div></div></div>
         <!-- Sept 28 2026 (Elliot): the meter above moved a sliver and he took
              that as "my microphone works". Join now waits for a real check:
@@ -285,6 +292,8 @@
         <select id="camSel"></select>
         <video id="preview" autoplay playsinline muted></video>
         <button class="ghost" id="camToggle" type="button">Turn camera off</button>
+        <label class="blur-row" for="blurBg"><input type="checkbox" id="blurBg"> Blur my background</label>
+        <p class="blur-msg" id="blurMsg" aria-live="polite"></p>
       </section>
     </div>
     <div class="join-area">
@@ -393,6 +402,10 @@
       </figure>
     </div>
     <p class="stage-note">Mira is an illustration that moves while the room is talking; she can't see you.</p>
+    <div class="guest-only hidden" id="blurCallRow">
+      <label class="blur-row" for="blurBgCall"><input type="checkbox" id="blurBgCall"> Blur my background</label>
+      <p class="blur-msg" id="blurCallMsg" aria-live="polite"></p>
+    </div>
     <div class="call-bar">
       <p class="status ok" id="callMsg">You're live with Mira.</p>
       <div class="row">
@@ -418,6 +431,7 @@
         <select id="micSelCall"></select>
       </div>
     </div>
+    <p class="device-note hidden" id="deviceNoteCall" role="status" aria-live="polite"></p>
     <p class="tips guest-only" style="color:var(--muted)">
       Interrupt her whenever you like — she can handle it. Ask her questions
       too; the conversation goes both ways.
@@ -740,13 +754,29 @@
   }
   function wirePreview() {
     var v = document.getElementById("preview");
+    if (setupBlur) { setupBlur.stop(); setupBlur = null; }
     if (camOn && localStream.getVideoTracks().length) {
       v.srcObject = localStream; v.classList.remove("hidden");
+      if (blurOn) {
+        var src = localStream;
+        blurMsg("blurMsg", "Blurring your background\u2026");
+        blurTrack(src.getVideoTracks()[0]).then(function (b) {
+          if (localStream !== src || !blurOn) { b.stop(); return; }
+          setupBlur = b;
+          v.srcObject = new MediaStream([b.track]);
+          blurMsg("blurMsg", videoTake ? "Your background is blurred, in the preview and in the recording."
+                                       : "Your background is blurred in your preview.");
+        }).catch(function (e) { blurUnavailable("blurMsg", e); });
+      }
     } else { v.classList.add("hidden"); }
+    var row = document.getElementById("blurBg");
+    if (row) row.disabled = !camOn;
   }
-  function listDevices() {
-    navigator.mediaDevices.enumerateDevices().then(function (devs) {
+  function listDevices(known) {
+    var got = known ? Promise.resolve(known) : navigator.mediaDevices.enumerateDevices();
+    return got.then(function (devs) {
       var mic = document.getElementById("micSel"), cam = document.getElementById("camSel");
+      var keepMic = mic.value, keepCam = cam.value;
       mic.innerHTML = ""; cam.innerHTML = "";
       devs.forEach(function (d) {
         var o = document.createElement("option");
@@ -754,7 +784,16 @@
         if (d.kind === "audioinput") mic.appendChild(o);
         if (d.kind === "videoinput") cam.appendChild(o);
       });
+      // A list rebuilt because a headset came or went keeps what was picked.
+      if (keepMic && hasOption(mic, keepMic)) mic.value = keepMic;
+      if (keepCam && hasOption(cam, keepCam)) cam.value = keepCam;
+      if (!knownInputs) { rememberDevices(devs); suggestBetterMic(devs); }
+      if (activeCall) fillCallMics();
+      return devs;
     });
+  }
+  function hasOption(sel, value) {
+    return Array.prototype.some.call(sel.options, function (o) { return o.value === value; });
   }
   // Oct 27 2026 (Elliot Justin): turning the camera off reset his passed
   // microphone check and locked Join again, with a message about a "new
@@ -1596,8 +1635,12 @@
       note.textContent = text;
       note.classList.remove("hidden");
     }
+    var blurRow = document.getElementById("blurCallRow");
+    if (blurRow) blurRow.classList.toggle("hidden", !(videoTake && camOn));
+    var blurBox = document.getElementById("blurBgCall");
+    if (blurBox) blurBox.checked = blurOn;
     if (videoTake) {
-      var vs = vrec.stream;
+      var vs = vrec.view || vrec.stream;
       if (!camOn || !vs || !vs.getVideoTracks().length) {
         noPicture(camOn ? "Your camera is starting…" : "Your camera is off. That's fine: the conversation is audio.");
         return;
@@ -1841,8 +1884,11 @@
     to.value = from.value;
   }
   document.getElementById("micSelCall").addEventListener("change", function () {
-    var id = this.value;
+    switchCallMic(this.value);
+  });
+  function switchCallMic(id) {
     document.getElementById("micSel").value = id;
+    document.getElementById("micSelCall").value = id;
     if (activeCall) {
       try {
         var adm = VoxImplant.Hardware.AudioDeviceManager.get();
@@ -1860,7 +1906,7 @@
     stopLocalRecording().then(function () { if (activeCall) startLocalRecording(); });
     // The video take carries the same microphone as its sync reference.
     stopLocalVideo().then(function () { if (activeCall) startLocalVideo(); });
-  });
+  }
 
   // ---- 4. Local high-quality recording (Riverside model, Phase 2) ---------
   // The call track keeps the browser's defaults; this second capture of the
@@ -1988,7 +2034,8 @@
   // fatal: no take means an audio episode, as before.
   var VIDEO_MIMES = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm",
                      "video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4"];
-  var vrec = { recorder: null, stream: null, seq: 0, uploaded: 0, failed: 0, sid: null, mime: "",
+  var vrec = { recorder: null, stream: null, view: null, blur: null, starting: false, abort: false,
+               seq: 0, uploaded: 0, failed: 0, sid: null, mime: "",
                queue: Promise.resolve(), startedAt: null, stopping: null, done: false };
   function pickVideoMime() {
     if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
@@ -2022,9 +2069,13 @@
     return tryOnce();
   }
   function startLocalVideo() {
-    if (!videoTake || isHost || !camOn || vrec.recorder || !runId) return;
+    if (!videoTake || isHost || !camOn || vrec.recorder || vrec.starting || !runId) return;
     var mime = pickVideoMime();
     if (!mime) { console.warn("[studio] this browser cannot record video"); return; }
+    // Opening the camera (and loading the blur, the first time) takes a
+    // moment; a second start meanwhile is ignored, and a stop meanwhile
+    // cancels this one.
+    vrec.starting = true; vrec.abort = false;
     var camId = document.getElementById("camSel").value;
     var micId = document.getElementById("micSel").value;
     var video = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } };
@@ -2033,25 +2084,47 @@
     if (micId) audio.deviceId = { exact: micId };
     navigator.mediaDevices.getUserMedia({ video: video, audio: audio }).then(function (stream) {
       if (!activeCall) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
-      vrec.stream = stream;
-      var recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2500000,
-                                                 audioBitsPerSecond: 64000 });
-      vrec.recorder = recorder; vrec.mime = mime;
-      vrec.startedAt = new Date().toISOString();
-      vrec.sid = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      vrec.seq = 0; vrec.uploaded = 0; vrec.failed = 0; vrec.done = false;
-      recorder.addEventListener("dataavailable", function (ev) {
-        if (!ev.data || !ev.data.size) return;
-        var seq = vrec.seq++;
-        var blob = ev.data;
-        vrec.queue = vrec.queue.then(function () { return uploadVideoChunk(blob, seq); });
-      });
-      recorder.start(5000);
-      showSelfView();
+      var blurred = blurOn
+        ? blurTrack(stream.getVideoTracks()[0]).then(function (b) {
+            blurMsg("blurCallMsg", "Your background is blurred, in your view and in the recording.");
+            return b;
+          }).catch(function (e) { blurUnavailable("blurCallMsg", e); return null; })
+        : Promise.resolve(null);
+      return blurred.then(function (b) { recordVideoTake(stream, b, mime); });
     }).catch(function (e) {
+      vrec.starting = false;
       console.warn("[studio] camera recording unavailable", e);
       showSelfView();
     });
+  }
+  // The take records what the guest sees of themselves: the blurred picture
+  // when blur is on (nothing unblurred is recorded), the camera otherwise,
+  // with the raw microphone alongside as the sync reference.
+  function recordVideoTake(stream, b, mime) {
+    vrec.starting = false;
+    if (!activeCall || vrec.abort) {
+      vrec.abort = false;
+      if (b) b.stop();
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      return;
+    }
+    vrec.stream = stream;
+    vrec.blur = b;
+    vrec.view = b ? new MediaStream([b.track].concat(stream.getAudioTracks())) : stream;
+    var recorder = new MediaRecorder(vrec.view, { mimeType: mime, videoBitsPerSecond: 2500000,
+                                                  audioBitsPerSecond: 64000 });
+    vrec.recorder = recorder; vrec.mime = mime;
+    vrec.startedAt = new Date().toISOString();
+    vrec.sid = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    vrec.seq = 0; vrec.uploaded = 0; vrec.failed = 0; vrec.done = false;
+    recorder.addEventListener("dataavailable", function (ev) {
+      if (!ev.data || !ev.data.size) return;
+      var seq = vrec.seq++;
+      var blob = ev.data;
+      vrec.queue = vrec.queue.then(function () { return uploadVideoChunk(blob, seq); });
+    });
+    recorder.start(5000);
+    showSelfView();
   }
   function videoDonePayload() {
     return { run_id: runId, role: role, kind: "video", chunks: vrec.seq, mime: vrec.mime,
@@ -2060,7 +2133,10 @@
   }
   function stopLocalVideo() {
     if (!vrec.recorder) {
+      if (vrec.starting) vrec.abort = true;
+      if (vrec.blur) { vrec.blur.stop(); vrec.blur = null; }
       if (vrec.stream) { vrec.stream.getTracks().forEach(function (t) { t.stop(); }); vrec.stream = null; }
+      vrec.view = null;
       return Promise.resolve();
     }
     if (vrec.stopping) return vrec.stopping;
@@ -2073,6 +2149,7 @@
     vrec.stopping = stopped
       .then(function () { return vrec.queue; })
       .then(function () {
+        if (vrec.blur) { vrec.blur.stop(); vrec.blur = null; }
         if (vrec.stream) vrec.stream.getTracks().forEach(function (t) { t.stop(); });
         return fetch(API + "/upload-done", {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -2081,7 +2158,7 @@
       })
       .then(function () { vrec.done = true; })
       .catch(function (e) { console.warn("[studio] video upload-done failed", e); })
-      .then(function () { vrec.recorder = null; vrec.stream = null; vrec.stopping = null; });
+      .then(function () { vrec.recorder = null; vrec.stream = null; vrec.view = null; vrec.stopping = null; });
     return vrec.stopping;
   }
 
@@ -2101,6 +2178,339 @@
         new Blob([JSON.stringify(uploadDonePayload())], { type: "text/plain" }));
     } catch (e) { /* best-effort */ }
   });
+
+  // ---- 4c. Follow the headset the guest puts on (Oct 28 2026) -------------
+  // Patrick's second test room: he opened the room, then put on AirPods, and
+  // the studio stayed on the laptop's microphone and speakers. A device that
+  // appears while the page is open is the one the person just connected:
+  //  * new headphones get Mira's voice (the call's output follows them);
+  //  * a wired or USB microphone or headset is switched to at once, before
+  //    and during the call, exactly as a pick from the list switches;
+  //  * a Bluetooth headset's microphone (AirPods and the like) is offered,
+  //    not taken: Bluetooth drops to phone-call quality the moment its
+  //    microphone opens (the sound phone calls were taken off the show for),
+  //    and the computer's own microphone sounds better under headphones.
+  //    One click takes it anyway;
+  //  * a microphone that disappears falls back to what the system offers.
+  var BLUETOOTH_RE = /airpods|bluetooth|hands-?free|\bbuds\b|beats|bose|wh-1000|wf-1000|jabra elite|powerbeats/i;
+  function isBluetooth(d) {
+    var label = String((d && d.label) || "");
+    return BLUETOOTH_RE.test(label) && !/\busb\b/i.test(label);
+  }
+  var knownInputs = null, knownOutputs = null, defaultMicLabel = "", followTimer = null;
+  function realDevice(d) {
+    return !!d.deviceId && d.deviceId !== "default" && d.deviceId !== "communications";
+  }
+  function rememberDevices(devs) {
+    knownInputs = devs.filter(function (d) { return d.kind === "audioinput" && realDevice(d); })
+      .map(function (d) { return d.deviceId; });
+    knownOutputs = devs.filter(function (d) { return d.kind === "audiooutput" && realDevice(d); })
+      .map(function (d) { return d.deviceId; });
+    var def = devs.filter(function (d) { return d.kind === "audioinput" && d.deviceId === "default"; })[0];
+    if (def) defaultMicLabel = deviceName(def);
+  }
+  function selectedMicName() {
+    var sel = document.getElementById("micSel");
+    var o = sel && sel.options[sel.selectedIndex];
+    return o ? deviceName({ label: o.textContent }) : "your computer's microphone";
+  }
+  function deviceName(d) {
+    return String(d.label || "your new microphone").replace(/^Default\s*-\s*/i, "").replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i, "");
+  }
+  function deviceNote(html) {
+    var id = activeCall ? "deviceNoteCall" : "deviceNote";
+    ["deviceNote", "deviceNoteCall"].forEach(function (x) {
+      var el = document.getElementById(x);
+      if (!el) return;
+      if (x === id && html) { el.innerHTML = html; el.classList.remove("hidden"); }
+      else { el.classList.add("hidden"); el.innerHTML = ""; }
+    });
+  }
+  function escapeHtml(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  // Pick a microphone for the person, the way choosing it in the list would.
+  function selectMic(id, note) {
+    var sel = document.getElementById("micSel");
+    if (!hasOption(sel, id)) return;
+    sel.value = id;
+    var callSel = document.getElementById("micSelCall");
+    if (callSel && hasOption(callSel, id)) callSel.value = id;
+    if (activeCall) {
+      switchCallMic(id);
+    } else if (localStream) {
+      switchDevices("mic");
+      if (micOk || micVerdict !== "unknown" || document.getElementById("micCheckMsg").textContent) {
+        setMicMsg("New microphone. Press Check my microphone again.", "var(--muted)");
+      }
+    }
+    if (note) deviceNote(escapeHtml(note));
+  }
+  // Mira's voice to the new headphones (Chrome and Edge let a page choose).
+  var preferredOutputId = "";
+  function followOutput(d) {
+    preferredOutputId = d.deviceId;
+    try {
+      var adm = VoxImplant.Hardware.AudioDeviceManager.get();
+      adm.setDefaultAudioSettings(Object.assign({}, adm.getDefaultAudioSettings() || {}, { outputId: d.deviceId }));
+      if (activeCall) {
+        var cur = adm.getCallAudioSettings(activeCall) || adm.getDefaultAudioSettings() || {};
+        var p = adm.setCallAudioSettings(activeCall, Object.assign({}, cur, { outputId: d.deviceId }));
+        if (p && p.catch) p.catch(function (e) { console.warn("[studio] output switch failed", e); });
+      }
+    } catch (e) { console.warn("[studio] output switch failed", e); }
+  }
+  function offerBluetoothMic(d) {
+    var name = escapeHtml(deviceName(d));
+    deviceNote("<b>" + name + "</b> connected. You're still on " +
+      escapeHtml(selectedMicName()) + ": it sounds better than a" +
+      " Bluetooth headset's microphone, which drops to phone-call quality. " +
+      "<br><button class=\"ghost\" type=\"button\" id=\"useBtMic\">Use " + name + "'s microphone instead</button>");
+    var b = document.getElementById("useBtMic");
+    if (b) b.addEventListener("click", function () {
+      selectMic(d.deviceId, "Switched to " + deviceName(d) + ".");
+    });
+  }
+  // Headphones already on when the page opened: a Bluetooth microphone is
+  // what the system hands over, so the better one is offered once.
+  function suggestBetterMic(devs) {
+    var sel = document.getElementById("micSel");
+    if (!sel || !isBluetooth({ label: selectedMicName() })) return;
+    var better = devs.filter(function (d) {
+      return d.kind === "audioinput" && realDevice(d) && !isBluetooth(d);
+    })[0];
+    if (!better) return;
+    deviceNote("You're on <b>" + escapeHtml(selectedMicName()) + "</b>. Keep them on for listening," +
+      " but " + escapeHtml(deviceName(better)) + " will sound better than a Bluetooth headset's" +
+      " microphone.<br><button class=\"ghost\" type=\"button\" id=\"useBetterMic\">Use " +
+      escapeHtml(deviceName(better)) + "</button>");
+    var b = document.getElementById("useBetterMic");
+    if (b) b.addEventListener("click", function () {
+      selectMic(better.deviceId, "Switched to " + deviceName(better) + ". Your headphones still play Mira.");
+    });
+  }
+  function onDevicesChanged() {
+    if (!micAccess) return;
+    var beforeIn = knownInputs, beforeOut = knownOutputs || [], beforeDefault = defaultMicLabel;
+    navigator.mediaDevices.enumerateDevices().then(function (devs) {
+      var sel = document.getElementById("micSel");
+      var current = sel.value;
+      var stillThere = devs.some(function (d) { return d.kind === "audioinput" && d.deviceId === current; });
+      // "Default" in a list moves to whatever the system now calls default
+      // (on a Mac, AirPods the moment they connect). Pin the microphone the
+      // person was actually using before the list is rebuilt.
+      if (current === "default" && beforeDefault) {
+        var was = devs.filter(function (d) {
+          return d.kind === "audioinput" && realDevice(d) && deviceName(d) === beforeDefault;
+        })[0];
+        if (was) current = was.deviceId;
+      }
+      rememberDevices(devs);
+      return listDevices(devs).then(function () {
+        if (!beforeIn) return;
+        if (hasOption(sel, current)) {
+          sel.value = current;
+          var callSel = document.getElementById("micSelCall");
+          if (callSel && hasOption(callSel, current)) callSel.value = current;
+        }
+        var addedIn = devs.filter(function (d) {
+          return d.kind === "audioinput" && realDevice(d) && beforeIn.indexOf(d.deviceId) < 0;
+        });
+        var addedOut = devs.filter(function (d) {
+          return d.kind === "audiooutput" && realDevice(d) && beforeOut.indexOf(d.deviceId) < 0;
+        });
+        if (addedOut.length) followOutput(addedOut[0]);
+        if (preferredOutputId && !devs.some(function (d) { return d.deviceId === preferredOutputId; })) {
+          followOutput({ deviceId: "default" });
+          preferredOutputId = "";
+        }
+        var wired = addedIn.filter(function (d) { return !isBluetooth(d); })[0];
+        var bt = addedIn.filter(isBluetooth)[0];
+        if (wired) { selectMic(wired.deviceId, "Switched to " + deviceName(wired) + "."); return; }
+        if (bt) { offerBluetoothMic(bt); return; }
+        if (current && current !== "default" && !stillThere && !hasOption(sel, current)) {
+          var next = devs.filter(function (d) { return d.kind === "audioinput"; })[0];
+          if (next) selectMic(next.deviceId, "Your microphone was disconnected, so the studio switched to " + deviceName(next) + ".");
+        }
+      });
+    }).catch(function (e) { console.warn("[studio] device change", e); });
+  }
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener("devicechange", function () {
+      // A Mac announces a headset several times in a row; act once it settles.
+      clearTimeout(followTimer);
+      followTimer = setTimeout(onDevicesChanged, 700);
+    });
+  }
+
+  // ---- 4d. Background blur (Oct 28 2026) ------------------------------------
+  // Patrick: let guests blur their background. When it is on, the picture
+  // the guest sees of themselves and the picture that is recorded are the
+  // same blurred one: nothing unblurred is recorded. MediaPipe's selfie
+  // segmenter runs in the browser (on the graphics chip where it can) on a
+  // 256x144 copy of each frame; the person is drawn sharp over a blurred
+  // frame. It loads only when someone turns blur on (about 10 MB, once).
+  // Chrome and Edge transform the camera's own frames, so the recording
+  // keeps going if the tab is in the background; other browsers draw
+  // through a canvas.
+  var BLUR_LIB = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+  var BLUR_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
+  var SEG_W = 256, SEG_H = 144;
+  var blurOn = false, setupBlur = null, blurSegmenter = null, blurLoading = null;
+  try { blurOn = window.localStorage.getItem("nn_studio_blur") === "1"; } catch (e) { blurOn = false; }
+  function saveBlur() {
+    try { window.localStorage.setItem("nn_studio_blur", blurOn ? "1" : "0"); } catch (e) { /* per-visit only */ }
+  }
+  function blurMsg(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text || "";
+  }
+  function blurUnavailable(id, e) {
+    console.warn("[studio] background blur unavailable", e);
+    blurOn = false; saveBlur();
+    ["blurBg", "blurBgCall"].forEach(function (x) { var c = document.getElementById(x); if (c) c.checked = false; });
+    blurMsg(id, "Background blur isn't available in this browser. Your camera works as usual.");
+  }
+  function loadBlur() {
+    if (blurSegmenter) return Promise.resolve(blurSegmenter);
+    if (blurLoading) return blurLoading;
+    blurLoading = import(BLUR_LIB + "/vision_bundle.mjs").then(function (vision) {
+      return vision.FilesetResolver.forVisionTasks(BLUR_LIB + "/wasm").then(function (files) {
+        function make(delegate) {
+          return vision.ImageSegmenter.createFromOptions(files, {
+            baseOptions: { modelAssetPath: BLUR_MODEL, delegate: delegate },
+            runningMode: "VIDEO", outputCategoryMask: false, outputConfidenceMasks: true });
+        }
+        return make("GPU").catch(function () { return make("CPU"); });
+      });
+    }).then(function (seg) { blurSegmenter = seg; return seg; })
+      .catch(function (e) { blurLoading = null; throw e; });
+    return blurLoading;
+  }
+  function blurCanvas(w, h, onPage) {
+    if (!onPage && typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(w, h);
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    return c;
+  }
+  // One frame at a time: segment a small copy, then the blurred frame with
+  // the person drawn over it through the (scaled-up, soft-edged) mask.
+  function makeCompositor(w, h, onPage) {
+    var small = blurCanvas(SEG_W, SEG_H), sctx = small.getContext("2d", { willReadFrequently: true });
+    var maskC = blurCanvas(SEG_W, SEG_H), mctx = maskC.getContext("2d");
+    var tiny = blurCanvas(Math.max(8, Math.round(w / 24)), Math.max(8, Math.round(h / 24)));
+    var tctx = tiny.getContext("2d");
+    var person = blurCanvas(w, h), pctx = person.getContext("2d");
+    var out = blurCanvas(w, h, onPage), octx = out.getContext("2d");
+    var mask = mctx.createImageData(SEG_W, SEG_H);
+    var canFilter = typeof octx.filter === "string";
+    var last = -1;
+    function background(src) {
+      if (canFilter) {
+        octx.filter = "blur(18px)";
+        octx.drawImage(src, 0, 0, w, h);
+        octx.filter = "none";
+        return;
+      }
+      // No canvas filter (older Safari): shrink and grow again, smoothed.
+      tctx.imageSmoothingEnabled = true;
+      tctx.drawImage(src, 0, 0, tiny.width, tiny.height);
+      octx.imageSmoothingEnabled = true;
+      octx.imageSmoothingQuality = "high";
+      octx.drawImage(tiny, 0, 0, w, h);
+    }
+    return {
+      canvas: out,
+      draw: function (src, ms) {
+        sctx.drawImage(src, 0, 0, SEG_W, SEG_H);
+        if (!(ms > last)) ms = last + 1;
+        last = ms;
+        blurSegmenter.segmentForVideo(small, ms, function (res) {
+          var masks = res && res.confidenceMasks;
+          if (!masks || !masks.length) return;
+          // The selfie model's last mask is the person (a two-class model
+          // lists the background first).
+          var conf = masks[masks.length - 1].getAsFloat32Array();
+          var px = mask.data;
+          for (var i = 0, j = 3; i < conf.length && j < px.length; i++, j += 4) px[j] = conf[i] * 255;
+          mctx.putImageData(mask, 0, 0);
+        });
+        background(src);
+        pctx.globalCompositeOperation = "copy";
+        pctx.imageSmoothingEnabled = true;
+        pctx.drawImage(maskC, 0, 0, w, h);
+        pctx.globalCompositeOperation = "source-in";
+        pctx.drawImage(src, 0, 0, w, h);
+        pctx.globalCompositeOperation = "source-over";
+        octx.drawImage(person, 0, 0);
+      }
+    };
+  }
+  // A camera track in, a blurred track out: { track, stop }.
+  function blurTrack(track) {
+    if (!track) return Promise.reject(new Error("no camera track"));
+    return loadBlur().then(function () {
+      var st = track.getSettings ? track.getSettings() : {};
+      var w = st.width || 1280, h = st.height || 720;
+      var stopped = false;
+      if (typeof MediaStreamTrackProcessor !== "undefined" &&
+          typeof MediaStreamTrackGenerator !== "undefined" && typeof VideoFrame !== "undefined") {
+        var comp = makeCompositor(w, h, false);
+        var proc = new MediaStreamTrackProcessor({ track: track });
+        var gen = new MediaStreamTrackGenerator({ kind: "video" });
+        proc.readable.pipeThrough(new TransformStream({
+          transform: function (frame, ctl) {
+            try {
+              if (!stopped) {
+                comp.draw(frame, frame.timestamp / 1000);
+                ctl.enqueue(new VideoFrame(comp.canvas, { timestamp: frame.timestamp }));
+              }
+            } catch (e) {
+              console.warn("[studio] blur frame failed", e);
+            } finally {
+              frame.close();
+            }
+          }
+        })).pipeTo(gen.writable).catch(function () { /* the camera stopped */ });
+        return { track: gen, stop: function () { stopped = true; try { gen.stop(); } catch (e) { /* gone */ } } };
+      }
+      var comp2 = makeCompositor(w, h, true);
+      var v = document.createElement("video");
+      v.muted = true; v.playsInline = true; v.srcObject = new MediaStream([track]);
+      var pv = v.play(); if (pv && pv.catch) pv.catch(function () {});
+      function tick() {
+        if (stopped) return;
+        if (v.readyState >= 2) { try { comp2.draw(v, performance.now()); } catch (e) { /* next frame */ } }
+        if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(tick); else requestAnimationFrame(tick);
+      }
+      tick();
+      var outTrack = comp2.canvas.captureStream(30).getVideoTracks()[0];
+      return { track: outTrack, stop: function () {
+        stopped = true;
+        try { outTrack.stop(); } catch (e) { /* gone */ }
+        try { v.srcObject = null; } catch (e) { /* gone */ }
+      } };
+    });
+  }
+  function setBlur(on, msgId) {
+    blurOn = !!on; saveBlur();
+    ["blurBg", "blurBgCall"].forEach(function (x) { var c = document.getElementById(x); if (c) c.checked = blurOn; });
+    if (!blurOn) { blurMsg("blurMsg", ""); blurMsg("blurCallMsg", ""); }
+    if (activeCall) {
+      if (blurOn) blurMsg(msgId, "Blurring your background…");
+      // A new take starts with the new picture; the old one is kept.
+      stopLocalVideo().then(function () { if (activeCall) startLocalVideo(); });
+    } else if (localStream) {
+      wirePreview();
+    }
+  }
+  (function () {
+    var a = document.getElementById("blurBg"), b = document.getElementById("blurBgCall");
+    if (a) { a.checked = blurOn; a.addEventListener("change", function () { setBlur(this.checked, "blurMsg"); }); }
+    if (b) { b.checked = blurOn; b.addEventListener("change", function () { setBlur(this.checked, "blurCallMsg"); }); }
+  })();
 
   checkState();
 })();

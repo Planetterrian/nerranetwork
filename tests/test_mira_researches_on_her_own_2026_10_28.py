@@ -153,7 +153,7 @@ class TestTheRecord:
         body = body[:body.index("\n}\n")]
         assert '"research_lookups"' in body
         assert "payload.research_notes.slice(0, 12)" in body
-        assert '["guest", "answer", "claim"]' in body
+        assert '["guest", "answer", "request", "claim"]' in body
 
     def test_the_rehearsal_log_shows_it(self):
         import rehearsal

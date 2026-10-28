@@ -1148,13 +1148,15 @@ export function roomCountersOf(payload: any): Record<string, unknown> {
         ...(f.text ? { text: String(f.text).slice(0, 240) } : {}),
         ...(typeof f.applied === "boolean" ? { applied: f.applied } : {}),
         ...(typeof f.held === "boolean" ? { held: f.held } : {}),
+        // Oct 28 2026: typed words asking to finish, honoured as a stop.
+        ...(f.wrap_up === true ? { wrap_up: true } : {}),
       }));
   }
   // Oct 28 2026: what the room's quiet research handed Mira (the guest's
   // name or the topic looked up, the finding and its source), bounded.
   if (Array.isArray(payload?.research_notes)) {
     out.research_notes = payload.research_notes.slice(0, 12)
-      .filter((n: any) => n && ["guest", "answer", "claim"].includes(String(n.kind)) && n.finding)
+      .filter((n: any) => n && ["guest", "answer", "request", "claim"].includes(String(n.kind)) && n.finding)
       .map((n: any) => ({
         kind: String(n.kind),
         at_sec: Number.isFinite(Number(n.at_sec)) ? Number(n.at_sec) : null,
@@ -4634,34 +4636,48 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
   // local_<role>_url keeps pointing at the newest take (what the pipeline
   // reads today); every take is also listed so an interview that survived a
   // reconnect can be reassembled from all of them instead of just the last.
-  const existing = (await sb(env, "GET",
-    `interview_runs?id=eq.${runId}&select=grok_session_log`))?.[0]?.grok_session_log ?? {};
+  //
+  // Oct 28 2026 (the second test room): the audio and the video take finish
+  // at the same moment, and each upload-done read grok_session_log, added its
+  // take and wrote the whole object back, so the later write erased the
+  // earlier one's listing (the video's 42 chunks were on R2 and listed
+  // nowhere). Takes are appended inside the database now, one row lock per
+  // append (voices_append_take, migration 20261028_voices_append_take.sql).
+  const take: Record<string, unknown> = {
+    manifest: manifestKey, sid, started_at: manifest.started_at,
+    duration_ms: manifest.duration_ms, chunks: keys.length, missing: missing.length,
+    ...(kind === "video" ? { mime: manifest.mime, bytes } : {}),
+  };
+  await appendTake(env, runId, kind === "video" ? "local_video_takes" : "local_takes",
+                   gate.role, take);
   if (kind === "video") {
     // Listed for post_interview (local_video_takes), never the audio pointer.
-    const vtakes = { ...(existing.local_video_takes ?? {}) };
-    const vfor: any[] = Array.isArray(vtakes[gate.role]) ? vtakes[gate.role] : [];
-    if (!vfor.some((t) => t?.manifest === manifestKey)) {
-      vfor.push({ manifest: manifestKey, sid, mime: manifest.mime, started_at: manifest.started_at,
-                  duration_ms: manifest.duration_ms, chunks: keys.length,
-                  missing: missing.length, bytes });
-    }
-    vtakes[gate.role] = vfor;
-    await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
-      { grok_session_log: { ...existing, local_video_takes: vtakes } });
     return json({ ok: true, key: manifestKey, kind, chunks: keys.length, missing, bytes });
   }
-  const takes = { ...(existing.local_takes ?? {}) };
-  const forRole: any[] = Array.isArray(takes[gate.role]) ? takes[gate.role] : [];
-  if (!forRole.some((t) => t?.manifest === manifestKey)) {
-    forRole.push({ manifest: manifestKey, sid, started_at: manifest.started_at,
-                   duration_ms: manifest.duration_ms, chunks: keys.length,
-                   missing: missing.length });
-  }
-  takes[gate.role] = forRole;
-  await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
-    { [`local_${gate.role}_url`]: manifestKey,
-      grok_session_log: { ...existing, local_takes: takes } });
+  await sb(env, "PATCH", `interview_runs?id=eq.${runId}`, { [`local_${gate.role}_url`]: manifestKey });
   return json({ ok: true, key: manifestKey, chunks: keys.length, missing, bytes });
+}
+
+/** Add one take to grok_session_log.<field>.<role> atomically (deduplicated
+ *  by manifest). A database without the function yet falls back to the old
+ *  read-and-write, which is what every run did before Oct 28. */
+export async function appendTake(env: Env, runId: string, field: "local_takes" | "local_video_takes",
+                                 role: StudioRole, take: Record<string, unknown>): Promise<void> {
+  try {
+    await sb(env, "POST", "rpc/voices_append_take",
+      { p_run: runId, p_field: field, p_role: role, p_take: take });
+    return;
+  } catch (err) {
+    console.log(`voices_append_take unavailable (${String(err).slice(0, 160)}); read-and-write instead`);
+  }
+  const existing = (await sb(env, "GET",
+    `interview_runs?id=eq.${runId}&select=grok_session_log`))?.[0]?.grok_session_log ?? {};
+  const lists = { ...(existing[field] ?? {}) };
+  const list: any[] = Array.isArray(lists[role]) ? lists[role] : [];
+  if (!list.some((t) => t?.manifest === take.manifest)) list.push(take);
+  lists[role] = list;
+  await sb(env, "PATCH", `interview_runs?id=eq.${runId}`,
+    { grok_session_log: { ...existing, [field]: lists } });
 }
 
 // GET /voices/host-link?interview=<id> (admin) — Patrick's co-host studio

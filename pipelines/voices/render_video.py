@@ -428,14 +428,20 @@ def preview_for_run(run_id: str) -> Optional[str]:
     if not stereo:
         logger.info("run %s has no room recording to preview", run_id)
         return None
-    if not (((run.get("grok_session_log") or {}).get("tracks") or {}).get("video")
-            or video_takes(run)):
-        logger.info("run %s recorded no camera — nothing to preview", run_id)
-        return None
     interview = (sb_select("interviews", f"id=eq.{run.get('interview_id')}") or [{}])[0]
     app = (sb_select("guest_applications",
                      f"id=eq.{interview.get('application_id')}") or [{}])[0]
     show = show_for(interview, app)
+    from common import r2_list, r2_put_json, r2_read_json
+    from video_take import discover_takes
+
+    def discover():
+        return discover_takes(r2_list(show.r2_key("local", run_id, "guest-video") + "/"),
+                              r2_read_json, put_json=r2_put_json)
+    if not (((run.get("grok_session_log") or {}).get("tracks") or {}).get("video")
+            or video_takes(run) or discover()):
+        logger.info("run %s recorded no camera — nothing to preview", run_id)
+        return None
     with tempfile.TemporaryDirectory(prefix="render_preview_") as tmp:
         work = Path(tmp)
         room = work / "room.mp3"
@@ -452,7 +458,7 @@ def preview_for_run(run_id: str) -> Optional[str]:
         video = (((run.get("grok_session_log") or {}).get("tracks") or {}).get("video")
                  or build_video_track(run, ref, work / "takes",
                                       upload=lambda path, _key: str(path),
-                                      key_for=lambda name: name))
+                                      key_for=lambda name: name, discover=discover))
         if not video or not video.get("takes"):
             logger.info("run %s: the camera could not be placed on the room", run_id)
             return None

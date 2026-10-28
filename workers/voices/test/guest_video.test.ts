@@ -35,7 +35,7 @@ function fakeBucket() {
   };
 }
 
-function fakeSupabase(log: any = {}) {
+function fakeSupabase(log: any = {}, rpcMissing = false) {
   const calls: Call[] = [];
   const fn = vi.fn(async (input: any, init?: any) => {
     const url = typeof input === "string" ? input : input.url;
@@ -53,6 +53,10 @@ function fakeSupabase(log: any = {}) {
     }
     if (method === "GET" && url.includes("select=grok_session_log")) {
       return new Response(JSON.stringify([{ grok_session_log: log }]));
+    }
+    if (url.includes("/rpc/voices_append_take")) {
+      if (rpcMissing) return new Response('{"code":"PGRST202"}', { status: 404 });
+      return new Response("[]", { status: 200 });
     }
     return new Response("[]", { status: 200 });
   });
@@ -103,29 +107,62 @@ describe("the video lane", () => {
     expect(refused.status).toBe(415);
   });
 
-  it("lists a finished video take and never touches the audio pointer", async () => {
-    const bucket = fakeBucket();
-    const sb = fakeSupabase({ local_takes: { guest: [{ manifest: "audio-take" }] } });
+  async function finishVideoTake(sb: ReturnType<typeof fakeSupabase>, bucket: ReturnType<typeof fakeBucket>) {
     vi.stubGlobal("fetch", sb.fn);
     for (let i = 0; i < 2; i++) {
       await bucket.put(`age_of_ai/local/${RUN}/guest-video/v1abc/0000${i}.webm`, new Uint8Array(10));
     }
-    const res = await worker.fetch(new Request("https://api.nerranetwork.com/voices/upload-done", {
+    return worker.fetch(new Request("https://api.nerranetwork.com/voices/upload-done", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ run_id: RUN, role: "guest", kind: "video", sid: "v1abc", chunks: 2,
                              mime: "video/webm;codecs=vp9,opus", started_at: "2026-10-28T17:00:00Z",
                              duration_ms: 10000 }),
     }), env(bucket), {} as any);
+  }
+
+  it("lists a finished video take atomically and never touches the audio pointer", async () => {
+    // Oct 28 2026 (the second test room): the audio and the video take
+    // finished together and the later read-and-write erased the earlier
+    // listing. The take is appended inside the database now.
+    const bucket = fakeBucket();
+    const sb = fakeSupabase();
+    const res = await finishVideoTake(sb, bucket);
+    expect(res.status).toBe(200);
+    const rpc = sb.calls.find((c) => c.url.includes("/rpc/voices_append_take"));
+    expect(rpc).toBeTruthy();
+    expect(rpc!.method).toBe("POST");
+    expect(rpc!.body).toMatchObject({ p_run: RUN, p_field: "local_video_takes", p_role: "guest" });
+    expect(rpc!.body.p_take).toMatchObject({ manifest: `age_of_ai/local/${RUN}/guest-video/v1abc/manifest.json`,
+                                             chunks: 2, missing: 0, bytes: 20 });
+    expect(sb.calls.some((c) => c.method === "PATCH")).toBe(false);
+    expect(bucket.objects.has(`age_of_ai/local/${RUN}/guest-video/v1abc/manifest.json`)).toBe(true);
+  });
+
+  it("falls back to read-and-write on a database without the function", async () => {
+    const bucket = fakeBucket();
+    const sb = fakeSupabase({ local_takes: { guest: [{ manifest: "audio-take" }] } }, true);
+    const res = await finishVideoTake(sb, bucket);
     expect(res.status).toBe(200);
     const patch = sb.calls.find((c) => c.method === "PATCH");
-    expect(patch).toBeTruthy();
     expect(Object.keys(patch!.body)).toEqual(["grok_session_log"]);
-    const takes = patch!.body.grok_session_log.local_video_takes.guest;
-    expect(takes).toHaveLength(1);
-    expect(takes[0]).toMatchObject({ manifest: `age_of_ai/local/${RUN}/guest-video/v1abc/manifest.json`,
-                                     chunks: 2, missing: 0, bytes: 20 });
+    expect(patch!.body.grok_session_log.local_video_takes.guest).toHaveLength(1);
     expect(patch!.body.grok_session_log.local_takes).toEqual({ guest: [{ manifest: "audio-take" }] });
-    expect(bucket.objects.has(`age_of_ai/local/${RUN}/guest-video/v1abc/manifest.json`)).toBe(true);
+  });
+
+  it("an audio take is appended the same way, and its pointer is a column of its own", async () => {
+    const bucket = fakeBucket();
+    const sb = fakeSupabase();
+    vi.stubGlobal("fetch", sb.fn);
+    await bucket.put(`age_of_ai/local/${RUN}/guest/a1/00000.webm`, new Uint8Array(5));
+    const res = await worker.fetch(new Request("https://api.nerranetwork.com/voices/upload-done", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ run_id: RUN, role: "guest", sid: "a1", chunks: 1 }),
+    }), env(bucket), {} as any);
+    expect(res.status).toBe(200);
+    const rpc = sb.calls.find((c) => c.url.includes("/rpc/voices_append_take"));
+    expect(rpc!.body).toMatchObject({ p_field: "local_takes", p_role: "guest" });
+    const patch = sb.calls.find((c) => c.method === "PATCH");
+    expect(patch!.body).toEqual({ local_guest_url: `age_of_ai/local/${RUN}/guest/a1/manifest.json` });
   });
 });
 
@@ -142,6 +179,16 @@ describe("the room's quiet research, as the webhook reports it", () => {
     expect(out.research_notes[0].subject).toHaveLength(160);
     expect(out.research_notes[0].finding).toHaveLength(300);
     expect(out.research_notes[1].delivered).toBe(false);
+  });
+
+  it("keeps a lookup the guest asked for, and a typed wrap-up", () => {
+    const out: any = roomCountersOf({
+      research_notes: [{ kind: "request", finding: "f", source: "s", delivered: true }],
+      guest_feedback: [{ kind: "topic", by: "guest", at_min: 38, text: "we can wrap up now",
+                         applied: true, held: false, wrap_up: true }],
+    });
+    expect(out.research_notes[0].kind).toBe("request");
+    expect(out.guest_feedback[0].wrap_up).toBe(true);
   });
 
   it("drops what is not a finding", () => {

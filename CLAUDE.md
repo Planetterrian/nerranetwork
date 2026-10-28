@@ -2543,9 +2543,53 @@ Rules that bind:
   camera, uncut) before any camera cue is built. ⚠️ Nothing here changes the
   room's timing.
 
+**Same day, the second test room and Michael Kamins' room** (guards
+`tests/test_second_test_room_2026_10_28.py`, `workers/voices/test/guest_video.test.ts`):
+
+- **A take is appended in the database, never read-and-written.** The page
+  finishes its audio and camera takes together; both upload-dones rewrote
+  `grok_session_log` and the camera take's listing was lost (its 42 chunks
+  safe in R2). `voices_append_take` (migration
+  `20261028_voices_append_take.sql`, applied) appends under the row lock,
+  deduplicated by manifest; the Worker falls back to read-and-write only on
+  a database without it. Post-production and the preview also find an
+  unlisted take in R2 (`video_take.discover_takes`), and adopt one whose page
+  never finished (a manifest written up to the first gap).
+- **Asked to look something up, she does.** A guest's request
+  (`RESEARCH_ASK_RE`) starts a lookup at once (inside the cap, outside the
+  answer gap, one per 45 s); her next turn says in a few words that she will
+  bring it in (`takeResearchAsk`, a one-turn instruction after any guest
+  steer); the finding comes as a `request` note to bring in on her next turn;
+  nothing reliable is said only if they ask again. Her brief says the room
+  looks things up as she talks (she had told Patrick she cannot browse).
+- **A test room plays the show's own notice** (`rehearsal.build_run_row`
+  carries `room_clips(show)`).
+- **A typed wrap-up is a stop.** The whole typed message must be the request
+  (`TYPED_WRAP_UP_RE`, anchored: "how we wrap up a launch" stays a topic):
+  in the closing round it closes with her thanks; before it, the closing round
+  begins. Michael's "we can wrap up now" had been held as a topic for five
+  minutes. Stored as `guest_feedback[].wrap_up`.
+- **The studio follows the headset the guest puts on** (section 4c): new
+  headphones get Mira's voice (the call's `outputId`); a wired or USB
+  microphone is switched to at once, in setup and mid-call; a Bluetooth
+  headset's microphone is offered with one click, never taken, because it
+  drops to phone-call quality (the reason phone calls left the show); a
+  "Default" selection is pinned to the device it meant before the list is
+  rebuilt; an unplugged microphone falls back; AirPods already on when the
+  page opens get the computer's microphone offered. Run by
+  `tests/fixtures/studio_devices_sim.js`.
+- **Background blur** (section 4d): MediaPipe's selfie segmenter
+  (`@mediapipe/tasks-vision@0.10.14`, loaded only when a guest turns blur on)
+  on a 256x144 copy of each frame, the person drawn sharp over a blurred
+  frame; Chrome/Edge transform the camera's own frames
+  (`MediaStreamTrackProcessor`, keeps recording in a background tab), other
+  browsers draw through a canvas. **What is recorded is what they see**: the
+  take records the blurred track, never the raw camera. A failure leaves the
+  camera as it was and says so.
+
 Operator: push; `wrangler deploy` in `workers/voices` (video lane, studio
-`video_take`, review-page choice, booking copy, research counters); the
-migration is applied. Scenario (research): the candidate rehearsal, a listen,
+`video_take`, review-page choice, booking copy, research counters, the take
+append); both migrations are applied. Scenario (research): the candidate rehearsal, a listen,
 then "Deploy Voximplant scenario". Video: a test room with the camera on, the
 workflow "Cut the video version of an interview" on that run with `preview`
 ticked (a test room is never post-processed, so the preview is the room

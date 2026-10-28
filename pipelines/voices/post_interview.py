@@ -1502,10 +1502,15 @@ def main() -> int:
         video_track = None
         try:
             from video_take import build_video_track
+            from video_take import discover_takes
+            from common import r2_list, r2_put_json, r2_read_json
             video_track = build_video_track(
                 run, tracks["guest"], workdir / "video",
                 upload=r2_upload,
-                key_for=lambda name: show.r2_key("raw", f"{run['id']}_{stamp}_{name}"))
+                key_for=lambda name: show.r2_key("raw", f"{run['id']}_{stamp}_{name}"),
+                discover=lambda: discover_takes(
+                    r2_list(show.r2_key("local", run["id"], "guest-video") + "/"),
+                    r2_read_json, put_json=r2_put_json))
         except Exception:  # noqa: BLE001 — the audio episode is the product
             logger.exception("guest video take not built (non-fatal)")
         if video_track:

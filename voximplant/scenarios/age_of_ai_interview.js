@@ -861,6 +861,7 @@ function onGuestFeedback(leg, raw) {
   }
   const text = kind === "topic" ? cleanFeedbackText(msg.text) : "";
   if (kind === "topic" && !text) { feedbackAck(leg, kind, "empty"); return; }
+  if (kind === "topic" && !holdMode && TYPED_WRAP_UP_RE.test(text)) { typedWrapUp(leg, text, atMin); return; }
   const closing = roundActive || roundClosed || roundPendingStart || closingRequired;
   const applies = !holdMode && !closing;
   guestFeedback.push({ kind: kind, by: leg.role, at_min: atMin, text: text, applied: false, held: !applies });
@@ -875,6 +876,42 @@ function onGuestFeedback(leg, raw) {
   trace("feedback", leg.role + ": " + (kind === "move_on" ? "move on" : "topic (" + text.length + " chars)") +
     "; at her next turn");
   feedbackAck(leg, kind, "queued");
+}
+
+// Oct 28 2026 (Michael Kamins' room): "we can wrap up now", typed during the
+// closing round's second question, was held as a topic and the round ran
+// five more minutes. Typed words asking to finish are the guest asking to
+// stop: in the closing round the round closes with her thanks; before it,
+// the closing round begins at the next pause (or now, if nobody is talking).
+// The whole message must be the request (a topic such as "how we wrap up a
+// launch" is a subject, never a stop).
+const TYPED_WRAP_UP_RE = /^\s*(?:ok(?:ay)?[,\s]+)?(?:i think\s+)?(?:(?:we can|let'?s|can we|could we|ok to|time to|please|i'?d like to|i need to|i have to|we should)\s+)?(?:wrap(?:ping)?(?:\s+(?:it|this|things))?\s+up|stop|end|finish|close)(?:\s+(?:here|now|it|this|the interview|the recording|things|soon))*(?:\s+please)?\s*[.!?]*\s*$/i;
+
+function typedWrapUp(leg, text, atMin) {
+  guestFeedback.push({ kind: "topic", by: leg.role, at_min: atMin, text: text, applied: true,
+                       held: false, wrap_up: true });
+  guestAskedToStop = true;
+  dropGuestSteer("closing");
+  if (roundClosed || isHelloSession()) {
+    trace("close", leg.role + " typed to wrap up; already closing");
+  } else if (roundActive) {
+    trace("close", leg.role + " typed to wrap up at " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + "; closing thanks");
+    if (roundRepromptTimer) { clearTimeout(roundRepromptTimer); roundRepromptTimer = null; }
+    roundAwaitingAnswer = false;
+    roundRehandOwed = false;
+    closeRound();
+  } else {
+    closingPermitted = true;
+    closingRequired = true;
+    if (!inboundSpeaking && !miraSpeaking && !rotating) {
+      trace("close", leg.role + " typed to wrap up; the closing round begins");
+      startRound("the guest asked to wrap up", -1);
+    } else {
+      trace("close", leg.role + " typed to wrap up; the closing round begins at the next pause");
+      roundPendingStart = true;
+    }
+  }
+  feedbackAck(leg, "topic", "applied");
 }
 
 /** The steer a guest asked for, as this response's instructions (or ""). */
@@ -1423,6 +1460,7 @@ function remember(who, text) {
 function guestWordsChecks(text) {
   try {
     noteHoldFromGuest(text);
+    noteResearchAsk(text);
     if (!guestAskedToStop && GUEST_STOP_RE.test(text || "")) {
       guestAskedToStop = true;
       trace("close", "the guest asked to stop");
@@ -1509,7 +1547,7 @@ function requestTurn(agent) {
   miraSpeaking = true;
   turnRequested = true;
   if (closingThanksQueued) closingThanksSent = true;
-  const instructions = nextTurnInstructions || takeGuestSteer();
+  const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk();
   const body = instructions ? { response: { instructions: instructions } } : {};
   nextTurnInstructions = "";
   turnRoundLabel = roundTurnRequested;
@@ -3696,7 +3734,7 @@ function researchInBackground(claim, context, opts) {
   const kind = opts.kind || "claim";
   const key = claim.toLowerCase().replace(/[^a-z0-9 ]+/g, "").trim().slice(0, 120);
   if (!key || researchSeen[key] || researchInFlight >= RESEARCH_MAX_IN_FLIGHT) {
-    trace("research", "skipped (" + kind + ")" + (kind === "answer" ? "" : ": " + claim.slice(0, 80)));
+    trace("research", "skipped (" + kind + ")" + (kind === "answer" || kind === "request" ? "" : ": " + claim.slice(0, 80)));
     return false;
   }
   let auth;
@@ -3711,7 +3749,8 @@ function researchInBackground(claim, context, opts) {
   const startedAt = Date.now();
   // The trace never carries the guest's own words: an answer is named by
   // its length (the lookup's topic comes back with the finding).
-  const label = kind === "answer" ? "an answer of " + countWords(claim) + " words" : claim.slice(0, 120);
+  const label = kind === "answer" ? "an answer of " + countWords(claim) + " words"
+    : kind === "request" ? "a request of " + countWords(claim) + " words" : claim.slice(0, 120);
   trace("research", "started (" + kind + "): " + label);
   let pending;
   try {
@@ -3734,11 +3773,13 @@ function researchInBackground(claim, context, opts) {
     researchInFlight -= 1;
     if (!(res && res.code >= 200 && res.code < 300)) {
       trace("research", "HTTP " + (res && res.code) + " (silent)");
+      if (kind === "request") nothingReliable();
       return;
     }
     const found = parseFinding(responseText(res.text));
     if (!found) {
       trace("research", "nothing found (silent): " + label.slice(0, 80));
+      if (kind === "request") nothingReliable();
       return;
     }
     if (!grokAgent || roomEnded) return;
@@ -3766,6 +3807,22 @@ function researchInBackground(claim, context, opts) {
   return true;
 }
 
+/** A lookup the guest asked for found nothing reliable: she is told, and
+ *  says so only if they ask about it again. */
+function nothingReliable() {
+  if (!grokAgent || roomEnded) return;
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[RESEARCH NOTE \u2014 system note, do not read this label aloud] The lookup the guest" +
+        " asked for turned up nothing reliable. Do not bring it up yourself; if they ask about" +
+        " it, say in a few words that nothing reliable came up, and carry on." }] },
+    });
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] research note inject failed: " + err.message);
+  }
+}
+
 /** The note a finding reaches her as. Never a response: she uses it on a
  *  turn the room gives her, or not at all. */
 function researchNoteText(kind, subject, found) {
@@ -3778,6 +3835,11 @@ function researchNoteText(kind, subject, found) {
     return label + "Recent news on your guest or their work: " + fact + ". If the " +
       "conversation comes near it, you may fold it into one question, naming the " +
       "source. " + quiet;
+  }
+  if (kind === "request") {
+    return label + "What the guest asked you to look up" + (found.topic ? " (" + found.topic + ")" : "") +
+      ": " + fact + ". Bring it in on your next turn, in a sentence or two, naming the source;" +
+      " they asked for it, so you may say it is what you found. Never correct or contradict them with it.";
   }
   if (kind === "answer") {
     return label + "Background on something the guest just mentioned" +
@@ -3922,6 +3984,58 @@ function maybeAutoResearch() {
   }
 }
 
+// A guest who asks her to look something up (Oct 28 2026, Patrick's second
+// test room: "can you search about me?", and she said she cannot browse).
+// The room starts that lookup at once (outside the answer gap, inside the
+// cap), and her next turn says in a few words that she will bring it in if
+// something useful turns up. What it finds reaches her as a note she brings
+// in on her next turn; when nothing reliable turns up she is told so, and
+// says it only if they ask again.
+const RESEARCH_ASK_RE = /\b(?:look(?:ing)? (?:it |that |this |them |him |her |me |us )?up|search(?:ing)? (?:for|about|on|up)|do (?:a|some) (?:quick )?(?:live )?(?:search|searching|research)|google (?:it|that|me|him|her|them)|research (?:me|him|her|them|that|this)|see what you can find)\b/i;
+const RESEARCH_ASK_GAP_MS = 45000;
+let researchAskAt = 0;
+let researchAsk = null;      // her next turn's line after a guest asked for a lookup
+
+function noteResearchAsk(text) {
+  if (!autoResearchOn() || holdMode || roundActive || roundClosed) return;
+  if (!RESEARCH_ASK_RE.test(text || "")) return;
+  if (researchAskAt && Date.now() - researchAskAt < RESEARCH_ASK_GAP_MS) return;
+  if (autoResearchCount >= AUTO_RESEARCH_MAX) return;
+  researchAskAt = Date.now();
+  const ask = guestDelta() || String(text || "");
+  const question = lastMiraLine();
+  if (researchInBackground(ask, question, { kind: "request",
+      prompt: requestResearchPrompt(ask, guestIdentity(), question) })) {
+    autoResearchCount += 1;
+    researchAsk = "[ROOM \u2014 for this turn only, do not read aloud] They asked you to look" +
+      " something up, and the room is looking it up now. In a few words, say you will bring" +
+      " it in if something useful turns up, then carry on with the conversation. Never say" +
+      " you cannot search or browse.";
+  }
+}
+
+function takeResearchAsk() {
+  if (!researchAsk || holdMode || roundActive || roundPendingStart) return "";
+  const line = researchAsk;
+  researchAsk = null;
+  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+  return (base ? base + "\n\n" : "") + line;
+}
+
+function requestResearchPrompt(ask, who, question) {
+  return "A guest on a live podcast interview asked the host to look something up.\n\n" +
+    (who ? "The guest is: " + who + " (when they say \"me\", they mean this person).\n" : "") +
+    (question ? "The host had just asked: " + question.slice(0, 300) + "\n" : "") +
+    "What the guest said: " + ask.slice(0, 1200) + "\n\n" +
+    "Work out what they want looked up and search the web and X for it.\n\n" +
+    "Reply with ONE JSON object and nothing else:\n" +
+    '{"found": true|false, "topic": "what you looked up", "finding": "one or two spoken ' +
+    'sentences a host could say: the specific, dated facts you found", "source": "the ' +
+    'publication or organisation name"}\n' +
+    "found is true ONLY if you found specific, reliable information about exactly what " +
+    "they asked (a namesake or a general page is found false). Never speculate.";
+}
+
 function noteResearchFinding(kind, subject, found, startedAt, delivered) {
   if (researchNotes.length >= RESEARCH_NOTES_MAX) return;
   researchNotes.push({
@@ -3929,7 +4043,7 @@ function noteResearchFinding(kind, subject, found, startedAt, delivered) {
     took_sec: Math.round((Date.now() - startedAt) / 1000),
     kind: kind,
     // The guest's name, or the topic looked up: never the guest's own words.
-    subject: String(kind === "answer" ? (found.topic || "") : subject || "").slice(0, 160),
+    subject: String(kind === "answer" || kind === "request" ? (found.topic || "") : subject || "").slice(0, 160),
     finding: String(found.finding || "").slice(0, 300),
     source: String(found.source || "").slice(0, 120),
     delivered: !!delivered,

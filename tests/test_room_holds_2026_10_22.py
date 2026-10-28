@@ -131,8 +131,9 @@ class TestHoldMode:
         assert 'nextTurnInstructions = "";' in exit_hold
         create = SCENARIO.split("turnRequested = true;", 1)[1].split("\n}\n", 1)[0]
         # Oct 23 2026: a guest's feedback steer is the only other source of a
-        # turn's instructions, and only when no room turn is parked.
-        assert "const instructions = nextTurnInstructions || takeGuestSteer();" in create
+        # turn's instructions, and only when no room turn is parked. Oct 28
+        # 2026: then the one-turn line after a guest asked for a lookup.
+        assert "const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk();" in create
         assert "{ response: { instructions: instructions } }" in create
         assert 'nextTurnInstructions = "";' in create
 

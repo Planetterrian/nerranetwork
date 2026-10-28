@@ -86,6 +86,7 @@ run(`
 `);
 
 // --- the room's inputs, as the voice API delivers them ---------------------
+function __acksOut() { return acks.slice(); }
 function guestSays(text, ms) {
   run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
   advance(ms || 2000);
@@ -837,6 +838,57 @@ if (which === "server_turns_advance_the_round") {
   out.researchNotes = run("researchNotes");
   out.researchLookups = run("researchLookups");
   out.guestIdentity = run("guestIdentity()");
+} else if (which === "research_request" || which === "research_request_nothing") {
+  // Oct 28 2026 (Patrick's second test room): "can you search about me?"
+  const lookups = [];
+  const realNet = ctx.Net.httpRequestAsync;
+  ctx.Net.httpRequestAsync = function (url, opts) {
+    if (String(url).indexOf("api.x.ai/v1/responses") < 0) return realNet(url, opts);
+    const body = JSON.parse(opts.postData);
+    lookups.push(body.input[0].content);
+    const found = which === "research_request" && /asked the host to look something up/.test(body.input[0].content);
+    const res = { code: 200, text: JSON.stringify({ output_text: JSON.stringify(found
+      ? { found: true, topic: "Patrick Novak", finding: "He launched the Nerra Network in 2026.", source: "Nerra Network" }
+      : { found: false }) }) };
+    return { then: function (ok) { ok(res); } };
+  };
+  run(`getSecret = function () { return "test-key"; };
+       config.mira_system_prompt = "Role.\\nToday you are conducting a live interview with: Patrick Novak, founder of the Nerra Network.\\nMore.";`);
+  miraFinishes("Welcome, Patrick. What made you build this?");     // the guest lookup
+  const c0 = events.filter(function (e) { return e === "create"; }).length;
+  guestSays("I wanted people to be heard. Can you do some live searching about me and see if you can work it into our conversation?", 6000);
+  out.lookupsAfterAsk = lookups.length;
+  out.askPrompt = lookups[lookups.length - 1];
+  advance(5000);                                                   // the room gives her the turn
+  out.createsAfterAsk = events.filter(function (e) { return e === "create"; }).length - c0;
+  out.turnInstructions = instructions[instructions.length - 1];
+  out.notes = notes.filter(function (n) { return n.indexOf("[RESEARCH NOTE") === 0; });
+  // Asking again inside 45 s starts nothing new.
+  miraFinishes("I'll bring it in if something useful turns up.");
+  guestSays("Did you search for me yet? Look it up please.", 3000);
+  out.lookupsAfterSecondAsk = lookups.length;
+  out.researchNotes = run("researchNotes");
+} else if (which === "typed_wrap_up_in_round" || which === "typed_wrap_up_before_round") {
+  // Oct 28 2026 (Michael Kamins' room): "we can wrap up now", typed.
+  if (which === "typed_wrap_up_in_round") {
+    run("closingPermitted = true; closingRequired = true; startRound('test', -1);");
+    roomTurnStarts(); miraFinishes(handed()); responseDone();
+    guestSays("That the desert market holds into spring.", 3000); advance(5000);
+    roomTurnStarts(); miraFinishes(handed()); responseDone();
+  } else {
+    roomTurnStarts();
+    miraFinishes("What is the one bet you are making for the next five years?");
+    responseDone();
+  }
+  events.length = 0;
+  ctx.__raw = JSON.stringify({ nn: 1, kind: "topic", text: "we can wrap up now" });
+  run("onGuestFeedback(legs[0], __raw);");
+  advance(3000);
+  out.state = state();
+  out.acks = __acksOut();
+  out.lastInstructions = instructions[instructions.length - 1];
+  out.feedback = run("guestFeedback");
+  out.askedToStop = run("guestAskedToStop");
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

@@ -31,6 +31,7 @@ means an audio episode, as before.
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -77,6 +78,73 @@ def video_takes(run: dict, role: str = "guest") -> List[dict]:
     good = [t for t in takes if isinstance(t, dict) and t.get("manifest")
             and int(t.get("chunks") or 0) > 0]
     return sorted(good, key=lambda t: str(t.get("started_at") or ""))
+
+
+_CHUNK_RE = re.compile(r"^(\d{5})\.(webm|mp4)$")
+
+
+def discover_takes(keys: List[str], read_json: Callable[[str], Any], *,
+                   put_json: Optional[Callable[[str, Any], None]] = None) -> List[dict]:
+    """The camera takes in R2 under ``<prefix>/local/<run>/guest-video/``,
+    for a run whose row lists none.
+
+    Oct 28 2026 (the second test room): the page finished its audio take and
+    its camera take at the same moment, both upload-dones rewrote the run's
+    log, and the camera take's listing was lost with all 42 chunks safely in
+    R2. The Worker appends atomically now; this is the backstop, and it also
+    adopts a take whose page never sent upload-done (chunks, no manifest),
+    writing the manifest it would have written when ``put_json`` is given."""
+    manifests: Dict[str, str] = {}
+    chunks: Dict[str, List[Tuple[int, str]]] = {}
+    for key in keys or []:
+        parts = str(key).split("/")
+        if len(parts) < 3:
+            continue
+        sid, name = parts[-2], parts[-1]
+        if name == "manifest.json":
+            manifests[sid] = key
+            continue
+        m = _CHUNK_RE.match(name)
+        if m:
+            chunks.setdefault(sid, []).append((int(m.group(1)), key))
+    takes: List[dict] = []
+    for sid in sorted(set(manifests) | set(chunks)):
+        if sid in manifests:
+            try:
+                man = read_json(manifests[sid]) or {}
+            except Exception:  # noqa: BLE001 — an unreadable manifest is no take
+                continue
+            takes.append({"manifest": manifests[sid], "sid": sid, "mime": man.get("mime") or "",
+                          "started_at": man.get("started_at"),
+                          "duration_ms": man.get("duration_ms") or 0,
+                          "chunks": len(man.get("chunks") or []),
+                          "missing": len(man.get("missing") or []),
+                          "bytes": man.get("bytes"), "discovered": True})
+            continue
+        if put_json is None:
+            continue
+        numbered = sorted(chunks[sid])
+        have = {n for n, _k in numbered}
+        first = numbered[0][1]
+        folder, ext = first.rsplit("/", 1)[0], first.rsplit(".", 1)[1]
+        # Every expected chunk is listed and the absent ones are named, as the
+        # Worker's own manifest does, so usable_chunks stops at the first gap.
+        expected = [f"{folder}/{i:05d}.{ext}" for i in range(max(have) + 1)]
+        key = folder + "/manifest.json"
+        manifest = {"sid": sid, "kind": "video",
+                    "mime": "video/mp4" if ext == "mp4" else "video/webm",
+                    "started_at": None, "duration_ms": 0, "chunks": expected,
+                    "missing": [k for i, k in enumerate(expected) if i not in have],
+                    "adopted": "no upload-done from the page; built from the chunks in R2"}
+        try:
+            put_json(key, manifest)
+        except Exception:  # noqa: BLE001
+            logger.warning("video take %s: could not write the adopted manifest", sid)
+            continue
+        takes.append({"manifest": key, "sid": sid, "mime": manifest["mime"], "started_at": None,
+                      "duration_ms": 0, "chunks": len(expected),
+                      "missing": len(manifest["missing"]), "discovered": True, "adopted": True})
+    return takes
 
 
 def usable_chunks(manifest: Optional[dict]) -> List[str]:
@@ -199,6 +267,7 @@ def build_video_track(run: dict, reference_wav: Path, workdir: Path, *,
                       key_for: Callable[[str], str],
                       read_json: Optional[Callable[[str], Any]] = None,
                       download: Optional[Callable[[str, Path], Path]] = None,
+                      discover: Optional[Callable[[], List[dict]]] = None,
                       ) -> Optional[Dict[str, Any]]:
     """Every usable take of the guest's camera, on R2 and placed on the
     guest leg's clock: ``{"fps", "takes": [{"url", "sid", "duration_sec",
@@ -207,6 +276,14 @@ def build_video_track(run: dict, reference_wav: Path, workdir: Path, *,
     ``key_for(name)`` returns the R2 key a file called ``name`` goes to;
     ``upload(path, key)`` puts it there and returns its public URL."""
     takes = video_takes(run)
+    if not takes and discover is not None:
+        try:
+            takes = sorted(discover() or [], key=lambda t: str(t.get("started_at") or ""))
+        except Exception:  # noqa: BLE001 — no listing and no R2 means no video
+            logger.exception("video takes could not be discovered in R2 (non-fatal)")
+            takes = []
+        if takes:
+            logger.info("video: %d take(s) found in R2 that the run row did not list", len(takes))
     if not takes:
         return None
     placed: List[dict] = []

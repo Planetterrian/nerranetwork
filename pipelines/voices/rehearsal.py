@@ -323,7 +323,7 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
                   scenario: str = "deployed", with_hold: bool = False) -> Dict[str, Any]:
     """The interview_runs row for one rehearsal room. The scenario reads the
     same columns a live run carries; the only marker is session_kind."""
-    from fire_interviews import MIRA_TOOLS, keyterms_for, turn_detection
+    from fire_interviews import MIRA_TOOLS, keyterms_for, room_clips, turn_detection
     from common import cohost_name
     from shows import show_for
     show = show_for(interview)
@@ -344,6 +344,11 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
         "scheduled_for": _iso(_now()),
         "host_mode": False,
         "status": "awaiting_guest",
+        # Oct 28 2026: a test room plays the show's own consent notice and
+        # drop apology, the ones a guest hears (the second test room still
+        # played the shared "This call is being recorded" clip, so the new
+        # notice explaining her pause was never heard in a rehearsal).
+        **room_clips(show),
         # Oct 28 2026: a person in a test room has their camera recorded in
         # the browser, the material the turn-cue analysis is built from.
         "grok_session_log": {"local_video": True, "rehearsal": {
