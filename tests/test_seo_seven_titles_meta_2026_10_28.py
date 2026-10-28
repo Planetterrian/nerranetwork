@@ -2,11 +2,13 @@
 
 Covers /mira.html, /explore.html, /about.html and the four show pages
 added to docs/seo-titles-final.md (ai-chips, mag7, prediction-markets,
-modern-investing). Titles ≤60, metas ≤160; explore/about must not carry
-a show-count phrase.
+modern-investing). Titles ≤60, metas ≤160; explore/about head tags must
+not carry a show-count phrase. About's Organization JSON-LD must not
+restate a banned cadence claim.
 """
 from __future__ import annotations
 
+import json
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -31,9 +33,8 @@ EXPLORE_META = (
 
 ABOUT_TITLE = "About Nerra Network: independent, free podcasts | Nerra"
 ABOUT_META = (
-    "Nerra Network is an independent podcast network of daily shows on "
-    "AI, Tesla, investing, space and science, made in Vancouver. Every "
-    "Nerra show stays free."
+    "Nerra Network is an independent podcast network of shows, most of "
+    "them daily, made in Vancouver. Every Nerra show stays free."
 )
 
 SHOW_PAGES = {
@@ -66,6 +67,15 @@ SHOW_PAGES = {
 TITLE_TAGS = ("title", "og:title", "twitter:title")
 META_TAGS = ("description", "og:description", "twitter:description")
 FREE_SHOWS_RE = re.compile(r"\d+ free shows")
+# Count + cadence: "26 daily shows", "26 free daily shows", etc.
+COUNT_CADENCE_RE = re.compile(
+    r"\d+\s+(?:free\s+)?(?:daily|weekly)\s+shows", re.I,
+)
+STATIC_PAGES = (
+    ("mira.html", MIRA_TITLE, MIRA_META),
+    ("explore.html", EXPLORE_TITLE, EXPLORE_META),
+    ("about.html", ABOUT_TITLE, ABOUT_META),
+)
 
 
 class _HeadMetaParser(HTMLParser):
@@ -137,6 +147,41 @@ def _assert_title_meta(tags: dict[str, str], title: str, meta: str, label: str):
     assert len(meta) <= 160, (label, len(meta), meta)
 
 
+def _organization_description(html: str) -> str:
+    """Return the Organization.description from the first ld+json block."""
+    for match in re.finditer(
+        r'<script type="application/ld\+json">\s*(.*?)\s*</script>',
+        html,
+        re.S,
+    ):
+        try:
+            data = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            continue
+        entity = data.get("mainEntity") or data
+        if isinstance(entity, dict) and entity.get("@type") == "Organization":
+            return entity.get("description") or ""
+        if data.get("@type") == "Organization":
+            return data.get("description") or ""
+    return ""
+
+
+def _assert_no_banned_cadence(description: str, label: str) -> None:
+    low = description.lower()
+    assert "free daily shows" not in low, (
+        f"{label}: Organization description carries 'free daily shows': "
+        f"{description!r}"
+    )
+    assert "daily shows" not in low, (
+        f"{label}: Organization description carries bare 'daily shows': "
+        f"{description!r}"
+    )
+    assert not COUNT_CADENCE_RE.search(description), (
+        f"{label}: Organization description carries a count+cadence shape: "
+        f"{description!r}"
+    )
+
+
 def test_mira_explore_about_seo_tags(tmp_path):
     import generate_html as G
 
@@ -159,6 +204,42 @@ def test_mira_explore_about_seo_tags(tmp_path):
                     f"{basename} {key} must not contain a show-count phrase: "
                     f"{value!r}"
                 )
+
+
+@pytest.mark.parametrize("basename,title,meta", STATIC_PAGES, ids=[b for b, _, _ in STATIC_PAGES])
+def test_committed_static_pages_match_approved_seo(basename, title, meta):
+    """Committed HTML must carry the same six tags (not only a tmp render)."""
+    path = ROOT / basename
+    assert path.exists(), f"missing committed HTML: {path}"
+    tags = _page_seo_tags(path.read_text(encoding="utf-8"))
+    _assert_title_meta(tags, title, meta, f"committed {basename}")
+    if basename in ("explore.html", "about.html"):
+        for key, value in tags.items():
+            assert not FREE_SHOWS_RE.search(_unescape_meta(value)), (
+                f"committed {basename} {key} must not contain a show-count "
+                f"phrase: {value!r}"
+            )
+
+
+def test_about_organization_jsonld_has_no_banned_cadence(tmp_path):
+    import generate_html as G
+
+    path = Path(G.generate_about_page(output_dir=tmp_path))
+    html = path.read_text(encoding="utf-8")
+    desc = _organization_description(html)
+    assert desc, "about page missing Organization JSON-LD description"
+    assert desc == ABOUT_META, (
+        f"Organization description must match the approved about meta:\n"
+        f"  got:  {desc!r}\n  want: {ABOUT_META!r}"
+    )
+    _assert_no_banned_cadence(desc, "rendered about.html")
+
+    committed = _organization_description(
+        (ROOT / "about.html").read_text(encoding="utf-8"),
+    )
+    assert committed, "committed about.html missing Organization description"
+    _assert_no_banned_cadence(committed, "committed about.html")
+    assert committed == ABOUT_META
 
 
 @pytest.mark.parametrize("slug", sorted(SHOW_PAGES))

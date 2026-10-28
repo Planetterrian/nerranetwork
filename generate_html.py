@@ -7532,20 +7532,20 @@ def generate_about_page(*, dry_run=False, output_dir=None):
     env = _get_jinja_env()
     template = env.get_template("about.html.j2")
 
-    # Search + social share the same string so cards and the snippet agree.
-    # "N daily shows" / "N free shows" was not true (weekly and interview-ready
-    # shows exist) and is banned on visitor surfaces; the Sep 3 pass corrected
-    # visible copy and still left the meta as the line Google actually prints.
+    # Search + social + Organization JSON-LD share one string so cards, the
+    # snippet Google prints, and structured data cannot diverge. "of daily
+    # shows" / "N free shows" was not true (weekly and interview-ready shows
+    # exist); the hedge "most of them daily" is the approved 2026-10-28 copy.
     _about_description = (
-        "Nerra Network is an independent podcast network of daily shows on "
-        "AI, Tesla, investing, space and science, made in Vancouver. Every "
-        "Nerra show stays free."
+        "Nerra Network is an independent podcast network of shows, most of "
+        "them daily, made in Vancouver. Every Nerra show stays free."
     )
     context = {
         "path_prefix": "",
         "page_title": "About Nerra Network: independent, free podcasts | Nerra",
         "page_description": _about_description,
         "meta_description": _about_description,
+        "org_description": _about_description,
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
