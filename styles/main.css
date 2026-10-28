@@ -3444,3 +3444,101 @@ main :where(p, li, dd, td) > a:where(:not([class]):not([style])) {
 .nn-member-special-title a:hover { text-decoration: underline; }
 .nn-member-special-text { color: var(--nn-text-secondary); margin: 0 0 var(--sp-3); }
 .nn-member-special audio { width: 100%; max-width: 420px; height: 40px; }
+
+/* ============================================================
+   The site's one player (Oct 28 2026, assets/js/nn-player.js)
+   A bar at the bottom of every page; the front page's cards and My
+   Nerra hand it their episodes, and it resumes on the next page.
+   ============================================================ */
+html.nn-has-player body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--nn-tabbar-h, 0px)); }
+.nn-gp[hidden], .nn-native-audio { display: none !important; }
+.nn-gp { position: fixed; left: 0; right: 0; bottom: var(--nn-tabbar-h, 0px); z-index: 900;
+  background: rgba(13, 17, 31, 0.95); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1); color: var(--nn-white); font-family: var(--font-ui);
+  padding-bottom: env(safe-area-inset-bottom, 0px); }
+.nn-gp-progress { position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: rgba(255, 255, 255, 0.08); }
+.nn-gp-progress span { display: block; height: 100%; width: 0; background: var(--show-color, var(--nn-cyan)); transition: width 0.4s linear; }
+.nn-gp-inner { max-width: var(--container-max, 1200px); margin: 0 auto; padding: 10px var(--sp-6, 24px);
+  display: grid; grid-template-columns: 48px minmax(0, 1.2fr) auto minmax(0, 1.4fr) auto; gap: 14px; align-items: center; }
+.nn-gp-cover { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; display: block; background: rgba(255, 255, 255, 0.06); }
+.nn-gp-who { min-width: 0; }
+.nn-gp-show { display: block; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--nn-cyan)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nn-gp-title { display: block; font-size: 0.9rem; font-weight: 600; color: var(--nn-white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+.nn-gp-title:hover { text-decoration: underline; }
+.nn-gp-resume { display: block; font-size: 0.72rem; color: var(--nn-text-muted); }
+.nn-gp-ctl { display: flex; gap: 6px; align-items: center; }
+.nn-gp-btn { min-width: 34px; height: 34px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.16); background: transparent;
+  color: var(--nn-white); cursor: pointer; font: 700 0.76rem/1 var(--font-ui); display: inline-flex; align-items: center; justify-content: center; }
+.nn-gp-btn:hover { border-color: var(--nn-cyan); }
+.nn-gp-btn[disabled] { opacity: 0.3; cursor: default; }
+.nn-gp-big { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.nn-gp-big .ic, .nn-listen .ic { width: 0; height: 0; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
+.nn-gp-big.is-playing .ic, .nn-listen.is-playing .ic { width: 12px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; margin-left: 0; }
+.nn-gp-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 0.74rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
+.nn-gp-seek { width: 100%; accent-color: var(--nn-cyan); }
+.nn-gp-side { display: flex; gap: 6px; align-items: center; font-size: 0.76rem; color: var(--nn-text-muted); }
+@media (max-width: 900px) {
+  .nn-gp-inner { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .nn-gp-bar { grid-column: 1 / -1; grid-row: 2; }
+  .nn-gp-side { display: none; }
+  .nn-gp-cover { width: 44px; height: 44px; }
+}
+@media (max-width: 560px) {
+  .nn-gp-inner { padding: 8px var(--sp-4, 16px); gap: 10px; }
+  .nn-gp-skip { display: none; }
+  .nn-gp-bar { display: none; }
+}
+/* The Listen button that stands in for a card's native audio control. */
+.nn-listen { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 6px; border-radius: 999px; border: 0; cursor: pointer;
+  background: #fff; color: #0B0F1A; font: 700 0.92rem/1 var(--font-ui); }
+.nn-listen .ic { margin-left: 14px; }
+.nn-listen.is-playing .ic { margin-left: 12px; }
+.nn-listen:hover { box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.35); }
+.nn-listen:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 3px; }
+
+/* The video player inside the page (privacy-enhanced YouTube). */
+.nn-watch { padding: 0; border: 0; background: transparent; max-width: min(1000px, 96vw); width: 100%; color: var(--nn-white); }
+.nn-watch::backdrop { background: rgba(5, 8, 16, 0.86); }
+.nn-watch-shell { position: relative; background: #0D1120; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; overflow: hidden; }
+.nn-watch-frame { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.nn-watch.is-short { max-width: min(420px, 94vw); }
+.nn-watch.is-short .nn-watch-frame { aspect-ratio: 9 / 16; max-height: 72vh; margin: 0 auto; }
+.nn-watch-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.nn-watch-info { padding: var(--sp-4, 16px) var(--sp-5, 20px); font-family: var(--font-ui); }
+.nn-watch-show { margin: 0; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-cyan); }
+.nn-watch-title { margin: 4px 0 10px; font-family: var(--font-heading); font-size: 1.15rem; line-height: 1.3; }
+.nn-watch-actions { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 8px; }
+.nn-watch-actions a { color: var(--nn-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.nn-watch-actions a[hidden] { display: none; }
+.nn-watch-note { margin: 0; font-size: 0.78rem; color: var(--nn-text-muted); }
+.nn-watch-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+  background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 1rem; }
+
+/* ============================================================
+   The web app (Oct 28 2026, assets/js/nn-app.js + manifest.webmanifest)
+   The tab bar exists only in the installed app (html.nn-standalone);
+   install buttons stay hidden until the browser can install.
+   ============================================================ */
+[data-nn-install][hidden], [data-nn-install-ios][hidden] { display: none !important; }
+.nn-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 910; display: grid; grid-template-columns: repeat(4, 1fr);
+  background: rgba(11, 15, 26, 0.97); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); font-family: var(--font-ui); }
+.nn-tabbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; color: var(--nn-text-muted); text-decoration: none; font-size: 0.68rem; font-weight: 600; }
+.nn-tabbar a.is-on { color: var(--nn-white); }
+.nn-tabbar a.is-on svg { color: var(--nn-cyan); }
+html.nn-standalone body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--nn-tabbar-h, 64px)); }
+.nn-app-card { display: flex; align-items: center; gap: var(--sp-4, 16px); padding: var(--sp-4, 16px) var(--sp-5, 20px); border: 1px solid var(--nn-border);
+  border-radius: 14px; background: linear-gradient(135deg, rgba(107, 71, 255, 0.12), rgba(0, 212, 255, 0.08)); font-family: var(--font-ui); }
+.nn-app-card img { width: 52px; height: 52px; border-radius: 12px; flex: none; }
+.nn-app-card p { margin: 0; color: var(--nn-text-muted); font-size: 0.9rem; line-height: 1.45; }
+.nn-app-card strong { display: block; color: var(--nn-white); font-size: 1rem; margin-bottom: 2px; }
+.nn-app-card .nn-app-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex: none; }
+.nn-app-btn { display: inline-flex; align-items: center; gap: 6px; padding: 0.55rem 1rem; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--nn-gradient); color: #fff; font: 700 0.88rem/1 var(--font-ui); text-decoration: none; }
+.nn-app-x { border: 0; background: transparent; color: var(--nn-text-muted); cursor: pointer; font-size: 1rem; padding: 6px; }
+.nn-app-ios kbd { font: inherit; font-weight: 700; color: var(--nn-white); }
+@media (max-width: 640px) {
+  .nn-app-card { flex-wrap: wrap; }
+  .nn-app-card .nn-app-actions { margin-left: 0; width: 100%; }
+}
+.nn-footer-app { max-width: 720px; margin: var(--sp-6, 24px) auto 0; }

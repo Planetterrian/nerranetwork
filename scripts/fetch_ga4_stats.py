@@ -78,7 +78,11 @@ CONVERSION_EVENTS = ["newsletter_signup", "generate_lead", "gallery_subscribe"]
 ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
                      "play_short", "select_short_show", "play_short_unavailable",
                      "episode_play", "subscribe_click", "play_personal_sample",
-                     "begin_checkout", "watch_on_youtube"]
+                     "begin_checkout", "watch_on_youtube",
+                     # Oct 28 2026: the web app (assets/js/nn-player.js,
+                     # nn-app.js, for-you.js, join.html, add.html).
+                     "play_video", "build_lineup_start", "personal_feed_add",
+                     "app_install_prompt", "app_installed", "app_open"]
 
 
 def _session():

@@ -45,7 +45,13 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="assets/js/consent.js"
@@ -61,125 +67,1075 @@
     <link rel="stylesheet" href="styles/main.css">
 
     
-    <link rel="stylesheet" href="styles/main.css">
     <style>
+.lt-page {
+  --lt-ink: var(--nn-text);
+  --lt-muted: var(--nn-text-muted);
+  --lt-rule: var(--nn-border);
+  --lt-rule-strong: rgba(255, 255, 255, 0.16);
+  --lt-panel: var(--nn-bg-alt);
+  --lt-panel-2: rgba(255, 255, 255, 0.035);
+  --lt-accent: var(--nn-purple);
+  --lt-accent-text: var(--nn-purple-text);
+  --lt-cyan: var(--nn-cyan);
+  --lt-today-bg: rgba(240, 180, 41, 0.16);
+  --lt-today-text: #F5C860;
+  --lt-head: 'Source Serif 4', Georgia, serif;
+  --lt-ui: var(--font-ui);
+  --lt-radius: 10px;
+  padding-top: calc(var(--nav-height, 72px) + var(--sp-4));
+  padding-bottom: var(--sp-12);
+  color: var(--lt-ink);
+}
+/* Component links: the site-wide prose-link rule (cyan + underline on a bare
+   <a> inside p/li) is for running text; on a front page every headline is a
+   link and gets its own hover treatment below. Running-text links that
+   remain (.lt-note, the edition note) are underlined explicitly. */
+.lt-page a { color: inherit; text-decoration: none; }
+.lt-page a:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; border-radius: 4px; }
+.lt-page .container { padding-left: var(--sp-6); padding-right: var(--sp-6); }
+
+/* ---- Masthead ---- */
+.lt-masthead-inner { border-bottom: 3px double var(--lt-rule-strong); padding-bottom: var(--sp-4); margin-bottom: var(--sp-3); }
+.lt-masthead-meta {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); align-items: center;
+  font-family: var(--lt-ui); font-size: 0.82rem; color: var(--lt-muted);
+  border-bottom: 1px solid var(--lt-rule); padding-bottom: var(--sp-2); margin-bottom: var(--sp-4);
+}
+.lt-masthead-meta time { color: var(--lt-ink); font-weight: 600; }
+.lt-masthead-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3) var(--sp-8); }
+.lt-dateline { text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ---- Markets & launches (every value under its as-of date) ---- */
+.lt-markets {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sp-3); margin: 0 0 var(--sp-3); min-width: 0;
+  font-family: var(--lt-ui); font-size: 0.8rem; border-bottom: 1px solid var(--lt-rule); padding-bottom: var(--sp-2);
+}
+.lt-markets-h { flex: 1 1 auto; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-muted); }
+.lt-markets ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px var(--sp-6); min-width: 0; flex: 1 1 100%; order: 3; }
+
+.lt-mk-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.lt-mk-label { color: var(--lt-muted); font-size: 0.72rem; }
+.lt-mk-label time { color: var(--lt-muted); }
+.lt-quote { display: inline-flex; gap: 5px; align-items: baseline; }
+.lt-quote-sym { font-weight: 800; color: var(--nn-white); letter-spacing: 0.02em; }
+.lt-quote-px { font-variant-numeric: tabular-nums; color: var(--lt-ink); }
+.lt-quote-chg { font-variant-numeric: tabular-nums; font-weight: 700; }
+.lt-quote.is-up .lt-quote-chg { color: #34D399; }
+.lt-quote.is-down .lt-quote-chg { color: #F87171; }
+.lt-quote.is-flat .lt-quote-chg { color: var(--lt-muted); }
+.lt-launch-name { color: var(--nn-white); font-weight: 700; }
+.lt-markets-more { flex: none; font-weight: 700; color: var(--lt-accent-text) !important; font-size: 0.76rem; }
+/* Oct 19 2026: live quotes (assets/js/live-ticker.js). A live group carries a dot. */
+.lt-mk-group.is-live .lt-mk-label::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px;
+  border-radius: 50%; background: var(--lt-cyan); vertical-align: 1px; }
+/* The tapes: a row wider than its box moves; its Pause button appears only then. */
+.lt-tape-pause {
+  flex: none; font-family: var(--lt-ui); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--lt-muted); background: transparent; border: 1px solid var(--lt-rule); border-radius: 999px;
+  padding: 2px 9px; cursor: pointer; line-height: 1.4;
+}
+.lt-tape-pause:hover, .lt-tape-pause:focus-visible { color: var(--nn-white); border-color: var(--lt-muted); }
+.lt-tape-pause[hidden] { display: none; }
+.is-moving > ul { scroll-snap-type: none; }
+
+/* ---- Timestamps ---- */
+.lt-today { display: inline-block; font-family: var(--lt-ui); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lt-today-text); background: var(--lt-today-bg); padding: 1px 6px; border-radius: 4px; vertical-align: 1px; }
+.lt-when time, .lt-rail-when time { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-rail-when { font-size: 0.72rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
+.lt-rail-more { font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 700; margin: var(--sp-2) 0 0; }
+.lt-rail-more a { color: var(--lt-accent-text); }
+.lt-rail-more a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Developing stories ---- */
+.lt-dev-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--sp-4) var(--sp-6); }
+.lt-dev { border-left: 3px solid var(--show-color); padding: 2px 0 2px var(--sp-4); min-width: 0; }
+.lt-dev-flag { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 700; color: var(--lt-muted); margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.lt-dev-badge { color: #fff; background: #B42318; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.64rem; padding: 2px 6px; border-radius: 3px; }
+.lt-dev .lt-hl { font-size: 1.12rem; line-height: 1.3; }
+.lt-dev-shows { font-family: var(--lt-ui); font-size: 0.78rem; font-weight: 700; margin: 4px 0 0; color: var(--lt-muted); }
+.lt-dev-shows a { color: var(--lt-ink); }
+.lt-dev-shows a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-dev-latest { font-weight: 700; color: var(--lt-ink); }
+.lt-dev-earlier { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.lt-dev-earlier li { font-family: var(--lt-ui); font-size: 0.82rem; line-height: 1.4; color: var(--lt-muted); }
+.lt-dev-earlier a { color: var(--lt-ink); }
+.lt-dev-earlier a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-dev-when { font-weight: 700; color: var(--lt-muted); margin-right: 4px; }
+
+/* ---- Personal tips band (the homepage's one email ask) ---- */
+.lt-soft { margin-top: var(--sp-10); }
+.lt-soft .nn-soft-personal-hero { border-top: 1px solid var(--nn-border); }
+
+/* ---- Today: the edition + the schedule ---- */
+.lt-today-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-6); align-items: stretch; }
+.lt-today-grid.is-single { grid-template-columns: minmax(0, 1fr); }
+.lt-today-grid .lt-edition { margin-top: 0; }
+.lt-schedule ol { list-style: none; margin: 0; padding: 0; }
+.lt-schedule li { display: grid; grid-template-columns: 9.4rem minmax(0, 1fr); gap: var(--sp-3); padding: 8px 0; border-bottom: 1px solid var(--lt-rule); font-family: var(--lt-ui); font-size: 0.84rem; line-height: 1.4; }
+.lt-schedule li:last-child { border-bottom: 0; }
+.lt-sched-time { white-space: nowrap; font-weight: 700; color: var(--nn-white); font-variant-numeric: tabular-nums; }
+.lt-sched-what { color: var(--lt-muted); }
+.lt-sched-what b { color: var(--lt-ink); }
+.lt-schedule li.is-past .lt-sched-time { color: var(--lt-muted); }
+.lt-schedule li.is-past .lt-sched-time::after { content: " ✓"; color: #34D399; }
+
+/* ---- Corrections ---- */
+.lt-corrections { margin-top: var(--sp-6); }
+.lt-corrections ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.lt-corrections li { border-left: 3px solid var(--nn-claims-flagged, #F5C860); padding-left: var(--sp-4); }
+.lt-corrections .lt-kicker time { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-corr-text { font-family: var(--lt-ui); font-size: 0.88rem; line-height: 1.55; color: var(--lt-ink); margin: 0; }
+.lt-corr-text a { font-weight: 700; color: var(--nn-white); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- Personal lineup sample ---- */
+.lt-lineup { display: grid; gap: 6px; width: 100%; max-width: 22rem; margin-bottom: var(--sp-2); }
+.lt-lineup-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--lt-rule); border-radius: 10px; padding: 6px 10px; background: rgba(5, 7, 14, 0.35); font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-lineup-row img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+.lt-lineup-row small { margin-left: auto; color: var(--lt-muted); }
+.lt-personal-note a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.lt-personal-note a.nn-soft-personal-link { text-decoration: none; }
+
+/* ---- Subscribe + about ---- */
+.subscribe-all { margin-top: var(--sp-4); }
+.subscribe-all summary { cursor: pointer; font-family: var(--lt-ui); font-weight: 700; font-size: 0.88rem; color: var(--lt-accent-text); }
+.subscribe-all .lt-app-list { margin-top: var(--sp-3); }
+.lt-about { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-10); align-items: start; }
+.lt-about-text p { font-family: var(--lt-ui); font-size: 0.95rem; line-height: 1.65; color: var(--lt-ink); margin: 0 0 var(--sp-3); }
+.lt-about-text a, .lt-values a { color: var(--lt-cyan); text-decoration: underline; text-underline-offset: 2px; }
+.lt-values { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.lt-values li { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); gap: var(--sp-2); font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.55; color: var(--lt-muted); }
+.lt-values b { color: var(--lt-ink); }
+#shows .show-showcase { margin-top: 0; }
+.lt-wordmark {
+  font-family: var(--lt-head); font-weight: 700; letter-spacing: -0.02em;
+  font-size: clamp(2.1rem, 5.2vw, 3.6rem); line-height: 1; margin: 0;
+}
+.lt-wordmark span { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+/* Oct 18 2026: the tagline and the promise lead the front page
+   (engine.brand owns the words). The tagline sits under the wordmark in the
+   headline face; the promise is a full-strength standfirst, not a caption. */
+.lt-brandline { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lt-tagline {
+  font-family: var(--lt-head); font-style: italic; font-weight: 600;
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem); line-height: 1.2; margin: 0;
+  color: var(--lt-ink);
+}
+.lt-tagline::before {
+  content: ""; display: inline-block; width: 0.9em; height: 3px; vertical-align: middle;
+  margin-right: 0.45em; border-radius: 2px; background: var(--nn-gradient);
+}
+.lt-standfirst { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.88; font-size: 1.06rem; max-width: 36rem; margin: 0; line-height: 1.55; }
+.lt-standfirst-wrap { max-width: 36rem; }
+.lt-masthead-actions { font-family: var(--lt-ui); display: flex; flex-wrap: wrap; gap: 8px; margin: var(--sp-3) 0 0; }
+.lt-masthead-actions a {
+  font-size: 0.86rem; font-weight: 700; color: var(--nn-white); text-decoration: none;
+  border: 1px solid var(--lt-rule-strong); border-radius: 999px; padding: 6px 14px;
+}
+.lt-masthead-actions a:hover { border-color: var(--lt-cyan); }
+.lt-masthead-actions a.is-primary { background: var(--lt-accent); border-color: var(--lt-accent); }
+.lt-masthead-actions a.is-primary:hover { background: var(--nn-accent-hover); }
+
+/* ---- Section nav (in-page anchors) ---- */
+.lt-secnav { margin: 0 0 var(--sp-3); }
+.lt-secnav ul {
+  list-style: none; display: flex; gap: var(--sp-1) var(--sp-5); margin: 0; padding: 0 0 var(--sp-2);
+  overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--lt-rule);
+  /* v2 added sections: the nav scrolls; the faded edge says so. */
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
+}
+.lt-secnav ul::-webkit-scrollbar { display: none; }
+.lt-secnav a {
+  display: block; white-space: nowrap; font-family: var(--lt-ui); font-size: 0.86rem; font-weight: 600;
+  color: var(--lt-ink); padding: 6px 0; border-bottom: 2px solid transparent;
+}
+.lt-secnav a:hover { border-bottom-color: var(--lt-accent); color: var(--nn-white); }
+
+/* ---- Ticker ---- */
+.lt-ticker { display: flex; align-items: stretch; gap: var(--sp-3); margin-bottom: var(--sp-6); min-width: 0; }
+.lt-ticker-label {
+  flex: none; display: flex; align-items: center; gap: 6px;
+  font-family: var(--lt-ui); font-weight: 700; font-size: 0.74rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--nn-white); background: var(--lt-accent);
+  padding: 0 10px; border-radius: 6px;
+}
+.lt-ticker-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lt-cyan); }
+.lt-ticker ul {
+  list-style: none; margin: 0; padding: 0; display: flex; gap: var(--sp-5); min-width: 0;
+  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 48px), transparent);
+}
+.lt-ticker ul::-webkit-scrollbar { display: none; }
+.lt-ticker li { flex: none; scroll-snap-align: start; padding: 6px 0; font-family: var(--lt-ui); font-size: 0.86rem; white-space: nowrap; }
+.lt-ticker li a { color: var(--lt-ink); }
+.lt-ticker li a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-ticker-show { font-weight: 700; color: var(--show-color-text); margin-right: 6px; }
+.lt-ticker .lt-tape-pause { order: 3; align-self: center; }
+
+/* ---- Shared story atoms ---- */
+.lt-kicker {
+  font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--show-color-text); display: flex; flex-wrap: wrap; gap: 4px 8px;
+  align-items: center; margin: 0 0 6px;
+}
+.lt-kicker a { color: inherit; }
+.lt-kicker a:hover { text-decoration: underline; }
+.lt-kicker .lt-hub { color: var(--lt-muted); }
+.lt-kicker .lt-hub::after { content: "/"; margin-left: 8px; color: var(--lt-rule-strong); }
+.lt-hl { font-family: var(--lt-head); font-weight: 700; line-height: 1.22; letter-spacing: -0.005em; margin: 0; color: var(--lt-ink); }
+.lt-hl a { color: inherit; }
+.lt-hl a:hover { color: var(--nn-white); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.lt-meta { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin-top: 8px; }
+.lt-meta a { color: var(--lt-ink); font-weight: 600; }
+.lt-meta a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-meta .lt-dot { color: var(--lt-rule-strong); }
+.lt-pop-date { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-personal-sample { width: 100%; max-width: 360px; }
+.lt-personal-sample .lt-sublabel { margin-bottom: var(--sp-2); }
+.lt-personal-sample audio { width: 100%; display: block; }
+.lt-personal-price { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); margin: 0; }
+.lt-also-by { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 6px 0 0; }
+.lt-also-by a { color: var(--lt-ink); font-weight: 600; }
+.lt-also-by a:hover { color: var(--nn-white); text-decoration: underline; }
+
+.lt-media {
+  position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--lt-radius);
+  background: radial-gradient(120% 120% at 20% 10%, color-mix(in srgb, var(--show-color) 55%, #0B0F1A), #0B0F1A 70%);
+  border-bottom: 3px solid var(--show-color);
+}
+.lt-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
+.lt-media.is-portrait img { object-position: center 30%; }
+.lt-media.is-cover img { width: auto; height: 74%; aspect-ratio: 1; position: absolute; inset: 0; margin: auto; border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); object-fit: cover; }
+a.lt-media:hover img { transform: scale(1.03); }
+.lt-media.is-cover:hover img { transform: none; }
+.lt-feature .lt-media.is-cover, .lt-pair .lt-media.is-cover, .lt-card .lt-media.is-cover { aspect-ratio: 21 / 9; }
+.lt-feature .lt-media.is-cover img, .lt-pair .lt-media.is-cover img, .lt-card .lt-media.is-cover img { height: 82%; }
+
+.lt-more { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.lt-more li { font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.4; padding-left: 14px; position: relative; color: var(--lt-ink); }
+.lt-more li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 6px; height: 6px; border-radius: 1px; background: var(--show-color); }
+.lt-more a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-more-label { font-family: var(--lt-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--lt-muted); margin: 14px 0 0; }
+
+/* ---- Lead + Latest ---- */
+.lt-top { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); gap: var(--sp-8); }
+.lt-lead .lt-media { border-radius: 12px; }
+.lt-lead-head { margin-bottom: var(--sp-4); }
+.lt-lead-head .lt-hl { margin-top: 6px; }
+.lt-lead-body { padding-top: var(--sp-3); }
+.lt-lead .lt-hl { font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; }
+.lt-lead-audio { margin-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
+.lt-lead-audio audio { width: min(100%, 420px); height: 40px; }
+.lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--lt-ui); font-weight: 700; font-size: 0.86rem;
+  padding: 9px 14px; border-radius: 8px; border: 1px solid var(--lt-rule-strong); color: var(--nn-white); background: var(--lt-panel-2);
+}
+.lt-btn:hover { border-color: var(--lt-cyan); }
+.lt-btn--primary { background: var(--lt-accent); border-color: var(--lt-accent); }
+.lt-btn--primary:hover { background: var(--nn-accent-hover); }
+
+.lt-latest { border-left: 1px solid var(--lt-rule); padding-left: var(--sp-6); min-width: 0; }
+.lt-rail-h {
+  font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--nn-white); margin: 0 0 var(--sp-3); padding-top: 8px; border-top: 3px solid var(--lt-accent);
+}
+.lt-latest ol { list-style: none; margin: 0; padding: 0; }
+.lt-latest li { padding: 11px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-latest li:last-child { border-bottom: 0; }
+.lt-latest .lt-kicker { font-size: 0.68rem; margin-bottom: 3px; }
+.lt-latest .lt-hl { font-size: 1.02rem; font-weight: 600; line-height: 1.32; }
+.lt-latest time { font-family: var(--lt-ui); font-size: 0.74rem; color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+/* ---- Top stories ---- */
+.lt-block { margin-top: var(--sp-10); }
+.lt-block-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4);
+  border-top: 3px solid var(--lt-ink); padding-top: 8px; margin-bottom: var(--sp-5); flex-wrap: wrap;
+}
+.lt-block-head h2 { font-family: var(--lt-head); font-size: 1.55rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.lt-block-head a { font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 700; color: var(--lt-accent-text); text-align: right; }
+.lt-block-head a:hover { color: var(--nn-white); }
+.lt-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-card .lt-card-body { padding-top: 12px; }
+.lt-card .lt-hl { font-size: 1.14rem; }
+
+/* ---- Edition strip (Nerra Daily / Mira) ---- */
+.lt-edition {
+  margin-top: var(--sp-10); border-radius: 16px; overflow: hidden; position: relative;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--nn-purple) 38%, #0B0F1A) 0%, #111627 55%, color-mix(in srgb, var(--nn-cyan) 18%, #0B0F1A) 100%);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-edition-inner { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--sp-6); padding: var(--sp-6); align-items: center; }
+.lt-edition-cover img { width: 180px; height: 180px; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+.lt-edition-label { font-family: var(--lt-ui); font-size: 0.76rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-cyan); margin: 0 0 6px; }
+.lt-edition .lt-hl { font-size: clamp(1.3rem, 2.4vw, 1.8rem); }
+.lt-edition p.lt-edition-note { font-family: var(--lt-ui); font-size: 0.92rem; color: var(--lt-ink); opacity: 0.85; margin: 8px 0 0; line-height: 1.5; }
+.lt-edition .lt-lead-audio { margin-top: var(--sp-3); }
+
+/* ---- Flagship shows (engine.brand.FLAGSHIP_SHOW_SLUGS) ---- */
+.lt-flag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-flag {
+  border: 1px solid var(--lt-rule-strong); border-top: 4px solid var(--show-color); border-radius: 14px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--show-color) 16%, #0B0F1A) 0%, #0F1424 60%);
+  padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0;
+}
+.lt-flag-head { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; }
+.lt-flag-cover img { width: 72px; height: 72px; border-radius: 10px; display: block; box-shadow: 0 8px 22px rgba(0,0,0,0.45); }
+.lt-flag-name { font-family: var(--lt-head); font-size: 1.32rem; font-weight: 700; margin: 0; line-height: 1.15; }
+.lt-flag-name a { color: var(--nn-white); text-decoration: none; }
+.lt-flag-name a:hover { text-decoration: underline; }
+.lt-flag-tag { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); margin: 2px 0 0; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lt-flag-quote { font-family: var(--lt-ui); font-size: 0.92rem; margin: 0; text-align: right; white-space: nowrap; }
+.lt-flag-quote small { display: block; font-size: 0.72rem; color: var(--lt-muted); font-weight: 500; }
+.lt-flag .lt-media { border-radius: 10px; }
+.lt-flag .lt-hl { font-size: 1.36rem; margin: 0; }
+.lt-flag-launch { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-ink); margin: 0; }
+.lt-flag-launch b { color: var(--show-color-text, var(--lt-cyan)); }
+.lt-flag-links { font-family: var(--lt-ui); font-size: 0.86rem; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; }
+.lt-flag-links a { color: var(--lt-cyan); font-weight: 600; }
+.lt-flag .lt-lead-audio { margin-top: auto; }
+
+/* ---- Topic sections ---- */
+.lt-section-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); }
+.lt-feature .lt-hl { font-size: 1.42rem; }
+.lt-feature .lt-card-body { padding-top: 12px; }
+.lt-stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; align-content: start; }
+.lt-row { display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: var(--sp-4); padding: 14px 0; border-bottom: 1px solid var(--lt-rule); align-items: start; }
+.lt-stack .lt-row:first-child { padding-top: 0; }
+.lt-stack .lt-row:last-child { border-bottom: 0; }
+.lt-row .lt-hl { font-size: 1.04rem; font-weight: 600; line-height: 1.3; }
+.lt-row .lt-media { border-radius: 8px; border-bottom-width: 2px; }
+.lt-row .lt-media.is-cover img { height: 80%; border-radius: 6px; }
+
+.lt-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-8); }
+.lt-pair .lt-hl { font-size: 1.3rem; }
+
+/* ---- More from the network ---- */
+.lt-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--sp-8); }
+.lt-grid-3 .lt-row { padding-top: 14px; }
+
+/* ---- Most played / Most read ---- */
+.lt-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-6) var(--sp-10); }
+.lt-charts.is-single { grid-template-columns: minmax(0, 1fr); }
+.lt-chart-h { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nn-white); margin: 0 0 4px; }
+.lt-chart-sub { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0 0 var(--sp-2); }
+.lt-popular ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: lt-pop; }
+.lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--sp-8); }
+.lt-popular li { counter-increment: lt-pop; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: var(--sp-2); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-popular li::before { content: counter(lt-pop); font-family: var(--lt-head); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--lt-accent-text); }
+.lt-popular .lt-hl { font-size: 1rem; font-weight: 600; line-height: 1.32; }
+.lt-dek { font-family: var(--lt-ui); font-size: 0.84rem; line-height: 1.45; color: var(--lt-muted); margin: 4px 0 0; }
+
+/* ---- Shared v2 atoms ---- */
+.lt-block-head .lt-block-sub { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); font-weight: 500; margin: 0; flex: 1 1 18rem; }
+.lt-block-head .lt-block-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.lt-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.lt-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 600;
+  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--lt-rule-strong); background: var(--lt-panel-2); color: var(--lt-ink);
+}
+.lt-page a.lt-chip:hover { border-color: var(--lt-cyan); color: var(--nn-white); }
+.lt-chip { white-space: nowrap; }
+.lt-chip-count { font-weight: 500; font-size: 0.78rem; color: var(--lt-muted); }
+.lt-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--show-color, var(--lt-accent)); flex: none; }
+.lt-panel { border: 1px solid var(--lt-rule); border-radius: 14px; background: var(--lt-panel-2); padding: var(--sp-5); }
+.lt-sublabel { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-muted); margin: 0 0 var(--sp-3); }
+.lt-links-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: var(--sp-4) 0 0; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-links-row a { color: var(--lt-accent-text); font-weight: 700; }
+.lt-links-row a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Lead share row ---- */
+.lt-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: var(--sp-3); font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+.lt-share a { color: var(--lt-ink); font-weight: 600; }
+.lt-share a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Conversations (The Age of AI, Nerra Voices) ---- */
+.lt-convo-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-convo-feature {
+  position: relative; border-radius: 16px; overflow: hidden; padding: var(--sp-6);
+  background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--show-color) 40%, #0B0F1A) 0%, #101524 58%, #0B0F1A 100%);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-convo-top { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-5); align-items: center; }
+.lt-convo-top img { width: 132px; height: 132px; border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.5); object-fit: cover; }
+.lt-guest { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.7rem, 3vw, 2.35rem); line-height: 1.08; margin: 4px 0 6px; color: var(--nn-white); }
+.lt-guest a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.lt-guest-id { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-ink); opacity: 0.85; margin: 0; line-height: 1.4; }
+.lt-convo-hook { font-family: var(--lt-head); font-size: 1.16rem; line-height: 1.45; color: var(--lt-ink); margin: var(--sp-5) 0 0; }
+.lt-convo-feature .lt-lead-audio { margin-top: var(--sp-4); }
+.lt-convo-list { list-style: none; margin: 0; padding: 0; }
+.lt-convo-list li { padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-convo-list li:first-child { padding-top: 0; }
+.lt-convo-list .lt-hl { font-size: 1.12rem; }
+.lt-convo-list .lt-guest-id { font-size: 0.84rem; color: var(--lt-muted); opacity: 1; margin-top: 2px; }
+.lt-apply {
+  margin-top: var(--sp-4); border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px dashed color-mix(in srgb, var(--lt-accent) 60%, transparent); background: rgba(107, 71, 255, 0.08);
+}
+.lt-apply h3 { font-family: var(--lt-head); font-size: 1.15rem; margin: 0 0 4px; }
+.lt-apply p { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); margin: 0 0 var(--sp-3); line-height: 1.5; }
+.lt-apply .lt-signup-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lt-claim-wrap { margin-top: var(--sp-6); }
+/* The claim, its basis and its correction invitation always render together
+   (engine.brand / the mira_claim macro); here the claim reads as a pull
+   quote beside its basis. */
+.lt-claim-wrap .nn-mira-claim {
+  margin: 0; padding: var(--sp-5) var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  gap: var(--sp-2) var(--sp-8); align-items: start; border-left-color: var(--lt-accent);
+}
+.lt-claim-wrap .nn-mira-claim__claim { grid-row: span 2; font-family: var(--lt-head); font-size: 1.24rem; line-height: 1.4; margin: 0; }
+.lt-claim-wrap .nn-mira-claim__basis { font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.6; color: var(--lt-muted); margin: 0; }
+.lt-claim-wrap .nn-mira-claim__footnote { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Watch (YouTube) ---- */
+.lt-watch-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-video .lt-media::after {
+  content: ""; position: absolute; left: 12px; bottom: 12px; width: 44px; height: 32px; border-radius: 8px;
+  background: rgba(10, 12, 20, 0.78) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 18px no-repeat;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.lt-video .lt-media.is-card { display: flex; align-items: flex-end; padding: 14px 14px 14px 70px; }
+.lt-video .lt-media.is-card span { font-family: var(--lt-ui); font-weight: 700; font-size: 0.82rem; color: var(--nn-white); opacity: 0.9; }
+.lt-video .lt-hl { font-size: 1.04rem; margin-top: 10px; }
+/* ---- Shorts reel (Oct 18 2026): one 9:16 card per show ---- */
+.lt-reel-head { align-items: center; }
+.lt-reel-nav { display: flex; gap: 8px; flex: none; }
+.lt-reel-arrow {
+  width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center;
+  border: 1px solid var(--lt-rule-strong); background: var(--lt-panel-2); color: var(--nn-white);
+  transition: border-color 160ms var(--ease), background 160ms var(--ease), opacity 160ms var(--ease);
+}
+.lt-reel-arrow svg { width: 18px; height: 18px; }
+.lt-reel-arrow:hover:not(:disabled) { border-color: var(--lt-cyan); background: rgba(0, 212, 255, 0.08); }
+.lt-reel-arrow:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+.lt-reel-arrow:disabled { opacity: 0.35; cursor: default; }
+
+.lt-reel { position: relative; --reel-card: 196px; --reel-gap: var(--sp-4); }
+/* Edge fades say "there is more"; the script switches them off at either end. */
+.lt-reel::before, .lt-reel::after {
+  content: ""; position: absolute; top: 0; bottom: 44px; width: 56px; z-index: 2; pointer-events: none;
+  transition: opacity 200ms var(--ease);
+}
+.lt-reel::before { left: 0; background: linear-gradient(to right, var(--nn-bg), rgba(11, 15, 26, 0)); }
+.lt-reel::after { right: 0; background: linear-gradient(to left, var(--nn-bg), rgba(11, 15, 26, 0)); }
+.lt-reel[data-at-start]::before, .lt-reel[data-at-end]::after { opacity: 0; }
+.lt-reel-track {
+  list-style: none; margin: 0; padding: 4px 2px var(--sp-2); display: flex; gap: var(--reel-gap);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.lt-reel-track::-webkit-scrollbar { display: none; }
+.lt-reel-card { flex: 0 0 var(--reel-card); scroll-snap-align: start; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.lt-reel-frame {
+  position: relative; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(130% 90% at 30% 0%, color-mix(in srgb, var(--show-color) 70%, #0B0F1A), #0B0F1A 78%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 14px 32px -14px rgba(0, 0, 0, 0.7);
+  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+}
+.lt-reel-frame::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(5, 7, 14, 0.55) 0%, rgba(5, 7, 14, 0) 22%),
+    linear-gradient(to top, rgba(5, 7, 14, 0.96) 0%, rgba(5, 7, 14, 0.72) 30%, rgba(5, 7, 14, 0) 58%);
+}
+.lt-reel-frame::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; z-index: 2; background: var(--show-color);
+}
+.lt-reel-img, .lt-reel-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lt-reel-img { transition: transform 500ms var(--ease); }
+.lt-reel-img[data-landscape] { object-position: 50% 40%; }
+.lt-reel-preview { opacity: 0; transition: opacity 400ms var(--ease); }
+.lt-reel-preview.is-playing { opacity: 1; }
+.lt-reel-cover {
+  position: absolute; left: 50%; top: 34%; width: 58%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 12px; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55); object-fit: cover;
+}
+.lt-reel-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 3; max-width: calc(100% - 20px);
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; border-radius: 999px;
+  font-family: var(--lt-ui); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; line-height: 1.2;
+  color: var(--show-color-text); background: rgba(8, 10, 18, 0.74); border: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.lt-reel-badge-name { min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.lt-reel-badge .lt-chip-dot { width: 7px; height: 7px; }
+.lt-reel-glyph {
+  position: absolute; left: 50%; top: 42%; z-index: 3; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--nn-white);
+  background: rgba(8, 10, 18, 0.5); border: 1.5px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  transition: transform 220ms var(--ease), background 220ms var(--ease), border-color 220ms var(--ease), opacity 220ms var(--ease);
+}
+.lt-reel-glyph svg { width: 22px; height: 22px; margin-left: 3px; }
+.lt-reel-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 12px 13px; }
+.lt-reel-title {
+  font-family: var(--lt-head); font-weight: 700; font-size: 1rem; line-height: 1.24; color: var(--nn-white); margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.lt-reel-date { display: block; margin-top: 6px; font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 600; color: rgba(232, 236, 244, 0.72); letter-spacing: 0.02em; }
+.lt-reel-hit { position: absolute; inset: 0; z-index: 4; display: block; border: 0; padding: 0; margin: 0; background: transparent; border-radius: inherit; cursor: pointer; }
+.lt-reel-hit:focus-visible { outline: 3px solid var(--lt-cyan); outline-offset: -3px; }
+.lt-reel-card:hover .lt-reel-frame, .lt-reel-card:focus-within .lt-reel-frame {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--show-color) 65%, transparent), 0 20px 38px -14px rgba(0, 0, 0, 0.8);
+}
+.lt-reel-card:hover .lt-reel-img { transform: scale(1.045); }
+.lt-reel-card:hover .lt-reel-glyph, .lt-reel-frame:focus-within .lt-reel-glyph {
+  transform: scale(1.08); background: var(--show-color); border-color: var(--show-color);
+}
+.lt-reel-card.is-previewing .lt-reel-glyph { opacity: 0.85; }
+.lt-page a.lt-reel-show {
+  font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; line-height: 1.35; color: var(--lt-muted);
+  padding: 0 2px; display: block;
+}
+.lt-reel-show b { color: var(--show-color-text); font-weight: 800; }
+.lt-page a.lt-reel-show:hover { color: var(--nn-white); }
+.lt-page a.lt-reel-show:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.lt-reel-arrowtext { white-space: nowrap; }
+.lt-reel-show:hover .lt-reel-arrowtext { color: var(--nn-white); }
+
+/* ---- The in-page Shorts player (a <dialog>; the frame loads on Play) ---- */
+.lt-player {
+  margin: auto; padding: 0; border: 0; background: transparent; color: var(--nn-text);
+  width: min(100vw, 980px); max-width: 100vw; max-height: 100dvh; overflow: visible;
+}
+.lt-player::backdrop { background: rgba(4, 6, 12, 0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.lt-player[open] { animation: lt-player-in 220ms var(--ease); }
+@keyframes lt-player-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+.lt-player-shell {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-8); align-items: center;
+  padding: var(--sp-6); border-radius: 20px; border: 1px solid var(--lt-rule-strong, rgba(255, 255, 255, 0.16));
+  background: linear-gradient(150deg, color-mix(in srgb, var(--show-color, #6B47FF) 22%, #0B0F1A) 0%, #0F1424 55%, #0B0F1A 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.lt-player-stage { position: relative; }
+.lt-player-frame {
+  width: min(360px, calc((100dvh - 96px) * 9 / 16)); aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #000 center / cover no-repeat;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.lt-player-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.lt-player-fallback {
+  position: absolute; inset: 0; z-index: 1; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-4); padding: var(--sp-6); text-align: center;
+  background: linear-gradient(to bottom, rgba(7, 9, 15, 0.55), rgba(7, 9, 15, 0.9)), var(--player-poster, none) center / cover no-repeat, radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--show-color, #6B47FF) 45%, #0B0F1A), #07090F 75%);
+}
+.lt-player-fallback p { font-family: var(--font-ui); font-weight: 700; font-size: 1rem; color: var(--nn-white); margin: 0; }
+.lt-player-fallback .lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-ui); font-weight: 700; font-size: 0.9rem; padding: 11px 16px;
+  border-radius: 9px; color: var(--nn-white); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.18); text-decoration: none;
+}
+.lt-player-fallback .lt-btn--primary { background: var(--nn-purple); border-color: var(--nn-purple); }
+.lt-player-fallback .lt-btn:hover { border-color: var(--nn-cyan); }
+.lt-player-step {
+  position: absolute; top: 50%; width: 44px; height: 44px; margin-top: -22px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--nn-white); z-index: 2;
+  background: rgba(8, 10, 18, 0.72); border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.lt-player-step svg { width: 20px; height: 20px; }
+.lt-player-step.is-prev { left: -22px; }
+.lt-player-step.is-next { right: -22px; }
+.lt-player-step:hover:not(:disabled) { border-color: var(--nn-cyan); }
+.lt-player-step:disabled { opacity: 0.3; cursor: default; }
+.lt-player-step:focus-visible, .lt-player-close:focus-visible, .lt-player a:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 2px; }
+.lt-player-info { min-width: 0; font-family: var(--font-ui); }
+.lt-player-show {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 var(--sp-2);
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--show-color-text);
+}
+.lt-player-count { color: var(--nn-text-muted); font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.lt-player-count::before { content: "·"; margin-right: 8px; }
+.lt-player-title { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1.18; font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-5); }
+.lt-player-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lt-player-actions .lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 10px 15px; border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16); color: var(--nn-white); background: rgba(255, 255, 255, 0.04); text-decoration: none;
+}
+.lt-player-actions .lt-btn:hover { border-color: var(--nn-cyan); }
+.lt-player-actions .lt-btn--primary { background: var(--nn-purple); border-color: var(--nn-purple); }
+.lt-player-actions .lt-btn--primary:hover { background: var(--nn-accent-hover); }
+.lt-player-note { margin: var(--sp-5) 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--nn-text-muted); }
+.lt-player-note a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+.lt-player-close {
+  position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--nn-white); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.lt-player-close svg { width: 18px; height: 18px; }
+.lt-player-close:hover { border-color: var(--nn-cyan); }
+body.lt-player-open { overflow: hidden; }
+.lt-yt-badge { font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-white); background: #C4302B; padding: 2px 7px; border-radius: 4px; }
+.lt-channels { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Inline signup ---- */
+.lt-signup {
+  margin-top: var(--sp-10); border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--sp-8);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background:
+    radial-gradient(90% 140% at 100% 0%, rgba(0, 212, 255, 0.10), transparent 60%),
+    linear-gradient(135deg, rgba(107, 71, 255, 0.20), rgba(17, 22, 39, 0.6));
+}
+.lt-signup-kicker { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-cyan); margin: 0 0 6px; }
+.lt-signup h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2rem); line-height: 1.15; margin: 0 0 8px; }
+.lt-signup p { font-family: var(--lt-ui); color: var(--lt-muted); margin: 0; line-height: 1.55; }
+.lt-form { display: grid; gap: var(--sp-3); }
+.lt-form-row { display: flex; gap: var(--sp-2); }
+.lt-form input[type=email] {
+  flex: 1 1 auto; min-width: 0; font-family: var(--lt-ui); font-size: 16px; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.55); color: var(--nn-white);
+}
+.lt-form input[type=email]:focus { outline: 2px solid var(--lt-cyan); outline-offset: 1px; }
+.lt-form button {
+  flex: none; font-family: var(--lt-ui); font-weight: 800; font-size: 0.95rem; padding: 12px 18px; border-radius: 10px; border: 0;
+  color: var(--nn-white); background: var(--lt-accent); cursor: pointer;
+}
+.lt-form button:hover { background: var(--nn-accent-hover); }
+.lt-form button:disabled { opacity: 0.7; cursor: default; }
+.lt-picks { font-family: var(--lt-ui); font-size: 0.86rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.lt-picks legend { font-weight: 700; color: var(--lt-ink); padding: 0; }
+.lt-picks legend span { color: var(--lt-muted); font-weight: 500; }
+.lt-picks summary { cursor: pointer; font-weight: 700; color: var(--lt-accent-text); margin-top: 10px; font-size: 0.82rem; }
+.lt-picks-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lt-picks label {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.35); color: var(--lt-ink); font-size: 0.82rem;
+}
+.lt-picks label:has(input:checked) { border-color: var(--lt-cyan); background: rgba(0, 212, 255, 0.10); }
+.lt-picks input { accent-color: var(--nn-cyan); }
+.lt-form-status { font-family: var(--lt-ui); font-size: 0.86rem; min-height: 1.2em; margin: 0; }
+.lt-form-fine { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0; line-height: 1.5; }
+.lt-form-fine a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- By the numbers + trust ---- */
+.lt-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-4); }
+.lt-tile { border-top: 2px solid var(--lt-rule-strong); padding-top: 10px; }
+.lt-tile-num { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1; color: var(--nn-white); letter-spacing: -0.01em; }
+.lt-tile-label { font-family: var(--lt-ui); font-size: 0.82rem; color: var(--lt-muted); margin-top: 6px; line-height: 1.4; }
+.lt-trust { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-trust h3 { font-family: var(--lt-head); font-size: 1.35rem; margin: 0 0 6px; }
+.lt-trust p { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-muted); line-height: 1.55; margin: 0; }
+.lt-trust .lt-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lt-tile--verified { border-top-color: var(--nn-claims-verified, #34D399); }
+.lt-tile--flagged { border-top-color: var(--nn-claims-flagged, #F5C860); }
+
+/* ---- Dashboards + trackers ---- */
+.lt-dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-4); }
+.lt-dash {
+  display: flex; flex-direction: column; gap: 6px; border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--lt-rule); background: var(--lt-panel-2); border-top: 3px solid var(--show-color);
+}
+.lt-page a.lt-dash:hover { border-color: var(--lt-rule-strong); border-top-color: var(--show-color); background: rgba(255,255,255,0.06); }
+.lt-dash-title { font-family: var(--lt-head); font-weight: 700; font-size: 1.12rem; color: var(--nn-white); }
+.lt-dash-desc { font-family: var(--lt-ui); font-size: 0.84rem; color: var(--lt-muted); line-height: 1.45; }
+.lt-dash-fact { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; color: var(--lt-cyan); line-height: 1.4; margin-top: auto; padding-top: 6px; }
+.lt-trackers { margin-top: var(--sp-5); }
+
+/* ---- Personal ---- */
+.lt-personal {
+  border-radius: 18px; padding: var(--sp-8); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background: radial-gradient(120% 140% at 0% 100%, rgba(0, 212, 255, 0.12), transparent 55%), linear-gradient(120deg, #111627, #0E1322);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-personal h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2.05rem); line-height: 1.15; margin: 0 0 10px; }
+.lt-personal p { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.9; margin: 0; line-height: 1.55; }
+.lt-personal ul { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: 8px; font-family: var(--lt-ui); font-size: 0.9rem; }
+.lt-personal li { padding-left: 22px; position: relative; }
+.lt-personal li::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 10px; height: 6px; border-left: 2px solid var(--lt-cyan); border-bottom: 2px solid var(--lt-cyan); transform: rotate(-45deg); }
+.lt-personal-cta { display: grid; gap: var(--sp-3); justify-items: start; }
+.lt-personal-cta .lt-btn { font-size: 0.95rem; padding: 12px 18px; }
+.lt-personal-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Books + gallery ---- */
+.lt-shelf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: var(--sp-8); align-items: start; }
+.lt-books { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
+.lt-book { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+.lt-book-cover {
+  width: 92px; aspect-ratio: 5 / 8; border-radius: 4px 8px 8px 4px; padding: 10px 9px; display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--show-color) 85%, #fff 0%), color-mix(in srgb, var(--show-color) 45%, #05070E));
+  box-shadow: inset 6px 0 0 rgba(0,0,0,0.25), 0 12px 26px rgba(0,0,0,0.45); color: #fff;
+}
+.lt-book-cover b { font-family: var(--lt-head); font-size: 0.74rem; line-height: 1.12; overflow-wrap: anywhere; hyphens: auto; }
+.lt-book-cover small { font-family: var(--lt-ui); font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.lt-book .lt-hl { font-size: 1.08rem; }
+.lt-gallery-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.lt-gallery-grid a { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #111627; }
+.lt-gallery-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
+.lt-gallery-grid a:hover img { transform: scale(1.04); }
+.lt-gallery-grid span {
+  position: absolute; inset: auto 0 0 0; padding: 18px 8px 6px; font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 700; color: #fff;
+  background: linear-gradient(to top, rgba(5,7,14,0.85), rgba(5,7,14,0));
+}
+
+/* ---- Listen everywhere ---- */
+.lt-apps { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-app-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--sp-6); }
+.lt-app-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--lt-rule); font-family: var(--lt-ui); font-size: 0.88rem; }
+.lt-app-list .lt-app-name { font-weight: 700; color: var(--lt-ink); }
+.lt-app-list .lt-app-links { display: flex; gap: 12px; font-size: 0.8rem; }
+.lt-app-list .lt-app-links a { color: var(--show-color-text); font-weight: 700; }
+.lt-app-list a:hover { text-decoration: underline; }
+
+/* ---- Partners ---- */
+.lt-partners { margin-top: var(--sp-10); border-top: 1px solid var(--lt-rule); padding-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-partners strong { color: var(--lt-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.74rem; }
+.lt-partners a { color: var(--lt-ink); font-weight: 600; }
+.lt-partners a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Listen rail ---- */
+.lt-listen > ul {
+  list-style: none; margin: 0; padding: 0 0 var(--sp-3); display: flex; gap: var(--sp-4); overflow-x: auto;
+  scroll-snap-type: x mandatory; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
+}
+.lt-listen > ul > li { flex: 0 0 150px; scroll-snap-align: start; }
+.lt-listen > ul img { width: 150px; height: 150px; border-radius: 10px; border-bottom: 3px solid var(--show-color); object-fit: cover; }
+.lt-listen-name { font-family: var(--lt-ui); font-weight: 700; font-size: 0.88rem; line-height: 1.3; margin: 8px 0 2px; color: var(--lt-ink); }
+.lt-listen-name a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-listen-sched { font-family: var(--lt-ui); font-size: 0.75rem; color: var(--lt-muted); margin: 0; }
+.lt-listen-links { font-family: var(--lt-ui); font-size: 0.78rem; display: flex; gap: 10px; margin-top: 4px; }
+.lt-listen-links a { color: var(--show-color-text); font-weight: 700; }
+.lt-listen-links a:hover { text-decoration: underline; }
+
+.lt-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); margin-top: var(--sp-8); line-height: 1.5; }
+.lt-note a, .lt-edition-note a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.lt-empty { padding: var(--sp-12) 0; font-family: var(--lt-ui); color: var(--lt-muted); }
+
+/* ---- Responsive ---- */
+@media (max-width: 1100px) {
+  .lt-grid-4, .lt-watch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-reel { --reel-card: 176px; }
+  .lt-gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .lt-top { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+  .lt-latest { border-left: 0; padding-left: 0; }
+  /* Stacked under the lead, the full Latest list pushed the top stories
+     three screens down; the ticker above already carries every headline. */
+  .lt-latest li:nth-child(n+6) { display: none; }
+  .lt-section-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-pair { gap: var(--sp-6); }
+  .lt-signup, .lt-personal, .lt-convo-grid, .lt-charts, .lt-trust, .lt-shelf, .lt-apps, .lt-claim-wrap .nn-mira-claim, .lt-today-grid, .lt-about { grid-template-columns: minmax(0, 1fr); }
+  .lt-claim-wrap .nn-mira-claim__claim { grid-row: auto; font-size: 1.12rem; }
+}
+@media (max-width: 640px) {
+  .lt-flag-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-flag { padding: var(--sp-4); }
+  .lt-flag-head { grid-template-columns: 56px minmax(0, 1fr); }
+  .lt-flag-cover img { width: 56px; height: 56px; }
+  .lt-flag-quote { grid-column: 1 / -1; text-align: left; }
+  .lt-flag-quote small { display: inline; margin-left: 6px; }
+  .lt-flag .lt-hl { font-size: 1.2rem; }
+  .lt-flag .lt-lead-audio audio { width: 100%; }
+  .lt-page .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+  .lt-page { padding-top: calc(var(--nav-height, 72px) + var(--sp-2)); }
+  .lt-lead .lt-media { border-radius: 8px; }
+  .lt-grid-4 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  /* On a phone the top stories read as a list: headline beside a thumbnail,
+     the BBC/Guardian mobile pattern, not four full-width pictures. */
+  .lt-grid-4 .lt-card { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: var(--sp-3); padding: 14px 0; border-bottom: 1px solid var(--lt-rule); }
+  .lt-grid-4 .lt-card .lt-media { order: 2; border-radius: 6px; border-bottom-width: 2px; }
+  .lt-grid-4 .lt-card .lt-card-body { order: 1; padding-top: 0; }
+  .lt-grid-4 .lt-card .lt-hl { font-size: 1.02rem; }
+  .lt-grid-4 .lt-card .lt-more, .lt-grid-4 .lt-card .lt-more-label { display: none; }
+  .lt-row { grid-template-columns: minmax(0, 1fr) 112px; }
+  .lt-pair { grid-template-columns: minmax(0, 1fr); }
+  .lt-feature .lt-hl, .lt-pair .lt-hl { font-size: 1.24rem; }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: minmax(0, 1fr); }
+  .lt-watch-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  /* Videos read as a list on a phone, like the top stories. */
+  .lt-video { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-3); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); align-items: start; }
+  .lt-video .lt-hl { margin-top: 0; font-size: 0.98rem; }
+  .lt-video .lt-media { border-radius: 6px; border-bottom-width: 2px; }
+  .lt-video .lt-media::after { width: 30px; height: 22px; left: 6px; bottom: 6px; background-size: 13px; }
+  .lt-video .lt-media.is-card { padding: 8px 8px 8px 42px; }
+  .lt-video .lt-media.is-card span { font-size: 0.7rem; }
+  /* The reel runs edge to edge on a phone: the card cut off at the screen
+     edge is the "swipe for more" cue, so the fades and arrows step aside. */
+  .lt-reel { --reel-card: 152px; --reel-gap: var(--sp-3); }
+  .lt-reel::before, .lt-reel::after { display: none; }
+  .lt-reel-nav { display: none !important; }
+  .lt-reel-track {
+    margin: 0 calc(-1 * var(--sp-4)); padding-left: var(--sp-4); padding-right: var(--sp-4);
+    scroll-padding-inline: var(--sp-4);
+  }
+  .lt-reel-title { font-size: 0.92rem; -webkit-line-clamp: 4; }
+  .lt-reel-caption { padding: 0 10px 11px; }
+  .lt-reel-glyph { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  .lt-reel-glyph svg { width: 18px; height: 18px; }
+  .lt-reel-badge { font-size: 0.62rem; top: 8px; left: 8px; }
+  .lt-page a.lt-reel-show { font-size: 0.76rem; }
+  /* The player fills a phone: the video on top, the show and its links under it. */
+  .lt-player { width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; }
+  .lt-player-shell {
+    grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-content: start; justify-items: center;
+    min-height: 100dvh; border-radius: 0; border: 0; padding: 60px var(--sp-4) var(--sp-5); overflow-y: auto;
+  }
+  .lt-player-frame { width: min(100%, calc((100dvh - 290px) * 9 / 16), 330px); }
+  .lt-player-step.is-prev { left: -14px; }
+  .lt-player-step.is-next { right: -14px; }
+  .lt-player-info { width: 100%; max-width: 420px; }
+  .lt-player-title { font-size: 1.22rem; margin-bottom: var(--sp-3); }
+  .lt-player-actions .lt-btn { flex: 1 1 auto; justify-content: center; padding: 10px 12px; font-size: 0.84rem; }
+  .lt-player-actions .lt-btn--primary { flex-basis: 100%; }
+  .lt-player-note { margin-top: var(--sp-3); }
+  .lt-player-close { top: 10px; right: 10px; }
+  .lt-convo-feature { padding: var(--sp-4); }
+  .lt-convo-top { grid-template-columns: 84px minmax(0, 1fr); gap: var(--sp-3); }
+  .lt-convo-top img { width: 84px; height: 84px; border-radius: 8px; }
+  .lt-convo-hook { font-size: 1.04rem; margin-top: var(--sp-4); }
+  .lt-convo-feature .lt-lead-audio audio { width: 100%; }
+  .lt-form-row { flex-direction: column; }
+  .lt-form button { width: 100%; }
+  .lt-signup, .lt-personal { padding: var(--sp-5) var(--sp-4); }
+  .lt-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-app-list { grid-template-columns: minmax(0, 1fr); }
+  .lt-tiles, .lt-trust .lt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-markets { flex-wrap: wrap; }
+  /* A phone scrolls the strip sideways, like the Latest ticker. */
+  .lt-markets ul {
+    flex-basis: 100%; order: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent);
+  }
+  .lt-markets ul::-webkit-scrollbar { display: none; }
+  .lt-mk-group { flex-wrap: nowrap; flex: none; }
+  .lt-schedule li { grid-template-columns: 8.6rem minmax(0, 1fr); }
+  .lt-book { grid-template-columns: 76px minmax(0, 1fr); }
+  .lt-book-cover { width: 76px; }
+  .lt-edition-inner { display: block; padding: var(--sp-4); }
+  .lt-edition-inner::after { content: ""; display: table; clear: both; }
+  .lt-edition-cover { float: left; margin: 0 var(--sp-3) var(--sp-2) 0; }
+  .lt-edition-cover img { width: 76px; height: 76px; border-radius: 8px; }
+  .lt-edition .lt-edition-note, .lt-edition .lt-lead-audio { clear: both; }
+  .lt-edition .lt-lead-audio audio { width: 100%; }
+  .lt-feature .lt-more, .lt-feature .lt-more-label, .lt-pair .lt-more, .lt-pair .lt-more-label { display: none; }
+  .lt-block-head h2 { font-size: 1.3rem; }
+  .lt-hide-sm { display: none; }
+  .lt-listen > ul > li { flex-basis: 128px; }
+  .lt-listen > ul img { width: 128px; height: 128px; }
+  .lt-signup { padding: var(--sp-6) var(--sp-4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lt-media img { transition: none; }
+  a.lt-media:hover img { transform: none; }
+  /* The reel holds still: no preview loops (the script never starts one and
+     this hides any that did), no lift, no zoom, no animated scroll. */
+  .lt-reel-preview { display: none !important; }
+  .lt-reel-track { scroll-behavior: auto; }
+  .lt-reel-frame, .lt-reel-img, .lt-reel-glyph { transition: none; }
+  .lt-reel-card:hover .lt-reel-frame, .lt-reel-card:focus-within .lt-reel-frame,
+  .lt-reel-card:hover .lt-reel-img { transform: none; }
+  .lt-player[open] { animation: none; }
+}
+/* For you (Oct 28 2026): the front page's picker for visitors and its row of
+   a member's own shows. assets/js/for-you.js. */
+.nn-you { --you-pad: var(--sp-6); }
+.nn-you > div { border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--you-pad);
+  background: radial-gradient(ellipse 55% 90% at 0% 0%, rgba(107,71,255,0.18), transparent 70%), radial-gradient(ellipse 50% 90% at 100% 100%, rgba(0,212,255,0.12), transparent 70%), #0D1120; }
+.nn-you [hidden] { display: none !important; }
+.nn-you-visitor { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: var(--sp-6); align-items: center; }
+.nn-you-copy h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: 4px 0 10px; }
+.nn-you-copy p { margin: 0; color: var(--lt-muted); line-height: 1.55; font-family: var(--font-ui); }
+.nn-you-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.nn-you-pick { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.03); color: var(--nn-white); font: 600 0.84rem/1.2 var(--font-ui); }
+.nn-you-pick img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block; }
+.nn-you-pick i { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.35); flex: none; position: relative; }
+.nn-you-pick[aria-pressed="true"] { border-color: var(--show-color); background: color-mix(in srgb, var(--show-color) 22%, transparent); }
+.nn-you-pick[aria-pressed="true"] i { background: var(--show-color); border-color: var(--show-color); }
+.nn-you-pick[aria-pressed="true"] i::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.nn-you-pick:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+.nn-you-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); font-family: var(--font-ui); }
+.nn-you-count { color: var(--lt-muted); font-size: 0.88rem; }
+.nn-you-signin { margin-left: auto; color: var(--lt-cyan); font-size: 0.88rem; }
+.nn-you-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.nn-you-head h2 { font-size: clamp(1.5rem, 2.8vw, 2rem); margin: 4px 0 6px; }
+.nn-you-head h2 em { font-style: italic; color: var(--lt-cyan); }
+.nn-you-sub { margin: 0; color: var(--lt-muted); font-family: var(--font-ui); }
+.nn-you-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.nn-you-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.nn-you-card { width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px; gap: 12px; align-items: center; text-align: left; cursor: pointer;
+  padding: 10px; border-radius: 14px; border: 1px solid var(--lt-rule); border-left: 3px solid var(--show-color); background: rgba(255,255,255,0.03); color: var(--nn-white); font-family: var(--font-ui); }
+.nn-you-card:hover { background: rgba(255,255,255,0.06); }
+.nn-you-card img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; display: block; background: rgba(255,255,255,0.05); }
+.nn-you-card-txt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nn-you-card-txt b { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
+.nn-you-card-hl { font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 0.98rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nn-you-card-txt small { color: var(--lt-muted); font-size: 0.74rem; }
+.nn-you-card-play { width: 40px; height: 40px; border-radius: 50%; background: #fff; position: relative; }
+.nn-you-card-play::after { content: ""; position: absolute; left: 15px; top: 12px; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+.nn-you-card.is-playing .nn-you-card-play::after { left: 14px; top: 13px; width: 4px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; }
+.nn-you-upsell { margin: var(--sp-4) 0 0; font-family: var(--font-ui); color: var(--lt-muted); }
+.nn-you-upsell a { color: var(--lt-cyan); font-weight: 600; }
+@media (max-width: 860px) {
+  .nn-you-visitor { grid-template-columns: minmax(0, 1fr); }
+  .nn-you { --you-pad: var(--sp-4); }
+  .nn-you-signin { margin-left: 0; }
+}
+</style>
+    <style>
+        .jn [hidden] { display: none !important; }
+        .jn { font-family: var(--font-ui); }
+        .jn-wrap { max-width: var(--container-max, 1200px); margin: 0 auto; padding: 0 var(--sp-6); }
+        .jn h2.jn-h { font-family: var(--lt-head); font-size: clamp(1.6rem, 3vw, 2.2rem); line-height: 1.15; margin: 0 0 var(--sp-2); }
+        .jn-lede { color: var(--lt-muted); margin: 0; max-width: 680px; line-height: 1.6; }
+        .jn-sec { padding: var(--sp-12) 0 0; }
+        .jn-sec-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); border-top: 3px solid var(--nn-white); padding-top: var(--sp-4); }
+
         /* ---------- Hero ---------- */
-        .np-hero { position: relative; overflow: hidden; padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-10); }
+        .np-hero { position: relative; overflow: hidden; padding: calc(var(--nav-height) + var(--sp-10)) 0 var(--sp-8); }
         .np-hero::before { content: ''; position: absolute; inset: 0; background:
-            radial-gradient(ellipse 60% 50% at 20% 10%, rgba(0, 212, 255, 0.16), transparent 65%),
-            radial-gradient(ellipse 50% 45% at 85% 70%, rgba(124, 92, 255, 0.14), transparent 65%);
-            pointer-events: none; }
-        .np-hero-grid { position: relative; max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--sp-10); align-items: center; }
-        @media (max-width: 860px) { .np-hero-grid { grid-template-columns: 1fr; } }
-        .np-eyebrow { font-family: var(--font-ui); font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--nn-cyan, #00D4FF); font-weight: 700; margin-bottom: var(--sp-3); }
-        .np-hero h1 { font-family: var(--font-heading); font-size: clamp(2.2rem, 5.5vw, 3.4rem); line-height: 1.08; margin: 0 0 var(--sp-4); }
-        .np-hero h1 .grad { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .np-hero-sub { font-family: var(--font-ui); color: var(--nn-text-muted); font-size: 1.08rem; max-width: 520px; margin: 0 0 var(--sp-5); line-height: 1.6; }
-        .np-cta-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-        .np-cta { display: inline-block; padding: 0.85rem 1.6rem; border-radius: 12px; font-weight: 700; text-decoration: none; font-family: var(--font-ui); }
-        .np-cta.primary { background: var(--nn-gradient); color: #fff; box-shadow: 0 8px 28px rgba(0, 160, 220, 0.35); }
-        .np-cta.ghost { border: 1px solid var(--nn-border); color: inherit; }
-        .np-trust { font-size: 0.85rem; color: var(--nn-text-muted); }
+            radial-gradient(ellipse 55% 55% at 15% 10%, rgba(0, 212, 255, 0.15), transparent 65%),
+            radial-gradient(ellipse 50% 50% at 90% 70%, rgba(107, 71, 255, 0.18), transparent 65%); pointer-events: none; }
+        .np-hero-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: var(--sp-10); align-items: center; }
+        .np-eyebrow { font-size: 0.76rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--lt-cyan); font-weight: 700; margin: 0 0 var(--sp-3); }
+        .np-hero h1 { font-family: var(--lt-head); font-size: clamp(2.4rem, 5.6vw, 4rem); line-height: 1.02; letter-spacing: -0.015em; margin: 0 0 var(--sp-4); }
+        .np-hero h1 em { font-style: italic; color: var(--lt-cyan); }
+        .np-hero-sub { color: var(--lt-muted); font-size: 1.1rem; max-width: 540px; margin: 0 0 var(--sp-6); line-height: 1.6; }
+        .np-cta-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+        .jn-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0.85rem 1.5rem; border-radius: 999px; font: 700 0.98rem/1 var(--font-ui); text-decoration: none; cursor: pointer; border: 1px solid var(--lt-rule-strong); background: transparent; color: var(--nn-white); }
+        .jn-btn.primary { background: var(--nn-gradient); border-color: transparent; box-shadow: 0 10px 30px rgba(0, 160, 220, 0.3); }
+        .jn-btn.light { background: #fff; color: #0B0F1A; border-color: #fff; }
+        .jn-btn .ic { width: 0; height: 0; border-left: 11px solid currentColor; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+        .jn-btn.is-playing .ic { width: 10px; height: 12px; border: 0; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
+        .np-trust { font-size: 0.86rem; color: var(--lt-muted); margin: 0; }
         .np-trust span { white-space: nowrap; }
 
-        /* ---------- Player mockup ---------- */
-        .np-player { position: relative; border: 1px solid var(--nn-border); border-radius: 22px; background: var(--nn-surface); padding: var(--sp-5); box-shadow: 0 24px 60px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,212,255,0.06); max-width: 420px; margin: 0 auto; }
-        .np-player::after { content: 'PRIVATE FEED'; position: absolute; top: -12px; right: 18px; font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.3rem 0.6rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
-        .np-player-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--sp-2); }
-        .np-player-top .date { font-size: 0.8rem; color: var(--nn-text-muted); }
-        .np-player-top .mira { font-size: 0.68rem; letter-spacing: 0.1em; font-weight: 700; color: var(--nn-cyan, #00D4FF); }
-        .np-greeting { font-family: var(--font-heading); font-size: 1.12rem; margin: 0 0 var(--sp-4); }
-        .np-progress { display: flex; align-items: center; gap: 0.7rem; margin-bottom: var(--sp-4); }
-        .np-play { width: 44px; height: 44px; border-radius: 50%; background: var(--nn-gradient); flex: none; position: relative; }
-        .np-play::after { content: ''; position: absolute; left: 17px; top: 13px; border-style: solid; border-width: 9px 0 9px 14px; border-color: transparent transparent transparent #fff; }
-        .np-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--nn-border); position: relative; overflow: hidden; }
-        .np-bar::after { content: ''; position: absolute; inset: 0 62% 0 0; background: var(--nn-gradient); border-radius: 3px; }
-        .np-time { font-size: 0.75rem; color: var(--nn-text-muted); flex: none; }
-        .np-chapters { display: flex; flex-direction: column; gap: 0.45rem; }
-        .np-ch { display: flex; align-items: center; gap: 0.65rem; padding: 0.45rem 0.55rem; border-radius: 10px; background: rgba(127,127,127,0.06); }
-        .np-ch img { width: 34px; height: 34px; border-radius: 8px; display: block; }
-        .np-ch .nm { font-size: 0.88rem; font-weight: 600; flex: 1; }
-        .np-ch .ln { font-size: 0.75rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
-        .np-ch.local { border: 1px dashed var(--nn-border); background: transparent; }
-        .np-ch.local .ic { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; background: rgba(0,212,255,0.12); }
+        /* ---------- The edition preview ---------- */
+        .jn-ed { position: relative; border: 1px solid var(--lt-rule-strong); border-radius: 22px; background: #0D1120; padding: var(--sp-5); box-shadow: 0 30px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,212,255,0.06); }
+        .jn-ed::after { content: 'PRIVATE FEED'; position: absolute; top: -12px; right: 20px; font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
+        .jn-ed-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 0.78rem; color: var(--lt-muted); margin-bottom: 6px; }
+        .jn-ed-top b { color: var(--lt-cyan); letter-spacing: 0.08em; font-size: 0.68rem; }
+        .jn-ed-greet { font-family: var(--lt-head); font-size: 1.3rem; line-height: 1.25; margin: 0 0 var(--sp-4); }
+        .jn-ed-greet em { font-style: italic; color: var(--lt-cyan); }
+        .jn-ed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 330px; overflow: auto; }
+        .jn-ed-list li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,0.04); border-left: 3px solid var(--show-color, transparent); }
+        .jn-ed-list img, .jn-ed-list .ic { width: 34px; height: 34px; border-radius: 8px; display: block; object-fit: cover; }
+        .jn-ed-list .ic { display: flex; align-items: center; justify-content: center; background: rgba(0,212,255,0.14); font-size: 0.95rem; }
+        .jn-ed-list .nm { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .jn-ed-list .ln { font-size: 0.76rem; color: var(--lt-muted); font-variant-numeric: tabular-nums; }
+        .jn-ed-list li.is-mira { background: transparent; border: 1px dashed var(--lt-rule-strong); }
+        .jn-ed-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: var(--sp-4); padding-top: var(--sp-3); border-top: 1px solid var(--lt-rule); font-size: 0.84rem; color: var(--lt-muted); }
+        .jn-ed-foot strong { color: var(--nn-white); font-size: 1.05rem; }
+        .jn-ed-note { font-size: 0.74rem; color: var(--lt-muted); margin: var(--sp-2) 0 0; }
 
         /* ---------- Stats strip ---------- */
-        .np-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-8); padding: var(--sp-6); max-width: 900px; margin: 0 auto var(--sp-4); border-top: 1px solid var(--nn-border); border-bottom: 1px solid var(--nn-border); }
-        .np-stat { text-align: center; font-family: var(--font-ui); }
-        .np-stat strong { display: block; font-size: 1.5rem; font-family: var(--font-heading); }
-        .np-stat span { font-size: 0.8rem; color: var(--nn-text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+        .np-stats { display: flex; flex-wrap: wrap; justify-content: space-around; gap: var(--sp-6); padding: var(--sp-5) 0; border-top: 1px solid var(--lt-rule); border-bottom: 1px solid var(--lt-rule); }
+        .np-stat { text-align: center; }
+        .np-stat strong { display: block; font-size: 1.8rem; font-family: var(--lt-head); }
+        .np-stat span { font-size: 0.76rem; color: var(--lt-muted); letter-spacing: 0.06em; text-transform: uppercase; }
 
-        /* ---------- Shared sections ---------- */
-        .nn-section-head { text-align: center; max-width: 680px; margin: var(--sp-10) auto var(--sp-6); padding: 0 var(--sp-6); }
-        .nn-section-head h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-2); font-size: 1.7rem; }
-        .nn-section-head p { color: var(--nn-text-muted); margin: 0; }
-        .nn-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-6); max-width: 1080px; margin: 0 auto; padding: var(--sp-4) var(--sp-6); }
-        .nn-tier { border: 1px solid var(--nn-border); border-radius: 16px; padding: var(--sp-6); background: var(--nn-surface); display: flex; flex-direction: column; }
-        .nn-tier.featured { border-color: var(--nn-cyan, #00D4FF); box-shadow: 0 0 32px rgba(0,212,255,0.12); position: relative; }
-        .nn-tier.featured::before { content: 'MOST POPULAR'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.28rem 0.7rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
-        .nn-tier h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-1); font-size: 1.3rem; }
-        .nn-tier .price { font-size: 2rem; font-weight: 700; margin: 0 0 var(--sp-3); }
-        .nn-tier .price small { font-size: 0.9rem; font-weight: 400; color: var(--nn-text-muted); }
+        /* ---------- Builder ---------- */
+        .jn-build { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-8); align-items: start; }
+        .nn-showgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+        .nn-showcard { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--lt-rule); background: rgba(255,255,255,0.02); }
+        .nn-showcard.is-on { border-color: var(--show-color); background: color-mix(in srgb, var(--show-color) 14%, transparent); }
+        .nn-showcard img { width: 52px; height: 52px; border-radius: 10px; display: block; }
+        .nn-showcard strong { display: block; font-family: var(--lt-head); font-size: 0.98rem; line-height: 1.2; }
+        .nn-showcard em { display: block; font-size: 0.7rem; color: var(--lt-cyan); font-style: normal; letter-spacing: 0.04em; margin-top: 2px; }
+        .nn-showcard .jn-tag { display: block; font-size: 0.78rem; color: var(--lt-muted); line-height: 1.4; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .nn-showcard .jn-hear { font-size: 0.74rem; color: var(--lt-cyan); }
+        .nn-showcard-access { display: inline-block; margin: 3px 0 0; padding: 1px 7px; border-radius: 999px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; color: #0B0F1A; background: var(--lt-cyan); }
+        .jn-toggle { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--lt-rule-strong); background: transparent; color: var(--nn-white); cursor: pointer; font-size: 1.15rem; line-height: 1; }
+        .nn-showcard.is-on .jn-toggle { background: var(--show-color); border-color: var(--show-color); }
+        .jn-toggle:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+        .jn-side { position: sticky; top: calc(var(--nav-height) + 16px); border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--sp-5); background: #0D1120; }
+        .jn-side h3 { font-family: var(--lt-head); font-size: 1.2rem; margin: 0 0 6px; }
+        .jn-side p { color: var(--lt-muted); font-size: 0.9rem; line-height: 1.5; margin: 0 0 var(--sp-3); }
+        .jn-side label { display: block; font-size: 0.78rem; color: var(--lt-muted); margin: var(--sp-3) 0 4px; }
+        .jn-side input { width: 100%; box-sizing: border-box; padding: 0.7rem 0.9rem; border-radius: 10px; border: 1px solid var(--lt-rule-strong); background: #0B0F1A; color: var(--nn-white); font: 500 0.95rem var(--font-ui); }
+        .jn-side input:focus { outline: 2px solid var(--lt-cyan); outline-offset: 1px; }
+        .jn-side .jn-count { font-size: 0.9rem; margin: var(--sp-4) 0 var(--sp-3); color: var(--nn-white); }
+        .jn-side .jn-btn { width: 100%; justify-content: center; margin-top: 8px; box-sizing: border-box; }
+
+        /* ---------- Sample ---------- */
+        .np-sample { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--sp-6); align-items: center; border: 1px solid var(--lt-rule-strong); border-radius: 20px; padding: var(--sp-6);
+            background: radial-gradient(ellipse 50% 80% at 0% 50%, rgba(0,212,255,0.12), transparent 70%), #0D1120; }
+        .np-sample img { width: 180px; height: 180px; border-radius: 16px; display: block; }
+        .np-sample h2 { margin: 0 0 6px; font-family: var(--lt-head); font-size: 1.6rem; }
+        .np-sample p { margin: 0 0 var(--sp-4); color: var(--lt-muted); line-height: 1.55; }
+        .np-sample .lt-lead-audio { margin: 0 0 var(--sp-3); }
+        .np-sample .rundown { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+        .np-sample .rundown li { font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--lt-rule); color: var(--lt-muted); }
+
+        .np-soft-interest { margin: var(--sp-8) auto 0; max-width: 760px; padding: var(--sp-4) var(--sp-6); border: 1px dashed var(--lt-rule-strong); border-radius: 14px; background: rgba(0,212,255,0.04); text-align: center; }
+        .np-soft-interest p { margin: 0 0 var(--sp-2); color: var(--lt-muted); }
+        .np-soft-interest a.np-soft-cta { font-weight: 700; color: var(--lt-cyan); text-decoration: none; }
+
+        /* ---------- Plans ---------- */
+        .nn-tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+        .nn-tier { border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--sp-6); background: rgba(255,255,255,0.02); display: flex; flex-direction: column; }
+        .nn-tier.featured { border-color: var(--lt-cyan); background: linear-gradient(180deg, rgba(0,212,255,0.08), rgba(107,71,255,0.06)); box-shadow: 0 0 40px rgba(0,212,255,0.12); position: relative; }
+        /* Oct 28 2026: was 'MOST POPULAR'. Membership is unmeasured
+           (api/member_metrics.json), so a popularity claim had no basis;
+           a recommendation is ours to make. */
+        .nn-tier.featured::before { content: 'RECOMMENDED'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.28rem 0.7rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
+        .nn-tier h2 { font-family: var(--lt-head); margin: 0 0 var(--sp-1); font-size: 1.35rem; }
+        .nn-tier .price { font-size: 2.2rem; font-weight: 700; margin: 0 0 var(--sp-1); font-family: var(--lt-head); }
+        .nn-tier .price small { font-size: 0.9rem; font-weight: 400; color: var(--lt-muted); font-family: var(--font-ui); }
+        .nn-tier .for { color: var(--lt-muted); font-size: 0.88rem; margin: 0 0 var(--sp-4); }
         .nn-tier ul { list-style: none; padding: 0; margin: 0 0 var(--sp-5); flex: 1; }
-        .nn-tier li { padding: 0.35rem 0; border-bottom: 1px dashed var(--nn-border); font-size: 0.95rem; }
-        .nn-tier li::before { content: '✓ '; color: var(--nn-cyan, #00D4FF); }
-        .nn-tier .cta { display: block; text-align: center; padding: 0.8rem 1rem; border-radius: 10px; font-weight: 600; text-decoration: none; background: var(--nn-gradient); color: #fff; }
-        .nn-tier .cta.secondary { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
-        .nn-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-5); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
-        .nn-step { border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-5); background: var(--nn-surface); }
+        .nn-tier li { padding: 0.45rem 0 0.45rem 1.4rem; border-bottom: 1px solid var(--lt-rule); font-size: 0.93rem; line-height: 1.45; position: relative; }
+        .nn-tier li::before { content: '✓'; position: absolute; left: 0; color: var(--lt-cyan); font-weight: 700; }
+        .nn-tier .cta { display: block; text-align: center; padding: 0.85rem 1rem; border-radius: 999px; font-weight: 700; text-decoration: none; background: var(--nn-gradient); color: #fff; }
+        .nn-tier .cta.secondary { background: transparent; border: 1px solid var(--lt-rule-strong); color: inherit; }
+        .nn-tier .cta small { display: block; font-weight: 400; font-size: 0.78rem; opacity: 0.85; margin-top: 0.2rem; }
+
+        /* ---------- Steps, listen anywhere, products, FAQ ---------- */
+        .nn-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+        .nn-step { border-top: 1px solid var(--lt-rule-strong); padding-top: var(--sp-4); }
         .nn-step .num { display: inline-flex; width: 2rem; height: 2rem; border-radius: 50%; background: var(--nn-gradient); color: #fff; align-items: center; justify-content: center; font-weight: 700; margin-bottom: var(--sp-3); }
-        .nn-step h3 { margin: 0 0 var(--sp-2); font-size: 1.05rem; font-family: var(--font-heading); }
-        .nn-step p { margin: 0; color: var(--nn-text-muted); font-size: 0.95rem; }
-        .nn-showgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
-        .nn-showcard { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); text-decoration: none; color: inherit; display: flex; gap: 0.8rem; align-items: flex-start; transition: border-color 0.15s, transform 0.15s; }
-        .nn-showcard:hover { border-color: var(--nn-cyan, #00D4FF); transform: translateY(-2px); }
-        .nn-showcard img { width: 52px; height: 52px; border-radius: 10px; flex: none; }
-        .nn-showcard strong { display: block; font-family: var(--font-heading); margin-bottom: 0.2rem; line-height: 1.25; }
-        .nn-showcard span { font-size: 0.82rem; color: var(--nn-text-muted); display: block; line-height: 1.45; }
-        .nn-showcard em { font-size: 0.72rem; color: var(--nn-cyan, #00D4FF); font-style: normal; letter-spacing: 0.04em; }
-        .nn-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
-        .nn-product { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); }
-        .nn-product h3 { margin: 0 0 var(--sp-1); font-size: 1rem; font-family: var(--font-heading); }
-        .nn-product p { margin: 0 0 var(--sp-2); font-size: 0.9rem; color: var(--nn-text-muted); }
-        .nn-faq { max-width: 760px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6); }
-        .nn-faq details { border: 1px solid var(--nn-border); border-radius: 10px; background: var(--nn-surface); margin-bottom: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
-        .nn-faq summary { cursor: pointer; font-weight: 600; }
-        .nn-faq p { color: var(--nn-text-muted); font-size: 0.95rem; margin: var(--sp-3) 0 0; }
-        .nn-join-form { max-width: 480px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6); text-align: center; }
-        .nn-join-form h2 { font-family: var(--font-heading); }
-        .nn-join-form input[type=email] { width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-surface); color: inherit; margin-bottom: var(--sp-3); }
-        .nn-join-form button { padding: 0.8rem 2rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
-        .np-sample { max-width: 760px; margin: 0 auto var(--sp-10); padding: var(--sp-5) var(--sp-6); border: 1px solid var(--nn-border); border-radius: 18px; background: var(--nn-surface); }
-        .np-sample h2 { margin: 0 0 0.3rem; font-family: var(--font-heading); font-size: 1.35rem; }
-        .np-sample p { margin: 0 0 var(--sp-3); color: var(--nn-text-muted); font-size: 0.95rem; }
-        .np-sample audio { width: 100%; display: block; }
-        .np-sample .rundown { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: var(--sp-3) 0 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--nn-text-muted); }
-        .np-sample .rundown li::before { content: "▸ "; color: var(--nn-accent, #7c5cff); }
-        .np-trial { display: inline-block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(52,211,153,0.14); color: #34d399; margin-bottom: 0.5rem; }
-        .nn-tier .cta small { display: block; font-weight: 400; font-size: 0.8rem; opacity: 0.85; margin-top: 0.15rem; }
-        .nn-join-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto var(--sp-12); padding: 0 var(--sp-6); text-align: center; }
-        /* Personal tips interest band (ENG-SPEC) — above Stripe, not a waitlist */
-        .np-soft-interest {
-            max-width: 760px; margin: var(--sp-8) auto var(--sp-2); padding: var(--sp-5) var(--sp-6);
-            border: 1px dashed var(--nn-border); border-radius: 14px; background: rgba(0,212,255,0.04);
-            text-align: center;
-        }
-        .np-soft-interest p { margin: 0 0 var(--sp-3); color: var(--nn-text-muted); font-size: 0.98rem; line-height: 1.55; }
-        .np-soft-interest a.np-soft-cta {
-            display: inline-block; font-family: var(--font-ui); font-weight: 700;
-            color: var(--nn-cyan, #00D4FF); text-decoration: none;
-        }
-        .np-soft-interest a.np-soft-cta:hover { text-decoration: underline; }
+        .nn-step h3 { margin: 0 0 var(--sp-2); font-size: 1.12rem; font-family: var(--lt-head); }
+        .nn-step p { margin: 0; color: var(--lt-muted); font-size: 0.94rem; line-height: 1.55; }
+        .jn-ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-5); }
+        .jn-way { border: 1px solid var(--lt-rule); border-radius: 16px; padding: var(--sp-5); background: rgba(255,255,255,0.02); }
+        .jn-way h3 { font-family: var(--lt-head); font-size: 1.15rem; margin: 0 0 6px; }
+        .jn-way p { margin: 0 0 var(--sp-3); color: var(--lt-muted); font-size: 0.92rem; line-height: 1.5; }
+        .jn-apps { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+        .jn-apps li { font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); }
+        .jn-way a { color: var(--lt-cyan); font-weight: 600; }
+        .nn-products { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-4); }
+        .nn-product { border: 1px solid var(--lt-rule); border-radius: 14px; padding: var(--sp-4); background: rgba(255,255,255,0.02); }
+        .nn-product h3 { margin: 0 0 var(--sp-1); font-size: 1rem; font-family: var(--lt-head); }
+        .nn-product p { margin: 0 0 var(--sp-2); font-size: 0.88rem; color: var(--lt-muted); line-height: 1.5; }
+        .nn-product a { color: var(--lt-cyan); font-weight: 600; font-size: 0.88rem; }
+        .nn-faq { max-width: 820px; }
+        .nn-faq details { border-bottom: 1px solid var(--lt-rule); padding: var(--sp-4) 0; }
+        .nn-faq summary { cursor: pointer; font-weight: 700; font-family: var(--lt-head); font-size: 1.05rem; }
+        .nn-faq p { color: var(--lt-muted); font-size: 0.95rem; margin: var(--sp-3) 0 0; line-height: 1.6; }
+        .nn-join-form { max-width: 560px; margin: var(--sp-12) auto var(--sp-6); text-align: center; border: 1px solid var(--lt-rule-strong); border-radius: 20px; padding: var(--sp-8) var(--sp-6); background: #0D1120; }
+        .nn-join-form h2 { font-family: var(--lt-head); margin: 0 0 var(--sp-2); font-size: 1.7rem; }
+        .nn-join-form p { color: var(--lt-muted); }
+        .nn-join-form form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: var(--sp-4); }
+        .nn-join-form input[type=email] { flex: 1 1 240px; padding: 0.85rem 1rem; border-radius: 999px; border: 1px solid var(--lt-rule-strong); background: #0B0F1A; color: inherit; font: 500 0.98rem var(--font-ui); }
+        .nn-join-form button { padding: 0.85rem 1.8rem; border-radius: 999px; border: none; background: var(--nn-gradient); color: #fff; font: 700 0.98rem var(--font-ui); cursor: pointer; }
+        .jn-draft-note { font-size: 0.86rem; color: var(--lt-cyan); margin: var(--sp-3) 0 0; }
+        .nn-join-note { font-size: 0.85rem; color: var(--lt-muted); max-width: 680px; margin: 0 auto var(--sp-12); text-align: center; line-height: 1.55; }
         /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
            drops the underline, so a link inside a sentence was invisible.
            Scoped to this page's content and to plain (class-less) links. */
-        #main-content p a:not([class]), #main-content li a:not([class]) {
-            color: var(--nn-cyan);
-            text-decoration: underline;
-            text-underline-offset: 2px;
+        #main-content p a:not([class]), #main-content li a:not([class]) { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover { color: var(--nn-white); }
+
+        @media (max-width: 1000px) {
+            .np-hero-grid, .jn-build { grid-template-columns: minmax(0, 1fr); }
+            .jn-side { position: static; }
+            .nn-tiers, .nn-steps, .jn-ways { grid-template-columns: minmax(0, 1fr); }
+            .nn-products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
-        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
-            color: var(--nn-white);
+        @media (max-width: 640px) {
+            .jn-wrap { padding: 0 var(--sp-4); }
+            .np-sample { grid-template-columns: minmax(0, 1fr); }
+            .np-sample img { width: 96px; height: 96px; }
+            .nn-products { grid-template-columns: minmax(0, 1fr); }
+            .np-stats { justify-content: space-between; gap: var(--sp-4); }
         }
     </style>
 
@@ -885,93 +1841,483 @@
 
     <main id="main-content">
     
+<div class="jn">
 <section class="np-hero">
-    <div class="np-hero-grid">
+    <div class="jn-wrap np-hero-grid">
         <div>
-            <div class="np-eyebrow">Nerra Personal</div>
-            <h1>Your own <span class="grad">daily show.</span></h1><p class="np-hero-sub">26 shows to pick from, most of them new every day, all free.
+            <p class="np-eyebrow">Nerra Personal</p>
+            <h1>Your own <em>morning show.</em></h1>
+            <p class="np-hero-sub">26 shows to pick from, most of them new every day, 21 of them free to everyone.
                Personal turns the ones you love into one continuous morning
-               show — your picks, in your order, anchored by Mira, delivered
+               show: your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
             <div class="np-cta-row">
-                <a class="np-cta primary" href="#plans">Try it free for 7 days</a>
-                <a class="np-cta ghost" href="#sample">Hear a sample</a>
+                <a class="jn-btn primary" href="#builder">Build my edition</a>
+                <button type="button" class="jn-btn light" data-nn-play data-nn-sample="join" data-src="https://audio.nerranetwork.com/personal/sample/vancouver.mp3" data-key="sample" data-title="A sample Nerra Personal edition" data-show="Nerra Personal" data-cover="assets/covers/nerra-daily.jpg" data-post="join.html#sample" data-color="#00D4FF"><span class="ic" aria-hidden="true"></span> Hear a sample</button>
             </div>
-            <p class="np-trust"><span>7-day free trial</span> ·
+            <p class="np-trust"><span>7 days free, then from $4.99/mo</span> ·
                <span>Cancel in one click</span> ·
                <span>Chapters for every segment</span> ·
-               <span>Yours alone — no algorithm</span></p>
-        </div>
-        <div class="np-player" aria-label="Illustration of a personal edition in a podcast player">
-            <div class="np-player-top">
-                <span class="date">Thursday edition · 1 h 42 m</span>
-                <span class="mira">MIRA · AI ANCHOR</span>
-            </div>
-            <p class="np-greeting">“Good morning, Alex — here's your Thursday.”</p>
-            <div class="np-progress">
-                <span class="np-play" aria-hidden="true"></span>
-                <span class="np-bar" aria-hidden="true"></span>
-                <span class="np-time">38:12</span>
-            </div>
-            <div class="np-chapters">
+               <span>Yours alone, no algorithm</span></p>
+        </div><div class="jn-ed" aria-label="Preview of a personal edition" data-jn-preview>
+            <div class="jn-ed-top"><span data-jn-day>Tomorrow's edition</span><b>MIRA · AI ANCHOR</b></div>
+            <p class="jn-ed-greet" data-jn-greet>“Good morning, <em>Alex</em>. Here's your morning.”</p>
+            <ol class="jn-ed-list" data-jn-list>
+                <li class="is-mira"><span class="ic" aria-hidden="true">🌤️</span><span class="nm">Your city's morning brief</span><span class="ln">Mira</span></li>
                 
-                <div class="np-ch">
+                <li style="--show-color:#1A5CFF;">
                     <img src="assets/covers/spacex-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">SpaceX Daily</span>
-                    <span class="ln">9:41</span>
-                </div>
+                    <span class="ln">9 min</span>
+                </li>
                 
-                <div class="np-ch">
+                <li style="--show-color:#E31937;">
                     <img src="assets/covers/tesla-shorts-time-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">Tesla Shorts Time</span>
-                    <span class="ln">8:12</span>
-                </div>
+                    <span class="ln">10 min</span>
+                </li>
                 
-                <div class="np-ch">
+                <li style="--show-color:#7C3AED;">
                     <img src="assets/covers/models-agents-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">Models & Agents</span>
-                    <span class="ln">9:56</span>
-                </div>
+                    <span class="ln">12 min</span>
+                </li>
                 
-                <div class="np-ch">
-                    <img src="assets/covers/dp-pod-400.webp" alt="" loading="lazy" width="34" height="34">
-                    <span class="nm">The DP Pod: The Do Positive Podcast</span>
-                    <span class="ln">10:03</span>
-                </div>
+                <li style="--show-color:#017A99;">
+                    <img src="assets/covers/planetterrian-daily-400.webp" alt="" loading="lazy" width="34" height="34">
+                    <span class="nm">Planetterrian Daily</span>
+                    <span class="ln">10 min</span>
+                </li>
                 
-                <div class="np-ch local">
-                    <span class="ic" aria-hidden="true">🌤️</span>
-                    <span class="nm">Your city's morning brief</span>
-                    <span class="ln">with Local</span>
-                </div>
-            </div>
+            </ol>
+            <div class="jn-ed-foot"><span data-jn-shows>4 shows · starter lineup</span><span>about <strong data-jn-total>41</strong> min</span></div>
+            <p class="jn-ed-note">Lengths are each show's typical episode this week. The edition plays every show in full; Mira's handoffs are seconds long.</p>
         </div>
     </div>
 </section>
 
+<div class="jn-wrap">
 <div class="np-stats" aria-label="Network stats">
     <div class="np-stat"><strong>26</strong><span>shows to pick from</span></div>
-    <div class="np-stat"><strong>2736+</strong><span>episodes shipped</span></div>
-    <div class="np-stat"><strong>0</strong><span>ads, ever</span></div>
+    <div class="np-stat"><strong>2753+</strong><span>episodes shipped</span></div><div class="np-stat"><strong>7</strong><span>days free to try</span></div>
+    
     <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
 </div>
 
-<section class="np-sample" id="sample" aria-label="Sample personal edition">
-    <h2>Hear five minutes of one</h2>
-    <p>A sample edition for “Alex” in Vancouver, built by the same pipeline
-       that makes every member's — Mira's open, the city brief with its
-       sources named, one of Alex's topics, the markets minute, then a
-       taste of two shows. In a real edition every show plays in full.</p>
-    <audio controls preload="none" src="https://audio.nerranetwork.com/personal/sample/vancouver.mp3"></audio>
-    <ul class="rundown">
-        <li>Good morning from Mira</li>
-        <li>Your Vancouver brief</li>
-        <li>Your topics</li>
-        <li>Markets minute</li>
-        <li>SpaceX Daily</li>
-        <li>Tesla Shorts Time</li>
-        <li>Sign-off</li>
-    </ul>
+
+<section class="jn-sec" id="builder" aria-labelledby="jn-build-h">
+    <div class="jn-sec-head">
+        <div>
+            <h2 class="jn-h" id="jn-build-h">Build yours in a minute</h2>
+            <p class="jn-lede">26 shows to build from. Tap the ones you want, in the order you want them; each is produced daily or weekly by the network and free to hear first from its own page, except the 5 marked for members, which are made only for the editions that carry them.</p>
+        </div>
+    </div>
+    <div class="jn-build">
+        <div class="nn-showgrid" aria-label="Shows">
+            
+            <div class="nn-showcard" data-slug="spacex" style="--show-color:#1A5CFF;">
+                
+                <img src="assets/covers/spacex-400.webp" alt="SpaceX Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>SpaceX Daily</strong>
+                    <em>Daily · about 9 min</em>
+                    
+                    <span class="jn-tag">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</span>
+                    <a class="jn-hear" href="spacex.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="spacex" aria-label="Add SpaceX Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="tesla" style="--show-color:#E31937;">
+                
+                <img src="assets/covers/tesla-shorts-time-400.webp" alt="Tesla Shorts Time cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Tesla Shorts Time</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">Shorting Tesla? Time's Up.</span>
+                    <a class="jn-hear" href="tesla.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="tesla" aria-label="Add Tesla Shorts Time to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="planetterrian" style="--show-color:#017A99;">
+                
+                <img src="assets/covers/planetterrian-daily-400.webp" alt="Planetterrian Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Planetterrian Daily</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">Science, longevity, and the frontier of human health.</span>
+                    <a class="jn-hear" href="planetterrian.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="planetterrian" aria-label="Add Planetterrian Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="models_agents" style="--show-color:#7C3AED;">
+                
+                <img src="assets/covers/models-agents-400.webp" alt="Models & Agents cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Models & Agents</strong>
+                    <em>Daily · about 12 min</em>
+                    
+                    <span class="jn-tag">Daily AI models, agents, and practical developments.</span>
+                    <a class="jn-hear" href="models-agents.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="models_agents" aria-label="Add Models & Agents to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+                
+                <img src="assets/covers/fascinating-frontiers-400.webp" alt="Fascinating Frontiers cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Fascinating Frontiers</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">Journey to the stars with today's discoveries.</span>
+                    <a class="jn-hear" href="fascinating-frontiers.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="fascinating_frontiers" aria-label="Add Fascinating Frontiers to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_world" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-world-400.webp" alt="Omni View Top World News cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View Top World News</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">The ten stories that matter most today, anywhere.</span>
+                    <a class="jn-hear" href="omni-view-world.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_world" aria-label="Add Omni View Top World News to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="mag7" style="--show-color:#334155;">
+                
+                <img src="assets/covers/mag7-400.webp" alt="MAG 7 Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>MAG 7 Daily</strong>
+                    <em>Daily · about 11 min</em>
+                    
+                    <span class="jn-tag">Seven companies, one daily desk.</span>
+                    <a class="jn-hear" href="mag7.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="mag7" aria-label="Add MAG 7 Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="modern_investing" style="--show-color:#047857;">
+                
+                <img src="assets/covers/modern-investing-400.webp" alt="Modern Investing Techniques cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Modern Investing Techniques</strong>
+                    <em>Daily · about 13 min</em>
+                    
+                    <span class="jn-tag">AI-Powered Market Intelligence</span>
+                    <a class="jn-hear" href="modern-investing.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="modern_investing" aria-label="Add Modern Investing Techniques to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="longevity" style="--show-color:#3F6212;">
+                
+                <img src="assets/covers/longevity-400.webp" alt="Longevity Weekly cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Longevity Weekly</strong>
+                    <em>Weekly (Wednesday) · about 11 min</em>
+                    
+                    <span class="jn-tag">The science of aging, read carefully.</span>
+                    <a class="jn-hear" href="longevity.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="longevity" aria-label="Add Longevity Weekly to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="peptides" style="--show-color:#9D174D;">
+                
+                <img src="assets/covers/peptides-400.webp" alt="Peptides Weekly cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Peptides Weekly</strong>
+                    <em>Weekly (Thursday) · about 10 min</em>
+                    
+                    <span class="jn-tag">Peptides, with the evidence read carefully.</span>
+                    <a class="jn-hear" href="peptides.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="peptides" aria-label="Add Peptides Weekly to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="offshore_north" style="--show-color:#0B3C5D;">
+                
+                <img src="assets/covers/offshore-north-400.webp" alt="Offshore North cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Offshore North</strong>
+                    <em>Weekly — Mondays · about 7 min</em>
+                    
+                    <span class="jn-tag">One man. One boat. Around the world, alone.</span>
+                    <a class="jn-hear" href="offshore-north.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="offshore_north" aria-label="Add Offshore North to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="ai_chips" style="--show-color:#4338CA;">
+                
+                <img src="assets/covers/ai-chips-400.webp" alt="AI Chips & Data Centres Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>AI Chips & Data Centres Daily</strong>
+                    <em>Daily · about 13 min</em>
+                    
+                    <span class="jn-tag">The silicon, the buildings and the power behind AI.</span>
+                    <a class="jn-hear" href="ai-chips.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="ai_chips" aria-label="Add AI Chips & Data Centres Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="first_principles" style="--show-color:#0F766E;">
+                
+                <img src="assets/covers/first-principles-daily-400.webp" alt="First Principles Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>First Principles Daily</strong>
+                    <em>Daily · about 9 min</em>
+                    
+                    <span class="jn-tag">Reason from raw materials, not analogy.</span>
+                    <a class="jn-hear" href="first-principles.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="first_principles" aria-label="Add First Principles Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="unintended_consequences" style="--show-color:#B45309;">
+                
+                <img src="assets/covers/unintended-consequences-400.webp" alt="Unintended Consequences cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Unintended Consequences</strong>
+                    <em>Daily · about 12 min</em>
+                    
+                    <span class="jn-tag">Good intentions. Surprising results. Real lessons.</span>
+                    <a class="jn-hear" href="unintended-consequences.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="unintended_consequences" aria-label="Add Unintended Consequences to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="prediction_markets" style="--show-color:#A21CAF;">
+                
+                <img src="assets/covers/prediction-markets-400.webp" alt="Prediction Markets Daily cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Prediction Markets Daily</strong>
+                    <em>Daily · about 9 min</em>
+                    
+                    <span class="jn-tag">Where forecasting meets the market.</span>
+                    <a class="jn-hear" href="prediction-markets.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="prediction_markets" aria-label="Add Prediction Markets Daily to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
+                
+                <img src="assets/covers/models-agents-beginners-400.webp" alt="Models & Agents for Beginners cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Models & Agents for Beginners</strong>
+                    <em>Daily · about 9 min</em>
+                    
+                    <span class="jn-tag">AI explained simply — for beginners and teens.</span>
+                    <a class="jn-hear" href="models-agents-beginners.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="models_agents_beginners" aria-label="Add Models & Agents for Beginners to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="collingwood" style="--show-color:#0D6E8C;">
+                
+                <img src="assets/covers/collingwood-400.webp" alt="Collingwood Weekly cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Collingwood Weekly</strong>
+                    <em>Weekly (Friday) · about 6 min</em>
+                    
+                    <span class="jn-tag">The week around the south Georgian Bay.</span>
+                    <a class="jn-hear" href="collingwood.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="collingwood" aria-label="Add Collingwood Weekly to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="env_intel" style="--show-color:#1B5E20;">
+                
+                <img src="assets/covers/environmental-intelligence-400.webp" alt="Environmental Intelligence cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Environmental Intelligence</strong>
+                    <em>Weekly — Mondays · about 6 min</em>
+                    
+                    <span class="jn-tag">Environmental regulatory and compliance briefing.</span>
+                    <a class="jn-hear" href="env-intel.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="env_intel" aria-label="Add Environmental Intelligence to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="dp_pod" style="--show-color:#0B7A45;">
+                
+                <img src="assets/covers/dp-pod-400.webp" alt="The DP Pod: The Do Positive Podcast cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>The DP Pod: The Do Positive Podcast</strong>
+                    <em>Weekly — Mondays · about 10 min</em>
+                    
+                    <span class="jn-tag">The club for people who do something about it — good news, honest numbers, one action a week.</span>
+                    <a class="jn-hear" href="thedppod.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="dp_pod" aria-label="Add The DP Pod: The Do Positive Podcast to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-400.webp" alt="Omni View cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">See every side. Decide for yourself.</span>
+                    <a class="jn-hear" href="omni-view.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view" aria-label="Add Omni View to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_north_america" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-north-america-400.webp" alt="Omni View North America cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View North America</strong>
+                    <em>Daily</em>
+                    <b class="nn-showcard-access">Members only</b>
+                    <span class="jn-tag">North America, one region deep, every day.</span>
+                    <a class="jn-hear" href="omni-view-north-america.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_north_america" aria-label="Add Omni View North America to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_europe" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-europe-400.webp" alt="Omni View Europe cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View Europe</strong>
+                    <em>Daily</em>
+                    <b class="nn-showcard-access">Members only</b>
+                    <span class="jn-tag">Europe, one region deep, every day.</span>
+                    <a class="jn-hear" href="omni-view-europe.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_europe" aria-label="Add Omni View Europe to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_asia_pacific" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-asia-pacific-400.webp" alt="Omni View Asia Pacific cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View Asia Pacific</strong>
+                    <em>Daily</em>
+                    <b class="nn-showcard-access">Members only</b>
+                    <span class="jn-tag">Asia Pacific, one region deep, every day.</span>
+                    <a class="jn-hear" href="omni-view-asia-pacific.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_asia_pacific" aria-label="Add Omni View Asia Pacific to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_africa_mideast" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-africa-mideast-400.webp" alt="Omni View Africa & Middle East cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View Africa & Middle East</strong>
+                    <em>Daily</em>
+                    <b class="nn-showcard-access">Members only</b>
+                    <span class="jn-tag">Africa and the Middle East, one region deep, every day.</span>
+                    <a class="jn-hear" href="omni-view-africa-mideast.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_africa_mideast" aria-label="Add Omni View Africa & Middle East to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="omni_view_latam" style="--show-color:#0B6FD6;">
+                
+                <img src="assets/covers/omni-view-latam-400.webp" alt="Omni View Central & South America cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Omni View Central & South America</strong>
+                    <em>Daily</em>
+                    <b class="nn-showcard-access">Members only</b>
+                    <span class="jn-tag">Central and South America, one region deep, every day.</span>
+                    <a class="jn-hear" href="omni-view-latam.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="omni_view_latam" aria-label="Add Omni View Central & South America to my edition">+</button>
+            </div>
+            
+            <div class="nn-showcard" data-slug="vancouver" style="--show-color:#0D6E8C;">
+                
+                <img src="assets/covers/vancouver-400.webp" alt="Vancouver Daily News cover art" loading="lazy" width="52" height="52">
+                
+                <span>
+                    <strong>Vancouver Daily News</strong>
+                    <em>Daily · about 10 min</em>
+                    
+                    <span class="jn-tag">The morning brief for Metro Vancouver.</span>
+                    <a class="jn-hear" href="vancouver.html">Hear it free</a>
+                </span>
+                <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="vancouver" aria-label="Add Vancouver Daily News to my edition">+</button>
+            </div>
+            
+        </div>
+        <aside class="jn-side" aria-labelledby="jn-side-h">
+            <h3 id="jn-side-h">Your edition</h3>
+            <p>Mira greets you by name and opens with your city. Both are optional, and you can change everything later in My Nerra.</p>
+            <label for="jn-name">First name</label>
+            <input id="jn-name" type="text" maxlength="40" autocomplete="given-name" placeholder="Alex">
+            <label for="jn-city">City</label>
+            <input id="jn-city" type="text" maxlength="60" autocomplete="address-level2" placeholder="Vancouver, BC">
+            <p class="jn-count" data-jn-count aria-live="polite">Pick two or more shows.</p>
+            <a class="jn-btn primary" href="#join-free" data-jn-go>Save my lineup, free</a>
+            
+            <a class="jn-btn" href="#plans">See the plans</a>
+            
+        </aside>
+    </div>
+</section>
+
+
+<section class="jn-sec" id="sample" aria-label="Sample personal edition">
+    <div class="np-sample">
+        <img src="assets/covers/nerra-daily.jpg" alt="" width="180" height="180" loading="lazy">
+        <div>
+            <h2>Hear five minutes of one</h2>
+            <p>A sample edition for “Alex” in Vancouver, built by the same pipeline
+               that makes every member's: Mira's open, the city brief with its
+               sources named, one of Alex's topics, the markets minute, then a
+               taste of two shows. In a real edition every show plays in full.</p>
+            <div class="lt-lead-audio"><audio controls preload="none" src="https://audio.nerranetwork.com/personal/sample/vancouver.mp3" data-nn-sample="join" data-nn-player data-title="A sample Nerra Personal edition" data-show="Nerra Personal" aria-label="Play a five-minute sample Nerra Personal edition"></audio></div>
+            <ul class="rundown">
+                <li>Good morning from Mira</li>
+                <li>Your Vancouver brief</li>
+                <li>Your topics</li>
+                <li>Markets minute</li>
+                <li>SpaceX Daily</li>
+                <li>Tesla Shorts Time</li>
+                <li>Sign-off</li>
+            </ul>
+        </div>
+    </div>
 </section>
 
 <div class="np-soft-interest" id="soft-interest">
@@ -979,467 +2325,234 @@
     <a class="np-soft-cta" href="personal-interest.html">Save my email on the Personal page →</a>
 </div>
 
-<div class="nn-section-head" id="plans">
-    <h2>Simple, honest pricing</h2>
-    <p>The account is free forever. Personal is the price of a coffee a
-       month, the first 7 days are free, and stopping takes one click.</p>
-</div>
-<section class="nn-tiers">
-    <div class="nn-tier">
-        <h2>Nerra Account</h2>
-        <p class="price">Free</p>
-        <ul>
-            <li>Every show &amp; episode — always free</li>
-            <li>Pick &amp; order your lineup — saved, ready when you upgrade</li>
-            <li>The newsletter, per-show — you choose what lands</li>
-            <li>Member discounts on Nerra Network books</li>
-            <li>Full-resolution image gallery downloads</li>
-        </ul>
-        <a class="cta secondary" href="#join-free">Create your free account</a>
+<section class="jn-sec" id="plans" aria-labelledby="jn-plans-h">
+    <div class="jn-sec-head">
+        <div>
+            <h2 class="jn-h" id="jn-plans-h">Simple, honest pricing</h2>
+            <p class="jn-lede">The account is free forever. Personal is the price of a coffee a
+               month, the first 7 days are free, and stopping takes one click.</p>
+        </div>
     </div>
-    <div class="nn-tier featured">
-        <h2>Personal</h2>
-        <p class="price">$4.99<small>/month</small></p>
-        <ul>
-            <li>Everything in the free account</li>
-            <li><strong>Your own private daily show</strong> — your picks, your order</li>
-            <li>Mira anchors it and greets you by name</li>
-            <li>Private RSS feed — works in every podcast app</li>
-            <li>Chapter markers for every segment</li>
-            <li><strong>Your city's taster</strong> — the day's weather, plus one
-                local story, one event and one transit note, source named</li>
-            <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
-        </ul>
-        
-        <a class="cta" href="https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00">Try Personal free for 7 days<small>then $4.99/mo · cancel any time</small></a>
-        
-    </div>
-    <div class="nn-tier">
-        <h2>Personal News Network</h2>
-        <p class="price">$8.99<small>/month</small></p>
-        <ul>
-            <li>Everything in Personal</li>
-            <li><strong>The full brief</strong> — up to three items per section,
-                not one, for up to <strong>three locations</strong> on the same feed</li>
-            <li><strong>Your topics</strong> — name up to five subjects and Mira
-                researches each one every morning, source named aloud</li>
-            <li>An unverifiable item is skipped, never padded</li>
-            <li><strong>Every Nerra book included</strong> — the whole series as
-                EPUB downloads from your account, yours to keep</li>
-            <li>Switch add-ons and location any time from your account —
-                and move between Personal and Personal News Network in one
-                click, prorated</li>
-        </ul>
-        
-        <a class="cta" href="https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01">Try Personal News Network free for 7 days<small>then $8.99/mo · cancel any time</small></a>
-        
-    </div>
-</section>
-
-<div class="nn-section-head">
-    <h2>How Personal works</h2>
-    <p>No app to install, no algorithm deciding for you — a real private
-       podcast feed, assembled fresh every morning.</p>
-</div>
-<section class="nn-steps">
-    <div class="nn-step"><span class="num">1</span>
-        <h3>Pick your shows</h3>
-        <p>Choose from the 26 English shows in the Personal lineup
-           (Nerra Daily is the whole-network edition and The Age of AI is
-           interview-driven, so neither is a segment) and order them the way
-           you want your morning to run. Two minutes, changeable any time —
-           edits reach the very next edition.</p></div>
-    <div class="nn-step"><span class="num">2</span>
-        <h3>Mira builds your edition</h3>
-        <p>Every morning, after the day's episodes publish, Mira — the
-           network's AI anchor — stitches your picks into one continuous
-           show, greets you by name, and hands off between segments. Set a
-           location and she opens with your city's brief — the taster on
-           Personal, the full brief plus your own topics on Personal News
-           Network — every source named aloud.</p></div>
-    <div class="nn-step"><span class="num">3</span>
-        <h3>Listen anywhere</h3>
-        <p>You get a private RSS feed that works in Apple Podcasts, Overcast,
-           Pocket Casts — anywhere you already listen. Chapter markers let
-           you skip between your shows. Cancel in one click; your lineup
-           stays saved.</p></div>
-</section>
-
-
-<div class="nn-section-head">
-    <h2>26 shows to build from</h2>
-    <p>Every one produced daily or weekly by the network — tap any card to
-       hear it free before you add it to your lineup.</p>
-</div>
-<section class="nn-showgrid">
-    
-    <a class="nn-showcard" href="spacex.html">
-        
-        <img src="assets/covers/spacex-400.webp" alt="SpaceX Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>SpaceX Daily</strong>
-            <em>Daily</em>
-            <span>Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="tesla.html">
-        
-        <img src="assets/covers/tesla-shorts-time-400.webp" alt="Tesla Shorts Time cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Tesla Shorts Time</strong>
-            <em>Daily</em>
-            <span>Shorting Tesla? Time's Up.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="planetterrian.html">
-        
-        <img src="assets/covers/planetterrian-daily-400.webp" alt="Planetterrian Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Planetterrian Daily</strong>
-            <em>Daily</em>
-            <span>Science, longevity, and the frontier of human health.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="models-agents.html">
-        
-        <img src="assets/covers/models-agents-400.webp" alt="Models & Agents cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Models & Agents</strong>
-            <em>Daily</em>
-            <span>Daily AI models, agents, and practical developments.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="fascinating-frontiers.html">
-        
-        <img src="assets/covers/fascinating-frontiers-400.webp" alt="Fascinating Frontiers cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Fascinating Frontiers</strong>
-            <em>Daily</em>
-            <span>Journey to the stars with today's discoveries.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-world.html">
-        
-        <img src="assets/covers/omni-view-world-400.webp" alt="Omni View Top World News cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View Top World News</strong>
-            <em>Daily</em>
-            <span>The ten stories that matter most today, anywhere.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="mag7.html">
-        
-        <img src="assets/covers/mag7-400.webp" alt="MAG 7 Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>MAG 7 Daily</strong>
-            <em>Daily</em>
-            <span>Seven companies, one daily desk.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="modern-investing.html">
-        
-        <img src="assets/covers/modern-investing-400.webp" alt="Modern Investing Techniques cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Modern Investing Techniques</strong>
-            <em>Daily</em>
-            <span>AI-Powered Market Intelligence</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="longevity.html">
-        
-        <img src="assets/covers/longevity-400.webp" alt="Longevity Weekly cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Longevity Weekly</strong>
-            <em>Weekly (Wednesday)</em>
-            <span>The science of aging, read carefully.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="peptides.html">
-        
-        <img src="assets/covers/peptides-400.webp" alt="Peptides Weekly cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Peptides Weekly</strong>
-            <em>Weekly (Thursday)</em>
-            <span>Peptides, with the evidence read carefully.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="offshore-north.html">
-        
-        <img src="assets/covers/offshore-north-400.webp" alt="Offshore North cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Offshore North</strong>
-            <em>Weekly — Mondays</em>
-            <span>One man. One boat. Around the world, alone.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="ai-chips.html">
-        
-        <img src="assets/covers/ai-chips-400.webp" alt="AI Chips & Data Centres Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>AI Chips & Data Centres Daily</strong>
-            <em>Daily</em>
-            <span>The silicon, the buildings and the power behind AI.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="first-principles.html">
-        
-        <img src="assets/covers/first-principles-daily-400.webp" alt="First Principles Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>First Principles Daily</strong>
-            <em>Daily</em>
-            <span>Reason from raw materials, not analogy.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="unintended-consequences.html">
-        
-        <img src="assets/covers/unintended-consequences-400.webp" alt="Unintended Consequences cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Unintended Consequences</strong>
-            <em>Daily</em>
-            <span>Good intentions. Surprising results. Real lessons.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="prediction-markets.html">
-        
-        <img src="assets/covers/prediction-markets-400.webp" alt="Prediction Markets Daily cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Prediction Markets Daily</strong>
-            <em>Daily</em>
-            <span>Where forecasting meets the market.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="models-agents-beginners.html">
-        
-        <img src="assets/covers/models-agents-beginners-400.webp" alt="Models & Agents for Beginners cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Models & Agents for Beginners</strong>
-            <em>Daily</em>
-            <span>AI explained simply — for beginners and teens.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="collingwood.html">
-        
-        <img src="assets/covers/collingwood-400.webp" alt="Collingwood Weekly cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Collingwood Weekly</strong>
-            <em>Weekly (Friday)</em>
-            <span>The week around the south Georgian Bay.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="env-intel.html">
-        
-        <img src="assets/covers/environmental-intelligence-400.webp" alt="Environmental Intelligence cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Environmental Intelligence</strong>
-            <em>Weekly — Mondays</em>
-            <span>Environmental regulatory and compliance briefing.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="thedppod.html">
-        
-        <img src="assets/covers/dp-pod-400.webp" alt="The DP Pod: The Do Positive Podcast cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>The DP Pod: The Do Positive Podcast</strong>
-            <em>Weekly — Mondays</em>
-            <span>The club for people who do something about it — good news, honest numbers, one action a week.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view.html">
-        
-        <img src="assets/covers/omni-view-400.webp" alt="Omni View cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View</strong>
-            <em>Daily</em>
-            <span>See every side. Decide for yourself.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-north-america.html">
-        
-        <img src="assets/covers/omni-view-north-america-400.webp" alt="Omni View North America cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View North America</strong>
-            <em>Daily</em>
-            <span>North America, one region deep, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-europe.html">
-        
-        <img src="assets/covers/omni-view-europe-400.webp" alt="Omni View Europe cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View Europe</strong>
-            <em>Daily</em>
-            <span>Europe, one region deep, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-asia-pacific.html">
-        
-        <img src="assets/covers/omni-view-asia-pacific-400.webp" alt="Omni View Asia Pacific cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View Asia Pacific</strong>
-            <em>Daily</em>
-            <span>Asia Pacific, one region deep, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-africa-mideast.html">
-        
-        <img src="assets/covers/omni-view-africa-mideast-400.webp" alt="Omni View Africa & Middle East cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View Africa & Middle East</strong>
-            <em>Daily</em>
-            <span>Africa and the Middle East, one region deep, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="omni-view-latam.html">
-        
-        <img src="assets/covers/omni-view-latam-400.webp" alt="Omni View Central & South America cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Omni View Central & South America</strong>
-            <em>Daily</em>
-            <span>Central and South America, one region deep, every day.</span>
-        </span>
-    </a>
-    
-    <a class="nn-showcard" href="vancouver.html">
-        
-        <img src="assets/covers/vancouver-400.webp" alt="Vancouver Daily News cover art" loading="lazy" width="52" height="52">
-        
-        <span>
-            <strong>Vancouver Daily News</strong>
-            <em>Daily</em>
-            <span>The morning brief for Metro Vancouver.</span>
-        </span>
-    </a>
-    
-</section>
-
-
-<div class="nn-section-head">
-    <h2>One account, the whole network</h2>
-    <p>Personal is the headline act — the same free account carries every
-       product the network makes.</p>
-</div>
-<section class="nn-products">
-    <div class="nn-product">
-        <h3>🎧 Nerra Daily</h3>
-        <p>Not ready to customize? The whole English network in one free
-           ~2-hour daily edition, anchored by Mira.</p>
-        <a href="nerra-daily.html">Try Nerra Daily free →</a>
-    </div>
-    <div class="nn-product">
-        <h3>📚 Anthology books</h3>
-        <p>The narrative shows, compiled into illustrated ebooks and
-           narrated audiobooks — members get a discount code on every
-           volume.</p>
-        <a href="books.html">Browse the books →</a>
-    </div>
-    <div class="nn-product">
-        <h3>✉️ The newsletter</h3>
-        <p>Each show's briefing in your inbox, per-show opt-in — reading
-           and listening stay in sync.</p>
-        <a href="#join-free">Included with your account →</a>
-    </div>
-    <div class="nn-product">
-        <h3>🖼️ Image gallery</h3>
-        <p>Thousands of CC-licensed images generated for the shows —
-           full-resolution downloads included with your account.</p>
-        <a href="gallery.html">Open the gallery →</a>
+    <div class="nn-tiers">
+        <div class="nn-tier">
+            <h2>Nerra Account</h2>
+            <p class="price">Free</p>
+            <p class="for">Your own front page of the network.</p>
+            <ul>
+                <li>Every show &amp; episode, always free</li>
+                <li>My Nerra: your shows' newest episodes in your order, with a player that queues them</li>
+                <li>Stories on your topics and places, marked as they air</li>
+                <li>The newsletter, per show: you choose what lands</li>
+                <li>Member discounts on Nerra Network books</li>
+                <li>Full-resolution image gallery downloads</li>
+            </ul>
+            <a class="cta secondary" href="#join-free">Create your free account</a>
+        </div>
+        <div class="nn-tier featured">
+            <h2>Personal</h2>
+            <p class="price">$4.99<small>/month</small></p>
+            <p class="for">Your shows as one morning episode.</p>
+            <ul>
+                <li>Everything in the free account</li>
+                <li><strong>Your own private daily show</strong>: your picks, your order</li>
+                <li>Mira anchors it and greets you by name</li>
+                <li>Private RSS feed that works in every podcast app, added in one tap</li>
+                <li>Chapter markers for every segment</li>
+                <li><strong>Your city's taster</strong>: the day's weather, plus one
+                    local story, one event and one transit note, source named</li>
+                <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
+            </ul>
+            
+            <a class="cta" href="https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00" data-nn-tier="personal">Try Personal free for 7 days<small>then $4.99/mo · cancel any time</small></a>
+            
+        </div>
+        <div class="nn-tier">
+            <h2>Personal News Network</h2>
+            <p class="price">$8.99<small>/month</small></p>
+            <p class="for">Your edition, researched for you.</p>
+            <ul>
+                <li>Everything in Personal</li>
+                <li><strong>The full brief</strong>: up to three items per section,
+                    not one, for up to <strong>three locations</strong> on the same feed</li>
+                <li><strong>Your topics</strong>: name up to five subjects and Mira
+                    researches each one every morning, source named aloud</li>
+                <li>An unverifiable item is skipped, never padded</li>
+                <li><strong>Every Nerra book included</strong>: the whole series as
+                    EPUB downloads from your account, yours to keep</li>
+                <li>Switch add-ons and location any time from your account,
+                    and move between Personal and Personal News Network in one
+                    click, prorated</li>
+            </ul>
+            
+            <a class="cta" href="https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01" data-nn-tier="personal_local">Try Personal News Network free for 7 days<small>then $8.99/mo · cancel any time</small></a>
+            
+        </div>
     </div>
 </section>
 
-<div class="nn-section-head">
-    <h2>Honest answers</h2>
-</div>
-<section class="nn-faq">
-    <details>
-        <summary>What exactly arrives in my Personal feed?</summary>
-        <p>One episode each morning: the day's real episodes of the shows
-           you picked, in your order, joined by Mira's short spoken handoffs.
-           Nothing is summarized or cut down — you get the full episodes,
-           minus the cross-promo tails that don't make sense mid-edition.
-           Chapters mark every segment so you can skip freely.</p>
-    </details>
-    <details>
-        <summary>How does the Local morning brief stay honest?</summary>
-        <p>Weather comes from measured forecast data for your city. The
-           local story is found with a live web search and Mira names the
-           source out loud. On a day with nothing verifiable worth your
-           time, she says so and moves on — no filler, ever.</p>
-    </details>
-    <details>
-        <summary>Can I cancel easily?</summary>
-        <p>Yes — billing is by Stripe with self-serve cancellation, one
-           click, no email required. Your private feed runs to the end of
-           the paid period, and your lineup stays saved on your free
-           account if you ever come back.</p>
-    </details>
-    <details>
-        <summary>Is this AI-generated?</summary>
-        <p>The shows are AI-assisted productions with human editorial
-           oversight, and every episode says so on air. Mira is an AI
-           anchor and is always introduced as one. The full policy is at
-           <a href="ai-disclosure.html">our AI disclosure</a>.</p>
-    </details>
-    <details>
-        <summary>What happens with my email and city?</summary>
-        <p>Your email is your account and newsletter address — it's never
-           sold or shared. Your first name and city exist only so Mira can
-           greet you and build your brief; they're stored with your
-           account, never published, and deleted with it.</p>
-    </details>
+<section class="jn-sec" aria-labelledby="jn-how-h">
+    <div class="jn-sec-head">
+        <div>
+            <h2 class="jn-h" id="jn-how-h">How Personal works</h2>
+            <p class="jn-lede">No algorithm deciding for you: a real private
+               podcast feed, assembled fresh every morning.</p>
+        </div>
+    </div>
+    <div class="nn-steps">
+        <div class="nn-step"><span class="num">1</span>
+            <h3>Pick your shows</h3>
+            <p>Choose from the 26 English shows in the Personal lineup
+               (Nerra Daily is the whole-network edition and The Age of AI is
+               interview-driven, so neither is a segment) and order them the way
+               you want your morning to run. Two minutes, changeable any time;
+               edits reach the very next edition.</p></div>
+        <div class="nn-step"><span class="num">2</span>
+            <h3>Mira builds your edition</h3>
+            <p>Every morning, after the day's episodes publish, Mira, the
+               network's AI anchor, stitches your picks into one continuous
+               show, greets you by name, and hands off between segments. Set a
+               location and she opens with your city's brief: the taster on
+               Personal, the full brief plus your own topics on Personal News
+               Network, every source named aloud.</p></div>
+        <div class="nn-step"><span class="num">3</span>
+            <h3>Listen anywhere</h3>
+            <p>You get a private RSS feed that works in Apple Podcasts, Overcast,
+               Pocket Casts, anywhere you already listen, added from your account
+               in one tap. Chapter markers let you skip between your shows. Cancel
+               in one click; your lineup stays saved.</p></div>
+    </div>
+</section>
+
+<section class="jn-sec" aria-labelledby="jn-ways-h">
+    <div class="jn-sec-head">
+        <div>
+            <h2 class="jn-h" id="jn-ways-h">Listen your way</h2>
+            <p class="jn-lede">Your edition, your shows and their videos are in every place you already are.</p>
+        </div>
+    </div>
+    <div class="jn-ways">
+        <div class="jn-way">
+            <h3>In your podcast app</h3>
+            <p>Your private feed adds in one tap from your account, or by scanning a code on your phone. Spotify doesn't accept private feeds; every free show is on Spotify too.</p>
+            <ul class="jn-apps" aria-label="Apps that take a private feed">
+                <li>Apple Podcasts</li><li>Overcast</li><li>Pocket Casts</li><li>Castro</li><li>AntennaPod</li><li>Podcast Addict</li>
+            </ul>
+        </div>
+        <div class="jn-way">
+            <h3>Right here, as an app</h3>
+            <p>My Nerra is your own front page: your shows' newest episodes in your order, the stories on your topics, a player that keeps your place. Add it to your home screen and it opens like an app.</p>
+            <a href="account.html">Open My Nerra →</a>
+        </div>
+        <div class="jn-way">
+            <h3>On video</h3>
+            <p>The daily shows publish full episodes and Shorts on YouTube. Watch them here, played inside the page, or follow along on the channel.</p>
+            <a href="watch.html">Watch today's episodes →</a>
+        </div>
+    </div>
+</section>
+
+<section class="jn-sec" aria-labelledby="jn-more-h">
+    <div class="jn-sec-head">
+        <div>
+            <h2 class="jn-h" id="jn-more-h">One account, the whole network</h2>
+            <p class="jn-lede">Personal is the headline act; the same free account carries every
+               product the network makes.</p>
+        </div>
+    </div>
+    <div class="nn-products">
+        <div class="nn-product">
+            <h3>🎧 Nerra Daily</h3>
+            <p>Not ready to customize? The whole English network in one free
+               ~2-hour daily edition, anchored by Mira.</p>
+            <a href="nerra-daily.html">Try Nerra Daily free →</a>
+        </div>
+        <div class="nn-product">
+            <h3>📚 Anthology books</h3>
+            <p>The narrative shows, compiled into illustrated ebooks and
+               narrated audiobooks; members get a discount code on every
+               volume.</p>
+            <a href="books.html">Browse the books →</a>
+        </div>
+        <div class="nn-product">
+            <h3>✉️ The newsletter</h3>
+            <p>Each show's briefing in your inbox, per-show opt-in, so reading
+               and listening stay in sync.</p>
+            <a href="#join-free">Included with your account →</a>
+        </div>
+        <div class="nn-product">
+            <h3>🖼️ Image gallery</h3>
+            <p>Thousands of CC-licensed images generated for the shows, with
+               full-resolution downloads included with your account.</p>
+            <a href="gallery.html">Open the gallery →</a>
+        </div>
+    </div>
+</section>
+
+<section class="jn-sec" aria-labelledby="jn-faq-h">
+    <div class="jn-sec-head"><div><h2 class="jn-h" id="jn-faq-h">Honest answers</h2></div></div>
+    <div class="nn-faq">
+        <details>
+            <summary>What exactly arrives in my Personal feed?</summary>
+            <p>One episode each morning: the day's real episodes of the shows
+               you picked, in your order, joined by Mira's short spoken handoffs.
+               Nothing is summarized: you hear the full episodes, minus the
+               cross-promo tails that don't make sense mid-edition. If you set a
+               length or turn on Skip repeats, Mira leaves out whole chapters
+               (a story you already heard today, say) and tells you which.
+               Chapters mark every segment so you can skip freely.</p>
+        </details>
+        <details>
+            <summary>How do I add it to my podcast app?</summary>
+            <p>From your account: one tap opens your feed in Apple Podcasts,
+               Overcast, Pocket Casts, Castro, AntennaPod or Podcast Addict. On a
+               computer, scan the code with your phone. Any other app that takes
+               a feed URL works too; the URL is yours alone, so sharing it shares
+               your subscription.</p>
+        </details>
+        <details>
+            <summary>How does the Local morning brief stay honest?</summary>
+            <p>Weather comes from measured forecast data for your city. The
+               local story is found with a live web search and Mira names the
+               source out loud. On a day with nothing verifiable worth your
+               time, she says so and moves on, no filler, ever.</p>
+        </details>
+        <details>
+            <summary>Can I cancel easily?</summary>
+            <p>Yes. Billing is by Stripe with self-serve cancellation, one
+               click, no email required. Your private feed runs to the end of
+               the paid period, and your lineup stays saved on your free
+               account if you ever come back.</p>
+        </details>
+        <details>
+            <summary>Is this AI-generated?</summary>
+            <p>Yes. The shows are written and voiced with AI from the day's
+               sourced reporting, and every episode says so on air. A person
+               chooses each show's sources and rules and fixes what goes wrong,
+               but no one reads every episode before it ships; every claim is
+               checked against its source and an unverified one is marked
+               publicly. Mira is an AI anchor and is always introduced as one.
+               The full policy is at
+               <a href="ai-disclosure.html">our AI disclosure</a>.</p>
+        </details>
+        <details>
+            <summary>What happens with my email and city?</summary>
+            <p>Your email is your account and newsletter address. It's never
+               sold, and only the services that run your account see it. Your first name, city, subjects and note to Mira
+               exist only so Mira can greet you and build your edition: they're
+               stored with your account, sent to the AI model that writes
+               Mira's lines each morning (xAI, never with your email), never
+               published, and deleted with your account. The lineup you build
+               on this page stays in your browser until you create the account. The
+               <a href="privacy-policy.html">privacy policy</a>
+               has the details.</p>
+        </details>
+    </div>
 </section>
 
 <section class="nn-join-form" id="join-free">
     <h2>Create your free Nerra account</h2>
-    <p>One email. No password — we send you a sign-in link whenever you need one.</p>
+    <p>One email. No password: we send you a sign-in link whenever you need one.</p>
+    <p class="jn-draft-note" data-jn-draft-note hidden></p>
     <form method="post"
           action="#"
           data-nn-subscribe="join"
@@ -1458,10 +2571,12 @@
 </section>
 
 <p class="nn-join-note">Joining subscribes you to the Nerra newsletter (unsubscribe
-   any time — the account stays). Paid tiers are billed by Stripe and cancel in
+   any time; the account stays). Paid tiers are billed by Stripe and cancel in
    one click; your private feed stops at the end of the billing period. Prefer
    to just chip in? <a href="support.html">Support the network</a>
    with a one-time or monthly donation instead.</p>
+</div>
+</div>
 
     </main>
 
@@ -1704,6 +2819,14 @@
                         <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -1716,10 +2839,7 @@
                     <a href="privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="terms-of-service.html">Terms</a> &middot;
-                    <a href="ai-disclosure.html">AI Disclosure</a>
-                    <span style="opacity:0.5;">&middot;</span>
-                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
-                </div>
+                    <a href="ai-disclosure.html">AI Disclosure</a></div>
             </div>
         </div>
     </footer>
@@ -1804,28 +2924,141 @@
     });
     </script>
     
+<script>
+(function () {
+  'use strict';
+  var SHOWS = ["spacex", "tesla", "planetterrian", "models_agents", "fascinating_frontiers", "omni_view_world", "mag7", "modern_investing", "longevity", "peptides", "offshore_north", "ai_chips", "first_principles", "unintended_consequences", "prediction_markets", "models_agents_beginners", "collingwood", "env_intel", "dp_pod", "omni_view", "omni_view_north_america", "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast", "omni_view_latam", "vancouver"];
+  var META = {};
+  META["spacex"] = { name: "SpaceX Daily", cover: "assets/covers/spacex-400.webp", minutes: 9, color: "#1A5CFF", members: false };
+  META["tesla"] = { name: "Tesla Shorts Time", cover: "assets/covers/tesla-shorts-time-400.webp", minutes: 10, color: "#E31937", members: false };
+  META["planetterrian"] = { name: "Planetterrian Daily", cover: "assets/covers/planetterrian-daily-400.webp", minutes: 10, color: "#017A99", members: false };
+  META["models_agents"] = { name: "Models \u0026 Agents", cover: "assets/covers/models-agents-400.webp", minutes: 12, color: "#7C3AED", members: false };
+  META["fascinating_frontiers"] = { name: "Fascinating Frontiers", cover: "assets/covers/fascinating-frontiers-400.webp", minutes: 10, color: "#6B47FF", members: false };
+  META["omni_view_world"] = { name: "Omni View Top World News", cover: "assets/covers/omni-view-world-400.webp", minutes: 10, color: "#0B6FD6", members: false };
+  META["mag7"] = { name: "MAG 7 Daily", cover: "assets/covers/mag7-400.webp", minutes: 11, color: "#334155", members: false };
+  META["modern_investing"] = { name: "Modern Investing Techniques", cover: "assets/covers/modern-investing-400.webp", minutes: 13, color: "#047857", members: false };
+  META["longevity"] = { name: "Longevity Weekly", cover: "assets/covers/longevity-400.webp", minutes: 11, color: "#3F6212", members: false };
+  META["peptides"] = { name: "Peptides Weekly", cover: "assets/covers/peptides-400.webp", minutes: 10, color: "#9D174D", members: false };
+  META["offshore_north"] = { name: "Offshore North", cover: "assets/covers/offshore-north-400.webp", minutes: 7, color: "#0B3C5D", members: false };
+  META["ai_chips"] = { name: "AI Chips \u0026 Data Centres Daily", cover: "assets/covers/ai-chips-400.webp", minutes: 13, color: "#4338CA", members: false };
+  META["first_principles"] = { name: "First Principles Daily", cover: "assets/covers/first-principles-daily-400.webp", minutes: 9, color: "#0F766E", members: false };
+  META["unintended_consequences"] = { name: "Unintended Consequences", cover: "assets/covers/unintended-consequences-400.webp", minutes: 12, color: "#B45309", members: false };
+  META["prediction_markets"] = { name: "Prediction Markets Daily", cover: "assets/covers/prediction-markets-400.webp", minutes: 9, color: "#A21CAF", members: false };
+  META["models_agents_beginners"] = { name: "Models \u0026 Agents for Beginners", cover: "assets/covers/models-agents-beginners-400.webp", minutes: 9, color: "#C2410C", members: false };
+  META["collingwood"] = { name: "Collingwood Weekly", cover: "assets/covers/collingwood-400.webp", minutes: 6, color: "#0D6E8C", members: false };
+  META["env_intel"] = { name: "Environmental Intelligence", cover: "assets/covers/environmental-intelligence-400.webp", minutes: 6, color: "#1B5E20", members: false };
+  META["dp_pod"] = { name: "The DP Pod: The Do Positive Podcast", cover: "assets/covers/dp-pod-400.webp", minutes: 10, color: "#0B7A45", members: false };
+  META["omni_view"] = { name: "Omni View", cover: "assets/covers/omni-view-400.webp", minutes: 10, color: "#0B6FD6", members: false };
+  META["omni_view_north_america"] = { name: "Omni View North America", cover: "assets/covers/omni-view-north-america-400.webp", minutes: 0, color: "#0B6FD6", members: true };
+  META["omni_view_europe"] = { name: "Omni View Europe", cover: "assets/covers/omni-view-europe-400.webp", minutes: 0, color: "#0B6FD6", members: true };
+  META["omni_view_asia_pacific"] = { name: "Omni View Asia Pacific", cover: "assets/covers/omni-view-asia-pacific-400.webp", minutes: 0, color: "#0B6FD6", members: true };
+  META["omni_view_africa_mideast"] = { name: "Omni View Africa \u0026 Middle East", cover: "assets/covers/omni-view-africa-mideast-400.webp", minutes: 0, color: "#0B6FD6", members: true };
+  META["omni_view_latam"] = { name: "Omni View Central \u0026 South America", cover: "assets/covers/omni-view-latam-400.webp", minutes: 0, color: "#0B6FD6", members: true };
+  META["vancouver"] = { name: "Vancouver Daily News", cover: "assets/covers/vancouver-400.webp", minutes: 10, color: "#0D6E8C", members: false };
+  var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian'];
+  var DRAFT = 'nnMe.draft';
+  function load() { try { return JSON.parse(localStorage.getItem(DRAFT) || 'null'); } catch (e) { return null; } }
+  function save(d) { try { localStorage.setItem(DRAFT, JSON.stringify(d)); } catch (e) {} }
+  function track(name, params) { try { if (typeof window.gtag === 'function') { window.gtag('event', name, params || {}); } } catch (e) {} }
+  var d = load() || {};
+  var picks = (d.shows || []).filter(function (s) { return META[s]; });
+  var nameIn = document.getElementById('jn-name'), cityIn = document.getElementById('jn-city');
+  if (nameIn && d.first_name) { nameIn.value = d.first_name; }
+  if (cityIn && d.city) { cityIn.value = d.city; }
+  function persist() {
+    save({ shows: picks, first_name: nameIn ? nameIn.value.trim().slice(0, 40) : '', city: cityIn ? cityIn.value.trim().slice(0, 60) : '', ts: Date.now() });
+  }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) { n.className = cls; } n.textContent = text; return n; }
+  function render() {
+    document.querySelectorAll('.nn-showcard').forEach(function (c) {
+      var on = picks.indexOf(c.getAttribute('data-slug')) !== -1;
+      c.classList.toggle('is-on', on);
+      var b = c.querySelector('[data-jn-toggle]');
+      if (b) { b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.textContent = on ? '✓' : '+'; }
+    });
+    var list = document.querySelector('[data-jn-list]');
+    if (!list) { return; }
+    var shown = picks.length ? picks : STARTER.filter(function (s) { return META[s]; });
+    var name = nameIn && nameIn.value.trim();
+    var city = cityIn && cityIn.value.trim();
+    var greet = document.querySelector('[data-jn-greet]');
+    greet.textContent = '';
+    greet.appendChild(document.createTextNode('“Good morning, '));
+    greet.appendChild(txt('em', '', name || 'Alex'));
+    greet.appendChild(document.createTextNode('. Here\'s your morning.”'));
+    list.textContent = '';
+    var brief = document.createElement('li'); brief.className = 'is-mira';
+    brief.appendChild(txt('span', 'ic', '🌤️')); brief.firstChild.setAttribute('aria-hidden', 'true');
+    brief.appendChild(txt('span', 'nm', city ? city.split(',')[0] + "'s morning brief" : "Your city's morning brief"));
+    brief.appendChild(txt('span', 'ln', 'Mira'));
+    list.appendChild(brief);
+    var total = 0;
+    shown.forEach(function (slug) {
+      var m = META[slug]; if (!m) { return; }
+      total += m.minutes || 0;
+      var li = document.createElement('li'); li.style.setProperty('--show-color', m.color);
+      var img = document.createElement('img'); img.src = m.cover; img.alt = ''; img.width = 34; img.height = 34; img.loading = 'lazy';
+      li.appendChild(img);
+      li.appendChild(txt('span', 'nm', m.name));
+      li.appendChild(txt('span', 'ln', m.members ? 'members' : (m.minutes ? m.minutes + ' min' : '')));
+      list.appendChild(li);
+    });
+    document.querySelector('[data-jn-total]').textContent = total ? String(total) : '–';
+    document.querySelector('[data-jn-shows]').textContent = picks.length
+      ? picks.length + (picks.length === 1 ? ' show' : ' shows') + ', your order' : shown.length + ' shows · starter lineup';
+    var count = document.querySelector('[data-jn-count]');
+    if (count) {
+      count.textContent = picks.length === 0 ? 'Pick two or more shows.'
+        : picks.length === 1 ? '1 show picked. Pick one more.'
+        : picks.length + ' shows, about ' + total + ' minutes a morning.';
+    }
+    var note = document.querySelector('[data-jn-draft-note]');
+    if (note) { note.hidden = !picks.length; note.textContent = picks.length ? 'Your ' + picks.length + '-show lineup is saved in this browser and becomes your account\'s lineup when you join.' : ''; }
+  }
+  document.querySelectorAll('[data-jn-toggle]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var slug = b.getAttribute('data-jn-toggle');
+      var i = picks.indexOf(slug);
+      if (i === -1) { picks.push(slug); } else { picks.splice(i, 1); }
+      persist(); render();
+    });
+  });
+  [nameIn, cityIn].forEach(function (n) { if (n) { n.addEventListener('input', function () { persist(); render(); }); } });
+  var go = document.querySelector('[data-jn-go]');
+  if (go) { go.addEventListener('click', function () { persist(); track('build_lineup_start', { count: picks.length, placement: 'join', location: location.pathname }); }); }
+  var form = document.querySelector('[data-nn-subscribe="join"]');
+  if (form) { form.addEventListener('submit', function () { if (picks.length) { persist(); } }); }
+  render();
+})();
+</script>
+
 
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js" defer></script>
     <script src="assets/js/language-control.js" defer></script>
-    <script src="assets/js/footer-subscribe.js" defer></script>
+    <script src="assets/js/footer-subscribe.js" defer></script><script src="assets/js/nn-player.js" defer></script>
+    <script src="assets/js/nn-app.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">

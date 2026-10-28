@@ -540,6 +540,53 @@
     breadth of the network, one show a card (Oct 18 2026). -#}
 {{ shorts_reel() }}
 
+{#- For you (Oct 28 2026): the front page as the app's home screen. A visitor
+    picks the shows they'd listen to (kept in this browser as nnMe.draft) and
+    goes on to a free account, where My Nerra saves them as the lineup; a
+    signed-in member sees their own shows' newest episodes, in their order,
+    with one press to play them all. Read from window.nnAccount (the nav's
+    one account request) and api/personal_front.json; with JavaScript off it
+    is the picker's links. Not an email form: the Soft Personal band stays
+    the page's one email ask (Oct 9 2026). -#}
+{% if picker_shows %}
+<section class="lt-block container nn-you" id="for-you" aria-labelledby="nn-you-h" data-nn-you data-prefix="{{ path_prefix }}">
+    <div class="nn-you-visitor" data-nn-you-visitor>
+        <div class="nn-you-copy">
+            <p class="lt-signup-kicker">Make it yours · free</p>
+            <h2 class="lt-hl" id="nn-you-h">Pick your shows. Get your own front page.</h2>
+            <p>Tap the shows you'd listen to. A free account turns them into your own page, with a player that queues them in your order. Nerra Personal joins them into one morning episode for your podcast app, with your city first.</p>
+        </div>
+        <ul class="nn-you-picks" aria-label="Shows to pick">
+            {% for s in picker_shows %}
+            <li><button type="button" class="nn-you-pick" aria-pressed="false" data-slug="{{ s.slug }}" style="--show-color:{{ s.brand_color }};">
+                <picture>{% if s.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ s.cover_webp }}">{% endif %}<img src="{{ path_prefix }}{{ s.cover }}" alt="" width="36" height="36" loading="lazy" decoding="async"></picture>
+                <span>{{ s.name }}</span><i aria-hidden="true"></i></button></li>
+            {% endfor %}
+        </ul>
+        <div class="nn-you-actions">
+            <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}join.html#join-free" data-nn-you-go>Create my free page</a>
+            <span class="nn-you-count" data-nn-you-count aria-live="polite">Pick two or more</span>
+            <a class="nn-you-signin" href="{{ path_prefix }}account.html">Already a member? Sign in</a>
+        </div>
+    </div>
+    <div class="nn-you-member" data-nn-you-member hidden>
+        <div class="nn-you-head">
+            <div>
+                <p class="lt-signup-kicker">Your Nerra</p>
+                <h2 class="lt-hl" data-nn-you-greet>Your shows today</h2>
+                <p class="nn-you-sub" data-nn-you-sub></p>
+            </div>
+            <div class="nn-you-head-actions">
+                <button type="button" class="lt-btn lt-btn--primary" data-nn-you-playall hidden><span aria-hidden="true">▶</span> Play my lineup</button>
+                <a class="lt-btn" href="{{ path_prefix }}account.html">My Nerra →</a>
+            </div>
+        </div>
+        <ol class="nn-you-row" data-nn-you-row></ol>
+        <p class="nn-you-upsell" data-nn-you-upsell hidden>Want them as one morning episode in your podcast app, with Mira and your city first? <a href="{{ path_prefix }}join.html#plans" onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{placement:'homepage_for_you'});}">See Nerra Personal{% if personal and personal.trial_days %} · {{ personal.trial_days }} days free{% endif %} →</a></p>
+    </div>
+</section>
+{% endif %}
+
 {#- Developing stories: threads the network covered on two or more days this
     week, found by matching the digests' own headlines (engine.newsroom) —
     never written for this page. -#}
@@ -882,7 +929,7 @@
         {% if personal and personal.sample_url %}
         <div class="lt-personal-sample">
             <p class="lt-sublabel">Hear a five-minute sample edition</p>
-            <audio controls preload="none" src="{{ personal.sample_url }}" data-nn-sample="homepage" aria-label="Play a five-minute sample Nerra Personal edition"></audio>
+            <audio controls preload="none" src="{{ personal.sample_url }}" data-nn-sample="homepage" data-nn-player aria-label="Play a five-minute sample Nerra Personal edition"></audio>
         </div>
         {% endif %}
         {% if personal and personal.live %}
@@ -1047,6 +1094,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ path_prefix }}assets/js/for-you.js" defer></script>
 {%- if watch and watch.shorts %}
 {#- Oct 22 2026: load shorts-reel.js only when #shorts scrolls into view
     (IntersectionObserver), with a click-to-load fallback. Media uses

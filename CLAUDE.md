@@ -7367,6 +7367,50 @@ personalizes in the browser. Rules that bind:
   lines without minutes. Active members never see a checkout (the Oct 28
   rule).
 
+### The site is an app: one player, Watch, For you, the join builder, add-to-app (Oct 28 2026)
+
+Operator-directed: the join page and the member feed link redesigned, and
+Nerra Personal as a web app whose default screen is the discovery front page
+(register `web-app-2026-10-28`; guards `tests/test_web_app_2026_10_28.py`).
+Rules that bind:
+
+- **One player for every page** (`assets/js/nn-player.js`, `window.NNPlayer`,
+  loaded by `base.html.j2`). It plays `[data-nn-play]` buttons as a queue
+  (`data-nn-queue`), takes over every `audio` inside `.lt-lead-audio` (and
+  `audio[data-nn-player]`), opens `[data-nn-watch]` videos in a
+  youtube-nocookie dialog on a press, and resumes on the next page, paused,
+  from `nnPlay.now` (24 h). Positions share My Nerra's keys (`nnMe.pos`,
+  `nnMe.played`). **It reports the plays** (`episode_play`, the sample's
+  `play_personal_sample` from `data-nn-sample`), so no page using it sends
+  its own; My Nerra has no player of its own any more. The native controls
+  stay in the HTML (no-JS, and the language-hub tests read them).
+- **The service worker is conservative** (`sw.js`, registered by
+  `assets/js/nn-app.js`): pages network-first with `offline.html` behind them,
+  static assets stale-while-revalidate, and it never answers audio, another
+  origin (audio, the account Worker, YouTube, analytics) or a Range request.
+  Bump `VERSION` when its behaviour changes. `manifest.webmanifest` +
+  `assets/app/` icons; the tab bar (Today, Watch, Shows, My Nerra) exists only
+  in the installed app (`html.nn-standalone`); `[data-nn-install]` /
+  `[data-nn-install-ios]` stay hidden until something can install.
+- **`window.nnAccount`** is the nav's one `/api/account` request, shared as
+  a promise; a page that personalizes reads it, never a second fetch.
+- **The front page's For you band** (`assets/js/for-you.js`, after the Shorts
+  reel): a visitor picks shows (no email form; the Personal tips band stays the
+  page's one ask); a member gets their own shows' newest episodes, moved
+  under the lead, with Play my lineup.
+- **A lineup built before an account is a draft** (`nnMe.draft`, written by
+  the For you band and join.html's builder): My Nerra (`takeDraft`) saves it
+  as the lineup of an account with none, known slugs only, and fills an empty
+  first name.
+- **`/watch.html`** is written with `api/personal_front.json` (same rows;
+  each row now carries `videos` from `episode_video_links`, so a scheduled
+  video never appears) and committed by every workflow that commits that file.
+- **`/add.html#<token>`** puts the feed in an app: the token is in the
+  fragment and leaves the address bar before analytics load; one-tap links per
+  platform, the code to scan on a computer (qrcodejs 1.0.0, drawn in the page),
+  copy and share. noindex, never in the sitemap. My Nerra and the welcome email
+  link it. Operator: `wrangler deploy` in `workers/gallery` for the email.
+
 ### Covered means aired, and a story catalog (Oct 21 2026)
 
 Operator-directed (review

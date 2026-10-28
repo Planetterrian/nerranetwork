@@ -21,8 +21,7 @@
     <meta name="robots" content="noindex,follow">
     {% include "_landing_styles.html.j2" %}
     <style>
-        .nn-me { --me-player-h: 0px; }
-        .nn-me [hidden], .me-player[hidden], .nn-savebar[hidden] { display: none !important; }
+        .nn-me [hidden], .nn-savebar[hidden] { display: none !important; }
         .me-status { font-family: var(--font-ui); color: var(--lt-muted); min-height: 1.2rem; font-size: 0.92rem; margin: var(--sp-4) 0; }
         .me-link { background: none; border: 0; padding: 0; color: var(--lt-cyan); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
         .me-link:hover { color: var(--nn-white); }
@@ -119,6 +118,20 @@
         .me-add-show { font-family: var(--font-ui); font-size: 0.74rem; font-weight: 700; background: none; border: 1px solid var(--lt-rule-strong); color: var(--lt-cyan); border-radius: 999px; padding: 1px 9px; cursor: pointer; }
         .me-add-show:hover { border-color: var(--lt-cyan); }
         .me-topics-empty { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-4); align-items: center; border: 1px dashed var(--lt-rule-strong); border-radius: 12px; padding: var(--sp-5) var(--sp-6); }
+
+        /* ---- Watch ---- */
+        .me-watch-rail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: var(--sp-4); overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+        .me-vid { scroll-snap-align: start; position: relative; display: block; border-radius: 12px; overflow: hidden; background: #111827; color: var(--nn-white); text-decoration: none; aspect-ratio: 16 / 10; }
+        .me-vid.is-short { aspect-ratio: 9 / 13; }
+        .me-vid img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .me-vid::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85)); }
+        .me-vid-txt { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 1; font-family: var(--font-ui); }
+        .me-vid-txt b { display: block; font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
+        .me-vid-txt span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.9rem; font-weight: 600; line-height: 1.3; }
+        .me-vid-play { position: absolute; top: 10px; left: 10px; z-index: 1; font: 700 0.68rem/1 var(--font-ui); padding: 5px 8px; border-radius: 999px; background: rgba(0,0,0,0.6); }
+        .me-vid:hover img { transform: scale(1.03); transition: transform 0.3s; }
+        .me-vid:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 3px; }
+        .lt-meta .me-watch-link { margin-left: 4px; }
 
         /* ---- Catch up ---- */
         .me-catchup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sp-8); list-style: none; margin: 0; padding: 0; }
@@ -243,26 +256,9 @@
         .me-signin form { display: flex; flex-wrap: wrap; gap: 8px; }
         .me-signin .me-input { flex: 1 1 240px; }
 
-        /* ---- Save bar + player (fixed to the bottom, stacked) ---- */
-        .nn-savebar { position: fixed; left: 0; right: 0; bottom: var(--me-player-h, 0px); z-index: 61; background: #141A2E; border-top: 1px solid var(--lt-rule-strong);
+        /* ---- Save bar (fixed to the bottom, above the site player, assets/js/nn-player.js) ---- */
+        .nn-savebar { position: fixed; left: 0; right: 0; bottom: calc(var(--nn-player-h, 0px) + var(--nn-tabbar-h, 0px)); z-index: 901; background: #141A2E; border-top: 1px solid var(--lt-rule-strong);
             box-shadow: 0 -6px 24px rgba(0,0,0,0.35); padding: 0.65rem var(--sp-6); display: flex; gap: 0.8rem; align-items: center; justify-content: center; flex-wrap: wrap; font-family: var(--font-ui); font-size: 0.9rem; }
-        .me-player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: rgba(13, 17, 31, 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-            border-top: 1px solid var(--lt-rule-strong); box-shadow: 0 -8px 28px rgba(0,0,0,0.45); }
-        .me-player::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--show-color, var(--nn-purple)); }
-        .me-player-inner { max-width: var(--container-max, 1200px); margin: 0 auto; padding: 10px var(--sp-6); display: grid; grid-template-columns: 48px minmax(0, 1.2fr) auto minmax(0, 1.4fr) auto; gap: 14px; align-items: center; }
-        .me-player img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; display: block; }
-        .me-player .who { min-width: 0; font-family: var(--font-ui); }
-        .me-player .who b { display: block; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
-        .me-player .who a, .me-player .who span.t { display: block; font-size: 0.9rem; font-weight: 600; color: var(--nn-white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .me-player .ctl { display: flex; gap: 6px; align-items: center; }
-        .me-player .ctl .me-icon-btn { width: 34px; height: 34px; font-size: 0.74rem; font-family: var(--font-ui); font-weight: 700; }
-        .me-player .big { width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #0B0F1A; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-        .me-player .big .ic { width: 0; height: 0; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
-        .me-player .big.is-playing .ic { width: 12px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; margin-left: 0; }
-        .me-player .bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font-family: var(--font-ui); font-size: 0.74rem; color: var(--lt-muted); font-variant-numeric: tabular-nums; }
-        .me-player input[type=range] { width: 100%; accent-color: var(--lt-cyan); }
-        .me-player .side { display: flex; gap: 6px; align-items: center; font-family: var(--font-ui); font-size: 0.76rem; color: var(--lt-muted); }
-        .me-player .side .me-icon-btn { width: auto; padding: 0 9px; font-size: 0.76rem; }
 
         @media (max-width: 1100px) {
             .me-member-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -274,10 +270,6 @@
             .me-preview { position: static; }
             .me-timeline { max-height: none; }
             .me-catchup { grid-template-columns: minmax(0, 1fr); }
-            .me-player-inner { grid-template-columns: 44px minmax(0, 1fr) auto; }
-            .me-player .bar { grid-column: 1 / -1; grid-row: 2; }
-            .me-player .side { display: none; }
-            .me-player img { width: 44px; height: 44px; }
         }
         @media (max-width: 640px) {
             .me-member-grid { grid-template-columns: minmax(0, 1fr); }
@@ -294,8 +286,6 @@
             .me-order .me-handle { display: none; }
             .me-stats dd { font-size: 1.5rem; }
             .me-topics-empty { grid-template-columns: minmax(0, 1fr); }
-            .me-player-inner { padding: 8px var(--sp-4); gap: 10px; }
-            .me-player .ctl .me-skip { display: none; }
             .nn-savebar { padding: 0.5rem var(--sp-4); flex-wrap: nowrap; gap: 0.5rem; }
             .nn-savebar .me-long { display: none; }
         }
@@ -417,10 +407,14 @@
                             <div>
                                 <p class="lt-sublabel">Listen in your podcast app</p>
                                 <p class="me-feedurl" id="nn-feed-url"></p>
+                                <div class="me-ed-actions">
                                 <button type="button" class="lt-btn" id="nn-copy-feed" onclick="NN.copyFeed()">Copy feed URL</button>
                                 {#- Oct 28 2026: one tap into the app a member already uses —
                                     each app's own subscribe link for this feed (filled in by
                                     load(); the copy button stays the fallback). -#}
+                                <a class="lt-btn me-btn-grad" id="nn-add-page" href="{{ path_prefix }}add.html">Add to my podcast app</a>
+                                </div>
+                                <p class="me-fine">One tap for the apps on this device; on a computer it shows a code to scan with your phone.</p>
                                 <p class="me-apps" id="nn-addapp" aria-label="Add to a podcast app">
                                     <span class="me-muted">Add to</span>
                                     <a id="nn-add-apple" href="#" rel="nofollow">Apple Podcasts</a>
@@ -496,6 +490,16 @@
         <section class="lt-block" id="nn-topics-block" aria-labelledby="nn-topics-h">
             <div class="lt-block-head"><h2 id="nn-topics-h">On your topics and places</h2><a href="#nn-places">Edit them →</a></div>
             <div id="nn-topic-results"></div>
+        </section>
+
+        <!-- Watch -->
+        {#- Oct 28 2026 (later): the episodes' own videos, played inside the
+            page by the site player's video dialog (privacy-enhanced YouTube,
+            loaded only on a press). A scheduled video is never listed
+            (engine.youtube_index.episode_video_links). -#}
+        <section class="lt-block" id="nn-watch-block" hidden aria-labelledby="nn-watch-h">
+            <div class="lt-block-head"><h2 id="nn-watch-h">Watch</h2><span class="me-fine" style="margin:0;">Videos and Shorts from your shows · <a href="{{ path_prefix }}watch.html">Everything on video</a></span></div>
+            <div class="me-watch-rail" id="nn-watch"></div>
         </section>
 
         <!-- Catch up -->
@@ -731,29 +735,9 @@
     <button type="button" class="lt-btn" onclick="NN.load()">Discard</button>
 </div>
 
-<div class="me-player" id="nn-player" hidden role="region" aria-label="Now playing">
-    <div class="me-player-inner">
-        <img id="nn-pl-cover" src="" alt="" width="48" height="48">
-        <div class="who"><b id="nn-pl-show"></b><a id="nn-pl-title" href="#"></a></div>
-        <div class="ctl">
-            <button type="button" class="me-icon-btn me-skip" onclick="NN.player.seekBy(-15)" aria-label="Back 15 seconds">−15</button>
-            <button type="button" class="big" id="nn-pl-toggle" onclick="NN.player.toggle()" aria-label="Play"><span class="ic"></span></button>
-            <button type="button" class="me-icon-btn me-skip" onclick="NN.player.seekBy(30)" aria-label="Forward 30 seconds">+30</button>
-            <button type="button" class="me-icon-btn" id="nn-pl-next" onclick="NN.player.next()" aria-label="Next episode">⏭</button>
-        </div>
-        <div class="bar">
-            <span id="nn-pl-cur">0:00</span>
-            <input type="range" id="nn-pl-seek" min="0" max="1000" value="0" step="1" aria-label="Seek">
-            <span id="nn-pl-dur">0:00</span>
-        </div>
-        <div class="side">
-            <span id="nn-pl-queue"></span>
-            <button type="button" class="me-icon-btn" id="nn-pl-rate" onclick="NN.player.rate()" aria-label="Playback speed">1×</button>
-            <button type="button" class="me-icon-btn" onclick="NN.player.close()" aria-label="Close the player">✕</button>
-        </div>
-    </div>
-</div>
-
+{#- Oct 28 2026 (later): the page's own player became the site's one
+    player (assets/js/nn-player.js, loaded by base.html.j2), so a story
+    started here keeps its place on every other page. -#}
 <script>
 var NN = (function () {
   var API = 'https://api.nerranetwork.com';
@@ -873,7 +857,43 @@ var NN = (function () {
   function meta(s) {
     return '<div class="lt-meta"><span class="lt-when">' + whenHtml(s) + '</span>'
       + (s.post_url ? '<span class="lt-dot" aria-hidden="true">•</span><a href="' + esc(storyHref(s)) + '">Read</a>' : '')
-      + playBtn(s, false) + '</div>';
+      + watchLink(s) + playBtn(s, false) + '</div>';
+  }
+  function videoOf(s) {
+    var v = s.videos || {};
+    if (safeUrl(v.long)) { return { url: v.long, kind: 'long' }; }
+    if (safeUrl(v.short)) { return { url: v.short, kind: 'short' }; }
+    return null;
+  }
+  function watchAttrs(s, v) {
+    return ' href="' + esc(v.url) + '" target="_blank" rel="noopener" data-nn-watch="' + esc(v.url) + '" data-kind="' + v.kind
+      + '" data-title="' + esc(s.hook) + '" data-show="' + esc(showName(s.slug)) + '" data-post="' + esc(storyHref(s)) + '"';
+  }
+  function watchLink(s) {
+    var v = videoOf(s);
+    return v ? '<span class="lt-dot" aria-hidden="true">•</span><a class="me-watch-link"' + watchAttrs(s, v) + '>Watch</a>' : '';
+  }
+  function renderWatch(shows) {
+    var box = el('nn-watch');
+    if (!box) { return; }
+    var rows = [];
+    shows.forEach(function (slug) {
+      stories(slug).forEach(function (s) {
+        var v = s.videos || {};
+        if (safeUrl(v.short)) { rows.push({ s: s, v: { url: v.short, kind: 'short' } }); }
+        if (safeUrl(v.long)) { rows.push({ s: s, v: { url: v.long, kind: 'long' } }); }
+      });
+    });
+    rows.sort(function (a, b) { return String((b.s.stamp || {}).iso || b.s.date_raw).localeCompare(String((a.s.stamp || {}).iso || a.s.date_raw)); });
+    rows = rows.slice(0, 16);
+    el('nn-watch-block').hidden = !rows.length;
+    box.innerHTML = rows.map(function (r) {
+      var img = safeUrl(r.s.image_url) || coverSrc(r.s.slug);
+      return '<a class="me-vid' + (r.v.kind === 'short' ? ' is-short' : '') + '" style="--show-color:' + esc(showColor(r.s.slug)) + ';"' + watchAttrs(r.s, r.v) + '>'
+        + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '')
+        + '<span class="me-vid-play">▶ ' + (r.v.kind === 'short' ? 'Short' : 'Video') + '</span>'
+        + '<span class="me-vid-txt"><b>' + esc(showName(r.s.slug)) + '</b><span>' + esc(r.s.hook) + '</span></span></a>';
+    }).join('');
   }
   function card(s) {
     return '<article class="lt-card" style="--show-color:' + esc(showColor(s.slug)) + ';">' + media(s, false)
@@ -939,6 +959,7 @@ var NN = (function () {
     }
     box.innerHTML = html;
     renderStats(todays, shows);
+    renderWatch(shows);
     renderCatchup(shows);
   }
   function renderStats(todays, shows) {
@@ -1355,103 +1376,30 @@ var NN = (function () {
   }
 
   // ------------------------------------------------------------- the player
-  var player = (function () {
-    var audio = new Audio(); audio.preload = 'none';
-    var queue = [], at = -1, rates = [1, 1.25, 1.5, 1.75, 2, 0.8], rateAt = 0, lastSave = 0;
-    var positions = store('nnMe.pos') || {};
-    function show(on) {
-      el('nn-player').hidden = !on;
-      var h = on ? el('nn-player').offsetHeight : 0;
-      document.documentElement.style.setProperty('--me-player-h', h + 'px');
-      el('nn-me').style.paddingBottom = on ? (h + 24) + 'px' : '';
-    }
-    function current() { return queue[at] || null; }
-    function paint() {
-      var it = current(); if (!it) { return; }
-      var bar = el('nn-player');
-      bar.style.setProperty('--show-color', it.color || '#6B47FF');
-      el('nn-pl-cover').src = it.cover || '';
-      el('nn-pl-show').textContent = it.show || '';
-      var t = el('nn-pl-title'); t.textContent = it.title || ''; t.href = it.post || '#';
-      el('nn-pl-queue').textContent = queue.length > 1 ? (at + 1) + ' of ' + queue.length : '';
-      el('nn-pl-next').disabled = at >= queue.length - 1;
-      var playing = !audio.paused;
-      var tg = el('nn-pl-toggle');
-      tg.classList.toggle('is-playing', playing); tg.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-      document.querySelectorAll('.me-play').forEach(function (b) {
-        var key = b.getAttribute('data-play') || ('ed:' + b.getAttribute('data-edition'));
-        var on = playing && it.key === key;
-        b.classList.toggle('is-playing', on);
-      });
-      if ('mediaSession' in navigator) {
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({ title: it.title, artist: it.show, album: 'My Nerra',
-            artwork: it.cover ? [{ src: new URL(it.cover, location.href).href, sizes: '400x400' }] : [] });
-        } catch (e) {}
-      }
-    }
-    function start(items, i) {
-      queue = items; at = -1; play(i || 0);
-    }
-    function play(i) {
-      if (i < 0 || i >= queue.length) { return; }
-      at = i;
-      var it = current();
-      audio.src = it.url;
-      audio.playbackRate = rates[rateAt];
-      var pos = positions[it.url];
-      var go = function () { if (pos && pos > 5) { try { audio.currentTime = pos; } catch (e) {} } };
-      audio.addEventListener('loadedmetadata', go, { once: true });
-      show(true);
-      audio.play().catch(function () {});
-      paint();
-    }
-    audio.addEventListener('play', paint);
-    audio.addEventListener('pause', paint);
-    audio.addEventListener('timeupdate', function () {
-      var it = current(); if (!it) { return; }
-      var d = audio.duration || 0;
-      el('nn-pl-cur').textContent = clock(audio.currentTime);
-      el('nn-pl-dur').textContent = d ? clock(d) : '';
-      if (d && !state.seeking) { el('nn-pl-seek').value = String(Math.round(audio.currentTime / d * 1000)); }
-      if (Date.now() - lastSave > 5000) {
-        lastSave = Date.now(); positions[it.url] = audio.currentTime;
-        var keys = Object.keys(positions); if (keys.length > 200) { delete positions[keys[0]]; }
-        store('nnMe.pos', positions);
-        if (d && audio.currentTime / d > 0.9) { markPlayed(it.url); }
-      }
+  // The site's one player (assets/js/nn-player.js) plays, reports the play
+  // to analytics (episode_play, or play_personal_sample for the sample) and
+  // keeps positions under the keys this page reads (nnMe.pos, nnMe.played).
+  function P() { return window.NNPlayer || null; }
+  var player = {
+    start: function (items, i) { var p = P(); if (p) { p.start(items, i); } },
+    isKey: function (key) { var p = P(); return !!(p && p.isKey(key)); },
+    toggle: function () { var p = P(); if (p) { p.toggle(); } },
+  };
+  function paintPlaying(st) {
+    document.querySelectorAll('.me-play').forEach(function (b) {
+      var key = b.getAttribute('data-play') || ('ed:' + b.getAttribute('data-edition'));
+      b.classList.toggle('is-playing', !!(st && st.playing && st.key === key));
     });
-    audio.addEventListener('ended', function () {
-      var it = current(); if (it) { markPlayed(it.url); delete positions[it.url]; store('nnMe.pos', positions); }
-      if (at < queue.length - 1) { play(at + 1); } else { paint(); }
-    });
-    var seek = el('nn-pl-seek');
-    seek.addEventListener('input', function () { state.seeking = true; });
-    seek.addEventListener('change', function () {
-      state.seeking = false;
-      if (audio.duration) { audio.currentTime = Number(seek.value) / 1000 * audio.duration; }
-    });
-    // The save bar sits on top of the player, so its offset follows the
-    // player's height, which changes when the layout does.
-    window.addEventListener('resize', function () { if (!el('nn-player').hidden) { show(true); } });
-    if ('mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.setActionHandler('nexttrack', function () { api.next(); });
-        navigator.mediaSession.setActionHandler('seekbackward', function () { api.seekBy(-15); });
-        navigator.mediaSession.setActionHandler('seekforward', function () { api.seekBy(30); });
-      } catch (e) {}
-    }
-    var api = {
-      start: start,
-      isKey: function (key) { var it = current(); return !!(it && it.key === key); },
-      toggle: function () { if (!current()) { return; } if (audio.paused) { audio.play().catch(function () {}); } else { audio.pause(); } },
-      seekBy: function (s) { if (audio.duration) { audio.currentTime = Math.max(0, Math.min(audio.duration - 1, audio.currentTime + s)); } },
-      next: function () { if (at < queue.length - 1) { play(at + 1); } },
-      rate: function () { rateAt = (rateAt + 1) % rates.length; audio.playbackRate = rates[rateAt]; el('nn-pl-rate').textContent = rates[rateAt] + '×'; },
-      close: function () { audio.pause(); show(false); queue = []; at = -1; paint(); },
-    };
-    return api;
-  })();
+  }
+  function hookPlayer() { var p = P(); if (p) { p.onChange(paintPlaying); } else { setTimeout(hookPlayer, 50); } }
+  hookPlayer();
+  function takeDraft() {
+    var d = store('nnMe.draft');
+    try { localStorage.removeItem('nnMe.draft'); } catch (e) {}
+    if (!d || !Array.isArray(d.shows) || Date.now() - (d.ts || 0) > 30 * 86400e3) { return { shows: [], first_name: '' }; }
+    return { shows: d.shows.filter(function (x) { return typeof x === 'string' && /^[a-z0-9_]+$/.test(x); }),
+             first_name: typeof d.first_name === 'string' ? d.first_name.slice(0, 40) : '' };
+  }
   function isPlayed(url) { var p = store('nnMe.played') || {}; return !!(url && p[url]); }
   function markPlayed(url) {
     var p = store('nnMe.played') || {};
@@ -1478,7 +1426,6 @@ var NN = (function () {
     var todays = (state.todays || []);
     var idx = todays.indexOf(s);
     if (idx !== -1) { player.start(todays.map(storyItem), idx); } else { player.start([storyItem(s)], 0); }
-    track('episode_play', { src: String(s.audio_url || '').split('?')[0], location: location.pathname });
   });
 
   // ------------------------------------------------------------- markets
@@ -1619,6 +1566,19 @@ var NN = (function () {
         renderLineup();
         wireInputs();
         markClean();
+        // Oct 28 2026 (later): shows picked on the front page or the join
+        // page before the account existed (localStorage nnMe.draft) become
+        // the lineup of an account that has none, saved once.
+        var draft = takeDraft();
+        if (draft.first_name && !el('nn-name').value) { el('nn-name').value = draft.first_name; greet(draft.first_name); }
+        draft = draft.shows;
+        if (!state.shows.length && draft.length) {
+          state.shows = draft.filter(function (x) { return state.all.indexOf(x) !== -1; }).slice(0, 12);
+          if (state.shows.length) {
+            renderLineup(); checkDirty();
+            setTimeout(function () { NN.save(function () { el('nn-save-status').textContent = 'Saved the shows you picked'; }); }, 0);
+          }
+        }
         loadFront(function () { renderLineup(); renderFront(); renderTopics(); renderTomorrow(); });
         loadMarkets();
         el('nn-feed-active').hidden = !feedUrl;
@@ -1631,6 +1591,8 @@ var NN = (function () {
           el('nn-add-apple').href = 'podcast://' + bare;
           el('nn-add-overcast').href = 'overcast://x-callback-url/add?url=' + encodeURIComponent(feedUrl);
           el('nn-add-pocketcasts').href = 'pktc://subscribe/' + bare;
+          var tok = /\/api\/feed\/([0-9a-f]{32})\/feed\.rss$/.exec(feedUrl);
+          if (tok) { el('nn-add-page').href = '{{ path_prefix }}add.html#' + tok[1]; }
           el('nn-add-castro').href = 'castros://subscribe/' + bare;
         }
         renderBuild(state.today);
@@ -1792,10 +1754,8 @@ var NN = (function () {
     playSample: function () {
       if (!safeUrl(SAMPLE_URL)) { return; }
       player.start([{ key: 'sample', url: safeUrl(SAMPLE_URL), title: 'A sample Personal edition', show: 'Nerra Personal', color: '#00D4FF',
-                      cover: '{{ path_prefix }}assets/covers/nerra-daily.jpg', post: '{{ path_prefix }}join.html#sample' }], 0);
-      track('play_personal_sample', { placement: 'account', location: location.pathname });
+                      cover: '{{ path_prefix }}assets/covers/nerra-daily.jpg', post: '{{ path_prefix }}join.html#sample', sample: 'account' }], 0);
     },
-    player: player,
     logout: function () {
       fetch(API + '/api/logout', { method: 'POST', credentials: 'include' })
         .catch(function () {})

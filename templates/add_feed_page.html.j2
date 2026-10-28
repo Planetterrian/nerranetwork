@@ -1,0 +1,199 @@
+{% extends "base.html.j2" %}
+{#- /add.html (Oct 28 2026): put a Nerra Personal feed into a podcast app.
+
+    The member's feed token arrives in the URL FRAGMENT (add.html#<token>),
+    from My Nerra and the welcome email. A fragment is never sent to a
+    server, and the first script below moves it out of the address bar
+    before analytics load, so the token reaches no log and no page_view.
+    The page then offers each app's own subscribe link for this device,
+    the URL to copy, the share sheet, and on a computer a code to scan
+    with the phone (generated in the page; the code holds this page's URL
+    with the token, nothing is sent anywhere to draw it). Without a token
+    it asks for the member's account. noindex; never in the sitemap. -#}
+
+{% block head_early %}
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<script>
+(function () {
+  try {
+    var h = (location.hash || '').replace(/^#/, '');
+    if (/^[0-9a-f]{32}$/.test(h)) { sessionStorage.setItem('nnAdd.t', h); }
+    if (location.hash) { history.replaceState(null, '', location.pathname); }
+  } catch (e) {}
+})();
+</script>
+{% endblock %}
+
+{% block head_extra %}
+{% include "_landing_styles.html.j2" %}
+<style>
+.ad { max-width: 760px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-8)) var(--sp-6) var(--sp-12); font-family: var(--font-ui); }
+.ad [hidden] { display: none !important; }
+.ad-kicker { margin: 0 0 6px; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lt-cyan); font-weight: 700; }
+.ad h1 { font-family: var(--lt-head); font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.1; margin: 0 0 10px; }
+.ad-lede { color: var(--lt-muted); line-height: 1.6; margin: 0 0 var(--sp-6); }
+.ad-apps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.ad-app { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--lt-rule-strong); background: rgba(255,255,255,0.03); color: var(--nn-white); text-decoration: none; font-weight: 700; }
+.ad-app:hover { border-color: var(--lt-cyan); }
+.ad-app .ic { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex: none; color: #fff; }
+.ad-app small { display: block; font-weight: 500; color: var(--lt-muted); font-size: 0.76rem; margin-top: 2px; }
+.ad-sec { margin-top: var(--sp-8); padding-top: var(--sp-5); border-top: 1px solid var(--lt-rule); }
+.ad-sec h2 { font-family: var(--lt-head); font-size: 1.25rem; margin: 0 0 8px; }
+.ad-sec p { color: var(--lt-muted); line-height: 1.55; margin: 0 0 var(--sp-3); }
+.ad-url { display: flex; gap: 8px; flex-wrap: wrap; }
+.ad-url code { flex: 1 1 320px; word-break: break-all; padding: 10px 12px; border-radius: 10px; background: #0B0F1A; border: 1px solid var(--lt-rule-strong); color: #cbd5e0; font-size: 0.82rem; }
+.ad-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0.7rem 1.2rem; border-radius: 999px; border: 1px solid var(--lt-rule-strong); background: transparent; color: var(--nn-white); font: 700 0.9rem/1 var(--font-ui); cursor: pointer; text-decoration: none; }
+.ad-btn.primary { background: var(--nn-gradient); border-color: transparent; }
+.ad-qr { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--sp-5); align-items: center; }
+.ad-qr-box { width: 200px; height: 200px; background: #fff; border-radius: 14px; padding: 12px; box-sizing: border-box; }
+.ad-qr-box img, .ad-qr-box canvas { width: 100% !important; height: 100% !important; display: block; }
+.ad-steps { margin: 0; padding-left: 1.2rem; color: var(--lt-muted); line-height: 1.6; font-size: 0.92rem; }
+.ad-steps b { color: var(--nn-white); }
+.ad-warn { font-size: 0.82rem; color: var(--lt-muted); }
+@media (max-width: 560px) { .ad { padding-left: var(--sp-4); padding-right: var(--sp-4); } .ad-qr { grid-template-columns: minmax(0, 1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ad">
+    <div data-ad-none>
+        <p class="ad-kicker">Nerra Personal</p>
+        <h1>Add your edition to a podcast app</h1>
+        <p class="ad-lede">This page needs your private feed link. Open it from <a href="{{ path_prefix }}account.html#nn-edition">your account</a>, or from the "Add to my podcast app" button in your welcome email.</p>
+        <p><a class="ad-btn primary" href="{{ path_prefix }}account.html#nn-edition">Go to my account</a> <a class="ad-btn" href="{{ path_prefix }}join.html">What is Nerra Personal?</a></p>
+    </div>
+
+    <div data-ad-has hidden>
+        <p class="ad-kicker">Nerra Personal · your private feed</p>
+        <h1>Add your edition to your podcast app</h1>
+        <p class="ad-lede" data-ad-lede>Tap the app you listen in. It opens with your feed ready to follow; your first edition, or today's, is the newest episode.</p>
+
+        <ul class="ad-apps" data-ad-apps aria-label="Podcast apps"></ul>
+        <p class="ad-warn" style="margin-top:12px;">Nothing opened? That app isn't on this device. Copy the link below and paste it into the app instead.</p>
+
+        <section class="ad-sec" data-ad-qr-sec hidden aria-labelledby="ad-qr-h">
+            <h2 id="ad-qr-h">On your phone</h2>
+            <div class="ad-qr">
+                <div class="ad-qr-box" data-ad-qr role="img" aria-label="A code that opens this page on your phone"></div>
+                <div>
+                    <p>Point your phone's camera at the code. It opens this page there, with one-tap buttons for the apps on your phone.</p>
+                    <p class="ad-warn">The code carries your private link: anyone who scans it can follow your edition.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="ad-sec" aria-labelledby="ad-url-h">
+            <h2 id="ad-url-h">Your feed link</h2>
+            <p>For any other app that can follow a show by its link (an "RSS feed" or "URL").</p>
+            <div class="ad-url"><code data-ad-url></code>
+                <button type="button" class="ad-btn" data-ad-copy>Copy link</button>
+                <button type="button" class="ad-btn" data-ad-share hidden>Share to my phone</button></div>
+        </section>
+
+        <section class="ad-sec" aria-labelledby="ad-how-h">
+            <h2 id="ad-how-h">Adding it by hand</h2>
+            <ul class="ad-steps">
+                <li><b>Apple Podcasts</b>: Library, then the ⋯ menu, then Follow a Show by URL, and paste.</li>
+                <li><b>Overcast</b>: the + button, then Add URL, and paste.</li>
+                <li><b>Pocket Casts</b>: Search, paste the link, then Subscribe.</li>
+                <li><b>Castro</b>: Library, then the + button, then paste.</li>
+                <li><b>AntennaPod</b>: Add podcast, then Add podcast by RSS address, and paste.</li>
+                <li><b>Podcast Addict</b>: the + button, then RSS feed, and paste.</li>
+                <li><b>Spotify</b> doesn't accept private feeds. Every free Nerra show is on Spotify.</li>
+            </ul>
+        </section>
+
+        <section class="ad-sec">
+            <p>Prefer to listen right here? <a href="{{ path_prefix }}account.html">My Nerra</a> plays your edition and your shows in the browser, and keeps your place.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  'use strict';
+  var token = '';
+  try { token = sessionStorage.getItem('nnAdd.t') || ''; } catch (e) {}
+  function show(t) {
+    if (!/^[0-9a-f]{32}$/.test(t)) { return; }
+    token = t;
+    var feed = 'https://api.nerranetwork.com/api/feed/' + t + '/feed.rss';
+    var bare = feed.replace(/^https:\/\//, '');
+    var ua = navigator.userAgent || '';
+    var ios = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    var android = /android/i.test(ua);
+    var mac = /macintosh/i.test(ua) && !ios;
+    var APPS = [
+      { name: 'Apple Podcasts', href: 'podcast://' + bare, on: ios || mac, color: '#9933CC', ic: '◉' },
+      { name: 'Overcast', href: 'overcast://x-callback-url/add?url=' + encodeURIComponent(feed), on: ios, color: '#FC7E0F', ic: '◎' },
+      { name: 'Pocket Casts', href: 'pktc://subscribe/' + bare, on: ios || android, color: '#F43E37', ic: '●' },
+      { name: 'Castro', href: 'castros://subscribe/' + bare, on: ios, color: '#00B265', ic: '▲' },
+      { name: 'AntennaPod', href: 'antennapod-subscribe://' + bare, on: android, color: '#2A5FB3', ic: '⌁' },
+      { name: 'Podcast Addict', href: 'podcastaddict://' + bare, on: android, color: '#F4842D', ic: '✚' },
+    ];
+    var desktop = !ios && !android;
+    var list = APPS.filter(function (a) { return a.on; });
+    var ul = document.querySelector('[data-ad-apps]');
+    ul.textContent = '';
+    list.forEach(function (a) {
+      var li = document.createElement('li'), link = document.createElement('a');
+      link.className = 'ad-app'; link.href = a.href; link.rel = 'nofollow';
+      var ic = document.createElement('span'); ic.className = 'ic'; ic.style.background = a.color; ic.textContent = a.ic; ic.setAttribute('aria-hidden', 'true');
+      var t2 = document.createElement('span'); t2.textContent = a.name;
+      var sm = document.createElement('small'); sm.textContent = 'Opens the app with your feed';
+      t2.appendChild(sm);
+      link.appendChild(ic); link.appendChild(t2);
+      link.addEventListener('click', function () {
+        try { if (typeof window.gtag === 'function') { window.gtag('event', 'personal_feed_add', { app: a.name, location: location.pathname }); } } catch (e) {}
+      });
+      li.appendChild(link); ul.appendChild(li);
+    });
+    document.querySelector('[data-ad-url]').textContent = feed;
+    document.querySelector('[data-ad-none]').hidden = true;
+    document.querySelector('[data-ad-has]').hidden = false;
+    if (desktop) {
+      document.querySelector('[data-ad-lede]').textContent = mac
+        ? 'On this Mac, Apple Podcasts opens with your feed in one click. To listen on your phone, scan the code below with its camera.'
+        : 'To listen on your phone, scan the code below with its camera. On this computer, copy the link into any podcast app that follows a show by URL.';
+      var sec = document.querySelector('[data-ad-qr-sec]');
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.onload = function () {
+        try {
+          new window.QRCode(document.querySelector('[data-ad-qr]'), { text: location.origin + location.pathname + '#' + t, width: 176, height: 176, correctLevel: window.QRCode.CorrectLevel.M });
+          sec.hidden = false;
+        } catch (e) {}
+      };
+      document.head.appendChild(s);
+    }
+    var share = document.querySelector('[data-ad-share]');
+    if (navigator.share) {
+      share.hidden = false;
+      share.addEventListener('click', function () {
+        navigator.share({ title: 'My Nerra Personal feed', url: location.origin + location.pathname + '#' + t }).catch(function () {});
+      });
+    }
+  }
+  document.querySelector('[data-ad-copy]').addEventListener('click', function (ev) {
+    var b = ev.currentTarget, url = document.querySelector('[data-ad-url]').textContent;
+    var done = function (m) { b.textContent = m; setTimeout(function () { b.textContent = 'Copy link'; }, 2500); };
+    try { navigator.clipboard.writeText(url).then(function () { done('Copied'); }, function () { done('Select the link to copy it'); }); }
+    catch (e) { done('Select the link to copy it'); }
+  });
+  if (token) { show(token); return; }
+  // Signed in on this device: the account already knows the feed.
+  var p = window.nnAccount;
+  function fromAccount() {
+    (window.nnAccount || Promise.resolve(null)).then(function (a) {
+      var url = a && a.member && a.member.feed_url;
+      var m = /\/api\/feed\/([0-9a-f]{32})\/feed\.rss$/.exec(url || '');
+      if (m) { show(m[1]); }
+    });
+  }
+  if (p) { fromAccount(); } else { document.addEventListener('DOMContentLoaded', fromAccount); }
+})();
+</script>
+{% endblock %}
