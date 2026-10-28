@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 27 Oct 2026 10:06:17 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 28 Oct 2026 10:22:12 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,187 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 217: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; DeepMind has begun rolling Genie 4 out to trusted testers with wider access and a waitlist coming soon. The model combines real-time physics, reasoning, and audio inside simulations that nest inside other simulations. Builders should watch the official blog post and join the waitlist to experiment with world-model creation.
+
+Top Story
+DeepMind has started rolling Genie 4 out to trusted testers, with wider access planned soon. The interactive world model integrates real-time physics, reasoning, and audio generation inside nested simulations. It builds on prior Genie versions by adding richer sensory and planning capabilities that let users create and interact with dynamic environments. Developers and researchers interested in simulation, robotics, or game-like world building can sign up via the linked waitlist to explore what the model enables. The release positions Genie 4 as a step toward more capable generative world models that run at interactive speeds. Source: &lt;a href="https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/"&gt;deepmind.google&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;3, 7, 14, 17, 42: Instruction Tuning Installs and Sharpens Number-Choice Heuristics in Language Models: arXiv NLP&lt;/b&gt;
+Instruction tuning on 15 matched base and tuned open-weight model pairs makes number distributions less uniform by installing round-number avoidance and sharpening endpoint avoidance. Base models return endpoints 1 and N at 0.30–0.60 of the interior rate while tuned models almost never do; tuned models also avoid multiples of 10 almost completely. The study evaluated 18 model lines at five ranges up to N=100 under 29 decoding configurations and found no shared modal integer above N=10 across more than 42 percent of tuned conditions. Source: &lt;a href="https://arxiv.org/abs/2610.36178"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Beyond IceBERT: Open-Data ModernBERT Encoders for Icelandic from 12M to 1B Parameters: arXiv NLP&lt;/b&gt;
+A 1B-parameter Icelandic encoder trained from scratch on 9B open tokens outperforms the prior IceBERT reference on all eleven evaluated tasks, while a warm-started version from an English Ettin encoder of the same shape ranks highest on every task. Warm-start transfer from English layers works at base size and above even when the target vocabulary is transplanted, and the 1B model remains the first monolingual Icelandic encoder of that scale. Source: &lt;a href="https://arxiv.org/abs/2610.36230"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;MedJev: Evaluating Zero-Shot System-One Decision Making in Medicine: arXiv NLP&lt;/b&gt;
+MedJev, an open System-One model that runs locally on a laptop, reaches 72.5 percent on MedQA, 75.4 percent on USMLE, and 80.1 percent on NEJM while staying within 0.028–0.063 ECE on those knowledge tasks. On patient-level prediction from MIMIC IV it exceeds XGBoost on in-hospital mortality (AUROC 0.926) but trails supervised models on operational outcomes such as ED triage admission. A two-parameter recalibration method using 50–200 local labels reduces ECE to 0.007 on patient-level tasks. Source: &lt;a href="https://arxiv.org/abs/2610.36006"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;OmniBrain-0: A Unified Agentic Model for Embodied Intelligence: arXiv NLP&lt;/b&gt;
+OmniBrain-0 is a lightweight unified embodied agent that coordinates manipulation and navigation through a shared high-level decision model trained with embodied pretraining, domain-specialized distillation, and multi-teacher on-policy distillation. It adds Rubric-Guided Recursive Self-Improvement that turns execution evidence into refined rubrics and verified trajectories before reconsolidation. The model is evaluated on LIBERO-Pro, RoboCasa365, RoboTwin 2.0, R2R-CE, and multiple real-world manipulation tasks while showing substantially lower inference and execution overhead than its closed-source teacher. Source: &lt;a href="https://arxiv.org/abs/2610.36013"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;FinLLM-KG: Knowledge Graph-Enhanced LLMs for Financial Sentiment Analysis in Algorithmic Trading: arXiv NLP&lt;/b&gt;
+FinLLM-KG injects temporally grounded company-level facts from SEC 10-K filings into any causal LLM at inference time without weight updates, supplying either natural-language profiles or relevance-ranked triples. The framework attributes each sentiment score to individual sentences and retrieved triples for inspectability and improves portfolio performance over state-of-the-art baselines in simulation. Source: &lt;a href="https://arxiv.org/abs/2610.36083"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Benchmarking Task Takeover Across Agent Handoffs: arXiv NLP&lt;/b&gt;
+The Handoff State Continuity Benchmark (HSC-Bench) contains 1,039 tasks that measure how well a receiving model recovers repository evidence and continues from prior conversational, tool, and file state after an agent handoff. Structured handoff state improves evidence recovery for every tested model and continuation performance for most models, with the strongest receivers differing between the two tracks. Source: &lt;a href="https://arxiv.org/abs/2610.36523"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TrawMem: Reframing Agent Memory as Task-Oriented Role-Adaptive Workspaces: arXiv NLP&lt;/b&gt;
+TrawMem organizes interaction histories into local threads and builds task-oriented workspaces by assigning roles and jointly selecting complementary memories across Event, Affect, and Time views. On LoCoMo and MemGallery it delivers macro-F1 gains of 2.23–3.14 points over prior memory systems while using 5.1–12.8 percent fewer context tokens on two backbones. Source: &lt;a href="https://arxiv.org/abs/2610.36918"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;DocSkill: Skill-Integrated Agentic Reasoning for Multilingual Multi-Hop Document Question Answering: arXiv NLP&lt;/b&gt;
+DocSkill uses a learned skill-orchestration policy trained via bounded MCTS demonstrations and DPO to select, revisit, or skip skills as evidence state evolves. On the new MMHop-DocBench (60K QA pairs across 10 languages) the Qwen3-VL-8B instantiation reaches 41.0 accuracy and 49.2 F1, exceeding the strongest baseline by 5.5 and 6.3 points. Source: &lt;a href="https://arxiv.org/abs/2610.36759"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CAMR: Compatibility-Aware Memory Replay for Continual Learning in Large Language Models: arXiv NLP&lt;/b&gt;
+CAMR jointly controls current-example supervision and historical replay via compatibility checks and a learned memory gate, choosing among learning with replay, reinforcing compatible examples, or skipping mastered duplicates. On WikiBigEdit it reaches 93.66 percent Original Match after only 3K facts and leads all evaluated methods on four TRACE tasks while preserving earlier-task performance. Source: &lt;a href="https://arxiv.org/abs/2610.36734"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It: arXiv NLP&lt;/b&gt;
+Lipi-Ghor supplies 885 hours of speaker-diarized long-form Bengali audio from 998 YouTube videos across 17 domains together with SSTT annotations and a human-verified gold split. The construction pipeline is released as reusable code for any language with captioned YouTube presence, and four ASR models show consistent degradation on emotive, dialectal, and long-form content. Source: &lt;a href="https://arxiv.org/abs/2610.36184"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;No Tokenizer, Still a Gap: Cross-Lingual Fairness of Homoglyph and Invisible-Character Watermarking: arXiv NLP&lt;/b&gt;
+Homoglyph and invisible-character watermarks achieve capacity that varies 3.3-fold across 40 language varieties in 24 scripts, with script accounting for 96 percent of the variation. Ordinary copy-paste widens the gap so that a detector needs roughly 2 code points for English or Persian but 93 for Lao. Source: &lt;a href="https://arxiv.org/abs/2610.36432"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;ETAMem: Decoupling and Aligning Heterogeneous Memory for Long-Term Conversational Agents: arXiv NLP&lt;/b&gt;
+ETAMem parses conversations into atomic units, separates affective information, and maintains three hierarchical views (Event, Affect, Time) with adaptively calibrated thresholds. On LoCoMo and LongMemEval-S it improves accuracy by 12.46 percent and 7.96 percent relative to state-of-the-art baselines while keeping competitive token efficiency. Source: &lt;a href="https://arxiv.org/abs/2610.37443"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Nothing Left Behind: Finding Evidence from a Large Randomized Evaluation Corpus: arXiv NLP&lt;/b&gt;
+An embedding-based retrieval plus LLM filtering approach finds 92 percent of the evidence a systematic review would include in a 7,354-trial corpus, compared with 45 percent for label search alone. The two-stage design supports broad candidate retrieval followed by query-specific filtering at rising per-query cost with depth. Source: &lt;a href="https://arxiv.org/abs/2610.36910"&gt;arxiv.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;ReCoPII: A Relation-Grounded Framework for Building Contextual PII Masking Datasets: arXiv NLP&lt;/b&gt; — ReCoPII produces relation-grounded contextual PII masking data for Korean documents that yields 88.42 percent annotator agreement on KEEP labels versus 26.27 percent for author-based augmentation and supports joint fine-tuning that limits over-masking to at most 5.04 percent within a fixed leakage budget. Source: &lt;a href="https://arxiv.org/abs/2610.35925"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Frankly Speaking: The Company Election Integrity Keeps in Congressional Communication: arXiv NLP&lt;/b&gt; — Analysis of 10,420 congressional e-newsletters shows Democrats and Republicans surround the same election-integrity terms with entirely different neighboring language, with divergence growing on “certification” after 2020 and on “rigged” and “stolen” after that year. Source: &lt;a href="https://arxiv.org/abs/2610.36187"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Detect Before You Disambiguate: Perturbation-Based Input Ambiguity Detection in LLMs: arXiv NLP&lt;/b&gt; — A label-preserving perturbation framework detects input ambiguity before disambiguation and outperforms output-side uncertainty baselines and LLM-paraphrase baselines across open-domain, conversational, and visual QA datasets. Source: &lt;a href="https://arxiv.org/abs/2610.36353"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;AK_QMUL at ArGuard Shared Tasks: A Single Fine-Tuned JAIS for Arabic Harmful-Prompt Detection: arXiv NLP&lt;/b&gt; — A single JAIS-6.7B backbone fine-tuned with 4-bit QLoRA ranks first on both the binary safe/unsafe track (macro-F1 0.984) and the seven-way harm-domain track (macro-F1 0.790) of the ArGuard-2026 shared task while remaining accurate across six Arabic dialects. Source: &lt;a href="https://arxiv.org/abs/2610.36360"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;LLM Hallucination Detection via Low-rank Multilinear Decomposition: arXiv NLP&lt;/b&gt; — LOTUS summarizes variable-length token representations with statistical descriptors then applies low-rank multilinear decomposition to train a lightweight hallucination classifier that improves over recent state-of-the-art baselines across multiple LLMs and QA benchmarks. Source: &lt;a href="https://arxiv.org/abs/2610.36191"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Expanding Partnership with USGSA for Claude Access: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; — Anthropic’s new OneGov agreement extends Claude access to federal, state, local, tribal, and territorial governments at 40 percent off under a single contract. Source: &lt;a href="https://www.anthropic.com/news/expanding-partnership-gsa"&gt;anthropic.com&lt;/a&gt;
+
+&lt;b&gt;Anthropic Research Partnerships in Drug Development: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; — Anthropic scientists have formed research partnerships with six organizations developing new medicines and begun internal drug-discovery efforts, sharing early results on how Claude supports stages of drug development. Source: &lt;a href="https://x.com/AnthropicAI/status/2115178675050307942"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Build specialized multimodal models with LFM3: Hugging Face Blog&lt;/b&gt; — Liquid AI releases guidance on building specialized multimodal models with LFM3. Source: &lt;a href="https://huggingface.co/blog/LiquidAI/lfm3"&gt;huggingface.co&lt;/a&gt;
+
+&lt;b&gt;Can we trust LLMs to judge whether a research idea is novel?: Hugging Face Blog&lt;/b&gt; — AllenAI examines whether LLMs can reliably judge research novelty. Source: &lt;a href="https://huggingface.co/blog/allenai/novelty-bench"&gt;huggingface.co&lt;/a&gt;
+
+Under the Hood: Causal Head Attribution for Evidence Effects
+Causal head attribution works by running controlled symbolic probes that vary only the count and order of two symbols inside otherwise fixed prompts, then measuring how much each attention head shifts the logit difference between two answer tokens. The method first identifies candidate heads whose ablation removes most of the count effect and whose mean-output patching recovers the effect in both directions, then applies conditional bounds to decide which heads survive finite-sample noise. In Pythia-410M this process isolates sets of 1–12 heads that remove 65.5–91.6 percent of the count effect while preserving influence on count comparisons never seen during selection. When the same heads are ablated on a natural-language task that asks which state is supported by more reports, accuracy drops 8.2 points versus 0.8 points for random sets of the same size and layer. The technique therefore supplies a compact, causally validated shortlist rather than a diffuse importance map. Teams should reach for it when they need to know which specific heads carry a particular reasoning behavior before deciding whether to edit, prune, or monitor those heads in production; the main practical limit is that the symbolic probe must be carefully balanced so that the measured effect truly isolates the variable of interest.
+
+Things to Try This Week
+• Join the Genie 4 waitlist at the DeepMind blog link if you build simulations, robotics planners, or interactive environments and want early access to real-time physics plus audio.
+• Test MedJev on your local laptop for zero-shot medical QA or patient-level prediction tasks where you need low compute and well-calibrated outputs before supervised fine-tuning.
+• Run the released Lipi-Ghor pipeline code on your own language’s captioned YouTube channels to create a diarized long-form speech corpus without manual transcription.
+• Apply the HSC-Bench handoff tasks to measure how well your current agent setup preserves repository evidence and conversational state when responsibility passes between models.
+• Experiment with FinLLM-KG-style knowledge-graph injection on any causal LLM you already use for financial sentiment to add company-level context at inference time with almost zero added cost.
+
+On the Horizon
+• Wider Genie 4 access expected after the current trusted-tester phase.
+• Additional results from Anthropic’s drug-development research partnerships scheduled for the coming months.
+• Further ArGuard shared-task submissions and analyses for Arabic harmful-prompt detection.
+• Continued releases of open Icelandic ModernBERT-scale encoders and evaluation harnesses.</description>
+      <guid isPermaLink="false">models-agents-video-ep217-20261028</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep217_20261028.mp4" length="320762203" type="video/mp4" />
+      <pubDate>Wed, 28 Oct 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep217_20261028.jpg" />
+      <itunes:duration>14:21</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.**
+
+**What You Need to Know:** DeepMind has begun rolling Genie 4 out to trusted testers with wider access and a waitlist coming soon. The model combines real-time physics, reasoning, and audio inside simulations that nest inside other simulations. Builders should watch the official blog post and join the waitlist to experiment with world-model creation.
+---
+### Top Story
+DeepMind has started rolling Genie 4 out to trusted testers, with wider access planned soon. The interactive world model integrates real-time physics, reasoning, and audio generation inside nested simulations. It builds on prior Genie versions by adding richer sensory and planning capabilities that let users create and interact with dynamic environments. Developers and researchers interested in simulation, robotics, or game-like world building can sign up via the linked waitlist to explore what the model enables. The release positions Genie 4 as a step toward more capable generative world models that run at interactive speeds. Source: [deepmind.google](https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/)
+---
+### Model Updates
+**3, 7, 14, 17, 42: Instruction Tuning Installs and Sharpens Number-Choice Heuristics in Language Models: arXiv NLP**
+Instruction tuning on 15 matched base and tuned open-weight model pairs makes number distributions less uniform by installing round-number avoidance and sharpening endpoint avoidance. Base models return endpoints 1 and N at 0.30–0.60 of the interior rate while tuned models almost never do; tuned models also avoid multiples of 10 almost completely. The study evaluated 18 model lines at five ranges up to N=100 under 29 decoding configurations and found no shared modal integer above N=10 across more than 42 percent of tuned conditions. Source: [arxiv.org](https://arxiv.org/abs/2610.36178)
+
+**Beyond IceBERT: Open-Data ModernBERT Encoders for Icelandic from 12M to 1B Parameters: arXiv NLP**
+A 1B-parameter Icelandic encoder trained from scratch on 9B open tokens outperforms the prior IceBERT reference on all eleven evaluated tasks, while a warm-started version from an English Ettin encoder of the same shape ranks highest on every task. Warm-start transfer from English layers works at base size and above even when the target vocabulary is transplanted, and the 1B model remains the first monolingual Icelandic encoder of that scale. Source: [arxiv.org](https://arxiv.org/abs/2610.36230)
+
+**MedJev: Evaluating Zero-Shot System-One Decision Making in Medicine: arXiv NLP**
+MedJev, an open System-One model that runs locally on a laptop, reaches 72.5 percent on MedQA, 75.4 percent on USMLE, and 80.1 percent on NEJM while staying within 0.028–0.063 ECE on those knowledge tasks. On patient-level prediction from MIMIC IV it exceeds XGBoost on in-hospital mortality (AUROC 0.926) but trails supervised models on operational outcomes such as ED triage admission. A two-parameter recalibration method using 50–200 local labels reduces ECE to 0.007 on patient-level tasks. Source: [arxiv.org](https://arxiv.org/abs/2610.36006)
+
+**OmniBrain-0: A Unified Agentic Model for Embodied Intelligence: arXiv NLP**
+OmniBrain-0 is a lightweight unified embodied agent that coordinates manipulation and navigation through a shared high-level decision model trained with embodied pretraining, domain-specialized distillation, and multi-teacher on-policy distillation. It adds Rubric-Guided Recursive Self-Improvement that turns execution evidence into refined rubrics and verified trajectories before reconsolidation. The model is evaluated on LIBERO-Pro, RoboCasa365, RoboTwin 2.0, R2R-CE, and multiple real-world manipulation tasks while showing substantially lower inference and execution overhead than its closed-source teacher. Source: [arxiv.org](https://arxiv.org/abs/2610.36013)
+
+**FinLLM-KG: Knowledge Graph-Enhanced LLMs for Financial Sentiment Analysis in Algorithmic Trading: arXiv NLP**
+FinLLM-KG injects temporally grounded company-level facts from SEC 10-K filings into any causal LLM at inference time without weight updates, supplying either natural-language profiles or relevance-ranked triples. The framework attributes each sentiment score to individual sentences and retrieved triples for inspectability and improves portfolio performance over state-of-the-art baselines in simulation. Source: [arxiv.org](https://arxiv.org/abs/2610.36083)
+---
+### Agent &amp; Tool Developments
+**Benchmarking Task Takeover Across Agent Handoffs: arXiv NLP**
+The Handoff State Continuity Benchmark (HSC-Bench) contains 1,039 tasks that measure how well a receiving model recovers repository evidence and continues from prior conversational, tool, and file state after an agent handoff. Structured handoff state improves evidence recovery for every tested model and continuation performance for most models, with the strongest receivers differing between the two tracks. Source: [arxiv.org](https://arxiv.org/abs/2610.36523)
+
+**TrawMem: Reframing Agent Memory as Task-Oriented Role-Adaptive Workspaces: arXiv NLP**
+TrawMem organizes interaction histories into local threads and builds task-oriented workspaces by assigning roles and jointly selecting complementary memories across Event, Affect, and Time views. On LoCoMo and MemGallery it delivers macro-F1 gains of 2.23–3.14 points over prior memory systems while using 5.1–12.8 percent fewer context tokens on two backbones. Source: [arxiv.org](https://arxiv.org/abs/2610.36918)
+
+**DocSkill: Skill-Integrated Agentic Reasoning for Multilingual Multi-Hop Document Question Answering: arXiv NLP**
+DocSkill uses a learned skill-orchestration policy trained via bounded MCTS demonstrations and DPO to select, revisit, or skip skills as evidence state evolves. On the new MMHop-DocBench (60K QA pairs across 10 languages) the Qwen3-VL-8B instantiation reaches 41.0 accuracy and 49.2 F1, exceeding the strongest baseline by 5.5 and 6.3 points. Source: [arxiv.org](https://arxiv.org/abs/2610.36759)
+
+**CAMR: Compatibility-Aware Memory Replay for Continual Learning in Large Language Models: arXiv NLP**
+CAMR jointly controls current-example supervision and historical replay via compatibility checks and a learned memory gate, choosing among learning with replay, reinforcing compatible examples, or skipping mastered duplicates. On WikiBigEdit it reaches 93.66 percent Original Match after only 3K facts and leads all evaluated methods on four TRACE tasks while preserving earlier-task performance. Source: [arxiv.org](https://arxiv.org/abs/2610.36734)
+---
+### Practical &amp; Community
+**Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It: arXiv NLP**
+Lipi-Ghor supplies 885 hours of speaker-diarized long-form Bengali audio from 998 YouTube videos across 17 domains together with SSTT annotations and a human-verified gold split. The construction pipeline is released as reusable code for any language with captioned YouTube presence, and four ASR models show consistent degradation on emotive, dialectal, and long-form content. Source: [arxiv.org](https://arxiv.org/abs/2610.36184)
+
+**No Tokenizer, Still a Gap: Cross-Lingual Fairness of Homoglyph and Invisible-Character Watermarking: arXiv NLP**
+Homoglyph and invisible-character watermarks achieve capacity that varies 3.3-fold across 40 language varieties in 24 scripts, with script accounting for 96 percent of the variation. Ordinary copy-paste widens the gap so that a detector needs roughly 2 code points for English or Persian but 93 for Lao. Source: [arxiv.org](https://arxiv.org/abs/2610.36432)
+
+**ETAMem: Decoupling and Aligning Heterogeneous Memory for Long-Term Conversational Agents: arXiv NLP**
+ETAMem parses conversations into atomic units, separates affective information, and maintains three hierarchical views (Event, Affect, Time) with adaptively calibrated thresholds. On LoCoMo and LongMemEval-S it improves accuracy by 12.46 percent and 7.96 percent relative to state-of-the-art baselines while keeping competitive token efficiency. Source: [arxiv.org](https://arxiv.org/abs/2610.37443)
+
+**Nothing Left Behind: Finding Evidence from a Large Randomized Evaluation Corpus: arXiv NLP**
+An embedding-based retrieval plus LLM filtering approach finds 92 percent of the evidence a systematic review would include in a 7,354-trial corpus, compared with 45 percent for label search alone. The two-stage design supports broad candidate retrieval followed by query-specific filtering at rising per-query cost with depth. Source: [arxiv.org](https://arxiv.org/abs/2610.36910)
+---
+### Also Today
+**ReCoPII: A Relation-Grounded Framework for Building Contextual PII Masking Datasets: arXiv NLP** — ReCoPII produces relation-grounded contextual PII masking data for Korean documents that yields 88.42 percent annotator agreement on KEEP labels versus 26.27 percent for author-based augmentation and supports joint fine-tuning that limits over-masking to at most 5.04 percent within a fixed leakage budget. Source: [arxiv.org](https://arxiv.org/abs/2610.35925)
+
+**Frankly Speaking: The Company Election Integrity Keeps in Congressional Communication: arXiv NLP** — Analysis of 10,420 congressional e-newsletters shows Democrats and Republicans surround the same election-integrity terms with entirely different neighboring language, with divergence growing on “certification” after 2020 and on “rigged” and “stolen” after that year. Source: [arxiv.org](https://arxiv.org/abs/2610.36187)
+
+**Detect Before You Disambiguate: Perturbation-Based Input Ambiguity Detection in LLMs: arXiv NLP** — A label-preserving perturbation framework detects input ambiguity before disambiguation and outperforms output-side uncertainty baselines and LLM-paraphrase baselines across open-domain, conversational, and visual QA datasets. Source: [arxiv.org](https://arxiv.org/abs/2610.36353)
+
+**AK_QMUL at ArGuard Shared Tasks: A Single Fine-Tuned JAIS for Arabic Harmful-Prompt Detection: arXiv NLP** — A single JAIS-6.7B backbone fine-tuned with 4-bit QLoRA ranks first on both the binary safe/unsafe track (macro-F1 0.984) and the seven-way harm-domain track (macro-F1 0.790) of the ArGuard-2026 shared task while remaining accurate across six Arabic dialects. Source: [arxiv.org](https://arxiv.org/abs/2610.36360)
+
+**LLM Hallucination Detection via Low-rank Multilinear Decomposition: arXiv NLP** — LOTUS summarizes variable-length token representations with statistical descriptors then applies low-rank multilinear decomposition to train a lightweight hallucination classifier that improves over recent state-of-the-art baselines across multiple LLMs and QA benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2610.36191)
+
+**Expanding Partnership with USGSA for Claude Access: [@AnthropicAI](https://x.com/AnthropicAI)** — Anthropic’s new OneGov agreement extends Claude access to federal, state, local, tribal, and territorial governments at 40 percent off under a single contract. Source: [anthropic.com](https://www.anthropic.com/news/expanding-partnership-gsa)
+
+**Anthropic Research Partnerships in Drug Development: [@AnthropicAI](https://x.com/AnthropicAI)** — Anthropic scientists have formed research partnerships with six organizations developing new medicines and begun internal drug-discovery efforts, sharing early results on how Claude supports stages of drug development. Source: [x.com](https://x.com/AnthropicAI/status/2115178675050307942)
+
+**Build specialized multimodal models with LFM3: Hugging Face Blog** — Liquid AI releases guidance on building specialized multimodal models with LFM3. Source: [huggingface.co](https://huggingface.co/blog/LiquidAI/lfm3)
+
+**Can we trust LLMs to judge whether a research idea is novel?: Hugging Face Blog** — AllenAI examines whether LLMs can reliably judge research novelty. Source: [huggingface.co](https://huggingface.co/blog/allenai/novelty-bench)
+---
+### Under the Hood: Causal Head Attribution for Evidence Effects
+Causal head attribution works by running controlled symbolic probes that vary only the count and order of two symbols inside otherwise fixed prompts, then measuring how much each attention head shifts the logit difference between two answer tokens. The method first identifies candidate heads whose ablation removes most of the count effect and whose mean-output patching recovers the effect in both directions, then applies conditional bounds to decide which heads survive finite-sample noise. In Pythia-410M this process isolates sets of 1–12 heads that remove 65.5–91.6 percent of the count effect while preserving influence on count comparisons never seen during selection. When the same heads are ablated on a natural-language task that asks which state is supported by more reports, accuracy drops 8.2 points versus 0.8 points for random sets of the same size and layer. The technique therefore supplies a compact, causally validated shortlist rather than a diffuse importance map. Teams should reach for it when they need to know which specific heads carry a particular reasoning behavior before deciding whether to edit, prune, or monitor those heads in production; the main practical limit is that the symbolic probe must be carefully balanced so that the measured effect truly isolates the variable of interest.
+---
+### Things to Try This Week
+- Join the Genie 4 waitlist at the DeepMind blog link if you build simulations, robotics planners, or interactive environments and want early access to real-time physics plus audio.
+- Test MedJev on your local laptop for zero-shot medical QA or patient-level prediction tasks where you need low compute and well-calibrated outputs before supervised fine-tuning.
+- Run the released Lipi-Ghor pipeline code on your own language’s captioned YouTube channels to create a diarized long-form speech corpus without manual transcription.
+- Apply the HSC-Bench handoff tasks to measure how well your current agent setup preserves repository evidence and conversational state when responsibility passes between models.
+- Experiment with FinLLM-KG-style knowledge-graph injection on any causal LLM you already use for financial sentiment to add company-level context at inference time with almost zero added cost.
+---
+### On the Horizon
+- Wider Genie 4 access expected after the current trusted-tester phase.
+- Additional results from Anthropic’s drug-development research partnerships scheduled for the coming months.
+- Further ArGuard shared-task submissions and analyses for Arabic harmful-prompt detection.
+- Continued releases of open Icelandic ModernBERT-scale encoders and evaluation harnesses.
+</itunes:summary>
+      <itunes:episode>217</itunes:episode>
+      <itunes:title>Ep 217: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep217_20261028_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep217.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 216: OpenAI’s GPT-6.1 Terra delivers faster computer-use agents at half the prior token price.</title>
       <description>Models &amp; Agents
@@ -3736,116 +3917,17 @@ Safety cases for frontier reinforcement-learning runs require evidence that spec
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep188_20260929_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep188.json" type="application/json+chapters" /></item>
     <item>
-      <title>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Researchers mapped under one percent of neurons in a frozen BERT-base-uncased model that drive AI-text detection on the RAID benchmark. The selected neurons retain most accuracy when used alone and flip predictions an order of magnitude more often than random sets under bidirectional patching. A separate production study at Spotify shows a synthetic-data pipeline plus self-improvement loop raised conversational recommendation quality by eight percent and delivered fourteen percent more user listening in live A/B tests.
-
-Top Story
-A productionized pipeline for multi-turn synthetic data generation and self-improvement now powers Spotify's conversational recommendation agent. The pipeline converts single-turn prompts into realistic multi-turn conversations for systematic evaluation before launch. A variance-based contrastive optimization loop combined with a coding agent automatically identifies and fixes planning and tool-use errors. The system improved quality eight percent over a highly optimized manual prompt and has been deployed in production. Online A/B tests recorded fourteen percent higher user listening, five percent more weekly active users, and a five percent lower skip rate versus the prior session-refinement experience. The framework accelerates iteration cycles for cold-start agent development in industry settings. Source: &lt;a href="https://arxiv.org/abs/2609.30297"&gt;arxiv.org&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;A Mechanistic Study of AI-Text Detection Neurons in Frozen BERT: Sparse Probing and Activation Patching on RAID: arXiv NLP&lt;/b&gt;
-The study applied L1-to-L2 sparse probing to all 9,216 CLS hidden-state dimensions across twelve layers of a frozen BERT-base-uncased encoder on the RAID benchmark. It recovered a stable set of under one percent of neurons per generator that remained consistent across folds and seeds. A probe restricted to that set retained most of the full-feature detection accuracy. Bidirectional activation patching flipped predictions an order of magnitude more often than size-matched random sets. Mean-ablating the same neurons left accuracy largely intact, showing the signal is redundantly distributed. Instruction-tuned generators concentrated thirty to thirty-six percent of stable neurons in the final layer while base generators stayed below fourteen percent. Leave-one-family-out evaluation showed the neurons retained eighty-six to ninety-four percent of full-feature ceiling on unseen generator families. Source: &lt;a href="https://arxiv.org/abs/2609.30287"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Manifold Projection and Iterative Autoencoder Refinement for Masked Language Modeling: arXiv NLP&lt;/b&gt;
-The architecture replaces attention with a stack of autoencoder-based mixing modules operating over local neighborhoods, the full sequence, and across attention heads. Each module compresses and reconstructs its input through a low-rank bottleneck whose width is a hyperparameter. An iterative refinement procedure in masked positions first pulls an embedding toward a weighted average of neighbors then projects the result back to the learned manifold. When pretrained on C4 and compared with parameter-matched BERT baselines the model reached a significant portion of attention performance at roughly 1.9 times fewer FLOPs. A frequency-aware training schedule that oversamples rare tokens allowed the model to equal parameter-matched BERT and TinyBERT baselines on the rarest-token frequency bucket. Source: &lt;a href="https://arxiv.org/abs/2609.30288"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;A Survey on Fake Review Detection: From Pre-trained Language Models to Large Language Models: arXiv NLP&lt;/b&gt;
-The survey organizes 211 studies published from 2018 to early 2026 by evidence source and fusion level, covering review text, sentiment, rating behavior, temporal metadata, user-product graphs, multimodal content, external knowledge, and LLM-generated signals. It traces development from traditional machine learning through PLM-based and LLM-based methods. Performance trends are reported on Amazon, Yelp, and OpSpam benchmark families while noting limitations from differing label construction, data splits, and evaluation protocols. Open problems identified include adversarial generation, cross-domain transfer, uncertainty-aware fusion, missing-source robustness, interpretability, and trustworthy evaluation for AI-generated deceptive content. Source: &lt;a href="https://arxiv.org/abs/2609.30292"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SlideLab: Audience-Centered Scientific Slide Generation and Evaluation: arXiv NLP&lt;/b&gt;
-SlideLab is a training-free multi-agent framework that plans a presentation narrative then builds and iteratively refines a shared slide deck using agents for content planning, visual generation, layout refinement, and grounding verification. In a blind human preference study it was preferred over both open-source and commercial systems on seventy-seven percent of papers while using roughly four times fewer inference tokens than the strongest open-source baseline. The accompanying ConfArena framework simulates a conference room and assesses presentations slide by slide, matching human system rankings and detecting injected problems such as falsified numbers, degraded figures, dropped slides, and shuffled order. Source: &lt;a href="https://arxiv.org/abs/2609.30294"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Cartograph: Federated Tool Discovery with Operator-Attested Retrieval for AI Agents: arXiv NLP&lt;/b&gt;
-Cartograph is a federated MCP proxy that reduces agent-visible tool discovery from O(n) catalog traversal to O(k) progressive disclosure. It combines operator-attested Ed25519-signed capability cards, a three-layer confusable-cluster analysis called Rift, and two-stage retrieval that ranks servers before tools. On a twenty-two-server, three-hundred-seventy-four-tool deployment it exposes three proxy tools instead of three hundred seventy-four definitions. A forty-nine-query benchmark yields R@5 of 0.816 versus 0.592 for a Jaccard keyword baseline, while a measured top-five discovery exchange uses four hundred seventy-five tokens rather than forty-two thousand four hundred fifty. Rift identifies forty-nine confusable clusters including four high-risk clusters in bootstrap-generated cards. Gateway measurements add five milliseconds mean latency, or zero point eight percent, relative to direct stdio MCP calls. Source: &lt;a href="https://arxiv.org/abs/2609.30293"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Not All Memories Are Equal: Hierarchical Collaborative Memory for Validity-Aware Retrieval in LLM Agents: arXiv NLP&lt;/b&gt;
-HiCoMER maintains validity of team and individual memories then retrieves only currently valid memories rather than ranking a flat pool by semantic relevance or recency. It consists of a Hierarchical Memory Conflict Updater, a Validity-Aware Memory Retriever, and a Memory-Grounded Answer Generator. Two new datasets were constructed for memory-grounded question answering in collaborative settings. Experiments show HiCoMER consistently outperforms strong baselines by reducing outdated retrieval, preserving current team consensus, and improving downstream QA quality. Source: &lt;a href="https://arxiv.org/abs/2609.30289"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SignTrace: Describe a Sign, Find the Word: arXiv NLP&lt;/b&gt;
-SignTrace integrates LLM-based dictionary enrichment, action extraction, dictionary-style rewriting, seven-channel retrieval, and candidate reranking over six thousand six hundred ninety-nine Chinese sign-language dictionary entries. On a dictionary-derived benchmark of five hundred movement-description queries it achieves ninety-four point zero percent Hit@1, ninety-seven point four percent Hit@9, and mean reciprocal rank of zero point nine five four zero. Reranking raises Hit@1 from seventy-one point eight percent to ninety-four point zero percent. Median query-processing time is thirteen point three seven seconds with six concurrent queries. The system has been deployed for user trials with positive informal feedback. Source: &lt;a href="https://arxiv.org/abs/2609.30295"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;A Benchmark Framework for Screening Automation in Systematic Reviews: arXiv NLP&lt;/b&gt;
-The benchmark supplies forty-five thousand sixty-four labeled entries for evaluating LLM performance in systematic-review screening across thirty-two curated secondary studies. An evaluation framework accounts for class imbalance between excluded and included articles. PromptSR supports prompt experimentation, experiment management, and result analysis for LLM-based screening. A use-case demonstration applies SRBench and PromptSR to the screening task. Source: &lt;a href="https://arxiv.org/abs/2609.30298"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Inquesto Score: A reliability Protocol For Voice Agents: arXiv NLP&lt;/b&gt;
-Inquesto Score measures voice-agent reliability as the percentage of calls in a fixed, versioned evaluation population that achieve the caller's goal without functional failure. It defines explicit failure events and severity levels, measures timing failures directly from audio, and evaluates semantic failures with scenario predicates, tool traces, and a pinned open-model judge. Version zero point one evaluates thirty scenarios, three acoustic conditions, four speaker groups, and three hundred six calls per agent across thirteen configurations. The protocol, reference implementation, and evaluation records are released. Source: &lt;a href="https://arxiv.org/abs/2609.30514"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Low-Rank Bottleneck Autoencoders Replace Attention for Context Mixing
-The core insight is that attention's dynamic weighting can be approximated by a stack of fixed-width autoencoders that compress then reconstruct token representations. Each module operates on local neighborhoods, the full sequence, or across heads, with bottleneck width treated as a hyperparameter rather than learned. The iterative refinement step first averages an embedding with its neighbors then projects the result back onto the manifold learned by the autoencoder. On C4 pretraining this approach reaches a substantial fraction of attention performance while using roughly one point nine times fewer FLOPs than parameter-matched BERT baselines. The frequency-aware masking schedule that oversamples rare tokens allows the model to match BERT and TinyBERT on the lowest-frequency bucket. When the bottleneck is too narrow, reconstruction error rises sharply and downstream accuracy collapses; when it is too wide, the FLOPs advantage disappears. Teams should therefore sweep bottleneck width on a small validation slice before scaling, and retain the frequency-aware schedule whenever rare-token performance matters.
-
-Things to Try This Week
-• Apply the sparse-probing protocol from the BERT detection paper to your own frozen encoder on a small labeled set to test whether a one-percent neuron subset retains detection accuracy.
-• Run the Cartograph federated proxy against an MCP server catalog to measure token savings versus full-catalog traversal on your own tool set.
-• Test SignTrace on movement descriptions from your local sign-language learners to see whether the seven-channel retrieval plus reranking reaches the reported ninety-four percent Hit@1.
-
-On the Horizon
-• Additional leave-one-family-out results on the RAID benchmark are expected in follow-up work from the same lab.
-• Production metrics from wider deployment of the Spotify conversational agent will be reported in an upcoming industry case study.
-• Expanded user trials for SignTrace are planned with independent movement descriptions collected from learners.</description>
+      <title>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.</title>
+      <description>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.</description>
       <guid isPermaLink="false">models-agents-video-ep187-20260928</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep187_20260928.mp4" length="185377385" type="video/mp4" />
       <pubDate>Mon, 28 Sep 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep187_20260928.jpg" />
       <itunes:duration>10:54</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.**
-
-**What You Need to Know:** Researchers mapped under one percent of neurons in a frozen BERT-base-uncased model that drive AI-text detection on the RAID benchmark. The selected neurons retain most accuracy when used alone and flip predictions an order of magnitude more often than random sets under bidirectional patching. A separate production study at Spotify shows a synthetic-data pipeline plus self-improvement loop raised conversational recommendation quality by eight percent and delivered fourteen percent more user listening in live A/B tests.
----
-### Top Story
-A productionized pipeline for multi-turn synthetic data generation and self-improvement now powers Spotify's conversational recommendation agent. The pipeline converts single-turn prompts into realistic multi-turn conversations for systematic evaluation before launch. A variance-based contrastive optimization loop combined with a coding agent automatically identifies and fixes planning and tool-use errors. The system improved quality eight percent over a highly optimized manual prompt and has been deployed in production. Online A/B tests recorded fourteen percent higher user listening, five percent more weekly active users, and a five percent lower skip rate versus the prior session-refinement experience. The framework accelerates iteration cycles for cold-start agent development in industry settings. Source: [arxiv.org](https://arxiv.org/abs/2609.30297)
----
-### Model Updates
-**A Mechanistic Study of AI-Text Detection Neurons in Frozen BERT: Sparse Probing and Activation Patching on RAID: arXiv NLP**
-The study applied L1-to-L2 sparse probing to all 9,216 CLS hidden-state dimensions across twelve layers of a frozen BERT-base-uncased encoder on the RAID benchmark. It recovered a stable set of under one percent of neurons per generator that remained consistent across folds and seeds. A probe restricted to that set retained most of the full-feature detection accuracy. Bidirectional activation patching flipped predictions an order of magnitude more often than size-matched random sets. Mean-ablating the same neurons left accuracy largely intact, showing the signal is redundantly distributed. Instruction-tuned generators concentrated thirty to thirty-six percent of stable neurons in the final layer while base generators stayed below fourteen percent. Leave-one-family-out evaluation showed the neurons retained eighty-six to ninety-four percent of full-feature ceiling on unseen generator families. Source: [arxiv.org](https://arxiv.org/abs/2609.30287)
-
-**Manifold Projection and Iterative Autoencoder Refinement for Masked Language Modeling: arXiv NLP**
-The architecture replaces attention with a stack of autoencoder-based mixing modules operating over local neighborhoods, the full sequence, and across attention heads. Each module compresses and reconstructs its input through a low-rank bottleneck whose width is a hyperparameter. An iterative refinement procedure in masked positions first pulls an embedding toward a weighted average of neighbors then projects the result back to the learned manifold. When pretrained on C4 and compared with parameter-matched BERT baselines the model reached a significant portion of attention performance at roughly 1.9 times fewer FLOPs. A frequency-aware training schedule that oversamples rare tokens allowed the model to equal parameter-matched BERT and TinyBERT baselines on the rarest-token frequency bucket. Source: [arxiv.org](https://arxiv.org/abs/2609.30288)
-
-**A Survey on Fake Review Detection: From Pre-trained Language Models to Large Language Models: arXiv NLP**
-The survey organizes 211 studies published from 2018 to early 2026 by evidence source and fusion level, covering review text, sentiment, rating behavior, temporal metadata, user-product graphs, multimodal content, external knowledge, and LLM-generated signals. It traces development from traditional machine learning through PLM-based and LLM-based methods. Performance trends are reported on Amazon, Yelp, and OpSpam benchmark families while noting limitations from differing label construction, data splits, and evaluation protocols. Open problems identified include adversarial generation, cross-domain transfer, uncertainty-aware fusion, missing-source robustness, interpretability, and trustworthy evaluation for AI-generated deceptive content. Source: [arxiv.org](https://arxiv.org/abs/2609.30292)
-
-**SlideLab: Audience-Centered Scientific Slide Generation and Evaluation: arXiv NLP**
-SlideLab is a training-free multi-agent framework that plans a presentation narrative then builds and iteratively refines a shared slide deck using agents for content planning, visual generation, layout refinement, and grounding verification. In a blind human preference study it was preferred over both open-source and commercial systems on seventy-seven percent of papers while using roughly four times fewer inference tokens than the strongest open-source baseline. The accompanying ConfArena framework simulates a conference room and assesses presentations slide by slide, matching human system rankings and detecting injected problems such as falsified numbers, degraded figures, dropped slides, and shuffled order. Source: [arxiv.org](https://arxiv.org/abs/2609.30294)
----
-### Agent &amp; Tool Developments
-**Cartograph: Federated Tool Discovery with Operator-Attested Retrieval for AI Agents: arXiv NLP**
-Cartograph is a federated MCP proxy that reduces agent-visible tool discovery from O(n) catalog traversal to O(k) progressive disclosure. It combines operator-attested Ed25519-signed capability cards, a three-layer confusable-cluster analysis called Rift, and two-stage retrieval that ranks servers before tools. On a twenty-two-server, three-hundred-seventy-four-tool deployment it exposes three proxy tools instead of three hundred seventy-four definitions. A forty-nine-query benchmark yields R@5 of 0.816 versus 0.592 for a Jaccard keyword baseline, while a measured top-five discovery exchange uses four hundred seventy-five tokens rather than forty-two thousand four hundred fifty. Rift identifies forty-nine confusable clusters including four high-risk clusters in bootstrap-generated cards. Gateway measurements add five milliseconds mean latency, or zero point eight percent, relative to direct stdio MCP calls. Source: [arxiv.org](https://arxiv.org/abs/2609.30293)
-
-**Not All Memories Are Equal: Hierarchical Collaborative Memory for Validity-Aware Retrieval in LLM Agents: arXiv NLP**
-HiCoMER maintains validity of team and individual memories then retrieves only currently valid memories rather than ranking a flat pool by semantic relevance or recency. It consists of a Hierarchical Memory Conflict Updater, a Validity-Aware Memory Retriever, and a Memory-Grounded Answer Generator. Two new datasets were constructed for memory-grounded question answering in collaborative settings. Experiments show HiCoMER consistently outperforms strong baselines by reducing outdated retrieval, preserving current team consensus, and improving downstream QA quality. Source: [arxiv.org](https://arxiv.org/abs/2609.30289)
-
-**SignTrace: Describe a Sign, Find the Word: arXiv NLP**
-SignTrace integrates LLM-based dictionary enrichment, action extraction, dictionary-style rewriting, seven-channel retrieval, and candidate reranking over six thousand six hundred ninety-nine Chinese sign-language dictionary entries. On a dictionary-derived benchmark of five hundred movement-description queries it achieves ninety-four point zero percent Hit@1, ninety-seven point four percent Hit@9, and mean reciprocal rank of zero point nine five four zero. Reranking raises Hit@1 from seventy-one point eight percent to ninety-four point zero percent. Median query-processing time is thirteen point three seven seconds with six concurrent queries. The system has been deployed for user trials with positive informal feedback. Source: [arxiv.org](https://arxiv.org/abs/2609.30295)
----
-### Practical &amp; Community
-**A Benchmark Framework for Screening Automation in Systematic Reviews: arXiv NLP**
-The benchmark supplies forty-five thousand sixty-four labeled entries for evaluating LLM performance in systematic-review screening across thirty-two curated secondary studies. An evaluation framework accounts for class imbalance between excluded and included articles. PromptSR supports prompt experimentation, experiment management, and result analysis for LLM-based screening. A use-case demonstration applies SRBench and PromptSR to the screening task. Source: [arxiv.org](https://arxiv.org/abs/2609.30298)
-
-**Inquesto Score: A reliability Protocol For Voice Agents: arXiv NLP**
-Inquesto Score measures voice-agent reliability as the percentage of calls in a fixed, versioned evaluation population that achieve the caller's goal without functional failure. It defines explicit failure events and severity levels, measures timing failures directly from audio, and evaluates semantic failures with scenario predicates, tool traces, and a pinned open-model judge. Version zero point one evaluates thirty scenarios, three acoustic conditions, four speaker groups, and three hundred six calls per agent across thirteen configurations. The protocol, reference implementation, and evaluation records are released. Source: [arxiv.org](https://arxiv.org/abs/2609.30514)
----
-### Under the Hood: Low-Rank Bottleneck Autoencoders Replace Attention for Context Mixing
-The core insight is that attention's dynamic weighting can be approximated by a stack of fixed-width autoencoders that compress then reconstruct token representations. Each module operates on local neighborhoods, the full sequence, or across heads, with bottleneck width treated as a hyperparameter rather than learned. The iterative refinement step first averages an embedding with its neighbors then projects the result back onto the manifold learned by the autoencoder. On C4 pretraining this approach reaches a substantial fraction of attention performance while using roughly one point nine times fewer FLOPs than parameter-matched BERT baselines. The frequency-aware masking schedule that oversamples rare tokens allows the model to match BERT and TinyBERT on the lowest-frequency bucket. When the bottleneck is too narrow, reconstruction error rises sharply and downstream accuracy collapses; when it is too wide, the FLOPs advantage disappears. Teams should therefore sweep bottleneck width on a small validation slice before scaling, and retain the frequency-aware schedule whenever rare-token performance matters.
----
-### Things to Try This Week
-- Apply the sparse-probing protocol from the BERT detection paper to your own frozen encoder on a small labeled set to test whether a one-percent neuron subset retains detection accuracy.
-- Run the Cartograph federated proxy against an MCP server catalog to measure token savings versus full-catalog traversal on your own tool set.
-- Test SignTrace on movement descriptions from your local sign-language learners to see whether the seven-channel retrieval plus reranking reaches the reported ninety-four percent Hit@1.
----
-### On the Horizon
-- Additional leave-one-family-out results on the RAID benchmark are expected in follow-up work from the same lab.
-- Production metrics from wider deployment of the Spotify conversational agent will be reported in an upcoming industry case study.
-- Expanded user trials for SignTrace are planned with independent movement descriptions collected from learners.
-</itunes:summary>
+      <itunes:summary>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.</itunes:summary>
       <itunes:episode>187</itunes:episode>
-      <itunes:title>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators…</itunes:title>
+      <itunes:title>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep187_20260928_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep187.json" type="application/json+chapters" /></item>
     <item>
@@ -3862,19 +3944,5 @@ The core insight is that attention's dynamic weighting can be approximated by a 
       <itunes:title>Ep 186: Local inference on Apple Silicon just got faster with a tuned fork of the Splash engine delivering up to 1.5 times the speed on M5 Max chips.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep186_20260927_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep186.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 185: Claude solved a nine-loop scattering amplitude problem in particle physics that stood as the prior record at eight loops.</title>
-      <description>Ep 185: Claude solved a nine-loop scattering amplitude problem in particle physics that stood as the prior record at eight loops.</description>
-      <guid isPermaLink="false">models-agents-video-ep185-20260926</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep185_20260926.mp4" length="130178479" type="video/mp4" />
-      <pubDate>Sat, 26 Sep 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep185_20260926.jpg" />
-      <itunes:duration>08:13</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 185: Claude solved a nine-loop scattering amplitude problem in particle physics that stood as the prior record at eight loops.</itunes:summary>
-      <itunes:episode>185</itunes:episode>
-      <itunes:title>Ep 185: Claude solved a nine-loop scattering amplitude problem in particle physics that stood as the prior record at eight loops.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep185_20260926_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep185.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
