@@ -45,7 +45,13 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="assets/js/consent.js"
@@ -987,7 +993,7 @@
         <h3>Information you give us</h3>
         <ul>
             <li><strong>Email address</strong>, when you subscribe to a newsletter or create a Nerra account. Subscribing is explicit and opt-in.</li>
-            <li><strong>Membership details</strong>, if you join Nerra Personal: the shows you pick, their order, and, for the morning-brief tier, the city you choose. We keep this so we can build your feed.</li>
+            <li><strong>Membership details</strong>, if you join Nerra Personal: the shows you pick and their order, the first name Mira greets you by, the city or cities you choose, the subjects you ask her to follow, the add-ons and length you set, and the short note you can write in "Tell Mira about you". We keep this so we can build your feed.</li>
             <li><strong>Payment</strong> is handled entirely by Stripe. We receive a confirmation that a subscription is active; we never see or store your card number.</li>
             <li><strong>Messages you send us</strong> (name, email, and what you wrote) when you contact us.</li>
             <li><strong>Guest applications and interviews</strong> on The Age of AI and Nerra Voices &mdash; see <a href="#guests">If you are a guest</a> below.</li>
@@ -1069,6 +1075,11 @@
             <li>See <a href="#guests">If you are a guest</a> for what each one receives.</li>
         </ul>
 
+        <h3>Nerra Personal members: xAI</h3>
+        <ul>
+            <li>Each morning xAI's Grok model writes Mira's lines for your edition and, on the tiers that include them, your city brief and your subjects. To do that it receives your first name, the shows in your edition, your city or cities, your subjects, and your note to Mira. It never receives your email address or payment details. Mira's lines are then voiced with xAI's text-to-speech.</li>
+        </ul>
+
         <h3>Google Analytics and Google Ads measurement</h3>
         <ul>
             <li>We use Google Consent Mode v2: analytics and advertising storage are <strong>denied by default</strong>. The cookie banner asks before any tracking cookie is set. "Reject" means none are.</li>
@@ -1139,7 +1150,7 @@
         <p>No method of transmission over the internet is completely secure; we cannot guarantee absolute security.</p>
 
         <h2 id="transfers">8. International transfers</h2>
-        <p>Some providers (GitHub, Cloudflare, Buttondown, Stripe, Google, Resend, and for guests Cal.com, Voximplant and xAI) process data outside Canada. Those transfers are necessary to run the service, and by using Nerra Network you consent to them under this policy.</p>
+        <p>Some providers (GitHub, Cloudflare, Buttondown, Stripe, Google, Resend, xAI for Nerra Personal members, and for guests Cal.com, Voximplant and xAI) process data outside Canada. Those transfers are necessary to run the service, and by using Nerra Network you consent to them under this policy.</p>
 
         <h2 id="children">9. Children</h2>
         <p>Nerra Network is not directed at children under 13 and we do not knowingly collect their information. If we learn that we have, we delete it.</p>
@@ -1420,6 +1431,14 @@
                         <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -1432,10 +1451,7 @@
                     <a href="privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="terms-of-service.html">Terms</a> &middot;
-                    <a href="ai-disclosure.html">AI Disclosure</a>
-                    <span style="opacity:0.5;">&middot;</span>
-                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
-                </div>
+                    <a href="ai-disclosure.html">AI Disclosure</a></div>
             </div>
         </div>
     </footer>
@@ -1524,24 +1540,29 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js" defer></script>
     <script src="assets/js/language-control.js" defer></script>
-    <script src="assets/js/footer-subscribe.js" defer></script>
+    <script src="assets/js/footer-subscribe.js" defer></script><script src="assets/js/nn-player.js" defer></script>
+    <script src="assets/js/nn-app.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">

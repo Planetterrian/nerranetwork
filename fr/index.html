@@ -56,7 +56,13 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="../assets/js/consent.js"
@@ -168,7 +174,7 @@
 .lt-dev-earlier a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-dev-when { font-weight: 700; color: var(--lt-muted); margin-right: 4px; }
 
-/* ---- Soft Personal band (the homepage's one email ask) ---- */
+/* ---- Personal tips band (the homepage's one email ask) ---- */
 .lt-soft { margin-top: var(--sp-10); }
 .lt-soft .nn-soft-personal-hero { border-top: 1px solid var(--nn-border); }
 
@@ -296,6 +302,14 @@
 .lt-meta a { color: var(--lt-ink); font-weight: 600; }
 .lt-meta a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-meta .lt-dot { color: var(--lt-rule-strong); }
+.lt-pop-date { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-personal-sample { width: 100%; max-width: 360px; }
+.lt-personal-sample .lt-sublabel { margin-bottom: var(--sp-2); }
+.lt-personal-sample audio { width: 100%; display: block; }
+.lt-personal-price { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); margin: 0; }
+.lt-also-by { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 6px 0 0; }
+.lt-also-by a { color: var(--lt-ink); font-weight: 600; }
+.lt-also-by a:hover { color: var(--nn-white); text-decoration: underline; }
 
 .lt-media {
   position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--lt-radius);
@@ -319,7 +333,9 @@ a.lt-media:hover img { transform: scale(1.03); }
 /* ---- Lead + Latest ---- */
 .lt-top { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); gap: var(--sp-8); }
 .lt-lead .lt-media { border-radius: 12px; }
-.lt-lead-body { padding-top: var(--sp-4); }
+.lt-lead-head { margin-bottom: var(--sp-4); }
+.lt-lead-head .lt-hl { margin-top: 6px; }
+.lt-lead-body { padding-top: var(--sp-3); }
 .lt-lead .lt-hl { font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; }
 .lt-lead-audio { margin-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
 .lt-lead-audio audio { width: min(100%, 420px); height: 40px; }
@@ -928,6 +944,51 @@ body.lt-player-open { overflow: hidden; }
   .lt-reel-card:hover .lt-reel-frame, .lt-reel-card:focus-within .lt-reel-frame,
   .lt-reel-card:hover .lt-reel-img { transform: none; }
   .lt-player[open] { animation: none; }
+}
+/* For you (Oct 28 2026): the front page's picker for visitors and its row of
+   a member's own shows. assets/js/for-you.js. */
+.nn-you { --you-pad: var(--sp-6); }
+.nn-you > div { border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--you-pad);
+  background: radial-gradient(ellipse 55% 90% at 0% 0%, rgba(107,71,255,0.18), transparent 70%), radial-gradient(ellipse 50% 90% at 100% 100%, rgba(0,212,255,0.12), transparent 70%), #0D1120; }
+.nn-you [hidden] { display: none !important; }
+.nn-you-visitor { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: var(--sp-6); align-items: center; }
+.nn-you-copy h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: 4px 0 10px; }
+.nn-you-copy p { margin: 0; color: var(--lt-muted); line-height: 1.55; font-family: var(--font-ui); }
+.nn-you-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.nn-you-pick { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.03); color: var(--nn-white); font: 600 0.84rem/1.2 var(--font-ui); }
+.nn-you-pick img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block; }
+.nn-you-pick i { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.35); flex: none; position: relative; }
+.nn-you-pick[aria-pressed="true"] { border-color: var(--show-color); background: color-mix(in srgb, var(--show-color) 22%, transparent); }
+.nn-you-pick[aria-pressed="true"] i { background: var(--show-color); border-color: var(--show-color); }
+.nn-you-pick[aria-pressed="true"] i::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.nn-you-pick:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+.nn-you-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); font-family: var(--font-ui); }
+.nn-you-count { color: var(--lt-muted); font-size: 0.88rem; }
+.nn-you-signin { margin-left: auto; color: var(--lt-cyan); font-size: 0.88rem; }
+.nn-you-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.nn-you-head h2 { font-size: clamp(1.5rem, 2.8vw, 2rem); margin: 4px 0 6px; }
+.nn-you-head h2 em { font-style: italic; color: var(--lt-cyan); }
+.nn-you-sub { margin: 0; color: var(--lt-muted); font-family: var(--font-ui); }
+.nn-you-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.nn-you-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.nn-you-card { width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px; gap: 12px; align-items: center; text-align: left; cursor: pointer;
+  padding: 10px; border-radius: 14px; border: 1px solid var(--lt-rule); border-left: 3px solid var(--show-color); background: rgba(255,255,255,0.03); color: var(--nn-white); font-family: var(--font-ui); }
+.nn-you-card:hover { background: rgba(255,255,255,0.06); }
+.nn-you-card img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; display: block; background: rgba(255,255,255,0.05); }
+.nn-you-card-txt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nn-you-card-txt b { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
+.nn-you-card-hl { font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 0.98rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nn-you-card-txt small { color: var(--lt-muted); font-size: 0.74rem; }
+.nn-you-card-play { width: 40px; height: 40px; border-radius: 50%; background: #fff; position: relative; }
+.nn-you-card-play::after { content: ""; position: absolute; left: 15px; top: 12px; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+.nn-you-card.is-playing .nn-you-card-play::after { left: 14px; top: 13px; width: 4px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; }
+.nn-you-upsell { margin: var(--sp-4) 0 0; font-family: var(--font-ui); color: var(--lt-muted); }
+.nn-you-upsell a { color: var(--lt-cyan); font-weight: 600; }
+@media (max-width: 860px) {
+  .nn-you-visitor { grid-template-columns: minmax(0, 1fr); }
+  .nn-you { --you-pad: var(--sp-4); }
+  .nn-you-signin { margin-left: 0; }
 }
 </style>
 <style>
@@ -1655,8 +1716,8 @@ body.lt-player-open { overflow: hidden; }
 
 <header class="lt-masthead container"><div class="lt-masthead-inner">
     <div class="lt-masthead-meta">
-        <time class="lt-dateline" datetime="2026-10-27">mardi 27 octobre 2026</time>
-        <span>Mis à jour à <time datetime="2026-10-27T21:18:58Z">17:18 ET</time></span>
+        <time class="lt-dateline" datetime="2026-10-28">mercredi 28 octobre 2026</time>
+        <span>Mis à jour à <time datetime="2026-10-28T21:40:49Z">17:40 ET</time></span>
         <span>Nouveaux épisodes aujourd'hui: 6</span>
     </div>
     <div class="lt-masthead-row">
@@ -1694,6 +1755,18 @@ body.lt-player-open { overflow: hidden; }
     <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Lecture">Pause</button>
     <ul>
         
+        <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep144.html"><span class="lt-ticker-show">SpaceX Daily</span><span>SpaceX prévoit 10 000 lancements annuels de Starship depuis le seul site de Louisiane.</span></a></li>
+        
+        <li style="--show-color:#E31937;"><a href="../blog/tesla/ep648.html"><span class="lt-ticker-show">Tesla Shorts Time</span><span>Tesla a dépensé 4,73 milliards de dollars en dépenses d&#39;investissement au dernier…</span></a></li>
+        
+        <li style="--show-color:#7C3AED;"><a href="../blog/models_agents/ep217.html"><span class="lt-ticker-show">Models & Agents</span><span>Genie 4 offre désormais aux créateurs de la physique, du raisonnement et de l’audio en…</span></a></li>
+        
+        <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep236.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>Hera a résolu Didymos et Dimorphos comme des astéroïdes distincts à 197 millions de…</span></a></li>
+        
+        <li style="--show-color:#047857;"><a href="../blog/modern_investing/ep214.html"><span class="lt-ticker-show">Modern Investing Techniques</span><span>Les emprunteurs canadiens à taux variable devraient surveiller la décision de la Fed…</span></a></li>
+        
+        <li style="--show-color:#0F766E;"><a href="../blog/first_principles/ep144.html"><span class="lt-ticker-show">First Principles Daily</span><span>Une bouteille de shampoing se vend dix dollars alors que ses tensioactifs et son…</span></a></li>
+        
         <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep143.html"><span class="lt-ticker-show">SpaceX Daily</span><span>Raptor 4 vise 300 tonnes de poussée au niveau de la mer à la masse du Raptor 3, poussant…</span></a></li>
         
         <li style="--show-color:#E31937;"><a href="../blog/tesla/ep647.html"><span class="lt-ticker-show">Tesla Shorts Time</span><span>Tesla met à jour sa page canadienne du Model 3 avec les spécifications Fremont Long…</span></a></li>
@@ -1702,43 +1775,32 @@ body.lt-player-open { overflow: hidden; }
         
         <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep235.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>Deux satellites ont réduit leur écart de 189 km à 47 km en quatre jours tout en…</span></a></li>
         
-        <li style="--show-color:#047857;"><a href="../blog/modern_investing/ep213.html"><span class="lt-ticker-show">Modern Investing Techniques</span><span>Les actions énergétiques du TSX ont doublé cette année grâce aux gains pétroliers, une…</span></a></li>
-        
-        <li style="--show-color:#0F766E;"><a href="../blog/first_principles/ep143.html"><span class="lt-ticker-show">First Principles Daily</span><span>Les prix de l&#39;alizarine ont chuté de quinze dollars la livre à cinquante-cinq cents…</span></a></li>
-        
-        <li style="--show-color:#1A5CFF;"><a href="../blog/spacex/ep142.html"><span class="lt-ticker-show">SpaceX Daily</span><span>SpaceX a allumé les 33 moteurs Raptor du booster Super Heavy pour un tir statique de…</span></a></li>
-        
-        <li style="--show-color:#E31937;"><a href="../blog/tesla/ep646.html"><span class="lt-ticker-show">Tesla Shorts Time</span><span>Barclays estime désormais que le stockage d&#39;énergie Tesla est presque entièrement vendu…</span></a></li>
-        
-        <li style="--show-color:#7C3AED;"><a href="../blog/models_agents/ep215.html"><span class="lt-ticker-show">Models & Agents</span><span>Kolibri active 3,46 milliards de paramètres par token tout en se positionnant sur la…</span></a></li>
-        
-        <li style="--show-color:#6B47FF;"><a href="../blog/fascinating_frontiers/ep234.html"><span class="lt-ticker-show">Fascinating Frontiers</span><span>Webb a photographié une planète géante de 7,6 fois la masse de Jupiter à seulement douze…</span></a></li>
-        
     </ul>
 </div>
 
 <section class="lt-top container" aria-label="Article principal">
     
-    <article class="lt-lead" style="--show-color:#047857;">
-        <a href="../blog/modern_investing/ep213.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-27/ep213/90d35051424d.thumb.webp" alt=""
-         width="800" height="450"
-         fetchpriority="high" decoding="async">
-</a>
-        <div class="lt-lead-body">
+    <article class="lt-lead" style="--show-color:#047857;"><div class="lt-lead-head">
             <p class="lt-kicker">
     <span class="lt-hub">Marchés et investissement</span>
     <a href="../modern-investing.html">Modern Investing Techniques</a>
 </p>
-            <h2 class="lt-hl"><a href="../blog/modern_investing/ep213.html">Les actions énergétiques du TSX ont doublé cette année grâce aux gains pétroliers, une opportunité de rotation sectorielle pour les CELI canadiens.</a></h2>
+            <h2 class="lt-hl"><a href="../blog/modern_investing/ep214.html">Les emprunteurs canadiens à taux variable devraient surveiller la décision de la Fed pour des signaux indiquant si les 90,6 % de chances de statu quo se maintiennent.</a></h2>
+        </div>
+        <a href="../blog/modern_investing/ep214.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-28/ep214/bcd54f3f9597.thumb.webp" alt=""
+         width="800" height="450"
+         fetchpriority="high" decoding="async">
+</a>
+        <div class="lt-lead-body">
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T10:12:55Z">27 octobre 2026 · 06:12 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep213.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T10:13:44Z">28 octobre 2026 · 06:13 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep214.html">Lire</a>
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep213_20261027.fr.mp3" aria-label="Écouter l'épisode — Modern Investing Techniques 213"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/modern_investing/ep213.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep214_20261028.fr.mp3" aria-label="Écouter l'épisode — Modern Investing Techniques 214"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/modern_investing/ep214.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../modern-investing.html">Plus de Modern Investing Techniques</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </div>
@@ -1749,48 +1811,48 @@ body.lt-player-open { overflow: hidden; }
         <ol>
             
             <li style="--show-color:#1A5CFF;">
-                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T10:03:46Z">27 octobre 2026 · 06:03 ET</time></span></p>
+                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:59:08Z">28 octobre 2026 · 05:59 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/spacex/ep144.html">SpaceX prévoit 10 000 lancements annuels de Starship depuis le seul site de Louisiane.</a></h3>
+            </li>
+            
+            <li style="--show-color:#E31937;">
+                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T10:02:23Z">28 octobre 2026 · 06:02 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/tesla/ep648.html">Tesla a dépensé 4,73 milliards de dollars en dépenses d&#39;investissement au dernier trimestre, dont la majeure partie a été consacrée à la capacité de production de véhicules et de systèmes énergétiques.</a></h3>
+            </li>
+            
+            <li style="--show-color:#7C3AED;">
+                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:40:15Z">28 octobre 2026 · 05:40 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/models_agents/ep217.html">Genie 4 offre désormais aux créateurs de la physique, du raisonnement et de l’audio en temps réel dans des simulations interactives qu’ils peuvent tester dès aujourd’hui.</a></h3>
+            </li>
+            
+            <li style="--show-color:#6B47FF;">
+                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:23:56Z">28 octobre 2026 · 05:23 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep236.html">Hera a résolu Didymos et Dimorphos comme des astéroïdes distincts à 197 millions de kilomètres.</a></h3>
+            </li>
+            
+            <li style="--show-color:#0F766E;">
+                <p class="lt-kicker"><a href="../first-principles.html">First Principles Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T08:14:35Z">28 octobre 2026 · 04:14 ET</time></span></p>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep144.html">Une bouteille de shampoing se vend dix dollars alors que ses tensioactifs et son plastique coûtent moins d’un dollar.</a></h3>
+            </li>
+            
+            <li style="--show-color:#1A5CFF;">
+                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><time datetime="2026-10-27T10:03:46Z">27 octobre 2026 · 06:03 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/spacex/ep143.html">Raptor 4 vise 300 tonnes de poussée au niveau de la mer à la masse du Raptor 3, poussant Super Heavy vers 9 900 tonnes au total.</a></h3>
             </li>
             
             <li style="--show-color:#E31937;">
-                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T10:05:40Z">27 octobre 2026 · 06:05 ET</time></span></p>
+                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><time datetime="2026-10-27T10:05:40Z">27 octobre 2026 · 06:05 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/tesla/ep647.html">Tesla met à jour sa page canadienne du Model 3 avec les spécifications Fremont Long Range RWD après que les unités de Shanghai ont atteint les limites de quota.</a></h3>
             </li>
             
             <li style="--show-color:#7C3AED;">
-                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T09:38:49Z">27 octobre 2026 · 05:38 ET</time></span></p>
+                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><time datetime="2026-10-27T09:38:49Z">27 octobre 2026 · 05:38 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/models_agents/ep216.html">GPT-6.1 Terra d&#39;OpenAI offre des agents d&#39;utilisation d&#39;ordinateur plus rapides à la moitié du prix des tokens précédent.</a></h3>
             </li>
             
             <li style="--show-color:#6B47FF;">
-                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T09:25:27Z">27 octobre 2026 · 05:25 ET</time></span></p>
+                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><time datetime="2026-10-27T09:25:27Z">27 octobre 2026 · 05:25 ET</time></span></p>
                 <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep235.html">Deux satellites ont réduit leur écart de 189 km à 47 km en quatre jours tout en égalisant leurs vitesses à l’allure d’un jogging lors d’un test de rendez-vous de l’US Space Force.</a></h3>
-            </li>
-            
-            <li style="--show-color:#0F766E;">
-                <p class="lt-kicker"><a href="../first-principles.html">First Principles Daily</a> <span class="lt-rail-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T08:15:56Z">27 octobre 2026 · 04:15 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep143.html">Les prix de l&#39;alizarine ont chuté de quinze dollars la livre à cinquante-cinq cents après la synthèse de 1869.</a></h3>
-            </li>
-            
-            <li style="--show-color:#1A5CFF;">
-                <p class="lt-kicker"><a href="../spacex.html">SpaceX Daily</a> <span class="lt-rail-when"><time datetime="2026-10-26T10:01:10Z">26 octobre 2026 · 06:01 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/spacex/ep142.html">SpaceX a allumé les 33 moteurs Raptor du booster Super Heavy pour un tir statique de pleine durée, ouvrant la voie à l’étape suivante immédiate pour Starship Flight 15.</a></h3>
-            </li>
-            
-            <li style="--show-color:#E31937;">
-                <p class="lt-kicker"><a href="../tesla.html">Tesla Shorts Time</a> <span class="lt-rail-when"><time datetime="2026-10-26T10:02:29Z">26 octobre 2026 · 06:02 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/tesla/ep646.html">Barclays estime désormais que le stockage d&#39;énergie Tesla est presque entièrement vendu pour 2027, porté par la demande des data centers.</a></h3>
-            </li>
-            
-            <li style="--show-color:#7C3AED;">
-                <p class="lt-kicker"><a href="../models-agents.html">Models & Agents</a> <span class="lt-rail-when"><time datetime="2026-10-26T09:39:27Z">26 octobre 2026 · 05:39 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/models_agents/ep215.html">Kolibri active 3,46 milliards de paramètres par token tout en se positionnant sur la frontière de Pareto pour la qualité en anglais et en allemand par rapport au coût de service.</a></h3>
-            </li>
-            
-            <li style="--show-color:#6B47FF;">
-                <p class="lt-kicker"><a href="../fascinating-frontiers.html">Fascinating Frontiers</a> <span class="lt-rail-when"><time datetime="2026-10-26T09:24:23Z">26 octobre 2026 · 05:24 ET</time></span></p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep234.html">Webb a photographié une planète géante de 7,6 fois la masse de Jupiter à seulement douze années-lumière.</a></h3>
             </li>
             
         </ol>
@@ -1820,20 +1882,20 @@ body.lt-player-open { overflow: hidden; }
                     <p class="lt-flag-tag">Starship, Falcon, Starlink, Dragon et le marché SPCX — l'essentiel technique du jour.</p>
                 </div>
             </div>
-            <a href="../blog/spacex/ep143.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/spacex/2026-10-27/ep143/485d374bcfce.thumb.webp" alt=""
+            <a href="../blog/spacex/ep144.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/spacex/2026-10-28/ep144/d3d6ab4d5c41.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
-            <h3 class="lt-hl"><a href="../blog/spacex/ep143.html">Raptor 4 vise 300 tonnes de poussée au niveau de la mer à la masse du Raptor 3, poussant Super Heavy vers 9 900 tonnes au total.</a></h3>
+            <h3 class="lt-hl"><a href="../blog/spacex/ep144.html">SpaceX prévoit 10 000 lancements annuels de Starship depuis le seul site de Louisiane.</a></h3>
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T10:03:46Z">27 octobre 2026 · 06:03 ET</time></span>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:59:08Z">28 octobre 2026 · 05:59 ET</time></span>
     
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/spacex/SpaceX_Daily_Ep143_20261027.fr.mp3" aria-label="Écouter l'épisode — SpaceX Daily 143"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/spacex/ep143.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/spacex/SpaceX_Daily_Ep144_20261028.fr.mp3" aria-label="Écouter l'épisode — SpaceX Daily 144"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/spacex/ep144.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../spacex.html">Plus de SpaceX Daily</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </article>
@@ -1852,20 +1914,20 @@ body.lt-player-open { overflow: hidden; }
                     <p class="lt-flag-tag">FSD et conduite autonome, Optimus, Cybercab, l'énergie et le cours TSLA.</p>
                 </div>
             </div>
-            <a href="../blog/tesla/ep647.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/tesla/2026-10-27/ep647/912c45d4714d.thumb.webp" alt=""
+            <a href="../blog/tesla/ep648.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/tesla/2026-10-28/ep648/355c00d9f460.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
-            <h3 class="lt-hl"><a href="../blog/tesla/ep647.html">Tesla met à jour sa page canadienne du Model 3 avec les spécifications Fremont Long Range RWD après que les unités de Shanghai ont atteint les limites de quota.</a></h3>
+            <h3 class="lt-hl"><a href="../blog/tesla/ep648.html">Tesla a dépensé 4,73 milliards de dollars en dépenses d&#39;investissement au dernier trimestre, dont la majeure partie a été consacrée à la capacité de production de véhicules et de systèmes énergétiques.</a></h3>
             <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T10:05:40Z">27 octobre 2026 · 06:05 ET</time></span>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T10:02:23Z">28 octobre 2026 · 06:02 ET</time></span>
     
     
 </div>
             <div class="lt-lead-audio">
-    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep647_20261027.fr.mp3" aria-label="Écouter l'épisode — Tesla Shorts Time 647"></audio>
-    <a class="lt-btn lt-btn--primary" href="../blog/tesla/ep647.html">Lire l'article (en anglais)</a>
+    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep648_20261028.fr.mp3" aria-label="Écouter l'épisode — Tesla Shorts Time 648"></audio>
+    <a class="lt-btn lt-btn--primary" href="../blog/tesla/ep648.html">Lire l'article (en anglais)</a>
     <a class="lt-btn" href="../tesla.html">Plus de Tesla Shorts Time</a>
 </div><p class="lt-translated">Audio en français · article et sources en anglais.</p>
         </article>
@@ -1880,8 +1942,8 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-grid-4">
         
         <article class="lt-card" style="--show-color:#7C3AED;">
-            <a href="../blog/models_agents/ep216.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-27/ep216/11a46283fae0.thumb.webp" alt=""
+            <a href="../blog/models_agents/ep217.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-28/ep217/26f3b8473b56.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
@@ -1890,18 +1952,18 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Intelligence artificielle</span>
     <a href="../models-agents.html">Models & Agents</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/models_agents/ep216.html">GPT-6.1 Terra d&#39;OpenAI offre des agents d&#39;utilisation d&#39;ordinateur plus rapides à la moitié du prix des tokens précédent.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/models_agents/ep217.html">Genie 4 offre désormais aux créateurs de la physique, du raisonnement et de l’audio en temps réel dans des simulations interactives qu’ils peuvent tester dès aujourd’hui.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T09:38:49Z">27 octobre 2026 · 05:38 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep216.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:40:15Z">28 octobre 2026 · 05:40 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep217.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../models-agents.html">Écouter</a>
 </div>
             </div>
         </article>
         
         <article class="lt-card" style="--show-color:#6B47FF;">
-            <a href="../blog/fascinating_frontiers/ep235.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-27/ep235/871f42a698cc.thumb.webp" alt=""
+            <a href="../blog/fascinating_frontiers/ep236.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-28/ep236/4050dd40ee2d.thumb.webp" alt=""
          width="800" height="450"
          loading="lazy" decoding="async">
 </a>
@@ -1910,18 +1972,18 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Espace</span>
     <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep235.html">Deux satellites ont réduit leur écart de 189 km à 47 km en quatre jours tout en égalisant leurs vitesses à l’allure d’un jogging lors d’un test de rendez-vous de l’US Space Force.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep236.html">Hera a résolu Didymos et Dimorphos comme des astéroïdes distincts à 197 millions de kilomètres.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T09:25:27Z">27 octobre 2026 · 05:25 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep235.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T09:23:56Z">28 octobre 2026 · 05:23 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep236.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
 </div>
             </div>
         </article>
         
         <article class="lt-card" style="--show-color:#0F766E;">
-            <a href="../blog/first_principles/ep143.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-27/ep143/719f4c426534.thumb.webp" alt=""
+            <a href="../blog/first_principles/ep144.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-28/ep144/20df3fae62a3.thumb.webp" alt=""
          width="450" height="800"
          loading="lazy" decoding="async">
 </a>
@@ -1930,10 +1992,10 @@ body.lt-player-open { overflow: hidden; }
     <span class="lt-hub">Histoire et conséquences</span>
     <a href="../first-principles.html">First Principles Daily</a>
 </p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep143.html">Les prix de l&#39;alizarine ont chuté de quinze dollars la livre à cinquante-cinq cents après la synthèse de 1869.</a></h3>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep144.html">Une bouteille de shampoing se vend dix dollars alors que ses tensioactifs et son plastique coûtent moins d’un dollar.</a></h3>
                 <div class="lt-meta">
-    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-27T08:15:56Z">27 octobre 2026 · 04:15 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep143.html">Lire</a>
+    <span class="lt-when"><span class="lt-today">Aujourd'hui</span> <time datetime="2026-10-28T08:14:35Z">28 octobre 2026 · 04:14 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep144.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
 </div>
             </div>
@@ -1972,6 +2034,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-pair">
         
         <article class="lt-feature" style="--show-color:#7C3AED;">
+            <a href="../blog/models_agents/ep216.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-27/ep216/11a46283fae0.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../models-agents.html">Models & Agents</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/models_agents/ep216.html">GPT-6.1 Terra d&#39;OpenAI offre des agents d&#39;utilisation d&#39;ordinateur plus rapides à la moitié du prix des tokens précédent.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-27T09:38:49Z">27 octobre 2026 · 05:38 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep216.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../models-agents.html">Écouter</a>
+</div>
+            </div>
+        </article>
+        
+        <article class="lt-feature" style="--show-color:#7C3AED;">
             <a href="../blog/models_agents/ep215.html" class="lt-media" tabindex="-1" aria-hidden="true">
     <img src="https://gallery.nerranetwork.com/models_agents/2026-10-26/ep215/c6265327f974.thumb.webp" alt=""
          width="800" height="450"
@@ -1991,26 +2073,6 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#7C3AED;">
-            <a href="../blog/models_agents/ep214.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/models_agents/2026-10-25/ep214/7baf768a147c.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../models-agents.html">Models & Agents</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/models_agents/ep214.html">Microsoft a mis Agensh en open source afin que 1 024 agents de codage puissent se coordonner eux-mêmes sur ProgramBench, sans aucun orchestrateur central.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-25T09:40:11Z">25 octobre 2026 · 05:40 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/models_agents/ep214.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../models-agents.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
@@ -2019,6 +2081,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-space">Espace</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#6B47FF;">
+            <a href="../blog/fascinating_frontiers/ep235.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-27/ep235/871f42a698cc.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep235.html">Deux satellites ont réduit leur écart de 189 km à 47 km en quatre jours tout en égalisant leurs vitesses à l’allure d’un jogging lors d’un test de rendez-vous de l’US Space Force.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-27T09:25:27Z">27 octobre 2026 · 05:25 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep235.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#6B47FF;">
             <a href="../blog/fascinating_frontiers/ep234.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -2040,26 +2122,6 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#6B47FF;">
-            <a href="../blog/fascinating_frontiers/ep233.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/fascinating_frontiers/2026-10-25/ep233/94a0fb98c276.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../fascinating-frontiers.html">Fascinating Frontiers</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/fascinating_frontiers/ep233.html">Des astronomes ont trouvé des preuves d’un exosatellite de masse jovienne en orbite autour d’une naine brune dans le système CD-35 2722.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-25T09:22:07Z">25 octobre 2026 · 05:22 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/fascinating_frontiers/ep233.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../fascinating-frontiers.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
@@ -2068,6 +2130,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-markets">Marchés et investissement</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#047857;">
+            <a href="../blog/modern_investing/ep213.html" class="lt-media" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-27/ep213/90d35051424d.thumb.webp" alt=""
+         width="800" height="450"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../modern-investing.html">Modern Investing Techniques</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/modern_investing/ep213.html">Les actions énergétiques du TSX ont doublé cette année grâce aux gains pétroliers, une opportunité de rotation sectorielle pour les CELI canadiens.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-27T10:12:55Z">27 octobre 2026 · 06:12 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep213.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../modern-investing.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#047857;">
             <a href="../blog/modern_investing/ep212.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -2089,26 +2171,6 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-feature" style="--show-color:#047857;">
-            <a href="../blog/modern_investing/ep211.html" class="lt-media" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/modern_investing/2026-10-25/ep211/c0d08f147c71.thumb.webp" alt=""
-         width="800" height="450"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../modern-investing.html">Modern Investing Techniques</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/modern_investing/ep211.html">Les emprunteurs de prêts hypothécaires à taux variable au Canada font face à d’éventuelles hausses de taux dès le début 2027, selon CMHC.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-25T10:17:08Z">25 octobre 2026 · 06:17 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/modern_investing/ep211.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../modern-investing.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
     </div>
     
 </section>
@@ -2117,6 +2179,26 @@ body.lt-player-open { overflow: hidden; }
     <div class="lt-block-head"><h2 id="lt-sec-history-and-consequences">Histoire et conséquences</h2></div>
     
     <div class="lt-pair">
+        
+        <article class="lt-feature" style="--show-color:#0F766E;">
+            <a href="../blog/first_principles/ep143.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
+    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-27/ep143/719f4c426534.thumb.webp" alt=""
+         width="450" height="800"
+         loading="lazy" decoding="async">
+</a>
+            <div class="lt-card-body">
+                <p class="lt-kicker">
+    
+    <a href="../first-principles.html">First Principles Daily</a>
+</p>
+                <h3 class="lt-hl"><a href="../blog/first_principles/ep143.html">Les prix de l&#39;alizarine ont chuté de quinze dollars la livre à cinquante-cinq cents après la synthèse de 1869.</a></h3>
+                <div class="lt-meta">
+    <span class="lt-when"><time datetime="2026-10-27T08:15:56Z">27 octobre 2026 · 04:15 ET</time></span>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep143.html">Lire</a>
+    <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
+</div>
+            </div>
+        </article>
         
         <article class="lt-feature" style="--show-color:#0F766E;">
             <a href="../blog/first_principles/ep142.html" class="lt-media" tabindex="-1" aria-hidden="true">
@@ -2133,26 +2215,6 @@ body.lt-player-open { overflow: hidden; }
                 <div class="lt-meta">
     <span class="lt-when"><time datetime="2026-10-26T08:14:21Z">26 octobre 2026 · 04:14 ET</time></span>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep142.html">Lire</a>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
-</div>
-            </div>
-        </article>
-        
-        <article class="lt-feature" style="--show-color:#0F766E;">
-            <a href="../blog/first_principles/ep141.html" class="lt-media is-portrait" tabindex="-1" aria-hidden="true">
-    <img src="https://gallery.nerranetwork.com/first_principles/2026-10-25/ep141/e23dee348405.thumb.webp" alt=""
-         width="450" height="800"
-         loading="lazy" decoding="async">
-</a>
-            <div class="lt-card-body">
-                <p class="lt-kicker">
-    
-    <a href="../first-principles.html">First Principles Daily</a>
-</p>
-                <h3 class="lt-hl"><a href="../blog/first_principles/ep141.html">Un combiné vendu près de quatre mille dollars en 1984 a vu ses prix de gros descendre sous les trente dollars au début de 2006.</a></h3>
-                <div class="lt-meta">
-    <span class="lt-when"><time datetime="2026-10-25T08:13:23Z">25 octobre 2026 · 04:13 ET</time></span>
-    <span class="lt-dot" aria-hidden="true">•</span><a href="../blog/first_principles/ep141.html">Lire</a>
     <span class="lt-dot" aria-hidden="true">•</span><a href="../first-principles.html">Écouter</a>
 </div>
             </div>
@@ -2498,6 +2560,14 @@ body.lt-player-open { overflow: hidden; }
                     <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
                     <a href="../contact.html">Contact</a>
                 </div>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -2510,10 +2580,7 @@ body.lt-player-open { overflow: hidden; }
                     <a href="../privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="../terms-of-service.html">Terms</a> &middot;
-                    <a href="../ai-disclosure.html">AI Disclosure</a>
-                    <span style="opacity:0.5;">&middot;</span>
-                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
-                </div>
+                    <a href="../ai-disclosure.html">AI Disclosure</a></div>
             </div>
         </div>
     </footer>
@@ -2603,24 +2670,29 @@ body.lt-player-open { overflow: hidden; }
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
-    <script src="../assets/js/footer-subscribe.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script><script src="../assets/js/nn-player.js" defer></script>
+    <script src="../assets/js/nn-app.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = '../account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">
