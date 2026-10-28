@@ -221,3 +221,22 @@ class TestSitemapLastmodContentDates:
         # Prefer a non-episode guard so we know show/claims/narrative path works.
         non_ep = [p for p in with_lm if not _is_episode(p[0])]
         assert non_ep, "expected at least one non-episode lastmod (show or claims)"
+
+    def test_every_non_stub_episode_is_in_the_sitemap_with_a_lastmod(self, sitemap_xml):
+        """An episode page that exists and carries a datePublished must be
+        listed with exactly that date. A dropped or undated episode is a
+        silent indexing loss, which is the failure this whole change guards."""
+        by_loc = _lastmod_map(sitemap_xml)
+        missing, wrong = [], []
+        for ep_file in sorted((ROOT / "blog").glob("*/ep*.html")):
+            loc = f"{BASE}/blog/{ep_file.parent.name}/{ep_file.name}"
+            head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+            m = _DP_RE.search(head)
+            if not m:
+                continue  # no datePublished: a redirect stub, out of scope
+            if loc not in by_loc:
+                missing.append(loc)
+            elif by_loc[loc] != m.group(1):
+                wrong.append((loc, by_loc[loc], m.group(1)))
+        assert not missing, f"{len(missing)} dated episodes absent from the sitemap: {missing[:5]}"
+        assert not wrong, f"{len(wrong)} episodes carry the wrong lastmod: {wrong[:5]}"
