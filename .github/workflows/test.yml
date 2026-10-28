@@ -29,8 +29,13 @@ on:
     branches: [main]
   # Weekly full-suite backstop for the paths filter: generated-only pushes
   # skip this workflow, so a Monday cron still exercises the whole suite.
+  # schedule: must stay at this top level (sibling of push/pull_request),
+  # unfiltered by paths-ignore — nesting it under push: would inherit the
+  # skip and the backstop would never fire.
+  # 13:17 UTC = 06:17 Pacific Monday (matches restock-topic-queues.yml's
+  # 37 13 * * * UTC precedent); do not convert this back to 06 UTC.
   schedule:
-    - cron: '17 6 * * 1'
+    - cron: '17 13 * * 1'
 
 # Cancel superseded runs on the same PR; on main every push gets its own
 # group (run_id) so nothing is cancelled there.
