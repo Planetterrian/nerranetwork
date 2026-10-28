@@ -22,6 +22,7 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -1027,6 +1028,32 @@ class TestKnownSectionsOnlyChapters:
         titles = {c.title for c in chapters}
         assert titles <= self.KNOWN_TITLES | set(headlines), titles
         assert not any(t.endswith("…") for t in titles)
+
+    def test_a_lead_told_in_the_deep_dives_words_gets_no_section_chapter(self):
+        # Oct 28 2026, SpaceX Ep143: the script told the Raptor 4 lead in the
+        # Engineering Deep Dive's own sentences, the story detector filed
+        # those lines under the essay, and the essay's raw HEADING became a
+        # chapter inside the lead story. On this show an essay is named by
+        # its marker or not at all; its marker starts it where it is spoken.
+        from engine.grok_imagine import extract_story_headlines
+        d = _ROOT / "digests/spacex"
+        script_p = d / "SpaceX_Daily_Ep143_20261027_tts.txt"
+        digest_p = d / "SpaceX_Daily_Ep143_20261027.md"
+        if not (script_p.exists() and digest_p.exists()):
+            pytest.skip("SpaceX Ep143 not committed")
+        digest = digest_p.read_text(encoding="utf-8")
+        headlines = extract_story_headlines(digest, max_count=12)
+        chapters = parse_chapters(
+            script_p.read_text(encoding="utf-8"), _spacex_markers(),
+            show_name="SpaceX Daily", story_headlines=headlines,
+            digest_text=digest, known_sections_only=True)
+        titles = [c.title for c in chapters]
+        assert "Engineering Deep Dive" not in titles
+        assert set(titles) <= self.KNOWN_TITLES | set(headlines), titles
+        # The section still has its chapter, where the deep dive is spoken,
+        # after every news story.
+        assert titles.count("The Engineering Angle") == 1
+        assert titles.index("The Engineering Angle") > titles.index("Also Today")
 
     def test_a_headline_too_long_to_fit_whole_gets_no_chapter(self):
         from engine.titles import HEADLINE_CHAPTER_TITLE_MAX

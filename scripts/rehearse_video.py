@@ -197,6 +197,9 @@ def main(argv=None) -> int:
     sys.path.insert(0, str(ROOT))
     refused_uploads = refuse_r2_uploads()
     import run_show  # noqa: E402 — after the scrub, so nothing reads a credential
+    # The video job's watchdog and budget, from the moment the rehearsal
+    # starts (run_show no longer arms it on import).
+    run_show.arm_pipeline_watchdog()
     from engine import youtube as _youtube
     from engine.config import load_config
     from engine.metrics import PipelineMetrics
