@@ -88,13 +88,45 @@ class TestThePlayer:
     def test_video_is_privacy_enhanced_and_only_on_a_press(self):
         js = _read("assets/js/nn-player.js")
         assert "https://www.youtube-nocookie.com/embed/" in js
-        assert "iframe" not in js.split("function openWatch", 1)[0].replace("createElement('iframe')", "")
+        assert "host: 'https://www.youtube-nocookie.com'" in js
+        # The IFrame API loads only inside loadYT, which only a playlist
+        # video (a press) calls; nothing YouTube runs at page load.
+        assert js.count("https://www.youtube.com/iframe_api") == 1
+        assert js.count("loadYT().then") == 1
+        assert "loadYT().then" in js.split("function playVideo", 1)[1].split("function playMira", 1)[0]
+        init = js.split("function init()", 1)[1]
+        assert "openList" not in init and "loadYT" not in init
 
     def test_my_nerra_uses_it_and_has_no_player_of_its_own(self):
         src = _read("templates/account_page.html.j2")
         assert "window.NNPlayer" in src
         assert "new Audio()" not in src
         assert 'id="nn-player"' not in src
+
+
+class TestWatchMyLineup:
+    def test_my_nerra_builds_the_list_from_the_lineup(self):
+        src = _read("templates/account_page.html.j2")
+        assert 'id="nn-watch-all"' in src and "NN.watchLineup()" in src
+        body = src.split("function lineupVideos()", 1)[1].split("function renderWatch", 1)[0]
+        assert "lineup().forEach" in body and "e.members_only" in body
+
+    def test_mira_card_is_written_and_disclosed(self):
+        src = _read("templates/account_page.html.j2")
+        card = src.split("watchLineup: function ()", 1)[1].split("playLineup:", 1)[0]
+        assert "kind: 'mira'" in card and "assets/mira/mira-studio.mp4" in card
+        assert "Mira is an AI host" in card
+        assert (ROOT / "assets" / "mira" / "mira-studio.mp4").is_file()
+
+    def test_the_playlist_advances_on_end_and_by_hand(self):
+        js = _read("assets/js/nn-player.js")
+        assert "e.data === 0" in js and "showItem(listAt + 1)" in js
+        assert "api.watchList = function" in js
+        assert "placement: list.length > 1 ? 'lineup' : 'single'" in js
+
+    def test_greeting_reaches_the_card_as_text(self):
+        mira = _read("assets/js/nn-player.js").split("function playMira", 1)[1].split("function showItem", 1)[0]
+        assert "h.textContent = item.greeting" in mira and "p.textContent = line" in mira
 
 
 class TestEveryEventIsRead:

@@ -341,59 +341,177 @@
   }
 
   // ------------------------------------------------------------- watching
-  var dialog = null;
+  // One dialog for a single video and for a playlist (My Nerra's "Watch my
+  // lineup"). A playlist item is a YouTube video, or Mira's card: her studio
+  // loop with a written greeting, no voice (a spoken one would be a model
+  // call per member). A playlist advances when a video ends, through the
+  // YouTube IFrame API on the privacy-enhanced host, loaded only on a press;
+  // if that script cannot load, the video still plays and Next advances.
+  var dialog = null, list = [], listAt = 0, ytPlayer = null, ytReady = null, miraTimer = null;
+  var MIRA_SECONDS = 8;
   function videoId(ref) {
     ref = String(ref || '');
     var m = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,15})/.exec(ref);
     if (m) { return m[1]; }
     return /^[A-Za-z0-9_-]{6,15}$/.test(ref) ? ref : '';
   }
+  function loadYT() {
+    if (ytReady) { return ytReady; }
+    ytReady = new Promise(function (resolve) {
+      if (window.YT && window.YT.Player) { resolve(window.YT); return; }
+      var prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () { if (prev) { try { prev(); } catch (e) {} } resolve(window.YT); };
+      var s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      s.onerror = function () { resolve(null); };
+      document.head.appendChild(s);
+      setTimeout(function () { resolve(window.YT && window.YT.Player ? window.YT : null); }, 6000);
+    });
+    return ytReady;
+  }
+  function stopFrame() {
+    clearInterval(miraTimer); miraTimer = null;
+    if (ytPlayer && ytPlayer.destroy) { try { ytPlayer.destroy(); } catch (e) {} }
+    ytPlayer = null;
+    if (dialog) { var f = dialog.querySelector('.nn-watch-frame'); f.innerHTML = ''; f.classList.remove('is-mira'); }
+  }
   function closeWatch() {
     if (!dialog) { return; }
-    dialog.querySelector('.nn-watch-frame').innerHTML = '';
+    stopFrame();
+    list = []; listAt = 0;
     if (dialog.open && dialog.close) { dialog.close(); } else { dialog.removeAttribute('open'); }
   }
-  function openWatch(ref, info) {
-    var id = videoId(ref);
-    if (!id) { return false; }
-    if (!dialog) {
-      dialog = el('dialog', 'nn-watch');
-      dialog.setAttribute('aria-label', 'Video');
-      dialog.innerHTML = '<div class="nn-watch-shell"><div class="nn-watch-frame"></div>' +
-        '<div class="nn-watch-info"><p class="nn-watch-show"></p><h2 class="nn-watch-title"></h2>' +
-        '<p class="nn-watch-actions"><a class="nn-watch-post" href="#">Read the episode</a>' +
-        '<a class="nn-watch-yt" href="#" target="_blank" rel="noopener">Watch on YouTube ↗</a></p>' +
-        '<p class="nn-watch-note">Plays from YouTube in privacy-enhanced mode, only after you open it.</p></div>' +
-        '<button type="button" class="nn-watch-close" aria-label="Close the video">✕</button></div>';
-      document.body.appendChild(dialog);
-      dialog.querySelector('.nn-watch-close').addEventListener('click', closeWatch);
-      dialog.addEventListener('click', function (ev) { if (ev.target === dialog) { closeWatch(); } });
-      dialog.addEventListener('close', function () { dialog.querySelector('.nn-watch-frame').innerHTML = ''; });
-      dialog.querySelector('.nn-watch-yt').addEventListener('click', function () {
-        track('watch_on_youtube', { location: location.pathname, placement: 'player' });
-      });
-    }
-    var vertical = info.kind === 'short' || /\/shorts\//.test(String(ref));
+  function buildDialog() {
+    if (dialog) { return; }
+    dialog = el('dialog', 'nn-watch');
+    dialog.setAttribute('aria-label', 'Video');
+    dialog.innerHTML = '<div class="nn-watch-shell"><div class="nn-watch-frame"></div>' +
+      '<div class="nn-watch-info"><p class="nn-watch-show"></p><h2 class="nn-watch-title"></h2>' +
+      '<div class="nn-watch-list" hidden><button type="button" class="nn-gp-btn" data-wl="prev" aria-label="Previous video">‹ Prev</button>' +
+      '<span class="nn-watch-count"></span><button type="button" class="nn-gp-btn" data-wl="next" aria-label="Next video">Next ›</button>' +
+      '<span class="nn-watch-next"></span></div>' +
+      '<p class="nn-watch-actions"><a class="nn-watch-post" href="#">Read the episode</a>' +
+      '<a class="nn-watch-yt" href="#" target="_blank" rel="noopener">Watch on YouTube ↗</a></p>' +
+      '<p class="nn-watch-note">Plays from YouTube in privacy-enhanced mode, only after you open it.</p></div>' +
+      '<button type="button" class="nn-watch-close" aria-label="Close the video">✕</button></div>';
+    document.body.appendChild(dialog);
+    dialog.querySelector('.nn-watch-close').addEventListener('click', closeWatch);
+    dialog.addEventListener('click', function (ev) {
+      if (ev.target === dialog) { closeWatch(); return; }
+      var b = ev.target.closest('[data-wl]');
+      if (b) { showItem(listAt + (b.getAttribute('data-wl') === 'next' ? 1 : -1)); }
+    });
+    dialog.addEventListener('close', function () { stopFrame(); list = []; listAt = 0; });
+    dialog.querySelector('.nn-watch-yt').addEventListener('click', function () {
+      track('watch_on_youtube', { location: location.pathname, placement: 'player' });
+    });
+  }
+  function paintInfo(info, vertical, id) {
     dialog.classList.toggle('is-short', vertical);
-    var frame = dialog.querySelector('.nn-watch-frame');
-    var ifr = document.createElement('iframe');
-    ifr.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&playsinline=1&modestbranding=1';
-    ifr.title = info.title || 'Video';
-    ifr.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    ifr.allowFullscreen = true;
-    ifr.referrerPolicy = 'strict-origin-when-cross-origin';
-    frame.innerHTML = '';
-    frame.appendChild(ifr);
     dialog.querySelector('.nn-watch-show').textContent = info.show || '';
     dialog.querySelector('.nn-watch-title').textContent = info.title || '';
     var post = dialog.querySelector('.nn-watch-post');
     post.hidden = !safeUrl(info.post); post.href = safeUrl(info.post) || '#';
-    dialog.querySelector('.nn-watch-yt').href = (vertical ? 'https://www.youtube.com/shorts/' : 'https://www.youtube.com/watch?v=') + id;
+    var yt = dialog.querySelector('.nn-watch-yt');
+    yt.hidden = !id;
+    if (id) { yt.href = (vertical ? 'https://www.youtube.com/shorts/' : 'https://www.youtube.com/watch?v=') + id; }
+    var bar = dialog.querySelector('.nn-watch-list');
+    bar.hidden = list.length < 2;
+    if (list.length > 1) {
+      dialog.querySelector('.nn-watch-count').textContent = (listAt + 1) + ' of ' + list.length;
+      bar.querySelector('[data-wl="prev"]').disabled = listAt === 0;
+      bar.querySelector('[data-wl="next"]').disabled = listAt >= list.length - 1;
+      var nx = list[listAt + 1];
+      dialog.querySelector('.nn-watch-next').textContent = nx ? 'Up next: ' + (nx.show || nx.title || '') : '';
+    }
+  }
+  function playVideo(id, info, vertical) {
+    var frame = dialog.querySelector('.nn-watch-frame');
+    frame.innerHTML = '';
+    var advance = list.length > 1 && listAt < list.length - 1;
+    var plain = function () {
+      var ifr = document.createElement('iframe');
+      ifr.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&playsinline=1&modestbranding=1';
+      ifr.title = info.title || 'Video';
+      ifr.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      ifr.allowFullscreen = true;
+      ifr.referrerPolicy = 'strict-origin-when-cross-origin';
+      frame.appendChild(ifr);
+    };
+    if (!advance) { plain(); return; }
+    var mount = document.createElement('div');
+    frame.appendChild(mount);
+    var at = listAt;
+    loadYT().then(function (YT) {
+      if (at !== listAt || !dialog.open) { return; }
+      if (!YT) { frame.innerHTML = ''; plain(); return; }
+      ytPlayer = new YT.Player(mount, {
+        host: 'https://www.youtube-nocookie.com', videoId: id,
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
+        events: { onStateChange: function (e) { if (e.data === 0 && at === listAt) { showItem(listAt + 1); } } },
+      });
+      var ifr = frame.querySelector('iframe');
+      if (ifr) { ifr.title = info.title || 'Video'; }
+    });
+  }
+  function playMira(item) {
+    var frame = dialog.querySelector('.nn-watch-frame');
+    frame.innerHTML = '';
+    frame.classList.add('is-mira');
+    var card = el('div', 'nn-watch-mira');
+    var v = document.createElement('video');
+    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
+    v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+    v.poster = item.poster || ''; v.src = item.video || '';
+    card.appendChild(v);
+    var txt = el('div', 'nn-watch-mira-txt');
+    txt.appendChild(el('p', 'nn-watch-mira-k', 'Mira · your lineup'));
+    var h = el('p', 'nn-watch-mira-h'); h.textContent = item.greeting || ''; txt.appendChild(h);
+    (item.lines || []).forEach(function (line) { var p = el('p', 'nn-watch-mira-l'); p.textContent = line; txt.appendChild(p); });
+    var go = el('button', 'nn-gp-btn nn-watch-mira-go'); go.type = 'button';
+    txt.appendChild(go);
+    card.appendChild(txt);
+    frame.appendChild(card);
+    var left = MIRA_SECONDS, at = listAt;
+    var paint = function () { go.textContent = 'Start · ' + left + 's'; };
+    paint();
+    go.addEventListener('click', function () { showItem(at + 1); });
+    miraTimer = setInterval(function () {
+      left -= 1;
+      if (left <= 0 || at !== listAt) { clearInterval(miraTimer); if (at === listAt) { showItem(at + 1); } return; }
+      paint();
+    }, 1000);
+  }
+  function showItem(i) {
+    if (i < 0 || i >= list.length) { return; }
+    stopFrame();
+    listAt = i;
+    var item = list[i];
+    if (item.kind === 'mira') {
+      paintInfo({ show: 'Mira', title: item.title || 'Your lineup' }, false, '');
+      playMira(item);
+      return;
+    }
+    var id = videoId(item.url), vertical = item.kind === 'short' || /\/shorts\//.test(String(item.url));
+    paintInfo(item, vertical, id);
+    playVideo(id, item, vertical);
+    track('play_video', { kind: vertical ? 'short' : 'long', placement: list.length > 1 ? 'lineup' : 'single', location: location.pathname });
+  }
+  function openList(items, start) {
+    var clean = (items || []).filter(function (x) { return x && (x.kind === 'mira' || videoId(x.url)); });
+    if (!clean.length) { return false; }
+    buildDialog();
+    list = clean;
     if (!audio.paused) { audio.pause(); }
-    if (dialog.showModal) { dialog.showModal(); } else { dialog.setAttribute('open', ''); }
-    track('play_video', { kind: vertical ? 'short' : 'long', location: location.pathname });
+    if (!dialog.open) { if (dialog.showModal) { dialog.showModal(); } else { dialog.setAttribute('open', ''); } }
+    showItem(Math.max(0, Math.min(clean.length - 1, start || 0)));
     return true;
   }
+  function openWatch(ref, info) {
+    if (!videoId(ref)) { return false; }
+    return openList([{ url: ref, kind: info.kind, title: info.title, show: info.show, post: info.post }], 0);
+  }
+  api.watchList = function (items, start) { return openList(items, start); };
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest ? ev.target.closest('[data-nn-watch]') : null;
     if (!b || ev.metaKey || ev.ctrlKey || ev.shiftKey) { return; }

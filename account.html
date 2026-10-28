@@ -2019,6 +2019,7 @@ body.lt-player-open { overflow: hidden; }
                 </div>
                 <div class="me-mast-actions">
                     <button type="button" class="lt-btn me-btn-grad" id="nn-play-all" hidden onclick="NN.playLineup()"><span aria-hidden="true">▶</span> Play today's lineup <span class="me-len" id="nn-play-all-len"></span></button>
+                    <button type="button" class="lt-btn" id="nn-watch-all" hidden onclick="NN.watchLineup()"><span aria-hidden="true">▶</span> Watch my lineup <span class="me-len" id="nn-watch-all-n"></span></button>
                     <a class="lt-btn" href="#customize">Customize</a>
                 </div>
             </div>
@@ -2065,7 +2066,9 @@ body.lt-player-open { overflow: hidden; }
                             <div>
                                 <p class="lt-sublabel">Listen in your podcast app</p>
                                 <p class="me-feedurl" id="nn-feed-url"></p>
+                                <div class="me-ed-actions">
                                 <button type="button" class="lt-btn" id="nn-copy-feed" onclick="NN.copyFeed()">Copy feed URL</button><a class="lt-btn me-btn-grad" id="nn-add-page" href="add.html">Add to my podcast app</a>
+                                </div>
                                 <p class="me-fine">One tap for the apps on this device; on a computer it shows a code to scan with your phone.</p>
                                 <p class="me-apps" id="nn-addapp" aria-label="Add to a podcast app">
                                     <span class="me-muted">Add to</span>
@@ -2143,7 +2146,8 @@ body.lt-player-open { overflow: hidden; }
         </section>
 
         <!-- Watch --><section class="lt-block" id="nn-watch-block" hidden aria-labelledby="nn-watch-h">
-            <div class="lt-block-head"><h2 id="nn-watch-h">Watch</h2><span class="me-fine" style="margin:0;">Videos and Shorts from your shows · <a href="watch.html">Everything on video</a></span></div>
+            <div class="lt-block-head"><h2 id="nn-watch-h">Watch</h2><span class="me-fine" style="margin:0;">Videos and Shorts from your shows · <a href="watch.html">Everything on video</a></span>
+                <button type="button" class="lt-btn me-btn-grad" onclick="NN.watchLineup()"><span aria-hidden="true">▶</span> Watch my lineup</button></div>
             <div class="me-watch-rail" id="nn-watch"></div>
         </section>
 
@@ -2512,6 +2516,21 @@ var NN = (function () {
     var v = videoOf(s);
     return v ? '<span class="lt-dot" aria-hidden="true">•</span><a class="me-watch-link"' + watchAttrs(s, v) + '>Watch</a>' : '';
   }
+  // Watch my lineup (Oct 28 2026): the newest episode with a public video
+  // from each of the member's shows, in their order; the full episode when
+  // there is one, else its Short. Played by the site player's video dialog.
+  function lineupVideos() {
+    var out = [];
+    lineup().forEach(function (slug) {
+      var e = showEntry(slug);
+      if (!e || e.members_only) { return; }
+      var s = stories(slug).filter(function (x) { return videoOf(x); })[0];
+      if (!s) { return; }
+      var v = videoOf(s);
+      out.push({ url: v.url, kind: v.kind, title: s.hook, show: showName(slug), post: storyHref(s) });
+    });
+    return out;
+  }
   function renderWatch(shows) {
     var box = el('nn-watch');
     if (!box) { return; }
@@ -2526,6 +2545,9 @@ var NN = (function () {
     rows.sort(function (a, b) { return String((b.s.stamp || {}).iso || b.s.date_raw).localeCompare(String((a.s.stamp || {}).iso || a.s.date_raw)); });
     rows = rows.slice(0, 16);
     el('nn-watch-block').hidden = !rows.length;
+    var n = lineupVideos().length;
+    el('nn-watch-all').hidden = !n;
+    el('nn-watch-all-n').textContent = n ? '· ' + n + (n === 1 ? ' video' : ' videos') : '';
     box.innerHTML = rows.map(function (r) {
       var img = safeUrl(r.s.image_url) || coverSrc(r.s.slug);
       return '<a class="me-vid' + (r.v.kind === 'short' ? ' is-short' : '') + '" style="--show-color:' + esc(showColor(r.s.slug)) + ';"' + watchAttrs(r.s, r.v) + '>'
@@ -3382,6 +3404,21 @@ var NN = (function () {
       } catch (e) { done('Select the URL above to copy it'); }
     },
     showAllShows: function () { state.showAll = true; renderShowGrid(); },
+    watchLineup: function () {
+      var vids = lineupVideos();
+      var p = P();
+      if (!vids.length || !p || !p.watchList) { return; }
+      var name = el('nn-name').value.trim();
+      var hour = new Date().getHours();
+      var part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      var names = vids.map(function (v) { return v.show; });
+      var mira = { kind: 'mira', title: 'Your lineup', video: 'assets/mira/mira-studio.mp4',
+                   poster: 'assets/mira/mira-studio.jpg',
+                   greeting: part + (name ? ', ' + name : '') + '. Here is your lineup on video.',
+                   lines: [vids.length + (vids.length === 1 ? ' episode' : ' episodes') + ', in your order: ' + names.join(' · '),
+                           'Each one plays after the last. Mira is an AI host; this card is an illustration of her.'] };
+      p.watchList([mira].concat(vids), 0);
+    },
     playLineup: function () { if (state.todays && state.todays.length) { player.start(state.todays.map(storyItem), 0); } },
     playEdition: function (i) {
       var items = state.editions.map(function (e, j) {

@@ -7410,6 +7410,17 @@ Rules that bind:
   platform, the code to scan on a computer (qrcodejs 1.0.0, drawn in the page),
   copy and share. noindex, never in the sitemap. My Nerra and the welcome email
   link it. Operator: `wrangler deploy` in `workers/gallery` for the email.
+- **Watch my lineup** (My Nerra, `NN.watchLineup` → `NNPlayer.watchList`):
+  Mira's card (her studio loop with a WRITTEN greeting and the lineup, no
+  voice, which would be a model call per member; it says she is an AI host
+  and the card an illustration), then the newest public video of each of
+  the member's shows in their order, long-form before Short. A video ends
+  and the next plays through the YouTube IFrame API on the nocookie host,
+  loaded only on that press; if it cannot load, the video still plays and
+  Next advances. A private video FEED is the next step only on demand
+  (`play_video` with `placement: lineup`) and on more shows keeping their
+  video files: today 8 of 29 Personal shows have a long-form and only
+  Tesla/SpaceX keep the MP4 (about 1 GB an hour at 1080p).
 
 ### Covered means aired, and a story catalog (Oct 21 2026)
 
