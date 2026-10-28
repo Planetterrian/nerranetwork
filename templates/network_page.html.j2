@@ -559,7 +559,7 @@
         <ul class="nn-you-picks" aria-label="Shows to pick">
             {% for s in picker_shows %}
             <li><button type="button" class="nn-you-pick" aria-pressed="false" data-slug="{{ s.slug }}" style="--show-color:{{ s.brand_color }};">
-                <picture>{% if s.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ s.cover_webp }}">{% endif %}<img src="{{ path_prefix }}{{ s.cover }}" alt="" width="36" height="36" loading="lazy" decoding="async"></picture>
+                <picture>{% if s.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ s.cover_webp }}">{% endif %}<img src="{{ path_prefix }}{{ s.cover }}" alt="{{ s.name }} cover art" width="36" height="36" loading="lazy" decoding="async"></picture>
                 <span>{{ s.name }}</span><i aria-hidden="true"></i></button></li>
             {% endfor %}
         </ul>
