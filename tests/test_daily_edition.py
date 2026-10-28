@@ -735,6 +735,8 @@ class TestPromoCutHardening:
         ("digests/dp_pod/DP_Pod_Ep052_20260830_transcript.json", 45.0),
         ("digests/dp_pod/DP_Pod_Ep039_20260818_transcript.json", 45.0),
         ("digests/first_principles/First_Principles_Ep075_20260819_transcript.json", 45.0),
+        # Oct 28 2026: Whisper dropped the network's name from frame 1.
+        ("digests/spacex/SpaceX_Daily_Ep142_20261026_transcript.json", 45.0),
     ])
     def test_whisper_plural_sister_show_hits_the_frame(self, rel_path, max_tail):
         path = ROOT / rel_path

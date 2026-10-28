@@ -633,6 +633,11 @@ def ready_decision(
 # Narrow Network" (Planetterrian Ep183) — so the article is optional.
 _PRIMARY_PROMO_PATTERNS = [
     re.compile(r"\b(?:and\s+)?before you go\s+this show is part of (?:(?:the|a|an)\s+)?\w+\s*network\b"),
+    # Oct 28 2026: Whisper lost the network's name altogether — "And before
+    # you go, this show is part of the | cast on tech, science, and
+    # markets" (SpaceX Ep142) — so the frame's own opening clause anchors
+    # it. "before you go" keeps it off the body's "before we go" teaser.
+    re.compile(r"\b(?:and\s+)?before you go\s+this show is part of\b"),
     re.compile(r"\bthis show is part of (?:(?:the|a|an)\s+)?\w+\s*network\b"),
     # Whisper renders "our sister show SpaceX Daily" as "sister shows spacex"
     # and "sisters show space x" (both observed on DP Pod / First Principles
