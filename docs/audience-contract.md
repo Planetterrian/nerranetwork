@@ -13,9 +13,10 @@ was built. Each surface block also carries that source's own
 `fetched_at` / `generated_at` so a consumer can see which block is stale.
 
 The builder (`scripts/build_audience_contract.py`) is a pure
-read-transform-write over already-committed `api/dashboard.json` and
-`api/audience_headline.json`. It does not fetch, recompute, or change
-how any existing number is produced.
+read-transform-write over already-committed `api/dashboard.json`,
+`api/audience_headline.json`, and `api/youtube_stats.json`. It does not
+fetch. YouTube `views_7d` / `subs_net_7d` are summed from the committed
+day series (see below); every other field is projected as-is.
 
 ---
 
@@ -78,33 +79,49 @@ Sources: `dashboard.audience.op3` for the rolling totals and
 `unindexed`; `audience_headline.network` for WoW fields and
 `shows_measured` / `shows_unindexed`.
 
+When `audience_headline.json` is missing, `last_week` / `prior_week` /
+`wow_pct` / `shows_measured` are `null`, but `fetched_at` (and the
+rolling download totals) still come from the dashboard so a consumer can
+tell *why* WoW is null rather than seeing an unexplained empty block.
+
 ---
 
 ## `youtube` — YouTube Analytics (per channel)
 
-**Window:** `subs_net_7d` is the net subscriber change over the last 7
-**complete** reporting days. `views_7d` is views summed over those same
-7 complete days. **YouTube Analytics finalizes day-data about 48 hours
-behind**, so the 7-day window ends ~2 days before the build date. Do not
-treat these as "calendar last 7 days including today."
+**Window:** the last 7 rows **present** in
+`api/youtube_stats.json` → `channels.<ch>.day_series`. The series itself
+ends at the last day YouTube finalized, which runs about 2 days behind
+the build — unfinalized days are simply absent from the file. Sum those
+last 7 present rows; **do not trim further**.
+
+`subs_net_7d` is net subscribers gained − lost over that window.
+`views_7d` is views summed over the same rows. Do not treat these as
+"calendar last 7 days including today."
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `generated_at` | string \| null | YouTube analytics generation timestamp. |
 | `channels` | object | Keys `en`, `ru`, `fr`. |
-| `channels.<ch>.subscribers` | int \| null | Current subscriber count. |
-| `channels.<ch>.subs_net_7d` | int \| null | Net subscribers gained − lost over the lag-trimmed 7d window. |
-| `channels.<ch>.views_7d` | int \| null | Views summed over the lag-trimmed 7d window. |
-| `network_views_7d` | int \| null | Sum of per-channel `views_7d` when every channel that reports has a number; otherwise null if none measured. |
+| `channels.<ch>.subscribers` | int \| null | Current subscriber count (point-in-time). |
+| `channels.<ch>.subs_net_7d` | int \| null | Net subscribers over `day_series[-7:]`. |
+| `channels.<ch>.views_7d` | int \| null | Views summed over `day_series[-7:]`. |
+| `network_views_7d` | int \| null | Sum of per-channel `views_7d` when any channel reports; otherwise null. |
 
-**Source note (v1):** `dashboard.audience.youtube` carries
-`subscribers` and `subscribers_delta_7d` but **not** `views_7d`. The
-lag-trimmed `views_7d` / `subs_net_7d` values the contract documents
-already live under `dashboard.growth.channel_scorecard` (same nightly
-dashboard build, same YouTube Analytics fetch — not a new computation).
-The builder reads that scorecard for the 7d fields and falls back to
-`audience.youtube.channels` for subscriber counts when the scorecard is
-absent. It does not recompute from raw day series.
+**Source note (v1):** `views_7d` / `subs_net_7d` are read from
+`api/youtube_stats.json` `channels.<ch>.day_series[-7:]` with **no**
+extra lag trim. Point-in-time `subscribers` comes from
+`dashboard.growth.channel_scorecard` (fallback:
+`dashboard.audience.youtube.channels`, then the youtube_stats channel
+snap).
+
+**Do not use `growth.channel_scorecard.channels.*.views_7d`.** That
+scorecard field is known to be **double-trimmed**:
+`scripts/generate_dashboard.py` drops the trailing 2 day-series rows as
+a lag guard, but the API has already omitted the unfinalized days, so
+the scorecard window ends two days too far back (e.g. Oct 17–23 instead
+of Oct 19–25 when the series ends on Oct 25). Fixing that trim is a
+separate change that needs the founder's go; the contract deliberately
+ignores the scorecard 7d fields so it stays correct either way.
 
 ---
 
@@ -194,8 +211,10 @@ Source: `dashboard.audience.newsletter`, with
    missing."
 2. **Do not invent substitutes.** If a documented field has no value in
    the sources, emit `null` and keep the field present.
-3. **Carry provenance timestamps** per surface so staleness is visible
-   without opening the upstream files.
+3. **Carry provenance timestamps** per surface so staleness — and a
+   missing upstream file — is visible without opening the sources. A
+   null field next to a present `fetched_at` / `generated_at` means
+   "this surface was measured; that particular figure was not."
 4. **Keep surfaces separate** — see the reach-sum ban above.
 5. **Bump `schema_version`** when removing a field or changing its
    meaning; additive fields may stay on the same version if documented.

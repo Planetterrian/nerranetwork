@@ -12,9 +12,11 @@ Honesty rules (same as the funnel / headline builders):
 
 * Unmeasured → ``null``, never ``0``.
 * No network calls — pure read of already-committed
-  ``api/dashboard.json`` and ``api/audience_headline.json``.
-* Do not recompute OP3 / YouTube / Spotify / Apple / GA4 figures; only
-  project existing fields into the contract shape.
+  ``api/dashboard.json``, ``api/audience_headline.json``, and
+  ``api/youtube_stats.json``.
+* Do not re-fetch analytics. YouTube ``views_7d`` / ``subs_net_7d`` are
+  summed from the committed day series (last 7 present rows, no extra
+  lag trim — the API already omits unfinalized days).
 
 See ``docs/audience-contract.md`` for the human-readable contract.
 """
@@ -85,6 +87,29 @@ def _configured(block: Any) -> bool:
     return isinstance(block, dict) and bool(block.get("configured"))
 
 
+def youtube_7d_from_day_series(
+    day_series: Any,
+) -> Dict[str, Optional[int]]:
+    """Sum the last 7 **present** day-series rows.
+
+    YouTube Analytics omits unfinalized days from the series (~2 days
+    behind the build). Do **not** trim further — ``generate_dashboard``'s
+    scorecard does ``ds[:-2]`` then ``[-7:]``, which double-trims and
+    shifts the window two days too far back. The contract uses
+    ``day_series[-7:]`` only.
+    """
+    rows = [d for d in (day_series or []) if isinstance(d, dict)]
+    if not rows:
+        return {"views_7d": None, "subs_net_7d": None}
+    last7 = rows[-7:]
+    views = sum(int(d.get("views") or 0) for d in last7)
+    subs_net = sum(
+        int(d.get("subscribersGained") or 0) - int(d.get("subscribersLost") or 0)
+        for d in last7
+    )
+    return {"views_7d": views, "subs_net_7d": subs_net}
+
+
 def build_op3(
     audience: Dict[str, Any],
     headline: Dict[str, Any],
@@ -118,10 +143,15 @@ def build_op3(
     if downloads_30d is None:
         downloads_30d = _int_or_none(network.get("downloads_30d"))
 
+    # Provenance stays on the block even when the headline (and thus WoW)
+    # is missing — a null wow_pct with a present fetched_at means "headline
+    # absent / WoW unmeasured", not "OP3 itself is gone".
+    fetched_at = op3.get("fetched_at")
+    if fetched_at is None:
+        fetched_at = (headline.get("sources") or {}).get("op3_fetched_at")
+
     return {
-        "fetched_at": op3.get("fetched_at") or (headline.get("sources") or {}).get(
-            "op3_fetched_at"
-        ),
+        "fetched_at": fetched_at,
         "network_downloads_7d": downloads_7d,
         "network_downloads_30d": downloads_30d,
         "last_week": _int_or_none(network.get("last_week")),
@@ -132,22 +162,56 @@ def build_op3(
     }
 
 
-def build_youtube(dashboard: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    audience = dashboard.get("audience") if isinstance(dashboard.get("audience"), dict) else {}
-    yt_aud = audience.get("youtube") if isinstance(audience.get("youtube"), dict) else {}
-    growth = dashboard.get("growth") if isinstance(dashboard.get("growth"), dict) else {}
+def build_youtube(
+    dashboard: Dict[str, Any],
+    youtube_stats: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    audience = (
+        dashboard.get("audience")
+        if isinstance(dashboard.get("audience"), dict)
+        else {}
+    )
+    yt_aud = (
+        audience.get("youtube")
+        if isinstance(audience.get("youtube"), dict)
+        else {}
+    )
+    growth = (
+        dashboard.get("growth")
+        if isinstance(dashboard.get("growth"), dict)
+        else {}
+    )
     scorecard = (
         growth.get("channel_scorecard")
         if isinstance(growth.get("channel_scorecard"), dict)
         else {}
     )
+    yt_stats = youtube_stats if isinstance(youtube_stats, dict) else {}
+    stats_channels = (
+        yt_stats.get("channels")
+        if isinstance(yt_stats.get("channels"), dict)
+        else {}
+    )
 
-    sc_channels = scorecard.get("channels") if isinstance(scorecard.get("channels"), dict) else {}
-    aud_channels = yt_aud.get("channels") if isinstance(yt_aud.get("channels"), dict) else {}
+    sc_channels = (
+        scorecard.get("channels")
+        if isinstance(scorecard.get("channels"), dict)
+        else {}
+    )
+    aud_channels = (
+        yt_aud.get("channels")
+        if isinstance(yt_aud.get("channels"), dict)
+        else {}
+    )
 
-    if not sc_channels and not aud_channels:
+    if not stats_channels and not sc_channels and not aud_channels:
         return None
-    if not sc_channels and yt_aud and not _configured(yt_aud):
+    if (
+        not stats_channels
+        and not sc_channels
+        and yt_aud
+        and not _configured(yt_aud)
+    ):
         return None
 
     channels_out: Dict[str, Any] = {}
@@ -156,25 +220,33 @@ def build_youtube(dashboard: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     for ch in YOUTUBE_CHANNELS:
         sc = sc_channels.get(ch) if isinstance(sc_channels.get(ch), dict) else {}
         aud = aud_channels.get(ch) if isinstance(aud_channels.get(ch), dict) else {}
-        if not sc and not aud:
+        st = stats_channels.get(ch) if isinstance(stats_channels.get(ch), dict) else {}
+
+        # Point-in-time subscriber count: scorecard first, then audience,
+        # then the raw youtube_stats channel snap.
+        subscribers = _int_or_none(sc.get("subscribers"))
+        if subscribers is None:
+            subscribers = _int_or_none(aud.get("subscribers"))
+        if subscribers is None:
+            subscribers = _int_or_none(st.get("subscribers"))
+
+        # 7d window: ALWAYS from day_series[-7:] when present. Never from
+        # channel_scorecard.views_7d / subs_net_7d (known double-trimmed).
+        window = youtube_7d_from_day_series(st.get("day_series"))
+        views_7d = window["views_7d"]
+        subs_net = window["subs_net_7d"]
+        if views_7d is not None:
+            views_sum += views_7d
+            views_any = True
+
+        if subscribers is None and views_7d is None and subs_net is None and not st:
             channels_out[ch] = {
                 "subscribers": None,
                 "subs_net_7d": None,
                 "views_7d": None,
             }
             continue
-        # Prefer the lag-trimmed scorecard for 7d fields; fall back to
-        # audience.youtube subscribers / subscribers_delta_7d.
-        subscribers = _int_or_none(sc.get("subscribers"))
-        if subscribers is None:
-            subscribers = _int_or_none(aud.get("subscribers"))
-        subs_net = _int_or_none(sc.get("subs_net_7d"))
-        if subs_net is None:
-            subs_net = _int_or_none(aud.get("subscribers_delta_7d"))
-        views_7d = _int_or_none(sc.get("views_7d"))
-        if views_7d is not None:
-            views_sum += views_7d
-            views_any = True
+
         channels_out[ch] = {
             "subscribers": subscribers,
             "subs_net_7d": subs_net,
@@ -182,7 +254,8 @@ def build_youtube(dashboard: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         }
 
     generated = (
-        scorecard.get("as_of")
+        yt_stats.get("generated")
+        or scorecard.get("as_of")
         or yt_aud.get("generated")
     )
     return {
@@ -213,7 +286,11 @@ def build_apple(
     if not ap or not _configured(ap):
         return None
     totals = ap.get("totals") if isinstance(ap.get("totals"), dict) else {}
-    network = dashboard.get("network") if isinstance(dashboard.get("network"), dict) else {}
+    network = (
+        dashboard.get("network")
+        if isinstance(dashboard.get("network"), dict)
+        else {}
+    )
     return {
         "fetched_at": ap.get("fetched_at"),
         "plays": _int_or_none(totals.get("plays")),
@@ -246,7 +323,11 @@ def build_newsletter(
     audience: Dict[str, Any],
     headline: Dict[str, Any],
 ) -> Optional[Dict[str, Any]]:
-    nl = audience.get("newsletter") if isinstance(audience.get("newsletter"), dict) else {}
+    nl = (
+        audience.get("newsletter")
+        if isinstance(audience.get("newsletter"), dict)
+        else {}
+    )
     network = (
         headline.get("network")
         if isinstance(headline.get("network"), dict)
@@ -272,10 +353,11 @@ def build_newsletter(
 def build_contract(
     dashboard: Dict[str, Any],
     headline: Dict[str, Any],
+    youtube_stats: Optional[Dict[str, Any]] = None,
     *,
     now: Optional[dt.datetime] = None,
 ) -> Dict[str, Any]:
-    """Project dashboard + headline into the version-1 contract shape."""
+    """Project dashboard + headline + youtube_stats into the v1 shape."""
     audience = (
         dashboard.get("audience")
         if isinstance(dashboard.get("audience"), dict)
@@ -286,7 +368,7 @@ def build_contract(
         "schema_version": SCHEMA_VERSION,
         "generated_at": when.isoformat(),
         "op3": build_op3(audience, headline),
-        "youtube": build_youtube(dashboard),
+        "youtube": build_youtube(dashboard, youtube_stats),
         "spotify": build_spotify(audience),
         "apple": build_apple(audience, dashboard),
         "site": build_site(audience),
@@ -294,10 +376,13 @@ def build_contract(
     }
 
 
-def build_from_root(root: Path, *, now: Optional[dt.datetime] = None) -> Dict[str, Any]:
+def build_from_root(
+    root: Path, *, now: Optional[dt.datetime] = None
+) -> Dict[str, Any]:
     dashboard = _load(root / "api" / "dashboard.json")
     headline = _load(root / "api" / "audience_headline.json")
-    return build_contract(dashboard, headline, now=now)
+    youtube_stats = _load(root / "api" / "youtube_stats.json")
+    return build_contract(dashboard, headline, youtube_stats, now=now)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
