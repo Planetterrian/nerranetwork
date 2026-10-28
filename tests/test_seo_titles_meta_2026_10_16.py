@@ -119,8 +119,13 @@ def approved() -> dict[str, tuple[str, str]]:
     return rows
 
 
-def test_seo_file_has_eleven_pages(approved):
-    assert len(approved) == len(URL_TO_FILE)
+def test_seo_file_matches_url_to_file(approved):
+    # approved() already asserts set(rows) == set(URL_TO_FILE); pin the
+    # expected size so adding a dict entry without a docs row still fails
+    # (11 original + 4 show pages on 2026-10-28).
+    assert len(URL_TO_FILE) == 15
+    assert len(approved) == 15
+    assert set(approved) == set(URL_TO_FILE)
 
 
 @pytest.mark.parametrize("url", list(URL_TO_FILE))

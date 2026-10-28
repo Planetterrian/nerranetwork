@@ -150,10 +150,15 @@ def test_mira_explore_about_seo_tags(tmp_path):
         html = path.read_text(encoding="utf-8")
         tags = _page_seo_tags(html)
         _assert_title_meta(tags, title, meta, basename)
+        # Count-free titles/metas only (Google + social cards) — not a ban
+        # on body copy. Explore still renders the free/members counts in
+        # its intro; about's body has never carried a count.
         if basename in ("explore.html", "about.html"):
-            assert not FREE_SHOWS_RE.search(html), (
-                f"{basename} must not contain a show-count phrase"
-            )
+            for key, value in tags.items():
+                assert not FREE_SHOWS_RE.search(_unescape_meta(value)), (
+                    f"{basename} {key} must not contain a show-count phrase: "
+                    f"{value!r}"
+                )
 
 
 @pytest.mark.parametrize("slug", sorted(SHOW_PAGES))
