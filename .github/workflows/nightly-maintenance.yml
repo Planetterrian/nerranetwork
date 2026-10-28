@@ -267,6 +267,12 @@ jobs:
         # and two nights of analytics were computed and discarded).
         run: python scripts/generate_dashboard.py --out api/dashboard.json || echo "::error::Dashboard reports a failing landmine card — investigate, but nightly commit proceeds"
 
+      - name: Build audience contract
+        # Versioned JSON Mission Control pins to — projects already-built
+        # dashboard + audience_headline into api/audience_contract.json.
+        # Pure read-transform; null where unmeasured. See docs/audience-contract.md.
+        run: python scripts/build_audience_contract.py || echo "::warning::Audience contract build failed (non-fatal)"
+
       - name: Daily Show Health Check (Grok Tier 1)
         # Pattern-based surface checks (chapters, phonetic garbles, word count).
         # Outputs api/daily-show-health.json. Escalations (score >0.6) post to
@@ -469,6 +475,7 @@ jobs:
             digests/**/*_claims.json
             api/dashboard.json
             api/audience_headline.json
+            api/audience_contract.json
             api/daily-show-health.json
             api/youtube_stats.json
             api/youtube_channel_history.json
