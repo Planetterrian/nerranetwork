@@ -92,11 +92,16 @@ show notes until re-synthesized (Actions "Re-synthesize Episode", same R2 key).
 
 ## 5. Open: not fixed here
 
-- **The fire tick runs every five minutes all day.** `fireTickDue` is held
-  open by an `interview_runs` row in `staged/awaiting_guest/fired` within 48 h
-  (about 362 runner-minutes on Oct 27, almost all "already has an active run —
-  skipping"). This needs a Worker change, `wrangler deploy` and a rehearsal
-  window; it is not a quick fix.
+- **The fire tick ran every five minutes all day. Fixed in a follow-up
+  (Oct 28).** The gate read `interview_runs` created in the last 48 hours,
+  and every run is staged about a day before its slot, so each booking held
+  it open for two days. Run d0cdb835 (staged Oct 26 for Oct 27 18:00) and
+  then run 35cdf6f4 (staged Oct 27 for Oct 28 17:30) kept it open all of
+  Oct 27: 232 dispatches, almost all "already has an active run —
+  skipping". The gate now reads a run by its `scheduled_for`, in the same
+  window as the interview (140 minutes ahead to 3 hours behind). Replayed
+  on Oct 27's rows, 65 five-minute ticks open instead of 288, plus the
+  half-hour catch-alls. Operator: `wrangler deploy` in `workers/voices`.
 - **The Mira prompt is over budget**: 17,946 and 18,525 characters against
   16,000 for the two upcoming guests. Two lessons say they should not be in
   the prompt. This is a room change and needs a rehearsal PASS plus a listen.
