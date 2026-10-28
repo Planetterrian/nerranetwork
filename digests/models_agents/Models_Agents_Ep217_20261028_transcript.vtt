@@ -1,0 +1,481 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Genie 4 now gives builders real-time physics, reasoning, and audio, and interactive simulations they can test today. This is Models &amp; Agents, Episode 217. Instruction 2 Number Habits, new Icelandic encoders, and an open medical decision model come next. Then things to try. DeepMind has begun rolling Genie 4 out to trusted testers, the lab said. The interactive world model nest simulations inside other simulations. It builds on prior Genie versions by adding richer sensory and planning capability.
+
+00:00:29.980 --> 00:00:33.900
+that let users create and interact with dynamic environments.
+
+00:00:34.560 --> 00:00:39.320
+Developers and researchers interested in simulation, robotics, or game-like world building
+
+00:00:39.320 --> 00:00:42.840
+can sign up on a wait list with wider access plans soon.
+
+00:00:43.460 --> 00:00:45.380
+The model runs at interactive speeds.
+
+00:00:46.471 --> 00:00:48.831
+Instruction-tuning installs round number avoidance
+
+00:00:49.071 --> 00:00:50.831
+and sharpens endpoint avoidance,
+
+00:00:51.231 --> 00:00:55.111
+making number distributions less uniform according to a paper on archive.
+
+00:00:55.611 --> 00:00:59.651
+The comparison used 15 matched base and tuned open-weight model pairs.
+
+00:00:59.651 --> 00:01:07.391
+base models return the N.1 and N at 0.30 to 0.60 of the interior rate, while
+
+00:01:07.391 --> 00:01:12.311
+tuned models almost never do. Tune models also avoid multiples of 10 almost
+
+00:01:12.311 --> 00:01:18.291
+completely. The study evaluated 18 model lines at 5 ranges up to N equals 100
+
+00:01:18.291 --> 00:01:24.171
+under 29 decoding configurations. No shared model integer above N equals 10 showed
+
+00:01:24.171 --> 00:01:27.171
+up across more than 42% of tuned conditions.
+
+00:01:28.108 --> 00:01:33.688
+Iceland now has open data modern-burt encoders trained for the language, including a from-scratch
+
+00:01:33.688 --> 00:01:35.608
+model and a warm start from English.
+
+00:01:36.168 --> 00:01:41.868
+The 1 billion-parameter model trained from scratch on 9 billion open tokens outperforms
+
+00:01:41.868 --> 00:01:45.248
+the prior iceberg reference on all 11 evaluated tasks.
+
+00:01:45.728 --> 00:01:50.788
+A warm-started version from an English-etting encoder of the same shape ranks highest on
+
+00:01:50.788 --> 00:01:51.488
+every task.
+
+00:01:51.488 --> 00:01:56.888
+Warm start transfer from English layers works at base size and above even when the target
+
+00:01:56.888 --> 00:01:58.768
+vocabulary is transplanted.
+
+00:01:58.988 --> 00:02:03.808
+The 1 billion parameter model remains the first model lingual Icelandic encoder of that
+
+00:02:03.808 --> 00:02:04.228
+scale.
+
+00:02:05.305 --> 00:02:11.205
+Medgev is an open system 1 model, fast, intuitive decision making that runs locally on a laptop.
+
+00:02:11.825 --> 00:02:20.505
+It reaches 72.5% on MedQA, 75.4% on the United States Medical Licensing Examination, or USMLE,
+
+00:02:20.505 --> 00:02:25.185
+and 80.1% on the New England Journal of Medicine or NEJM.
+
+00:02:25.765 --> 00:02:30.745
+Expected calibration error, a measure of how well confidence matches accuracy, stays
+
+00:02:30.745 --> 00:02:35.405
+within 0.028-0.063 on those knowledge tasks.
+
+00:02:35.885 --> 00:02:43.045
+On patient-level prediction from MIMIC4, it exceeds XG boost on in-hospital mortality with
+
+00:02:43.045 --> 00:02:48.605
+an area under the receiver operating curve or AUROC of 0.926.
+
+00:02:48.605 --> 00:02:54.105
+6, but trails supervise models on operational outcomes such as emergency department triage
+
+00:02:54.105 --> 00:02:54.605
+admission.
+
+00:02:55.145 --> 00:03:01.445
+A 2-parameter recalibration method using 50-200 local labels reduces expected calibration
+
+00:03:01.445 --> 00:03:05.105
+error to 0.007 on patient-level tasks.
+
+00:03:06.068 --> 00:03:11.648
+Manipulation and navigation share one high-level decision model in OmniBrain-0, a lightweight
+
+00:03:11.648 --> 00:03:13.168
+unified embodied agent.
+
+00:03:13.168 --> 00:03:18.888
+Training uses embodied pre-training, domain specialized distillation, and multi-teacher
+
+00:03:18.888 --> 00:03:20.348
+on-policy distillation.
+
+00:03:20.888 --> 00:03:25.828
+Rubric guided recursive self-improvement turns execution evidence into refined rubric's
+
+00:03:25.828 --> 00:03:28.468
+and verified trajectories before reconsolidation.
+
+00:03:29.028 --> 00:03:38.848
+Evaluation covers Libero Pro Robocassa 365, Robo Twin 2.0, R2RCE, and multiple real-world
+
+00:03:38.848 --> 00:03:43.888
+manipulation tasks. Inference and execution overhead come in substantially lower than
+
+00:03:43.888 --> 00:03:51.543
+its closed-source teacher. Annual SEC 10K filings become inference time context in Fin LLMKG,
+
+00:03:51.923 --> 00:03:57.023
+which injects temporally grounded company-level facts into any causal large language model,
+
+00:03:57.403 --> 00:04:03.263
+or LLM, without weight updates. The framework supplies either natural language profiles or
+
+00:04:03.263 --> 00:04:08.283
+relevance-ranked triples. It attributes each sentiment score to individual sentences and
+
+00:04:08.283 --> 00:04:13.343
+retrieved triples for inspectability. Portfolio performance improves over state-of-the-art
+
+00:04:13.343 --> 00:04:18.914
+baselines in simulation. Agent handoffs now have a dedicated continuity test called
+
+00:04:18.914 --> 00:04:26.434
+the Handoff State Continuity Benchmark, or HSC-Bench. It contains 1,039 tasks that measure
+
+00:04:26.434 --> 00:04:32.014
+how well a receiving model recovers repository evidence and continues from prior conversational,
+
+00:04:32.314 --> 00:04:37.614
+tool and file state. Structured Handoff State improves evidence recovery for every tested
+
+00:04:37.614 --> 00:04:40.694
+and model, and continuation performance for most models.
+
+00:04:41.314 --> 00:04:43.794
+The strongest receivers differ between the two tracks.
+
+00:04:44.791 --> 00:04:49.311
+Traumem reframes agent memory as task-oriented role-adaptive workspaces.
+
+00:04:49.771 --> 00:04:54.751
+It organizes interaction histories into local threads and builds those workspaces by assigning
+
+00:04:54.751 --> 00:05:00.291
+roles and jointly selecting complementary memories across event, affect, and time views.
+
+00:05:00.871 --> 00:05:07.751
+On Locomo and Mem Gallery, it delivers macro-F1 gains of 2.23 to 3.14 points over
+
+00:05:07.751 --> 00:05:14.431
+prior memory systems. It uses 5.1 to 12.8% fewer context tokens on two backbones.
+
+00:05:15.573 --> 00:05:20.493
+Multilingual multi-hop document question answering gets a learned skill orchestration policy
+
+00:05:20.493 --> 00:05:27.473
+in doc skill. The policy is trained via bounded Monte Carlo tree search or MCTS, demonstrations
+
+00:05:27.473 --> 00:05:33.513
+and direct preference optimization or DPO, to select, revisit, or skip skills as evidence
+
+00:05:33.513 --> 00:05:39.793
+state evolves. On the new MMHAB doc bench of 60,000 question answer pairs across 10 languages,
+
+00:05:40.373 --> 00:05:49.453
+the QN3 VL8B instantiation reaches 41.0 accuracy and 49.2 F1. That exceeds the strongest
+
+00:05:49.453 --> 00:05:57.814
+baseline by 5.5 and 6.3 points. Camer, short for compatibility aware memory replay, jointly controls
+
+00:05:57.814 --> 00:06:03.054
+current example supervision and historical replay for continual learning in large language models.
+
+00:06:03.054 --> 00:06:08.794
+Compatibility checks and a learned memory gate choose among learning with replay, reinforcing
+
+00:06:08.794 --> 00:06:11.914
+compatible examples or skipping mastered duplicates.
+
+00:06:12.334 --> 00:06:18.194
+On wiki big edit, it reaches 93.66% original match after only 3,000 facts.
+
+00:06:18.734 --> 00:06:23.974
+It leads all evaluated methods on four trace tasks while preserving earlier task performance.
+
+00:06:25.033 --> 00:06:30.533
+Bengali speech research just got lipigore, a large-scale, diorized multi-domain corpus.
+
+00:06:30.533 --> 00:06:37.733
+It supplies 885 hours of speaker-diarrhized long-form audio from 998 YouTube videos across
+
+00:06:37.733 --> 00:06:43.413
+17 domains, together with SSTT annotations and a human verified gold split.
+
+00:06:43.893 --> 00:06:48.793
+The construction pipeline is released as reusable code for any language with captioned YouTube
+
+00:06:48.793 --> 00:06:49.253
+presence.
+
+00:06:49.873 --> 00:06:56.413
+For automatic speech recognition or ASR models, show consistent degradation on a motive, dialectal,
+
+00:06:56.573 --> 00:06:57.793
+and long-form content.
+
+00:06:57.793 --> 00:07:04.136
+Homo glyph and invisible character Watermark still leave across lingual fairness gap, even
+
+00:07:04.136 --> 00:07:05.776
+without a tokenizer in the loop.
+
+00:07:06.356 --> 00:07:12.696
+Capacity varies 3.3 fold across 40 language varieties and 24 scripts, with script accounting
+
+00:07:12.696 --> 00:07:14.696
+for 96% of the variation.
+
+00:07:15.376 --> 00:07:20.576
+Ordinary copypaste widens the gap so that a detector needs roughly two code points for English
+
+00:07:20.576 --> 00:07:23.036
+or Persian, but 93 for Lau.
+
+00:07:23.036 --> 00:07:29.357
+ETMM decouples and aligns heterogeneous memory for long-term conversational agents.
+
+00:07:29.717 --> 00:07:35.177
+It parses conversations into atomic units, separates effective information, and maintains
+
+00:07:35.177 --> 00:07:41.517
+three hierarchical views, event, affect, and time, with adaptively calibrated thresholds.
+
+00:07:41.877 --> 00:07:50.677
+On locomo and long-mem Eval S, it improves accuracy by 12.46% and 7.96% relative to state-of-the-art
+
+00:07:50.677 --> 00:07:57.154
+baselines, while keeping competitive token efficiency. An embedding-based retrieval plus LLM
+
+00:07:57.154 --> 00:08:03.794
+filtering approach now hunts evidence inside a large randomized evaluation corpus. It finds 92%
+
+00:08:03.794 --> 00:08:11.374
+of the evidence a systematic review would include in a 7,354 trial corpus, compared with 45% for
+
+00:08:11.374 --> 00:08:16.914
+label search alone. The two-stage design supports broad candidate retrieval followed by query
+
+00:08:16.914 --> 00:08:22.555
+specific filtering at rising per query cost with depth. Across the rest of the slate,
+
+00:08:22.915 --> 00:08:27.715
+RECOPPI produces relation grounded contextual, personally identifiable information,
+
+00:08:28.195 --> 00:08:34.975
+or PII, masking data for Korean documents that yields 88.42% annotator agreement on
+
+00:08:34.975 --> 00:08:42.255
+keep labels, versus 26.27% for author-based augmentation, and supports joint fine-tuning that
+
+00:08:42.255 --> 00:08:47.415
+limits overmasking to at most 5.04% within a fixed leakage budget.
+
+00:08:48.075 --> 00:08:53.895
+Analysis of 10,420 congressional e-newsletters finds Democrats and Republicans surround the
+
+00:08:53.895 --> 00:08:59.115
+same election integrity terms with entirely different neighboring language, with divergence
+
+00:08:59.115 --> 00:09:03.935
+growing on certification after 2020, and on rigged install and after that year.
+
+00:09:04.515 --> 00:09:09.475
+A label preserving perturbation framework detects input ambiguity before disambiguation,
+
+00:09:09.475 --> 00:09:15.595
+and outperforms output site uncertainty baselines and LLM paraphrase baselines across open domain,
+
+00:09:16.135 --> 00:09:21.815
+conversational, and visual question answering data sets. A single JIS 6.7 billion
+
+00:09:21.815 --> 00:09:28.555
+parameter backbone fine-tuned with 4-bit quantized low-rank adaptation or Q-Lora ranks first on
+
+00:09:28.555 --> 00:09:37.835
+both the binary safe unsafe track at macro F1 0.984 and the 7-way harm domain track at macro F1 0.790
+
+00:09:37.835 --> 00:09:44.195
+of the R-Guard 2026 shared task while remaining accurate across six aerobic dialects.
+
+00:09:44.675 --> 00:09:49.315
+Lotus summarizes variable-length token representations with statistical descriptors,
+
+00:09:49.615 --> 00:09:54.835
+then applies low-rank multi-linear decomposition to train a lightweight hallucination classifier
+
+00:09:54.835 --> 00:10:00.875
+that improves over recent state-of-the-art baselines across multiple LLMs and question-answering benchmarks.
+
+00:10:01.675 --> 00:10:06.555
+Andthropic's new one-gov agreement extends Claude access to federal, state, local, tribal,
+
+00:10:06.735 --> 00:10:10.295
+and territorial governments at 40% off under a single contract.
+
+00:10:10.935 --> 00:10:15.435
+Andthropic scientists have formed research partnerships with six organizations developing
+
+00:10:15.435 --> 00:10:20.855
+new medicines and begun internal drug discovery efforts, sharing early results on how Claude
+
+00:10:20.855 --> 00:10:22.575
+supports stages of drug development.
+
+00:10:23.215 --> 00:10:28.895
+Liquid AI released guidance on building specialized multimodal models with LFM3, according
+
+00:10:28.895 --> 00:10:33.975
+According to the hugging face blog, Alan AI examines whether LLMs can reliably judge
+
+00:10:33.975 --> 00:10:35.855
+whether a research idea is novel.
+
+00:10:36.828 --> 00:10:41.748
+Load Medgev on your laptop and run zero-shot medical question answering or patient-level
+
+00:10:41.748 --> 00:10:46.408
+prediction when you want low-compute and calibrated outputs before any fine-tune.
+
+00:10:46.828 --> 00:10:51.788
+Point the released lipigore pipeline at captioned YouTube channels in your language and build
+
+00:10:51.788 --> 00:10:55.908
+a diorized long-form speech corpus without sitting through manual transcription.
+
+00:10:55.908 --> 00:11:06.408
+drop your current agent stack onto the HSC bench hand-off tasks and score how well repository evidence and conversational state survive when one model hands work to another.
+
+00:11:07.048 --> 00:11:12.148
+Pipe company level triples into whatever causal LLM you already use for financial sentiment.
+
+00:11:12.668 --> 00:11:18.388
+Fin LLM KG style, so the extra context arrives at inference with almost no added cost.
+
+00:11:19.517 --> 00:11:24.637
+Additional results from Anthropics Drug Development Research Partnerships are scheduled for the coming months.
+
+00:11:24.637 --> 00:11:30.077
+Further, our guard shared task submissions and analyses for Arabic harmful prompt detection
+
+00:11:30.077 --> 00:11:30.977
+are still coming.
+
+00:11:31.697 --> 00:11:36.377
+Open Icelandic modern bird scaling coders and evaluation harnesses are slated to keep
+
+00:11:36.377 --> 00:11:36.817
+arriving.
+
+00:11:37.838 --> 00:11:42.278
+Control symbolic probes are how you pop the hood on which attention heads actually carry
+
+00:11:42.278 --> 00:11:43.018
+a count effect.
+
+00:11:43.598 --> 00:11:48.338
+The method varies only the count and order of two symbols inside, otherwise fixed prompts.
+
+00:11:48.918 --> 00:11:52.098
+Then measures how much each attention head shifts the loge at difference.
+
+00:11:52.098 --> 00:11:54.858
+The score gap between two answer tokens.
+
+00:11:55.138 --> 00:12:00.478
+It first identifies candidate heads whose ablation removes most of the count effect, and whose
+
+00:12:00.478 --> 00:12:05.058
+mean output patching recovers the effect in both directions, then applies conditional
+
+00:12:05.058 --> 00:12:08.098
+bounds to decide which heads survive finite sample noise.
+
+00:12:08.718 --> 00:12:16.938
+In Pithia 410 million, this process isolates sets of 1 to 12 heads that remove 65.5 to 91.6%
+
+00:12:16.938 --> 00:12:21.958
+of the count effect while preserving influence on count comparisons never seen during selection.
+
+00:12:22.618 --> 00:12:27.438
+When the same heads are ablated on a natural language task that asks which state is supported by
+
+00:12:27.438 --> 00:12:34.398
+more reports, accuracy drops 8.2 points versus 0.8 points for random sets of the same size and layer.
+
+00:12:35.018 --> 00:12:40.378
+The technique supplies a compact, causally validated shortlist rather than a diffuse importance map.
+
+00:12:40.998 --> 00:12:44.758
+Reach for it when you need to know which specific heads carry a particular reasoning
+
+00:12:44.758 --> 00:12:48.698
+behavior before editing, pruning, or monitoring those heads in production.
+
+00:12:49.278 --> 00:12:54.138
+The main practical limit is that the symbolic probe must be carefully balanced, so the measured
+
+00:12:54.138 --> 00:12:56.518
+effect truly isolates the variable of interest.
+
+00:12:57.412 --> 00:13:03.612
+Before we go, the R-Guard 2026 task is still collecting Arabic harmful prompt detection submissions
+
+00:13:03.612 --> 00:13:04.372
+and write-ups.
+
+00:13:04.832 --> 00:13:06.592
+That's models and agents for today.
+
+00:13:07.092 --> 00:13:11.092
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:13:11.552 --> 00:13:13.852
+and subscribe so you don't miss tomorrow's update.
+
+00:13:13.852 --> 00:13:19.052
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+
+00:13:19.052 --> 00:13:24.352
+watch then listen, find us on YouTube at Narin Network, links in the show notes, quick
+
+00:13:24.352 --> 00:13:29.692
+tip from the network, try fascinating frontiers next, the most fascinating news from space
+
+00:13:29.692 --> 00:13:30.372
+and science.
+
+00:13:30.832 --> 00:13:34.152
+Every Narin Network show is free at NarinNetwork.com.
+
+00:13:34.352 --> 00:13:39.752
+Our interviews are hosted by Mira, the network's AI documentarian, and the guest decides
+
+00:13:39.752 --> 00:13:41.852
+whether the conversation is published at all.
+
+00:13:41.852 --> 00:13:45.052
+How that works is at narennetwork.com Mira.
+
+00:13:45.472 --> 00:13:48.592
+This episode used AI voice synthesis of my voice.
+
+00:13:49.072 --> 00:13:51.412
+Editorial selection and analysis are my own.
