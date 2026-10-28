@@ -66,6 +66,17 @@
             if (!link) return;
             var href = link.getAttribute('href') || '';
             var lower = href.toLowerCase();
+            // A site visitor sent to the episode's video (Oct 28 2026): the
+            // blog's Watch button and every other YouTube link. Its own
+            // event — a watch is not a subscribe.
+            if (lower.indexOf('youtube.com/watch') !== -1 || lower.indexOf('youtube.com/shorts/') !== -1) {
+                track('watch_on_youtube', {
+                    transport_type: 'beacon',
+                    kind: link.getAttribute('data-nn-watch') || 'link',
+                    location: window.location.pathname,
+                });
+                return;
+            }
             var directory = null;
             if (lower.indexOf('podcasts.apple.com') !== -1) directory = 'apple_podcasts';
             else if (lower.indexOf('open.spotify.com') !== -1) directory = 'spotify';
@@ -81,6 +92,22 @@
         });
     }
 
+    // ----- Checkout starts (Oct 28 2026) -----
+    // A click on a Nerra Personal Payment Link (data-nn-tier on the join
+    // and account pages). Until now neither page's Stripe buttons sent
+    // anything, so "how many visitors started paying" was unmeasured.
+    function attachCheckoutTracking() {
+        document.addEventListener('click', function (e) {
+            var link = e.target.closest('a[data-nn-tier]');
+            if (!link) return;
+            track('begin_checkout', {
+                transport_type: 'beacon',
+                tier: link.getAttribute('data-nn-tier') || 'unknown',
+                location: window.location.pathname,
+            });
+        });
+    }
+
     // ----- Episode play tracking -----
     function attachAudioTracking() {
         document.querySelectorAll('audio').forEach(function (audio) {
@@ -88,6 +115,16 @@
             audio.addEventListener('play', function () {
                 if (played) return;  // Only track first play per session
                 played = true;
+                // The Nerra Personal sample edition is the paid product's
+                // demo, not an episode: its own event, so the funnel can
+                // tell "heard the sample" from "played a show" (Oct 28 2026).
+                if (audio.hasAttribute('data-nn-sample')) {
+                    track('play_personal_sample', {
+                        placement: audio.getAttribute('data-nn-sample') || 'unknown',
+                        location: window.location.pathname,
+                    });
+                    return;
+                }
                 track('episode_play', {
                     src: (audio.currentSrc || audio.src || '').split('?')[0],
                     location: window.location.pathname,
@@ -100,6 +137,7 @@
     function init() {
         attachNewsletterTracking();
         attachOutboundTracking();
+        attachCheckoutTracking();
         attachAudioTracking();
     }
 

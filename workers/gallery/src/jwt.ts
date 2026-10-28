@@ -30,6 +30,12 @@ export interface JwtClaims {
   scope: JwtScope;
   iat: number;        // issued-at, unix seconds
   exp: number;        // expires-at, unix seconds
+  /** Oct 28 2026: 1 when the session was opened from an emailed link, so
+   *  the holder has shown they read that inbox. POST /api/subscribe signs
+   *  a cookie for whatever address is typed into a form; only a verified
+   *  session may read or change an existing member's private record
+   *  (personal.ts). Absent on every cookie issued before this field. */
+  v?: 1;
 }
 
 const HEADER_B64 = base64UrlEncode(
@@ -53,6 +59,7 @@ export async function signJwt(
     scope: payload.scope,
     iat: now,
     exp: now + payload.ttlSeconds,
+    ...(payload.v === 1 ? { v: 1 as const } : {}),
   };
   const payloadB64 = base64UrlEncode(
     new TextEncoder().encode(JSON.stringify(claims)),

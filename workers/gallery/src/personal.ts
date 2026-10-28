@@ -35,8 +35,9 @@ import {
   todayStatus,
 } from "./build";
 import { corsHeaders, jsonResponse } from "./cors";
-import { verifyJwt } from "./jwt";
-import type { Env } from "./types";
+import { signJwt, verifyJwt } from "./jwt";
+import { buildWelcomeEmail } from "./magic-email";
+import type { Env, HandlerDeps } from "./types";
 
 /** Constant-time compare for Authorization bearer strings. */
 function bearerEquals(a: string, b: string): boolean {
@@ -150,6 +151,10 @@ export interface MemberRecord {
   customer_id?: string;  // Stripe customer — needed to open the billing portal
   ends_at?: string;      // ISO date when a cancel-at-period-end takes effect
   trial_ends_at?: string; // ISO date the free trial converts (Sep 17 2026)
+  /** Issued-at of the UNVERIFIED session that created this free record
+   *  (Oct 28 2026, mayUseRecord). Absent when a verified session or the
+   *  webhook made it. */
+  created_iat?: number;
   updated_at: string;
 }
 
@@ -180,10 +185,18 @@ function notConfigured(request: Request): Response {
   });
 }
 
-async function emailFromCookie(
+export interface Session {
+  email: string;
+  /** Opened from an emailed link (jwt.ts `v`). */
+  verified: boolean;
+  /** The cookie's issued-at — ties a free record to the session that made it. */
+  iat: number;
+}
+
+async function sessionFromCookie(
   request: Request,
   env: Env,
-): Promise<string | null> {
+): Promise<Session | null> {
   const header = request.headers.get("Cookie");
   if (!header) return null;
   let token: string | null = null;
@@ -198,7 +211,43 @@ async function emailFromCookie(
     expectedScope: "gallery-subscriber",
   });
   if (!verify.ok || !verify.claims?.sub) return null;
-  return (verify.claims.sub as string).toLowerCase();
+  return {
+    email: (verify.claims.sub as string).toLowerCase(),
+    verified: verify.claims.v === 1,
+    iat: verify.claims.iat,
+  };
+}
+
+/**
+ * Whether this session may read or change this member record.
+ *
+ * Oct 28 2026: POST /api/subscribe signs a 90-day cookie for whatever
+ * address is typed into a form, with no proof the visitor owns it, and
+ * every endpoint here accepted that cookie — so anyone who knew a member's
+ * email could read their private feed URL, name, cities, topics and
+ * profile note, change their lineup, and (with the Stripe key set) open
+ * their billing portal. Now:
+ *   - a VERIFIED session (opened from an emailed link) may use the record;
+ *   - with no record there is nothing private yet, so anyone may start one;
+ *   - an unverified session may keep editing a FREE record it created
+ *     itself (the same cookie, by issued-at), so a new account can still
+ *     pick shows straight after signing up;
+ *   - a paid record (active, or one that has ever held a feed token) needs
+ *     a verified session, whatever made it.
+ */
+export function mayUseRecord(sess: Session, member: MemberRecord | null): boolean {
+  if (sess.verified) return true;
+  if (!member) return true;
+  if (member.status === "active" || member.feed_token || member.sub_id) return false;
+  return typeof member.created_iat === "number" && member.created_iat === sess.iat;
+}
+
+function verifyRequired(request: Request): Response {
+  return jsonResponse(request, 403, {
+    ok: false,
+    error: "verify_required",
+    message: "Open the sign-in link we email you to see or change this account.",
+  });
 }
 
 async function loadMember(env: Env, email: string): Promise<MemberRecord | null> {
@@ -221,11 +270,24 @@ async function saveMember(env: Env, email: string, rec: MemberRecord) {
 // ---------------------------------------------------------------------------
 
 export async function handleAccount(request: Request, env: Env): Promise<Response> {
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
+  const email = sess.email;
   const member = env.RATE_LIMIT_KV ? await loadMember(env, email) : null;
+  if (!mayUseRecord(sess, member)) {
+    // Signed in by a form, not by a link: say only that a link is needed.
+    // Nothing about the record — not even whether it is a paid one.
+    return jsonResponse(request, 200, {
+      ok: true,
+      shows: PERSONAL_SHOWS,
+      email,
+      verify_required: true,
+      member: null,
+      perks: { book_discount_code: null, library: false },
+    });
+  }
   const active = member?.status === "active" && member.feed_token;
   return jsonResponse(request, 200, {
     ok: true,
@@ -303,11 +365,13 @@ export async function handleBookDownload(
       !file.startsWith(volume)) {
     return jsonResponse(request, 400, { ok: false, error: "bad request" });
   }
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
+  const email = sess.email;
   const member = await loadMember(env, email);
+  if (!mayUseRecord(sess, member)) return verifyRequired(request);
   if (!libraryUnlocked(env, member)) {
     return jsonResponse(request, 403, {
       ok: false, error: "books are included with Personal News Network",
@@ -340,10 +404,13 @@ export async function handleCheckoutRef(
   env: Env,
 ): Promise<Response> {
   if (!env.RATE_LIMIT_KV) return notConfigured(request);
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  // An unverified session may start a checkout: paying for an address you
+  // typed can only give that address a membership, never read its record.
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
+  const email = sess.email;
   const ref = randomToken();
   await env.RATE_LIMIT_KV.put(`cref:${ref}`, email,
     { expirationTtl: CREF_TTL_SECONDS });
@@ -398,10 +465,13 @@ export async function handlePortal(
   env: Env,
 ): Promise<Response> {
   if (!env.RATE_LIMIT_KV || !env.STRIPE_SECRET_KEY) return notConfigured(request);
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
+  const email = sess.email;
+  // Billing (cancel, card, plan) is never open to an unverified session.
+  if (!sess.verified) return verifyRequired(request);
   const member = await loadMember(env, email);
   if (!member || (!member.customer_id && !member.sub_id)) {
     return jsonResponse(request, 404, { ok: false, error: "no subscription" });
@@ -449,10 +519,13 @@ export async function handlePreferences(
   env: Env,
 ): Promise<Response> {
   if (!env.RATE_LIMIT_KV) return notConfigured(request);
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
+  const email = sess.email;
+  const stored = await loadMember(env, email);
+  if (!mayUseRecord(sess, stored)) return verifyRequired(request);
   let body: any;
   try {
     body = await request.json();
@@ -508,8 +581,11 @@ export async function handlePreferences(
     targetMinutes = (TARGET_MINUTES as readonly number[]).includes(n) ? n : null;
   }
 
-  const existing = (await loadMember(env, email)) || {
+  const existing: MemberRecord = stored || {
     shows: [], first_name: "", city: "", tier: "none", status: "none",
+    // A record started by an unverified session stays editable by that
+    // session only (mayUseRecord).
+    ...(sess.verified ? {} : { created_iat: sess.iat }),
     updated_at: "",
   };
   const rec: MemberRecord = {
@@ -547,11 +623,12 @@ export async function handleRebuild(
   env: Env,
 ): Promise<Response> {
   if (!env.RATE_LIMIT_KV || !env.PERSONAL_BUCKET) return notConfigured(request);
-  const email = await emailFromCookie(request, env);
-  if (!email) {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
-  const member = await loadMember(env, email);
+  const member = await loadMember(env, sess.email);
+  if (!mayUseRecord(sess, member)) return verifyRequired(request);
   if (!member || member.status !== "active" || !member.feed_token) {
     return jsonResponse(request, 404, { ok: false, error: "no active subscription" });
   }
@@ -653,9 +730,99 @@ function randomToken(): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** The welcome email's sign-in link waits in an inbox, so it lives longer
+ *  than a login link (15 minutes); still one day, not the cookie's 90. */
+const WELCOME_SIGN_IN_HOURS = 24;
+/** The public sample edition (join.html) stands in as the one item of a new
+ *  member's feed until their first edition is built. */
+const WELCOME_AUDIO_URL = "https://audio.nerranetwork.com/personal/sample/vancouver.mp3";
+const WELCOME_AUDIO_BYTES = 4845026;
+const NETWORK_COVER_URL = "https://nerranetwork.com/assets/covers/nerra-daily.jpg";
+
+function feedUrlFor(token: string): string {
+  return `https://api.nerranetwork.com/api/feed/${token}/feed.rss`;
+}
+
+function xmlEscape(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Oct 28 2026: a new member's feed URL answered 404 until the first build
+ * ran — hours when the build had to wait for the morning sweep — and Apple
+ * Podcasts refuses to add a feed that 404s, at the one moment the member is
+ * trying. This writes a valid one-item feed (the sample edition, titled as a
+ * welcome) ONLY when the member has no feed yet; the builder replaces it
+ * with the real feed on its first run. Same channel title and private
+ * markers as engine.personal_edition.build_personal_feed_xml.
+ */
+export function welcomeFeedXml(token: string, firstName: string, now = new Date()): string {
+  const who = firstName ? `${firstName}'s` : "Your";
+  const title = xmlEscape(`${who} Nerra Daily`);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<channel>
+<title>${title}</title>
+<link>https://nerranetwork.com/join.html</link>
+<description>Your personal edition of the Nerra Network — the shows you chose, in your order, anchored by Mira. Private feed: don't share this URL; it is your subscription.</description>
+<language>en</language>
+<itunes:author>Nerra Network</itunes:author>
+<itunes:image href="${NETWORK_COVER_URL}"/>
+<itunes:block>yes</itunes:block>
+<item>
+<title>Welcome to Nerra Personal: your first edition is on its way</title>
+<description>While your first edition is made, here is five minutes of a sample one. Your own editions replace this episode in this feed.</description>
+<guid isPermaLink="false">personal-${token.slice(0, 8)}-welcome</guid>
+<pubDate>${now.toUTCString()}</pubDate>
+<enclosure url="${WELCOME_AUDIO_URL}" length="${WELCOME_AUDIO_BYTES}" type="audio/mpeg"/>
+<itunes:duration>300</itunes:duration>
+</item>
+</channel>
+</rss>
+`;
+}
+
+async function writeWelcomeFeedIfAbsent(env: Env, token: string, firstName: string) {
+  if (!env.PERSONAL_BUCKET) return;
+  const key = `personal/${token}/feed.rss`;
+  if (await env.PERSONAL_BUCKET.head(key)) return;
+  await env.PERSONAL_BUCKET.put(key, welcomeFeedXml(token, firstName), {
+    httpMetadata: { contentType: "application/rss+xml; charset=utf-8" },
+  });
+}
+
+async function sendWelcomeEmail(
+  env: Env,
+  deps: HandlerDeps,
+  host: string,
+  email: string,
+  rec: MemberRecord,
+  firstEditionNow: boolean,
+) {
+  if (!env.JWT_SECRET || !rec.feed_token) return;
+  const token = await signJwt(
+    { sub: email, scope: "magic-login", ttlSeconds: WELCOME_SIGN_IN_HOURS * 3600 },
+    env.JWT_SECRET,
+  );
+  const mail = buildWelcomeEmail({
+    firstName: rec.first_name || "",
+    feedUrl: feedUrlFor(rec.feed_token),
+    signInUrl: `https://${host}/api/magic?token=${encodeURIComponent(token)}`,
+    signInHours: WELCOME_SIGN_IN_HOURS,
+    firstEditionNow,
+  });
+  const send = await deps.resend.sendEmail(
+    env.RESEND_API_KEY, env.RESEND_FROM_EMAIL,
+    { to: email, subject: mail.subject, html: mail.html, text: mail.text },
+  );
+  if (!send.ok) console.warn("stripe: welcome email failed", send.error, send.status);
+}
+
 export async function handleStripeWebhook(
   request: Request,
   env: Env,
+  deps?: HandlerDeps,
 ): Promise<Response> {
   if (!env.RATE_LIMIT_KV || !env.STRIPE_WEBHOOK_SECRET) {
     return notConfigured(request);
@@ -740,6 +907,8 @@ export async function handleStripeWebhook(
       customer_id: String(session.customer || existing.customer_id || ""),
       ends_at: undefined,
       trial_ends_at: trialEndsAt,
+      // A paid record is never tied to an unverified session (mayUseRecord).
+      created_iat: undefined,
       updated_at: new Date().toISOString(),
     };
     await saveMember(env, email, rec);
@@ -756,6 +925,22 @@ export async function handleStripeWebhook(
         date: todayIso(), replace: false, reason: "activation",
       });
       if (!r.ok) console.log("stripe: first-edition dispatch skipped:", r.error);
+      // Oct 28 2026: a feed URL that works the moment they paste it, and an
+      // email that tells them where it is. Both best-effort — neither may
+      // fail the webhook (Stripe would retry and re-run the activation).
+      try {
+        await writeWelcomeFeedIfAbsent(env, token, rec.first_name || "");
+      } catch (e) {
+        console.warn("stripe: welcome feed skipped:", (e as Error).message);
+      }
+      if (deps) {
+        try {
+          await sendWelcomeEmail(env, deps, new URL(request.url).host,
+            email, rec, r.ok);
+        } catch (e) {
+          console.warn("stripe: welcome email skipped:", (e as Error).message);
+        }
+      }
     }
   } else if (event.type === "customer.subscription.deleted") {
     const subId = String(event.data?.object?.id || "");
@@ -764,7 +949,14 @@ export async function handleStripeWebhook(
       : null;
     if (email) {
       const member = await loadMember(env, email);
-      if (member) {
+      // Oct 28 2026: only the member's CURRENT subscription ends their
+      // membership. A member who bought a second plan (an upgrade through
+      // a fresh checkout) and then cancelled the first one used to lose the
+      // feed they were still paying for.
+      if (member && member.sub_id && member.sub_id !== subId) {
+        console.log("stripe: deleted a superseded subscription",
+          subId.slice(0, 12), "— membership unchanged");
+      } else if (member) {
         if (member.feed_token) {
           // Deleting the token mapping revokes the feed IMMEDIATELY —
           // the R2 objects can linger for the lifecycle rule to clean.
@@ -789,6 +981,12 @@ export async function handleStripeWebhook(
     const member = email ? await loadMember(env, email) : null;
     if (!member) {
       console.log("stripe: subscription.updated for unknown sub", subId.slice(0, 12));
+      return jsonResponse(request, 200, { ok: true });
+    }
+    if (member.sub_id && member.sub_id !== subId) {
+      // A superseded subscription (see .deleted above): its lifecycle no
+      // longer describes this member.
+      console.log("stripe: update on a superseded subscription", subId.slice(0, 12));
       return jsonResponse(request, 200, { ok: true });
     }
     if (DEAD_STATUSES.has(String(sub.status || ""))) {
@@ -862,7 +1060,36 @@ export async function handlePersonalFeed(
   if (!member || member.status !== "active") {
     return jsonResponse(request, 404, { ok: false, error: "not found" });
   }
-  const object = await env.PERSONAL_BUCKET.get(`personal/${token}/${file}`);
+  const key = `personal/${token}/${file}`;
+  // Oct 28 2026: byte ranges. An edition is a 1-2 hour MP3; Apple Podcasts
+  // and iOS Safari's <audio> stream it in ranges and seek by range (chapter
+  // jumps), and every request here used to get the whole file as a 200.
+  const range = request.method === "HEAD"
+    ? null : parseByteRange(request.headers.get("Range"));
+  // A range is resolved against the object's size first, so an
+  // unsatisfiable one is a 416, never an R2 error.
+  let span: { start: number; end: number } | null = null;
+  let object: R2Object | R2ObjectBody | null;
+  if (request.method === "HEAD") {
+    object = await env.PERSONAL_BUCKET.head(key);
+  } else if (range) {
+    const meta = await env.PERSONAL_BUCKET.head(key);
+    if (!meta) {
+      return jsonResponse(request, 404, { ok: false, error: "not found" });
+    }
+    span = resolveRange(range, meta.size);
+    if (!span) {
+      const h = new Headers(corsHeaders(request));
+      h.set("Content-Range", `bytes */${meta.size}`);
+      h.set("Accept-Ranges", "bytes");
+      return new Response(null, { status: 416, headers: h });
+    }
+    object = await env.PERSONAL_BUCKET.get(key, {
+      range: { offset: span.start, length: span.end - span.start + 1 },
+    });
+  } else {
+    object = await env.PERSONAL_BUCKET.get(key);
+  }
   if (!object) {
     return jsonResponse(request, 404, { ok: false, error: "not found" });
   }
@@ -875,7 +1102,51 @@ export async function handlePersonalFeed(
     headers.set("Content-Type", "audio/mpeg");
   }
   headers.set("Cache-Control", "private, max-age=300");
-  return new Response(object.body, { status: 200, headers });
+  headers.set("Accept-Ranges", "bytes");
+  const size = object.size;
+  const hasSize = typeof size === "number";
+  if (request.method === "HEAD") {
+    if (hasSize) headers.set("Content-Length", String(size));
+    return new Response(null, { status: 200, headers });
+  }
+  const body = (object as R2ObjectBody).body;
+  if (span) {
+    headers.set("Content-Range", `bytes ${span.start}-${span.end}/${size}`);
+    headers.set("Content-Length", String(span.end - span.start + 1));
+    return new Response(body, { status: 206, headers });
+  }
+  if (hasSize) headers.set("Content-Length", String(size));
+  return new Response(body, { status: 200, headers });
+}
+
+/** One `bytes=` range as an R2 range, or null for no / an unusable header
+ *  (a multi-range request is answered whole, which HTTP allows). */
+export function parseByteRange(header: string | null): R2Range | null {
+  const m = /^bytes=(\d*)-(\d*)$/.exec((header || "").trim());
+  if (!m || (m[1] === "" && m[2] === "")) return null;
+  if (m[1] === "") return { suffix: Number(m[2]) };
+  const offset = Number(m[1]);
+  if (m[2] === "") return { offset };
+  const end = Number(m[2]);
+  if (end < offset) return null;
+  return { offset, length: end - offset + 1 };
+}
+
+/** The inclusive byte span an R2 range covers in an object of `size`. */
+export function resolveRange(range: R2Range, size: number): { start: number; end: number } | null {
+  let start: number;
+  let end: number;
+  if ("suffix" in range && range.suffix !== undefined) {
+    if (range.suffix <= 0) return null;
+    start = Math.max(0, size - range.suffix);
+    end = size - 1;
+  } else {
+    start = (range as { offset?: number }).offset ?? 0;
+    const len = (range as { length?: number }).length;
+    end = len !== undefined ? Math.min(size - 1, start + len - 1) : size - 1;
+  }
+  if (start >= size || start < 0 || end < start) return null;
+  return { start, end };
 }
 
 // ---------------------------------------------------------------------------

@@ -2321,6 +2321,7 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     avps.sort()
     out["long_form_median_avp_en_14d"] = (
         round(avps[len(avps) // 2], 1) if avps else None)
+    out["long_form_avp_en_age7_median"] = _long_avp_at_age(root, anchor_d)
 
     # EN Shorts: subscribers gained per Short published in the last 14
     # analytics days (Sep 9 2026 — the shorts-subscribe-cta readout).
@@ -2640,6 +2641,48 @@ def _hook_motion_ab_ratio(root: Path, *, age: str = "3", min_n: int = 10):
     import statistics
     base = statistics.median(control)
     return round(statistics.median(motion) / base, 2) if base > 0 else None
+
+
+def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 14,
+                     min_n: int = 8):
+    """Median EN long-form retention at a FIXED age (Oct 28 2026).
+
+    ``long_form_median_avp_en_14d`` reads the live snapshot over every long
+    of the last 14 days, so it mixes a two-day-old video (1-2%, Shorts-feed
+    taps) with a twelve-day-old one (~14%) and moves with the publish mix,
+    not the content. This reads each long's retention at the same age from
+    ``api/youtube_early_reach.json``, over the longs that reached that age in
+    the ``window_days`` before the anchor. ``None`` under ``min_n`` videos.
+    """
+    data = _load_json(root / "api" / "youtube_early_reach.json") or {}
+    vids = data.get("videos") if isinstance(data, dict) else None
+    if not isinstance(vids, dict):
+        return None
+    lo = anchor_d - _dt.timedelta(days=age + window_days)
+    hi = anchor_d - _dt.timedelta(days=age)
+    vals = []
+    for rec in vids.values():
+        if not isinstance(rec, dict) or rec.get("kind") != "long":
+            continue
+        if (rec.get("channel") or "en") != "en":
+            continue
+        try:
+            pub = _dt.date.fromisoformat(str(rec.get("published") or "")[:10])
+        except ValueError:
+            continue
+        if not (lo < pub <= hi):
+            continue
+        val = (rec.get("avp_by_age") or {}).get(str(age))
+        if val is None:
+            continue
+        try:
+            vals.append(float(val))
+        except (TypeError, ValueError):
+            continue
+    if len(vals) < min_n:
+        return None
+    vals.sort()
+    return round(vals[len(vals) // 2], 1)
 
 
 def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:

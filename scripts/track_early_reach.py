@@ -40,6 +40,11 @@ from typing import Any, Dict, Optional
 ROOT = Path(__file__).resolve().parent.parent
 
 MAX_AGE_DAYS = 7
+#: Oct 28 2026: a long-form's retention settles over two weeks (EN longs read
+#: 1.6% at age <= 2, 7.8% at 7-9 and 14.4% at 14-20 on the Oct 23 file), so a
+#: long is followed to age 21 and read at a fixed age past the Shorts-feed
+#: taps. Shorts stop at 7 — 97% of a Short's views arrive by day 3.
+LONG_MAX_AGE_DAYS = 21
 PRUNE_DAYS = 60
 SCHEMA_VERSION = 1
 
@@ -86,7 +91,8 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
             if not vid or pub is None:
                 continue
             age = (gen - pub).days
-            if age < 1 or age > MAX_AGE_DAYS:
+            max_age = LONG_MAX_AGE_DAYS if v.get("kind") == "long" else MAX_AGE_DAYS
+            if age < 1 or age > max_age:
                 continue
             rec = videos.setdefault(vid, {
                 "published": pub.isoformat(),
@@ -116,6 +122,16 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
             # change is scored at a FIXED age like reach already is.
             _avp = v.get("average_view_percentage")
             _avd = v.get("average_view_duration_s")
+            # Oct 28 2026: a 0% with no watch time is the Analytics lag (6 of
+            # 22 EN longs read exactly 0 at age 2), not a video nobody
+            # watched — and first-observation-wins would freeze the zero.
+            # It is recorded as unmeasured.
+            try:
+                if (_avp is not None and float(_avp) == 0.0
+                        and (_avd is None or float(_avd) == 0.0)):
+                    _avp = _avd = None
+            except (TypeError, ValueError):
+                pass
             if _avp is not None or _avd is not None:
                 avp_by_age = rec.setdefault("avp_by_age", {})
                 avd_by_age = rec.setdefault("avd_by_age", {})

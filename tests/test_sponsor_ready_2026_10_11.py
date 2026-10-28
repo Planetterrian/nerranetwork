@@ -23,6 +23,8 @@ sys.path.insert(0, str(ROOT))
 
 _AD_FREE_RE = re.compile(
     r"\bad[- ]free\b|\bno ads\b|\bzero ads\b|\bwithout ads\b|\bnever (?:any )?ads\b"
+    # Oct 28 2026: the Personal page's stat strip read "0 / ads, ever".
+    r"|\bads,?\s+ever\b"
     r"|без\s+рекламы",
     re.IGNORECASE)
 # An outside site's own description (generate_html's health resource list)

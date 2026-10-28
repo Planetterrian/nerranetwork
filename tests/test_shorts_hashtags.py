@@ -117,8 +117,14 @@ def test_show_keyword_collapses_spaces():
         ["tesla cybertruck", "ai agents", "modern_investing"],
     )
     assert "TeslaCybertruck" in out
-    assert "AiAgents" in out
+    # Oct 28 2026: an acronym stays an acronym ("AiAgents" read as a word).
+    assert "AIAgents" in out
     assert "ModernInvesting" in out
+
+
+def test_show_keyword_acronyms_and_tickers_stay_capitalised():
+    out = _normalise_show_keywords(["tsla", "llm", "ai model", "model 3", "meta"])
+    assert out == ["TSLA", "LLM", "AIModel", "Model3", "Meta"]
 
 
 def test_show_keyword_skips_blanks():
@@ -177,7 +183,7 @@ def test_show_keywords_blend_in_at_tail():
         max_hashtags=5,
     )
     assert "Tesla" in out
-    assert "AiAgents" in out
+    assert "AIAgents" in out
     assert "ModernInvesting" in out
 
 

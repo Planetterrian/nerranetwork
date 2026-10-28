@@ -180,11 +180,30 @@ def _extract_acronyms(hook: str) -> List[str]:
     return out
 
 
+#: Words a YAML keyword spells in lower case that are acronyms or tickers on
+#: a viewer's screen (Oct 28 2026: Tesla Ep648's row above the title read
+#: "#Tesla #Tsla #Model3"; Models & Agents shipped #Llm and #AiModel).
+_KEYWORD_ACRONYMS = frozenset("""
+ai agi llm llms ml gpu gpus cpu tpu hbm api
+tsla spcx nvda aapl msft googl amzn
+nasa esa jaxa isro spacex ev evs fsd
+etf etfs ipo tfsa rrsp fhsa resp rrif
+ceo us uk eu un uae
+""".split()) - {"spacex"}
+
+
+def _keyword_word(word: str) -> str:
+    low = word.lower()
+    if low in _KEYWORD_ACRONYMS:
+        return low.upper()
+    return word[:1].upper() + word[1:].lower()
+
+
 def _normalise_show_keywords(raw: Iterable[str]) -> List[str]:
     """Convert YAML keywords ("tesla cybertruck", "ai agents") into
-    hashtag bodies ("TeslaCybertruck", "AiAgents"). Lowercases then
-    Title-cases each word and concatenates so a single keyword
-    becomes a single tag."""
+    hashtag bodies ("TeslaCybertruck", "AIAgents"). Title-cases each word
+    — an acronym or ticker (``_KEYWORD_ACRONYMS``) in capitals — and
+    concatenates so a single keyword becomes a single tag."""
     out: List[str] = []
     seen: set = set()
     for kw in raw:
@@ -193,7 +212,7 @@ def _normalise_show_keywords(raw: Iterable[str]) -> List[str]:
         words = [w for w in re.split(r"[\s_-]+", kw.strip()) if w]
         if not words:
             continue
-        body = "".join(w[:1].upper() + w[1:].lower() for w in words)
+        body = "".join(_keyword_word(w) for w in words)
         body = _clean_for_tag(body)
         if not body:
             continue

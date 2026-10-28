@@ -56,7 +56,10 @@
         .nn-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-6); max-width: 1080px; margin: 0 auto; padding: var(--sp-4) var(--sp-6); }
         .nn-tier { border: 1px solid var(--nn-border); border-radius: 16px; padding: var(--sp-6); background: var(--nn-surface); display: flex; flex-direction: column; }
         .nn-tier.featured { border-color: var(--nn-cyan, #00D4FF); box-shadow: 0 0 32px rgba(0,212,255,0.12); position: relative; }
-        .nn-tier.featured::before { content: 'MOST POPULAR'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.28rem 0.7rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
+        /* Oct 28 2026: was 'MOST POPULAR'. Membership is unmeasured
+           (api/member_metrics.json), so a popularity claim had no basis;
+           a recommendation is ours to make. */
+        .nn-tier.featured::before { content: 'RECOMMENDED'; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); font-size: 0.62rem; letter-spacing: 0.14em; font-weight: 800; padding: 0.28rem 0.7rem; border-radius: 999px; background: var(--nn-gradient); color: #fff; }
         .nn-tier h2 { font-family: var(--font-heading); margin: 0 0 var(--sp-1); font-size: 1.3rem; }
         .nn-tier .price { font-size: 2rem; font-weight: 700; margin: 0 0 var(--sp-3); }
         .nn-tier .price small { font-size: 0.9rem; font-weight: 400; color: var(--nn-text-muted); }
@@ -77,6 +80,7 @@
         .nn-showcard strong { display: block; font-family: var(--font-heading); margin-bottom: 0.2rem; line-height: 1.25; }
         .nn-showcard span { font-size: 0.82rem; color: var(--nn-text-muted); display: block; line-height: 1.45; }
         .nn-showcard em { font-size: 0.72rem; color: var(--nn-cyan, #00D4FF); font-style: normal; letter-spacing: 0.04em; }
+        .nn-showcard-access { display: inline-block; margin: 0.15rem 0 0.25rem; padding: 1px 7px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; color: #0B0F1A; background: var(--nn-cyan, #00D4FF); }
         .nn-products { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); max-width: 1080px; margin: 0 auto var(--sp-6); padding: 0 var(--sp-6); }
         .nn-product { border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); background: var(--nn-surface); }
         .nn-product h3 { margin: 0 0 var(--sp-1); font-size: 1rem; font-family: var(--font-heading); }
@@ -134,7 +138,8 @@
                 Voices included, which has no episodes) beside a stat of 26 and
                 a Step 1 that printed a literal 13. All three read the Personal
                 roster now (engine.personal_edition via _personal_shows_list). -#}
-            <p class="np-hero-sub">{{ personal_shows|length }} shows to pick from, most of them new every day, all free.
+            {%- set _gated_n = personal_shows | selectattr('access_note') | list | length %}
+            <p class="np-hero-sub">{{ personal_shows|length }} shows to pick from, most of them new every day{% if _gated_n %}, {{ personal_shows|length - _gated_n }} of them free to everyone{% else %}, all free{% endif %}.
                Personal turns the ones you love into one continuous morning
                show — your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
@@ -142,7 +147,7 @@
                 <a class="np-cta primary" href="#plans">{% if trial_days %}Try it free for {{ trial_days }} days{% else %}Start from $4.99/mo{% endif %}</a>
                 <a class="np-cta ghost" href="#sample">Hear a sample</a>
             </div>
-            <p class="np-trust">{% if trial_days %}<span>{{ trial_days }}-day free trial</span> ·{% endif %}
+            <p class="np-trust">{% if trial_days %}<span>{{ trial_days }} days free, then from $4.99/mo</span> ·{% else %}<span>From $4.99/mo</span> ·{% endif %}
                <span>Cancel in one click</span> ·
                <span>Chapters for every segment</span> ·
                <span>Yours alone — no algorithm</span></p>
@@ -169,7 +174,7 @@
                 <div class="np-ch local">
                     <span class="ic" aria-hidden="true">🌤️</span>
                     <span class="nm">Your city's morning brief</span>
-                    <span class="ln">with Local</span>
+                    <span class="ln">every plan</span>
                 </div>
             </div>
         </div>
@@ -179,7 +184,14 @@
 <div class="np-stats" aria-label="Network stats">
     <div class="np-stat"><strong>{{ personal_shows | length }}</strong><span>shows to pick from</span></div>
     <div class="np-stat"><strong>{{ total_episodes }}+</strong><span>episodes shipped</span></div>
-    <div class="np-stat"><strong>0</strong><span>ads, ever</span></div>
+    {#- Oct 28 2026: this stat promised there would never be advertising.
+        Sponsors are coming to the free shows (engine.brand, Oct 18), and a
+        Personal edition splices those shows' published audio, so it was a
+        network-wide promise the sponsor plan breaks. The trial (when the
+        Payment Links carry one — trial_days) or the one-click cancel is a
+        fact of the offer. -#}
+    {% if trial_days %}<div class="np-stat"><strong>{{ trial_days }}</strong><span>days free to try</span></div>
+    {% else %}<div class="np-stat"><strong>1</strong><span>click to cancel</span></div>{% endif %}
     <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
 </div>
 
@@ -189,7 +201,7 @@
        that makes every member's — Mira's open, the city brief with its
        sources named, one of Alex's topics, the markets minute, then a
        taste of two shows. In a real edition every show plays in full.</p>
-    <audio controls preload="none" src="{{ sample_url }}"></audio>
+    <audio controls preload="none" src="{{ sample_url }}" data-nn-sample="join"></audio>
     <ul class="rundown">
         <li>Good morning from Mira</li>
         <li>Your Vancouver brief</li>
@@ -238,7 +250,7 @@
             <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
         </ul>
         {% if stripe_personal_url and stripe_personal_url != '#' %}
-        <a class="cta" href="{{ stripe_personal_url }}">{% if trial_days %}Try Personal free for {{ trial_days }} days<small>then $4.99/mo · cancel any time</small>{% else %}Start Personal{% endif %}</a>
+        <a class="cta" href="{{ stripe_personal_url }}" data-nn-tier="personal">{% if trial_days %}Try Personal free for {{ trial_days }} days<small>then $4.99/mo · cancel any time</small>{% else %}Start Personal{% endif %}</a>
         {% else %}
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         {% endif %}
@@ -260,7 +272,7 @@
                 click, prorated</li>
         </ul>
         {% if stripe_personal_local_url and stripe_personal_local_url != '#' %}
-        <a class="cta" href="{{ stripe_personal_local_url }}">{% if trial_days %}Try Personal News Network free for {{ trial_days }} days<small>then $8.99/mo · cancel any time</small>{% else %}Start Personal News Network{% endif %}</a>
+        <a class="cta" href="{{ stripe_personal_local_url }}" data-nn-tier="personal_local">{% if trial_days %}Try Personal News Network free for {{ trial_days }} days<small>then $8.99/mo · cancel any time</small>{% else %}Start Personal News Network{% endif %}</a>
         {% else %}
         <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         {% endif %}
@@ -299,8 +311,11 @@
 {% if personal_shows %}
 <div class="nn-section-head">
     <h2>{{ personal_shows | length }} shows to build from</h2>
+    {%- set _gated = personal_shows | selectattr('access_note') | list %}
     <p>Every one produced daily or weekly by the network — tap any card to
-       hear it free before you add it to your lineup.</p>
+       hear it free before you add it to your lineup{% if _gated %}, except
+       the {{ _gated | length }} marked for members, which are made only for
+       the editions that carry them{% endif %}.</p>
 </div>
 <section class="nn-showgrid">
     {% for s in personal_shows %}
@@ -311,6 +326,7 @@
         <span>
             <strong>{{ s.name }}</strong>
             {% if s.schedule %}<em>{{ s.schedule }}</em>{% endif %}
+            {% if s.access_note %}<b class="nn-showcard-access">{{ s.access_note }}</b>{% endif %}
             <span>{{ s.tagline | truncate(100) }}</span>
         </span>
     </a>
@@ -359,8 +375,10 @@
         <summary>What exactly arrives in my Personal feed?</summary>
         <p>One episode each morning: the day's real episodes of the shows
            you picked, in your order, joined by Mira's short spoken handoffs.
-           Nothing is summarized or cut down — you get the full episodes,
-           minus the cross-promo tails that don't make sense mid-edition.
+           Nothing is summarized — you hear the full episodes, minus the
+           cross-promo tails that don't make sense mid-edition. If you set a
+           length or turn on Skip repeats, Mira leaves out whole chapters
+           (a story you already heard today, say) and tells you which.
            Chapters mark every segment so you can skip freely.</p>
     </details>
     <details>
@@ -379,17 +397,25 @@
     </details>
     <details>
         <summary>Is this AI-generated?</summary>
-        <p>The shows are AI-assisted productions with human editorial
-           oversight, and every episode says so on air. Mira is an AI
-           anchor and is always introduced as one. The full policy is at
+        <p>Yes. The shows are written and voiced with AI from the day's
+           sourced reporting, and every episode says so on air. A person
+           chooses each show's sources and rules and fixes what goes wrong,
+           but no one reads every episode before it ships; every claim is
+           checked against its source and an unverified one is marked
+           publicly. Mira is an AI anchor and is always introduced as one.
+           The full policy is at
            <a href="{{ path_prefix }}ai-disclosure.html">our AI disclosure</a>.</p>
     </details>
     <details>
         <summary>What happens with my email and city?</summary>
         <p>Your email is your account and newsletter address — it's never
-           sold or shared. Your first name and city exist only so Mira can
-           greet you and build your brief; they're stored with your
-           account, never published, and deleted with it.</p>
+           sold, and only the services that run your account see it. Your first name, city, subjects and note to Mira
+           exist only so Mira can greet you and build your edition: they're
+           stored with your account, sent to the AI model that writes
+           Mira's lines each morning (xAI, never with your email), never
+           published, and deleted with your account. The
+           <a href="{{ path_prefix }}privacy-policy.html">privacy policy</a>
+           has the details.</p>
     </details>
 </section>
 

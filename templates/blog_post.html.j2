@@ -1223,10 +1223,20 @@
                     meta row onto a second line of one button, and a reader
                     already on the article has the text. The show page and
                     the footer still link the summaries page. -#}
+                {#- Oct 28 2026: the video links come from the show's own
+                    video index on every rebuild (engine.youtube_index.
+                    episode_video_links) — the button had been dropped by
+                    every regen and reached no post. A shorts-only episode
+                    links its Short; a still-private video is never linked. -#}
                 {% if youtube_url %}
-                <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank">
+                <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-                    Watch on YouTube
+                    {% if _is_ru %}Смотреть на YouTube{% else %}Watch on YouTube{% endif %}
+                </a>
+                {% elif youtube_short_url %}
+                <a href="{{ youtube_short_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="short">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                    {% if _is_ru %}Смотреть Short{% else %}Watch the Short{% endif %}
                 </a>
                 {% endif %}
             </div>

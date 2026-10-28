@@ -114,6 +114,64 @@ def fetch_specs(token: str) -> Optional[list]:
 
 
 
+def fetch_show_demand(token: str) -> Optional[Dict[str, Any]]:
+    """``{"members": N, "demand": {slug: count}}`` from the Worker's
+    ``/api/admin/show-demand``, or None on any failure.
+
+    Oct 28 2026: the admin token (whose endpoint returns names, cities and
+    feed tokens) was never put in this public repo, so membership read
+    "unmeasured" from Sep 21 on — while the show runs already held
+    ``PERSONAL_DEMAND_TOKEN``, whose endpoint answers in counts only and is
+    the same population (active members with a feed). This reads that."""
+    import requests
+
+    try:
+        resp = requests.get(
+            f"{API_BASE}/api/admin/show-demand",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=HTTP_TIMEOUT,
+        )
+    except Exception as exc:  # noqa: BLE001 — never break the nightly job
+        log.warning("member metrics: show-demand request failed: %s", exc)
+        return None
+    if resp.status_code != 200:
+        log.warning("member metrics: HTTP %s from /api/admin/show-demand",
+                    resp.status_code)
+        return None
+    try:
+        payload = resp.json() or {}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("member metrics: unreadable show-demand JSON: %s", exc)
+        return None
+    members = payload.get("members")
+    demand = payload.get("demand")
+    if not isinstance(members, int) or not isinstance(demand, dict):
+        log.warning("member metrics: show-demand answer has no counts")
+        return None
+    return {"members": members,
+            "demand": {str(k): int(v) for k, v in demand.items()
+                       if isinstance(v, (int, float))}}
+
+
+def summarise_demand(answer: Dict[str, Any]) -> Dict[str, Any]:
+    """The counts-only view: how many paying members, and how many carry
+    each show (the starter lineup counted, as the builder builds it). Tier,
+    add-on and city figures need the admin records and stay null."""
+    return {
+        "paid_active_total": answer["members"],
+        "by_tier": None,
+        "by_addon": None,
+        "with_city_brief": None,
+        "on_default_lineup": None,
+        "shows_chosen": dict(sorted(answer["demand"].items(),
+                                    key=lambda kv: (-kv[1], kv[0]))),
+        "counts_source": "show-demand",
+        "free_accounts": None,
+        "mrr_usd": None,
+        "trialing": None,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Stripe
 # ---------------------------------------------------------------------------
@@ -470,6 +528,14 @@ def main(argv: Optional[list] = None) -> int:
         specs = raw.get("specs", raw) if isinstance(raw, dict) else raw
     else:
         token = os.environ.get("PERSONAL_ADMIN_TOKEN", "").strip()
+        demand_token = os.environ.get("PERSONAL_DEMAND_TOKEN", "").strip()
+        if not token and demand_token:
+            answer = fetch_show_demand(demand_token)
+            if answer is None:
+                log.warning("member metrics: no data this run — leaving %s as is",
+                            out_path)
+                return 0
+            return _write(args, out_path, summarise_demand(answer))
         if not token:
             log.info("PERSONAL_ADMIN_TOKEN unset — skipping member metrics "
                      "(clean no-op)")
@@ -497,11 +563,15 @@ def main(argv: Optional[list] = None) -> int:
                         out_path)
             return 0
 
+    return _write(args, out_path, summarise(specs))
+
+
+def _write(args, out_path: Path, counts: Dict[str, Any]) -> int:
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(
             timespec="seconds"),
         "configured": True,
-        **summarise(specs),
+        **counts,
     }
 
     # Revenue and trial state. A missing key or an unreachable Stripe leaves
@@ -535,7 +605,7 @@ def main(argv: Optional[list] = None) -> int:
     out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     log.info("wrote %s (paid_active=%s, mrr_usd=%s, trialing=%s, tiers=%s)",
              out_path, payload["paid_active_total"], payload.get("mrr_usd"),
-             payload.get("trialing"), payload["by_tier"])
+             payload.get("trialing"), payload.get("by_tier"))
     return 0
 
 

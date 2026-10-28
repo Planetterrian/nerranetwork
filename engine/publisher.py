@@ -1820,6 +1820,30 @@ def _draw_text_with_shadow(draw, xy, text, *, font, fill, shadow=(0, 0, 0)):
     draw.text((x, y), text, font=font, fill=fill)
 
 
+def _draw_band_scrim(img, top: int, bottom: int, *, peak: int = 150) -> None:
+    """A soft dark band behind text that sits mid-frame: alpha rises from 0
+    at the band's edges to *peak* across its middle, so the picture shows
+    through above and below. Mutates ``img`` in place."""
+    from PIL import Image
+
+    width, height = img.size
+    top = max(0, top)
+    bottom = min(height, bottom)
+    if bottom <= top:
+        return
+    col = Image.new("RGBA", (1, height), (0, 0, 0, 0))
+    px = col.load()
+    span = bottom - top
+    for y in range(top, bottom):
+        t = (y - top) / span
+        # Flat across the middle 60 %, eased to nothing at each edge.
+        edge = min(t, 1 - t) / 0.2
+        px[0, y] = (0, 0, 0, int(peak * min(1.0, edge)))
+    overlay = col.resize((width, height), Image.BILINEAR)
+    composed = Image.alpha_composite(img.convert("RGBA"), overlay)
+    img.paste(composed.convert("RGB"))
+
+
 def generate_episode_thumbnail(
     base_image_path: Path,
     episode_num: int,
@@ -1830,6 +1854,7 @@ def generate_episode_thumbnail(
     show_name: str = "",
     size: tuple = (1280, 720),
     punch_text: str = "",
+    text_band: str = "lower",
 ) -> tuple[Path, int | None]:
     """Render an image-first episode thumbnail for YouTube.
 
@@ -1861,6 +1886,13 @@ def generate_episode_thumbnail(
         Optional small label rendered top-left.
     size:
         Output ``(width, height)`` in pixels.
+    text_band:
+        ``"lower"`` (default, every long-form thumbnail): the text sits in
+        the lower third on the bottom scrim. ``"upper"`` (a Short's punch
+        text, Oct 28 2026): the block is centred at ~36 % of the height on
+        its own band scrim, because YouTube's Shorts shelf draws the title
+        and view count over the bottom fifth of the card — where the hook
+        sentence was printed, in small type, on every Short.
     """
     from PIL import Image, ImageDraw
 
@@ -1945,10 +1977,18 @@ def generate_episode_thumbnail(
             ascent_descent = hook_font.getbbox("Ay")
             line_h = (ascent_descent[3] - ascent_descent[1]) + 10
         block_h = line_h * len(lines)
-        # Sit the hook block just above the footer, inside the scrim.
-        footer_reserve = max(48, height // 14)
-        y = height - margin - footer_reserve - block_h
-        y = max(int(height * 0.52), y)
+        if text_band == "upper":
+            # Mid-upper frame, clear of the Shorts shelf's bottom overlay
+            # and of the show chip at the top.
+            y = int(height * 0.36) - block_h // 2
+            pad = max(36, line_h // 2)
+            _draw_band_scrim(img, y - pad, y + block_h + pad)
+            draw = ImageDraw.Draw(img)
+        else:
+            # Sit the hook block just above the footer, inside the scrim.
+            footer_reserve = max(48, height // 14)
+            y = height - margin - footer_reserve - block_h
+            y = max(int(height * 0.52), y)
         for line in lines:
             bbox = hook_font.getbbox(line)
             line_w = bbox[2] - bbox[0]
@@ -2034,7 +2074,10 @@ def generate_shorts_thumbnail(
     show_name: str = "",
     punch_text: str = "",
 ) -> Path:
-    """Render a 1080×1920 vertical thumbnail for YouTube Shorts."""
+    """Render a 1080×1920 vertical thumbnail for YouTube Shorts.
+
+    With *punch_text* the 2-4 word headline sits mid-upper frame
+    (``text_band="upper"``); without it the legacy lower-third hook."""
     return generate_episode_thumbnail(
         base_image_path,
         episode_num,
@@ -2044,6 +2087,7 @@ def generate_shorts_thumbnail(
         show_name=show_name,
         size=(1080, 1920),
         punch_text=punch_text,
+        text_band="upper" if (punch_text or "").strip() else "lower",
     )
 
 

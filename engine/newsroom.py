@@ -216,6 +216,65 @@ def _tokens(text: str) -> frozenset:
     return frozenset(salient_tokens(text) - GENERIC_WORDS)
 
 
+def _tokens_match(a: frozenset, b: frozenset) -> bool:
+    """The developing-story test on two token sets: at least
+    ``DEVELOPING_MIN_SHARED`` shared, and that many are at least
+    ``DEVELOPING_MIN_SHARE`` of the shorter set."""
+    if len(a) < 2 or len(b) < 2:
+        return False
+    shared = len(a & b)
+    return (shared >= DEVELOPING_MIN_SHARED
+            and shared / min(len(a), len(b)) >= DEVELOPING_MIN_SHARE)
+
+
+def _stem(token: str) -> str:
+    """A plain inflection fold: "resolves"/"resolved" -> "resolv"."""
+    for suffix in ("ing", "ed", "es", "s"):
+        if len(token) >= len(suffix) + 4 and token.endswith(suffix):
+            return token[: -len(suffix)]
+    return token
+
+
+def same_story(a: str, b: str) -> bool:
+    """Whether two headlines tell one story, by the developing-story test
+    on inflection-folded words.
+
+    The front page uses it to keep a story once: an episode's "Also in this
+    episode" list held the hook's own story under the digest's headline for
+    it on 36 of 403 rows (Oct 23-28 2026 — "SpaceX targets 10,000 Starship
+    launches per year…" under the hook "SpaceX plans 10,000 annual Starship
+    launches…"). No common-word filter applies here, so a show's beat word
+    counts; the share floor still needs half the shorter headline. The fold
+    found 10 more of 2,110 headlines ("Hera spacecraft resolves Didymos
+    binary" under "Hera has resolved Didymos and Dimorphos…"), every one the
+    hook's story; ``developing_stories`` keeps its calibrated exact words."""
+    return _tokens_match(frozenset(_stem(t) for t in _tokens(a)),
+                         frozenset(_stem(t) for t in _tokens(b)))
+
+
+#: A research paper's title opens on its name — one coined token with two or
+#: more capitals ("ETAMem:", "MOSAIC:", "IceBERT:") before a colon.
+_PAPER_NAME_RE = re.compile(r"^\s*([A-Za-z0-9][\w\-]*[A-Z][\w\-]*)\s*:\s")
+
+
+def _paper_name(text: str) -> str:
+    m = _PAPER_NAME_RE.match(text or "")
+    if (not m or len(m.group(1)) < 4
+            or sum(1 for ch in m.group(1) if ch.isupper()) < 2):
+        return ""
+    return m.group(1).lower()
+
+
+def _different_papers(a: str, b: str) -> bool:
+    """Two research-paper titles with different names are two papers, never
+    one developing story — Models & Agents' "ETAMem: … Long-Term
+    Conversational Agents" and "MOSAIC: … Long-Term Memory … Conversational
+    Agents" ran on the Oct 28 2026 front page as one thread on {memory,
+    long, term, conversational}."""
+    pa, pb = _paper_name(a), _paper_name(b)
+    return bool(pa and pb and pa != pb)
+
+
 def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
                        window_days: int = DEVELOPING_WINDOW_DAYS,
                        max_silence_days: int = DEVELOPING_MAX_SILENCE_DAYS,
@@ -296,9 +355,8 @@ def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
             ib = items[b]
             if len(ib["tokens"]) < 2 or ia["ep"] is ib["ep"]:
                 continue
-            shared = len(ia["tokens"] & ib["tokens"])
-            if (shared >= DEVELOPING_MIN_SHARED and shared
-                    / min(len(ia["tokens"]), len(ib["tokens"])) >= DEVELOPING_MIN_SHARE):
+            if (_tokens_match(ia["tokens"], ib["tokens"])
+                    and not _different_papers(ia["text"], ib["text"])):
                 parent[find(a)] = find(b)
 
     groups: Dict[int, List[dict]] = defaultdict(list)

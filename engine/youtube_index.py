@@ -169,3 +169,45 @@ def record_video(
     except Exception as exc:
         logger.warning("Could not record video %s in index: %s", video_id, exc)
         return False
+
+
+def episode_video_links(path: Path, *, now=None) -> dict:
+    """``{episode: {"long": url, "short": url}}`` from a show's own index.
+
+    Oct 28 2026: the blog's "Watch on YouTube" button had reached no post
+    (0 of 1,036 flagship posts) — run_show wrote it once and every site
+    rebuild re-rendered the post without it, and since Oct 17 the run itself
+    skips it whenever the long-form is still scheduled. This is the one
+    reading the rebuild uses. A video still private (``publish_at`` ahead)
+    is left out; the hook Short wins over any other Short of the episode;
+    the most recent row wins for the long-form. Never raises.
+    """
+    from engine.release_schedule import is_still_scheduled
+
+    links: dict = {}
+    try:
+        rows = _load(Path(path)).get("videos") or []
+    except Exception:  # noqa: BLE001 — a link never breaks a page
+        return links
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        episode = row.get("episode")
+        url = str(row.get("watch_url") or "").strip()
+        if not isinstance(episode, int) or not url.startswith("https://"):
+            continue
+        if is_still_scheduled(str(row.get("publish_at") or ""), now=now):
+            continue
+        entry = links.setdefault(episode, {})
+        kind = row.get("kind")
+        if kind == "long":
+            entry["long"] = url
+        elif kind == "short":
+            if row.get("window") == "hook_open":
+                entry["short"] = url
+                entry["_hook"] = True
+            elif not entry.get("_hook"):
+                entry.setdefault("short", url)
+    for entry in links.values():
+        entry.pop("_hook", None)
+    return links

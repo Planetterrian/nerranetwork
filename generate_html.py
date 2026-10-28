@@ -3998,6 +3998,13 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     blog_dir = (Path(output_dir) if output_dir else ROOT) / "blog" / slug
     results = []
 
+    # Oct 28 2026: every rebuild links the episode's public YouTube videos
+    # from the show's own index. The regen passed none, so a rebuild removed
+    # the "Watch on YouTube" button run_show had written (0 of ~1,000
+    # flagship posts carried one).
+    from engine.youtube_index import episode_video_links
+    _video_links = episode_video_links(digest_dir / "youtube_videos.json")
+
     for i, meta in enumerate(all_meta):
         prev_post = all_meta[i - 1] if i > 0 else None
         next_post = all_meta[i + 1] if i < len(all_meta) - 1 else None
@@ -4014,6 +4021,8 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
             prev_post=prev_post,
             next_post=next_post,
             related_posts=_related,
+            youtube_url=(_video_links.get(meta["episode_num"]) or {}).get("long", ""),
+            youtube_short_url=(_video_links.get(meta["episode_num"]) or {}).get("short", ""),
             translation_bodies=_translated_bodies_for_episode(digest_dir, meta),
         )
 
@@ -4877,7 +4886,10 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
 
     # Pictures already beside a story on this page: a video card shows a
     # DIFFERENT scene of its episode when the episode has one.
+    # Oct 28 2026: the flagship band joined this set — Watch had printed the
+    # SpaceX and Tesla flagship scenes a second time, two screens below.
     used = {s.get("image_url") for s in [page.get("lead") or {}, *(page.get("top") or []),
+                                          *(page.get("flagships") or []),
                                           *(s for sec in page.get("sections") or [] for s in sec["stories"]),
                                           *(page.get("more") or [])] if s and s.get("image_url")}
 
@@ -5109,6 +5121,9 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
         # Same rule as join.html: no live Payment Link = "launching soon".
         "live": bool(stripe and stripe != "#"),
         "trial_days": _env_int("STRIPE_TRIAL_DAYS"),
+        # Oct 28 2026: the front page's paid band named no price and offered
+        # nothing to hear; the join page's sample is the product's demo.
+        "sample_url": PERSONAL_SAMPLE_URL,
     } if _landing_file("join.html") else None
 
     # ---- Listen everywhere ----------------------------------------------
@@ -5362,6 +5377,14 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
                     if _num and _cfg.get("json_path") else None)
             ep["title"] = (_lt.hook_from_markdown((_rec or {}).get("content") or "")
                            or _lt.strip_episode_label(ep.get("title") or ""))
+            # Oct 28 2026: a week-old headline ("…when earnings land
+            # Tuesday") printed with no date read as today's news; each row
+            # now says when its episode went out.
+            try:
+                _d = datetime.strptime(str((_rec or {}).get("date") or "")[:10], "%Y-%m-%d")
+                ep["date_label"] = f"{_d.strftime('%b')} {_d.day}"
+            except ValueError:
+                ep["date_label"] = ""
             popular_episodes.append(ep)
 
     # Newsletter social proof — fed by the nightly Buttondown stats fetch.
@@ -7143,6 +7166,12 @@ def render_books_page(volumes):
     return template.render(**context)
 
 
+#: The public five-minute sample edition (``scripts/build_personal_sample.py``
+#: uploads it). One constant: the join, personal-interest and front pages all
+#: play it, and the welcome email links it.
+PERSONAL_SAMPLE_URL = "https://audio.nerranetwork.com/personal/sample/vancouver.mp3"
+
+
 def _member_page_context(title, description, canonical):
     import os
     return {
@@ -7169,7 +7198,7 @@ def _member_page_context(title, description, canonical):
         # 2026-09-17). 0 = no trial copy anywhere.
         "trial_days": _env_int("STRIPE_TRIAL_DAYS"),
         # The public sample edition scripts/build_personal_sample.py uploads.
-        "sample_url": "https://audio.nerranetwork.com/personal/sample/vancouver.mp3",
+        "sample_url": PERSONAL_SAMPLE_URL,
         "stripe_personal_local_url": os.environ.get(
             "STRIPE_LINK_PERSONAL_LOCAL", ""),
         "donate_monthly_url": os.environ.get("STRIPE_LINK_DONATE_MONTHLY", ""),
@@ -7255,12 +7284,24 @@ def _personal_shows_list():
     real cover art, so the product looks the same before and after
     sign-in.
     """
+    from engine import access as _access
     from engine.personal_edition import PERSONAL_SHOW_SLUGS
     personal_shows = []
     for slug in PERSONAL_SHOW_SLUGS:
         meta = NETWORK_SHOWS.get(slug, {})
         cover = meta.get("podcast_image", "")
         cover_base = cover[:-4] if cover.endswith(".jpg") else cover
+        # Oct 28 2026: a gated show says so on its card. The lineup's lede
+        # promised every card could be heard free first, and the five
+        # regional desks publish only inside Personal.
+        _access_note = ""
+        _cfg = _registry_show_config(slug)
+        if _cfg is not None:
+            try:
+                if _access.is_gated(_cfg):
+                    _access_note = _access.describe(_cfg)
+            except ValueError:
+                _access_note = ""
         personal_shows.append({
             "slug": slug,
             "name": meta.get("name", slug),
@@ -7269,6 +7310,7 @@ def _personal_shows_list():
             "schedule": meta.get("schedule", ""),
             "cover": cover,
             "cover_webp": f"{cover_base}-400.webp" if cover_base else "",
+            "access_note": _access_note,
         })
     return personal_shows
 

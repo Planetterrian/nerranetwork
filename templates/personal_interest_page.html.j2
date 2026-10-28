@@ -155,6 +155,29 @@
             height: 1px;
             overflow: hidden;
         }
+        /* Oct 28 2026: the sample edition, so a visitor can hear the
+           product before deciding — this page takes the paid traffic
+           (313 of 840 sessions in 28 days) and kept 2% of it. */
+        .spi-sample {
+            margin-top: var(--sp-6);
+            padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--nn-border);
+            border-radius: 14px;
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .spi-sample h2 {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            margin: 0 0 var(--sp-2);
+        }
+        .spi-sample p {
+            font-family: var(--font-ui);
+            color: var(--nn-text-muted);
+            font-size: 0.92rem;
+            line-height: 1.55;
+            margin: 0 0 var(--sp-3);
+        }
+        .spi-sample audio { width: 100%; }
         .spi-foot {
             margin-top: var(--sp-8);
             font-size: 0.85rem;
@@ -176,6 +199,12 @@
         <h1 id="spi-title">Occasional Personal tips by email — no charge, no card</h1>
         <p class="spi-body">Every Nerra show stays free. Personal is optional: you pick the shows (SpaceX Daily included), Mira greets you by name, and one private podcast feed arrives in the app you already use.</p>
         <p class="spi-body">Want occasional Personal tips by email? Leave your email. No outrage diet. Curiosity only.</p>
+
+        <section class="spi-sample" aria-labelledby="spi-sample-h">
+            <h2 id="spi-sample-h">Hear five minutes of one</h2>
+            <p>A sample edition for “Alex” in Vancouver: Mira’s open, the city brief with its sources named, the markets minute, then a taste of two shows. A real edition plays every show you pick in full.</p>
+            <audio controls preload="none" src="{{ sample_url }}" data-nn-sample="personal-interest"></audio>
+        </section>
 
         <div class="spi-card" id="spi-form-card">
             <form id="spi-form" novalidate>

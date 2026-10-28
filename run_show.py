@@ -6428,8 +6428,12 @@ def _run_video_stage(
         except Exception as exc:  # noqa: BLE001
             logger.warning("Feed refresh with the YouTube link failed (non-fatal): %s", exc)
     if youtube_long_url or youtube_short_url:
+        # Oct 28 2026: the post links the hook Short only once it is public
+        # too (the template falls back to it when the long-form is absent);
+        # the next site rebuild links whichever went public later.
         _write_blog_post("" if youtube_long_scheduled else youtube_long_url,
-                         youtube_short_url, refresh=True)
+                         "" if _still_scheduled(youtube_urls.get("short_publish_at") or "")
+                         else youtube_short_url, refresh=True)
 
     # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
     # uploaded to R2 during the YouTube stage; attach it to the summaries
@@ -9607,6 +9611,12 @@ def _publish_youtube(
                                 short_idx % len(short_scene_paths)
                             ]
                         try:
+                            # Oct 28 2026: the hook Short tells the episode's
+                            # hook story, so it carries the title bundle's
+                            # punch text (big, mid-frame) — this call used to
+                            # print the full hook sentence in the bottom
+                            # fifth, under YouTube's Shorts-shelf overlay. A
+                            # window Short tells another story: no punch.
                             generate_shorts_thumbnail(
                                 _thumb_base,
                                 episode_num=episode_num,
@@ -9614,6 +9624,8 @@ def _publish_youtube(
                                 output_path=this_short_thumb_path,
                                 hook=this_hook,
                                 show_name=show_label,
+                                punch_text=(yt_punch_text
+                                            if _fill_mode == "hook_open" else ""),
                             )
                         except Exception as exc:  # pragma: no cover
                             logger.warning(
