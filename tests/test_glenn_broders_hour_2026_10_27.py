@@ -236,6 +236,17 @@ class TestTheEditClock:
         text = transcript_of_the_edit("[00:05] Glenn: a\n[00:50] Mira: b\n", cuts, [70.0])
         assert "[00:20] Mira: b" in text
 
+    def test_a_cold_open_shows_its_own_words(self):
+        # Oct 28 2026: the clip starts inside a transcript line.
+        from edit_transcript import transcript_of_the_edit
+        cuts = [{"from": "narration:lead"},
+                {"from": "track:guest", "start": 964.0, "end": 979.1, "gaps": False,
+                 "text": "They have to be willing to sign their name to the final product."},
+                {"from": "mix:clean", "start": 44.6, "end": 1000.0, "_gaps_removed": []}]
+        text = transcript_of_the_edit(TRANSCRIPT, cuts, [6.0, 15.0, 955.4], 0.0, {"lead": "Lead."})
+        assert text.splitlines()[1] == ("[00:06] Glenn: They have to be willing to sign their "
+                                        "name to the final product.")
+
     def test_the_chapter_pass_gives_stamps(self):
         from edit_transcript import normalise_chapters
         out = normalise_chapters([{"start": "00:00", "title": "a"}, {"start": "[16:04]", "title": "b"},

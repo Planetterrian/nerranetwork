@@ -221,6 +221,16 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
         if _is_conversation(cut) and cut.get("start") is not None and cut.get("end") is not None:
             s = float(cut["start"]) + room_offset_sec
             e = float(cut["end"]) + room_offset_sec
+            # Oct 28 2026, Glenn Broder: a cold-open clip starts inside a
+            # transcript line, so its first sentence fell outside the span and
+            # his review page showed the clip from "that that is their
+            # responsibility". A clip that carries its own words shows them.
+            if cut.get("text"):
+                who = next((w for at, w, _t in reversed(lines)
+                            if at <= e and not w.lower().startswith("mira")), "Guest")
+                out.append(f"{stamp(clock)} {who}: {str(cut['text']).strip()}")
+                clock += dur
+                continue
             # Oct 23 2026, Stan Lewis. The assembler closes every pause over
             # a second (GAP_TRIM), so a 30-minute span can come out at 24.
             # Stamped at "room minus span start", his last line before the
