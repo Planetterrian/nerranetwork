@@ -5824,81 +5824,140 @@ def sitemap_should_include_blog_archive_page(name: str) -> bool:
 
 def generate_sitemap(*, dry_run=False, out=None):
     """Write sitemap.xml. *out* overrides the destination (tests only —
-    regenerating the real file outside the pipeline rewrites every
-    `lastmod` from local file state; see the sitemap landmine in
-    CLAUDE.md).
+    do not regenerate the committed file outside the pipeline; see the
+    sitemap landmine in CLAUDE.md).
 
-    Oct 22 2026 crawl pass: show hubs and newest episodes first; real
-    episode ``lastmod`` from ``datePublished``; deep archive pages (page
-    3+, which are ``noindex,follow``) and thin utility surfaces stay out.
+    Oct 22 2026 crawl pass: show hubs and newest episodes first; deep
+    archive pages (page 3+, which are ``noindex,follow``) and thin
+    utility surfaces stay out.
+
+    Oct 28 2026 lastmod pass: every ``lastmod`` is derived from working-
+    tree *content*, never file mtime and never the build clock. The
+    finalize job rewrites generated HTML daily, so mtime/today stamped
+    every non-episode URL with the build date forever. Episode pages
+    keep ``datePublished`` from JSON-LD; show hubs / summaries / blog
+    indexes / page-N archives take the newest episode's datePublished;
+    narrative trackers parse ``Last updated YYYY-MM-DD``; claims pages
+    take the newest ISO date printed on the page; everything else omits
+    ``<lastmod>`` entirely. Do not simplify episode lastmod back to
+    mtime (docs/session_2026-07-28.md).
     """
     from xml.sax.saxutils import escape as _esc
-    import os
     from datetime import datetime, timezone
     from engine.show_memory import get_config as _sm_get_config
 
     base = "https://nerranetwork.com"
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    _dp_re = re.compile(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})')
+    _ep_num_re = re.compile(r"^ep(\d+)\.html$", re.I)
+    _narr_updated_re = re.compile(r"Last updated\s+(\d{4}-\d{2}-\d{2})")
+    _iso_date_re = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 
-    def _file_lastmod(path):
-        """Get file modification date as YYYY-MM-DD."""
+    # Per-slug cache: each show's highest-numbered episode is read once.
+    _show_newest_cache: dict[str, str] = {}
+
+    def _show_newest_episode_date(slug: str) -> str:
+        """Newest datePublished among blog/<slug>/ep*.html (by ep number)."""
+        if slug in _show_newest_cache:
+            return _show_newest_cache[slug]
+        show_dir = ROOT / "blog" / slug
+        best_num = -1
+        best_file = None
+        if show_dir.is_dir():
+            for ep_file in show_dir.glob("ep*.html"):
+                m = _ep_num_re.match(ep_file.name)
+                if not m:
+                    continue
+                num = int(m.group(1))
+                if num > best_num:
+                    best_num = num
+                    best_file = ep_file
+        date = ""
+        if best_file is not None:
+            try:
+                head = best_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+            except Exception:
+                head = ""
+            m = _dp_re.search(head)
+            if m:
+                date = m.group(1)
+        _show_newest_cache[slug] = date
+        return date
+
+    def _narrative_lastmod(rel: str) -> str:
         try:
-            mtime = os.path.getmtime(path)
-            return datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+            text = (ROOT / rel).read_text(encoding="utf-8", errors="ignore")
         except Exception:
-            return today
+            return ""
+        m = _narr_updated_re.search(text)
+        return m.group(1) if m else ""
 
-    # ``lastmod`` is per-file modification time wherever possible —
-    # Google uses it as a freshness signal. The previous sitemap
-    # used ``today`` for everything (build date), defeating the
-    # signal because every URL claimed to have changed every day
-    # whether it had or not (May 2026 audit Phase 5).
-    def _lm_or_today(rel: str) -> str:
-        path = ROOT / rel
-        return _file_lastmod(path) if path.exists() else today
+    def _claims_lastmod(rel: str, *, ceiling: str = "") -> str:
+        """Newest ISO date printed on the page, capped at *ceiling*.
+
+        Prediction-market ledgers print future resolution dates in claim
+        text; those are not page-update dates. *ceiling* is the newest
+        episode ``datePublished`` on the network (or the show), so a
+        lastmod can never outrun real published content.
+        """
+        try:
+            text = (ROOT / rel).read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            return ""
+        dates = _iso_date_re.findall(text)
+        if ceiling:
+            dates = [d for d in dates if d <= ceiling]
+        return max(dates) if dates else ""
+
+    def _post_lastmod(ep_file) -> str:
+        """Episode lastmod from JSON-LD datePublished only (no mtime)."""
+        try:
+            head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+        except Exception:
+            return ""
+        m = _dp_re.search(head)
+        return m.group(1) if m else ""
 
     # Buckets keep discovery order honest: hubs before the dated archive.
+    # lastmod is "" when no content-derived date exists (omit the element).
     hubs: list[tuple[str, str, str]] = []
     secondary: list[tuple[str, str, str]] = []
     episodes: list[tuple[str, str, str]] = []  # sorted newest-first later
 
-    # Landing page
-    hubs.append((f"{base}/", "1.0", _lm_or_today("index.html")))
+    # Landing page — no derivable content date.
+    hubs.append((f"{base}/", "1.0", ""))
 
     # Show hubs first (high priority), then each show's blog index.
     # Summaries / narrative trackers are secondary — useful but not the
-    # primary crawl target.
+    # primary crawl target. Show surfaces change when a new episode lands.
     for slug, cfg in NETWORK_SHOWS.items():
-        hubs.append((f"{base}/{cfg['show_page']}", "0.9",
-                     _lm_or_today(cfg["show_page"])))
-        hubs.append((f"{base}/blog/{slug}/index.html", "0.8",
-                     _lm_or_today(f"blog/{slug}/index.html")))
-        secondary.append((f"{base}/{cfg['summaries_page']}", "0.6",
-                          _lm_or_today(cfg["summaries_page"])))
+        show_lm = _show_newest_episode_date(slug)
+        hubs.append((f"{base}/{cfg['show_page']}", "0.9", show_lm))
+        hubs.append((f"{base}/blog/{slug}/index.html", "0.8", show_lm))
+        secondary.append((f"{base}/{cfg['summaries_page']}", "0.6", show_lm))
         # Paginated archive: page 2 only. Page 3+ are noindex,follow thin
         # lists — advertising them wastes crawl budget (Oct 22 2026).
         for _page in sorted((ROOT / "blog" / slug).glob("page*.html")):
             if not sitemap_should_include_blog_archive_page(_page.name):
                 continue
             _rel = f"blog/{slug}/{_page.name}"
-            secondary.append((f"{base}/{_rel}", "0.4", _lm_or_today(_rel)))
+            secondary.append((f"{base}/{_rel}", "0.4", show_lm))
         _narr = "tesla-narrative.html" if slug == "tesla" else (
             cfg["show_page"].replace(".html", "-narrative.html")
             if _sm_get_config(slug) else None
         )
         if _narr and (ROOT / _narr).exists():
-            secondary.append((f"{base}/{_narr}", "0.5", _lm_or_today(_narr)))
+            secondary.append((f"{base}/{_narr}", "0.5",
+                              _narrative_lastmod(_narr)))
 
-    # Network blog hub
-    hubs.append((f"{base}/blog/index.html", "0.8",
-                 _lm_or_today("blog/index.html")))
+    # Network blog hub — no single show date.
+    hubs.append((f"{base}/blog/index.html", "0.8", ""))
 
     # Language hubs (engine.show_lang): one per non-English site language,
-    # listed only when the page exists.
+    # listed only when the page exists. No content-derived lastmod.
     for _row in _site_language_links():
         _hub = _row["path"]
         if _hub and (ROOT / _hub).exists():
-            hubs.append((f"{base}/{_hub}", "0.7", _lm_or_today(_hub)))
+            hubs.append((f"{base}/{_hub}", "0.7", ""))
 
     # Russian funnel landing pages. High priority on purpose: these are
     # the destination every @NerraRU description points at, so they are
@@ -5906,7 +5965,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     for _slug in NETWORK_SHOWS:
         _target = _ru_landing_target(_slug)
         if _target and (ROOT / _target).exists():
-            hubs.append((f"{base}/{_target}", "0.8", _lm_or_today(_target)))
+            hubs.append((f"{base}/{_target}", "0.8", ""))
 
     # Evergreen topic hubs (Sep 2026). Listed from engine/topic_hubs.py rather
     # than a glob so a hub the generator SKIPPED for thinness can never be
@@ -5924,23 +5983,34 @@ def generate_sitemap(*, dry_run=False, out=None):
                 _hub_paths.append(f"{_topic_hubs.HUB_DIR}/index.html")
             for _hub_rel in _hub_paths:
                 if (ROOT / _hub_rel).exists():
-                    hubs.append((f"{base}/{_hub_rel}", "0.7",
-                                 _file_lastmod(ROOT / _hub_rel)))
+                    hubs.append((f"{base}/{_hub_rel}", "0.7", ""))
     except Exception as exc:  # noqa: BLE001 — a sitemap is never worth a crash
         print(f"Warning: topic hubs not added to sitemap: {exc}", file=sys.stderr)
 
-    # Legal pages
+    # Legal pages — omit lastmod (utility/legal surfaces).
     for legal in ["privacy-policy.html", "terms-of-service.html", "ai-disclosure.html"]:
         if (ROOT / legal).exists():
-            secondary.append((f"{base}/{legal}", "0.3", _file_lastmod(ROOT / legal)))
+            secondary.append((f"{base}/{legal}", "0.3", ""))
 
     # Claims & corrections ledger (Oct 1 2026): listed from the SAME list
     # generate_claims_pages writes (claims_page_paths), never a glob, and
     # only when the file is on disk — a page that was not built is never
-    # advertised.
+    # advertised. lastmod = newest ISO date printed on the page, never
+    # newer than the newest episode datePublished (future market dates
+    # appear in claim text and are not page updates).
+    _claims_ceiling = max(
+        (d for d in (_show_newest_episode_date(s) for s in NETWORK_SHOWS) if d),
+        default="",
+    )
     for _rel in claims_page_paths():
         if (ROOT / _rel).exists():
-            secondary.append((f"{base}/{_rel}", "0.4", _file_lastmod(ROOT / _rel)))
+            _ceil = _claims_ceiling
+            if _rel.startswith("claims/") and _rel.endswith(".html"):
+                _slug = _rel[len("claims/"):-len(".html")]
+                if _slug in NETWORK_SHOWS:
+                    _ceil = _show_newest_episode_date(_slug) or _claims_ceiling
+            secondary.append((f"{base}/{_rel}", "0.4",
+                              _claims_lastmod(_rel, ceiling=_ceil)))
 
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
@@ -5952,6 +6022,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     # reachable from the site but excluded here as thin utility surfaces
     # (Oct 22 2026 crawl pass — see SITEMAP_EXCLUDE_UTILITIES). join.html
     # and personal-interest.html stay listed — funnel landers we want indexed.
+    # Dashboard / resource / utility pages omit lastmod.
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "mira.html", "explore.html", "age-of-ai-apply.html",
@@ -5967,29 +6038,9 @@ def generate_sitemap(*, dry_run=False, out=None):
         if extra in SITEMAP_EXCLUDE_UTILITIES:
             continue
         if (ROOT / extra).exists():
-            secondary.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
+            secondary.append((f"{base}/{extra}", "0.5", ""))
 
-    # Individual blog posts.
-    #
-    # lastmod comes from the EPISODE DATE embedded in the page, not the
-    # file mtime. A blog post is a dated article: its content changes
-    # when the episode changes, which is never. But the file is rewritten
-    # every time anything in the generator or template moves, and a
-    # network-wide regeneration then stamps all ~1,250 posts with today's
-    # date — telling Google the entire archive changed at once, which is
-    # exactly the useless signal the May 2026 audit removed by switching
-    # off build-date lastmod in the first place. Reading the date back out
-    # of the page makes the signal survive regeneration.
-    _dp_re = re.compile(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})')
-
-    def _post_lastmod(ep_file):
-        try:
-            head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
-        except Exception:
-            return _file_lastmod(ep_file)
-        m = _dp_re.search(head)
-        return m.group(1) if m else _file_lastmod(ep_file)
-
+    # Individual blog posts — lastmod from JSON-LD datePublished only.
     # Redirect stubs live at the URLs of retired episodes, so they match the
     # ep*.html glob below. Submitting one to Google would advertise a redirect
     # as an article; skip them (they are noindex besides).
@@ -6005,7 +6056,8 @@ def generate_sitemap(*, dry_run=False, out=None):
                         continue
                     lastmod = _post_lastmod(ep_file)
                     # Prefer calendar proximity: anything in the last ~45 days
-                    # reads as "new" for crawl priority.
+                    # reads as "new" for crawl priority. (Clock used for
+                    # priority only — never written into lastmod.)
                     try:
                         age_days = (
                             datetime.now(timezone.utc).date()
