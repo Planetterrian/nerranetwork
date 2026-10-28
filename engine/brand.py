@@ -690,9 +690,9 @@ MIRA_FIRST_CLAIM_FOOTNOTE = (
 #: The mira.html meta description (was a literal in generate_html.py
 #: carrying the overclaim). Kept short: it is what a search result shows.
 MIRA_PAGE_DESCRIPTION = (
-    "Mira is the Nerra Network's AI host. She anchors the daily combined "
-    "edition and interviews real people live — and each guest gets a week "
-    "to approve, cut from or refuse their own transcript."
+    "Mira is Nerra Network's AI host. She anchors the daily combined "
+    "edition and interviews real people live. Guests get a week to "
+    "approve or refuse a transcript."
 )
 
 

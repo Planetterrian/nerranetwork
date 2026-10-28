@@ -29,6 +29,10 @@ URL_TO_FILE = {
     "/models-agents.html": "models-agents.html",
     "/age-of-ai.html": "age-of-ai.html",
     "/nerra-voices.html": "nerra-voices.html",
+    "/ai-chips.html": "ai-chips.html",
+    "/mag7.html": "mag7.html",
+    "/prediction-markets.html": "prediction-markets.html",
+    "/modern-investing.html": "modern-investing.html",
 }
 
 TITLE_TAGS = ("title", "og:title", "twitter:title")
@@ -116,7 +120,7 @@ def approved() -> dict[str, tuple[str, str]]:
 
 
 def test_seo_file_has_eleven_pages(approved):
-    assert len(approved) == 11
+    assert len(approved) == len(URL_TO_FILE)
 
 
 @pytest.mark.parametrize("url", list(URL_TO_FILE))

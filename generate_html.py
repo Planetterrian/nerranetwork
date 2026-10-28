@@ -60,6 +60,10 @@ _SEO_URL_TO_FILE = {
     "/models-agents.html": "models-agents.html",
     "/age-of-ai.html": "age-of-ai.html",
     "/nerra-voices.html": "nerra-voices.html",
+    "/ai-chips.html": "ai-chips.html",
+    "/mag7.html": "mag7.html",
+    "/prediction-markets.html": "prediction-markets.html",
+    "/modern-investing.html": "modern-investing.html",
 }
 
 
@@ -4546,7 +4550,7 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
 
     context = {
         "path_prefix": "",
-        "page_title": "Mira — the Nerra Network's AI host",
+        "page_title": "Mira, the Nerra Network's AI host",
         "page_description": description,
         "meta_description": description,
         "meta_keywords": (
@@ -4649,14 +4653,14 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
     ]
 
     description = (
-        "Browse the Nerra Network's shows by subject and language — AI, "
-        "space, markets, science, climate, world news, language learning and "
-        f"more. {_public_show_count_cached()} free shows, independently produced."
+        "Browse the Nerra Network's shows by subject and language: AI, "
+        "space, markets, science, climate, world news and language learning. "
+        "Free to listen."
     )
 
     context = {
         "path_prefix": "",
-        "page_title": "Explore the shows — Nerra Network",
+        "page_title": "Explore the shows: browse every Nerra podcast | Nerra",
         "page_description": description,
         "meta_description": description,
         "meta_keywords": (
@@ -7528,15 +7532,20 @@ def generate_about_page(*, dry_run=False, output_dir=None):
     env = _get_jinja_env()
     template = env.get_template("about.html.j2")
 
+    # Search + social share the same string so cards and the snippet agree.
+    # "N daily shows" / "N free shows" was not true (weekly and interview-ready
+    # shows exist) and is banned on visitor surfaces; the Sep 3 pass corrected
+    # visible copy and still left the meta as the line Google actually prints.
+    _about_description = (
+        "Nerra Network is an independent podcast network of daily shows on "
+        "AI, Tesla, investing, space and science, made in Vancouver. Every "
+        "Nerra show stays free."
+    )
     context = {
         "path_prefix": "",
-        "page_title": "About — Nerra Network",
-        "page_description": "Meet the independent podcast network producing free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
-        # "N daily shows" was not true: six of the eighteen are weekly,
-        # alternate-day, or published when an interview is ready. The Sep 3
-        # pass corrected the visible copy to "most shows daily" and missed the
-        # meta description, which is the line Google actually prints.
-        "meta_description": f"About Nerra Network — an independent podcast network of {_public_show_count_cached()} free shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
+        "page_title": "About Nerra Network: independent, free podcasts | Nerra",
+        "page_description": _about_description,
+        "meta_description": _about_description,
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
