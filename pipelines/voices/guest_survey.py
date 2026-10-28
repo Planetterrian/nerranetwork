@@ -80,8 +80,11 @@ def due_packages(now: Optional[dt.datetime] = None) -> List[Dict[str, Any]]:
     an address later is asked then.
     """
     now = now or _now()
-    since = (now - SURVEY_WINDOW).isoformat()
-    until = (now - SURVEY_AFTER).isoformat()
+    # Oct 28 2026: "Z", never "+00:00" — an unencoded "+" reaches PostgREST
+    # as a space, and this query had returned HTTP 400 on every run, so no
+    # guest was ever surveyed.
+    since = (now - SURVEY_WINDOW).astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    until = (now - SURVEY_AFTER).astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
     rows = sb_select(
         "editorial_packages",
         f"survey_sent_at=is.null&created_at=gte.{since}&created_at=lte.{until}"

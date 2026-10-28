@@ -55,7 +55,10 @@ TRUSTED_DATE_SOURCES = frozenset({
 # Sep 30 2026: the default number of pages a run may open to date the
 # articles nothing else dated. The prompt list is capped at 40; on a clean
 # feed day the probe opens nothing at all.
-DEFAULT_MAX_PROBES = 12
+#: Oct 28 2026: 12 -> 40. Tesla and SpaceX had 38-43 candidates a day and
+#: probed 12; Tesla Ep647 aired a 2022 IEEE Spectrum article (undated URL,
+#: an X post's date) among its news. A probe is one page GET, eight at a time.
+DEFAULT_MAX_PROBES = 40
 
 _DATE_TOKEN_RE = re.compile(r"(20[0-9]{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])")
 _X_HOST_RE = re.compile(r"^https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com|t\.co)/", re.I)
@@ -238,7 +241,7 @@ def probe_page_dates(
     *,
     max_probes: int = DEFAULT_MAX_PROBES,
     fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
-    workers: int = 4,
+    workers: int = 8,
 ) -> Dict[str, int]:
     """Open the pages of the articles nothing trustworthy dated and read the
     publisher's own date. In-place, best-effort, bounded by *max_probes*.

@@ -270,8 +270,11 @@ class TestXOutcome:
 
     def test_voices_publisher_posts_and_the_workflows_carry_the_secrets(self):
         src = (ROOT / "pipelines" / "voices" / "publish_episode.py").read_text(encoding="utf-8")
-        assert "def maybe_post_x(" in src and "maybe_post_x(show, cfg, episode_num, title)" in src
-        assert src.index("maybe_publish_youtube(show, cfg, episode_num, today") < src.index("maybe_post_x(show, cfg, episode_num, title)")
+        # Oct 27 2026 the call gained mention=x_handle(app) (the guest's own
+        # handle); the guard pins the call and its order, not its tail.
+        call = "maybe_post_x(show, cfg, episode_num, title"
+        assert "def maybe_post_x(" in src and call in src
+        assert src.index("maybe_publish_youtube(show, cfg, episode_num, today") < src.index(call)
         for wf in ("nerra-daily.yml", "nerra_voices_publish.yml"):
             text = (ROOT / ".github" / "workflows" / wf).read_text(encoding="utf-8")
             for k in ("CONSUMER_KEY", "CONSUMER_SECRET", "ACCESS_TOKEN", "ACCESS_TOKEN_SECRET"):
