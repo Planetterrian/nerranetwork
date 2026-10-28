@@ -5774,3 +5774,29 @@ experiments:
       written with every homepage build; committed by run-show finalize,
       nerra-daily, render-video and nightly). Guards:
       tests/test_my_nerra_2026_10_28.py. No Worker change.
+  - id: web-app-2026-10-28
+    title: "The site as an app: one player, Watch, For you, join lineup builder, add-to-app page"
+    area: site
+    shipped: 2026-10-28
+    readout: 2026-11-25
+    status: reading
+    baseline: >
+      Every card on the front page carried its own native audio control,
+      nothing kept a listener's place across pages, no page played a video,
+      the join page sold a lineup it never let a visitor build, the member's
+      feed link was a copy-paste URL plus four bare app links, and the site
+      could not be installed. Signups and checkout starts are near zero
+      (api/funnel.json).
+    target: >
+      build_lineup_start and personal_feed_add non-zero in GA4 within two
+      weeks; play_video counted; begin_checkout from /join.html higher than
+      the four weeks before; app_install_prompt accepted at least once;
+      play_video with placement lineup counted (Watch my lineup), the read
+      that decides whether a private video feed is worth building.
+    notes: >
+      assets/js/nn-player.js (shared player, resume, video dialog),
+      assets/js/nn-app.js + manifest.webmanifest + sw.js (install, tab bar,
+      offline page), assets/js/for-you.js (front page band), join.html
+      builder (nnMe.draft, saved by My Nerra), add.html (token in the
+      fragment). Guards: tests/test_web_app_2026_10_28.py. Worker:
+      welcome email links add.html (wrangler deploy in workers/gallery).

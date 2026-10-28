@@ -1,0 +1,131 @@
+{% extends "base.html.j2" %}
+{#- /watch.html (Oct 28 2026): every show's newest public videos in one
+    place. Built from api/personal_front.json's own rows (the homepage
+    build writes both), so a scheduled video is never listed
+    (engine.youtube_index.episode_video_links). Each card is the episode's
+    own scene, never a YouTube thumbnail; a press opens the video inside
+    the page through the site player (assets/js/nn-player.js), and without
+    JavaScript the card is a plain link to YouTube. -#}
+
+{% block head_extra %}
+<style>
+.wt { max-width: var(--container-max, 1200px); margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-8)) var(--sp-6) var(--sp-12); font-family: var(--font-ui); }
+.wt-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); }
+.wt-kicker { margin: 0 0 6px; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--nn-cyan); font-weight: 700; }
+.wt h1 { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.05; margin: 0; }
+.wt-sub { margin: 8px 0 0; color: var(--nn-text-muted); max-width: 640px; line-height: 1.55; }
+.wt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 var(--sp-6); padding: 0; list-style: none; }
+.wt-chips button { border: 1px solid rgba(255,255,255,0.16); background: transparent; color: var(--nn-white); border-radius: 999px; padding: 6px 12px; font: 600 0.82rem/1.2 var(--font-ui); cursor: pointer; }
+.wt-chips button[aria-pressed="true"] { background: #fff; color: #0B0F1A; border-color: #fff; }
+.wt-chips .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--show-color); }
+.wt h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.5rem; margin: var(--sp-8) 0 var(--sp-4); display: flex; align-items: baseline; gap: 12px; }
+.wt h2 small { font-family: var(--font-ui); font-size: 0.82rem; color: var(--nn-text-muted); font-weight: 500; }
+.wt-shorts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 210px); gap: var(--sp-4); overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
+.wt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: var(--sp-5); }
+.wt-card { position: relative; display: block; border-radius: 14px; overflow: hidden; background: #111827; color: var(--nn-white); text-decoration: none; scroll-snap-align: start; }
+.wt-card .wt-pic { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.wt-card.is-short .wt-pic { aspect-ratio: 9 / 16; }
+.wt-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
+.wt-card:hover img { transform: scale(1.03); }
+.wt-card:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 3px; }
+.wt-card .wt-tag { position: absolute; top: 10px; left: 10px; font: 700 0.68rem/1 var(--font-ui); padding: 5px 8px; border-radius: 999px; background: rgba(0,0,0,0.62); }
+.wt-card .wt-dur { position: absolute; right: 10px; bottom: 10px; font: 700 0.7rem/1 var(--font-ui); padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,0.7); }
+.wt-card .wt-body { padding: 12px 14px 14px; border-top: 3px solid var(--show-color); }
+.wt-card.is-short .wt-body { position: absolute; left: 0; right: 0; bottom: 0; border-top: 0; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.88) 45%); padding-top: 40px; }
+.wt-card .wt-show { display: block; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--nn-cyan)); font-weight: 700; }
+.wt-card .wt-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Source Serif 4', Georgia, serif; font-size: 1.02rem; font-weight: 600; line-height: 1.3; margin-top: 4px; }
+.wt-card .wt-when { display: block; font-size: 0.74rem; color: var(--nn-text-muted); margin-top: 6px; }
+.wt-card[hidden] { display: none; }
+.wt-cta { margin-top: var(--sp-10); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--sp-6); align-items: center; padding: var(--sp-6); border-radius: 18px; border: 1px solid var(--nn-border);
+  background: radial-gradient(ellipse 60% 80% at 0% 0%, rgba(107,71,255,0.22), transparent 70%), radial-gradient(ellipse 60% 80% at 100% 100%, rgba(0,212,255,0.16), transparent 70%), #0D1120; }
+.wt-cta h2 { margin: 0 0 8px; }
+.wt-cta p { margin: 0; color: var(--nn-text-muted); line-height: 1.55; }
+.wt-cta .wt-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.wt-btn { display: inline-flex; align-items: center; padding: 0.75rem 1.2rem; border-radius: 999px; font-weight: 700; text-decoration: none; border: 1px solid rgba(255,255,255,0.2); color: var(--nn-white); }
+.wt-btn.primary { background: var(--nn-gradient); border-color: transparent; }
+.wt-empty { color: var(--nn-text-muted); }
+@media (max-width: 760px) { .wt-cta { grid-template-columns: minmax(0, 1fr); } .wt-cta .wt-actions { justify-content: flex-start; } .wt { padding-left: var(--sp-4); padding-right: var(--sp-4); } }
+</style>
+{% endblock %}
+
+{% macro vcard(v, short) -%}
+<a class="wt-card{% if short %} is-short{% endif %}" href="{{ v.url }}" target="_blank" rel="noopener"
+   data-nn-watch="{{ v.url }}" data-kind="{{ 'short' if short else 'long' }}" data-title="{{ v.hook | e }}" data-show="{{ v.show_name | e }}"
+   {% if v.post_url %}data-post="{{ path_prefix }}{{ v.post_url }}"{% endif %} data-slug="{{ v.slug }}" style="--show-color:{{ v.brand_color }};">
+    <span class="wt-pic">
+        {% if v.image_url %}<img src="{{ v.image_url if v.image_url.startswith('https://') else path_prefix ~ v.image_url }}" alt="" loading="lazy" decoding="async">{% endif %}
+        <span class="wt-tag">▶ {{ 'Short' if short else 'Episode' }}</span>
+        {% if not short and v.minutes %}<span class="wt-dur">{{ v.minutes }} min</span>{% endif %}
+    </span>
+    <span class="wt-body">
+        <span class="wt-show">{{ v.show_name | e }}</span>
+        <span class="wt-title">{{ v.hook | e }}</span>
+        {% if v.when %}<span class="wt-when">{{ v.when }}</span>{% endif %}
+    </span>
+</a>
+{%- endmacro %}
+
+{% block content %}
+<div class="wt">
+    <div class="wt-head">
+        <div>
+            <p class="wt-kicker">Watch</p>
+            <h1>The day on video</h1>
+            <p class="wt-sub">Every show's newest full episodes and Shorts, newest first. Press one to watch it here; it plays from YouTube in privacy-enhanced mode, only after you press.</p>
+        </div>
+    </div>
+
+    {% if shows_with_video %}
+    <ul class="wt-chips" aria-label="Filter by show">
+        <li><button type="button" aria-pressed="true" data-wt-filter="">All shows</button></li>
+        {% for s in shows_with_video %}
+        <li><button type="button" aria-pressed="false" data-wt-filter="{{ s.slug }}" style="--show-color:{{ s.brand_color }};"><span class="dot" aria-hidden="true"></span>{{ s.name | e }}</button></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if shorts %}
+    <h2 id="wt-shorts-h">Shorts <small>Under a minute each</small></h2>
+    <div class="wt-shorts" aria-labelledby="wt-shorts-h">
+        {% for v in shorts %}{{ vcard(v, true) }}{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if longs %}
+    <h2 id="wt-long-h">Full episodes <small>The whole show, with pictures</small></h2>
+    <div class="wt-grid" aria-labelledby="wt-long-h">
+        {% for v in longs %}{{ vcard(v, false) }}{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not shorts and not longs %}
+    <p class="wt-empty">No videos are public yet today. The day's episodes are on the <a href="{{ home_url }}">front page</a>.</p>
+    {% endif %}
+
+    <section class="wt-cta" aria-labelledby="wt-cta-h">
+        <div>
+            <h2 id="wt-cta-h">Only the shows you follow</h2>
+            <p>A free Nerra account turns this into your own page: the shows you pick, in your order, with the stories on your topics marked. Nerra Personal joins them into one morning edition for your podcast app.</p>
+        </div>
+        <div class="wt-actions">
+            <a class="wt-btn primary" href="{{ path_prefix }}account.html#customize">Make it yours, free</a>
+            <a class="wt-btn" href="{{ path_prefix }}join.html">See Nerra Personal</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var chips = document.querySelectorAll('[data-wt-filter]');
+  chips.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var slug = b.getAttribute('data-wt-filter');
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', c === b ? 'true' : 'false'); });
+      document.querySelectorAll('.wt-card').forEach(function (c) { c.hidden = !!slug && c.getAttribute('data-slug') !== slug; });
+    });
+  });
+})();
+</script>
+{% endblock %}

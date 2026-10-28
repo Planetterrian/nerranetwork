@@ -309,6 +309,18 @@ describe("activation welcomes the member", () => {
     expect(mail.html).not.toContain("<b>Eve</b>");
     expect(mail.html).toContain("token=a&amp;b");
     expect(mail.text).toContain("next morning");
+    // A feed URL that is not a member feed gets no add-to-app link.
+    expect(mail.html).not.toContain("add.html#");
+  });
+
+  it("the welcome email links the one-tap add page with the token in the fragment", () => {
+    const mail = buildWelcomeEmail({
+      firstName: "Eve", feedUrl: `https://api.nerranetwork.com/api/feed/${TOKEN}/feed.rss`,
+      signInUrl: "https://x/api/magic?token=a", signInHours: 24, firstEditionNow: true,
+    });
+    expect(mail.html).toContain(`https://nerranetwork.com/add.html#${TOKEN}`);
+    expect(mail.html).toContain("Add to my podcast app");
+    expect(mail.text).toContain(`https://nerranetwork.com/add.html#${TOKEN}`);
   });
 });
 

@@ -5283,6 +5283,7 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
     from engine.interviews import feed_durations as _feed_durations
     from engine.personal_edition import PERSONAL_SHOW_SLUGS
     from engine.publisher import apply_op3_prefix as _op3
+    from engine.youtube_index import episode_video_links as _episode_video_links
 
     root = Path(root) if root else ROOT
     by_slug = {s["slug"]: s for s in shows}
@@ -5330,6 +5331,10 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
             out_shows[slug] = entry
             continue
         durations = _feed_durations(root / cfg["rss_file"]) if cfg.get("rss_file") else {}
+        # The episode's public videos (a scheduled one is never listed), so
+        # My Nerra and the watch page play them inside the page.
+        videos = _episode_video_links(root / Path(cfg["json_path"]).parent / "youtube_videos.json",
+                                      now=now)
         _slice = gallery_root / f"{slug}.json"
         gallery = _lt.load_gallery_index(gallery_root, slug)
         for record in _lt.recent_records(root / cfg["json_path"], PERSONAL_FRONT_PER_SHOW):
@@ -5341,9 +5346,14 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
             if story is None:
                 continue
             story["stamp"] = _nr.stamp(record.get("date"), _nr.published_at(record), now)
-            entry["stories"].append(_lt.story_json(
-                story, record=record,
-                duration_s=durations.get(story.get("episode_num"))))
+            row = _lt.story_json(story, record=record,
+                                 duration_s=durations.get(story.get("episode_num")))
+            try:
+                links = videos.get(int(story.get("episode_num") or 0)) or {}
+            except (TypeError, ValueError):
+                links = {}
+            row["videos"] = {k: v for k, v in links.items() if k in ("long", "short")}
+            entry["stories"].append(row)
         out_shows[slug] = entry
     return {
         "generated_at": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -5353,8 +5363,9 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
 
 
 def write_personal_front(shows, *, gallery_root, now, output_dir=None):
-    """Write ``api/personal_front.json``; never raises (a member page's data
-    is never worth the homepage)."""
+    """Write ``api/personal_front.json`` and the watch page built from the
+    same rows; never raises (a member page's data is never worth the
+    homepage)."""
     try:
         payload = personal_front_payload(shows, gallery_root=gallery_root, now=now)
         out = (Path(output_dir) if output_dir else ROOT) / "api" / "personal_front.json"
@@ -5362,10 +5373,117 @@ def write_personal_front(shows, *, gallery_root, now, output_dir=None):
         out.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
                        encoding="utf-8")
         print(f"Wrote {out}")
-        return out
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::api/personal_front.json not written: {exc}")
         return None
+    try:
+        generate_watch_page(payload=payload, output_dir=output_dir)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::watch.html not written: {exc}")
+    return out
+
+
+#: Watch page: at most this many Shorts and this many full episodes.
+WATCH_PAGE_MAX_SHORTS = 24
+WATCH_PAGE_MAX_LONGS = 24
+
+
+def watch_page_rows(payload):
+    """``(shows_with_video, shorts, longs)`` from the personal_front rows.
+
+    Newest first by the story stamp; one row per video (an episode with a
+    Short and a long-form appears in both lists). Only ``https://`` YouTube
+    URLs the index recorded are used, and a scheduled video never reaches
+    the payload (engine.youtube_index.episode_video_links)."""
+    shows_with_video, shorts, longs = [], [], []
+    for slug, entry in (payload or {}).get("shows", {}).items():
+        has = False
+        for st in entry.get("stories") or []:
+            vids = st.get("videos") or {}
+            stamp = st.get("stamp") or {}
+            row = {
+                "slug": slug, "show_name": entry.get("name") or slug,
+                "brand_color": entry.get("brand_color") or "#6B47FF",
+                "hook": st.get("hook") or "", "post_url": st.get("post_url") or "",
+                "image_url": st.get("image_url") or st.get("cover_webp") or entry.get("cover_webp") or "",
+                "when": stamp.get("label") or st.get("date") or "",
+                "iso": stamp.get("iso") or st.get("date_raw") or "",
+                "minutes": max(1, round((st.get("duration_s") or 0) / 60)) if st.get("duration_s") else None,
+            }
+            for kind, bucket in (("short", shorts), ("long", longs)):
+                url = str(vids.get(kind) or "")
+                if url.startswith("https://www.youtube.com/") or url.startswith("https://youtu.be/"):
+                    bucket.append({**row, "url": url})
+                    has = True
+        if has:
+            shows_with_video.append({"slug": slug, "name": entry.get("name") or slug,
+                                     "brand_color": entry.get("brand_color") or "#6B47FF"})
+    shorts.sort(key=lambda r: r["iso"], reverse=True)
+    longs.sort(key=lambda r: r["iso"], reverse=True)
+    return shows_with_video, shorts[:WATCH_PAGE_MAX_SHORTS], longs[:WATCH_PAGE_MAX_LONGS]
+
+
+def generate_watch_page(*, payload=None, dry_run=False, output_dir=None, now=None):
+    """Generate /watch.html — every show's newest public videos, played in
+    the page (Oct 28 2026). ``payload`` is the personal_front payload the
+    homepage build just wrote; without one it is built here."""
+    if payload is None:
+        now = now or datetime.now(timezone.utc)
+        payload = personal_front_payload(
+            _build_all_shows_list(), gallery_root=ROOT / "site" / "data" / "gallery", now=now)
+    shows_with_video, shorts, longs = watch_page_rows(payload)
+    env = _get_jinja_env()
+    ctx = _member_page_context(
+        "Watch: today's episodes and Shorts | Nerra Network",
+        "Every Nerra Network show's newest full episodes and Shorts in one place, "
+        "played right on the page.",
+        "https://nerranetwork.com/watch.html")
+    ctx.update({"shows_with_video": shows_with_video, "shorts": shorts, "longs": longs,
+                "theme_color": "", "og_image": ""})
+    html = env.get_template("watch_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "watch.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_add_feed_page(*, dry_run=False, output_dir=None):
+    """Generate /add.html — put a Nerra Personal feed into a podcast app
+    (Oct 28 2026). The token arrives in the URL fragment; noindex, never in
+    the sitemap."""
+    env = _get_jinja_env()
+    ctx = _member_page_context("Add your edition to a podcast app | Nerra Network",
+                               "Add your private Nerra Personal feed to your podcast app in one tap.",
+                               "")
+    ctx.update({"theme_color": "", "og_image": ""})
+    html = env.get_template("add_feed_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "add.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_offline_page(*, dry_run=False, output_dir=None):
+    """Generate /offline.html — the installed app's page for a dead
+    connection (sw.js serves it when a page has no saved copy)."""
+    env = _get_jinja_env()
+    ctx = _member_page_context("You're offline | Nerra Network",
+                               "This page isn't saved on this device yet.", "")
+    ctx["theme_color"] = ""
+    html = env.get_template("offline_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "offline.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
 
 
 def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
@@ -5647,6 +5765,9 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         # ask; suppress the footer per-show newsletter form but keep the
         # Personal tips link. Every other page leaves this unset/false.
         "suppress_footer_newsletter_form": True,
+        # Oct 28 2026: the For you band's show picker — the Personal lineup's
+        # public shows (a members-only desk is picked inside My Nerra).
+        "picker_shows": [s for s in _personal_shows_list() if not s["access_note"]],
         **v2,
     }
     html = _get_jinja_env().get_template("network_page.html.j2").render(**context)
@@ -6167,7 +6288,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "press.html", "sponsor.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "guest-picks.html", "player.html", "data.html",
                   "join.html", "support.html", "personal-interest.html",
-                  "specials.html",
+                  "specials.html", "watch.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
                   "offshore-north-dashboard.html",
@@ -7443,17 +7564,31 @@ def generate_join_page(*, dry_run=False, output_dir=None):
         _join_title,
         _join_meta,
         "https://nerranetwork.com/join.html")
+    # Oct 28 2026 (later): each show's typical episode length, the median of
+    # its newest episodes in api/personal_front.json (the file the homepage
+    # build just wrote), so the lineup builder's running time is measured,
+    # never typed. A show with no measured episode carries none.
+    try:
+        _front = json.loads((ROOT / "api" / "personal_front.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        _front = {}
+    for _s in personal_shows:
+        _d = sorted(st.get("duration_s") or 0 for st in
+                    ((_front.get("shows") or {}).get(_s["slug"], {}).get("stories") or [])
+                    if st.get("duration_s"))
+        _s["minutes"] = max(1, round(_d[len(_d) // 2] / 60)) if _d else None
     ctx["personal_shows"] = personal_shows
     ctx["total_episodes"] = _count_total_episodes()
     # The hero's player mockup shows a believable edition using real
     # show identities (covers + names) with illustrative durations.
     _by_slug = {s["slug"]: s for s in personal_shows}
+    # The preview edition opens on the starter lineup My Nerra uses before
+    # a member picks (account_page STARTER), with each show's measured length.
     ctx["mock_lineup"] = [
-        {**_by_slug[s], "length": t} for s, t in (
-            ("spacex", "9:41"), ("tesla", "8:12"),
-            ("models_agents", "9:56"), ("dp_pod", "10:03"),
-        ) if s in _by_slug
+        {**_by_slug[s], "length": f"{_by_slug[s]['minutes']} min" if _by_slug[s].get("minutes") else ""}
+        for s in ("spacex", "tesla", "models_agents", "planetterrian") if s in _by_slug
     ]
+    ctx["mock_total"] = sum(s.get("minutes") or 0 for s in ctx["mock_lineup"]) or None
     html = env.get_template("join_page.html.j2").render(**ctx)
     out_path = (Path(output_dir) if output_dir else ROOT) / "join.html"
     if dry_run:
@@ -8933,6 +9068,8 @@ def generate_static_pages(*, dry_run=False):
     generate_gallery_page(dry_run=dry_run)
     generate_books_page(dry_run=dry_run)
     generate_404_page(dry_run=dry_run)
+    generate_offline_page(dry_run=dry_run)
+    generate_add_feed_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
     generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)

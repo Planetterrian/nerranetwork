@@ -1,0 +1,47 @@
+{% extends "base.html.j2" %}
+{#- /offline.html (Oct 28 2026): what the installed app shows when a page
+    cannot load and has no saved copy (sw.js). It lists the pages the app
+    has kept, so a reader on a train still has something to read. -#}
+{% block head_extra %}
+<meta name="robots" content="noindex">
+<style>
+.off { max-width: 680px; margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-12); font-family: var(--font-ui); }
+.off h1 { font-family: 'Source Serif 4', Georgia, serif; font-size: 2.2rem; margin: 0 0 8px; }
+.off p { color: var(--nn-text-muted); line-height: 1.6; }
+.off ul { list-style: none; padding: 0; margin: var(--sp-5) 0 0; }
+.off li a { display: block; padding: 12px 0; border-bottom: 1px solid var(--nn-border); color: var(--nn-white); text-decoration: none; font-weight: 600; }
+.off button { margin-top: var(--sp-4); padding: 0.7rem 1.3rem; border-radius: 999px; border: 0; background: var(--nn-gradient); color: #fff; font: 700 0.92rem/1 var(--font-ui); cursor: pointer; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="off">
+    <h1>You're offline</h1>
+    <p>This page isn't saved on this device yet. Pages you opened recently are below; the rest come back with your connection.</p>
+    <button type="button" onclick="location.reload()">Try again</button>
+    <ul id="off-pages" aria-label="Saved pages"></ul>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  if (!('caches' in window)) { return; }
+  caches.keys().then(function (keys) {
+    var pages = keys.filter(function (k) { return /-pages$/.test(k); });
+    return Promise.all(pages.map(function (k) { return caches.open(k).then(function (c) { return c.keys(); }); }));
+  }).then(function (lists) {
+    var seen = {}, out = [];
+    (lists || []).forEach(function (l) { l.forEach(function (r) {
+      var u = new URL(r.url);
+      if (u.origin !== location.origin || seen[u.pathname]) { return; }
+      seen[u.pathname] = 1; out.push(u.pathname);
+    }); });
+    var ul = document.getElementById('off-pages');
+    out.reverse().slice(0, 20).forEach(function (p) {
+      var li = document.createElement('li'), a = document.createElement('a');
+      a.href = p; a.textContent = p === '/' ? 'Front page' : p.replace(/^\//, '').replace(/\.html$/, '').replace(/[-_/]/g, ' ');
+      li.appendChild(a); ul.appendChild(li);
+    });
+  }).catch(function () {});
+})();
+</script>
+{% endblock %}

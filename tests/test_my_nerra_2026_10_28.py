@@ -148,9 +148,14 @@ class TestThePage:
         assert "out += on ? '<mark>' + esc(tok) + '</mark>' : esc(tok);" in src
 
     def test_plays_are_reported_like_tracking_js(self):
-        src = _src()
-        assert "track('episode_play', { src:" in src
-        assert "track('play_personal_sample', { placement: 'account'" in src
+        """Since the site player (assets/js/nn-player.js) plays My Nerra's
+        episodes, it reports them, with tracking.js's parameters; the page
+        marks the sample so it reports its own event."""
+        player = (ROOT / "assets" / "js" / "nn-player.js").read_text()
+        assert "track('episode_play', { src:" in player
+        assert "track('play_personal_sample', { placement: it.sample" in player
+        assert "sample: 'account'" in _src()
+        assert "track('episode_play'" not in _src(), "the page must not report a play twice"
         tracking = (ROOT / "assets" / "js" / "tracking.js").read_text()
         assert "track('episode_play', {" in tracking and "src:" in tracking
 

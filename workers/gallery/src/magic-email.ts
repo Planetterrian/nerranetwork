@@ -87,6 +87,19 @@ export function buildWelcomeEmail(opts: {
   const hello = opts.firstName ? `Welcome, ${opts.firstName}` : "Welcome";
   const feed = escapeHtml(opts.feedUrl);
   const signIn = escapeHtml(opts.signInUrl);
+  // Oct 28 2026: one tap into the member's own podcast app. The add page
+  // reads the feed token from the URL fragment (never sent to a server) and
+  // offers each app's own subscribe link; on a computer it shows a code to
+  // scan with the phone.
+  const tokenMatch = /\/api\/feed\/([0-9a-f]{32})\/feed\.rss$/.exec(opts.feedUrl);
+  const addUrl = tokenMatch ? `https://nerranetwork.com/add.html#${tokenMatch[1]}` : "";
+  const addButton = addUrl
+    ? `<tr><td align="center" style="padding:18px 28px 0;">
+          <a href="${escapeHtml(addUrl)}"
+             style="display:inline-block;padding:12px 28px;background:#ffffff;color:#0b0f1a;font-weight:700;text-decoration:none;border-radius:999px;font-size:0.95rem;">Add to my podcast app</a>
+          <p style="margin:8px 0 0;color:#8b8fae;font-size:0.8rem;">Open this on your phone: one tap for Apple Podcasts, Overcast, Pocket Casts, Castro, AntennaPod or Podcast Addict.</p>
+        </td></tr>`
+    : "";
   const when = opts.firstEditionNow
     ? "Your first edition is being made now and appears in your feed within a few minutes."
     : "Your first edition arrives with the next morning's build.";
@@ -104,6 +117,7 @@ export function buildWelcomeEmail(opts: {
           <h1 style="margin:0 0 8px;font-size:1.25rem;color:#ffffff;">${escapeHtml(hello)} to Nerra Personal</h1>
           <p style="margin:0;color:#c3c8d8;font-size:0.95rem;line-height:1.55;">${escapeHtml(when)} Mira opens each edition by name and plays your shows in the order you chose.</p>
         </td></tr>
+        ${addButton}
         <tr><td style="padding:18px 28px 4px;">
           <p style="margin:0 0 6px;color:#ffffff;font-weight:600;font-size:0.95rem;">Your private feed</p>
           <p style="margin:0;word-break:break-all;color:#cbd5e0;font-size:0.85rem;background:#0b0f1a;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;">${feed}</p>
@@ -125,6 +139,7 @@ export function buildWelcomeEmail(opts: {
   const text =
     `${hello} to Nerra Personal\n\n` +
     `${when}\n\n` +
+    (addUrl ? `Add it to your podcast app in one tap (open on your phone):\n${addUrl}\n\n` : "") +
     `Your private feed (yours alone; please don't share it):\n${opts.feedUrl}\n\n` +
     `Apple Podcasts: Library > ... > Follow a Show by URL. Overcast: + > Add URL. ` +
     `Pocket Casts: Search, then paste the URL.\n\n` +

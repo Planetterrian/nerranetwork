@@ -45,7 +45,13 @@
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="assets/js/consent.js"
@@ -159,7 +165,7 @@
 .lt-dev-earlier a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-dev-when { font-weight: 700; color: var(--lt-muted); margin-right: 4px; }
 
-/* ---- Soft Personal band (the homepage's one email ask) ---- */
+/* ---- Personal tips band (the homepage's one email ask) ---- */
 .lt-soft { margin-top: var(--sp-10); }
 .lt-soft .nn-soft-personal-hero { border-top: 1px solid var(--nn-border); }
 
@@ -930,10 +936,54 @@ body.lt-player-open { overflow: hidden; }
   .lt-reel-card:hover .lt-reel-img { transform: none; }
   .lt-player[open] { animation: none; }
 }
+/* For you (Oct 28 2026): the front page's picker for visitors and its row of
+   a member's own shows. assets/js/for-you.js. */
+.nn-you { --you-pad: var(--sp-6); }
+.nn-you > div { border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--you-pad);
+  background: radial-gradient(ellipse 55% 90% at 0% 0%, rgba(107,71,255,0.18), transparent 70%), radial-gradient(ellipse 50% 90% at 100% 100%, rgba(0,212,255,0.12), transparent 70%), #0D1120; }
+.nn-you [hidden] { display: none !important; }
+.nn-you-visitor { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: var(--sp-6); align-items: center; }
+.nn-you-copy h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: 4px 0 10px; }
+.nn-you-copy p { margin: 0; color: var(--lt-muted); line-height: 1.55; font-family: var(--font-ui); }
+.nn-you-picks { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.nn-you-pick { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.03); color: var(--nn-white); font: 600 0.84rem/1.2 var(--font-ui); }
+.nn-you-pick img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block; }
+.nn-you-pick i { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.35); flex: none; position: relative; }
+.nn-you-pick[aria-pressed="true"] { border-color: var(--show-color); background: color-mix(in srgb, var(--show-color) 22%, transparent); }
+.nn-you-pick[aria-pressed="true"] i { background: var(--show-color); border-color: var(--show-color); }
+.nn-you-pick[aria-pressed="true"] i::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.nn-you-pick:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+.nn-you-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); font-family: var(--font-ui); }
+.nn-you-count { color: var(--lt-muted); font-size: 0.88rem; }
+.nn-you-signin { margin-left: auto; color: var(--lt-cyan); font-size: 0.88rem; }
+.nn-you-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.nn-you-head h2 { font-size: clamp(1.5rem, 2.8vw, 2rem); margin: 4px 0 6px; }
+.nn-you-head h2 em { font-style: italic; color: var(--lt-cyan); }
+.nn-you-sub { margin: 0; color: var(--lt-muted); font-family: var(--font-ui); }
+.nn-you-head-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.nn-you-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.nn-you-card { width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px; gap: 12px; align-items: center; text-align: left; cursor: pointer;
+  padding: 10px; border-radius: 14px; border: 1px solid var(--lt-rule); border-left: 3px solid var(--show-color); background: rgba(255,255,255,0.03); color: var(--nn-white); font-family: var(--font-ui); }
+.nn-you-card:hover { background: rgba(255,255,255,0.06); }
+.nn-you-card img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; display: block; background: rgba(255,255,255,0.05); }
+.nn-you-card-txt { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nn-you-card-txt b { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
+.nn-you-card-hl { font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; font-size: 0.98rem; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nn-you-card-txt small { color: var(--lt-muted); font-size: 0.74rem; }
+.nn-you-card-play { width: 40px; height: 40px; border-radius: 50%; background: #fff; position: relative; }
+.nn-you-card-play::after { content: ""; position: absolute; left: 15px; top: 12px; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+.nn-you-card.is-playing .nn-you-card-play::after { left: 14px; top: 13px; width: 4px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; }
+.nn-you-upsell { margin: var(--sp-4) 0 0; font-family: var(--font-ui); color: var(--lt-muted); }
+.nn-you-upsell a { color: var(--lt-cyan); font-weight: 600; }
+@media (max-width: 860px) {
+  .nn-you-visitor { grid-template-columns: minmax(0, 1fr); }
+  .nn-you { --you-pad: var(--sp-4); }
+  .nn-you-signin { margin-left: 0; }
+}
 </style>
     <style>
-        .nn-me { --me-player-h: 0px; }
-        .nn-me [hidden], .me-player[hidden], .nn-savebar[hidden] { display: none !important; }
+        .nn-me [hidden], .nn-savebar[hidden] { display: none !important; }
         .me-status { font-family: var(--font-ui); color: var(--lt-muted); min-height: 1.2rem; font-size: 0.92rem; margin: var(--sp-4) 0; }
         .me-link { background: none; border: 0; padding: 0; color: var(--lt-cyan); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
         .me-link:hover { color: var(--nn-white); }
@@ -1030,6 +1080,20 @@ body.lt-player-open { overflow: hidden; }
         .me-add-show { font-family: var(--font-ui); font-size: 0.74rem; font-weight: 700; background: none; border: 1px solid var(--lt-rule-strong); color: var(--lt-cyan); border-radius: 999px; padding: 1px 9px; cursor: pointer; }
         .me-add-show:hover { border-color: var(--lt-cyan); }
         .me-topics-empty { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-4); align-items: center; border: 1px dashed var(--lt-rule-strong); border-radius: 12px; padding: var(--sp-5) var(--sp-6); }
+
+        /* ---- Watch ---- */
+        .me-watch-rail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: var(--sp-4); overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+        .me-vid { scroll-snap-align: start; position: relative; display: block; border-radius: 12px; overflow: hidden; background: #111827; color: var(--nn-white); text-decoration: none; aspect-ratio: 16 / 10; }
+        .me-vid.is-short { aspect-ratio: 9 / 13; }
+        .me-vid img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .me-vid::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.85)); }
+        .me-vid-txt { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 1; font-family: var(--font-ui); }
+        .me-vid-txt b { display: block; font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
+        .me-vid-txt span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.9rem; font-weight: 600; line-height: 1.3; }
+        .me-vid-play { position: absolute; top: 10px; left: 10px; z-index: 1; font: 700 0.68rem/1 var(--font-ui); padding: 5px 8px; border-radius: 999px; background: rgba(0,0,0,0.6); }
+        .me-vid:hover img { transform: scale(1.03); transition: transform 0.3s; }
+        .me-vid:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 3px; }
+        .lt-meta .me-watch-link { margin-left: 4px; }
 
         /* ---- Catch up ---- */
         .me-catchup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--sp-8); list-style: none; margin: 0; padding: 0; }
@@ -1154,26 +1218,9 @@ body.lt-player-open { overflow: hidden; }
         .me-signin form { display: flex; flex-wrap: wrap; gap: 8px; }
         .me-signin .me-input { flex: 1 1 240px; }
 
-        /* ---- Save bar + player (fixed to the bottom, stacked) ---- */
-        .nn-savebar { position: fixed; left: 0; right: 0; bottom: var(--me-player-h, 0px); z-index: 61; background: #141A2E; border-top: 1px solid var(--lt-rule-strong);
+        /* ---- Save bar (fixed to the bottom, above the site player, assets/js/nn-player.js) ---- */
+        .nn-savebar { position: fixed; left: 0; right: 0; bottom: calc(var(--nn-player-h, 0px) + var(--nn-tabbar-h, 0px)); z-index: 901; background: #141A2E; border-top: 1px solid var(--lt-rule-strong);
             box-shadow: 0 -6px 24px rgba(0,0,0,0.35); padding: 0.65rem var(--sp-6); display: flex; gap: 0.8rem; align-items: center; justify-content: center; flex-wrap: wrap; font-family: var(--font-ui); font-size: 0.9rem; }
-        .me-player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: rgba(13, 17, 31, 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-            border-top: 1px solid var(--lt-rule-strong); box-shadow: 0 -8px 28px rgba(0,0,0,0.45); }
-        .me-player::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--show-color, var(--nn-purple)); }
-        .me-player-inner { max-width: var(--container-max, 1200px); margin: 0 auto; padding: 10px var(--sp-6); display: grid; grid-template-columns: 48px minmax(0, 1.2fr) auto minmax(0, 1.4fr) auto; gap: 14px; align-items: center; }
-        .me-player img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; display: block; }
-        .me-player .who { min-width: 0; font-family: var(--font-ui); }
-        .me-player .who b { display: block; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--lt-cyan)); }
-        .me-player .who a, .me-player .who span.t { display: block; font-size: 0.9rem; font-weight: 600; color: var(--nn-white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .me-player .ctl { display: flex; gap: 6px; align-items: center; }
-        .me-player .ctl .me-icon-btn { width: 34px; height: 34px; font-size: 0.74rem; font-family: var(--font-ui); font-weight: 700; }
-        .me-player .big { width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #0B0F1A; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-        .me-player .big .ic { width: 0; height: 0; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
-        .me-player .big.is-playing .ic { width: 12px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; margin-left: 0; }
-        .me-player .bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font-family: var(--font-ui); font-size: 0.74rem; color: var(--lt-muted); font-variant-numeric: tabular-nums; }
-        .me-player input[type=range] { width: 100%; accent-color: var(--lt-cyan); }
-        .me-player .side { display: flex; gap: 6px; align-items: center; font-family: var(--font-ui); font-size: 0.76rem; color: var(--lt-muted); }
-        .me-player .side .me-icon-btn { width: auto; padding: 0 9px; font-size: 0.76rem; }
 
         @media (max-width: 1100px) {
             .me-member-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1185,10 +1232,6 @@ body.lt-player-open { overflow: hidden; }
             .me-preview { position: static; }
             .me-timeline { max-height: none; }
             .me-catchup { grid-template-columns: minmax(0, 1fr); }
-            .me-player-inner { grid-template-columns: 44px minmax(0, 1fr) auto; }
-            .me-player .bar { grid-column: 1 / -1; grid-row: 2; }
-            .me-player .side { display: none; }
-            .me-player img { width: 44px; height: 44px; }
         }
         @media (max-width: 640px) {
             .me-member-grid { grid-template-columns: minmax(0, 1fr); }
@@ -1205,8 +1248,6 @@ body.lt-player-open { overflow: hidden; }
             .me-order .me-handle { display: none; }
             .me-stats dd { font-size: 1.5rem; }
             .me-topics-empty { grid-template-columns: minmax(0, 1fr); }
-            .me-player-inner { padding: 8px var(--sp-4); gap: 10px; }
-            .me-player .ctl .me-skip { display: none; }
             .nn-savebar { padding: 0.5rem var(--sp-4); flex-wrap: nowrap; gap: 0.5rem; }
             .nn-savebar .me-long { display: none; }
         }
@@ -1978,6 +2019,7 @@ body.lt-player-open { overflow: hidden; }
                 </div>
                 <div class="me-mast-actions">
                     <button type="button" class="lt-btn me-btn-grad" id="nn-play-all" hidden onclick="NN.playLineup()"><span aria-hidden="true">▶</span> Play today's lineup <span class="me-len" id="nn-play-all-len"></span></button>
+                    <button type="button" class="lt-btn" id="nn-watch-all" hidden onclick="NN.watchLineup()"><span aria-hidden="true">▶</span> Watch my lineup <span class="me-len" id="nn-watch-all-n"></span></button>
                     <a class="lt-btn" href="#customize">Customize</a>
                 </div>
             </div>
@@ -2024,7 +2066,11 @@ body.lt-player-open { overflow: hidden; }
                             <div>
                                 <p class="lt-sublabel">Listen in your podcast app</p>
                                 <p class="me-feedurl" id="nn-feed-url"></p>
-                                <button type="button" class="lt-btn" id="nn-copy-feed" onclick="NN.copyFeed()">Copy feed URL</button><p class="me-apps" id="nn-addapp" aria-label="Add to a podcast app">
+                                <div class="me-ed-actions">
+                                <button type="button" class="lt-btn" id="nn-copy-feed" onclick="NN.copyFeed()">Copy feed URL</button><a class="lt-btn me-btn-grad" id="nn-add-page" href="add.html">Add to my podcast app</a>
+                                </div>
+                                <p class="me-fine">One tap for the apps on this device; on a computer it shows a code to scan with your phone.</p>
+                                <p class="me-apps" id="nn-addapp" aria-label="Add to a podcast app">
                                     <span class="me-muted">Add to</span>
                                     <a id="nn-add-apple" href="#" rel="nofollow">Apple Podcasts</a>
                                     <a id="nn-add-overcast" href="#" rel="nofollow">Overcast</a>
@@ -2097,6 +2143,12 @@ body.lt-player-open { overflow: hidden; }
         <section class="lt-block" id="nn-topics-block" aria-labelledby="nn-topics-h">
             <div class="lt-block-head"><h2 id="nn-topics-h">On your topics and places</h2><a href="#nn-places">Edit them →</a></div>
             <div id="nn-topic-results"></div>
+        </section>
+
+        <!-- Watch --><section class="lt-block" id="nn-watch-block" hidden aria-labelledby="nn-watch-h">
+            <div class="lt-block-head"><h2 id="nn-watch-h">Watch</h2><span class="me-fine" style="margin:0;">Videos and Shorts from your shows · <a href="watch.html">Everything on video</a></span>
+                <button type="button" class="lt-btn me-btn-grad" onclick="NN.watchLineup()"><span aria-hidden="true">▶</span> Watch my lineup</button></div>
+            <div class="me-watch-rail" id="nn-watch"></div>
         </section>
 
         <!-- Catch up -->
@@ -2329,32 +2381,7 @@ body.lt-player-open { overflow: hidden; }
     <span>Unsaved changes<span class="me-long">. Saved, they reach tomorrow morning's edition</span>.</span>
     <button type="button" class="lt-btn me-btn-grad" onclick="NN.save()">Save</button>
     <button type="button" class="lt-btn" onclick="NN.load()">Discard</button>
-</div>
-
-<div class="me-player" id="nn-player" hidden role="region" aria-label="Now playing">
-    <div class="me-player-inner">
-        <img id="nn-pl-cover" src="" alt="" width="48" height="48">
-        <div class="who"><b id="nn-pl-show"></b><a id="nn-pl-title" href="#"></a></div>
-        <div class="ctl">
-            <button type="button" class="me-icon-btn me-skip" onclick="NN.player.seekBy(-15)" aria-label="Back 15 seconds">−15</button>
-            <button type="button" class="big" id="nn-pl-toggle" onclick="NN.player.toggle()" aria-label="Play"><span class="ic"></span></button>
-            <button type="button" class="me-icon-btn me-skip" onclick="NN.player.seekBy(30)" aria-label="Forward 30 seconds">+30</button>
-            <button type="button" class="me-icon-btn" id="nn-pl-next" onclick="NN.player.next()" aria-label="Next episode">⏭</button>
-        </div>
-        <div class="bar">
-            <span id="nn-pl-cur">0:00</span>
-            <input type="range" id="nn-pl-seek" min="0" max="1000" value="0" step="1" aria-label="Seek">
-            <span id="nn-pl-dur">0:00</span>
-        </div>
-        <div class="side">
-            <span id="nn-pl-queue"></span>
-            <button type="button" class="me-icon-btn" id="nn-pl-rate" onclick="NN.player.rate()" aria-label="Playback speed">1×</button>
-            <button type="button" class="me-icon-btn" onclick="NN.player.close()" aria-label="Close the player">✕</button>
-        </div>
-    </div>
-</div>
-
-<script>
+</div><script>
 var NN = (function () {
   var API = 'https://api.nerranetwork.com';
   var FRONT_URL = 'api/personal_front.json';
@@ -2473,7 +2500,61 @@ var NN = (function () {
   function meta(s) {
     return '<div class="lt-meta"><span class="lt-when">' + whenHtml(s) + '</span>'
       + (s.post_url ? '<span class="lt-dot" aria-hidden="true">•</span><a href="' + esc(storyHref(s)) + '">Read</a>' : '')
-      + playBtn(s, false) + '</div>';
+      + watchLink(s) + playBtn(s, false) + '</div>';
+  }
+  function videoOf(s) {
+    var v = s.videos || {};
+    if (safeUrl(v.long)) { return { url: v.long, kind: 'long' }; }
+    if (safeUrl(v.short)) { return { url: v.short, kind: 'short' }; }
+    return null;
+  }
+  function watchAttrs(s, v) {
+    return ' href="' + esc(v.url) + '" target="_blank" rel="noopener" data-nn-watch="' + esc(v.url) + '" data-kind="' + v.kind
+      + '" data-title="' + esc(s.hook) + '" data-show="' + esc(showName(s.slug)) + '" data-post="' + esc(storyHref(s)) + '"';
+  }
+  function watchLink(s) {
+    var v = videoOf(s);
+    return v ? '<span class="lt-dot" aria-hidden="true">•</span><a class="me-watch-link"' + watchAttrs(s, v) + '>Watch</a>' : '';
+  }
+  // Watch my lineup (Oct 28 2026): the newest episode with a public video
+  // from each of the member's shows, in their order; the full episode when
+  // there is one, else its Short. Played by the site player's video dialog.
+  function lineupVideos() {
+    var out = [];
+    lineup().forEach(function (slug) {
+      var e = showEntry(slug);
+      if (!e || e.members_only) { return; }
+      var s = stories(slug).filter(function (x) { return videoOf(x); })[0];
+      if (!s) { return; }
+      var v = videoOf(s);
+      out.push({ url: v.url, kind: v.kind, title: s.hook, show: showName(slug), post: storyHref(s) });
+    });
+    return out;
+  }
+  function renderWatch(shows) {
+    var box = el('nn-watch');
+    if (!box) { return; }
+    var rows = [];
+    shows.forEach(function (slug) {
+      stories(slug).forEach(function (s) {
+        var v = s.videos || {};
+        if (safeUrl(v.short)) { rows.push({ s: s, v: { url: v.short, kind: 'short' } }); }
+        if (safeUrl(v.long)) { rows.push({ s: s, v: { url: v.long, kind: 'long' } }); }
+      });
+    });
+    rows.sort(function (a, b) { return String((b.s.stamp || {}).iso || b.s.date_raw).localeCompare(String((a.s.stamp || {}).iso || a.s.date_raw)); });
+    rows = rows.slice(0, 16);
+    el('nn-watch-block').hidden = !rows.length;
+    var n = lineupVideos().length;
+    el('nn-watch-all').hidden = !n;
+    el('nn-watch-all-n').textContent = n ? '· ' + n + (n === 1 ? ' video' : ' videos') : '';
+    box.innerHTML = rows.map(function (r) {
+      var img = safeUrl(r.s.image_url) || coverSrc(r.s.slug);
+      return '<a class="me-vid' + (r.v.kind === 'short' ? ' is-short' : '') + '" style="--show-color:' + esc(showColor(r.s.slug)) + ';"' + watchAttrs(r.s, r.v) + '>'
+        + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '')
+        + '<span class="me-vid-play">▶ ' + (r.v.kind === 'short' ? 'Short' : 'Video') + '</span>'
+        + '<span class="me-vid-txt"><b>' + esc(showName(r.s.slug)) + '</b><span>' + esc(r.s.hook) + '</span></span></a>';
+    }).join('');
   }
   function card(s) {
     return '<article class="lt-card" style="--show-color:' + esc(showColor(s.slug)) + ';">' + media(s, false)
@@ -2539,6 +2620,7 @@ var NN = (function () {
     }
     box.innerHTML = html;
     renderStats(todays, shows);
+    renderWatch(shows);
     renderCatchup(shows);
   }
   function renderStats(todays, shows) {
@@ -2955,103 +3037,30 @@ var NN = (function () {
   }
 
   // ------------------------------------------------------------- the player
-  var player = (function () {
-    var audio = new Audio(); audio.preload = 'none';
-    var queue = [], at = -1, rates = [1, 1.25, 1.5, 1.75, 2, 0.8], rateAt = 0, lastSave = 0;
-    var positions = store('nnMe.pos') || {};
-    function show(on) {
-      el('nn-player').hidden = !on;
-      var h = on ? el('nn-player').offsetHeight : 0;
-      document.documentElement.style.setProperty('--me-player-h', h + 'px');
-      el('nn-me').style.paddingBottom = on ? (h + 24) + 'px' : '';
-    }
-    function current() { return queue[at] || null; }
-    function paint() {
-      var it = current(); if (!it) { return; }
-      var bar = el('nn-player');
-      bar.style.setProperty('--show-color', it.color || '#6B47FF');
-      el('nn-pl-cover').src = it.cover || '';
-      el('nn-pl-show').textContent = it.show || '';
-      var t = el('nn-pl-title'); t.textContent = it.title || ''; t.href = it.post || '#';
-      el('nn-pl-queue').textContent = queue.length > 1 ? (at + 1) + ' of ' + queue.length : '';
-      el('nn-pl-next').disabled = at >= queue.length - 1;
-      var playing = !audio.paused;
-      var tg = el('nn-pl-toggle');
-      tg.classList.toggle('is-playing', playing); tg.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-      document.querySelectorAll('.me-play').forEach(function (b) {
-        var key = b.getAttribute('data-play') || ('ed:' + b.getAttribute('data-edition'));
-        var on = playing && it.key === key;
-        b.classList.toggle('is-playing', on);
-      });
-      if ('mediaSession' in navigator) {
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({ title: it.title, artist: it.show, album: 'My Nerra',
-            artwork: it.cover ? [{ src: new URL(it.cover, location.href).href, sizes: '400x400' }] : [] });
-        } catch (e) {}
-      }
-    }
-    function start(items, i) {
-      queue = items; at = -1; play(i || 0);
-    }
-    function play(i) {
-      if (i < 0 || i >= queue.length) { return; }
-      at = i;
-      var it = current();
-      audio.src = it.url;
-      audio.playbackRate = rates[rateAt];
-      var pos = positions[it.url];
-      var go = function () { if (pos && pos > 5) { try { audio.currentTime = pos; } catch (e) {} } };
-      audio.addEventListener('loadedmetadata', go, { once: true });
-      show(true);
-      audio.play().catch(function () {});
-      paint();
-    }
-    audio.addEventListener('play', paint);
-    audio.addEventListener('pause', paint);
-    audio.addEventListener('timeupdate', function () {
-      var it = current(); if (!it) { return; }
-      var d = audio.duration || 0;
-      el('nn-pl-cur').textContent = clock(audio.currentTime);
-      el('nn-pl-dur').textContent = d ? clock(d) : '';
-      if (d && !state.seeking) { el('nn-pl-seek').value = String(Math.round(audio.currentTime / d * 1000)); }
-      if (Date.now() - lastSave > 5000) {
-        lastSave = Date.now(); positions[it.url] = audio.currentTime;
-        var keys = Object.keys(positions); if (keys.length > 200) { delete positions[keys[0]]; }
-        store('nnMe.pos', positions);
-        if (d && audio.currentTime / d > 0.9) { markPlayed(it.url); }
-      }
+  // The site's one player (assets/js/nn-player.js) plays, reports the play
+  // to analytics (episode_play, or play_personal_sample for the sample) and
+  // keeps positions under the keys this page reads (nnMe.pos, nnMe.played).
+  function P() { return window.NNPlayer || null; }
+  var player = {
+    start: function (items, i) { var p = P(); if (p) { p.start(items, i); } },
+    isKey: function (key) { var p = P(); return !!(p && p.isKey(key)); },
+    toggle: function () { var p = P(); if (p) { p.toggle(); } },
+  };
+  function paintPlaying(st) {
+    document.querySelectorAll('.me-play').forEach(function (b) {
+      var key = b.getAttribute('data-play') || ('ed:' + b.getAttribute('data-edition'));
+      b.classList.toggle('is-playing', !!(st && st.playing && st.key === key));
     });
-    audio.addEventListener('ended', function () {
-      var it = current(); if (it) { markPlayed(it.url); delete positions[it.url]; store('nnMe.pos', positions); }
-      if (at < queue.length - 1) { play(at + 1); } else { paint(); }
-    });
-    var seek = el('nn-pl-seek');
-    seek.addEventListener('input', function () { state.seeking = true; });
-    seek.addEventListener('change', function () {
-      state.seeking = false;
-      if (audio.duration) { audio.currentTime = Number(seek.value) / 1000 * audio.duration; }
-    });
-    // The save bar sits on top of the player, so its offset follows the
-    // player's height, which changes when the layout does.
-    window.addEventListener('resize', function () { if (!el('nn-player').hidden) { show(true); } });
-    if ('mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.setActionHandler('nexttrack', function () { api.next(); });
-        navigator.mediaSession.setActionHandler('seekbackward', function () { api.seekBy(-15); });
-        navigator.mediaSession.setActionHandler('seekforward', function () { api.seekBy(30); });
-      } catch (e) {}
-    }
-    var api = {
-      start: start,
-      isKey: function (key) { var it = current(); return !!(it && it.key === key); },
-      toggle: function () { if (!current()) { return; } if (audio.paused) { audio.play().catch(function () {}); } else { audio.pause(); } },
-      seekBy: function (s) { if (audio.duration) { audio.currentTime = Math.max(0, Math.min(audio.duration - 1, audio.currentTime + s)); } },
-      next: function () { if (at < queue.length - 1) { play(at + 1); } },
-      rate: function () { rateAt = (rateAt + 1) % rates.length; audio.playbackRate = rates[rateAt]; el('nn-pl-rate').textContent = rates[rateAt] + '×'; },
-      close: function () { audio.pause(); show(false); queue = []; at = -1; paint(); },
-    };
-    return api;
-  })();
+  }
+  function hookPlayer() { var p = P(); if (p) { p.onChange(paintPlaying); } else { setTimeout(hookPlayer, 50); } }
+  hookPlayer();
+  function takeDraft() {
+    var d = store('nnMe.draft');
+    try { localStorage.removeItem('nnMe.draft'); } catch (e) {}
+    if (!d || !Array.isArray(d.shows) || Date.now() - (d.ts || 0) > 30 * 86400e3) { return { shows: [], first_name: '' }; }
+    return { shows: d.shows.filter(function (x) { return typeof x === 'string' && /^[a-z0-9_]+$/.test(x); }),
+             first_name: typeof d.first_name === 'string' ? d.first_name.slice(0, 40) : '' };
+  }
   function isPlayed(url) { var p = store('nnMe.played') || {}; return !!(url && p[url]); }
   function markPlayed(url) {
     var p = store('nnMe.played') || {};
@@ -3078,7 +3087,6 @@ var NN = (function () {
     var todays = (state.todays || []);
     var idx = todays.indexOf(s);
     if (idx !== -1) { player.start(todays.map(storyItem), idx); } else { player.start([storyItem(s)], 0); }
-    track('episode_play', { src: String(s.audio_url || '').split('?')[0], location: location.pathname });
   });
 
   // ------------------------------------------------------------- markets
@@ -3219,6 +3227,19 @@ var NN = (function () {
         renderLineup();
         wireInputs();
         markClean();
+        // Oct 28 2026 (later): shows picked on the front page or the join
+        // page before the account existed (localStorage nnMe.draft) become
+        // the lineup of an account that has none, saved once.
+        var draft = takeDraft();
+        if (draft.first_name && !el('nn-name').value) { el('nn-name').value = draft.first_name; greet(draft.first_name); }
+        draft = draft.shows;
+        if (!state.shows.length && draft.length) {
+          state.shows = draft.filter(function (x) { return state.all.indexOf(x) !== -1; }).slice(0, 12);
+          if (state.shows.length) {
+            renderLineup(); checkDirty();
+            setTimeout(function () { NN.save(function () { el('nn-save-status').textContent = 'Saved the shows you picked'; }); }, 0);
+          }
+        }
         loadFront(function () { renderLineup(); renderFront(); renderTopics(); renderTomorrow(); });
         loadMarkets();
         el('nn-feed-active').hidden = !feedUrl;
@@ -3231,6 +3252,8 @@ var NN = (function () {
           el('nn-add-apple').href = 'podcast://' + bare;
           el('nn-add-overcast').href = 'overcast://x-callback-url/add?url=' + encodeURIComponent(feedUrl);
           el('nn-add-pocketcasts').href = 'pktc://subscribe/' + bare;
+          var tok = /\/api\/feed\/([0-9a-f]{32})\/feed\.rss$/.exec(feedUrl);
+          if (tok) { el('nn-add-page').href = 'add.html#' + tok[1]; }
           el('nn-add-castro').href = 'castros://subscribe/' + bare;
         }
         renderBuild(state.today);
@@ -3381,6 +3404,21 @@ var NN = (function () {
       } catch (e) { done('Select the URL above to copy it'); }
     },
     showAllShows: function () { state.showAll = true; renderShowGrid(); },
+    watchLineup: function () {
+      var vids = lineupVideos();
+      var p = P();
+      if (!vids.length || !p || !p.watchList) { return; }
+      var name = el('nn-name').value.trim();
+      var hour = new Date().getHours();
+      var part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      var names = vids.map(function (v) { return v.show; });
+      var mira = { kind: 'mira', title: 'Your lineup', video: 'assets/mira/mira-studio.mp4',
+                   poster: 'assets/mira/mira-studio.jpg',
+                   greeting: part + (name ? ', ' + name : '') + '. Here is your lineup on video.',
+                   lines: [vids.length + (vids.length === 1 ? ' episode' : ' episodes') + ', in your order: ' + names.join(' · '),
+                           'Each one plays after the last. Mira is an AI host; this card is an illustration of her.'] };
+      p.watchList([mira].concat(vids), 0);
+    },
     playLineup: function () { if (state.todays && state.todays.length) { player.start(state.todays.map(storyItem), 0); } },
     playEdition: function (i) {
       var items = state.editions.map(function (e, j) {
@@ -3392,10 +3430,8 @@ var NN = (function () {
     playSample: function () {
       if (!safeUrl(SAMPLE_URL)) { return; }
       player.start([{ key: 'sample', url: safeUrl(SAMPLE_URL), title: 'A sample Personal edition', show: 'Nerra Personal', color: '#00D4FF',
-                      cover: 'assets/covers/nerra-daily.jpg', post: 'join.html#sample' }], 0);
-      track('play_personal_sample', { placement: 'account', location: location.pathname });
+                      cover: 'assets/covers/nerra-daily.jpg', post: 'join.html#sample', sample: 'account' }], 0);
     },
-    player: player,
     logout: function () {
       fetch(API + '/api/logout', { method: 'POST', credentials: 'include' })
         .catch(function () {})
@@ -3659,6 +3695,14 @@ NN.load();
                         <a class="nn-login-link" href="login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -3760,24 +3804,29 @@ NN.load();
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js" defer></script>
     <script src="assets/js/language-control.js" defer></script>
-    <script src="assets/js/footer-subscribe.js" defer></script>
+    <script src="assets/js/footer-subscribe.js" defer></script><script src="assets/js/nn-player.js" defer></script>
+    <script src="assets/js/nn-app.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = 'account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">
