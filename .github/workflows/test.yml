@@ -27,6 +27,16 @@ on:
       - 'sitemap.xml'
   pull_request:
     branches: [main]
+  # Weekly full-suite backstop for the paths filter: generated-only pushes
+  # skip this workflow, so a Monday cron still exercises the whole suite.
+  # schedule: must stay at this top level (sibling of push/pull_request),
+  # unfiltered by paths-ignore — nesting it under push: would inherit the
+  # skip and the backstop would never fire.
+  # 13:17 UTC Mondays = 06:17 PT in winter (PST), 07:17 PT during daylight
+  # saving (PDT). Matches restock-topic-queues.yml's 37 13 * * * UTC
+  # precedent; do not convert this back to 06 UTC.
+  schedule:
+    - cron: '17 13 * * 1'
 
 # Cancel superseded runs on the same PR; on main every push gets its own
 # group (run_id) so nothing is cancelled there.
@@ -124,9 +134,71 @@ jobs:
           ./actionlint -color
 
       - name: Run tests
+        if: github.event_name != 'schedule'
         # Oct 9 2026: in parallel across the runner's cores (operator-directed).
         # Serial, 11,700 tests took 12-20 minutes on the new image; the first
         # xdist trial locally ran 5,777 of them in six minutes on four
         # workers, and the clean full run passed. -x still stops the run on
         # the first failure.
-        run: python -m pytest tests/ -x -q --tb=short -n auto
+        # Curriculum / queue-runway invariants live in curriculum.yml (always
+        # runs, including on generated-only pushes). Deselect exact node ids
+        # here so a curriculum break is red on the curriculum check, never
+        # silently absent from this job. Never use -k for this — a green
+        # check that means less than it looks like is the failure we are
+        # fixing. Single-quote every --deselect value: parametrized node
+        # ids carry [...] which the shell would otherwise treat as a glob.
+        run: |
+          python -m pytest tests/ -x -q --tb=short -n auto \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_board_week_parses_the_committed_ep1' \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_week_block_pairs_first_and_latest_readings' \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_hook_wires_the_friday_block' \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_prompts_carry_price_not_odds_week_board_and_critic' \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_validator_board_stops_at_week_board' \
+            --deselect='tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_curriculum_restocked' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_queue_has_runway[unintended_consequences-7-4.0]' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_queue_has_runway[first_principles-7-3.0]' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_queue_ids_unique' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_first_principles_alternation_stocked' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_first_principles_unproduced_alternates' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_no_duplicate_topics_reintroduced' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_uc_biofuels_category_accurate' \
+            --deselect='tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_uc_unproduced_interleaved_not_clustered' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_both_narrative_shows_registered' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_age_of_ai_never_registered' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_files_exist[first_principles]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_files_exist[unintended_consequences]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_trigger_sits_above_alarm_floor[first_principles]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_trigger_sits_above_alarm_floor[unintended_consequences]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_categories_match_live_queue[first_principles]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_categories_match_live_queue[unintended_consequences]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_prompt_placeholders[first_principles]' \
+            --deselect='tests/test_queue_restock.py::TestConfigRegistry::test_prompt_placeholders[unintended_consequences]' \
+            --deselect='tests/test_queue_restock.py::TestRunwayMath::test_no_restock_above_trigger' \
+            --deselect='tests/test_queue_restock.py::TestRunwayMath::test_restock_fills_to_target' \
+            --deselect='tests/test_queue_restock.py::TestRunwayMath::test_backstop_cap' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_accepts_valid_novel_topic' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_rejects_duplicate_and_near_duplicate' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_rejects_bad_category_and_thin_brief' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_caps_at_needed' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_never_mutates_existing_queue' \
+            --deselect='tests/test_queue_restock.py::TestValidation::test_parse_tolerates_fences_and_prose' \
+            --deselect='tests/test_queue_restock.py::TestWorkflowWiring::test_workflow_exists_and_gated' \
+            --deselect='tests/test_queue_restock.py::TestWorkflowWiring::test_runway_alarm_comment_updated' \
+            --deselect='tests/test_queue_restock.py::TestResequenceUnproduced::test_fpd_shape_alternates_within_imbalance_bound' \
+            --deselect='tests/test_queue_restock.py::TestResequenceUnproduced::test_uc_shape_no_adjacent_repeat_before_overflow' \
+            --deselect='tests/test_queue_restock.py::TestResequenceUnproduced::test_produced_entries_and_positions_untouched' \
+            --deselect='tests/test_queue_restock.py::TestResequenceUnproduced::test_restock_flow_calls_resequence' \
+            --deselect='tests/test_queue_restock.py::TestModelFallback::test_primary_success_never_touches_the_fallback' \
+            --deselect='tests/test_queue_restock.py::TestModelFallback::test_transport_failure_falls_back_once' \
+            --deselect='tests/test_queue_restock.py::TestModelFallback::test_unparsable_output_falls_back_too' \
+            --deselect='tests/test_queue_restock.py::TestModelFallback::test_both_failing_raises_the_last_error' \
+            --deselect='tests/test_queue_restock.py::TestModelFallback::test_env_pin_on_the_fallback_model_calls_it_once' \
+            --deselect='tests/test_queue_restock.py::TestResequenceSkipsDeferred::test_deferred_entries_stay_in_place' \
+            --deselect='tests/test_queue_restock.py::TestResequenceSkipsDeferred::test_pickable_sequence_is_interleaved_around_a_parked_entry'
+
+      # Weekly full-suite backstop: no paths filter applies to schedule, and
+      # NO --deselect — the whole suite including curriculum invariants runs.
+      - name: Run full suite (weekly backstop)
+        if: github.event_name == 'schedule'
+        run: python -m pytest tests/ -q --tb=short -n auto
+
