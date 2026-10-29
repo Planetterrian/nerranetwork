@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from engine.daily_edition import EDITIONS, discover_segments  # noqa: E402
+from engine.daily_edition import EDITIONS, PIECE_SUFFIX, discover_segments  # noqa: E402
 from engine.personal_edition import (  # noqa: E402
     MIRA_PERSONAL_DISCLOSURE,
     PersonalSpec,
@@ -111,7 +111,7 @@ def main() -> int:
             if i > 0:
                 pieces.append(bpf._mira_piece(
                     links["handoffs"][i - 1], f"handoff_{i}", workdir, lead_in=sting))
-            taste = workdir / f"taste_{seg.slug}.mp3"
+            taste = workdir / f"taste_{seg.slug}{PIECE_SUFFIX}"
             bpf._run(taste_cmd(cache[seg.slug], taste, TASTE_SECONDS), f"taste {seg.slug}")
             pieces.append(taste)
         signoff = bpf._mira_piece(
@@ -121,9 +121,10 @@ def main() -> int:
         pieces.append(signoff)
 
         from engine.audio import concatenate_audio
+        from engine.daily_edition import EDITION_ENCODE_ARGS
 
         final = workdir / f"{SAMPLE_SLUG}.mp3"
-        concatenate_audio(pieces, final)
+        concatenate_audio(pieces, final, encode_args=EDITION_ENCODE_ARGS)
         total = bpf._duration(final)
         logger.info("sample: %0.1f min, %d pieces", total / 60, len(pieces))
         if args.keep:

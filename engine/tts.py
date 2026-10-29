@@ -876,6 +876,15 @@ def grok_speak_chunk(
                 f.write(data)
 
 
+def _tts_output_codec_args(filename) -> List[str]:
+    """The encode of a finished Grok synthesis: lossless PCM when the caller
+    asks for a ``.wav`` (Mira's edition links, which are processed and
+    encoded once more), else MP3 at ``-q:a 0``."""
+    if str(filename).lower().endswith(".wav"):
+        return ["-c:a", "pcm_s16le"]
+    return ["-c:a", "libmp3lame", "-q:a", "0"]
+
+
 def _crossfade_wavs_to_mp3(
     wav_files: List[Path],
     filename: str | Path,
@@ -925,7 +934,7 @@ def _crossfade_wavs_to_mp3(
         [
             "ffmpeg", "-y",
             "-i", str(merged_wav),
-            "-c:a", "libmp3lame", "-q:a", "0",
+            *_tts_output_codec_args(filename),
             str(filename),
         ],
         check=True, capture_output=True, timeout=300,
@@ -1027,7 +1036,7 @@ def _speak_with_grok(
             subprocess.run(
                 [
                     "ffmpeg", "-y", "-i", str(wav_chunk),
-                    "-c:a", "libmp3lame", "-q:a", "0",
+                    *_tts_output_codec_args(filename),
                     str(filename),
                 ],
                 check=True, capture_output=True, timeout=300,

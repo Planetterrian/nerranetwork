@@ -5323,8 +5323,14 @@ def run(args: argparse.Namespace) -> None:
                         _lens = [b.insert for b in _breaks if b.insert > 0]
                         if _cuts:
                             _breaks_wav = raw_mp3.with_name(raw_mp3.stem + "_breaks.wav")
-                            _sp.run(_sb.insert_silences_cmd(raw_mp3, _breaks_wav, _cuts, _lens),
+                            # Each pause is filled with the voice's own room
+                            # tone, never digital zero (Oct 29 2026).
+                            _tones = _sb.room_tone_spans(raw_mp3, _breaks)
+                            _sp.run(_sb.insert_silences_cmd(raw_mp3, _breaks_wav, _cuts, _lens,
+                                                            room_tone=_tones),
                                     check=True, timeout=900)
+                            metrics.record("story_break_room_tone",
+                                           sum(1 for t in _tones if t is not None))
                             _sb.rewrite_transcript_files(digests_dir, _ep_prefix, _cuts, _lens)
                             voice_for_mix = _breaks_wav
                         if _breaks and getattr(config.audio, "story_break_cue", False):
