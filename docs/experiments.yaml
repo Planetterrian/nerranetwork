@@ -5816,3 +5816,32 @@ experiments:
       builder (nnMe.draft, saved by My Nerra), add.html (token in the
       fragment). Guards: tests/test_web_app_2026_10_28.py. Worker:
       welcome email links add.html (wrangler deploy in workers/gallery).
+  - id: audio-clean-joins-2026-10-29
+    title: "Nerra Daily and Personal: sample-exact joins, lossless pieces, Mira through the voice chain, room tone in story pauses"
+    area: audio
+    shipped: 2026-10-29
+    readout: 2026-11-12
+    status: reading
+    baseline: >
+      Operator heard hiss and clicks on Nerra Daily Ep070 (Mira's intro and
+      SpaceX). Measured: 86 click events in the edition (0.59/min), 11 in
+      Mira's 35 s intro; every join an MP3 stream copy carrying ~39 ms of
+      digital silence and a hard step; Mira's pause hiss -67.3 dB (4-16
+      kHz) against ~-71 on a show; a show's spliced story pause dropped
+      from a ~-65 dB floor to digital zero and back; three MP3
+      generations per show segment, four for Mira.
+    target: >
+      The next edition, measured with the same click detector, has no click
+      at a join and fewer than one click a minute overall; Mira's pause
+      hiss within 1 dB of the shows'; no digital-zero run inside a show's
+      story pause (story_break_room_tone equals the breaks spliced); the
+      operator's listen hears no hiss or click at the handoffs.
+    notes: >
+      engine.audio.concatenate_audio (decoded join, 6 ms edge fades, one
+      encode), engine.daily_edition SEGMENT_ENCODE_ARGS = FLAC /
+      EDITION_ENCODE_ARGS q0, mira_piece_cmd + engine.audio.voice_chain_filters,
+      Mira TTS as WAV, engine.story_breaks.room_tone_spans. Probe: Actions
+      "Probe audio chain" (scripts/probe_audio_chain.py) synthesizes fresh
+      audio and attaches every stage old and new, plus a stronger-denoise
+      variant that is NOT shipped. Guards: tests/test_audio_quality_2026_10_29.py.
+      AUDIO — listen to the probe and the first edition.

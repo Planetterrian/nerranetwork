@@ -364,8 +364,8 @@ class TestSpliceCommands:
             assert arg in cmd
 
     def test_uniform_encode_across_pieces(self):
-        # Stream-copy concat joins the pieces byte-level: every piece MUST
-        # share sample rate / channels / codec settings.
+        # Every piece shares one lossless format, so the join decodes
+        # identical streams and encodes once (Oct 29 2026).
         seg = segment_trim_cmd(Path("a"), Path("b"), 100.0)
         mira = mira_piece_cmd(Path("c"), Path("d"))
         for arg in SEGMENT_ENCODE_ARGS:

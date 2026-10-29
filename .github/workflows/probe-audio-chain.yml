@@ -1,0 +1,45 @@
+# Read-only probe of the audio chain on fresh Grok audio (Oct 29 2026) — see
+# scripts/probe_audio_chain.py. Synthesises one short passage on the show
+# voice and on Mira (~900 characters), runs every stage old and new (Mira's
+# piece, the voice chain, a story pause, the joins), prints clicks, pause
+# floor and hiss per file, and attaches the audio so the operator can listen.
+# Publishes nothing. Runs on a push that changes the probe (so a session
+# branch can run it before merge) and on demand.
+name: Probe audio chain
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths:
+      - scripts/probe_audio_chain.py
+      - .github/workflows/probe-audio-chain.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          cache: pip
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          python -m pip install -q -r requirements.txt
+      - name: Probe the audio chain
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python3 scripts/probe_audio_chain.py
+      - name: Attach the audio
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: audio-chain-probe
+          path: probe_out/
+          retention-days: 7

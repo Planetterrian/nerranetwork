@@ -58,6 +58,8 @@ from engine.daily_edition import (  # noqa: E402
     feed_description,
     find_promo_cut,
     load_transcript,
+    EDITION_ENCODE_ARGS,
+    PIECE_SUFFIX,
     mira_piece_cmd,
     parse_find_text,
     parse_links_json,
@@ -429,7 +431,7 @@ def build_edition(
         dropped: List[str] = []
         for seg in segments:
             raw = workdir / f"raw_{seg.slug}.mp3"
-            trimmed = workdir / f"seg_{seg.slug}.mp3"
+            trimmed = workdir / f"seg_{seg.slug}{PIECE_SUFFIX}"
             try:
                 _download(seg.audio_url, raw)
                 cut_final = None
@@ -473,8 +475,10 @@ def build_edition(
 
         # --- Mira's links: TTS + normalize to the segment format.
         def mira(name: str, text: str) -> Path:
-            raw = workdir / f"mira_{name}_raw.mp3"
-            out = workdir / f"mira_{name}.mp3"
+            # WAV straight from Grok: her voice is encoded lossy once, in
+            # the finished edition.
+            raw = workdir / f"mira_{name}_raw.wav"
+            out = workdir / f"mira_{name}{PIECE_SUFFIX}"
             try:
                 _tts_mira(spec, text, raw, tracker)
             except RuntimeError:
@@ -485,7 +489,7 @@ def build_edition(
                 # digital silence makes loudnorm/lame degenerate).
                 _run(["ffmpeg", "-y", "-f", "lavfi",
                       "-i", "anoisesrc=r=44100:c=pink:a=0.005", "-t", "2",
-                      "-ac", "2", "-c:a", "libmp3lame", "-q:a", "2", str(raw)],
+                      "-ac", "2", "-c:a", "pcm_s16le", str(raw)],
                      f"placeholder noise {name}")
             _run(mira_piece_cmd(raw, out), f"process mira {name}")
             raw.unlink(missing_ok=True)
@@ -539,7 +543,7 @@ def build_edition(
 
         mp3_name = f"{spec.episode_prefix}_Ep{episode_num:03d}_{target_date:%Y%m%d}.mp3"
         final_mp3 = workdir / mp3_name
-        concatenate_audio(splice, final_mp3)
+        concatenate_audio(splice, final_mp3, encode_args=EDITION_ENCODE_ARGS)
         duration = get_audio_duration(final_mp3) or 0.0
         title = daily_title(episode_num, target_date, segments,
                             links.get("title", ""))

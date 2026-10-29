@@ -67,11 +67,20 @@ MIRA_AI_DISCLOSURE = (
     "selection and analysis across the network are our own."
 )
 
-#: Uniform re-encode for every spliced piece (segments + Mira links) so the
-#: final stream-copy concat joins identical streams. ``-q:a 2`` (~190 kbps
-#: VBR) is one small step below the shows' archival ``-q:a 0`` master —
-#: inaudible for speech, and it keeps a ~2 h daily file near ~150 MB.
-SEGMENT_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-q:a", "2"]
+#: Every spliced piece (segments, Mira's links, Personal's stings and
+#: trims) is written LOSSLESS at one format, and the join encodes once.
+#: Oct 29 2026: the pieces were ``-q:a 2`` MP3 joined by stream copy, so a
+#: show reached the listener through three MP3 generations (master, piece,
+#: none at the join but every join a frame-level splice with ~39 ms of
+#: encoder padding and a hard step: a click per handoff), and Mira through
+#: four. FLAC is the piece format; :data:`PIECE_SUFFIX` names its files.
+SEGMENT_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "flac"]
+PIECE_SUFFIX = ".flac"
+
+#: The one lossy encode of a finished edition: the shows' own master
+#: setting, so a segment reaches the listener one generation from its
+#: show's published file.
+EDITION_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-q:a", "0"]
 
 PROMO_FADE_SECONDS = 0.5
 PROMO_CUT_PAD_SECONDS = 0.15
@@ -651,7 +660,10 @@ _PRIMARY_PROMO_PATTERNS = [
     # the frame's own second clause is an anchor too.
     re.compile(r"\bif you (?:liked|like|enjoyed|enjoy) today\s*s? episode\s+our sisters?(?:\s+s)?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
-    re.compile(r"\bthis show comes to you from (?:the|a|an) \w+\s*network\b"),
+    # Oct 29 2026: Whisper dropped the article — "This show comes to you
+    # from Narin Network" (AI Chips Ep038) — so the article is optional, as
+    # in frame 1.
+    re.compile(r"\bthis show comes to you from (?:(?:the|a|an)\s+)?\w+\s*network\b"),
 ]
 #: The YouTube CTA that immediately precedes the plug on most shows. It is
 #: SCRIPTED text (``engine.intros._maybe_append_youtube_cta`` appends it to
@@ -672,7 +684,7 @@ _YOUTUBE_LEAD_PATTERN = re.compile(
 #: listen" (none observed) from ever cutting body content.
 YOUTUBE_LEAD_MAX_TAIL_SECONDS = 60.0
 #: Weaker evidence, used only when no frame matched.
-_NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow|nare)\s*network\b")
+_NETWORK_MENTION_PATTERN = re.compile(r"\b(?:nerra|nera|narra|narrow|nare|narin)\s*network\b")
 _DISCLOSURE_PATTERN = re.compile(r"\bthis episode used ai voice synthesis\b")
 
 _TOKEN_CLEAN_RE = re.compile(r"[^a-z0-9]+")
@@ -877,11 +889,18 @@ def segment_trim_cmd(
 
 
 def mira_piece_cmd(in_path: Path, out_path: Path) -> List[str]:
-    """Process one raw Mira TTS piece to match the segments: loudness to
-    the network's -16 LUFS spec, breathing room either side, 44.1 kHz
-    stereo at the shared VBR setting."""
+    """Process one raw Mira TTS piece to match the segments: the network's
+    voice cleanup chain (the shows' own, ``engine.audio.voice_chain_filters``
+    — declick, denoise, compression, limiter), loudness to the -16 LUFS
+    spec, breathing room either side, 44.1 kHz stereo lossless.
+
+    Oct 29 2026: her pieces had loudness only, and her raw Grok audio
+    carried onset clicks and a hissier pause floor than any show's."""
+    from engine.audio import voice_chain_filters
+
     filters = (
-        "loudnorm=I=-16:TP=-1.5:LRA=11,"
+        voice_chain_filters()
+        + ",loudnorm=I=-16:TP=-1.5:LRA=11,"
         "adelay=350:all=1,apad=pad_dur=0.45"
     )
     return (

@@ -4,7 +4,7 @@ Provides:
   - get_audio_duration(): cached ffprobe duration lookup
   - format_duration(): seconds -> HH:MM:SS or MM:SS string
   - normalize_voice(): ffmpeg highpass/lowpass/loudnorm/compressor chain with fallback
-  - concatenate_audio(): ffmpeg concat demuxer
+  - concatenate_audio(): sample-exact decoded join with edge fades, one encode
   - generate_transition_sting(): create a short audio sting with ffmpeg
   - concatenate_with_stings(): interleave section audio with sting transitions
   - mix_with_music(): full music mixing pipeline (intro/overlap/fadeout/silence/outro)
@@ -109,6 +109,37 @@ def _voice_norm_codec_args(output_path: str) -> list:
     return ["-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast"]
 
 
+def voice_chain_filters(*, denoise: bool = True) -> str:
+    """The network's voice cleanup chain as one ffmpeg ``-af`` string.
+
+    One owner for every voice the network publishes: the show voices go
+    through it in :func:`normalize_voice` (see :func:`_voice_norm_full_cmd`
+    for the history of each stage) and, since Oct 29 2026, Nerra Daily's
+    and Nerra Personal's Mira links do too. Before that her pieces were
+    loudness-normalized only, and her raw Grok audio carried 11 clicks in
+    a 35-second intro and a pause floor ~3 dB hissier than a show's; the
+    chain measured 11 -> 1 clicks and -67.3 -> -71.5 dB of pause hiss on
+    the same intro.
+    """
+    return (
+        # ``afade=t=in:st=0:d=0.05`` (May 22 2026) ramps the very
+        # first 50 ms of voice from silence to full level so the
+        # WAV stream-copy concat with the prepended ``voice_silence``
+        # block transitions smoothly. Without it, the first
+        # non-zero sample of TTS audio jumped from absolute zero
+        # to whatever the encoder produced — audible as a click /
+        # tic right at the moment voice enters the mix. The afade
+        # also covers any matching click at the apad-added trailing
+        # silence boundary at the very end of the voice file.
+        "afade=t=in:st=0:d=0.05:curve=tri,"
+        "highpass=f=80,lowpass=f=15000,"
+        + ("adeclick,afftdn=nr=9:nf=-42:tn=1," if denoise else "")
+        + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
+        "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
+        "alimiter=level_in=1:level_out=0.95:limit=0.95"
+    )
+
+
 def _voice_norm_full_cmd(voice_in: str, voice_out: str,
                          *, denoise: bool = True) -> list:
     """Build the voice normalization ffmpeg command.
@@ -167,23 +198,7 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str,
       sounded like clipping on enthusiastic delivery. +1 dB keeps
       perceived loudness without slamming the limiter.
     """
-    filters = (
-        # ``afade=t=in:st=0:d=0.05`` (May 22 2026) ramps the very
-        # first 50 ms of voice from silence to full level so the
-        # WAV stream-copy concat with the prepended ``voice_silence``
-        # block transitions smoothly. Without it, the first
-        # non-zero sample of TTS audio jumped from absolute zero
-        # to whatever the encoder produced — audible as a click /
-        # tic right at the moment voice enters the mix. The afade
-        # also covers any matching click at the apad-added trailing
-        # silence boundary at the very end of the voice file.
-        "afade=t=in:st=0:d=0.05:curve=tri,"
-        "highpass=f=80,lowpass=f=15000,"
-        + ("adeclick,afftdn=nr=9:nf=-42:tn=1," if denoise else "")
-        + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
-        "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
-        "alimiter=level_in=1:level_out=0.95:limit=0.95"
-    )
+    filters = voice_chain_filters(denoise=denoise)
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af", filters,
@@ -243,32 +258,96 @@ def normalize_voice(input_path: Path, output_path: Path,
 # Audio concatenation
 # ---------------------------------------------------------------------------
 
-def concatenate_audio(file_list: List[Path], output_path: Path) -> Path:
-    """Concatenate audio files using the ffmpeg concat demuxer.
+#: Length of the fade applied to both edges of every piece a join splices.
+#: A piece that ends mid-waveform next to one that starts at a different
+#: sample value is a step, and a step is a click; 6 ms is below anything a
+#: listener hears as a fade and long enough to remove the step.
+JOIN_EDGE_FADE_SECONDS = 0.006
 
-    Creates a temporary concat list file, runs ``ffmpeg -f concat``,
-    and cleans up the list.  Returns *output_path*.
-    """
-    concat_list = output_path.parent / "concat_list.txt"
+#: The final encode of a joined MP3 when the caller names none: the shows'
+#: own archival master setting.
+JOIN_MP3_ENCODE_ARGS = ["-c:a", "libmp3lame", "-q:a", "0"]
+
+
+def _probe_audio_format(path: Path) -> tuple:
+    """``(sample_rate, channels)`` of *path*'s first audio stream, or
+    ``(None, None)`` when ffprobe cannot read it."""
     try:
-        with open(concat_list, "w", encoding="utf-8") as f:
-            for fp in file_list:
-                f.write(f"file '{_ffmpeg_escape(fp)}'\n")
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "a:0",
+             "-show_entries", "stream=sample_rate,channels",
+             "-of", "default=noprint_wrappers=1", str(path)],
+            capture_output=True, text=True, check=True, timeout=60,
+        ).stdout
+    except Exception:
+        return None, None
+    fields = dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
+    try:
+        return int(fields.get("sample_rate") or 0) or None, int(fields.get("channels") or 0) or None
+    except ValueError:
+        return None, None
 
-        cmd = [
-            "ffmpeg", "-y", "-threads", "0",
-            "-f", "concat", "-safe", "0", "-i", str(concat_list),
-            "-c", "copy",
-            str(output_path),
-        ]
-        subprocess.run(cmd, check=True, capture_output=True)
-    finally:
-        try:
-            if concat_list.exists():
-                concat_list.unlink()
-        except Exception:
-            pass
 
+def _join_encode_args(output_path: Path) -> list:
+    suffix = output_path.suffix.lower()
+    if suffix == ".wav":
+        return ["-c:a", "pcm_s16le"]
+    if suffix == ".flac":
+        return ["-c:a", "flac"]
+    return list(JOIN_MP3_ENCODE_ARGS)
+
+
+def concatenate_audio(file_list: List[Path], output_path: Path, *,
+                      encode_args: Optional[Sequence[str]] = None,
+                      edge_fade: float = JOIN_EDGE_FADE_SECONDS) -> Path:
+    """Join *file_list* end to end into *output_path*, sample-exact.
+
+    Every input is DECODED, its two edges get a *edge_fade* fade, and the
+    result is encoded once (*encode_args*, else by the output's suffix:
+    WAV and FLAC lossless, MP3 at the shows' ``-q:a 0``). Returns
+    *output_path*.
+
+    Oct 29 2026: this used the concat demuxer with ``-c copy``, which joins
+    MP3 files frame by frame and keeps each file's encoder delay, padding
+    and info frame. Measured on Nerra Daily Ep070: every join carried
+    ~39 ms of digital silence (1,735 samples) and a hard step from the
+    last sample of one piece to the first of the next, which a listener
+    hears as a click at every handoff. The decoder honours the LAME
+    gapless header, so a decoded join adds 0.0 ms.
+    """
+    if not file_list:
+        raise ValueError("concatenate_audio needs at least one input")
+    sample_rate, _ = _probe_audio_format(file_list[0])
+    sample_rate = sample_rate or 44100
+    channels = max((_probe_audio_format(p)[1] or 1) for p in file_list)
+    layout = "mono" if channels == 1 else "stereo"
+
+    cmd: List[str] = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
+    for fp in file_list:
+        cmd += ["-i", str(fp)]
+    parts: List[str] = []
+    for i, fp in enumerate(file_list):
+        chain = [f"aresample={sample_rate}",
+                 f"aformat=sample_fmts=fltp:sample_rates={sample_rate}:channel_layouts={layout}"]
+        if edge_fade > 0:
+            chain.append(f"afade=t=in:st=0:d={edge_fade:.3f}")
+            duration = get_audio_duration(Path(fp))
+            if duration and duration > 2 * edge_fade:
+                chain.append(f"afade=t=out:st={duration - edge_fade:.3f}:d={edge_fade:.3f}")
+        parts.append(f"[{i}:a]" + ",".join(chain) + f"[p{i}]")
+    labels = "".join(f"[p{i}]" for i in range(len(file_list)))
+    graph = ";".join(parts) + f";{labels}concat=n={len(file_list)}:v=0:a=1[out]"
+    cmd += ["-filter_complex", graph, "-map", "[out]"]
+    args = list(encode_args) if encode_args is not None else _join_encode_args(Path(output_path))
+    if "-ar" not in args:
+        args = ["-ar", str(sample_rate)] + args
+    if "-ac" not in args:
+        args = ["-ac", str(channels)] + args
+    cmd += args + [str(output_path)]
+    total = sum((get_audio_duration(Path(p)) or 0.0) for p in file_list)
+    subprocess.run(cmd, check=True, capture_output=True,
+                   timeout=max(600, int(total) + 300))
+    _audio_duration_cache.pop(Path(output_path), None)
     return output_path
 
 

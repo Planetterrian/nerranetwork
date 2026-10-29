@@ -740,10 +740,11 @@ class TestPolish:
         assert segment_gain_db(-25.3) == 9.3          # UC on 2026-09-17
         assert segment_gain_db(-2.0) == -12.0         # clamped
         assert segment_gain_db(None) == 0.0 and segment_gain_db(-70.0) == 0.0
-        cmd = segment_gain_cmd(Path("in.mp3"), Path("out.mp3"), 9.3)
+        cmd = segment_gain_cmd(Path("in.flac"), Path("out.flac"), 9.3)
         assert "volume=+9.3dB,alimiter=limit=0.891:level=false" in " ".join(cmd)
-        assert cmd[-1] == "out.mp3" and "-q:a" in cmd
-        sting = " ".join(sting_cmd(Path("sting.mp3")))
+        # Lossless piece format since Oct 29 2026 (one encode, at the join).
+        assert cmd[-1] == "out.flac" and "flac" in cmd
+        sting = " ".join(sting_cmd(Path("sting.flac")))
         assert "channel_layouts=stereo" in sting and "volume=-18dB" in sting
 
     def test_builder_exposes_only_and_replace(self):

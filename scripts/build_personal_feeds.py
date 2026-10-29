@@ -64,6 +64,8 @@ sys.path.insert(0, str(ROOT))
 from engine.access import parse_private_ref  # noqa: E402
 from engine.daily_edition import (  # noqa: E402
     EDITIONS,
+    EDITION_ENCODE_ARGS,
+    PIECE_SUFFIX,
     Segment,
     discover_segments,
     find_promo_cut,
@@ -218,7 +220,7 @@ def build_segment_cache(
         seg = segments_by_slug.get(slug)
         if seg is None:
             continue
-        target = cache_dir / f"{slug}.mp3"
+        target = cache_dir / f"{slug}{PIECE_SUFFIX}"
         # The promo cut comes from the committed transcript, so it is known
         # without the audio — and it must be on the segment even when the
         # cached file already exists: the edition's transcript stops there
@@ -269,7 +271,7 @@ def _level_segment(slug: str, target: Path) -> None:
         logger.info("segment cache: %s at %s LUFS — in spec", slug,
                     "?" if measured is None else f"{measured:.1f}")
         return
-    levelled = target.with_name(f"{slug}.level.mp3")
+    levelled = target.with_name(f"{slug}.level{PIECE_SUFFIX}")
     try:
         _run(segment_gain_cmd(target, levelled, gain), f"level {slug}")
         levelled.replace(target)
@@ -283,7 +285,7 @@ def _level_segment(slug: str, target: Path) -> None:
 
 def ensure_sting(cache_dir: Path) -> Optional[Path]:
     """The transition chime, rendered once per run into the shared cache."""
-    path = cache_dir / "sting.mp3"
+    path = cache_dir / f"sting{PIECE_SUFFIX}"
     if path.exists():
         return path
     try:
@@ -327,14 +329,16 @@ def _mira_piece(text: str, name: str, workdir: Path,
                 lead_in: Optional[Path] = None) -> Path:
     from engine.audio import concatenate_audio
 
-    raw = workdir / f"{name}.raw.mp3"
-    out = workdir / f"{name}.mp3"
+    # WAV straight from Grok and lossless pieces: Mira's voice is encoded
+    # lossy once, in the finished episode (Oct 29 2026).
+    raw = workdir / f"{name}.raw.wav"
+    out = workdir / f"{name}{PIECE_SUFFIX}"
     _tts(text, raw)
     _run(mira_piece_cmd(raw, out), f"process {name}")
     raw.unlink(missing_ok=True)
     if lead_in is not None:
         # Chime, breath, then Mira — one file so chapter math is unchanged.
-        voiced = workdir / f"{name}.voice.mp3"
+        voiced = workdir / f"{name}.voice{PIECE_SUFFIX}"
         out.replace(voiced)
         concatenate_audio([lead_in, voiced], out)
         voiced.unlink(missing_ok=True)
@@ -621,7 +625,7 @@ def apply_cuts(cuts: List["pstories.Cut"], cache: Dict[str, Path],
     by_slug = {s.slug: s for s in stories}
     for slug in sorted({c.slug for c in cuts}):
         removed = pstories.removed_spans(cuts, slug)
-        out = workdir / f"{slug}.trimmed.mp3"
+        out = workdir / f"{slug}.trimmed{PIECE_SUFFIX}"
         dur = by_slug[slug].duration
         try:
             _run(pstories.cut_segment_cmd(cache[slug], out,
@@ -769,7 +773,7 @@ def build_for_spec(
         filename = (f"Nerra_Personal_{target_date:%Y%m%d}"
                     + (f"_r{revision}" if previous else "") + ".mp3")
         final = workdir / filename
-        concatenate_audio(splice, final)
+        concatenate_audio(splice, final, encode_args=EDITION_ENCODE_ARGS)
         total = _duration(final)
         title = personal_episode_title(target_date, segments, links.get("title") or "")
         logger.info("%s…: %0.1f min%s, %d segments%s%s%s", spec.token[:8],

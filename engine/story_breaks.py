@@ -746,23 +746,107 @@ def _per_cut(cut_times: Sequence[float], seconds) -> List[Tuple[float, float]]:
     return sorted(p for p in pairs if p[0] > 0)
 
 
+#: Room tone (Oct 29 2026). A spliced pause used to be ``apad`` digital
+#: zeros: the voice's own pause floor (~-65 dB of hiss) dropped to nothing
+#: and came back at every story change, so the hiss switched off and on,
+#: and the voice chain's noise-tracking denoiser re-learned its floor from
+#: a stretch of zeros each time. The pause is filled with the voice's own
+#: room tone instead: the quietest :data:`ROOM_TONE_WINDOW` of the pause it
+#: already left there (the quietest, so a breath is never what repeats),
+#: looped to length.
+ROOM_TONE_WINDOW = 0.12
+#: The window keeps this far from the words either side of the pause.
+ROOM_TONE_EDGE = 0.04
+ROOM_TONE_RATE = 48000
+
+
+def quietest_window(samples, rate: int, *, window: float = ROOM_TONE_WINDOW,
+                    hop: float = 0.01) -> Optional[Tuple[float, float]]:
+    """``(start, end)`` seconds into *samples* of the lowest-energy stretch
+    of *window* seconds (the whole buffer when it is shorter), or ``None``
+    for an empty buffer."""
+    import numpy as np
+
+    x = np.asarray(samples, dtype=np.float64)
+    n = len(x)
+    if n == 0:
+        return None
+    w = max(1, int(round(window * rate)))
+    if n <= w:
+        return 0.0, n / rate
+    csum = np.concatenate([[0.0], np.cumsum(x * x)])
+    starts = np.arange(0, n - w + 1, max(1, int(round(hop * rate))))
+    best = int(starts[int(np.argmin(csum[starts + w] - csum[starts]))])
+    return best / rate, (best + w) / rate
+
+
+def room_tone_spans(src: Path, breaks: Sequence["Break"]) -> List[Optional[Tuple[float, float]]]:
+    """For each break with a splice, the ``(start, end)`` of the room tone
+    to loop into it (source timeline), or ``None`` when the pause is too
+    short to hold one. Never raises: a failure is ``None`` and that
+    splice falls back to digital silence."""
+    import subprocess
+
+    spans: List[Optional[Tuple[float, float]]] = []
+    for b in breaks:
+        if b.insert <= 0:
+            continue
+        lo, hi = b.gap_start + ROOM_TONE_EDGE, b.gap_end - ROOM_TONE_EDGE
+        if hi - lo < 0.02:
+            spans.append(None)
+            continue
+        try:
+            import numpy as np
+
+            raw = subprocess.run(
+                ["ffmpeg", "-v", "error", "-ss", f"{lo:.3f}", "-t", f"{hi - lo:.3f}",
+                 "-i", str(src), "-ac", "1", "-ar", str(ROOM_TONE_RATE),
+                 "-f", "f32le", "-"],
+                capture_output=True, check=True, timeout=60).stdout
+            win = quietest_window(np.frombuffer(raw, dtype=np.float32), ROOM_TONE_RATE)
+        except Exception:
+            win = None
+        spans.append(None if win is None or win[1] - win[0] < 0.02
+                     else (round(lo + win[0], 3), round(lo + win[1], 3)))
+    return spans
+
+
 def insert_silences_cmd(src: Path, dst: Path, cut_times: Sequence[float],
-                        seconds) -> List[str]:
-    """ffmpeg command: *src* with silence spliced at every cut (*seconds*:
+                        seconds, *,
+                        room_tone: Optional[Sequence[Optional[Tuple[float, float]]]] = None,
+                        ) -> List[str]:
+    """ffmpeg command: *src* with a pause spliced at every cut (*seconds*:
     one length for all, or one per cut), written as 48 kHz PCM WAV
-    (lossless — the music mix re-encodes once)."""
+    (lossless — the music mix re-encodes once).
+
+    *room_tone* (one ``(start, end)`` or ``None`` per cut, in cut order)
+    names a stretch of *src* to loop into each pause; without it, or for a
+    ``None``, the pause is digital silence as before."""
     pairs = _per_cut(cut_times, seconds)
     cuts = [c for c, _ in pairs]
+    tones: List[Optional[Tuple[float, float]]] = list(room_tone or [])
+    tones += [None] * (len(cuts) - len(tones))
     parts: List[str] = []
     labels: List[str] = []
     edges = [0.0, *cuts]
+    rate = ROOM_TONE_RATE
     for i, start in enumerate(edges):
         end = cuts[i] if i < len(cuts) else None
         trim = f"atrim=start={start:.3f}" + (f":end={end:.3f}" if end is not None else "")
-        pad = (f",apad=pad_dur={pairs[i][1]:.3f}"
-               if end is not None and pairs[i][1] > 0 else "")
-        parts.append(f"[0:a]{trim},asetpts=PTS-STARTPTS{pad}[s{i}]")
+        pad_len = pairs[i][1] if end is not None else 0.0
+        tone = tones[i] if end is not None else None
+        pad = (f",apad=pad_dur={pad_len:.3f}" if pad_len > 0 and tone is None else "")
+        parts.append(f"[0:a]{trim},asetpts=PTS-STARTPTS,aresample={rate}{pad}[s{i}]")
         labels.append(f"[s{i}]")
+        if pad_len > 0 and tone is not None:
+            t0, t1 = tone
+            size = max(1, int(round((t1 - t0) * rate)))
+            loops = max(1, math.ceil(pad_len / max(t1 - t0, 1e-3)))
+            parts.append(
+                f"[0:a]atrim=start={t0:.3f}:end={t1:.3f},asetpts=PTS-STARTPTS,"
+                f"aresample={rate},aloop=loop={loops}:size={size},"
+                f"atrim=duration={pad_len:.3f},asetpts=PTS-STARTPTS[t{i}]")
+            labels.append(f"[t{i}]")
     graph = ";".join(parts) + ";" + "".join(labels) + f"concat=n={len(labels)}:v=0:a=1[out]"
     return ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
             "-filter_complex", graph, "-map", "[out]",
