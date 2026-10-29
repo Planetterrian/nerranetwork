@@ -31,6 +31,15 @@ class TestMyNerraShipsLiveQuotes:
         src = _read("templates/account_page.html.j2")
         assert "api/tsla.json" not in src and "api/spcx.json" not in src
 
+    def test_committed_checkout_pages_keep_their_payment_links(self):
+        # A local render without STRIPE_LINK_* writes the "launching soon"
+        # state; the first push of this PR did exactly that and the e2e
+        # join test caught it. The committed pages must carry live links.
+        for rel in ("join.html", "account.html"):
+            html = _read(rel)
+            assert 'data-nn-tier="personal" ' in html and "https://buy.stripe.com/" in html, rel
+            assert 'data-nn-tier="personal_local"' in html, rel
+
     def test_committed_account_page_carries_the_read_buttons(self):
         html = _read("account.html")
         assert "function readBtn" in html and "data-ed-notes" in html
