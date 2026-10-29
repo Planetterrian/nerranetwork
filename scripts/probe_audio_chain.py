@@ -88,6 +88,7 @@ def measure(path: Path) -> dict:
     blk = int(0.02 * SR)
     nb = len(e) // blk
     clicks = 0
+    times: list = []
     if nb >= 3:
         med = np.median(e[: nb * blk].reshape(nb, blk), axis=1) + 1e-6
         nbr = np.maximum(np.r_[med[0], med[:-1]], np.r_[med[1:], med[-1]])
@@ -97,6 +98,7 @@ def measure(path: Path) -> dict:
         for i in hit:
             if i - last > int(0.005 * SR):
                 clicks += 1
+                times.append(round((i + 1) / SR, 3))
             last = i
     n = int(0.02 * SR)
     k = len(m) // n
@@ -115,6 +117,7 @@ def measure(path: Path) -> dict:
         "file": path.name,
         "seconds": round(len(m) / SR, 2),
         "clicks": clicks,
+        "click_times": times[:20],
         "pause_floor_db": round(float(np.median(db[pause])), 1) if pause.any() else None,
         "pause_hiss_4_16k_db": hiss,
         "digital_silence_frames": int((db <= -100).sum()),
@@ -147,6 +150,15 @@ def main() -> int:
           "loudnorm=I=-16:TP=-1.5:LRA=11,adelay=350:all=1,apad=pad_dur=0.45"]
          + q2 + [str(OUT / "mira_old.mp3")])
     _run(mira_piece_cmd(mira_raw, OUT / "mira_new.flac"))
+    # Mira stage by stage, to find where a click comes from.
+    chain_all = voice_chain_filters()
+    for name, af in (
+        ("mira_stage_chain", chain_all),
+        ("mira_stage_nodenoise", voice_chain_filters(denoise=False)),
+        ("mira_stage_chain_loudnorm", chain_all + ",loudnorm=I=-16:TP=-1.5:LRA=11"),
+        ("mira_stage_loudnorm_only", "loudnorm=I=-16:TP=-1.5:LRA=11"),
+    ):
+        _run(["ffmpeg", "-y", "-i", str(mira_raw), "-af", af, str(OUT / f"{name}.wav")])
 
     # The show voice through the chain, and a stronger denoise to compare.
     chain = voice_chain_filters()

@@ -560,10 +560,10 @@ class TestBuilder:
         mod = _builder()
         segs, _ = discover_segments(personal_edition_spec(), ROOT, dt.date(2026, 10, 17))
         seg = next(s for s in segs if s.slug == "tesla")
-        (tmp_path / "tesla.mp3").write_bytes(b"cached")
+        (tmp_path / "tesla.flac").write_bytes(b"cached")
         seg.cut_final_seconds = None
         out = mod.build_segment_cache(["tesla"], {"tesla": seg}, tmp_path)
-        assert out["tesla"] == tmp_path / "tesla.mp3"
+        assert out["tesla"] == tmp_path / "tesla.flac"
         assert seg.cut_final_seconds is not None and 300 < seg.cut_final_seconds < 520
 
     @pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg not installed")
