@@ -26,6 +26,14 @@
  * is open (10 min otherwise) in the colo's cache, and a last-good copy is
  * kept for two days; a refused or failed symbol is filled from it, so a
  * 429 shows the last good number with its own time, never a blank.
+ *
+ * Member tickers (Oct 29 2026): ``?extra=SHOP.TO,BTC-USD`` adds up to
+ * MEMBER_SYMBOLS_PER_REQUEST symbols a member chose on My Nerra. Each is
+ * checked against MEMBER_SYMBOL_RE (the shapes Yahoo's chart API names:
+ * a listing, an exchange suffix, an index ``^``, a pair ``=X``, a future
+ * ``=F``), fetched on its own and cached per symbol under the same TTLs,
+ * with its own last-good copy. A symbol Yahoo does not know is returned in
+ * ``unknown`` so the page can say so; nothing is ever guessed.
  */
 
 import { corsHeaders } from "./cors";
@@ -42,6 +50,14 @@ const UA =
   "(KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 const CACHE_KEY = "https://api.nerranetwork.com/__cache/markets/v1";
 const LAST_GOOD_KEY = "https://api.nerranetwork.com/__cache/markets/last-good/v1";
+const SYMBOL_CACHE = "https://api.nerranetwork.com/__cache/markets/sym/v1/";
+const SYMBOL_LAST_GOOD = "https://api.nerranetwork.com/__cache/markets/sym-last-good/v1/";
+
+/** A member-chosen symbol (also used by personal.ts cleanTickers). Mirrors
+ *  engine.personal_edition.TICKER_RE — drift-guarded. */
+export const MEMBER_SYMBOL_RE = /^\^?[A-Z0-9][A-Z0-9.\-]{0,9}(=[XF])?$/;
+export const MEMBER_SYMBOLS_PER_REQUEST = 10;
+const NAME_MAX = 60;
 export const LIVE_TTL_S = 60;
 export const CLOSED_TTL_S = 600;
 const LAST_GOOD_TTL_S = 2 * 86400;
@@ -54,6 +70,10 @@ export interface LiveQuote {
   change_pct: number | null;
   state: "live" | "close";
   as_of: string;
+  /** Yahoo's own short name for the listing ("Shopify Inc."), when given. */
+  name?: string;
+  /** ISO currency of the price ("USD", "CAD"), when given. */
+  currency?: string;
 }
 
 export interface MarketsBody {
@@ -61,6 +81,8 @@ export interface MarketsBody {
   fetched_at: string;
   stale: boolean;
   quotes: LiveQuote[];
+  /** Member symbols Yahoo answered with no usable quote. */
+  unknown?: string[];
 }
 
 function easternDay(epochS: number): string {
@@ -101,7 +123,7 @@ export function parseChart(symbol: string, body: unknown, nowS: number): LiveQuo
     && nowS >= start && nowS < end && t >= start;
 
   const change = prev ? ((price - prev) / prev) * 100 : null;
-  return {
+  const q: LiveQuote = {
     symbol,
     price: Math.round(price * 100) / 100,
     prev_close: prev === null ? null : Math.round(prev * 100) / 100,
@@ -109,6 +131,22 @@ export function parseChart(symbol: string, body: unknown, nowS: number): LiveQuo
     state: open ? "live" : "close",
     as_of: new Date(t * 1000).toISOString(),
   };
+  const name = cleanName(meta.shortName || meta.longName);
+  if (name) q.name = name;
+  const cur = String(meta.currency ?? "").toUpperCase();
+  if (/^[A-Z]{3}$/.test(cur)) q.currency = cur;
+  return q;
+}
+
+/** Yahoo's listing name as plain text: no markup, no control characters,
+ *  capped. It reaches a page as textContent and a spoken line as words. */
+export function cleanName(raw: unknown): string {
+  const text = String(raw ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[^\p{L}\p{N} .,&'()\-]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.slice(0, NAME_MAX).trim();
 }
 
 async function fetchSymbol(symbol: string, nowS: number): Promise<LiveQuote | null> {
@@ -133,11 +171,66 @@ export function requestedSymbols(url: URL): string[] {
   return MARKET_SYMBOLS.filter((s) => wanted.has(s));
 }
 
+/** Member symbols the request added (``?extra=``): valid shapes only, not
+ *  already in the closed list, de-duplicated, at most
+ *  MEMBER_SYMBOLS_PER_REQUEST. */
+export function memberSymbols(url: URL): string[] {
+  const raw = url.searchParams.get("extra");
+  if (!raw) return [];
+  const out: string[] = [];
+  for (const part of raw.toUpperCase().split(",")) {
+    const s = part.trim();
+    if (!s || !MEMBER_SYMBOL_RE.test(s)) continue;
+    if ((MARKET_SYMBOLS as readonly string[]).includes(s) || out.includes(s)) continue;
+    out.push(s);
+    if (out.length >= MEMBER_SYMBOLS_PER_REQUEST) break;
+  }
+  return out;
+}
+
+/** One member symbol, from its own cache, else Yahoo, else its last good
+ *  copy (as a close). null when Yahoo has never answered for it. */
+async function memberQuote(
+  symbol: string, cache: Cache, ctx: ExecutionContext, nowS: number,
+): Promise<{ quote: LiveQuote | null; stale: boolean }> {
+  const key = SYMBOL_CACHE + encodeURIComponent(symbol);
+  const hit = await cache.match(key);
+  if (hit) {
+    const cached = (await hit.json()) as { quote: LiveQuote | null };
+    return { quote: cached.quote, stale: false };
+  }
+  const fresh = await fetchSymbol(symbol, nowS);
+  const lgKey = SYMBOL_LAST_GOOD + encodeURIComponent(symbol);
+  const puts: Promise<unknown>[] = [];
+  let quote = fresh;
+  let stale = false;
+  if (fresh) {
+    puts.push(cache.put(lgKey, new Response(JSON.stringify(fresh), {
+      headers: { "Cache-Control": `public, max-age=${LAST_GOOD_TTL_S}` },
+    })));
+  } else {
+    const lg = await cache.match(lgKey);
+    if (lg) {
+      quote = { ...((await lg.json()) as LiveQuote), state: "close" };
+      stale = true;
+    }
+  }
+  const ttl = quote?.state === "live" ? LIVE_TTL_S : CLOSED_TTL_S;
+  puts.push(cache.put(key, new Response(JSON.stringify({ quote }), {
+    headers: { "Cache-Control": `public, max-age=${ttl}` },
+  })));
+  ctx.waitUntil(Promise.all(puts));
+  return { quote, stale };
+}
+
 function respond(request: Request, body: MarketsBody, maxAge: number): Response {
   const headers = new Headers(corsHeaders(request));
   headers.set("Content-Type", "application/json; charset=utf-8");
   headers.set("Cache-Control", `public, max-age=${maxAge}`);
-  return new Response(JSON.stringify(body), { status: body.quotes.length ? 200 : 503, headers });
+  // A lookup that named only symbols Yahoo does not know is still an
+  // answer (200 with ``unknown``); no quote at all for any reason is 503.
+  const answered = body.quotes.length > 0 || (body.unknown?.length ?? 0) > 0;
+  return new Response(JSON.stringify(body), { status: answered ? 200 : 503, headers });
 }
 
 export async function handleMarkets(request: Request, ctx: ExecutionContext): Promise<Response> {
@@ -188,6 +281,24 @@ export async function handleMarkets(request: Request, ctx: ExecutionContext): Pr
 
   const want = new Set(symbols);
   const body: MarketsBody = { ...all, quotes: all.quotes.filter((q) => want.has(q.symbol)) };
+  const extras = memberSymbols(url);
+  if (extras.length) {
+    // An explicit ``symbols=`` filter that names none of the closed list
+    // asks for member symbols only.
+    const nowS = Math.floor(Date.now() / 1000);
+    const got = await Promise.all(extras.map((s) => memberQuote(s, cache, ctx, nowS)));
+    const unknown: string[] = [];
+    got.forEach((g, i) => {
+      if (g.quote) {
+        body.quotes.push(g.quote);
+        if (g.stale) body.stale = true;
+      } else {
+        unknown.push(extras[i]);
+      }
+    });
+    if (unknown.length) body.unknown = unknown;
+    body.ok = body.quotes.length > 0;
+  }
   const live = body.quotes.some((q) => q.state === "live");
   return respond(request, body, live ? LIVE_TTL_S : CLOSED_TTL_S);
 }

@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import functools
+import hashlib
 import json
 import os
 import re
@@ -2512,6 +2513,11 @@ def _get_jinja_env():
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
+    # Oct 29 2026: a content hash on each shared script and stylesheet, so
+    # the installed app's service worker (stale-while-revalidate on assets)
+    # never pairs a new page with an old script. The hash follows the file's
+    # bytes: an unchanged file renders byte-identical pages.
+    env.globals["asset_v"] = _asset_version
     # Same-show "More from <show>" links on episode posts (Oct 22 2026 crawl
     # pass). Template-only surface — no engine.blog change — so crawl paths
     # reach older episodes from any post that regenerates.
@@ -5423,6 +5429,21 @@ def watch_page_rows(payload):
     return shows_with_video, shorts[:WATCH_PAGE_MAX_SHORTS], longs[:WATCH_PAGE_MAX_LONGS]
 
 
+_ASSET_VERSIONS: dict = {}
+
+
+def _asset_version(rel: str) -> str:
+    """``rel`` with ``?v=<8 hex of its bytes>`` (``rel`` alone when missing)."""
+    rel = str(rel)
+    if rel not in _ASSET_VERSIONS:
+        try:
+            digest = hashlib.sha1((ROOT / rel).read_bytes()).hexdigest()[:8]
+            _ASSET_VERSIONS[rel] = f"{rel}?v={digest}"
+        except OSError:
+            _ASSET_VERSIONS[rel] = rel
+    return _ASSET_VERSIONS[rel]
+
+
 def generate_watch_page(*, payload=None, dry_run=False, output_dir=None, now=None):
     """Generate /watch.html — every show's newest public videos, played in
     the page (Oct 28 2026). ``payload`` is the personal_front payload the
@@ -5478,6 +5499,25 @@ def generate_offline_page(*, dry_run=False, output_dir=None):
     ctx["theme_color"] = ""
     html = env.get_template("offline_page.html.j2").render(**ctx)
     out_path = (Path(output_dir) if output_dir else ROOT) / "offline.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_app_page(*, dry_run=False, output_dir=None):
+    """Generate /app.html (Oct 29 2026): the Nerra app (this site on a Home
+    Screen or Dock), what it does and how to add it on each device."""
+    env = _get_jinja_env()
+    ctx = _member_page_context(
+        "Get the Nerra app | Nerra Network",
+        "Add Nerra to your Home Screen: one tap to today's stories, the player on "
+        "your lock screen, your own shows and edition a tab away. Free, no app store.",
+        "app.html")
+    html = env.get_template("app_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "app.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -6288,7 +6328,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "press.html", "sponsor.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "guest-picks.html", "player.html", "data.html",
                   "join.html", "support.html", "personal-interest.html",
-                  "specials.html", "watch.html",
+                  "specials.html", "watch.html", "app.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
                   "offshore-north-dashboard.html",
@@ -9070,6 +9110,7 @@ def generate_static_pages(*, dry_run=False):
     generate_404_page(dry_run=dry_run)
     generate_offline_page(dry_run=dry_run)
     generate_add_feed_page(dry_run=dry_run)
+    generate_app_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
     generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)

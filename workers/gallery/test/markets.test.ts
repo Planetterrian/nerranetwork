@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  handleMarkets, MARKET_SYMBOLS, parseChart, requestedSymbols,
+  handleMarkets, MARKET_SYMBOLS, parseChart, requestedSymbols, memberSymbols, cleanName,
 } from "../src/markets";
 
 // Unix seconds for 16:00 ET closes (EDT, UTC-4) and a session window.
@@ -83,6 +83,21 @@ function ctx() {
     passThroughOnException() {} } as unknown as ExecutionContext & { pending: Promise<unknown>[] };
 }
 
+describe("memberSymbols", () => {
+  it("takes valid shapes only, never the closed list twice, at most ten", () => {
+    const u = (q: string) => new URL(`https://x/api/markets?extra=${encodeURIComponent(q)}`);
+    expect(memberSymbols(u("shop.to,BTC-USD,^GSPC,EURUSD=X,GC=F")))
+      .toEqual(["SHOP.TO", "BTC-USD", "^GSPC", "EURUSD=X", "GC=F"]);
+    expect(memberSymbols(u("TSLA,<script>,../x,AAAAAAAAAAAAAAAA,shop,SHOP"))).toEqual(["SHOP"]);
+    expect(memberSymbols(u(Array.from({ length: 15 }, (_, i) => `A${i}`).join(",")))).toHaveLength(10);
+    expect(memberSymbols(new URL("https://x/api/markets"))).toEqual([]);
+  });
+
+  it("a listing name is plain text", () => {
+    expect(cleanName("Shopify <b>Inc.</b>\u0007")).toBe("Shopify Inc.");
+  });
+});
+
 describe("handleMarkets", () => {
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -122,6 +137,31 @@ describe("handleMarkets", () => {
     const body = await resp.json() as { stale: boolean; quotes: { symbol: string; state: string }[] };
     expect(body.stale).toBe(true);
     expect(body.quotes).toEqual([expect.objectContaining({ symbol: "TSLA", state: "close" })]);
+  });
+
+  it("adds a member's symbols, each fetched and cached on its own, and names the unknown ones", async () => {
+    const mem = new MemCache();
+    vi.stubGlobal("caches", { default: mem });
+    const fetchMock = vi.fn(async (u: string) => {
+      if (String(u).includes("NOPE")) return new Response("{}", { status: 404 });
+      const body = chart(100, close("2026-10-16"), WEEK) as any;
+      body.chart.result[0].meta.shortName = "Shopify Inc.";
+      body.chart.result[0].meta.currency = "CAD";
+      return new Response(JSON.stringify(body));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const req = new Request("https://api.nerranetwork.com/api/markets?symbols=none&extra=SHOP.TO,NOPE");
+    const c = ctx();
+    const resp = await handleMarkets(req, c);
+    await Promise.all(c.pending);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { quotes: any[]; unknown: string[] };
+    expect(body.quotes).toEqual([expect.objectContaining({
+      symbol: "SHOP.TO", name: "Shopify Inc.", currency: "CAD" })]);
+    expect(body.unknown).toEqual(["NOPE"]);
+    const calls = fetchMock.mock.calls.length;
+    await handleMarkets(req, ctx());
+    expect(fetchMock.mock.calls.length).toBe(calls);
   });
 
   it("answers 503 with no quotes when nothing was ever fetched", async () => {

@@ -7,6 +7,7 @@
  *   GET  /api/subscribe-counts - durable daily subscribe totals (x-counts-key)
  *   GET  /api/login       - request a magic-link email
  *   GET  /api/magic       - consume a magic-link token
+ *   POST /api/login-code  - the sign-in email's six-digit code (installed app)
  *   POST /api/logout      - clear the session cookie
  *   GET  /api/books/<vol>/<file> - PNN members' EPUB library (session + tier gated)
  *   POST /api/account/checkout-ref - opaque ref to attach a checkout to this account
@@ -25,6 +26,7 @@ import {
   handleLogout,
   handleLogin,
   handleMagic,
+  handleLoginCode,
   handleSubscribe,
   handleSubscribeCounts,
 } from "./handlers";
@@ -88,6 +90,9 @@ export default {
           return await handleLogin(request, env, DEPS);
         case "GET /api/magic":
           return await handleMagic(request, env, DEPS);
+        case "POST /api/login-code":
+          // Oct 29 2026: the sign-in email's code, for the installed app.
+          return await handleLoginCode(request, env, DEPS);
         case "POST /api/logout":
           return handleLogout(request);
         case "GET /api/download":

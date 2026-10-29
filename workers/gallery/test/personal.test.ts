@@ -10,6 +10,8 @@ import {
   PERSONAL_ADDONS,
   PERSONAL_SHOWS,
   TARGET_MINUTES,
+  TICKERS_MAX,
+  cleanTickers,
   handleAccount,
   handleAdminSpecs,
   handleBookDownload,
@@ -868,6 +870,59 @@ describe("profile, length and skip_repeats (Oct 18 2026)", () => {
     expect("profile" in plain).toBe(false);
     expect("target_minutes" in plain).toBe(false);
     expect(JSON.stringify(body)).not.toContain("example.com");
+  });
+});
+
+describe("member tickers (Oct 29 2026)", () => {
+  async function save(env: Env, email: string, body: object) {
+    return handlePreferences(new Request("https://api.example.com/api/account/preferences", {
+      method: "POST",
+      headers: { Cookie: await memberCookie(env, email), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }), env);
+  }
+  async function account(env: Env, email: string) {
+    return (await (await handleAccount(
+      new Request("https://api.example.com/api/account",
+        { headers: { Cookie: await memberCookie(env, email) } }), env)).json()) as any;
+  }
+
+  it("stores valid shapes, upper-cased, de-duplicated, capped at TICKERS_MAX", async () => {
+    expect(TICKERS_MAX).toBe(8);
+    expect(cleanTickers(["shop.to", "SHOP.TO", "<b>", "btc-usd", "^gspc", "x".repeat(20)]))
+      .toEqual(["SHOP.TO", "BTC-USD", "^GSPC"]);
+    const env = envWith();
+    const res = await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"],
+      tickers: Array.from({ length: 12 }, (_, i) => `t${i}`),
+    });
+    const saved = (await res.json() as any).saved;
+    expect(saved.tickers).toHaveLength(8);
+    expect(saved.tickers[0]).toBe("T0");
+    expect((await account(env, "fan@example.com")).member.preferences.tickers).toEqual(saved.tickers);
+  });
+
+  it("an older page leaves them untouched; an empty list clears them", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], tickers: ["NVDA"] });
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"] });
+    expect((await account(env, "fan@example.com")).member.preferences.tickers).toEqual(["NVDA"]);
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], tickers: [] });
+    expect((await account(env, "fan@example.com")).member.preferences.tickers).toEqual([]);
+  });
+
+  it("admin specs carry them only when saved", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], tickers: ["SHOP.TO"] });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      ...rec, tier: "personal", status: "active", feed_token: "e".repeat(32),
+    }));
+    const res = await handleAdminSpecs(new Request("https://api.example.com/api/admin/personal-specs",
+      { headers: { Authorization: "Bearer admin-token" } }), env);
+    const sp = (await res.json() as { specs: any[] }).specs.find((x) => x.token === "e".repeat(32))!;
+    expect(sp.tickers).toEqual(["SHOP.TO"]);
   });
 });
 

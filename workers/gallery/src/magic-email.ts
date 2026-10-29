@@ -23,6 +23,9 @@ export interface MagicLinkEmail {
 export function buildMagicLinkEmail(opts: {
   magicUrl: string;
   ttlMinutes: number;
+  /** Oct 29 2026: the six-digit code for the installed app (an emailed
+   *  link opens in the browser, which on iPhone is not the app). */
+  code?: string;
 }): MagicLinkEmail {
   const subject = "Sign in to your Nerra Network account";
   const safeUrl = escapeHtml(opts.magicUrl);
@@ -45,8 +48,12 @@ export function buildMagicLinkEmail(opts: {
           <a href="${safeUrl}"
              style="display:inline-block;padding:12px 28px;background:#6B47FF;color:#ffffff;font-weight:600;text-decoration:none;border-radius:10px;font-size:0.95rem;">Sign in</a>
         </td></tr>
+        ${opts.code ? `<tr><td align="center" style="padding:0 28px 20px;color:#8b8fae;font-size:0.9rem;">
+          <p style="margin:0 0 8px;">Using the Nerra app on your Home Screen? Type this code there instead:</p>
+          <p style="margin:0;font-size:1.8rem;font-weight:700;letter-spacing:0.28em;color:#ffffff;font-family:ui-monospace,Menlo,monospace;">${escapeHtml(opts.code.slice(0, 3) + " " + opts.code.slice(3))}</p>
+        </td></tr>` : ""}
         <tr><td style="padding:0 28px 24px;color:#8b8fae;font-size:0.8rem;line-height:1.5;">
-          <p style="margin:0 0 8px;">The link expires in ${ttl} minutes. If you didn&rsquo;t request this email you can safely ignore it &mdash; nobody will be signed in unless they click the button above.</p>
+          <p style="margin:0 0 8px;">The link${opts.code ? " and the code expire" : " expires"} in ${ttl} minutes. If you didn&rsquo;t request this email you can safely ignore it &mdash; nobody will be signed in unless they click the button above.</p>
           <p style="margin:0;word-break:break-all;">If the button doesn&rsquo;t work, paste this URL into your browser:<br><span style="color:#cbd5e0;">${safeUrl}</span></p>
         </td></tr>
       </table>
@@ -61,6 +68,7 @@ export function buildMagicLinkEmail(opts: {
     `daily feed, your newsletter settings, member perks and gallery ` +
     `downloads:\n\n` +
     `${opts.magicUrl}\n\n` +
+    (opts.code ? `Using the Nerra app on your Home Screen? Type this code there instead: ${opts.code}\n\n` : "") +
     `The link expires in ${ttl} minutes. If you didn't request this email ` +
     `you can safely ignore it.\n\n` +
     `— Nerra Network (https://nerranetwork.com)\n`;

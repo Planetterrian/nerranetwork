@@ -472,7 +472,7 @@ class TestAddons:
         src = _read("scripts/build_personal_feeds.py")
         assert "wants_local_brief(spec)" in src
         assert "needs_research_call(spec)" in src
-        assert "build_markets_line(ROOT)" in src
+        assert "build_markets_line(ROOT, member_tickers(spec), quotes)" in src
         assert 'if "markets" in spec.effective_addons()' in src
 
 

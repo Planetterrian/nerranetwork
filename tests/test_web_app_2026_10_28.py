@@ -78,7 +78,10 @@ class TestManifest:
 class TestThePlayer:
     def test_reports_plays_once_with_tracking_js_parameters(self):
         js = _read("assets/js/nn-player.js")
-        assert "track('episode_play', { src: String(it.url).split('?')[0], location: location.pathname })" in js
+        assert "track('episode_play', { src: analyticsSrc(it.url), location: location.pathname })" in js
+        # Oct 29 2026: a member edition's URL carries the private feed token;
+        # analytics gets the file name only.
+        assert "return m ? 'personal_edition/' + m[1] : u;" in js
         assert "if (!it || reported[it.url]) { return; }" in js
 
     def test_keeps_my_nerras_storage_keys(self):

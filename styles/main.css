@@ -3477,17 +3477,29 @@ html.nn-has-player body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 .nn-gp-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 0.74rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
 .nn-gp-seek { width: 100%; accent-color: var(--nn-cyan); }
 .nn-gp-side { display: flex; gap: 6px; align-items: center; font-size: 0.76rem; color: var(--nn-text-muted); }
+/* Oct 29 2026: a phone keeps every control. Row one: cover, title, play;
+   speed and close; row two: the seek bar (with back and forward on a
+   phone). A 60-minute edition
+   has to be seekable on the device people listen on. */
 @media (max-width: 900px) {
-  .nn-gp-inner { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .nn-gp-inner { grid-template-columns: 44px minmax(0, 1fr) auto auto; row-gap: 6px; }
   .nn-gp-bar { grid-column: 1 / -1; grid-row: 2; }
-  .nn-gp-side { display: none; }
+  .nn-gp-side { grid-column: 4; grid-row: 1; }
   .nn-gp-cover { width: 44px; height: 44px; }
 }
 @media (max-width: 560px) {
-  .nn-gp-inner { padding: 8px var(--sp-4, 16px); gap: 10px; }
-  .nn-gp-skip { display: none; }
-  .nn-gp-bar { display: none; }
+  .nn-gp-inner { padding: 8px var(--sp-4, 16px); gap: 8px 10px; grid-template-columns: 40px minmax(0, 1fr) auto auto; }
+  .nn-gp-cover { width: 40px; height: 40px; }
+  .nn-gp-ctl .nn-gp-skip { display: none; }
+  .nn-gp-bar { grid-column: 1 / -1; grid-row: 2; grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+  .nn-gp-side { grid-column: 4; grid-row: 1; gap: 4px; }
+  .nn-gp-side .nn-gp-queue { display: none; }
+  .nn-gp-side .nn-gp-btn { min-width: 30px; height: 30px; padding: 0 6px; }
 }
+.nn-gp-bar .nn-gp-skip-sm { display: none; min-width: 30px; height: 28px; padding: 0 6px; }
+@media (max-width: 560px) { .nn-gp-bar .nn-gp-skip-sm { display: inline-flex; } }
+/* The installed app's tab bar already pads the home indicator. */
+html.nn-standalone .nn-gp { padding-bottom: 0; }
 /* The Listen button that stands in for a card's native audio control. */
 .nn-listen { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 6px; border-radius: 999px; border: 0; cursor: pointer;
   background: #fff; color: #0B0F1A; font: 700 0.92rem/1 var(--font-ui); }
@@ -3554,3 +3566,22 @@ html.nn-standalone body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 .nn-watch-mira-l { margin: 0; font-size: clamp(0.8rem, 1.6vw, 0.95rem); color: #cbd5e0; }
 .nn-watch-mira-go { align-self: flex-start; margin-top: 10px; background: #fff; color: #0B0F1A; border-color: #fff; }
 @media (max-width: 560px) { .nn-watch-frame.is-mira { aspect-ratio: 4 / 5; } .nn-watch-mira { grid-template-columns: minmax(0, 1fr); } .nn-watch-mira video { position: absolute; inset: 0; opacity: 0.35; } .nn-watch-mira-txt { position: relative; } }
+
+/* Oct 29 2026: the app offer, a small sheet at the bottom of the page
+   (assets/js/nn-app.js). Above the player and the tab bar, never over the
+   cookie choice. */
+.nn-app-sheet { position: fixed; left: 50%; bottom: calc(var(--nn-player-h, 0px) + var(--nn-tabbar-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 140%); transition: transform 0.28s ease; z-index: 950; width: min(560px, calc(100vw - 24px));
+  display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px 14px; align-items: start; padding: 14px 16px;
+  background: #121829; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 16px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-ui); color: var(--nn-white); }
+.nn-app-sheet.is-open { transform: translate(-50%, 0); }
+.nn-app-sheet img { width: 48px; height: 48px; border-radius: 12px; }
+.nn-app-sheet-h { margin: 0; font-weight: 700; font-size: 1rem; }
+.nn-app-sheet-p { margin: 2px 0 0; font-size: 0.88rem; line-height: 1.45; color: var(--nn-text-muted); }
+.nn-app-sheet-steps { margin: 8px 0 0; padding-left: 1.2em; font-size: 0.88rem; line-height: 1.6; }
+.nn-app-sheet-steps[hidden] { display: none; }
+.nn-app-sheet-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; }
+.nn-app-sheet-more { color: var(--nn-cyan); font-size: 0.86rem; font-weight: 600; }
+.nn-app-sheet .nn-app-x { margin-left: auto; }
+@media (prefers-reduced-motion: reduce) { .nn-app-sheet { transition: none; } }

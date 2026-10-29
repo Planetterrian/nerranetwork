@@ -82,7 +82,9 @@ ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
                      # Oct 28 2026: the web app (assets/js/nn-player.js,
                      # nn-app.js, for-you.js, join.html, add.html).
                      "play_video", "build_lineup_start", "personal_feed_add",
-                     "app_install_prompt", "app_installed", "app_open"]
+                     "app_install_prompt", "app_installed", "app_open",
+                     # Oct 29 2026: the app offer sheet (nn-app.js).
+                     "app_sheet"]
 
 
 def _session():

@@ -26,6 +26,7 @@
  *                                          tokens + prefs, NEVER emails)
  */
 
+import { MEMBER_SYMBOL_RE } from "./markets";
 import {
   BUILD_ETA_MINUTES,
   dispatchAvailable,
@@ -120,6 +121,25 @@ const PROFILE_MAX = 240;
 // Edition length preference, minutes. Mirrors
 // engine.personal_edition.TARGET_MINUTES — drift-guarded.
 export const TARGET_MINUTES = [20, 30, 45, 60] as const;
+// Member tickers (Oct 29 2026): the stocks a member follows, shown live on
+// My Nerra and spoken in the markets minute. Mirrors
+// engine.personal_edition.TICKERS_MAX — drift-guarded. The shape check is
+// markets.ts MEMBER_SYMBOL_RE (one owner in the Worker).
+export const TICKERS_MAX = 8;
+
+/** A member's ticker list: upper-cased, valid shapes only, no duplicates,
+ *  at most TICKERS_MAX, in the member's order. */
+export function cleanTickers(raw: unknown): string[] {
+  const out: string[] = [];
+  if (!Array.isArray(raw)) return out;
+  for (const t of raw) {
+    const s = String(t ?? "").trim().toUpperCase();
+    if (!MEMBER_SYMBOL_RE.test(s) || out.includes(s)) continue;
+    out.push(s);
+    if (out.length >= TICKERS_MAX) break;
+  }
+  return out;
+}
 
 const COOKIE_NAME = "nn_gallery";
 const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
@@ -144,6 +164,7 @@ export interface MemberRecord {
   topics?: string[];   // member-named subjects, ≤ TOPICS_MAX
   profile?: string;    // "Tell Mira about you", ≤ PROFILE_MAX (absent = never saved)
   target_minutes?: number | null; // one of TARGET_MINUTES; null/absent = no budget
+  tickers?: string[];  // member-chosen symbols, ≤ TICKERS_MAX (absent = never saved)
   tier: string;          // "personal" | "personal_local"
   status: string;        // "none" | "active" | "cancelled"
   feed_token?: string;
@@ -306,6 +327,7 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
             addons: member.addons ?? null,
             profile: member.profile ?? "",
             target_minutes: member.target_minutes ?? null,
+            tickers: member.tickers ?? null,
           }
         : null,
       tier: member?.tier || "none",
@@ -581,6 +603,11 @@ export async function handlePreferences(
     targetMinutes = (TARGET_MINUTES as readonly number[]).includes(n) ? n : null;
   }
 
+  // Oct 29 2026 — tickers: absent = untouched; an array (even empty)
+  // replaces the stored list.
+  let tickers: string[] | undefined;
+  if (body?.tickers !== undefined) tickers = cleanTickers(body.tickers);
+
   const existing: MemberRecord = stored || {
     shows: [], first_name: "", city: "", tier: "none", status: "none",
     // A record started by an unverified session stays editable by that
@@ -598,6 +625,7 @@ export async function handlePreferences(
     ...(addons !== undefined ? { addons } : {}),
     ...(profile !== undefined ? { profile } : {}),
     ...(targetMinutes !== undefined ? { target_minutes: targetMinutes } : {}),
+    ...(tickers !== undefined ? { tickers } : {}),
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
@@ -606,6 +634,7 @@ export async function handlePreferences(
     addons: addons !== undefined ? addons : (existing as MemberRecord).addons ?? null,
     profile: rec.profile ?? "",
     target_minutes: rec.target_minutes ?? null,
+    tickers: rec.tickers ?? null,
   } });
 }
 
@@ -1203,6 +1232,9 @@ export async function handleAdminSpecs(
           // builder re-scrubs and re-validates both (validate_spec).
           ...(rec.profile ? { profile: rec.profile } : {}),
           ...(rec.target_minutes ? { target_minutes: rec.target_minutes } : {}),
+          // Oct 29 2026: the stocks the markets minute speaks. The builder
+          // re-validates the shapes (validate_spec).
+          ...(rec.tickers !== undefined ? { tickers: rec.tickers } : {}),
           default_lineup: (rec.shows?.length ?? 0) < 2,
         });
       }

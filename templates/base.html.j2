@@ -2,7 +2,7 @@
 <html lang="{{ page_lang | default('en') }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     {#- Runs before fonts, consent, and analytics. 404.html uses this so a
         mis-copied path can location.replace before page_not_found fires. -#}
     {% block head_early %}{% endblock %}
@@ -146,10 +146,10 @@
     <script defer data-domain="{{ marketing.plausible_domain }}" src="https://plausible.io/js/script.js"></script>
     {% endif %}
     {# Tracking event helper — safe no-op when no analytics configured #}
-    <script defer src="{{ path_prefix }}assets/js/tracking.js"></script>
+    <script defer src="{{ path_prefix }}{{ asset_v("assets/js/tracking.js") }}"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <link rel="stylesheet" href="{{ path_prefix }}{{ asset_v("styles/main.css") }}">
 
     {% block head_extra %}{% endblock %}
 
@@ -753,12 +753,12 @@
                 iPhone Safari, how to add it), never inside the installed app. -#}
             <div class="nn-app-card nn-footer-app" data-nn-install hidden>
                 <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
-                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap. <a href="{{ path_prefix }}app.html">How it works</a></p>
                 <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
             </div>
             <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
                 <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
-                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories. <a href="{{ path_prefix }}app.html">How it works</a></p>
             </div>
             <div class="nn-footer-bottom">
                 <span>{{ t.copyright_line }}</span>
@@ -768,6 +768,7 @@
                 <p class="ai-notice">{{ t.ai_notice }} <a href="{{ path_prefix }}ai-disclosure.html">{{ t.learn_more }}</a></p>
                 <div>
                     <a href="{{ path_prefix }}support.html">Support the network</a> &middot;
+                    <a href="{{ path_prefix }}app.html">Get the app</a> &middot;
                     <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy }}</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">{{ t.footer_cookie_settings }}</a> &middot;
                     <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms }}</a> &middot;
@@ -862,14 +863,15 @@
     {% block scripts %}{% endblock %}
 
     <!-- Centralized, improved global search -->
-    <script src="{{ path_prefix }}assets/js/search.js" defer></script>
-    <script src="{{ path_prefix }}assets/js/language-control.js" defer></script>
-    <script src="{{ path_prefix }}assets/js/footer-subscribe.js" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/search.js") }}" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/language-control.js") }}" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/footer-subscribe.js") }}" defer></script>
     {#- Oct 28 2026: the site's one player (resumes across pages, plays a
         card's episode and an episode's video inside the page) and the web
         app layer (service worker, install, the installed app's tab bar). -#}
-    <script src="{{ path_prefix }}assets/js/nn-player.js" defer></script>
-    <script src="{{ path_prefix }}assets/js/nn-app.js" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/nn-markets.js") }}" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/nn-player.js") }}" defer></script>
+    <script src="{{ path_prefix }}{{ asset_v("assets/js/nn-app.js") }}" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

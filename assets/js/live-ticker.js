@@ -10,6 +10,11 @@
  *    textContent: nothing from the network becomes markup.
  * 2. Headlines. The Latest row re-reads this page's own newest build (the
  *    site regenerates it after every show) and swaps in its headlines.
+ * 1b. Your stocks (Oct 29 2026). A member's own tickers (their account) or a
+ *    visitor's (this browser, localStorage nnMe.tickers, via
+ *    assets/js/nn-markets.js) join the strip as a "Your stocks" group; the
+ *    strip's "+ Your stocks" control adds one (a visitor's list becomes
+ *    their account's when they make one; a member edits theirs on My Nerra).
  * 3. Motion. A row wider than its box moves as a tape (its own scroll
  *    position advances, so it can still be swiped). It pauses on hover, on
  *    keyboard focus, on touch, with its Pause button and in a hidden tab,
@@ -148,6 +153,88 @@
     });
     if (!symbols.length) return;
     var timer = null;
+    var mine = [];          // the reader's own stocks, beyond the strip's list
+    var isMember = false;
+
+    function readMine() {
+      var M = window.NNMarkets;
+      if (!M) return Promise.resolve([]);
+      var local = M.stored();
+      return (window.nnAccount || Promise.resolve(null)).then(function (acct) {
+        var prefs = acct && acct.member && acct.member.preferences;
+        isMember = !!(acct && acct.member && !acct.verify_required);
+        if (prefs && Array.isArray(prefs.tickers) && prefs.tickers.length) return M.clean(prefs.tickers);
+        return local;
+      }).catch(function () { return local; });
+    }
+
+    function renderMine(quotes) {
+      Array.prototype.slice.call(ul.querySelectorAll('[data-mine]')).forEach(function (n) { n.remove(); });
+      var M = window.NNMarkets;
+      // A stock the strip already shows is not repeated.
+      var got = mine.filter(function (s) { return quotes[s] && symbols.indexOf(s) < 0; });
+      if (!M || !got.length) return;
+      var li = el('li', 'lt-mk-group lt-mk-mine');
+      li.setAttribute('data-quotes', '');
+      li.setAttribute('data-mine', '');
+      li.appendChild(el('span', 'lt-mk-label', 'Your stocks · ' + M.when(quotes[got[0]])));
+      got.forEach(function (sym) {
+        var q = quotes[sym];
+        var s = el('span', 'lt-quote is-' + M.dir(q));
+        s.setAttribute('data-symbol', sym);
+        s.appendChild(el('b', 'lt-quote-sym', sym));
+        s.appendChild(document.createTextNode(' '));
+        s.appendChild(el('span', 'lt-quote-px', M.price(q)));
+        var c = M.change(q);
+        if (c) { s.appendChild(document.createTextNode(' ')); s.appendChild(el('span', 'lt-quote-chg', c)); }
+        li.appendChild(s);
+      });
+      var launch = ul.querySelector('.lt-launch:not([data-tape-copy])');
+      ul.insertBefore(li, launch || null);
+    }
+
+    function addControl() {
+      if (!window.NNMarkets || aside.querySelector('.lt-mk-add')) return;
+      var btn = el('button', 'lt-mk-add', '+ Your stocks');
+      btn.type = 'button';
+      btn.setAttribute('aria-expanded', 'false');
+      var form = el('form', 'lt-mk-form');
+      form.hidden = true;
+      var lab = el('label', 'sr-only', 'Add a stock by its ticker');
+      lab.setAttribute('for', 'lt-mk-input');
+      var inp = el('input', '');
+      inp.id = 'lt-mk-input'; inp.type = 'text'; inp.maxLength = 12; inp.autocomplete = 'off';
+      inp.setAttribute('autocapitalize', 'characters'); inp.spellcheck = false;
+      inp.placeholder = 'Ticker: NVDA, SHOP.TO';
+      var go = el('button', '', 'Add'); go.type = 'submit';
+      var msg = el('span', 'lt-mk-msg'); msg.setAttribute('role', 'status');
+      form.appendChild(lab); form.appendChild(inp); form.appendChild(go); form.appendChild(msg);
+      btn.addEventListener('click', function () {
+        if (isMember) { window.location.href = (aside.getAttribute('data-account') || 'account.html') + '#nn-markets'; return; }
+        form.hidden = !form.hidden;
+        btn.setAttribute('aria-expanded', form.hidden ? 'false' : 'true');
+        if (!form.hidden) inp.focus();
+      });
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        var M = window.NNMarkets;
+        var sym = String(inp.value || '').trim().toUpperCase().replace(/^\$/, '');
+        if (!M.valid(sym)) { msg.textContent = 'Not a ticker shape we know.'; return; }
+        var list = M.stored();
+        if (list.indexOf(sym) !== -1) { msg.textContent = 'Already on your list.'; return; }
+        if (list.length >= M.MAX) { msg.textContent = 'Up to ' + M.MAX + '. Edit them on My Nerra.'; return; }
+        msg.textContent = 'Looking up ' + sym + '…';
+        M.get([sym]).then(function (r) {
+          if (!r.quotes[sym]) { msg.textContent = r.unknown.indexOf(sym) !== -1 ? 'No quote for ' + sym + '.' : 'No quote right now; try again shortly.'; return; }
+          list.push(sym); M.store(list); mine = list; inp.value = '';
+          msg.textContent = 'Added. Saved in this browser; a free account keeps them everywhere.';
+          tick();
+        });
+      });
+      var more = aside.querySelector('.lt-markets-more');
+      aside.insertBefore(btn, more || null);
+      aside.insertBefore(form, more || null);
+    }
 
     function render(quotes) {
       // Group by what the value is: live now, or a close on its own day.
@@ -222,20 +309,30 @@
       clearTimeout(timer);
       timer = null;
       if (!visible()) return;
-      var url = api + (api.indexOf('?') < 0 ? '?' : '&') + 'symbols=' + encodeURIComponent(symbols.join(','));
+      // The network's own symbols go in symbols=; anything else in extra=
+      // (the Worker fetches and caches each one on its own).
+      var NET = ['TSLA', 'NVDA', 'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'SPCX'];
+      var asked = symbols.concat(mine.filter(function (s) { return symbols.indexOf(s) < 0 && NET.indexOf(s) >= 0; }));
+      var extra = mine.filter(function (s) { return asked.indexOf(s) < 0; });
+      var url = api + (api.indexOf('?') < 0 ? '?' : '&') + 'symbols=' + encodeURIComponent(asked.join(','))
+        + (extra.length ? '&extra=' + encodeURIComponent(extra.join(',')) : '');
       fetch(url, {mode: 'cors', credentials: 'omit'})
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (body) {
-          var quotes = body && Array.isArray(body.quotes) ? body.quotes.filter(function (q) {
+          var all = body && Array.isArray(body.quotes) ? body.quotes : [];
+          var byMine = {};
+          all.forEach(function (q) { if (q && mine.indexOf(q.symbol) >= 0 && q.price > 0 && q.as_of) byMine[q.symbol] = q; });
+          var quotes = all.filter(function (q) {
             return q && symbols.indexOf(q.symbol) >= 0 && q.price > 0 && q.as_of;
-          }) : [];
-          if (!quotes.length) return;
+          });
+          if (!quotes.length) { renderMine(byMine); if (tape) tape.refresh(); return; }
           quotes.sort(function (a, b) { return symbols.indexOf(a.symbol) - symbols.indexOf(b.symbol); });
           if (render(quotes)) {
             aside.classList.add('is-live-data');
             flagships(quotes);
-            if (tape) tape.refresh();
           }
+          renderMine(byMine);
+          if (tape) tape.refresh();
           // A closed market changes slowly: look again in ten minutes.
           var live = quotes.some(function (q) { return q.state === 'live'; });
           timer = setTimeout(tick, live ? every : Math.max(every, 600000));
@@ -244,7 +341,10 @@
         .then(function () { if (!timer && visible()) timer = setTimeout(tick, every); });
     }
     document.addEventListener('visibilitychange', function () { if (visible()) tick(); else clearTimeout(timer); });
-    tick();
+    // nn-markets.js loads deferred from the base template, after this file:
+    // every deferred script has run by DOMContentLoaded.
+    var start = function () { readMine().then(function (list) { mine = list; addControl(); tick(); }); };
+    if (window.NNMarkets) start(); else document.addEventListener('DOMContentLoaded', start, {once: true});
   }
 
   /* ---------------- Live headlines ---------------- */

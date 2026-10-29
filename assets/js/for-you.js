@@ -125,6 +125,28 @@
       });
       var paid = m && m.status === 'active';
       band.querySelector('[data-nn-you-upsell]').hidden = !!paid;
+      // Oct 29 2026: a paying member's own edition, from their private feed
+      // (the newest item), played by the site player.
+      if (paid && m.feed_url && window.DOMParser) { edition(m.feed_url); }
+    }).catch(function () {});
+  }
+  function edition(feedUrl) {
+    var btn = band.querySelector('[data-nn-you-edition]');
+    if (!btn || !/^https:\/\/api\.nerranetwork\.com\/api\/feed\//.test(feedUrl)) { return; }
+    fetch(feedUrl, { credentials: 'omit' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (xml) {
+      if (!xml) { return; }
+      var doc = new DOMParser().parseFromString(xml, 'text/xml');
+      var item = doc.querySelector('item');
+      var enc = item && item.querySelector('enclosure');
+      var url = enc && safeUrl(enc.getAttribute('url'));
+      if (!url) { return; }
+      var title = (item.querySelector('title') || {}).textContent || 'Your edition';
+      btn.hidden = false;
+      btn.addEventListener('click', function () {
+        if (!window.NNPlayer) { return; }
+        NNPlayer.start([{ key: url, url: url, title: title, show: 'Your Nerra edition',
+          cover: prefix + 'assets/covers/nerra-daily.jpg', post: prefix + 'account.html#nn-edition', color: '#6B47FF' }], 0);
+      });
     }).catch(function () {});
   }
   function start() {

@@ -9,6 +9,8 @@ import {
   handleDownload,
   handleLogin,
   handleMagic,
+  handleLoginCode,
+  LOGIN_CODE_TRIES,
   handleSubscribe,
   handleSubscribeCounts,
   isSafeKey,
@@ -951,5 +953,59 @@ describe("POST /api/logout", () => {
     expect(sc).toContain("nn_gallery=;");
     expect(sc).toContain("Max-Age=0");
     expect(sc).toContain("HttpOnly");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// /api/login-code (Oct 29 2026): the sign-in email's code, for the installed
+// app, which keeps its own cookies (an emailed link opens in the browser).
+// ---------------------------------------------------------------------------
+
+describe("POST /api/login-code", () => {
+  async function emailCode(env: Env) {
+    const deps = makeDeps();
+    await handleLogin(makeRequest("GET",
+      "https://api.nerranetwork.com/api/login?email=alice%40example.com"), env, deps);
+    const html = (deps.resend.sendEmail as any).mock.calls[0][2].html as string;
+    const text = (deps.resend.sendEmail as any).mock.calls[0][2].text as string;
+    const m = /Type this code there instead: (\d{6})/.exec(text);
+    expect(m).not.toBeNull();
+    expect(html).toContain(m![1].slice(0, 3) + " " + m![1].slice(3));
+    return m![1];
+  }
+  const post = (body: object) => new Request("https://api.nerranetwork.com/api/login-code", {
+    method: "POST", headers: { "Content-Type": "application/json", Origin: "https://nerranetwork.com" },
+    body: JSON.stringify(body),
+  });
+
+  it("the emailed code signs in once, with a verified cookie", async () => {
+    const env = makeEnv({ RATE_LIMIT_KV: makeKv() });
+    const code = await emailCode(env);
+    const ok = await handleLoginCode(post({ email: "Alice@example.com", code }), env, makeDeps());
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get("Set-Cookie")).toMatch(/nn_gallery=/);
+    const again = await handleLoginCode(post({ email: "alice@example.com", code }), env, makeDeps());
+    expect(again.status).toBe(401);
+  });
+
+  it("five wrong guesses and the code is gone", async () => {
+    const store: Record<string, string> = {};
+    const env = makeEnv({ RATE_LIMIT_KV: makeKv(store) });
+    const code = await emailCode(env);
+    const wrong = code === "000000" ? "111111" : "000000";
+    for (let i = 0; i < LOGIN_CODE_TRIES; i++) {
+      const r = await handleLoginCode(post({ email: "alice@example.com", code: wrong }), env, makeDeps());
+      expect(r.status).toBe(401);
+    }
+    expect(Object.keys(store).some((k) => k.startsWith("login-code:"))).toBe(false);
+    const late = await handleLoginCode(post({ email: "alice@example.com", code }), env, makeDeps());
+    expect(late.status).not.toBe(200);   // gone (401), or this address's IP is rate limited (429)
+  });
+
+  it("is stored hashed, never as the code", async () => {
+    const store: Record<string, string> = {};
+    const env = makeEnv({ RATE_LIMIT_KV: makeKv(store) });
+    const code = await emailCode(env);
+    expect(JSON.stringify(store)).not.toContain(code);
   });
 });
