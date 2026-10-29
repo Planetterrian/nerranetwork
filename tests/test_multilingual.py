@@ -506,7 +506,7 @@ class TestAutoGeneration:
         # Mock out the network/heavy calls.
         monkeypatch.setattr(translate, "translate_script", lambda s, lang, **k: f"[{lang}]script")
         monkeypatch.setattr(translate, "translate_metadata", lambda t, d, lang, **k: (f"T{lang}", f"D{lang}"))
-        monkeypatch.setattr(multilingual, "render_track",
+        monkeypatch.setattr(multilingual, "render_mastered_track",
                             lambda *a, **k: Path(a[4]).write_bytes(b"x"))
         monkeypatch.setattr(multilingual, "ffprobe_duration", lambda *a, **k: 120.0)
         # Sep 22 2026: the shadow spoken-text gate Whispers every track —
@@ -779,7 +779,7 @@ class TestDubSpokenTextGate:
         monkeypatch.setattr(translate, "translate_script",
                             lambda s, lang, **k: "Bonjour et bienvenue sur le podcast. " * 12)
         monkeypatch.setattr(translate, "translate_metadata", lambda t, d, lang, **k: ("T", "D"))
-        monkeypatch.setattr(multilingual, "render_track",
+        monkeypatch.setattr(multilingual, "render_mastered_track",
                             lambda *a, **k: Path(a[4]).write_bytes(b"x"))
         monkeypatch.setattr(multilingual, "ffprobe_duration", lambda *a, **k: 120.0)
         monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))

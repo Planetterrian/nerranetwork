@@ -355,6 +355,11 @@ class AudioConfig:
     # _voice_norm_full_cmd docstring). Per-show opt-out:
     # ``audio.voice_denoise: false`` restores the pre-July-16 chain.
     voice_denoise: bool = True
+    # Oct 29 2026: ``adeclick`` strength in the voice chain
+    # (``engine.audio.DECLICK_FILTERS``). ``strong`` on the shows Mira
+    # hosts: her Grok voice leaves ~1 click a minute through the standard
+    # pass. Patrick's voice measures clean and stays ``standard``.
+    voice_declick: str = "standard"
     # Oct 13 2026 (engine/story_breaks.py): seconds of silence spliced into
     # the voice track where a new story starts, before the music mix. 0 =
     # off (the dataclass default — the exact pre-change audio); the network

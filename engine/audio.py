@@ -109,7 +109,21 @@ def _voice_norm_codec_args(output_path: str) -> list:
     return ["-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast"]
 
 
-def voice_chain_filters(*, denoise: bool = True) -> str:
+#: ``adeclick`` settings by strength. ``standard`` is ffmpeg's default (the
+#: July 2026 chain). ``strong`` is the setting the Age of AI chain has used on
+#: guest speech since October (``pipelines/voices/assemble_edit.RESTORE``):
+#: Mira's Grok voice (``ara``) leaves ~1 transient click a minute through
+#: the standard pass (Top World Ep037: 10 in 7.6 min against 1 in 9.8 min of
+#: Patrick on SpaceX Ep145); ``strong`` measured 10 -> 3 on that episode.
+#: It also touches ~3% of samples of clean speech, so it is chosen per
+#: voice, never for the whole network (Oct 29 2026).
+DECLICK_FILTERS = {
+    "standard": "adeclick",
+    "strong": "adeclick=w=75:t=2",
+}
+
+
+def voice_chain_filters(*, denoise: bool = True, declick: str = "standard") -> str:
     """The network's voice cleanup chain as one ffmpeg ``-af`` string.
 
     One owner for every voice the network publishes: the show voices go
@@ -133,7 +147,8 @@ def voice_chain_filters(*, denoise: bool = True) -> str:
         # silence boundary at the very end of the voice file.
         "afade=t=in:st=0:d=0.05:curve=tri,"
         "highpass=f=80,lowpass=f=15000,"
-        + ("adeclick,afftdn=nr=9:nf=-42:tn=1," if denoise else "")
+        + (f"{DECLICK_FILTERS.get(declick, 'adeclick')},afftdn=nr=9:nf=-42:tn=1,"
+           if denoise else "")
         + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95"
@@ -141,7 +156,7 @@ def voice_chain_filters(*, denoise: bool = True) -> str:
 
 
 def _voice_norm_full_cmd(voice_in: str, voice_out: str,
-                         *, denoise: bool = True) -> list:
+                         *, denoise: bool = True, declick: str = "standard") -> list:
     """Build the voice normalization ffmpeg command.
 
     Order matters — each stage operates on the output of the previous:
@@ -198,7 +213,7 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str,
       sounded like clipping on enthusiastic delivery. +1 dB keeps
       perceived loudness without slamming the limiter.
     """
-    filters = voice_chain_filters(denoise=denoise)
+    filters = voice_chain_filters(denoise=denoise, declick=declick)
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af", filters,
@@ -220,7 +235,7 @@ def _voice_norm_fallback_cmd(voice_in: str, voice_out: str) -> list:
 
 
 def normalize_voice(input_path: Path, output_path: Path,
-                    *, denoise: bool = True) -> Path:
+                    *, denoise: bool = True, declick: str = "standard") -> Path:
     """Normalize voice audio with a multi-stage filter chain.
 
     Tries the full chain (highpass -> lowpass -> declick/denoise ->
@@ -242,7 +257,7 @@ def normalize_voice(input_path: Path, output_path: Path,
     try:
         logger.info("Attempting voice normalization with full filter chain...")
         cmd = _voice_norm_full_cmd(str(input_path), str(output_path),
-                                   denoise=denoise)
+                                   denoise=denoise, declick=declick)
         subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
         logger.info("Voice normalization (full chain) succeeded.")
     except subprocess.CalledProcessError:
@@ -252,6 +267,37 @@ def normalize_voice(input_path: Path, output_path: Path,
         logger.info("Voice normalization (fallback) succeeded.")
 
     return output_path
+
+
+#: The network's published loudness (Apple Podcasts / Spotify spec), the
+#: same target ``_final_mix_cmd`` masters every show to.
+PUBLISHED_LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+
+def master_voice_track(input_path: Path, output_path: Path, *,
+                       declick: str = "standard") -> Path:
+    """A voice-only track finished like a show: the voice chain, then the
+    published -16 LUFS. For audio that reaches a listener without going
+    through :func:`mix_with_music` (the translated tracks).
+
+    Oct 29 2026: the FR/RU/ES tracks shipped Grok's raw output, measured at
+    -26 LUFS against the English episodes' -16, so every per-language feed
+    and every @NerraRU / @NerraFR dub played 10 dB quiet (YouTube turns a
+    quiet video down never up), with no declick or denoise. A ``.mp3``
+    output is encoded once at ``-q:a 0``; a ``.wav`` stays PCM.
+    """
+    out = str(output_path)
+    codec = (["-c:a", "pcm_s16le"] if out.lower().endswith(".wav")
+             else ["-c:a", "libmp3lame", "-q:a", "0"])
+    duration = get_audio_duration(Path(input_path)) or 0.0
+    subprocess.run(
+        ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(input_path),
+         "-af", voice_chain_filters(declick=declick) + "," + PUBLISHED_LOUDNESS,
+         "-ar", "44100", "-ac", "1", *codec, out],
+        check=True, capture_output=True, timeout=max(600, int(duration * 3) + 120),
+    )
+    _audio_duration_cache.pop(Path(output_path), None)
+    return Path(output_path)
 
 
 # ---------------------------------------------------------------------------
@@ -936,6 +982,7 @@ def mix_with_music(
     outro_crossfade: float = 0.0,
     outro_fade_out_duration: float = 6.0,
     denoise: bool = True,
+    declick: str = "standard",
     breathers: Optional[Sequence[float]] = None,
     breather_volume: float = BREATHER_VOLUME,
 ) -> Path:
@@ -979,7 +1026,7 @@ def mix_with_music(
     """
     if not music_path.exists():
         logger.warning("Music file %s not found — returning voice-only.", music_path)
-        return normalize_voice(voice_path, output_path, denoise=denoise)
+        return normalize_voice(voice_path, output_path, denoise=denoise, declick=declick)
 
     # Voice file must exist AND be non-empty before we hand it to ffmpeg.
     # A 0-byte / missing voice file produces a cryptic ffmpeg error
@@ -1011,7 +1058,7 @@ def mix_with_music(
 
         # Normalize voice to lossless WAV — MP3 encoding happens once in final mix
         voice_mix = tmp_dir / "voice_normalized_mix.wav"
-        normalize_voice(voice_path, voice_mix, denoise=denoise)
+        normalize_voice(voice_path, voice_mix, denoise=denoise, declick=declick)
 
         # --- Apply voice intro delay if configured ---
         effective_voice_duration = voice_duration

@@ -891,15 +891,16 @@ def segment_trim_cmd(
 def mira_piece_cmd(in_path: Path, out_path: Path) -> List[str]:
     """Process one raw Mira TTS piece to match the segments: the network's
     voice cleanup chain (the shows' own, ``engine.audio.voice_chain_filters``
-    — declick, denoise, compression, limiter), loudness to the -16 LUFS
-    spec, breathing room either side, 44.1 kHz stereo lossless.
+    — declick at the strong setting her voice needs, denoise, compression,
+    limiter), loudness to the -16 LUFS spec, breathing room either side,
+    44.1 kHz stereo lossless.
 
     Oct 29 2026: her pieces had loudness only, and her raw Grok audio
     carried onset clicks and a hissier pause floor than any show's."""
     from engine.audio import voice_chain_filters
 
     filters = (
-        voice_chain_filters()
+        voice_chain_filters(declick="strong")
         + ",loudnorm=I=-16:TP=-1.5:LRA=11,"
         "adelay=350:all=1,apad=pad_dur=0.45"
     )

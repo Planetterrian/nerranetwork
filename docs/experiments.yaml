@@ -5845,3 +5845,30 @@ experiments:
       audio and attaches every stage old and new, plus a stronger-denoise
       variant that is NOT shipped. Guards: tests/test_audio_quality_2026_10_29.py.
       AUDIO — listen to the probe and the first edition.
+  - id: audio-tracks-and-mira-declick-2026-10-29
+    title: "Translated tracks mastered like the English episodes; strong declick on every Mira-voiced show"
+    area: audio
+    shipped: 2026-10-29
+    readout: 2026-11-12
+    status: reading
+    baseline: >
+      The FR/RU/ES tracks were Grok's raw output with no processing: SpaceX
+      Ep145 FR -25.9 LUFS and FF FR -26.1 against -16.5 on the English
+      episode. Those files feed the per-language podcast feeds and the
+      @NerraRU / @NerraFR dubs. Mira's voice through the standard declick
+      left in-speech clicks: Vancouver Ep024 7 in 656 s, Vancouver Ep037
+      12, Top World Ep037 10, Collingwood Ep005 3. The Patrick shows read
+      0-1 (SpaceX Ep145, Tesla Ep636, MAG 7 Ep024, Omni View Ep207).
+    target: >
+      Translated tracks at -16 LUFS (+/-1.5) with the network voice chain.
+      Mira-voiced shows under one in-speech click per two minutes on the
+      same detector. The operator's listen hears no click on Vancouver or
+      a desk.
+    notes: >
+      engine.audio.master_voice_track (chain + PUBLISHED_LOUDNESS) via
+      engine.multilingual.render_mastered_track; engine.audio.DECLICK_FILTERS
+      ("strong" = adeclick=w=75:t=2, the Voices restore setting; Top World
+      Ep037 10 -> 3 click events); audio.voice_declick in the eight Mira show
+      YAMLs and in mira_piece_cmd. Not changed: audiobook chapter tracks are
+      raw Grok audio already submitted to stores (operator decision).
+      Guards: tests/test_audio_quality_2026_10_29.py. AUDIO.

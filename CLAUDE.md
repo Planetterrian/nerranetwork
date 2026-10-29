@@ -7444,6 +7444,21 @@ needs the article (AI Chips Ep038: "from Narin Network").
 ⚠️ AUDIO on Nerra Daily, Personal and every story pause: listen to the probe
 and the first edition.
 
+**Same day, the other shows** (register `audio-tracks-and-mira-declick-2026-10-29`):
+- **A translated track is mastered like the English episode**
+  (`engine.multilingual.render_mastered_track` → `engine.audio.master_voice_track`:
+  the voice chain, then `PUBLISHED_LOUDNESS` -16 LUFS). The FR/RU/ES tracks
+  had shipped Grok's raw audio at -26 LUFS with no declick or denoise, into
+  the language feeds and both dub channels.
+- **Mira's voice gets the strong declick** (`engine.audio.DECLICK_FILTERS`,
+  `"strong"` = `adeclick=w=75:t=2`, the Voices restore setting). It is set by
+  `audio.voice_declick: strong` in the eight show YAMLs she hosts, and in
+  `mira_piece_cmd`. A new Mira show sets it too: a guard compares the setting
+  with the `ara` voice. The standard declick left her ~1 click a minute; the
+  Patrick shows read 0-1 an episode and stay on it.
+- Not changed: audiobook chapter tracks are raw Grok audio already submitted
+  to stores. Mastering them is the operator's call.
+
 ### The front page, Nerra Personal and the video links (Oct 28 2026)
 
 Review [`docs/reviews/landing_personal_youtube_2026_10_28.md`](docs/reviews/landing_personal_youtube_2026_10_28.md);
