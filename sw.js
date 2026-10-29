@@ -21,7 +21,7 @@
  * Bump VERSION when this file's behaviour changes; old caches are deleted on
  * activate. A broken worker is replaced by publishing a new sw.js.
  */
-var VERSION = 'nn-2026-10-29';
+var VERSION = 'nn-2026-10-29b';
 var PAGES = VERSION + '-pages';
 var STATIC = VERSION + '-static';
 var DATA = VERSION + '-data';

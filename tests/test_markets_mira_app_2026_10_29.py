@@ -260,7 +260,9 @@ class TestEveryPageIsTheApp:
         assert "if (html.indexOf('assets/js/nn-app.js') !== -1) { return res; }" in sw
         for js in ("nn-markets.js", "nn-player.js", "nn-app.js"):
             assert f'<script src="/assets/js/{js}" defer></script>' in sw
-        assert "var VERSION = 'nn-2026-10-29';" in sw
+        # Bumped (never reset) whenever an injected script changes, so an
+        # installed app drops the cached copy: nn-2026-10-29b added Read.
+        assert "var VERSION = 'nn-2026-10-29" in sw
 
     def test_the_bar_has_back_and_lights_the_section(self):
         js = _read("assets/js/nn-app.js")

@@ -103,6 +103,12 @@
         .me-ed-list { list-style: none; margin: 0; padding: 0; }
         .me-ed-list li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--lt-rule); }
         .me-ed-list li:last-child { border-bottom: 0; }
+        .me-ed-list li { grid-template-columns: auto minmax(0, 1fr) auto; }
+        .me-ed-notes { grid-column: 1 / -1; font-family: var(--font-ui); font-size: 0.88rem; line-height: 1.55; color: var(--nn-text-secondary, #c8cfe0);
+            background: rgba(255,255,255,0.03); border: 1px solid var(--lt-rule); border-radius: 12px; padding: 12px 16px; }
+        .me-ed-notes p { margin: 0 0 8px; } .me-ed-notes ol, .me-ed-notes ul { margin: 0 0 10px; padding-left: 1.2em; }
+        .me-ed-notes a { color: var(--nn-cyan); }
+        .me-ed-notes li { display: list-item; padding: 2px 0; border: 0; } .me-ed-notes small { color: var(--lt-muted); }
         .me-ed-list .t { font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600; color: var(--nn-white); line-height: 1.3; }
         .me-ed-list .d { font-family: var(--font-ui); font-size: 0.78rem; color: var(--lt-muted); }
         .me-feedurl { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.76rem; word-break: break-all; background: rgba(0,0,0,0.28); border: 1px solid var(--lt-rule); padding: 0.55rem 0.75rem; border-radius: 8px; margin: 0 0 var(--sp-2); color: var(--lt-ink); }
@@ -120,6 +126,7 @@
             background: color-mix(in srgb, var(--show-color, var(--nn-purple)) 30%, rgba(255,255,255,0.04)); border: 1px solid color-mix(in srgb, var(--show-color, var(--nn-purple)) 60%, transparent);
             border-radius: 999px; padding: 5px 12px 5px 9px; cursor: pointer; line-height: 1.2; }
         .me-play:hover { filter: brightness(1.15); }
+        .me-acts { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .me-play .ic { width: 0; height: 0; border-left: 8px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
         .me-play.is-playing .ic { width: 8px; height: 10px; border: 0; border-left: 3px solid currentColor; border-right: 3px solid currentColor; }
         .me-play.is-round { width: 36px; height: 36px; padding: 0; justify-content: center; }
@@ -432,6 +439,7 @@
                         </div>
                         <div class="me-ed-actions">
                             <button type="button" class="lt-btn me-btn-grad" id="nn-ed-play" hidden onclick="NN.playEdition(0)"><span aria-hidden="true">▶</span> Play your edition <span class="me-len" id="nn-ed-len"></span></button>
+                            <button type="button" class="lt-btn" id="nn-ed-read" hidden data-ed-notes="0" aria-expanded="false" aria-controls="nn-ed-notes-0">Read today's notes</button>
                             <button type="button" class="lt-btn" id="nn-build-btn" hidden onclick="NN.rebuild()">Build my edition now</button>
                             <button type="button" class="lt-btn" id="nn-portal-btn" hidden onclick="NN.portal()">Manage plan &amp; billing</button>
                         </div>
@@ -928,6 +936,14 @@ var NN = (function () {
       + (round ? '' : (s.duration_s ? '<span class="me-len">' + mins(s.duration_s) + ' min</span>' : 'Play')) + '</button>'
       + (played ? ' <span class="me-played">Played</span>' : '');
   }
+  // Read (Oct 29 2026): the episode's article (story, sources, transcript)
+  // as a pill beside Play, never only a text link.
+  function readBtn(s, round) {
+    var href = safeUrl(s.post_url);
+    if (!href) { return ''; }
+    return '<a class="nn-read' + (round ? ' is-round' : '') + '" href="' + esc(href) + '" aria-label="Read ' + esc(showName(s.slug))
+      + ' episode ' + esc(s.episode_num) + '"><span class="ic" aria-hidden="true"></span>' + (round ? '' : 'Read') + '</a>';
+  }
   function kicker(s, hub) {
     return '<p class="lt-kicker">' + (hub && s.hub_heading ? '<span class="lt-hub">' + esc(s.hub_heading) + '</span>' : '')
       + '<a href="' + esc(safeUrl(s.show_page) || '#') + '">' + esc(showName(s.slug)) + '</a></p>';
@@ -937,8 +953,7 @@ var NN = (function () {
   }
   function meta(s) {
     return '<div class="lt-meta"><span class="lt-when">' + whenHtml(s) + '</span>'
-      + (s.post_url ? '<span class="lt-dot" aria-hidden="true">•</span><a href="' + esc(storyHref(s)) + '">Read</a>' : '')
-      + watchLink(s) + playBtn(s, false) + '</div>';
+      + watchLink(s) + playBtn(s, false) + readBtn(s, false) + '</div>';
   }
   function videoOf(s) {
     var v = s.videos || {};
@@ -1045,7 +1060,7 @@ var NN = (function () {
         + (rail.length ? rail.slice(0, 8).map(function (s) {
             return '<li style="--show-color:' + esc(showColor(s.slug)) + ';"><p class="lt-kicker"><a href="' + esc(safeUrl(s.show_page) || '#') + '">'
               + esc(showName(s.slug)) + '</a> <span class="lt-rail-when">' + whenHtml(s) + '</span></p>' + hl(s, 'h4')
-              + '<div style="margin-top:6px;">' + playBtn(s, false) + '</div></li>';
+              + '<div class="me-acts" style="margin-top:6px;">' + playBtn(s, false) + readBtn(s, false) + '</div></li>';
           }).join('') : '<li><p class="me-p me-muted" style="margin:0;">Add more shows to fill this column.</p></li>')
         + '</ol></aside></div>';
       var rest = latest.filter(function (s) { return s !== lead; });
@@ -1103,7 +1118,7 @@ var NN = (function () {
       return '<li style="--show-color:' + esc(showColor(s.slug)) + ';">'
         + '<img src="' + esc(safeUrl(s.image_url) || coverSrc(s.slug)) + '" alt="" width="56" height="56" loading="lazy">'
         + '<div>' + '<p class="lt-kicker">' + esc(showName(s.slug)) + ' <span class="lt-rail-when">' + whenHtml(s) + '</span></p>' + hl(s, 'h3') + '</div>'
-        + playBtn(s, true) + '</li>';
+        + '<span class="me-acts">' + playBtn(s, true) + readBtn(s, true) + '</span></li>';
     }).join('');
   }
 
@@ -1467,6 +1482,53 @@ var NN = (function () {
       }).catch(function () {});
   }
 
+  // Read (Oct 29 2026): an edition's written notes, from its own feed item
+  // (the running order with timestamps, the sources each brief named, and a
+  // link to every story's article). Rebuilt from an allow-list of tags with
+  // https links only, never the item's markup as it came.
+  var NOTE_TAGS = { P: 1, OL: 1, UL: 1, LI: 1, STRONG: 1, B: 1, EM: 1, I: 1, SMALL: 1, BR: 1, A: 1 };
+  var NOTE_DROP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1, IFRAME: 1, OBJECT: 1, SVG: 1, MATH: 1 };
+  function noteNodes(e) {
+    var out = document.createDocumentFragment();
+    if (!e.notes) {
+      String(e.desc || '').split(/\n+/).forEach(function (line) {
+        if (!line.trim()) { return; }
+        var para = document.createElement('p'); para.textContent = line; out.appendChild(para);
+      });
+      return out;
+    }
+    var src = new DOMParser().parseFromString(String(e.notes), 'text/html').body;
+    (function walk(from, to) {
+      Array.prototype.forEach.call(from.childNodes, function (n) {
+        if (n.nodeType === 3) { to.appendChild(document.createTextNode(n.nodeValue)); return; }
+        if (n.nodeType !== 1 || NOTE_DROP[n.tagName]) { return; }
+        if (!NOTE_TAGS[n.tagName]) { walk(n, to); return; }
+        if (n.tagName === 'A') {
+          var h = n.getAttribute('href') || '';
+          if (!/^https:\/\//i.test(h)) { walk(n, to); return; }
+          var a = document.createElement('a'); a.href = h;
+          if (!/^https:\/\/nerranetwork\.com\//i.test(h)) { a.target = '_blank'; a.rel = 'noopener'; }
+          walk(n, a); to.appendChild(a); return;
+        }
+        var c = document.createElement(n.tagName.toLowerCase());
+        walk(n, c); to.appendChild(c);
+      });
+    })(src, out);
+    return out;
+  }
+  function editionNotes(i) {
+    var e = (state.editions || [])[i];
+    var box = el('nn-ed-notes-' + i);
+    if (!e || !box) { return; }
+    var open = box.hidden;
+    if (open && !box.childNodes.length) { box.appendChild(noteNodes(e)); }
+    box.hidden = !open;
+    document.querySelectorAll('[data-ed-notes="' + i + '"]').forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+    var top = el('nn-ed-read');
+    if (top && i === 0) { top.textContent = open ? 'Hide the notes' : "Read today's notes"; }
+    if (open && i === 0 && el('nn-editions')) { box.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }
+
   // ------------------------------------------------------------- the member's own feed
   function loadEditions(feedUrl) {
     fetch(feedUrl, { credentials: 'omit' })
@@ -1484,18 +1546,25 @@ var NN = (function () {
           var dur = it.getElementsByTagName('itunes:duration')[0];
           var secs = 0;
           if (dur) { (dur.textContent || '').split(':').forEach(function (p) { secs = secs * 60 + (parseInt(p, 10) || 0); }); }
+          var notes = it.getElementsByTagName('content:encoded')[0];
           return { title: q('title'), date: (q('pubDate') || '').split(' ').slice(0, 4).join(' '),
-                   url: enc ? enc.getAttribute('url') : '', secs: secs };
+                   url: enc ? enc.getAttribute('url') : '', secs: secs,
+                   notes: notes ? notes.textContent : '', desc: q('description') };
         }).filter(function (e) { return safeUrl(e.url); });
         if (!state.editions.length) { return; }
         var first = state.editions[0];
         el('nn-ed-h').textContent = first.title || 'Your edition';
         el('nn-ed-play').hidden = false;
+        el('nn-ed-read').hidden = !(first.notes || first.desc);
         el('nn-ed-len').textContent = first.secs ? '· ' + mins(first.secs) + ' min' : '';
         el('nn-editions-list').innerHTML = state.editions.map(function (e, i) {
           return '<li><button type="button" class="me-play is-round" data-edition="' + i + '" aria-label="Play ' + esc(e.title) + '"><span class="ic"></span></button>'
             + '<span><span class="t">' + esc(e.title) + '</span><br><span class="d">' + esc(e.date) + (e.secs ? ' · ' + mins(e.secs) + ' min' : '')
-            + (isPlayed(e.url) ? ' · <span class="me-played">Played</span>' : '') + '</span></span></li>';
+            + (isPlayed(e.url) ? ' · <span class="me-played">Played</span>' : '') + '</span></span>'
+            + ((e.notes || e.desc) ? '<button type="button" class="nn-read" data-ed-notes="' + i + '" aria-expanded="false" aria-controls="nn-ed-notes-' + i + '">'
+                + '<span class="ic" aria-hidden="true"></span>Read</button>'
+                + '<div class="me-ed-notes" id="nn-ed-notes-' + i + '" hidden></div>' : '')
+            + '</li>';
         }).join('');
         el('nn-editions').hidden = false;
         el('nn-feed-note').hidden = true;   // editions exist: not "just subscribed"
@@ -1551,8 +1620,9 @@ var NN = (function () {
     return stories(slug).filter(function (s) { return String(s.episode_num) === num; })[0] || null;
   }
   document.addEventListener('click', function (ev) {
-    var b = ev.target.closest ? ev.target.closest('[data-play],[data-edition],[data-add-show]') : null;
+    var b = ev.target.closest ? ev.target.closest('[data-play],[data-edition],[data-add-show],[data-ed-notes]') : null;
     if (!b) { return; }
+    if (b.hasAttribute('data-ed-notes')) { editionNotes(Number(b.getAttribute('data-ed-notes'))); return; }
     if (b.hasAttribute('data-add-show')) { addShow(b.getAttribute('data-add-show')); return; }
     if (b.hasAttribute('data-edition')) { NN.playEdition(Number(b.getAttribute('data-edition'))); return; }
     var key = b.getAttribute('data-play');
