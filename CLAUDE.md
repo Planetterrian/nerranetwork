@@ -2656,6 +2656,15 @@ for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
   (~100 long pauses) before a cue is worth building. ⚠️ Nothing changes the
   room's timing.
 
+- **Post-production never loops on a line** (Michael Kamins' room, run
+  35cdf6f4; guard `tests/test_michaels_post_production_2026_10_28.py`).
+  `tidy_lines` (Oct 27) moved a stub of a few unfinished words to its
+  speaker's next line with a `for ... else`; a stub whose speaker did not
+  come back within `TIDY_REACH_SEC` left by `break`, skipped the `else` that
+  moves on, and looked at the same line forever. His post-production hung
+  silently after both transcripts, twice, until the two-hour limit, and
+  nothing reached the run row. Every pass now removes a line or moves on.
+
 Operator: push (the studio page and the pipeline go live with it; the Worker
 is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
 research changes, then "Deploy Voximplant scenario"; no new secret (Shorts go

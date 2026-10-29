@@ -1064,14 +1064,22 @@ def tidy_lines(lines: list[tuple[float, str, str]]) -> list[tuple[float, str, st
             del out[i + 1]
             continue
         if nxt[1] != who and unfinished and 0 < len(words) <= TIDY_STUB_WORDS:
+            # Oct 28 2026, Michael Kamins: this loop used ``for ... else`` and
+            # a stub whose speaker did not come back within the reach left the
+            # loop by ``break``, which skipped the ``else`` that moves on, so
+            # the same line was looked at forever. Post-production hung right
+            # after the transcripts twice, until GitHub stopped it at two
+            # hours. Every pass now either removes a line or moves on.
+            moved = False
             for j in range(i + 1, len(out)):
                 if out[j][0] - at > TIDY_REACH_SEC:
                     break
                 if out[j][1] == who:
                     out[j][2] = (text + " " + out[j][2]).strip()
                     del out[i]
+                    moved = True
                     break
-            else:
+            if not moved:
                 i += 1
             continue
         i += 1
