@@ -453,7 +453,7 @@ class TestTimeline:
         subprocess.run(["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=20",
                         "-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-q:a", "2", str(src)],
                        check=True, capture_output=True)
-        out = tmp_path / "cut.mp3"
+        out = tmp_path / "cut.flac"   # lossless piece format (Oct 29 2026)
         subprocess.run(ps.cut_segment_cmd(src, out, ps.keep_ranges(20.0, [(5.0, 10.0)]), 20.0),
                        check=True, capture_output=True)
         from engine.audio import get_audio_duration
