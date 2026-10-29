@@ -420,7 +420,8 @@ def _when(date_iso: str, target_date: _dt.date) -> str:
 
 def memory_notes(today: Sequence[SegmentStories], past_rows: Sequence[dict],
                  target_date: _dt.date) -> List[str]:
-    """"This listener heard about <story> on <weekday> in <show>" — one
+    """"Their edition <when> carried <story>, in <show>" (Oct 29 2026: an
+    edition being built is not proof it was played, so never "heard") — one
     note per today's story that one of the member's last seven editions
     carried, newest past telling cited."""
     rows = _past_rows(past_rows, target_date)
@@ -442,8 +443,8 @@ def memory_notes(today: Sequence[SegmentStories], past_rows: Sequence[dict],
                     break
             if hit:
                 notes.append(
-                    f'{s.show_name} today: "{text}" — this listener heard '
-                    f'this story {_when(hit[0], target_date)} in {hit[1]} '
+                    f'{s.show_name} today: "{text}" — their edition '
+                    f'{_when(hit[0], target_date)} carried this story, in {hit[1]} '
                     f'("{hit[2]}").')
                 break   # one note per segment keeps the block short
         if len(notes) >= MAX_MEMORY_NOTES:

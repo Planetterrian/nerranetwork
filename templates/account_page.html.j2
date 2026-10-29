@@ -6,7 +6,8 @@
    identity and preferences come from api.nerranetwork.com (cookie), the
    stories from api/personal_front.json (written with every homepage build
    from the homepage's own story data — generate_html.personal_front_payload),
-   and the markets from api/tsla.json / api/spcx.json. It borrows the front
+   and the stocks the member follows live from the markets route
+   (assets/js/nn-markets.js; Oct 29 2026). It borrows the front
    page's design (_landing_styles.html.j2, the lt-* classes) and lays it out
    for one person: their lineup in their order, the stories on their topics
    and places, their edition, and a studio that shows what tomorrow's
@@ -56,6 +57,36 @@
         .me-quotes #nn-mkt { display: inline-flex; flex-wrap: wrap; gap: 4px var(--sp-5); }
         .me-quotes a:hover .lt-quote-sym { text-decoration: underline; }
         .me-quotes small { color: var(--lt-muted); font-size: 0.72rem; }
+
+        /* ---- Your markets (Oct 29 2026) ---- */
+        .me-mkt-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: var(--sp-3); }
+        .me-mkt { position: relative; border: 1px solid var(--lt-rule); border-radius: 14px; padding: 14px 16px; background: rgba(255,255,255,0.02); font-family: var(--font-ui); }
+        .me-mkt .sym { font-weight: 800; letter-spacing: 0.04em; color: var(--nn-white); }
+        .me-mkt .nm { display: block; color: var(--lt-muted); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 26px; }
+        .me-mkt .px { display: block; font-family: var(--lt-head); font-size: 1.5rem; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--nn-white); }
+        .me-mkt .chg { font-weight: 700; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+        .me-mkt.is-up .chg { color: #34D399; } .me-mkt.is-down .chg { color: #F87171; } .me-mkt.is-flat .chg { color: var(--lt-muted); }
+        .me-mkt .when { display: block; color: var(--lt-muted); font-size: 0.74rem; margin-top: 4px; }
+        .me-mkt .in { display: block; font-size: 0.8rem; margin-top: 8px; color: var(--lt-ink); }
+        .me-mkt .in a { color: var(--nn-cyan); }
+        .me-mkt .rm { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--lt-rule); background: transparent; color: var(--lt-muted); cursor: pointer; line-height: 1; }
+        .me-mkt .rm:hover, .me-mkt .rm:focus-visible { color: var(--nn-white); border-color: var(--nn-cyan); }
+        .me-mkt.is-missing .px { font-size: 1rem; color: var(--lt-muted); }
+        .me-mkt-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: var(--sp-4); }
+        .me-mkt-add .me-input { max-width: 280px; text-transform: uppercase; }
+        .me-app { margin: var(--sp-6) 0 0; }
+        .me-app .nn-app-card { margin: 0; }
+        .me-code { margin-top: var(--sp-4); padding-top: var(--sp-4); border-top: 1px solid var(--lt-rule); }
+        .me-code[hidden] { display: none; }
+        .me-code-row { display: flex; gap: 8px; margin-top: 6px; }
+        .me-code-row .me-input { max-width: 160px; font-size: 1.2rem; letter-spacing: 0.2em; text-align: center; font-variant-numeric: tabular-nums; }
+        .me-mkt-add [role="status"] { font-family: var(--font-ui); font-size: 0.86rem; color: var(--lt-muted); }
+        @media (max-width: 560px) {
+            .me-mkt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+            .me-mkt { padding: 12px; }
+            .me-mkt .px { font-size: 1.15rem; }
+            .me-mkt-add .me-input { flex: 1 1 0; min-width: 0; }
+        }
 
         /* ---- Your edition ---- */
         .me-edition { margin-top: 0; }
@@ -326,7 +357,18 @@
                     <input type="email" id="nn-account-email" name="email" class="me-input" placeholder="you@example.com" required autocomplete="email">
                     <button type="submit" class="lt-btn me-btn-grad">Email me a link</button>
                 </form>
-                <p class="me-fine">New here? <a href="{{ path_prefix }}join.html">Create your free account</a>
+                {#- Oct 29 2026: the installed app keeps its own cookies, and an
+                    emailed link opens in the browser (on iPhone always Safari),
+                    so the email also carries a six-digit code to type here. -#}
+                <form class="me-code" id="nn-code-form" hidden onsubmit="NN.loginCode(this);return false;">
+                    <label for="nn-login-code" class="me-label">Got the email? Type its six-digit code</label>
+                    <div class="me-code-row">
+                        <input type="text" id="nn-login-code" name="code" class="me-input" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7" autocomplete="one-time-code" placeholder="123 456" required>
+                        <button type="submit" class="lt-btn">Sign in</button>
+                    </div>
+                    <p class="me-fine" id="nn-code-status" role="status">The code works on this screen, including the Nerra app on your Home Screen.</p>
+                </form>
+                <p class="me-fine">New here? Your email has no account yet: <a href="{{ path_prefix }}join.html#join-free">create one free</a>
                    · <a href="{{ path_prefix }}login.html">Full sign-in page</a></p>
             </div>
             <div class="me-card">
@@ -481,6 +523,24 @@
         </section>
 
         <!-- Your front page -->
+        {#- Oct 29 2026: My Nerra on the Home Screen. Each card shows only
+            where it applies (assets/js/nn-app.js); inside the app none does. -#}
+        <div class="me-app" aria-label="The Nerra app">
+            <div class="nn-app-card" data-nn-install hidden>
+                <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Put My Nerra on your Home Screen</strong>Your shows, your edition and the player in one tap, full screen, playing on the lock screen. <a href="{{ path_prefix }}app.html">How it works</a></p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios" data-nn-install-ios hidden>
+                <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Put My Nerra on your Home Screen</strong>Tap <kbd>Share</kbd>, then <kbd>Add to Home Screen</kbd>. In the app, sign in with the six-digit code from your sign-in email. <a href="{{ path_prefix }}app.html">How it works</a></p>
+            </div>
+            <div class="nn-app-card" data-nn-install-mac hidden>
+                <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Keep My Nerra in your Dock</strong>In Safari: <kbd>File</kbd> › <kbd>Add to Dock</kbd>. <a href="{{ path_prefix }}app.html">How it works</a></p>
+            </div>
+        </div>
+
         <section class="lt-block" id="nn-front" aria-labelledby="nn-front-h">
             <div class="lt-block-head"><h2 id="nn-front-h">Your front page</h2><a href="#customize">Edit your lineup →</a></div>
             <p class="me-front-note" id="nn-front-note" hidden></p>
@@ -491,6 +551,24 @@
         <section class="lt-block" id="nn-topics-block" aria-labelledby="nn-topics-h">
             <div class="lt-block-head"><h2 id="nn-topics-h">On your topics and places</h2><a href="#nn-places">Edit them →</a></div>
             <div id="nn-topic-results"></div>
+        </section>
+
+        <!-- Your markets (Oct 29 2026): the stocks they follow, live from the
+             markets route, the same list the markets minute reads aloud. -->
+        <section class="lt-block" id="nn-markets" aria-labelledby="nn-markets-h">
+            <div class="lt-block-head"><h2 id="nn-markets-h">Your markets</h2><span class="me-fine" style="margin:0;" id="nn-mkt-sub">Live while the market is open</span></div>
+            <ul class="me-mkt-grid" id="nn-mkt-grid" aria-live="polite"></ul>
+            <form class="me-mkt-add" id="nn-mkt-form" onsubmit="NN.addTicker(event)">
+                <label class="sr-only" for="nn-mkt-input">Add a stock by its ticker</label>
+                <input type="text" id="nn-mkt-input" class="me-input" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                       placeholder="Add a ticker, e.g. SHOP.TO" aria-describedby="nn-mkt-help">
+                <button type="submit" class="lt-btn">Add</button>
+                <span id="nn-mkt-msg" role="status"></span>
+            </form>
+            <p class="me-help" id="nn-mkt-help">Up to 8. Use the ticker as Yahoo Finance writes it: an exchange
+               suffix for listings outside the US (<code>.TO</code> Toronto, <code>.L</code> London, <code>.AX</code> Sydney),
+               <code>^GSPC</code> for an index, <code>BTC-USD</code> for a coin. Saved with your account. On a paid
+               plan Mira reads them in your markets minute and tells you when one of your shows covers one.</p>
         </section>
 
         <!-- Watch -->
@@ -520,6 +598,7 @@
                         <p class="me-panel-lede">Pick at least two, then put them in the order you want
                            your morning to run. This page and your edition both follow it.</p>
                         <ol class="me-order" id="nn-lineup" aria-label="Your shows, in order"></ol>
+                        <p class="sr-only" id="nn-lineup-live" aria-live="polite"></p>
                         <div class="me-shows-tools">
                             <span class="me-label">Add shows <small id="nn-shows-count"></small></span>
                             <label class="sr-only" for="nn-show-search">Find a show</label>
@@ -746,7 +825,7 @@ var NN = (function () {
   var FRONT_URL = '{{ path_prefix }}api/personal_front.json';
   var SAMPLE_URL = {{ sample_url | tojson }};
   var state = { shows: [], all: [], addons: null, addonsTouched: false, tier: 'none', active: false,
-                status: 'none', front: null, editions: [], feedUrl: '' };
+                status: 'none', front: null, editions: [], feedUrl: '', tickers: null, quotes: {} };
   var SHOW_META = {{ personal_shows | tojson }};
   var META = {}; SHOW_META.forEach(function (s) { META[s.slug] = s; });
   var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian', 'dp_pod'];
@@ -1132,9 +1211,24 @@ var NN = (function () {
         + '<button type="button" class="me-icon-btn" data-move="1"' + (idx === state.shows.length - 1 ? ' disabled' : '') + ' aria-label="Move ' + esc(showName(slug)) + ' down">↓</button>'
         + '<button type="button" class="me-icon-btn" data-remove="1" aria-label="Remove ' + esc(showName(slug)) + '">✕</button></span>';
       li.querySelectorAll('[data-move]').forEach(function (b) {
-        b.onclick = function () { moveShow(idx, idx + Number(b.getAttribute('data-move'))); };
+        b.onclick = function () {
+          var dir = Number(b.getAttribute('data-move'));
+          moveShow(idx, idx + dir);
+          // The list is rebuilt: keep keyboard focus on the moved show and
+          // say where it went (Oct 29 2026).
+          var at = state.shows.indexOf(slug);
+          var row = el('nn-lineup').children[at];
+          var again = row && (row.querySelector('[data-move="' + dir + '"]:not([disabled])') || row.querySelector('[data-move]:not([disabled])'));
+          if (again) { again.focus(); }
+          el('nn-lineup-live').textContent = showName(slug) + ' moved to ' + (at + 1) + ' of ' + state.shows.length + '.';
+        };
       });
-      li.querySelector('[data-remove]').onclick = function () { removeShow(slug); };
+      li.querySelector('[data-remove]').onclick = function () {
+        removeShow(slug);
+        el('nn-lineup-live').textContent = showName(slug) + ' removed.';
+        var next = el('nn-lineup').querySelector('[data-remove]') || el('nn-show-search');
+        if (next) { next.focus(); }
+      };
       li.addEventListener('dragstart', function (ev) { dragFrom = idx; li.classList.add('is-drag'); try { ev.dataTransfer.setData('text/plain', slug); } catch (e) {} });
       li.addEventListener('dragend', function () { li.classList.remove('is-drag'); });
       li.addEventListener('dragover', function (ev) { ev.preventDefault(); li.classList.add('is-over'); });
@@ -1244,6 +1338,7 @@ var NN = (function () {
       shows: state.shows, name: el('nn-name').value.trim(),
       cities: listValues(cityInputs()), topics: listValues(topicInputs()),
       addons: state.addons, profile: el('nn-profile').value.trim(), length: getLength(),
+      tickers: state.tickers,
     });
   }
   function markClean() { state.clean = snapshot(); checkDirty(); }
@@ -1253,14 +1348,24 @@ var NN = (function () {
     renderTomorrow();
   }
   function changed() { renderLineup(); renderFront(); renderTopics(); checkDirty(); }
+  function easternParts(d) {
+    try {
+      var f = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).split('-');
+      return { y: Number(f[0]), m: Number(f[1]), d: Number(f[2]) };
+    } catch (e) { return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() }; }
+  }
   function renderTomorrow() {
     var list = el('nn-tomorrow-list'); if (!list) { return; }
     var lim = limits();
     var shows = lineup();
-    var tomorrow = new Date(Date.now() + 86400000);
-    var wd = tomorrow.getDay();
+    // Oct 29 2026: editions are dated in Eastern time (the builder's
+    // clock), so "tomorrow" is tomorrow in New York, whatever the browser's
+    // own zone — a Pacific evening visit read the wrong day's lineup.
+    var et = easternParts(new Date());
+    var tomorrow = new Date(Date.UTC(et.y, et.m - 1, et.d + 1, 12));
+    var wd = tomorrow.getUTCDay();
     el('nn-tomorrow-when').textContent = (state.active ? 'Tomorrow, ' : 'Your edition would be, for ')
-      + tomorrow.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      + tomorrow.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
     var name = el('nn-name').value.trim();
     var addons = state.addons === null ? DEFAULT_ADDONS : state.addons;
     var tier = state.active ? state.tier : 'personal';
@@ -1278,7 +1383,7 @@ var NN = (function () {
       items.push('<li class="is-off">No location yet: <a class="me-link" href="#nn-places">add one</a> for a morning brief</li>');
     }
     if (topics.length) { items.push('<li>Your topics: ' + esc(topics.join(', ')) + '</li>'); total += 60 * topics.length; }
-    if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute</li>'); total += 60; }
+    if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute: ' + esc(myTickers().join(', ')) + '</li>'); total += 20 + 8 * myTickers().length; }
     var off = [];
     shows.forEach(function (slug) {
       var e = showEntry(slug);
@@ -1293,7 +1398,7 @@ var NN = (function () {
       items.push('<li class="is-off">' + esc(showName(slug)) + '<span class="tm">not on ' + WEEKDAYS[wd].charAt(0).toUpperCase() + WEEKDAYS[wd].slice(1) + 's</span></li>');
     });
     if (el('nn-profile').value.trim()) { items.push('<li>Mira knows what you told her, and uses it only where a story connects</li>'); }
-    if (addons.indexOf('skip_repeats') !== -1 && (state.tier === 'personal_local' || !state.active || state.tier === 'personal')) {
+    if (addons.indexOf('skip_repeats') !== -1) {
       items.push('<li>A story told twice is trimmed from the later show, and Mira says so</li>');
     }
     items.push('<li>Mira signs off</li>');
@@ -1303,6 +1408,9 @@ var NN = (function () {
     var warn = el('nn-preview-warn');
     var msgs = [];
     if (state.shows.length && state.shows.length < 2) { msgs.push('Pick at least two shows; until then the starter lineup is used.'); }
+    else if (shows.length >= 2 && shows.length - off.length < 2) {
+      msgs.push('Only ' + (shows.length - off.length) + ' of your shows publish that day, and an edition needs two: add a daily show so you get one.');
+    }
     if (len && mins(total) > Number(len)) { msgs.push('That runs past your ' + len + '-minute setting, so Mira trims later stories at clean breaks, never a lead.'); }
     warn.hidden = !msgs.length; warn.textContent = msgs.join(' ');
     el('nn-preview-cta').hidden = state.active || state.status === 'cancelled';
@@ -1405,20 +1513,27 @@ var NN = (function () {
     isKey: function (key) { var p = P(); return !!(p && p.isKey(key)); },
     toggle: function () { var p = P(); if (p) { p.toggle(); } },
   };
+  var wasPlaying = false;
   function paintPlaying(st) {
     document.querySelectorAll('.me-play').forEach(function (b) {
       var key = b.getAttribute('data-play') || ('ed:' + b.getAttribute('data-edition'));
       b.classList.toggle('is-playing', !!(st && st.playing && st.key === key));
     });
+    // Oct 29 2026: when playback stops, the "Played" and "Resume · m:ss"
+    // labels are drawn again from the positions the player just saved.
+    var playing = !!(st && st.playing);
+    if (wasPlaying && !playing && state.front) { try { renderFront(); } catch (e) {} }
+    wasPlaying = playing;
   }
   function hookPlayer() { var p = P(); if (p) { p.onChange(paintPlaying); } else { setTimeout(hookPlayer, 50); } }
   hookPlayer();
   function takeDraft() {
     var d = store('nnMe.draft');
     try { localStorage.removeItem('nnMe.draft'); } catch (e) {}
-    if (!d || !Array.isArray(d.shows) || Date.now() - (d.ts || 0) > 30 * 86400e3) { return { shows: [], first_name: '' }; }
+    if (!d || !Array.isArray(d.shows) || Date.now() - (d.ts || 0) > 30 * 86400e3) { return { shows: [], first_name: '', city: '' }; }
     return { shows: d.shows.filter(function (x) { return typeof x === 'string' && /^[a-z0-9_]+$/.test(x); }),
-             first_name: typeof d.first_name === 'string' ? d.first_name.slice(0, 40) : '' };
+             first_name: typeof d.first_name === 'string' ? d.first_name.slice(0, 40) : '',
+             city: typeof d.city === 'string' ? d.city.slice(0, 80) : '' };
   }
   function isPlayed(url) { var p = store('nnMe.played') || {}; return !!(url && p[url]); }
   function markPlayed(url) {
@@ -1449,40 +1564,103 @@ var NN = (function () {
   });
 
   // ------------------------------------------------------------- markets
-  function mktQuote(sym, price, deltaPct, href) {
-    if (price === undefined || price === null) { return ''; }
-    var cls = deltaPct > 0 ? 'is-up' : deltaPct < 0 ? 'is-down' : 'is-flat';
-    var arrow = deltaPct > 0 ? '▲' : deltaPct < 0 ? '▼' : '';
-    return '<a class="lt-quote ' + cls + '" href="' + href + '"><span class="lt-quote-sym">' + sym + '</span>'
-      + '<span class="lt-quote-px">$' + Number(price).toFixed(2) + '</span>'
-      + '<span class="lt-quote-chg">' + arrow + ' ' + Math.abs(deltaPct).toFixed(1) + '%</span></a>';
+  // ------------------------------------------------------------- markets
+  // Oct 29 2026: quotes come from the markets route (live while the session
+  // is open), never the once-a-morning committed files the card used to
+  // read — those printed yesterday's close as today's.
+  function myTickers() { return (state.tickers && state.tickers.length) ? state.tickers.slice() : NNMarkets.DEFAULT.slice(); }
+  // The newest episode of a show (theirs first) whose hook or headlines name
+  // this stock: its ticker as written, or its name (a one-word name alone; a
+  // longer one whole, so "Advanced" never matches AMD).
+  function stockPattern(sym, q) {
+    var core = sym.replace(/^\^/, '').split(/[.\-=]/)[0].replace(/[^A-Z0-9]/g, '');
+    var name = (NNMarkets.name(q || { symbol: sym }) || '')
+      .replace(/[,.]?\s+(inc|incorporated|corp|corporation|co|company|ltd|limited|plc|holdings?|group)\.?$/i, '').trim();
+    var parts = [];
+    if (core.length >= 2) { parts.push('(?:^|[^A-Za-z$])' + core + '(?![A-Za-z])'); }
+    if (name && (name.split(/\s+/).length > 1 || name.length >= 4)) {
+      parts.push('\\b' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+    }
+    return parts.length ? new RegExp(parts.join('|'), 'i') : null;
   }
+  function storyFor(sym, q) {
+    var front = state.front && state.front.shows;
+    var re = stockPattern(sym, q);
+    if (!front || !re) { return null; }
+    var shows = lineup().concat(Object.keys(front).filter(function (s) { return lineup().indexOf(s) === -1; }));
+    for (var i = 0; i < shows.length; i++) {
+      var e = front[shows[i]]; if (!e || e.members_only) { continue; }
+      var st = (e.stories || [])[0];
+      if (!st) { continue; }
+      var texts = [st.hook].concat(st.headlines || []);
+      for (var j = 0; j < texts.length; j++) {
+        // The ticker matches as written (upper case); the name in any case.
+        var t = String(texts[j] || '');
+        if (re.test(t)) { return { show: e.name, story: st, text: t }; }
+      }
+    }
+    return null;
+  }
+  function renderMarkets() {
+    var grid = el('nn-mkt-grid'); if (!grid) { return; }
+    var list = myTickers();
+    grid.textContent = '';
+    var live = false, any = false;
+    list.forEach(function (sym) {
+      var q = state.quotes[sym];
+      var li = document.createElement('li');
+      li.className = 'me-mkt is-' + (q ? NNMarkets.dir(q) : 'flat') + (q ? '' : ' is-missing');
+      var top = document.createElement('span'); top.className = 'sym'; top.textContent = sym; li.appendChild(top);
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = q ? NNMarkets.name(q) : ''; li.appendChild(nm);
+      var px = document.createElement('span'); px.className = 'px'; px.textContent = q ? NNMarkets.price(q) : 'No quote yet'; li.appendChild(px);
+      if (q) {
+        any = true; if (q.state === 'live') { live = true; }
+        var chg = document.createElement('span'); chg.className = 'chg'; chg.textContent = NNMarkets.change(q); li.appendChild(chg);
+        var w = document.createElement('span'); w.className = 'when'; w.textContent = NNMarkets.when(q); li.appendChild(w);
+        var hit = storyFor(sym, q);
+        if (hit) {
+          var inn = document.createElement('span'); inn.className = 'in';
+          inn.appendChild(document.createTextNode('In ' + hit.show + ': '));
+          var a = document.createElement('a'); a.href = storyHref(hit.story);
+          a.textContent = hit.text; inn.appendChild(a); li.appendChild(inn);
+        }
+      }
+      if (state.tickers && state.tickers.length) {
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm';
+        rm.setAttribute('aria-label', 'Stop following ' + sym); rm.textContent = '✕';
+        rm.onclick = function () { NN.removeTicker(sym); };
+        li.appendChild(rm);
+      }
+      grid.appendChild(li);
+    });
+    el('nn-mkt-sub').textContent = !state.tickers || !state.tickers.length
+      ? 'Tesla and SpaceX until you add your own'
+      : (live ? 'Live while the market is open' : (any ? 'Closing prices' : 'Waiting for quotes'));
+    // The header strip: the first four, compact.
+    var strip = '';
+    list.slice(0, 4).forEach(function (sym) {
+      var q = state.quotes[sym]; if (!q) { return; }
+      strip += '<a class="lt-quote is-' + NNMarkets.dir(q) + '" href="#nn-markets"><span class="lt-quote-sym">' + esc(sym) + '</span> '
+        + '<span class="lt-quote-px">' + esc(NNMarkets.price(q)) + '</span> <span class="lt-quote-chg">' + esc(NNMarkets.change(q)) + '</span></a>';
+    });
+    el('nn-mkt').innerHTML = strip;
+    var first = state.quotes[list[0]];
+    el('nn-mkt-asof').textContent = first ? NNMarkets.when(first) : '';
+    el('nn-mkt-card').hidden = !strip;
+  }
+  var mktTimer = null;
   function loadMarkets() {
-    var mine = lineup(), addons = state.addons === null ? DEFAULT_ADDONS : state.addons;
-    var wants = ['tesla', 'spacex', 'mag7', 'modern_investing'].some(function (s) { return mine.indexOf(s) !== -1; })
-      || (state.active && addons.indexOf('markets') !== -1);
-    if (!wants) { el('nn-mkt-card').hidden = true; return; }
-    Promise.all([
-      fetch('{{ path_prefix }}api/tsla.json').then(function (r) { return r.json(); }).catch(function () { return null; }),
-      fetch('{{ path_prefix }}api/spcx.json').then(function (r) { return r.json(); }).catch(function () { return null; })
-    ]).then(function (res) {
-      var t = res[0], s = res[1], html = '';
-      if (t && t.price) {
-        var tp = (typeof t.change_pct === 'number') ? t.change_pct : (t.prev_close ? (t.price - t.prev_close) / t.prev_close * 100 : 0);
-        html += mktQuote('TSLA', t.price, tp, '{{ path_prefix }}tesla-dashboard.html');
-      }
-      if (s && s.price) {
-        var sp = s.prev_close ? (s.price - s.prev_close) / s.prev_close * 100 : 0;
-        html += mktQuote('SPCX', s.price, sp, '{{ path_prefix }}spacex-dashboard.html');
-      }
-      if (html) {
-        el('nn-mkt').innerHTML = html;
-        var asof = (t && t.fetched_at) || (s && s.updated_at) || '';
-        el('nn-mkt-asof').textContent = asof ? 'As of ' + asof.slice(0, 10) : '';
-        el('nn-mkt-card').hidden = false;
-      }
+    clearTimeout(mktTimer);
+    if (!window.NNMarkets) { return; }
+    NNMarkets.get(myTickers()).then(function (r) {
+      Object.keys(r.quotes).forEach(function (k) { state.quotes[k] = r.quotes[k]; });
+      state.unknown = r.unknown; state.marketsAnswered = r.answered;
+      renderMarkets();
+      var live = Object.keys(r.quotes).some(function (k) { return r.quotes[k].state === 'live'; });
+      if (document.visibilityState !== 'hidden') { mktTimer = setTimeout(loadMarkets, live ? 60000 : 600000); }
     });
   }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && state.shows) { loadMarkets(); } });
 
   function greet(name) {
     var h = new Date().getHours();
@@ -1551,8 +1729,13 @@ var NN = (function () {
 
   function load() {
     el('nn-guest-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-    fetch(API + '/api/account', { credentials: 'include' })
-      .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+    // Oct 29 2026: the first load reads the base template's one account
+    // request (window.nnAccount); Discard and later reloads ask again.
+    var first = !state.loadedOnce && window.nnAccount;
+    state.loadedOnce = true;
+    (first ? window.nnAccount.then(function (d) { if (!d) { throw new Error('signed out'); } return d; })
+           : fetch(API + '/api/account', { credentials: 'include' })
+               .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); }))
       .then(function (data) {
         el('nn-status').textContent = ''; el('nn-status').hidden = true;
         if (data.verify_required) {
@@ -1561,6 +1744,7 @@ var NN = (function () {
           el('nn-verify-note').hidden = false;
           el('nn-signin-lede').hidden = true;
           if (data.email) { el('nn-account-email').value = data.email; }
+          if (document.documentElement.classList.contains('nn-standalone')) { el('nn-code-form').hidden = false; }
           loadFront(renderGuestFront);
           return;
         }
@@ -1569,6 +1753,12 @@ var NN = (function () {
         var prefs = (data.member && data.member.preferences) || {};
         state.shows = (prefs.shows || []).slice();
         state.addons = (prefs.addons === undefined) ? null : prefs.addons;
+        state.tickers = Array.isArray(prefs.tickers) ? NNMarkets.clean(prefs.tickers) : null;
+        // Stocks a visitor added on the front page before signing in.
+        if (!state.tickers) {
+          var local = NNMarkets.stored();
+          if (local.length) { state.tickers = local; state.tickersFromBrowser = true; }
+        }
         el('nn-name').value = prefs.first_name || '';
         el('nn-profile').value = prefs.profile || '';
         el('nn-profile-count').textContent = String(el('nn-profile').value.length);
@@ -1591,16 +1781,23 @@ var NN = (function () {
         // the lineup of an account that has none, saved once.
         var draft = takeDraft();
         if (draft.first_name && !el('nn-name').value) { el('nn-name').value = draft.first_name; greet(draft.first_name); }
+        // The city typed in the join builder becomes the first location of
+        // an account that has none.
+        var draftCity = false;
+        if (draft.city && !listValues(cityInputs()).length) { cityInputs()[0].value = draft.city; draftCity = true; }
         draft = draft.shows;
         if (!state.shows.length && draft.length) {
           state.shows = draft.filter(function (x) { return state.all.indexOf(x) !== -1; }).slice(0, 12);
           if (state.shows.length) {
             renderLineup(); checkDirty();
             setTimeout(function () { NN.save(function () { el('nn-save-status').textContent = 'Saved the shows you picked'; }); }, 0);
+            draftCity = false;
           }
         }
-        loadFront(function () { renderLineup(); renderFront(); renderTopics(); renderTomorrow(); });
-        loadMarkets();
+        if (draftCity) { setTimeout(function () { NN.save(); }, 0); }
+        loadFront(function () { renderLineup(); renderFront(); renderTopics(); renderTomorrow(); renderMarkets(); });
+        renderMarkets(); loadMarkets();
+        if (state.tickersFromBrowser) { setTimeout(function () { NN.save(); }, 0); }
         el('nn-feed-active').hidden = !feedUrl;
         el('nn-feed-upsell').hidden = !!feedUrl || cancelled;
         el('nn-feed-cancelled').hidden = !cancelled || !!feedUrl;
@@ -1682,6 +1879,9 @@ var NN = (function () {
       .catch(function () {
         el('nn-status').textContent = ''; el('nn-status').hidden = true;
         el('nn-guest').hidden = false;
+        // In the installed app an emailed link opens the browser, not the
+        // app: the code box is there from the start.
+        if (document.documentElement.classList.contains('nn-standalone')) { el('nn-code-form').hidden = false; }
         loadFront(renderGuestFront);
       });
   }
@@ -1694,8 +1894,54 @@ var NN = (function () {
       // on any HTTP status, so a refused request read "Check your inbox").
       fetch(API + '/api/login?email=' + encodeURIComponent(form.email.value))
         .then(function (r) { if (!r.ok) { throw new Error(r.status); } })
-        .then(function () { btn.textContent = 'Check your inbox'; })
+        .then(function () {
+          btn.textContent = 'Check your inbox';
+          var f = el('nn-code-form'); if (f) { f.hidden = false; f.setAttribute('data-email', form.email.value); }
+        })
         .catch(function () { btn.textContent = 'Try again'; btn.disabled = false; });
+    },
+    loginCode: function (form) {
+      var btn = form.querySelector('button'), st = el('nn-code-status');
+      var email = form.getAttribute('data-email') || el('nn-account-email').value;
+      btn.disabled = true; st.textContent = 'Checking…';
+      fetch(API + '/api/login-code', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, code: String(form.code.value || '').replace(/\D/g, '') }),
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { d._s = r.status; return d; }); })
+        .then(function (d) {
+          if (d._s === 200) { st.textContent = 'Signed in.'; window.location.reload(); return; }
+          btn.disabled = false;
+          st.textContent = d._s === 429 ? 'Too many tries; wait a few minutes.'
+            : d.error === 'wrong code' ? 'That code does not match' + (d.tries_left ? ' (' + d.tries_left + ' tries left).' : '; email yourself a new one.')
+            : 'That code has expired; email yourself a new one.';
+        })
+        .catch(function () { btn.disabled = false; st.textContent = 'Could not check the code; try again.'; });
+    },
+    addTicker: function (ev) {
+      if (ev && ev.preventDefault) { ev.preventDefault(); }
+      var inp = el('nn-mkt-input'), msg = el('nn-mkt-msg');
+      var sym = String(inp.value || '').trim().toUpperCase().replace(/^\$/, '');
+      if (!sym) { return; }
+      if (!NNMarkets.valid(sym)) { msg.textContent = sym + ' is not a ticker shape we know.'; return; }
+      var list = state.tickers ? state.tickers.slice() : [];
+      if (list.indexOf(sym) !== -1) { msg.textContent = 'You already follow ' + sym + '.'; return; }
+      if (list.length >= NNMarkets.MAX) { msg.textContent = 'You can follow up to ' + NNMarkets.MAX + '. Remove one first.'; return; }
+      msg.textContent = 'Looking up ' + sym + '…';
+      NNMarkets.get([sym]).then(function (r) {
+        if (r.unknown.indexOf(sym) !== -1) { msg.textContent = 'No quote found for ' + sym + '. Check the suffix (.TO, .L, -USD).'; return; }
+        if (r.quotes[sym]) { state.quotes[sym] = r.quotes[sym]; }
+        list.push(sym); state.tickers = list; inp.value = '';
+        msg.textContent = r.quotes[sym] ? 'Added ' + sym + '. Saving…' : 'Added ' + sym + '; its quote appears once the markets service answers. Saving…';
+        renderMarkets();
+        NN.save(function () { msg.textContent = 'Following ' + sym + '.'; });
+      });
+    },
+    removeTicker: function (sym) {
+      state.tickers = (state.tickers || []).filter(function (t) { return t !== sym; });
+      renderMarkets();
+      el('nn-mkt-msg').textContent = 'Stopped following ' + sym + '. Saving…';
+      NN.save(function () { el('nn-mkt-msg').textContent = 'Stopped following ' + sym + '.'; loadMarkets(); });
+      var first = document.querySelector('#nn-mkt-grid .rm'); if (first) { first.focus(); } else { el('nn-mkt-input').focus(); }
     },
     save: function (done) {
       el('nn-save-status').textContent = 'Saving…';
@@ -1710,6 +1956,8 @@ var NN = (function () {
         profile: el('nn-profile').value.trim(),
         target_minutes: len ? Number(len) : null,
       };
+      // Oct 29 2026: the stocks they follow (absent = never touched).
+      if (state.tickers !== null) { body.tickers = state.tickers; }
       // Send addons only once the member has a real choice — an untouched
       // page must not overwrite "never saved" (defaults) with a snapshot.
       if (state.addonsTouched || state.addons !== null) { body.addons = state.addons; }
@@ -1782,7 +2030,7 @@ var NN = (function () {
     playEdition: function (i) {
       var items = state.editions.map(function (e, j) {
         return { key: 'ed:' + j, url: safeUrl(e.url), title: e.title || 'Your edition', show: 'Your edition', color: '#00D4FF',
-                 cover: el('nn-ed-cover').src, post: '#nn-edition' };
+                 cover: el('nn-ed-cover').src, post: '{{ path_prefix }}account.html#nn-edition' };
       });
       if (items[i]) { player.start(items, i); }
     },
@@ -1792,6 +2040,10 @@ var NN = (function () {
                       cover: '{{ path_prefix }}assets/covers/nerra-daily.jpg', post: '{{ path_prefix }}join.html#sample', sample: 'account' }], 0);
     },
     logout: function () {
+      // Oct 29 2026: a shared device keeps nothing of this account — the
+      // edition's URL carries the member's private feed token.
+      try { if (window.NNPlayer && NNPlayer.forgetPrivate) { NNPlayer.forgetPrivate(); } } catch (e) {}
+      ['nnMe.draft', 'nnMe.tickers'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
       fetch(API + '/api/logout', { method: 'POST', credentials: 'include' })
         .catch(function () {})
         .then(function () { window.location.href = '{{ path_prefix }}login.html'; });
@@ -1810,6 +2062,8 @@ var NN = (function () {
     load: load,
   };
 })();
-NN.load();
+// The shared scripts (nn-markets.js, nn-player.js) load deferred from the
+// base template; start once they have run.
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', NN.load); } else { NN.load(); }
 </script>
 {% endblock %}

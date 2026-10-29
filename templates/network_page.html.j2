@@ -381,7 +381,7 @@
     date (engine.newsroom.market_strip). A stale or undated value is absent. -#}
 {%- set mk = markets -%}
 {% if mk and (mk.groups or mk.launch) %}
-<div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches"{% if live_ticker %} data-live-markets="{{ live_ticker.markets_api }}" data-every="{{ live_ticker.quotes_every_s }}"{% endif %}>
+<div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches"{% if live_ticker %} data-live-markets="{{ live_ticker.markets_api }}" data-every="{{ live_ticker.quotes_every_s }}" data-account="{{ path_prefix }}account.html"{% endif %}>
     <span class="lt-markets-h">Markets &amp; launches</span>
     <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Play">Pause</button>
     <ul>
@@ -577,6 +577,7 @@
                 <p class="nn-you-sub" data-nn-you-sub></p>
             </div>
             <div class="nn-you-head-actions">
+                <button type="button" class="lt-btn lt-btn--primary" data-nn-you-edition hidden><span aria-hidden="true">▶</span> My edition</button>
                 <button type="button" class="lt-btn lt-btn--primary" data-nn-you-playall hidden><span aria-hidden="true">▶</span> Play my lineup</button>
                 <a class="lt-btn" href="{{ path_prefix }}account.html">My Nerra →</a>
             </div>
@@ -1094,7 +1095,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ path_prefix }}assets/js/for-you.js" defer></script>
+<script src="{{ path_prefix }}{{ asset_v("assets/js/for-you.js") }}" defer></script>
 {%- if watch and watch.shorts %}
 {#- Oct 22 2026: load shorts-reel.js only when #shorts scrolls into view
     (IntersectionObserver), with a click-to-load fallback. Media uses
@@ -1156,7 +1157,7 @@
 {%- endif %}
 {#- Oct 19 2026: live quotes from the Worker, Latest headlines re-read from
     this page's newest build, and both rows moving as a tape. -#}
-<script src="{{ path_prefix }}assets/js/live-ticker.js" defer></script>
+<script src="{{ path_prefix }}{{ asset_v("assets/js/live-ticker.js") }}" defer></script>
 {#- Relative timestamps (BBC / Guardian convention): the server prints the
     absolute Eastern time; this rewrites it to "2 hours ago" / "Yesterday",
     keeps the absolute stamp as the tooltip, drops a "Today" marker whose

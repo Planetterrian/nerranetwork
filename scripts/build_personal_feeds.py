@@ -82,7 +82,12 @@ from engine.personal_edition import (  # noqa: E402
     PersonalSpec,
     build_chapters,
     build_local_brief_prompt,
+    absent_show_notes,
     build_markets_line,
+    cross_show_connections,
+    fetch_market_quotes,
+    market_notes,
+    member_tickers,
     build_personal_feed_xml,
     build_personal_links_prompt,
     build_topics_prompt,
@@ -645,6 +650,7 @@ def build_for_spec(
     dry_run: bool,
     replace: bool = False,
     sting: Optional[Path] = None,
+    quotes: Optional[Dict[str, dict]] = None,
 ) -> bool:
     from engine.audio import concatenate_audio
 
@@ -683,7 +689,7 @@ def build_for_spec(
         topics_text = generate_topics_brief(spec, target_date)
         markets_text = ""
         if "markets" in spec.effective_addons():
-            markets_text = build_markets_line(ROOT)
+            markets_text = build_markets_line(ROOT, member_tickers(spec), quotes)
         extra_words = sum(len(t.split()) for _c, t in local_texts) + len(
             (topics_text or "").split()) + len(markets_text.split())
 
@@ -694,6 +700,16 @@ def build_for_spec(
             spec, segments, cache, episodes, target_date, episode_num, extra_words)
         seg_paths, spans, kept = apply_cuts(planned, cache, stories, workdir)
         context = finish_context(context, stories, kept, spec, spans)
+        # Oct 29 2026 — more of the edition is theirs, still no new model
+        # call: their stocks and where today's episodes name them, names that
+        # link two of their shows, and the shows absent today.
+        if spec.tickers or "markets" in spec.effective_addons():
+            context.markets = market_notes(member_tickers(spec), quotes or {}, segments)
+        context.connections = cross_show_connections(segments, context.repeats)
+        context.absent = absent_show_notes(spec, segments, target_date)
+        logger.info("%s…: personal — %d stock note(s), %d connection(s), %d absent",
+                    spec.token[:8], len(context.markets), len(context.connections),
+                    len(context.absent))
 
         links = generate_personal_links(spec, segments, target_date, context)
         links = ensure_trim_mentions(links, segments, context.trims,
@@ -755,7 +771,7 @@ def build_for_spec(
         final = workdir / filename
         concatenate_audio(splice, final)
         total = _duration(final)
-        title = personal_episode_title(target_date, segments)
+        title = personal_episode_title(target_date, segments, links.get("title") or "")
         logger.info("%s…: %0.1f min%s, %d segments%s%s%s", spec.token[:8],
                     total / 60,
                     f" (asked for {spec.target_minutes})" if spec.target_minutes else "",
@@ -793,7 +809,7 @@ def build_for_spec(
             sources["Your topics"] = named_sources(topics_text)
         description, notes_html = episode_notes(
             spec, chapters["chapters"], sources_by_chapter=sources,
-            segments=segments, trims=context.trims)
+            segments=segments, trims=context.trims, absent=context.absent)
         cues = transcript_entries(_transcript_pieces(
             spec, segments, durations, links, local_texts, topics_text,
             markets_text, signoff_text, spans))
@@ -985,12 +1001,19 @@ def main() -> int:
 
     sting = ensure_sting(cache_root)
 
+    # Oct 29 2026: every member's stocks in one pass over the site's markets
+    # route (no model call; a stock with no quote is left out, never guessed).
+    wanted = sorted({t for spec in specs for t in member_tickers(spec)
+                     if spec.tickers or "markets" in spec.effective_addons()})
+    quotes = fetch_market_quotes(wanted) if wanted else {}
+    logger.info("markets: %d of %d member stock(s) quoted", len(quotes), len(wanted))
+
     client = None if args.dry_run else _r2_client()
     built = 0
     for spec in specs:
         if build_for_spec(spec, target_date, segments_by_slug, cache,
                           client, dry_run=args.dry_run,
-                          replace=args.replace, sting=sting):
+                          replace=args.replace, sting=sting, quotes=quotes):
             built += 1
         if client is not None:
             try:

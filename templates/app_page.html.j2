@@ -1,0 +1,106 @@
+{% extends "base.html.j2" %}
+{#- /app.html (Oct 29 2026): the Nerra app, which is this site added to a
+    Home Screen or a Dock (manifest.webmanifest + sw.js). What it does,
+    stated as built, and how to add it on each device. The live buttons are
+    assets/js/nn-app.js's: [data-nn-install] shows where the browser can
+    install, [data-nn-install-ios] on iPhone and iPad, [data-nn-install-mac]
+    in Safari on a Mac, [data-nn-install-inapp] inside another app's
+    browser, [data-nn-installed] inside the app itself. -#}
+{% block head_extra %}
+<style>
+.ap { max-width: var(--container-max, 1200px); margin: 0 auto; padding: calc(var(--nav-height) + var(--sp-8)) var(--sp-6) var(--sp-12); font-family: var(--font-ui); }
+.ap-hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--sp-8); align-items: center; }
+.ap-kicker { margin: 0 0 8px; font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--nn-cyan); font-weight: 700; }
+.ap h1 { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.04; margin: 0 0 var(--sp-4); }
+.ap-lede { color: var(--nn-text-muted); font-size: 1.08rem; line-height: 1.6; margin: 0 0 var(--sp-5); max-width: 560px; }
+.ap-now { display: grid; gap: var(--sp-3); }
+.ap-now .nn-app-card { margin: 0; }
+.ap-phone { justify-self: center; width: min(300px, 80vw); aspect-ratio: 9 / 19; border-radius: 42px; border: 10px solid #1c2236; background: #0B0F1A; box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06); position: relative; overflow: hidden; }
+.ap-phone .grid { position: absolute; inset: 56px 18px auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px 14px; }
+.ap-phone .tile { aspect-ratio: 1; border-radius: 14px; background: rgba(255,255,255,0.07); }
+.ap-phone .tile.is-us { background: url({{ path_prefix }}assets/app/icon-192.png) center / cover; box-shadow: 0 0 0 2px var(--nn-cyan), 0 0 24px rgba(0,212,255,0.45); }
+.ap-phone .lbl { position: absolute; left: 18px; right: 18px; bottom: 28px; text-align: center; font-size: 0.82rem; color: var(--nn-text-muted); }
+.ap h2 { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.7rem; margin: var(--sp-10) 0 var(--sp-4); }
+.ap-gets { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: var(--sp-4); }
+.ap-gets li { border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4) var(--sp-5); }
+.ap-gets b { display: block; color: var(--nn-white); margin-bottom: 4px; }
+.ap-gets span { color: var(--nn-text-muted); font-size: 0.92rem; line-height: 1.5; }
+.ap-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: var(--sp-4); }
+.ap-step { border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4) var(--sp-5); }
+.ap-step h3 { margin: 0 0 8px; font-size: 1rem; }
+.ap-step ol { margin: 0; padding-left: 1.2em; color: var(--nn-text-muted); line-height: 1.65; font-size: 0.94rem; }
+.ap-step b, .ap-step kbd { color: var(--nn-white); font: inherit; font-weight: 700; }
+.ap-note { color: var(--nn-text-muted); line-height: 1.6; max-width: 760px; }
+.ap-note strong { color: var(--nn-white); }
+@media (max-width: 820px) { .ap-hero { grid-template-columns: minmax(0, 1fr); } .ap-phone { display: none; } .ap { padding-left: var(--sp-4); padding-right: var(--sp-4); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ap">
+    <section class="ap-hero" aria-labelledby="ap-h">
+        <div>
+            <p class="ap-kicker">The Nerra app</p>
+            <h1 id="ap-h">Nerra on your Home Screen</h1>
+            <p class="ap-lede">The app is this site, added to your Home Screen or Dock. It opens full screen in
+               one tap, straight to today's stories, with the player and your own shows a tab away. It's free,
+               it comes from no app store, and it never needs updating: every visit is the current site.</p>
+            <div class="ap-now">
+                <div class="nn-app-card" data-nn-install hidden>
+                    <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52">
+                    <p><strong>Your browser can add it now</strong>One tap, and Nerra sits beside your other apps.</p>
+                    <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+                </div>
+                <div class="nn-app-card nn-app-ios" data-nn-install-ios hidden>
+                    <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52">
+                    <p><strong>On this iPhone or iPad</strong>Tap <kbd>Share</kbd>, then <kbd>Add to Home Screen</kbd>, then <kbd>Add</kbd>.</p>
+                </div>
+                <div class="nn-app-card" data-nn-install-mac hidden>
+                    <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52">
+                    <p><strong>In Safari on this Mac</strong>Choose <kbd>File</kbd> › <kbd>Add to Dock</kbd>.</p>
+                </div>
+                <div class="nn-app-card" data-nn-install-inapp hidden>
+                    <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52">
+                    <p><strong>Open this page in your browser first</strong>An app's built-in browser can't add pages to the Home Screen. Use its menu to open in Safari or Chrome, then come back here.</p>
+                </div>
+                <div class="nn-app-card" data-nn-installed hidden>
+                    <img src="{{ path_prefix }}assets/app/icon-192.png" alt="" width="52" height="52">
+                    <p><strong>You're in the app</strong>Today, Watch, Shows and My Nerra are along the bottom.</p>
+                </div>
+            </div>
+        </div>
+        <div class="ap-phone" aria-hidden="true">
+            <div class="grid">{% for i in range(16) %}<span class="tile{% if i == 5 %} is-us{% endif %}"></span>{% endfor %}</div>
+            <p class="lbl">Nerra, beside your other apps</p>
+        </div>
+    </section>
+
+    <h2>What the app does</h2>
+    <ul class="ap-gets">
+        <li><b>Opens in one tap</b><span>Full screen, no browser bars, straight to the day's front page.</span></li>
+        <li><b>Plays like a podcast app</b><span>The player keeps going with the screen locked, with play, skip and scrub on the lock screen, and picks up where you left off.</span></li>
+        <li><b>Your Nerra, a tab away</b><span>Your shows in your order, the stocks you follow, and on Nerra Personal your private morning edition, one button to play.</span></li>
+        <li><b>Watch in the same place</b><span>Every show's newest videos and Shorts on one tab, played inside the app.</span></li>
+        <li><b>Holds up on a weak connection</b><span>Pages you opened recently still load when the signal drops.</span></li>
+        <li><b>Tells you when your edition is ready</b><span>On a phone or computer that supports app badges, the icon shows a dot until you play today's edition.</span></li>
+    </ul>
+
+    <h2>Add it on your device</h2>
+    <div class="ap-steps">
+        <div class="ap-step"><h3>iPhone and iPad</h3><ol><li>Open nerranetwork.com in Safari (or Chrome)</li><li>Tap <b>Share</b></li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b></li></ol></div>
+        <div class="ap-step"><h3>Android</h3><ol><li>Open nerranetwork.com in Chrome</li><li>Tap <b>Install</b> when it's offered, or the <b>⋮</b> menu › <b>Add to Home screen</b></li><li>In Samsung Internet: menu › <b>Add page to</b> › <b>Home screen</b></li></ol></div>
+        <div class="ap-step"><h3>Mac</h3><ol><li>Safari: <b>File</b> › <b>Add to Dock</b></li><li>Chrome or Edge: the install icon at the right of the address bar</li></ol></div>
+        <div class="ap-step"><h3>Windows and Chromebook</h3><ol><li>Chrome or Edge: the install icon at the right of the address bar</li><li>Or the browser menu › <b>Apps</b> › <b>Install Nerra</b></li></ol></div>
+    </div>
+
+    <h2>Signing in inside the app</h2>
+    <p class="ap-note">On iPhone and iPad the app keeps its own sign-in, separate from Safari's, and a link
+       in an email always opens Safari. So in the app, open <strong>My Nerra</strong>, ask for a sign-in email,
+       and type the <strong>six-digit code</strong> in it. On Android and computers the emailed link works as
+       usual. Your private feed for podcast apps is unaffected either way; it lives in
+       <a href="{{ path_prefix }}account.html#nn-edition">My Nerra</a>.</p>
+    <p class="ap-note">Prefer a podcast app? Every show has a feed for Apple Podcasts, Spotify and the rest on
+       <a href="{{ path_prefix }}how-to-listen.html">how to listen</a>, and Nerra Personal's edition comes as a
+       private feed for any of them.</p>
+</div>
+{% endblock %}

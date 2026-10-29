@@ -255,7 +255,7 @@ const REVOCATION_PREFIX = "revoke:";
 
 async function checkRateLimit(
   env: Env,
-  route: "subscribe" | "login",
+  route: "subscribe" | "login" | "login-code",
   ip: string,
 ): Promise<{ allowed: boolean; retryAfter?: number }> {
   if (!env.RATE_LIMIT_KV) {
@@ -569,9 +569,14 @@ export async function handleLogin(
         env.JWT_SECRET,
       );
       const magicUrl = `https://${url.host}/api/magic?token=${encodeURIComponent(token)}`;
+      // Oct 29 2026: a one-time code beside the link, for the installed
+      // app (it keeps its own cookies, and an emailed link opens in the
+      // browser). Stored hashed, for the link's lifetime, a few tries.
+      const code = env.RATE_LIMIT_KV ? await issueLoginCode(env, email) : undefined;
       const mail = buildMagicLinkEmail({
         magicUrl,
         ttlMinutes: MAGIC_TTL_MINUTES,
+        code,
       });
       const send = await deps.resend.sendEmail(
         env.RESEND_API_KEY,
@@ -591,6 +596,84 @@ export async function handleLogin(
   return jsonResponse(request, 200, { ok: true });
 }
 
+
+// ---------------------------------------------------------------------------
+// POST /api/login-code  {email, code}
+//
+// Oct 29 2026: the code from the sign-in email, typed into the installed
+// app. Six digits, one per sign-in email, kept hashed in KV for the
+// magic link's lifetime, LOGIN_CODE_TRIES wrong guesses and it is gone.
+// A right code sets the same verified cookie the magic link sets.
+// ---------------------------------------------------------------------------
+
+export const LOGIN_CODE_TRIES = 5;
+const LOGIN_CODE_PREFIX = "login-code:";
+
+async function sha256Hex(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function issueLoginCode(env: Env, email: string): Promise<string> {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
+  const code = String(n).padStart(6, "0");
+  const hash = await sha256Hex(`${env.JWT_SECRET}:${email}:${code}`);
+  await env.RATE_LIMIT_KV!.put(LOGIN_CODE_PREFIX + email,
+    JSON.stringify({ hash, tries: 0 }), { expirationTtl: MAGIC_TTL_SECONDS });
+  return code;
+}
+
+export async function handleLoginCode(
+  request: Request,
+  env: Env,
+  _deps: HandlerDeps,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV) {
+    return jsonResponse(request, 503, { ok: false, error: "not configured" });
+  }
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const rate = await checkRateLimit(env, "login-code", ip);
+  if (!rate.allowed) {
+    return jsonResponse(request, 429, { ok: false, error: "rate limited", retryAfter: rate.retryAfter },
+      { "Retry-After": String(rate.retryAfter || 600) });
+  }
+  let body: any;
+  try { body = await request.json(); } catch { body = null; }
+  const email = normaliseEmail(body?.email);
+  const code = String(body?.code ?? "").replace(/\D/g, "");
+  if (!email || code.length !== 6) {
+    return jsonResponse(request, 400, { ok: false, error: "email and six-digit code required" });
+  }
+  const key = LOGIN_CODE_PREFIX + email;
+  const raw = await env.RATE_LIMIT_KV.get(key);
+  let rec: { hash: string; tries: number } | null = null;
+  try { rec = raw ? JSON.parse(raw) : null; } catch { rec = null; }
+  if (!rec) {
+    return jsonResponse(request, 401, { ok: false, error: "code expired; request a new email" });
+  }
+  const hash = await sha256Hex(`${env.JWT_SECRET}:${email}:${code}`);
+  if (hash !== rec.hash) {
+    const tries = (rec.tries || 0) + 1;
+    if (tries >= LOGIN_CODE_TRIES) {
+      await env.RATE_LIMIT_KV.delete(key);
+    } else {
+      await env.RATE_LIMIT_KV.put(key, JSON.stringify({ hash: rec.hash, tries }),
+        { expirationTtl: MAGIC_TTL_SECONDS });
+    }
+    return jsonResponse(request, 401, { ok: false, error: "wrong code",
+      tries_left: Math.max(0, LOGIN_CODE_TRIES - tries) });
+  }
+  await env.RATE_LIMIT_KV.delete(key);
+  if (await isEmailRevoked(env, email)) {
+    return jsonResponse(request, 403, { ok: false, error: "revoked" });
+  }
+  const cookieToken = await signJwt(
+    { sub: email, scope: "gallery-subscriber", v: 1, ttlSeconds: SUBSCRIBER_TTL_SECONDS },
+    env.JWT_SECRET,
+  );
+  return jsonResponse(request, 200, { ok: true },
+    { "Set-Cookie": cookieFor(cookieToken, SUBSCRIBER_TTL_SECONDS), "Cache-Control": "no-store" });
+}
 
 export async function handleMagic(
   request: Request,

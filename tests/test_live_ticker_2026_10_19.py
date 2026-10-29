@@ -125,7 +125,7 @@ class TestThePage:
 
     def test_the_latest_row_refreshes_and_loads_the_script(self, home):
         assert f'data-live-headlines data-every="{N.LIVE_HEADLINES_REFRESH_S}"' in home
-        assert 'assets/js/live-ticker.js" defer></script>' in home
+        assert re.search(r'assets/js/live-ticker\.js(\?v=[0-9a-f]{8})?" defer></script>', home)
 
     def test_the_language_hubs_refresh_in_their_own_words(self, hubs):
         assert hubs, "no language hub rendered"

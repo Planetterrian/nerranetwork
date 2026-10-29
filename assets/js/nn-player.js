@@ -54,7 +54,8 @@
 
   var audio = new Audio();
   audio.preload = 'none';
-  var queue = [], at = -1, rateAt = 0, lastSave = 0, seeking = false, reported = {};
+  var RATE_KEY = 'nnPlay.rate';
+  var queue = [], at = -1, rateAt = Math.max(0, RATES.indexOf(Number(load(RATE_KEY)) || 1)), lastSave = 0, seeking = false, reported = {};
   var positions = load('nnMe.pos') || {};
   var listeners = [];
   var bar = null, ui = {};
@@ -105,11 +106,14 @@
           '<button type="button" class="nn-gp-btn nn-gp-skip" data-gp="fwd" aria-label="Forward 30 seconds">+30</button>' +
           '<button type="button" class="nn-gp-btn" data-gp="next" aria-label="Next episode">⏭</button>' +
         '</div>' +
-        '<div class="nn-gp-bar"><span class="nn-gp-cur">0:00</span>' +
+        '<div class="nn-gp-bar">' +
+          '<button type="button" class="nn-gp-btn nn-gp-skip-sm" data-gp="back" aria-label="Back 15 seconds">−15</button>' +
+          '<span class="nn-gp-cur">0:00</span>' +
           '<input type="range" class="nn-gp-seek" min="0" max="1000" value="0" step="1" aria-label="Seek">' +
-          '<span class="nn-gp-dur"></span></div>' +
+          '<span class="nn-gp-dur"></span>' +
+          '<button type="button" class="nn-gp-btn nn-gp-skip-sm" data-gp="fwd" aria-label="Forward 30 seconds">+30</button></div>' +
         '<div class="nn-gp-side"><span class="nn-gp-queue"></span>' +
-          '<button type="button" class="nn-gp-btn" data-gp="rate" aria-label="Playback speed">1×</button>' +
+          '<button type="button" class="nn-gp-btn" data-gp="rate" aria-label="Playback speed">' + RATES[rateAt] + '×</button>' +
           '<button type="button" class="nn-gp-btn" data-gp="close" aria-label="Close the player">✕</button></div>' +
       '</div>';
     document.body.appendChild(bar);
@@ -174,16 +178,34 @@
     ui.dur.textContent = d ? clock(d) : '';
     if (d && !seeking) { ui.seek.value = String(Math.round(t / d * 1000)); }
     ui.fill.style.width = d ? (t / d * 100).toFixed(2) + '%' : '0';
+    ui.seek.setAttribute('aria-valuetext', clock(t) + (d ? ' of ' + clock(d) : ''));
+    if (d && 'mediaSession' in navigator && navigator.mediaSession.setPositionState) {
+      try { navigator.mediaSession.setPositionState({ duration: d, position: Math.min(t, d), playbackRate: audio.playbackRate || 1 }); } catch (e) {}
+    }
   }
 
   // --------------------------------------------------------------- engine
+  // Oct 29 2026: a member's edition URL carries their private feed token
+  // (/api/feed/<token>/<file>.mp3); analytics never sees it. The edition is
+  // reported as itself, by file name.
+  function analyticsSrc(url) {
+    var u = String(url || '').split('?')[0];
+    var m = /\/api\/feed\/[^/]+\/([^/]+)$/.exec(u);
+    return m ? 'personal_edition/' + m[1] : u;
+  }
   function report(it) {
     if (!it || reported[it.url]) { return; }
     reported[it.url] = 1;
+    // A member's edition played: the app badge for that day clears.
+    var ed = /\/api\/feed\/[^/]+\/Nerra_Personal_(\d{4})(\d{2})(\d{2})/.exec(String(it.url));
+    if (ed) {
+      save('nnMe.editionDone', ed[1] + '-' + ed[2] + '-' + ed[3]);
+      try { if (navigator.clearAppBadge) { navigator.clearAppBadge().catch(function () {}); } } catch (e) {}
+    }
     if (it.sample) {
       track('play_personal_sample', { placement: it.sample, location: location.pathname });
     } else {
-      track('episode_play', { src: String(it.url).split('?')[0], location: location.pathname });
+      track('episode_play', { src: analyticsSrc(it.url), location: location.pathname });
     }
   }
   function cue(i, autoplay) {
@@ -228,6 +250,14 @@
       navigator.mediaSession.setActionHandler('nexttrack', function () { api.next(); });
       navigator.mediaSession.setActionHandler('seekbackward', function () { api.seekBy(-15); });
       navigator.mediaSession.setActionHandler('seekforward', function () { api.seekBy(30); });
+      navigator.mediaSession.setActionHandler('previoustrack', function () {
+        if (audio.currentTime > 5 || at <= 0) { audio.currentTime = 0; } else { cue(at - 1, true); }
+      });
+      navigator.mediaSession.setActionHandler('seekto', function (d) {
+        if (d && typeof d.seekTime === 'number' && audio.duration) { audio.currentTime = Math.max(0, Math.min(audio.duration, d.seekTime)); progress(); }
+      });
+      navigator.mediaSession.setActionHandler('play', function () { api.toggle(); });
+      navigator.mediaSession.setActionHandler('pause', function () { if (!audio.paused) { audio.pause(); } });
     } catch (e) {}
   }
 
@@ -256,7 +286,25 @@
     },
     seekBy: function (s) { if (audio.duration) { audio.currentTime = Math.max(0, Math.min(audio.duration - 1, audio.currentTime + s)); } },
     next: function () { if (at < queue.length - 1) { cue(at + 1, true); } },
-    rate: function () { rateAt = (rateAt + 1) % RATES.length; audio.playbackRate = RATES[rateAt]; if (ui.rate) { ui.rate.textContent = RATES[rateAt] + '×'; } },
+    rate: function () {
+      rateAt = (rateAt + 1) % RATES.length; audio.playbackRate = RATES[rateAt];
+      if (ui.rate) { ui.rate.textContent = RATES[rateAt] + '×'; ui.rate.setAttribute('aria-label', 'Playback speed, ' + RATES[rateAt] + ' times'); }
+      save(RATE_KEY, RATES[rateAt]); progress();
+    },
+    // Oct 29 2026: signing out forgets anything private this browser kept —
+    // a member's edition carries their feed token in its URL.
+    forgetPrivate: function () {
+      var it = current();
+      if (it && /\/api\/feed\//.test(it.url)) { api.close(); }
+      var now = load(NOW_KEY);
+      if (now && (now.queue || []).some(function (x) { return /\/api\/feed\//.test(x.url || ''); })) { save(NOW_KEY, null); }
+      ['nnMe.pos', 'nnMe.played'].forEach(function (k) {
+        var m = load(k) || {}, changed = false;
+        Object.keys(m).forEach(function (u) { if (/\/api\/feed\//.test(u)) { delete m[u]; changed = true; } });
+        if (changed) { save(k, m); }
+      });
+      positions = load('nnMe.pos') || {};
+    },
     close: function () { remember(); audio.pause(); show(false); queue = []; at = -1; save(NOW_KEY, null); emit(); },
     isKey: function (key) { var it = current(); return !!(it && it.key === key); },
     isPlaying: function () { return !!current() && !audio.paused; },
@@ -472,11 +520,18 @@
     txt.appendChild(go);
     card.appendChild(txt);
     frame.appendChild(card);
-    var left = MIRA_SECONDS, at = listAt;
-    var paint = function () { go.textContent = 'Start · ' + left + 's'; };
+    var left = MIRA_SECONDS, at = listAt, held = false;
+    // Oct 29 2026 (WCAG 2.2.1): the countdown waits while a reader is on
+    // the card (pointer over it, or keyboard focus in it).
+    var paint = function () { go.textContent = held ? 'Start' : 'Start · ' + left + 's'; };
     paint();
     go.addEventListener('click', function () { showItem(at + 1); });
+    card.addEventListener('mouseenter', function () { held = true; paint(); });
+    card.addEventListener('mouseleave', function () { held = false; paint(); });
+    card.addEventListener('focusin', function () { held = true; paint(); });
+    card.addEventListener('focusout', function () { held = false; paint(); });
     miraTimer = setInterval(function () {
+      if (held) { return; }
       left -= 1;
       if (left <= 0 || at !== listAt) { clearInterval(miraTimer); if (at === listAt) { showItem(at + 1); } return; }
       paint();

@@ -53,6 +53,12 @@ from engine.daily_edition import (
 
 logger = logging.getLogger(__name__)
 
+try:
+    from zoneinfo import ZoneInfo as _ZoneInfo
+    _EASTERN = _ZoneInfo("America/New_York")
+except Exception:  # noqa: BLE001 — a missing tz database never sinks a build
+    _EASTERN = _dt.timezone.utc
+
 #: Shows a member may choose beyond the Nerra Daily roster. Empty from
 #: Oct 2 2026 (the launch cohort joined the Nerra Daily lineup itself) until
 #: Oct 17 2026, when Vancouver Daily News left the 7:00 AM Eastern edition to
@@ -155,6 +161,16 @@ PROFILE_MAX_CHARS = 240
 #: Edition length preference, minutes — a closed set; absent = no budget.
 #: Mirrored as TARGET_MINUTES in the Worker (drift-guarded).
 TARGET_MINUTES: Tuple[int, ...] = (20, 30, 45, 60)
+#: Member tickers (Oct 29 2026): the stocks a member follows on My Nerra,
+#: spoken in the markets minute and given to Mira's links call. The shape is
+#: Yahoo's chart-API symbol (a listing, an exchange suffix, an index ``^``, a
+#: pair ``=X``, a future ``=F``). Mirrored as MEMBER_SYMBOL_RE in
+#: workers/gallery/src/markets.ts and TICKERS_MAX in personal.ts
+#: (drift-guarded).
+TICKER_RE = re.compile(r"^\^?[A-Z0-9][A-Z0-9.\-]{0,9}(=[XF])?$")
+TICKERS_MAX = 8
+#: The markets minute before a member chooses their own stocks.
+DEFAULT_TICKERS: Tuple[str, ...] = ("TSLA", "SPCX")
 
 
 def tier_limits(tier: str) -> Dict[str, int]:
@@ -194,6 +210,9 @@ class PersonalSpec:
     profile: str = ""
     #: Edition length budget in minutes (one of TARGET_MINUTES), or None.
     target_minutes: Optional[int] = None
+    #: The stocks the member follows (validated, ≤ TICKERS_MAX), in their
+    #: order. None = never saved; the markets minute speaks DEFAULT_TICKERS.
+    tickers: Optional[List[str]] = None
     #: Resolved lazily by the builder (Open-Meteo geocoding, cached per
     #: city name within one run).
     latitude: Optional[float] = None
@@ -305,7 +324,23 @@ def validate_spec(raw: dict) -> Optional[PersonalSpec]:
     return PersonalSpec(token=token, shows=shows, tier=tier,
                         first_name=first_name, city=city, addons=addons,
                         cities=cities, topics=topics, profile=profile,
-                        target_minutes=target_minutes)
+                        target_minutes=target_minutes,
+                        tickers=clean_tickers(raw.get("tickers")))
+
+
+def clean_tickers(raw: object) -> Optional[List[str]]:
+    """A member's ticker list as the Worker stores it: upper-cased, valid
+    shapes, no duplicates, at most TICKERS_MAX. None when never saved."""
+    if not isinstance(raw, list):
+        return None
+    out: List[str] = []
+    for t in raw:
+        sym = str(t or "").strip().upper()
+        if TICKER_RE.match(sym) and sym not in out:
+            out.append(sym)
+        if len(out) >= TICKERS_MAX:
+            break
+    return out
 
 
 _FREE_TEXT_RE = re.compile(r"[^\w \-.,'’&/()]", re.UNICODE)
@@ -345,6 +380,16 @@ class EditionContext:
     target_minutes: Optional[int] = None
     estimated_minutes: Optional[float] = None
     weekday: int = -1
+    #: Oct 29 2026: the stocks they follow, with where today's episodes
+    #: mention them ("Nvidia (NVDA): down 1.2 percent at the last close —
+    #: in AI Chips Daily").
+    markets: List[str] = field(default_factory=list)
+    #: Names that turn up in two or more of today's episodes, counted from
+    #: the episodes' own text (never a story two shows both tell — those
+    #: are ``repeats``).
+    connections: List[str] = field(default_factory=list)
+    #: Shows in their lineup with no episode in today's edition, and why.
+    absent: List[str] = field(default_factory=list)
     #: Builder bookkeeping (not rendered): Mira's estimated seconds and the
     #: engine.personal_stories.Repeat objects the notes are made from.
     overhead_seconds: float = 0.0
@@ -355,9 +400,180 @@ def _bullets(lines: List[str]) -> str:
     return "\n".join(f"- {x}" for x in lines)
 
 
+#: Editions worth marking in one clause (the number is otherwise never
+#: announced).
+MILESTONE_EDITIONS = frozenset({10, 25, 50, 100, 150, 200, 250, 300, 365, 500, 750, 1000})
+MAX_MARKET_NOTES = 4
+
+
+def _and_list(items: List[str]) -> str:
+    items = list(items)
+    if len(items) <= 2:
+        return " and ".join(items)
+    return ", ".join(items[:-1]) + " and " + items[-1]
+MAX_CONNECTIONS = 3
+
+
+def _mentions(content: str, symbol: str, quote: dict) -> bool:
+    """True when an episode's text names this stock: its ticker as written
+    (case-sensitive, never a lower-case word), or its listing name."""
+    core = re.split(r"[.\-=]", symbol.lstrip("^"))[0]
+    if len(core) >= 2 and re.search(rf"(?<![A-Za-z$]){re.escape(core)}(?![A-Za-z])", content):
+        return True
+    name = _FLAGSHIP_SPOKEN.get(symbol, "").split(",")[0] or listing_name(quote)
+    # A one-word name alone ("Nvidia"); a longer one whole, so "Advanced"
+    # never stands in for Advanced Micro Devices.
+    name = " ".join(name.split())
+    if len(name) < 4:
+        return False
+    return bool(re.search(rf"\b{re.escape(name)}\b", content, re.IGNORECASE))
+
+
+def market_notes(tickers: List[str], quotes: Dict[str, dict],
+                 segments: List["Segment"]) -> List[str]:
+    """Each stock the member follows that has a quote, with the shows in
+    today's edition whose episode names it."""
+    out: List[str] = []
+    for sym in tickers:
+        q = quotes.get(sym)
+        if not q:
+            continue
+        label = quote_label(sym, q).split(",")[0]
+        pct = q.get("change_pct")
+        when = "today so far" if q.get("state") == "live" else "at the last close"
+        if pct is None:
+            move = "no change figure"
+        elif round(abs(float(pct)), 1) == 0:
+            move = "unchanged"
+        else:
+            move = f"{'up' if float(pct) > 0 else 'down'} {abs(float(pct)):.1f} percent"
+        shows = [seg.show_name for seg in segments if _mentions(seg.content or "", sym, q)]
+        line = f"{label} ({sym}): {move} {when}"
+        line += (" — named in today's " + _and_list(shows[:3])) if shows else \
+            " — not in today's episodes"
+        out.append(line + ".")
+        if len(out) >= MAX_MARKET_NOTES:
+            break
+    return out
+
+
+_PROPER_RE = re.compile(
+    r"(?<=[a-z,;:] )([A-Z][A-Za-z0-9&'’-]{2,}(?: (?:[A-Z][A-Za-z0-9&'’-]+|of|de))*)")
+_NOT_A_THREAD = frozenset("""
+monday tuesday wednesday thursday friday saturday sunday january february march
+april may june july august september october november december today tomorrow
+nerra mira ai the this that these those it its they their our we you i us u.s
+source sources read more episode show podcast story stories news report reports
+according american canadian european chinese said says new first last
+reuters bloomberg guardian cnbc bbc associated press ap techcrunch verge axios
+politico cnn nbc abc cbs fox times post journal wire telegraph independent
+israeli iraqi saudi pakistani thai emirati qatari kuwaiti
+""".split())
+_DEMONYM_RE = re.compile(r"^[A-Z][a-z]+(?:ian|ean|ese|ish)$")
+
+
+def _proper_names(text: str) -> List[str]:
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text or "")
+    text = re.sub(r"https?://\S+", " ", text)
+    text = re.sub(r"(?im)^\s*(?:source|sources|read more)\b.*$", " ", text)
+    # Headings and bold titles are title case: every word is capitalised
+    # there, so they say nothing about which words are names.
+    text = "\n".join(line for line in text.splitlines()
+                     if not re.match(r"\s*(?:#|\*\*|[-*]\s+\*\*|\d+\.\s+\*\*)", line))
+    text = re.sub(r"[*_#>`]", " ", text)
+    # A word the text also uses in lower case is an ordinary word that
+    # started a clause ("Know", "Need"), never a name.
+    lower = set(re.findall(r"\b[a-z][a-z'’-]+\b", text))
+    out = []
+    for m in _PROPER_RE.finditer(text):
+        name = m.group(1).strip(" -'’")
+        name = re.sub(r" (?:of|de)$", "", name)
+        words = [w.lower() for w in name.split() if w not in ("of", "de")]
+        if all(w in _NOT_A_THREAD or w in lower for w in words):
+            continue
+        if " " not in name and (_DEMONYM_RE.match(name)
+                                or (name.isupper() and len(name) <= 3)):
+            continue        # "Russian", "CPU": a description, not a thread
+        out.append(name)
+    return out
+
+
+def cross_show_connections(segments: List["Segment"],
+                           exclude: Optional[List[str]] = None) -> List[str]:
+    """Names (people, companies, places, programmes) that appear in two or
+    more of today's episodes — read from each episode's own text, counted,
+    never inferred. A name inside a story two shows both tell (*exclude*:
+    the repeat notes) is not a connection, it is the same story."""
+    show_words = {w.lower() for seg in segments for w in seg.show_name.split()}
+    excluded = " ".join(exclude or []).lower()
+    by_name: Dict[str, Dict[str, int]] = {}
+    shown: Dict[str, str] = {}
+    for seg in segments:
+        for name in _proper_names(seg.content or ""):
+            key = name.lower()
+            if set(key.split()) <= show_words:
+                continue
+            by_name.setdefault(key, {})
+            by_name[key][seg.show_name] = by_name[key].get(seg.show_name, 0) + 1
+            shown.setdefault(key, name)
+    # A shorter name inside a longer one that has the same shows is the same
+    # thread ("Nvidia" and "Nvidia Blackwell"): keep the shorter.
+    ranked = sorted(((k, v) for k, v in by_name.items() if len(v) >= 2),
+                    key=lambda kv: (-len(kv[1]), -sum(kv[1].values()), kv[0]))
+    out: List[str] = []
+    kept: List[str] = []
+    n = len(segments)
+    for key, shows in ranked:
+        if n >= 3 and len(shows) == n:
+            continue        # in every episode: furniture, not a thread
+        if key in excluded or any(k in key or key in k for k in kept):
+            continue
+        kept.append(key)
+        names = [seg.show_name for seg in segments if seg.show_name in shows]
+        out.append(f"{shown[key]} — in {_and_list(names)}.")
+        if len(out) >= MAX_CONNECTIONS:
+            break
+    return out
+
+
+def absent_show_notes(spec: "PersonalSpec", segments: List["Segment"],
+                      target_date: _dt.date, names: Optional[Dict[str, str]] = None,
+                      schedules: Optional[Dict[str, str]] = None) -> List[str]:
+    """The member's shows with no episode in today's edition, and the
+    reason the schedule gives ("publishes on Thursdays"); a show whose
+    schedule says it should be here says only that it has none today."""
+    present = {seg.slug for seg in segments}
+    names = names or {}
+    schedules = schedules or {}
+    if not names or not schedules:
+        try:
+            from generate_html import NETWORK_SHOWS  # type: ignore
+            for slug in spec.shows:
+                meta = NETWORK_SHOWS.get(slug) or {}
+                names.setdefault(slug, str(meta.get("name") or slug))
+                schedules.setdefault(slug, str(meta.get("schedule") or ""))
+        except Exception:  # noqa: BLE001 — the registry is a site-layer import
+            pass
+    today = target_date.strftime("%A").lower()
+    out: List[str] = []
+    for slug in spec.shows:
+        if slug in present:
+            continue
+        name = names.get(slug, slug)
+        sched = (schedules.get(slug) or "").strip()
+        days = [d for d in ("monday", "tuesday", "wednesday", "thursday", "friday",
+                            "saturday", "sunday") if d in sched.lower()]
+        if days and today not in days and not sched.lower().startswith("daily"):
+            when = " and ".join(d.capitalize() + "s" for d in days)
+            out.append(f"{name} is not in today's edition: it publishes on {when}.")
+        else:
+            out.append(f"{name} has no new episode in today's edition.")
+    return out
+
+
 def personal_context_blocks(spec: PersonalSpec,
                             context: Optional[EditionContext]) -> Dict[str, str]:
-    """The five personal blocks of nerra_personal_links.txt. Every block
+    """The seven personal blocks of nerra_personal_links.txt. Every block
     has an explicit "nothing today" line, so the prompt never carries an
     empty heading the model might fill."""
     ctx = context or EditionContext()
@@ -380,12 +596,15 @@ def personal_context_blocks(spec: PersonalSpec,
         memory = "(This is their first edition — there is nothing they have heard yet.)"
     elif ctx.memory:
         memory = (
-            "WHAT THIS LISTENER ALREADY HEARD (matched against their own last "
-            "seven editions by headline — counted, not guessed):\n"
+            "WHAT THEIR RECENT EDITIONS CARRIED (matched against their own last "
+            "seven editions by headline — counted, not guessed; an edition being "
+            "built is not proof it was played):\n"
             + _bullets(ctx.memory) + "\n"
             "Where one of today's items continues one of these, frame it as an "
-            "update: say when they heard it and lead with what is new, in one "
-            "clause — never present it as news they have not heard.")
+            "update: name the edition that carried it (\"Tuesday's edition\") and "
+            "lead with what is new, in one clause. Never claim they heard or "
+            "remember it, and never present it as news their editions have not "
+            "carried.")
     else:
         memory = "(Nothing in today's lineup continues a story from their recent editions.)"
 
@@ -429,6 +648,10 @@ def personal_context_blocks(spec: PersonalSpec,
             "heard, so later editions can say what changed; and they can change "
             "the lineup, the length and what they told you about themselves at "
             "nerranetwork.com. Say this once — later editions do not repeat it.")
+    elif ctx.edition_number in MILESTONE_EDITIONS:
+        edition.append(
+            f"This is their {ctx.edition_number}th edition — the intro may mark it in "
+            "one plain clause, without fuss.")
     elif ctx.edition_number:
         edition.append(f"This is edition number {ctx.edition_number} of theirs — "
                        "do not announce the number.")
@@ -446,11 +669,37 @@ def personal_context_blocks(spec: PersonalSpec,
                if ctx.estimated_minutes else "")
         edition.append(f"They asked for editions of about {ctx.target_minutes} minutes{est}. "
                        "Keep your own pieces at the short end of each range.")
+    if ctx.absent:
+        edition.append(
+            "SHOWS IN THEIR LINEUP WITH NO EPISODE TODAY:\n" + _bullets(ctx.absent)
+            + "\nSay so once, in a short clause in the intro, so they are not "
+            "left wondering; never apologise for it.")
+
+    if ctx.markets:
+        markets = (
+            "THE STOCKS THEY FOLLOW (from their account page; the figures are "
+            "measured quotes, and their markets minute reads them out just after "
+            "your intro):\n" + _bullets(ctx.markets) + "\n"
+            "Where a stock is named in an episode, the handoff into that show may "
+            "connect the two in one clause — at most twice in the edition. Never "
+            "explain a move: the material does not say why a price moved.")
+    else:
+        markets = "(They follow no stocks, or none had a quote today.)"
+    if ctx.connections:
+        connections = (
+            "NAMES THAT TURN UP IN MORE THAN ONE OF TODAY'S EPISODES (counted from "
+            "the episodes' own text):\n" + _bullets(ctx.connections) + "\n"
+            "A handoff between two of these shows may point out the shared name in "
+            "one clause, saying only what each episode's material says about it.")
+    else:
+        connections = "(No name links two of today's episodes.)"
     return {
         "listener_block": listener,
         "memory_block": memory,
         "repeats_block": repeats,
         "interests_block": interests,
+        "markets_block": markets,
+        "connections_block": connections,
         "edition_block": "\n".join(edition) or "(Nothing else to note today.)",
     }
 
@@ -543,8 +792,10 @@ def fallback_personal_links(
     the day's real titles, and the greeting still lands personally."""
     who = f", {spec.first_name}" if spec.first_name else ""
     date_spoken = target_date.strftime("%A, %B %-d")
+    hour = _dt.datetime.now(_dt.timezone.utc).astimezone(_EASTERN).hour
+    hello = "Good morning" if hour < 12 else ("Good afternoon" if hour < 18 else "Good evening")
     intro = (
-        f"Good morning{who} — this is your Nerra edition for {date_spoken}. "
+        f"{hello}{who} — this is your Nerra edition for {date_spoken}. "
         f"I'm Mira. Your lineup today: "
         + ", ".join(s.show_name for s in segments) + ". First up, "
         f"{segments[0].show_name}: {segments[0].hook or segments[0].episode_title}"
@@ -728,45 +979,177 @@ def needs_research_call(spec: PersonalSpec) -> bool:
     return bool(set(spec.effective_addons()) & set(_ADDON_RESEARCH_LINES))
 
 
-def build_markets_line(root: Path) -> str:
-    """Deterministic 'markets minute' from the pipeline's committed
-    price caches — zero LLM cost, and silent (empty string) when the
-    caches are missing or stale rather than ever inventing a number."""
+#: The Worker route the site's markets strip reads (engine.newsroom owns
+#: the URL). The builder asks it once per run for every member's stocks.
+_MARKETS_API = "https://api.nerranetwork.com/api/markets"
+#: The closed list the route always serves; everything else goes in
+#: ``extra=`` (workers/gallery/src/markets.ts MEMBER_SYMBOLS_PER_REQUEST).
+_MARKETS_PER_REQUEST = 10
+
+#: Spoken names for the two stocks the network itself covers. A member's
+#: own stocks are named from the quote's listing name.
+_FLAGSHIP_SPOKEN = {
+    "TSLA": "Tesla",
+    # "Ess Pee See Ex", never "S P C X": Grok TTS's server-side text
+    # normalization merges the "S P" bigram into "S&P" (the Aug 29 SPCX
+    # fix — letter-name words are immune).
+    "SPCX": "SpaceX, ticker Ess Pee See Ex,",
+    "NVDA": "Nvidia", "AAPL": "Apple", "MSFT": "Microsoft",
+    "GOOGL": "Alphabet", "AMZN": "Amazon", "META": "Meta",
+}
+_LETTER_NAMES = {
+    "A": "Ay", "B": "Bee", "C": "See", "D": "Dee", "E": "Ee", "F": "Eff",
+    "G": "Gee", "H": "Aitch", "I": "Eye", "J": "Jay", "K": "Kay", "L": "El",
+    "M": "Em", "N": "En", "O": "Oh", "P": "Pee", "Q": "Cue", "R": "Ar",
+    "S": "Ess", "T": "Tee", "U": "You", "V": "Vee", "W": "Double-you",
+    "X": "Ex", "Y": "Why", "Z": "Zee",
+}
+#: Words that end a listing's name and never help a listener ("Shopify
+#: Inc." is spoken "Shopify").
+_NAME_SUFFIX_RE = re.compile(
+    r"(?:[\s,]+(?:inc|incorporated|corp|corporation|co|company|ltd|limited|plc|"
+    r"holdings?|group|sa|ag|nv|se|lp|llc|class [a-z]|cl [a-z]|common stock|"
+    r"ordinary shares|the))+\.?$", re.IGNORECASE)
+_CURRENCY_PREFIX = {"USD": "$", "CAD": "C$", "EUR": "€", "GBP": "£", "JPY": "¥"}
+
+
+def fetch_market_quotes(symbols: List[str], *, api: str = _MARKETS_API,
+                        timeout: float = 10.0, session=None) -> Dict[str, dict]:
+    """Quotes for *symbols* from the site's markets route, keyed by symbol.
+
+    One request per ten member symbols (the route's cap); the network's
+    own list rides the first. A symbol the route does not answer for is
+    simply absent: nothing is ever estimated. Never raises."""
+    want = [s for s in dict.fromkeys(symbols) if TICKER_RE.match(s)]
+    if not want:
+        return {}
+    import requests as _requests
+
+    http = session or _requests
+    closed = [s for s in want if s in DEFAULT_TICKERS or s in _NETWORK_SYMBOLS]
+    extra = [s for s in want if s not in closed]
+    batches = [extra[i:i + _MARKETS_PER_REQUEST]
+               for i in range(0, len(extra), _MARKETS_PER_REQUEST)] or [[]]
+    out: Dict[str, dict] = {}
+    for i, batch in enumerate(batches):
+        params = {"symbols": ",".join(closed) if (i == 0 and closed) else "none"}
+        if batch:
+            params["extra"] = ",".join(batch)
+        try:
+            resp = http.get(api, params=params, timeout=timeout,
+                            headers={"Accept": "application/json"})
+            if resp.status_code != 200:
+                logger.warning("markets route answered %s", resp.status_code)
+                continue
+            for q in (resp.json() or {}).get("quotes") or []:
+                if isinstance(q, dict) and q.get("symbol") in want and q.get("price"):
+                    out[str(q["symbol"])] = q
+        except Exception as exc:  # noqa: BLE001 — quotes never sink an edition
+            logger.warning("markets route unreachable: %s", exc)
+    return out
+
+
+#: The symbols the markets route serves without ``extra`` (mirrors
+#: engine.newsroom.MARKET_TICKERS + SPCX, the Worker's MARKET_SYMBOLS).
+_NETWORK_SYMBOLS = ("TSLA", "NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "SPCX")
+
+
+def spoken_symbol(symbol: str) -> str:
+    """A ticker as words TTS reads letter by letter without merging pairs."""
+    core = re.split(r"[.\-=]", symbol.lstrip("^"))[0]
+    return " ".join(_LETTER_NAMES.get(ch, ch) for ch in core)
+
+
+def listing_name(quote: dict) -> str:
+    """The quote's listing name without its corporate suffix; "" when the
+    route gave none."""
+    name = " ".join(str(quote.get("name") or "").split())
+    prev = None
+    while name and name != prev:
+        prev = name
+        name = _NAME_SUFFIX_RE.sub("", name).strip(" ,.")
+    return name
+
+
+def quote_label(symbol: str, quote: dict) -> str:
+    """How the markets minute names a stock: the flagship names, else the
+    listing name, else the ticker spelled out."""
+    if symbol in _FLAGSHIP_SPOKEN:
+        return _FLAGSHIP_SPOKEN[symbol]
+    name = listing_name(quote)
+    return name or f"ticker {spoken_symbol(symbol)}"
+
+
+def _price_words(symbol: str, quote: dict) -> str:
+    price = float(quote["price"])
+    if symbol.startswith("^"):
+        return f"{price:,.2f} points"
+    if symbol.endswith("=X"):
+        return f"{price:,.4f}"
+    cur = str(quote.get("currency") or ("USD" if symbol in _NETWORK_SYMBOLS else ""))
+    prefix = _CURRENCY_PREFIX.get(cur)
+    if prefix:
+        return f"{prefix}{price:,.2f}"
+    return f"{price:,.2f}" + (f" {cur}" if cur else "")
+
+
+def quote_phrase(symbol: str, quote: dict) -> str:
+    """One stock, spoken: "Shopify at C$212.40, up 3.1 percent". The verb
+    follows the quote's own state (a live quote is "trading at")."""
+    pct = quote.get("change_pct")
+    if pct is None and quote.get("prev_close"):
+        prev = float(quote["prev_close"])
+        pct = (float(quote["price"]) - prev) / prev * 100 if prev else None
+    move = ""
+    if pct is not None:
+        pct = float(pct)
+        move = (", unchanged" if round(abs(pct), 1) == 0
+                else f", {'up' if pct > 0 else 'down'} {abs(pct):.1f} percent")
+    verb = "trading at" if quote.get("state") == "live" else "at"
+    return f"{quote_label(symbol, quote)} {verb} {_price_words(symbol, quote)}{move}"
+
+
+def member_tickers(spec: "PersonalSpec") -> List[str]:
+    """The stocks this member's markets minute speaks, in their order."""
+    return list(spec.tickers) if spec.tickers else list(DEFAULT_TICKERS)
+
+
+def _cached_quotes(root: Path) -> Dict[str, dict]:
+    """The pipeline's committed TSLA / SPCX caches, as quotes. Used only when
+    the markets route did not answer for them."""
     import json as _json
-    parts: List[str] = []
-    tsla = root / "api" / "tsla.json"
-    spcx = root / "api" / "spcx.json"
-    try:
-        if tsla.exists():
-            d = _json.loads(tsla.read_text(encoding="utf-8"))
-            price, prev = d.get("price"), d.get("prev_close")
-            if price and prev:
-                direction = "up" if price >= prev else "down"
-                pct = abs(price - prev) / prev * 100
-                parts.append(
-                    f"Tesla at ${price:.2f}, {direction} "
-                    f"{pct:.1f} percent")
-    except Exception:  # noqa: BLE001 — a bad cache never sinks an edition
-        pass
-    try:
-        if spcx.exists():
-            d = _json.loads(spcx.read_text(encoding="utf-8"))
-            price, prev = d.get("price"), d.get("prev_close")
-            if price and prev:
-                direction = "up" if price >= prev else "down"
-                pct = abs(price - prev) / prev * 100
-                # "Ess Pee See Ex", never "S P C X": Grok TTS's server-side
-                # text normalization merges the "S P" bigram into "S&P"
-                # (the Aug 29 SPCX fix — letter-name words are immune).
-                parts.append(
-                    f"SpaceX, ticker Ess Pee See Ex, at ${price:.2f}, "
-                    f"{direction} {pct:.1f} percent")
-    except Exception:  # noqa: BLE001
-        pass
+    out: Dict[str, dict] = {}
+    for sym, name in (("TSLA", "tsla.json"), ("SPCX", "spcx.json")):
+        path = root / "api" / name
+        try:
+            d = _json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        except Exception:  # noqa: BLE001 — a bad cache never sinks an edition
+            continue
+        price, prev = d.get("price"), d.get("prev_close")
+        if price and prev:
+            out[sym] = {"symbol": sym, "price": float(price), "prev_close": float(prev),
+                        "currency": "USD", "state": "close"}
+    return out
+
+
+def build_markets_line(root: Path, tickers: Optional[List[str]] = None,
+                       quotes: Optional[Dict[str, dict]] = None) -> str:
+    """Deterministic 'markets minute' — zero LLM cost. Speaks the member's
+    own stocks (DEFAULT_TICKERS when they chose none) from the markets
+    route's quotes, falling back to the pipeline's committed caches for the
+    two flagship stocks; a stock with no quote is left out, and the line is
+    empty rather than ever inventing a number."""
+    symbols = list(tickers) if tickers else list(DEFAULT_TICKERS)
+    have = dict(quotes or {})
+    for sym, q in _cached_quotes(root).items():
+        have.setdefault(sym, q)
+    parts = [quote_phrase(s, have[s]) for s in symbols if s in have]
     if not parts:
         return ""
-    return ("Your markets minute: " + "; ".join(parts)
-            + ". As always, prices are from the last market close.")
+    live = any(have[s].get("state") == "live" for s in symbols if s in have)
+    tail = ("Prices move through the day." if live
+            else "As always, prices are from the last market close.")
+    return "Your markets minute: " + "; ".join(parts) + ". " + tail
 
 
 def parse_local_brief(text: str, *, max_words: int = 220) -> Optional[str]:
@@ -1070,13 +1453,19 @@ def prune_episode_state(episodes: List[dict]) -> Tuple[List[dict], List[str]]:
 
 
 def personal_episode_title(target_date: _dt.date,
-                           segments: List[Segment]) -> str:
+                           segments: List[Segment], headline: str = "") -> str:
     """Personal feeds carry no "Ep N:" label (the number lives in the
     itunes:episode tag) — but the 100-char clip rule from engine.titles
-    still binds; podcast apps clamp these too."""
+    still binds; podcast apps clamp these too.
+
+    Oct 29 2026: *headline* is the whole edition's title from Mira's links
+    reply (validated by engine.daily_edition.validate_edition_title, the
+    same check Nerra Daily's edition titles pass). Without one the edition
+    took its first show's hook, so a member's app named their edition after
+    one show."""
     from engine.titles import clip_words
 
-    lead = segments[0].hook or segments[0].episode_title if segments else ""
+    lead = headline or (segments[0].hook or segments[0].episode_title if segments else "")
     title = clip_words(f"{target_date.strftime('%A')} — {lead}", 100)
     return title or f"Your edition — {target_date.isoformat()}"
 
@@ -1214,6 +1603,7 @@ def episode_notes(
     sources_by_chapter: Optional[Dict[str, List[str]]] = None,
     segments: Optional[List[Segment]] = None,
     trims: Optional[List[dict]] = None,
+    absent: Optional[List[str]] = None,
 ) -> Tuple[str, str]:
     """(plain description, HTML notes) for one edition.
 
@@ -1256,12 +1646,42 @@ def episode_notes(
     shows = [s.show_name for s in (segments or [])]
     if shows:
         html.append(f"<p>Shows today: {_esc(', '.join(shows))}.</p>")
+    # Oct 29 2026: each show's article, with its sources, a tap away from
+    # the episode screen (a public post only; a members-only episode has
+    # none), and the shows absent today.
+    posts = []
+    for seg in segments or []:
+        rel = f"blog/{seg.slug}/ep{int(seg.episode_num):03d}.html"
+        if (_REPO_ROOT / rel).is_file():
+            posts.append((seg.show_name, seg.hook or seg.episode_title, f"https://nerranetwork.com/{rel}"))
+    if posts:
+        html.append("<p><strong>Read today's stories, with their sources</strong></p><ul>")
+        for name, hook, url in posts:
+            html.append(f'<li><a href="{_esc(url)}">{_esc(name)}: {_esc(hook)}</a></li>')
+            lines.append(f"{name}: {url}")
+        html.append("</ul>")
+    if absent:
+        html.append("<p>" + _esc(" ".join(absent)) + "</p>")
+    html.append('<p>Spot an error? <a href="mailto:' + _esc(_contact_email()) +
+                '?subject=Error%20in%20my%20Nerra%20edition">Tell us</a>; corrections are '
+                'listed on each story\'s page.</p>')
     html.append(
         '<p>Change your shows, order, cities and topics any time at '
         '<a href="https://nerranetwork.com/account.html">nerranetwork.com/account</a>. '
         "Mira and the shows use AI voice synthesis; the editorial selection is ours.</p>")
     plain = f"{who} edition, in your order. " + " · ".join(lines)
     return plain, "\n".join(html)
+
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _contact_email() -> str:
+    try:
+        from engine.brand import CONTACT_EMAIL
+        return CONTACT_EMAIL
+    except Exception:  # noqa: BLE001
+        return "hello@nerranetwork.com"
 
 
 def _esc(text: str) -> str:
@@ -1476,6 +1896,16 @@ __all__ = [
     "build_chapters",
     "build_local_brief_prompt",
     "build_markets_line",
+    "absent_show_notes",
+    "cross_show_connections",
+    "market_notes",
+    "clean_tickers",
+    "fetch_market_quotes",
+    "member_tickers",
+    "quote_phrase",
+    "DEFAULT_TICKERS",
+    "TICKERS_MAX",
+    "TICKER_RE",
     "needs_research_call",
     "wants_local_brief",
     "build_personal_feed_xml",
