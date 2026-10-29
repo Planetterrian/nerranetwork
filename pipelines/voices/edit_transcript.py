@@ -240,7 +240,7 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
             scale = min(1.0, dur / (e - s)) if e > s else 1.0
             removed = cut.get("_gaps_removed")
             for at, who, text in lines:
-                if s <= at < e:
+                if s <= at < e and not _muted(cut, at - room_offset_sec, who):
                     # Oct 27 2026: when the assembler says which silences it
                     # took out, place each line exactly; otherwise spread.
                     rel = (_map_rel(at - s, removed) if removed is not None
@@ -250,6 +250,28 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
             continue
         clock += dur
     return "\n".join(out).strip() + ("\n" if out else "")
+
+
+def _muted(cut: dict, at: float, who: str) -> bool:
+    """Whether the line ``who`` starts at ``at`` (the cut's clock) is under one
+    of the cut's mutes: a speaker silenced for a stretch is not heard, so the
+    transcript of the edit does not carry them either (Oct 29 2026, Michael
+    Kamins: his "You cut out for a second" was muted under her question and
+    still printed)."""
+    mira = who.lower().startswith("mira")
+    for m in cut.get("mute") or []:
+        role = str(m.get("role") or "")
+        if (role == "mira") != mira:
+            continue
+        try:
+            a, b = float(m["from"]), float(m["to"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        # Whole-second stamps: a line that starts in the second the mute
+        # opens is under it.
+        if a - 1.0 < at < b:
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------

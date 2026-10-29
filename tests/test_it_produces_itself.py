@@ -1904,7 +1904,7 @@ class TestTheGuestHearsTheMomentTheyAreOut:
     def test_it_is_sent_after_the_rows_flip_and_copies_the_publicist(self):
         pub = (V / "publish_episode.py").read_text(encoding="utf-8")
         flip = pub.index('{"status": "published", "episode_number": episode_num}')
-        assert pub.index("tell_the_guest(show, app, pkg, episode_num)") > flip
+        assert pub.index("tell_the_guest(show, app, pkg, episode_num, run=run)") > flip
         assert 'cc = [str(app.get("publicist_email")' in pub
         assert "cc_operator=True, cc=cc" in pub
 

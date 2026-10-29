@@ -187,7 +187,7 @@ class TestGuestMailCarriesTheKits:
             def post_url(self, n):
                 return f"https://nerranetwork.com/blog/age_of_ai/ep{n:03d}.html"
 
-        monkeypatch.setattr(pe, "clip_link", lambda p, s, n: ("", ""))
+        monkeypatch.setattr(pe, "clip_link", lambda p, s, n, **kw: ("", ""))
         monkeypatch.setattr(pe, "share_card_link", lambda s, n: "")
         monkeypatch.setattr(pe, "mira_signature_html", lambda show=None: "<p>Mira</p>")
         _subject, body = pe.published_email(_Show(), {"name": "Jane Doe"}, {}, 12)

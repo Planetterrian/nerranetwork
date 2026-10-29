@@ -323,7 +323,13 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     notes = (pkg.get("episode_notes") or "").strip()
     bio = (app.get("bio") or "").strip()
     materials = (pkg.get("guest_materials") or "").strip()
-    transcript = (pkg.get("transcript_cleaned") or "").strip()
+    # Oct 29 2026 (Michael Kamins): the post printed the ROOM's transcript,
+    # so a question the guest skipped, a line the edit took out and Mira's
+    # "you can hang up now" were all on the page of an episode that does not
+    # contain them. The transcript of the edit is what listeners hear and
+    # what the guest was sent to approve; the room's is the fallback for an
+    # episode assembled before the edit had one.
+    transcript = (pkg.get("edit_transcript") or pkg.get("transcript_cleaned") or "").strip()
     name = app.get("name") or "our guest"
     role = ", ".join(x for x in (app.get("title"), app.get("organization")) if x)
 
@@ -412,15 +418,28 @@ def return_month(when: dt.date, months: int = RETURN_AFTER_MONTHS) -> str:
     return dt.date(year, m % 12 + 1, 1).strftime("%B %Y")
 
 
-def clip_link(pkg: dict, show: VoiceShow, episode_num: int) -> tuple:
+def clip_link(pkg: dict, show: VoiceShow, episode_num: int,
+              run: dict | None = None) -> tuple:
     """``(url, title)`` of a 60-second moment the guest can share: the first
     clip suggestion, as a deep link into the YouTube upload when the publish
-    recorded one, else into the episode's post with a ``#t=`` offset."""
+    recorded one, else into the episode's post with a ``#t=`` offset.
+
+    Oct 29 2026: the suggestion is on the room's clock and the link points
+    into the published file, which opens on narration and has its pauses
+    closed; the moment is moved to the edit's clock first (as the chapters
+    and the X clip are), or the link lands minutes early."""
     clips = pkg.get("clip_suggestions") or []
     clip = next((c for c in clips if isinstance(c, dict) and c.get("start") is not None), None)
     if clip is None:
         return "", ""
     start = max(0, int(float(clip["start"])))
+    clock = ((((run or {}).get("grok_session_log") or {}).get("tracks") or {})
+             .get("edit") or {}).get("clock")
+    if clock:
+        from edit_transcript import room_to_edit
+        moved = room_to_edit(clock, float(clip["start"]))
+        if moved is not None:
+            start = max(0, int(moved))
     title = str(clip.get("title") or "").strip()
     index = ROOT / show.audio_subdir / "youtube_videos.json"
     try:
@@ -441,7 +460,8 @@ def share_card_link(show: VoiceShow, episode_num: int) -> str:
 
 
 def published_email(show: VoiceShow, app: dict, pkg: dict,
-                    episode_num: int, when: dt.date | None = None) -> tuple:
+                    episode_num: int, when: dt.date | None = None,
+                    run: dict | None = None) -> tuple:
     """Subject and body of the note the guest gets when their episode is out.
 
     Sept 20 2026. John Capobianco's team asked twice where the episode would
@@ -490,7 +510,7 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
                      + "</ul>")
     # Oct 21 2026: what a guest tells people about is the thing they can
     # share in one tap. A sixty-second moment, the card, and a date.
-    clip_url, clip_title = clip_link(pkg, show, episode_num)
+    clip_url, clip_title = clip_link(pkg, show, episode_num, run=run)
     if clip_url:
         parts.append("<p>A short moment to share, if you want one"
                      + (f" — <em>{e(clip_title)}</em>" if clip_title else "")
@@ -547,12 +567,13 @@ def fill_social_links(pkg: dict, url: str) -> None:
         logger.exception("social copy links not filled (non-fatal)")
 
 
-def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int) -> None:
+def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int,
+                   run: dict | None = None) -> None:
     """Send :func:`published_email` once; a failure never unpublishes anything."""
     if pkg.get("publish_package_sent_at"):
         logger.info("publish-day note already sent %s", pkg["publish_package_sent_at"])
         return
-    subject, body = published_email(show, app, pkg, episode_num)
+    subject, body = published_email(show, app, pkg, episode_num, run=run)
     to = str(app.get("email") or "").strip()
     cc = [str(app.get("publicist_email") or "").strip()]
     try:
@@ -743,7 +764,7 @@ def publish_one(interview_id: str) -> int:
     # The site is regenerated in this run but the workflow commits and
     # deploys it after this script returns, so the page may lag the email by
     # a few minutes. The link is right; the guest will not race it.
-    tell_the_guest(show, app, pkg, episode_num)
+    tell_the_guest(show, app, pkg, episode_num, run=run)
     fill_social_links(pkg, show.post_url(episode_num))
     return 0
 

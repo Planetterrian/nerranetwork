@@ -1022,13 +1022,40 @@ def split_on_pauses(seg: dict, pause: float = SPLIT_PAUSE_SEC) -> list[tuple[flo
     parts.append(cur)
     if len(parts) == 1:
         return [(float(seg.get("start", 0.0)), text)]
+    # Oct 29 2026, Michael Kamins: the transcript JSON stores every word
+    # stripped ("Great.", "I'm"), and joining them with nothing between gave
+    # his transcript "That'sareallysolidquestion.Ithinkovermycareer" on
+    # every line that was split here: 47 of them, in the transcript he is
+    # asked to approve. Each part is cut out of the segment's own text, which
+    # has Whisper's spacing ("self-rated", "P&L", "0.3%"); only if a word
+    # cannot be found there are the words joined with spaces.
+    spans = _word_spans(text, [str(w.get("word") or "").strip() for w in words])
     out = []
+    at = 0
     for chunk in parts:
-        said = "".join(str(w.get("word") or "") for w in chunk).strip()
+        n = len(chunk)
+        if spans is not None:
+            said = text[spans[at][0]:spans[at + n - 1][1]]
+        else:
+            said = " ".join(str(w.get("word") or "").strip() for w in chunk)
+        at += n
         said = " ".join(said.split())
         if said:
             out.append((float(chunk[0]["start"]), said))
     return out or [(float(seg.get("start", 0.0)), text)]
+
+
+def _word_spans(text: str, words: list[str]) -> list[tuple[int, int]] | None:
+    """Where each word sits in ``text``, in order, or None when one is not
+    found (the word list and the text disagree)."""
+    spans, pos = [], 0
+    for w in words:
+        i = text.find(w, pos)
+        if i < 0:
+            return None
+        spans.append((i, i + len(w)))
+        pos = i + len(w)
+    return spans
 
 
 # Splitting at pauses leaves the odd stub: Whisper's segment boundaries fall
@@ -1147,6 +1174,21 @@ _ECHO_SAME_RATIO = 0.75      # how alike two lines must be to be one line twice
 _ECHO_WINDOW_SEC = 8.0       # how far apart the echo can land from the original
 
 
+def _words_in_order(candidate: str, said: str) -> float:
+    """The share of ``candidate``'s words that ``said`` has in the same order
+    (longest common subsequence of words over the candidate's length)."""
+    a, b = candidate.split(), said.split()
+    if not a:
+        return 0.0
+    prev = [0] * (len(b) + 1)
+    for x in a:
+        cur = [0]
+        for j, y in enumerate(b):
+            cur.append(prev[j] + 1 if x == y else max(prev[j + 1], cur[j]))
+        prev = cur
+    return prev[-1] / len(a)
+
+
 def strip_echo_lines(transcript: str, host_label: str = "Mira") -> tuple[str, int]:
     """Take the host's own words out of everyone else's lines.
 
@@ -1211,7 +1253,14 @@ def strip_echo_lines(transcript: str, host_label: str = "Mira") -> tuple[str, in
             # the guest's own length.
             matcher = difflib.SequenceMatcher(None, candidate, said)
             covered = sum(b.size for b in matcher.get_matching_blocks())
-            if covered / max(len(candidate), 1) >= _ECHO_SAME_RATIO:
+            # Oct 29 2026, Michael Kamins: summed character blocks alone
+            # found his "Does that make sense?" inside her "Does early work
+            # done under that old resume system count..." (every letter of
+            # it is in there somewhere) and dropped his question from the
+            # transcript. An echo is her WORDS, in her order: most of his
+            # words must be hers, in sequence, as well.
+            if (covered / max(len(candidate), 1) >= _ECHO_SAME_RATIO
+                    and _words_in_order(candidate, said) >= _ECHO_SAME_RATIO):
                 echo = True
                 break
         if echo:

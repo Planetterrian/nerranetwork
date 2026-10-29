@@ -119,7 +119,7 @@ class TestThePublishDayPackage:
         assert pe.clip_link({}, show, 12) == ("", "")
 
     def test_the_email_carries_the_clip_the_card_and_the_date(self, monkeypatch):
-        monkeypatch.setattr(pe, "clip_link", lambda p, s, n: ("https://y/t", "A moment"))
+        monkeypatch.setattr(pe, "clip_link", lambda p, s, n, **kw: ("https://y/t", "A moment"))
         monkeypatch.setattr(pe, "share_card_link", lambda s, n: "https://cdn/share/ep12.jpg")
         monkeypatch.setattr(pe, "guest_links", lambda app: [])
         _subject, body = pe.published_email(_Show(), {"name": "Jane Doe"}, {}, 12,

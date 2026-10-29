@@ -2665,6 +2665,32 @@ for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
   silently after both transcripts, twice, until the two-hour limit, and
   nothing reached the run row. Every pass now removes a line or moves on.
 
+- **Michael's episode, re-cut by hand, and what the review found in the
+  pipeline** (Oct 29 2026; guard `tests/test_michaels_post_production_2026_10_28.py`).
+  The auto cut kept the whole room. The re-cut (EDL stored in
+  `episode_edits`, every removal listed with its reason under `removed`)
+  takes out the two questions he skipped ("let's skip that"), the assertion
+  he called incorrect, every repeat of a question he asked her to repeat
+  (her clearest ask is kept), the echo openers that restated his answer
+  (one kept wherever the question needs it as an antecedent), his repeat of
+  his first answer, his first version of the scoring answer (Mira's own
+  question gets the full one at 21:03), and "that's the end of the
+  recording, you can hang up now"; his "you cut out" is muted under her
+  question. 40.5 -> about 36 minutes. Pipeline faults it found, fixed:
+  `split_on_pauses` joined the stripped JSON words with nothing
+  ("That'sareallysolidquestion", 47 lines; parts are now sliced from the
+  segment's own text); `strip_echo_lines` dropped his "Does that make sense?"
+  as her echo (summed character blocks; an echo now also needs her words in
+  her order, `_words_in_order`); the transcript of the edit printed lines
+  under a `mute`; the post printed the ROOM's transcript, cut lines and all
+  (it prints `edit_transcript` now); and the guest's shareable moment
+  linked the room's second into the published file (`clip_link` moves it to
+  the edit's clock). The Voximplant video of his room is not usable: 19 kbps
+  of 1080p, 38% of frames frozen, corrupt blocks, motion separates nothing
+  (talking vs listening AUC 0.48; at a pause 0.52). His audio says what the
+  camera cannot: mid-answer pauses p99 1.6 s, three over 2 s in 43 answers,
+  while Mira waited a median 4.3 s at every real end.
+
 Operator: push (the studio page and the pipeline go live with it; the Worker
 is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
 research changes, then "Deploy Voximplant scenario"; no new secret (Shorts go
