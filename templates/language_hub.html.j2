@@ -70,8 +70,8 @@
 {%- macro meta(s, listen=true, read=true) -%}
 <div class="lt-meta">
     {% if s.stamp and s.stamp.label %}<span class="lt-when">{{ when(s.stamp) }}</span>{% elif s.date_raw %}<time datetime="{{ s.date_raw }}">{{ s.date_raw }}</time>{% endif %}
-    {% if read and s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">{{ hub.read_label }}</a>{% endif %}
     {% if listen %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.show_page }}">{{ hub.listen_label }}</a>{% endif %}
+    {% if read and s.post_url %}<a class="nn-read" href="{{ path_prefix }}{{ s.post_url }}"><span class="ic" aria-hidden="true"></span>{{ hub.read_label }}</a>{% endif %}
 </div>
 {%- endmacro -%}
 
@@ -157,7 +157,7 @@
         </div>
         {{ media(s, eager=true) }}
         <div class="lt-lead-body">
-            {{ meta(s, listen=false) }}
+            {{ meta(s, listen=false, read=false) }}
             {{ listen_row(s) }}
         </div>
     </article>

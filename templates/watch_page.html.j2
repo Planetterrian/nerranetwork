@@ -23,7 +23,7 @@
 .wt-shorts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 210px); gap: var(--sp-4); overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
 .wt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: var(--sp-5); }
 .wt-card { position: relative; display: block; border-radius: 14px; overflow: hidden; background: #111827; color: var(--nn-white); text-decoration: none; scroll-snap-align: start; }
-.wt-card .wt-pic { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.wt-card .wt-pic { display: block; position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
 .wt-card.is-short .wt-pic { aspect-ratio: 9 / 16; }
 .wt-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
 .wt-card:hover img { transform: scale(1.03); }
@@ -35,7 +35,9 @@
 .wt-card .wt-show { display: block; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--nn-cyan)); font-weight: 700; }
 .wt-card .wt-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Source Serif 4', Georgia, serif; font-size: 1.02rem; font-weight: 600; line-height: 1.3; margin-top: 4px; }
 .wt-card .wt-when { display: block; font-size: 0.74rem; color: var(--nn-text-muted); margin-top: 6px; }
-.wt-card[hidden] { display: none; }
+.wt-item { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; scroll-snap-align: start; }
+.wt-item .wt-card { width: 100%; }
+.wt-item[hidden] { display: none; }
 .wt-cta { margin-top: var(--sp-10); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--sp-6); align-items: center; padding: var(--sp-6); border-radius: 18px; border: 1px solid var(--nn-border);
   background: radial-gradient(ellipse 60% 80% at 0% 0%, rgba(107,71,255,0.22), transparent 70%), radial-gradient(ellipse 60% 80% at 100% 100%, rgba(0,212,255,0.16), transparent 70%), #0D1120; }
 .wt-cta h2 { margin: 0 0 8px; }
@@ -49,6 +51,7 @@
 {% endblock %}
 
 {% macro vcard(v, short) -%}
+<div class="wt-item" data-slug="{{ v.slug }}" style="--show-color:{{ v.brand_color }};">
 <a class="wt-card{% if short %} is-short{% endif %}" href="{{ v.url }}" target="_blank" rel="noopener"
    data-nn-watch="{{ v.url }}" data-kind="{{ 'short' if short else 'long' }}" data-title="{{ v.hook | e }}" data-show="{{ v.show_name | e }}"
    {% if v.post_url %}data-post="{{ path_prefix }}{{ v.post_url }}"{% endif %} data-slug="{{ v.slug }}" style="--show-color:{{ v.brand_color }};">
@@ -63,6 +66,10 @@
         {% if v.when %}<span class="wt-when">{{ v.when }}</span>{% endif %}
     </span>
 </a>
+{#- Read (Oct 29 2026): the episode's article, beside the video, never
+    only inside the dialog after a press. -#}
+{% if v.post_url %}<a class="nn-read" href="{{ path_prefix }}{{ v.post_url }}" aria-label="Read: {{ v.hook | e }}"><span class="ic" aria-hidden="true"></span>Read the story</a>{% endif %}
+</div>
 {%- endmacro %}
 
 {% block content %}
@@ -123,7 +130,7 @@
     b.addEventListener('click', function () {
       var slug = b.getAttribute('data-wt-filter');
       chips.forEach(function (c) { c.setAttribute('aria-pressed', c === b ? 'true' : 'false'); });
-      document.querySelectorAll('.wt-card').forEach(function (c) { c.hidden = !!slug && c.getAttribute('data-slug') !== slug; });
+      document.querySelectorAll('.wt-item').forEach(function (c) { c.hidden = !!slug && c.getAttribute('data-slug') !== slug; });
     });
   });
 })();

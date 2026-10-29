@@ -86,8 +86,8 @@
 {%- macro meta(s, listen=true, read=true) -%}
 <div class="lt-meta">
     {% if s.stamp and s.stamp.label %}<span class="lt-when">{{ when(s.stamp) }}</span>{% elif s.date %}<time datetime="{{ s.date_raw }}">{{ s.date }}</time>{% endif %}
-    {% if read and s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">Read</a>{% endif %}
     {% if listen %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.show_page }}">Listen</a>{% endif %}
+    {% if read and s.post_url %}<a class="nn-read" href="{{ path_prefix }}{{ s.post_url }}" aria-label="Read: {{ s.hook | e }}"><span class="ic" aria-hidden="true"></span>Read</a>{% endif %}
 </div>
 {#- Another show told the same story (engine.landing_test.merge_retellings):
     the page keeps it once and names the other telling here. -#}
@@ -452,7 +452,8 @@
         </div>
         {{ media(s, eager=true) }}
         <div class="lt-lead-body">
-            {{ meta(s, listen=false) }}
+            {#- The lead carries "Read the full story" below; no second Read. -#}
+            {{ meta(s, listen=false, read=false) }}
             {{ more_list(s) }}
             <div class="lt-lead-audio">
                 {% if s.audio_url %}<audio controls preload="none" src="{{ s.audio_url }}" aria-label="Play {{ s.show_name }} episode {{ s.episode_num }}"></audio>{% endif %}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Every Nerra Network show's newest full episodes and Shorts in one place, played right on the page.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="description" content="Every Nerra Network show's newest full episodes and Shorts in one place, played right on the page.">
     
     <meta name="keywords" content="Nerra Network membership, personalized podcast, Nerra Personal, support Nerra Network"><title>Watch: today's episodes and Shorts | Nerra Network</title>
     <!-- Open Graph -->
@@ -61,10 +61,10 @@
     
     
     
-    <script defer src="assets/js/tracking.js"></script>
+    <script defer src="assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/main.css?v=472d212b">
 
     
 <style>
@@ -82,7 +82,7 @@
 .wt-shorts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 210px); gap: var(--sp-4); overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; }
 .wt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: var(--sp-5); }
 .wt-card { position: relative; display: block; border-radius: 14px; overflow: hidden; background: #111827; color: var(--nn-white); text-decoration: none; scroll-snap-align: start; }
-.wt-card .wt-pic { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.wt-card .wt-pic { display: block; position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
 .wt-card.is-short .wt-pic { aspect-ratio: 9 / 16; }
 .wt-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
 .wt-card:hover img { transform: scale(1.03); }
@@ -94,7 +94,9 @@
 .wt-card .wt-show { display: block; font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--nn-cyan)); font-weight: 700; }
 .wt-card .wt-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Source Serif 4', Georgia, serif; font-size: 1.02rem; font-weight: 600; line-height: 1.3; margin-top: 4px; }
 .wt-card .wt-when { display: block; font-size: 0.74rem; color: var(--nn-text-muted); margin-top: 6px; }
-.wt-card[hidden] { display: none; }
+.wt-item { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; scroll-snap-align: start; }
+.wt-item .wt-card { width: 100%; }
+.wt-item[hidden] { display: none; }
 .wt-cta { margin-top: var(--sp-10); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--sp-6); align-items: center; padding: var(--sp-6); border-radius: 18px; border: 1px solid var(--nn-border);
   background: radial-gradient(ellipse 60% 80% at 0% 0%, rgba(107,71,255,0.22), transparent 70%), radial-gradient(ellipse 60% 80% at 100% 100%, rgba(0,212,255,0.16), transparent 70%), #0D1120; }
 .wt-cta h2 { margin: 0 0 8px; }
@@ -849,7 +851,8 @@
     
     <h2 id="wt-shorts-h">Shorts <small>Under a minute each</small></h2>
     <div class="wt-shorts" aria-labelledby="wt-shorts-h">
-        <a class="wt-card is-short" href="https://www.youtube.com/watch?v=S3f64h1QIjw" target="_blank" rel="noopener"
+        <div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=S3f64h1QIjw" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=S3f64h1QIjw" data-kind="short" data-title="Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep648.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -862,7 +865,9 @@
         <span class="wt-title">Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems.</span>
         <span class="wt-when">Oct 28, 6:02 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=HMo2NtDJYBs" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep648.html" aria-label="Read: Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=HMo2NtDJYBs" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=HMo2NtDJYBs" data-kind="short" data-title="SpaceX plans 10,000 annual Starship launches from Louisiana site alone." data-show="SpaceX Daily"
    data-post="blog/spacex/ep144.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -875,7 +880,9 @@
         <span class="wt-title">SpaceX plans 10,000 annual Starship launches from Louisiana site alone.</span>
         <span class="wt-when">Oct 28, 5:59 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=ts3gTYs1zm8" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep144.html" aria-label="Read: SpaceX plans 10,000 annual Starship launches from Louisiana site alone."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="omni_view" style="--show-color:#0B6FD6;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=ts3gTYs1zm8" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=ts3gTYs1zm8" data-kind="short" data-title="At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville." data-show="Omni View"
    data-post="blog/omni_view/ep219.html" data-slug="omni_view" style="--show-color:#0B6FD6;">
     <span class="wt-pic">
@@ -888,7 +895,9 @@
         <span class="wt-title">At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville.</span>
         <span class="wt-when">Oct 28, 5:53 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=eHIf_Xc0hI4" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/omni_view/ep219.html" aria-label="Read: At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents" style="--show-color:#7C3AED;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=eHIf_Xc0hI4" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=eHIf_Xc0hI4" data-kind="short" data-title="Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today." data-show="Models &amp; Agents"
    data-post="blog/models_agents/ep217.html" data-slug="models_agents" style="--show-color:#7C3AED;">
     <span class="wt-pic">
@@ -901,7 +910,9 @@
         <span class="wt-title">Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.</span>
         <span class="wt-when">Oct 28, 5:40 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=ggye7c56R1E" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents/ep217.html" aria-label="Read: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=ggye7c56R1E" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=ggye7c56R1E" data-kind="short" data-title="Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep236.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -914,7 +925,9 @@
         <span class="wt-title">Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away.</span>
         <span class="wt-when">Oct 28, 5:23 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=uPh6pe2cIm8" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep236.html" aria-label="Read: Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="planetterrian" style="--show-color:#017A99;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=uPh6pe2cIm8" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=uPh6pe2cIm8" data-kind="short" data-title="A daily inulin fiber supplement reduced knee osteoarthritis pain and improved grip strength by shifting gut bacteria and raising GLP-1 levels." data-show="Planetterrian Daily"
    data-post="blog/planetterrian/ep227.html" data-slug="planetterrian" style="--show-color:#017A99;">
     <span class="wt-pic">
@@ -927,7 +940,9 @@
         <span class="wt-title">A daily inulin fiber supplement reduced knee osteoarthritis pain and improved grip strength by shifting gut bacteria and raising GLP-1 levels.</span>
         <span class="wt-when">Oct 28, 5:11 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=j_Ps7il_vdI" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/planetterrian/ep227.html" aria-label="Read: A daily inulin fiber supplement reduced knee osteoarthritis pain and improved grip strength by shifting gut bacteria and raising GLP-1 levels."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="first_principles" style="--show-color:#0F766E;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=j_Ps7il_vdI" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=j_Ps7il_vdI" data-kind="short" data-title="A bottle of shampoo sells for ten dollars while its surfactants and plastic cost under a dollar." data-show="First Principles Daily"
    data-post="blog/first_principles/ep144.html" data-slug="first_principles" style="--show-color:#0F766E;">
     <span class="wt-pic">
@@ -940,7 +955,9 @@
         <span class="wt-title">A bottle of shampoo sells for ten dollars while its surfactants and plastic cost under a dollar.</span>
         <span class="wt-when">Oct 28, 4:14 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=HL6Ne8u0nbA" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/first_principles/ep144.html" aria-label="Read: A bottle of shampoo sells for ten dollars while its surfactants and plastic cost under a dollar."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="unintended_consequences" style="--show-color:#B45309;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=HL6Ne8u0nbA" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=HL6Ne8u0nbA" data-kind="short" data-title="The 1990 Clean Air Act gave 3.5 million extra allowances to scrubber plants, keeping high-sulfur coal units running longer." data-show="Unintended Consequences"
    data-post="blog/unintended_consequences/ep156.html" data-slug="unintended_consequences" style="--show-color:#B45309;">
     <span class="wt-pic">
@@ -953,7 +970,9 @@
         <span class="wt-title">The 1990 Clean Air Act gave 3.5 million extra allowances to scrubber plants, keeping high-sulfur coal units running longer.</span>
         <span class="wt-when">Oct 28, 4:11 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=DQsHTjLLasU" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/unintended_consequences/ep156.html" aria-label="Read: The 1990 Clean Air Act gave 3.5 million extra allowances to scrubber plants, keeping high-sulfur coal units running longer."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=DQsHTjLLasU" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=DQsHTjLLasU" data-kind="short" data-title="Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep647.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -966,7 +985,9 @@
         <span class="wt-title">Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits.</span>
         <span class="wt-when">Oct 27, 6:05 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=6SCKH95gWE0" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep647.html" aria-label="Read: Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=6SCKH95gWE0" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=6SCKH95gWE0" data-kind="short" data-title="Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total." data-show="SpaceX Daily"
    data-post="blog/spacex/ep143.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -979,7 +1000,9 @@
         <span class="wt-title">Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total.</span>
         <span class="wt-when">Oct 27, 6:03 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=wYE5ZcaZnVo" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep143.html" aria-label="Read: Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=wYE5ZcaZnVo" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=wYE5ZcaZnVo" data-kind="short" data-title="Imagine an AI helper that can actually finish tasks instead of just chatting about them." data-show="Models &amp; Agents for Beginners"
    data-post="blog/models_agents_beginners/ep209.html" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
     <span class="wt-pic">
@@ -992,7 +1015,9 @@
         <span class="wt-title">Imagine an AI helper that can actually finish tasks instead of just chatting about them.</span>
         <span class="wt-when">Oct 27, 5:41 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=2ym-sgwi4zc" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents_beginners/ep209.html" aria-label="Read: Imagine an AI helper that can actually finish tasks instead of just chatting about them."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=2ym-sgwi4zc" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=2ym-sgwi4zc" data-kind="short" data-title="Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep235.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -1005,7 +1030,9 @@
         <span class="wt-title">Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test.</span>
         <span class="wt-when">Oct 27, 5:25 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=MBH7by1PZQA" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep235.html" aria-label="Read: Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="planetterrian" style="--show-color:#017A99;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=MBH7by1PZQA" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=MBH7by1PZQA" data-kind="short" data-title="Collaborative study shows drought-avoiding desert plants fared better than drought-tolerating ones during extreme heat at Uluru." data-show="Planetterrian Daily"
    data-post="blog/planetterrian/ep226.html" data-slug="planetterrian" style="--show-color:#017A99;">
     <span class="wt-pic">
@@ -1018,7 +1045,9 @@
         <span class="wt-title">Collaborative study shows drought-avoiding desert plants fared better than drought-tolerating ones during extreme heat at Uluru.</span>
         <span class="wt-when">Oct 27, 5:12 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=IUIv3LEGEkY" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/planetterrian/ep226.html" aria-label="Read: Collaborative study shows drought-avoiding desert plants fared better than drought-tolerating ones during extreme heat at Uluru."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="first_principles" style="--show-color:#0F766E;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=IUIv3LEGEkY" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=IUIv3LEGEkY" data-kind="short" data-title="Alizarin prices fell from fifteen dollars a pound to fifty-five cents after the 1869 synthesis." data-show="First Principles Daily"
    data-post="blog/first_principles/ep143.html" data-slug="first_principles" style="--show-color:#0F766E;">
     <span class="wt-pic">
@@ -1031,7 +1060,9 @@
         <span class="wt-title">Alizarin prices fell from fifteen dollars a pound to fifty-five cents after the 1869 synthesis.</span>
         <span class="wt-when">Oct 27, 4:15 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=m7TWkf-KVlI" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/first_principles/ep143.html" aria-label="Read: Alizarin prices fell from fifteen dollars a pound to fifty-five cents after the 1869 synthesis."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="unintended_consequences" style="--show-color:#B45309;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=m7TWkf-KVlI" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=m7TWkf-KVlI" data-kind="short" data-title="The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock." data-show="Unintended Consequences"
    data-post="blog/unintended_consequences/ep155.html" data-slug="unintended_consequences" style="--show-color:#B45309;">
     <span class="wt-pic">
@@ -1044,7 +1075,9 @@
         <span class="wt-title">The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock.</span>
         <span class="wt-when">Oct 27, 4:09 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=G98YSMeqsBk" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/unintended_consequences/ep155.html" aria-label="Read: The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=G98YSMeqsBk" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=G98YSMeqsBk" data-kind="short" data-title="Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep646.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -1057,7 +1090,9 @@
         <span class="wt-title">Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand.</span>
         <span class="wt-when">Oct 26, 6:02 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=-_O9jzY9sKo" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep646.html" aria-label="Read: Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=-_O9jzY9sKo" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=-_O9jzY9sKo" data-kind="short" data-title="SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15." data-show="SpaceX Daily"
    data-post="blog/spacex/ep142.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -1070,7 +1105,9 @@
         <span class="wt-title">SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15.</span>
         <span class="wt-when">Oct 26, 6:01 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=X0DSdapRD6o" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep142.html" aria-label="Read: SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=X0DSdapRD6o" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=X0DSdapRD6o" data-kind="short" data-title="Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep234.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -1083,7 +1120,9 @@
         <span class="wt-title">Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away.</span>
         <span class="wt-when">Oct 26, 5:24 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=CPSbdXv9R4o" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep234.html" aria-label="Read: Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="planetterrian" style="--show-color:#017A99;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=CPSbdXv9R4o" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=CPSbdXv9R4o" data-kind="short" data-title="A liquid painted on teeth stops cavities in young children without drilling or anesthesia." data-show="Planetterrian Daily"
    data-post="blog/planetterrian/ep225.html" data-slug="planetterrian" style="--show-color:#017A99;">
     <span class="wt-pic">
@@ -1096,7 +1135,9 @@
         <span class="wt-title">A liquid painted on teeth stops cavities in young children without drilling or anesthesia.</span>
         <span class="wt-when">Oct 26, 5:11 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=QfV4_g6WRvc" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/planetterrian/ep225.html" aria-label="Read: A liquid painted on teeth stops cavities in young children without drilling or anesthesia."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="first_principles" style="--show-color:#0F766E;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=QfV4_g6WRvc" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=QfV4_g6WRvc" data-kind="short" data-title="A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it." data-show="First Principles Daily"
    data-post="blog/first_principles/ep142.html" data-slug="first_principles" style="--show-color:#0F766E;">
     <span class="wt-pic">
@@ -1109,7 +1150,9 @@
         <span class="wt-title">A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it.</span>
         <span class="wt-when">Oct 26, 4:14 AM ET</span>
     </span>
-</a><a class="wt-card is-short" href="https://www.youtube.com/watch?v=0Oe4iugS6uQ" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/first_principles/ep142.html" aria-label="Read: A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="unintended_consequences" style="--show-color:#B45309;">
+<a class="wt-card is-short" href="https://www.youtube.com/watch?v=0Oe4iugS6uQ" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=0Oe4iugS6uQ" data-kind="short" data-title="In 1972 Inco built a 381-metre stack to clear Sudbury&#39;s air, and sent the sulphur elsewhere instead." data-show="Unintended Consequences"
    data-post="blog/unintended_consequences/ep154.html" data-slug="unintended_consequences" style="--show-color:#B45309;">
     <span class="wt-pic">
@@ -1122,14 +1165,16 @@
         <span class="wt-title">In 1972 Inco built a 381-metre stack to clear Sudbury&#39;s air, and sent the sulphur elsewhere instead.</span>
         <span class="wt-when">Oct 26, 4:11 AM ET</span>
     </span>
-</a>
+</a><a class="nn-read" href="blog/unintended_consequences/ep154.html" aria-label="Read: In 1972 Inco built a 381-metre stack to clear Sudbury&#39;s air, and sent the sulphur elsewhere instead."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div>
     </div>
     
 
     
     <h2 id="wt-long-h">Full episodes <small>The whole show, with pictures</small></h2>
     <div class="wt-grid" aria-labelledby="wt-long-h">
-        <a class="wt-card" href="https://www.youtube.com/watch?v=ECwmYc_frPc" target="_blank" rel="noopener"
+        <div class="wt-item" data-slug="modern_investing" style="--show-color:#047857;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=ECwmYc_frPc" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=ECwmYc_frPc" data-kind="long" data-title="Canadian variable-rate borrowers should watch the Fed decision for signals on whether 90.6 percent odds of no change hold." data-show="Modern Investing Techniques"
    data-post="blog/modern_investing/ep214.html" data-slug="modern_investing" style="--show-color:#047857;">
     <span class="wt-pic">
@@ -1142,7 +1187,9 @@
         <span class="wt-title">Canadian variable-rate borrowers should watch the Fed decision for signals on whether 90.6 percent odds of no change hold.</span>
         <span class="wt-when">Oct 28, 6:13 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=vRhYqEggNH4" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/modern_investing/ep214.html" aria-label="Read: Canadian variable-rate borrowers should watch the Fed decision for signals on whether 90.6 percent odds of no change hold."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=vRhYqEggNH4" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=vRhYqEggNH4" data-kind="long" data-title="Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep648.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -1155,7 +1202,9 @@
         <span class="wt-title">Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems.</span>
         <span class="wt-when">Oct 28, 6:02 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=u960BT4QP4c" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep648.html" aria-label="Read: Tesla spent $4.73 billion on capital expenditures last quarter, with the bulk directed at production capacity for vehicles and energy systems."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=u960BT4QP4c" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=u960BT4QP4c" data-kind="long" data-title="SpaceX plans 10,000 annual Starship launches from Louisiana site alone." data-show="SpaceX Daily"
    data-post="blog/spacex/ep144.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -1168,7 +1217,9 @@
         <span class="wt-title">SpaceX plans 10,000 annual Starship launches from Louisiana site alone.</span>
         <span class="wt-when">Oct 28, 5:59 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=9RtydqjEFJw" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep144.html" aria-label="Read: SpaceX plans 10,000 annual Starship launches from Louisiana site alone."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="omni_view" style="--show-color:#0B6FD6;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=9RtydqjEFJw" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=9RtydqjEFJw" data-kind="long" data-title="At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville." data-show="Omni View"
    data-post="blog/omni_view/ep219.html" data-slug="omni_view" style="--show-color:#0B6FD6;">
     <span class="wt-pic">
@@ -1181,7 +1232,9 @@
         <span class="wt-title">At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville.</span>
         <span class="wt-when">Oct 28, 5:53 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=ex_yXz5y7Wo" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/omni_view/ep219.html" aria-label="Read: At least ten people died when two high-speed trains collided in central Spain, suspending services between Madrid and Seville."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=ex_yXz5y7Wo" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=ex_yXz5y7Wo" data-kind="long" data-title="Google just demoed an AI that builds a whole interactive 3D world with a flying mouse at a Victorian tea party—in real time." data-show="Models &amp; Agents for Beginners"
    data-post="blog/models_agents_beginners/ep210.html" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
     <span class="wt-pic">
@@ -1194,7 +1247,9 @@
         <span class="wt-title">Google just demoed an AI that builds a whole interactive 3D world with a flying mouse at a Victorian tea party—in real time.</span>
         <span class="wt-when">Oct 28, 5:41 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=HW14m2AGOTY" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents_beginners/ep210.html" aria-label="Read: Google just demoed an AI that builds a whole interactive 3D world with a flying mouse at a Victorian tea party—in real time."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents" style="--show-color:#7C3AED;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=HW14m2AGOTY" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=HW14m2AGOTY" data-kind="long" data-title="Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today." data-show="Models &amp; Agents"
    data-post="blog/models_agents/ep217.html" data-slug="models_agents" style="--show-color:#7C3AED;">
     <span class="wt-pic">
@@ -1207,7 +1262,9 @@
         <span class="wt-title">Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.</span>
         <span class="wt-when">Oct 28, 5:40 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=xAxKhJORR4g" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents/ep217.html" aria-label="Read: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=xAxKhJORR4g" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=xAxKhJORR4g" data-kind="long" data-title="Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep236.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -1220,7 +1277,9 @@
         <span class="wt-title">Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away.</span>
         <span class="wt-when">Oct 28, 5:23 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=RExJ_feESHk" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep236.html" aria-label="Read: Hera has resolved Didymos and Dimorphos as separate asteroids 197 million kilometres away."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="modern_investing" style="--show-color:#047857;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=RExJ_feESHk" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=RExJ_feESHk" data-kind="long" data-title="TSX energy stocks doubled this year on oil gains, a sector rotation chance for Canadian TFSAs." data-show="Modern Investing Techniques"
    data-post="blog/modern_investing/ep213.html" data-slug="modern_investing" style="--show-color:#047857;">
     <span class="wt-pic">
@@ -1233,7 +1292,9 @@
         <span class="wt-title">TSX energy stocks doubled this year on oil gains, a sector rotation chance for Canadian TFSAs.</span>
         <span class="wt-when">Oct 27, 6:12 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=SjotnPjZq9c" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/modern_investing/ep213.html" aria-label="Read: TSX energy stocks doubled this year on oil gains, a sector rotation chance for Canadian TFSAs."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=SjotnPjZq9c" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=SjotnPjZq9c" data-kind="long" data-title="Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep647.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -1246,7 +1307,9 @@
         <span class="wt-title">Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits.</span>
         <span class="wt-when">Oct 27, 6:05 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=MYGHsljj2wY" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep647.html" aria-label="Read: Tesla is updating its Canadian Model 3 page with Fremont Long Range RWD specs after Shanghai units hit quota limits."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=MYGHsljj2wY" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=MYGHsljj2wY" data-kind="long" data-title="Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total." data-show="SpaceX Daily"
    data-post="blog/spacex/ep143.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -1259,7 +1322,9 @@
         <span class="wt-title">Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total.</span>
         <span class="wt-when">Oct 27, 6:03 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=b26hDjkaBH0" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep143.html" aria-label="Read: Raptor 4 targets 300 tons of sea-level thrust at Raptor 3 mass, pushing Super Heavy toward 9,900 tons total."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="omni_view" style="--show-color:#0B6FD6;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=b26hDjkaBH0" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=b26hDjkaBH0" data-kind="long" data-title="Seven point three million Israelis vote in an election that could end Netanyahu&#39;s rule after three years of war." data-show="Omni View"
    data-post="blog/omni_view/ep218.html" data-slug="omni_view" style="--show-color:#0B6FD6;">
     <span class="wt-pic">
@@ -1272,7 +1337,9 @@
         <span class="wt-title">Seven point three million Israelis vote in an election that could end Netanyahu&#39;s rule after three years of war.</span>
         <span class="wt-when">Oct 27, 5:55 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=HZKp92OLSGI" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/omni_view/ep218.html" aria-label="Read: Seven point three million Israelis vote in an election that could end Netanyahu&#39;s rule after three years of war."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=HZKp92OLSGI" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=HZKp92OLSGI" data-kind="long" data-title="Imagine an AI helper that can actually finish tasks instead of just chatting about them." data-show="Models &amp; Agents for Beginners"
    data-post="blog/models_agents_beginners/ep209.html" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
     <span class="wt-pic">
@@ -1285,7 +1352,9 @@
         <span class="wt-title">Imagine an AI helper that can actually finish tasks instead of just chatting about them.</span>
         <span class="wt-when">Oct 27, 5:41 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=F_Obw2f_TKo" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents_beginners/ep209.html" aria-label="Read: Imagine an AI helper that can actually finish tasks instead of just chatting about them."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents" style="--show-color:#7C3AED;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=F_Obw2f_TKo" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=F_Obw2f_TKo" data-kind="long" data-title="OpenAI’s GPT-6.1 Terra delivers faster computer-use agents at half the prior token price." data-show="Models &amp; Agents"
    data-post="blog/models_agents/ep216.html" data-slug="models_agents" style="--show-color:#7C3AED;">
     <span class="wt-pic">
@@ -1298,7 +1367,9 @@
         <span class="wt-title">OpenAI’s GPT-6.1 Terra delivers faster computer-use agents at half the prior token price.</span>
         <span class="wt-when">Oct 27, 5:38 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=m6dPDU3uOdg" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents/ep216.html" aria-label="Read: OpenAI’s GPT-6.1 Terra delivers faster computer-use agents at half the prior token price."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=m6dPDU3uOdg" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=m6dPDU3uOdg" data-kind="long" data-title="Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep235.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -1311,7 +1382,9 @@
         <span class="wt-title">Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test.</span>
         <span class="wt-when">Oct 27, 5:25 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=V5NueTl7uz0" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep235.html" aria-label="Read: Two satellites closed from 189 km to 47 km apart in four days while matching speeds at jogging pace during a US Space Force rendezvous test."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="unintended_consequences" style="--show-color:#B45309;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=V5NueTl7uz0" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=V5NueTl7uz0" data-kind="long" data-title="The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock." data-show="Unintended Consequences"
    data-post="blog/unintended_consequences/ep155.html" data-slug="unintended_consequences" style="--show-color:#B45309;">
     <span class="wt-pic">
@@ -1324,7 +1397,9 @@
         <span class="wt-title">The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock.</span>
         <span class="wt-when">Oct 27, 4:09 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=NKp-w9uBdSY" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/unintended_consequences/ep155.html" aria-label="Read: The lifeboat rules passed after the Titanic sank capsized the Eastland, drowning 844 passengers at a Chicago dock."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="modern_investing" style="--show-color:#047857;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=NKp-w9uBdSY" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=NKp-w9uBdSY" data-kind="long" data-title="Retired Albertan shows Canadian TFSA investors how to use contribution dates to build custom ETF benchmarks and spot true outperformers." data-show="Modern Investing Techniques"
    data-post="blog/modern_investing/ep212.html" data-slug="modern_investing" style="--show-color:#047857;">
     <span class="wt-pic">
@@ -1337,7 +1412,9 @@
         <span class="wt-title">Retired Albertan shows Canadian TFSA investors how to use contribution dates to build custom ETF benchmarks and spot true outperformers.</span>
         <span class="wt-when">Oct 26, 6:14 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=hou0vg9ZFtE" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/modern_investing/ep212.html" aria-label="Read: Retired Albertan shows Canadian TFSA investors how to use contribution dates to build custom ETF benchmarks and spot true outperformers."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="tesla" style="--show-color:#E31937;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=hou0vg9ZFtE" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=hou0vg9ZFtE" data-kind="long" data-title="Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand." data-show="Tesla Shorts Time"
    data-post="blog/tesla/ep646.html" data-slug="tesla" style="--show-color:#E31937;">
     <span class="wt-pic">
@@ -1350,7 +1427,9 @@
         <span class="wt-title">Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand.</span>
         <span class="wt-when">Oct 26, 6:02 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=iHUloXCAGSM" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/tesla/ep646.html" aria-label="Read: Barclays now sees Tesla energy storage nearly sold out for 2027 on data-center demand."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="spacex" style="--show-color:#1A5CFF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=iHUloXCAGSM" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=iHUloXCAGSM" data-kind="long" data-title="SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15." data-show="SpaceX Daily"
    data-post="blog/spacex/ep142.html" data-slug="spacex" style="--show-color:#1A5CFF;">
     <span class="wt-pic">
@@ -1363,7 +1442,9 @@
         <span class="wt-title">SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15.</span>
         <span class="wt-when">Oct 26, 6:01 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=9bl_rHy7Q98" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/spacex/ep142.html" aria-label="Read: SpaceX fired all 33 Raptor engines on the Super Heavy booster for a full-duration static fire, clearing the immediate next step for Starship Flight 15."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="omni_view" style="--show-color:#0B6FD6;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=9bl_rHy7Q98" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=9bl_rHy7Q98" data-kind="long" data-title="Turkey raised its qualified-investor threshold fivefold after a fund rout erased billions in equity value." data-show="Omni View"
    data-post="blog/omni_view/ep217.html" data-slug="omni_view" style="--show-color:#0B6FD6;">
     <span class="wt-pic">
@@ -1376,7 +1457,9 @@
         <span class="wt-title">Turkey raised its qualified-investor threshold fivefold after a fund rout erased billions in equity value.</span>
         <span class="wt-when">Oct 26, 5:50 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=ajArh-_1mMI" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/omni_view/ep217.html" aria-label="Read: Turkey raised its qualified-investor threshold fivefold after a fund rout erased billions in equity value."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=ajArh-_1mMI" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=ajArh-_1mMI" data-kind="long" data-title="AI agents are now cold-emailing real editors to pitch news stories." data-show="Models &amp; Agents for Beginners"
    data-post="blog/models_agents_beginners/ep208.html" data-slug="models_agents_beginners" style="--show-color:#C2410C;">
     <span class="wt-pic">
@@ -1389,7 +1472,9 @@
         <span class="wt-title">AI agents are now cold-emailing real editors to pitch news stories.</span>
         <span class="wt-when">Oct 26, 5:42 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=HMKgom5ctik" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents_beginners/ep208.html" aria-label="Read: AI agents are now cold-emailing real editors to pitch news stories."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="models_agents" style="--show-color:#7C3AED;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=HMKgom5ctik" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=HMKgom5ctik" data-kind="long" data-title="Kolibri activates 3.46 billion parameters per token while landing on the Pareto frontier for English and German quality versus serving cost." data-show="Models &amp; Agents"
    data-post="blog/models_agents/ep215.html" data-slug="models_agents" style="--show-color:#7C3AED;">
     <span class="wt-pic">
@@ -1402,7 +1487,9 @@
         <span class="wt-title">Kolibri activates 3.46 billion parameters per token while landing on the Pareto frontier for English and German quality versus serving cost.</span>
         <span class="wt-when">Oct 26, 5:39 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=DQsjwSGyddI" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/models_agents/ep215.html" aria-label="Read: Kolibri activates 3.46 billion parameters per token while landing on the Pareto frontier for English and German quality versus serving cost."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=DQsjwSGyddI" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=DQsjwSGyddI" data-kind="long" data-title="Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away." data-show="Fascinating Frontiers"
    data-post="blog/fascinating_frontiers/ep234.html" data-slug="fascinating_frontiers" style="--show-color:#6B47FF;">
     <span class="wt-pic">
@@ -1415,7 +1502,9 @@
         <span class="wt-title">Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away.</span>
         <span class="wt-when">Oct 26, 5:24 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=H7JHEaYQgAk" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/fascinating_frontiers/ep234.html" aria-label="Read: Webb has imaged a giant planet seven point six times Jupiter&#39;s mass just twelve light-years away."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="planetterrian" style="--show-color:#017A99;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=H7JHEaYQgAk" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=H7JHEaYQgAk" data-kind="long" data-title="A liquid painted on teeth stops cavities in young children without drilling or anesthesia." data-show="Planetterrian Daily"
    data-post="blog/planetterrian/ep225.html" data-slug="planetterrian" style="--show-color:#017A99;">
     <span class="wt-pic">
@@ -1428,7 +1517,9 @@
         <span class="wt-title">A liquid painted on teeth stops cavities in young children without drilling or anesthesia.</span>
         <span class="wt-when">Oct 26, 5:11 AM ET</span>
     </span>
-</a><a class="wt-card" href="https://www.youtube.com/watch?v=tk-pB2akvHM" target="_blank" rel="noopener"
+</a><a class="nn-read" href="blog/planetterrian/ep225.html" aria-label="Read: A liquid painted on teeth stops cavities in young children without drilling or anesthesia."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div><div class="wt-item" data-slug="first_principles" style="--show-color:#0F766E;">
+<a class="wt-card" href="https://www.youtube.com/watch?v=tk-pB2akvHM" target="_blank" rel="noopener"
    data-nn-watch="https://www.youtube.com/watch?v=tk-pB2akvHM" data-kind="long" data-title="A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it." data-show="First Principles Daily"
    data-post="blog/first_principles/ep142.html" data-slug="first_principles" style="--show-color:#0F766E;">
     <span class="wt-pic">
@@ -1441,7 +1532,8 @@
         <span class="wt-title">A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it.</span>
         <span class="wt-when">Oct 26, 4:14 AM ET</span>
     </span>
-</a>
+</a><a class="nn-read" href="blog/first_principles/ep142.html" aria-label="Read: A typical bottle of laundry detergent costs roughly ten times the petrochemicals and enzymes inside it."><span class="ic" aria-hidden="true"></span>Read the story</a>
+</div>
     </div>
     
 
@@ -1453,7 +1545,7 @@
             <p>A free Nerra account turns this into your own page: the shows you pick, in your order, with the stories on your topics marked. Nerra Personal joins them into one morning edition for your podcast app.</p>
         </div>
         <div class="wt-actions">
-            <a class="wt-btn primary" href="account.html#customize">Make it yours, free</a>
+            <a class="wt-btn primary" href="join.html#join-free">Make it yours, free</a>
             <a class="wt-btn" href="join.html">See Nerra Personal</a>
         </div>
     </section>
@@ -1702,12 +1794,12 @@
                 </form>
             </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
                 <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
-                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap.</p>
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap. <a href="app.html">How it works</a></p>
                 <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
             </div>
             <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
                 <img src="assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
-                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories.</p>
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories. <a href="app.html">How it works</a></p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -1717,6 +1809,7 @@
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="ai-disclosure.html">Learn more</a></p>
                 <div>
                     <a href="support.html">Support the network</a> &middot;
+                    <a href="app.html">Get the app</a> &middot;
                     <a href="privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="terms-of-service.html">Terms</a> &middot;
@@ -1812,7 +1905,7 @@
     b.addEventListener('click', function () {
       var slug = b.getAttribute('data-wt-filter');
       chips.forEach(function (c) { c.setAttribute('aria-pressed', c === b ? 'true' : 'false'); });
-      document.querySelectorAll('.wt-card').forEach(function (c) { c.hidden = !!slug && c.getAttribute('data-slug') !== slug; });
+      document.querySelectorAll('.wt-item').forEach(function (c) { c.hidden = !!slug && c.getAttribute('data-slug') !== slug; });
     });
   });
 })();
@@ -1820,10 +1913,11 @@
 
 
     <!-- Centralized, improved global search -->
-    <script src="assets/js/search.js" defer></script>
-    <script src="assets/js/language-control.js" defer></script>
-    <script src="assets/js/footer-subscribe.js" defer></script><script src="assets/js/nn-player.js" defer></script>
-    <script src="assets/js/nn-app.js" defer></script>
+    <script src="assets/js/search.js?v=eca36a37" defer></script>
+    <script src="assets/js/language-control.js?v=38af1572" defer></script>
+    <script src="assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

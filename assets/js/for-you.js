@@ -79,6 +79,19 @@
     var ic = document.createElement('span'); ic.className = 'nn-you-card-play'; ic.setAttribute('aria-hidden', 'true');
     btn.appendChild(img); btn.appendChild(txt); btn.appendChild(ic);
     li.appendChild(btn);
+    // Read (Oct 29 2026): the episode's article beside the card (a link
+    // cannot sit inside the play button).
+    if (attrs.post) {
+      var read = document.createElement('a');
+      read.className = 'nn-read is-round';
+      read.href = attrs.post;
+      read.setAttribute('aria-label', 'Read ' + (entry.name || '') + ': ' + (s.hook || ''));
+      read.title = 'Read the story';
+      var ri = document.createElement('span'); ri.className = 'ic'; ri.setAttribute('aria-hidden', 'true');
+      read.appendChild(ri);
+      li.appendChild(read);
+      li.className = 'has-read';
+    }
     return li;
   }
   function member(acct) {

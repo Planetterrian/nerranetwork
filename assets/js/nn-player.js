@@ -113,6 +113,7 @@
           '<span class="nn-gp-dur"></span>' +
           '<button type="button" class="nn-gp-btn nn-gp-skip-sm" data-gp="fwd" aria-label="Forward 30 seconds">+30</button></div>' +
         '<div class="nn-gp-side"><span class="nn-gp-queue"></span>' +
+          '<a class="nn-read nn-gp-read" href="#" hidden><span class="ic" aria-hidden="true"></span><span class="t">Read</span></a>' +
           '<button type="button" class="nn-gp-btn" data-gp="rate" aria-label="Playback speed">' + RATES[rateAt] + '×</button>' +
           '<button type="button" class="nn-gp-btn" data-gp="close" aria-label="Close the player">✕</button></div>' +
       '</div>';
@@ -122,6 +123,7 @@
     ui.next = bar.querySelector('[data-gp="next"]');
     ui.rate = bar.querySelector('[data-gp="rate"]');
     ui.fill = bar.querySelector('.nn-gp-progress span');
+    ui.read = bar.querySelector('.nn-gp-read');
     bar.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-gp]');
       if (!b) { return; }
@@ -155,6 +157,12 @@
     ui.show.textContent = it.show || '';
     ui.title.textContent = it.title || '';
     ui.title.href = safeUrl(it.post) || '#';
+    // Read (Oct 29 2026): the article of what is playing, one tap away.
+    if (ui.read) {
+      ui.read.hidden = !safeUrl(it.post);
+      ui.read.href = safeUrl(it.post) || '#';
+      ui.read.setAttribute('aria-label', 'Read the story' + (it.title ? ': ' + it.title : ''));
+    }
     ui.resume.hidden = !resuming;
     if (resuming) { ui.cur.textContent = clock(positions[it.url] || 0); ui.dur.textContent = ''; }
     ui.queue.textContent = queue.length > 1 ? (at + 1) + ' of ' + queue.length : '';

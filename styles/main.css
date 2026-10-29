@@ -3588,3 +3588,19 @@ html.nn-standalone body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 .nn-app-sheet-more { color: var(--nn-cyan); font-size: 0.86rem; font-weight: 600; }
 .nn-app-sheet .nn-app-x { margin-left: auto; }
 @media (prefers-reduced-motion: reduce) { .nn-app-sheet { transition: none; } }
+
+/* Read (Oct 29 2026): one pill wherever an episode can be played or
+   watched, linking its article (the written story, sources and full
+   transcript). Paired with the play pill, never a bare text link a reader
+   can miss. Show colour tints it when the card carries --show-color. */
+.nn-read { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-ui); font-size: 0.82rem; font-weight: 700; line-height: 1.2;
+  color: var(--nn-white) !important; text-decoration: none !important; border-radius: 999px; padding: 5px 12px 5px 10px; white-space: nowrap;
+  background: rgba(255,255,255,0.04); border: 1px solid color-mix(in srgb, var(--show-color, var(--nn-purple)) 45%, rgba(255,255,255,0.18)); }
+.nn-read:hover { background: color-mix(in srgb, var(--show-color, var(--nn-purple)) 18%, rgba(255,255,255,0.04)); }
+.nn-read:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 2px; }
+.nn-read .ic { width: 13px; height: 11px; flex: none; border: 2px solid currentColor; border-top-width: 2px; border-radius: 2px 2px 3px 3px;
+  background: linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat; opacity: 0.9; }
+.nn-read.is-round { width: 36px; height: 36px; padding: 0; justify-content: center; }
+.nn-gp-read { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; }
+.nn-gp-read[hidden] { display: none; }
+@media (max-width: 760px) { .nn-gp-read { width: 30px; height: 30px; padding: 0; justify-content: center; } .nn-gp-read .t { display: none; } }

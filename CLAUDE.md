@@ -7606,6 +7606,18 @@ Rules that bind:
   **Back** whenever the app session has a page to go back to (an iPhone Home
   Screen app has no browser Back), scrolls to the top or reloads on a second
   tap of its own tab, and same-site `target="_blank"` links open in place.
+- **A template change to a static page commits the page it renders.** PR
+  #1577 changed `account_page.html.j2` and never committed `account.html`,
+  so the site kept serving the old page, which read the morning's
+  `api/tsla.json`, and members saw yesterday's close until the nightly ran.
+  `tests/test_read_buttons_2026_10_29.py` reads the committed file too.
+- **Read sits beside every Play and Watch** (`.nn-read` in `styles/main.css`):
+  My Nerra's cards, Latest rail and catch-up list, the front page and language
+  hubs' story meta (not the lead, which has "Read the full story"), Watch's
+  cards, the For you band, and the player bar (`nn-gp-read`, icon-only on a
+  phone). An edition's Read opens its written notes from the feed item,
+  rebuilt from an allow-list of tags with https links only, never pasted as
+  markup.
 
 Operator: `wrangler deploy` in `workers/gallery` (member symbols, tickers,
 the sign-in code). Until then member stocks show "No quote yet" and the
