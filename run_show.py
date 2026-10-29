@@ -5469,16 +5469,19 @@ def run(args: argparse.Namespace) -> None:
                                 config.audio, "outro_fade_out_duration", 6.0,
                             ),
                             denoise=config.audio.voice_denoise,
+                            declick=config.audio.voice_declick,
                             breathers=story_cue_starts or None,
                         )
                         metrics.record("story_break_cues", len(story_cue_starts))
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
                         normalize_voice(voice_for_mix, final_mp3,
-                                        denoise=config.audio.voice_denoise)
+                                        denoise=config.audio.voice_denoise,
+                                        declick=config.audio.voice_declick)
                 else:
                     normalize_voice(voice_for_mix, final_mp3,
-                                    denoise=config.audio.voice_denoise)
+                                    denoise=config.audio.voice_denoise,
+                                    declick=config.audio.voice_declick)
                 if voice_for_mix != raw_mp3:
                     Path(voice_for_mix).unlink(missing_ok=True)
 

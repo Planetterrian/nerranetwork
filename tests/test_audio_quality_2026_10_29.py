@@ -150,7 +150,7 @@ class TestMiraGoesThroughTheVoiceChain:
         from engine.daily_edition import mira_piece_cmd
 
         joined = " ".join(mira_piece_cmd(Path("in.wav"), Path("out.flac")))
-        chain = voice_chain_filters()
+        chain = voice_chain_filters(declick="strong")
         assert chain in joined
         assert joined.index(chain) < joined.index("loudnorm=I=-16:TP=-1.5:LRA=11,adelay")
 
@@ -218,3 +218,86 @@ class TestTheProbeIsReadOnly:
         wf = _read(".github/workflows/probe-audio-chain.yml")
         assert "contents: read" in wf and "scripts/probe_audio_chain.py" in wf
         assert "upload-artifact" in wf and "git push" not in wf
+
+
+class TestTranslatedTracksAreMastered:
+    """Oct 29 2026, follow-up: the FR/RU/ES tracks shipped Grok's raw output
+    at -26 LUFS against the English episodes' -16, with no declick or
+    denoise, and the per-language feeds and the @NerraRU / @NerraFR dubs all
+    read them."""
+
+    def test_the_sweep_renders_the_mastered_track(self):
+        src = _read("engine/multilingual.py")
+        body = src[src.index("        local_mp3 = output_dir /"):]
+        assert body.index("render_mastered_track(") < body.index("ffprobe_duration(")
+        fn = src[src.index("def render_mastered_track("):src.index("def track_transcript_path(")]
+        assert "master_voice_track(raw, out_path)" in fn and '".raw.wav"' in fn
+        assert "raw.unlink(missing_ok=True)" in fn
+
+    def test_master_is_the_chain_then_the_published_loudness(self, monkeypatch, tmp_path):
+        from engine import audio
+
+        seen = {}
+        monkeypatch.setattr(audio.subprocess, "run",
+                            lambda cmd, **k: seen.setdefault("cmd", cmd))
+        monkeypatch.setattr(audio, "get_audio_duration", lambda p: 60.0)
+        audio.master_voice_track(tmp_path / "in.wav", tmp_path / "out.mp3")
+        af = seen["cmd"][seen["cmd"].index("-af") + 1]
+        assert af == audio.voice_chain_filters() + "," + audio.PUBLISHED_LOUDNESS
+        assert "loudnorm=I=-16" in audio.PUBLISHED_LOUDNESS
+        assert seen["cmd"][-3:] == ["-q:a", "0", str(tmp_path / "out.mp3")]
+
+    @needs_ffmpeg
+    def test_a_quiet_track_comes_out_at_the_network_loudness(self, tmp_path):
+        from engine.audio import master_voice_track
+
+        quiet = tmp_path / "quiet.wav"
+        # Speech-like: a 220 Hz tone pulsed like syllables, ~-30 dBFS.
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
+                        "sine=frequency=220:duration=20:sample_rate=48000",
+                        "-af", "volume=0.04,apulsator=hz=3:amount=0.8",
+                        "-c:a", "pcm_s16le", str(quiet)], check=True)
+        out = master_voice_track(quiet, tmp_path / "out.mp3")
+        log = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(out),
+                              "-af", "ebur128", "-f", "null", "-"],
+                             capture_output=True, text=True).stderr
+        integrated = float([ln for ln in log.splitlines() if ln.strip().startswith("I:")][-1]
+                           .split()[1])
+        assert -18.0 <= integrated <= -14.0, integrated
+
+
+class TestMiraGetsTheStrongDeclick:
+    MIRA_SHOWS = ("vancouver", "collingwood", "omni_view_world", "omni_view_north_america",
+                  "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+                  "omni_view_latam")
+
+    def test_strength_is_a_closed_choice(self):
+        from engine.audio import DECLICK_FILTERS, voice_chain_filters
+
+        assert DECLICK_FILTERS["standard"] == "adeclick"
+        assert "adeclick=w=75:t=2" in voice_chain_filters(declick="strong")
+        assert voice_chain_filters() == voice_chain_filters(declick="standard")
+        assert "adeclick=w=75" not in voice_chain_filters()
+
+    def test_every_show_mira_hosts_is_strong_and_no_other(self):
+        from engine.config import load_config
+
+        for path in sorted((ROOT / "shows").glob("*.yaml")):
+            if path.name.startswith("_") or path.stem in ("age_of_ai", "nerra_voices"):
+                continue
+            cfg = load_config(str(path))
+            mira = (cfg.tts.voice_id or "") == "ara"
+            assert (cfg.audio.voice_declick == "strong") == mira, path.stem
+        assert all((ROOT / "shows" / f"{s}.yaml").exists() for s in self.MIRA_SHOWS)
+
+    def test_run_show_and_the_repair_tool_pass_it(self):
+        assert _read("run_show.py").count("declick=config.audio.voice_declick") == 3
+        assert _read("scripts/resynthesize_episode.py").count(
+            "declick=config.audio.voice_declick") == 2
+
+    def test_her_edition_pieces_use_it(self):
+        from engine.audio import voice_chain_filters
+        from engine.daily_edition import mira_piece_cmd
+
+        joined = " ".join(mira_piece_cmd(Path("in.wav"), Path("out.flac")))
+        assert voice_chain_filters(declick="strong") in joined

@@ -197,9 +197,11 @@ def mix(raw: Path, config, final: Path) -> Path:
                        intro_volume=a.intro_volume, overlap_volume=a.overlap_volume,
                        fade_volume=a.fade_volume, outro_volume=a.outro_volume,
                        voice_intro_delay=a.voice_intro_delay, outro_crossfade=a.outro_crossfade,
-                       denoise=a.voice_denoise)
+                       denoise=a.voice_denoise,
+                       declick=getattr(a, "voice_declick", "standard"))
     else:
-        normalize_voice(raw, final, denoise=a.voice_denoise)
+        normalize_voice(raw, final, denoise=a.voice_denoise,
+                        declick=getattr(a, "voice_declick", "standard"))
     return final
 
 

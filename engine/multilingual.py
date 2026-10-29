@@ -119,6 +119,32 @@ def render_track(script_text: str, lang: str, voice_id: str, api_key: str,
     )
 
 
+def render_mastered_track(script_text: str, lang: str, voice_id: str, api_key: str,
+                          out_path: Path, max_chars: int) -> None:
+    """Synthesize the track as WAV, then finish it like an English episode
+    (``engine.audio.master_voice_track``: the voice chain, -16 LUFS) and
+    encode it once into *out_path*.
+
+    Oct 29 2026: the tracks shipped Grok's raw output at -26 LUFS, 10 dB
+    under the English episodes, with no declick or denoise; the
+    per-language feeds and the @NerraRU / @NerraFR dubs all read them. If
+    the mastering step fails the raw synthesis ships, as it did before."""
+    from engine.audio import master_voice_track
+
+    raw = out_path.with_name(out_path.stem + ".raw.wav")
+    render_track(script_text, lang, voice_id, api_key, raw, max_chars)
+    try:
+        master_voice_track(raw, out_path)
+    except Exception as exc:  # noqa: BLE001 — an unmastered track beats none
+        logger.warning("%s: mastering failed (%s); shipping the raw synthesis",
+                       out_path.name, exc)
+        subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                        "-i", str(raw), "-c:a", "libmp3lame", "-q:a", "0", str(out_path)],
+                       check=True, capture_output=True)
+    finally:
+        raw.unlink(missing_ok=True)
+
+
 def track_transcript_path(output_dir: Path, episode_num: int, lang: str) -> Optional[Path]:
     """The committed-or-local Whisper JSON for a language track, if the
     multilingual sweep wrote one (``<stem>.<lang>_transcript.json`` beside
@@ -328,7 +354,7 @@ def generate_for_episode(
             continue
 
         local_mp3 = output_dir / f"{tts_file.stem.replace('_tts', '')}.{lang}.mp3"
-        render_track(translated, lang, voice_id, api_key, local_mp3, max_chars)
+        render_mastered_track(translated, lang, voice_id, api_key, local_mp3, max_chars)
         dur = ffprobe_duration(str(local_mp3))
         try:
             size_bytes = local_mp3.stat().st_size

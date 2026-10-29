@@ -143,8 +143,8 @@ def main() -> int:
         logger.info("ZH SAMPLE: localizing first ~%d chars of Ep%s", args.sample_chars, ep)
         zh_text = translate.translate_script(snippet, "zh")
         sample_mp3 = output_dir / f"{tf.stem.replace('_tts', '')}.zh.sample.mp3"
-        multilingual.render_track(zh_text, "zh", voice_id, api_key, sample_mp3,
-                                  config.tts.max_chars or tts.GROK_MAX_CHARS_PER_REQUEST)
+        multilingual.render_mastered_track(zh_text, "zh", voice_id, api_key, sample_mp3,
+                                           config.tts.max_chars or tts.GROK_MAX_CHARS_PER_REQUEST)
         dur = multilingual.ffprobe_duration(str(sample_mp3))
         logger.info("=" * 60)
         logger.info("ZH SAMPLE READY: %s (%.1fs) — LISTEN before batch ZH. Re-run "
