@@ -97,32 +97,87 @@
   });
 
   // ------------------------------------------------------------ tab bar
+  // Oct 29 2026: the bar is on every page of the app (sw.js adds this file
+  // to pages generated before it existed), it lights the tab a page belongs
+  // to — a blog post, a show page or a topic is under Shows — and, since a
+  // Home Screen app on iPhone has no browser Back, it carries one whenever
+  // there is a page to go back to.
   var TABS = [
     { href: '/', label: 'Today', match: /^\/(index\.html)?$/,
       icon: '<path d="M4 5h16v14H4z M8 9h8 M8 13h8 M8 16h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' },
     { href: '/watch.html', label: 'Watch', match: /^\/watch\.html$/,
       icon: '<rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/>' },
-    { href: '/explore.html', label: 'Shows', match: /^\/explore\.html$/,
+    { href: '/explore.html', label: 'Shows', match: /^\/(explore\.html|blog\/|topics\/|claims\/|[a-z0-9-]+(-summaries|-narrative|-dashboard|-glossary)?\.html$)/,
       icon: '<rect x="4" y="4" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.8"/>' },
-    { href: '/account.html', label: 'My Nerra', match: /^\/(account|join)\.html$/,
+    { href: '/account.html', label: 'My Nerra', match: /^\/(account|join|add|app|login)\.html$/,
       icon: '<circle cx="12" cy="9" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 19.5c1.4-3.2 4-4.8 7-4.8s5.6 1.6 7 4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' },
   ];
+  var ROOTS = /^\/(index\.html|watch\.html|explore\.html|account\.html)?$/;
+  var BACK_ICON = '<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  function trail() {
+    // The pages this app session has opened, so Back appears only when
+    // there is somewhere to go back to inside the app.
+    var t = [];
+    try { t = JSON.parse(sessionStorage.getItem('nnApp.trail') || '[]') || []; } catch (e) { t = []; }
+    var here = location.pathname + location.search;
+    if (t[t.length - 1] !== here) { t.push(here); }
+    if (t.length > 30) { t = t.slice(-30); }
+    try { sessionStorage.setItem('nnApp.trail', JSON.stringify(t)); } catch (e) {}
+    return t;
+  }
   function tabBar() {
+    if (document.querySelector('.nn-tabbar')) { return; }
     var nav = document.createElement('nav');
     nav.className = 'nn-tabbar';
     nav.setAttribute('aria-label', 'App');
     var path = location.pathname;
     var active = -1;
     TABS.forEach(function (t, i) { if (active === -1 && t.match.test(path)) { active = i; } });
-    nav.innerHTML = TABS.map(function (t, i) {
+    var back = trail().length > 1 && window.history.length > 1 && !ROOTS.test(path);
+    var html = back
+      ? '<a href="#" data-nn-back class="nn-tab-back" aria-label="Back"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">' + BACK_ICON + '</svg><span>Back</span></a>'
+      : '';
+    html += TABS.map(function (t, i) {
       return '<a href="' + t.href + '"' + (i === active ? ' aria-current="page" class="is-on"' : '') + '>'
         + '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">' + t.icon + '</svg><span>' + t.label + '</span></a>';
     }).join('');
+    nav.innerHTML = html;
+    nav.classList.toggle('has-back', back);
+    nav.addEventListener('click', function (ev) {
+      var a = ev.target.closest('a');
+      if (!a) { return; }
+      if (a.hasAttribute('data-nn-back')) {
+        ev.preventDefault();
+        var t = trail(); t.pop(); t.pop();
+        try { sessionStorage.setItem('nnApp.trail', JSON.stringify(t)); } catch (e) {}
+        window.history.back();
+        return;
+      }
+      // The tab you are on: scroll to the top; at the top, reload (an app
+      // on iPhone has no pull-to-refresh).
+      if (a.classList.contains('is-on') && ROOTS.test(path)) {
+        ev.preventDefault();
+        if (window.scrollY > 40) { window.scrollTo({ top: 0, behavior: 'smooth' }); } else { location.reload(); }
+      }
+    });
     document.body.appendChild(nav);
     var set = function () { root.style.setProperty('--nn-tabbar-h', nav.offsetHeight + 'px'); };
     set();
     window.addEventListener('resize', set);
   }
+  // A same-site link that opens a new window would leave the app for the
+  // browser: inside the app it opens in place.
+  function keepLinksInApp() {
+    document.addEventListener('click', function (ev) {
+      var a = ev.target.closest ? ev.target.closest('a[target="_blank"]') : null;
+      if (!a || !a.href) { return; }
+      try {
+        var u = new URL(a.href, location.href);
+        if (u.origin === location.origin && !/\.(mp3|m4a|m4b|mp4|zip|epub|pdf)$/i.test(u.pathname)) { a.removeAttribute('target'); }
+      } catch (e) {}
+    }, true);
+  }
+
   // ------------------------------------------------------------ the sheet
   var SHEET_SNOOZE_DAYS = 14;
   var DAY = 86400000;
@@ -235,6 +290,7 @@
     offerLater();
     if (standalone) {
       tabBar();
+      keepLinksInApp();
       var first = true;
       try { first = !sessionStorage.getItem('nnApp.opened'); sessionStorage.setItem('nnApp.opened', '1'); } catch (e) {}
       if (first) { track('app_open', { location: location.pathname }); }

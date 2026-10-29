@@ -7588,6 +7588,16 @@ Rules that bind:
   and the stylesheet carry a content hash (`asset_v`) so the service worker
   never pairs a new page with an old script.
 
+- **Every page is the app.** 1,479 of 3,042 committed pages predate the app
+  layer, so the tab bar vanished on any older blog post. `sw.js`
+  (`withAppLayer`) adds the three shared scripts before `</body>` of any page
+  that does not load `nn-app.js`; a regenerated page passes through untouched
+  (`VERSION` bumped so installed apps pick it up). The tab bar lights the
+  section a page belongs to (a post, a show page or a topic is Shows), carries
+  **Back** whenever the app session has a page to go back to (an iPhone Home
+  Screen app has no browser Back), scrolls to the top or reloads on a second
+  tap of its own tab, and same-site `target="_blank"` links open in place.
+
 Operator: `wrangler deploy` in `workers/gallery` (member symbols, tickers,
 the sign-in code). Until then member stocks show "No quote yet" and the
 markets minute speaks only what the route answers.

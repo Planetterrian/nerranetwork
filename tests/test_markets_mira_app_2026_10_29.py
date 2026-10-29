@@ -248,3 +248,29 @@ class TestJoinPage:
         assert src.count("data-checkout data-plan=") == 2
         assert "api/account/checkout-ref" in src
         assert "account.html#nn-membership" in src
+
+
+class TestEveryPageIsTheApp:
+    """Oct 29 2026: the tab bar vanished on 1,479 of 3,042 pages, generated
+    before the app layer existed; the service worker adds it as they load."""
+
+    def test_the_worker_adds_the_app_layer_to_older_pages(self):
+        sw = _read("sw.js")
+        assert "event.respondWith(networkFirst(req, PAGES, '/offline.html').then(withAppLayer));" in sw
+        assert "if (html.indexOf('assets/js/nn-app.js') !== -1) { return res; }" in sw
+        for js in ("nn-markets.js", "nn-player.js", "nn-app.js"):
+            assert f'<script src="/assets/js/{js}" defer></script>' in sw
+        assert "var VERSION = 'nn-2026-10-29';" in sw
+
+    def test_the_bar_has_back_and_lights_the_section(self):
+        js = _read("assets/js/nn-app.js")
+        assert "data-nn-back" in js and "window.history.back()" in js
+        shows = re.search(r"label: 'Shows', match: (/.*?/),", js).group(1)
+        for path in ("/blog/omni_view/ep003.html", "/topics/space.html", "/tesla.html", "/explore.html"):
+            assert re.search(shows.strip("/").replace("\\/", "/"), path), path
+        assert "keepLinksInApp();" in js
+
+    def test_nothing_loads_the_player_twice(self):
+        assert "if (window.NNPlayer) { return; }" in _read("assets/js/nn-player.js")
+        assert "if (window.NNMarkets) { return; }" in _read("assets/js/nn-markets.js")
+        assert "if (document.querySelector('.nn-tabbar')) { return; }" in _read("assets/js/nn-app.js")
