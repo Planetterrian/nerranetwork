@@ -10,6 +10,7 @@ Called from run_show.py after the pipeline completes.
 
 import logging
 import subprocess
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional
@@ -209,21 +210,53 @@ def validate_enclosure_reachability(
     dated.sort(key=lambda t: (t[0], -t[1]), reverse=True)
     sample = [url for _k, _p, url in dated[:sample_count]]
     for url in sample:
-        try:
-            resp = _req.head(url, headers=headers, timeout=timeout, allow_redirects=True)
-            if 200 <= resp.status_code < 400:
-                logger.info("Enclosure reachable (%d): %s", resp.status_code, url)
-            else:
-                logger.error(
-                    "Enclosure UNREACHABLE (%d): %s — listeners will get a broken link",
-                    resp.status_code, url,
-                )
-                all_ok = False
-        except Exception as exc:
-            logger.error("Enclosure UNREACHABLE (error): %s — %s", url, exc)
+        if not _enclosure_answers(_req, url, headers, timeout):
             all_ok = False
 
     return all_ok
+
+
+#: Oct 30 2026: per-attempt timeouts for one enclosure. AI Chips Ep037
+#: (Oct 28) was produced, uploaded and in the feed when ONE 8 s read timeout
+#: on its brand-new MP3 (the CDN's first fetch of a 23 MB object, through
+#: OP3's redirect) failed the run: nothing was pushed, Nerra Daily built
+#: without it, and GitHub's fallback cron made the whole episode again at
+#: 17:01. A transport error or a 5xx is asked again with a longer wait; a
+#: 4xx is an answer and fails at once.
+ENCLOSURE_ATTEMPT_TIMEOUTS = (8, 20, 45)
+ENCLOSURE_RETRY_PAUSES = (3, 10)
+_sleep = time.sleep
+
+
+def _enclosure_answers(_req, url: str, headers: dict, timeout: int) -> bool:
+    timeouts = (timeout,) + tuple(t for t in ENCLOSURE_ATTEMPT_TIMEOUTS if t > timeout)
+    last = ""
+    for attempt, attempt_timeout in enumerate(timeouts):
+        if attempt:
+            _sleep(ENCLOSURE_RETRY_PAUSES[min(attempt - 1, len(ENCLOSURE_RETRY_PAUSES) - 1)])
+        try:
+            resp = _req.head(url, headers=headers, timeout=attempt_timeout,
+                             allow_redirects=True)
+        except Exception as exc:  # noqa: BLE001 — a transport error is asked again
+            last = f"error: {exc}"
+            logger.warning("Enclosure check attempt %d/%d did not answer: %s — %s",
+                           attempt + 1, len(timeouts), url, exc)
+            continue
+        if 200 <= resp.status_code < 400:
+            logger.info("Enclosure reachable (%d): %s", resp.status_code, url)
+            return True
+        if resp.status_code < 500:
+            logger.error(
+                "Enclosure UNREACHABLE (%d): %s — listeners will get a broken link",
+                resp.status_code, url,
+            )
+            return False
+        last = str(resp.status_code)
+        logger.warning("Enclosure check attempt %d/%d answered %d: %s",
+                       attempt + 1, len(timeouts), resp.status_code, url)
+    logger.error("Enclosure UNREACHABLE (%s): %s — after %d attempts",
+                 last, url, len(timeouts))
+    return False
 
 
 def validate_digest(digest_text: str, show_name: str, min_chars: int = 200) -> bool:

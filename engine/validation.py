@@ -445,7 +445,7 @@ def tst_validation_config() -> ValidationConfig:
                 pattern=(
                     r"(?:📰 \*\*Top (?:10|12) News Items\*\*|### Top (?:10|12) News Items|### Top (?:10|12) News|### Top News)"
                     r"(.*?)"
-                    r"(?=━━|## Short Spot|📉|### Tesla First Principles|## Tesla X Takeover|🎙️)"
+                    r"(?=━━|### Also Today|## Also Today|## Short Spot|📉|### Tesla First Principles|## Tesla X Takeover|🎙️)"
                 ),
                 min_items=5,
             ),

@@ -560,8 +560,12 @@ def spotlight_card_missing(digest: str) -> List[str]:
             break
     if body is None:
         return list(SPOTLIGHT_CARD_LABELS)
-    low = body.lower()
-    return [lab for lab in SPOTLIGHT_CARD_LABELS if f"**{lab.lower()}" not in low]
+    # Oct 30 2026: a slot is its label at the start of a line, bold or not.
+    # The prompt asks for "each opening with its label and a colon"; the
+    # model writes them plain, and the bold-only check fired on complete
+    # cards every week (Ep6, Ep7), spending the structural regeneration.
+    return [lab for lab in SPOTLIGHT_CARD_LABELS
+            if not re.search(rf"(?im)^\s*[-*•]?\s*(?:\*\*)?{re.escape(lab)}\b", body)]
 
 
 def lint_spotlight_card(digest: str) -> Optional[LintFinding]:

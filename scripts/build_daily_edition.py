@@ -150,8 +150,13 @@ def _annotate(kind: str, message: str) -> None:
     (logger.error if kind == "error" else logger.warning)(message)
 
 
+#: An ffmpeg trim or join of a segment takes seconds; ten minutes is a hang.
+SUBPROCESS_TIMEOUT_S = 600
+
+
 def _run(cmd: List[str], what: str) -> None:
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True,
+                          timeout=SUBPROCESS_TIMEOUT_S)
     if proc.returncode != 0:
         raise RuntimeError(f"{what} failed: {proc.stderr[-800:]}")
 
@@ -197,14 +202,18 @@ def _rerunning_after_hold(missing: List[str], target_date: dt.date,
     return rerunning_shows(runs, missing, hold_until=hold_until, now_utc=now_utc)
 
 
-def _download(url: str, dest: Path) -> None:
-    import requests
+#: Oct 30 2026: once the segment loop has spent this long, each remaining
+#: download gets one attempt — a slow CDN morning costs minutes, never the
+#: hours Ep069 lost (81 silent minutes, published 12:17 UTC).
+SEGMENT_LOOP_BUDGET_S = 20 * 60
 
-    with requests.get(url, stream=True, timeout=600) as resp:
-        resp.raise_for_status()
-        with dest.open("wb") as fh:
-            for chunk in resp.iter_content(1 << 16):
-                fh.write(chunk)
+
+def _download(url: str, dest: Path, label: str = "", *, attempts: int = 3) -> None:
+    # Oct 30 2026: bounded and logged (engine.http_download) — Ep069 sat 81
+    # silent minutes in this loop behind a read-timeout-only download.
+    from engine.http_download import download_to
+
+    download_to(url, dest, label=label, attempts=attempts)
 
 
 def _generate_links(
@@ -429,11 +438,15 @@ def build_edition(
         chapter_pieces: List[tuple] = []
         survivors: List[Segment] = []
         dropped: List[str] = []
+        import time as _time
+        loop_started = _time.monotonic()
         for seg in segments:
             raw = workdir / f"raw_{seg.slug}.mp3"
             trimmed = workdir / f"seg_{seg.slug}{PIECE_SUFFIX}"
             try:
-                _download(seg.audio_url, raw)
+                over_budget = _time.monotonic() - loop_started > SEGMENT_LOOP_BUDGET_S
+                _download(seg.audio_url, raw, label=f"{seg.slug} Ep{seg.episode_num}",
+                          attempts=1 if over_budget else 3)
                 cut_final = None
                 if seg.transcript_path:
                     transcript = load_transcript(seg.transcript_path)
@@ -458,6 +471,10 @@ def build_edition(
                 raw.unlink(missing_ok=True)
             seg.cut_final_seconds = cut_final
             seg.duration_seconds = get_audio_duration(trimmed) or 0.0
+            logger.info("segment %s Ep%s: cut %s (%s), %.0f s",
+                        seg.slug, seg.episode_num,
+                        f"{cut_final:.1f} s" if cut_final is not None else "none",
+                        seg.cut_kind or "whole", seg.duration_seconds)
             survivors.append(seg)
             pieces.append(trimmed)
 

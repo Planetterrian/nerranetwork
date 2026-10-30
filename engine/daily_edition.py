@@ -965,6 +965,27 @@ _DATE_TOKEN_RE = re.compile(
 )
 
 
+_MONTHS = ("January|February|March|April|May|June|July|August|September|"
+           "October|November|December")
+_ORDINAL_WORD = (r"(?:(?:twenty|thirty)[- ])?(?:first|second|third|fourth|fifth|"
+                 r"sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|"
+                 r"fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|"
+                 r"nineteenth|twentieth|thirtieth)")
+#: Oct 30 2026: Mira SPEAKS the date, and the rundown carries her words —
+#: "October thirtieth, twenty twenty-six finds Nerra Daily…". The token
+#: regex above saw only digits, so all ten of Ep062-071 opened on the same
+#: spelled-date skeleton while the memory showed ten different strings.
+#: A spelled ordinal counts only right after a month ("the first segment"
+#: is not a date); a spelled year counts anywhere.
+_SPELLED_DATE_RE = re.compile(
+    rf"\b(?:{_MONTHS})\s+(?:the\s+)?{_ORDINAL_WORD}\b,?", re.IGNORECASE)
+_SPELLED_YEAR_RE = re.compile(
+    r"\b(?:twenty[- ]twenty|two thousand(?: and)?)(?:[- ](?:one|two|three|four|"
+    r"five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|"
+    r"sixteen|seventeen|eighteen|nineteen|twenty|thirty)(?:[- ](?:one|two|"
+    r"three|four|five|six|seven|eight|nine))?)?\b,?", re.IGNORECASE)
+
+
 def normalize_date_tokens(text: str) -> str:
     """Collapse weekday / month / day / year tokens to ``[date]`` so the
     sentence SKELETON is what the memory block shows. The first memory
@@ -973,7 +994,9 @@ def normalize_date_tokens(text: str) -> str:
     "Saturday, August 29, 2026 opens Nerra Daily…" read as different
     lines to the model while being the same sentence (5 of the 9 post-fix
     editions converged on "<date> opens Nerra Daily")."""
-    out = _DATE_TOKEN_RE.sub("[date]", text or "")
+    out = _SPELLED_DATE_RE.sub("[date]", text or "")
+    out = _SPELLED_YEAR_RE.sub("[date]", out)
+    out = _DATE_TOKEN_RE.sub("[date]", out)
     out = re.sub(r"(?:\[date\]\s*)+", "[date] ", out)
     out = re.sub(r"\[date\]\s+([.,;:])", r"[date]\1", out)
     return _WS_RE.sub(" ", out).strip()
@@ -1547,6 +1570,44 @@ def handoffs_show_name_led(links: dict, segments: List[Segment]) -> int:
     return count
 
 
+_ECHO_STOP = frozenset(
+    "that this with from have will their they them were been into than then "
+    "also about after over more most when what which while there here these "
+    "those just only some such each other first says said would could".split())
+
+
+def _salient(text: str) -> set:
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return {w for w in words if len(w) >= 4 and w not in _ECHO_STOP}
+
+
+#: A handoff restates the next segment's headline when it carries this share
+#: of the headline's salient words. Oct 30 2026: the links prompt says a
+#: handoff never repeats the headline the episode opens on; Ep069 and Ep071
+#: did it on 8 and 7 handoffs ("Letters from two senators set a November 25
+#: deadline for Meta…" then MAG 7 opening "Two senators set a November 25th
+#: deadline for Meta…"). An instruction the model breaks is enforced in code.
+HANDOFF_ECHO_SHARE = 0.6
+
+
+def handoff_echoes_hook(handoff: str, hook: str) -> bool:
+    hook_words = _salient(hook)
+    if len(hook_words) < 4:
+        return False
+    return len(hook_words & _salient(handoff)) / len(hook_words) >= HANDOFF_ECHO_SHARE
+
+
+def handoffs_echoing_hook(links: dict, segments: List[Segment]) -> List[int]:
+    """1-based numbers of the handoffs that restate the next segment's hook."""
+    out = []
+    for i, text in enumerate(links.get("handoffs") or []):
+        if i + 1 >= len(segments):
+            break
+        if handoff_echoes_hook(text or "", getattr(segments[i + 1], "hook", "") or ""):
+            out.append(i + 1)
+    return out
+
+
 #: The links prompt's own rule: at most one handoff in three may open with
 #: the show's name (``nerra_daily_links.txt``).
 HANDOFF_NAME_LED_SHARE = 1 / 3
@@ -1572,22 +1633,36 @@ def handoff_revision_prompt(prompt: str, links: dict,
     handoffs = links.get("handoffs") or []
     led = handoffs_show_name_led(links, segments)
     cap = handoff_name_led_cap(len(handoffs))
-    if not handoffs or led <= cap:
+    echoes = handoffs_echoing_hook(links, segments)
+    if not handoffs or (led <= cap and not echoes):
         return None
     import json as _json
 
     draft = _json.dumps(links, ensure_ascii=False, indent=2)
+    problems = []
+    if led > cap:
+        problems.append(
+            f"It opened {led} of {len(handoffs)} handoffs with the name of the "
+            f"show it introduces; the rule is at most {cap}.")
+    if echoes:
+        problems.append(
+            "Handoff(s) " + ", ".join(str(n) for n in echoes) + " restate the "
+            "headline the next episode opens on, so the listener hears the same "
+            "fact twice in a row; set that episode up with a different detail "
+            "from its summary — an angle, a stake, a question the headline raises.")
+    # Oct 30 2026: "or at the end" produced a new tic — 13 of 13 Ep069
+    # handoffs ended "…, <Show> examines/covers/carries".
     return (
         f"{prompt}\n\n"
-        "REVISION REQUIRED. Your draft (below) opened "
-        f"{led} of {len(handoffs)} handoffs with the name of the show it "
-        f"introduces. The rule is at most {cap}. Return the same JSON object "
-        "with intro, title and signoff UNCHANGED and the same number of "
-        f"handoffs ({len(handoffs)}), in the same order, each keeping its "
-        "facts. Rewrite the handoffs so that no more than "
-        f"{cap} begin with a show name: open on the detail, the stake or the "
-        "question, and let the show name arrive mid-sentence or at the end. "
-        "No two handoffs may share an opening phrase.\n\nDRAFT:\n" + draft
+        "REVISION REQUIRED. Your draft (below) breaks the handoff rules. "
+        + " ".join(problems)
+        + " Return the same JSON object with intro, title and signoff UNCHANGED "
+        f"and the same number of handoffs ({len(handoffs)}), in the same order, "
+        f"each introducing the same show. No more than {cap} may begin with a "
+        "show name: open on the detail, the stake or the question and let the "
+        "show name arrive mid-sentence; never end a handoff on the show name "
+        "and a verb (\", <Show> examines\"). No two handoffs may share an "
+        "opening phrase or a closing shape.\n\nDRAFT:\n" + draft
     )
 
 
@@ -1600,12 +1675,20 @@ def adopt_revised_handoffs(first: dict, revised: Optional[dict],
     out = dict(first)
     out["_name_led_first_draft"] = handoffs_show_name_led(first, segments)
     out["_handoffs_revised"] = False
+    out["_echoes_first_draft"] = len(handoffs_echoing_hook(first, segments))
     if not revised:
         return out
     new = revised.get("handoffs") or []
     if len(new) != len(first.get("handoffs") or []):
         return out
-    if handoffs_show_name_led(revised, segments) < out["_name_led_first_draft"]:
+    led_new = handoffs_show_name_led(revised, segments)
+    echo_new = len(handoffs_echoing_hook(revised, segments))
+    cap = handoff_name_led_cap(len(new))
+    led_old = out["_name_led_first_draft"]
+    # Better when it breaks fewer rules in total and never goes back over
+    # the name cap it was under.
+    if (led_new + echo_new < led_old + out["_echoes_first_draft"]
+            and (led_new <= cap or led_new < led_old)):
         out["handoffs"] = list(new)
         out["_handoffs_revised"] = True
     return out
@@ -1762,6 +1845,8 @@ def build_edition_metrics(
         # Oct 4 2026: the first draft's count, and whether the one-shot
         # revision replaced the handoffs (adopt_revised_handoffs).
         "handoffs_show_name_led_first_draft": (links or {}).get("_name_led_first_draft"),
+        "handoffs_echoing_hook": len(handoffs_echoing_hook(links or {}, segments)),
+        "handoffs_echoing_hook_first_draft": (links or {}).get("_echoes_first_draft"),
         "handoffs_revised": bool((links or {}).get("_handoffs_revised")),
         # Oct 16 2026: handoffs moved or replaced because they introduced a
         # different segment than the one they preceded (realign_handoffs).

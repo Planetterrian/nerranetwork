@@ -247,18 +247,71 @@ def _gn_resolve_via_batchexecute(
     # Response is Google's anti-JSON-hijacking envelope: a `)]}'` prelude,
     # then length-prefixed JSON chunks. The payload we want is a nested
     # JSON string `["garturlres","<url>",1]`.
-    match = re.search(r'\\"garturlres\\",\\"(https?://[^\\"]+)', body)
-    if not match:
-        match = re.search(r'"garturlres","(https?://[^"]+)"', body)
-    if not match:
+    resolved = _garturlres_url(body)
+    if not resolved:
         logger.debug("Google News RPC returned no publisher URL for %s", url)
         return None
-
-    resolved = match.group(1).encode().decode("unicode_escape")
     resolved = sanitize_url(resolved)
     if not resolved or is_google_news_url(resolved):
         return None
     return resolved
+
+
+def _garturlres_walk(node, depth: int = 0) -> Optional[str]:
+    if depth > 6:
+        return None
+    if isinstance(node, str):
+        if "garturlres" in node:
+            try:
+                return _garturlres_walk(json.loads(node), depth + 1)
+            except ValueError:
+                return None
+        return None
+    if isinstance(node, list):
+        if (len(node) >= 2 and node[0] == "garturlres" and isinstance(node[1], str)
+                and node[1].startswith(("http://", "https://"))):
+            return node[1]
+        for child in node:
+            found = _garturlres_walk(child, depth + 1)
+            if found:
+                return found
+    return None
+
+
+def _garturlres_url(body: str) -> Optional[str]:
+    """The publisher URL in a batchexecute reply, its query string whole.
+
+    Oct 30 2026: the reply nests the payload as a JSON string inside JSON,
+    so a ``=`` in the URL arrives as ``\\u003d``. The old regex read up to
+    the first backslash and every resolved link lost its query values —
+    ``news.amp?news_id``, ``story?id``, ``news.php?subaction`` — on the
+    blog, the feed, the newsletter and the claims ledger, about one link a
+    day since September. Each chunk is parsed as JSON instead."""
+    for line in (body or "").splitlines():
+        line = line.strip()
+        if not line.startswith("["):
+            continue
+        try:
+            data = json.loads(line)
+        except ValueError:
+            continue
+        found = _garturlres_walk(data)
+        if found:
+            return found
+    # A reply whose chunks do not parse line by line: read the escaped URL
+    # through to its closing quote, then undo both levels of escaping.
+    match = re.search(r'garturlres\\*",\\*"(https?:(?:[^"\\]|\\.)*?)\\*"', body or "")
+    if not match:
+        return None
+    raw = match.group(1)
+    for _ in range(2):
+        if "\\" not in raw:
+            break
+        try:
+            raw = json.loads(f'"{raw}"')
+        except ValueError:
+            break
+    return raw
 
 
 def resolve_google_news_url(

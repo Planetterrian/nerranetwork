@@ -212,7 +212,7 @@ def build_segment_cache(
 ) -> Dict[str, Path]:
     """Download + promo-trim each show once; every subscriber splices the
     same files."""
-    import requests
+    from engine.http_download import download_to
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     out: Dict[str, Path] = {}
@@ -245,11 +245,7 @@ def build_segment_cache(
                 bucket, key = private
                 _r2_client().download_file(bucket, key, str(raw))
             else:
-                with requests.get(seg.audio_url, stream=True, timeout=600) as resp:
-                    resp.raise_for_status()
-                    with raw.open("wb") as fh:
-                        for chunk in resp.iter_content(1 << 16):
-                            fh.write(chunk)
+                download_to(seg.audio_url, raw, label=slug)
             _run(segment_trim_cmd(raw, target, cut), f"trim {slug}")
             _level_segment(slug, target)
             out[slug] = target
@@ -300,7 +296,8 @@ def ensure_sting(cache_dir: Path) -> Optional[Path]:
 def _run(cmd: List[str], what: str) -> None:
     import subprocess
 
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    # Oct 30 2026: a trim takes seconds; ten minutes is a hang.
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if proc.returncode != 0:
         raise RuntimeError(f"{what} failed: {proc.stderr[-500:]}")
 
