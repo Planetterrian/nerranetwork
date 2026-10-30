@@ -43,6 +43,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -66,7 +69,7 @@
     <script defer src="assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="styles/main.css?v=29ee3e76">
 
     
 <!-- Schema.org PodcastSeries -->
@@ -916,7 +919,7 @@
                         <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 22: Six hundred thousand Texas voter registrations sit delayed before early voting.</div>
                         <div class="latest-episode-date" id="latest-date">October 15, 2026</div>
                         
-                        <audio id="latest-audio" controls preload="metadata" src="https://op3.dev/e/audio.nerranetwork.com/omni_view_north_america/Omni_View_North_America_Ep022_20261015.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        <audio id="latest-audio" controls preload="metadata" data-nn-card data-nn-title-from="#latest-title" data-show="Omni View North America" data-cover="assets/covers/omni-view-north-america.jpg" src="https://op3.dev/e/audio.nerranetwork.com/omni_view_north_america/Omni_View_North_America_Ep022_20261015.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
                         
                         <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                     </div>
@@ -2147,7 +2150,7 @@
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
     <script src="assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"

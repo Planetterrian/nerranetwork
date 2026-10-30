@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="The Age of AI Blog RSS" href="https://nerranetwork.com/blog_age_of_ai.rss">
@@ -967,9 +970,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1894,7 +1899,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Listen to the conversation
             </div>
-            <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/ed0a32b9-9f41-4f5b-9b1b-c771785df0c6_edit_20260922000021.mp3">
+            <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/ed0a32b9-9f41-4f5b-9b1b-c771785df0c6_edit_20260922000021.mp3" data-nn-card data-title="Sameer Ranjan" data-show="The Age of AI" data-cover="../../assets/covers/age-of-ai.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/ed0a32b9-9f41-4f5b-9b1b-c771785df0c6_edit_20260922000021.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2036,6 +2041,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2627,24 +2633,24 @@
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents/ep218.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                    <a href="../../blog/models_agents/ep219.html" class="blog-related-card" style="--card-show-color: #7C3AED">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
-                        <h3>Gemini 4 Carbon scores 88.2 percent on vulnerability finding and leads the Artificial Analysis Intelligence Index at 59.</h3>
+                        <h3>Samaya Sterling beats Claude Fable 5.1 on FrontierFinance at one-eleventh the cost.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep145.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep146.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Edison paid half a million dollars to light one square mile with six custom dynamos.</h3>
+                        <h3>A two-hundred-dollar perfume bottle holds cents of alcohol and a few dollars of oils.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/tesla/ep649.html" class="blog-related-card" style="--card-show-color: #E31937">
+                    <a href="../../blog/tesla/ep650.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
-                        <h3>Tesla added a Trick or Treat mode that plays spooky sounds and lights when visitors approach the car.</h3>
+                        <h3>Tesla's Robotaxi app now shows first rides free in Houston and Dallas as the service area expands nearly tenfold.</h3>
                         
                     </a>
                     
@@ -3099,7 +3105,7 @@
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
