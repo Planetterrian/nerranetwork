@@ -144,7 +144,6 @@ def _line_start_after(script, transcript, first, after, map_start):
     """
     from engine import story_breaks as sb
 
-    lines = sb.script_lines(script)
     anchors, unmatched = sb.boundary_anchors(script, [first, after], transcript)
     if not unmatched and len(anchors) == 2:
         return anchors[1]
