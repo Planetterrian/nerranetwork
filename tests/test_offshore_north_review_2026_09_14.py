@@ -258,7 +258,7 @@ class TestEditorialRules:
         p, d, s = _podcast(), _digest(), _system()
         assert 'NEVER SPEAK THE WORDS "standing facts", "standing item"' in p
         assert "**Standing item:**" not in d, "the old writer label was spoken on air"
-        assert "writer-only label — never spoken" in d  # Dan's lens keeps its label
+        assert "**Dan's lens" not in d  # Oct 30 2026: host lines are out of the show
         assert "NO BACKGROUND BLOCK, NO LABELS" in d  # round 1 (Sep 18): the block is gone
         assert "at most once in any four-week span" in _facts()
         assert 'Say "standing facts", "standing item"' in s
@@ -268,13 +268,18 @@ class TestEditorialRules:
         assert "EVERGREEN:" in _podcast()
         assert "useful in a year" in _system()
 
-    def test_dan_is_required_once_per_episode(self):
+    def test_host_lines_are_out_of_the_show(self):
+        """Oct 30 2026 (listener review of Ep011): the one-a-week host line,
+        required since Sep 14, came across too brief and without context.
+        No prompt asks for one, and every prompt says never to write one."""
         p, s, d = _podcast(), _system(), _digest()
-        assert "REQUIRED: EXACTLY ONE personal reference per episode" in p
-        assert "never zero" in p
-        assert "at most ONE personal reference" not in p
-        assert "exactly ONE personal reference per episode, required" in s
-        assert "Dan's lens" in d and "Dan's lens" in p
+        for text in (p, s, d):
+            assert "REQUIRED: EXACTLY ONE personal reference" not in text
+            assert "personal reference per episode, required" not in text
+            assert "airline captain" not in text and "737" not in text
+        assert "NO HOST-EXPERIENCE LINES" in p
+        assert "NO HOST LINES" in d
+        assert "never talks about his own life on the show" in s
 
     def test_race_finish_outranks_a_resurfaced_start(self):
         assert "A finish inside this week's window outranks every earlier report" in _digest()

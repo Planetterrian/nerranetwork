@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Organizers of the Route du Rhum 2026 will spend 1.1 million euros securing the Saint-Malo start site alone, a twenty-two-fold increase since 2014.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="description" content="Organizers of the Route du Rhum 2026 will spend 1.1 million euros securing the Saint-Malo start site alone, a twenty-two-fold increase since 2014.">
     
     <meta name="keywords" content="offshore sailing, ocean racing, IMOCA, Vendee Globe, Canada Ocean Racing, Scott Shawyer, The Ocean Race, Route du Rhum, solo sailing, foiling, yacht racing, Canadian sailing, sailing podcast"><title>Route du Rhum Costs Climb as Canadian Campaign Prepares — Ep7 | Offshore North</title>
     <meta name="theme-color" content="#0B3C5D"><!-- Open Graph -->
@@ -41,11 +41,20 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="../../assets/js/consent.js"
@@ -55,10 +64,10 @@
     
     
     
-    <script defer src="../../assets/js/tracking.js"></script>
+    <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Offshore North Blog RSS" href="https://nerranetwork.com/blog_offshore_north.rss">
@@ -953,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1046,6 +1057,17 @@
             font-family: var(--font-heading);
             font-size: clamp(2rem, 5.2vw, 3rem);
             line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-who { display: flex; align-items: center; gap: 1.1rem; margin: 0 0 1rem; }
+        .nn-iv-who .nn-iv-identifier { margin-bottom: 0; }
+        .nn-iv-photo {
+            width: 104px; height: 104px; flex-shrink: 0; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--show-color);
+            background: var(--nn-surface);
+        }
+        @media (max-width: 520px) {
+            .nn-iv-photo { width: 76px; height: 76px; }
+            .nn-iv-who { gap: 0.8rem; }
         }
         .nn-iv-identifier {
             font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
@@ -1879,7 +1901,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1887,7 +1909,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep007_20260928.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep007_20260928.mp3" data-nn-card data-title="Route du Rhum Costs Climb as Canadian Campaign Prepares" data-show="Offshore North" data-cover="../../assets/covers/offshore-north.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/offshore_north/Offshore_North_Ep007_20260928.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2042,6 +2064,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2387,17 +2410,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/omni_view/ep216.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/modern_investing/ep216.html" class="blog-related-card" style="--card-show-color: #047857">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>Explosions in Riyadh coincide with plans to reopen the airport after recent Houthi strikes.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Two Fed governors dissenting for a hike today means Canadian investors in rate-sensitive names should tighten stops before Monday.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/models_agents_beginners/ep207.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                    <a href="../../blog/nerra_daily/ep071.html" class="blog-related-card" style="--card-show-color: #007A99">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
-                        <h3>One gamer used ChatGPT to build custom mods that let him shapeshift into monsters in Gears of War.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
+                        <h3>Friday edition — Starlink spectrum path, Binance concerns, and AI efficiency gains</h3>
                         
                     </a>
                     
@@ -2648,6 +2671,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <a class="nn-login-link" href="../../login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap. <a href="../../app.html">How it works</a></p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories. <a href="../../app.html">How it works</a></p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -2657,13 +2688,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
                 <div>
                     <a href="../../support.html">Support the network</a> &middot;
+                    <a href="../../app.html">Get the app</a> &middot;
                     <a href="../../privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="../../terms-of-service.html">Terms</a> &middot;
-                    <a href="../../ai-disclosure.html">AI Disclosure</a>
-                    <span style="opacity:0.5;">&middot;</span>
-                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
-                </div>
+                    <a href="../../ai-disclosure.html">AI Disclosure</a></div>
             </div>
         </div>
     </footer>
@@ -2843,26 +2872,32 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
 
 
     <!-- Centralized, improved global search -->
-    <script src="../../assets/js/search.js" defer></script>
-    <script src="../../assets/js/language-control.js" defer></script>
-    <script src="../../assets/js/footer-subscribe.js" defer></script>
+    <script src="../../assets/js/search.js?v=eca36a37" defer></script>
+    <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
+    <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = '../../account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">

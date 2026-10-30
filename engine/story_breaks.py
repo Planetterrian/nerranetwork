@@ -551,11 +551,20 @@ def boundary_anchors(script: str, boundary_idx: Sequence[int],
         # Both sides go through the same number speech: a script line that
         # kept "1980s" as digits must still meet Whisper's "1980s".
         toks = [t for t in (_spoken(_norm(x)) for x in lines[idx].split()) if t]
+        # Oct 30 2026: a line too short to probe on its own ("Now, the
+        # fleet." is 11 letters) borrows the opening of the lines after it;
+        # the anchor is still the line's own first word. Offshore North
+        # Ep011's Fleet chapter kept its word-count time, 12 s late.
+        own = len(toks)
+        nxt = idx + 1
+        while len("".join(toks)) < CHAR_PROBE and nxt < len(lines):
+            toks += [t for t in (_spoken(_norm(x)) for x in lines[nxt].split()) if t]
+            nxt += 1
         hit = None
         # From the first word; then from the second or third when the line
         # opens on something Whisper spells differently (a station's call
         # letters, a model number).
-        for skip in (0, 1, 2):
+        for skip in (0, 1, 2)[:max(1, min(3, own))]:
             probe = "".join(toks[skip:])[:CHAR_PROBE]
             if len(probe) < CHAR_PROBE_MIN:
                 break

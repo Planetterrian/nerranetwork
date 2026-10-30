@@ -25,6 +25,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -306,4 +307,62 @@ def campaign_status_from_files(*, now: Optional[_dt.datetime] = None,
         return build_campaign_status(curated, live=live, now=now, tracker=tracker)
     except Exception as exc:  # noqa: BLE001 — never block an episode
         logger.warning("Offshore North campaign status unavailable (non-fatal): %s", exc)
+        return ""
+
+
+# ---------------------------------------------------------------------------
+# Plain Sailing memory (Oct 30 2026)
+# ---------------------------------------------------------------------------
+
+#: The show's digests, newest last by episode number.
+DIGESTS_DIR = _ROOT / "digests" / "offshore_north"
+#: How many past explainers the writer is shown. Three subjects aired twice
+#: in a row by Ep011 (one start line: Ep005/007; foils: Ep008/009; solo
+#: sleep: Ep010/011) because nothing told the writer what had aired.
+PLAIN_SAILING_MEMORY = 8
+
+_EP_FILE_RE = re.compile(r"_Ep(\d{3,4})_(\d{8})\.md$")
+_MD_RE = re.compile(r"[*_`>#]|\[([^\]]*)\]\([^)]*\)")
+
+
+def _plain_sailing_opening(digest: str) -> str:
+    """First sentence of the digest's ``## Plain Sailing`` section."""
+    m = re.search(r"(?m)^##\s+Plain Sailing\s*$(.*?)(?=^##\s|\Z)", digest, re.S)
+    if not m:
+        return ""
+    body = " ".join(m.group(1).split())
+    body = _MD_RE.sub(lambda x: x.group(1) or "", body).strip()
+    first = re.split(r"(?<=[.!?])\s+", body, maxsplit=1)[0]
+    return first[:240].strip()
+
+
+def recent_plain_sailing(digests_dir: Optional[Path] = None, *,
+                         n: int = PLAIN_SAILING_MEMORY,
+                         before_episode: Optional[int] = None) -> str:
+    """A dated list of the last *n* Plain Sailing explainers; '' when none.
+
+    Each line is the episode date and the explainer's opening sentence, the
+    sentence that names its concept. Never raises.
+    """
+    try:
+        rows = []
+        for path in (digests_dir or DIGESTS_DIR).glob("*_Ep*_*.md"):
+            m = _EP_FILE_RE.search(path.name)
+            if not m:
+                continue
+            num = int(m.group(1))
+            if before_episode is not None and num >= before_episode:
+                continue
+            opening = _plain_sailing_opening(path.read_text(encoding="utf-8"))
+            if opening:
+                d = _dt.datetime.strptime(m.group(2), "%Y%m%d").date()
+                rows.append((num, d, opening))
+        rows.sort()
+        rows = rows[-n:]
+        if not rows:
+            return ""
+        lines = [f"- {_fmt(d)}: {opening}" for _num, d, opening in reversed(rows)]
+        return "\n".join(lines)
+    except Exception as exc:  # noqa: BLE001 — never block an episode
+        logger.warning("Offshore North Plain Sailing memory unavailable (non-fatal): %s", exc)
         return ""

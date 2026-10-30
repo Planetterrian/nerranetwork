@@ -2531,6 +2531,8 @@ def run(args: argparse.Namespace) -> None:
         # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
         # from shows/hooks/offshore_north.py. Same defaulting contract.
         template_vars.setdefault("campaign_status", "")
+        # Oct 30 2026: Offshore North's dated list of aired explainers.
+        template_vars.setdefault("recent_plain_sailing", "")
         # Generic per-show hook block (Sep 2026 new shows): sibling-coverage
         # notes, the MAG 7 tape, a curriculum spotlight. Empty when the
         # show's hook does not supply it or fails.
@@ -3518,6 +3520,20 @@ def run(args: argparse.Namespace) -> None:
                 logger.warning("Absence-sentence filter failed (non-fatal): %s",
                                _abs_exc)
 
+        # Host-experience lines (Oct 30 2026, Offshore North): the brief's
+        # "Dan's lens" and any sentence drawn from the host's own flying,
+        # foiling or sailing. Opt-in, before the source-integrity gate.
+        if getattr(config, "host_experience_filter", False):
+            try:
+                from engine.host_experience import strip_host_experience
+                x_thread, _host_n = strip_host_experience(x_thread)
+                if _host_n:
+                    logger.info("Removed %d host-experience sentence(s) from the digest",
+                                _host_n)
+                metrics.record("digest_host_experience_removed", _host_n)
+            except Exception as _host_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Host-experience filter failed (non-fatal): %s", _host_exc)
+
         # Oct 19 2026: how much of the sourced list the digest reports (the
         # operator's ask), and how much of that is the Also Today run.
         # Consumers: the dashboard's prompt_articles_reported_pct_7d /
@@ -4445,6 +4461,18 @@ def run(args: argparse.Namespace) -> None:
                 except Exception as _abs_exc:  # noqa: BLE001
                     logger.warning("Script absence-sentence filter failed "
                                    "(non-fatal): %s", _abs_exc)
+
+            if getattr(config, "host_experience_filter", False):
+                try:
+                    from engine.host_experience import strip_host_experience
+                    podcast_script, _host_s = strip_host_experience(podcast_script)
+                    if _host_s:
+                        logger.info("Removed %d host-experience sentence(s) from the script",
+                                    _host_s)
+                    metrics.record("script_host_experience_removed", _host_s)
+                except Exception as _host_exc:  # noqa: BLE001
+                    logger.warning("Script host-experience filter failed "
+                                   "(non-fatal): %s", _host_exc)
 
             # Final near-duplicate strip (July 16 2026): SpaceX Ep034 spoke
             # its entire ~8-sentence Engineering Deep Dive TWICE verbatim —
