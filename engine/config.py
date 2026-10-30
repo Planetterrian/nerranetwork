@@ -1207,6 +1207,11 @@ class YouTubeConfig:
     # half of a Short's viewers leave before the end card asks). EN path
     # only — the RU/FR dubs render their own Shorts and are the control.
     shorts_subscribe_pill: bool = False
+    # Oct 30 2026 — the hook Short skips the episode's map (the sentence
+    # after the identity line listing the stories that follow; every
+    # English opening since Oct 20). The Short is cut from a spliced copy
+    # of the mix; the episode is untouched (engine/short_furniture.py).
+    shorts_skip_map: bool = False
 
     # End-screen CTA card on Shorts (May 2026). When enabled, the last
     # ``shorts_end_card_duration_seconds`` of the Shorts MP4 overlay a
