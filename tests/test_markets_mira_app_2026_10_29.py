@@ -261,8 +261,10 @@ class TestEveryPageIsTheApp:
         for js in ("nn-markets.js", "nn-player.js", "nn-app.js"):
             assert f'<script src="/assets/js/{js}" defer></script>' in sw
         # Bumped (never reset) whenever an injected script changes, so an
-        # installed app drops the cached copy: nn-2026-10-29b added Read.
-        assert "var VERSION = 'nn-2026-10-29" in sw
+        # installed app drops the cached copy: nn-2026-10-29b added Read,
+        # nn-2026-10-30 made styles and scripts network first.
+        m = re.search(r"var VERSION = 'nn-(\d{4}-\d{2}-\d{2})", sw)
+        assert m and m.group(1) >= "2026-10-29", "the cache version went back"
 
     def test_the_bar_has_back_and_lights_the_section(self):
         js = _read("assets/js/nn-app.js")

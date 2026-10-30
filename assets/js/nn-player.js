@@ -770,9 +770,29 @@
   });
 
   // ---------------------------------------------------------------- start
+  // The episode button at the top of a post ("Listen to podcast") starts the
+  // episode in the page's player instead of only scrolling to it.
+  function listenLinks() {
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href="#listen"]') : null;
+      if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) { return; }
+      var box = document.getElementById('listen');
+      var card = null;
+      for (var k = 0; k < inline.length; k++) {
+        if (inline[k].card && !inline[k].root.hidden && box && box.contains(inline[k].root)) { card = inline[k]; break; }
+      }
+      if (!card) { return; }
+      e.preventDefault();
+      try { card.root.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) { card.root.scrollIntoView(); }
+      if (!inlineIsCur(card) || audio.paused) { inlinePlay(card); }
+    });
+  }
+
   function init() {
     enhance();
     enhanceInline();
+    document.documentElement.classList.add('nn-ip-ready');
+    listenLinks();
     // A show page draws its archive after a fetch; those players are taken
     // over as they arrive.
     if (window.MutationObserver && document.body) {

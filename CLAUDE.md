@@ -7774,6 +7774,18 @@ Rules that bind:
   and the observer calls back into it.
 - Posts built before Oct 28 do not load `nn-player.js` and keep the native
   control until their show rebuilds them.
+- **A deploy reaches a returning visitor on their next page** (later the same
+  day: Patrick's iPhone still showed the white bar on Ep071 after the merge).
+  `sw.js` serves `styles/` and `assets/js/` NETWORK FIRST (cache only for a
+  dead connection, query ignored on the fallback); fonts, covers and icons stay
+  stale-while-revalidate. Stale-while-revalidate on scripts meant the first
+  page after every deploy ran the previous code. Version `nn-2026-10-30`.
+- **The browser's own control never shows before the player replaces it**:
+  iOS ignores `color-scheme` on `<audio>`, so `base.html.j2` sets `html.nn-js`
+  in the head and `audio[controls]` stays `visibility: hidden` until
+  `nn-player.js` adds `nn-ip-ready`; after five seconds without it
+  (`nn-ip-off`) the control comes back. "Listen to podcast" (`a[href="#listen"]`)
+  plays the card instead of only scrolling to it.
 
 ### Covered means aired, and a story catalog (Oct 21 2026)
 

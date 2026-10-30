@@ -86,8 +86,12 @@
    rule sets its display (explore's "Clear filters" chip showed permanently). */
 [hidden] { display: none !important; }
 
-/* Native players follow the dark theme instead of rendering as white pills. */
+/* Native players follow the dark theme where the browser allows it. iOS
+   Safari ignores this and draws a white bar, so on a page with JavaScript the
+   control stays hidden until nn-player.js has replaced it (html.nn-ip-ready),
+   and comes back after five seconds if it never does (html.nn-ip-off). */
 audio { color-scheme: dark; }
+html.nn-js:not(.nn-ip-ready):not(.nn-ip-off) audio[controls]:not([data-nn-native]):not(.nn-sticky-audio) { visibility: hidden; }
 html {
   scroll-behavior: smooth;
   /* In-page anchors (#shows, #subscribe, the skip link's #main-content)

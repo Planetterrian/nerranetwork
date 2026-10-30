@@ -190,3 +190,39 @@ class TestInABrowser:
         # The box spans the column again, not a collapsed pill.
         assert out["boxWidth"] > out["viewport"] * 0.8
         assert not out["errors"], out["errors"]
+
+
+class TestANewDeployReachesTheVisitor:
+    """Later on Oct 30: Patrick's iPhone still showed the white native bar on
+    Nerra Daily Ep071 after the player shipped. The service worker served the
+    stylesheet and scripts from its cache first, so a returning visitor's
+    first page after a deploy ran the previous day's code."""
+
+    SW = (ROOT / "sw.js").read_text(encoding="utf-8")
+
+    def test_styles_and_scripts_are_network_first(self):
+        assert "if (/^\\/(styles|assets\\/js)\\//.test(url.pathname)) {\n    event.respondWith(networkFirst(req, STATIC, null));" in self.SW
+        swr = re.search(r"if \(/\^\\/\((.*?)\)\\//\.test\(url\.pathname\)\s*\n\s*\|\| /\\\.\(svg", self.SW)
+        assert swr, "stale-while-revalidate branch not found"
+        assert "styles" not in swr.group(1) and "assets\\/js" not in swr.group(1)
+
+    def test_offline_fallback_finds_a_versioned_asset(self):
+        # Pages ask for main.css?v=<hash>; the precache holds main.css.
+        assert "ignoreSearch: cacheName !== DATA" in self.SW
+
+    def test_the_cache_version_moved(self):
+        assert "var VERSION = 'nn-2026-10-29b'" not in self.SW
+
+
+class TestTheNativeBarNeverFlashes:
+    def test_the_control_waits_for_the_player(self):
+        base = _template("base.html.j2")
+        assert "d.classList.add('nn-js')" in base
+        assert "d.classList.add('nn-ip-off')" in base and "5000" in base
+        assert ("html.nn-js:not(.nn-ip-ready):not(.nn-ip-off) audio[controls]"
+                ":not([data-nn-native]):not(.nn-sticky-audio) { visibility: hidden; }") in CSS
+        assert "document.documentElement.classList.add('nn-ip-ready');" in PLAYER_JS
+
+    def test_listen_to_podcast_plays_the_card(self):
+        assert "closest('a[href=\"#listen\"]')" in PLAYER_JS
+        assert "listenLinks();" in PLAYER_JS

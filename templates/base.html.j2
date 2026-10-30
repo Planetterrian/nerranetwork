@@ -107,6 +107,13 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      {#- Oct 30 2026: the browser's own audio control is hidden until
+          nn-player.js has put the site's player in its place (iOS draws it
+          as a white bar whatever the page's colours). If the player has not
+          arrived after five seconds, the control comes back. #}
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
