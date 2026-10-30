@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Modern Investing Techniques Blog RSS" href="https://nerranetwork.com/blog_modern_investing.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1899,7 +1904,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1907,7 +1912,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep146_20260822.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep146_20260822.mp3" data-nn-card data-title="Tariff matching by Canada creates a chance to tilt TFSA exposure toward TSX financials that can absorb the hit." data-show="Modern Investing Techniques" data-cover="../../assets/covers/modern-investing.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep146_20260822.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2141,6 +2146,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -3009,7 +3015,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
