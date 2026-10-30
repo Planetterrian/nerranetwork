@@ -5872,3 +5872,41 @@ experiments:
       YAMLs and in mira_piece_cmd. Not changed: audiobook chapter tracks are
       raw Grok audio already submitted to stores (operator decision).
       Guards: tests/test_audio_quality_2026_10_29.py. AUDIO.
+
+  - id: slate-2026-10-30
+    title: "Oct 28-30: a finished episode failed on one timeout, the edition stalled 81 minutes, Google News links lost their query values"
+    area: ops
+    shipped: 2026-10-30
+    readout: 2026-11-13
+    status: reading
+    baseline: >
+      Oct 28-30: every show run green except AI Chips Ep037 on Oct 28, which
+      was produced, uploaded and in its feed when one 8 s read timeout on the
+      new enclosure failed post-run validation; nothing was pushed, Nerra
+      Daily Ep069 built without it, and the fallback cron made the episode
+      again at 17:01. Ep069's build spent 81 silent minutes in its segment
+      downloads (published 12:17 UTC, X post at 12:30) against ~6 minutes on
+      every other day. Every Google News link with a query string lost its
+      values at resolution (news.amp?news_id, story?id, news.php?subaction;
+      about one a day since Sep 23). Two true UC claims with PDF sources were
+      published "not found"; Tesla Ep650 flagged a claim that verified.
+      Peptides' card lint fired on complete cards every week. Prediction
+      Markets' Friday recap stopped at Monday's ceasefire price and missed a
+      leader change. Nerra Daily: all 10 of Ep062-071 opened on the spelled
+      date, the handoff revision fired every day (13 of 13 name-led) and its
+      "at the end" wording made "…, <Show> examines" the new skeleton; 2-8
+      handoffs an edition restated the next headline. UC Ep156/158 ran 2,064
+      and 2,559 words from ~1,150-word briefs by retelling; Tesla shipped no
+      Also Today on any episode since Oct 19.
+    target: >
+      No run fails post-run validation on a transport error that answers on
+      retry; every Nerra Daily build under 15 minutes with one "downloaded"
+      line per segment; no catalog article URL ends on a valueless query
+      key; handoffs_echoing_hook 0-1 after revision; no Peptides
+      spotlight_card regeneration on a complete card; UC scripts at most
+      ~1.5x their brief; digest_also_today_items > 0 on Tesla on most days.
+    notes: >
+      Review docs/reviews/slate_review_2026_10_30.md. Guards:
+      tests/test_slate_2026_10_30.py. Prompt changes (AUDIO, A/B-listen):
+      UC script length, Tesla required sections, Nerra Daily links and the
+      handoff revision.

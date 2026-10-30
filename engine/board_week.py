@@ -104,6 +104,9 @@ def _question_and_outcome(head: str) -> Tuple[str, str]:
     tail = head[m.start():]
     tail = re.sub(r"^\s*(?::|\?|[—–]|,)\s*", "", tail)
     outcome = _OUTCOME_TAIL_RE.sub("", tail).strip(" ,;:—–-")
+    # "Democrats sweep, a 66 percent implied probability": the article
+    # before the price is not part of the outcome (Oct 30 2026).
+    outcome = re.sub(r"[,\s]+an?$", "", outcome).strip(" ,;:—–-")
     return question, " ".join(outcome.split()[:8])
 
 
@@ -159,6 +162,27 @@ def _same_market(a: Tuple[frozenset, str], b: Tuple[frozenset, str]) -> bool:
     return len(ta & tb) / len(ta | tb) >= SAME_QUESTION_JACCARD
 
 
+#: Oct 30 2026: the outcome a binary question's price is for, however the
+#: line words it. Ep037 wrote the ceasefire row "…through October 31 — that
+#: date at 96.7 percent", the week's first reading said "Yes", and the two
+#: were treated as different outcomes: Ep038's Friday recap stopped at
+#: Monday's 85.5 while the same episode's Board said 91, down from 96.7.
+_YES_OUTCOMES = frozenset({"yes", "that date", "that day", "the yes side", "yes side"})
+
+
+def _outcome_key(outcome: str) -> str:
+    o = " ".join((outcome or "").lower().split()).strip(" .,;:")
+    return "yes" if o in _YES_OUTCOMES else o
+
+
+def _leader_note(change: Optional[Tuple[_dt.date, float, str]], last: _dt.date) -> str:
+    if not change or change[0] <= last:
+        return ""
+    d2, p2, o2 = change
+    return (f"; on {d2.strftime('%A')} a different outcome led, {o2} at {p2:g}% — "
+            "say so")
+
+
 def week_board_block(digests_dir: Path, today: _dt.date,
                      todays_articles: Optional[Sequence[Dict[str, object]]] = None) -> str:
     """The Friday instruction block, or "" when the week has no boards.
@@ -174,6 +198,7 @@ def week_board_block(digests_dir: Path, today: _dt.date,
     first: Dict[str, Tuple[_dt.date, float, str, str]] = {}
     latest: Dict[str, Tuple[_dt.date, float]] = {}
     outcome: Dict[str, str] = {}
+    changed: Dict[str, Tuple[_dt.date, float, str]] = {}
     markets: Dict[str, Tuple[frozenset, str]] = {}
     for d, lines in boards:
         for ln in lines:
@@ -185,11 +210,18 @@ def week_board_block(digests_dir: Path, today: _dt.date,
                 markets[k] = sig
                 first[k] = (d, float(ln["prob"]), str(ln["venue"]), str(ln["question"]))
                 outcome[k] = out_now
-            elif not out_now or not outcome[k] or out_now.lower() == outcome[k].lower():
+            elif (not out_now or not outcome[k]
+                  or _outcome_key(out_now) == _outcome_key(outcome[k])):
                 # Only a reading of the SAME outcome is a price move; a
                 # different leader is a different number, not a change.
                 latest[k] = (d, float(ln["prob"]))
                 outcome[k] = outcome[k] or out_now
+                changed.pop(k, None)
+            else:
+                # Oct 30 2026: a different outcome now leads (Ep036 put
+                # Netanyahu at 44.5 on a question Monday's board led with
+                # Eizenkot; Friday's recap reported only Eizenkot's move).
+                changed[k] = (d, float(ln["prob"]), out_now)
     # Today's live board articles carry "NN% implied probability" in their text.
     for art in todays_articles or []:
         text = f"{art.get('title', '')}\n{art.get('content_text') or art.get('description') or ''}"
@@ -211,7 +243,14 @@ def week_board_block(digests_dir: Path, today: _dt.date,
             delta = p1 - p0
             sign = "+" if delta > 0 else ""
             rows.append(f"- {question}{label} ({venue}): {p0:g}% on {d0.strftime('%A')} → "
-                        f"{p1:g}% on {d1.strftime('%A')} ({sign}{delta:g} points)")
+                        f"{p1:g}% on {d1.strftime('%A')} ({sign}{delta:g} points)"
+                        + _leader_note(changed.get(k), d1))
+        elif k in changed:
+            d2, p2, o2 = changed[k]
+            rows.append(f"- {question} ({venue}): {outcome[k] or 'the first outcome'} led at "
+                        f"{p0:g}% on {d0.strftime('%A')}; {o2} led at {p2:g}% on "
+                        f"{d2.strftime('%A')} — a different outcome now leads, which is the "
+                        "change to report, never a price move of one outcome")
         else:
             once.append(f"{question}{label} ({venue})")
     # Oct 16 2026: Ep024 spoke eighteen "one reading" questions in a row —

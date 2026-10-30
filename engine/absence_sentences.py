@@ -128,6 +128,16 @@ def is_attribution_only_sentence(sentence: str) -> bool:
 # names the production apparatus, which is never news. A show's debut copy
 # about itself ("This brief is for listeners who…") is left alone.
 _SELF_NARRATION = [
+    # Oct 30 2026 slate: a style rule from the prompt spoken as a sentence
+    # ("Say implied probability once and leave it there: …", Prediction
+    # Markets Ep038), the brief as a document ("The brief record does not
+    # give…", UC Ep156) and a map clause made of the prompt's condition
+    # ("Then the case on both sides, if the day gives one.", Top World
+    # Ep038). Swept against 2,615 committed scripts: these match only the
+    # three aired lines (a lesson's "Say it once more" is not matched).
+    re.compile(r"^Say\b.{0,60}\bonce and leave it\b", re.IGNORECASE),
+    re.compile(r"\bthe brief(?:'s|’s)? record\b", re.IGNORECASE),
+    re.compile(r"\bif the day gives (?:one|any)\b", re.IGNORECASE),
     # The digest is never the show's own name; "briefing" often is ("That
     # wraps today's briefing", "this briefing finds you every day"), so it
     # counts only as a document that says, carries or lacks something.

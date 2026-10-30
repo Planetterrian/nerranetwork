@@ -735,13 +735,20 @@ def verify_claim_sources(
             reason = "supporting_quote not found in source"
         else:
             reason = ""
+        # Oct 30 2026: a 2xx whose body we could not read (a PDF, an image,
+        # an empty reply) says nothing about the claim. It was published as
+        # "not found" — the fabrication class — for two true UC claims whose
+        # sources are PDFs (the RSPCA review, the EIA report). It is
+        # unreachable: still a gate failure, labelled for what it is.
+        unread = (status is not None and 200 <= status < 300
+                  and not bool(body.strip()))
         results.append({
             "id": claim.get("id", ""),
             "url": url,
             "resolved": resolved,
             "quote_found": quote_found,
             "passed": resolved and quote_found,
-            "unreachable": not resolved and _is_unreachable(status),
+            "unreachable": not resolved and (_is_unreachable(status) or unread),
             "reason": reason,
             "via": "http",
         })
@@ -1919,6 +1926,24 @@ def flag_unverified(
         text = re.sub(r"[ \t]{2,}", " ", text)
         text = re.sub(r" +([.,;:])", r"\1", text)
 
+    # Oct 30 2026: the same claim twice — once verified from the fetched copy,
+    # once unreachable through a second source (Tesla Ep650's V2L fault: the
+    # article verified, a reddit 403 did not). The claim is verified; the
+    # duplicate entry is dropped so the post carries no false "unverified"
+    # badge on a sentence that checked out.
+    def _claim_key(e: dict) -> str:
+        return " ".join(str(e.get("claim") or "").lower().split())
+    verified_keys = {_claim_key(e) for e in ledger
+                     if is_verified_status(e.get("status")) and _claim_key(e)}
+    dropped = [e for e in ledger if e.get("status") in UNVERIFIED_STATUSES
+               and _claim_key(e) in verified_keys]
+    if dropped:
+        ledger = [e for e in ledger if not any(e is d for d in dropped)]
+        gone = {_sentence_for_entry(e, episode_text) for e in dropped}
+        still = {_sentence_for_entry(e, episode_text) for e in ledger
+                 if e.get("status") in UNVERIFIED_STATUSES}
+        flagged = [s for s in flagged if s not in gone or s in still]
+
     seen: set = set()
     flagged = [s for s in flagged if not (s in seen or seen.add(s))]
 
@@ -1930,6 +1955,11 @@ def flag_unverified(
         1 for e in ledger if e.get("status") in UNVERIFIED_STATUSES)
     new_gate.verified_count = sum(
         1 for e in ledger if is_verified_status(e.get("status")))
+    if dropped:
+        dropped_ids = {str(e.get("id") or "") for e in dropped}
+        new_gate.failed_verifications = [
+            v for v in (new_gate.failed_verifications or [])
+            if not (isinstance(v, dict) and str(v.get("id") or "") in dropped_ids)]
     new_gate.covered_by_item_source = covered_by_item
     new_gate.stripped_notes = list(removed_notes)
     # Reviewer notes are gone from the text; the mechanical verdict on
