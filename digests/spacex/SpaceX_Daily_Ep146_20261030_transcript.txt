@@ -1,0 +1,130 @@
+The FCC's vote to open 482 megahertz of Spectrum expands starlink mobile's path to compete
+with terrestrial carriers on direct-to-phone service. This is SpaceX Daily, episode 146. Colonial
+Hills Home offers, a cursor marketplace backdoor, and a Ukraine starlink throttle come next.
+Then the counterpoint and the engineering deep dive. The Federal Communications Commission voted
+Thursday to advance a proposal raising eligible satellite direct-to-phone bands from 5-13.
+14, according to KeepTrack, though no bands have been assigned yet. AT&T, Verizon, and
+T-Mobile, through the wireless trade group CTIA, asked the commission to drop the 2.5
+GHz and 3.45 GHz bands, which account for 290 MHz of the total. T-Mobile argued satellite
+interference could eliminate up to 96% of a cell site's uplink coverage area. SpaceX asked
+the FCC to add the 902-928 megahertz band. A companion item proposes auctioning 25 megahertz
+in the 1,675-1,695 megahertz and 2020-2,025 megahertz bands, usable for terrestrial service,
+direct to device service, or both, with commons due 60 days after the notice appears in the Federal
+Register. The Starlink constellation stands at 13,069 satellites launched, 11,199 in orbit,
+and 11,176 working, while the conjunction catalogs Socrates lists seven upcoming Starlink
+events among its top probability cases, non-rated high-risk, two of them carrying physically
+implausible numbers that should be treated as stale, and two satellites with active reentry
+predictions as they decay toward planned disposal. Colonial Hills, a neighborhood in South
+Haven, has been getting buyout approaches covering as many as 418 homes, according to
+Big Go. The community sits roughly half a mile from the power plant that supplies electricity
+to the company's data centers in the area. The buyout carries a condition that sellers must
+agree not to join the class action litigation over noise from the gas turbines that run the
+facilities GPUs. The subsidiary operating the Colossus 2 site, MZX, sent an open letter
+to residents saying it requires property for its business purposes.
+South Haven mayor Darren Muscle White said the acquired homes would house SpaceX and
+XAI staff as the company's expand, describing the program as a goodwill gesture from a good
+corporate citizen for those who perceive the industrial development near them as negative, and he
+He said the purchases are not meant to turn colonial hills into a company town.
+Musk has been staying in the neighborhood in an air-stream trailer four nights a week,
+personally overseeing the build-out of capacity needed to power the GROC chatbot.
+Cursor disclosed a security incident involving a maliciously modified version of the anthropic
+clawed code extension in its VS code marketplace.
+Business Standard reports the package was not developed by anthropic.
+Rancode attempting to install a persistent secure shell, or SSH, backdoor, and affected
+at most 5,000 users.
+The malicious package was available for roughly 11 hours on October 29.
+It collected host and user information, including host name, user name, operating system, and
+the machine's public IP address.
+Tried to add an attacker-controlled SSH key and opened a reverse tunnel.
+A step the company said would fail unless Cursor was started with Administrator privileges,
+and still installed persistence and sent host details.
+For persistence, the payload installs a Mac login agent called a launch agent, or on
+Windows a scheduled task that attempts to run at the highest system privilege, with background
+scripts retrying the tunnel roughly every 60 seconds.
+Cursor removed the malicious version, shut down the entire marketplace as a precaution, confirmed
+no other extensions were tampered with, rotated its keys, rebuilt the marketplace,
+and worked with the cloud provider to take the attacker's server offline, leaving the reverse shell
+non-functional. Elon Musk acknowledged over the weekend that SpaceX had throttled Starlink in
+Ukraine, and accused Ukraine of violating Starlink's terms of service, a charge Ukrainian officials rejected.
+Ars Technica reports Musk wrote that the loophole was closed last week and that star shield,
+a different system is controlled by the U.S. government.
+Ukrainian officials reported that military drones lost satellite connectivity when traveling
+above 161 kilometers per hour, and that the limit was removed after about 10 days.
+The Pentagon Inspector General's Office declined a request from U.S. Senators to investigate
+restrictions on the Ukraine military's use of the network.
+An Inspector General Platmoring told them the questions should go to the U.S. Air Force
+and Space Force.
+Five Democratic and four Republican Senators had sent an October 15 letter asking
+for a probe into reported disruptions of Starlink and Starsheald. A spokesperson said
+the Department of War Office of Inspector General determined the matters were best addressed
+by the Department of War. After the problems were discovered following an administration threat
+to withhold intelligence from Kiev over strikes on Russian refineries and a deal by President
+Donald Trump to buy Russian diesel and ease sanctions on Moscow.
+On the California Pad, SpaceX will maintain the current launch cadence at Vandenberg Air
+Force Base, with another Falcon 9 mission scheduled, according to NewsHawk.
+KSBY News confirms a Falcon 9 mission is set for Friday from that site.
+Mario Naufal said Starship 42 completed a six-engine static fire, and that a separate Raptor
+tests simulated return from orbit, with the goal for flight 15 to catch both the super
+heavy booster and the ship upper stage, a report that is not confirmed.
+Sci-Guy Space shared a long-read examining why SpaceX may stop selling commercial Falcon
+9 launches after 2028, and what that would mean for NASA's reliance on the rocket, which
+this show has not independently verified.
+Worth keeping an eye on is residents' complaint of persistent noise and air pollution from the
+gas turbines behind the Colossus 1 and Colossus 2 sites.
+The facilities have been criticized for installing turbines without permits, and a former Duke
+Energy Generating Site nearby hosts dozens of temporary gas units supplying the data centers.
+SpaceX and XAI have denied the allegations and say they have adjusted power output and
+erected sound dampening walls.
+The company has said it will remove all unpermitted turbines within a year as its 1.2 gigawatt
+power plant comes online.
+but that timeline does not address the noise complaints. Resolution would require
+either successful noise mitigation or court rulings on the pending litigation.
+Closing a phone to satellite link from an engineering standpoint is a fight
+against distance and millawatts, not a shortage of towers. A handheld phone puts
+out only a few hundred millawatts of radio energy, while a terrestrial cell
+site sits a few hundred meters away and can run a few tens of watts. Free space
+This path loss at a couple of gigahertz across hundreds of kilometers is, on a back-of-envelope
+figure, on the order of 150 decibels, so received power shrinks by a factor of about
+10 to the 15.
+Thermal noise in a one-hertz bandwidth sits near minus 174 decibels milliwatts, a textbook
+floor, so every extra decibel of path loss eats into the bits you can push.
+Shannon's formula says that in the moderate signal to noise regime, more hertz at the same
+ratio raises the data rate without asking the handset to shout louder.
+In the extremely power-limited limit, capacity approaches a ceiling set by received power
+over noise density.
+So extra spectrum helps more as cleaner channels and as reuse of the same hertz in non-overlapping
+spot beams, meaning narrow radio footprints on the ground.
+Each new megahertz can be painted onto a different patch of earth at the same time, so system
+Some capacity scales with both bandwidth and the number of simultaneous beams the satellites
+phased array antennas can form.
+Because the satellites already carry inter-satellite laser links, a direct-to-cell user's bits
+can leave the serving beam and ride the mesh to a ground station instead of fighting for a
+return path in the same frequency.
+The magic wand number is hertz reused across beams rather than extra millawatts in your pocket,
+And the idiot index is that 15 orders of magnitude gap that coding, antenna gain, and frequency
+reuse have to close.
+Wider contiguous channels let the modem extract more bits per jewel at the handset.
+The only lever that does not raise handset output, while lower frequency allocations penetrate
+buildings and foliage with less loss.
+Before we go, the next dated step on the satellite to phone bands is the notice appearing in the
+federal register, which opens the comment period.
+That's your SpaceX news for today.
+I'm Patrick and Vancouver.
+Thanks for listening.
+See you tomorrow.
+If SpaceX daily helps you stay curious without the noise, a quick rating on Apple
+podcasts or Spotify helps other people find it.
+No pressure.
+The show stays free either way.
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in the
+show notes.
+And before you go, this show is part of the Narin Network, a family of daily podcasts
+on tech, science, and markets.
+each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next lesson.
+Unintended consequences, true stories of good intentions that backfired.
+Find every show free at narennetwork.com.
+And if you would rather browse by subject than by show,
+every subject the network covers has its own page at narennetwork.com topics.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
