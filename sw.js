@@ -5,8 +5,13 @@
  * page outlives the deploy that fixes it:
  *   - pages are NETWORK FIRST: a visitor online always gets today's page;
  *     the cached copy is only for a dead connection, then offline.html;
- *   - styles, scripts, fonts, covers and app icons are stale-while-revalidate
- *     (served from cache, refreshed in the background);
+ *   - styles and scripts are NETWORK FIRST too (Oct 30 2026): served from
+ *     cache first, a returning visitor's first page after a deploy ran the
+ *     previous day's player and stylesheet (the white native audio bar on a
+ *     post the new player had already replaced); the cached copy is only for
+ *     a dead connection;
+ *   - fonts, covers and app icons are stale-while-revalidate (served from
+ *     cache, refreshed in the background);
  *   - site JSON (api/*.json, site/data/*.json) is network first;
  *   - NOTHING cross-origin is touched: episode audio (audio.nerranetwork.com,
  *     the OP3 prefix), the account Worker (api.nerranetwork.com), YouTube and
@@ -21,7 +26,7 @@
  * Bump VERSION when this file's behaviour changes; old caches are deleted on
  * activate. A broken worker is replaced by publishing a new sw.js.
  */
-var VERSION = 'nn-2026-10-29b';
+var VERSION = 'nn-2026-10-30';
 var PAGES = VERSION + '-pages';
 var STATIC = VERSION + '-static';
 var DATA = VERSION + '-data';
@@ -77,7 +82,7 @@ function networkFirst(request, cacheName, fallbackUrl) {
     }
     return res;
   }).catch(function () {
-    return caches.match(request, { ignoreSearch: cacheName === PAGES }).then(function (hit) {
+    return caches.match(request, { ignoreSearch: cacheName !== DATA }).then(function (hit) {
       return hit || (fallbackUrl ? caches.match(fallbackUrl) : Response.error());
     });
   });
@@ -109,7 +114,11 @@ self.addEventListener('fetch', function (event) {
     event.respondWith(networkFirst(req, DATA, null));
     return;
   }
-  if (/^\/(styles|assets\/js|assets\/fonts|assets\/covers|assets\/app)\//.test(url.pathname)
+  if (/^\/(styles|assets\/js)\//.test(url.pathname)) {
+    event.respondWith(networkFirst(req, STATIC, null));
+    return;
+  }
+  if (/^\/(assets\/fonts|assets\/covers|assets\/app)\//.test(url.pathname)
       || /\.(svg|woff2?)$/i.test(url.pathname)) {
     event.respondWith(staleWhileRevalidate(req));
   }

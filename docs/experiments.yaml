@@ -5935,4 +5935,8 @@ experiments:
       Guards: tests/test_inline_player_2026_10_30.py. Committed posts built
       before Oct 28 do not load nn-player.js and keep the native control
       until their show rebuilds them (or a returning visitor's service
-      worker adds the script).
+      worker adds the script). Same day: the service worker had served the
+      stylesheet and scripts from cache first, so the first page after the
+      deploy still ran the old player on Patrick's iPhone; styles and
+      scripts are network first now, and the native control is hidden
+      until the player replaces it (back after 5 s if it never does).
