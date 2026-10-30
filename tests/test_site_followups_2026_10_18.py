@@ -58,7 +58,10 @@ def _text(html: str) -> str:
 # ---------------------------------------------------------------------------
 
 _COUNT_PAGES = [
-    ("about.html", G.generate_about_page),
+    # about.html dropped 2026-10-28: its only show-count phrase lived in the
+    # meta description; the approved SEO copy makes that meta count-free, and
+    # inventing a new body count was not approved. Count-free head tags for
+    # about are pinned in tests/test_seo_seven_titles_meta_2026_10_28.py.
     ("support.html", G.generate_support_page),
     ("sponsor.html", G.generate_sponsor_page),
     ("explore.html", G.generate_explore_page),
@@ -168,6 +171,8 @@ class TestDevelopingFalseThreads:
 
 _OG_PAGES = [
     ("data.html", G.generate_data_hub_page),
+    # about stays here after leaving _COUNT_PAGES (count-free meta, 2026-10-28).
+    ("about.html", G.generate_about_page),
     *_COUNT_PAGES,
 ]
 
