@@ -504,3 +504,19 @@ class TestSnapshotOnShowsWithoutFetchFilters:
         assert "Review snapshot: models_agents" in report
         assert "Digest heading integrity" in report
         assert "Fetch-filter leakage" not in report  # no patterns configured
+
+
+class TestSnapshotNumberPlaceholder:
+    """Oct 30 2026: a number in the repeated-phrase report is ``#``. As
+    ``0`` it read as a digit: "This is MAG 7 Daily, episode 24" printed as
+    "this is mag 0 daily episode 0" and two MAG 7 reviews scored a garble
+    the audio never had."""
+
+    def test_numbers_are_a_placeholder_that_is_not_a_digit(self):
+        snap = _load_script("review_snapshot")
+        toks = snap._tokens("This is MAG 7 Daily, episode 24.")
+        assert toks == ["this", "is", "mag", "#", "daily", "episode", "#"]
+        texts = [f"Story {i} about chips. This is MAG 7 Daily, episode {20 + i}, "
+                 "then the thread and the calendar today." for i in range(6)]
+        phrases = " ".join(p for p, _ in snap.find_repeated_ngrams(texts))
+        assert "mag # daily" in phrases and "mag 0" not in phrases
