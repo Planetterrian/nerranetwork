@@ -374,9 +374,36 @@ def rebuild_chapters(config, art: EpisodeArtifacts, script: str,
             "Chapter structure changed since publication (%d published, %d "
             "now) — the repaired episode carries the current chapters",
             len(published), len(chapters))
-    offset = config.audio.voice_intro_delay + config.audio.intro_duration
+    # Oct 30 2026: the same timing run_show uses. The voice sits
+    # voice_intro_delay into the mix (intro_duration is the theme UNDER the
+    # voice, and adding it put every chapter 3 s late — run_show dropped it
+    # on Oct 18), and each start then moves to the time its line is spoken
+    # in the fresh, story-break-shifted transcript.
+    offset = float(config.audio.voice_intro_delay or 0.0)
     calculate_timestamps(chapters, audio_duration, music_intro_offset=offset)
+    if art.transcript_json.exists():
+        try:
+            from engine.chapters import align_timestamps_to_transcript
+            from engine.utils import strip_speech_tags
+            align_timestamps_to_transcript(
+                chapters, strip_speech_tags(script),
+                json.loads(art.transcript_json.read_text(encoding="utf-8")),
+                music_intro_offset=offset, total_duration=audio_duration,
+            )
+        except Exception as exc:  # noqa: BLE001 — chapters are metadata
+            logger.warning("Chapter alignment skipped: %s", exc)
     return chapters
+
+
+def published_episode_title(path: Path) -> str:
+    """The ``title`` the committed chapters file carries ("Ep 11: ...")."""
+    if not path.exists():
+        return ""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    return str(data.get("title") or "") if isinstance(data, dict) else ""
 
 
 def published_chapter_titles(path: Path) -> List[str]:
@@ -831,11 +858,11 @@ def main() -> int:
                 "Chapter titles changed during repair (%s -> %s). Timestamps "
                 "were expected to move; titles were not.", was, now,
             )
-        title_hook = chapters[0].title if chapters else ""
-        write_chapters_json(
-            chapters, art.chapters_path,
-            episode_title=f"Ep {art.episode_num}: {title_hook}",
-        )
+        # The episode's published title, never its first chapter's: the
+        # repair wrote "Ep 11: Introduction" over "Ep 11: <headline>".
+        episode_title = (published_episode_title(art.chapters_path)
+                         or f"Ep {art.episode_num}: {chapters[0].title}")
+        write_chapters_json(chapters, art.chapters_path, episode_title=episode_title)
         logger.info("Chapters rewritten: %s", art.chapters_path.name)
 
     # --- spend ---------------------------------------------------------------

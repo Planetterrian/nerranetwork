@@ -37,6 +37,14 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
             "Offshore North campaign status skipped (non-fatal): %s", exc
         )
         ctx["campaign_status"] = ""
+    # Oct 30 2026: the explainers already aired, dated, so Plain Sailing
+    # never re-explains one (three subjects aired twice running by Ep011).
+    try:
+        from engine.offshore_north_status import recent_plain_sailing
+
+        ctx["recent_plain_sailing"] = recent_plain_sailing(before_episode=episode_num)
+    except Exception:  # noqa: BLE001 — the block is optional
+        ctx["recent_plain_sailing"] = ""
     articles = _source_articles(tracker)
     if articles:
         ctx["articles"] = articles

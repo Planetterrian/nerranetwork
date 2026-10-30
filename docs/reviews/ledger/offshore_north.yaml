@@ -173,5 +173,44 @@ reviews:
         verdict: pending
         evidence: null
     agent_cost_usd: null
+  - date: 2026-10-30
+    reviewer: listener review (operator-relayed), acted on in session
+    summary: >-
+      Five points on Ep011, each checked against the primary source: the
+      RORC Transatlantic is not a Vendée Globe qualifier (Notice of Race 9.1:
+      a solo Globe Series race on the same boat within twice the first
+      finisher's time); host-experience lines out of the show; every team
+      item dated, the 10 January 2027 start from Marina Lanzarote on record;
+      the 2023 record named to the team's earlier IMOCA, Alan Roberts given
+      one line; padding trimmed and The Fleet's chapter moved onto its
+      spoken line (1:49 in the published MP3; the reviewer's 1:47 lands in
+      the sentence before).
+    shipped:
+      - prompts: qualification from the Notice of Race list, NO HOST LINES, DATE EVERY TEAM ITEM, NO PADDING, recent_plain_sailing memory
+      - engine/host_experience.py (host_experience_filter, digest + script)
+      - engine.offshore_north_status.recent_plain_sailing + hook + defaults
+      - campaign record: rorc_2027 countdown, qualification outline and ledger
+      - story_breaks.boundary_anchors: a short line borrows the next lines' opening
+      - resynthesize_episode: chapters aligned to the fresh transcript, voice_intro_delay only, episode title kept
+      - Ep011 correction (where: both) + text amendments + chapters
+    deferred:
+      - re-voice Ep011 (Actions "Re-synthesize Episode") once merged
+    predictions:
+      - metric: "races called a Vendée qualifier that are not on the Notice of Race list, next 4 episodes"
+        baseline: "Ep011: 1"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "host-experience sentences removed by the filter (digest + script), next 4 episodes"
+        baseline: "the prompts required one a week (Ep006-011)"
+        expected: "0 on 4/4 (the model stops writing them once nothing asks)"
+        verdict: pending
+        evidence: null
+      - metric: "Plain Sailing concept repeats one in the recent_plain_sailing block, next 4 episodes"
+        baseline: "3 back-to-back repeats in Ep005-011"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry: []

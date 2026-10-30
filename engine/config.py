@@ -1433,6 +1433,11 @@ class ShowConfig:
     # (engine/absence_sentences.py, Sep 22 2026 new-show Ep1s). Opt-in;
     # False = every other show byte-identical.
     absence_sentence_filter: bool = False
+    # Remove host-experience lines ("the same pressure systems I read from
+    # the flight deck", the brief's "Dan's lens") from the digest and the
+    # script (engine/host_experience.py, Oct 30 2026, Offshore North).
+    # Opt-in; False = every other show byte-identical.
+    host_experience_filter: bool = False
     # How far back the X account fetch looks. 24 (default) = the prompt
     # every show has always sent; the weekly shows read their whole week.
     x_lookback_hours: int = 24
@@ -1727,6 +1732,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
         max_prompt_articles=int(data.get("max_prompt_articles", 0) or 0),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
+        host_experience_filter=bool(data.get("host_experience_filter", False)),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
         digest_lints_blocking=[str(x) for x in (data.get("digest_lints_blocking") or [])],

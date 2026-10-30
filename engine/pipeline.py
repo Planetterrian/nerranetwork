@@ -690,6 +690,8 @@ def build_podcast_template_vars(
     pod_vars.setdefault("vocab_review_section", "")
     # Offshore North (Sep 19 2026): {campaign_status} in both prompts.
     pod_vars.setdefault("campaign_status", "")
+    # Oct 30 2026: Offshore North's dated list of aired explainers.
+    pod_vars.setdefault("recent_plain_sailing", "")
     # Modern Investing (Oct 13 2026): {nasdaq_benchmark_line} in the
     # podcast prompt's Market Pulse; empty when the hook did not run.
     pod_vars.setdefault("nasdaq_benchmark_line", "")

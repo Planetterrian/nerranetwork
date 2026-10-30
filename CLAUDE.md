@@ -1201,8 +1201,8 @@ today's work, not just explain yesterday's):
   FIRST and LONGEST; incidents not leaderboards, one sentence max on a
   leader, no roll-calls; never "standing facts/item" on air and the boat's
   pedigree at most once in four weeks; Plain Sailing EVERGREEN (never a
-  same-episode race recap); EXACTLY ONE Dan reference per episode (the
-  brief's writer-only "Dan's lens" line names it); a finish inside the
+  same-episode race recap); no host-experience line (the Sep 14 rule of
+  EXACTLY ONE Dan reference was reversed on Oct 30); a finish inside the
   window outranks a re-surfaced start. Blog footer placeholder is
   cadence-aware (`engine.blog.next_episode_placeholder` — "New episode
   Monday", never "tomorrow" on a weekly show). **Public campaign
@@ -1292,6 +1292,28 @@ today's work, not just explain yesterday's):
   (the privacy policy says so); `media_url` is never requested. Secrets
   `INSTAGRAM_GRAPH_TOKEN` / `INSTAGRAM_GRAPH_USER_ID` — deliberately not the
   Shorts publisher's `IG_*` names; unset = a clean no-op.
+  **Oct 30 2026 — a listener review of Ep011** (guards
+  `tests/test_offshore_north_review_2026_10_30.py`; register
+  `offshore-north-review-2026-10-30`). Rules that bind: **Vendée Globe
+  qualification is the Notice of Race list** (section 9.1: a SOLO finish
+  from Vendée Arctique 2026, Route du Rhum 2026, Retour à la Base 2027, The
+  Transat CIC 2028 or New York Vendée 2028, on the same boat, within twice
+  the first finisher's time, plus a top-37 Globe Series ranking); a race off
+  that list is never a qualifier — Ep011 called the double-handed RORC
+  Transatlantic (10 January 2027, Marina Lanzarote, Scott with Alan Roberts
+  on EMIRA IV) a "qualifying passage", a claim the team never made.
+  **No host-experience lines**: the weekly "Dan's lens" the prompts required
+  since Sep 14 is gone from every prompt, and `host_experience_filter`
+  (`engine/host_experience.py`) removes one the model writes anyway.
+  **Every team item carries its channel and date; a past result names its
+  boat** (the 2023 record was the team's earlier IMOCA). **No padding**
+  (photos, ceremony colour, a fact told twice), and Plain Sailing reads the
+  last eight explainers (`recent_plain_sailing`, hook-supplied) — three
+  subjects had aired twice running. A three-word chapter line ("Now, the
+  fleet.") now borrows the next lines' opening to find itself in the
+  transcript, and the re-synthesis tool times chapters as run_show does.
+  Ep011 carries a correction (`where: both`); re-voice it with Actions
+  "Re-synthesize Episode". ⚠️ AUDIO — A/B-listen the next episode.
 - **Vancouver Daily News / Collingwood Weekly** (Sep 2026, pre-launch) — the
   first run_show shows with an AI host: `host_kind: ai`, Mira on `ara`, NO
   speech wrap (Nerra Daily's Mira has none). Roads and weather arrive as

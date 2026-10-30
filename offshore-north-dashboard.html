@@ -43,6 +43,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -66,7 +69,7 @@
     <script defer src="assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="styles/main.css?v=29ee3e76">
 
     
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -975,6 +978,8 @@
           
           <a class="on-chip" href="https://www.routedurhum.com/en" target="_blank" rel="noopener" data-when="2026-10-20T00:00:00+02:00" data-end="2026-11-01T13:02:00+01:00" title="Saint-Malo"><span>Route du Rhum race village opens</span><b class="days">…</b></a>
           
+          <a class="on-chip" href="https://www.canadaoceanracing.com/back-in-the-race-rorc-transatlantic-2027/" target="_blank" rel="noopener" data-when="2027-01-10T00:00:00+00:00" data-end="" title="Marina Lanzarote → Antigua · about 3,000 nm · Scott Shawyer and Alan Roberts, double-handed on EMIRA IV · not a Vendée Globe qualifier"><span>RORC Transatlantic Race start</span><b class="days">…</b></a>
+          
           <a class="on-chip" href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener" data-when="2028-11-12T13:02:00+01:00" data-end="2029-02-28T23:59:00+01:00" title="Les Sables d'Olonne — the goal"><span>Vendée Globe 2028 start</span><b class="days">…</b></a>
           
         </div>
@@ -1117,12 +1122,12 @@
     </div>
     <div class="on-panel">
       <h2>The skipper: Scott Shawyer</h2>
-      <p style="margin:0 0 .6rem;font-size:.92rem;line-height:1.5;">President and skipper. Came to the sport from engineering and business (26 years leading JMP Solutions). Holds the double-handed course record for the RORC Transatlantic Race; 4th in the 2024 New York Vendée, his first solo IMOCA race. Collingwood, Ontario.</p>
+      <p style="margin:0 0 .6rem;font-size:.92rem;line-height:1.5;">President and skipper. Came to the sport from engineering and business (26 years leading JMP Solutions). Holds the double-handed course record for the RORC Transatlantic Race, set in 2023 with Alan Roberts on the team's earlier IMOCA (9d 12h 26m); 4th in the 2024 New York Vendée, his first solo IMOCA race. Collingwood, Ontario.</p>
       <p class="on-muted" style="margin:0 0 .8rem;">Be Water Positive (water-scarcity awareness) + a Youth Pathway Programme for young Canadian sailors.</p>
       <h2 style="margin-top:1rem;">Vendée Globe 2028 qualification <span class="sm">published outline · the campaign's ledger</span></h2>
       <ul class="on-led">
         
-        <li><span class="s open">○</span><span><b>Grade 2 solo race finished on EMIRA IV</b><br><span class="st">Not yet — EMIRA IV did not sail the 48H Azimut (17–19 Sep 2026); the Route du Rhum on 1 November 2026 is the first opportunity on record</span></span></li>
+        <li><span class="s open">○</span><span><b>Grade 2 solo race finished on EMIRA IV</b><br><span class="st">Not yet. EMIRA IV did not sail the Vendée Arctique and Scott Shawyer will not start the Route du Rhum; the solo qualifiers left on the list are Retour à la Base 2027, The Transat CIC 2028 and New York Vendée 2028. The RORC Transatlantic in January 2027 is not one.</span></span></li>
         
         <li><span class="s unknown">?</span><span><b>IMOCA Globe Series ranking</b><br><span class="st">Not published here until sourced from imoca.org</span></span></li>
         
@@ -1130,7 +1135,7 @@
         
       </ul>
       <p class="on-muted" style="margin:.7rem 0 0;">
-        Complete at least one Grade 2 solo race from the IMOCA 2025–2028 calendar on the boat you will race in the Vendée Globe, finishing within twice the winner's time. Be among the top 37 in the IMOCA Globe Series championship (remaining places under the organisers' criteria). The fleet is capped at 40 boats. 
+        Finish at least one solo race from the Notice of Race list on the boat you will race in the Vendée Globe, in no more than twice the first finisher's time (section 9.1): Vendée Arctique 2026, Route du Rhum 2026, Retour à la Base 2027, The Transat CIC 2028, New York Vendée 2028, or a solo Globe Series race added by amendment. Be among the top 37 in the IMOCA Globe Series championship (section 9.2); the organisers may invite up to three more. The fleet is capped at 40 boats. The RORC Transatlantic is not an IMOCA Globe Series race and is not sailed solo: it neither qualifies a skipper nor earns Globe Series points. 
         Finer mechanics (points tables, the designated-race list, wild cards) are not published here until sourced from <a href="https://www.imoca.org/en" target="_blank" rel="noopener">imoca.org</a> / <a href="https://www.vendeeglobe.org/en" target="_blank" rel="noopener">vendeeglobe.org</a>.
       </p>
     </div>
@@ -1160,6 +1165,8 @@
         <li><span class="d">2026-11-01</span><span class="emira"><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum – Destination Guadeloupe start, 13:02 — Scott Shawyer will not start (team announcement, 8 October)</a><span class="st upcoming" data-start="2026-11-01" data-end="2026-11-30" data-result="no">upcoming</span></span></li>
         
         <li><span class="d">2026-11-06</span><span class=""><a href="https://www.routedurhum.com/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Route du Rhum finish village opens, Pointe-à-Pitre (first Ultims expected within days)</a><span class="st upcoming" data-start="2026-11-06" data-end="2026-11-30" data-result="">upcoming</span></span></li>
+        
+        <li><span class="d">2027-01-10</span><span class="emira"><a href="https://www.canadaoceanracing.com/back-in-the-race-rorc-transatlantic-2027/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">RORC Transatlantic Race, Marina Lanzarote → Antigua — Scott Shawyer and Alan Roberts, double-handed on EMIRA IV (team announcement, 23 October). Not a Vendée Globe qualifier</a><span class="st upcoming" data-start="" data-end="" data-result="">upcoming</span></span></li>
         
         <li><span class="d">2027</span><span class=""><a href="https://www.imoca.org/en" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Transat Café L'OR + the crewed calendar — dates to be confirmed</a><span class="st tbc" data-start="" data-end="" data-result="">tbc</span></span></li>
         
@@ -1358,7 +1365,7 @@
   </div>
 
   <p class="on-foot">
-    Curated facts verified 2026-10-04 against the linked sources; the live rails refresh nightly and after each episode from the team's own feeds and the offshore press. Dates are local to the event. Nothing here is a race prediction. Explore every dashboard at the <a href="data.html">Nerra data hub</a>.
+    Curated facts verified 2026-10-30 against the linked sources; the live rails refresh nightly and after each episode from the team's own feeds and the offshore press. Dates are local to the event. Nothing here is a race prediction. Explore every dashboard at the <a href="data.html">Nerra data hub</a>.
   </p>
 </div>
 
@@ -1882,7 +1889,7 @@
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
     <script src="assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"

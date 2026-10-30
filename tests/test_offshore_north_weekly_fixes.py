@@ -707,22 +707,24 @@ class TestCompactCrossPromo:
 
 
 class TestDanBackgroundIsReal:
-    """The voice section now carries Dan's actual background, with a hard
-    one-personal-reference-per-episode limit."""
+    """Aug 2026: the voice section carried Dan's real background with a
+    one-personal-reference limit. Oct 30 2026 (listener review of Ep011):
+    the host lines are out of the show; what stays is that he is a real
+    person and nothing is invented for him."""
 
-    def test_prompt_has_the_real_background(self):
+    def test_the_background_is_out_of_the_prompt(self):
         src = _podcast_prompt()
         for fact in ("Boeing 737", "wing foil", "Hobie 18", "bareboat"):
-            assert fact in src, f"voice section lost: {fact}"
+            assert fact not in src, f"host background still in the prompt: {fact}"
 
-    def test_one_reference_limit(self):
+    def test_no_reference_is_required(self):
         src = _podcast_prompt()
-        assert "ONE personal reference per episode" in src
-        assert "TWO first-person touches" not in src
+        assert "ONE personal reference per episode" not in src
+        assert "NO HOST-EXPERIENCE LINES" in src
 
-    def test_never_upgrade_experience(self):
+    def test_never_invent_for_him(self):
         src = _podcast_prompt()
-        assert "has not raced across an ocean" in src
+        assert "never invent an event, a place, a result or an anecdote for him" in src
 
 
 class TestPositionReport:
@@ -852,7 +854,7 @@ class TestFieldGuide:
             "1 November 2026",            # Route du Rhum start (verified)
             "98 seconds",                  # Mike Birch, 1978 (verified)
             "Gerry Roufs",
-            "Grade 2 solo race",          # published VG 2028 outline
+            "Grade 2 (category 2) solo races",  # VG 2028 Notice of Race, 9.1
             "top 37",
             "11 June 2026",               # Dalin — handle with dignity
             "confirm before use",         # the decay discipline
@@ -875,10 +877,10 @@ class TestFieldGuide:
             rendered = load_prompt(str(_PROMPTS / name))
             assert "Mike Birch" in rendered, f"{name}: guide include did not resolve"
 
-    def test_countdown_may_use_published_outline(self):
+    def test_countdown_may_use_the_notice_of_race_list(self):
         src = _digest_prompt()
-        assert "published outline" in src
-        assert "Grade-2 solo finish" in src or "Grade 2 solo" in src
+        assert "field guide's qualification section" in src
+        assert "Notice of Race list" in src
 
 
 class TestFrenchPrimaryFeeds:
