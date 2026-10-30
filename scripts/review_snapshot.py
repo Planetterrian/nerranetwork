@@ -37,6 +37,10 @@ def count_words(text: str) -> int:
     return len(re.findall(r"\S+", text))
 
 
+#: What a number becomes in the repeated-phrase report (any number).
+NUMBER_PLACEHOLDER = "#"
+
+
 def _tokens(text: str) -> list[str]:
     # Unicode-aware word tokens (internal apostrophes kept). The old
     # ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
@@ -52,8 +56,13 @@ def _tokens(text: str) -> list[str]:
     # closer was never broken. With the placeholder, a phrase repeats
     # across episodes only if its WORDING repeats; changing numbers no
     # longer collapse into a fake invariant.
+    #
+    # Oct 30 2026: the placeholder is ``#``, never ``0``. As ``0`` it read as
+    # a real digit: "This is MAG 7 Daily, episode 24" printed as "this is
+    # mag 0 daily episode 0", and two MAG 7 reviews (Oct 13, Oct 25) scored
+    # a "mag zero" garble the audio never had.
     return [
-        ("0" if t[0].isdigit() else t)
+        (NUMBER_PLACEHOLDER if t[0].isdigit() else t)
         for t in re.findall(
             r"[^\W\d_]+(?:['’][^\W\d_]+)*|\d[\d.,%]*", text.lower())
     ]
@@ -422,7 +431,8 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
     lines.append(f"## Repeated phrases across episodes (from {len(texts)} {source})")
     lines.append("Phrases below recur across most episodes. Show intro/outro is "
                  "expected; anything else is likely a boilerplate tic, dead "
-                 "rotation pool, or template echo.")
+                 "rotation pool, or template echo. `#` stands for any number; "
+                 "read the spoken form in the episode's `_tts.txt`.")
     for phrase, count in tics:
         lines.append(f"- {count}/{len(texts)} episodes: “{phrase}”")
     if not tics:

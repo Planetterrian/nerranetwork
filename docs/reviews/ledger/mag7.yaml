@@ -289,11 +289,11 @@ reviews:
       verdict: hit
       evidence: 'Ep024–033 transcripts: no full close boards, ticker strips, or ''regular session closes on the tape'' reads'
     - metric: identity/closing lines using digit form 'MAG 7' / ASR 'mag 0' (next 7)
-      verdict: miss
-      evidence: 10/10 snapshot ASR 'mag 0 daily'; every Ep024–033 identity still 'This is MAG 7 Daily'; Mag Seven change never shipped
+      verdict: hit
+      evidence: 'Corrected 2026-10-30 (operator-requested PR review): every _tts.txt from Ep009 to Ep038 says "This is Mag Seven Daily". The review read Whisper''s transcript, which writes the spoken words as "MAG 7"; that is transcription formatting, not the audio.'
     - metric: scripts with week-in-review / past-week recap / 'stepped away over the past week' blocks
-      verdict: miss
-      evidence: Ep026 'The past seven days, taken together…'; Ep033 'The past seven days before this desk…' weekend lead list — memory still unfenced
+      verdict: hit
+      evidence: 'Corrected 2026-10-30: Ep012, Ep019, Ep026 and Ep033 are all Sundays, and mag7.yaml carries weekly_summary_segment: true, so their week-in-review is the designed Sunday segment (landmine #19), not leaked memory. No weekday episode in Ep024–033 carries a recap.'
     - metric: teaser matching shape nearest/next date on the (list|sheet|book)
       verdict: hit
       evidence: Ep024–033 teasers varied (named dates/next steps); no nearest-date-on-list/sheet lock
@@ -317,11 +317,11 @@ reviews:
     - metric: identity/closing lines using digit 'MAG 7' or ASR 'mag 0' (next 7 after Mag Seven prompt+yaml ship)
       baseline: 10/10 identity digit MAG 7; 10/10 snapshot mag 0
       expected: ≤2/7 digit/mag-0 once spoken form is Mag Seven (ASR may lag one ep)
-      verdict: pending
-      evidence: null
-    - metric: scripts with week-in-review / past-seven-days / weekend-review recap blocks (next 7)
-      baseline: 2/10 (Ep026, Ep033)
-      expected: 0/7 after memory non-speech fence ships
+      verdict: hit
+      evidence: 'Withdrawn as already met (2026-10-30): the scripts have said "Mag Seven Daily" since Ep009; read the _tts.txt, never the Whisper text, for the spoken form.'
+    - metric: WEEKDAY scripts with week-in-review / past-seven-days / weekend-review recap blocks (next 7)
+      baseline: 0/10 (Ep026 and Ep033 are Sundays, the designed weekly segment)
+      expected: 0/7; a Sunday recap is the weekly_summary_segment and never counts
       verdict: pending
       evidence: null
     - metric: Tesla vehicle/product/FSD/energy/Semi/robotaxi/Cybercab as Top News, Company Desk, or Thread (next 7)
@@ -386,4 +386,8 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard; score Tape/memory/name/boundary/digest-floor mechanically next pass. Wiring guards must load real YAML via load_config.
     agent_cost_usd: 0.1505
-do_not_retry: []
+    # Operator review 2026-10-30: the memory non-speech fence and the
+    # "Mag Seven" prompt line were NOT applied. The first would remove the
+    # designed Sunday segment; the second is already true of every script.
+do_not_retry:
+- 'A memory fence or prompt ban against the Sunday week-in-review on mag7: it is the designed weekly_summary_segment (landmine #19), not leaked memory.'
