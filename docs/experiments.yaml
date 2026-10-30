@@ -5974,3 +5974,29 @@ experiments:
       the Re-synthesize Episode workflow. Guards:
       tests/test_offshore_north_review_2026_10_30.py. AUDIO: A/B-listen the
       next episode.
+  - id: shorts-skip-map-2026-10-30
+    title: "The hook Short skips the episode's map sentence (render only)"
+    area: youtube
+    shipped: 2026-10-30
+    readout: 2026-11-13
+    status: reading
+    baseline: >
+      Since Oct 20 every English opening runs hook, identity line, then a
+      one-sentence map of the stories that follow; the hook Short is a clip
+      of that opening, so ~9 s of a ~32 s Short listed OTHER stories. At age
+      5 days Shorts published after Oct 20 held viewers for less (EN 16.0 ->
+      13.5 s, AVP 46.5 -> 41.7%; FR 16 -> 13 s; RU 19 -> 17 s) and EN reach
+      per Short at day 3 fell from a median 15-16 to 8.5 (flagships: Tesla
+      87 -> 26, SpaceX 55 -> 13, FF 29 -> 7). Review:
+      docs/reviews/youtube_review_2026_10_30.md.
+    target: >
+      EN hook-Short median views at day 3 back to >= 15 and average view
+      duration at age 5 back to >= 15.5 s within two weeks, against RU/FR
+      (still carrying the map) as the control.
+    notes: >
+      engine/short_furniture.py splices the map out of a copy of the mix and
+      transcript for Short #1 (hook_open); youtube.shorts_skip_map (defaults
+      true); metric shorts_map_cut_s. Replay: 128 of 176 English episodes
+      since Oct 20 cut (median 8.7 s), 0 of 379 before. The episode keeps
+      its map. Dubs not covered (no committed dub word timings to test on).
+      Guards: tests/test_short_skips_map_2026_10_30.py.

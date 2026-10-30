@@ -7662,6 +7662,39 @@ def _break_long_paragraphs(text: str, max_chars: int = 400) -> str:
     return "\n\n".join(out_paragraphs)
 
 
+def _short_source(yt, short_idx, fill_mode, final_mp3, transcript_path,
+                  transcript_words, work_dir, caption_offset, result):
+    """``(audio, transcript, words)`` a Short is cut from (Oct 30 2026).
+
+    The hook Short (Short #1, ``hook_open``) renders from a copy of the mix
+    and transcript with the episode's map sentence spliced out
+    (``engine.short_furniture``), so it goes from the hook and the show's
+    name straight into the hook's story; every other Short, and any
+    failure, renders from the episode itself.
+    """
+    source = (final_mp3, transcript_path, transcript_words)
+    if not (short_idx == 0 and fill_mode == "hook_open"
+            and transcript_path is not None
+            and bool(getattr(yt, "shorts_skip_map", False))):
+        return source
+    from engine.short_furniture import spliced_short_source
+    spliced = spliced_short_source(final_mp3, Path(transcript_path), work_dir,
+                                   audio_offset=caption_offset)
+    if spliced is None:
+        return source
+    audio, tx, cut_s = spliced
+    result["shorts_map_cut_s"] = cut_s
+    logger.info("Hook Short: the map (%.1f s) is cut from the clip", cut_s)
+    words: list = []
+    if transcript_words:
+        try:
+            from engine.visual_reuse import load_transcript_words
+            words = load_transcript_words(tx)
+        except Exception:  # noqa: BLE001 — cuts fall back to the grid
+            words = []
+    return audio, tx, words
+
+
 def _publish_youtube(
     config,
     *,
@@ -9617,12 +9650,17 @@ def _publish_youtube(
             _base_short_duration = duration
             result["short_durations"] = []
             for short_idx, (this_offset, this_hook, _fill_mode) in enumerate(shorts_plan):
+                # Oct 30 2026: the hook Short skips the episode's map (engine/
+                # short_furniture.py); every other Short reads the episode.
+                _src_audio, _src_tx, _src_words = _short_source(
+                    _yt, short_idx, _fill_mode, final_mp3, transcript_path,
+                    _transcript_words, work_dir, _caption_offset, result)
                 # Oct 18 2026: each Short ends on its last full sentence
                 # inside the final few seconds (it used to stop mid-word at
                 # 35 s on four Shorts in five).
                 from engine.shorts_selector import end_on_sentence
                 duration = end_on_sentence(
-                    _transcript_words, this_offset, _base_short_duration,
+                    _src_words, this_offset, _base_short_duration,
                     audio_offset_s=_caption_offset,
                 )
                 result["short_durations"].append(duration)
@@ -9675,13 +9713,13 @@ def _publish_youtube(
                     # Per-Short caption (ASS first, SRT fallback) —
                     # same selection logic as the single-Short path.
                     this_srt_path = None
-                    if transcript_path is not None:
+                    if _src_tx is not None:
                         try:
                             ass_candidate = (
                                 work_dir / f"{base_name}_short{suffix}.ass"
                             )
                             transcript_to_ass_window(
-                                transcript_path,
+                                _src_tx,
                                 ass_candidate,
                                 window_start_seconds=this_offset,
                                 window_duration_seconds=duration,
@@ -9715,7 +9753,7 @@ def _publish_youtube(
                                     work_dir / f"{base_name}_short{suffix}.srt"
                                 )
                                 transcript_to_srt_window(
-                                    transcript_path,
+                                    _src_tx,
                                     srt_candidate,
                                     window_start_seconds=this_offset,
                                     window_duration_seconds=duration,
@@ -9747,7 +9785,7 @@ def _publish_youtube(
                                 short_scene_paths if recap_pool_used
                                 else fresh_short_scenes
                             ),
-                            transcript_words=_transcript_words,
+                            transcript_words=_src_words,
                             # Words live on the voice-only Whisper
                             # timeline; the final mix prepends the music
                             # intro — same offset the captions apply.
@@ -9882,7 +9920,7 @@ def _publish_youtube(
                         try:
                             from engine.fact_cards import fact_cards_for_window
                             _short_fact_cards = fact_cards_for_window(
-                                transcript_path,
+                                _src_tx,
                                 this_offset - _caption_offset,
                                 duration,
                             )
@@ -9939,7 +9977,7 @@ def _publish_youtube(
                         result.update(_hook_motion.as_metric())
 
                     build_short_video(
-                        final_mp3, cover_path, this_short_video_path,
+                        _src_audio, cover_path, this_short_video_path,
                         fact_cards=_short_fact_cards,
                         punch_text=_short_punch,
                         subscribe_pill=_short_pill,
@@ -10223,7 +10261,7 @@ def _publish_youtube(
                         from engine.social_distribution import distribute_short
                         dist = distribute_short(
                             config,
-                            audio_path=final_mp3, cover_path=cover_path,
+                            audio_path=_src_audio, cover_path=cover_path,
                             work_dir=work_dir, base_name=base_name, short_suffix=suffix,
                             start_offset=this_offset, duration=duration,
                             hook=this_hook or "", show_name=config.name,

@@ -248,6 +248,8 @@ def record_youtube_outcomes(
         if youtube_urls.get("shorts_fact_cards_rendered") is not None:
             metrics.record("shorts_fact_cards_rendered",
                            int(youtube_urls["shorts_fact_cards_rendered"]))
+        if youtube_urls.get("shorts_map_cut_s") is not None:
+            metrics.record("shorts_map_cut_s", float(youtube_urls["shorts_map_cut_s"]))
         if youtube_urls.get("shorts_subscribe_pill_rendered") is not None:
             metrics.record("shorts_subscribe_pill_rendered",
                            bool(youtube_urls["shorts_subscribe_pill_rendered"]))
