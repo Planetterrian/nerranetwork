@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Environmental Intelligence Blog RSS" href="https://nerranetwork.com/blog_env_intel.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1894,7 +1899,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1907,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep003_20260302.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep003_20260302.mp3" data-nn-card data-title="Road salt accumulation in Ontario&#39;s Lake Simcoe watershed exceeds CCME chloride guidelines, triggering site assessments under O. Reg. 153/04." data-show="Environmental Intelligence" data-cover="../../assets/covers/environmental-intelligence.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep003_20260302.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2339,17 +2344,17 @@ That's Environmental Intelligence for March second, twenty twenty-six. If this b
                         <p>Scott Shawyer will return to competition in January 2027, teaming up with Alan Roberts for the RORC Transatlantic Race o&hellip;</p>
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep157.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/unintended_consequences/ep158.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>The 22 trillion won Four Rivers Project’s 16 weirs slowed flows and caused algal blooms across South Korea’s rivers.</h3>
+                        <h3>After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/planetterrian/ep228.html" class="blog-related-card" style="--card-show-color: #017A99">
+                    <a href="../../blog/planetterrian/ep229.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>Brainstem cells limit dangerous blood pressure swings even when average readings stay normal.</h3>
+                        <h3>Boosting fibroblast growth factor 13 from astrocytes slows aging throughout the bodies of mice.</h3>
                         
                     </a>
                     
@@ -2804,7 +2809,7 @@ That's Environmental Intelligence for March second, twenty twenty-six. If this b
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
