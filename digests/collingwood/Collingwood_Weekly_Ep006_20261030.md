@@ -1,0 +1,59 @@
+# Collingwood Weekly
+> **A forty-million-dollar ticket sold in Grey County was claimed hours before the prize expired.**
+
+**What You Need to Know:** A forty-million-dollar ticket sold in Grey County was claimed hours before the prize expired. OLG says the ticket was validated at a lottery terminal and that rightful ownership still has to be confirmed. South Georgian Bay also has its new council slates, and Grey County's Gather in Grey campaign took a provincial tourism award.
+
+### The Week's Stories
+**$40M Lotto ticket sold in Grey County claimed hours before expiry: CKNX News Today**
+A $40 million LOTTO MAX ticket sold in Grey County was validated at an OLG lottery terminal with just hours left before a midnight deadline. CKNX News Today reported that the ticket was sold for the October 28, 2025 draw. OLG said it has contacted the person or persons who validated the ticket and that the next step is a meeting to determine whether they are the rightful owners. OLG said prize claims over $1,000 are reviewed, and that a retailer sale means the corporation does not know who bought the ticket. OLG had said that if nobody came forward by the end of Wednesday, October 28, the prize would return to the Lotto Max pool and would have been Canada's second-largest unclaimed Lotto Max prize, behind a $70 million ticket from the June 28, 2022 draw sold in Scarborough. Source: [cknxnewstoday.ca](https://cknxnewstoday.ca/midwestern/news/2026/10/28/40m-lotto-ticket-sold-in-grey-county-claimed-hours-before-expiry) Source: [cknxnewstoday.ca](https://cknxnewstoday.ca/midwestern/news/2026/10/27/40m-grey-county-lotto-ticket-could-become-canadas-second-largest-unclaimed-prize)
+
+**2026 Municipal Election Results – Collingwood, Wasaga Beach, Clearview Twp & Town of Blue Mountains: Bayshore Broadcasting News Centre**
+Bayshore Broadcasting listed the south Georgian Bay results. In Collingwood, Yvonne Hamlin is mayor and Chris Potts is deputy mayor, with councillors Christopher Baines, Marianne Mcleod, Rob Ring, Ian MacCulloch, Jan Ferrigan, James McCrimmon and Steve Perry; CollingwoodToday reported Hamlin was re-elected. In Wasaga Beach, CTV News reported the results were heavily delayed and that Brian Smith will return as mayor; Bayshore listed Mike Foley as deputy mayor and Joe Belanger, Sasha-Rose Dileo, Kyle Graves, Ellen Timms and Richard White as councillors. In Clearview, Bayshore listed Robert Macarthur as mayor, Justin McGillvray as deputy mayor, and ward councillors Craig Houghton, Gary Walters, John Broderick, Ken Walker and Rachel Brooks; CollingwoodToday reported Doug Measures was unseated. In The Blue Mountains, CollingwoodToday reported Marni Moreau won with 2,469 votes, or 41.1 per cent, ahead of Paul Reale with 2,384 votes, or 39.7 per cent, and Peter Bordignon with 1,159 votes, or 19.3 per cent, with Rachel Gilliland as deputy mayor and councillors Brayden DeWitt, Meghan Loney, Shawn McKinlay, George McLeod and June Porter. CollingwoodToday said those Blue Mountains results are unofficial until the clerk certifies them, and that 6,147 of 15,154 eligible electors voted, a turnout of 40.6 per cent. Source: [bayshorebroadcasting.ca](https://www.bayshorebroadcasting.ca/2026/10/26/2026-municipal-election-results/) Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/2026-municipal-election-news/the-blue-mountains-election-results-12941604) Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/video/2026/10/27/wasaga-beachs-election-results-heavily-delayed/) Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/doug-measures-unseated-in-clearview-as-mcarthur-wins-mayors-chair-12942217) Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/2026-municipal-election-news/collingwood-election-results-yvonne-hamlin-re-elected-12941592)
+
+**Simcoe County public board enrolment down by more than 600 students: CollingwoodToday**
+CollingwoodToday reports Simcoe County's public board enrolment is down by more than 600 students. The board notes more than 300 students registered late in September. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/simcoe-county-public-board-enrolment-down-by-more-than-600-students-12954801)
+
+**Close Collingwood trustee race takes twists and turns: CollingwoodToday**
+CollingwoodToday reports Julie Rose is the newly minted Collingwood/Wasaga Beach trustee after a close race. Rose said, "I'm very happy. I can't wait to get to work." Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/2026-municipal-election-news/close-collingwood-trustee-race-takes-twists-and-turns-12947307)
+
+### Council & County
+**Grey County Needs $28.7 Million More a Year to Keep Roads and Bridges in Good Shape: The Owen Sound Current**
+The Owen Sound Current reports Grey County needs $28.7 million more a year to keep roads and bridges in good shape. CollingwoodToday reports the county is on track to close its infrastructure funding gap by 2038. Source: [owensoundcurrent.com](https://www.owensoundcurrent.com/p/grey-county-needs-287-million-more) Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/the-blue-mountains-and-grey-highlands/grey-county-on-track-to-close-infrastructure-funding-gap-by-2038-12939579)
+
+### The Closer Look
+**Grey County marketing campaign wins provincial award: CollingwoodToday**
+Grey County's Gather in Grey campaign won the Tourism Industry Association of Ontario's Tourism Marketing Campaign Award in the over-$50,000 category. The award was presented at the 2026 Ontario Tourism Awards of Excellence in Ottawa on October 23, 2026. CollingwoodToday reported the win, and The Owen Sound Current reported the same award, category, date and city. CollingwoodToday said the award recognizes outstanding tourism marketing that inspires travel, builds destination awareness and helps grow Ontario's visitor economy.
+
+Gather in Grey was selected from finalists including Explore Waterloo Region's brand launch campaign and Tourism Hamilton's Let Me Show You the Hamilton I Love campaign. It was also a finalist in the Tourism Digital Marketing Award category alongside Tourism Hamilton. Ottawa Tourism received that digital award for its Magic on Set campaign. Both outlets reported those finalist lists and that Ottawa Tourism took the digital prize.
+
+The campaign was built with partner organizations. Funding came from the Province of Ontario through the Rural Ontario Development program and from Regional Tourism Organization 7 through its Partnership Fund. Roger Mooking, described by CollingwoodToday as an internationally recognized chef and artist, is Grey County's first creative director and culinary ambassador. The Owen Sound Current also described him as a television host. In a series of videos he travelled through Grey County meeting farmers, producers, restaurateurs, artisans, makers and tourism operators. CollingwoodToday said those videos showcased the region's creativity, entrepreneurial spirit and sense of community.
+
+The campaign used video, photography, social media, digital and print advertising, connected television, radio, editorial content and trip-planning resources. Since the full launch in 2025, CollingwoodToday reported more than 50,000 trip idea views and 54,000 event page views. The Owen Sound Current reported 1.78 million impressions, more than 137,000 YouTube views and more than 315,000 website sessions.
+
+Gather in Grey has grown from a campaign into the county's tourism brand and has replaced Visit Grey. Grey County now uses the name to guide destination marketing, including a new destination website. Savanna Myers, director of economic development, tourism and culture, said the recognition reflects tourism operators, businesses, artists, farmers, makers, community partners and residents whose stories continue to shape Grey County's tourism experience and its reputation as a destination where people come together. The Owen Sound Current reported that Myers credited tourism operators, businesses, farmers, artists and residents whose stories appear in the campaign. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/the-blue-mountains-and-grey-highlands/grey-county-marketing-campaign-wins-provincial-award-12952059) Source: [owensoundcurrent.com](https://www.owensoundcurrent.com/p/grey-countys-gather-in-grey-campaign)
+
+### Also Today
+**Georgian Bay General Hospital brings back stricter masking requirements: MidlandToday**
+MidlandToday reports Georgian Bay General Hospital has brought back stricter masking, required during direct patient interactions because of rising respiratory illnesses. Source: [midlandtoday.ca](https://www.midlandtoday.ca/local-news/georgian-bay-general-hospital-brings-back-stricter-masking-requirements-12956469)
+
+**Local residents call for retirement of York University's nine research monkeys: MidlandToday**
+MidlandToday reports a Collingwood undercover investigator and a Tiny Township advocate are pressing for stronger protections and sanctuary retirement for nine research monkeys at York University. Source: [midlandtoday.ca](https://www.midlandtoday.ca/local-news/two-local-women-fight-for-future-of-yorks-nine-monkeys-12933441)
+
+**10 tubing lanes, a mountaintop skating loop and a water park: Blue Mountain's winter is about more than skiing: Toronto.com**
+Toronto.com reports Blue Mountain's winter includes 10 tubing lanes, a mountaintop skating loop and a water park, beyond skiing. Source: [toronto.com](https://www.toronto.com/news/blue-mountain-travel-ontario/article_81177db7-1a3e-51ae-85ef-a0635024160e.html)
+
+**Grey County Launches Online Engagement Platform Connect Grey: The Meaford Independent**
+The Meaford Independent reports Grey County has launched an online engagement platform called Connect Grey. Source: [themeafordindependent.ca](https://themeafordindependent.ca/grey-county-launches-online-engagement-platform-connect-grey/)
+
+**Four Georgian Bay Titans head to U.K.: CollingwoodToday Sports**
+CollingwoodToday Sports reports four Georgian Bay Titans are heading to the U.K., and the group aims to raise $8,000 to cover costs. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-sports/four-georgian-bay-titans-head-to-uk-12931808)
+
+### Roads & Weather Ahead
+Environment Canada says no watches or warnings are in effect for Collingwood. Friday is cloudy with a 40 percent chance of showers, a northwest wind of 30 km/h gusting to 50, a high of 9 and a UV index of 2 or low; the feed's current reading was 8.6°C. Friday night is mainly cloudy, with fog patches developing, a low of zero, and a northwest wind of 20 km/h gusting to 40 becoming light in the evening. Saturday is a mix of sun and cloud, with morning fog dissipating, a northwest wind of 20 km/h late in the morning, a high of 12 and a UV index of 3 or moderate; Saturday night is clear with a low of plus 2. Sunday is sunny with a high of 15. Source: [weather.gc.ca](https://weather.gc.ca/rss/weather/44.5_-80.217_e.xml)
+
+### The Weekend
+**Photographer to present Niagara Escarpment book and talk in Collingwood: CollingwoodToday**
+CollingwoodToday reports Mark Zelinski will be in Collingwood on November 5 for a free evening of photography, storytelling and stewardship tied to his book, Niagara Escarpment: Land Between Waters. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/photographer-to-present-niagara-escarpment-book-and-talk-in-collingwood-12939466)
+
+**Simcoe County Museum to host virtual Remembrance Day lectures: MidlandToday**
+MidlandToday reports the Simcoe County Museum will host free virtual Remembrance Day lectures on November 5 and November 26. Source: [midlandtoday.ca](https://www.midlandtoday.ca/local-news/simcoe-county-museum-to-host-virtual-remembrance-day-lectures-12940165)
