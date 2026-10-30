@@ -78,6 +78,7 @@
     save(NOW_KEY, { queue: queue.slice(0, 40), at: at, ts: Date.now() });
   }
   function emit() {
+    if (inline.length) { paintInline(); }
     var it = current();
     var st = { key: it ? it.key : '', playing: !!(it && !audio.paused) };
     listeners.forEach(function (fn) { try { fn(st); } catch (e) {} });
@@ -181,6 +182,7 @@
   }
   function progress() {
     var d = audio.duration || 0, t = audio.currentTime || 0;
+    if (inline.length) { paintInline(); }
     if (!bar) { return; }
     ui.cur.textContent = clock(t);
     ui.dur.textContent = d ? clock(d) : '';
@@ -280,6 +282,16 @@
   }
 
   var api = {
+    // Plays a page's own <audio> through this player, from *seconds* when
+    // given; false when the element has no player card (the caller then
+    // plays it natively). A chapter link uses it, so the hidden native
+    // element never fetches the file a second time.
+    playElement: function (el, seconds) {
+      for (var k = 0; k < inline.length; k++) {
+        if (inline[k].native === el) { inlinePlay(inline[k], typeof seconds === 'number' ? seconds : undefined); return true; }
+      }
+      return false;
+    },
     start: function (items, i) {
       var list = normalize(items);
       if (!list.length) { return; }
@@ -394,6 +406,179 @@
       a.setAttribute('aria-hidden', 'true');
       a.tabIndex = -1;
     });
+  }
+
+  // -------------------------------------------------------- inline players
+  // Oct 30 2026: every other native <audio controls> on the site (a blog
+  // post's "Listen to this episode", a show page's latest episode and its
+  // archive, the language hubs, the specials) becomes a player of our own
+  // that drives this one engine. On an iPhone the native control drew a
+  // white box on the dark pages, and a press started a second, separate
+  // player the bar knew nothing about. The native element stays in the HTML,
+  // hidden, for a visitor without JavaScript, and it stays the source of the
+  // episode's URL: a language switch or a chapter seek that sets its src or
+  // currentTime and calls play() is routed here (``proxy``). A card shows
+  // cover, show, title, play, −15/+30, a scrubber with times and the speed;
+  // a row (an archive list) shows the controls only.
+  var inline = [];
+  // The page's one episode player, by id, and where its title is written
+  // (pages built before Oct 30 carry no data-nn-title-from).
+  var CARD_IDS = { 'nn-i18n-audio': '.blog-hero h1 .nn-i18n-title', 'latest-audio': '#latest-title' };
+  function pageShow() {
+    var b = document.querySelector('.blog-show-badge');
+    if (b) { return b.textContent.replace(/\s+Blog\s*$/i, '').trim(); }
+    var h = document.querySelector('.show-hero h1');
+    return h ? h.textContent.trim() : '';
+  }
+  function pageCover() {
+    var i = document.querySelector('.blog-show-badge img, .show-hero-art');
+    return i ? (i.currentSrc || i.getAttribute('src') || '') : '';
+  }
+  function absUrl(u) { try { return u ? new URL(u, location.href).href : ''; } catch (e) { return ''; } }
+  function inlineItem(p) {
+    var a = p.native, card = a.closest('article, .episode-card, .glass-card, .nn-guest, .lt-card, section') || a.parentNode;
+    var titleFrom = a.getAttribute('data-nn-title-from') || (typeof CARD_IDS[a.id] === 'string' ? CARD_IDS[a.id] : '');
+    var titleNode = titleFrom ? document.querySelector(titleFrom) : null;
+    if (!titleNode && card) { titleNode = card.querySelector('[data-role="title"], .episode-card-title, .nn-guest-name, h3, .lt-hl'); }
+    if (!titleNode && p.card) { titleNode = document.querySelector('.blog-hero h1, .nn-iv-name, h1'); }
+    var label = (a.getAttribute('aria-label') || '').replace(/^Play (an? |the )?/i, '');
+    var img = card && !p.card ? card.querySelector('img') : null;
+    var color = '';
+    try { color = getComputedStyle(a.parentNode).getPropertyValue('--show-color').trim(); } catch (e) {}
+    return {
+      key: a.getAttribute('src') || '', url: absUrl(a.getAttribute('src')),
+      title: a.getAttribute('data-title') || (titleNode ? titleNode.textContent.trim() : '') || label || document.title,
+      show: a.getAttribute('data-show') || pageShow(),
+      cover: absUrl(a.getAttribute('data-cover') || (img ? (img.currentSrc || img.getAttribute('src')) : '') || pageCover()),
+      post: absUrl(a.getAttribute('data-post') || ''), color: color,
+    };
+  }
+  function inlineSync(p) {
+    var it = inlineItem(p);
+    // Written only when changed: a write is a DOM mutation, and the page's
+    // mutation observer calls back here.
+    if (p.ui.title && p.ui.title.textContent !== it.title) { p.ui.title.textContent = it.title; }
+    if (p.ui.show && p.ui.show.textContent !== it.show) { p.ui.show.textContent = it.show; p.ui.show.hidden = !it.show; }
+    if (p.ui.cover) {
+      if (it.cover) { if (p.ui.cover.getAttribute('src') !== it.cover) { p.ui.cover.setAttribute('src', it.cover); } p.ui.cover.hidden = false; } else { p.ui.cover.hidden = true; }
+    }
+    p.root.hidden = !it.url;
+  }
+  function inlineIsCur(p) { var c = current(); return !!(c && p.native.getAttribute('src') && c.url === absUrl(p.native.getAttribute('src'))); }
+  function inlineDur(p) { var d = p.native.duration; return isFinite(d) && d > 0 ? d : (p.knownDur || 0); }
+  function paintInline() {
+    inline.forEach(function (p) {
+      var cur = inlineIsCur(p), playing = cur && !audio.paused;
+      var url = absUrl(p.native.getAttribute('src'));
+      var t = cur ? (audio.currentTime || 0) : (positions[url] || 0);
+      var d = cur ? (audio.duration || inlineDur(p)) : inlineDur(p);
+      if (cur && audio.duration) { p.knownDur = audio.duration; }
+      p.root.classList.toggle('is-current', cur);
+      p.root.classList.toggle('is-playing', playing);
+      p.ui.play.setAttribute('aria-label', playing ? 'Pause' : (t > 30 && !cur ? 'Resume from ' + clock(t) : 'Play'));
+      p.ui.cur.textContent = clock(t);
+      p.ui.dur.textContent = d ? clock(d) : '';
+      if (!p.seeking) { p.ui.seek.value = d ? String(Math.round(Math.min(t, d) / d * 1000)) : '0'; }
+      p.ui.seek.style.setProperty('--nn-ip-fill', d ? (Math.min(t, d) / d * 100).toFixed(2) + '%' : '0%');
+      p.ui.seek.setAttribute('aria-valuetext', clock(t) + (d ? ' of ' + clock(d) : ''));
+      p.ui.seek.disabled = !d;
+      p.ui.rate.textContent = RATES[rateAt] + '×';
+      p.ui.back.disabled = !cur; p.ui.fwd.disabled = !cur;
+      if (p.ui.state) { p.ui.state.textContent = playing ? 'Playing' : cur ? 'Paused' : isPlayed(url) ? 'Played' : t > 30 ? 'Resume at ' + clock(t) : ''; }
+    });
+  }
+  function inlinePlay(p, at) {
+    var it = inlineItem(p);
+    if (!it.url) { return; }
+    if (inlineIsCur(p)) {
+      if (typeof at === 'number' && audio.duration) { audio.currentTime = Math.max(0, Math.min(audio.duration - 1, at)); if (audio.paused) { api.toggle(); } return; }
+      api.toggle(); return;
+    }
+    if (typeof at === 'number' && at > 0) { positions[it.url] = at; }
+    // The page's rows play as one queue in page order; a card plays alone.
+    if (p.card) { api.start([it], 0); return; }
+    var rows = inline.filter(function (x) { return !x.card && !x.root.hidden; });
+    api.start(rows.map(inlineItem), Math.max(0, rows.indexOf(p)));
+  }
+  function proxy(p) {
+    // A script that plays the hidden native element (a chapter link, the
+    // language switcher) plays through the engine instead, from where it
+    // put the playhead.
+    p.native.addEventListener('play', function () {
+      var t = p.native.currentTime || 0;
+      try { p.native.pause(); } catch (e) {}
+      inlinePlay(p, t > 0 ? t : undefined);
+    });
+    p.native.addEventListener('loadedmetadata', function () { paintInline(); });
+    if (window.MutationObserver) {
+      var last = absUrl(p.native.getAttribute('src'));
+      new MutationObserver(function () {
+        var now = absUrl(p.native.getAttribute('src'));
+        if (now === last) { return; }
+        var wasCur = current() && current().url === last && !audio.paused;
+        last = now; p.knownDur = 0;
+        inlineSync(p);
+        if (wasCur) { inlinePlay(p); } else { paintInline(); }
+      }).observe(p.native, { attributes: true, attributeFilter: ['src'] });
+    }
+  }
+  function buildInline(a) {
+    var isCard = a.hasAttribute('data-nn-card') || !!CARD_IDS[a.id] || !!a.closest('.nn-iv-player');
+    var root = el('div', 'nn-ip' + (isCard ? ' nn-ip--card' : ' nn-ip--row'));
+    root.setAttribute('role', 'group');
+    root.setAttribute('aria-label', 'Episode player');
+    root.innerHTML =
+      (isCard ? '<img class="nn-ip-cover" alt="" width="64" height="64" loading="lazy">' +
+        '<div class="nn-ip-head"><b class="nn-ip-show"></b><span class="nn-ip-title"></span>' +
+        '<span class="nn-ip-state" aria-live="polite"></span></div>' : '') +
+      '<div class="nn-ip-ctl">' +
+        '<button type="button" class="nn-ip-play" aria-label="Play"><span class="ic" aria-hidden="true"></span></button>' +
+        '<button type="button" class="nn-ip-skip" data-ip="back" aria-label="Back 15 seconds">−15</button>' +
+        '<div class="nn-ip-track"><input type="range" class="nn-ip-seek" min="0" max="1000" value="0" step="1" aria-label="Seek">' +
+          '<span class="nn-ip-times"><span class="nn-ip-cur">0:00</span><span class="nn-ip-dur"></span></span></div>' +
+        '<button type="button" class="nn-ip-skip" data-ip="fwd" aria-label="Forward 30 seconds">+30</button>' +
+        '<button type="button" class="nn-ip-rate" data-ip="rate" aria-label="Playback speed">1×</button>' +
+      '</div>';
+    var p = { native: a, root: root, card: isCard, ui: {}, knownDur: 0, seeking: false };
+    ['cover', 'show', 'title', 'state', 'play', 'seek', 'cur', 'dur'].forEach(function (k) { p.ui[k] = root.querySelector('.nn-ip-' + k); });
+    p.ui.back = root.querySelector('[data-ip="back"]');
+    p.ui.fwd = root.querySelector('[data-ip="fwd"]');
+    p.ui.rate = root.querySelector('[data-ip="rate"]');
+    p.ui.play.addEventListener('click', function () { inlinePlay(p); });
+    p.ui.back.addEventListener('click', function () { if (inlineIsCur(p)) { api.seekBy(-15); } });
+    p.ui.fwd.addEventListener('click', function () { if (inlineIsCur(p)) { api.seekBy(30); } });
+    p.ui.rate.addEventListener('click', function () { api.rate(); paintInline(); });
+    p.ui.seek.addEventListener('input', function () {
+      p.seeking = true;
+      var d = inlineIsCur(p) ? audio.duration : inlineDur(p);
+      if (d) { p.ui.cur.textContent = clock(Number(p.ui.seek.value) / 1000 * d); }
+    });
+    p.ui.seek.addEventListener('change', function () {
+      p.seeking = false;
+      var d = inlineIsCur(p) ? audio.duration : inlineDur(p);
+      if (d) { inlinePlay(p, Number(p.ui.seek.value) / 1000 * d); }
+    });
+    a.parentNode.insertBefore(root, a);
+    a.classList.add('nn-native-audio');
+    a.setAttribute('aria-hidden', 'true');
+    a.tabIndex = -1;
+    a._nn = true;
+    inline.push(p);
+    proxy(p);
+    inlineSync(p);
+  }
+  function enhanceInline() {
+    // A card a page script re-rendered away is forgotten.
+    inline = inline.filter(function (p) { return document.contains(p.root); });
+    inline.forEach(inlineSync);
+    var found = Array.prototype.slice.call(document.querySelectorAll('audio[controls]'));
+    var added = false;
+    found.forEach(function (a) {
+      if (a._nn || a.hasAttribute('data-nn-native') || a.closest('noscript, .lt-lead-audio, .nn-gp')) { return; }
+      if (a.classList.contains('nn-sticky-audio')) { return; }
+      buildInline(a); added = true;
+    });
+    if (added) { paintInline(); }
   }
 
   // ------------------------------------------------------------- watching
@@ -587,6 +772,24 @@
   // ---------------------------------------------------------------- start
   function init() {
     enhance();
+    enhanceInline();
+    // A show page draws its archive after a fetch; those players are taken
+    // over as they arrive.
+    if (window.MutationObserver && document.body) {
+      var pending = 0;
+      new MutationObserver(function (muts) {
+        if (pending) { return; }
+        for (var i = 0; i < muts.length; i++) {
+          var tg = muts[i].target;
+          // The players' own clocks and labels are not new content.
+          if (tg && tg.closest && tg.closest('.nn-ip, .nn-gp')) { continue; }
+          if (muts[i].addedNodes && muts[i].addedNodes.length) {
+            pending = setTimeout(function () { pending = 0; enhance(); enhanceInline(); }, 60);
+            return;
+          }
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    }
     var now = load(NOW_KEY);
     if (now && now.queue && now.queue.length && Date.now() - (now.ts || 0) < RESUME_HOURS * 3600e3 && !current()) {
       queue = normalize(now.queue);

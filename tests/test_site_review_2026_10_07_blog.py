@@ -105,7 +105,9 @@ class TestEveryPostHasAPlayer:
         """The only <audio> used to be inside the language switcher."""
         assert 'id="listen"' in dp_pod_post
         # The player box, not the language switcher (no pills, no tracks).
-        assert 'class="nn-listen"' in dp_pod_post
+        # .nn-episode-listen since Oct 30 (it was .nn-listen, the class of the
+        # site player's Listen button, whose pill shape collapsed this box).
+        assert 'class="nn-episode-listen"' in dp_pod_post
         m = re.search(r'<audio id="nn-i18n-audio"[^>]*src="([^"]+)"', dp_pod_post)
         assert m, "no player on an episode with published audio"
         assert m.group(1).startswith("https://op3.dev/e/audio.nerranetwork.com/"), (

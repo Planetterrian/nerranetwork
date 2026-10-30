@@ -850,9 +850,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1108,7 +1110,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Listen to the conversation
             </div>
-            <audio controls preload="none" src="{{ audio_url }}">
+            <audio controls preload="none" src="{{ audio_url }}" data-nn-card data-title="{{ interview.guest_name | e }}" data-show="{{ show_name | e }}" data-cover="{{ path_prefix }}{{ podcast_image }}">
                 <a href="{{ audio_url }}">Download the audio</a>
             </audio>
         </div>
@@ -1275,7 +1277,7 @@
                 <button type="button" class="nn-i18n-pill" data-lang="{{ code }}" aria-pressed="false">{{ _LANG_LABELS.get(code, code) }}</button>
                 {% endfor %}
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}"></audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}" data-nn-card data-title="{{ episode_title | e }}" data-show="{{ show_name | e }}" data-cover="{{ path_prefix }}{{ podcast_image }}"></audio>
         </div>
         <script type="application/json" id="nn-i18n-tracks">
 {
@@ -1290,7 +1292,7 @@
         posts offered no way to listen on the page. An interview post has its
         player in its own hero. Same id, so the chapter list seeks it. -#}
     {% elif audio_url and not interview %}
-    <section class="nn-listen" id="listen" aria-label="{% if _is_ru %}Слушать выпуск{% else %}Listen to this episode{% endif %}">
+    <section class="nn-episode-listen" id="listen" aria-label="{% if _is_ru %}Слушать выпуск{% else %}Listen to this episode{% endif %}">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1298,7 +1300,7 @@
                     {% if _is_ru %}Слушать выпуск{% else %}Listen to this episode{% endif %}
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}" data-nn-card data-title="{{ episode_title | e }}" data-show="{{ show_name | e }}" data-cover="{{ path_prefix }}{{ podcast_image }}">
                 <a href="{{ audio_url }}">{% if _is_ru %}Скачать аудио{% else %}Download the audio{% endif %}</a>
             </audio>
         </div>
@@ -1432,6 +1434,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
