@@ -5910,3 +5910,29 @@ experiments:
       tests/test_slate_2026_10_30.py. Prompt changes (AUDIO, A/B-listen):
       UC script length, Tesla required sections, Nerra Daily links and the
       handoff revision.
+  - id: site-episode-player-2026-10-30
+    title: "Every episode player on the site is the site's own player, and the blog's listen box is no longer a collapsed pill"
+    area: site
+    shipped: 2026-10-30
+    readout: 2026-11-13
+    status: reading
+    baseline: >
+      Patrick on an iPhone, Oct 30: the blog post's "Listen to this episode"
+      box rendered as a small whited-out pill, and the show pages' players
+      looked missing. The box was <section class="nn-listen">, the class of
+      the site player's Listen button, so the button's pill rules collapsed
+      it; every other episode player was the browser's native
+      <audio controls>, which iOS draws as a light-grey bar with no title,
+      artwork or speed, outside the site's queue and resume memory.
+    target: >
+      No native audio control visible on a blog post or show page; the
+      episode card shows cover, show, title, play, -15/+30, a scrubber and
+      the speed; episode_play events from blog posts and show pages hold or
+      rise against the two weeks before.
+    notes: >
+      assets/js/nn-player.js (enhanceInline, NNPlayer.playElement),
+      styles/main.css (.nn-ip, button.nn-listen). Render only, no audio.
+      Guards: tests/test_inline_player_2026_10_30.py. Committed posts built
+      before Oct 28 do not load nn-player.js and keep the native control
+      until their show rebuilds them (or a returning visitor's service
+      worker adds the script).

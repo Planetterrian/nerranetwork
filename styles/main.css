@@ -3472,8 +3472,8 @@ html.nn-has-player body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 .nn-gp-btn:hover { border-color: var(--nn-cyan); }
 .nn-gp-btn[disabled] { opacity: 0.3; cursor: default; }
 .nn-gp-big { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-.nn-gp-big .ic, .nn-listen .ic { width: 0; height: 0; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
-.nn-gp-big.is-playing .ic, .nn-listen.is-playing .ic { width: 12px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; margin-left: 0; }
+.nn-gp-big .ic, button.nn-listen .ic, .nn-ip-play .ic { width: 0; height: 0; border-left: 13px solid #0B0F1A; border-top: 8px solid transparent; border-bottom: 8px solid transparent; margin-left: 3px; }
+.nn-gp-big.is-playing .ic, button.nn-listen.is-playing .ic, .nn-ip.is-playing .nn-ip-play .ic { width: 12px; height: 14px; border: 0; border-left: 4px solid #0B0F1A; border-right: 4px solid #0B0F1A; margin-left: 0; }
 .nn-gp-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 0.74rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
 .nn-gp-seek { width: 100%; accent-color: var(--nn-cyan); }
 .nn-gp-side { display: flex; gap: 6px; align-items: center; font-size: 0.76rem; color: var(--nn-text-muted); }
@@ -3500,13 +3500,83 @@ html.nn-has-player body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 @media (max-width: 560px) { .nn-gp-bar .nn-gp-skip-sm { display: inline-flex; } }
 /* The installed app's tab bar already pads the home indicator. */
 html.nn-standalone .nn-gp { padding-bottom: 0; }
-/* The Listen button that stands in for a card's native audio control. */
-.nn-listen { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 6px; border-radius: 999px; border: 0; cursor: pointer;
+/* The Listen button that stands in for a card's native audio control.
+   Scoped to the BUTTON (Oct 30 2026): a blog post's listen box was a
+   <section class="nn-listen"> and took this pill's 44 px height, so the
+   iPhone's native white control spilled out of a collapsed box. */
+button.nn-listen { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 18px 0 6px; border-radius: 999px; border: 0; cursor: pointer;
   background: #fff; color: #0B0F1A; font: 700 0.92rem/1 var(--font-ui); }
-.nn-listen .ic { margin-left: 14px; }
-.nn-listen.is-playing .ic { margin-left: 12px; }
-.nn-listen:hover { box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.35); }
-.nn-listen:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 3px; }
+button.nn-listen .ic { margin-left: 14px; }
+button.nn-listen.is-playing .ic { margin-left: 12px; }
+button.nn-listen:hover { box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.35); }
+button.nn-listen:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 3px; }
+
+/* The inline player (Oct 30 2026, nn-player.js ``buildInline``): a blog
+   post's listen box, a show page's latest episode and its archive. It drives
+   the one engine above, so the bar, the lock screen and every other player on
+   the page agree on what is playing. ``--card`` carries the cover and title;
+   ``--row`` is the controls alone. */
+.nn-ip { --ip-c: var(--show-color, var(--nn-cyan)); color: var(--nn-white); font-family: var(--font-ui); }
+.nn-ip[hidden] { display: none !important; }
+.nn-ip--card { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px 16px; align-items: center;
+  padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ip-c) 16%, rgba(13, 17, 31, 0.9)), rgba(13, 17, 31, 0.92) 70%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
+.nn-ip--card.is-current { border-color: color-mix(in srgb, var(--ip-c) 55%, transparent); }
+.nn-ip-cover { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; display: block; background: rgba(255, 255, 255, 0.06); }
+.nn-ip-cover[hidden] + .nn-ip-head { grid-column: 1 / -1; }
+.nn-ip-head { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nn-ip-show { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--show-color-text, var(--nn-cyan)); }
+.nn-ip-title { font-size: 1rem; font-weight: 600; line-height: 1.35; color: var(--nn-white);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nn-ip-state { font-size: 0.76rem; color: var(--nn-text-muted); min-height: 1em; }
+.nn-ip-state:empty { display: none; }
+.nn-ip--card .nn-ip-ctl { grid-column: 1 / -1; }
+.nn-ip-ctl { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.nn-ip-play { flex: none; width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; background: #fff;
+  display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.nn-ip-play:hover { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ip-c) 40%, transparent); }
+.nn-ip-play:active { transform: scale(0.95); }
+.nn-ip-play:focus-visible, .nn-ip-skip:focus-visible, .nn-ip-rate:focus-visible, .nn-ip-seek:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 3px; }
+.nn-ip--row .nn-ip-play { width: 40px; height: 40px; }
+.nn-ip--row .nn-ip-play .ic { transform: scale(0.85); }
+.nn-ip-skip, .nn-ip-rate { flex: none; min-width: 40px; height: 32px; padding: 0 8px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.04); color: var(--nn-white);
+  font: 700 0.76rem/1 var(--font-ui); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; justify-content: center; }
+.nn-ip-skip:hover, .nn-ip-rate:hover { border-color: var(--ip-c); }
+.nn-ip-skip[disabled] { opacity: 0.35; cursor: default; border-color: rgba(255, 255, 255, 0.1); }
+.nn-ip-track { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nn-ip-times { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--nn-text-muted); font-variant-numeric: tabular-nums; }
+.nn-ip-seek { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; margin: 0; background: transparent; cursor: pointer; --nn-ip-fill: 0%; }
+.nn-ip-seek:disabled { cursor: default; }
+.nn-ip-seek::-webkit-slider-runnable-track { height: 4px; border-radius: 4px;
+  background: linear-gradient(to right, var(--ip-c) var(--nn-ip-fill), rgba(255, 255, 255, 0.16) var(--nn-ip-fill)); }
+.nn-ip-seek::-moz-range-track { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.16); }
+.nn-ip-seek::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--ip-c); }
+.nn-ip-seek::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+.nn-ip-seek::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 0; }
+.nn-ip-seek:disabled::-webkit-slider-thumb { opacity: 0; }
+.nn-ip-seek:disabled::-moz-range-thumb { opacity: 0; }
+.nn-ip--row { padding: 8px 0 2px; }
+/* A phone: play, back, forward and speed on one line, the scrubber with its
+   times on the next, full width. */
+@media (max-width: 560px) {
+  .nn-ip--card { grid-template-columns: 60px minmax(0, 1fr); padding: 14px; gap: 12px; }
+  .nn-ip-cover { width: 60px; height: 60px; border-radius: 10px; }
+  .nn-ip-title { font-size: 0.95rem; }
+  .nn-ip-ctl { flex-wrap: wrap; row-gap: 8px; }
+  .nn-ip-track { order: 9; flex-basis: 100%; }
+  .nn-ip-rate { margin-left: auto; }
+}
+
+/* A blog post's listen box (both its current .nn-episode-listen and the
+   .nn-listen class committed posts still carry): with the episode card in
+   place the card is the box, and the label that repeats it goes. */
+.nn-i18n-inner:has(.nn-ip) { background: transparent; border: 0; padding: 0; }
+section.nn-listen .nn-i18n-inner:has(.nn-ip) .nn-i18n-row,
+.nn-episode-listen .nn-i18n-inner:has(.nn-ip) .nn-i18n-row { display: none; }
+.nn-i18n .nn-i18n-inner:has(.nn-ip) .nn-i18n-row { margin-bottom: var(--sp-3); }
 
 /* The video player inside the page (privacy-enhanced YouTube). */
 .nn-watch { padding: 0; border: 0; background: transparent; max-width: min(1000px, 96vw); width: 100%; max-height: 96vh; margin: auto; overflow: auto; color: var(--nn-white); }

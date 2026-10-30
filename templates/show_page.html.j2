@@ -302,7 +302,7 @@
                            request per page view buys the duration; the archive
                            players below stay at ``none`` because there are a dozen
                            of them and nobody is looking at them yet. #}
-                        <audio id="latest-audio" controls preload="metadata"{% if latest_episode and latest_episode.audio_url %} src="{{ latest_episode.audio_url }}"{% endif %} aria-label="{% if _is_ru %}Плеер последнего выпуска{% else %}Latest episode audio player{% endif %}" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        <audio id="latest-audio" controls preload="metadata" data-nn-card data-nn-title-from="#latest-title" data-show="{{ show_name | e }}" data-cover="{{ path_prefix }}{{ podcast_image_url }}"{% if latest_episode and latest_episode.audio_url %} src="{{ latest_episode.audio_url }}"{% endif %} aria-label="{% if _is_ru %}Плеер последнего выпуска{% else %}Latest episode audio player{% endif %}" style="width:100%;height:42px;border-radius:8px;"></audio>
                         {# Language switcher for the latest episode — populated by JS only
                            when the episode has translation tracks. Shares the site-wide
                            `nn-pref-lang` preference with the per-episode blog switcher. #}
