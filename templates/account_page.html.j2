@@ -576,7 +576,8 @@
             <p class="me-help" id="nn-mkt-help">Up to 8. Use the ticker as Yahoo Finance writes it: an exchange
                suffix for listings outside the US (<code>.TO</code> Toronto, <code>.L</code> London, <code>.AX</code> Sydney),
                <code>^GSPC</code> for an index, <code>BTC-USD</code> for a coin. Saved with your account. On a paid
-               plan Mira reads them in your markets minute and tells you when one of your shows covers one.</p>
+               plan Mira reads them in your markets minute (on once you save a stock; switch it off with
+               the Markets minute toggle) and tells you when one of your shows covers one.</p>
         </section>
 
         <!-- Watch -->
@@ -989,10 +990,13 @@ var NN = (function () {
     if (!box) { return; }
     var rows = [];
     shows.forEach(function (slug) {
+      // One card per episode (Oct 31 2026): its Short and its long-form
+      // under the same headline read as the same story twice. The Short
+      // leads; the long-form plays from the episode's own card.
       stories(slug).forEach(function (s) {
         var v = s.videos || {};
         if (safeUrl(v.short)) { rows.push({ s: s, v: { url: v.short, kind: 'short' } }); }
-        if (safeUrl(v.long)) { rows.push({ s: s, v: { url: v.long, kind: 'long' } }); }
+        else if (safeUrl(v.long)) { rows.push({ s: s, v: { url: v.long, kind: 'long' } }); }
       });
     });
     rows.sort(function (a, b) { return String((b.s.stamp || {}).iso || b.s.date_raw).localeCompare(String((a.s.stamp || {}).iso || a.s.date_raw)); });
@@ -1063,7 +1067,10 @@ var NN = (function () {
               + '<div class="me-acts" style="margin-top:6px;">' + playBtn(s, false) + readBtn(s, false) + '</div></li>';
           }).join('') : '<li><p class="me-p me-muted" style="margin:0;">Add more shows to fill this column.</p></li>')
         + '</ol></aside></div>';
-      var rest = latest.filter(function (s) { return s !== lead; });
+      // Oct 31 2026: the rail already lists every other show's latest, so
+      // the cards carry only what the rail had no room for (they repeated
+      // the same stories a second time).
+      var rest = rail.slice(8);
       if (rest.length) {
         html += '<div class="lt-grid-4 me-front-grid">' + rest.map(card).join('') + '</div>';
       }
@@ -1133,10 +1140,17 @@ var NN = (function () {
   }
   function stem(w) { return w.length > 3 && /s$/.test(w) && !/ss$/.test(w) ? w.slice(0, -1) : w; }
   function keysOf(topic) { return words(topic).filter(function (w) { return !STOP[w] && (w.length > 1 || /\d/.test(w)); }).map(stem); }
+  // A word is the topic word, or the topic word with an inflection ending
+  // (Oct 31 2026). Any longer word used to count, so "space" matched
+  // "SpaceX" and "world" matched "worldwide".
+  var ENDINGS = /^(s|es|ed|d|ing|er|ers|ian|ians|ite|ites|al|ic|ics)$/;
+  function sameWord(w, k) {
+    return w === k || (k.length >= 4 && w.indexOf(k) === 0 && ENDINGS.test(w.slice(k.length)));
+  }
   function hits(keys, text) {
     var ws = words(text).map(stem);
     var found = keys.filter(function (k) {
-      return ws.some(function (w) { return w === k || (k.length >= 4 && w.indexOf(k) === 0); });
+      return ws.some(function (w) { return sameWord(w, k); });
     });
     var need = keys.length <= 2 ? keys.length : keys.length - 1;
     return keys.length && found.length >= need;
@@ -1145,7 +1159,7 @@ var NN = (function () {
     var out = '', re = /[A-Za-z0-9À-ɏ]+|[^A-Za-z0-9À-ɏ]+/g, m;
     while ((m = re.exec(String(text))) !== null) {
       var tok = m[0], ws = words(tok);
-      var on = ws.length === 1 && keys.some(function (k) { var w = stem(ws[0]); return w === k || (k.length >= 4 && w.indexOf(k) === 0); });
+      var on = ws.length === 1 && keys.some(function (k) { return sameWord(stem(ws[0]), k); });
       out += on ? '<mark>' + esc(tok) + '</mark>' : esc(tok);
     }
     return out;
@@ -1180,6 +1194,20 @@ var NN = (function () {
       });
       rows.sort(function (a, b) { return String((b.s.stamp || {}).iso || b.s.date_raw).localeCompare(String((a.s.stamp || {}).iso || a.s.date_raw)); });
       rows = rows.slice(0, 5);
+      // Then the newest episode of each show whose own subjects are this
+      // topic, so "world news" finds the world-news shows and "science"
+      // the science shows even when no headline uses the word.
+      if (rows.length < 5 && t.kind === 'topic') {
+        var have = {};
+        rows.forEach(function (p) { have[p.s.slug + '|' + p.s.episode_num] = 1; });
+        Object.keys(state.front.shows || {}).forEach(function (slug) {
+          var entry = state.front.shows[slug] || {};
+          var on = (entry.topics || []).some(function (tag) { return hits(keys, tag); });
+          var s0 = on ? stories(slug)[0] : null;
+          if (s0 && !have[slug + '|' + s0.episode_num]) { rows.push({ s: s0, text: s0.hook, primary: true }); }
+        });
+        rows = rows.slice(0, 5);
+      }
       var list = rows.length ? rows.map(function (p) {
         var s = p.s, inLineup = mine.indexOf(s.slug) !== -1;
         // One "+ Add" per show per topic, on its newest story.
@@ -1282,7 +1310,16 @@ var NN = (function () {
   }
 
   // ------------------------------------------------------------- add-ons, places, topics
-  function addonOn(id) { var chosen = state.addons === null ? DEFAULT_ADDONS : state.addons; return chosen.indexOf(id) !== -1; }
+  // What the builder runs (engine.personal_edition.PersonalSpec.effective_addons):
+  // the defaults until the member chooses, plus the markets minute once they
+  // have saved stocks (Oct 31 2026).
+  function chosenAddons() {
+    if (state.addons !== null) { return state.addons; }
+    var d = DEFAULT_ADDONS.slice();
+    if (state.tickers && state.tickers.length && d.indexOf('markets') === -1) { d.push('markets'); }
+    return d;
+  }
+  function addonOn(id) { return chosenAddons().indexOf(id) !== -1; }
   function addonAllowed(a) { if (!state.active) { return false; } return a.tier === 'personal' || state.tier === 'personal_local'; }
   // Tier ceilings — mirror engine.personal_edition.TIER_LIMITS.
   var LIMITS = { personal: { cities: 1, topics: 0 }, personal_local: { cities: 3, topics: 5 } };
@@ -1331,7 +1368,7 @@ var NN = (function () {
           if (to && !to.hidden && to.scrollIntoView) { to.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
           return;
         }
-        var chosen = (state.addons === null ? DEFAULT_ADDONS.slice() : state.addons.slice());
+        var chosen = chosenAddons().slice();
         var i = chosen.indexOf(a.id);
         if (i === -1) { chosen.push(a.id); } else { chosen.splice(i, 1); }
         state.addons = chosen; state.addonsTouched = true;
@@ -1382,7 +1419,7 @@ var NN = (function () {
     el('nn-tomorrow-when').textContent = (state.active ? 'Tomorrow, ' : 'Your edition would be, for ')
       + tomorrow.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
     var name = el('nn-name').value.trim();
-    var addons = state.addons === null ? DEFAULT_ADDONS : state.addons;
+    var addons = chosenAddons();
     var tier = state.active ? state.tier : 'personal';
     var cities = listValues(cityInputs()).slice(0, Math.max(LIMITS[tier] ? LIMITS[tier].cities : 1, 1));
     var topics = listValues(topicInputs()).slice(0, (LIMITS[tier] || {}).topics || 0);
@@ -2001,6 +2038,7 @@ var NN = (function () {
         if (r.unknown.indexOf(sym) !== -1) { msg.textContent = 'No quote found for ' + sym + '. Check the suffix (.TO, .L, -USD).'; return; }
         if (r.quotes[sym]) { state.quotes[sym] = r.quotes[sym]; }
         list.push(sym); state.tickers = list; inp.value = '';
+        renderAddons(); renderTomorrow();
         msg.textContent = r.quotes[sym] ? 'Added ' + sym + '. Saving…' : 'Added ' + sym + '; its quote appears once the markets service answers. Saving…';
         renderMarkets();
         NN.save(function () { msg.textContent = 'Following ' + sym + '.'; });
@@ -2009,6 +2047,7 @@ var NN = (function () {
     removeTicker: function (sym) {
       state.tickers = (state.tickers || []).filter(function (t) { return t !== sym; });
       renderMarkets();
+      renderAddons(); renderTomorrow();
       el('nn-mkt-msg').textContent = 'Stopped following ' + sym + '. Saving…';
       NN.save(function () { el('nn-mkt-msg').textContent = 'Stopped following ' + sym + '.'; loadMarkets(); });
       var first = document.querySelector('#nn-mkt-grid .rm'); if (first) { first.focus(); } else { el('nn-mkt-input').focus(); }

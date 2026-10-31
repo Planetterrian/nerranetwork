@@ -137,15 +137,47 @@ def stamp(record_date: Any, when: Optional[dt.datetime], now: dt.datetime) -> Di
             "day": day.isoformat(), "is_today": day == today, "has_time": False}
 
 
-def masthead(now: dt.datetime) -> Dict[str, str]:
-    """The masthead's dateline and "Updated" stamp, from the build clock."""
+def masthead(now: dt.datetime, updated: Optional[dt.datetime] = None) -> Dict[str, str]:
+    """The masthead's dateline and "Updated" stamp.
+
+    The dateline is the build clock's day. "Updated" is the newest story's
+    publish time when the caller knows it (Oct 31 2026): stamped with the
+    build clock, a rebuild that changed nothing still changed the page, and
+    nine of the 26 homepage commits on Oct 31 were that line alone — each a
+    commit and a site deploy. A story time later than the build clock is
+    never used.
+    """
     t = _aware(now).astimezone(EASTERN)
+    u = _aware(updated) if updated is not None else None
+    if u is None or u > _aware(now):
+        u = _aware(now)
+    ut = u.astimezone(EASTERN)
     return {
         "date": f"{t.strftime('%A, %B')} {t.day}, {t.year}",
         "date_iso": t.date().isoformat(),
-        "updated_iso": _aware(now).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "updated": f"{_clock(t)} ET",
+        "updated_iso": u.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "updated": f"{_clock(ut)} ET",
     }
+
+
+def newest_story_time(*groups) -> Optional[dt.datetime]:
+    """The latest timed ``stamp`` among the stories in *groups* (lists of
+    story dicts, or single stories), or None."""
+    best = None
+    for group in groups:
+        items = group if isinstance(group, (list, tuple)) else [group]
+        for story in items:
+            stamp = (story or {}).get("stamp") if isinstance(story, dict) else None
+            iso = (stamp or {}).get("iso") or ""
+            if not (stamp or {}).get("has_time") or not iso:
+                continue
+            try:
+                when = dt.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if best is None or when > best:
+                best = when
+    return best
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +307,17 @@ def _different_papers(a: str, b: str) -> bool:
     return bool(pa and pb and pa != pb)
 
 
+#: "Vaughn Palmer: <headline>" — a columnist's byline at the head of the
+#: headline. It is the same two words on every column, so two unrelated
+#: columns matched as one developing story (Oct 31 2026, Vancouver: the
+#: NDP's housing bill and a review of B.C.'s finances).
+_COLUMN_BYLINE_RE = re.compile(r"^\s*[A-Z][\w'’-]+(?:\s+[A-Z][\w'’-]+){1,2}:\s+(?=\S)")
+
+
+def _strip_column_byline(text: str) -> str:
+    return _COLUMN_BYLINE_RE.sub("", text or "", count=1)
+
+
 def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
                        window_days: int = DEVELOPING_WINDOW_DAYS,
                        max_silence_days: int = DEVELOPING_MAX_SILENCE_DAYS,
@@ -330,7 +373,8 @@ def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
             if not key or key in seen or (ep["slug"], key) in furniture:
                 continue
             seen.add(key)
-            items.append({"ep": ep, "text": text.strip(), "tokens": _tokens(text)})
+            items.append({"ep": ep, "text": text.strip(),
+                          "tokens": _tokens(_strip_column_byline(text))})
     if not items:
         return []
 

@@ -4013,7 +4013,8 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     # the "Watch on YouTube" button run_show had written (0 of ~1,000
     # flagship posts carried one).
     from engine.youtube_index import episode_video_links
-    _video_links = episode_video_links(digest_dir / "youtube_videos.json")
+    _video_links = episode_video_links(digest_dir / "youtube_videos.json",
+                                       include_scheduled=True)
 
     for i, meta in enumerate(all_meta):
         prev_post = all_meta[i - 1] if i > 0 else None
@@ -4033,6 +4034,8 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
             related_posts=_related,
             youtube_url=(_video_links.get(meta["episode_num"]) or {}).get("long", ""),
             youtube_short_url=(_video_links.get(meta["episode_num"]) or {}).get("short", ""),
+            youtube_release=(_video_links.get(meta["episode_num"]) or {}).get("long_at", ""),
+            youtube_short_release=(_video_links.get(meta["episode_num"]) or {}).get("short_at", ""),
             translation_bodies=_translated_bodies_for_episode(digest_dir, meta),
         )
 
@@ -5329,6 +5332,12 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
             "tagline": show.get("tagline") or "",
             "personal": slug in PERSONAL_SHOW_SLUGS,
             "members_only": False,
+            # The show's curated subjects (registry picker_tags), so a
+            # member's topic finds the shows ON it, not only headlines that
+            # happen to use the word (Oct 31 2026: "science" found nothing
+            # while the member followed Planetterrian).
+            "topics": [str(t).replace("-", " ")
+                       for t in ((cfg.get("picker_tags") or {}).get("topics") or [])],
             "stories": [],
         }
         reg = _registry_show_config(slug)
@@ -5380,6 +5389,17 @@ def write_personal_front(shows, *, gallery_root, now, output_dir=None):
         payload = personal_front_payload(shows, gallery_root=gallery_root, now=now)
         out = (Path(output_dir) if output_dir else ROOT) / "api" / "personal_front.json"
         out.parent.mkdir(parents=True, exist_ok=True)
+        # Oct 31 2026: a third of the day's rewrites changed only
+        # generated_at (a full 90 KB one-line diff and a watch.html rewrite
+        # each time). Same rows, same files.
+        try:
+            before = json.loads(out.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            before = None
+        if isinstance(before, dict) and {k: v for k, v in before.items() if k != "generated_at"} \
+                == {k: v for k, v in payload.items() if k != "generated_at"}:
+            print(f"{out} unchanged; not rewritten")
+            return out
         out.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
                        encoding="utf-8")
         print(f"Wrote {out}")
@@ -5794,7 +5814,9 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "member_specials": _specials_context_rows(),
         "popular_episodes": popular_episodes,
         "newsletter_subscriber_count": newsletter_subscriber_count,
-        "masthead": _nr.masthead(now),
+        "masthead": _nr.masthead(now, _nr.newest_story_time(
+            page.get("lead"), page.get("flagships") or [], page.get("top") or [],
+            page.get("latest") or [])),
         "developing": developing,
         "markets": markets,
         # Oct 19 2026: the strip and the Latest ticker update on the page.
@@ -7182,7 +7204,9 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
 
     context = {
         "page": page,
-        "masthead": _front.masthead(now, lang),
+        "masthead": _front.masthead(now, lang, _newsroom.newest_story_time(
+            page.get("lead"), page.get("flagships") or [], page.get("top") or [],
+            page.get("latest") or [])),
         "tagline": tagline,
         "path_prefix": prefix,
         "page_lang": lang,
@@ -9896,6 +9920,12 @@ def main():
         generate_explore_page(dry_run=args.dry_run)
     if args.homepage and not args.network:
         generate_network_page(dry_run=args.dry_run)
+    if args.homepage:
+        # Oct 31 2026: the language front pages follow the English one. They
+        # were rebuilt only by the nightly, so all morning ru/ and fr/ read
+        # the previous day's date and stories (~8 s; every workflow that
+        # commits index.html commits them too).
+        generate_language_hub_pages(dry_run=args.dry_run)
     if args.topics:
         generate_topic_hub_pages(dry_run=args.dry_run)
     if args.redirects:

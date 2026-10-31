@@ -110,6 +110,31 @@ _META_ONLY = re.compile(
     re.IGNORECASE,
 )
 
+# Oct 31 2026: a sentence that reports only a REACTION to a post (Tesla
+# Ep651: "Elon Musk replied to the post with “Cool” and a heart
+# emoji."; SpaceX: "Commenters speculated on whether it was a recovered
+# Dragon capsule…", "The post received immediate engagement…"). Swept
+# over every committed script and digest: these five sentences and nothing
+# else matched.
+_RQUOTE = r"(?:\"[^\"]{1,24}\"|'[^']{1,24}'|“[^”]{1,24}”|‘[^’]{1,24}’)"
+_REMOJI = (r"(?:an?\s+)?(?:[\w-]+\s+){0,2}"
+           r"(?:emoji|emojis|emoticon|heart|hearts|thumbs[- ]up|like)")
+_REPLY_ONLY = re.compile(
+    r"^(?:[A-Z][\w.'’-]*(?:\s+[A-Z][\w.'’-]*){0,3})\s+(?:replied|responded|reacted)"
+    r"(?:\s+to\s+(?:the|that|this|his|her|their|a|an)\s+(?:[\w-]+\s+)?"
+    r"(?:post|tweet|thread|reply|video|clip|update))?"
+    r"\s+with\s+(?:" + _RQUOTE + r"|" + _REMOJI + r")"
+    r"(?:\s*(?:,|and)\s*(?:" + _RQUOTE + r"|" + _REMOJI + r"))*\s*[.!]?$")
+_REPLIES_ONLY = re.compile(
+    r"^(?:replies|commenters|followers|users|other users|responses)\s+"
+    r"(?:quickly\s+|immediately\s+)?"
+    r"(?:speculated|joked|piled in|reacted|cheered|celebrated|chimed in)\b[^.!?]*[.!?]?$",
+    re.IGNORECASE)
+_ENGAGEMENT_SENT = re.compile(
+    r"^" + _META_SUBJECT + r"\b[^.!?]*?\b(?:received|drew|got|sparked|generated|attracted)\s+"
+    r"(?:immediate|quick|heavy|strong|wide|widespread|significant|instant|lots of)\s+engagement\b",
+    re.IGNORECASE)
+
 _SENT_SPLIT = re.compile(r"(?:(?<=[.!?])|(?<=[.!?][\"'”]))\s+(?=[\"'“A-Z0-9])")
 _SKIP_LINE = re.compile(r"^\s*(?:#|```|Source:|Ranks:|\|)")
 _URL_RE = re.compile(r"https?://\S+")
@@ -118,7 +143,8 @@ _URL_RE = re.compile(r"https?://\S+")
 def is_post_metadata_sentence(sentence: str) -> bool:
     """True when the sentence says only that a post appeared / was made on X."""
     s = (sentence or "").strip()
-    return bool(s) and bool(_META_ONLY.match(s))
+    return bool(s) and bool(_META_ONLY.match(s) or _REPLY_ONLY.match(s)
+                            or _REPLIES_ONLY.match(s) or _ENGAGEMENT_SENT.match(s))
 
 
 def clean_sentence(sentence: str) -> Tuple[str, bool]:

@@ -171,7 +171,7 @@ def record_video(
         return False
 
 
-def episode_video_links(path: Path, *, now=None) -> dict:
+def episode_video_links(path: Path, *, now=None, include_scheduled: bool = False) -> dict:
     """``{episode: {"long": url, "short": url}}`` from a show's own index.
 
     Oct 28 2026: the blog's "Watch on YouTube" button had reached no post
@@ -181,6 +181,13 @@ def episode_video_links(path: Path, *, now=None) -> dict:
     reading the rebuild uses. A video still private (``publish_at`` ahead)
     is left out; the hook Short wins over any other Short of the episode;
     the most recent row wins for the long-form. Never raises.
+
+    ``include_scheduled`` (Oct 31 2026): a still-private video is kept, with
+    its release instant under ``long_at`` / ``short_at``, for a page that
+    hides the link until then (the blog post — it is rendered before its
+    long-form goes public and nothing rebuilds it at release time, so five
+    of the Oct 31 posts never linked their video). A public video of the
+    same kind always wins over a scheduled one.
     """
     from engine.release_schedule import is_still_scheduled
 
@@ -196,18 +203,33 @@ def episode_video_links(path: Path, *, now=None) -> dict:
         url = str(row.get("watch_url") or "").strip()
         if not isinstance(episode, int) or not url.startswith("https://"):
             continue
-        if is_still_scheduled(str(row.get("publish_at") or ""), now=now):
+        release = str(row.get("publish_at") or "")
+        scheduled = is_still_scheduled(release, now=now)
+        if scheduled and not include_scheduled:
             continue
         entry = links.setdefault(episode, {})
         kind = row.get("kind")
+        if kind not in ("long", "short"):
+            continue
+        if scheduled and entry.get(kind) and not entry.get(f"{kind}_at"):
+            continue    # a public one already holds the slot
         if kind == "long":
             entry["long"] = url
-        elif kind == "short":
-            if row.get("window") == "hook_open":
-                entry["short"] = url
+            if scheduled:
+                entry["long_at"] = release
+            else:
+                entry.pop("long_at", None)
+        else:
+            hook = row.get("window") == "hook_open"
+            if hook or not entry.get("_hook"):
+                if hook or "short" not in entry or entry.get("short_at"):
+                    entry["short"] = url
+                    if scheduled:
+                        entry["short_at"] = release
+                    else:
+                        entry.pop("short_at", None)
+            if hook:
                 entry["_hook"] = True
-            elif not entry.get("_hook"):
-                entry.setdefault("short", url)
     for entry in links.values():
         entry.pop("_hook", None)
-    return links
+    return {ep: e for ep, e in links.items() if e}

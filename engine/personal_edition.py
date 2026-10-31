@@ -227,6 +227,11 @@ class PersonalSpec:
 
     def effective_addons(self) -> List[str]:
         chosen = DEFAULT_ADDONS if self.addons is None else self.addons
+        # Oct 31 2026: a member who saved stocks and never touched the
+        # toggles hears them. My Nerra says a paid plan reads them; the
+        # markets minute was off by default, so it never did.
+        if self.addons is None and self.tickers:
+            chosen = tuple(chosen) + ("markets",)
         allowed = set(addons_for_tier(self.tier))
         return [a for a in chosen if a in allowed]
 

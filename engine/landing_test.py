@@ -597,8 +597,17 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     pool = [s for s in ordered if s["slug"] not in flagship_order] or ordered
     if pool is ordered:  # nothing but flagships published: they lead as usual
         featured = []
-    lead = _rotated_lead(pool) or next(
-        (s for s in pool if s["image_orientation"] == "landscape"), pool[0])
+    # Oct 31 2026: before dawn the only story out may have no landscape
+    # picture (UC's scenes are portrait), and the page then led for up to 80
+    # minutes with YESTERDAY's story under today's dateline. The newest day
+    # comes first: its landscape story, then any of its stories with a
+    # picture, and only then an older landscape lead.
+    newest = pool[0].get("date_obj")
+    lead = (_rotated_lead(pool)
+            or next((s for s in pool if s.get("date_obj") == newest
+                     and s["image_orientation"] == "landscape"), None)
+            or next((s for s in pool if s.get("date_obj") == newest and s["image_url"]), None)
+            or next((s for s in pool if s["image_orientation"] == "landscape"), pool[0]))
     rest = [s for s in pool if s is not lead]
     with_art = [s for s in rest if s["image_url"]]
     top = _varied((with_art + [s for s in rest if not s["image_url"]]),

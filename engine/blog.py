@@ -1631,6 +1631,8 @@ def generate_blog_post_html(
     related_posts: Optional[list] = None,
     youtube_url: str = "",
     youtube_short_url: str = "",
+    youtube_release: str = "",
+    youtube_short_release: str = "",
     translation_bodies: Optional[dict] = None,
 ) -> str:
     """Generate a complete blog post HTML page from digest markdown.
@@ -2047,6 +2049,11 @@ def generate_blog_post_html(
         # "Watch on YouTube" button next to the existing podcast/summaries CTAs.
         "youtube_url": youtube_url or metadata.get("youtube_url", ""),
         "youtube_short_url": youtube_short_url or metadata.get("youtube_short_url", ""),
+        # Oct 31 2026: a video that is still private carries its release
+        # instant; the button is rendered hidden and the site script shows
+        # it once that time has passed (assets/js/nn-app.js).
+        "youtube_release": youtube_release,
+        "youtube_short_release": youtube_short_release,
         # For structured data in the blog post template (PodcastEpisode JSON-LD).
         # Falls back gracefully so | tojson never receives Undefined.
         "summary": metadata.get("hook", "") or metadata.get("title", ""),

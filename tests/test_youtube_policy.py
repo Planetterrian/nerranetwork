@@ -66,9 +66,20 @@ class TestVelocityMath:
     def test_same_day_video_divides_by_one(self):
         mod = _load_script()
         vel = mod.collect_velocities(_stats([
-            _vid(published="2026-07-13", views=7),
+            _vid(published="2026-07-13", views=7, kind="short"),
         ]))
-        assert vel[("tesla", "en", "long")] == [7.0]
+        assert vel[("tesla", "en", "short")] == [7.0]
+
+    def test_a_long_form_under_two_days_old_is_not_a_rate(self):
+        """Oct 31 2026: a young long's first-day burst read as a daily rate
+        and turned daily dub long-forms on."""
+        mod = _load_script()
+        vel = mod.collect_velocities(_stats([
+            _vid(published="2026-07-13", views=40),   # 0 days — out
+            _vid(published="2026-07-12", views=40),   # 1 day — out
+            _vid(published="2026-07-11", views=40),   # 2 days — in
+        ]))
+        assert vel[("tesla", "en", "long")] == [20.0]
 
     def test_window_excludes_old_and_future_videos(self):
         mod = _load_script()
@@ -82,9 +93,9 @@ class TestVelocityMath:
     def test_channels_and_kinds_are_separate_buckets(self):
         mod = _load_script()
         vel = mod.collect_velocities(_stats([
-            _vid(kind="long", channel="en", published="2026-07-12", views=4),
+            _vid(kind="long", channel="en", published="2026-07-11", views=8),
             _vid(kind="short", channel="en", published="2026-07-12", views=8),
-            _vid(kind="long", channel="ru", published="2026-07-12", views=2),
+            _vid(kind="long", channel="ru", published="2026-07-11", views=4),
         ]))
         assert vel[("tesla", "en", "long")] == [4.0]
         assert vel[("tesla", "en", "short")] == [8.0]
@@ -1133,7 +1144,9 @@ class TestDeadShortsTier:
         mod = _load_script()
         stats = _stats([_vid("omni_view", "short", "en", "2026-09-20", 3)
                         for _ in range(8)], generated="2026-09-22T00:00:00+00:00")
-        reach = _reach(_dead_rows("omni_view"))
+        # The bar is relative to the channel (Oct 31 2026): a healthy show
+        # beside it sets the channel median.
+        reach = _reach(_dead_rows("omni_view") + _dead_rows("tesla", views=40))
         p1 = mod.build_policy(stats, None, now_iso="2026-09-22T00:00:00+00:00", reach=reach)
         e1 = p1["channels"]["en"]["omni_view"]
         assert e1["shorts_per_episode"] == 1 and e1["shorts_dead_pending"] is True
@@ -1187,3 +1200,63 @@ class TestDeadShortsTier:
     def test_nightly_passes_the_reach_file_after_the_tracker(self):
         wf = (_ROOT / ".github" / "workflows" / "nightly-maintenance.yml").read_text(encoding="utf-8")
         assert wf.index("scripts/track_early_reach.py") < wf.index("scripts/update_youtube_policy.py")
+
+
+class TestRelativeDeadShortsFloor:
+    """Oct 31 2026: the dead-Shorts bar is half the channel's own hook-Short
+    median (never above 10), and a show with a breakout tail is not dead."""
+
+    TODAY = datetime.date(2026, 10, 31)
+
+    def _obs(self, views):
+        return [(f"2026-10-{11 + i:02d}", v) for i, v in enumerate(views)]
+
+    def test_floor_follows_the_channel(self):
+        mod = _load_script()
+        assert mod.dead_shorts_floor(11.0) == 5.5
+        assert mod.dead_shorts_floor(60.0) == 10.0
+        assert mod.dead_shorts_floor(None) == 10.0
+
+    def test_a_show_at_the_channel_median_is_not_dead(self):
+        mod = _load_script()
+        e = mod.advance_dead_shorts(None, self._obs([4, 14, 9, 8, 9, 2, 8, 6, 9]), "en",
+                                    self.TODAY, have_reach=True, channel_median=11.0)
+        assert e["shorts_dead_pending"] is None and e["hook_short_floor"] == 5.5
+
+    def test_a_breakout_tail_keeps_a_low_median_show_alive(self):
+        mod = _load_script()
+        # First Principles, Oct 2026: median 5, p75 21 against a channel median of 11.
+        views = [21, 3, 5, 3, 4, 54, 4, 73, 25, 34, 18, 5, 12, 3, 22, 2, 3, 3]
+        e = mod.advance_dead_shorts(None, self._obs(views), "en", self.TODAY,
+                                    have_reach=True, channel_median=11.0)
+        assert e["shorts_dead_pending"] is None
+
+    def test_a_show_far_under_the_channel_still_enters(self):
+        mod = _load_script()
+        e = mod.advance_dead_shorts(None, self._obs([1, 2, 3, 2, 1, 4, 2, 3]), "en",
+                                    self.TODAY, have_reach=True, channel_median=11.0)
+        assert e["shorts_dead_pending"] is True
+
+    def test_a_probing_show_is_released_when_the_window_clears(self):
+        mod = _load_script()
+        prev = {"shorts_probe_weekly": True, "shorts_probe_since": "2026-10-28"}
+        e = mod.advance_dead_shorts(prev, self._obs([7, 3, 25, 11, 18, 4, 1, 3, 10, 16, 9]),
+                                    "en", self.TODAY, have_reach=True, channel_median=11.0)
+        assert e["shorts_probe_weekly"] is False
+
+    def test_too_few_observations_keep_a_probing_show_probing(self):
+        mod = _load_script()
+        prev = {"shorts_probe_weekly": True, "shorts_probe_since": "2026-09-25"}
+        e = mod.advance_dead_shorts(prev, self._obs([4, 7]), "en", self.TODAY,
+                                    have_reach=True, channel_median=11.0)
+        assert e["shorts_probe_weekly"] is True
+
+
+class TestDubLongFormsNeedTheFullRead:
+    def test_two_probe_longs_never_promote_a_dub_channel(self):
+        mod = _load_script()
+        for ch in ("ru", "fr"):
+            tier, long_vpd, _s, _r = mod.compute_tier([9.0, 9.0], [20.0] * 5, "C", ch)
+            assert long_vpd is None and tier == "C", ch
+        tier, long_vpd, _s, _r = mod.compute_tier([9.0, 9.0], [20.0] * 5, "C", "en")
+        assert long_vpd == 9.0
