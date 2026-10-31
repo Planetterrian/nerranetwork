@@ -178,6 +178,21 @@ class TestSoftPersonalInterestPage:
         soft_at = src.index('id="soft-interest"')
         plans_at = src.index('id="plans"')
         assert soft_at < plans_at
+        # Oct 31 2026 (Patrick): free-account form above paid tiers — RSS
+        # items promise "sources and notes by email, free" and must not
+        # land the listener on the paid tier cards first. (Hero copy may
+        # still mention $4.99; assert against the tier price markup.)
+        assert 'id="join-free"' in src
+        join_at = src.index('id="join-free"')
+        assert soft_at < join_at < plans_at
+        assert src.index('<p class="price">$4.99') > join_at
+        assert src.index('<p class="price">$8.99') > join_at
+        join_html = _read("join.html")
+        assert join_html.index('id="join-free"') < join_html.index('id="plans"')
+        assert join_html.index('id="join-free"') < join_html.index('<p class="price">$4.99')
+        assert join_html.index('id="join-free"') < join_html.index('<p class="price">$8.99')
+        assert 'data-success-redirect="account.html"' in join_html
+        assert join_html.count('id="join-free"') == 1
 
     def test_worker_owns_the_list(self):
         handlers = _read("workers/gallery/src/handlers.ts")
