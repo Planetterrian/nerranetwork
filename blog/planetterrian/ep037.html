@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Planetterrian Daily Blog RSS" href="https://nerranetwork.com/blog_planetterrian.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1894,7 +1899,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1907,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep037_20260329.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep037_20260329.mp3" data-nn-card data-title="Supercomputer simulations have mapped the full motions of the spliceosome inside a two-million-atom model of the human cell." data-show="Planetterrian Daily" data-cover="../../assets/covers/planetterrian-daily.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep037_20260329.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2109,6 +2114,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2468,24 +2474,24 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/fascinating_frontiers/ep237.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/fascinating_frontiers/ep238.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Reid Wiseman, Artemis II commander, becomes JPL deputy director on November 30.</h3>
+                        <h3>A 4.1-billion-year-old Martian meteorite offers the oldest direct sample of the red planet's crust and mantle.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep157.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/unintended_consequences/ep158.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>The 22 trillion won Four Rivers Project’s 16 weirs slowed flows and caused algal blooms across South Korea’s rivers.</h3>
+                        <h3>After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep145.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep146.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Edison paid half a million dollars to light one square mile with six custom dynamos.</h3>
+                        <h3>A two-hundred-dollar perfume bottle holds cents of alcohol and a few dollars of oils.</h3>
                         
                     </a>
                     
@@ -2940,7 +2946,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"

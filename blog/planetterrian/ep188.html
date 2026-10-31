@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Planetterrian Daily Blog RSS" href="https://nerranetwork.com/blog_planetterrian.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1899,7 +1904,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1907,7 +1912,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep188_20260919.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep188_20260919.mp3" data-nn-card data-title="Multiomic analysis shows regular exercise produces a distinct immune signature across RNA, epigenetics, metabolites and lipids." data-show="Planetterrian Daily" data-cover="../../assets/covers/planetterrian-daily.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep188_20260919.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2149,6 +2154,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2592,24 +2598,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/fascinating_frontiers/ep237.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/fascinating_frontiers/ep238.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Reid Wiseman, Artemis II commander, becomes JPL deputy director on November 30.</h3>
+                        <h3>A 4.1-billion-year-old Martian meteorite offers the oldest direct sample of the red planet's crust and mantle.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/models_agents_beginners/ep211.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                    <a href="../../blog/models_agents_beginners/ep212.html" class="blog-related-card" style="--card-show-color: #C2410C">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
-                        <h3>New York just passed a law that limits how young people can use AI chatbots.</h3>
+                        <h3>Google just made it possible to create and edit real documents inside an AI chat.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/tesla/ep649.html" class="blog-related-card" style="--card-show-color: #E31937">
+                    <a href="../../blog/tesla/ep650.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
-                        <h3>Tesla added a Trick or Treat mode that plays spooky sounds and lights when visitors approach the car.</h3>
+                        <h3>Tesla's Robotaxi app now shows first rides free in Houston and Dallas as the service area expands nearly tenfold.</h3>
                         
                     </a>
                     
@@ -3064,7 +3070,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"

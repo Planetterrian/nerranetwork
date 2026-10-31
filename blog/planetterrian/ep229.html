@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Planetterrian Daily Blog RSS" href="https://nerranetwork.com/blog_planetterrian.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1887,6 +1892,11 @@
                     Listen to podcast
                 </a>
                 
+                <a href="https://www.youtube.com/watch?v=fdgCVVzP9vQ" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="short">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                    Watch the Short
+                </a>
+                
             </div>
         </div>
     </header>
@@ -1894,7 +1904,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1912,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep229_20261030.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep229_20261030.mp3" data-nn-card data-title="Boosting fibroblast growth factor 13 from astrocytes slows aging throughout the bodies of mice." data-show="Planetterrian Daily" data-cover="../../assets/covers/planetterrian-daily.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep229_20261030.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2189,6 +2199,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2526,12 +2537,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep230.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 230 · Spatial transcriptomics reveals how neighboring tissues send WNT and BMP signals that steer early gonadal cell fate in human embryos.</span>
+                </a>
                 
             </nav>
             
@@ -2561,6 +2570,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>More from Planetterrian Daily</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep230.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Ep 230</span>
+                        <h3>Spatial transcriptomics reveals how neighboring tissues send…</h3>
+                    </a>
+                    
                     <a href="ep228.html" class="blog-related-card" style="--card-show-color: #017A99">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Ep 228</span>
                         <h3>Brainstem cells limit dangerous blood pressure swings even…</h3>
@@ -2581,11 +2595,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <h3>A liquid painted on teeth stops cavities in young children…</h3>
                     </a>
                     
-                    <a href="ep224.html" class="blog-related-card" style="--card-show-color: #017A99">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Ep 224</span>
-                        <h3>Long-read nanopore sequencing uncovers hidden DNA…</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../planetterrian.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">Planetterrian Daily show page</a><span aria-hidden="true"> · </span>
@@ -2600,10 +2609,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/fascinating_frontiers/ep237.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/fascinating_frontiers/ep238.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Reid Wiseman, Artemis II commander, becomes JPL deputy director on November 30.</h3>
+                        <h3>A 4.1-billion-year-old Martian meteorite offers the oldest direct sample of the red planet's crust and mantle.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep159.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>Flight envelope protection cut fatal loss-of-control accidents 91 percent yet left pilots slower to recover when automation handed the airplane back.</h3>
                         
                     </a>
                     
@@ -2611,13 +2627,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
                         <h3>After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017.</h3>
-                        
-                    </a>
-                    
-                    <a href="../../blog/unintended_consequences/ep157.html" class="blog-related-card" style="--card-show-color: #B45309">
-                        
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>The 22 trillion won Four Rivers Project’s 16 weirs slowed flows and caused algal blooms across South Korea’s rivers.</h3>
                         
                     </a>
                     
@@ -3072,7 +3081,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
