@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Models & Agents for Beginners Blog RSS" href="https://nerranetwork.com/blog_models_agents_beginners.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1887,6 +1892,11 @@
                     Listen to podcast
                 </a>
                 
+                <a href="https://www.youtube.com/watch?v=b9CLY5pT71c" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                    Watch on YouTube
+                </a>
+                
             </div>
         </div>
     </header>
@@ -1894,7 +1904,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1912,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep212_20261030.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep212_20261030.mp3" data-nn-card data-title="Google just made it possible to create and edit real documents inside an AI chat." data-show="Models &amp; Agents for Beginners" data-cover="../../assets/covers/models-agents-beginners.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep212_20261030.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2069,6 +2079,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2343,12 +2354,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep213.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 213 · US students can still claim four free months of ChatGPT Plus before tonight’s deadline.</span>
+                </a>
                 
             </nav>
             
@@ -2376,6 +2385,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>More from Models & Agents for Beginners</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep213.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Ep 213</span>
+                        <h3>US students can still claim four free months of ChatGPT Plus…</h3>
+                    </a>
+                    
                     <a href="ep211.html" class="blog-related-card" style="--card-show-color: #C2410C">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Ep 211</span>
                         <h3>New York just passed a law that limits how young people can…</h3>
@@ -2396,11 +2410,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <h3>AI agents are now cold-emailing real editors to pitch news…</h3>
                     </a>
                     
-                    <a href="ep207.html" class="blog-related-card" style="--card-show-color: #C2410C">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Ep 207</span>
-                        <h3>One gamer used ChatGPT to build custom mods that let him…</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../models-agents-beginners.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">Models & Agents for Beginners show page</a><span aria-hidden="true"> · </span>
@@ -2415,24 +2424,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents/ep218.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                    <a href="../../blog/models_agents/ep220.html" class="blog-related-card" style="--card-show-color: #7C3AED">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
-                        <h3>Gemini 4 Carbon scores 88.2 percent on vulnerability finding and leads the Artificial Analysis Intelligence Index at 59.</h3>
+                        <h3>AI labs gave publishers one standardized signal to block future training scrapers across OpenAI, Google, Microsoft and Anthropic at once.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep157.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/models_agents/ep219.html" class="blog-related-card" style="--card-show-color: #7C3AED">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>The 22 trillion won Four Rivers Project’s 16 weirs slowed flows and caused algal blooms across South Korea’s rivers.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Samaya Sterling beats Claude Fable 5.1 on FrontierFinance at one-eleventh the cost.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/omni_view/ep220.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/tesla/ep650.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>North Korea fired multiple missiles toward the sea, raising security concerns for millions across East Asia.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla's Robotaxi app now shows first rides free in Houston and Dallas as the service area expands nearly tenfold.</h3>
                         
                     </a>
                     
@@ -2887,7 +2896,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"

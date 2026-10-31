@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Models & Agents for Beginners Blog RSS" href="https://nerranetwork.com/blog_models_agents_beginners.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1894,7 +1899,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1907,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep021_20260416.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep021_20260416.mp3" data-nn-card data-title="What if your browser could chat with you about any webpage you&#39;re on — using ChatGPT or Claude?" data-show="Models &amp; Agents for Beginners" data-cover="../../assets/covers/models-agents-beginners.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents_beginners/MAB_Ep021_20260416.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2043,6 +2048,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2431,24 +2437,24 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents/ep218.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                    <a href="../../blog/models_agents/ep220.html" class="blog-related-card" style="--card-show-color: #7C3AED">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
-                        <h3>Gemini 4 Carbon scores 88.2 percent on vulnerability finding and leads the Artificial Analysis Intelligence Index at 59.</h3>
+                        <h3>AI labs gave publishers one standardized signal to block future training scrapers across OpenAI, Google, Microsoft and Anthropic at once.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/spacex/ep145.html" class="blog-related-card" style="--card-show-color: #1A5CFF">
+                    <a href="../../blog/unintended_consequences/ep158.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #1A5CFF, white 35%)">SpaceX Daily</span>
-                        <h3>Crew Dragon Grace docked with the ISS after seven hours and fifty-five minutes, the fastest US crewed flight to the station.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep146.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep147.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>A two-hundred-dollar perfume bottle holds cents of alcohol and a few dollars of oils.</h3>
+                        <h3>Power looms in 1820s Lancashire wove seven pieces a week against two from hand looms.</h3>
                         
                     </a>
                     
@@ -2903,7 +2909,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
