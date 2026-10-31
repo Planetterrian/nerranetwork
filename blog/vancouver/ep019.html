@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Vancouver Daily News Blog RSS" href="https://nerranetwork.com/blog_vancouver.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1894,7 +1899,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1907,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/vancouver/Vancouver_Daily_Ep019_20261011.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/vancouver/Vancouver_Daily_Ep019_20261011.mp3" data-nn-card data-title="Ten-man Whitecaps draw 1-1 and clinch an MLS playoff spot." data-show="Vancouver Daily News" data-cover="../../assets/covers/vancouver.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/vancouver/Vancouver_Daily_Ep019_20261011.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2139,6 +2144,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2503,24 +2509,24 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/omni_view/ep221.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/omni_view/ep222.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>Binance suffered a suspected $6.3 billion hack today, putting crypto holdings of users worldwide at risk.</h3>
+                        <h3>Federal pressure on state election rules has left only 55 percent of Democrats confident the midterm count will be accurate.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep146.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep147.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>A two-hundred-dollar perfume bottle holds cents of alcohol and a few dollars of oils.</h3>
+                        <h3>Power looms in 1820s Lancashire wove seven pieces a week against two from hand looms.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep158.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/unintended_consequences/ep159.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017.</h3>
+                        <h3>Flight envelope protection cut fatal loss-of-control accidents 91 percent yet left pilots slower to recover when automation handed the airplane back.</h3>
                         
                     </a>
                     
@@ -2975,7 +2981,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
