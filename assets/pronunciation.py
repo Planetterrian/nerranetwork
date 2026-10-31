@@ -1471,6 +1471,19 @@ def replace_quarter_notation(text: str) -> str:
     return text
 
 
+#: The words a spelled-out quantity ends on. A one-letter unit after
+#: anything else is a letter, not a unit (Oct 31 2026: M&A Ep220 aired "h n t p plus equals
+#: h meters t p" for "hntp+=hmtp"; "two a meters", "eleven forty seven p
+#: meters" and "l meters underscore" before it).
+_UNIT_NUMBER_WORDS = (
+    "zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|"
+    "thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|"
+    "thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|"
+    "million|billion|trillion|hundreds|thousands|millions|billions|dozen|"
+    "dozens|few|several|half|quarter")
+_UNIT_AFTER_WORD_RE = rf"\b(?i:{_UNIT_NUMBER_WORDS})"
+
+
 def replace_units(text: str) -> str:
     """Expand unit abbreviations: '500 km' -> '500 kilometers'.
 
@@ -1485,8 +1498,13 @@ def replace_units(text: str) -> str:
             text,
         )
         # Also match unit after a word-form number (e.g. "five hundred thousand km")
+        # A one-letter unit ("m") only after a spoken quantity; any other
+        # unit after a word of two or more letters ("per kWh", "in MW"),
+        # never after a lone letter ("h m t p", "p m").
+        before = (_UNIT_AFTER_WORD_RE if len(abbr) == 1
+                  else r"(?<![\w'])(?:\w\w+|\d)")
         text = re.sub(
-            rf"(\w)\s+{re.escape(abbr)}(?!\w)",
+            rf"({before})\s+{re.escape(abbr)}(?!\w)",
             rf"\1 {expansion}",
             text,
         )

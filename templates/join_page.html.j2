@@ -256,7 +256,8 @@
                     {% if s.schedule %}<em>{{ s.schedule }}{% if s.minutes %} · about {{ s.minutes }} min{% endif %}</em>{% endif %}
                     {% if s.access_note %}<b class="nn-showcard-access">{{ s.access_note }}</b>{% endif %}
                     <span class="jn-tag">{{ s.tagline | truncate(100) }}</span>
-                    <a class="jn-hear" href="{{ path_prefix }}{{ s.page }}">Hear it free</a>
+                    {#- A members-only desk is never "free" (Oct 31 2026). -#}
+                    {% if not s.access_note %}<a class="jn-hear" href="{{ path_prefix }}{{ s.page }}">Hear it free</a>{% endif %}
                 </span>
                 <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="{{ s.slug }}" aria-label="Add {{ s.name }} to my edition">+</button>
             </div>
@@ -321,7 +322,7 @@
             <p class="price">Free</p>
             <p class="for">Your own front page of the network.</p>
             <ul>
-                <li>Every show &amp; episode, always free</li>
+                <li>Every public show &amp; episode, always free</li>
                 <li>My Nerra: your shows' newest episodes in your order, with a player that queues them</li>
                 <li>Stories on your topics and places, marked as they air</li>
                 <li>The newsletter, per show: you choose what lands</li>

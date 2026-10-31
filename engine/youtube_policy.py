@@ -76,15 +76,15 @@ def portrait_scene_count(yt_config, *, shorts_planned: int, default: int = 5,
     tier) caps it at ``PROBE_PORTRAIT_SCENES``.
     """
     yaml_count = int(getattr(yt_config, "short_scenes_per_episode", default) or default)
-    if shorts_probe:
+    other_consumers = (bool(getattr(yt_config, "ru_dub_enabled", False))
+                       or bool(list(getattr(yt_config, "dub_languages", None) or []))
+                       or bool(getattr(yt_config, "multi_platform_enabled", False)))
+    # Oct 31 2026: the probe cap is for THIS channel's one weekly Short. A
+    # dubbed show's RU/FR Shorts (FF-RU ships three a day, the network's
+    # best Shorts surface) share the same pool, so they keep the full set.
+    if shorts_probe and not other_consumers:
         yaml_count = min(yaml_count, PROBE_PORTRAIT_SCENES)
-    if int(shorts_planned or 0) > 0:
-        return yaml_count
-    if bool(getattr(yt_config, "ru_dub_enabled", False)):
-        return yaml_count
-    if list(getattr(yt_config, "dub_languages", None) or []):
-        return yaml_count
-    if bool(getattr(yt_config, "multi_platform_enabled", False)):
+    if int(shorts_planned or 0) > 0 or other_consumers:
         return yaml_count
     return 0
 

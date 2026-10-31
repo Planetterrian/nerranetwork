@@ -1243,13 +1243,16 @@
                     episode_video_links) — the button had been dropped by
                     every regen and reached no post. A shorts-only episode
                     links its Short; a still-private video is never linked. -#}
+                {#- Oct 31 2026: a still-private video's button is in the page,
+                    hidden, with its release instant; nn-app.js shows it once
+                    that time passes (nothing rebuilds the post at release). -#}
                 {% if youtube_url %}
-                <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long">
+                <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long"{% if youtube_release %} hidden data-nn-release="{{ youtube_release | e }}"{% endif %}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
                     {% if _is_ru %}Смотреть на YouTube{% else %}Watch on YouTube{% endif %}
                 </a>
                 {% elif youtube_short_url %}
-                <a href="{{ youtube_short_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="short">
+                <a href="{{ youtube_short_url }}" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="short"{% if youtube_short_release %} hidden data-nn-release="{{ youtube_short_release | e }}"{% endif %}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
                     {% if _is_ru %}Смотреть Short{% else %}Watch the Short{% endif %}
                 </a>

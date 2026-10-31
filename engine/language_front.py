@@ -100,16 +100,19 @@ def localize_stamp(stamp: Dict[str, Any], lang: str) -> Dict[str, Any]:
     return out
 
 
-def masthead(now: dt.datetime, lang: str) -> Dict[str, str]:
+def masthead(now: dt.datetime, lang: str,
+             updated: Optional[dt.datetime] = None) -> Dict[str, str]:
     """The dateline and "updated" stamp in *lang* (same clock as the English
-    masthead: Eastern, the network's publishing day)."""
-    base = _nr.masthead(now)
+    masthead: Eastern, the network's publishing day; "updated" is the newest
+    story's time when known, as on the English page)."""
+    base = _nr.masthead(now, updated)
     aware = now if now.tzinfo else now.replace(tzinfo=dt.timezone.utc)
     t = aware.astimezone(_nr.EASTERN)
+    u = dt.datetime.fromisoformat(base["updated_iso"].replace("Z", "+00:00")).astimezone(_nr.EASTERN)
     return {
         **base,
         "date": long_date(t.date(), lang),
-        "updated": f"{t.strftime('%H:%M')} ET",
+        "updated": f"{u.strftime('%H:%M')} ET",
     }
 
 

@@ -96,7 +96,7 @@ class TestTheInlineRunIsUnchanged:
         video = RUN_SHOW[RUN_SHOW.index("def _run_video_stage("):RUN_SHOW.index("def _run_x_stage(")]
         for step in ("_publish_youtube(", "record_youtube_outcomes(",
                      "_write_rss_feed(youtube_long_url, refresh=True",
-                     "_write_blog_post(\"\" if youtube_long_scheduled else youtube_long_url",
+                     "_write_blog_post(\n            youtube_long_url, youtube_short_url, refresh=True,",
                      "build_video_feed_for_show("):
             assert step in video
         x_stage = RUN_SHOW[RUN_SHOW.index("def _run_x_stage("):]

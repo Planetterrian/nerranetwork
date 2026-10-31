@@ -6214,7 +6214,8 @@ def _make_blog_writer(
 ) -> "callable":
     """The episode's blog-post writer: before the video and again with its links."""
     def _write_blog_post(youtube_long_url: str = "", youtube_short_url: str = "",
-                         *, refresh: bool = False) -> None:
+                         *, refresh: bool = False, long_release: str = "",
+                         short_release: str = "") -> None:
         try:
             from engine.blog import extract_blog_metadata, generate_blog_post_html
             from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
@@ -6254,6 +6255,8 @@ def _make_blog_writer(
                     x_thread, _blog_meta, _NS[config.slug], _blog_env,
                     youtube_url=youtube_long_url,
                     youtube_short_url=youtube_short_url,
+                    youtube_release=long_release,
+                    youtube_short_release=short_release,
                 )
                 _blog_dir = PROJECT_ROOT / "blog" / config.slug
                 _blog_dir.mkdir(parents=True, exist_ok=True)
@@ -6466,11 +6469,15 @@ def _run_video_stage(
             logger.warning("Feed refresh with the YouTube link failed (non-fatal): %s", exc)
     if youtube_long_url or youtube_short_url:
         # Oct 28 2026: the post links the hook Short only once it is public
-        # too (the template falls back to it when the long-form is absent);
-        # the next site rebuild links whichever went public later.
-        _write_blog_post("" if youtube_long_scheduled else youtube_long_url,
-                         "" if _still_scheduled(youtube_urls.get("short_publish_at") or "")
-                         else youtube_short_url, refresh=True)
+        # too (the template falls back to it when the long-form is absent).
+        # Oct 31 2026: a scheduled video's button goes in hidden with its
+        # release instant and the site script shows it then — nothing
+        # rebuilt the post at release, so most posts never linked theirs.
+        _short_scheduled = _still_scheduled(youtube_urls.get("short_publish_at") or "")
+        _write_blog_post(
+            youtube_long_url, youtube_short_url, refresh=True,
+            long_release=(youtube_urls.get("long_publish_at") or "") if youtube_long_scheduled else "",
+            short_release=(youtube_urls.get("short_publish_at") or "") if _short_scheduled else "")
 
     # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
     # uploaded to R2 during the YouTube stage; attach it to the summaries
@@ -8647,9 +8654,12 @@ def _publish_youtube(
         fresh_long_scenes: "list[Path]" = []
         fresh_short_scenes: "list[Path]" = []
     else:
+        # Oct 31 2026: a Shorts-only day pays for ONE 16:9 scene on purpose
+        # (thumbnail base + gallery); it used to be thrown away for being
+        # fewer than two.
         fresh_long_scenes = (
             [Path(p) for p in long_scene_paths if Path(p) != Path(cover_path)]
-            if len(long_scene_paths) >= 2 else []
+            if len(long_scene_paths) >= (2 if _long_form_produced else 1) else []
         )
         fresh_short_scenes = (
             [Path(p) for p in short_scene_paths if Path(p) != Path(cover_path)]
@@ -8660,7 +8670,10 @@ def _publish_youtube(
     if not recap_pool_used and video_provider != "grok":
         try:
             from engine.visual_reuse import fallback_scene_pool
-            if len(long_scene_paths) < 2:
+            # A deliberately single 16:9 scene (no long-form today) is not a
+            # degraded set either (Oct 31 2026: FPD and Planetterrian logged
+            # "degraded" on every Shorts-only day).
+            if len(long_scene_paths) < (2 if _long_form_produced else 1):
                 _fb_long = fallback_scene_pool(
                     config, show_slug=config.slug,
                     episode_id=f"ep{episode_num:03d}",

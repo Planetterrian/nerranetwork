@@ -285,7 +285,25 @@
     } catch (e) {}
   }
 
+  // ---------------------------------------------------- scheduled videos
+  // Oct 31 2026: a video that is still private when its page is built is in
+  // the page hidden, with its release instant (data-nn-release). It shows
+  // once that time has passed: on load, or while the page stays open.
+  function releaseScheduled() {
+    var now = Date.now(), next = Infinity;
+    document.querySelectorAll('[data-nn-release]').forEach(function (n) {
+      var at = Date.parse(n.getAttribute('data-nn-release'));
+      if (isNaN(at)) { return; }
+      if (at <= now) { n.hidden = false; n.removeAttribute('data-nn-release'); }
+      else if (at < next) { next = at; }
+    });
+    if (next !== Infinity && next - now < 12 * 3600 * 1000) {
+      setTimeout(releaseScheduled, Math.max(1000, next - now + 1000));
+    }
+  }
+
   function init() {
+    releaseScheduled();
     paintInstall();
     offerLater();
     if (standalone) {

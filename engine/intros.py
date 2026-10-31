@@ -1518,7 +1518,19 @@ def closing_has_ask(closing: str) -> bool:
 
 
 def platform_ask_for(show_slug: str, date: datetime.date, *, is_ru: bool = False) -> str:
-    """The ask sentence for this show on this date, or "" on an off day."""
+    """The ask sentence for this show on this date, or "" on an off day.
+
+    Never on a members-only show (Oct 31 2026): it has no public listing to
+    follow or rate, and six of the desks' first eleven members episodes
+    asked listeners to follow them in their podcast app.
+    """
+    try:
+        from engine.access import mode_for_slug
+
+        if mode_for_slug(show_slug) == "members_only":
+            return ""
+    except Exception:  # noqa: BLE001 — never let config break a closing
+        pass
     offset = sum(ord(c) for c in (show_slug or "")) % PLATFORM_ASK_EVERY_N_DAYS
     if (date.toordinal() + offset) % PLATFORM_ASK_EVERY_N_DAYS:
         return ""

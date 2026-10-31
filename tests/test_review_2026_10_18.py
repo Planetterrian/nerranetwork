@@ -125,7 +125,10 @@ class TestScheduledVideosAreNotLinked:
         src = (ROOT / "run_show.py").read_text()
         assert "youtube_long_scheduled = _still_scheduled(" in src
         assert "if youtube_long_url and not youtube_long_scheduled:" in src
-        assert '_write_blog_post("" if youtube_long_scheduled else youtube_long_url' in src
+        # Oct 31 2026: the post carries a scheduled long-form hidden, with
+        # its release instant, instead of leaving it out.
+        assert ("long_release=(youtube_urls.get(\"long_publish_at\") or \"\") "
+                "if youtube_long_scheduled else \"\"") in src
 
 
 class TestCheckpointPostCarriesItsPanels:

@@ -73,6 +73,16 @@ MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
 # their average clears the floor; they are never enough to turn it off,
 # and a show with long ON still needs four to be read at all.
 LONG_PROBE_MIN_VIDEOS = 2
+# Oct 31 2026: the two-probe promotion is EN only. On the dub channels it
+# turned daily long-forms back on for SpaceX, Tesla and FF (RU and FR) on
+# 10-26..29 from two young videos whose first-day burst read as a daily
+# rate; dub long-forms since Oct 14 earned a median 6 (RU) and 19 (FR)
+# views at day 3 and one subscriber in twenty, against 60 and 58 for the
+# hook Shorts, and each costs ~29 minutes of render. A dub channel still
+# earns long-form back on the full four-video read.
+LONG_PROBE_CHANNELS = frozenset({"en"})
+#: A long-form's velocity is read from its third day on.
+LONG_MIN_AGE_DAYS = 2
 # July 18 2026 (operator decision): the long-form floor is CHANNEL-specific.
 # RU long-form earned 435 views across 68 videos (~9% retention) while RU
 # Shorts carried 7,028 — an RU long_vpd of ~1.2 is noise, not
@@ -99,6 +109,16 @@ STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
 # RU/FR filled Shorts earn 100-225 views (engine.youtube_policy.
 # SHORTS_PROBE_CHANNELS is the one constant both sides read).
 DEAD_SHORTS_FLOOR = 10
+# Oct 31 2026: the floor is RELATIVE to the channel. When the whole EN
+# channel's hook-Short median fell to 11-12 (Oct 2026), an absolute 10 read
+# a channel-wide slump as six dead shows and cut EN Shorts from 6-9 a day
+# to 4 — including First Principles and Fascinating Frontiers, whose
+# breakouts (54-134 views) earned a third of the channel's hook views. A
+# show is dead only when its median is under DEAD_SHORTS_RELATIVE of the
+# channel's median AND its 75th percentile is under the channel median (a
+# show that breaks out one Short in four is not dead). The absolute floor
+# stays the ceiling of the bar, never the bar itself.
+DEAD_SHORTS_RELATIVE = 0.5
 DEAD_SHORTS_WINDOW_DAYS = 21
 DEAD_SHORTS_MIN_VIDEOS = 7
 DEAD_SHORTS_RECOVERY_PROBES = 3
@@ -239,6 +259,11 @@ def collect_velocities(stats: dict) -> Dict[Tuple[str, str, str], List[float]]:
             days = (generated - published).days
             if days < 0 or days > WINDOW_DAYS:
                 continue
+            # Oct 31 2026: a long-form under two days old is its first-day
+            # burst, not a daily rate (views / 1 day); two such dub longs
+            # read as 4+ views a day and turned daily dub long-forms on.
+            if kind == "long" and days < LONG_MIN_AGE_DAYS:
+                continue
             vpd = float(v.get("views") or 0) / max(1, days)
             out.setdefault((slug, channel, kind), []).append(vpd)
     return out
@@ -290,6 +315,32 @@ def _median(values: List[int]) -> Optional[float]:
     return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
 
 
+def _p75(values: List[int]) -> Optional[float]:
+    if not values:
+        return None
+    s = sorted(values)
+    return float(s[int(0.75 * (len(s) - 1))])
+
+
+def channel_hook_medians(
+    hook_reach: Dict[Tuple[str, str], List[Tuple[str, int]]],
+) -> Dict[str, Optional[float]]:
+    """Per channel: the median day-3 views of every show's hook Shorts in
+    the window — the bar a show's own median is read against."""
+    pooled: Dict[str, List[int]] = {}
+    for (_slug, channel), obs in hook_reach.items():
+        pooled.setdefault(channel, []).extend(v for _, v in obs)
+    return {ch: _median(v) for ch, v in pooled.items()}
+
+
+def dead_shorts_floor(channel_median: Optional[float]) -> float:
+    """The median a show's hook Shorts must reach: half the channel's,
+    never above the old absolute floor."""
+    if channel_median is None:
+        return float(DEAD_SHORTS_FLOOR)
+    return min(float(DEAD_SHORTS_FLOOR), DEAD_SHORTS_RELATIVE * channel_median)
+
+
 def advance_dead_shorts(
     prev_entry: Optional[dict],
     observations: Optional[List[Tuple[str, int]]],
@@ -297,6 +348,7 @@ def advance_dead_shorts(
     today: _dt.date,
     *,
     have_reach: bool,
+    channel_median: Optional[float] = None,
 ) -> dict:
     """Dead-Shorts tier state for one show × channel.
 
@@ -327,19 +379,28 @@ def advance_dead_shorts(
     obs = list(observations or [])
     views = [v for _, v in obs]
     median = _median(views)
+    floor = dead_shorts_floor(channel_median)
     state["hook_short_d3_median_21d"] = median
     state["hook_short_n_21d"] = len(views)
+    state["hook_short_floor"] = round(floor, 2)
+    p75 = _p75(views)
+    dead = (len(views) >= DEAD_SHORTS_MIN_VIDEOS and median is not None
+            and median < floor
+            and (channel_median is None or (p75 is not None and p75 < channel_median)))
     if probing:
         probe_views = [v for pub, v in obs if since and pub >= str(since)[:10]]
         recent = probe_views[-DEAD_SHORTS_RECOVERY_PROBES:]
         rec_median = _median(recent)
-        if (len(recent) >= DEAD_SHORTS_RECOVERY_PROBES and rec_median is not None
-                and rec_median >= DEAD_SHORTS_FLOOR):
+        recovered = (len(recent) >= DEAD_SHORTS_RECOVERY_PROBES and rec_median is not None
+                     and rec_median >= floor)
+        # A full window that no longer reads dead also releases the show
+        # (Oct 31 2026: the window still holds the daily Shorts from before
+        # the probe began, so a bar that moved is read at once).
+        cleared = len(views) >= DEAD_SHORTS_MIN_VIDEOS and not dead
+        if recovered or cleared:
             state.update(shorts_probe_weekly=False, shorts_probe_since=None,
                          shorts_dead_pending=None, shorts_dead_streak=0)
         return state
-    dead = (len(views) >= DEAD_SHORTS_MIN_VIDEOS and median is not None
-            and median < DEAD_SHORTS_FLOOR)
     if not dead:
         state.update(shorts_dead_pending=None, shorts_dead_streak=0)
         return state
@@ -376,6 +437,7 @@ def compute_tier(
 
     probe_promoted = False
     if (long_vpd is None and not active_long
+            and (channel or "en").lower() in LONG_PROBE_CHANNELS
             and len(long_vpds) >= LONG_PROBE_MIN_VIDEOS):
         probe_avg = _avg(long_vpds)
         if probe_avg >= long_floor:
@@ -456,6 +518,7 @@ def build_policy(
     velocities = collect_velocities(stats) if stats else {}
     prev_channels = (previous or {}).get("channels") or {}
     hook_reach = collect_hook_short_reach(reach) if reach else {}
+    hook_medians = channel_hook_medians(hook_reach)
     today = (_dt.datetime.fromisoformat(now_iso).date() if now_iso
              else _dt.datetime.now(_dt.timezone.utc).date())
 
@@ -543,7 +606,8 @@ def build_policy(
             # Short a week, on the probe day" (resolve_publish_plan).
             dead = advance_dead_shorts(
                 prev_entry, hook_reach.get((slug, channel)), channel, today,
-                have_reach=bool(hook_reach))
+                have_reach=bool(hook_reach),
+                channel_median=hook_medians.get(channel))
             if dead["shorts_probe_weekly"]:
                 shorts = 0
                 reason += (f"; dead-Shorts tier since {dead['shorts_probe_since']}"
@@ -551,7 +615,7 @@ def build_policy(
                            f"{dead['hook_short_d3_median_21d']}, weekly probe)")
             elif dead["shorts_dead_pending"]:
                 reason += (f"; hook Short d3 median {dead['hook_short_d3_median_21d']}"
-                           f" < {DEAD_SHORTS_FLOOR} (night {dead['shorts_dead_streak']}"
+                           f" < {dead['hook_short_floor']} (night {dead['shorts_dead_streak']}"
                            f" of {STREAK_TO_FLIP} before the weekly-probe tier)")
             channels[channel][slug] = {
                 "tier": active,

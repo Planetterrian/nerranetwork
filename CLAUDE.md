@@ -7507,6 +7507,83 @@ that bind:
 ⚠️ AUDIO: the UC, Tesla and Nerra Daily prompts. A/B-listen the first
 episode of each.
 
+### The 24-hour review: YouTube policy, the front page through the day, My Nerra (Oct 31 2026)
+
+Review [`docs/reviews/review_2026_10_31.md`](docs/reviews/review_2026_10_31.md);
+register `review-2026-10-31`; guards `tests/test_review_2026_10_31.py`,
+`tests/test_youtube_policy.py::{TestRelativeDeadShortsFloor,TestDubLongFormsNeedTheFullRead}`.
+Every run, render and edition of Oct 30-31 succeeded. Rules that bind:
+
+- **The dead-Shorts bar is relative to the channel.** A show enters the
+  weekly-probe tier only when its hook-Short day-3 median is under
+  `DEAD_SHORTS_RELATIVE` (0.5) of the channel's median (never above the old
+  10) AND its 75th percentile is under the channel median. A probing show
+  leaves when its full 21-day window no longer reads dead. The absolute 10
+  had read the Oct 2026 channel-wide slump (channel median 11) as six dead
+  shows and cut EN Shorts from 6-9 a day to 4. That included First
+  Principles and FF, whose breakouts earned a third of the channel's hook
+  views. They are back to a daily Short (`api/youtube_policy.json` was
+  recomputed); MAB and MIT stay in the tier.
+- **Dub long-forms come back on the full four-video read only.**
+  - The two-probe promotion is EN only (`LONG_PROBE_CHANNELS`).
+  - A long-form under two days old is not a rate (`LONG_MIN_AGE_DAYS`).
+  - Two young dub longs had turned daily RU/FR long-forms on for SpaceX,
+    Tesla and FF. They earned a median 6 / 19 day-3 views against 60 / 58
+    for the hook Shorts, at about 29 minutes of render each.
+  - The five probe-promoted entries were reset to C.
+- **A dubbed show keeps its full portrait set on an EN probe day**
+  (`portrait_scene_count`). The probe cap of 2 starved FF-RU's three daily
+  Shorts. **A Shorts-only day's single 16:9 scene is not "degraded"**, and
+  it is kept as the thumbnail base.
+- **A scheduled video's button is in the post, hidden**
+  (`episode_video_links(include_scheduled=True)`, `data-nn-release`,
+  `nn-app.js releaseScheduled`). Posts are built before their long-form
+  goes public and nothing rebuilds them at release, so five of the Oct 31
+  posts never linked their video. A reader still never sees the link
+  before the release time.
+- **`generate_html.py --homepage` also writes `ru/index.html` and
+  `fr/index.html`**, and every workflow that commits `index.html` commits
+  them. Before this they were rebuilt only by the nightly, and read the
+  previous day all morning.
+- **"Updated" on the front pages is the newest story's time**, never the
+  build clock (`newsroom.masthead(now, updated)`, `newest_story_time`). A
+  rebuild with no new story is now byte-identical, so it makes no commit
+  and no Pages deploy. Nine of 26 homepage commits on Oct 31 had changed
+  only that line.
+- **The lead is today's story when today has one.** The newest day's
+  landscape story wins first, then any of its pictured stories, and only
+  then an older landscape lead. Before this, UC's portrait-only scenes had
+  left yesterday's story leading under today's date for up to 80 minutes.
+  A columnist's byline ("Vaughn Palmer:") is never evidence that two
+  headlines are one developing story.
+- **A one-letter unit only after a spoken quantity, and no unit after a
+  lone letter** (`assets/pronunciation.replace_units`; M&A Ep220 aired "h
+  meters t p"). Swept over every committed digest, the change touches only
+  "the m" and "g cm".
+- **Members-only shows never ask for a follow or a rating**
+  (`intros.platform_ask_for`). **A sentence that only reports a reaction
+  to a post is removed** (`listener_noise`: "replied … with 'Cool' and a
+  heart emoji", "Commenters speculated…", "received immediate engagement").
+  Swept, these matched those five sentences and nothing else.
+- **Nerra Personal:**
+  - A member who saved stocks and never touched the toggles hears them:
+    `effective_addons` adds `markets`, and the page's `chosenAddons()`
+    mirrors it.
+  - My Nerra tells each story once: the cards carry only the rail's
+    overflow, with one video card per episode.
+  - Topic words match whole words or inflections, never a prefix. A show's
+    curated `topics` (registry `picker_tags`, now in `personal_front.json`)
+    fill a topic with that show's newest episode.
+  - The members-only desks are never "Hear it free".
+  - `personal_front.json` is not rewritten when only `generated_at` changed.
+
+Operator:
+- `PERSONAL_BATCH_DISPATCH_TOKEN` is still unset, so the paid edition waits
+  for its own sweep cron.
+- The dub map cut is the next YouTube step (about a day of work).
+- The phone front page shows no story on its first screen.
+- Dub Short titles come from the dub's own Whisper text.
+
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
 Operator listen: hiss and clicks on Nerra Daily, on Mira's intro and on the
