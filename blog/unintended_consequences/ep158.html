@@ -41,6 +41,9 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
@@ -64,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=472d212b">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="Unintended Consequences Blog RSS" href="https://nerranetwork.com/blog_unintended_consequences.rss">
@@ -959,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1887,6 +1892,11 @@
                     Listen to podcast
                 </a>
                 
+                <a href="https://www.youtube.com/watch?v=cKa1Hv0rFNw" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="short">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                    Watch the Short
+                </a>
+                
             </div>
         </div>
     </header>
@@ -1894,7 +1904,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1902,7 +1912,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/unintended_consequences/Unintended_Consequences_Ep158_20261030.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/unintended_consequences/Unintended_Consequences_Ep158_20261030.mp3" data-nn-card data-title="After banning four breeds in 1991, UK dog bite hospital admissions rose 81 percent by 2017." data-show="Unintended Consequences" data-cover="../../assets/covers/unintended-consequences.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/unintended_consequences/Unintended_Consequences_Ep158_20261030.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2067,6 +2077,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2575,12 +2586,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep159.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 159 · Flight envelope protection cut fatal loss-of-control accidents 91 percent yet left pilots slower to recover when automation handed the airplane back.</span>
+                </a>
                 
             </nav>
             
@@ -2608,6 +2617,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>More from Unintended Consequences</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep159.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Ep 159</span>
+                        <h3>Flight envelope protection cut fatal loss-of-control…</h3>
+                    </a>
+                    
                     <a href="ep157.html" class="blog-related-card" style="--card-show-color: #B45309">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Ep 157</span>
                         <h3>The 22 trillion won Four Rivers Project’s 16 weirs slowed…</h3>
@@ -2628,11 +2642,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <h3>In 1972 Inco built a 381-metre stack to clear Sudbury's air…</h3>
                     </a>
                     
-                    <a href="ep153.html" class="blog-related-card" style="--card-show-color: #B45309">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Ep 153</span>
-                        <h3>Over 80 percent of Israel's wastewater reused for irrigation…</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../unintended-consequences.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">Unintended Consequences show page</a><span aria-hidden="true"> · </span>
@@ -2647,24 +2656,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/first_principles/ep145.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/first_principles/ep146.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Edison paid half a million dollars to light one square mile with six custom dynamos.</h3>
+                        <h3>A two-hundred-dollar perfume bottle holds cents of alcohol and a few dollars of oils.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/planetterrian/ep228.html" class="blog-related-card" style="--card-show-color: #017A99">
+                    <a href="../../blog/planetterrian/ep229.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>Brainstem cells limit dangerous blood pressure swings even when average readings stay normal.</h3>
+                        <h3>Boosting fibroblast growth factor 13 from astrocytes slows aging throughout the bodies of mice.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/ai_chips/ep038.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                    <a href="../../blog/ai_chips/ep039.html" class="blog-related-card" style="--card-show-color: #4338CA">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">AI Chips & Data Centres Daily</span>
-                        <h3>Nineteen point two terabytes per second is the Vera Rubin bandwidth buyers get, not twenty-two.</h3>
+                        <h3>TSMC is weighing a twenty percent CoWoS price hike as packaging stays tight.</h3>
                         
                     </a>
                     
@@ -3119,7 +3128,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
     <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
-    <script src="../../assets/js/nn-player.js?v=4872756a" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=611ec99a" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
