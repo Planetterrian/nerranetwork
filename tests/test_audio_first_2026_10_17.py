@@ -47,7 +47,9 @@ def test_the_episode_is_complete_before_the_video():
     pos = {k: stage.index(k) for k in (
         "    youtube_urls = _publish_youtube(",
         "        _write_rss_feed(youtube_long_url, refresh=True,",
-        "        _write_blog_post(\"\" if youtube_long_scheduled else youtube_long_url,",
+        # Oct 31 2026: the post is written with the scheduled video's
+        # release instant (hidden until then), never a blank link.
+        "        _write_blog_post(\n            youtube_long_url, youtube_short_url, refresh=True,",
         "    # 12b. Video podcast (July 2026 pilot).",
     )}
     order = sorted(pos, key=pos.get)
