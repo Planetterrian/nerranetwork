@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-10-31",
+    "last_updated": "2026-11-01",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -3188,7 +3188,8 @@
       "entry_volume_ratio_20d": 0.96,
       "entry_vs_50dma_pct": 1.83,
       "sessions_held": 5,
-      "factors_version": 1
+      "factors_version": 1,
+      "callback_in_episode": 218
     },
     {
       "episode_num": 197,
@@ -3803,7 +3804,8 @@
         "nasdaq": -2.27,
         "sp500": -0.78,
         "tsx": -0.58
-      }
+      },
+      "reviewed_in_episode": 218
     },
     {
       "episode_num": 211,
@@ -4071,14 +4073,48 @@
         "LL-041"
       ],
       "resolved_symbol": "AMAT",
-      "pick_reference_price": 390.09
+      "pick_reference_price": 390.09,
+      "current_price": 390.09
+    },
+    {
+      "episode_num": 218,
+      "date": "2026-11-01",
+      "symbol": "KMP.UN",
+      "market": "TSX",
+      "strategy": "Dividend income from a geographically diversified apartment REIT trading below book value with monthly distributions.",
+      "confidence": "Low",
+      "target_range": "+2 percent to +5 percent over the five-session window if volume confirms the support level.",
+      "invalidation": "A drop below the 50-day moving average on volume above the 20-day average would invalidate the income thesis.",
+      "structure": "long_equity",
+      "sector": "other",
+      "strategy_family": "dividend_income",
+      "trade_type": "weekly",
+      "policy_version": 2,
+      "horizon_sessions": 5,
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "stop_loss": {
+        "pct": 8.0
+      },
+      "rules_in_effect": [
+        "LL-067",
+        "LL-066",
+        "LL-002",
+        "LL-028"
+      ],
+      "resolved_symbol": "KMP-UN.TO",
+      "pick_reference_price": 17.1
     }
   ],
   "benchmark": {
     "current_close": 25437.0,
     "inception_to_date_pct": 13.69,
     "ytd_pct": 9.47,
-    "last_updated": "2026-10-31"
+    "last_updated": "2026-11-01"
   },
   "alpha": {
     "inception_to_date_pct": -13.63,
@@ -4086,11 +4122,6 @@
     "monthly": {}
   },
   "sectors": {
-    "financials": {
-      "trade_count": 3,
-      "exposure_pct": 30.0,
-      "cumulative_pnl": 62.53
-    },
     "tech": {
       "trade_count": 3,
       "exposure_pct": 30.0,
@@ -4102,9 +4133,14 @@
       "cumulative_pnl": -100.96
     },
     "other": {
-      "trade_count": 1,
-      "exposure_pct": 10.0,
+      "trade_count": 2,
+      "exposure_pct": 20.0,
       "cumulative_pnl": 0.0
+    },
+    "financials": {
+      "trade_count": 2,
+      "exposure_pct": 20.0,
+      "cumulative_pnl": 39.72
     },
     "energy": {
       "trade_count": 2,
@@ -4184,10 +4220,22 @@
       "win_rate_pct": 53.0,
       "cumulative_pnl": 374.44,
       "alpha_vs_nasdaq": -14.76
+    },
+    {
+      "month": "2026-11",
+      "trades": 93,
+      "win_rate": 51.6,
+      "portfolio_pct": null,
+      "nasdaq_pct": null,
+      "alpha_pct": null,
+      "portfolio_pnl": 52.2,
+      "total_trades": 93,
+      "win_rate_pct": 51.6,
+      "cumulative_pnl": 52.2,
+      "alpha_vs_nasdaq": -9.41
     }
   ],
   "used_segment_ids": [
-    "mit_dividend_investing_v2",
     "mit_options_intro",
     "mit_technical_analysis_v2",
     "mit_tax_loss_harvesting",
@@ -4246,6 +4294,7 @@
     "mit_contrarian_passive_vs_active",
     "mit_tfsa_investing",
     "mit_ai_investing_tools",
-    "mit_earnings_analysis"
+    "mit_earnings_analysis",
+    "mit_crypto_portfolio"
   ]
 }
