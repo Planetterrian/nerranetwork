@@ -389,5 +389,104 @@ reviews:
     # Operator review 2026-10-30: the memory non-speech fence and the
     # "Mag Seven" prompt line were NOT applied. The first would remove the
     # designed Sunday segment; the second is already true of every script.
+  - date: '2026-11-01'
+    pr: null
+    doc: docs/reviews/mag7_review_2026_11_01.md
+    generated_by: grok-4.5
+    summary: Prior Oct 25 predictions mostly hit (weekday recaps, tape, Tesla boundary, script median); only the still-unshipped digest-floor inversion missed—while new issues are closing “Patrick and Vancouver” grammar, a Before-we-go “watch whether” teaser tic, elevated facts×2 on a few eps, Ep039 thin coverage/length, and a fetch-filter false positive, with Mag Seven/Sunday-memory left alone per operator do_not_retry.
+    scored_prior_predictions:
+    - metric: identity/closing lines using digit 'MAG 7' or ASR 'mag 0' (next 7 after Mag Seven prompt+yaml ship)
+      verdict: hit
+      evidence: 'Operator 2026-10-30: _tts.txt says Mag Seven Daily since Ep009; Whisper digit/mag-0 is transcription formatting only.'
+    - metric: WEEKDAY scripts with week-in-review / past-seven-days / weekend-review recap blocks (next 7)
+      verdict: hit
+      evidence: Ep031–032/034–039 weekdays have no past-week recap; only Sunday Ep033/040 carry designed weekly_summary_segment.
+    - metric: Tesla vehicle/product/FSD/energy/Semi/robotaxi/Cybercab as Top News, Company Desk, or Thread (next 7)
+      verdict: hit
+      evidence: 'Ep034–040 transcripts: no robotaxi/Cybercab/FSD/Semi/vehicle-product Thread or lead; Ep032 was prior-window baseline.'
+    - metric: episodes whose _tts.txt contains multi-company regular-session close board / tape price list (next 7)
+      verdict: hit
+      evidence: 'Ep031–040: no regular-session close boards or multi-ticker tape reads.'
+    - metric: min_digest_words config vs min_podcast_words
+      verdict: miss
+      evidence: shows/mag7.yaml still min_digest_words 1150 < min_podcast_words 1250; raise never shipped.
+    - metric: script word-count median next 7 _tts.txt (digest-side only; no podcast expand)
+      verdict: hit
+      evidence: Ep034–040 median 1593 words; 1/7 under 1250 (Ep039 1183 only).
+    shipped: []
+    deferred:
+    - Live-prune x_accounts after per-handle fetch counts (ledger carry)
+    - Network-wide absence-sentence filter default (still opt-in on mag7)
+    - Dedicated music_file (still assets/music/ModernInvesting.mp3)
+    - Hard drop of Tesla product URLs in hooks/mag7.py pre_fetch — only if boundary misses again after digest reject-list ships (operator decision)
+    - YouTube enable decision (currently false)
+    - Verify @nerranetwork clip posts after x_start_date 2026-10-24
+    - Sticky cross-promo weighting toward AI Chips / Modern Investing / TST
+    - Ep028 title Introduction root-cause in hook/title fallback (recent titles Ep031–040 look healthy)
+    - 'Optional engine/generator.py strip of ### The Tape from script briefing if close boards return (quiet in Ep031–040)'
+    - Opaque source-garble class (Ep026 shattered .io note) — monitor without specimen ban
+    - facts×2 spike follow-up (Ep040=10) only if median breaks ≤4 after digest-floor ship — avoid prompt mass for one ep
+    - Successor-tic watch after watch-whether de-seed (fourth-generation Before-we-go lock)
+    predictions:
+    - metric: min_digest_words >= min_podcast_words in shows/mag7.yaml
+      baseline: min_digest_words 1150 < min_podcast_words 1250
+      expected: min_digest_words >= 1300 and >= min_podcast_words after config ship
+      verdict: pending
+      evidence: null
+    - metric: closing host line 'I'm Patrick and Vancouver' in next 7 _tts/transcripts
+      baseline: 5/10 in Ep031–040 (031,035,036,039,040)
+      expected: 0/7 after template+prompt fix
+      verdict: pending
+      evidence: null
+    - metric: teaser opening continuation matching shape 'watch whether'
+      baseline: ≥3/10 (Ep031,037,038 explicit; related watch-openers)
+      expected: 0/7 after shape ban (watch successor tic)
+      verdict: pending
+      evidence: null
+    - metric: Tesla vehicle/product/FSD/Semi/robotaxi/Cybercab as Top News, Company Desk, or Thread (next 7 after digest reject list)
+      baseline: 0/7 in Ep034–040; reject list still absent
+      expected: 0/7 hold after explicit digest reject + Thread pin ship
+      verdict: pending
+      evidence: null
+    - metric: fetch-filter leakage rows on upgrade/downgrade pattern vs product 'upgrade … buy' prose (next 10 digests)
+      baseline: 1/10 (Ep039 upgrade customers actually buy)
+      expected: 0/10 false-positive body hits after pattern tighten
+      verdict: pending
+      evidence: null
+    - metric: script word-count median and under-floor count next 7 _tts.txt (digest-side only)
+      baseline: last-10 median ~1562; 1/10 under 1250 (Ep039)
+      expected: median ≥1250 and ≤1/7 under floor via digest substance only (no podcast expand)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'Oct 25 prediction miss: digest floor 1150 sits below podcast target 1250. Network length rule — digest substrate only; Ep039 1183/58% coverage is the thin-desk cliff. No podcast_expand / no min_podcast_words hike.'
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Ep039 leakage detector hit product prose 'upgrade customers actually buy'. Keep analyst rating/initiate-coverage exclusions; reduce false positives on product 'upgrade' + incidental 'buy'.
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Boundary held Ep034–040 but explicit reject class still never shipped after Ep004/Ep032. Selection-level reject so product beat cannot be laundered as desk/Thread news.
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Pins Ep032 failure mode at the section contract so Thread cannot launder TST product beat as cross-seven analysis.
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Successor-tic after nearest-date de-seed: Ep031/037/038 locked on Before we go, watch whether…. De-seed by shape + ban, no replacement specimen (ledger meta-rule).'
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep031/035/036/039/040 still speak Patrick and Vancouver despite exact closing_block instruction; pair with verifying generator template uses 'in'.
+    - file: tests/test_mag7_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; wiring guards must use load_config (frame-memory empty-render lesson). Score floor/teaser/closing/boundary/filter next pass.
+    agent_cost_usd: 0.1531
 do_not_retry:
 - 'A memory fence or prompt ban against the Sunday week-in-review on mag7: it is the designed weekly_summary_segment (landmine #19), not leaked memory.'
