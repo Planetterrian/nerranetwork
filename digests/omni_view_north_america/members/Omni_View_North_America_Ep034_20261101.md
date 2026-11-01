@@ -1,0 +1,50 @@
+# Omni View North America
+> **Ten billion dollars is out of Trump's Journal case after a judge barred any refiling.**
+
+**What You Need to Know:** A federal judge has thrown out President Donald Trump's ten-billion-dollar defamation lawsuit against the Wall Street Journal and Rupert Murdoch, and barred him from filing it again. Judge Darrin Gayles found Trump had not shown actual malice over a July 2025 report about an alleged 2003 letter to Jeffrey Epstein. Trump denies wrongdoing and has not been charged.
+
+### Lead
+**'Grasping at straws': Judge dismisses Trump suit against Wall Street Journal over Epstein letter: NPR**
+A US judge on Saturday dismissed President Donald Trump's defamation lawsuit against the Wall Street Journal and media magnate Rupert Murdoch over a report on his ties to Jeffrey Epstein. Trump had sued for 10 billion dollars after the newspaper's story was published in July 2025 detailing the president's alleged 2003 letter to Epstein, which apparently featured a drawing of a naked woman. In Saturday's ruling, Judge Darrin Gayles dismissed the lawsuit with prejudice, meaning Trump cannot file an amended version of the suit, as he did when Gayles turned down an initial version of it back in April. The judge wrote that in bringing his defamation claim, Trump had both times failed to establish that the defendants "acted with actual malice." NPR reported that the judge, saying the president was "grasping at straws," threw the case out. Murdoch is the founder of News Corp., which owns the Wall Street Journal. The House Oversight Committee last year published a copy of Trump's alleged birthday note to Epstein, a short dialogue between "Donald" and "Jeffrey": Donald says, "We have certain things in common," Jeffrey answers, "Yes, we do, come to think of it," Donald asks, "Enigmas never age, have you noticed that?" Jeffrey says, "As a matter of fact, it was clear to me the last time I saw you," and the note ends, "A pal is a wonderful thing. Happy Birthday — and may every day be another wonderful secret," followed by Trump's signature, which takes the place of pubic hair on the nude outline. Channels Television reported that the story piled scrutiny on Trump from Democrats and from his own Republican party, who rejected the president's attempts to downplay the saga as a hoax and called for a full release of legal files on Epstein. Trump's name appears repeatedly in the documents, but he denies any wrongdoing and has not been charged with any criminal offenses connected to the affair. The president fought for months to prevent the Department of Justice from releasing the so-called "Epstein Files" but eventually signed a law passed by Congress requiring their publication. Ahead of the November 3 US midterm elections, which will decide control of Congress, Democrats have reportedly spent more than 35 million dollars on Epstein-related advertisements. With a Republican majority in the House and Senate, Trump has so far enjoyed relatively little political opposition since taking office in January 2025, giving the courts a key role in limiting him. Source: [npr.org](https://www.npr.org/2026/11/01/nx-s1-6025342/judge-dismisses-trump-suit-against-wall-street-journal-epstein-letter) Source: [channelstv.com](https://www.channelstv.com/2026/11/01/us-judge-dismisses-trump-lawsuit-against-wall-street-journal-over-epstein-letter/)
+
+### Across the Region
+**Shooting at Spirit Halloween in California Kills Pregnant Mother of 4: The New York Times**
+A shooting at a Spirit Halloween store in California killed a 31-year-old pregnant mother of four. The New York Times reports the police are searching for a person who shot seven people on the night before Halloween. Families were in the store shopping for last-minute costumes. Source: [nytimes.com](https://www.nytimes.com/2026/10/31/us/shooting-spirit-halloween-california.html)
+
+**Virginia and D.C. sue to block construction of Trump arch: NPR**
+Virginia and the District of Columbia have sued to block construction of a triumphal arch President Trump wants erected in front of the iconic military cemetery outside Washington. NPR reports U.S. District Court Judge Tanya Chutkin ordered both sides to talk and to agree on a proposed briefing schedule on the motion for a temporary restraining order by Saturday evening. Channels Television reports that in a separate case Saturday, a new suit was filed to prevent that attempt, and that on Friday a US federal judge pushed back on government assertions that the planned arch was needed for national security. Trump has said the arch would house drones and snipers. Late Saturday he told reporters, "It's something (the) region needs militarily, and I think aesthetically also," and, "We're going to see if we can get it built." Channels Television described the arch as one of a number of projects launched by Trump in a bid to put his personal stamp on the capital, including a ballroom at the White House and a laborious renovation of the Reflecting Pool on the National Mall. Source: [npr.org](https://www.npr.org/2026/10/31/nx-s1-6024694/virginia-dc-sue-trump-arch) Source: [channelstv.com](https://www.channelstv.com/2026/11/01/us-judge-dismisses-trump-lawsuit-against-wall-street-journal-over-epstein-letter/)
+
+**An embattled Karen Bass is fighting tooth and nail to keep her mayorship in LA. It might be too late: The Guardian**
+The Guardian reports that Los Angeles Mayor Karen Bass, described as embattled, is fighting a strong challenge from a younger, more progressive opponent, with affordability a major election issue. Bass's opponent is Nithya Raman, a member of the Democratic Socialists of America, although the group is considering rescinding its endorsement over her refusal to explicitly embrace the Boycott, Divestment and Sanctions movement against Israel. The Guardian reports that at the end of 2022, the four largest US cities — New York, Los Angeles, Chicago and Houston — all had Black mayors, an alignment it said was made possible by the aftereffects of the Black Lives Matter civil rights movement and the wave of protests following the killing of George Floyd in 2020. Six years on, the Guardian reports, only one of those mayors remains: Karen Bass of Los Angeles. Source: [theguardian.com](https://www.theguardian.com/us-news/2026/nov/01/karen-bass-los-angeles-mayoral-race)
+
+### Also Today
+**Did the Peltola Campaign Seal the Fate of Alaska's Ranked Choice Vote?: The New York Times**
+The New York Times reports that beyond hotly contested Senate and governor's races, Alaskans will decide Tuesday whether to scrap the state's unique ballot, and that the campaign of Mary Peltola may have bolstered critics of the system. Source: [nytimes.com](https://www.nytimes.com/2026/11/01/us/alaska-ranked-choice-voting-peltola.html)
+
+**A Florida Election Chief Urges In-Person Voting Over 'Serious' Postal Delays: The New York Times**
+The Broward County supervisor of elections said his office had received dozens of reports that ballots were not being delivered in a timely manner, and he urged in-person voting over what he called serious postal delays. Source: [nytimes.com](https://www.nytimes.com/2026/10/31/us/elections/florida-early-voting-usps-delays.html)
+
+**Endangered North Atlantic right whale entangled in gear spotted in the Gulf of St. Lawrence: The Globe and Mail**
+An endangered North Atlantic right whale entangled in gear was spotted in the Gulf of St. Lawrence, and if it is located again, officials plan to tag the gear with a satellite tracker and try to disentangle the animal. Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/article-endangered-north-atlantic-right-whale-entangled-in-gear-spotted-in-the/)
+
+**Carney refuses to rush US trade deal as tariffs continue to hit Canadian industries: Philippine Canadian Inquirer**
+Carney is refusing to rush a US trade deal as tariffs continue to hit Canadian industries. Source: [canadianinquirer.net](https://canadianinquirer.net/2026/11/01/carney-refuses-to-rush-us-trade-deal-as-tariffs-continue-to-hit-canadian-industries/)
+
+**Canada shelves pledge to phase out captivity of elephants and great apes: CBC** Source: [cbc.ca](https://www.cbc.ca/news/canada/jane-goodall-act-elephant-captivity-9.7403457)
+
+**Dozens spend Halloween protesting Ontario's decision to continue removing bike lanes in Toronto: CBC** Source: [cbc.ca](https://www.cbc.ca/lite/story/9.7404375)
+
+**Alberta separatist Jeff Rath kicked out of governing United Conservative Party: CBC** Source: [cbc.ca](https://www.cbc.ca/player/play/video/9.7404416)
+
+**Republicans mount 'most aggressive play' for Black voters in Michigan Senate race: The Washington Post**
+The Washington Post reports Republicans are mounting what it calls their most aggressive play for Black voters in the Michigan Senate race. Source: [washingtonpost.com](https://www.washingtonpost.com/politics/2026/11/01/black-voters-become-pivot-michigan-senate-race/)
+
+**Lack of major property tax relief in Kansas prompts finger-pointing by governor candidates: KCUR**
+Kansas governor candidates are pointing fingers over a lack of major property tax relief. Source: [kcur.org](https://www.kcur.org/politics-elections-and-government/2026-11-01/lack-of-major-property-tax-relief-in-kansas-prompts-finger-pointing-in-governors-race)
+
+**Hinchey, Sheehan on ballot for New York State Senate District 41: The Poughkeepsie Journal**
+Hinchey and Sheehan are on the ballot for New York State Senate District 41. Source: [poughkeepsiejournal.com](https://www.poughkeepsiejournal.com/story/news/politics/elections/2026/11/01/candidates-for-new-york-state-senate-district-41/92518447007/)
+
+### Progress Watch
+**How one family gave a critical boost to gene therapy research: NPR**
+A family affected by Sanfilippo syndrome raised millions of dollars for research, and the Food and Drug Administration has just approved a gene therapy that support helped make possible. Source: [npr.org](https://www.npr.org/2026/11/01/nx-s1-6014739/sanfilippo-gene-therapy-fayuvi)
