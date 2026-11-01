@@ -1,0 +1,88 @@
+name: MIT — recompute past benchmarks
+
+# Operator-directed (Nov 1 2026): run scripts/recompute_mit_benchmarks.py
+# where market data is reachable. The script rebuilds each closed trade's
+# NASDAQ window and alpha over the bars the trade actually held (entry on
+# or after the pick, exit on or after the entry — never the pre-Aug-18
+# window that backdated entries). Stock-side P&L is never rewritten.
+#
+# DRY RUN IS THE DEFAULT: dispatch once and read the report in the job
+# summary (corrected record −3.35% alpha across 42 trades on Aug 18), then
+# dispatch again with apply ticked. --apply rewrites PUBLISHED performance
+# numbers (operator's call, CLAUDE.md "The MIT recompute"); the run then
+# rebuilds the public ledger and the MIT pages from the new tracker.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Write the realigned tracker and rebuild the public record. Leave false for a dry run.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  # The Modern Investing show run writes the same tracker; share its lock.
+  group: show-modern_investing
+  cancel-in-progress: false
+
+jobs:
+  recompute:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          skip-checkout: 'true'
+
+      - name: Recompute (dry run)
+        if: ${{ !inputs.apply }}
+        run: |
+          set -o pipefail
+          python scripts/recompute_mit_benchmarks.py | tee recompute_report.txt
+          {
+            echo "## MIT benchmark recompute — dry run"
+            echo '```'
+            tail -n 120 recompute_report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Recompute (apply)
+        if: ${{ inputs.apply }}
+        run: |
+          set -o pipefail
+          python scripts/recompute_mit_benchmarks.py --apply | tee recompute_report.txt
+          {
+            echo "## MIT benchmark recompute — APPLIED"
+            echo '```'
+            tail -n 120 recompute_report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Rebuild the public ledger and the MIT pages
+        if: ${{ inputs.apply }}
+        run: |
+          python scripts/build_mit_ledger.py --out api/mit_trade_ledger.json --csv api/mit_trade_ledger.csv
+          python generate_html.py --show modern_investing
+
+      - name: Commit
+        if: ${{ inputs.apply }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/modern_investing/investment_tracker.json
+            api/mit_trade_ledger.json
+            api/mit_trade_ledger.csv
+            modern-investing-performance.html
+            modern-investing.html
+            modern-investing-summaries.html
+          commit-message: "MIT: recompute past benchmarks on the corrected method (${{ github.run_id }})"
+          recovery-on-failure: "true"
+          recovery-show: "mit-recompute"
