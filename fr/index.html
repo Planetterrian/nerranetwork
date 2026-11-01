@@ -859,6 +859,28 @@ body.lt-player-open { overflow: hidden; }
   .lt-flag .lt-lead-audio audio { width: 100%; }
   .lt-page .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
   .lt-page { padding-top: calc(var(--nav-height, 72px) + var(--sp-2)); }
+  /* Nov 1 2026: on a phone the lead story comes straight after the brand
+     line, then the promise, its buttons and the tapes. The masthead's boxes
+     step aside (display: contents; the header sits inside <main>, so it is
+     no landmark) and the group is reordered; every inset and rule the
+     masthead drew is redrawn on the pieces. */
+  .lt-front-top { display: flex; flex-direction: column; }
+  /* width: a .container centres itself with auto margins, which in a flex
+     column would shrink it to its content (the tapes are max-content). */
+  .lt-front-top > * { order: 5; width: 100%; }
+  .lt-front-top .lt-masthead,
+  .lt-front-top .lt-masthead-inner,
+  .lt-front-top .lt-masthead-row { display: contents; }
+  .lt-front-top .lt-masthead-meta { order: 1; margin-left: var(--sp-4); margin-right: var(--sp-4); }
+  .lt-front-top .lt-brandline {
+    order: 2; margin: 0 var(--sp-4) var(--sp-4);
+    border-bottom: 3px double var(--lt-rule-strong); padding-bottom: var(--sp-3);
+  }
+  .lt-front-top > .lt-top { order: 3; }
+  .lt-front-top .lt-standfirst-wrap {
+    order: 4; margin: var(--sp-6) var(--sp-4) var(--sp-4); max-width: none;
+    border-top: 1px solid var(--lt-rule); padding-top: var(--sp-4);
+  }
   .lt-lead .lt-media { border-radius: 8px; }
   .lt-grid-4 { grid-template-columns: minmax(0, 1fr); gap: 0; }
   /* On a phone the top stories read as a list: headline beside a thumbnail,
@@ -1726,8 +1748,7 @@ body.lt-player-open { overflow: hidden; }
     <main id="main-content">
     
 <div class="lt-page">
-
-
+<div class="lt-front-top">
 <header class="lt-masthead container"><div class="lt-masthead-inner">
     <div class="lt-masthead-meta">
         <time class="lt-dateline" datetime="2026-11-01">dimanche 1 novembre 2026</time>
@@ -1873,8 +1894,7 @@ body.lt-player-open { overflow: hidden; }
         <p class="lt-rail-more"><a href="#shows">Toutes les émissions en français →</a></p>
     </aside>
 </section>
-
-
+</div>
 <section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
     <div class="lt-block-head">
         <h2 id="lt-flag-h">Émissions phares</h2>
