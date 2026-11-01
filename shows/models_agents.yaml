@@ -17,6 +17,11 @@ stale_article_days: 3
 # openers the last six scripts leaned on are banned for today's script
 # (engine/frame_memory.py). Prompt context: A/B-listen the first episode.
 frame_memory: true
+# Nov 1 2026 (operator decision on the Oct 31 review): the two-pass script
+# prompt gets the names the digest carries (engine/names_to_keep.py), the
+# data-side lever after three prompt-only passes missed names-kept >= 75%.
+# A/B-listen the first episode.
+names_to_keep: true
 x_posts_as_sources: secondary
 digest_lints:
 - x_only_lead
@@ -214,7 +219,12 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 5000
   podcast_max_tokens: 10000
-  min_podcast_words: 1500
+  # Nov 1 2026 (operator decision, option C of the Oct 31 review): 6 of the
+  # last 10 scripts came in under 1,500 words with every item told, so
+  # 1,200-1,400 is accepted as the show's natural length (prompt says so).
+  # The skip floor stays at its old 900 (60% of 1,500), pinned below.
+  min_podcast_words: 1300
+  min_podcast_publish_words: 900
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
