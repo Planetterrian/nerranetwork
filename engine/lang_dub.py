@@ -695,9 +695,20 @@ def publish_lang_dub(
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = (tmp / f"{lang.code}_short_ep"
                                        f"{episode_num:03d}{suffix}.mp4")
+                    # Nov 1 2026: the hook Short skips the translated map
+                    # (engine/short_furniture.py, youtube.shorts_skip_map);
+                    # every other Short, and any failure, reads the track.
+                    from engine.short_furniture import dub_short_source
+                    _src_audio, _src_tx, _src_words = dub_short_source(
+                        yt, short_idx, window_label, audio, tr_json, _dub_words,
+                        PROJECT_ROOT / config.episode.output_dir, episode_num,
+                        lang.code, tmp / f"{lang.code}_short_source{suffix}",
+                        result)
+                    _map_cut_s = (result.get("shorts_map_cut_s")
+                                  if _src_audio is not audio else None)
                     from engine.shorts_selector import end_on_sentence
                     this_dur = end_on_sentence(
-                        _dub_words, start_offset, short_dur, audio_offset_s=0.0)
+                        _src_words, start_offset, short_dur, audio_offset_s=0.0)
 
                     _window_body = ""
                     if short_idx == 0 or not opening_text:
@@ -730,7 +741,7 @@ def publish_lang_dub(
                     _overlay = title if short_idx == 0 else (_window_body or None)
 
                     ass_path = None
-                    if tr_json is not None:
+                    if _src_tx is not None:
                         try:
                             from engine.captions import (
                                 transcript_to_ass_window,
@@ -738,7 +749,7 @@ def publish_lang_dub(
                             cand = (tmp / f"{lang.code}_short_ep"
                                           f"{episode_num:03d}{suffix}.ass")
                             transcript_to_ass_window(
-                                tr_json, cand,
+                                _src_tx, cand,
                                 window_start_seconds=start_offset,
                                 window_duration_seconds=this_dur,
                                 audio_offset_seconds=0.0)
@@ -754,7 +765,7 @@ def publish_lang_dub(
                                 "%d (%s)", lang.code, short_idx + 1, exc)
 
                     build_short_video(
-                        audio, cover, short_mp4,
+                        _src_audio, cover, short_mp4,
                         start_offset=start_offset,
                         duration=this_dur,
                         hook=_overlay,
@@ -824,6 +835,7 @@ def publish_lang_dub(
                                    if _publish_at else date_str),
                         watch_url=sup.watch_url,
                         channel=lang.channel, window=window_label,
+                        map_cut_s=_map_cut_s,
                         index_path=idx_path)
                     # Shorts never join the podcast playlist (YouTube
                     # Music ingests it as the show's podcast) — same fix

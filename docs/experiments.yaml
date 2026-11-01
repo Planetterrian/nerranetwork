@@ -6079,3 +6079,39 @@ experiments:
       analytics, tag counts from subscribers). Doc docs/nerra_daily_email.md.
       Guards tests/test_nerra_daily_email_2026_11_01.py,
       workers/gallery/test/email.test.ts.
+
+  - id: dub-shorts-skip-map-2026-11-01
+    title: "The @NerraRU / @NerraFR hook Shorts skip the translated map (render only)"
+    area: youtube
+    shipped: 2026-11-01
+    readout: 2026-11-15
+    status: reading
+    baseline: >
+      The Oct 30 splice (shorts-skip-map-2026-10-30) covered English only;
+      the RU and FR hook Shorts kept the translated map, a median 10.5 s
+      (RU) / 10.3 s (FR) of a ~32 s Short listing other stories, measured
+      on the published dub tracks of Oct 20-Nov 1. At age 5 days, Shorts
+      published after Oct 20 held viewers for less than before it: FR 16 ->
+      13 s, RU 19 -> 17 s (docs/reviews/youtube_review_2026_10_30.md).
+    target: >
+      RU and FR hook-Short average view duration at age 5 back to the
+      pre-Oct-20 level (RU >= 18.5 s, FR >= 15.5 s) within two weeks, read
+      on the youtube_videos.ru/fr.json rows that carry map_cut_s against
+      the hook Shorts that do not (Whisper missed the map, or the line
+      count differed).
+    notes: >
+      engine/short_furniture.py dub_short_source / spliced_dub_short_source:
+      the dub's map is the dub line at the English map's index (every
+      mapped RU/FR script of Oct 20-Nov 1 keeps its English line count),
+      its edges found in the dub track's own Whisper words by letters
+      (Cyrillic transliterated, accents folded, digits dropped) and snapped
+      into the track's silence. Wired in engine/ru_dub.py and
+      engine/lang_dub.py for Short #1 (hook_open) behind
+      youtube.shorts_skip_map; result key shorts_map_cut_s, index row
+      map_cut_s. Replay on 172 Whispered dub openings: RU 40 of 41, FR 57
+      of 58 mapped openings cut; 0 of 73 openings without a map; the two
+      misses are Whisper holes over the map (refused). On 65 real splices
+      a fresh Whisper of the spliced source heard no map text (the one word
+      flagged in 65 was the next story's own). The
+      dub long-form, the language feeds and the episode are untouched.
+      Guards: tests/test_dub_shorts_skip_map_2026_11_01.py.

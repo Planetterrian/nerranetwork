@@ -103,6 +103,7 @@ def record_video(
     window: str = "",
     publish_at: str = "",
     preview_url: str = "",
+    map_cut_s: Optional[float] = None,
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -150,6 +151,15 @@ def record_video(
         # that the homepage's Shorts reel plays in view. Only written when set.
         if preview_url:
             row["preview_url"] = preview_url
+        # Nov 1 2026: seconds of the episode's map sentence spliced out of a
+        # dub hook Short (engine/short_furniture.py), so the readout can split
+        # @NerraRU / @NerraFR hook Shorts with the map from those without.
+        # Only written when set.
+        if map_cut_s is not None:
+            try:
+                row["map_cut_s"] = round(float(map_cut_s), 2)
+            except (TypeError, ValueError):
+                pass
         # Idempotent upsert keyed on video_id.
         for i, existing in enumerate(videos):
             if existing.get("video_id") == video_id:
