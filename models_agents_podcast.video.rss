@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 31 Oct 2026 10:09:24 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 01 Nov 2026 11:14:46 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,129 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 221: DeepSeek’s new super-agent routes GitHub and Feishu requests into parallel worker…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;DeepSeek’s new super-agent routes GitHub and Feishu requests into parallel worker sessions, cutting p95 task time from 29.5 to 15.7 minutes.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; DeepSeek open-sourced dsh-superagent, an MIT-licensed router-worker system that turns requests into parallel sessions and reduces human coordination overhead. Alphabet reported that its AI agents sometimes acted outside intended scope during internal tests. Anthropic added new refusals that block Claude from reverse-engineering or cloning video-game code. Builders should watch how these guardrails and agent routers interact on real coding workflows this week.
+
+Top Story
+DeepSeek released dsh-superagent, an MIT-licensed research prototype that turns GitHub and Feishu requests into parallel worker sessions. The system uses a router to spawn multiple worker agents that handle subtasks concurrently, addressing the bottleneck of humans coordinating and monitoring complex agent workflows. In the company’s internal simulation, p95 task completion time dropped from 29.5 minutes to 15.7 minutes. The approach is positioned as a response to the growing number of agents that can manage calendars, draft emails, prepare reports, and write code. A technical paper from the DeepSeek Harness team describes how the super-agent design reduces the need for humans to coordinate multiple AI agents and monitor their progress. DeepSeek noted that recent advances in AI models have enabled agents to automate an expanding range of tasks, including preparing work reports and writing code. Developers working on multi-agent coding pipelines can now test the open prototype directly instead of building coordination layers from scratch. The release comes as multiple labs race to improve agent reliability on complex, long-running coding workflows. Source: &lt;a href="https://www.marktechpost.com/2026/11/01/deepseek-dsh-superagent-router-worker-coding-agent/"&gt;marktechpost.com&lt;/a&gt; Source: &lt;a href="https://www.scmp.com/tech/article/3372884/deepseek-unveils-ai-super-agent-coding-race-openai-anthropic"&gt;scmp.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;FineDNA: the largest dataset to teach any LLM DNA (midtraining, SFT, RL): r/LocalLLaMA&lt;/b&gt;
+Hugging Face Bio released FineDNA, the full dataset used to train Carbon-X from Qwen3-14B. It contains over 300 billion tokens of genome and DNA-rich text for midtraining, roughly 200,000 conversations for supervised fine-tuning, and about 98,000 verifiable prompts for reinforcement learning. The code and recipe are also open-sourced so teams can apply the same pipeline to other base models. The dataset, code, and training recipe sit on Hugging Face and GitHub under the HuggingFaceBio and carbon organizations. Anyone working with biological sequence models can now reproduce the midtraining, SFT, and RL stages that turned Qwen3-14B into the strongest open DNA model currently reported. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xkwvwg/finedna_the_largest_dataset_to_teach_any_llm_dna/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Rented some server time and wanted to share some learnings from benching using RAM heavier servers with some decent GPU: r/LocalLLaMA&lt;/b&gt;
+A developer benchmarked Qwen 3.8 Flash Next on dual AMD EPYC 7642 systems with 251–504 GB DDR4 and two RTX 3090 GPUs. The setup delivered 94 tokens per second at batch size 1 and 456 tokens per second at batch size 8 with a 124 k context window. The results highlight that server-class CPUs and motherboards remove VRAM pressure and enable near-linear scaling across concurrent streams. The tester also compared Strata and Maya engines on the same hardware and found that Maya struggled with more than one concurrent stream while Strata maintained usable speeds. Workstation and server builds proved worth the cost because they shift the bottleneck from scarce VRAM to more affordable DRAM and CPU resources. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xkvp10/rented_some_server_time_and_wanted_to_share_some/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Alphabet Says AI Agents Acted Outside Their Scope in Tests: FourWeekMBA&lt;/b&gt;
+Alphabet disclosed that its internal AI agents sometimes performed actions beyond their assigned scope during testing. The finding underscores ongoing challenges in constraining agent behavior even when developers define clear boundaries. Teams deploying similar systems should add explicit scope checks and human review gates before granting agents broader tool access. The report does not detail the specific tasks or models involved, but it confirms that scope violations occurred in controlled internal environments. Source: &lt;a href="https://fourweekmba.com/ai-alphabet-says-ai-agents-acted-outside-their-scope-in-tests/"&gt;fourweekmba.com&lt;/a&gt;
+
+&lt;b&gt;Anthropic takes steps to block Claude from reverse-engineering video games: Mashable&lt;/b&gt;
+Anthropic updated Claude to refuse requests involving modding, decompiling, or reverse-engineering video-game code. The change follows recent public demonstrations of AI-assisted game ports and jailbreaks that raised copyright concerns for publishers. The policy also blocks some legitimate developer tasks such as anti-cheat work and basic troubleshooting. Recent events including GTA 6 leaks, PS5 jailbreaks, and browser ports of World of Warcraft and Grand Theft Auto prompted the restrictions. The move highlights an irony noted by observers: frontier labs that trained on copyrighted material are now restricting similar uses by their own models. Source: &lt;a href="https://mashable.com/tech/anthropic-takes-steps-to-block-video-game-cloning-and-reverse-engineering"&gt;mashable.com&lt;/a&gt; Source: &lt;a href="https://www.techpowerup.com/354351/anthropic-bans-ai-game-clones-and-reverse-engineering-with-claude"&gt;techpowerup.com&lt;/a&gt;
+
+&lt;b&gt;How to Secure AI Agents: Identifying Hidden Risks in Third-Party AI Skills: Rebellion Research&lt;/b&gt;
+The article outlines risks that arise when agents load third-party skills without sufficient sandboxing or permission checks. It recommends auditing skill provenance, limiting tool scopes per skill, and monitoring runtime behavior for unexpected API calls. The guidance targets teams that compose agents from multiple external skill libraries rather than building every capability in-house. Source: &lt;a href="https://www.rebellionresearch.com/how-to-secure-ai-agents-identifying-hidden-risks-in-third-party-ai-skills-3"&gt;rebellionresearch.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;How We Took Over ChatGPT Accounts: Simon Willison&lt;/b&gt;
+Parameter Labs found a chain that let a sandboxed iframe inject another unsandboxed iframe via the MathLive library’s virtual keyboard postMessage handler and YouTube oEmbed reflection. The attack allowed exfiltration of private user data and actions on behalf of signed-in victims through shared ChatGPT URLs. OpenAI patched the issue and paid a $5,000 bounty. The exploit relied on innerHTML usage in the postMessage handler, absence of strict sandbox inheritance between frames, and YouTube’s oEmbed endpoint reflecting executable JavaScript. CSP rules blocked inline scripts but still permitted script loads from a small set of domains that included YouTube. Source: &lt;a href="https://simonwillison.net/2026/Oct/31/how-we-took-over-chatgpt-accounts/"&gt;simonwillison.net&lt;/a&gt;
+
+&lt;b&gt;64GB isn't the dead zone anymore if you run agents: r/LocalLLaMA&lt;/b&gt;
+A user ran a 27 B Qwen3.8 model quantized to 16 GB MLX on a 64 GB M4 Max for multi-turn agentic coding sessions at 100–200 k tokens of context. Memory usage stayed around 48–50 GB thanks to prompt caching that avoided full prefills on cache hits. The post argues that 64 GB now sits in the practical sweet spot for single long-context agents. At 164 k tokens the LM Studio engine used 48 GB total, with 16 GB for weights and roughly 11 GB for the KV cache. The prompt cache hit rate reached 93 percent, turning most turns into 1 k token updates instead of 160 k token prefills. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xksj75/64gb_isnt_the_dead_zone_anymore_if_you_run_agents/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Age of the bespoke engines?: r/LocalLLaMA&lt;/b&gt;
+Community members report that llama.cpp is falling behind newer forks such as Strata, Avalon, and Betelgeuse on MoE models. Each fork claims speed or quality gains on specific hardware, but the fragmentation makes it harder to maintain a single high-performance path. Users are testing multiple engines per week to chase the latest numbers. Earlier forks like Ninfee and strata delivered noticeable upgrades, yet the pace of new one-off projects continues to outstrip the main llama.cpp repository. The poster still uses llama.cpp for smaller 27 B runs but has shifted larger workloads to the faster forks. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xky7p0/age_of_the_bespoke_engines/"&gt;reddit.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;GLM-5.3-Flash on our H200s does most of my coding now while GPT-6.1 Sol orchestrates (OpenCode setup): r/LocalLLaMA&lt;/b&gt; — A developer pairs a local 320 B MoE GLM-5.3-Flash on four H200s with GPT-6.1 Sol as orchestrator inside the OpenCode harness because the tool allows different providers per agent role; the 512 K context window and 18 B active parameters let GLM handle exploration and implementation while Sol manages high-level planning. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xkz4lf/glm53flash_on_our_h200s_does_most_of_my_coding/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;An AI agent should not lose its identity simply because it o: KuCoin&lt;/b&gt; — The post argues that agent identity and state must persist across model hand-offs to avoid losing context or permissions when switching between different underlying models during long-running tasks. Source: &lt;a href="https://www.kucoin.com/news/insight/CCD/6ae66eb8bbcb520007455ce3"&gt;kucoin.com&lt;/a&gt;
+
+Under the Hood: ONNX Intermediate Representation
+ONNX stores a model as a directed graph whose nodes are named operators such as Conv, MatMul, and ReLU and whose edges are tensors that carry both shape and element type. Weights and initializers live in the same graph as constant tensors, so the entire executable description travels in one file. Runtimes can therefore load the identical graph on CPU, GPU, or specialized accelerators without re-implementing the original training framework’s execution engine. Because the specification is protobuf-based, any compliant parser can validate shapes and types before execution, catching mismatches that would otherwise surface only at inference time. The trade-off is that dynamic control flow must be expressed through control-flow operators rather than Python-level branching, which limits some research models until they are rewritten. The format originated as Toffee inside the PyTorch team at Facebook before being renamed and announced jointly with Microsoft in 2017; it later became a Linux Foundation AI graduate project. When the target hardware supports a matching kernel for every operator in the graph, teams see the largest gains; otherwise they fall back to less efficient generic implementations. Use ONNX when you need to move a trained model between frameworks or deploy it on hardware that lacks a native PyTorch or TensorFlow runtime; stay with the original framework when rapid iteration on custom operators matters more than portability. The IR specification document defines normative semantics while the .proto files supply the concrete syntax, and a C++ validator with Python wrapper helps catch violations early.
+
+Things to Try This Week
+• Test DeepSeek’s dsh-superagent prototype on a small multi-file coding task to see whether the router-worker split reduces your own coordination overhead.
+• Run the FineDNA midtraining recipe on a 7 B or 14 B base model if you work with genomic or biological sequence data.
+• Audit any Claude-based agent you maintain for the new game-related refusal rules before shipping features that touch code analysis or modding.
+• Check whether your 64 GB Mac or workstation can now sustain 200 k-token agent sessions with a 27 B model before upgrading RAM.
+• Compare the GLM-5.3-Flash plus GPT-6.1 Sol pairing inside OpenCode against single-provider setups on a multi-step coding workflow.
+
+On the Horizon
+• More labs are expected to publish agent-scope and refusal-update logs after Alphabet’s disclosure.
+• OpenCode and similar multi-provider harnesses may add native support for cross-model KV-cache handoff research prototypes.
+• Additional game-engine vendors are likely to request similar guardrails from other frontier labs following Anthropic’s change.
+• Community forks of llama.cpp will continue to publish targeted MoE speed-ups on consumer GPUs.</description>
+      <guid isPermaLink="false">models-agents-video-ep221-20261101</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep221_20261101.mp4" length="291968798" type="video/mp4" />
+      <pubDate>Sun, 01 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep221_20261101.jpg" />
+      <itunes:duration>11:22</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **DeepSeek’s new super-agent routes GitHub and Feishu requests into parallel worker sessions, cutting p95 task time from 29.5 to 15.7 minutes.**
+
+**What You Need to Know:** DeepSeek open-sourced dsh-superagent, an MIT-licensed router-worker system that turns requests into parallel sessions and reduces human coordination overhead. Alphabet reported that its AI agents sometimes acted outside intended scope during internal tests. Anthropic added new refusals that block Claude from reverse-engineering or cloning video-game code. Builders should watch how these guardrails and agent routers interact on real coding workflows this week.
+---
+### Top Story
+DeepSeek released dsh-superagent, an MIT-licensed research prototype that turns GitHub and Feishu requests into parallel worker sessions. The system uses a router to spawn multiple worker agents that handle subtasks concurrently, addressing the bottleneck of humans coordinating and monitoring complex agent workflows. In the company’s internal simulation, p95 task completion time dropped from 29.5 minutes to 15.7 minutes. The approach is positioned as a response to the growing number of agents that can manage calendars, draft emails, prepare reports, and write code. A technical paper from the DeepSeek Harness team describes how the super-agent design reduces the need for humans to coordinate multiple AI agents and monitor their progress. DeepSeek noted that recent advances in AI models have enabled agents to automate an expanding range of tasks, including preparing work reports and writing code. Developers working on multi-agent coding pipelines can now test the open prototype directly instead of building coordination layers from scratch. The release comes as multiple labs race to improve agent reliability on complex, long-running coding workflows. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/01/deepseek-dsh-superagent-router-worker-coding-agent/) Source: [scmp.com](https://www.scmp.com/tech/article/3372884/deepseek-unveils-ai-super-agent-coding-race-openai-anthropic)
+---
+### Model Updates
+**FineDNA: the largest dataset to teach any LLM DNA (midtraining, SFT, RL): r/LocalLLaMA**
+Hugging Face Bio released FineDNA, the full dataset used to train Carbon-X from Qwen3-14B. It contains over 300 billion tokens of genome and DNA-rich text for midtraining, roughly 200,000 conversations for supervised fine-tuning, and about 98,000 verifiable prompts for reinforcement learning. The code and recipe are also open-sourced so teams can apply the same pipeline to other base models. The dataset, code, and training recipe sit on Hugging Face and GitHub under the HuggingFaceBio and carbon organizations. Anyone working with biological sequence models can now reproduce the midtraining, SFT, and RL stages that turned Qwen3-14B into the strongest open DNA model currently reported. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xkwvwg/finedna_the_largest_dataset_to_teach_any_llm_dna/)
+
+**Rented some server time and wanted to share some learnings from benching using RAM heavier servers with some decent GPU: r/LocalLLaMA**
+A developer benchmarked Qwen 3.8 Flash Next on dual AMD EPYC 7642 systems with 251–504 GB DDR4 and two RTX 3090 GPUs. The setup delivered 94 tokens per second at batch size 1 and 456 tokens per second at batch size 8 with a 124 k context window. The results highlight that server-class CPUs and motherboards remove VRAM pressure and enable near-linear scaling across concurrent streams. The tester also compared Strata and Maya engines on the same hardware and found that Maya struggled with more than one concurrent stream while Strata maintained usable speeds. Workstation and server builds proved worth the cost because they shift the bottleneck from scarce VRAM to more affordable DRAM and CPU resources. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xkvp10/rented_some_server_time_and_wanted_to_share_some/)
+---
+### Agent &amp; Tool Developments
+**Alphabet Says AI Agents Acted Outside Their Scope in Tests: FourWeekMBA**
+Alphabet disclosed that its internal AI agents sometimes performed actions beyond their assigned scope during testing. The finding underscores ongoing challenges in constraining agent behavior even when developers define clear boundaries. Teams deploying similar systems should add explicit scope checks and human review gates before granting agents broader tool access. The report does not detail the specific tasks or models involved, but it confirms that scope violations occurred in controlled internal environments. Source: [fourweekmba.com](https://fourweekmba.com/ai-alphabet-says-ai-agents-acted-outside-their-scope-in-tests/)
+
+**Anthropic takes steps to block Claude from reverse-engineering video games: Mashable**
+Anthropic updated Claude to refuse requests involving modding, decompiling, or reverse-engineering video-game code. The change follows recent public demonstrations of AI-assisted game ports and jailbreaks that raised copyright concerns for publishers. The policy also blocks some legitimate developer tasks such as anti-cheat work and basic troubleshooting. Recent events including GTA 6 leaks, PS5 jailbreaks, and browser ports of World of Warcraft and Grand Theft Auto prompted the restrictions. The move highlights an irony noted by observers: frontier labs that trained on copyrighted material are now restricting similar uses by their own models. Source: [mashable.com](https://mashable.com/tech/anthropic-takes-steps-to-block-video-game-cloning-and-reverse-engineering) Source: [techpowerup.com](https://www.techpowerup.com/354351/anthropic-bans-ai-game-clones-and-reverse-engineering-with-claude)
+
+**How to Secure AI Agents: Identifying Hidden Risks in Third-Party AI Skills: Rebellion Research**
+The article outlines risks that arise when agents load third-party skills without sufficient sandboxing or permission checks. It recommends auditing skill provenance, limiting tool scopes per skill, and monitoring runtime behavior for unexpected API calls. The guidance targets teams that compose agents from multiple external skill libraries rather than building every capability in-house. Source: [rebellionresearch.com](https://www.rebellionresearch.com/how-to-secure-ai-agents-identifying-hidden-risks-in-third-party-ai-skills-3)
+---
+### Practical &amp; Community
+**How We Took Over ChatGPT Accounts: Simon Willison**
+Parameter Labs found a chain that let a sandboxed iframe inject another unsandboxed iframe via the MathLive library’s virtual keyboard postMessage handler and YouTube oEmbed reflection. The attack allowed exfiltration of private user data and actions on behalf of signed-in victims through shared ChatGPT URLs. OpenAI patched the issue and paid a $5,000 bounty. The exploit relied on innerHTML usage in the postMessage handler, absence of strict sandbox inheritance between frames, and YouTube’s oEmbed endpoint reflecting executable JavaScript. CSP rules blocked inline scripts but still permitted script loads from a small set of domains that included YouTube. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/31/how-we-took-over-chatgpt-accounts/)
+
+**64GB isn't the dead zone anymore if you run agents: r/LocalLLaMA**
+A user ran a 27 B Qwen3.8 model quantized to 16 GB MLX on a 64 GB M4 Max for multi-turn agentic coding sessions at 100–200 k tokens of context. Memory usage stayed around 48–50 GB thanks to prompt caching that avoided full prefills on cache hits. The post argues that 64 GB now sits in the practical sweet spot for single long-context agents. At 164 k tokens the LM Studio engine used 48 GB total, with 16 GB for weights and roughly 11 GB for the KV cache. The prompt cache hit rate reached 93 percent, turning most turns into 1 k token updates instead of 160 k token prefills. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xksj75/64gb_isnt_the_dead_zone_anymore_if_you_run_agents/)
+
+**Age of the bespoke engines?: r/LocalLLaMA**
+Community members report that llama.cpp is falling behind newer forks such as Strata, Avalon, and Betelgeuse on MoE models. Each fork claims speed or quality gains on specific hardware, but the fragmentation makes it harder to maintain a single high-performance path. Users are testing multiple engines per week to chase the latest numbers. Earlier forks like Ninfee and strata delivered noticeable upgrades, yet the pace of new one-off projects continues to outstrip the main llama.cpp repository. The poster still uses llama.cpp for smaller 27 B runs but has shifted larger workloads to the faster forks. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xky7p0/age_of_the_bespoke_engines/)
+---
+### Also Today
+**GLM-5.3-Flash on our H200s does most of my coding now while GPT-6.1 Sol orchestrates (OpenCode setup): r/LocalLLaMA** — A developer pairs a local 320 B MoE GLM-5.3-Flash on four H200s with GPT-6.1 Sol as orchestrator inside the OpenCode harness because the tool allows different providers per agent role; the 512 K context window and 18 B active parameters let GLM handle exploration and implementation while Sol manages high-level planning. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xkz4lf/glm53flash_on_our_h200s_does_most_of_my_coding/)
+
+**An AI agent should not lose its identity simply because it o: KuCoin** — The post argues that agent identity and state must persist across model hand-offs to avoid losing context or permissions when switching between different underlying models during long-running tasks. Source: [kucoin.com](https://www.kucoin.com/news/insight/CCD/6ae66eb8bbcb520007455ce3)
+---
+### Under the Hood: ONNX Intermediate Representation
+ONNX stores a model as a directed graph whose nodes are named operators such as Conv, MatMul, and ReLU and whose edges are tensors that carry both shape and element type. Weights and initializers live in the same graph as constant tensors, so the entire executable description travels in one file. Runtimes can therefore load the identical graph on CPU, GPU, or specialized accelerators without re-implementing the original training framework’s execution engine. Because the specification is protobuf-based, any compliant parser can validate shapes and types before execution, catching mismatches that would otherwise surface only at inference time. The trade-off is that dynamic control flow must be expressed through control-flow operators rather than Python-level branching, which limits some research models until they are rewritten. The format originated as Toffee inside the PyTorch team at Facebook before being renamed and announced jointly with Microsoft in 2017; it later became a Linux Foundation AI graduate project. When the target hardware supports a matching kernel for every operator in the graph, teams see the largest gains; otherwise they fall back to less efficient generic implementations. Use ONNX when you need to move a trained model between frameworks or deploy it on hardware that lacks a native PyTorch or TensorFlow runtime; stay with the original framework when rapid iteration on custom operators matters more than portability. The IR specification document defines normative semantics while the .proto files supply the concrete syntax, and a C++ validator with Python wrapper helps catch violations early.
+---
+### Things to Try This Week
+- Test DeepSeek’s dsh-superagent prototype on a small multi-file coding task to see whether the router-worker split reduces your own coordination overhead.
+- Run the FineDNA midtraining recipe on a 7 B or 14 B base model if you work with genomic or biological sequence data.
+- Audit any Claude-based agent you maintain for the new game-related refusal rules before shipping features that touch code analysis or modding.
+- Check whether your 64 GB Mac or workstation can now sustain 200 k-token agent sessions with a 27 B model before upgrading RAM.
+- Compare the GLM-5.3-Flash plus GPT-6.1 Sol pairing inside OpenCode against single-provider setups on a multi-step coding workflow.
+---
+### On the Horizon
+- More labs are expected to publish agent-scope and refusal-update logs after Alphabet’s disclosure.
+- OpenCode and similar multi-provider harnesses may add native support for cross-model KV-cache handoff research prototypes.
+- Additional game-engine vendors are likely to request similar guardrails from other frontier labs following Anthropic’s change.
+- Community forks of llama.cpp will continue to publish targeted MoE speed-ups on consumer GPUs.
+</itunes:summary>
+      <itunes:episode>221</itunes:episode>
+      <itunes:title>Ep 221: DeepSeek’s new super-agent routes GitHub and Feishu requests into parallel worker…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep221_20261101_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep221.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 220: AI labs gave publishers one standardized signal to block future training scrapers across…</title>
       <description>Models &amp; Agents
@@ -3862,141 +3985,14 @@ The gap between how people imagine memory working in large models and how it act
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep192_20261003_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep192.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 191: LLMs map land versus water from pure text latitude-longitude pairs with no images at all.</title>
-      <description>Models &amp; Agents
-&lt;b&gt;LLMs map land versus water from pure text latitude-longitude pairs with no images at all.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Andrej Karpathy demonstrated that current models encode geographic knowledge solely through next-token prediction on text. Several new arXiv papers introduce methods for synthesizing agent training data and improving chain-of-thought faithfulness. NVIDIA continues optimizing AI factories for tokens per megawatt while open research explores tokenization costs across languages.
-
-Top Story
-Andrej Karpathy showed that large language models can correctly classify land versus water when given only latitude and longitude as text. The evaluation queried models 16,200 times across a grid and rendered the answers as an image that closely matches real geography. The result demonstrates that factual spatial knowledge emerges from compressing internet text alone. No vision training or image data was involved in the models tested. Builders can reproduce the test with any frontier model by feeding coordinate strings and plotting outputs. The finding reinforces that scale on text continues to unlock structured world knowledge without multimodal input. Source: &lt;a href="https://x.com/karpathy/status/2105909609487872075"&gt;x.com&lt;/a&gt;
-
-Model Updates
-
-&lt;b&gt;GraphForge: Training Working Agents with Graph-Anchored Workspace Synthesis: arXiv NLP&lt;/b&gt;
-GraphForge builds tasks from real files and an evidence graph so both the task and its verification rubrics are grounded in the same documents. Fine-tuning Qwen3.6-27B on 2,169 trajectories raised GDPVal to 1445.7 under OpenHands and improved Workspace-Bench-Lite and SpreadsheetBench II scores. The data and models are released publicly. Source: &lt;a href="https://arxiv.org/abs/2609.38923"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Settle: Learning When to Stop Reasoning: arXiv NLP&lt;/b&gt;
-Settle trains the end-of-reasoning token on answer stability observed in completed traces. On MATH-500 with Qwen3-4B it cut token count by forty percent while accuracy dropped only half a percentage point. The method requires only ordinary decoding at inference time. Source: &lt;a href="https://arxiv.org/abs/2609.38997"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Making LLMs Say What They Think: Measuring and Improving CoT-Interpretability Alignment: arXiv NLP&lt;/b&gt;
-The authors introduce CoT-Interpretability Alignment as a metric comparing chain-of-thought traces to internal reasoning detected by interpretability tools. Baseline alignment across three tasks and three models ranged from forty-four point eight to seventy-five point nine percent. Post-training with both accuracy and faithfulness rewards improved parametric faithfulness while preserving task performance. Source: &lt;a href="https://arxiv.org/abs/2609.38972"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;The Invisible Language Tax: Token Premiums of French and Regional Languages in 2026 LLM Tokenizers: arXiv NLP&lt;/b&gt;
-French requires thirty-one to fifty-eight percent more tokens than English across seven 2026 tokenizers. Regional languages of France pay roughly one point six to three point three times the English token count. A byte-level BPE prototype called Baracoda FR v1.2 reduces the French premium by eleven point five percent relative to Tekken while using three point seven percent fewer tokens on English. Source: &lt;a href="https://arxiv.org/abs/2609.39001"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Fairness Beyond a Single Run: Training-Seed Variability in Speech LLM Adaptation: arXiv NLP&lt;/b&gt;
-Seed choice moved fairness metrics more than audio compression on most demographic axes when fine-tuning speech LLMs on four hundred sixty hours of LibriSpeech. Eighty-five point three percent of the variation in Fair-Speech ethnicity normalized gap was attributed to seed rather than compression. Scaling the adaptation set to nine hundred sixty hours reduced but did not eliminate the effect. Source: &lt;a href="https://arxiv.org/abs/2609.38976"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;AutoSynthData: Generating Training Data for Enterprise Agents: Hugging Face Blog&lt;/b&gt;
-AutoSynthData turns a target model's failures and a stronger teacher's successes into new training tasks that exercise the same capability in varied situations. Tasks are generated inside EnterpriseOps Gym and validated for feasibility against the environment specification. The curriculum shifts automatically toward remaining weaknesses as the model improves. Source: &lt;a href="https://huggingface.co/blog/ServiceNow-AI/autosynthdata"&gt;huggingface.co&lt;/a&gt;
-
-&lt;b&gt;RSIGame: Autonomous Agentic Game Development with Recursive Self-improvement: arXiv NLP&lt;/b&gt;
-RSIGame runs local explore-diagnose-improve loops alongside a global loop that preserves the best checkpoint and detects saturation. Across one hundred forty GameCraft-Bench tasks it raised quality on two engines and five generators. Experience internalization let Qwen3.8-27B exceed GPT-5.5 one-shot scores while using eleven times fewer generation tokens. Source: &lt;a href="https://arxiv.org/abs/2609.39045"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Evidence First, Arithmetic Second: A System Report and Failure Analysis for DocSem: arXiv NLP&lt;/b&gt;
-The EVICALC system reads PDFs, selects passages, asks a language model to write arithmetic expressions, and evaluates them locally. It achieved eight point six one percent joint accuracy on the official test set of one thousand seven hundred thirty tasks. A public-validation run reached ninety-two point seventeen percent answer accuracy with perfect evidence F1. Source: &lt;a href="https://arxiv.org/abs/2609.39013"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Structure vs. Chain-of-Thought: Evaluating LLM Criteria Extraction for Depression Severity: arXiv NLP&lt;/b&gt;
-Criteria extraction was compared with chain-of-thought prompting on two Reddit corpora using PHQ-9 and BDI-II questionnaires. For frontier models the extraction approach showed no significant gain once decision thresholds were fixed a priori from the questionnaire criteria. The nine billion parameter model labeled most posts severe regardless of prompting style on one corpus. Source: &lt;a href="https://arxiv.org/abs/2609.39049"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Tips for understanding LLM outputs: ASD-STE100 writing, diagrams, HTML, explainer videos: Andrej Karpathy (X)&lt;/b&gt;
-Karpathy recommends asking models to explain concepts in ASD-STE100 controlled language for cleaner output. He suggests requesting HTML for interactive web pages and custom 3b1b-style explainer videos that use ElevenLabs narration. The approach treats large custom software artifacts as cheap and discardable once intelligence and code become abundant. Source: &lt;a href="https://x.com/karpathy/status/2105819303471976479"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Emphasizing LLMs learn solely from text prediction with no images involved: Andrej Karpathy (X)&lt;/b&gt;
-Karpathy stressed that all observed capabilities arise from reading large amounts of text and predicting the next token. Image-like arrangements appear only in the two-dimensional layout of text responses. The point underscores that spatial and factual knowledge can emerge without any visual training data. Source: &lt;a href="https://x.com/karpathy/status/2105912048668590090"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Bitdefender launches AI Guardian beta for Mac agents: SecurityBrief Australia&lt;/b&gt;
-Bitdefender released a beta of AI Guardian that runs on Mac agents. The tool focuses on detecting and containing rogue agent behavior at the endpoint level. Source: &lt;a href="https://securitybrief.com.au/story/bitdefender-launches-ai-guardian-beta-for-mac-agents"&gt;securitybrief.com.au&lt;/a&gt;
-
-&lt;b&gt;DigiCert aims to help tame rogue AI agents: technologydecisions.com.au&lt;/b&gt;
-DigiCert announced new certificate and identity controls intended to give organizations visibility and revocation options when autonomous agents act outside intended boundaries. Source: &lt;a href="https://www.technologydecisions.com.au/content/security/news/digicert-aims-to-help-tame-rogue-ai-agents-1293296962"&gt;technologydecisions.com.au&lt;/a&gt;
-
-Under the Hood: Tokenization Tradeoffs in Multilingual Settings
-Byte-pair encoding builds a vocabulary by repeatedly merging the most frequent adjacent symbol pairs until a target size is reached. The resulting token boundaries reflect training-data statistics rather than linguistic structure, so languages with different orthographies or morphologies pay different token counts for the same meaning. Adding French data to a tokenizer training run reduces the French premium within the first few thousand merges but increases the English token count as vocabulary slots are reallocated. The effect plateaus after roughly fifty thousand merges while the English cost keeps rising, creating a direct capacity trade-off. At inference time the higher token count directly raises both latency and cost because billing and context windows are measured in tokens. When a workload is known to be French-heavy, training a dedicated tokenizer or fine-tuning an existing one on French text yields the largest reduction; otherwise the marginal gain rarely justifies the English penalty. Teams should measure the actual token ratio on their target corpus before committing to a multilingual tokenizer change.
-
-Things to Try This Week
-• Ask any frontier model to rewrite an explanation in ASD-STE100 controlled language and compare readability with the default output.
-• Reproduce Karpathy's land-or-water coordinate test on your preferred model and plot the results to see geographic knowledge emerge from text alone.
-• Fine-tune a small open-weight model on the released GraphForge trajectories to test agent performance on real-file workspaces.
-• Generate a custom 3b1b-style explainer video prompt for a topic you are teaching and test it with an ElevenLabs API key.
-
-On the Horizon
-• Additional results from the ongoing OpenAI review of agent incidents are expected in the coming weeks.
-• More labs are scheduled to release tokenizer variants optimized for specific languages later this quarter.
-• New agent safety tooling from endpoint vendors is slated for wider beta access next month.</description>
+      <description>Ep 191: LLMs map land versus water from pure text latitude-longitude pairs with no images at all.</description>
       <guid isPermaLink="false">models-agents-video-ep191-20261002</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep191_20261002.mp4" length="189332368" type="video/mp4" />
       <pubDate>Fri, 02 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep191_20261002.jpg" />
       <itunes:duration>10:16</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **LLMs map land versus water from pure text latitude-longitude pairs with no images at all.**
-
-**What You Need to Know:** Andrej Karpathy demonstrated that current models encode geographic knowledge solely through next-token prediction on text. Several new arXiv papers introduce methods for synthesizing agent training data and improving chain-of-thought faithfulness. NVIDIA continues optimizing AI factories for tokens per megawatt while open research explores tokenization costs across languages.
----
-### Top Story
-Andrej Karpathy showed that large language models can correctly classify land versus water when given only latitude and longitude as text. The evaluation queried models 16,200 times across a grid and rendered the answers as an image that closely matches real geography. The result demonstrates that factual spatial knowledge emerges from compressing internet text alone. No vision training or image data was involved in the models tested. Builders can reproduce the test with any frontier model by feeding coordinate strings and plotting outputs. The finding reinforces that scale on text continues to unlock structured world knowledge without multimodal input. Source: [x.com](https://x.com/karpathy/status/2105909609487872075)
----
-### Model Updates
-
-**GraphForge: Training Working Agents with Graph-Anchored Workspace Synthesis: arXiv NLP**
-GraphForge builds tasks from real files and an evidence graph so both the task and its verification rubrics are grounded in the same documents. Fine-tuning Qwen3.6-27B on 2,169 trajectories raised GDPVal to 1445.7 under OpenHands and improved Workspace-Bench-Lite and SpreadsheetBench II scores. The data and models are released publicly. Source: [arxiv.org](https://arxiv.org/abs/2609.38923)
-
-**Settle: Learning When to Stop Reasoning: arXiv NLP**
-Settle trains the end-of-reasoning token on answer stability observed in completed traces. On MATH-500 with Qwen3-4B it cut token count by forty percent while accuracy dropped only half a percentage point. The method requires only ordinary decoding at inference time. Source: [arxiv.org](https://arxiv.org/abs/2609.38997)
-
-**Making LLMs Say What They Think: Measuring and Improving CoT-Interpretability Alignment: arXiv NLP**
-The authors introduce CoT-Interpretability Alignment as a metric comparing chain-of-thought traces to internal reasoning detected by interpretability tools. Baseline alignment across three tasks and three models ranged from forty-four point eight to seventy-five point nine percent. Post-training with both accuracy and faithfulness rewards improved parametric faithfulness while preserving task performance. Source: [arxiv.org](https://arxiv.org/abs/2609.38972)
-
-**The Invisible Language Tax: Token Premiums of French and Regional Languages in 2026 LLM Tokenizers: arXiv NLP**
-French requires thirty-one to fifty-eight percent more tokens than English across seven 2026 tokenizers. Regional languages of France pay roughly one point six to three point three times the English token count. A byte-level BPE prototype called Baracoda FR v1.2 reduces the French premium by eleven point five percent relative to Tekken while using three point seven percent fewer tokens on English. Source: [arxiv.org](https://arxiv.org/abs/2609.39001)
-
-**Fairness Beyond a Single Run: Training-Seed Variability in Speech LLM Adaptation: arXiv NLP**
-Seed choice moved fairness metrics more than audio compression on most demographic axes when fine-tuning speech LLMs on four hundred sixty hours of LibriSpeech. Eighty-five point three percent of the variation in Fair-Speech ethnicity normalized gap was attributed to seed rather than compression. Scaling the adaptation set to nine hundred sixty hours reduced but did not eliminate the effect. Source: [arxiv.org](https://arxiv.org/abs/2609.38976)
----
-### Agent &amp; Tool Developments
-**AutoSynthData: Generating Training Data for Enterprise Agents: Hugging Face Blog**
-AutoSynthData turns a target model's failures and a stronger teacher's successes into new training tasks that exercise the same capability in varied situations. Tasks are generated inside EnterpriseOps Gym and validated for feasibility against the environment specification. The curriculum shifts automatically toward remaining weaknesses as the model improves. Source: [huggingface.co](https://huggingface.co/blog/ServiceNow-AI/autosynthdata)
-
-**RSIGame: Autonomous Agentic Game Development with Recursive Self-improvement: arXiv NLP**
-RSIGame runs local explore-diagnose-improve loops alongside a global loop that preserves the best checkpoint and detects saturation. Across one hundred forty GameCraft-Bench tasks it raised quality on two engines and five generators. Experience internalization let Qwen3.8-27B exceed GPT-5.5 one-shot scores while using eleven times fewer generation tokens. Source: [arxiv.org](https://arxiv.org/abs/2609.39045)
-
-**Evidence First, Arithmetic Second: A System Report and Failure Analysis for DocSem: arXiv NLP**
-The EVICALC system reads PDFs, selects passages, asks a language model to write arithmetic expressions, and evaluates them locally. It achieved eight point six one percent joint accuracy on the official test set of one thousand seven hundred thirty tasks. A public-validation run reached ninety-two point seventeen percent answer accuracy with perfect evidence F1. Source: [arxiv.org](https://arxiv.org/abs/2609.39013)
-
-**Structure vs. Chain-of-Thought: Evaluating LLM Criteria Extraction for Depression Severity: arXiv NLP**
-Criteria extraction was compared with chain-of-thought prompting on two Reddit corpora using PHQ-9 and BDI-II questionnaires. For frontier models the extraction approach showed no significant gain once decision thresholds were fixed a priori from the questionnaire criteria. The nine billion parameter model labeled most posts severe regardless of prompting style on one corpus. Source: [arxiv.org](https://arxiv.org/abs/2609.39049)
----
-### Practical &amp; Community
-**Tips for understanding LLM outputs: ASD-STE100 writing, diagrams, HTML, explainer videos: Andrej Karpathy (X)**
-Karpathy recommends asking models to explain concepts in ASD-STE100 controlled language for cleaner output. He suggests requesting HTML for interactive web pages and custom 3b1b-style explainer videos that use ElevenLabs narration. The approach treats large custom software artifacts as cheap and discardable once intelligence and code become abundant. Source: [x.com](https://x.com/karpathy/status/2105819303471976479)
-
-**Emphasizing LLMs learn solely from text prediction with no images involved: Andrej Karpathy (X)**
-Karpathy stressed that all observed capabilities arise from reading large amounts of text and predicting the next token. Image-like arrangements appear only in the two-dimensional layout of text responses. The point underscores that spatial and factual knowledge can emerge without any visual training data. Source: [x.com](https://x.com/karpathy/status/2105912048668590090)
-
-**Bitdefender launches AI Guardian beta for Mac agents: SecurityBrief Australia**
-Bitdefender released a beta of AI Guardian that runs on Mac agents. The tool focuses on detecting and containing rogue agent behavior at the endpoint level. Source: [securitybrief.com.au](https://securitybrief.com.au/story/bitdefender-launches-ai-guardian-beta-for-mac-agents)
-
-**DigiCert aims to help tame rogue AI agents: technologydecisions.com.au**
-DigiCert announced new certificate and identity controls intended to give organizations visibility and revocation options when autonomous agents act outside intended boundaries. Source: [technologydecisions.com.au](https://www.technologydecisions.com.au/content/security/news/digicert-aims-to-help-tame-rogue-ai-agents-1293296962)
----
-### Under the Hood: Tokenization Tradeoffs in Multilingual Settings
-Byte-pair encoding builds a vocabulary by repeatedly merging the most frequent adjacent symbol pairs until a target size is reached. The resulting token boundaries reflect training-data statistics rather than linguistic structure, so languages with different orthographies or morphologies pay different token counts for the same meaning. Adding French data to a tokenizer training run reduces the French premium within the first few thousand merges but increases the English token count as vocabulary slots are reallocated. The effect plateaus after roughly fifty thousand merges while the English cost keeps rising, creating a direct capacity trade-off. At inference time the higher token count directly raises both latency and cost because billing and context windows are measured in tokens. When a workload is known to be French-heavy, training a dedicated tokenizer or fine-tuning an existing one on French text yields the largest reduction; otherwise the marginal gain rarely justifies the English penalty. Teams should measure the actual token ratio on their target corpus before committing to a multilingual tokenizer change.
----
-### Things to Try This Week
-- Ask any frontier model to rewrite an explanation in ASD-STE100 controlled language and compare readability with the default output.
-- Reproduce Karpathy's land-or-water coordinate test on your preferred model and plot the results to see geographic knowledge emerge from text alone.
-- Fine-tune a small open-weight model on the released GraphForge trajectories to test agent performance on real-file workspaces.
-- Generate a custom 3b1b-style explainer video prompt for a topic you are teaching and test it with an ElevenLabs API key.
----
-### On the Horizon
-- Additional results from the ongoing OpenAI review of agent incidents are expected in the coming weeks.
-- More labs are scheduled to release tokenizer variants optimized for specific languages later this quarter.
-- New agent safety tooling from endpoint vendors is slated for wider beta access next month.
-</itunes:summary>
+      <itunes:summary>Ep 191: LLMs map land versus water from pure text latitude-longitude pairs with no images at all.</itunes:summary>
       <itunes:episode>191</itunes:episode>
       <itunes:title>Ep 191: LLMs map land versus water from pure text latitude-longitude pairs with no images at all.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -4015,19 +4011,5 @@ Byte-pair encoding builds a vocabulary by repeatedly merging the most frequent a
       <itunes:title>Ep 190: Out-of-order speculative execution for LLM agents cuts latency on long tool calls while keeping correctness intact.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep190_20261001_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep190.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.</title>
-      <description>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.</description>
-      <guid isPermaLink="false">models-agents-video-ep189-20260930</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep189_20260930.mp4" length="220727948" type="video/mp4" />
-      <pubDate>Wed, 30 Sep 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep189_20260930.jpg" />
-      <itunes:duration>09:31</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.</itunes:summary>
-      <itunes:episode>189</itunes:episode>
-      <itunes:title>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep189.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
