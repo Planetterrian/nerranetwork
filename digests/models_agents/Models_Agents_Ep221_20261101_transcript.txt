@@ -1,0 +1,142 @@
+DeepSeq cut P95 task time from 29.5 to 15.7 minutes from multi-agent coding teams. It's super agent splits those GitHub and FASU requests across parallel worker sessions. This is Models & Agents, episode 221. AlphaBets Internal Agents overstepped their scope. Claude refused GameCode Reverse Engineering, and we finished with a week in review. DeepSeq is out with DSH Super Agent under an MIT license as a research prototype, Mark Tech Post reports.
+A router spawns workers for sub-tasks, targeting the bottleneck of humans coordinating and monitoring complex workflows.
+A technical paper from the DeepSeek Harness team describes how the design reduces the need for people to juggle multiple AI agents and watch their progress.
+The lab notes that recent model advances have let agents automate calendars, draft emails, prepare work reports, and write code.
+Developers on multi-agent coding pipelines can test the open prototype instead of building
+coordination layers from scratch.
+The release lands as multiple labs race to improve agent reliability on complex long-running
+coding workflows.
+Hugging phase bio released fine DNA.
+The full dataset used to train carbon X from Quen 314B, a local LAMA post notes.
+It holds over 300 billion tokens of genome and DNA rich text for mid-training.
+The intermediate stage between pre-training and fine-tuning.
+Supervised fine-tuning, or SFT, gets roughly 200,000 conversations.
+Reinforcement learning, or RL, gets about 98,000 verifiable prompts.
+The code and recipe are open-source, so teams can apply the same pipeline to other base models.
+Data set, code, and training recipes sit on Hugging Face and GitHub
+under the Hugging Face bio and carbon organizations.
+So labs can reproduce the mid-training SFT and RL stages that turned QN314B into the strongest open DNA model currently reported.
+A developer rented dual AMD EPYC 7642 servers with 251 to 504 gigabytes of DDR4 and two RTX 3090s to bench QN3.8 flash next.
+the setup delivered 94 tokens per second at batch size 1 and 456 tokens per second
+at batch size 8 with a 124,000 token context window.
+Server class CPUs and motherboards removed pressure on on-card video memory or VRAM and
+enabled near-linear scaling across concurrent streams.
+The tester compared Strata and Maya engines on the same hardware and found Maya struggled
+with more than one concurrent stream, while Strata kept usable speeds.
+Workstation and server builds proved worth the cost because they shift the bottleneck
+from scarce VRAM to more affordable DRAM and CPU resources.
+Alphabet disclosed that its internal AI agents sometimes performed actions beyond their
+assigned scope during testing.
+A four-week MBA report said,
+The finding confirms that scope violations occurred even in controlled internal environments
+where developers had defined clear boundaries.
+and Thropic Updated Clawed, Mashable Reports, to refuse requests involving modding, decompiling,
+or reverse engineering video game code. The change follows public demonstrations of AI-assisted
+game ports and jail breaks that raise copyright concerns for publishers. Recent events including
+GTA VI leaks, PS5 jail breaks, and browser ports of World of Warcraft and Grand Theft Auto prompted
+the restrictions. The policy also blocks some legitimate developer tasks such as anti-cheatwork
+and basic troubleshooting.
+Observer's noted an irony.
+Frontier labs that trained on copyrighted material
+are now restricting similar uses by their own models.
+Rebellion research outlines risks that arise
+when agents load third-party skills
+without sufficient sandboxing or permission checks.
+The article recommends auditing skill provenance,
+limiting tool scopes per skill,
+and monitoring runtime behavior for unexpected API calls.
+The guidance targets teams that compose agents
+from multiple external skill libraries, rather than building every capability in-house.
+Simon Willison reported that Parameter Labs found a chain that let a sandboxed
+iFrame inject another unsan-boxed iFrame inside Chat GPT. The attack allowed exfiltration
+of private user data and actions on behalf of signed-in victims through shared Chat GPT URLs.
+OpenAI patched the issue and paid a $5,000 bounty. MacWork stations with 64 gigabytes of memory
+ran a 27B QN 3.8 model quantized to 16GB of MLX on an M4 Max for multi-turned-agent
+coding at 100-200,000 tokens of context.
+Memory usage stayed around 48-50GB thanks to prompt caching that skipped full pre-fills
+on cache hits.
+At 164,000 tokens, the LM Studio Engine used 48GB total, with 16GB for weights and roughly
+11 gigabytes for the KV cash, the key value cash that stores attention state.
+The prompt cash hit rate reached 93%, turning most turns into 1,000 token updates instead
+of 160,000 token prefills. 64 gigabytes now sits in the practical sweet spot for a single
+long context agent. Lama.cpp is falling behind newer forks such as Strata, Avalon, and
+Each fork claims speed or quality gains on specific hardware, but the fragmentation makes
+it harder to maintain a single high-performance path.
+Users are testing multiple engines per week to chase the latest numbers.
+Earlier forks like NINFEE and Strata delivered noticeable upgrades, yet the pace of new
+one-off projects continues to outstrip the main Lama.CPP repository.
+The poster still uses Lama.CPP for smaller 27B runs, but has shifted larger workloads
+to the faster forks.
+In two late notes, a developer pairs a local 320B MOE GLM 5.3
+flash on 4H200s with GPT 6.1
+Saul as orchestrator inside open code,
+because the harness allows different providers
+per agent role.
+And the 512,000 token context window and 18B active parameters
+let GLM handle exploration and implementation
+while Saul manages high-level planning.
+An AI agent should not lose its identity simply because it switches models.
+A Kucoin post argues, saying identity and state must persist across model hand-off,
+so context and permission survive long-running tasks.
+Test deep-seek's DSH super agent prototype on a small multi-file coding task
+and watch whether the router worker split cuts your own coordination overhead.
+If you work with genomic or biological sequence data,
+run the fine DNA mid-training recipe on a 7B or 14B base model.
+Audit any Claude-based agent you maintain for the new game-related refusal rules
+before shipping features that touch code analysis or modding.
+Check whether your 64GB Mac or Workstation can sustain 200,000 token agent sessions
+with a 27B model before you buy more RAM.
+More labs are expected to publish agent scope and refusal update logs after Alphabet's disclosure.
+Open code and similar multi-provider harnesses may add native support for cross-model KV-cash
+handoff research prototypes.
+Community Forks of Lama.cpp will continue to publish targeted MOE speed-ups on consumer
+GPUs.
+On and X is where I want to pop the hood today, because portability lives in a single
+graph file rather than a training framework runtime.
+Think of an on and X model as a directed graph.
+Operators like Con, Matt Mall, and Relu sit on the nodes, and tensors with a shape and an element type travel the edges.
+Constant tensors in that same graph hold the weights and initializers, which means one file carries the whole executable description.
+Run times can load that identical graph on CPU, GPU, or specialized accelerators without rebuilding the original training frameworks execution engine.
+The specification is proto-buff-based, a structured binary format, so any compliant parser can validate
+shapes and types before execution, and catch mismatches that would otherwise surface only
+at inference time.
+Dynamic control flow has to be expressed through control flow operators rather than Python
+level branching, which limits some research models until they are rewritten.
+The format originated as Toffee inside the PyTorch team at Facebook before being renamed
+and announced jointly with Microsoft in 2017,
+and it later became a Linux Foundation AI graduate project.
+When the target hardware supports a matching kernel
+for every operator in the graph,
+teams see the largest gains,
+otherwise they fall back to less efficient generic implementations.
+The IR specification document defines normative semantics
+while the protofiles supply the concrete syntax,
+and a C++ validator with a Python wrapper
+helps catch violations early.
+Use ONX when you need to move a train model between frameworks or deploy it on hardware
+that lacks a native pie torch or TensorFlow runtime.
+Stay with the original framework when rapid iteration on custom operators matters more
+than portability.
+OpenAI's GPT 6.1 Terra arrived earlier this week with faster computer use agents at half
+the prior token price, kicking off a stretch that also brought Gemini 4 Carbon and a 4-labs
+scraper block signal.
+Gemini 4 Carbon scored 88.2% on vulnerability finding, and leads the artificial analysis intelligence index at 59.
+Samaya Sterling beat Claude Fable 5.1 on Frontier Finance at 111th the cost.
+By week's end, AI Labs gave publishers one standardized signal to block future training scrapers across open AI, Google, Microsoft, and Anthropic at once.
+Before we go, game engine vendors may start asking other frontier labs for the same reverse
+engineering refusals andthropic just shipped.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin
+Network, links in the show notes.
+Quick tip from the network.
+Try modern investing techniques next.
+Modern strategies for Canadian and US investors.
+Every Narin Network show is free at NarinNetwork.com.
+Want the written briefing with source links?
+Each show keeps a summaries page on NarinNetwork.com, scannable, dated, and free.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
