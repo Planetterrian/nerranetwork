@@ -1,0 +1,117 @@
+name: Nerra Daily email
+
+# The network's one daily email (Nov 1 2026, engine/nerra_daily_email.py).
+# The edition workflow (nerra-daily.yml) sends it the moment the edition
+# publishes; this workflow is
+#   * the FALLBACK when that step failed or the edition never built (the
+#     schedule below: after the 06:50 ET hold in both UTC offsets; the
+#     committed digests/nerra_daily/email/<date>.json marker makes a second
+#     send impossible), and
+#   * the operator's PREVIEW: mode "draft" makes a Buttondown draft with the
+#     day's audience and, with test_to, sends it to those addresses only.
+#     Mode "preview" renders the HTML (a new reader, a two-show follower,
+#     everything) as a run artifact without touching Buttondown.
+on:
+  schedule:
+    - cron: '25 12 * * *'   # 07:25 EST / 08:25 EDT
+    - cron: '25 13 * * *'   # 08:25 EST / 09:25 EDT
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Edition date YYYY-MM-DD (default: today UTC)'
+        required: false
+        default: ''
+        type: string
+      mode:
+        description: 'send = the real email (once per date); draft = a Buttondown draft; preview = HTML only'
+        required: false
+        default: 'draft'
+        type: choice
+        options: [draft, preview, send]
+      test_to:
+        description: 'draft mode: also send the draft to these addresses (comma-separated). Masked in the log.'
+        required: false
+        default: ''
+        type: string
+
+# Shares the edition's group so the fallback never races the edition run's
+# own send (both read and write the same marker).
+concurrency:
+  group: nerra-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  email:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Already sent?
+        id: gate
+        env:
+          EMAIL_DATE: ${{ github.event.inputs.date }}
+          MODE: ${{ github.event.inputs.mode || 'send' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import datetime, os
+          date = (os.environ.get("EMAIL_DATE") or "").strip() or \
+              datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          sent = os.path.exists(f"digests/nerra_daily/email/{date}.json")
+          mode = os.environ.get("MODE") or "send"
+          print(f"date={date}")
+          print(f"skip={'true' if (mode == 'send' and sent) else 'false'}")
+          PY
+
+      - uses: ./.github/actions/setup-python
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Send, draft or preview
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          EMAIL_DATE: ${{ steps.gate.outputs.date }}
+          MODE: ${{ github.event.inputs.mode || 'send' }}
+          TEST_TO: ${{ github.event.inputs.test_to }}
+        run: |
+          if [ -n "$TEST_TO" ]; then
+            IFS=',' read -ra ADDRS <<< "$TEST_TO"
+            for a in "${ADDRS[@]}"; do echo "::add-mask::$(echo "$a" | xargs)"; done
+          fi
+          ARGS="--date $EMAIL_DATE --mode $MODE --out outputs/nerra_daily_email"
+          # The scheduled fallback sends even when the edition never built:
+          # the readers still get the morning's shows.
+          if [ "$MODE" = "send" ]; then ARGS="$ARGS --allow-no-edition"; fi
+          if [ "$MODE" = "draft" ] && [ -n "$TEST_TO" ]; then
+            python scripts/send_nerra_daily_email.py $ARGS --test-to "$TEST_TO"
+          else
+            python scripts/send_nerra_daily_email.py $ARGS
+          fi
+
+      - name: Upload the preview
+        if: steps.gate.outputs.skip != 'true' && github.event.inputs.mode == 'preview'
+        uses: actions/upload-artifact@v7
+        with:
+          name: nerra-daily-email-${{ steps.gate.outputs.date }}
+          path: outputs/nerra_daily_email
+          retention-days: 7
+
+      - name: Commit the email record
+        if: steps.gate.outputs.skip != 'true' && (github.event.inputs.mode || 'send') == 'send'
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/nerra_daily/email
+          commit-message: "Nerra Daily email ${{ steps.gate.outputs.date }}"

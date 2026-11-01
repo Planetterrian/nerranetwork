@@ -604,6 +604,12 @@ class NewsletterConfig:
     # Buttondown's hand-edited Tags page, so renaming a tag there cannot
     # silently break the show's send. Never reaches the subscribe form.
     tag_id: str = ""
+    # Nov 1 2026: ``nerra_daily`` = a section of the one network email
+    # (engine/nerra_daily_email.py) and no per-show daily/weekly send;
+    # ``own`` = the show sends its own daily email (the Russian shows).
+    # The dataclass default stays ``own`` so a caller that bypasses the YAML
+    # behaves as before; _defaults.yaml sets the network to ``nerra_daily``.
+    delivery: str = "own"
     # June 10 2026: these fields were set in show YAMLs and read via
     # getattr() on this dataclass — but never DECLARED here, so
     # _build_nested silently dropped them and the getattr defaults always
@@ -1468,6 +1474,12 @@ class ShowConfig:
     # list for today (engine/frame_memory.py, rendered through the shared
     # snippets' {recent_frames_block}). Prompt context changes: A/B-listen.
     frame_memory: bool = False
+    # Nov 1 2026 (operator decision on the Models & Agents review): opt-in
+    # data-side name list — the two-pass script prompt gets the names the
+    # digest carries ({names_to_keep_block}, engine/names_to_keep.py). ""
+    # on a show that has not opted in and on the combined path. Prompt
+    # context changes: A/B-listen.
+    names_to_keep: bool = False
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1748,6 +1760,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
         date_probe_max=int(data.get("date_probe_max", 40) if data.get("date_probe_max") is not None else 40),
         frame_memory=bool(data.get("frame_memory", False)),
+        names_to_keep=bool(data.get("names_to_keep", False)),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[

@@ -2712,6 +2712,16 @@ for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
   (talking vs listening AUC 0.48; at a pause 0.52). His audio says what the
   camera cannot: mid-answer pauses p99 1.6 s, three over 2 s in 43 answers,
   while Mira waited a median 4.3 s at every real end.
+- **Published as Ep15 (Nov 1 2026), reviewed** (guard
+  `tests/test_michaels_publish_2026_11_01.py`). Feed, post, transcript,
+  chapters, links and YouTube were right. Three faults, fixed: the publish
+  mail told him "February 2027" (the three-month default) after he chose
+  "about six months" on the review page (`return_invitation_html` reads
+  `guest_followup`: 6 or 12 months from the day he chose, no date for
+  "nothing for now"); the note above an EDIT transcript said "as it was
+  recorded" (`EDIT_TRANSCRIPT_NOTE` says it is edited for length and flow);
+  chapter titles lifted from mid-question kept their lower case
+  (`_chapter_case`; `refresh_post` now rewrites the record's chapters too).
 
 Operator: push (the studio page and the pipeline go live with it; the Worker
 is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
@@ -7531,6 +7541,29 @@ that bind:
 ⚠️ AUDIO: the UC, Tesla and Nerra Daily prompts. A/B-listen the first
 episode of each.
 
+### Models & Agents: its natural length, and the names from the digest (Nov 1 2026)
+
+Operator decisions on the Oct 31 review (register
+`models-agents-length-names-2026-11-01`; guards
+`tests/test_models_agents_length_names_2026_11_01.py`). Rules that bind:
+
+- **1,200-1,400 words is the show's natural length** (option C):
+  `min_podcast_words` 1200 (the bottom of that range; the YAML floor
+  sits at or under the prompt's stated low end) and the prompt says the
+  briefing sets the length. **The skip floor stays at 900**, pinned with
+  `min_podcast_publish_words`, so the lower target never lowers it.
+- **The names are data, not an instruction** (`engine/names_to_keep.py`,
+  opt-in `names_to_keep: true`): the two-pass script prompt gets
+  `{names_to_keep_block}`, the names today's digest carries as written,
+  in order. A title-case headline or a bold label is not a list of names;
+  a headline only vouches for a name that opens a sentence. No model
+  call; "" on the combined path and on every show that has not opted in.
+  Three prose passes had missed names-kept >= 75%. ⚠️ AUDIO: A/B-listen
+  the first episode.
+- **The section-chapter wiring the review re-filed three times is
+  rejected**: replayed over Ep211-221 it replaced a story's headline
+  chapter with a section label on every episode (ledger `do_not_retry`).
+
 ### The 24-hour review: YouTube policy, the front page through the day, My Nerra (Oct 31 2026)
 
 Review [`docs/reviews/review_2026_10_31.md`](docs/reviews/review_2026_10_31.md);
@@ -7607,6 +7640,69 @@ Operator:
 - The dub map cut is the next YouTube step (about a day of work).
 - The phone front page shows no story on its first screen.
 - Dub Short titles come from the dub's own Whisper text.
+
+### One email: Nerra Daily (Nov 1 2026)
+
+Operator-directed (doc [`docs/nerra_daily_email.md`](docs/nerra_daily_email.md);
+register `nerra-daily-email-2026-11-01`; guards
+`tests/test_nerra_daily_email_2026_11_01.py`, `workers/gallery/test/email.test.ts`).
+Measured first: 14 subscribers, about 19 per-show daily sends a morning (five
+failing every day on tags no subscriber carried), nine per-show weeklies on
+Sunday, 3 email sessions in 28 days, and the free account's promised
+newsletter (`nerra-member`) never sent. Rules that bind:
+
+- **The network sends ONE email, Nerra Daily**
+  (`engine/nerra_daily_email.py`, `scripts/send_nerra_daily_email.py`).
+  - `nerra-daily.yml` sends it right after the edition publishes, scheduled
+    for 7:00 AM Eastern.
+  - `nerra-daily-email.yml` is the fallback and the operator's draft/preview.
+  - The committed `digests/nerra_daily/email/<date>.json` is the
+    idempotency key.
+- **It is personalized by Buttondown's per-subscriber Django templating on
+  TAGS**, never by sending different emails:
+  - a show's `newsletter.tag` is the follow;
+  - `nerra-daily-weekly` means Sundays only;
+  - `personal-paid` hides the Personal pitch.
+
+  Django `{% if %}` has no parentheses, so every condition is a flat
+  `and`/`or` chain or a nested `{% if %}`. `render_for` evaluates the same
+  subset for tests and the preview. Content braces are entities, so a
+  headline cannot become template syntax.
+- **`newsletter.delivery`.**
+  - `_defaults.yaml` sets `nerra_daily`. With it, `run_show`, the weekly
+    runner, `run_weekly_synthesis.py` and the Voices publisher send nothing
+    per show.
+  - The two Russian shows are `own` and keep their Russian daily email.
+  - The dataclass default is `own`, so a caller that bypasses the YAML
+    behaves as before.
+- **The audience is a filter tree** (`audience_filter`):
+  - included: `nerra-member`, `gallery-subscriber`, or an English show tag;
+  - excluded: Russian-only readers, and Monday to Saturday the Sundays-only
+    tag;
+  - a tree with nothing resolved is refused, never sent unfiltered.
+- **One show map, two copies:** `email_show_tags()` (public English, not the
+  members-only desks) and the Worker's `EMAIL_SHOW_TAGS`.
+- **The Worker moves the tags:**
+  - a lineup save adds its shows and drops only the shows taken out of the
+    lineup (a show followed from a show page stays);
+  - `GET`/`POST /api/account/email` is My Nerra's email panel;
+  - Stripe sets and clears `personal-paid`;
+  - the nightly `scripts/sync_email_tags.py` reconciles paid status and
+    never re-adds lineup shows.
+- **Every site link is `engine.funnel.newsletter_link`** (`kind="email"`,
+  variant `nerra_daily` or the network surface; `PLACEMENT_WEEK` for the
+  Sunday lists). The shared footer is tagged as `footer`.
+- **Size and contrast.** Every copy must pass contrast and stay under about
+  95 KB (Gmail clips at 102 KB). A `display:none` element has no contrast to
+  fail (the preheader).
+- **Measurement.** `fetch_buttondown_stats.py` reads per-email analytics.
+  It counts tags from the subscriber list because `/tags` carries no counts
+  on this account. Rates are null under 30 recipients.
+
+Operator:
+- `wrangler deploy` in `workers/gallery`, then once
+  `PERSONAL_ADMIN_TOKEN=… python scripts/sync_email_tags.py --lineups`.
+- Preview with Actions "Nerra Daily email", mode `draft` with `test_to`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 

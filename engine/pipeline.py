@@ -675,6 +675,11 @@ def build_podcast_template_vars(
         pod_vars["recent_frames_block"] = build_recent_frames_block(
             config, exclude_contains=f"Ep{int(episode_num):03d}_")
     pod_vars.setdefault("recent_frames_block", "")
+    # Names to keep (Nov 1 2026, engine/names_to_keep.py): filled from the
+    # finished digest in run_generation_phase; "" here so the combined path
+    # (which renders before the digest exists) and every show that has not
+    # opted in render the prompt without it.
+    pod_vars.setdefault("names_to_keep_block", "")
 
     # Hook-failure safety. A memory show's pre-fetch hook normally injects
     # {narrative_memory_section} (and Привет, Русский! injects
@@ -889,6 +894,10 @@ def run_generation_phase(
     # wired 2026-07-31 at operator request. Empty → the raw x_thread,
     # which is byte-for-byte the previous behaviour.
     template_vars_for_script["digest"] = podcast_digest or x_thread
+    if getattr(config, "names_to_keep", False):
+        from engine.names_to_keep import build_names_block
+        template_vars_for_script["names_to_keep_block"] = build_names_block(
+            template_vars_for_script["digest"])
 
     # Combined generation (Sep 12 2026): generate_digest may have written
     # the script in the same call as the digest. It ships only when the

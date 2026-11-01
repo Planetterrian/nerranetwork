@@ -177,8 +177,13 @@ class _ContrastWalker(HTMLParser):
             self.bg_stack.append((tag, bg_rgb))
         # Otherwise inherit — don't push.
 
-        # Check foreground contrast.
-        fg_value = style.get("color")
+        # Check foreground contrast. A ``display:none`` element is never
+        # read (the inbox preheader is deliberately page-coloured so it
+        # cannot show in a client that ignores the hide), so it has no
+        # contrast to fail (Nov 2026: the Nerra Daily email is the first
+        # caller to pass a preheader).
+        hidden = (style.get("display") or "").strip().lower() == "none"
+        fg_value = None if hidden else style.get("color")
         fg_rgb = _parse_color(fg_value) if fg_value else None
         if fg_rgb is not None:
             ancestor_bg_rgb = self.bg_stack[-1][1]

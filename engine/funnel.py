@@ -131,10 +131,15 @@ PLACEMENT_OUTRO = "outro"
 # body, the reply is a second post with its own click behaviour.
 PLACEMENT_REPLY = "reply"
 
+# The Sunday Nerra Daily's week lists and most-played block (Nov 2026), kept
+# apart from ``body`` (the day's cards) so a click on last Tuesday's episode
+# is distinguishable from a click on today's.
+PLACEMENT_WEEK = "week"
+
 PLACEMENTS = frozenset({
     PLACEMENT_DESCRIPTION, PLACEMENT_COMMENT, PLACEMENT_ENDCARD,
     PLACEMENT_SHOWNOTES, PLACEMENT_BODY, PLACEMENT_OUTRO,
-    PLACEMENT_REPLY,
+    PLACEMENT_REPLY, PLACEMENT_WEEK,
 })
 
 # The ``kind`` component of a campaign id — the asset that carried the link.
@@ -372,6 +377,38 @@ def episode_link(
 
 
 NETWORK_BASE_URL = "https://nerranetwork.com"
+
+#: The campaign variant every Nerra Daily email link carries unless it names
+#: a network surface of its own (``personal``, ``choose``, ``manage``).
+NEWSLETTER_VARIANT = "nerra_daily"
+
+
+def newsletter_link(
+    destination: str,
+    show_slug: str,
+    episode: int,
+    *,
+    variant: str = NEWSLETTER_VARIANT,
+    placement: str = PLACEMENT_BODY,
+) -> str:
+    """A link inside the Nerra Daily email (Nov 2026).
+
+    ``utm_source=newsletter`` / ``utm_medium=email`` and the LINKED
+    episode's campaign with ``kind="email"``, so a click on Tesla's card in
+    the network email is credited to Tesla's episode, and the variant says
+    it came from Nerra Daily. A network page (join, My Nerra) is linked with
+    ``show_slug="nerra_daily"``, the edition's number, and the surface as
+    the variant. Before this every email link was untagged and a click from
+    Gmail read as Direct traffic: email showed 3 sessions in 28 days.
+    """
+    return funnel_link(
+        destination,
+        source=SOURCE_NEWSLETTER,
+        medium=MEDIUM_EMAIL,
+        campaign=campaign_id(show_slug, episode, channel="en", kind="email",
+                             variant=variant),
+        placement=placement,
+    )
 
 
 def network_link(

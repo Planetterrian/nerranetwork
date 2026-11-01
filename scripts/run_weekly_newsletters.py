@@ -79,6 +79,12 @@ def send_preflight(show_slug: str) -> str:
     nl = getattr(cfg, "newsletter", None)
     if not nl or not getattr(nl, "enabled", False):
         return "newsletter not enabled"
+    # Nov 1 2026: the Sunday Nerra Daily email carries every English show's
+    # week (engine/nerra_daily_email.py); only a show that keeps its own
+    # email (``delivery: own``, the Russian shows) still gets a weekly here.
+    delivery = (getattr(nl, "delivery", "own") or "own").strip()
+    if delivery != "own":
+        return f"in the Sunday Nerra Daily email (newsletter.delivery={delivery})"
     key_env = getattr(nl, "api_key_env", "") or ""
     api_key = os.environ.get(key_env) if key_env else None
     if not api_key:

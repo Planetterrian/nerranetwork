@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch the Buttondown newsletter subscriber count.
+"""Fetch the Buttondown newsletter subscriber count, tags and email results.
 
 Writes ``api/buttondown_stats.json`` for the operator dashboard and the
 homepage "Join N readers" social proof. Clean no-op when
@@ -130,6 +130,135 @@ def fetch_tag_counts(api_key: str) -> Optional[dict]:
         return None
 
 
+#: Subscribers read at most when /tags carries no counts (Nov 2026). The
+#: list is 14 people today; the cap only stops a runaway walk.
+SUBSCRIBER_WALK_MAX = 5000
+
+
+def count_tags_from_subscribers(api_key: str) -> Optional[dict]:
+    """``{tag: subscribers}`` from the subscriber list itself, or None.
+
+    ``GET /v1/tags`` on this account returns every tag WITHOUT a
+    ``subscriber_count`` (23 tags, 0 counts on Oct 31 2026), which is why
+    ``tag_counts`` read ``{}`` for weeks. Each subscriber row carries its own
+    ``tags`` array, so counting them is exact. Only tag names and integers
+    leave this function: no address is stored or logged.
+    """
+    counts: dict = {}
+    seen = 0
+    url: Optional[str] = f"{BUTTONDOWN_API_BASE}/subscribers"
+    params: Optional[dict] = {"page_size": "100", "type": "regular"}
+    try:
+        while url and seen < SUBSCRIBER_WALK_MAX:
+            resp = requests.get(url, headers={"Authorization": f"Token {api_key}"},
+                                params=params, timeout=HTTP_TIMEOUT)
+            if resp.status_code != 200:
+                log.warning("buttondown: HTTP %s walking /subscribers", resp.status_code)
+                return None
+            data = resp.json() or {}
+            for row in data.get("results") or []:
+                seen += 1
+                for tag in (row or {}).get("tags") or []:
+                    if isinstance(tag, str) and tag:
+                        counts[tag] = counts.get(tag, 0) + 1
+            url = data.get("next") or None
+            params = None
+    except Exception as exc:  # noqa: BLE001
+        log.warning("buttondown: subscriber walk failed: %s", exc)
+        return None
+    return counts
+
+
+#: A rate is reported only over at least this many recipients (the funnel's
+#: honesty floor); below it the counts are the honest number.
+RATE_FLOOR = 30
+
+
+def fetch_recent_emails(api_key: str, *, days: int = 30, limit: int = 40) -> Optional[list]:
+    """The sent emails of the last *days*, newest first, with their analytics.
+
+    One row per email: id, subject, slug, kind (``nerra_daily`` or ``show``),
+    publish date, and Buttondown's counts (recipients, deliveries, opens,
+    clicks, unsubscriptions). Rates are null under :data:`RATE_FLOOR`
+    recipients. ``None`` when the list cannot be read at all.
+    """
+    from engine.newsletter import email_analytics
+
+    try:
+        resp = requests.get(f"{BUTTONDOWN_API_BASE}/emails",
+                            headers={"Authorization": f"Token {api_key}"},
+                            params={"page_size": "50"}, timeout=HTTP_TIMEOUT)
+        if resp.status_code != 200:
+            log.warning("buttondown: HTTP %s from /emails", resp.status_code)
+            return None
+        rows = (resp.json() or {}).get("results") or []
+    except Exception as exc:  # noqa: BLE001
+        log.warning("buttondown: email list failed: %s", exc)
+        return None
+    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=days)
+    out = []
+    for row in rows:
+        if (row or {}).get("status") not in ("sent", "imported"):
+            continue
+        when_raw = str(row.get("publish_date") or row.get("creation_date") or "")
+        try:
+            when = _dt.datetime.fromisoformat(when_raw.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=_dt.timezone.utc)
+        if when < cutoff:
+            continue
+        slug = str(row.get("slug") or "")
+        stats = email_analytics(str(row.get("id") or ""), api_key) or {}
+
+        def _n(key):
+            value = stats.get(key)
+            return value if isinstance(value, int) else None
+
+        recipients = _n("recipients")
+        entry = {
+            "id": row.get("id"),
+            "subject": row.get("subject") or "",
+            "slug": slug,
+            "kind": "nerra_daily" if slug.startswith("nerra-daily-") else "show",
+            "publish_date": when.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "recipients": recipients,
+            "deliveries": _n("deliveries"),
+            "opens": _n("opens"),
+            "clicks": _n("clicks"),
+            "unsubscriptions": _n("unsubscriptions"),
+        }
+        for key in ("opens", "clicks"):
+            value = entry[key]
+            entry[f"{key[:-1]}_rate"] = (round(value / recipients, 3)
+                                         if recipients and recipients >= RATE_FLOOR
+                                         and value is not None else None)
+        out.append(entry)
+        if len(out) >= limit:
+            break
+    out.sort(key=lambda e: e["publish_date"], reverse=True)
+    return out
+
+
+def summarize_nerra_daily(emails: list) -> dict:
+    """Last seven Nerra Daily sends: how many, to how many, opened, clicked."""
+    recent = [e for e in emails if e.get("kind") == "nerra_daily"][:7]
+
+    def total(key):
+        values = [e.get(key) for e in recent if isinstance(e.get(key), int)]
+        return sum(values) if values else None
+
+    return {
+        "sends": len(recent),
+        "last_recipients": recent[0].get("recipients") if recent else None,
+        "recipients": total("recipients"),
+        "opens": total("opens"),
+        "clicks": total("clicks"),
+        "unsubscriptions": total("unsubscriptions"),
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="api/buttondown_stats.json")
@@ -154,6 +283,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Per-tag breakdown. Omitted (not zeroed) when the call fails, so a
     # bad night reads as "unknown" rather than "everyone unsubscribed".
     tag_counts = fetch_tag_counts(api_key)
+    if count > 0 and not tag_counts:
+        walked = count_tags_from_subscribers(api_key)
+        if walked:
+            tag_counts = walked
+            stats["tag_counts_source"] = "subscribers"
     if tag_counts is not None:
         stats["tag_counts"] = dict(sorted(tag_counts.items()))
         stats["source_counts"] = {
@@ -189,6 +323,11 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "are src-* — captures can be traced to a LIST but not to the "
                 "surface that earned them."
             )
+
+    emails = fetch_recent_emails(api_key)
+    if emails is not None:
+        stats["emails"] = emails
+        stats["nerra_daily"] = summarize_nerra_daily(emails)
 
     if args.dry_run:
         print(json.dumps(stats, indent=2))

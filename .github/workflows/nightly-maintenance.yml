@@ -227,6 +227,15 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: python scripts/build_member_metrics.py --out api/member_metrics.json || echo "::warning::Member metrics build failed (non-fatal)"
 
+      # Nov 1 2026: the Nerra Daily email hides its Personal pitch from paying
+      # members by their Buttondown `personal-paid` tag. Stripe's webhook sets
+      # and clears it; this reconciles it nightly (members who paid before the
+      # tag existed, a webhook that missed Buttondown). Counts only.
+      - name: Reconcile the Nerra Daily email's member tags
+        env:
+          PERSONAL_ADMIN_TOKEN: ${{ secrets.PERSONAL_ADMIN_TOKEN }}
+        run: python scripts/sync_email_tags.py || echo "::warning::email tag sync failed (non-fatal)"
+
       - name: Build the funnel (reach -> click -> visit -> capture)
         run: python scripts/build_funnel.py --out api/funnel.json || echo "::warning::Funnel build failed (non-fatal)"
 
