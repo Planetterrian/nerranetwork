@@ -2712,6 +2712,16 @@ for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
   (talking vs listening AUC 0.48; at a pause 0.52). His audio says what the
   camera cannot: mid-answer pauses p99 1.6 s, three over 2 s in 43 answers,
   while Mira waited a median 4.3 s at every real end.
+- **Published as Ep15 (Nov 1 2026), reviewed** (guard
+  `tests/test_michaels_publish_2026_11_01.py`). Feed, post, transcript,
+  chapters, links and YouTube were right. Three faults, fixed: the publish
+  mail told him "February 2027" (the three-month default) after he chose
+  "about six months" on the review page (`return_invitation_html` reads
+  `guest_followup`: 6 or 12 months from the day he chose, no date for
+  "nothing for now"); the note above an EDIT transcript said "as it was
+  recorded" (`EDIT_TRANSCRIPT_NOTE` says it is edited for length and flow);
+  chapter titles lifted from mid-question kept their lower case
+  (`_chapter_case`; `refresh_post` now rewrites the record's chapters too).
 
 Operator: push (the studio page and the pipeline go live with it; the Worker
 is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
