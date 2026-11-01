@@ -7514,8 +7514,9 @@ Operator decisions on the Oct 31 review (register
 `tests/test_models_agents_length_names_2026_11_01.py`). Rules that bind:
 
 - **1,200-1,400 words is the show's natural length** (option C):
-  `min_podcast_words` 1300 and the prompt says the briefing sets the
-  length. **The skip floor stays at 900**, pinned with
+  `min_podcast_words` 1200 (the bottom of that range; the YAML floor
+  sits at or under the prompt's stated low end) and the prompt says the
+  briefing sets the length. **The skip floor stays at 900**, pinned with
   `min_podcast_publish_words`, so the lower target never lowers it.
 - **The names are data, not an instruction** (`engine/names_to_keep.py`,
   opt-in `names_to_keep: true`): the two-pass script prompt gets

@@ -90,7 +90,7 @@ class TestUnifiedLengthTargets:
 
     EXPECTED = {
         "modern_investing": (1800, "2,000–2,200 words"),
-        "models_agents": (1500, "1,600–2,200 words"),
+        "models_agents": (1200, "1,200–1,500 words"),
         "models_agents_beginners": (1200, "1300–1700 words"),
         "fascinating_frontiers": (1700, "1,900–2,200 words"),
     }

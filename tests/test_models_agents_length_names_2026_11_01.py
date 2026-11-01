@@ -2,7 +2,7 @@
 Oct 31 (PR #1593).
 
 - Length, option C: 1,200-1,400 words is the show's natural length. The
-  target drops to 1,300 and the skip floor stays at 900 (60 % of the old
+  target drops to 1,200 and the skip floor stays at 900 (60 % of the old
   1,500), pinned so the lower target never lowers it.
 - Names, the data-side lever: the two-pass script prompt gets the names the
   digest carries (engine/names_to_keep.py) instead of a fourth prose
@@ -98,7 +98,7 @@ class TestNamesToKeep:
 class TestModelsAgentsDecisions:
     def test_length_option_c_with_the_old_skip_floor_pinned(self):
         cfg = load_config(str(ROOT / "shows/models_agents.yaml"))
-        assert cfg.llm.min_podcast_words == 1300
+        assert cfg.llm.min_podcast_words == 1200
         # 60 % of the old 1,500: the lower target never lowers the floor.
         assert cfg.llm.min_podcast_publish_words == 900
 
