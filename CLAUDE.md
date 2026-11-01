@@ -5869,8 +5869,8 @@ the span between the edges must read as the map's text. Any refusal renders the
 Short from the dub track as before (`dub_short_source`, Short #1 `hook_open`
 only, behind the same `youtube.shorts_skip_map`; result key `shorts_map_cut_s`,
 index row `map_cut_s`). **The dub long-form, the language feeds and the episode
-keep the map.** Replay on 130 Whispered dub openings: RU 40/41, FR 57/58 mapped
-openings cut, 0 of 42 without a map; the two misses are Whisper holes over the
+keep the map.** Replay on 172 Whispered dub openings: RU 40/41, FR 57/58 mapped
+openings cut, 0 of 73 without a map; the two misses are Whisper holes over the
 map (refused). The dub's word JSON is gitignored, so the committed fixture
 `tests/fixtures/dub_openings_2026_11_01.json` carries seven real openings and
 the VTTs carry the rest.

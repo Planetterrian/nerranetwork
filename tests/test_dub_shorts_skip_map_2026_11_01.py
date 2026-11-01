@@ -11,9 +11,10 @@ dropped). Every refusal renders the Short from the dub track as before.
 Measured before shipping on the dub openings of Oct 15-Nov 1 (faster-whisper,
 the production function, on the published RU/FR tracks of SpaceX, Tesla, FF,
 MIT, M&A and FPD): 40 of 41 RU and 57 of 58 FR mapped openings cut (median
-10.5 / 10.3 s), 0 cuts on the 42 openings without an English map; the two
+10.5 / 10.3 s), 0 cuts on the 73 openings without an English map; the two
 misses are openings where Whisper wrote no words over the map. On 65 real
-splices, Whisper of the spliced source heard no map-only word.
+splices, Whisper of the spliced source heard no map text (the one word
+flagged in 65 was the next story's own).
 """
 
 from __future__ import annotations
