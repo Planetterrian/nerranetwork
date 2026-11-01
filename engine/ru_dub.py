@@ -961,9 +961,19 @@ def publish_ru_dub(
                 try:
                     suffix = "" if short_idx == 0 else f"_{short_idx + 1}"
                     short_mp4 = tmp / f"ru_short_ep{episode_num:03d}{suffix}.mp4"
+                    # Nov 1 2026: the hook Short skips the translated map
+                    # (engine/short_furniture.py, youtube.shorts_skip_map);
+                    # every other Short, and any failure, reads the RU track.
+                    from engine.short_furniture import dub_short_source
+                    _src_audio, _src_tx, _src_words = dub_short_source(
+                        yt, short_idx, window_label, audio, tr_json, _dub_words,
+                        PROJECT_ROOT / config.episode.output_dir, episode_num,
+                        "ru", tmp / f"ru_short_source{suffix}", result)
+                    _map_cut_s = (result.get("shorts_map_cut_s")
+                                  if _src_audio is not audio else None)
                     from engine.shorts_selector import end_on_sentence
                     this_dur = end_on_sentence(
-                        _dub_words, start_offset, short_dur, audio_offset_s=0.0)
+                        _src_words, start_offset, short_dur, audio_offset_s=0.0)
 
                     # Titles: Short #1 keeps the optimized-derived headline;
                     # Short #2 leads with ITS window's opening text (already
@@ -1000,13 +1010,13 @@ def publish_ru_dub(
                     _overlay = ru_title if short_idx == 0 else (_window_body or None)
 
                     ass_path = None
-                    if tr_json is not None:
+                    if _src_tx is not None:
                         try:
                             from engine.captions import transcript_to_ass_window
                             ass_candidate = (
                                 tmp / f"ru_short_ep{episode_num:03d}{suffix}.ass")
                             transcript_to_ass_window(
-                                tr_json, ass_candidate,
+                                _src_tx, ass_candidate,
                                 window_start_seconds=start_offset,
                                 window_duration_seconds=this_dur,
                                 audio_offset_seconds=0.0)
@@ -1022,7 +1032,7 @@ def publish_ru_dub(
                                 "(%s)", short_idx + 1, exc)
 
                     build_short_video(
-                        audio, cover, short_mp4,
+                        _src_audio, cover, short_mp4,
                         start_offset=start_offset,
                         duration=this_dur,
                         hook=_overlay,
@@ -1147,6 +1157,7 @@ def publish_ru_dub(
                         watch_url=sup.watch_url,
                         channel="ru",
                         window=window_label,
+                        map_cut_s=_map_cut_s,
                         index_path=PROJECT_ROOT / config.episode.output_dir
                         / "youtube_videos.ru.json")
                     # Shorts never join the PODCAST playlist (YouTube
