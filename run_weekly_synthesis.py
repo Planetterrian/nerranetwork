@@ -81,7 +81,10 @@ def run_show_weekly(show_slug: str, *, dry_run: bool = False) -> None:
     logger.info("Weekly newsletter saved: %s (%d chars)", weekly_path.name, len(newsletter_md))
 
     # Send via Buttondown if newsletter is enabled and not dry-run
-    if config.newsletter.enabled and not dry_run:
+    # Nov 1 2026: an English show's week is in the Sunday Nerra Daily email;
+    # only a ``delivery: own`` show (the Russian shows) sends a weekly here.
+    own = (getattr(config.newsletter, "delivery", "own") or "own").strip() == "own"
+    if config.newsletter.enabled and own and not dry_run:
         from engine.newsletter import send_show_newsletter
         email_id = send_show_newsletter(
             newsletter_md, config,

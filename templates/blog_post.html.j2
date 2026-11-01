@@ -1573,8 +1573,13 @@
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
             {% if newsletter_tag %}
             <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
+                {%- if (page_lang | default('en')) == 'ru' %}
                 <h3>Enjoy this episode? Get {{ show_name }} in your inbox</h3>
                 <p>New episode alerts — no spam, unsubscribe anytime.</p>
+                {%- else %}
+                <h3>Enjoy this episode? Get {{ show_name }} in Nerra Daily</h3>
+                <p>One email at 7 AM Eastern with the shows you pick. No spam, unsubscribe anytime.</p>
+                {%- endif %}
                 <form method="post" action="#"
                       data-nn-subscribe="blog-cta"
                       data-list="member"

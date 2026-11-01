@@ -885,6 +885,14 @@ def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
     """
     if cfg is None or not getattr(getattr(cfg, "newsletter", None), "enabled", False):
         return
+    # Nov 1 2026: an interview is a section of the next morning's Nerra Daily
+    # email (engine/nerra_daily_email.py reads the published episode), not an
+    # email of its own, unless the show keeps one (``delivery: own``).
+    delivery = (getattr(cfg.newsletter, "delivery", "own") or "own").strip()
+    if delivery != "own":
+        logger.info("Newsletter for %s Ep%d goes out in the next Nerra Daily email.",
+                    show.slug, episode_num)
+        return
     if not digest_path or not digest_path.exists():
         logger.warning("::warning::newsletter skipped for %s Ep%d: no digest at %s",
                        show.slug, episode_num, digest_path)

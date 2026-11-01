@@ -13,7 +13,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -385,6 +385,57 @@ def tag_exists(tag: str, api_key: str) -> Optional[bool]:
     return False if _ALL_TAG_NAMES else None
 
 
+def resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
+    """Public name -> id map for *tag_names* (missing names are absent)."""
+    return _resolve_tag_ids([t for t in tag_names if t], api_key)
+
+
+def send_draft_to(email_id: str, recipients: List[str], api_key: str) -> bool:
+    """Send a DRAFT email to *recipients* only (Buttondown ``send-draft``).
+
+    The operator's preview: the real email, in a real inbox, before any
+    subscriber gets it. The addresses are never logged.
+    """
+    recipients = [r.strip() for r in recipients if r and "@" in r]
+    if not (email_id and recipients and api_key):
+        return False
+    try:
+        resp = requests.post(
+            f"{BUTTONDOWN_API_BASE}/emails/{email_id}/send-draft",
+            headers={"Authorization": f"Token {api_key}",
+                     "Content-Type": "application/json"},
+            json={"recipients": recipients},
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        logger.error("Test send failed: %s", type(exc).__name__)
+        return False
+    if resp.status_code in (200, 201, 202, 204):
+        logger.info("Test send of %s accepted for %d address(es)", email_id, len(recipients))
+        return True
+    logger.error("Test send of %s refused: HTTP %s", email_id, resp.status_code)
+    return False
+
+
+def email_analytics(email_id: str, api_key: str) -> Optional[Dict[str, Any]]:
+    """``GET /v1/emails/{id}/analytics`` (recipients, deliveries, opens,
+    clicks, unsubscriptions ...), or ``None`` when it cannot be read."""
+    if not (email_id and api_key):
+        return None
+    try:
+        resp = requests.get(
+            f"{BUTTONDOWN_API_BASE}/emails/{email_id}/analytics",
+            headers={"Authorization": f"Token {api_key}"},
+            timeout=20,
+        )
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        return data if isinstance(data, dict) else None
+    except (requests.RequestException, ValueError):
+        return None
+
+
 def _future_utc_iso(when) -> str:
     """``when`` as ISO 8601 UTC (``...Z``) if it is in the future, else ``""``."""
     if when is None:
@@ -409,6 +460,7 @@ def send_newsletter(
     tags: Optional[List[str]] = None,
     slug: Optional[str] = None,
     publish_date: Optional["datetime.datetime"] = None,
+    filters: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     """Send a newsletter issue via Buttondown API.
 
@@ -440,6 +492,13 @@ def send_newsletter(
         https://docs.buttondown.com/scheduling-emails-via-the-api) and
         Buttondown sends it then. ``None`` or a past time leaves *status*
         as given (send now).
+    filters:
+        A complete Buttondown filter tree (tag IDENTIFIERS, nested groups,
+        ``contains`` / ``not_contains``), built by the caller. Used by the
+        Nerra Daily email (Nov 2026), whose audience is "free accounts and
+        English-show followers, minus Russian-only readers and, on weekdays,
+        Sunday-only readers" — more than an OR of tags. Wins over *tags*.
+        An empty or missing tree is never sent: it would reach everyone.
 
     Returns
     -------
@@ -480,7 +539,13 @@ def send_newsletter(
         if ascii_slug:
             data["slug"] = ascii_slug[:100]
 
-    if tags:
+    if filters is not None:
+        if not (filters.get("filters") or filters.get("groups")):
+            logger.error("Refusing to send with an empty filter tree: it "
+                         "would reach the whole list.")
+            return None
+        data["filters"] = filters
+    elif tags:
         # Buttondown's email-send filters use a tree structure with
         # ``filters`` (leaf conditions), ``groups`` (nested filter
         # groups), and ``predicate`` ("and"/"or") for the join.
@@ -550,10 +615,13 @@ def send_newsletter(
     if resp.status_code in (200, 201):
         result = resp.json()
         email_id = result.get("id", "unknown")
-        recipient_count = result.get("secondary_id", result.get("num_recipients", "?"))
+        # ``secondary_id`` is Buttondown's running issue number (1,378 on
+        # Oct 25), not a recipient count; this line printed it as one.
         logger.info(
-            "Newsletter created: id=%s status=%s tags=%s recipients=%s",
-            email_id, status, tags, recipient_count,
+            "Newsletter created: id=%s status=%s tags=%s issue=%s recipients=%s",
+            email_id, status, tags if filters is None else "filter-tree",
+            result.get("secondary_id", "?"),
+            result.get("num_recipients", "resolved at send time"),
         )
         # Zero recipients when tag filters are set is a misconfiguration —
         # the email was accepted but nobody received it. Surface this as a
@@ -562,11 +630,12 @@ def send_newsletter(
         # recipients at send time), so a 0 there is not evidence of
         # anything: the tag ids above were resolved, and returning None
         # would report a failure for an email that will still go out.
-        if status == "scheduled" and tags and result.get("num_recipients", 1) == 0:
+        targeted = bool(tags) or filters is not None
+        if status in ("scheduled", "draft") and targeted and result.get("num_recipients", 1) == 0:
             logger.info("Newsletter %s scheduled for %s; recipients are "
                         "resolved at send time.", email_id,
                         data.get("publish_date"))
-        elif tags and result.get("num_recipients", 1) == 0:
+        elif targeted and result.get("num_recipients", 1) == 0:
             logger.error(
                 "Newsletter %s was created but has 0 recipients — "
                 "tag filter %s matched no subscribers. Treating as failure.",

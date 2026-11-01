@@ -278,3 +278,29 @@ jobs:
           else
             echo "::warning::Nerra Personal dispatch failed ($status): $(head -c 300 /tmp/dispatch.out). Fallback cron will build it later."
           fi
+
+      # --- The Nerra Daily email follows the edition (Nov 1 2026) ----------
+      # One network email instead of one per show (engine/nerra_daily_email.py):
+      # every show of the morning has published by now, so the email carries
+      # each reader's own shows. Scheduled for 7:00 AM Eastern through
+      # Buttondown when it is earlier than that, sent now otherwise. The
+      # committed digests/nerra_daily/email/<date>.json marker is the
+      # idempotency key; nerra-daily-email.yml is the fallback when this step
+      # fails. A failure here never fails the edition.
+      - name: Send the Nerra Daily email
+        id: email
+        if: steps.postgate.outputs.published == 'true'
+        continue-on-error: true
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          EDITION_DATE: ${{ steps.postgate.outputs.date }}
+        run: python scripts/send_nerra_daily_email.py --date "$EDITION_DATE"
+
+      - name: Commit the email record
+        if: steps.postgate.outputs.published == 'true' && steps.email.outcome == 'success'
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/nerra_daily/email
+          commit-message: "Nerra Daily email ${{ steps.postgate.outputs.date }}"

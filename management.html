@@ -853,6 +853,14 @@
            fmt(Object.keys(yt.channels || {}).length) + " YouTube channels" }));
   tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
     { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
+  // Nov 2026: the one network email. Counts over its last seven sends;
+  // a dash, never 0, where Buttondown has not reported yet.
+  const nd = bd.nerra_daily || {};
+  if (bd.configured && nd.sends) {
+    tiles.appendChild(statTile("Nerra Daily email", fmtOrDash(nd.last_recipients),
+      { sub: "recipients last send · " + fmtOrDash(nd.opens) + " opens · " +
+             fmtOrDash(nd.clicks) + " clicks over " + fmt(nd.sends) + " sends" }));
+  }
   tiles.appendChild(statTile("Image library", gallery.configured ? compact(gallery.image_count) : "—",
     { sub: gallery.configured
         ? "CC-licensed images on /gallery.html"

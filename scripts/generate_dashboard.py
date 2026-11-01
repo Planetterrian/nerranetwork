@@ -4118,6 +4118,11 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "configured": True,
                 "fetched_at": data.get("fetched_at"),
                 "subscriber_count": data.get("subscriber_count"),
+                # Nov 2026: the one network email's last seven sends
+                # (recipients / opens / clicks, counts — rates stay null
+                # under 30 recipients) and the per-tag follow counts.
+                "nerra_daily": data.get("nerra_daily"),
+                "tag_counts": data.get("tag_counts"),
             }
         except Exception as exc:  # noqa: BLE001
             section["newsletter"] = {"configured": True, "error": str(exc)}

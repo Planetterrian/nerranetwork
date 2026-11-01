@@ -982,7 +982,11 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
 
     # Validate newsletter API key if newsletter is enabled — gives a clear
     # early warning instead of failing silently at the end of the pipeline.
-    if config.newsletter.enabled:
+    # A show folded into the Nerra Daily email (Nov 2026) never calls
+    # Buttondown from here, so it pays no validation request either.
+    if config.newsletter.enabled and (
+        getattr(config.newsletter, "delivery", "own") or "own"
+    ).strip() == "own":
         nl_key = os.environ.get(config.newsletter.api_key_env, "").strip()
         if not nl_key:
             logger.warning(
@@ -5865,9 +5869,19 @@ def run(args: argparse.Namespace) -> None:
     episode_published = bool(final_mp3 and final_mp3.exists())
 
     # 12b. Send newsletter
+    # Nov 1 2026: an English show is a section of the one network email,
+    # Nerra Daily (engine/nerra_daily_email.py), sent after the edition
+    # publishes; only a show with ``newsletter.delivery: own`` (the Russian
+    # shows) still sends its own daily email from here.
+    _nl_delivery = (getattr(config.newsletter, "delivery", "own") or "own").strip()
+    if episode_published and config.newsletter.enabled and _nl_delivery != "own":
+        metrics.record("newsletter_delivery", _nl_delivery)
+        logger.info("Newsletter: this episode goes out in the Nerra Daily email "
+                    "(newsletter.delivery=%s); no per-show send.", _nl_delivery)
     if (
         episode_published
         and config.newsletter.enabled
+        and _nl_delivery == "own"
         and not args.skip_newsletter
     ):
         from engine.newsletter import send_show_newsletter

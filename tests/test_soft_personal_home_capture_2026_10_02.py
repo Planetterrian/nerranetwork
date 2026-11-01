@@ -246,4 +246,4 @@ class TestSoftPersonalNoFrLocaleFlag:
         assert 'data-nn-subscribe="show-inline"' in html
         assert 'data-list="member"' in html
         assert 'data-nn-subscribe="footer"' in html
-        assert "Get The Age of AI in your inbox" in html
+        assert "Get The Age of AI in Nerra Daily" in html

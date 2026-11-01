@@ -7777,6 +7777,14 @@ def generate_account_page(*, dry_run=False, output_dir=None):
     ctx["library"] = account_library_volumes(
         books_page_volumes(ROOT / "books" / "catalog.json",
                            ROOT / "books" / "volumes"))
+    # Nov 1 2026: "Your Nerra Daily email" — the shows a reader can carry in
+    # the one network email, in the registry's order (the Worker mirrors the
+    # slugs in workers/gallery/src/email.ts EMAIL_SHOW_TAGS).
+    from engine.nerra_daily_email import email_show_tags
+    ctx["email_shows"] = [
+        {"slug": slug, "name": (NETWORK_SHOWS.get(slug) or {}).get("name") or slug}
+        for slug in email_show_tags()
+    ]
     html = env.get_template("account_page.html.j2").render(**ctx)
     out_path = (Path(output_dir) if output_dir else ROOT) / "account.html"
     if dry_run:
