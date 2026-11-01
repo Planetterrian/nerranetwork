@@ -239,7 +239,7 @@
     <section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
         <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
             <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
-                {% if _is_ru %}📬 Получайте новые выпуски на почту:{% elif (schedule | default('Daily')).startswith('Daily') %}📬 Get tomorrow's episode in your inbox:{% else %}📬 Get the next episode in your inbox:{% endif %}
+                {% if _is_ru %}📬 Получайте новые выпуски на почту:{% else %}📬 Get {{ show_name }} in Nerra Daily, our 7 AM email:{% endif %}
             </span>
             <form method="post" action="#"
                   data-nn-subscribe="show-hero"
@@ -1100,8 +1100,8 @@
     <section class="nn-section" style="padding-top:0;">
         <div class="container" style="max-width:700px;">
             <div class="show-subscribe-inline">
-                <h3>{% if _is_ru %}Получайте {{ show_name }} на почту{% else %}Get {{ show_name }} in your inbox{% endif %}</h3>
-                <p>{% if _is_ru %}Уведомления о новых выпусках прямо на email — без спама, отписаться можно в любой момент.{% else %}New episode alerts delivered straight to your email — no spam, unsubscribe anytime.{% endif %}</p>
+                <h3>{% if _is_ru %}Получайте {{ show_name }} на почту{% else %}Get {{ show_name }} in Nerra Daily{% endif %}</h3>
+                <p>{% if _is_ru %}Уведомления о новых выпусках прямо на email — без спама, отписаться можно в любой момент.{% else %}One email at 7 AM Eastern with {{ show_name }} and any other shows you pick. No spam, unsubscribe anytime.{% endif %}</p>
                 <form method="post" action="#"
                       data-nn-subscribe="show-inline"
                       data-list="member"

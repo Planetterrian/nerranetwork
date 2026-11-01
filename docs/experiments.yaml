@@ -6026,3 +6026,33 @@ experiments:
       LONG_PROBE_CHANNELS, LONG_MIN_AGE_DAYS); api/youtube_policy.json
       recomputed and the five probe-promoted dub entries reset to C. Guards:
       tests/test_review_2026_10_31.py, tests/test_youtube_policy.py.
+  - id: nerra-daily-email-2026-11-01
+    title: "One network email, Nerra Daily: each reader's own shows, daily or Sundays only"
+    area: funnel
+    shipped: 2026-11-01
+    readout: 2026-11-29
+    status: reading
+    baseline: >
+      Oct 31 2026: 14 Buttondown subscribers (2 paid), email 3 sessions to the
+      site in 28 days, about 19 per-show daily sends attempted a morning (ten
+      delivered to one to three people each, five failing daily on tags no
+      subscriber carried), nine per-show weeklies on Sundays (~36 min of
+      synthesis), and the free account's promised newsletter (nerra-member)
+      never sent. No email link carried a campaign; no email mentioned
+      Personal.
+    target: >
+      Every free account receives an email (Nerra Daily reaches every
+      nerra-member); email sessions in GA4 above 30 a month on campaigns that
+      parse (nn-*-email-*); at least one Personal checkout started from a
+      nerra_daily campaign; unsubscribes under 10% of recipients over the
+      first four weeks; zero daily send failures.
+    notes: >
+      engine/nerra_daily_email.py, scripts/send_nerra_daily_email.py,
+      nerra-daily.yml (send after the edition), nerra-daily-email.yml
+      (fallback + preview), newsletter.delivery in shows/_defaults.yaml (the
+      Russian shows keep own), workers/gallery/src/email.ts (lineup and
+      Stripe move the tags; /api/account/email), scripts/sync_email_tags.py
+      (nightly paid-tag reconcile), fetch_buttondown_stats.py (per-email
+      analytics, tag counts from subscribers). Doc docs/nerra_daily_email.md.
+      Guards tests/test_nerra_daily_email_2026_11_01.py,
+      workers/gallery/test/email.test.ts.

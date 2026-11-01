@@ -604,6 +604,12 @@ class NewsletterConfig:
     # Buttondown's hand-edited Tags page, so renaming a tag there cannot
     # silently break the show's send. Never reaches the subscribe form.
     tag_id: str = ""
+    # Nov 1 2026: ``nerra_daily`` = a section of the one network email
+    # (engine/nerra_daily_email.py) and no per-show daily/weekly send;
+    # ``own`` = the show sends its own daily email (the Russian shows).
+    # The dataclass default stays ``own`` so a caller that bypasses the YAML
+    # behaves as before; _defaults.yaml sets the network to ``nerra_daily``.
+    delivery: str = "own"
     # June 10 2026: these fields were set in show YAMLs and read via
     # getattr() on this dataclass — but never DECLARED here, so
     # _build_nested silently dropped them and the getattr defaults always

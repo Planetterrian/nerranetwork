@@ -13,6 +13,7 @@
  *   POST /api/account/checkout-ref - opaque ref to attach a checkout to this account
  *   POST /api/account/portal       - Stripe customer portal session (switch plan / cancel)
  *   POST /api/account/rebuild      - build / rebuild today's edition now (dispatches the batch repo)
+ *   GET|POST /api/account/email    - the Nerra Daily email's shows and frequency (Buttondown tags)
  *   GET  /api/download    - stream a private R2 object
  *   GET  /api/health      - liveness ping (no auth)
  *
@@ -33,6 +34,8 @@ import {
 import {
   handleAccount,
   handleBookDownload,
+  handleEmailPrefs,
+  handleEmailSync,
   handleCheckoutRef,
   handlePortal,
   handleAdminSpecs,
@@ -107,10 +110,15 @@ export default {
           return await handlePortal(request, env);
         case "POST /api/account/rebuild":
           return await handleRebuild(request, env);
+        case "GET /api/account/email":
+        case "POST /api/account/email":
+          return await handleEmailPrefs(request, env);
         case "POST /api/stripe/webhook":
           return await handleStripeWebhook(request, env, DEPS);
         case "GET /api/admin/personal-specs":
           return await handleAdminSpecs(request, env);
+        case "POST /api/admin/sync-email-tags":
+          return await handleEmailSync(request, env);
         case "GET /api/admin/show-demand":
           return await handleShowDemand(request, env);
         case "GET /api/markets":

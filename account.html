@@ -1197,6 +1197,12 @@ body.lt-player-open { overflow: hidden; }
         .me-tile .lock { display: block; margin-top: 3px; font-family: var(--font-ui); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #F5C860; }
         .me-tile .me-icon-btn { color: var(--lt-cyan); font-size: 1.1rem; }
 
+        /* The Nerra Daily email's show list (Nov 2026) */
+        .me-email-shows { border: 0; padding: 0; margin: var(--sp-3) 0 var(--sp-4); display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 14px; }
+        .me-email-shows legend { margin-bottom: 6px; }
+        .me-email-show { display: flex; gap: 8px; align-items: center; font-family: var(--font-ui); font-size: 0.9rem; color: var(--lt-ink); cursor: pointer; }
+        .me-email-show input { width: 18px; height: 18px; accent-color: var(--lt-cyan); }
+
         /* Edition length: a segmented control */
         .me-seg { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
         .me-seg input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
@@ -2375,6 +2381,35 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </section>
 
+        <!-- The Nerra Daily email (Nov 1 2026): one email a morning, the shows
+             chosen here. The state is the address's Buttondown tags, read and
+             written by the account Worker (/api/account/email). -->
+        <section class="lt-block" id="email" aria-labelledby="nn-email-h">
+            <div class="lt-block-head"><h2 id="nn-email-h">Your Nerra Daily email</h2><span class="me-fine" style="margin:0;">7:00 AM Eastern</span></div>
+            <div class="me-panel">
+                <p class="me-panel-lede">One email a morning: today's Nerra Daily, a card for each show
+                   ticked below, and one line on everything else Nerra published. Shows you add to your
+                   lineup join it; shows you take out of your lineup leave it.</p>
+                <p class="me-help" id="nn-email-status" aria-live="polite">Loading your email settings…</p>
+                <div id="nn-email-form" hidden>
+                    <div class="me-field">
+                        <span class="me-label" id="nn-email-freq-label">How often</span>
+                        <div class="me-seg" role="radiogroup" aria-labelledby="nn-email-freq-label">
+                            <input type="radio" name="nn-email-freq" id="nn-email-daily" value="daily"><label for="nn-email-daily">Every morning</label>
+                            <input type="radio" name="nn-email-freq" id="nn-email-weekly" value="weekly"><label for="nn-email-weekly">Sundays only</label>
+                        </div>
+                    </div>
+                    <fieldset class="me-field me-email-shows">
+                        <legend class="me-label">Shows in your email</legend>
+                        <label class="me-email-show"><input type="checkbox" name="nn-email-show" value="tesla"> Tesla Shorts Time</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="omni_view"> Omni View</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="fascinating_frontiers"> Fascinating Frontiers</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="planetterrian"> Planetterrian Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="env_intel"> Environmental Intelligence</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="models_agents"> Models &amp; Agents</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="models_agents_beginners"> Models &amp; Agents for Beginners</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="modern_investing"> Modern Investing Techniques</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="unintended_consequences"> Unintended Consequences</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="first_principles"> First Principles Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="dp_pod"> The DP Pod: The Do Positive Podcast</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="spacex"> SpaceX Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="age_of_ai"> The Age of AI</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="offshore_north"> Offshore North</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="ai_chips"> AI Chips &amp; Data Centres Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="mag7"> MAG 7 Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="prediction_markets"> Prediction Markets Daily</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="peptides"> Peptides Weekly</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="longevity"> Longevity Weekly</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="vancouver"> Vancouver Daily News</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="collingwood"> Collingwood Weekly</label><label class="me-email-show"><input type="checkbox" name="nn-email-show" value="omni_view_world"> Omni View Top World News</label>
+                    </fieldset>
+                    <button type="button" class="lt-btn" id="nn-email-save" onclick="NN.saveEmail()">Save email settings</button>
+                    <p class="me-fine">With nothing ticked you get a few of our shows and a link back here.
+                       To stop every email, use the unsubscribe link at the bottom of any one; your account stays.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Membership -->
         <section class="lt-block" id="nn-membership" aria-labelledby="nn-membership-h">
             <div class="lt-block-head"><h2 id="nn-membership-h">Your membership</h2><a href="join.html">Everything included →</a></div>
@@ -2400,7 +2435,7 @@ body.lt-player-open { overflow: hidden; }
                     </div>
                     <div class="me-card">
                         <h3>Member perks</h3>
-                        <div class="me-perk"><span>Newsletter</span><span class="me-muted">Manage topics in any email's footer</span></div>
+                        <div class="me-perk"><span>Nerra Daily email</span><a href="#email">Choose your shows →</a></div>
                         <div class="me-perk"><span>Gallery downloads</span><a href="gallery.html">Browse →</a></div>
                         <div class="me-perk"><span>Books</span><span id="nn-book-perk" class="me-muted">—</span></div>
                         <div class="me-perk"><span>Support the network</span><a href="support.html">Donate →</a></div>
@@ -3481,6 +3516,31 @@ var NN = (function () {
     if (!q._nnWired) { q._nnWired = true; q.addEventListener('input', renderShowGrid); }
   }
 
+  // Nov 1 2026: the Nerra Daily email's settings, read from the Worker
+  // (the address's Buttondown tags). A failure leaves a plain sentence.
+  function showEmail(e) {
+    if (!e) { return; }
+    el('nn-email-form').hidden = false;
+    var freq = el(e.frequency === 'weekly' ? 'nn-email-weekly' : 'nn-email-daily');
+    if (freq) { freq.checked = true; }
+    var on = {};
+    (e.shows || []).forEach(function (s) { on[s] = true; });
+    document.querySelectorAll('input[name="nn-email-show"]').forEach(function (i) {
+      i.checked = !!on[i.value];
+    });
+    el('nn-email-status').textContent = e.subscribed ? ''
+      : 'This address is not subscribed to email right now. Saving here does not resubscribe it; join again from the newsletter form to get Nerra Daily.';
+    el('nn-email-status').hidden = !!e.subscribed;
+  }
+  function loadEmail() {
+    fetch(API + '/api/account/email', { credentials: 'include' })
+      .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+      .then(function (d) { showEmail(d.email); })
+      .catch(function () {
+        el('nn-email-status').textContent = 'Your email settings are not available right now.';
+      });
+  }
+
   function load() {
     el('nn-guest-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     // Oct 29 2026: the first load reads the base template's one account
@@ -3612,6 +3672,7 @@ var NN = (function () {
         var pnnHelp = el('nn-pnn-help');
         if (pnnHelp) { pnnHelp.hidden = !(status === 'active' && !portal); }
         attachCheckoutRefs();
+        loadEmail();
         // Library: links answer only for active PNN (the Worker gates the
         // bytes; this decides what the page shows).
         var lib = !!(data.perks && data.perks.library);
@@ -3804,6 +3865,29 @@ var NN = (function () {
         .catch(function () {})
         .then(function () { window.location.href = 'login.html'; });
     },
+    saveEmail: function () {
+      var btn = el('nn-email-save');
+      var freq = document.querySelector('input[name="nn-email-freq"]:checked');
+      var shows = [].map.call(document.querySelectorAll('input[name="nn-email-show"]:checked'),
+        function (i) { return i.value; });
+      btn.disabled = true; btn.textContent = 'Saving…';
+      fetch(API + '/api/account/email', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shows: shows, frequency: freq ? freq.value : 'daily' }),
+      })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) { throw d; } return d; }); })
+        .then(function (d) {
+          showEmail(d.email);
+          el('nn-email-status').textContent = 'Saved. The next email follows these settings.';
+          el('nn-email-status').hidden = false;
+        })
+        .catch(function (d) {
+          el('nn-email-status').textContent = (d && d.message) || 'Not saved. Try again in a minute.';
+          el('nn-email-status').hidden = false;
+        })
+        .then(function () { btn.disabled = false; btn.textContent = 'Save email settings'; });
+    },
     portal: function () {
       var btn = el('nn-portal-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
@@ -3988,8 +4072,8 @@ if (document.readyState === 'loading') { document.addEventListener('DOMContentLo
                       data-label-done="Check your email ✓"
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
-                    <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <h4>Get Nerra Daily by email</h4>
+                    <p>One email at 7 AM Eastern, with the shows you pick:</p><details class="nn-subscribe-pick">
                     <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>

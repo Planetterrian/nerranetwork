@@ -27,6 +27,7 @@
  */
 
 import { MEMBER_SYMBOL_RE } from "./markets";
+import { applyEmailChange, EMAIL_SHOW_TAGS, readEmailState } from "./email";
 import {
   BUILD_ETA_MINUTES,
   dispatchAvailable,
@@ -629,6 +630,17 @@ export async function handlePreferences(
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
+  // Nov 1 2026: the Nerra Daily email follows the lineup. Shows added here
+  // join the email; shows REMOVED from the lineup leave it. A show followed
+  // from a show page and never in the lineup is left alone. Best-effort:
+  // the saved lineup stands whatever Buttondown says.
+  if (Array.isArray(body?.shows)) {
+    const before = (existing.shows || []) as string[];
+    await applyEmailChange(env, email, {
+      addShows: shows,
+      dropShows: before.filter((s) => !shows.includes(s)),
+    });
+  }
   return jsonResponse(request, 200, { ok: true, saved: {
     shows, first_name: firstName, city, cities, topics,
     addons: addons !== undefined ? addons : (existing as MemberRecord).addons ?? null,
@@ -636,6 +648,58 @@ export async function handlePreferences(
     target_minutes: rec.target_minutes ?? null,
     tickers: rec.tickers ?? null,
   } });
+}
+
+// ---------------------------------------------------------------------------
+// GET/POST /api/account/email  (Nov 1 2026)
+//
+// My Nerra's "Your Nerra Daily email": which shows the one network email
+// carries and whether it comes daily or on Sundays only. The state IS the
+// subscriber's Buttondown tags (see email.ts). A verified session only:
+// these read and change what an address receives.
+// ---------------------------------------------------------------------------
+
+export async function handleEmailPrefs(request: Request, env: Env): Promise<Response> {
+  const sess = await sessionFromCookie(request, env);
+  if (!sess) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  if (!sess.verified) return verifyRequired(request);
+  if (!env.BUTTONDOWN_API_KEY) return notConfigured(request);
+  if (request.method === "GET") {
+    const state = await readEmailState(env, sess.email);
+    if (!state) {
+      return jsonResponse(request, 502, { ok: false, error: "email settings unavailable" });
+    }
+    return jsonResponse(request, 200, { ok: true, email: state });
+  }
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse(request, 400, { ok: false, error: "invalid json" });
+  }
+  const change: { shows?: string[]; frequency?: "daily" | "weekly" } = {};
+  if (Array.isArray(body?.shows)) {
+    change.shows = [];
+    for (const s of body.shows.slice(0, 40)) {
+      const slug = String(s);
+      if (EMAIL_SHOW_TAGS[slug] && !change.shows.includes(slug)) change.shows.push(slug);
+    }
+  }
+  if (body?.frequency === "daily" || body?.frequency === "weekly") {
+    change.frequency = body.frequency;
+  }
+  const tags = await applyEmailChange(env, sess.email, change);
+  if (!tags) {
+    return jsonResponse(request, 502, {
+      ok: false,
+      error: "not saved",
+      message: "Your email settings could not be saved. Try again in a minute.",
+    });
+  }
+  const state = await readEmailState(env, sess.email);
+  return jsonResponse(request, 200, { ok: true, email: state });
 }
 
 // ---------------------------------------------------------------------------
@@ -946,6 +1010,8 @@ export async function handleStripeWebhook(
       await env.RATE_LIMIT_KV.put(`sub:${rec.sub_id}`, email);
     }
     console.log("stripe: activated", tier, "token", token.slice(0, 8));
+    // Nov 1 2026: the Nerra Daily email stops pitching Personal to a member.
+    await applyEmailChange(env, email, { paid: true });
     if (existing.status !== "active") {
       // First edition within minutes of paying (Sep 17 2026) — the
       // starter lineup until they pick shows. Best-effort: a failed or
@@ -996,6 +1062,7 @@ export async function handleStripeWebhook(
           status: "cancelled",
           updated_at: new Date().toISOString(),
         });
+        await applyEmailChange(env, email, { paid: false });
         console.log("stripe: cancelled sub", subId.slice(0, 12));
       }
     }
@@ -1029,6 +1096,7 @@ export async function handleStripeWebhook(
           ...member, status: "cancelled", trial_ends_at: undefined,
           updated_at: new Date().toISOString(),
         });
+        await applyEmailChange(env, email!, { paid: false });
         console.log("stripe: subscription", sub.status, "→ cancelled", subId.slice(0, 12));
       }
       return jsonResponse(request, 200, { ok: true });
@@ -1242,6 +1310,56 @@ export async function handleAdminSpecs(
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return jsonResponse(request, 200, { ok: true, specs });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/sync-email-tags  (Nov 1 2026)
+//
+// Reconciles the Nerra Daily email's `personal-paid` tag with every member
+// record: set while the membership is active, cleared otherwise. Covers the
+// members who paid before the tag existed and any webhook that failed to
+// reach Buttondown. `?lineups=1` (a one-time backfill) also adds each
+// record's lineup shows to the email; the nightly run never does, because a
+// member may have taken a lineup show out of the email on purpose.
+// Counts only in the response: no address leaves the Worker.
+// ---------------------------------------------------------------------------
+
+export async function handleEmailSync(request: Request, env: Env): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !env.PERSONAL_ADMIN_TOKEN || !env.BUTTONDOWN_API_KEY) {
+    return notConfigured(request);
+  }
+  const auth = request.headers.get("Authorization") || "";
+  if (!bearerEquals(auth, `Bearer ${env.PERSONAL_ADMIN_TOKEN}`)) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const withLineups = new URL(request.url).searchParams.get("lineups") === "1";
+  const counts = { members: 0, paid: 0, updated: 0, not_on_list: 0 };
+  let cursor: string | undefined;
+  do {
+    const page = await env.RATE_LIMIT_KV.list({ prefix: "member:", cursor });
+    for (const key of page.keys) {
+      const raw = await env.RATE_LIMIT_KV.get(key.name);
+      if (!raw) continue;
+      let rec: MemberRecord;
+      try {
+        rec = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      const email = key.name.slice("member:".length);
+      const paid = rec.status === "active" && !!rec.feed_token;
+      counts.members += 1;
+      if (paid) counts.paid += 1;
+      const tags = await applyEmailChange(env, email, {
+        paid,
+        ...(withLineups ? { addShows: rec.shows || [] } : {}),
+      });
+      if (tags) counts.updated += 1;
+      else counts.not_on_list += 1;
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return jsonResponse(request, 200, { ok: true, ...counts });
 }
 
 // ---------------------------------------------------------------------------
