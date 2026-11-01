@@ -58,6 +58,19 @@ TRANSCRIPT_NOTE = (
     "approve, cut from or refuse before publication."
 )
 
+#: Nov 1 2026: since Oct 21 the post prints the transcript of the EDIT
+#: (``edit_transcript``), and the edit takes out more than the guest's cuts:
+#: Michael Kamins' Ep15 lost a skipped question, a repeated answer and a
+#: dropout, none of which he asked for, under a line saying the transcript
+#: was the conversation "as it was recorded". The room transcript keeps the
+#: old line.
+EDIT_TRANSCRIPT_NOTE = (
+    "The conversation as it plays in the episode, which is edited for length "
+    "and flow, with every cut the guest asked for made. After editorial review "
+    "the transcript was sent to {name} to approve, cut from or refuse before "
+    "publication."
+)
+
 
 def _next_episode_number(show: VoiceShow) -> int:
     summaries = show.summaries_path
@@ -266,8 +279,21 @@ def vouched_chapters(pkg: dict) -> list:
     the transcript vouches for the list, or there is no list.
     """
     from engine.interviews import supported_chapters
-    return supported_chapters(pkg.get("chapter_markers") or [],
+    kept = supported_chapters(pkg.get("chapter_markers") or [],
                               (pkg.get("transcript_cleaned") or "").strip())
+    return [{**ch, "title": _chapter_case(ch.get("title", ""))}
+            if isinstance(ch, dict) else ch for ch in kept]
+
+
+def _chapter_case(title) -> str:
+    """A chapter title opens on a capital (Nov 1 2026: Ep15's list mixed
+    "the document that decided…" with "Conflict as a source…", because a
+    title lifted from the middle of Mira's question keeps its lower case).
+    A word like "iPhone", lower then upper, is left as written."""
+    t = str(title or "").strip()
+    if len(t) > 1 and t[0].islower() and not t[1].isupper():
+        return t[0].upper() + t[1:]
+    return t
 
 
 def notes_lede(notes: str) -> str:
@@ -396,7 +422,8 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
         # Gate 2 as built (engine.brand.interview_provenance): the guest is
         # SENT the transcript to approve, cut from or refuse, and seven days
         # of silence also publishes — so this never says "approved by".
-        parts.append(TRANSCRIPT_NOTE.format(name=name))
+        note = EDIT_TRANSCRIPT_NOTE if pkg.get("edit_transcript") else TRANSCRIPT_NOTE
+        parts.append(note.format(name=name))
         parts.append(transcript)
 
     md = "\n\n".join(parts).rstrip() + "\n"
@@ -416,6 +443,51 @@ def return_month(when: dt.date, months: int = RETURN_AFTER_MONTHS) -> str:
     m = when.month - 1 + months
     year = when.year + m // 12
     return dt.date(year, m % 12 + 1, 1).strftime("%B %Y")
+
+
+# Nov 1 2026: the review page asks the guest when they would come back
+# (Worker ``handleGuestReviewSubmit``: ``guest_followup``, and a
+# ``guest_return_requests`` row due that many months on). Michael Kamins chose
+# "about six months" and the publish mail told him February 2027, three
+# months, because it never read his answer. The guest's choice wins.
+RETURN_MONTHS_BY_CHOICE = {"return_6": 6, "return_12": 12}
+
+
+def _date_of(value) -> dt.date | None:
+    try:
+        return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except (TypeError, ValueError):
+        return None
+
+
+def return_invitation_html(pkg: dict, when: dt.date) -> str:
+    """The "I would like you back" paragraph, as the guest asked for it.
+
+    No answer: the network default, ``RETURN_AFTER_MONTHS`` from ``when``.
+    Six or twelve months: that month, counted from the day they chose it.
+    Another time: no month, an offer to fix one. Nothing for now (or a
+    redo): no invitation at all; they have already said."""
+    e = _html.escape
+    choice = str(pkg.get("guest_followup") or "").strip()
+    if choice in ("none", "redo"):
+        return ""
+    if choice == "return_other":
+        return ("<p>You said you would like to come back at another time. "
+                "Reply with when suits you and I'll send the booking link "
+                "nearer the time.</p>")
+    months = RETURN_MONTHS_BY_CHOICE.get(choice)
+    if months:
+        month = return_month(_date_of(pkg.get("guest_followup_at")) or when, months)
+        return (f"<p>And I would like you back. You said about "
+                f"{'six months' if months == 6 else 'a year'}, so I have put "
+                f"{e(month)} in the calendar for a second conversation, when there "
+                "will be something to measure the first one against; I'll send the "
+                "booking link nearer the time.</p>")
+    month = return_month(when)
+    return (f"<p>And I would like you back. I have put {e(month)} in the calendar for a "
+            "second conversation, when there will be something to measure the first "
+            "one against; reply with a yes and I'll send the booking link nearer the "
+            "time.</p>")
 
 
 def clip_link(pkg: dict, show: VoiceShow, episode_num: int,
@@ -518,16 +590,13 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
     card = share_card_link(show, episode_num)
     if card:
         parts.append(f"<p>The episode's share card, for a post of your own: {link(card)}</p>")
-    month = return_month(when or dt.date.today())
+    invitation = return_invitation_html(pkg, when or dt.date.today())
     parts += [
         "<p>If anything on the page is wrong, a link, a title, a spelling, "
         "reply to this and I'll have it fixed the same day. If you post about it, "
         "send me the link and I'll share it on. The network is "
         f"{link(show.base_url)} and @planetterrian on X if you want to tag it.</p>",
-        f"<p>And I would like you back. I have put {e(month)} in the calendar for a "
-        "second conversation, when there will be something to measure the first "
-        "one against; reply with a yes and I'll send the booking link nearer the "
-        "time.</p>",
+    ] + ([invitation] if invitation else []) + [
         # Oct 21 2026 (operator): the two kits, last and in one paragraph.
         # The media kit is what a guest's publicist asks for next; the
         # sponsorship kit is an offer, never a pitch, and the interview
@@ -1222,9 +1291,13 @@ def refresh_post(interview_id: str) -> int:
     # date, which is how an episode published before then gets its photo.
     photo = ensure_photo(app) or entry.get("guest_photo") or ""
     links = guest_links(app) or entry.get("guest_links") or []
-    if photo != entry.get("guest_photo", "") or links != entry.get("guest_links"):
+    # Nov 1 2026: and its chapters, which the post's list is drawn from.
+    chapters = vouched_chapters(pkg) or entry.get("chapters") or []
+    if (photo != entry.get("guest_photo", "") or links != entry.get("guest_links")
+            or chapters != entry.get("chapters", [])):
         entry["guest_photo"] = photo
         entry["guest_links"] = links
+        entry["chapters"] = chapters
         show.summaries_path.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     when = dt.date.fromisoformat(str(entry["date"])[:10])

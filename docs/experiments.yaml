@@ -6026,6 +6026,29 @@ experiments:
       LONG_PROBE_CHANNELS, LONG_MIN_AGE_DAYS); api/youtube_policy.json
       recomputed and the five probe-promoted dub entries reset to C. Guards:
       tests/test_review_2026_10_31.py, tests/test_youtube_policy.py.
+  - id: models-agents-length-names-2026-11-01
+    title: "Models & Agents: 1,200-1,400 words accepted as natural length; data-side name list in the script prompt"
+    area: quality
+    shipped: 2026-11-01
+    readout: 2026-11-15
+    status: reading
+    baseline: >
+      Ep211-220: 6 of 10 scripts under the 1,500-word target with every
+      item told; script_entity_retention_pct >= 75 on 3 of 10 (59-82%)
+      after three prompt-only passes (Sep 8, Sep 13, Oct 2) missed it.
+      Review: docs/reviews/models_agents_review_2026_10_31.md.
+    target: >
+      script_entity_retention_pct >= 75 on 7 of the next 10 episodes;
+      digest coverage no lower than the Ep211-220 window; no episode
+      skipped for length (the skip floor stays at 900 words).
+    notes: >
+      Operator decision on PR #1593 (option C + data-side names).
+      engine/names_to_keep.py, ShowConfig.names_to_keep,
+      {names_to_keep_block} in models_agents_podcast.txt,
+      min_podcast_words 1200 with min_podcast_publish_words 900. The
+      proposed section-chapter wiring was replayed and not shipped (ledger
+      do_not_retry). AUDIO: A/B-listen the first episode. Guards:
+      tests/test_models_agents_length_names_2026_11_01.py.
   - id: nerra-daily-email-2026-11-01
     title: "One network email, Nerra Daily: each reader's own shows, daily or Sundays only"
     area: funnel

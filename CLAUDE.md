@@ -2712,6 +2712,16 @@ for the show. ⚠️ AUDIO (the new notice) and ⚠️ the room (research).
   (talking vs listening AUC 0.48; at a pause 0.52). His audio says what the
   camera cannot: mid-answer pauses p99 1.6 s, three over 2 s in 43 answers,
   while Mira waited a median 4.3 s at every real end.
+- **Published as Ep15 (Nov 1 2026), reviewed** (guard
+  `tests/test_michaels_publish_2026_11_01.py`). Feed, post, transcript,
+  chapters, links and YouTube were right. Three faults, fixed: the publish
+  mail told him "February 2027" (the three-month default) after he chose
+  "about six months" on the review page (`return_invitation_html` reads
+  `guest_followup`: 6 or 12 months from the day he chose, no date for
+  "nothing for now"); the note above an EDIT transcript said "as it was
+  recorded" (`EDIT_TRANSCRIPT_NOTE` says it is edited for length and flow);
+  chapter titles lifted from mid-question kept their lower case
+  (`_chapter_case`; `refresh_post` now rewrites the record's chapters too).
 
 Operator: push (the studio page and the pipeline go live with it; the Worker
 is unchanged); "Nerra Voices — rehearsal" with `candidate_scenario` for the
@@ -7506,6 +7516,29 @@ that bind:
 
 ⚠️ AUDIO: the UC, Tesla and Nerra Daily prompts. A/B-listen the first
 episode of each.
+
+### Models & Agents: its natural length, and the names from the digest (Nov 1 2026)
+
+Operator decisions on the Oct 31 review (register
+`models-agents-length-names-2026-11-01`; guards
+`tests/test_models_agents_length_names_2026_11_01.py`). Rules that bind:
+
+- **1,200-1,400 words is the show's natural length** (option C):
+  `min_podcast_words` 1200 (the bottom of that range; the YAML floor
+  sits at or under the prompt's stated low end) and the prompt says the
+  briefing sets the length. **The skip floor stays at 900**, pinned with
+  `min_podcast_publish_words`, so the lower target never lowers it.
+- **The names are data, not an instruction** (`engine/names_to_keep.py`,
+  opt-in `names_to_keep: true`): the two-pass script prompt gets
+  `{names_to_keep_block}`, the names today's digest carries as written,
+  in order. A title-case headline or a bold label is not a list of names;
+  a headline only vouches for a name that opens a sentence. No model
+  call; "" on the combined path and on every show that has not opted in.
+  Three prose passes had missed names-kept >= 75%. ⚠️ AUDIO: A/B-listen
+  the first episode.
+- **The section-chapter wiring the review re-filed three times is
+  rejected**: replayed over Ep211-221 it replaced a story's headline
+  chapter with a section label on every episode (ledger `do_not_retry`).
 
 ### The 24-hour review: YouTube policy, the front page through the day, My Nerra (Oct 31 2026)
 

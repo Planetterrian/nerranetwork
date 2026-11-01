@@ -346,6 +346,9 @@
 <div class="lt-page">
 {% set p = page %}
 
+{#- Nov 1 2026: the top of the front page as one group, so a phone can put
+    the lead story straight after the brand line (_landing_styles.html.j2). -#}
+<div class="lt-front-top">
 <header class="lt-masthead container"><div class="lt-masthead-inner">
     <div class="lt-masthead-meta">
         <time class="lt-dateline" datetime="{{ masthead.date_iso }}">{{ masthead.date }}</time>
@@ -406,6 +409,7 @@
 <div class="container lt-empty">
     <p>No stories to show right now. Every show is on <a href="{{ path_prefix }}explore.html">the shows page</a>.</p>
 </div>
+</div>{#- .lt-front-top -#}
 {% else %}
 
 <div class="container"><nav class="lt-secnav" aria-label="Sections on this page">
@@ -489,6 +493,7 @@
         <p class="lt-rail-more"><a href="{{ path_prefix }}blog/index.html">Every article →</a></p>
     </aside>
 </section>
+</div>{#- .lt-front-top -#}
 
 {#- The flagship shows (engine.brand.FLAGSHIP_SHOW_SLUGS): the network's two
     biggest audiences keep a band of their own every day, beside the lead the

@@ -99,6 +99,9 @@
 <div class="lt-page">
 {% set p = page %}
 
+{#- Nov 1 2026: the top of the front page as one group, so a phone can put
+    the lead story straight after the brand line (_landing_styles.html.j2). -#}
+<div class="lt-front-top">
 <header class="lt-masthead container"><div class="lt-masthead-inner">
     <div class="lt-masthead-meta">
         <time class="lt-dateline" datetime="{{ masthead.date_iso }}">{{ masthead.date }}</time>
@@ -123,6 +126,7 @@
 
 {% if not p.lead %}
 <div class="container lt-empty"><p>{{ hub.empty_note }}</p></div>
+</div>{#- .lt-front-top -#}
 {% else %}
 
 <div class="container"><nav class="lt-secnav" aria-label="{{ hub.sections_nav_label }}">
@@ -175,6 +179,7 @@
         <p class="lt-rail-more"><a href="#shows">{{ hub.every_show_link }}</a></p>
     </aside>
 </section>
+</div>{#- .lt-front-top -#}
 
 {% if p.flagships %}
 <section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">

@@ -201,15 +201,15 @@ class TestTheFleetChapter:
         k = next(i for i, ln in enumerate(lines) if ln.strip() == "Now, the fleet.")
         anchors, unmatched = sb.boundary_anchors(script, [k], tx)
         assert unmatched == 0
-        # 90.12 s since the Nov 1 2026 re-synthesis of the corrected script
-        # (108.86 in the first audio): the anchor is the spoken "Now the
-        # fleet" in the committed Whisper words, wherever the audio puts it.
+        # Nov 1 2026: Ep011 was re-voiced from its corrected script (the
+        # Vendée-qualifier sentence is gone), so the fleet starts at 90.12 s
+        # of the new audio (108.86 s in the first one).
         assert anchors[0][1] == pytest.approx(90.12, abs=0.05)
 
     def test_ep011_chapters_carry_it(self):
         d = json.loads((ON / "chapters_ep011.json").read_text(encoding="utf-8"))
         fleet = next(c for c in d["chapters"] if c["title"] == "The Fleet")
-        assert fleet["startTime"] == 90.1  # re-voiced Nov 1 2026 (was 108.9)
+        assert fleet["startTime"] == 90.1  # the re-voiced audio (was 108.9)
 
     def test_the_repair_tool_times_chapters_like_run_show(self):
         src = _read("scripts/resynthesize_episode.py")

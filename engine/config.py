@@ -1474,6 +1474,12 @@ class ShowConfig:
     # list for today (engine/frame_memory.py, rendered through the shared
     # snippets' {recent_frames_block}). Prompt context changes: A/B-listen.
     frame_memory: bool = False
+    # Nov 1 2026 (operator decision on the Models & Agents review): opt-in
+    # data-side name list — the two-pass script prompt gets the names the
+    # digest carries ({names_to_keep_block}, engine/names_to_keep.py). ""
+    # on a show that has not opted in and on the combined path. Prompt
+    # context changes: A/B-listen.
+    names_to_keep: bool = False
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1754,6 +1760,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
         date_probe_max=int(data.get("date_probe_max", 40) if data.get("date_probe_max") is not None else 40),
         frame_memory=bool(data.get("frame_memory", False)),
+        names_to_keep=bool(data.get("names_to_keep", False)),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[

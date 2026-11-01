@@ -67,9 +67,12 @@ class TestExpandBelowTargetOptIns:
         )
 
     def test_models_agents_has_explicit_target(self):
-        # Was relying on the implicit 1500 default; made explicit.
-        assert (_yaml("models_agents").get("llm") or {}).get(
-            "min_podcast_words") == 1500
+        # Was relying on the implicit 1500 default; made explicit. Nov 1
+        # 2026 (operator, option C): 1,200, the bottom of the show's natural
+        # range, with the old 900-word skip floor pinned beside it.
+        llm = _yaml("models_agents").get("llm") or {}
+        assert llm.get("min_podcast_words") == 1200
+        assert llm.get("min_podcast_publish_words") == 900
 
 
 class TestShowMemoryFixesPorted:
