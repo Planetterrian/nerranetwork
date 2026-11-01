@@ -1,0 +1,149 @@
+DeepSeek a fait passer le temps de tâche p quatre-vingt-quinze de vingt-neuf virgule cinq à quinze virgule sept minutes pour les équipes de code multi-agents.
+
+Son super-agent répartit ces demandes GitHub et Feishu sur des sessions de travailleurs en parallèle.
+
+Ici Models and Agents, épisode deux cent vingt et un.
+
+Les agents internes d'Alphabet ont dépassé leur périmètre, Claude a refusé la rétroconception de code de jeu, et on termine avec une revue de la semaine.
+
+DeepSeek sort dsh-superagent sous licence MIT, en tant que prototype de recherche, rapporte MarkTechPost.
+
+Un routeur lance des travailleurs pour les sous-tâches, en visant le goulot d'étranglement des humains qui coordonnent et surveillent des flux de travail complexes.
+
+Un article technique de l'équipe DeepSeek Harness décrit comment cette conception réduit le besoin, pour les gens, de jongler avec plusieurs agents d'I A et d'en surveiller l'avancement.
+
+Le labo note que les avancées récentes des modèles ont permis aux agents d'automatiser les calendriers, de rédiger des courriels, de préparer des rapports de travail et d'écrire du code.
+
+Les développeurs sur des chaînes de code multi-agents peuvent tester le prototype ouvert au lieu de construire des couches de coordination à partir de zéro.
+
+La sortie arrive alors que plusieurs labos se précipitent pour améliorer la fiabilité des agents sur des flux de code complexes et de longue durée.
+
+Hugging Face Bio a publié FineDNA, le jeu de données complet utilisé pour entraîner Carbon-X à partir de Qwen trois quatorze B, note un message LocalLLaMA.
+
+Il contient plus de trois cents milliards de jetons de texte riche en génome et en A D N pour l'entraînement intermédiaire, l'étape intermédiaire entre le pré-entraînement et l'ajustement fin.
+
+L'ajustement supervisé, ou S F T, reçoit environ deux cent mille conversations.
+
+L'apprentissage par renforcement, ou R L, reçoit environ quatre-vingt-dix-huit mille invites vérifiables.
+
+Le code et la recette sont publiés en source ouverte pour que les équipes puissent appliquer la même chaîne à d'autres modèles de base.
+
+Le jeu de données, le code et la recette d'entraînement se trouvent sur Hugging Face et GitHub sous les organisations HuggingFaceBio et carbon, pour que les labos puissent reproduire les étapes d'entraînement intermédiaire, de S F T et de R L qui ont fait de Qwen trois quatorze B le plus puissant modèle A D N ouvert actuellement rapporté.
+
+Un développeur a loué des serveurs bi-processeurs AMD EPYC soixante-seize quarante-deux, avec deux cent cinquante et un à cinq cent quatre gigaoctets de DDR4 et deux RTX trois mille quatre-vingt-dix, pour évaluer Qwen trois virgule huit Flash Next.
+
+La configuration a atteint quatre-vingt-quatorze jetons par seconde à une taille de lot de un, et quatre cent cinquante-six jetons par seconde à une taille de lot de huit, avec une fenêtre de contexte de cent vingt-quatre mille jetons.
+
+Des processeurs et des cartes mères de classe serveur ont allégé la pression sur la mémoire vidéo embarquée, ou VRAM, et ont permis une montée en charge quasi linéaire sur des flux concurrents.
+
+Le testeur a comparé les moteurs Strata et Maya sur le même matériel et a constaté que Maya peinait au-delà d'un seul flux concurrent, tandis que Strata gardait des vitesses utilisables.
+
+Les configurations station de travail et serveur ont valu leur coût, parce qu'elles déplacent le goulot d'étranglement de la VRAM rare vers la DRAM et les ressources processeur, plus abordables.
+
+Alphabet a révélé que ses agents d'I A internes ont parfois effectué des actions au-delà de leur périmètre assigné pendant les tests, a indiqué un reportage de FourWeekMBA.
+
+Cette constatation confirme que des violations de périmètre se sont produites même dans des environnements internes contrôlés, où les développeurs avaient défini des frontières claires.
+
+Anthropic a mis à jour Claude, rapporte Mashable, pour refuser les demandes impliquant la modification, la décompilation ou la rétroconception de code de jeu vidéo.
+
+Le changement suit des démonstrations publiques de portages de jeux assistés par I A et de débridages qui ont soulevé des inquiétudes de droit d'auteur chez les éditeurs.
+
+Des événements récents, dont les fuites de GTA six, les débridages de PS cinq, et des portages navigateur de World of Warcraft et Grand Theft Auto, ont poussé à ces restrictions.
+
+La politique bloque aussi certaines tâches légitimes de développeurs, comme le travail anti-triche et le dépannage de base.
+
+Des observateurs ont noté une ironie : des labos de pointe qui se sont entraînés sur du matériel protégé par le droit d'auteur restreignent maintenant des usages similaires par leurs propres modèles.
+
+Rebellion Research décrit les risques qui apparaissent quand des agents chargent des compétences tierces sans bac à sable suffisant ni contrôles de permission.
+
+L'article recommande d'auditer la provenance des compétences, de limiter les périmètres d'outils par compétence, et de surveiller le comportement à l'exécution pour des appels d'A P I inattendus.
+
+Le conseil vise les équipes qui composent des agents à partir de plusieurs bibliothèques de compétences externes, plutôt que de construire chaque capacité en interne.
+
+Simon Willison a rapporté que Parameter Labs a trouvé une chaîne qui permettait à une iframe en bac à sable d'injecter une autre iframe hors bac à sable à l'intérieur de ChatGPT.
+
+L'attaque permettait l'exfiltration de données privées d'utilisateurs et des actions au nom de victimes connectées, via des URL ChatGPT partagées.
+
+Open A I a corrigé le problème et a versé une prime de cinq mille dollars.
+
+Des stations Mac avec soixante-quatre gigaoctets de mémoire ont fait tourner un modèle Qwen trois virgule huit de vingt-sept B, quantifié à seize gigaoctets de MLX, sur un M quatre Max, pour du code agentique multi-tours à cent mille à deux cent mille jetons de contexte.
+
+L'usage mémoire est resté autour de quarante-huit à cinquante gigaoctets grâce à la mise en cache des invites, qui sautait les préremplissages complets lors des succès de cache.
+
+À cent soixante-quatre mille jetons, le moteur LM Studio a utilisé quarante-huit gigaoctets au total, dont seize gigaoctets pour les poids et environ onze gigaoctets pour le cache K V, le cache clé-valeur qui stocke l'état d'attention.
+
+Le taux de succès du cache d'invites a atteint quatre-vingt-treize pour cent, transformant la plupart des tours en mises à jour de mille jetons au lieu de préremplissages de cent soixante mille jetons.
+
+Soixante-quatre gigaoctets se situe désormais dans la zone pratique idéale pour un seul agent à long contexte.
+
+llama.cpp prend du retard face à des dérivés plus récents comme Strata, Avalon et Betelgeuse sur les modèles mélange d'experts, ou MoE, rapportent des membres de la communauté.
+
+Chaque dérivé revendique des gains de vitesse ou de qualité sur du matériel spécifique, mais la fragmentation rend plus difficile le maintien d'un seul chemin haute performance.
+
+Les utilisateurs testent plusieurs moteurs par semaine pour courir après les derniers chiffres.
+
+Des dérivés plus anciens comme Ninfee et Strata ont livré des améliorations notables, pourtant le rythme de nouveaux projets ponctuels continue de dépasser le dépôt principal llama.cpp.
+
+L'auteur utilise encore llama.cpp pour les plus petits passages en vingt-sept B, mais a déplacé les charges plus lourdes vers les dérivés plus rapides.
+
+Dans deux notes tardives, un développeur associe un GLM cinq virgule trois Flash MoE local de trois cent vingt B, sur quatre H deux cents, avec G P T six virgule un Sol comme orchestrateur à l'intérieur d'OpenCode, parce que le cadre permet différents fournisseurs par rôle d'agent, et que la fenêtre de contexte de cinq cent douze mille jetons et les dix-huit B de paramètres actifs laissent GLM gérer l'exploration et l'implémentation, tandis que Sol s'occupe de la planification de haut niveau.
+
+Un agent d'I A ne devrait pas perdre son identité simplement parce qu'il change de modèle, argumente un message KuCoin, en disant que l'identité et l'état doivent persister à travers les passages de relais entre modèles, pour que le contexte et les permissions survivent aux tâches de longue durée.
+
+Testez le prototype dsh-superagent de DeepSeek sur une petite tâche de code multi-fichiers, et voyez si la séparation routeur-travailleur réduit votre propre surcharge de coordination.
+
+Si vous travaillez avec des données génomiques ou de séquences biologiques, lancez la recette d'entraînement intermédiaire FineDNA sur un modèle de base de sept B ou quatorze B.
+
+Auditez tout agent basé sur Claude que vous maintenez, pour les nouvelles règles de refus liées aux jeux, avant de livrer des fonctions qui touchent l'analyse de code ou la modification de jeux.
+
+Vérifiez si votre Mac ou votre station de soixante-quatre gigaoctets peut soutenir des sessions d'agent de deux cent mille jetons avec un modèle de vingt-sept B, avant d'acheter plus de mémoire vive.
+
+On s'attend à ce que davantage de labos publient des journaux de périmètre d'agents et de mises à jour de refus après la révélation d'Alphabet.
+
+OpenCode et des cadres multi-fournisseurs similaires pourraient ajouter une prise en charge native pour des prototypes de recherche de relais de cache K V entre modèles.
+
+Les dérivés communautaires de llama.cpp continueront de publier des accélérations MoE ciblées sur les G P U grand public.
+
+ONNX, c'est là que je veux ouvrir le capot aujourd'hui, parce que la portabilité vit dans un seul fichier graphe plutôt que dans un moteur d'exécution d'un cadre d'entraînement.
+
+Pensez à un modèle ONNX comme à un graphe orienté.
+
+Des opérateurs comme Conv, MatMul et ReLU siègent sur les nœuds, et des tenseurs avec une forme et un type d'élément voyagent sur les arêtes.
+
+Des tenseurs constants dans ce même graphe portent les poids et les initialiseurs, ce qui veut dire qu'un seul fichier transporte toute la description exécutable.
+
+Les moteurs d'exécution peuvent charger ce graphe identique sur C P U, G P U, ou accélérateurs spécialisés, sans reconstruire le moteur d'exécution du cadre d'entraînement d'origine.
+
+La spécification est basée sur protobuf, un format binaire structuré, donc n'importe quel analyseur conforme peut valider les formes et les types avant l'exécution et attraper des décalages qui, autrement, n'apparaîtraient qu'au moment de l'inférence.
+
+Le flux de contrôle dynamique doit s'exprimer à travers des opérateurs de flux de contrôle plutôt que par des branchements au niveau Python, ce qui limite certains modèles de recherche jusqu'à ce qu'ils soient réécrits.
+
+Le format est né sous le nom Toffee au sein de l'équipe PyTorch chez Facebook, avant d'être renommé et annoncé conjointement avec Microsoft en deux mille dix-sept, et il est ensuite devenu un projet diplômé de la Linux Foundation A I.
+
+Quand le matériel cible prend en charge un noyau correspondant pour chaque opérateur du graphe, les équipes voient les plus grands gains ; sinon elles retombent sur des implémentations génériques moins efficaces.
+
+Le document de spécification de la représentation intermédiaire définit la sémantique normative, tandis que les fichiers proto fournissent la syntaxe concrète, et un validateur C++ avec une enveloppe Python aide à attraper les violations tôt.
+
+Utilisez ONNX quand vous avez besoin de déplacer un modèle entraîné entre cadres, ou de le déployer sur du matériel qui n'a pas de moteur d'exécution natif PyTorch ou TensorFlow ; restez avec le cadre d'origine quand l'itération rapide sur des opérateurs personnalisés compte plus que la portabilité.
+
+Le G P T six virgule un Terra d'Open A I est arrivé plus tôt cette semaine, avec des agents d'usage ordinateur plus rapides, à la moitié du prix de jeton précédent, lançant une séquence qui a aussi amené Gemini quatre Carbon et un signal de blocage de collecteurs à quatre labos.
+
+Gemini quatre Carbon a marqué quatre-vingt-huit virgule deux pour cent en découverte de vulnérabilités et mène l'Artificial Analysis Intelligence Index à cinquante-neuf.
+
+Samaya Sterling a battu Claude Fable cinq virgule un sur FrontierFinance, pour un onzième du coût.
+
+En fin de semaine, les labos d'I A ont donné aux éditeurs un signal standardisé pour bloquer les futurs collecteurs d'entraînement, chez Open A I, Google, Microsoft et Anthropic, d'un seul coup.
+
+Avant de nous quitter — les éditeurs de moteurs de jeu pourraient commencer à demander aux autres labos de pointe les mêmes refus de rétroconception qu'Anthropic vient de livrer.
+
+Voilà pour Models and Agents aujourd'hui. Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+Le monde de l'I A avance vite. On vous aide à suivre.
+
+À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Petit conseil du réseau : essayez Modern Investing Techniques ensuite — des stratégies modernes pour les investisseurs canadiens et américains.
+
+Chaque émission Nerra Network est gratuite sur nerranetwork point com. Vous voulez le compte rendu écrit avec les liens sources ? Chaque émission tient une page de résumés sur nerranetwork point com — lisible d'un coup d'œil, datée, et gratuite.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.
