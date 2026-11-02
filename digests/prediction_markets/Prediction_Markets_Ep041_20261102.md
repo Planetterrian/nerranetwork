@@ -1,0 +1,59 @@
+# Prediction Markets Daily
+> **A $400,000 Polymarket insider case now goes to a New York jury.**
+
+**What You Need to Know:** A federal judge in New York refused to dismiss criminal charges against a special operations soldier accused of using classified information to make $400,000 on Polymarket, so a jury will decide whether those bets were swaps. Canada has a first indigenous prediction-markets law on the books, and Kalshi has a second Supreme Court extension in its New Jersey case.
+
+### Top Story
+A federal judge in New York last week denied a special operations soldier’s motion to dismiss criminal charges, Bloomberg Law reported, leaving a jury to decide whether his Polymarket bets were a hedging derivative called a swap. Prosecutors accuse him of using classified information about the capture of Venezuelan President Nicolás Maduro to reap $400,000 on Polymarket. Bloomberg Law describes an anticipated first-of-its-kind trial that would test how far U.S. prosecutors can go against alleged insider trading in the industry, and it says the ruling sets the stage for how such cases will be tried. Source: [news.bloomberglaw.com](https://news.bloomberglaw.com/securities-law/soldier-prediction-markets-insider-case-tests-us-prosecution)
+
+### The Ecosystem
+**First indigenous prediction markets law launches in Canada: SBC News**
+SBC News reported on November 2, 2026 that the first indigenous prediction markets law has launched in Canada. Source: [sbcnews.co.uk](https://sbcnews.co.uk/northamerica/2026/11/02/canada-prediction-markets/)
+
+**Kalshi Gets Second Supreme Court Extension in New Jersey Case: Gaming America**
+Gaming America reported on November 2, 2026 that Kalshi received a second Supreme Court extension in its New Jersey case. Source: [gamingamerica.com](https://gamingamerica.com/news/1109608/kalshi-supreme-court-extension-new-jersey-december-7)
+
+**Nasdaq Wants to Launch Inflation Prediction Markets: ATS.io**
+Source: [ats.io](https://ats.io/prediction-markets/news/nasdaq-inflation-markets/)
+
+**Prediction market bettors are the new political pundits. Why are we listening to them?: The Guardian**
+A Guardian column published November 2, 2026 argues that Kalshi and Polymarket sell crowd wisdom while a few skilled traders control the prices. A Kalshi spokesperson told Reuters, “This data is bottom-up, not elites-driven,” and said, “Prediction markets are a way to see what people are saying when there’s money on the line.” The column says authors of a much-cited 2025 Vanderbilt University study infer from their results — that Polymarket was more accurate than polls — an alignment with wisdom-of-crowds research. A working paper from the London Business School and Yale University, using public Polymarket trading data, found that almost every wagerer’s outcomes were no better than chance and that accuracy came from a minority of persistently skilled traders, around 3 percent of accounts, while the crowd generated most of the volume and little of the information. Analyzing 1.6 million Polymarket wallets traded since November 2022, the Wall Street Journal found that three-quarters of the profits went to 0.1 percent of the accounts, and that of at least 2.3 million accounts just 2,000 netted almost half a billion dollars. Pew Research found the median Polymarket user placed 46 trades across 10 active trading days in 2026, and a Brennan Center-funded study found that prediction-market prices shift voters’ expectations substantially; Barnard College economist Rajiv Sethi told NPR that what people believe will happen in an election can affect what happens. Source: [theguardian.com](https://www.theguardian.com/commentisfree/2026/nov/02/prediction-markets-voters-elections)
+
+**Codere Online CEO ‘keeping an eye’ on prediction markets: iGaming Business**
+Codere Online chief executive Aviv Sher told iGaming Business the company is keeping an eye on prediction markets, has not entered the sector, and calls a move a realistic option and a possible addition to the portfolio. Sher said it could complement strategy in Mexico toward Spanish-speaking people in the southern United States, and that the company is still monitoring. Source: [igamingbusiness.com](https://igamingbusiness.com/prediction-markets/codere-online-ceo-aviv-sher-prediction-markets/)
+
+### Also Today
+**Polymarket Returns $3.9 Million to Traders as DebugBear Cites DNS Hijack: SecurityWeek**
+SecurityWeek reported that Polymarket returned $3.9 million to traders as DebugBear cited a DNS hijack. Source: [securityweek.com](https://www.securityweek.com/polymarket-returns-3-9-million-to-traders-as-debugbear-cites-dns-hijack/)
+
+**Exclusive / Democrats question if X is giving Polymarket preferential treatment: Semafor**
+Semafor reported that Democrats are questioning whether X is giving Polymarket preferential treatment; this show takes no money from any venue and holds no position. Source: [semafor.com](https://www.semafor.com/article/11/02/2026/democrats-question-if-x-is-giving-polymarket-preferential-treatment)
+
+**Prediction Market Bettors Go Door to Door Hunting a Midterm Edge: Bloomberg**
+Bloomberg reported that traders on Kalshi and Polymarket went door to door in Maine hunting a midterm edge. Source: [bloomberg.com](https://www.bloomberg.com/news/articles/2026-11-01/traders-on-kalshi-and-polymarket-went-to-maine-hunting-a-midterm-election-edge)
+
+**Kalshi, Polymarket Users Trade Maryland Races Despite Ban: RG.org**
+RG.org reported that Kalshi and Polymarket users traded Maryland races despite a ban. Source: [rg.org](https://rg.org/news/prediction-markets/maryland-election-prediction-markets-kalshi-polymarket-betting-ban)
+
+**Major wagers placed on B.C. elections amid prediction markets' growing influence: CBC**
+CBC reported major wagers on British Columbia elections amid prediction markets’ growing influence. Source: [cbc.ca](https://www.cbc.ca/news/canada/british-columbia/bc-election-prediction-markets-9.7401509)
+
+### The Board
+Balance of Power: 2026 Midterms — Democrats Sweep priced at 71.5 cents, a 71.5 percent implied probability, on Polymarket; 24-hour volume $2.9 million; read at 2026-11-02 11:09 UTC; scheduled to close 2026-11-04.
+Which party will win the House in 2026? — Democratic Party priced at 94.5 cents, a 94.5 percent implied probability, on Polymarket; 24-hour volume $2.4 million; read at 2026-11-02 11:09 UTC.
+Which party will win the Senate in 2026? — Democratic Party priced at 72.5 cents, a 72.5 percent implied probability, on Polymarket; 24-hour volume $2.3 million; read at 2026-11-02 11:09 UTC.
+Which Senate Swing States will Republicans win? — None priced at 31.5 cents, a 31.5 percent implied probability, up 7.0 points in 24 hours, on Polymarket; 24-hour volume $12.2 million; read at 2026-11-02 11:09 UTC.
+Will Republicans win the Senate in the 2026 elections? — Yes at a 21.4 percent implied probability on Manifold, which uses play money (mana), not dollars; 24-hour volume 37,000 mana; read at 2026-11-02 11:09 UTC.
+Whether these venues are available, and for which contracts, depends on where the listener lives; the rules differ by country, province and state and are changing. Source: [polymarket.com](https://polymarket.com/event/balance-of-power-2026-midterms) Source: [polymarket.com](https://polymarket.com/event/which-party-will-win-the-house-in-2026) Source: [polymarket.com](https://polymarket.com/event/which-party-will-win-the-senate-in-2026) Source: [polymarket.com](https://polymarket.com/event/which-tossup-senate-states-will-republicans-win-ak-ia-ks-me-mi-oh-tx) Source: [manifold.markets](https://manifold.markets/AndrewG/will-republicans-win-the-senate-in-738388924521)
+
+### New and Notable
+Polymarket posted a new contract asking whether a Democratic sweep and a Chinese AI model ranked number one both happen by the end of 2027. The question ties two unrelated outcomes into one combinatorial claim, a different shape from a single-event contract. Source: [polymarket.com](https://polymarket.com/event/dem-sweep-and-chinese-ai-model-number-1-by-end-of-2027?dub_id=m3oGjTdhyTeksgxT)
+
+### How It Works: Betting on Science: Replication Markets
+A replication market is a contract on a narrow scientific event: will an independent team, running a published study again, get the same finding? Traders buy the claim if they think the result will hold and sell it if they think it will not. The price is the probability implied by those trades. The contract pays if the replication succeeds and pays nothing if it fails. Nobody in the market has to rerun the lab. They price the chance that someone else’s rerun will confirm the paper.
+
+The worked example with figures in the record is a 2015 paper in the Proceedings of the National Academy of Sciences. Researchers set up prediction markets to estimate the reproducibility of 44 studies published in prominent psychology journals and then replicated in the Reproducibility Project: Psychology. Step one: the list was fixed at those 44 papers, so the questions did not drift as headlines changed. Step two: each study was a tradable claim about a real replication attempt, not a vote on whether the original authors still believed their result. Step three: the markets predicted the replication outcomes well. Step four: they outperformed a survey of individual forecasts. The same paper’s significance statement frames why a fast screen matters, using a cost estimate that is not itself a market result: the costs associated with irreproducible preclinical research alone have recently been estimated at 28 billion U.S. dollars a year in the United States. The markets are offered as a way to flag findings unlikely to replicate before that kind of money is spent again. The paper says there were no mechanisms in place to identify those findings quickly, and that prediction markets are well suited to bridge the gap.
+
+A 2025 paper in the Proceedings of the Human Factors and Ergonomics Society Annual Meeting starts from the design faults that sit under a result like that. Conventional replication markets, the authors write, suffer from thin liquidity, slow payouts, and limited expert engagement. A thin book means one arrival can shove the price. A slow payout means a trader who is right may wait until a replication finishes. Limited expert engagement means the people closest to the method may never show up. The proposed fix is a hybrid that blends three automated-market-maker models, reputation-based staking, and staged payouts. A university or a grant agency that sponsors a market can choose from three built-in pricing rules meant to keep prices meaningful even when only a few people are trading. Reputation-based staking lets standing in the field back a position, not only cash. Staged payouts pay along the way rather than only at the end. The authors say sponsors would get a practical triage tool for replication efforts, and researchers a gauge of how robust a new finding looks, inside a market that stays liquid and, in their phrase, intellectually rewarding.
+
+The dispute is built into that second paper. The 2015 markets did a specific job: 44 psychology papers, one replication project, prices that beat a survey of individual forecasts. The 2025 authors treat thin liquidity, slow payouts, and scarce experts as the standing weaknesses of that conventional shape, and they answer with a hybrid design. A listener who has those two papers in mind reads a science price as a probability under stated rules, settled by a replication, not by the prestige of the original journal. A survey of experts is a different instrument, and on those 44 studies the market beat the survey. A price with almost no one on the other side is the fault the hybrid is built to repair. None of this is a reason to buy or sell any contract. It is a reason to ask who can trade, when they get paid, and what event actually settles the question.
