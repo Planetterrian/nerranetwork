@@ -1,0 +1,658 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:08.560
+Le modèle ouvert 27b d'Aprie L marque 98,9 sur Big Bench Audio, tout en ajoutant la parole native et l'appel d'outil.
+
+00:00:09.220 --> 00:00:12.100
+Ici Modors &amp; Agents, épisode 222.
+
+00:00:12.720 --> 00:00:17.900
+Hyper Repair, au coût de l'inférence, des affineurs agentiques pour la cosmologie et la sécurité,
+
+00:00:18.600 --> 00:00:23.280
+des réalisations de la communauté, puis des choses à essayer et ceux qui se profitent à l'horizon.
+
+00:00:23.280 --> 00:00:32.980
+A priori, elle voice 27b prévue, traite l'audio directement et produit à la fois des réponses textuelles et des appels doutis, sans modèle de dialogue séparé.
+
+00:00:33.520 --> 00:00:42.560
+Construis sur le point de contrôle post-entraîné, GEMA 86b à 4b, l'article archive indique qu'il conserve les modalités textes et images.
+
+00:00:43.360 --> 00:00:50.860
+L'entraînement se fait en deux étapes. D'abord l'établissement de l'interface vocale, puis l'adaptation conjoint du projecteur et du tronc.
+
+00:00:50.860 --> 00:00:56.300
+avec de la finage supervisée, du rejeu de texte et des pertes dépendantes de la source.
+
+00:00:56.920 --> 00:01:04.880
+En mode réflexion, il atteint 81,13 sur speech BFCL et 65,51% de réussites de tâches
+
+00:01:04.880 --> 00:01:09.140
+sur taux hois pour une latence moyenne d'une 1,81 seconde.
+
+00:01:09.780 --> 00:01:16.360
+La précision EVA en anglais est de 51,27% et la réussite expérience au premier essai
+
+00:01:16.360 --> 00:01:22.700
+et de 64,13%. Le modèle tourne sur une plateforme d'inférence sur mesure pour les sessions
+
+00:01:22.700 --> 00:01:27.980
+vocales interactives. Hyper-repaire récupère les capacités générales des modèles affinées,
+
+00:01:28.460 --> 00:01:33.200
+uniquement au coût de l'inférence. Le cadre entraîne un hyper réseau sur des réparations
+
+00:01:33.200 --> 00:01:38.780
+du modèle source, qui génère un repairing side net conditionné par l'invite en s'appuyant sur
+
+00:01:38.780 --> 00:01:44.840
+des emprunts d'activation. Les tests ont porté sur deux familles de modèles, 12 jeux de données d'adaptation
+
+00:01:44.840 --> 00:01:51.400
+de rend faible, ou l'ora, et 15 bandes et c'est généraux. Il conserve 99,5% de la
+
+00:01:51.400 --> 00:01:57.720
+performance de domaine. Il récupère 93,4% du score général moyen du modèle de base.
+
+00:01:58.440 --> 00:02:02.880
+Aucun exemple du domaine cible, ni optimisation supplémentaire, n'est requis à l'inférence.
+
+00:02:03.660 --> 00:02:09.240
+Le patch du cache clé valeur ou cache cave d'un modèle affiné l'ora vers le modèle de base
+
+00:02:09.240 --> 00:02:13.860
+transfère des comportements comme le style de réponse en allemand ou le mésalignement
+
+00:02:13.860 --> 00:02:19.060
+émergent, l'échange inverse les supprimes, l'effet se concentre sur quelques positions
+
+00:02:19.060 --> 00:02:23.380
+pivot, surtout les jetons de consignes systèmes et de gabarits de conversation.
+
+00:02:24.080 --> 00:02:26.620
+Il évolue avec la fraction du cache remplacée.
+
+00:02:27.420 --> 00:02:32.520
+L'ITU-SAO fait progresser l'apprentissage par renforcement à 5 grandes, à un seul passage,
+
+00:02:33.200 --> 00:02:36.120
+avec un amortage acteur critique relative aux groupes.
+
+00:02:36.120 --> 00:02:41.240
+La méthode entraîne l'acteur avec un avantage relatif au groupe, et le critique avec
+
+00:02:41.240 --> 00:02:45.640
+un retour centré sur le groupe, tant que le modèle de valeur est froid, puis bascule
+
+00:02:45.640 --> 00:02:50.040
+vers l'estimation d'avantage généralisée à un seul passage, ou GAE.
+
+00:02:50.700 --> 00:02:54.960
+Elle referme les cas de début d'entraînement avec l'optimisation de politique relatif
+
+00:02:54.960 --> 00:03:00.640
+au groupe, ou GRPO, sur les tâches agentiques, et relève le plafond de performances plus
+
+00:03:00.640 --> 00:03:01.120
+tardif.
+
+00:03:01.760 --> 00:03:03.460
+Le code est publié avec l'article.
+
+00:03:03.460 --> 00:03:13.080
+Des points de contrôle autoregressif de GMA-29B, la MA-3,8B, QN-2,57B, et ministre-A-8B
+
+00:03:13.080 --> 00:03:18.920
+se convertissent en modèle de langage par diffusion sous BIOD, avec des adaptateurs uniquement
+
+00:03:18.920 --> 00:03:19.280
+l'ORA.
+
+00:03:19.840 --> 00:03:27.180
+La recette utilise de 4,1 à 5,8% des paramètres finaux et au plus 102,4 millions de jetons
+
+00:03:27.180 --> 00:03:27.900
+par conversion.
+
+00:03:27.900 --> 00:03:32.880
+Les quatre modèles génèrent à partir de séquences entièrement masquées et consèrent
+
+00:03:32.880 --> 00:03:34.660
+une connaissance substantielle du parent.
+
+00:03:35.460 --> 00:03:40.780
+BIO-DGEMA atteint 50,6 % de précision moyenne sur une suite de 9 tâches.
+
+00:03:41.440 --> 00:03:47.140
+Lapelle d'outils en tâjique est la cible de side-zone à tâjique LFM 2,6b, un modèle
+
+00:03:47.140 --> 00:03:51.040
+hybride adapté par préentraînement continue puis affinage supervisé.
+
+00:03:51.560 --> 00:03:57.140
+Le préentraînement continue l'ORA apporté sur 1,48 millions de documents tâjiques nettoyés
+
+00:03:57.140 --> 00:04:01.560
+pendant trois époques, puis une époque d'affinage supervisée mixte d'appel d'outils.
+
+00:04:02.060 --> 00:04:07.360
+La précision stricte d'appel complet sur un test de 164 items dérivée du BFCL
+
+00:04:07.360 --> 00:04:14.480
+Tajik et passée de 20,69 à 64,14. La précision d'appel d'outils en anglais restent
+
+00:04:14.480 --> 00:04:20.360
+stables à environ 67. Le prêt entraînement continue à lui-sol et fasse le format natif
+
+00:04:20.360 --> 00:04:25.960
+d'appel d'outils. Les simulations cosmologiques reçoivent à Gentectuneur qui utilisent un grand
+
+00:04:25.960 --> 00:04:31.220
+modèle de langage actuel comme optimiseur. Le pipeline fournit à l'agent des a priori
+
+00:04:31.220 --> 00:04:36.820
+informelles lisibles par un humain, code source, documentation, heuristique. Il atteint
+
+00:04:36.820 --> 00:04:42.160
+une performance de calibration compétitive pour une fraction du coup CPU de l'optimisation
+
+00:04:42.160 --> 00:04:48.880
+biaisienne. Sa finie 1,5 ajoute une architecture native de sécurité et un harnait de raisonnement
+
+00:04:48.880 --> 00:04:54.420
+vérifiable pour l'amélioration récursive de la sécurité. Des états de sécurité persistants
+
+00:04:54.420 --> 00:04:59.860
+et le désenchevêtrement des connaissances dangereuses permettent le retrait ciblé d'experts risqués.
+
+00:05:00.440 --> 00:05:05.400
+Le arnais de raisonnement formel récupère les relations manquantes, vient un pontage sémantique,
+
+00:05:05.900 --> 00:05:10.420
+guidé par les obligations de preuves et surpassent les modèles de frontières sur les tâches de
+
+00:05:10.420 --> 00:05:16.720
+sécurité et de raisonnement. Un écran de quatre pouces basé sur ESP32 affichent désormais un
+
+00:05:16.720 --> 00:05:22.980
+tableau de bord terminal face à son bit-top plus-plus pour un cluster DGX d'après un fil local
+
+00:05:22.980 --> 00:05:29.440
+L à la main. Le micro logiciel est sur GitHub, avec un fichier skill.md pour que les
+
+00:05:29.440 --> 00:05:33.380
+agents puissent le compiler et un doc imprimé en 3D est en cours.
+
+00:05:34.200 --> 00:05:38.840
+Andrége Carpati a publié un bricolage de Weekend appelé hacker tube sur X.
+
+00:05:39.660 --> 00:05:44.720
+Claude a filtré 43 millions de commentaires hacker news, couvrant 20 ans jusqu'à
+
+00:05:44.720 --> 00:05:50.820
+6454 vidéos recommandées de façon répétée et a construit autour d'elle un site façon
+
+00:05:50.820 --> 00:05:56.420
+YouTube. Le filtrage a écarté les liens, les expressions régulières et les indésirables,
+
+00:05:56.720 --> 00:06:01.560
+et seuls le reste est allé à sonnet avec un CCWalkflow pour qu'il utilise les jetons
+
+00:06:01.560 --> 00:06:06.260
+de l'abonnement. Le fichier zip de données et public, l'état vit dans la session d'une
+
+00:06:06.260 --> 00:06:11.220
+navigateur sans contre-qui, et les commentaires qui restent sous les vidéos sont ceux qui recommandent.
+
+00:06:11.700 --> 00:06:17.060
+Si Mixé-I ajoute une couche conversationnelle légère, centrer sur un grand modèle de langage
+
+00:06:17.060 --> 00:06:20.640
+pour les ressources existantes, d'y à explicables ou ex-y à.
+
+00:06:21.160 --> 00:06:26.000
+Un seul grand modèle de langage à appel d'outils remplace les modules séparés d'intention,
+
+00:06:26.500 --> 00:06:28.280
+de gestion du dialogue et de gabarits.
+
+00:06:28.800 --> 00:06:33.020
+Il améliore la précision des tâches et réduit le nombre de tours par rapport aux agents
+
+00:06:33.020 --> 00:06:38.200
+de style Gus, tout en préservant la fidélité et le code d'évaluation ainsi que les jeux
+
+00:06:38.200 --> 00:06:39.360
+de données sont publiés.
+
+00:06:40.200 --> 00:06:44.760
+Personnate chatbench évalue les assistants de conversations auprès d'utilisateurs simulés
+
+00:06:44.760 --> 00:06:45.140
+d'hiver.
+
+00:06:45.140 --> 00:06:50.720
+Le banc d'essai à ceci des tâches identiques à plusieurs cartes de personnes qui encotte des
+
+00:06:50.720 --> 00:06:55.800
+besoins et des comportements distincts. La performance de tâches et la satisfaction des besoins
+
+00:06:55.800 --> 00:07:00.400
+varient selon les personnes et de forces corps agrégées ne garantissent pas une satisfaction
+
+00:07:00.400 --> 00:07:05.320
+constante des exigences de chaque utilisateur. Dans la pile des pré-publications,
+
+00:07:05.940 --> 00:07:11.260
+Kista c'est un protocole d'équité portable pré-enregistré qui mesure la symétrie procédurale,
+
+00:07:11.260 --> 00:07:19.180
+le refus différenciel et le recours aux stéréotypes sur des pères contre-factuels appariés pour des constituantes sociales iracquiennes.
+
+00:07:19.680 --> 00:07:25.360
+La récompense de diversité du grossier au fin de Coffee Break appliquait uniquement aux attaques réussis,
+
+00:07:25.720 --> 00:07:36.360
+produit de 1,6 à 2,0 fois plus de stratégies distincts sur Arm Bench et une diversité 2,1 fois plus élevée sur Adventure par rapport à la plus forte référence.
+
+00:07:36.360 --> 00:07:42.460
+Des travaux de personnalisation adaptatifs constatent une chute de 35 à 46% de la calibration
+
+00:07:42.460 --> 00:07:47.240
+de stratégie pendant la génération libre par rapport à la reconnaissance à choix
+
+00:07:47.240 --> 00:07:51.780
+multiples et un entraînement ciblé sur les représentations interne de stratégie
+
+00:07:51.780 --> 00:07:54.160
+réduit les cas de généralisation d'un tiers.
+
+00:07:54.980 --> 00:07:59.660
+De meilleures récupérateurs font passer la part des contextes sans vérité terrain qui contiennent
+
+00:07:59.660 --> 00:08:06.140
+pourtant la réponse de 28% à 72% faisant chuter la précision des raccourcis de 0,68
+
+00:08:06.140 --> 00:08:10.860
+à 0,10 dans l'évaluation d'abstention du rague conversationnelle.
+
+00:08:11.420 --> 00:08:15.900
+Mettre à 0,729 têtes redondantes pour la tâche dans GPT-2XL,
+
+00:08:16.520 --> 00:08:19.840
+réduit le compte de mémorisation de 81,5%.
+
+00:08:19.840 --> 00:08:24.460
+Tout en améliorant la perplexité Wikitext 103 de 0,92.
+
+00:08:25.080 --> 00:08:28.300
+Sur Billalbench, 6 des 7 modèles de langage ouvert
+
+00:08:28.300 --> 00:08:34.560
+évalués inventes avec assurance sur 79,3 à 95,3% des questions
+
+00:08:34.560 --> 00:08:36.280
+de production de sources en Bengali.
+
+00:08:36.900 --> 00:08:44.020
+L'ing-flow sur passent les variantes Dispark sur JNPPL et MOV, au longueur 128 et 1024,
+
+00:08:44.600 --> 00:08:46.120
+sous des budgets d'entraînement EGO.
+
+00:08:46.800 --> 00:08:54.380
+Traspect relève le débit de rejeux de 12,5 à 22,6% par rapport à sa base Dispark sur
+
+00:08:54.380 --> 00:09:02.040
+trois tailles cibles et la location adaptative augmente la longueur acceptée de 3,3 à 10,0% par
+
+00:09:02.040 --> 00:09:07.640
+rapport à la supervision fixe de tours complet et à ECG réduit l'erreur absolu moyenne
+
+00:09:07.640 --> 00:09:17.460
+de 50,3% et fait passer le capapon des réquadratiques de 0,798 à 0,927 par rapport à une
+
+00:09:17.460 --> 00:09:21.680
+régression roberta simple pour la notation de réponse courte en mathématique.
+
+00:09:22.400 --> 00:09:27.300
+Si interviewie maintient les faits cliniques fixes avec des permissions d'écriture asymétrique,
+
+00:09:27.300 --> 00:09:32.080
+tandis que les états de divulgation et de comportement évoluent, et ils surpassent
+
+00:09:32.080 --> 00:09:36.460
+quatre références sur l'invariance informationnelle et l'adaptativité relationnelle.
+
+00:09:37.280 --> 00:09:42.180
+ASTC utilise des dynamiques récurantes natives pour faire avancer l'information absorbée
+
+00:09:42.180 --> 00:09:46.720
+sous forme de jetons souples, réduisant les attentions paire de bout en bout jusqu'à
+
+00:09:46.720 --> 00:09:51.200
+50,68 % tout en égaleant la précision non compressée.
+
+00:09:52.020 --> 00:09:57.100
+G-SR Bench introduit une hiérarchie à quatre niveaux de capacité de reformulation pour
+
+00:09:57.100 --> 00:10:01.900
+pour la reconnaissance vocale générative en crée et identifie l'allucination acoustique
+
+00:10:01.900 --> 00:10:04.680
+et la dérive d'instruction comme mode de défaillance clé.
+
+00:10:05.380 --> 00:10:09.740
+La notation absolue directe égale le classement comparatif sur la corrélation de rang,
+
+00:10:10.240 --> 00:10:14.740
+avec les scores humains pour la qualité des articles académiques, pourtant l'entrée limitée
+
+00:10:14.740 --> 00:10:17.200
+au résumé bas le résumé de l'article complet.
+
+00:10:17.960 --> 00:10:23.660
+Blind to change montre un écart de 27,5 points quand un fait nécessaire n'est pas explicitement
+
+00:10:23.660 --> 00:10:24.160
+mentionné.
+
+00:10:24.160 --> 00:10:29.160
+et plus de la moitié des échecs tiennent à des agents qui ne cherchent jamais à vérifier leurs hypothèses.
+
+00:10:29.900 --> 00:10:35.200
+Kipper constate que la prédiction liée à la récompense donne la plus haute performance de tâches avant
+
+00:10:35.200 --> 00:10:41.200
+et après le RL or ligne et une analyse au niveau des affirmations montrent la persistance des erreurs
+
+00:10:41.200 --> 00:10:43.400
+malgré des observations correctives.
+
+00:10:43.960 --> 00:10:50.820
+Une configuration duale budget de diffusion de textes parsimonieuses réduit le coup de 20% par rapport à diffusec,
+
+00:10:50.820 --> 00:10:59.260
+Selon le temps de calcul rapporté, un T5 adapté par l'ORA atteint le plus haut F macro de 0,708
+
+00:10:59.260 --> 00:11:05.540
+sur les résumés et 0,701,3 sur le texte intégral pour l'extraction de relations d'entité
+
+00:11:05.540 --> 00:11:06.340
+de connaissances.
+
+00:11:06.900 --> 00:11:12.140
+La perte focale, plus l'apprentissage contrastive supervisée, surpassent de forter référence
+
+00:11:12.140 --> 00:11:18.740
+sur la prédiction CEFR au niveau de la phrase et du document, en cadre monolingue comme multilingue.
+
+00:11:18.740 --> 00:11:25.140
+Un second vecteur de guidage complémentaire restant environ 78 % des changements de discours non-voulus,
+
+00:11:25.580 --> 00:11:28.540
+tout en préservant 93 % du comportement voulu.
+
+00:11:29.120 --> 00:11:35.460
+Le paramètre de pénalité de répétition à lui seul permet un ajustement contrôlable du couple précision rappel
+
+00:11:35.460 --> 00:11:41.220
+au moment de l'inférence pour la correction d'erreur grammatical, sans changer l'architecture ni l'invite.
+
+00:11:41.220 --> 00:11:49.560
+Sur Graph NIAH, au profondeur 16 et 32, les modèles GPT-5,6 et QN-3,5 ne répondent
+
+00:11:49.560 --> 00:11:53.020
+pas mieux qu'au hasard au question oui ou non, surtout en répondant non.
+
+00:11:53.700 --> 00:11:58.380
+Stepwise querying distile le raisonnement sans accès à la chaîne de pensée du professeur
+
+00:11:58.380 --> 00:12:04.320
+et gagne 14 comparaisons sur 16, sur deux professeurs, deux étudiants et quatre bandes essais.
+
+00:12:05.000 --> 00:12:09.940
+Pile récupère des graphes acicliques dirigeées taxonomiques avec une haute fidélité structurelle
+
+00:12:09.940 --> 00:12:14.320
+sur deux bandes essais OLLM en utilisant qu'un vocabulaire de concept
+
+00:12:14.320 --> 00:12:16.140
+issu des plongements matrioshka.
+
+00:12:16.580 --> 00:12:20.540
+Les signatures de chemin de profondeur 2 équilibrent de façon optimale
+
+00:12:20.540 --> 00:12:24.920
+les sensibilités au niveau caractère et au niveau mot et préserve l'ordre
+
+00:12:24.920 --> 00:12:27.020
+des mots pour la similarité l'exicale.
+
+00:12:27.640 --> 00:12:31.720
+Tises escatées atteint la plus haute ause et moyenne et la plus haute précision
+
+00:12:31.720 --> 00:12:35.360
+sur tous les domaines cibles dans des tests où l'on laisse un domaine de côté,
+
+00:12:35.640 --> 00:12:37.400
+en utilisant le texte que comme index.
+
+00:12:37.400 --> 00:12:43.720
+Un espace de plongement à 66 dimensions, dérivée de 4,7 millions de jugements humains
+
+00:12:43.720 --> 00:12:48.960
+Odd One Out, fournit des justifications ancrées dans les dimensions, et une RSA sur
+
+00:12:48.960 --> 00:12:54.320
+un jeu de données FM Marie, montre un alignement représentationnel humain modèle accru.
+
+00:12:55.120 --> 00:13:00.500
+Turn-Turk GPT prédit les tours de parole en turc à partir du texte, et bas à la fois
+
+00:13:00.500 --> 00:13:05.580
+les références à règles et un détecteur multilingue de fins de tours sous-évaluation dix
+
+00:13:05.580 --> 00:13:08.560
+jointes en enregistrement et disjointes en l'ocuteur.
+
+00:13:09.240 --> 00:13:13.940
+Les modèles de langage, Distilled Asynchronous Flow Map, établissent une nouvelle performance
+
+00:13:13.940 --> 00:13:19.100
+état de l'art en une étape sur Sudoku et la génération de code GSM 8000K.
+
+00:13:19.560 --> 00:13:25.960
+Cross fait monter la précision hors-domaine à 46,8% sur Reasoning Gym, embrouillant l'ordre
+
+00:13:25.960 --> 00:13:29.240
+des étapes de la chaîne de pensée tout en préservant le contenu.
+
+00:13:30.020 --> 00:13:34.800
+Range soit permet l'extrapolation de longueur sans entraînement pour les modèles de langage
+
+00:13:34.800 --> 00:13:40.580
+à diffusion continue, avec une attention locale à fenêtre glissante, des résumés de blocs
+
+00:13:40.580 --> 00:13:46.100
+distincts et une récupération dynamique. ZHF est poussé un arbre de résumés de clés
+
+00:13:46.100 --> 00:13:51.520
+compressés, de sorte que le coût total croit de façon soulinaire avec la longueur de séquence,
+
+00:13:52.000 --> 00:13:57.260
+tout en préservant la récupération en long contexte après une courte étape de distillation KL.
+
+00:13:58.020 --> 00:14:04.480
+Le modèle DecisionRank 1,7B bas son professeur génératif 27B sur Trek DL
+
+00:14:04.480 --> 00:14:05.480
+19 à 23.
+
+00:14:06.320 --> 00:14:12.520
+Fli de répons aux requêtes jusqu'à 9,5 fois plus vite que VLLM et SGLANG, tout en restant
+
+00:14:12.520 --> 00:14:15.060
+le plus proche de la référence en flottant 32.
+
+00:14:15.740 --> 00:14:21.020
+Un protocole de requête à parier avec éthictage basé sur le contenu montre que les classements
+
+00:14:21.020 --> 00:14:25.840
+de défense rague changent quand on distingue les échecs empêchés des échecs introduits.
+
+00:14:26.440 --> 00:14:31.200
+La variante à contribution égale au risque de farot abaisse la perte sur données propres
+
+00:14:31.200 --> 00:14:37.100
+sur chaque graine, de 0,0136 nat en moyenne, sans tant ni mémoir ajouté.
+
+00:14:37.680 --> 00:14:42.360
+Testé à Priellevoise 27b sur des tâches d'appel d'outils conditionnés par la parole,
+
+00:14:43.060 --> 00:14:46.440
+la recette en deux étapes est entièrement décrite et le modèle est ouvert.
+
+00:14:47.180 --> 00:14:51.800
+Faites passer le fiché zip de données hack-tube dans votre propre agent pour générer un
+
+00:14:51.800 --> 00:14:55.220
+flux vidéo personnalisé, filtré par thème ou par époque.
+
+00:14:55.680 --> 00:15:00.300
+Comparé hyper-repaire à l'inversion l'orace tendar sur n'importe quel modèle affiné
+
+00:15:00.300 --> 00:15:05.860
+de 7b à 13b que vous avez déjà. Le point de contrôle de l'hyper réseau est publié.
+
+00:15:06.440 --> 00:15:11.300
+Appliquer le patch de cache KV à un modèle affiné pour la sécurité, pour voir combien
+
+00:15:11.300 --> 00:15:15.660
+du comportement d'alignement se transfère sans réentraînement. On s'attend à ce
+
+00:15:15.660 --> 00:15:20.620
+que davantage de modèle ouvert par rôle langage adopte la recette en deux étapes projecteurs
+
+00:15:20.620 --> 00:15:26.280
+plus troncs démontrés par appriels. Des pipelines de calibration agentique comme Agentectuneur
+
+00:15:26.280 --> 00:15:30.900
+apparaîtrons probablement pour d'autres simulateurs scientifiques au-delà de la cosmologie.
+
+00:15:31.620 --> 00:15:36.020
+Des protocoles d'équité portable calqués sur KISTAS sont attendus pour d'autres langues
+
+00:15:36.020 --> 00:15:37.820
+et d'autres juridictions réglementaires.
+
+00:15:38.340 --> 00:15:41.900
+67,6% de précisions moyennes à 4 B.
+
+00:15:42.440 --> 00:15:47.720
+Voilà pourquoi on ouvre le capot des têtes pointeurs de du jève pour les décisions catégorielles
+
+00:15:47.720 --> 00:15:48.520
+en une seule passe.
+
+00:15:49.300 --> 00:15:53.380
+Les têtes pointeurs permettent à un modèle de produire une distribution de probabilité
+
+00:15:53.380 --> 00:15:58.680
+sur un ensemble fixe d'options, en une seule passe avant, en autant chaque option avec
+
+00:15:58.680 --> 00:16:01.380
+un marqueur appris au lieu de générer des jetons.
+
+00:16:01.940 --> 00:16:06.420
+Le geste central, c'est de remplacer la tête habituelle de modélisation du langage
+
+00:16:06.420 --> 00:16:11.540
+par un petit ensemble de sons de linéaires spécifiques aux options qui partagent le même
+
+00:16:11.540 --> 00:16:12.200
+encodeur.
+
+00:16:12.660 --> 00:16:17.860
+Parce que le vocabulaire de sortie, c'est désormais exactement les choix autorisés, la
+
+00:16:17.860 --> 00:16:23.460
+libération devient une normalisation exponentielle directe sur ses scores, plutôt qu'une correspondance
+
+00:16:23.460 --> 00:16:28.740
+indirecte depuis du texte libre. Ça enlève à la fois l'étape d'analyse et le risque que
+
+00:16:28.740 --> 00:16:33.620
+le modèle produce une réponse hors ensemble. La famille fournie des modèles de décision
+
+00:16:33.620 --> 00:16:43.200
+en une seule passe, de 0,8b à 4b pour l'étage d'éducation. La variante 4b atteint 67,6% de précision
+
+00:16:43.200 --> 00:16:50.160
+moyenne sur 12 bancs d'essais d'éducation, batant la plus forte API commerciale de 9,4 points et
+
+00:16:50.160 --> 00:16:57.220
+le meilleur modèle ouvert 4B de 18,7 points. Il tourne à environ 150 décisions par seconde sur un
+
+00:16:57.220 --> 00:17:02.680
+H 100, grosse au modo un ordre de grandeur plus vite que n'importe quelle référence de génération de
+
+00:17:02.680 --> 00:17:07.980
+texte qui doit être post-traité. Le gain de qualité disparaît dès que l'ensemble d'options
+
+00:17:07.980 --> 00:17:12.400
+des passes quelques centaines d'entrées, parce que la tête pointeur doit encore rivaliser
+
+00:17:12.400 --> 00:17:17.460
+avec la capacité de l'encoder, à cet échelle, un reclassifier léger au-dessus d'un
+
+00:17:17.460 --> 00:17:22.220
+modèle génératif devient préférable. Utiliser les têtes pointeurs quand la tâche est
+
+00:17:22.220 --> 00:17:27.460
+une classification à ensemble fermée, avec un inventaire d'étiquette stable et que la
+
+00:17:27.460 --> 00:17:32.000
+l'attence compte. Revenez à la génération plus analyse quand l'espace d'étiquette est
+
+00:17:32.000 --> 00:17:36.760
+ouvert ou change souvent. Avant de partir, on s'attend à ce que des reclassifiers de
+
+00:17:36.760 --> 00:17:42.240
+modèles de décision, entraînés par distillation sur politique dans l'espace des Items, visent
+
+00:17:42.240 --> 00:17:46.680
+d'autres bandes et sètes de récupération. Voilà pour Models &amp; Agents aujourd'hui.
+
+00:17:47.120 --> 00:17:51.320
+Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous ces
+
+00:17:51.320 --> 00:17:55.840
+changements et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de
+
+00:17:55.840 --> 00:18:01.100
+LIA va vite, on vous aide à suivre, à demain. Et si vous préférez regarder plutôt qu'écouter,
+
+00:18:01.100 --> 00:18:05.960
+retrouvez-nous sur YouTube chez NERANETWORK. Le lien est dans les notes de l'émission.
+
+00:18:06.460 --> 00:18:11.300
+Cette émission vous est proposée par le NERANETWORK. Si vous voulez un autre briefing quotidien
+
+00:18:11.300 --> 00:18:16.920
+tranchant, un intended consequence est là pour vous, de vrais histoires de bonnes intentions qui
+
+00:18:16.920 --> 00:18:23.040
+ont mal tourné. Toutes nos émissions sont gratuits sur NERANETWORK.com. Vous suivez les longs arcs,
+
+00:18:23.860 --> 00:18:29.420
+Storytrakers sur NERANETWORK.com, suite les grands programmes à travers les épisodes. Tesla,
+
+00:18:29.420 --> 00:18:33.280
+SpaceX IA, science spatiale et plus encore.
+
+00:18:33.820 --> 00:18:37.040
+Cette épisode a utilisé la synthèse vocale IA de ma voix.
+
+00:18:37.560 --> 00:18:40.320
+La sélection éditoriale et l'analyse sont les miennes.
