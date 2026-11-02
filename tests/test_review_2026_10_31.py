@@ -99,12 +99,37 @@ class TestDubShortsKeepTheirScenes:
 
 
 class TestTheLivePolicyAfterTheReset:
-    def test_dub_long_forms_turned_on_by_two_probes_are_off(self):
+    def test_a_dub_long_form_is_on_only_on_the_full_read(self):
+        """The Oct 31 reset turned off five dub long-forms that two young
+        probes had switched on. This guard first pinned those five as off,
+        which held only until the next full read. On Nov 1 the nightly
+        turned FR Tesla and FR Fascinating Frontiers back on from four or
+        more longs in the window (long_vpd 4.39 and 3.62 over the 2.0
+        floor), which is the rule working. What the rule forbids is a dub
+        long-form switched on by probes, so that is what this checks, on
+        whatever the committed policy says today."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "update_youtube_policy", ROOT / "scripts" / "update_youtube_policy.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        assert mod.LONG_PROBE_CHANNELS == frozenset({"en"})
+
+        from engine.show_lang import page_lang
+
         policy = json.loads(_read("api/youtube_policy.json"))
-        for ch, slugs in (("ru", ("spacex", "tesla", "fascinating_frontiers")),
-                          ("fr", ("tesla", "fascinating_frontiers"))):
-            for slug in slugs:
-                assert policy["channels"][ch][slug]["publish_long_form"] is False, (ch, slug)
+        for ch in ("ru", "fr"):
+            for slug, entry in policy["channels"].get(ch, {}).items():
+                if page_lang(slug) == ch:
+                    continue  # a native show's own long-form, not a dub
+                reason = entry.get("reason") or ""
+                assert "probe long" not in reason, (ch, slug, reason)
+                if (entry.get("publish_long_form")
+                        and entry.get("computed") == entry.get("tier")):
+                    vpd = entry.get("long_vpd")
+                    assert vpd is not None and vpd >= mod.LONG_VPD_FLOOR[ch], (
+                        ch, slug, reason)
 
     def test_the_breakout_shows_are_back_to_a_daily_short(self):
         en = json.loads(_read("api/youtube_policy.json"))["channels"]["en"]
