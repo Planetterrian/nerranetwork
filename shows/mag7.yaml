@@ -262,7 +262,12 @@ llm:
   min_podcast_words: 1250
   min_podcast_publish_words: 660
   podcast_expand_below_target: false
-  min_digest_words: 1150
+  # Nov 2 2026 (review 2026-11-01): the digest floor sat under the script
+  # target it feeds (1,150 < 1,250). Measured on Ep022-041, 1,300 fires on
+  # two thin days: Ep027 (1,277 prose words, a 981-word script) and Ep028
+  # (1,255, 1,073). Ep039's short script came from a 1,648-word digest, so
+  # no floor reaches it. A thin-day guard, not a lever on every day.
+  min_digest_words: 1300
   digest_expand_below_target: true
   podcast_chain: true
 

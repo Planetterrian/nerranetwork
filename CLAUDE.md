@@ -5421,6 +5421,12 @@ and a publish that renders the page before the post.** Guards:
   The narrow claim (the guest holds the final say) survives on those terms.
   The guard reads `workers/voices/src/index.ts` for the auto-approve and
   fails any surface that claims the stronger gate while it exists.
+  **Nov 2 2026:** the feed description Apple and Spotify show, the
+  registry (`about_host`, meta descriptions), the terms of service, the
+  guest-picks page and Mira's producer replies to guests still said "the
+  guest approves the transcript before it publishes". All of them were
+  corrected, and the guard now sweeps them
+  (`tests/test_review_followups_2026_11_02.py`).
 - Every blog post on the site printed `\ud83d\udc4d` where a thumbs-up
   belonged — JSON escapes pasted into `blog_post.html.j2`. A guard sweeps
   every template for surrogate escapes.

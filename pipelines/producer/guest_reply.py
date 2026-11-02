@@ -184,7 +184,8 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
     elif latest and latest.get("status") in RECORDED:
         standing = f"interview recorded ({latest.get('status')}); the episode is in production or review"
         lines.append("- The interview is recorded. They will get (or have had) an email with a link "
-                     "to hear the episode and approve it before it publishes.")
+                     "to their transcript, with a week to approve it, cut from it or refuse it "
+                     "before it publishes.")
     elif latest and latest.get("status") == "published":
         standing = "their episode is published"
         lines.append("- Their episode is published on the show page.")

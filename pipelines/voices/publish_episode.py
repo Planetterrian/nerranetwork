@@ -1191,8 +1191,9 @@ def maybe_publish_shorts(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                         f"{guest_name} on {cfg.name}, episode {episode_num}.",
                         f"The full conversation: {full}",
                         f"Every show: {page}",
-                        f"{cfg.name} is hosted by Mira, an AI. Every guest approves "
-                        "their own transcript before it is published.",
+                        f"{cfg.name} is hosted by Mira, an AI. Every guest is sent "
+                        "their own transcript to approve, cut from or refuse before "
+                        "it is published.",
                         "#Shorts #AI #podcast",
                     ))
                     result = upload_video(
