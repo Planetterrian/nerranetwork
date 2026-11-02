@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Record-scale Lumina simulation now lets researchers test JWST observations of the universe's first galaxies in detail.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="description" content="Record-scale Lumina simulation now lets researchers test JWST observations of the universe's first galaxies in detail.">
     
     <meta name="keywords" content="good news, positive news, optimism, science podcast, climate solutions, individual action, mental health, mindset, do positive, dp pod"><title>Record-scale Lumina simulation now lets researchers test… — Ep81 | The DP Pod: The Do Positive Podcast</title>
     <meta name="theme-color" content="#0B7A45"><!-- Open Graph -->
@@ -41,11 +41,20 @@
       } catch (e) {
         document.documentElement.classList.add('nn-consent-needed');
       }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
     })();
     </script>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
 
     
     <script src="../../assets/js/consent.js"
@@ -55,10 +64,10 @@
     
     
     
-    <script defer src="../../assets/js/tracking.js"></script>
+    <script defer src="../../assets/js/tracking.js?v=50a382c6"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css">
+    <link rel="stylesheet" href="../../styles/main.css?v=29ee3e76">
 
     
     <link rel="alternate" type="application/rss+xml" title="The DP Pod: The Do Positive Podcast Blog RSS" href="https://nerranetwork.com/blog_dp_pod.rss">
@@ -953,9 +962,11 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        /* .nn-episode-listen is the same box without the switcher (Oct 7
+           2026; it was .nn-listen until Oct 30, the class of the player's
+           Listen button, whose pill shape collapsed this box). */
         .nn-i18n,
-        .nn-listen {
+        .nn-episode-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1046,6 +1057,17 @@
             font-family: var(--font-heading);
             font-size: clamp(2rem, 5.2vw, 3rem);
             line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-who { display: flex; align-items: center; gap: 1.1rem; margin: 0 0 1rem; }
+        .nn-iv-who .nn-iv-identifier { margin-bottom: 0; }
+        .nn-iv-photo {
+            width: 104px; height: 104px; flex-shrink: 0; border-radius: 50%;
+            object-fit: cover; border: 3px solid var(--show-color);
+            background: var(--nn-surface);
+        }
+        @media (max-width: 520px) {
+            .nn-iv-photo { width: 76px; height: 76px; }
+            .nn-iv-who { gap: 0.8rem; }
         }
         .nn-iv-identifier {
             font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
@@ -1877,7 +1899,7 @@
 
     
     
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1885,7 +1907,7 @@
                     Listen to this episode
                 </span>
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/dp_pod/DP_Pod_Ep081_20261026.mp3">
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/dp_pod/DP_Pod_Ep081_20261026.mp3" data-nn-card data-title="Record-scale Lumina simulation now lets researchers test JWST observations of the universe&#39;s first galaxies in detail." data-show="The DP Pod: The Do Positive Podcast" data-cover="../../assets/covers/dp-pod.jpg">
                 <a href="https://op3.dev/e/audio.nerranetwork.com/dp_pod/DP_Pod_Ep081_20261026.mp3">Download the audio</a>
             </audio>
         </div>
@@ -2053,6 +2075,7 @@
                     if (isNaN(at)) return;
                     li.classList.add("is-seekable");
                     li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
                         try { audio.currentTime = at; audio.play(); } catch (e) {}
                     });
                 });
@@ -2337,8 +2360,8 @@ This episode used AI voice synthesis of our voices — the editorial selection a
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
             
             <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
-                <h3>Enjoy this episode? Get The DP Pod: The Do Positive Podcast in your inbox</h3>
-                <p>New episode alerts — no spam, unsubscribe anytime.</p>
+                <h3>Enjoy this episode? Get The DP Pod: The Do Positive Podcast in Nerra Daily</h3>
+                <p>One email at 7 AM Eastern with the shows you pick. No spam, unsubscribe anytime.</p>
                 <form method="post" action="#"
                       data-nn-subscribe="blog-cta"
                       data-list="member"
@@ -2367,12 +2390,10 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Next episode →</span>
-                    <span class="nav-title">New episode Monday</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep082.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 82 · China's clean tech exports could cut 8.4 billion tonnes of CO2, giving every buyer a direct lever in the energy transition.</span>
+                </a>
                 
             </nav>
             
@@ -2404,6 +2425,11 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                 <h2>More from The DP Pod: The Do Positive Podcast</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep082.html" class="blog-related-card" style="--card-show-color: #0B7A45">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B7A45, white 35%)">Ep 82</span>
+                        <h3>China's clean tech exports could cut 8.4 billion tonnes of…</h3>
+                    </a>
+                    
                     <a href="ep080.html" class="blog-related-card" style="--card-show-color: #0B7A45">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0B7A45, white 35%)">Ep 80</span>
                         <h3>Green turtle nests have tripled in one Malaysian archipelago…</h3>
@@ -2424,11 +2450,6 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                         <h3>One CRISPR dose cut LDL cholesterol by 52.5 percent and held…</h3>
                     </a>
                     
-                    <a href="ep076.html" class="blog-related-card" style="--card-show-color: #0B7A45">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B7A45, white 35%)">Ep 76</span>
-                        <h3>A urine test spotted bladder-cancer genes in 71 of 77…</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../thedppod.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">The DP Pod: The Do Positive Podcast show page</a><span aria-hidden="true"> · </span>
@@ -2443,24 +2464,24 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/fascinating_frontiers/ep233.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/fascinating_frontiers/ep240.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>Astronomers have found evidence of a Jupiter-mass exosatellite orbiting a brown dwarf in the CD-35 2722 system.</h3>
+                        <h3>Frost in 32 of 36 Martian polar craters changes with local conditions rather than global seasons.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/omni_view/ep216.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/omni_view/ep223.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>Explosions in Riyadh coincide with plans to reopen the airport after recent Houthi strikes.</h3>
+                        <h3>An attack on a Qatari LNG tanker in the Gulf raises risks to energy shipments that millions rely on for power and transport.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep153.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/unintended_consequences/ep160.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>Over 80 percent of Israel's wastewater reused for irrigation lowered citrus yields by 20 percent after a decade.</h3>
+                        <h3>The 1968 National Flood Insurance Act produced 25 percent more housing starts in participating communities.</h3>
                         
                     </a>
                     
@@ -2635,8 +2656,8 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                       data-label-done="Check your email ✓"
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
-                    <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <h4>Get Nerra Daily by email</h4>
+                    <p>One email at 7 AM Eastern, with the shows you pick:</p><details class="nn-subscribe-pick">
                     <summary>Choose shows <span>(29)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
@@ -2711,6 +2732,14 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                         <a class="nn-login-link" href="../../login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap. <a href="../../app.html">How it works</a></p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories. <a href="../../app.html">How it works</a></p>
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
@@ -2720,13 +2749,11 @@ This episode used AI voice synthesis of our voices — the editorial selection a
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
                 <div>
                     <a href="../../support.html">Support the network</a> &middot;
+                    <a href="../../app.html">Get the app</a> &middot;
                     <a href="../../privacy-policy.html">Privacy</a> &middot;
                     <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
                     <a href="../../terms-of-service.html">Terms</a> &middot;
-                    <a href="../../ai-disclosure.html">AI Disclosure</a>
-                    <span style="opacity:0.5;">&middot;</span>
-                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
-                </div>
+                    <a href="../../ai-disclosure.html">AI Disclosure</a></div>
             </div>
         </div>
     </footer>
@@ -2906,26 +2933,32 @@ This episode used AI voice synthesis of our voices — the editorial selection a
 
 
     <!-- Centralized, improved global search -->
-    <script src="../../assets/js/search.js" defer></script>
-    <script src="../../assets/js/language-control.js" defer></script>
-    <script src="../../assets/js/footer-subscribe.js" defer></script>
+    <script src="../../assets/js/search.js?v=eca36a37" defer></script>
+    <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
+    <script src="../../assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
     // signed-out visitors, blocked cookies, or an unreachable Worker all
     // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
     (function () {
       try {
-        fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
           .then(function (r) {
-            if (!r.ok) return;
+            if (!r.ok) return null;
             ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
               var a = document.getElementById(id);
               if (a) { a.textContent = 'My Nerra'; a.href = '../../account.html'; }
             });
             document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
-          }).catch(function () {});
-      } catch (e) {}
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
     </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">
