@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 01 Nov 2026 11:14:46 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 02 Nov 2026 11:26:01 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,379 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 222: Apriel's 27B open model scores 98.9 on Big Bench Audio while adding native speech and tool…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Apriel's 27B open model scores 98.9 on Big Bench Audio while adding native speech and tool calling.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Apriel Voice 27B Preview unifies speech input, reasoning, and tool use in one open model built on Gemma 4. It posts 98.90 on Big Bench Audio, 81.13 on Speech-BFCL, and 65.51% task success on τ-Voice with 1.91-second mean latency. Builders should test its two-stage training recipe for adding speech to existing backbones.
+
+Top Story
+Apriel Voice 27B Preview ships as an open speech-language model that processes audio directly and outputs both text responses and tool calls without a separate dialogue model. Built on the post-trained Gemma 4 26B-A4B checkpoint, it keeps text and image modalities while adding a two-stage training process: first establishing the speech interface, then jointly adapting the projector and backbone with supervised fine-tuning, text replay, and source-dependent losses. In thinking mode it reaches 98.90 on Big Bench Audio, 81.13 on Speech-BFCL, and 65.51% task success on τ-Voice at 1.91-second mean latency; English EVA accuracy is 51.27% and experience pass@1 is 74.13%. The model runs on a custom serving platform for interactive voice sessions. Watch for community fine-tunes that extend the same recipe to other 20B–30B backbones. Source: &lt;a href="https://arxiv.org/abs/2610.40738"&gt;arxiv.org&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;HyperRepair recovers general capabilities of fine-tuned models at inference cost only: arXiv NLP&lt;/b&gt;
+The framework trains a hypernetwork on source-model repairs that generates a prompt-conditioned Repairing Side Net using activation fingerprints. On two model families, 12 LoRA datasets, and 15 general benchmarks it retains 99.5% of domain performance while recovering 93.4% of the base model's average general score. No target-domain examples or extra optimization are required at inference. Source: &lt;a href="https://arxiv.org/abs/2610.41147"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;KV-Cache Patching transfers fine-tuned behaviors by swapping KV states between base and adapted models: arXiv NLP&lt;/b&gt;
+Patching the KV cache from a LoRA-tuned model into the base transfers behaviors such as German response style or emergent misalignment; the reverse removes them. The effect concentrates at a few pivotal positions, especially system-prompt and chat-template tokens, and scales with the fraction of the cache replaced. Source: &lt;a href="https://arxiv.org/abs/2610.41480"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Li²SAO lifts single-rollout asynchronous RL with group-relative actor-critic bootstrapping: arXiv NLP&lt;/b&gt;
+The method trains the actor with group-relative advantage and the critic with group-centered return while the value model is cold, then switches to single-rollout GAE. It closes the early-training gap with GRPO on agentic tasks and raises the later performance ceiling; code is at https://github.com/jd-cc-coder/Li2SAO. Source: &lt;a href="https://arxiv.org/abs/2610.40726"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;BYOD converts autoregressive models to diffusion language models with LoRA-only adapters: arXiv NLP&lt;/b&gt;
+The recipe works on Gemma 2 9B, Llama 3.1 8B, Qwen2.5 7B, and Ministral 8B using 4.1–5.8% of final parameters and at most 102.4M tokens per conversion. All four models generate from fully masked sequences and retain substantial parent knowledge; BYOD-Gemma reaches 50.6% average accuracy on a nine-task suite. Source: &lt;a href="https://arxiv.org/abs/2610.41574"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Saidzoda-Tajik-LFM-2.6B adapts a hybrid model for Tajik tool calling via continued pretraining then SFT: arXiv NLP&lt;/b&gt;
+LoRA CPT on 1.48M cleaned Tajik documents for three epochs followed by one epoch of mixed tool-call SFT lifts strict full-call accuracy on a 174-item Tajik BFCL-derived test from 20.69 to 64.14. English tool-calling accuracy stays flat at ~77; CPT alone erases the native tool-call format. Source: &lt;a href="https://arxiv.org/abs/2610.41576"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;EDU-Jev supplies single-pass decision models at 0.8B–4B for education tasks: arXiv NLP&lt;/b&gt;
+A pointer head restricts predictions to predefined options and returns a probability distribution without text generation. The 4B variant hits 67.6% average accuracy across twelve education benchmarks, beating the strongest commercial API by 9.4 points and the best open 4B model by 18.7 points while running ~150 decisions per second on one H100. Source: &lt;a href="https://arxiv.org/abs/2610.41079"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;HCLTech launches AI agents to automate enterprise mainframe operations: The Economic Times&lt;/b&gt;
+The agents target routine mainframe tasks in enterprise environments. No further technical details or benchmarks are supplied in the announcement. Source: &lt;a href="https://m.economictimes.com/tech/artificial-intelligence/hcltech-launches-ai-agents-to-automate-enterprise-mainframe-operations/articleshow/135453649.cms"&gt;m.economictimes.com&lt;/a&gt;
+
+&lt;b&gt;Instinct fixes WhatsApp disruption with its personal AI agent: The Indian Express&lt;/b&gt;
+The agent handled the service outage for users. Limited technical description is available. Source: &lt;a href="https://indianexpress.com/article/technology/artificial-intelligence/instinct-whatsapp-disruption-ai-agents-what-happened-10947160/"&gt;indianexpress.com&lt;/a&gt;
+
+&lt;b&gt;AI Travel Agents give hotels a new guest to impress: PYMNTS.com&lt;/b&gt;
+Hotels must now optimize for AI intermediaries that book on behalf of travelers. The article discusses shifting marketing and service expectations but supplies no concrete metrics. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/ai-travel-agents-give-hotels-a-new-guest-to-impress/"&gt;pymnts.com&lt;/a&gt;
+
+&lt;b&gt;AgenticTuner calibrates cosmological simulations with a present-day LLM as optimizer: arXiv NLP&lt;/b&gt;
+The pipeline supplies informal human-readable priors (codebase, documentation, heuristics) to the agent. It reaches competitive calibration performance at a fraction of the CPU cost of Bayesian optimization. Source: &lt;a href="https://arxiv.org/abs/2610.40685"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Safin-1.5 adds a safety-native architecture and verifiable reasoning harness for recursive safety improvement: arXiv NLP&lt;/b&gt;
+Persistent safety states and hazardous-knowledge disentanglement allow targeted removal of risky experts. The formal-reasoning harness recovers missing relations via proof-obligation-guided semantic bridging and outperforms frontier models on safety and reasoning tasks. Source: &lt;a href="https://arxiv.org/abs/2610.40751"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;4" touchscreen for inference engine monitoring: r/LocalLLaMA&lt;/b&gt;
+A builder wired an ESP32-based 4-inch screen to display a btop++-style TUI dashboard for a DGX cluster. Firmware is on GitHub with a SKILL.md file so agents can compile it; a 3D-printed dock is in progress. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1xlsuwf/4_touchscreen_for_inference_engine_monitoring/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Weekend hack: HackerTube: Andrej Karpathy (X)&lt;/b&gt;
+Claude filtered 43M Hacker News comments spanning 20 years down to 6,454 repeatedly recommended videos and built a YouTube-style site around them. The data zip is public; state lives in the browser session with no login required. Source: &lt;a href="https://x.com/karpathy/status/2116980174667583602"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;SimXAI adds a lightweight LLM-centric conversational layer for existing XAI resources: arXiv NLP&lt;/b&gt;
+A single tool-calling LLM replaces separate intent, dialogue-management, and template modules. It improves task accuracy and reduces turns versus GUS-style agents while preserving faithfulness; evaluation code and datasets are released. Source: &lt;a href="https://arxiv.org/abs/2610.41856"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;PersonaChatBench evaluates chat assistants across diverse simulated users: arXiv NLP&lt;/b&gt;
+The benchmark pairs identical tasks with multiple persona cards that encode distinct needs and behaviors. Task performance and need fulfillment vary across personas; strong aggregate scores do not guarantee consistent satisfaction of individual user requirements. Source: &lt;a href="https://arxiv.org/abs/2610.42060"&gt;arxiv.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Qistas: A Pre-Registered, Portable Protocol for Fairness Evaluation of Large Language Models: arXiv NLP&lt;/b&gt;
+The protocol measures procedural symmetry, differential refusal, and stereotype reliance across matched counterfactual pairs for Iraqi social constituencies and releases the full authoring apparatus plus pre-registration. Source: &lt;a href="https://arxiv.org/abs/2610.40893"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CoFiBreak improves attack diversity in automated red teaming while preserving effectiveness: arXiv NLP&lt;/b&gt;
+A coarse-to-fine diversity reward applied only to successful attacks yields 1.6–2.0× more distinct strategies on HarmBench and 2.1× higher diversity on AdvBench versus the strongest baseline. Source: &lt;a href="https://arxiv.org/abs/2610.40926"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Adaptive Personalization Under Preference Epistemic Uncertainty: arXiv NLP&lt;/b&gt;
+Models show a 35–46% drop in strategy calibration during open-ended generation versus multiple-choice recognition and default to exploit-first behavior; targeted training on internal strategy representations narrows the generalization gap by one-third. Source: &lt;a href="https://arxiv.org/abs/2610.40930"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Better Retrievers, Worse Labels: How Incomplete Relevance Judgments Distort Abstention Evaluation in Conversational RAG: arXiv NLP&lt;/b&gt;
+Stronger retrievers increase the share of no-gold contexts that still contain the answer (28% to 72%), dropping shortcut precision from 0.68 to 0.10; the authors release code, runs, and content-based labels. Source: &lt;a href="https://arxiv.org/abs/2610.40966"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Fewer Heads, Fewer Memories: Pruning Redundant Attention Heads Suppresses Verbatim Memorisation: arXiv NLP&lt;/b&gt;
+Zeroing 729 task-redundant heads in GPT-2-XL cuts memorization count by 91.5% while improving WikiText-103 perplexity by 0.92. Source: &lt;a href="https://arxiv.org/abs/2610.40974"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Do Open Language Models Invent Scripture? BILAL-BENCH: arXiv NLP&lt;/b&gt;
+Six of seven evaluated models confidently fabricate on 79.3–95.3% of source-production questions in Bengali; hadith provenance is the weakest category with only two of 315 responses correct and sourced. Source: &lt;a href="https://arxiv.org/abs/2610.40996"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Generative Gap Between Speculative Drafter and Continuous Diffusion Language Model: arXiv NLP&lt;/b&gt;
+LangFlow outperforms DSpark variants on GenPPL and MAUVE at lengths 128 and 1024 under equal training budgets; increasing denoising steps at fixed weights further improves results at shorter lengths. Source: &lt;a href="https://arxiv.org/abs/2610.40847"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TraceSpec improves speculative decoding for LLM agents via trajectory-conditioned draft training: arXiv NLP&lt;/b&gt;
+The method raises replay throughput 12.5–22.6% over its DSpark base across three target sizes; adaptive allocation increases accepted length 3.3–10.0% over fixed full-turn supervision. Source: &lt;a href="https://arxiv.org/abs/2610.41177"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Beyond Response Scoring: An AI-aware Cognitive Supervision Framework for Automated Mathematical Short Answer Grading: arXiv NLP&lt;/b&gt;
+AICG reduces MAE by 50.3% and lifts QWK from 0.798 to 0.927 versus plain RoBERTa regression; AI-aware weighting adds a further 4.2% MAE reduction on post-Gen-AI semesters. Source: &lt;a href="https://arxiv.org/abs/2610.41215"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;PsyInterviewee separates protected truth and dynamic interaction channels for reliable mental-health interview simulation: arXiv NLP&lt;/b&gt;
+Asymmetric write permissions keep clinical facts fixed while allowing disclosure and behavioral states to evolve; it outperforms four baselines on informational invariance and relational adaptivity. Source: &lt;a href="https://arxiv.org/abs/2610.41289"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;In-Model Context Compression with Agentic Soft Tokens for Long-Horizon LLM Agents: arXiv NLP&lt;/b&gt;
+ASTC uses the model's native recurrent dynamics to carry absorbed information forward as soft tokens, cutting end-to-end Attention Pairs by up to 50.68% while matching uncompressed accuracy. Source: &lt;a href="https://arxiv.org/abs/2610.41291"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;From Transcription to Reformulation: Defining and Benchmarking Grounded Generative Speech Recognition: arXiv NLP&lt;/b&gt;
+GSR-Bench introduces a four-level hierarchy of reformulation capabilities and a multi-dimensional evaluation framework; experiments reveal acoustic hallucination and instruction drift as key failure modes. Source: &lt;a href="https://arxiv.org/abs/2610.41292"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Comparative Evaluation of LLM-Based Review Paradigms for Academic Paper Quality Assessment: arXiv NLP&lt;/b&gt;
+Direct absolute rating matches comparative ranking on rank correlation with human scores yet compresses predictions above the accept threshold; abstract-only input beats full-paper summarization and model choice matters as much as paradigm choice. Source: &lt;a href="https://arxiv.org/abs/2610.41391"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;BlindToChange measures whether agents proactively discover recent events that affect their responses: arXiv NLP&lt;/b&gt;
+A 27.5-point gap appears when the needed fact is not explicitly mentioned versus when it is; more than half of failures trace to agents never searching to verify assumptions. Source: &lt;a href="https://arxiv.org/abs/2610.41435"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;KEEPER learns control-sufficient textual memory for long-horizon agents: arXiv NLP&lt;/b&gt;
+Reward-related prediction yields the highest task performance before and after offline RL; claim-level analysis shows error persistence despite corrective observations. Source: &lt;a href="https://arxiv.org/abs/2610.41482"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Sparse Text Diffusion under Dual Budgets: Context Connectivity and Expert Activation: arXiv NLP&lt;/b&gt;
+Normalized masked attention and conditional expert computation respect separate edge and activation budgets; a DualBudget configuration cuts cost 20% relative to DiffuSeq under the reported timing. Source: &lt;a href="https://arxiv.org/abs/2610.41487"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Enhancing Knowledge Entity Relation Extraction in Abstracts and Full-text Content of Academic Articles Using Large Language Models: arXiv NLP&lt;/b&gt;
+LoRA-adapted T5 reaches the highest macro F1 (0.7408 abstract, 0.7013 full-text); LLM-generated entity descriptions help SLMs, and combining strategies with complementary error patterns further improves results. Source: &lt;a href="https://arxiv.org/abs/2610.41552"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CEFR Level Assessment across Languages and Text Granularities: arXiv NLP&lt;/b&gt;
+Focal loss plus supervised contrastive learning outperforms strong baselines on sentence- and document-level CEFR prediction in both monolingual and multilingual settings. Source: &lt;a href="https://arxiv.org/abs/2610.41553"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;When Steering Shifts Discourse: Identifying and Intervening on Discourse-Level Changes due to Activation Steering in LLMs: arXiv NLP&lt;/b&gt;
+Steering alters formality, evidence use, and ambiguity; a second complementary vector restores ~78% of unintended discourse changes while preserving 93% of the intended behavior. Source: &lt;a href="https://arxiv.org/abs/2610.41661"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Precision–Recall Trade-off on the Inference Level for LLMs in Grammatical Error Correction: arXiv NLP&lt;/b&gt;
+The repetition penalty parameter alone enables controllable precision–recall adjustment at inference time without architecture or prompt changes. Source: &lt;a href="https://arxiv.org/abs/2610.41698"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;GraphNIAH: A Benchmark for Long-Context Reasoning over Real-World Graphs: arXiv NLP&lt;/b&gt;
+Accuracy falls with reasoning depth; at depths 16 and 32, GPT-5.6 and Qwen3.5 models answer YES/NO questions no better than random, mostly by answering NO. Source: &lt;a href="https://arxiv.org/abs/2610.41704"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Stepwise-Querying distills reasoning without teacher chain-of-thought access: arXiv NLP&lt;/b&gt;
+Independent queries elicit step-specific explanations that are assembled for SFT; the method wins 14 of 16 comparisons across two teachers, two students, and four benchmarks. Source: &lt;a href="https://arxiv.org/abs/2610.41769"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Peeling the Matryoshka: Extracting Ontological Structure from Retrieval Embeddings: arXiv NLP&lt;/b&gt;
+Prefix length in Matryoshka embeddings aligns with taxonomy granularity; PEEL recovers taxonomic DAGs with high structural fidelity on two OLLM benchmarks using only a concept vocabulary. Source: &lt;a href="https://arxiv.org/abs/2610.41785"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Iterated Integrals as Lexical Fingerprints: Path Signature Embeddings for Lexical Similarity: arXiv NLP&lt;/b&gt;
+Depth-2 signatures optimally balance character- and word-level sensitivities and preserve word order; the critical lexical variance sits in a compact PCA subspace. Source: &lt;a href="https://arxiv.org/abs/2610.41855"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Text as an Index for Zero-Shot Cross-Domain Knowledge Tracing: arXiv NLP&lt;/b&gt;
+TIZSKT separates behavioral sequence modeling from domain-local evidence construction and uses text only as an index; it achieves the highest mean AUC and accuracy on all target domains in leave-one-domain-out tests. Source: &lt;a href="https://arxiv.org/abs/2610.41883"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Aligning MLLMs with the Latent Structure of Human Cognition via Behavior-Derived Semantic Dimensions: arXiv NLP&lt;/b&gt;
+A 66-dimensional embedding space derived from 4.7M human Odd-One-Out judgments supplies dimension-grounded rationales; RSA on an fMRI dataset shows increased human-model representational alignment. Source: &lt;a href="https://arxiv.org/abs/2610.41951"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TurnTurk-GPT predicts turn-taking in Turkish from text: arXiv NLP&lt;/b&gt;
+Fine-tuning Turkish GPT-2 with the TurnGPT objective on synthetic and real dialogue beats both rule baselines and a multilingual end-of-turn detector under recording-disjoint and speaker-disjoint evaluation. Source: &lt;a href="https://arxiv.org/abs/2610.42010"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Asynchronous Flow Map Language Models enable one-step parallel generation with learned ordering: arXiv NLP&lt;/b&gt;
+State-adaptive asynchronous flows define tokenwise denoising schedules; the distilled models set new state-of-the-art one-step performance on Sudoku and GSM8K code generation. Source: &lt;a href="https://arxiv.org/abs/2610.42018"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CRoS improves CoT faithfulness by scrambling step order while preserving content: arXiv NLP&lt;/b&gt;
+The metric avoids confounding from information changes; on Reasoning Gym it raises out-of-domain accuracy to 46.8%, CoT quality, and hint-acknowledgment score versus outcome-only and prior causality rewards. Source: &lt;a href="https://arxiv.org/abs/2610.42054"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;RangeSWA enables training-free length extrapolation for continuous diffusion language models: arXiv NLP&lt;/b&gt;
+Local sliding-window attention, remote block summaries, and dynamic retrieval plus positional remapping and adaptive window scheduling reduce repetition and semantic drift beyond training length. Source: &lt;a href="https://arxiv.org/abs/2610.42084"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Subquadratic Attention with a Hierarchical Tree-Structured Indexer: arXiv NLP&lt;/b&gt;
+ZHA grows a tree of compressed key summaries; total cost grows sublinearly in sequence length while preserving long-context retrieval and reasoning performance after a short KL-distillation stage. Source: &lt;a href="https://arxiv.org/abs/2610.42112"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;DecisionRank trains decision-model rerankers via item-space on-policy distillation: arXiv NLP&lt;/b&gt;
+The 1.7B model beats its 27B generative teacher on TREC DL19–23; the 8B version outperforms its listwise counterpart while running 24.5× faster on TREC DL. Source: &lt;a href="https://arxiv.org/abs/2610.42128"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Flide accelerates decision inference with exact state forking: arXiv NLP&lt;/b&gt;
+ForkAttention navigates request dependencies via GPU-resident indices across attention and Gated DeltaNet layers; it answers queries up to 9.5× faster than vLLM/SGLang while staying closest to float32 reference. Source: &lt;a href="https://arxiv.org/abs/2610.42148"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Prevented is Not Protected: What Attack Success Rate Hides about RAG: arXiv NLP&lt;/b&gt;
+Existing defenses can introduce unexpected target-positive answers; the matched-query protocol with content-based labeling reveals that defense rankings shift when prevented versus introduced failures are distinguished. Source: &lt;a href="https://arxiv.org/abs/2610.40742"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;FARO reallocates per-block optimizer budgets by cross-block equal-risk contribution: arXiv NLP&lt;/b&gt;
+The adaptive arm matches the best hand-designed recipe; the ERC variant lowers clean-data loss on every seed by an average 0.0136 nats with no added time or memory. Source: &lt;a href="https://arxiv.org/abs/2610.40858"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Oh tbc Claude filtered it down a lot: urls, regexes, dropping spam, only the remainder was dispatched to Sonnet with a CC Workflow (so it uses the sub tokens). You can see surviving comments under videos, the comments that recommend videos seem to be of nice &amp; helpful character.: Andrej Karpathy (X)&lt;/b&gt;
+Filtering reduced 43M comments to the final 6,454-video set before Sonnet handled the remainder. Source: &lt;a href="https://x.com/karpathy/status/2116970707867566106"&gt;x.com&lt;/a&gt;
+
+Under the Hood: Pointer Heads for Single-Pass Categorical Decision Models
+Pointer heads let a model output a probability distribution over a fixed set of options in one forward pass by scoring each option with a learned marker instead of generating tokens. The core move is to replace the usual language-modeling head with a small set of option-specific linear probes that share the same encoder; because the output vocabulary is now exactly the allowed choices, calibration becomes a direct softmax over those scores rather than an indirect mapping from free-form text. This removes both the parsing step and the risk that the model produces an out-of-set answer. On education benchmarks the approach yields 67.6% average accuracy at 4B parameters while sustaining 150 decisions per second on a single H100, roughly an order of magnitude faster than any text-generation baseline that must be post-processed. The quality gain disappears once the option set grows beyond a few hundred entries because the pointer head must still compete with the encoder's capacity; at that scale a lightweight reranker on top of a generative model becomes preferable. The practical decision rule is therefore simple: use pointer heads when the task is closed-set classification with a stable label inventory and latency matters; fall back to generation-plus-parsing when the label space is open or changes frequently.
+
+Things to Try This Week
+• Test Apriel Voice 27B on speech-conditioned tool-calling tasks; its two-stage recipe is fully described and the model is open.
+• Run the HackerTube data zip through your own agent to generate a personalized video feed filtered by topic or era.
+• Compare HyperRepair against standard LoRA reversal on any fine-tuned 7B–13B model you already have; the hypernetwork checkpoint is released.
+• Try the pointer-head training recipe from EDU-Jev on a small education or multiple-choice dataset to measure single-pass latency gains.
+• Apply KV-Cache Patching to a safety-tuned model to see how much of the alignment behavior transfers without retraining.
+
+On the Horizon
+• More open speech-language models are expected to adopt the two-stage projector-plus-backbone recipe demonstrated by Apriel.
+• Agentic calibration pipelines like AgenticTuner will likely appear for other scientific simulators beyond cosmology.
+• Decision-model rerankers trained with item-space on-policy distillation are expected to target additional retrieval benchmarks.
+• Portable fairness protocols modeled on Qistas are anticipated for additional languages and regulatory jurisdictions.</description>
+      <guid isPermaLink="false">models-agents-video-ep222-20261102</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep222_20261102.mp4" length="336587779" type="video/mp4" />
+      <pubDate>Mon, 02 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep222_20261102.jpg" />
+      <itunes:duration>17:21</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Apriel's 27B open model scores 98.9 on Big Bench Audio while adding native speech and tool calling.**
+
+**What You Need to Know:** Apriel Voice 27B Preview unifies speech input, reasoning, and tool use in one open model built on Gemma 4. It posts 98.90 on Big Bench Audio, 81.13 on Speech-BFCL, and 65.51% task success on τ-Voice with 1.91-second mean latency. Builders should test its two-stage training recipe for adding speech to existing backbones.
+---
+### Top Story
+Apriel Voice 27B Preview ships as an open speech-language model that processes audio directly and outputs both text responses and tool calls without a separate dialogue model. Built on the post-trained Gemma 4 26B-A4B checkpoint, it keeps text and image modalities while adding a two-stage training process: first establishing the speech interface, then jointly adapting the projector and backbone with supervised fine-tuning, text replay, and source-dependent losses. In thinking mode it reaches 98.90 on Big Bench Audio, 81.13 on Speech-BFCL, and 65.51% task success on τ-Voice at 1.91-second mean latency; English EVA accuracy is 51.27% and experience pass@1 is 74.13%. The model runs on a custom serving platform for interactive voice sessions. Watch for community fine-tunes that extend the same recipe to other 20B–30B backbones. Source: [arxiv.org](https://arxiv.org/abs/2610.40738)
+---
+### Model Updates
+**HyperRepair recovers general capabilities of fine-tuned models at inference cost only: arXiv NLP**
+The framework trains a hypernetwork on source-model repairs that generates a prompt-conditioned Repairing Side Net using activation fingerprints. On two model families, 12 LoRA datasets, and 15 general benchmarks it retains 99.5% of domain performance while recovering 93.4% of the base model's average general score. No target-domain examples or extra optimization are required at inference. Source: [arxiv.org](https://arxiv.org/abs/2610.41147)
+
+**KV-Cache Patching transfers fine-tuned behaviors by swapping KV states between base and adapted models: arXiv NLP**
+Patching the KV cache from a LoRA-tuned model into the base transfers behaviors such as German response style or emergent misalignment; the reverse removes them. The effect concentrates at a few pivotal positions, especially system-prompt and chat-template tokens, and scales with the fraction of the cache replaced. Source: [arxiv.org](https://arxiv.org/abs/2610.41480)
+
+**Li²SAO lifts single-rollout asynchronous RL with group-relative actor-critic bootstrapping: arXiv NLP**
+The method trains the actor with group-relative advantage and the critic with group-centered return while the value model is cold, then switches to single-rollout GAE. It closes the early-training gap with GRPO on agentic tasks and raises the later performance ceiling; code is at https://github.com/jd-cc-coder/Li2SAO. Source: [arxiv.org](https://arxiv.org/abs/2610.40726)
+
+**BYOD converts autoregressive models to diffusion language models with LoRA-only adapters: arXiv NLP**
+The recipe works on Gemma 2 9B, Llama 3.1 8B, Qwen2.5 7B, and Ministral 8B using 4.1–5.8% of final parameters and at most 102.4M tokens per conversion. All four models generate from fully masked sequences and retain substantial parent knowledge; BYOD-Gemma reaches 50.6% average accuracy on a nine-task suite. Source: [arxiv.org](https://arxiv.org/abs/2610.41574)
+
+**Saidzoda-Tajik-LFM-2.6B adapts a hybrid model for Tajik tool calling via continued pretraining then SFT: arXiv NLP**
+LoRA CPT on 1.48M cleaned Tajik documents for three epochs followed by one epoch of mixed tool-call SFT lifts strict full-call accuracy on a 174-item Tajik BFCL-derived test from 20.69 to 64.14. English tool-calling accuracy stays flat at ~77; CPT alone erases the native tool-call format. Source: [arxiv.org](https://arxiv.org/abs/2610.41576)
+
+**EDU-Jev supplies single-pass decision models at 0.8B–4B for education tasks: arXiv NLP**
+A pointer head restricts predictions to predefined options and returns a probability distribution without text generation. The 4B variant hits 67.6% average accuracy across twelve education benchmarks, beating the strongest commercial API by 9.4 points and the best open 4B model by 18.7 points while running ~150 decisions per second on one H100. Source: [arxiv.org](https://arxiv.org/abs/2610.41079)
+---
+### Agent &amp; Tool Developments
+**HCLTech launches AI agents to automate enterprise mainframe operations: The Economic Times**
+The agents target routine mainframe tasks in enterprise environments. No further technical details or benchmarks are supplied in the announcement. Source: [m.economictimes.com](https://m.economictimes.com/tech/artificial-intelligence/hcltech-launches-ai-agents-to-automate-enterprise-mainframe-operations/articleshow/135453649.cms)
+
+**Instinct fixes WhatsApp disruption with its personal AI agent: The Indian Express**
+The agent handled the service outage for users. Limited technical description is available. Source: [indianexpress.com](https://indianexpress.com/article/technology/artificial-intelligence/instinct-whatsapp-disruption-ai-agents-what-happened-10947160/)
+
+**AI Travel Agents give hotels a new guest to impress: PYMNTS.com**
+Hotels must now optimize for AI intermediaries that book on behalf of travelers. The article discusses shifting marketing and service expectations but supplies no concrete metrics. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/ai-travel-agents-give-hotels-a-new-guest-to-impress/)
+
+**AgenticTuner calibrates cosmological simulations with a present-day LLM as optimizer: arXiv NLP**
+The pipeline supplies informal human-readable priors (codebase, documentation, heuristics) to the agent. It reaches competitive calibration performance at a fraction of the CPU cost of Bayesian optimization. Source: [arxiv.org](https://arxiv.org/abs/2610.40685)
+
+**Safin-1.5 adds a safety-native architecture and verifiable reasoning harness for recursive safety improvement: arXiv NLP**
+Persistent safety states and hazardous-knowledge disentanglement allow targeted removal of risky experts. The formal-reasoning harness recovers missing relations via proof-obligation-guided semantic bridging and outperforms frontier models on safety and reasoning tasks. Source: [arxiv.org](https://arxiv.org/abs/2610.40751)
+---
+### Practical &amp; Community
+**4" touchscreen for inference engine monitoring: r/LocalLLaMA**
+A builder wired an ESP32-based 4-inch screen to display a btop++-style TUI dashboard for a DGX cluster. Firmware is on GitHub with a SKILL.md file so agents can compile it; a 3D-printed dock is in progress. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1xlsuwf/4_touchscreen_for_inference_engine_monitoring/)
+
+**Weekend hack: HackerTube: Andrej Karpathy (X)**
+Claude filtered 43M Hacker News comments spanning 20 years down to 6,454 repeatedly recommended videos and built a YouTube-style site around them. The data zip is public; state lives in the browser session with no login required. Source: [x.com](https://x.com/karpathy/status/2116980174667583602)
+
+**SimXAI adds a lightweight LLM-centric conversational layer for existing XAI resources: arXiv NLP**
+A single tool-calling LLM replaces separate intent, dialogue-management, and template modules. It improves task accuracy and reduces turns versus GUS-style agents while preserving faithfulness; evaluation code and datasets are released. Source: [arxiv.org](https://arxiv.org/abs/2610.41856)
+
+**PersonaChatBench evaluates chat assistants across diverse simulated users: arXiv NLP**
+The benchmark pairs identical tasks with multiple persona cards that encode distinct needs and behaviors. Task performance and need fulfillment vary across personas; strong aggregate scores do not guarantee consistent satisfaction of individual user requirements. Source: [arxiv.org](https://arxiv.org/abs/2610.42060)
+---
+### Also Today
+**Qistas: A Pre-Registered, Portable Protocol for Fairness Evaluation of Large Language Models: arXiv NLP**
+The protocol measures procedural symmetry, differential refusal, and stereotype reliance across matched counterfactual pairs for Iraqi social constituencies and releases the full authoring apparatus plus pre-registration. Source: [arxiv.org](https://arxiv.org/abs/2610.40893)
+
+**CoFiBreak improves attack diversity in automated red teaming while preserving effectiveness: arXiv NLP**
+A coarse-to-fine diversity reward applied only to successful attacks yields 1.6–2.0× more distinct strategies on HarmBench and 2.1× higher diversity on AdvBench versus the strongest baseline. Source: [arxiv.org](https://arxiv.org/abs/2610.40926)
+
+**Adaptive Personalization Under Preference Epistemic Uncertainty: arXiv NLP**
+Models show a 35–46% drop in strategy calibration during open-ended generation versus multiple-choice recognition and default to exploit-first behavior; targeted training on internal strategy representations narrows the generalization gap by one-third. Source: [arxiv.org](https://arxiv.org/abs/2610.40930)
+
+**Better Retrievers, Worse Labels: How Incomplete Relevance Judgments Distort Abstention Evaluation in Conversational RAG: arXiv NLP**
+Stronger retrievers increase the share of no-gold contexts that still contain the answer (28% to 72%), dropping shortcut precision from 0.68 to 0.10; the authors release code, runs, and content-based labels. Source: [arxiv.org](https://arxiv.org/abs/2610.40966)
+
+**Fewer Heads, Fewer Memories: Pruning Redundant Attention Heads Suppresses Verbatim Memorisation: arXiv NLP**
+Zeroing 729 task-redundant heads in GPT-2-XL cuts memorization count by 91.5% while improving WikiText-103 perplexity by 0.92. Source: [arxiv.org](https://arxiv.org/abs/2610.40974)
+
+**Do Open Language Models Invent Scripture? BILAL-BENCH: arXiv NLP**
+Six of seven evaluated models confidently fabricate on 79.3–95.3% of source-production questions in Bengali; hadith provenance is the weakest category with only two of 315 responses correct and sourced. Source: [arxiv.org](https://arxiv.org/abs/2610.40996)
+
+**The Generative Gap Between Speculative Drafter and Continuous Diffusion Language Model: arXiv NLP**
+LangFlow outperforms DSpark variants on GenPPL and MAUVE at lengths 128 and 1024 under equal training budgets; increasing denoising steps at fixed weights further improves results at shorter lengths. Source: [arxiv.org](https://arxiv.org/abs/2610.40847)
+
+**TraceSpec improves speculative decoding for LLM agents via trajectory-conditioned draft training: arXiv NLP**
+The method raises replay throughput 12.5–22.6% over its DSpark base across three target sizes; adaptive allocation increases accepted length 3.3–10.0% over fixed full-turn supervision. Source: [arxiv.org](https://arxiv.org/abs/2610.41177)
+
+**Beyond Response Scoring: An AI-aware Cognitive Supervision Framework for Automated Mathematical Short Answer Grading: arXiv NLP**
+AICG reduces MAE by 50.3% and lifts QWK from 0.798 to 0.927 versus plain RoBERTa regression; AI-aware weighting adds a further 4.2% MAE reduction on post-Gen-AI semesters. Source: [arxiv.org](https://arxiv.org/abs/2610.41215)
+
+**PsyInterviewee separates protected truth and dynamic interaction channels for reliable mental-health interview simulation: arXiv NLP**
+Asymmetric write permissions keep clinical facts fixed while allowing disclosure and behavioral states to evolve; it outperforms four baselines on informational invariance and relational adaptivity. Source: [arxiv.org](https://arxiv.org/abs/2610.41289)
+
+**In-Model Context Compression with Agentic Soft Tokens for Long-Horizon LLM Agents: arXiv NLP**
+ASTC uses the model's native recurrent dynamics to carry absorbed information forward as soft tokens, cutting end-to-end Attention Pairs by up to 50.68% while matching uncompressed accuracy. Source: [arxiv.org](https://arxiv.org/abs/2610.41291)
+
+**From Transcription to Reformulation: Defining and Benchmarking Grounded Generative Speech Recognition: arXiv NLP**
+GSR-Bench introduces a four-level hierarchy of reformulation capabilities and a multi-dimensional evaluation framework; experiments reveal acoustic hallucination and instruction drift as key failure modes. Source: [arxiv.org](https://arxiv.org/abs/2610.41292)
+
+**Comparative Evaluation of LLM-Based Review Paradigms for Academic Paper Quality Assessment: arXiv NLP**
+Direct absolute rating matches comparative ranking on rank correlation with human scores yet compresses predictions above the accept threshold; abstract-only input beats full-paper summarization and model choice matters as much as paradigm choice. Source: [arxiv.org](https://arxiv.org/abs/2610.41391)
+
+**BlindToChange measures whether agents proactively discover recent events that affect their responses: arXiv NLP**
+A 27.5-point gap appears when the needed fact is not explicitly mentioned versus when it is; more than half of failures trace to agents never searching to verify assumptions. Source: [arxiv.org](https://arxiv.org/abs/2610.41435)
+
+**KEEPER learns control-sufficient textual memory for long-horizon agents: arXiv NLP**
+Reward-related prediction yields the highest task performance before and after offline RL; claim-level analysis shows error persistence despite corrective observations. Source: [arxiv.org](https://arxiv.org/abs/2610.41482)
+
+**Sparse Text Diffusion under Dual Budgets: Context Connectivity and Expert Activation: arXiv NLP**
+Normalized masked attention and conditional expert computation respect separate edge and activation budgets; a DualBudget configuration cuts cost 20% relative to DiffuSeq under the reported timing. Source: [arxiv.org](https://arxiv.org/abs/2610.41487)
+
+**Enhancing Knowledge Entity Relation Extraction in Abstracts and Full-text Content of Academic Articles Using Large Language Models: arXiv NLP**
+LoRA-adapted T5 reaches the highest macro F1 (0.7408 abstract, 0.7013 full-text); LLM-generated entity descriptions help SLMs, and combining strategies with complementary error patterns further improves results. Source: [arxiv.org](https://arxiv.org/abs/2610.41552)
+
+**CEFR Level Assessment across Languages and Text Granularities: arXiv NLP**
+Focal loss plus supervised contrastive learning outperforms strong baselines on sentence- and document-level CEFR prediction in both monolingual and multilingual settings. Source: [arxiv.org](https://arxiv.org/abs/2610.41553)
+
+**When Steering Shifts Discourse: Identifying and Intervening on Discourse-Level Changes due to Activation Steering in LLMs: arXiv NLP**
+Steering alters formality, evidence use, and ambiguity; a second complementary vector restores ~78% of unintended discourse changes while preserving 93% of the intended behavior. Source: [arxiv.org](https://arxiv.org/abs/2610.41661)
+
+**Precision–Recall Trade-off on the Inference Level for LLMs in Grammatical Error Correction: arXiv NLP**
+The repetition penalty parameter alone enables controllable precision–recall adjustment at inference time without architecture or prompt changes. Source: [arxiv.org](https://arxiv.org/abs/2610.41698)
+
+**GraphNIAH: A Benchmark for Long-Context Reasoning over Real-World Graphs: arXiv NLP**
+Accuracy falls with reasoning depth; at depths 16 and 32, GPT-5.6 and Qwen3.5 models answer YES/NO questions no better than random, mostly by answering NO. Source: [arxiv.org](https://arxiv.org/abs/2610.41704)
+
+**Stepwise-Querying distills reasoning without teacher chain-of-thought access: arXiv NLP**
+Independent queries elicit step-specific explanations that are assembled for SFT; the method wins 14 of 16 comparisons across two teachers, two students, and four benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2610.41769)
+
+**Peeling the Matryoshka: Extracting Ontological Structure from Retrieval Embeddings: arXiv NLP**
+Prefix length in Matryoshka embeddings aligns with taxonomy granularity; PEEL recovers taxonomic DAGs with high structural fidelity on two OLLM benchmarks using only a concept vocabulary. Source: [arxiv.org](https://arxiv.org/abs/2610.41785)
+
+**Iterated Integrals as Lexical Fingerprints: Path Signature Embeddings for Lexical Similarity: arXiv NLP**
+Depth-2 signatures optimally balance character- and word-level sensitivities and preserve word order; the critical lexical variance sits in a compact PCA subspace. Source: [arxiv.org](https://arxiv.org/abs/2610.41855)
+
+**Text as an Index for Zero-Shot Cross-Domain Knowledge Tracing: arXiv NLP**
+TIZSKT separates behavioral sequence modeling from domain-local evidence construction and uses text only as an index; it achieves the highest mean AUC and accuracy on all target domains in leave-one-domain-out tests. Source: [arxiv.org](https://arxiv.org/abs/2610.41883)
+
+**Aligning MLLMs with the Latent Structure of Human Cognition via Behavior-Derived Semantic Dimensions: arXiv NLP**
+A 66-dimensional embedding space derived from 4.7M human Odd-One-Out judgments supplies dimension-grounded rationales; RSA on an fMRI dataset shows increased human-model representational alignment. Source: [arxiv.org](https://arxiv.org/abs/2610.41951)
+
+**TurnTurk-GPT predicts turn-taking in Turkish from text: arXiv NLP**
+Fine-tuning Turkish GPT-2 with the TurnGPT objective on synthetic and real dialogue beats both rule baselines and a multilingual end-of-turn detector under recording-disjoint and speaker-disjoint evaluation. Source: [arxiv.org](https://arxiv.org/abs/2610.42010)
+
+**Asynchronous Flow Map Language Models enable one-step parallel generation with learned ordering: arXiv NLP**
+State-adaptive asynchronous flows define tokenwise denoising schedules; the distilled models set new state-of-the-art one-step performance on Sudoku and GSM8K code generation. Source: [arxiv.org](https://arxiv.org/abs/2610.42018)
+
+**CRoS improves CoT faithfulness by scrambling step order while preserving content: arXiv NLP**
+The metric avoids confounding from information changes; on Reasoning Gym it raises out-of-domain accuracy to 46.8%, CoT quality, and hint-acknowledgment score versus outcome-only and prior causality rewards. Source: [arxiv.org](https://arxiv.org/abs/2610.42054)
+
+**RangeSWA enables training-free length extrapolation for continuous diffusion language models: arXiv NLP**
+Local sliding-window attention, remote block summaries, and dynamic retrieval plus positional remapping and adaptive window scheduling reduce repetition and semantic drift beyond training length. Source: [arxiv.org](https://arxiv.org/abs/2610.42084)
+
+**Subquadratic Attention with a Hierarchical Tree-Structured Indexer: arXiv NLP**
+ZHA grows a tree of compressed key summaries; total cost grows sublinearly in sequence length while preserving long-context retrieval and reasoning performance after a short KL-distillation stage. Source: [arxiv.org](https://arxiv.org/abs/2610.42112)
+
+**DecisionRank trains decision-model rerankers via item-space on-policy distillation: arXiv NLP**
+The 1.7B model beats its 27B generative teacher on TREC DL19–23; the 8B version outperforms its listwise counterpart while running 24.5× faster on TREC DL. Source: [arxiv.org](https://arxiv.org/abs/2610.42128)
+
+**Flide accelerates decision inference with exact state forking: arXiv NLP**
+ForkAttention navigates request dependencies via GPU-resident indices across attention and Gated DeltaNet layers; it answers queries up to 9.5× faster than vLLM/SGLang while staying closest to float32 reference. Source: [arxiv.org](https://arxiv.org/abs/2610.42148)
+
+**Prevented is Not Protected: What Attack Success Rate Hides about RAG: arXiv NLP**
+Existing defenses can introduce unexpected target-positive answers; the matched-query protocol with content-based labeling reveals that defense rankings shift when prevented versus introduced failures are distinguished. Source: [arxiv.org](https://arxiv.org/abs/2610.40742)
+
+**FARO reallocates per-block optimizer budgets by cross-block equal-risk contribution: arXiv NLP**
+The adaptive arm matches the best hand-designed recipe; the ERC variant lowers clean-data loss on every seed by an average 0.0136 nats with no added time or memory. Source: [arxiv.org](https://arxiv.org/abs/2610.40858)
+
+**Oh tbc Claude filtered it down a lot: urls, regexes, dropping spam, only the remainder was dispatched to Sonnet with a CC Workflow (so it uses the sub tokens). You can see surviving comments under videos, the comments that recommend videos seem to be of nice &amp; helpful character.: Andrej Karpathy (X)**
+Filtering reduced 43M comments to the final 6,454-video set before Sonnet handled the remainder. Source: [x.com](https://x.com/karpathy/status/2116970707867566106)
+---
+### Under the Hood: Pointer Heads for Single-Pass Categorical Decision Models
+Pointer heads let a model output a probability distribution over a fixed set of options in one forward pass by scoring each option with a learned marker instead of generating tokens. The core move is to replace the usual language-modeling head with a small set of option-specific linear probes that share the same encoder; because the output vocabulary is now exactly the allowed choices, calibration becomes a direct softmax over those scores rather than an indirect mapping from free-form text. This removes both the parsing step and the risk that the model produces an out-of-set answer. On education benchmarks the approach yields 67.6% average accuracy at 4B parameters while sustaining 150 decisions per second on a single H100, roughly an order of magnitude faster than any text-generation baseline that must be post-processed. The quality gain disappears once the option set grows beyond a few hundred entries because the pointer head must still compete with the encoder's capacity; at that scale a lightweight reranker on top of a generative model becomes preferable. The practical decision rule is therefore simple: use pointer heads when the task is closed-set classification with a stable label inventory and latency matters; fall back to generation-plus-parsing when the label space is open or changes frequently.
+---
+### Things to Try This Week
+- Test Apriel Voice 27B on speech-conditioned tool-calling tasks; its two-stage recipe is fully described and the model is open.
+- Run the HackerTube data zip through your own agent to generate a personalized video feed filtered by topic or era.
+- Compare HyperRepair against standard LoRA reversal on any fine-tuned 7B–13B model you already have; the hypernetwork checkpoint is released.
+- Try the pointer-head training recipe from EDU-Jev on a small education or multiple-choice dataset to measure single-pass latency gains.
+- Apply KV-Cache Patching to a safety-tuned model to see how much of the alignment behavior transfers without retraining.
+---
+### On the Horizon
+- More open speech-language models are expected to adopt the two-stage projector-plus-backbone recipe demonstrated by Apriel.
+- Agentic calibration pipelines like AgenticTuner will likely appear for other scientific simulators beyond cosmology.
+- Decision-model rerankers trained with item-space on-policy distillation are expected to target additional retrieval benchmarks.
+- Portable fairness protocols modeled on Qistas are anticipated for additional languages and regulatory jurisdictions.
+</itunes:summary>
+      <itunes:episode>222</itunes:episode>
+      <itunes:title>Ep 222: Apriel's 27B open model scores 98.9 on Big Bench Audio while adding native speech and tool…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep222_20261102_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep222.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 221: DeepSeek’s new super-agent routes GitHub and Feishu requests into parallel worker…</title>
       <description>Models &amp; Agents
@@ -3867,120 +4240,17 @@ Agent benchmarks that score only tool-call syntax miss cases where the final dat
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep193_20261004_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep193.json" type="application/json+chapters" /></item>
     <item>
-      <title>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Apple announced changes to Full Disk Access permissions to address risks from autonomous AI agents. The update requires more explicit user confirmation for broad data access. Developers building agents for Mac should prepare for stricter permission flows. The change comes amid complaints over Meta's Muse agent. Apple shares gained about two percent in Friday's trade. Meta shares gained zero point three percent.
-
-Top Story
-Apple is tightening privacy controls on Mac computers as increasingly capable artificial intelligence agents gain access to sensitive user data. The company announced on Friday that it will introduce additional safeguards around its Full Disk Access feature, requiring more explicit user action before an app can obtain broad access to files, messages, mail and other data. Apple said that Full Disk Access is a powerful macOS capability that largely bypasses the operating system’s normal privacy protections. The feature exists in part because certain applications, particularly backup services, need broad access to a Mac’s data to function properly. However, Apple said some developers are using the capability in ways that could expose users to privacy risks. As AI agents become increasingly capable and autonomous, the risks associated with this level of access will grow substantially. Apple directly tied the planned changes to the rapid development of autonomous AI agents. The company said an application with this level of access can potentially reach virtually everything stored on a Mac, including files, mail, messages and browsing history. Going forward, Apple said it will introduce additional controls so users who want to grant an application Full Disk Access must take a more explicit action to do so. Apple shares ended with gains of about two percent in Friday’s regular trade, while Meta shares gained zero point three percent. Source: &lt;a href="https://www.businessinsider.com/apple-planning-tougher-mac-privacy-controls-ai-agents-2026-10"&gt;businessinsider.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;qwen4exp : halve the indexer score memory by ServeurpersoCom · Pull Request #29825 · ggml-org/llama.cpp : r/LocalLLaMA&lt;/b&gt;
-Qwen Flash Next now uses less VRAM. The pull request halves the indexer score memory for the model. The change targets memory usage during inference for the Qwen family. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wwfyv6/qwen4exp_halve_the_indexer_score_memory_by/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Unitree just dropped UnifoLM-WLA-1.0 — a single 6B model that does 64 whole-body + tabletop tasks on a real humanoid : r/LocalLLaMA&lt;/b&gt;
-Unitree Robotics released UnifoLM-WLA-1.0, their new general-purpose humanoid foundation model. Key points include six billion parameters trained on approximately two thousand five hundred hours of real robot data. One model handles sixty four tasks consisting of ten whole-body and fifty four tabletop actions. It supports parallel grippers and two different dexterous hands. The model shows strong spatial reasoning that beats many open-source models on embodied benchmarks. Architecture starts with UnifoLM-ER-1 embodied reasoner based on Qwen3-VL. It adds future dynamic region prediction via optical flow plus VQ-VAE. Actions are discretized with residual VQ for end-effector, hand and lower body. An MMDiT action expert is added on top for continuous control. Demos show the Unitree G1 making the bed, loading the washing machine, folding clothes and sorting objects. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1ww91uw/unitree_just_dropped_unifolmwla10_a_single_6b/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;microsoft/FrogNano-4B-2609 · Hugging Face : r/LocalLLaMA&lt;/b&gt;
-An agentic model from Microsoft for the GPU poor. FrogNano is derived from Qwen/Qwen3.5-4B. It inherits the dense thirty two layer hybrid Gated DeltaNet and gated-attention architecture. The model is further trained using reinforcement learning on approximately one thousand five hundred synthetic SWE task environments generated and calibrated against the evolving policy using TaskPilot. Training uses the five-tool Leaf harness and executable test-based rewards over complete multi-turn coding trajectories. The additional post-training targets long-horizon repository navigation, debugging, code editing, test execution and patch generation. Performance is sensitive to the Leaf harness and test quality. Training data are Python-heavy and primarily English. Generated patches may be incorrect or insecure despite passing available tests. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1ww40o2/microsoftfrognano4b2609_hugging_face/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Qwen3.8-Flash-Next 177B running at 11–15 tok/s on a single RTX 5070 12GB + 32GB RAM DDR4 : r/LocalLLaMA&lt;/b&gt;
-Benchmarking used a llama.cpp based expert streaming setup for Qwen3.8-Flash-Next 177B in UD-IQ3_XXS on Windows. The benchmark reached eleven point five tokens per second, up from roughly seven tokens per second on the inherited setup. Normal conversations reached fourteen to fifteen tokens per second. A long coding prompt generated four thousand eight hundred ninety two tokens at ten point fifteen tokens per second and produced a working single-file Snake game. Hardware consisted of RTX 5070 twelve GB, thirty two GB DDR4-2400, Ryzen five 5600GT on PCIe Gen3 under Windows. Main gains came from fixing Windows I/O queue-depth issues, using one file handle per worker, and building a page-locked hot-expert tier. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wwggwt/qwen38flashnext_177b_running_at_1115_toks_on_a/"&gt;reddit.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;mlsubgen — subtitles in 45 languages for your videos, entirely on your own machine : r/LocalLLaMA&lt;/b&gt;
-mlsubgen generates subtitles in forty five languages entirely on your own machine. It detects the language of every stretch of speech rather than per file so mixed-language material works. It runs two speech recognisers on everything and has a local LLM reconcile them. It prefers existing human work to machine inference, embedded subtitle tracks are used before the audio is, including OCR of bitmap PGS tracks on Blu-ray remuxes, and it only listens when there is nothing to read. Every feature has a measured accuracy in the README. It runs on a twenty four GB RTX A5000 with profiles for sixteen, twelve and eight GB cards. It wants sixteen to thirty two GB of system RAM depending on the profile and is storage-hungry with thirty to sixty five GB of models. It is slow when it has to listen, roughly real time per target language on the test card. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wwds6i/mlsubgen_subtitles_in_45_languages_for_your/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;The fastest interference engine for RTX5090 and Qwen3.8 27B. Twice as fast as ninfer. 500+ t/s single coding, 2000+t/s up to 12 agents at the same time with 800k context. Smart VRAM-RAM-DISC Cache management, Loop Guard, Nice UI etc. : r/LocalLLaMA&lt;/b&gt;
-MegaCapybara is a purpose-built engine for RTX5090 focused on Qwen3.8 twenty seven B. It beats Ninfer by roughly twice in decode speed for both single and multi tasks. It reaches up to six hundred fifty tokens per second in small bursts and two thousand six hundred tokens per second if stars align with twelve slots server pure coding answer. Custom kernels switch dynamically for short versus long context. It includes Dflash2 and confidence scheduling from Dspark plus draft trees. Weights come with attached metadata that runs benchmark and compares at every setting to original BF16 weights. The engine shows lost KL and top-one percent when switching KV to four bit or extending with YARN. It supports up to one million context and twelve slots for agents. Proper cache management keeps prefill almost unused after initial job start. Unified context swaps tasks to RAM instantly in zero point zero three seconds when context runs out. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wwavua/the_fastest_interference_engine_for_rtx5090_and/"&gt;reddit.com&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Grayscale Report: AI Crypto Sector Surges 54% as Blockchain Powers the Agent Economy : Cryptonews.net&lt;/b&gt;
-Grayscale reports that the AI-focused crypto sector gained fifty four percent in September. The sector remains the smallest of six crypto categories at roughly fifteen billion dollars. Grayscale sees potential for blockchain networks to support AI agents through payments, identity, private computing and verifiable data. NEAR rose one hundred eighty three percent, Bittensor gained thirty seven percent, World advanced forty seven percent and Venice climbed seventy percent. The report argues public blockchains can complement centralized AI systems by supplying infrastructure that conventional platforms may struggle to provide independently. Source: &lt;a href="https://cryptonews.net/news/altcoins/33532853/"&gt;cryptonews.net&lt;/a&gt;
-
-&lt;b&gt;AAPL To Flag AI Requests For Data Access On Macs Amid Complaints Over META's Muse Agent : TradingView&lt;/b&gt;
-Unlike traditional applications that generally perform a defined set of functions, AI agents can interpret instructions, make decisions and take multiple actions on a user's behalf. The company is committed to ensuring users clearly understand these risks before granting such access. Source: &lt;a href="https://www.tradingview.com/news/stocktwits:b780f2751094b:0-aapl-to-flag-ai-requests-for-data-access-on-macs-amid-complaints-over-meta-s-muse-agent/"&gt;tradingview.com&lt;/a&gt;
-
-&lt;b&gt;Anyone sitting on a lot of slow system memory and a modest GPU.. try Strata + Qwen3.8 Next. : r/LocalLLaMA&lt;/b&gt;
-IQ3_XXS weights are just under eighty GB. Slow DDR4 plus seven thousand nine hundred XTX stabilizes around forty five to seventy tokens per second, sometimes higher while coding depending on mtp. Similar results appear for users with twelve GB and sixteen GB cards. Significantly faster numbers appear for owners of DDR5. Llama CPP with tuning maxed out around twenty two point five tokens per second on the same rig. Quality seems reliably superior though Q2 weights are not recommended. Source: &lt;a href="https://www.reddit.com/r/LocalLLaMA/comments/1wwcqas/anyone_sitting_on_a_lot_of_slow_system_memory_and/"&gt;reddit.com&lt;/a&gt;
-
-Under the Hood: Sparse Memory Access in Agentic Systems
-The gap between how people imagine memory working in large models and how it actually scales shows up in the difference between fixed expert counts and truly dynamic indexing. In practice each token only needs to touch a small number of memory cells even as the total memory grows without bound. The model learns to index individual cells so that access cost stays constant rather than linear. This design separates the intelligence module, which stays fixed in size, from the memory store that can keep growing. When memory holds both facts and procedures new capabilities appear without any weight updates. The practical rule is to use this approach when your workload involves long-horizon tasks that benefit from accumulating skills over time rather than static knowledge retrieval. The intelligence module performs computation while memory holds knowledge, procedures and working state. Every token reads from and writes to an unbounded memory yet touches only a small number of cells at a time. Sparse architectures that fix the fraction of capacity used at each step cannot match this flexibility. The approach trades increased indexing complexity for unbounded growth without rising access cost.
-
-Things to Try This Week
-• Try mlsubgen for generating multilingual subtitles on local hardware if you work with mixed-language video content.
-• Check out the qwen4exp pull request if you are running Qwen Flash Next models and want to reduce VRAM usage.
-• Experiment with Unitree's UnifoLM-WLA-1.0 if you are exploring embodied AI on humanoid robots.
-• Test MegaCapybara on an RTX5090 if you need high-speed multi-agent serving for Qwen3.8 twenty seven B.
-
-On the Horizon
-• More updates to Mac privacy controls for AI agents expected in coming weeks.
-• Further developments in open-weight humanoid foundation models from robotics labs.
-• Additional agentic models from Microsoft and other labs in the pipeline.
-• Continued inference engine optimizations targeting high-context multi-agent workloads.</description>
+      <title>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.</title>
+      <description>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.</description>
       <guid isPermaLink="false">models-agents-video-ep192-20261003</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep192_20261003.mp4" length="287095046" type="video/mp4" />
       <pubDate>Sat, 03 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep192_20261003.jpg" />
       <itunes:duration>12:26</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.**
-
-**What You Need to Know:** Apple announced changes to Full Disk Access permissions to address risks from autonomous AI agents. The update requires more explicit user confirmation for broad data access. Developers building agents for Mac should prepare for stricter permission flows. The change comes amid complaints over Meta's Muse agent. Apple shares gained about two percent in Friday's trade. Meta shares gained zero point three percent.
----
-### Top Story
-Apple is tightening privacy controls on Mac computers as increasingly capable artificial intelligence agents gain access to sensitive user data. The company announced on Friday that it will introduce additional safeguards around its Full Disk Access feature, requiring more explicit user action before an app can obtain broad access to files, messages, mail and other data. Apple said that Full Disk Access is a powerful macOS capability that largely bypasses the operating system’s normal privacy protections. The feature exists in part because certain applications, particularly backup services, need broad access to a Mac’s data to function properly. However, Apple said some developers are using the capability in ways that could expose users to privacy risks. As AI agents become increasingly capable and autonomous, the risks associated with this level of access will grow substantially. Apple directly tied the planned changes to the rapid development of autonomous AI agents. The company said an application with this level of access can potentially reach virtually everything stored on a Mac, including files, mail, messages and browsing history. Going forward, Apple said it will introduce additional controls so users who want to grant an application Full Disk Access must take a more explicit action to do so. Apple shares ended with gains of about two percent in Friday’s regular trade, while Meta shares gained zero point three percent. Source: [businessinsider.com](https://www.businessinsider.com/apple-planning-tougher-mac-privacy-controls-ai-agents-2026-10)
----
-### Model Updates
-**qwen4exp : halve the indexer score memory by ServeurpersoCom · Pull Request #29825 · ggml-org/llama.cpp : r/LocalLLaMA**
-Qwen Flash Next now uses less VRAM. The pull request halves the indexer score memory for the model. The change targets memory usage during inference for the Qwen family. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wwfyv6/qwen4exp_halve_the_indexer_score_memory_by/)
-
-**Unitree just dropped UnifoLM-WLA-1.0 — a single 6B model that does 64 whole-body + tabletop tasks on a real humanoid : r/LocalLLaMA**
-Unitree Robotics released UnifoLM-WLA-1.0, their new general-purpose humanoid foundation model. Key points include six billion parameters trained on approximately two thousand five hundred hours of real robot data. One model handles sixty four tasks consisting of ten whole-body and fifty four tabletop actions. It supports parallel grippers and two different dexterous hands. The model shows strong spatial reasoning that beats many open-source models on embodied benchmarks. Architecture starts with UnifoLM-ER-1 embodied reasoner based on Qwen3-VL. It adds future dynamic region prediction via optical flow plus VQ-VAE. Actions are discretized with residual VQ for end-effector, hand and lower body. An MMDiT action expert is added on top for continuous control. Demos show the Unitree G1 making the bed, loading the washing machine, folding clothes and sorting objects. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1ww91uw/unitree_just_dropped_unifolmwla10_a_single_6b/)
-
-**microsoft/FrogNano-4B-2609 · Hugging Face : r/LocalLLaMA**
-An agentic model from Microsoft for the GPU poor. FrogNano is derived from Qwen/Qwen3.5-4B. It inherits the dense thirty two layer hybrid Gated DeltaNet and gated-attention architecture. The model is further trained using reinforcement learning on approximately one thousand five hundred synthetic SWE task environments generated and calibrated against the evolving policy using TaskPilot. Training uses the five-tool Leaf harness and executable test-based rewards over complete multi-turn coding trajectories. The additional post-training targets long-horizon repository navigation, debugging, code editing, test execution and patch generation. Performance is sensitive to the Leaf harness and test quality. Training data are Python-heavy and primarily English. Generated patches may be incorrect or insecure despite passing available tests. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1ww40o2/microsoftfrognano4b2609_hugging_face/)
-
-**Qwen3.8-Flash-Next 177B running at 11–15 tok/s on a single RTX 5070 12GB + 32GB RAM DDR4 : r/LocalLLaMA**
-Benchmarking used a llama.cpp based expert streaming setup for Qwen3.8-Flash-Next 177B in UD-IQ3_XXS on Windows. The benchmark reached eleven point five tokens per second, up from roughly seven tokens per second on the inherited setup. Normal conversations reached fourteen to fifteen tokens per second. A long coding prompt generated four thousand eight hundred ninety two tokens at ten point fifteen tokens per second and produced a working single-file Snake game. Hardware consisted of RTX 5070 twelve GB, thirty two GB DDR4-2400, Ryzen five 5600GT on PCIe Gen3 under Windows. Main gains came from fixing Windows I/O queue-depth issues, using one file handle per worker, and building a page-locked hot-expert tier. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wwggwt/qwen38flashnext_177b_running_at_1115_toks_on_a/)
----
-### Agent &amp; Tool Developments
-**mlsubgen — subtitles in 45 languages for your videos, entirely on your own machine : r/LocalLLaMA**
-mlsubgen generates subtitles in forty five languages entirely on your own machine. It detects the language of every stretch of speech rather than per file so mixed-language material works. It runs two speech recognisers on everything and has a local LLM reconcile them. It prefers existing human work to machine inference, embedded subtitle tracks are used before the audio is, including OCR of bitmap PGS tracks on Blu-ray remuxes, and it only listens when there is nothing to read. Every feature has a measured accuracy in the README. It runs on a twenty four GB RTX A5000 with profiles for sixteen, twelve and eight GB cards. It wants sixteen to thirty two GB of system RAM depending on the profile and is storage-hungry with thirty to sixty five GB of models. It is slow when it has to listen, roughly real time per target language on the test card. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wwds6i/mlsubgen_subtitles_in_45_languages_for_your/)
-
-**The fastest interference engine for RTX5090 and Qwen3.8 27B. Twice as fast as ninfer. 500+ t/s single coding, 2000+t/s up to 12 agents at the same time with 800k context. Smart VRAM-RAM-DISC Cache management, Loop Guard, Nice UI etc. : r/LocalLLaMA**
-MegaCapybara is a purpose-built engine for RTX5090 focused on Qwen3.8 twenty seven B. It beats Ninfer by roughly twice in decode speed for both single and multi tasks. It reaches up to six hundred fifty tokens per second in small bursts and two thousand six hundred tokens per second if stars align with twelve slots server pure coding answer. Custom kernels switch dynamically for short versus long context. It includes Dflash2 and confidence scheduling from Dspark plus draft trees. Weights come with attached metadata that runs benchmark and compares at every setting to original BF16 weights. The engine shows lost KL and top-one percent when switching KV to four bit or extending with YARN. It supports up to one million context and twelve slots for agents. Proper cache management keeps prefill almost unused after initial job start. Unified context swaps tasks to RAM instantly in zero point zero three seconds when context runs out. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wwavua/the_fastest_interference_engine_for_rtx5090_and/)
----
-### Practical &amp; Community
-**Grayscale Report: AI Crypto Sector Surges 54% as Blockchain Powers the Agent Economy : Cryptonews.net**
-Grayscale reports that the AI-focused crypto sector gained fifty four percent in September. The sector remains the smallest of six crypto categories at roughly fifteen billion dollars. Grayscale sees potential for blockchain networks to support AI agents through payments, identity, private computing and verifiable data. NEAR rose one hundred eighty three percent, Bittensor gained thirty seven percent, World advanced forty seven percent and Venice climbed seventy percent. The report argues public blockchains can complement centralized AI systems by supplying infrastructure that conventional platforms may struggle to provide independently. Source: [cryptonews.net](https://cryptonews.net/news/altcoins/33532853/)
-
-**AAPL To Flag AI Requests For Data Access On Macs Amid Complaints Over META's Muse Agent : TradingView**
-Unlike traditional applications that generally perform a defined set of functions, AI agents can interpret instructions, make decisions and take multiple actions on a user's behalf. The company is committed to ensuring users clearly understand these risks before granting such access. Source: [tradingview.com](https://www.tradingview.com/news/stocktwits:b780f2751094b:0-aapl-to-flag-ai-requests-for-data-access-on-macs-amid-complaints-over-meta-s-muse-agent/)
-
-**Anyone sitting on a lot of slow system memory and a modest GPU.. try Strata + Qwen3.8 Next. : r/LocalLLaMA**
-IQ3_XXS weights are just under eighty GB. Slow DDR4 plus seven thousand nine hundred XTX stabilizes around forty five to seventy tokens per second, sometimes higher while coding depending on mtp. Similar results appear for users with twelve GB and sixteen GB cards. Significantly faster numbers appear for owners of DDR5. Llama CPP with tuning maxed out around twenty two point five tokens per second on the same rig. Quality seems reliably superior though Q2 weights are not recommended. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1wwcqas/anyone_sitting_on_a_lot_of_slow_system_memory_and/)
----
-### Under the Hood: Sparse Memory Access in Agentic Systems
-The gap between how people imagine memory working in large models and how it actually scales shows up in the difference between fixed expert counts and truly dynamic indexing. In practice each token only needs to touch a small number of memory cells even as the total memory grows without bound. The model learns to index individual cells so that access cost stays constant rather than linear. This design separates the intelligence module, which stays fixed in size, from the memory store that can keep growing. When memory holds both facts and procedures new capabilities appear without any weight updates. The practical rule is to use this approach when your workload involves long-horizon tasks that benefit from accumulating skills over time rather than static knowledge retrieval. The intelligence module performs computation while memory holds knowledge, procedures and working state. Every token reads from and writes to an unbounded memory yet touches only a small number of cells at a time. Sparse architectures that fix the fraction of capacity used at each step cannot match this flexibility. The approach trades increased indexing complexity for unbounded growth without rising access cost.
----
-### Things to Try This Week
-- Try mlsubgen for generating multilingual subtitles on local hardware if you work with mixed-language video content.
-- Check out the qwen4exp pull request if you are running Qwen Flash Next models and want to reduce VRAM usage.
-- Experiment with Unitree's UnifoLM-WLA-1.0 if you are exploring embodied AI on humanoid robots.
-- Test MegaCapybara on an RTX5090 if you need high-speed multi-agent serving for Qwen3.8 twenty seven B.
----
-### On the Horizon
-- More updates to Mac privacy controls for AI agents expected in coming weeks.
-- Further developments in open-weight humanoid foundation models from robotics labs.
-- Additional agentic models from Microsoft and other labs in the pipeline.
-- Continued inference engine optimizations targeting high-context multi-agent workloads.
-</itunes:summary>
+      <itunes:summary>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.</itunes:summary>
       <itunes:episode>192</itunes:episode>
-      <itunes:title>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on…</itunes:title>
+      <itunes:title>Ep 192: Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep192_20261003_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep192.json" type="application/json+chapters" /></item>
     <item>
@@ -3997,19 +4267,5 @@ The gap between how people imagine memory working in large models and how it act
       <itunes:title>Ep 191: LLMs map land versus water from pure text latitude-longitude pairs with no images at all.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep191_20261002_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep191.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 190: Out-of-order speculative execution for LLM agents cuts latency on long tool calls while keeping correctness intact.</title>
-      <description>Ep 190: Out-of-order speculative execution for LLM agents cuts latency on long tool calls while keeping correctness intact.</description>
-      <guid isPermaLink="false">models-agents-video-ep190-20261001</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep190_20261001.mp4" length="278875573" type="video/mp4" />
-      <pubDate>Thu, 01 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep190_20261001.jpg" />
-      <itunes:duration>10:07</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 190: Out-of-order speculative execution for LLM agents cuts latency on long tool calls while keeping correctness intact.</itunes:summary>
-      <itunes:episode>190</itunes:episode>
-      <itunes:title>Ep 190: Out-of-order speculative execution for LLM agents cuts latency on long tool calls while keeping correctness intact.</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep190_20261001_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep190.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
