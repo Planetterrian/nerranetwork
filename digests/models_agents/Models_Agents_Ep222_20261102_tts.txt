@@ -1,0 +1,211 @@
+Apriel's twenty-seven B open model scores ninety-eight point nine on Big Bench Audio while adding native speech and tool calling.
+
+This is Models and Agents, episode two hundred twenty-two.
+
+HyperRepair at inference cost, agentic tuners for cosmology and safety, community builds, then things to try and on the horizon.
+
+Apriel Voice twenty-seven B Preview processes audio directly and outputs both text responses and tool calls without a separate dialogue model.
+
+Built on the post-trained Gemma four twenty-six B-A four B checkpoint, the arXiv paper says it keeps text and image modalities.
+
+Training runs in two stages: first establishing the speech interface, then jointly adapting the projector and backbone with supervised fine-tuning, text replay, and source-dependent losses.
+
+In thinking mode it reaches eighty-one point one three on Speech-BFCL and sixty-five point five one percent task success on tau-Voice at one point nine one second mean latency.
+
+English EVA accuracy is fifty-one point two seven percent and experience pass at one is seventy-four point one three percent.
+
+The model runs on a custom serving platform for interactive voice sessions.
+
+HyperRepair recovers general capabilities of fine-tuned models at inference cost only.
+
+The framework trains a hypernetwork on source-model repairs that generates a prompt-conditioned Repairing Side Net using activation fingerprints.
+
+Tests ran on two model families, twelve Low-Rank Adaptation, or Laura, datasets, and fifteen general benchmarks.
+
+It retains ninety-nine point five percent of domain performance.
+
+It recovers ninety-three point four percent of the base model's average general score.
+
+No target-domain examples or extra optimization are required at inference.
+
+Patching the key-value cache, or KV cache, from a Laura-tuned model into the base transfers behaviors such as German response style or emergent misalignment.
+
+The reverse swap removes them.
+
+The effect concentrates at a few pivotal positions, especially system-prompt and chat-template tokens.
+
+It scales with the fraction of the cache replaced.
+
+Li two SAO lifts single-rollout asynchronous reinforcement learning with group-relative actor-critic bootstrapping.
+
+The method trains the actor with group-relative advantage and the critic with group-centered return while the value model is cold, then switches to single-rollout Generalized Advantage Estimation, or GAE.
+
+It closes the early-training gap with Group Relative Policy Optimization, or GRPO, on agentic tasks and raises the later performance ceiling.
+
+Code is released with the paper.
+
+Autoregressive checkpoints from Gemma two nine B, Llama three point one eight B, Qwen two point five seven B, and Ministral eight B convert to diffusion language models under BYOD with Laura-only adapters.
+
+The recipe uses four point one to five point eight percent of final parameters and at most one hundred two point four million tokens per conversion.
+
+All four models generate from fully masked sequences and retain substantial parent knowledge.
+
+BYOD-Gemma reaches fifty point six percent average accuracy on a nine-task suite.
+
+Tajik tool calling is the target of Saidzoda-Tajik-LFM-two point six B, a hybrid model adapted with continued pretraining then supervised fine-tuning.
+
+Laura continued pretraining ran on one point four eight million cleaned Tajik documents for three epochs, then one epoch of mixed tool-call supervised fine-tuning.
+
+Strict full-call accuracy on a one hundred seventy-four item Tajik BFCL-derived test rose from twenty point six nine to sixty-four point one four.
+
+English tool-calling accuracy stays flat at approximately seventy-seven.
+
+Continued pretraining alone erases the native tool-call format.
+
+Cosmological simulations get AgenticTuner, which uses a present-day large language model as the optimizer.
+
+The pipeline supplies informal human-readable priors — codebase, documentation, heuristics — to the agent.
+
+It reaches competitive calibration performance at a fraction of the CPU cost of Bayesian optimization.
+
+Safin-one point five adds a safety-native architecture and a verifiable reasoning harness for recursive safety improvement.
+
+Persistent safety states and hazardous-knowledge disentanglement allow targeted removal of risky experts.
+
+The formal-reasoning harness recovers missing relations via proof-obligation-guided semantic bridging and outperforms frontier models on safety and reasoning tasks.
+
+An ESP32-based four-inch screen now shows a btop plus plus-style terminal dashboard for a DGX cluster, according to a LocalLLaMA thread.
+
+Firmware is on GitHub with a SKILL dot M D file so agents can compile it, and a three-D-printed dock is in progress.
+
+Andrej Karpathy posted a weekend hack called HackerTube on X.
+
+Claude filtered forty-three million Hacker News comments spanning twenty years down to six thousand four hundred fifty-four repeatedly recommended videos and built a YouTube-style site around them.
+
+Filtering dropped links, regexes, and spam, and only the remainder went to Sonnet with a CC Workflow so it uses the sub tokens.
+
+The data zip is public, state lives in the browser session with no login required, and the surviving comments under videos are the recommending ones.
+
+SimXAI adds a lightweight L L M centric conversational layer for existing explainable A I, or ex A I, resources.
+
+A single tool-calling L L M replaces separate intent, dialogue-management, and template modules.
+
+It improves task accuracy and reduces turns versus GUS-style agents while preserving faithfulness, and evaluation code and datasets are released.
+
+PersonaChatBench evaluates chat assistants across diverse simulated users.
+
+The benchmark pairs identical tasks with multiple persona cards that encode distinct needs and behaviors.
+
+Task performance and need fulfillment vary across personas, and strong aggregate scores do not guarantee consistent satisfaction of individual user requirements.
+
+From the preprint stack, Qistas is a pre-registered portable fairness protocol measuring procedural symmetry, differential refusal, and stereotype reliance across matched counterfactual pairs for Iraqi social constituencies.
+
+CoFiBreak's coarse-to-fine diversity reward, applied only to successful attacks, yields one point six to two point zero times more distinct strategies on HarmBench and two point one times higher diversity on AdvBench versus the strongest baseline.
+
+Adaptive personalization work finds a thirty-five to forty-six percent drop in strategy calibration during open-ended generation versus multiple-choice recognition, with targeted training on internal strategy representations narrowing the generalization gap by one-third.
+
+Better retrievers raise the share of no-gold contexts that still contain the answer from twenty-eight percent to seventy-two percent, dropping shortcut precision from zero point six eight to zero point one zero in conversational rag abstention evaluation.
+
+Zeroing seven hundred twenty-nine task-redundant heads in G P T two XL cuts memorization count by ninety-one point five percent while improving WikiText-103 perplexity by zero point nine two.
+
+On BILAL-BENCH, six of seven evaluated open language models confidently fabricate on seventy-nine point three to ninety-five point three percent of source-production questions in Bengali.
+
+LangFlow outperforms DSpark variants on GenPPL and MAUVE at lengths one hundred twenty-eight and one thousand twenty-four under equal training budgets.
+
+TraceSpec raises replay throughput twelve point five to twenty-two point six percent over its DSpark base across three target sizes, with adaptive allocation increasing accepted length three point three to ten point zero percent over fixed full-turn supervision.
+
+AICG reduces mean absolute error by fifty point three percent and lifts quadratic weighted kappa from zero point seven nine eight to zero point nine two seven versus plain RoBERTa regression for mathematical short-answer grading.
+
+PsyInterviewee keeps clinical facts fixed with asymmetric write permissions while disclosure and behavioral states evolve, and it outperforms four baselines on informational invariance and relational adaptivity.
+
+ASTC uses native recurrent dynamics to carry absorbed information forward as soft tokens, cutting end-to-end Attention Pairs by up to fifty point six eight percent while matching uncompressed accuracy.
+
+GSR-Bench introduces a four-level hierarchy of reformulation capabilities for grounded generative speech recognition and finds acoustic hallucination and instruction drift as key failure modes.
+
+Direct absolute rating matches comparative ranking on rank correlation with human scores for academic paper quality, yet abstract-only input beats full-paper summarization.
+
+BlindToChange shows a twenty-seven point five point gap when a needed fact is not explicitly mentioned, and more than half of failures trace to agents never searching to verify assumptions.
+
+KEEPER finds reward-related prediction yields the highest task performance before and after offline RL, with claim-level analysis showing error persistence despite corrective observations.
+
+A DualBudget sparse text diffusion configuration cuts cost twenty percent relative to DiffuSeq under the reported timing.
+
+Laura-adapted T5 reaches the highest macro F1 of zero point seven four zero eight on abstracts and zero point seven zero one three on full-text for knowledge entity relation extraction.
+
+Focal loss plus supervised contrastive learning outperforms strong baselines on sentence- and document-level CEFR prediction in both monolingual and multilingual settings.
+
+A second complementary steering vector restores approximately seventy-eight percent of unintended discourse changes while preserving ninety-three percent of the intended behavior.
+
+The repetition penalty parameter alone enables controllable precision-recall adjustment at inference time for grammatical error correction without architecture or prompt changes.
+
+On GraphNIAH, at depths sixteen and thirty-two, G P T five point six and Qwen three point five models answer yes/no questions no better than random, mostly by answering no.
+
+Stepwise-Querying distills reasoning without teacher chain-of-thought access and wins fourteen of sixteen comparisons across two teachers, two students, and four benchmarks.
+
+PEEL recovers taxonomic directed acyclic graphs with high structural fidelity on two OLLM benchmarks using only a concept vocabulary from Matryoshka embeddings.
+
+Depth-two path signatures optimally balance character- and word-level sensitivities and preserve word order for lexical similarity.
+
+TIZSKT achieves the highest mean AUC and accuracy on all target domains in leave-one-domain-out tests by using text only as an index.
+
+A sixty-six-dimensional embedding space derived from four point seven million human Odd-One-Out judgments supplies dimension-grounded rationales, and RSA on an fMRI dataset shows increased human-model representational alignment.
+
+TurnTurk-G P T predicts turn-taking in Turkish from text and beats both rule baselines and a multilingual end-of-turn detector under recording-disjoint and speaker-disjoint evaluation.
+
+Distilled Asynchronous Flow Map language models set new state-of-the-art one-step performance on Sudoku and GSM8K code generation.
+
+CRoS raises out-of-domain accuracy to forty-six point eight percent on Reasoning Gym by scrambling chain-of-thought step order while preserving content.
+
+RangeSWA enables training-free length extrapolation for continuous diffusion language models with local sliding-window attention, remote block summaries, and dynamic retrieval.
+
+ZHA grows a tree of compressed key summaries so total cost grows sublinearly in sequence length while preserving long-context retrieval after a short K L distillation stage.
+
+The one point seven B DecisionRank model beats its twenty-seven B generative teacher on TREC D L nineteen through twenty-three.
+
+Flide answers queries up to nine point five times faster than vLLM and SGLang while staying closest to float thirty-two reference.
+
+A matched-query protocol with content-based labeling shows that rag defense rankings shift when prevented versus introduced failures are distinguished.
+
+FARO's equal-risk-contribution variant lowers clean-data loss on every seed by an average zero point zero one three six nats with no added time or memory.
+
+Test Apriel Voice twenty-seven B on speech-conditioned tool-calling tasks; the two-stage recipe is fully described and the model is open.
+
+Run the HackerTube data zip through your own agent to generate a personalized video feed filtered by topic or era.
+
+Compare HyperRepair against standard Laura reversal on any fine-tuned seven B to thirteen B model you already have; the hypernetwork checkpoint is released.
+
+Apply KV-cache patching to a safety-tuned model to see how much of the alignment behavior transfers without retraining.
+
+More open speech-language models are expected to adopt the two-stage projector-plus-backbone recipe demonstrated by Apriel.
+
+Agentic calibration pipelines like AgenticTuner will likely appear for other scientific simulators beyond cosmology.
+
+Portable fairness protocols modeled on Qistas are anticipated for additional languages and regulatory jurisdictions.
+
+Sixty-seven point six percent average accuracy at four B is why we pop the hood on EDU-Jev's pointer heads for single-pass categorical decisions.
+
+Pointer heads let a model output a probability distribution over a fixed set of options in one forward pass by scoring each option with a learned marker instead of generating tokens.
+
+The core move is to replace the usual language-modeling head with a small set of option-specific linear probes that share the same encoder.
+
+Because the output vocabulary is now exactly the allowed choices, calibration becomes a direct softmax over those scores rather than an indirect mapping from free-form text.
+
+That removes both the parsing step and the risk that the model produces an out-of-set answer.
+
+The family supplies single-pass decision models from zero point eight B to four B for education tasks.
+
+The four B variant hits sixty-seven point six percent average accuracy across twelve education benchmarks, beating the strongest commercial A P I by nine point four points and the best open four B model by eighteen point seven points.
+
+It runs approximately one hundred fifty decisions per second on one H one hundred, roughly an order of magnitude faster than any text-generation baseline that must be post-processed.
+
+The quality gain disappears once the option set grows beyond a few hundred entries because the pointer head must still compete with the encoder's capacity; at that scale a lightweight reranker on top of a generative model becomes preferable.
+
+Use pointer heads when the task is closed-set classification with a stable label inventory and latency matters; fall back to generation-plus-parsing when the label space is open or changes frequently.
+
+Before we go — decision-model rerankers trained with item-space on-policy distillation are expected to target additional retrieval benchmarks.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Unintended Consequences has you covered — true stories of good intentions that backfired. All our shows are free at nerranetwork dot com. Following the long arcs? Story Trackers on nerranetwork dot com follow major programs across episodes — Tesla, Space X, A I, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

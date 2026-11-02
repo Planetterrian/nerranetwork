@@ -1,0 +1,192 @@
+April's 27-B Open Model scores 98.9 on Big Bench Audio, while adding native speech and tool calling. This is Models & Agents, Episode 222. Hyper Repair at inference cost,
+agentic tuners for cosmology and safety, community builds, then things to try and on the horizon.
+Appreal Voice 27B Preview processes audio directly and outputs both text responses and toolcalls
+without a separate dialogue model. Built on the post-trained Gemma 426 BA4B checkpoint,
+the archive paper says it keeps text and image modalities. Training runs in two stages,
+first establishing the speech interface, then jointly adapting the projector and backbone
+with supervised fine-tuning, text replay and source dependent losses.
+In thinking mode, it reaches 81.13 on speech BFCL, and 65.51% task success on Tau voice
+at 1.91 second mean latency.
+English EVA accuracy is 51.27%, and experience pass at 1 is 74.13%.
+The model runs on a custom-serving platform for interactive voice sessions.
+HyperRepair recovers general capabilities of fine-tune models at inference cost only.
+The framework trains a hyper network on source model repairs that generates a prompt-conditioned repairing side-net using activation fingerprints.
+Tests ran on two model families, 12 low-rank adaptation, or Laura, data sets, and 15 general benchmarks.
+It retains 99.5% of domain performance. It recovers 93.4% of the base model's average
+general score. No target domain examples or extra optimization are required at inference.
+Patching the key value cache or KV cache from a lura-tuned model into the base transfers
+behaviors such as German response style or emergent misalignment. The reverse swap removes
+them. The effect concentrates at a few pivotal positions, especially system prompt and chat template
+tokens. It scales with the fraction of the cache replaced. Le2-SAO lifts single rollout asynchronous
+reinforcement learning with group relative actor critic bootstrapping. The method trains the actor
+with group relative advantage and the critic with group centered return, while the value model is
+cold, then switches to single roll out generalized advantage estimation, or G-A-E. It closes the early
+training gap with group relative policy optimization, or GRPO, on agentic tasks and raises the later
+performance ceiling. Code is released with the paper, auto regressive checkpoints from Gemma 29b,
+Lama 3.18b, Quinn 2.57b, and Ministeral 8b convert to diffusion language models under BYOD
+with Lora-only adapters. The recipe uses 4.1 to 5.8% of final parameters and at
+most 102.4 million tokens per conversion. All four models generate from fully
+mask sequences and retain substantial parent knowledge. BYOD Gemma reaches
+50.6% average accuracy on a 9-task suite. Tajik tool calling is the target of
+Zoda, Tajik, LFM, 2.6B, a hybrid model adapted with continued pre-training than supervised fine-tuning.
+Laura continued pre-training ran on 1.48 million cleaned Tajik documents for three epochs,
+then one epoch of mixed tool-call supervised fine-tuning.
+Strict full-call accuracy on a 174 item Tajik BFCL derived test rose from 20.69 to 64.14.
+4. English tool-calling accuracy stays flat at approximately 77. Continued pre-training
+alone erases the native tool-call format. Cosmological simulations get
+agentic tuner, which uses a present-day large language model as the optimizer.
+The pipeline supplies informal human readable priors, code-based documentation,
+heuristics to the agent. It reaches competitive calibration performance at a
+of the CPU cost of Bayesian optimization.
+Safin 1.5 adds a safety native architecture
+and a verifiable reasoning harness
+for recursive safety improvement.
+Persistent safety states and hazardous knowledge
+disentanglement allow targeted removal of risky experts.
+The formal reasoning harness
+recovers missing relations via proof obligation
+guided semantic bridging
+and outperforms frontier models on safety and reasoning tasks.
+An ESP 32-based 4-inch screen now shows a B-top plus-plus-style terminal dashboard for
+a DGX cluster, according to a local LAA thread.
+Firmware is on GitHub with a Skill.MD file so agents can compile it, and a 3D-printed
+dock is in progress.
+Andre Carpathi posted a weekend hack called HackerTube on X.
+Clod filtered 43 million hacker news comments spanning 20 years down to 6454, repeatedly
+recommended videos, and built a YouTube-style site around them.
+Filtering dropped links, rejects, and spam, and only the remainder went to Sonnet with
+a CC workflow so it uses the sub-tokens.
+The data zip is public, state lives in the browser session with no login required, and
+the surviving comments under videos are the recommending ones.
+SimXAI adds a lightweight LLM centric conversational layer for existing explainable AI or XAI resources.
+A single tool calling LLM replaces separate intent, dialogue management and template modules.
+It improves task accuracy and reduces turns versus use style agents while preserving faithfulness.
+An evaluation code and data sets are released.
+Persona chat bench evaluates chat assistance across diverse simulated users.
+The benchmark pair's identical tasks with multiple persona cards that encode distinct
+needs and behaviors.
+Task performance and need fulfillment vary across personas, and strong aggregate scores
+do not guarantee consistent satisfaction of individual user requirements.
+From the pre-print stack, Kistas is a pre-registered portable fairness protocol measuring procedural
+symmetry, differential refusal, and stereotype reliance across matched counterfactual pairs
+for Iraqi social constituencies.
+Kofi breaks course-to-find diversity reward,
+applied only to successful attacks,
+yields 1.6 to 2.0 times more distinct strategies
+on harm bench, and 2.1 times higher diversity
+on ad bench versus the strongest baseline.
+Adaptive personalization work finds a 35% to 46% drop
+in strategy calibration during open-ended generation
+versus multiple choice recognition.
+With targeted training on internal strategy representations, narrowing the generalization
+gap by one-third, better retrievers raise the share of no-gold context that still contain
+the answer from 28% to 72%, dropping shortcut precision from 0.68 to 0.10 in conversational
+rag abstention evaluation.
+Zeroing 729 task redundant heads in GPT-2 XL cuts memorization count by 91.5% while improving
+wiki text 103 perplexity by 0.92.
+On Bilal bench, six of seven evaluated open language models confidently fabricate on 79.3
+to 95.3% of source production questions in Bengali.
+Langflow outperforms D-Spark variants on GenPPL and MOV at lengths 128 and 1,024 under equal
+training budgets.
+Trace spec raises replay throughput 12.5 to 22.6% over its D-Spark base across three target
+sizes, with adaptive allocation increasing accepted length 3.3 to 10.0% over fixed full-turn
+supervision. AICG reduces mean absolute error by 50.3% and lifts quadratic-weighted
+Kappa from 0.798 to 0.927 versus plain Roberta regression for mathematical short answer
+grading. Psy interviewE keeps clinical facts fixed with asymmetric right permissions
+while disclosure and behavioral states evolve, and it outperforms four baselines on informational
+invariance and relational adaptivity.
+ASTC uses native recurrent dynamics to carry absorbed information forward as soft tokens,
+cutting end-to-end attention pairs by up to 50.68% while matching uncompressed accuracy.
+GSR Bench introduces a four-level hierarchy of reformulation capabilities for grounded
+generative speech recognition and finds acoustic hallucination and instruction drift as key
+failure modes.
+Direct absolute rating matches comparative ranking on rank correlation with human scores
+for academic paper quality, yet abstract only input beats full paper summarization.
+Blind to change shows a 27.5 point gap when a needed fact is not explicitly mentioned
+and more than half of failures trace to agents never searching to verify assumptions.
+Keeper finds reward-related prediction yields the highest task performance before and after
+offline RL, with claim-level analysis showing error persistence despite corrective observations.
+A dual-budget sparse text diffusion configuration cuts costs 20% relative to diffuse seek
+under the reported timing. Laura adapted T5 reaches the highest macro F1 of 0.7408
+on abstracts and 0.7013 on full text for knowledge entity relation extraction.
+Focal loss plus supervised contrast of learning outperformed strong baselines on sentence and document
+level CEFR prediction in both monolingual and multilingual settings. A second complementary
+steering vector restores approximately 78% of unintended discourse changes while preserving
+93% of the intended behavior. The repetition penalty parameter alone enables controllable
+precision recall adjustment at inference time for grammatical error correction without
+architecture or prompt changes.
+On Graf Nia at depth 16 and 32, GPT 5.6 and Qwen 3.5 models answer yes, no questions, no
+better than random, mostly by answering no.
+Stepwise queering distills reasoning without teacher chain of thought access and wins 14
+of 16 comparisons across two teachers, two students and four benchmarks.
+Peele recovers taxonomic directed acyclic graphs with high structural fidelity on two OLLM benchmarks using only a concept vocabulary from Matryoshka embeddings.
+Depth two path signatures optimally balanced character and word level sensitivities and preserve word order for lexical similarity.
+TIZSKT achieves the highest mean AUC and accuracy on all target domains in leave one domain
+out tests by using text only as an index.
+A 66-dimensional embedding space derived from 4.7 million human-odd one-out judgments
+supplies dimension-grounded rationales, and RSA on an FMRI data set shows increased human
+model representational alignment.
+Turn-Turk GPT predicts turn-taking in Turkish from text and beats both rule baselines and a multi-lingual end-of-turn detector under recording disjoint and speaker disjoint evaluation.
+Distilled asynchronous flow map language models set new state-of-the-art one-step performance on Sudoku and GSM 8K code generation.
+CROS raises out-of-domain accuracy to 46.8% on reasoning gym by scrambling chain-of-thought-step
+order while preserving content. Range SWA enables training-free length extrapolation for continuous
+diffusion language models with local sliding window attention, remote block summaries,
+and dynamic retrieval. ZHA grows a tree of compressed key summaries, so total cost grows sublinearly
+in sequence length, while preserving long-context retrieval after a short KL distillation stage.
+The 1.7B decision-ranked model beats its 27B generative teacher on Trek-DL19 through 23.
+Flight answers queries up to 9.5 times faster than VLLM and SG-Lang while staying closest
+to float 32 reference.
+A matched query protocol with content-based labeling shows that rag-defense ranking shift
+when prevented versus introduced failures are distinguished.
+Farrow's equal risk contribution variant lowers clean data loss on every seed by an average
+0.0136 NATS, with no added time or memory.
+Test app-real-voice 27B on speech-conditioned tool-calling tasks.
+The two-stage recipe is fully described, and the model is open.
+Run the hacker-tube data zip through your own agent to generate a personalized video feed
+filtered by topic or error. Compare hyper-repair against standard
+Laura reversal on any fine-tuned 7B to 13B model you already have. The hyper-network
+checkpoint is released. Apply KV-Cache patching to a safety-tuned model to see
+how much of the alignment behavior transfers without retraining. More open
+speech-language models are expected to adopt the two-stage projector plus backbone
+recipe demonstrated by app real.
+Agentec calibration pipelines like Agentec tuner will likely appear for other scientific
+simulators beyond cosmology.
+Portable fairness protocols modeled on keystas are anticipated for additional languages and
+regulatory jurisdictions.
+67.6% average accuracy at 4 billion is why we pop the hood on EDU Jev's pointer heads
+for single-pass categorical decisions.
+Pointerheads let a model output a probability distribution over a fixed set of options in
+one forward pass by scoring each option with a learned marker instead of generating tokens.
+The core move is to replace the usual language modeling head with a small set of option-specific
+linear probes that share the same encoder.
+Because the output vocabulary is now exactly the allowed choices, calibration becomes a direct
+softmax over those scores rather than an indirect mapping from freeform text.
+That removes both the parsing step and the risk that the model produces an out-of-set answer.
+The family supplies single-pass decision models from 0.8 billion to 4 billion for education
+tasks.
+The 4B variant hits 67.6% average accuracy across 12 education benchmarks, beating the strongest
+commercial API by 9.4 points, and the best open 4B model by 18.7 points. It runs approximately
+150 decisions per second on 1H100, roughly an order of magnitude faster than any text generation
+baseline that must be post-processed. The quality gain disappears once the option set grows beyond
+a few hundred entries, because the pointer head must still compete with the encoder's capacity.
+At that scale, a lightweight re-ranker on top of a generative model becomes preferable.
+Use pointer heads when the task is closed set classification with a stable label inventory
+and latency matters.
+Fall back to generation plus parsing when the label space is open or changes frequently.
+Before we go, decision model re-rankers trained with item space on policy distillation are expected
+to target additional retrieval benchmarks.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin Network,
+links in the show notes.
+This show comes to you from the Narin Network.
+If you want another sharp daily briefing, unintended consequences has you covered.
+True stories of good intentions that backfired.
+All our shows are free at www.narrannetwork.com
+Following the long arcs, story trackers on www.narrannetwork.com
+follow major programs across episodes
+Tesla, SpaceX, AI, Space Science, and more
+This episode used AI voice synthesis of my voice
+Editorial selection and analysis are my own

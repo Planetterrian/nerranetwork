@@ -1,0 +1,577 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:14.700
+April's 27-B Open Model scores 98.9 on Big Bench Audio, while adding native speech and tool calling. This is Models &amp; Agents, Episode 222. Hyper Repair at inference cost,
+
+00:00:15.140 --> 00:00:21.420
+agentic tuners for cosmology and safety, community builds, then things to try and on the horizon.
+
+00:00:21.420 --> 00:00:28.980
+Appreal Voice 27B Preview processes audio directly and outputs both text responses and toolcalls
+
+00:00:28.980 --> 00:00:35.840
+without a separate dialogue model. Built on the post-trained Gemma 426 BA4B checkpoint,
+
+00:00:36.420 --> 00:00:41.900
+the archive paper says it keeps text and image modalities. Training runs in two stages,
+
+00:00:42.340 --> 00:00:47.180
+first establishing the speech interface, then jointly adapting the projector and backbone
+
+00:00:47.180 --> 00:00:51.720
+with supervised fine-tuning, text replay and source dependent losses.
+
+00:00:52.240 --> 00:01:01.220
+In thinking mode, it reaches 81.13 on speech BFCL, and 65.51% task success on Tau voice
+
+00:01:01.220 --> 00:01:03.900
+at 1.91 second mean latency.
+
+00:01:04.720 --> 00:01:12.740
+English EVA accuracy is 51.27%, and experience pass at 1 is 74.13%.
+
+00:01:12.740 --> 00:01:16.960
+The model runs on a custom-serving platform for interactive voice sessions.
+
+00:01:17.967 --> 00:01:22.967
+HyperRepair recovers general capabilities of fine-tune models at inference cost only.
+
+00:01:23.607 --> 00:01:31.227
+The framework trains a hyper network on source model repairs that generates a prompt-conditioned repairing side-net using activation fingerprints.
+
+00:01:31.967 --> 00:01:39.187
+Tests ran on two model families, 12 low-rank adaptation, or Laura, data sets, and 15 general benchmarks.
+
+00:01:39.187 --> 00:01:47.447
+It retains 99.5% of domain performance. It recovers 93.4% of the base model's average
+
+00:01:47.447 --> 00:01:52.987
+general score. No target domain examples or extra optimization are required at inference.
+
+00:01:54.228 --> 00:01:59.928
+Patching the key value cache or KV cache from a lura-tuned model into the base transfers
+
+00:01:59.928 --> 00:02:05.608
+behaviors such as German response style or emergent misalignment. The reverse swap removes
+
+00:02:05.608 --> 00:02:11.728
+them. The effect concentrates at a few pivotal positions, especially system prompt and chat template
+
+00:02:11.728 --> 00:02:18.691
+tokens. It scales with the fraction of the cache replaced. Le2-SAO lifts single rollout asynchronous
+
+00:02:18.691 --> 00:02:24.431
+reinforcement learning with group relative actor critic bootstrapping. The method trains the actor
+
+00:02:24.431 --> 00:02:29.651
+with group relative advantage and the critic with group centered return, while the value model is
+
+00:02:29.651 --> 00:02:36.451
+cold, then switches to single roll out generalized advantage estimation, or G-A-E. It closes the early
+
+00:02:36.451 --> 00:02:43.271
+training gap with group relative policy optimization, or GRPO, on agentic tasks and raises the later
+
+00:02:43.271 --> 00:02:50.154
+performance ceiling. Code is released with the paper, auto regressive checkpoints from Gemma 29b,
+
+00:02:50.714 --> 00:02:59.394
+Lama 3.18b, Quinn 2.57b, and Ministeral 8b convert to diffusion language models under BYOD
+
+00:02:59.394 --> 00:03:06.234
+with Lora-only adapters. The recipe uses 4.1 to 5.8% of final parameters and at
+
+00:03:06.234 --> 00:03:12.074
+most 102.4 million tokens per conversion. All four models generate from fully
+
+00:03:12.074 --> 00:03:17.514
+mask sequences and retain substantial parent knowledge. BYOD Gemma reaches
+
+00:03:17.514 --> 00:03:24.374
+50.6% average accuracy on a 9-task suite. Tajik tool calling is the target of
+
+00:03:24.374 --> 00:03:32.174
+Zoda, Tajik, LFM, 2.6B, a hybrid model adapted with continued pre-training than supervised fine-tuning.
+
+00:03:32.754 --> 00:03:38.954
+Laura continued pre-training ran on 1.48 million cleaned Tajik documents for three epochs,
+
+00:03:39.274 --> 00:03:42.474
+then one epoch of mixed tool-call supervised fine-tuning.
+
+00:03:43.034 --> 00:03:52.174
+Strict full-call accuracy on a 174 item Tajik BFCL derived test rose from 20.69 to 64.14.
+
+00:03:52.174 --> 00:03:58.554
+4. English tool-calling accuracy stays flat at approximately 77. Continued pre-training
+
+00:03:58.554 --> 00:04:03.617
+alone erases the native tool-call format. Cosmological simulations get
+
+00:04:03.617 --> 00:04:08.057
+agentic tuner, which uses a present-day large language model as the optimizer.
+
+00:04:08.697 --> 00:04:13.497
+The pipeline supplies informal human readable priors, code-based documentation,
+
+00:04:13.977 --> 00:04:18.637
+heuristics to the agent. It reaches competitive calibration performance at a
+
+00:04:18.637 --> 00:04:21.297
+of the CPU cost of Bayesian optimization.
+
+00:04:22.385 --> 00:04:25.465
+Safin 1.5 adds a safety native architecture
+
+00:04:25.465 --> 00:04:27.345
+and a verifiable reasoning harness
+
+00:04:27.345 --> 00:04:29.105
+for recursive safety improvement.
+
+00:04:29.725 --> 00:04:32.105
+Persistent safety states and hazardous knowledge
+
+00:04:32.105 --> 00:04:35.485
+disentanglement allow targeted removal of risky experts.
+
+00:04:36.145 --> 00:04:37.465
+The formal reasoning harness
+
+00:04:37.465 --> 00:04:40.145
+recovers missing relations via proof obligation
+
+00:04:40.145 --> 00:04:41.685
+guided semantic bridging
+
+00:04:41.685 --> 00:04:45.425
+and outperforms frontier models on safety and reasoning tasks.
+
+00:04:45.425 --> 00:04:52.482
+An ESP 32-based 4-inch screen now shows a B-top plus-plus-style terminal dashboard for
+
+00:04:52.482 --> 00:04:56.302
+a DGX cluster, according to a local LAA thread.
+
+00:04:56.922 --> 00:05:02.942
+Firmware is on GitHub with a Skill.MD file so agents can compile it, and a 3D-printed
+
+00:05:02.942 --> 00:05:03.962
+dock is in progress.
+
+00:05:05.177 --> 00:05:09.017
+Andre Carpathi posted a weekend hack called HackerTube on X.
+
+00:05:09.017 --> 00:05:16.597
+Clod filtered 43 million hacker news comments spanning 20 years down to 6454, repeatedly
+
+00:05:16.597 --> 00:05:20.097
+recommended videos, and built a YouTube-style site around them.
+
+00:05:20.637 --> 00:05:25.857
+Filtering dropped links, rejects, and spam, and only the remainder went to Sonnet with
+
+00:05:25.857 --> 00:05:28.637
+a CC workflow so it uses the sub-tokens.
+
+00:05:29.117 --> 00:05:34.237
+The data zip is public, state lives in the browser session with no login required, and
+
+00:05:34.237 --> 00:05:37.197
+the surviving comments under videos are the recommending ones.
+
+00:05:37.197 --> 00:05:45.732
+SimXAI adds a lightweight LLM centric conversational layer for existing explainable AI or XAI resources.
+
+00:05:46.292 --> 00:05:51.972
+A single tool calling LLM replaces separate intent, dialogue management and template modules.
+
+00:05:52.472 --> 00:05:57.942
+It improves task accuracy and reduces turns versus use style agents while preserving faithfulness.
+
+00:05:58.732 --> 00:06:01.092
+An evaluation code and data sets are released.
+
+00:06:02.183 --> 00:06:06.483
+Persona chat bench evaluates chat assistance across diverse simulated users.
+
+00:06:06.483 --> 00:06:11.423
+The benchmark pair's identical tasks with multiple persona cards that encode distinct
+
+00:06:11.423 --> 00:06:12.503
+needs and behaviors.
+
+00:06:13.243 --> 00:06:18.143
+Task performance and need fulfillment vary across personas, and strong aggregate scores
+
+00:06:18.143 --> 00:06:22.043
+do not guarantee consistent satisfaction of individual user requirements.
+
+00:06:23.121 --> 00:06:28.761
+From the pre-print stack, Kistas is a pre-registered portable fairness protocol measuring procedural
+
+00:06:28.761 --> 00:06:34.381
+symmetry, differential refusal, and stereotype reliance across matched counterfactual pairs
+
+00:06:34.381 --> 00:06:37.041
+for Iraqi social constituencies.
+
+00:06:37.041 --> 00:06:39.741
+Kofi breaks course-to-find diversity reward,
+
+00:06:40.261 --> 00:06:42.061
+applied only to successful attacks,
+
+00:06:42.281 --> 00:06:45.861
+yields 1.6 to 2.0 times more distinct strategies
+
+00:06:45.861 --> 00:06:49.301
+on harm bench, and 2.1 times higher diversity
+
+00:06:49.301 --> 00:06:51.581
+on ad bench versus the strongest baseline.
+
+00:06:52.361 --> 00:06:56.521
+Adaptive personalization work finds a 35% to 46% drop
+
+00:06:56.521 --> 00:06:59.421
+in strategy calibration during open-ended generation
+
+00:06:59.421 --> 00:07:01.501
+versus multiple choice recognition.
+
+00:07:01.501 --> 00:07:06.801
+With targeted training on internal strategy representations, narrowing the generalization
+
+00:07:06.801 --> 00:07:12.681
+gap by one-third, better retrievers raise the share of no-gold context that still contain
+
+00:07:12.681 --> 00:07:22.021
+the answer from 28% to 72%, dropping shortcut precision from 0.68 to 0.10 in conversational
+
+00:07:22.021 --> 00:07:23.481
+rag abstention evaluation.
+
+00:07:24.501 --> 00:07:33.861
+Zeroing 729 task redundant heads in GPT-2 XL cuts memorization count by 91.5% while improving
+
+00:07:33.861 --> 00:07:37.501
+wiki text 103 perplexity by 0.92.
+
+00:07:38.241 --> 00:07:45.061
+On Bilal bench, six of seven evaluated open language models confidently fabricate on 79.3
+
+00:07:45.201 --> 00:07:49.421
+to 95.3% of source production questions in Bengali.
+
+00:07:49.421 --> 00:07:58.721
+Langflow outperforms D-Spark variants on GenPPL and MOV at lengths 128 and 1,024 under equal
+
+00:07:58.721 --> 00:07:59.621
+training budgets.
+
+00:08:00.161 --> 00:08:07.301
+Trace spec raises replay throughput 12.5 to 22.6% over its D-Spark base across three target
+
+00:08:07.301 --> 00:08:14.821
+sizes, with adaptive allocation increasing accepted length 3.3 to 10.0% over fixed full-turn
+
+00:08:14.821 --> 00:08:21.841
+supervision. AICG reduces mean absolute error by 50.3% and lifts quadratic-weighted
+
+00:08:21.841 --> 00:08:29.521
+Kappa from 0.798 to 0.927 versus plain Roberta regression for mathematical short answer
+
+00:08:29.521 --> 00:08:34.701
+grading. Psy interviewE keeps clinical facts fixed with asymmetric right permissions
+
+00:08:34.701 --> 00:08:40.481
+while disclosure and behavioral states evolve, and it outperforms four baselines on informational
+
+00:08:40.481 --> 00:08:42.761
+invariance and relational adaptivity.
+
+00:08:43.441 --> 00:08:49.001
+ASTC uses native recurrent dynamics to carry absorbed information forward as soft tokens,
+
+00:08:49.621 --> 00:08:55.841
+cutting end-to-end attention pairs by up to 50.68% while matching uncompressed accuracy.
+
+00:08:56.541 --> 00:09:01.701
+GSR Bench introduces a four-level hierarchy of reformulation capabilities for grounded
+
+00:09:01.701 --> 00:09:07.161
+generative speech recognition and finds acoustic hallucination and instruction drift as key
+
+00:09:07.161 --> 00:09:07.921
+failure modes.
+
+00:09:07.921 --> 00:09:13.441
+Direct absolute rating matches comparative ranking on rank correlation with human scores
+
+00:09:13.441 --> 00:09:19.081
+for academic paper quality, yet abstract only input beats full paper summarization.
+
+00:09:19.621 --> 00:09:25.861
+Blind to change shows a 27.5 point gap when a needed fact is not explicitly mentioned
+
+00:09:25.861 --> 00:09:30.601
+and more than half of failures trace to agents never searching to verify assumptions.
+
+00:09:31.201 --> 00:09:36.281
+Keeper finds reward-related prediction yields the highest task performance before and after
+
+00:09:36.281 --> 00:09:42.001
+offline RL, with claim-level analysis showing error persistence despite corrective observations.
+
+00:09:42.601 --> 00:09:48.361
+A dual-budget sparse text diffusion configuration cuts costs 20% relative to diffuse seek
+
+00:09:48.361 --> 00:09:55.921
+under the reported timing. Laura adapted T5 reaches the highest macro F1 of 0.7408
+
+00:09:55.921 --> 00:10:01.921
+on abstracts and 0.7013 on full text for knowledge entity relation extraction.
+
+00:10:01.921 --> 00:10:08.241
+Focal loss plus supervised contrast of learning outperformed strong baselines on sentence and document
+
+00:10:08.241 --> 00:10:14.601
+level CEFR prediction in both monolingual and multilingual settings. A second complementary
+
+00:10:14.601 --> 00:10:20.541
+steering vector restores approximately 78% of unintended discourse changes while preserving
+
+00:10:20.541 --> 00:10:26.721
+93% of the intended behavior. The repetition penalty parameter alone enables controllable
+
+00:10:26.721 --> 00:10:31.461
+precision recall adjustment at inference time for grammatical error correction without
+
+00:10:31.461 --> 00:10:33.181
+architecture or prompt changes.
+
+00:10:33.661 --> 00:10:42.361
+On Graf Nia at depth 16 and 32, GPT 5.6 and Qwen 3.5 models answer yes, no questions, no
+
+00:10:42.361 --> 00:10:45.081
+better than random, mostly by answering no.
+
+00:10:45.681 --> 00:10:50.621
+Stepwise queering distills reasoning without teacher chain of thought access and wins 14
+
+00:10:50.621 --> 00:10:55.261
+of 16 comparisons across two teachers, two students and four benchmarks.
+
+00:10:55.261 --> 00:11:06.301
+Peele recovers taxonomic directed acyclic graphs with high structural fidelity on two OLLM benchmarks using only a concept vocabulary from Matryoshka embeddings.
+
+00:11:06.941 --> 00:11:14.241
+Depth two path signatures optimally balanced character and word level sensitivities and preserve word order for lexical similarity.
+
+00:11:15.681 --> 00:11:21.981
+TIZSKT achieves the highest mean AUC and accuracy on all target domains in leave one domain
+
+00:11:21.981 --> 00:11:25.161
+out tests by using text only as an index.
+
+00:11:25.781 --> 00:11:31.641
+A 66-dimensional embedding space derived from 4.7 million human-odd one-out judgments
+
+00:11:32.201 --> 00:11:38.341
+supplies dimension-grounded rationales, and RSA on an FMRI data set shows increased human
+
+00:11:38.341 --> 00:11:40.161
+model representational alignment.
+
+00:11:40.161 --> 00:11:52.221
+Turn-Turk GPT predicts turn-taking in Turkish from text and beats both rule baselines and a multi-lingual end-of-turn detector under recording disjoint and speaker disjoint evaluation.
+
+00:11:52.861 --> 00:12:01.261
+Distilled asynchronous flow map language models set new state-of-the-art one-step performance on Sudoku and GSM 8K code generation.
+
+00:12:02.121 --> 00:12:09.461
+CROS raises out-of-domain accuracy to 46.8% on reasoning gym by scrambling chain-of-thought-step
+
+00:12:09.461 --> 00:12:16.101
+order while preserving content. Range SWA enables training-free length extrapolation for continuous
+
+00:12:16.101 --> 00:12:21.521
+diffusion language models with local sliding window attention, remote block summaries,
+
+00:12:21.761 --> 00:12:28.541
+and dynamic retrieval. ZHA grows a tree of compressed key summaries, so total cost grows sublinearly
+
+00:12:28.541 --> 00:12:34.521
+in sequence length, while preserving long-context retrieval after a short KL distillation stage.
+
+00:12:34.981 --> 00:12:42.741
+The 1.7B decision-ranked model beats its 27B generative teacher on Trek-DL19 through 23.
+
+00:12:43.341 --> 00:12:50.021
+Flight answers queries up to 9.5 times faster than VLLM and SG-Lang while staying closest
+
+00:12:50.021 --> 00:12:51.461
+to float 32 reference.
+
+00:12:52.181 --> 00:12:57.301
+A matched query protocol with content-based labeling shows that rag-defense ranking shift
+
+00:12:57.301 --> 00:13:00.101
+when prevented versus introduced failures are distinguished.
+
+00:13:01.081 --> 00:13:06.141
+Farrow's equal risk contribution variant lowers clean data loss on every seed by an average
+
+00:13:06.141 --> 00:13:10.521
+0.0136 NATS, with no added time or memory.
+
+00:13:11.553 --> 00:13:15.833
+Test app-real-voice 27B on speech-conditioned tool-calling tasks.
+
+00:13:16.233 --> 00:13:19.893
+The two-stage recipe is fully described, and the model is open.
+
+00:13:20.593 --> 00:13:25.213
+Run the hacker-tube data zip through your own agent to generate a personalized video feed
+
+00:13:25.213 --> 00:13:29.713
+filtered by topic or error. Compare hyper-repair against standard
+
+00:13:29.713 --> 00:13:35.993
+Laura reversal on any fine-tuned 7B to 13B model you already have. The hyper-network
+
+00:13:35.993 --> 00:13:41.773
+checkpoint is released. Apply KV-Cache patching to a safety-tuned model to see
+
+00:13:41.773 --> 00:13:46.615
+how much of the alignment behavior transfers without retraining. More open
+
+00:13:46.615 --> 00:13:51.135
+speech-language models are expected to adopt the two-stage projector plus backbone
+
+00:13:51.135 --> 00:13:53.095
+recipe demonstrated by app real.
+
+00:13:53.875 --> 00:13:58.715
+Agentec calibration pipelines like Agentec tuner will likely appear for other scientific
+
+00:13:58.715 --> 00:14:00.615
+simulators beyond cosmology.
+
+00:14:01.335 --> 00:14:06.435
+Portable fairness protocols modeled on keystas are anticipated for additional languages and
+
+00:14:06.435 --> 00:14:07.755
+regulatory jurisdictions.
+
+00:14:08.415 --> 00:14:15.495
+67.6% average accuracy at 4 billion is why we pop the hood on EDU Jev's pointer heads
+
+00:14:15.495 --> 00:14:17.695
+for single-pass categorical decisions.
+
+00:14:18.624 --> 00:14:23.724
+Pointerheads let a model output a probability distribution over a fixed set of options in
+
+00:14:23.724 --> 00:14:29.104
+one forward pass by scoring each option with a learned marker instead of generating tokens.
+
+00:14:29.764 --> 00:14:35.364
+The core move is to replace the usual language modeling head with a small set of option-specific
+
+00:14:35.364 --> 00:14:37.624
+linear probes that share the same encoder.
+
+00:14:38.104 --> 00:14:43.724
+Because the output vocabulary is now exactly the allowed choices, calibration becomes a direct
+
+00:14:43.724 --> 00:14:48.464
+softmax over those scores rather than an indirect mapping from freeform text.
+
+00:14:48.684 --> 00:14:53.484
+That removes both the parsing step and the risk that the model produces an out-of-set answer.
+
+00:14:54.414 --> 00:15:00.034
+The family supplies single-pass decision models from 0.8 billion to 4 billion for education
+
+00:15:00.034 --> 00:15:00.634
+tasks.
+
+00:15:01.154 --> 00:15:08.754
+The 4B variant hits 67.6% average accuracy across 12 education benchmarks, beating the strongest
+
+00:15:08.754 --> 00:15:17.014
+commercial API by 9.4 points, and the best open 4B model by 18.7 points. It runs approximately
+
+00:15:17.014 --> 00:15:23.874
+150 decisions per second on 1H100, roughly an order of magnitude faster than any text generation
+
+00:15:23.874 --> 00:15:29.994
+baseline that must be post-processed. The quality gain disappears once the option set grows beyond
+
+00:15:29.994 --> 00:15:34.814
+a few hundred entries, because the pointer head must still compete with the encoder's capacity.
+
+00:15:34.814 --> 00:15:40.094
+At that scale, a lightweight re-ranker on top of a generative model becomes preferable.
+
+00:15:40.574 --> 00:15:45.554
+Use pointer heads when the task is closed set classification with a stable label inventory
+
+00:15:45.554 --> 00:15:46.754
+and latency matters.
+
+00:15:47.394 --> 00:15:52.274
+Fall back to generation plus parsing when the label space is open or changes frequently.
+
+00:15:53.208 --> 00:15:58.848
+Before we go, decision model re-rankers trained with item space on policy distillation are expected
+
+00:15:58.848 --> 00:16:00.828
+to target additional retrieval benchmarks.
+
+00:16:01.468 --> 00:16:03.288
+That's models and agents for today.
+
+00:16:03.288 --> 00:16:07.888
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:16:08.348 --> 00:16:10.568
+and subscribe so you don't miss tomorrow's update.
+
+00:16:11.128 --> 00:16:13.928
+The AI world moves fast, we'll help you keep up.
+
+00:16:14.408 --> 00:16:19.328
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin Network,
+
+00:16:19.748 --> 00:16:20.628
+links in the show notes.
+
+00:16:21.168 --> 00:16:23.168
+This show comes to you from the Narin Network.
+
+00:16:23.668 --> 00:16:27.828
+If you want another sharp daily briefing, unintended consequences has you covered.
+
+00:16:28.348 --> 00:16:30.768
+True stories of good intentions that backfired.
+
+00:16:30.768 --> 00:16:33.928
+All our shows are free at www.narrannetwork.com
+
+00:16:34.478 --> 00:16:38.148
+Following the long arcs, story trackers on www.narrannetwork.com
+
+00:16:38.148 --> 00:16:40.448
+follow major programs across episodes
+
+00:16:40.448 --> 00:16:44.348
+Tesla, SpaceX, AI, Space Science, and more
+
+00:16:44.348 --> 00:16:47.928
+This episode used AI voice synthesis of my voice
+
+00:16:47.928 --> 00:16:50.828
+Editorial selection and analysis are my own
