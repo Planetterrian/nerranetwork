@@ -2646,6 +2646,15 @@ def run(args: argparse.Namespace) -> None:
                     if _exp.get("words_after") is not None:
                         metrics.record("digest_expansion_words_after", int(_exp["words_after"]))
                     metrics.record("digest_expansion_floor", int(_exp.get("floor") or 0))
+                    # Nov 3 2026 (digest fact floor): on a show with
+                    # llm.min_digest_facts the retry fires and is judged on
+                    # facts; the digest-fact-floor-2026-11-03 readout reads
+                    # these beside digest_fact_free_pct from metrics_ep*.json.
+                    if _exp.get("floor_facts") is not None:
+                        metrics.record("digest_expansion_floor_facts", int(_exp["floor_facts"]))
+                        metrics.record("digest_expansion_facts_before", int(_exp.get("facts_before") or 0))
+                        if _exp.get("facts_after") is not None:
+                            metrics.record("digest_expansion_facts_after", int(_exp["facts_after"]))
             except Exception as _exp_exc:  # noqa: BLE001 — a metric never breaks a run
                 logger.debug("digest expansion metric skipped: %s", _exp_exc)
         except LLMRefusalError as e:

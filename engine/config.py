@@ -122,6 +122,19 @@ class LLMConfig:
     # rescues genuinely-thin briefs without fighting the ceiling.
     min_digest_words: int = 0
     digest_expand_below_target: bool = False
+    # Nov 3 2026 (digest fact floor, one flagship first): when > 0 the
+    # expansion retry fires on FACTS, never on words — story-item
+    # sentences that carry a number, a name, a date or a quote the digest
+    # had not given before (engine.generator.digest_fact_count) — after
+    # the Oct 19 stories floor, and the retry is kept only when the fact
+    # count rose. ``min_digest_words`` stays as the recorded number. The
+    # word floor fired on 7/7 flagship episodes in the week to Nov 2 and
+    # the padding it bought was the best predictor of a Repetitive audit
+    # flag; a short, dense episode is the trade (Oct 10). Calibrate from
+    # the show's last 14 committed digests so an ordinary day clears it
+    # (Planetterrian: median 20, floor 18 fires on 2 of 14). 0 = the word
+    # test, byte-identical.
+    min_digest_facts: int = 0
     # Oct 14 2026 (slate readout): how many expansion passes a digest may
     # get. The pass is judged on PROSE (the ledger never counts) and a
     # second pass runs only when the first left the digest under

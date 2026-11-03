@@ -468,8 +468,13 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                      "episode reads 1-2; the cohort's grok-4.7 episodes 5-8; the voice pauses either way).")
         lines.append("tail = share of body sentences ending on an attribution (\", X reported.\" / \", according to X.\"); "
                      "short = share of nine words or fewer. Both read-only baselines (Nov 3 2026).")
-        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept | commas | tail | short |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("fact-free = share of sentences with no fact of their own (no number, name, date or quote the text "
+                     "had not given before) in the digest's story items / the script's body — the review's best "
+                     "predictor of a Repetitive flag (flagships 44-62%, the cohort 10-22%); opener = share of body "
+                     "sentences opening on an attribution (\"X reports that…\"); caveat = share that only qualify "
+                     "evidence. All read-only (Nov 3 2026, digest fact floor).")
+        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept | commas | tail | short | fact-free (digest / script) | opener | caveat |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
         for num, path in tts_files:
             script_text = path.read_text(encoding="utf-8", errors="replace")
             digest_path = path.with_name(path.name.replace("_tts.txt", ".md"))
@@ -491,8 +496,13 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
             _dc = "n/a" if a.digest_commas_per_100w is None else f"{a.digest_commas_per_100w:.1f}"
             _tail = "n/a" if a.attribution_tail_pct is None else f"{a.attribution_tail_pct:.0f}%"
             _short = "n/a" if a.short_sentence_pct is None else f"{a.short_sentence_pct:.0f}%"
+            _dff = "n/a" if a.digest_fact_free_pct is None else f"{a.digest_fact_free_pct:.0f}%"
+            _sff = "n/a" if a.script_fact_free_pct is None else f"{a.script_fact_free_pct:.0f}%"
+            _open = "n/a" if a.attribution_opener_pct is None else f"{a.attribution_opener_pct:.0f}%"
+            _cav = "n/a" if a.caveat_sentence_pct is None else f"{a.caveat_sentence_pct:.0f}%"
             lines.append(f"| ep{num} | {a.sentences} | {ovl} | {dcov} | {secs} | {a.repeated_facts} | "
-                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents} | {_c} / {_dc} | {_tail} | {_short}{flag} |")
+                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents} | {_c} / {_dc} | {_tail} | {_short} | "
+                         f"{_dff} / {_sff} | {_open} | {_cav}{flag} |")
         lines.append("")
 
     # --- Fetch-filter leakage (July 18 2026 network meta-review) ---
