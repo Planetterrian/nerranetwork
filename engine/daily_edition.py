@@ -678,6 +678,19 @@ _PRIMARY_PROMO_PATTERNS = [
 _YOUTUBE_LEAD_PATTERN = re.compile(
     r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch th[ae]n listen\b"
 )
+#: The platform ask (``engine.intros._PLATFORM_ASKS``, Oct 1 2026) is two
+#: scripted sentences spoken on alternate days BEFORE the network frame. Nov
+#: 3 2026: the cut anchored on the frame, so 10 of Nerra Daily Ep074's 17
+#: seams kept "A rating on Apple Podcasts or Spotify takes ten seconds…" —
+#: ten rating asks in one edition. When the ask sits just before the frame
+#: cut, the cut moves to the ask (frame-grade: the words are the pipeline's
+#: own). Whisper-tolerant on the numbers and the app names.
+_PLATFORM_ASK_PATTERN = re.compile(
+    r"\b(?:if this show earns a place in your day\b"
+    r"|follow it in your podcast app so the next episode\b"
+    r"|(?:a\s+)?rating on apple podcasts or spotify takes (?:ten|10) seconds\b)"
+)
+PLATFORM_ASK_WINDOW_SECONDS = 25.0
 #: A cut anchored on the YouTube CTA alone (no frame matched after it) may
 #: never remove more than this much tail. The CTA is scripted only inside
 #: the closing, but the ceiling keeps a mid-episode "rather watch than
@@ -783,6 +796,8 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
         ) if i is not None
     ]
     lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
+    ask_idx = _search_stream(stream, _PLATFORM_ASK_PATTERN)
+    includes_ask = False
     if primary_hits:
         idx = min(primary_hits)
         kind, anchor = "promo", "frame"
@@ -791,6 +806,12 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
             and 0 < stream[idx][1] - stream[lead_idx][1] <= YOUTUBE_LEAD_WINDOW_SECONDS
         ):
             idx = lead_idx
+        if (
+            ask_idx is not None
+            and 0 < stream[idx][1] - stream[ask_idx][1] <= PLATFORM_ASK_WINDOW_SECONDS
+        ):
+            idx = ask_idx
+            includes_ask = True
         cut = _cut_before(stream, idx)
     elif lead_idx is not None and _outro_follows(stream, lead_idx):
         # No frame words, but the scripted YouTube call-out is there with
@@ -847,6 +868,8 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
     hit = {"raw_seconds": round(cut, 2), "kind": kind}
     if anchor:
         hit["anchor"] = anchor
+    if includes_ask:
+        hit["includes_platform_ask"] = True
     return hit
 
 

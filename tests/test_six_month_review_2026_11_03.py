@@ -701,9 +701,8 @@ class TestTheDailyAuditReadsTheProse:
         assert "verbatim or near-verbatim" not in src
 
     def test_the_real_names_preamble_lists_sources_and_outlets(self):
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("review_episodes", ROOT / "review_episodes.py")
-        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        import importlib
+        mod = importlib.import_module("review_episodes")  # ROOT is on sys.path
         digest = ("# Show\n\n### Top News\n\n1. **Samsung wins the HBM4 order: shattered.io**\n"
                   "Body.\nSource: [shattered.io](https://shattered.io/x)\n\n"
                   "2. **Colossus 2 names its Spam cluster: Teslarati**\nBody.\n"
@@ -712,3 +711,51 @@ class TestTheDailyAuditReadsTheProse:
         assert pre.startswith("REAL NAMES IN THIS EPISODE")
         assert "shattered.io" in pre and "Teslarati" in pre
         assert mod._real_names_preamble("") == ""
+
+
+class TestTheEditionCutsBeforeThePlatformAsk:
+    """Nerra Daily Ep074 carried ten "A rating on Apple Podcasts or Spotify
+    takes ten seconds…" sentences: the promo cut anchored on the network
+    frame, and the Oct 1 platform ask is scripted just before it."""
+
+    @staticmethod
+    def _transcript(sentences, start=200.0):
+        import itertools
+        t = start
+        segments = []
+        for sent in sentences:
+            words = []
+            for w in sent.split():
+                words.append({"word": w, "start": round(t, 2), "end": round(t + 0.35, 2)})
+                t += 0.4
+            segments.append({"start": words[0]["start"], "end": words[-1]["end"], "text": sent, "words": words})
+            t += 0.6
+        return {"duration": round(t + 2.0, 2), "segments": segments}
+
+    def test_the_cut_lands_before_the_rating_ask(self):
+        from engine.daily_edition import find_promo_cut
+        body = ["The last story of the day is about batteries and the grid in Alberta."] * 40
+        tr = self._transcript(body + [
+            "That's Tesla Shorts Time for today, I'm Patrick, see you tomorrow.",
+            "A rating on Apple Podcasts or Spotify takes ten seconds and it is how new listeners find this show.",
+            "And before you go this show is part of the Nerra Network, a family of podcasts on tech science and markets.",
+            "This episode used AI voice synthesis.",
+        ])
+        hit = find_promo_cut(tr)
+        assert hit and hit["kind"] == "promo" and hit.get("includes_platform_ask") is True
+        ask_start = tr["segments"][-3]["start"]
+        frame_start = tr["segments"][-2]["start"]
+        assert hit["raw_seconds"] < frame_start and hit["raw_seconds"] <= ask_start
+
+    def test_a_show_with_no_ask_cuts_as_before(self):
+        from engine.daily_edition import find_promo_cut
+        body = ["The last story of the day is about batteries and the grid in Alberta."] * 40
+        tr = self._transcript(body + [
+            "That's SpaceX Daily for today, I'm Patrick, see you tomorrow.",
+            "And before you go this show is part of the Nerra Network, a family of podcasts on tech science and markets.",
+            "This episode used AI voice synthesis.",
+        ])
+        hit = find_promo_cut(tr)
+        assert hit and hit["kind"] == "promo" and hit["anchor"] == "frame"
+        assert not hit.get("includes_platform_ask")
+        assert hit["raw_seconds"] >= tr["segments"][-3]["end"] - 1.0
