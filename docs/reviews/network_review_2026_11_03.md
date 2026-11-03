@@ -78,8 +78,57 @@ _(Filled from the synthesis: SCORECARD.md, the proposals and the skeptics' verdi
 
 ## 5. Operator items
 
-_(Filled with the review's operator-only steps.)_
+Deploys and settings:
+- `wrangler deploy` in `workers/voices` (hourly fire-tick catch-all; the gate-2 copy on the review page and email).
+- `wrangler deploy` in `workers/gallery` (Nerra Voices in `EMAIL_SHOW_TAGS`).
+- The 571 MB of FLAC stays in git HISTORY; only the landmine-#1 filter-repo playbook (`docs/workflow_review_2026_06_10.md`) removes it.
+- Rotate `PERSONAL_ADMIN_TOKEN` (it was pasted into a chat session on Nov 2).
+
+Listens (⚠️ AUDIO changes shipped in this branch — A/B-listen one each before trusting the slate):
+- Unintended Consequences, Vancouver or Collingwood: the first episode mastered to −16 LUFS (was −25).
+- Tesla or any music show: the opening bed now lasts its 30 s and the outro fades to silence; on headphones, the stereo image under the voice.
+- Nerra Daily: the next edition (handoffs realigned before revision; the promo cut before the platform ask; every segment levelled).
+- SpaceX on a Monday: "closed Friday at".
+
+YouTube Studio and the channels:
+- Upload the Oct 18 banner on @NerraNetwork (the live one reads "100% AD-FREE · EN · FR · RU · ZH"); write RU and FR channel descriptions that lead with Starship, astronomy and Tesla.
+- Every EN long-form exists twice on the channel: the render and an RSS-ingested copy YouTube made from the podcast feed (40 of the 80 newest videos). Remove the RSS-ingested podcast where a render exists and flag the API playlist as the podcast (landmine #15's route). A Studio read confirms it in one click.
+- Actions "Capture Site Screenshots" (the outro card on every long-form renders the Aug 9 homepage with "0 ADS").
+- An end-screen template on the flagship long-forms for a week (END_SCREEN delivered 1 view in 90 days).
+
+Directories and listings (`docs/podcast_directories.md` gives the order; Podcast Index first because OP3 resolves feeds through it):
+- Fifteen feeds are not in Podcast Index (the cohort, Offshore North, Nerra Daily); thirteen Apple rows have read PENDING since Oct 3; Amazon 0 live; Pocket Casts 0 of 32.
+- Nerra Daily: Apple and Spotify ids still null ten weeks after the Sep 3 ledger asked.
+- Nerra Voices, Offshore North, Omni View North America: unindexed on OP3.
+- The three French-only feeds (env_intel, first_principles, models_agents): submit to Podcast Index or switch the FR track off (about $19 a month unmeasured since Sep 4).
+
+Product decisions the review asks for:
+- The closing block (12–15% of every episode, four to seven asks on MIT and FPD): one ask per episode on the rotation that already picks the surface, about 30 s. Read the `platform-ask-2026-10-01` readout (due Nov 1) first.
+- The four dark desks (72 skipped episodes since Oct 16): `access.mode: public_weekly` (one free weekday each, daily for members, about $0.29 an episode) or retire them honestly; Top World's copy and the lineup follow either way.
+- The Planetterrian and FF Spotlight and Omni View's Understanding the Issue are second passes BY DESIGN (their prompts require it): a second story built from a fetched page, or keep the pass and say so.
+- `/personal-interest.html` writes a Buttondown tag (`personal-interest`, 4 people) that nothing sends to while the page promises "occasional Personal tips by email": include them in Nerra Daily, send them something, or change the copy. Read the Google Ads account for the Oct 15 and Oct 22–24 spend days: 492 landing sessions, 98.8% bounce, 2 submits.
+- Nerra Personal: freeze feature work until Stripe is read (`mrr_usd`, trials and churn are null) and the free list passes a floor; two paying members after eight passes.
+- The RU SpaceX pilot: 0 captures in three months and a Sunday letter whose tag (`ru-spacex`) no subscriber carries. Close `spacex-ru` and `tesla-ru` as MISS, retire `ru-spacex-weekly.yml`, give @NerraRU the subscribe pill.
+- Age of AI: run the camera test room (Patrick on camera, Actions "Cut the video version of an interview" with `preview`), watch it, then `local_video: true`; stop uploading the waveform meanwhile (27 views on 3 videos, 1.5% watched). The guest mix: 15 of 18 guests are founders pitching, against a premise of teachers, artists, tradespeople and skeptics.
+- Env Intel's Practitioner Deep Dive invents consulting experience by instruction (`env_intel_digest.txt:171`); Models & Agents for Beginners sources a death to "SSB Crack News" and ships 3 of 51 fetched articles; SpaceX has the lowest daily audit score of any daily show for three months and 30% of the network's downloads. Each needs a show pass of its own.
+- Финансы Просто and Привет, Русский!: invest (a Russian listener, a vocabulary gate, an arithmetic lint, the spoken-text gate out of shadow) or state plainly that they are five-to-seven-minute shows and align every surface. FP Ep090's mortgage arithmetic was wrong by two to three times and the show has no `corrections.yaml`.
+- The grok-4.6 script arms fail the model-upgrade playbook's latency gate on committed data (script p95 SpaceX 487 s, Tesla 558 s, M&A 448 s against 300 s) while winning on quality. Both numbers are now on the record; the decision is the operator's.
+
+Reads only a person can do:
+- What caused the Sep 28 download step (eleven shows +37% to +2,200% in one week, held five weeks) — the one growth event of the six months with no cause in any document.
+- The Studio read on the Sep 15 and Oct 19 Shorts-feed steps (restrictions, reused-content notices) asked for on Oct 3 and Oct 24 and recorded nowhere.
+- Is a welcome email configured at the Buttondown account level? The signup button now says when the email arrives instead of "Check your email".
+- Verify the email's archive copy on the next real send (Actions "Nerra Daily email", mode `draft`): the Django "no subscriber" behaviour is inferred from the Nov 2 archive, not documented.
+- Listen: a Patrick minute against an NPR minute at equal loudness (the chain's LRA 1.6–3.0 against NPR's 4.9–5.2 is the compressor; a listen decides whether it is a defect); the Olya voice reading the English half of a Russian lesson; the English-trained clone reading Russian and French to a native ear.
 
 ## 6. Open questions
 
-_(Filled from the readers' open questions that the operator can answer and the readers could not.)_
+Questions the readers could not settle from the committed record and the operator can:
+
+1. **Who is the network for?** SpaceX and Tesla are 48% of downloads, the EN YouTube audience is 99.7% male and 0.3% under 25, and there is no culture, sport or lifestyle beat. The alternative to traditional news networks the brief describes is built for one audience today. Is that the plan, or is the regional-desk and language work the direction?
+2. **Is the explainer minute inside the trust promise?** Omni View's Understanding the Issue, Tesla's First Principles essay and SpaceX's deep dive are written from model knowledge by design and the ledger holds no claim from them; the provenance line does not say so. On Nov 2 one was wrong.
+3. **How long is Nerra Daily?** 141 minutes a day, weekly downloads 139 → 85 while the network grew 10%, completion unmeasured (Spotify PENDING since Oct 3, Apple Reporter null). A 45-to-60-minute core edition with the full splice as a second feed is the readers' proposal; the instrument (Apple Connect consumption) comes first.
+4. **Does the Russian audience get its own voice?** Nothing in Russian or French is the network's own: the RU channel is 94% male searching rocket, Starship and telescope; the native Russian shows are a Canadian women's finance show and a language lesson. A Nerra Daily po-russki over the four RU dubs costs about $5 a month.
+5. **Light theme?** Every reference product Patrick named defaults to light for reading; the site is dark-only, which reads as an app and makes the kits unprintable. A brand decision.
+6. **What did the two paying members choose, and why?** Both picked nearly the whole network. The PII rules keep the answer out of the repo on purpose; only the operator's Stripe and KV reads can say.
+7. **Why are Korea 11% and Germany 10% of EN YouTube views?** Unread, and relevant to which language comes next.
