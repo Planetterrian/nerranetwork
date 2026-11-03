@@ -6523,6 +6523,69 @@ experiments:
       (upper bound from the archive page; operator measures it once from a
       draft). Guards tests/test_nerra_daily_email_2026_11_03.py.
 
+  - id: long-form-policy-instrument-2026-11-03
+    title: "The long-form policy carries the Shorts tier's ruler on every entry; a dub long is a rate only from day seven"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-24
+    status: reading
+    baseline: >
+      The policy decided a 19-29 minute render per long on a 14-day velocity
+      of young videos against an absolute floor, while the Shorts tier read
+      the age-matched reach file relative to the channel. On the Nov 1 reach
+      file the FR long median at day 3 was 13 (n=17) against 49 for the FR
+      hook Short, RU 4 vs 62; pooled since Oct 1 EN longs converted 1.6
+      subscribers per 1,000 views, FR longs 6.3. RU/FR entries carried
+      hook_short_d3_median_21d null; two dub longs under two days old had
+      read as 4+ views a day.
+    target: >
+      Three weeks after merge: every entry of every channel in
+      api/youtube_policy.json carries long_d3_median_21d / long_n_21d /
+      long_vs_hook_ratio_21d / long_subs_per_1k_age7_pooled_21d /
+      long_channel_d3_median_21d (None where unmeasured, never 0) and RU/FR
+      carry hook_short_d3_median_21d; every dub index row written since
+      merge carries long_form_render_duration_s; no publish_long_form flipped
+      by the dub overlay (DUB_LONG_RELATIVE_ENABLED is False). The operator
+      reads the ratio and the pooled rate before deciding the overlay (C17).
+    notes: >
+      scripts/update_youtube_policy.py collect_long_reach / long_reach_keys /
+      dub_long_read / dub_long_gate_reason; LONG_MIN_AGE_DAYS per channel
+      {en 2, ru 7, fr 7}; engine/ru_dub.py and engine/lang_dub.py time the
+      long render into engine.youtube_index.record_video(render_duration_s=).
+      Guards tests/test_long_form_policy_instrument_2026_11_03.py,
+      tests/test_youtube_policy.py::TestLongFormPolicyInstrument.
+  - id: env-intel-sourced-deep-dive-2026-11-03
+    title: "Env Intel's Practitioner Deep Dive is built from a document the run read, never from an invented career"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The digest prompt asked the section for "the wisdom that comes from
+      experience" and supplied the line it wanted; five of the last six
+      episodes (to Ep075, Nov 2) narrated an invented consulting career in
+      the first person to a professional audience, from no source — 45 such
+      sentences across the 42 committed Env Intel digests and scripts. The
+      three Reddit feeds were in the source list (Ep075 cited one);
+      articles_in_prompt read 15 (Ep074) and 21 (Ep075).
+    target: >
+      Four Mondays after merge: no first-person professional-experience
+      sentence in any shipped Env Intel digest or script (the committed
+      replay in the guard stays at 0 for new files); every Practitioner Deep
+      Dive names a document whose full text was in the prompt
+      (deep_dive_source_read True on the metrics) or the section is left
+      out; articles_in_prompt holds at or above 15 without Reddit; the
+      script-stage arm read from the credit files' per-call model, with
+      scripts/model_trial_report.py showing no quality drop and a faster
+      script stage. A/B-listen the first Monday (landmine 17).
+    notes: >
+      shows/prompts/env_intel_{digest,podcast}.txt rebuilt by shape;
+      engine/host_experience.py mode "experience" (host_experience_mode;
+      frames is byte-identical; unknown raises at load); DEEP_DIVE_FETCHED_SECTIONS
+      gains "Practitioner Deep Dive"; preferred ccme.ca / aer.ca inside the
+      eight-domain cap; chapter falls back to its digest_section; feed
+      description no longer promises "the most common mistake". Guards
+      tests/test_env_intel_sources_2026_11_03.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency

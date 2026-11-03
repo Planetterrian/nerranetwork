@@ -1861,6 +1861,21 @@ details in the review doc §4 and `docs/experiments.yaml`):
 - **CLAUDE.md is the rules** (≤ 165 KB, `tests/test_claude_md_size.py`): every
   dated pass's narrative lives verbatim under `docs/claude_md_history/`; a
   pass adds at most ten lines here.
+- **The long-form policy carries the Shorts tier's ruler on every entry**
+  (`long_d3_median_21d`, the ratio to the show's own hook Short, subscribers
+  per 1,000 pooled at age 7; RU/FR entries carry their hook-Short reach); **a
+  dub long is a rate only from day seven** (`LONG_MIN_AGE_DAYS` per channel);
+  the dub long overlay is SHIPPED OFF (`DUB_LONG_RELATIVE_ENABLED`) and only
+  the operator turns it on. Guards `tests/test_long_form_policy_instrument_2026_11_03.py`.
+- **Env Intel's Practitioner Deep Dive is built from a document the run read,
+  never from a career the host does not have**: both prompts build it from
+  one regulation or guidance document with full text in the prompt, or leave
+  it out; `engine/host_experience.py` mode `experience` removes a closed set
+  of first-person professional-experience shapes (`frames` is byte-identical;
+  an unknown mode raises at load; re-run the committed replay before widening
+  a pattern); `DEEP_DIVE_FETCHED_SECTIONS` lists the section — a YAML opt-in
+  for a section missing there is a lint that never fires. ⚠️ AUDIO Mondays.
+  Guards `tests/test_env_intel_sources_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
