@@ -769,11 +769,36 @@ ROOM_TONE_EDGE = 0.04
 ROOM_TONE_RATE = 48000
 
 
+def _zero_run_lengths(x):
+    """For each sample, the length of the run of exact zeros ending there
+    (0 for a non-zero sample)."""
+    import numpy as np
+
+    zero = (x == 0)
+    idx = np.arange(len(x))
+    # The index of the most recent non-zero sample at or before each position.
+    last_nonzero = np.maximum.accumulate(np.where(zero, -1, idx))
+    return np.where(zero, idx - last_nonzero, 0)
+
+
 def quietest_window(samples, rate: int, *, window: float = ROOM_TONE_WINDOW,
-                    hop: float = 0.01) -> Optional[Tuple[float, float]]:
+                    hop: float = 0.01,
+                    min_rms: Optional[float] = None,
+                    max_zero_run: Optional[float] = None) -> Optional[Tuple[float, float]]:
     """``(start, end)`` seconds into *samples* of the lowest-energy stretch
     of *window* seconds (the whole buffer when it is shorter), or ``None``
-    for an empty buffer."""
+    for an empty buffer.
+
+    Nov 3 2026, for a pad looped from a piece's edge: *min_rms* leaves out
+    every window whose RMS is at or under it, and *max_zero_run* (seconds)
+    every window holding a run of exact zeros at least that long. A gated
+    per-speaker track carries stretches of exact zeros; a window that is
+    mostly zeros with a sliver of room clears any RMS floor and still loops
+    as the digital silence the room tone exists to replace, while a real
+    floor, however quiet, never holds two milliseconds of exact zeros. With
+    every window excluded the answer is ``None``; without either argument
+    the behaviour is as before.
+    """
     import numpy as np
 
     x = np.asarray(samples, dtype=np.float64)
@@ -781,11 +806,27 @@ def quietest_window(samples, rate: int, *, window: float = ROOM_TONE_WINDOW,
     if n == 0:
         return None
     w = max(1, int(round(window * rate)))
+    run = max(1, int(round(max_zero_run * rate))) if max_zero_run is not None else None
     if n <= w:
+        if min_rms is not None and float(np.sqrt(np.mean(x * x))) <= min_rms:
+            return None
+        if run is not None and int(_zero_run_lengths(x).max()) >= run:
+            return None
         return 0.0, n / rate
     csum = np.concatenate([[0.0], np.cumsum(x * x)])
     starts = np.arange(0, n - w + 1, max(1, int(round(hop * rate))))
-    best = int(starts[int(np.argmin(csum[starts + w] - csum[starts]))])
+    energy = csum[starts + w] - csum[starts]
+    if min_rms is not None:
+        energy = np.where(energy <= (min_rms ** 2) * w, np.inf, energy)
+    if run is not None and run <= w:
+        # A run of `run` zeros ends at p with the whole run inside the window
+        # [s, s+w) exactly when s + run - 1 <= p < s + w.
+        ends_run = np.concatenate([[0], np.cumsum(_zero_run_lengths(x) >= run)])
+        holds_run = (ends_run[starts + w] - ends_run[starts + run - 1]) > 0
+        energy = np.where(holds_run, np.inf, energy)
+    if not np.isfinite(energy).any():
+        return None
+    best = int(starts[int(np.argmin(energy))])
     return best / rate, (best + w) / rate
 
 
@@ -818,6 +859,104 @@ def room_tone_spans(src: Path, breaks: Sequence["Break"]) -> List[Optional[Tuple
         spans.append(None if win is None or win[1] - win[0] < 0.02
                      else (round(lo + win[0], 3), round(lo + win[1], 3)))
     return spans
+
+
+#: A pad between two pieces of an edit (Nov 3 2026, The Age of AI). The
+#: quietest window is searched inside this many seconds of the piece's
+#: edge that faces the pad, so a 40-minute conversation is never decoded
+#: whole for 120 ms of its room.
+ROOM_TONE_SEARCH_SEC = 20.0
+#: A window at or under this RMS (about -100 dBFS) is a gated track's
+#: zeros, not a room; see :func:`quietest_window`'s *min_rms*.
+ROOM_TONE_MIN_RMS = 1e-5
+#: ... and so is a window holding this long a run of exact zeros (a real
+#: floor at -80 dBFS crosses zero on one sample in eight, never on 96 in
+#: a row); see *max_zero_run*.
+ROOM_TONE_MAX_ZERO_RUN = 0.002
+
+
+def room_tone_span(src: Path, *, at_end: bool = True,
+                   search: float = ROOM_TONE_SEARCH_SEC,
+                   min_rms: Optional[float] = ROOM_TONE_MIN_RMS,
+                   max_zero_run: Optional[float] = ROOM_TONE_MAX_ZERO_RUN,
+                   ) -> Optional[Tuple[float, float]]:
+    """``(start, end)`` on *src*'s own clock of the quietest
+    :data:`ROOM_TONE_WINDOW` inside the last (*at_end*) or first *search*
+    seconds of the file, or ``None`` when the file cannot be read, is
+    empty, or holds nothing but digital zeros there. Never raises."""
+    import subprocess
+
+    try:
+        import numpy as np
+
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", str(src)],
+            capture_output=True, text=True, check=True, timeout=60).stdout
+        duration = float(probe.strip() or 0.0)
+        if duration <= 0:
+            return None
+        lo = max(0.0, duration - search) if at_end else 0.0
+        hi = duration if at_end else min(duration, search)
+        if hi - lo < 0.02:
+            return None
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-ss", f"{lo:.3f}", "-t", f"{hi - lo:.3f}",
+             "-i", str(src), "-ac", "1", "-ar", str(ROOM_TONE_RATE),
+             "-f", "f32le", "-"],
+            capture_output=True, check=True, timeout=120).stdout
+        win = quietest_window(np.frombuffer(raw, dtype=np.float32), ROOM_TONE_RATE,
+                              min_rms=min_rms, max_zero_run=max_zero_run)
+    except Exception:
+        return None
+    if win is None or win[1] - win[0] < 0.02:
+        return None
+    return round(lo + win[0], 3), round(lo + win[1], 3)
+
+
+def room_tone_loop_cmd(src: Path, dst: Path, seconds: float,
+                       span: Tuple[float, float], *,
+                       rate: int = ROOM_TONE_RATE) -> List[str]:
+    """ffmpeg command: *span* of *src* looped to *seconds*, written as mono
+    PCM WAV at *rate* — the same ``aloop`` graph :func:`insert_silences_cmd`
+    splices into a story pause, as a file of its own."""
+    t0, t1 = span
+    size = max(1, int(round((t1 - t0) * rate)))
+    loops = max(1, math.ceil(seconds / max(t1 - t0, 1e-3)))
+    graph = (f"atrim=start={t0:.3f}:end={t1:.3f},asetpts=PTS-STARTPTS,"
+             f"aresample={rate},aformat=channel_layouts=mono,"
+             f"aloop=loop={loops}:size={size},"
+             f"atrim=duration={seconds:.3f},asetpts=PTS-STARTPTS")
+    return ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(src),
+            "-af", graph, "-ar", str(rate), "-ac", "1", "-c:a", "pcm_s16le", str(dst)]
+
+
+def write_room_tone_pad(dst: Path, seconds: float, src: Optional[Path] = None, *,
+                        at_end: bool = True, rate: int = ROOM_TONE_RATE) -> str:
+    """Write *seconds* of pad to *dst* (mono PCM WAV): the room tone of
+    *src*'s edge that faces the pad (:func:`room_tone_span`, looped), or
+    digital silence when no source is given or no window can be found.
+    Returns ``"room_tone"`` or ``"silence"`` — what was written.
+
+    The room-tone attempt never raises: any failure falls back to the
+    silence the pad used to be. Nov 3 2026: The Age of AI's edit carried
+    50.6 s of exact zeros between its pieces, the gaps between a guest's
+    answer and Mira's next question, so the guest's room switched off and
+    on around every seam."""
+    import subprocess
+
+    span = room_tone_span(Path(src), at_end=at_end) if src is not None and seconds > 0 else None
+    if span is not None:
+        try:
+            subprocess.run(room_tone_loop_cmd(Path(src), Path(dst), seconds, span, rate=rate),
+                           check=True, capture_output=True, timeout=120)
+            return "room_tone"
+        except Exception:
+            pass
+    subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi",
+                    "-t", f"{max(seconds, 0.0):.3f}", "-i", f"anullsrc=r={rate}:cl=mono",
+                    "-c:a", "pcm_s16le", str(dst)], check=True, capture_output=True)
+    return "silence"
 
 
 def insert_silences_cmd(src: Path, dst: Path, cut_times: Sequence[float],

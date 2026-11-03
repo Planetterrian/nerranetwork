@@ -47,6 +47,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from engine.audio import JOIN_MP3_ENCODE_ARGS
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -78,9 +80,9 @@ SEGMENT_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "flac"]
 PIECE_SUFFIX = ".flac"
 
 #: The one lossy encode of a finished edition: the shows' own master
-#: setting, so a segment reaches the listener one generation from its
-#: show's published file.
-EDITION_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-q:a", "0"]
+#: setting (``engine.audio.JOIN_MP3_ENCODE_ARGS`` owns it), so a segment
+#: reaches the listener one generation from its show's published file.
+EDITION_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", *JOIN_MP3_ENCODE_ARGS]
 
 PROMO_FADE_SECONDS = 0.5
 PROMO_CUT_PAD_SECONDS = 0.15

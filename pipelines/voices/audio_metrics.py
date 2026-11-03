@@ -498,6 +498,152 @@ def notes(measured: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# The shipped file (Nov 3 2026)
+# ---------------------------------------------------------------------------
+
+#: A frame of exact zeros this long is digital silence, not a pause: a
+#: real room's floor is never all-zero samples for 20 ms.
+ZERO_FRAME_SEC = 0.02
+
+#: The two measurements of the file that ships, kept under
+#: ``episode_metrics.notes["shipped"]`` (the table has no column for them).
+SHIPPED_KEYS = ("encode_kbps", "digital_zero_sec")
+
+
+def zero_frames(samples, frame: int) -> int:
+    """How many consecutive, non-overlapping frames of *frame* interleaved
+    samples in the 1-D buffer *samples* are all exactly zero (a trailing
+    partial frame is not counted)."""
+    import numpy as np
+
+    x = np.asarray(samples)
+    frame = max(1, int(frame))
+    n = (len(x) // frame) * frame
+    if n == 0:
+        return 0
+    return int((~(x[:n].reshape(-1, frame) != 0).any(axis=1)).sum())
+
+
+def digital_zero_sec(samples, rate: int, channels: int = 1) -> Optional[float]:
+    """Seconds of *samples* (interleaved PCM, *channels* wide, at *rate*)
+    made of :data:`ZERO_FRAME_SEC` frames that are exactly zero on every
+    channel; ``None`` for an empty buffer, never 0 for "unknown"."""
+    import numpy as np
+
+    x = np.asarray(samples)
+    if len(x) == 0 or rate <= 0:
+        return None
+    frame = max(1, int(round(ZERO_FRAME_SEC * rate))) * max(1, int(channels))
+    return round(zero_frames(x, frame) * frame / (rate * max(1, int(channels))), 2)
+
+
+def _probe_stream(path) -> Dict[str, Any]:
+    """``sample_rate`` / ``channels`` / ``bit_rate`` of *path*'s first audio
+    stream (the format's bit rate when the stream carries none); ``{}``
+    when ffprobe cannot read it."""
+    import json
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "a:0",
+             "-show_entries", "stream=sample_rate,channels,bit_rate:format=bit_rate",
+             "-of", "json", str(path)],
+            capture_output=True, text=True, check=True, timeout=60).stdout
+        data = json.loads(out or "{}")
+    except Exception:
+        return {}
+    stream = (data.get("streams") or [{}])[0] or {}
+    fmt = data.get("format") or {}
+    info: Dict[str, Any] = {}
+    for key in ("sample_rate", "channels"):
+        try:
+            info[key] = int(stream.get(key) or 0) or None
+        except (TypeError, ValueError):
+            info[key] = None
+    for src in (stream, fmt):
+        try:
+            rate = int(src.get("bit_rate") or 0)
+        except (TypeError, ValueError):
+            rate = 0
+        if rate > 0:
+            info["bit_rate"] = rate
+            break
+    return info
+
+
+def encode_kbps(path) -> Optional[int]:
+    """The shipped file's bit rate in kbps as ffprobe reads it (an MP3's
+    is the stream's average; a VBR file reads as what it landed at), or
+    ``None`` when it cannot be read."""
+    rate = _probe_stream(path).get("bit_rate")
+    return int(round(rate / 1000.0)) if rate else None
+
+
+def digital_zero_sec_of(path) -> Optional[float]:
+    """:func:`digital_zero_sec` of the decoded file at *path*, streamed
+    through ffmpeg a second at a time (an hour of mono 48 kHz PCM is 345 MB
+    whole). ``None`` when the file cannot be decoded."""
+    import subprocess
+
+    import numpy as np
+
+    info = _probe_stream(path)
+    rate = int(info.get("sample_rate") or 0)
+    channels = int(info.get("channels") or 0)
+    if rate <= 0 or channels <= 0:
+        return None
+    frame = max(1, int(round(ZERO_FRAME_SEC * rate))) * channels
+    chunk = frame * 50  # one second, a whole number of frames
+    zeros = 0
+    total = 0
+    try:
+        proc = subprocess.Popen(
+            ["ffmpeg", "-v", "error", "-i", str(path), "-f", "s16le",
+             "-ar", str(rate), "-ac", str(channels), "-"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        assert proc.stdout is not None
+        carry = b""
+        while True:
+            data = proc.stdout.read(chunk * 2)
+            if not data:
+                break
+            data = carry + data
+            usable = (len(data) // (frame * 2)) * (frame * 2)
+            carry = data[usable:]
+            if usable:
+                x = np.frombuffer(data[:usable], dtype=np.int16)
+                zeros += zero_frames(x, frame)
+                total += len(x)
+        proc.wait(timeout=600)
+        if proc.returncode != 0 or total == 0:
+            return None
+    except Exception:
+        return None
+    return round(zeros * frame / (rate * channels), 2)
+
+
+def shipped_file_metrics(path) -> Dict[str, Any]:
+    """``{"encode_kbps", "digital_zero_sec"}`` of the file that ships,
+    measured from the file itself. Either is ``None`` when it could not be
+    measured — never 0 for "unknown" — and nothing here raises.
+
+    Why (Nov 3 2026): the Age of AI edit was the only published file at
+    128 kbps CBR and carried 50.6 s of exact zeros, and no record said so;
+    these two numbers on every edit are the readout of the fix."""
+    out: Dict[str, Any] = {"encode_kbps": None, "digital_zero_sec": None}
+    try:
+        out["encode_kbps"] = encode_kbps(path)
+    except Exception:
+        pass
+    try:
+        out["digital_zero_sec"] = digital_zero_sec_of(path)
+    except Exception:
+        pass
+    return out
+
+
+# ---------------------------------------------------------------------------
 # The targets a lesson is retired against (§7.7)
 # ---------------------------------------------------------------------------
 

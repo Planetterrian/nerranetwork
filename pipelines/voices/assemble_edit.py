@@ -67,6 +67,10 @@ from common import (  # noqa: E402
     sb_update, send_email,
 )
 from shows import get_show  # noqa: E402
+import audio_metrics  # noqa: E402
+
+from engine.audio import JOIN_MP3_ENCODE_ARGS  # noqa: E402
+from engine.story_breaks import write_room_tone_pad  # noqa: E402
 
 EDL_DIR = Path(__file__).parent / "edl"
 # Sept 25 2026. Every sentence faded out. Patrick heard it on Dr. Michael
@@ -622,6 +626,64 @@ def _silence(seconds: float, out: Path) -> Path:
     return out
 
 
+def _room_tone(seconds: float, out: Path, source_wav: Path | None = None, *,
+               at_end: bool = True) -> Path:
+    """A pad of *seconds* carrying the room of the piece beside it.
+
+    Nov 3 2026. Every ``gap`` in an EDL was ``_silence``: exact zeros. The
+    published edits carried 50.6 s of them — the floor of a real room (the
+    guest's, which is what makes the file sound real) switched to nothing
+    and back at every seam between an answer and Mira's next question, and
+    the only file on the network with digital zero in it was the flagship
+    interview. The pad is now the quietest 120 ms of the adjacent GUEST
+    piece's facing edge, looped (``engine.story_breaks.write_room_tone_pad``,
+    the story-pause machinery), after that piece's own restore chain has
+    run, so the tone is the cleaned tone. With no *source_wav*, or when no
+    window with any energy can be found (a gated track's zeros are not a
+    room), the pad is the silence it was. The attempt never raises.
+    """
+    how = write_room_tone_pad(out, float(seconds), source_wav, at_end=at_end)
+    if how != "room_tone":
+        logger.info("pad %s (%.2fs): digital silence — %s", out.name, seconds,
+                    "no adjacent piece" if source_wav is None else "no room tone found")
+    return out
+
+
+def _tone_source(cuts: List[dict], pieces: List[Path | None], i: int):
+    """``(piece, at_end)`` of the rendered piece whose room a gap at *i*
+    should carry: the conversation beside it first (the piece before it,
+    then the one after), then any neighbour that is not itself a gap, else
+    ``(None, True)`` for silence."""
+    neighbours = ((i - 1, True), (i + 1, False))
+    for wanted in (("room", "guest"), None):
+        for j, at_end in neighbours:
+            if not 0 <= j < len(cuts) or pieces[j] is None:
+                continue
+            kind = piece_kind(cuts[j])
+            if kind == "gap":
+                continue
+            if wanted is None or kind in wanted:
+                return pieces[j], at_end
+    return None, True
+
+
+def _master_cmd(pieces: List[Path], episode: Path) -> List[str]:
+    """The one lossy encode of the edit: every piece (PCM WAV) joined,
+    mastered to the published loudness and written at the network's own
+    master setting (``engine.audio.JOIN_MP3_ENCODE_ARGS`` — VBR ``-q:a 0``,
+    never a CBR cap). Nov 3 2026: this carried ``-b:a 128k``, the only
+    published file on the network that did."""
+    inputs: List[str] = []
+    labels: List[str] = []
+    for i, piece in enumerate(pieces):
+        inputs += ["-i", str(piece)]
+        labels.append(f"[{i}:a]")
+    return ["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex",
+            "".join(labels) + f"concat=n={len(pieces)}:v=0:a=1,{LOUDNESS}[out]",
+            "-map", "[out]", "-ar", "48000", "-ac", "1",
+            *JOIN_MP3_ENCODE_ARGS, str(episode)]
+
+
 def _duration(path: Path) -> float:
     out = subprocess.run(["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
                           "-of", "csv=p=0", str(path)], capture_output=True, text=True)
@@ -812,10 +874,14 @@ def assemble(slug: str) -> dict:
              if _is_conversation(c)
              and c.get("end") is not None),
             default=-1)
+        # A gap is rendered after its neighbours, from the room of the piece
+        # beside it (_room_tone); until then its slot holds its place.
+        gaps: List[tuple] = []
         for i, cut in enumerate(cuts):
             out = work / f"{i:03d}.wav"
             if cut.get("gap") is not None:
-                pieces.append(_silence(float(cut["gap"]), out))
+                pieces.append(None)  # type: ignore[arg-type]
+                gaps.append((i, float(cut["gap"]), out))
                 continue
             ref = str(cut["from"])
             # Oct 5 2026: a piece can come from another recording of the same
@@ -871,6 +937,11 @@ def assemble(slug: str) -> dict:
             pieces.append(_piece(cut, src, out))
             logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))
 
+        for i, seconds, out in gaps:
+            src, at_end = _tone_source(cuts, pieces, i)
+            pieces[i] = _room_tone(seconds, out, src, at_end=at_end)
+        assert all(p is not None for p in pieces)
+
         piece_durations = [_duration(piece) for piece in pieces]
         # Oct 27 2026: the room-to-episode clock, so the chapters (written on
         # the room's clock) are published where the episode actually is.
@@ -881,18 +952,14 @@ def assemble(slug: str) -> dict:
         # (a cut of the guest's own track).
         edit_pieces = pieces_of(cuts, piece_durations)
         episode = work / "episode.mp3"
-        inputs: List[str] = []
-        labels: List[str] = []
-        for i, piece in enumerate(pieces):
-            inputs += ["-i", str(piece)]
-            labels.append(f"[{i}:a]")
-        subprocess.run(
-            ["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex",
-             "".join(labels) + f"concat=n={len(pieces)}:v=0:a=1,{LOUDNESS}[out]",
-             "-map", "[out]", "-ar", "48000", "-ac", "1",
-             "-c:a", "libmp3lame", "-b:a", "128k", str(episode)],
-            check=True)
+        subprocess.run(_master_cmd(pieces, episode), check=True)
         seconds = _duration(episode)
+        # Nov 3 2026: what the SHIPPED file is — its bitrate and how much of
+        # it is exact zeros — read from the file itself (never raises; an
+        # unreadable file records None, never 0).
+        shipped = audio_metrics.shipped_file_metrics(episode)
+        logger.info("shipped file: %s kbps, %s s of digital zero",
+                    shipped.get("encode_kbps"), shipped.get("digital_zero_sec"))
         # Sept 18 2026: the same key every time meant the CDN kept serving
         # the FIRST assembly to anyone who had already played it. Patrick
         # listened to Sheldon's corrected ending three times and heard the
@@ -959,10 +1026,18 @@ def assemble(slug: str) -> dict:
                       # has marked a window since it was built.
                       "windows_applied": applied,
                       "windows_hash": windows_hash(windows),
+                      # Nov 3 2026: encode_kbps / digital_zero_sec of the file
+                      # at `url`, measured from it (audio_metrics).
+                      "shipped": shipped,
                       "built_at": dt.datetime.now(dt.timezone.utc).isoformat()}
     log["tracks"] = tracks
     sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
     logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
+    try:
+        from learning import record_shipped_metrics
+        record_shipped_metrics(_interview_id(spec, run), shipped)
+    except Exception:  # noqa: BLE001 — metrics never block an episode
+        logger.exception("shipped-file metrics not recorded (non-fatal)")
     # Oct 5 2026: what the edit took out of Mira's own voice is the plainest
     # verdict on it, and the grading pass runs before anyone edits. Tell the
     # learning loop. transcript_raw, not cleaned: it is never replaced by the

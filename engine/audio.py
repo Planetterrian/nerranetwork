@@ -393,7 +393,15 @@ def master_voice_track(input_path: Path, output_path: Path, *,
 JOIN_EDGE_FADE_SECONDS = 0.006
 
 #: The final encode of a joined MP3 when the caller names none: the shows'
-#: own archival master setting.
+#: own archival master setting, and the ONE owner of the network's master
+#: encode. VBR ``-q:a 0``, never a CBR cap: the shows' master, Nerra Daily
+#: (``engine.daily_edition.EDITION_ENCODE_ARGS`` ends on it), Nerra
+#: Personal and the Nerra Voices edit and narration all import it. Nov 3
+#: 2026: The Age of AI was the only published file at ``-b:a 128k`` CBR
+#: mono (``pipelines/voices/assemble_edit.py`` and ``narrate.py`` each
+#: carried their own copy of the encode). A caller adds its own ``-ar`` /
+#: ``-ac`` in front; the bitrate a mono 48 kHz speech file lands at under
+#: this setting is the encoder's, not a number anything here promises.
 JOIN_MP3_ENCODE_ARGS = ["-c:a", "libmp3lame", "-q:a", "0"]
 
 
