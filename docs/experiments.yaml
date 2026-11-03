@@ -7,6 +7,11 @@
 # and when do we decide" a rendered surface instead of tribal knowledge —
 # the same discipline as the review ledgers, applied to growth work.
 #
+# A Shorts entry carries its channel's JOB metric or it is not an
+# experiment (Nov 3 2026): EN Shorts are scored on
+# short_subs_per_1k_views_14d_en + long_d3_median_en_7d, RU/FR on
+# short_reach_d3_median_<ch>_7d (engine/release_schedule.py).
+#
 # Consumed by scripts/generate_dashboard.py::build_experiments_section.
 # Schema per entry:
 #   id:        unique slug
@@ -6685,6 +6690,127 @@ experiments:
       (post_interview.strip_echo_lines) removes HER words from the GUEST's
       lines, so the beat must be in her own words. Guards
       tests/test_mira_beat_2026_11_03.py; narrative docs/mira_craft_notes.md.
+  - id: youtube-one-video-per-episode-2026-11-03
+    title: "The channel the repo can see: RSS-ingested copies reconciled nightly, counted and nowhere else"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-30
+    status: reading
+    metric: youtube_rss_copies_14d_en
+    baseline: >
+      Of the 80 newest EN videos on the Videos tab, 40 were "Ep N: <hook>"
+      uploads at the rendered long's duration with the square cover as the
+      still: YouTube Podcasts' RSS-ingested copies. api/youtube_stats.json
+      channels.en video_count 4,822 against 2,434 indexed rows (49% unknown
+      to the repo; ru 1,560 vs 1,265); on ten visible pairs the copies took
+      41 of 112 first-day views (37%). The first nightly after merge sets the
+      counted baseline.
+    target: >
+      The first nightly writes channels.<ch>.unindexed_recent and attributes
+      the copies (kind rss_copy, read by youtube_rss_copies_14d_<ch> and
+      nowhere else; every instrument reads INDEXED_KINDS only). After the
+      Nov 16 Studio step (remove the RSS-fed podcast where a render exists;
+      landmine 15, no API): youtube_rss_copies_14d_en toward 0 over the
+      following fortnight, and long_d3_median_en_7d read against the RU/FR
+      control to see whether the render keeps the views the copy took.
+    notes: >
+      scripts/fetch_youtube_analytics.py _channel_uploads (35 days, one Data
+      API unit a page; keys ABSENT on a failed read, never 0); attribution by
+      episode number + hook prefix (the Russian "Выпуск" prefix too); the
+      nightly warns "YouTube RSS copies — <show> on <ch>" where a copy sits
+      beside a render. Guards tests/test_youtube_pass_2026_11_03.py,
+      tests/test_dashboard_growth.py::TestYoutubeMeasurementKeys.
+  - id: retention-curves-every-long-2026-11-03
+    title: "A retention curve for every long of the last 14 days, hold-at-5% by age"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: long_hold5_age7_median_en
+    baseline: >
+      The analytics fetch pulled audienceWatchRatio curves for the top FIVE
+      longs per channel a night, so the instrument never accumulated past
+      ~10-15 curves and a carried-forward curve read as fresh. The first
+      fortnight after merge sets the hold5 baseline at age 7.
+    target: >
+      Every EN/RU/FR long under 14 days old carries a retention_curve with
+      its curve_fetched_at (RETENTION_CURVE_MAX 150 a night, newest first
+      across channels); api/youtube_early_reach.json carries hold5_by_age /
+      hold25_by_age for longs only; long_hold5_age7_median_en is a number on
+      the dashboard (null until age-7 reads exist, never 0). Readout: the
+      median beside the open-cliff card, grouped by show; a show whose
+      hold5 at age 7 sits under the channel's median is a cold-open
+      question for the Nov 17 review, not a policy flip.
+    notes: >
+      A curve carries curve_fetched_at and a carried-forward one is never
+      read as fresh; a failed curve never joins _FAILED_QUERIES; the
+      snapshot's generated stamp carries the fetch's own date so a fetch
+      across UTC midnight loses no hold. On current volume the top Shorts
+      get no curve slots until long volume drops or the cap is raised. The
+      curve pass adds ~130 Analytics queries a night. Guards
+      tests/test_youtube_pass_2026_11_03.py.
+  - id: listen-before-slate-2026-11-03
+    title: "Listen before the slate: a rehearsal that commits nothing, a probe on a real script, a listens record"
+    area: efficiency
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      "Ship to the whole slate, then repair" was the audio pattern: the Oct 13
+      beat and the Oct 14 swell each shipped network-wide and were reversed
+      within a day, the Oct 20 breath tag reached 14 episodes before the
+      operator heard it and every one was re-voiced, 34 "Re-synthesize
+      Episode" runs in 14 days, 11 commits to shows/_defaults.yaml in
+      October (5 between Oct 13 and 20). run_show --rehearse existed and no
+      workflow exposed it; the probe rendered one fixed passage.
+    target: >
+      Four weeks after merge: every change to _defaults.yaml's audio: or
+      tts: values carries a docs/listens.md line and a regenerated snapshot
+      (the guard fails the PR otherwise); at least one rehearsal artifact
+      and one probe run on a committed script in the record; zero
+      network-wide audio reversals and under 10 re-synthesis runs in the
+      four weeks.
+    notes: >
+      run-show.yml rehearse input (full pipeline through TTS and mix, the
+      MP3 and TTS text as a 3-day artifact, nothing committed, the
+      same-day guard skipped, every publish step gated);
+      scripts/probe_audio_chain.py --script renders a real minute of a
+      committed script through the real builders with named chain variants;
+      tests/fixtures/defaults_audio_snapshot.yaml + the listens guard; the
+      PR template asks for the rehearsal link and who listened; the
+      playbook's "Audio changes" section. Guards
+      tests/test_listen_before_slate_2026_11_03.py.
+  - id: findability-2026-11-03
+    title: "Findability a search engine can read: NewsArticle schema, sameAs and logo, dateModified, short titles, a news sitemap"
+    area: funnel
+    shipped: 2026-11-03
+    readout: 2026-12-15
+    status: reading
+    baseline: >
+      Organic Search was 19 sessions in 28 days on 2,966 sitemap URLs
+      (api/ga4_stats.json channels), the same as Sep 10; the 17 topic hubs
+      received no landing session. Every post title was shaped
+      "<hook>… — EpN | Show" at a median 88 characters; posts carried
+      BlogPosting with no dateModified and no publisher logo; the
+      Organization had no sameAs; no news sitemap.
+    target: >
+      Six weeks after merge (Search Console needs the window): organic
+      sessions per 28 days above 60 (3x) with news-sitemap.xml accepted in
+      Search Console and the NewsArticle posts indexed under their short
+      titles; zero rich-result errors on the sampled posts. A flat read
+      after six weeks closes the entry as a MISS, not a reason to add
+      schema.
+    notes: >
+      engine/blog.py article_schema_type (NewsArticle on the 24 news shows;
+      BlogPosting for a lesson, an interview, a dialogue, a narrative) with
+      the author kept as the show ORGANIZATION (never a Person for a cloned
+      voice), publisher logo ImageObject, dateModified from corrections,
+      image the share card; engine/titles.py web_page_title ("<lead> · <Show>",
+      WEB_TITLE_LEAD_MAX 58); org sameAs from network_social_sameas();
+      generate_news_sitemap (48 h, from each post's own JSON-LD, never
+      mtime), written by the finalize step and staged one path per add; an
+      initial empty file is committed so the URL robots.txt names never
+      404s. Guards tests/test_findability_2026_11_03.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency

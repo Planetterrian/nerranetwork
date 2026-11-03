@@ -1897,6 +1897,33 @@ details in the review doc §4 and `docs/experiments.yaml`):
   together**; the room-side baseline is the first audio-measured room, never
   the hand-edited Ep15. Ships to a booked room only on a two-arm rehearsal
   PASS plus one listen. Guards `tests/test_mira_beat_2026_11_03.py`.
+- **The channel the repo can see**: the nightly fetch reads the uploads
+  playlist back (`_channel_uploads`; keys ABSENT on a failed read, never 0);
+  an "Ep N: <hook>" twin is `kind: rss_copy`, counted by
+  `youtube_rss_copies_14d_<ch>` and nowhere else — **every instrument reads
+  `INDEXED_KINDS` only**. **Every long of the last 14 days gets a retention
+  curve** (`RETENTION_CURVE_MAX`, newest first ACROSS channels); a curve
+  carries `curve_fetched_at` and a carried-forward one is never read as
+  fresh; the snapshot's `generated` carries the fetch's own date. **The
+  Short's job is written once** (`engine/release_schedule.py`). The Studio
+  removal of the RSS podcasts is the operator's (landmine #15). Guards
+  `tests/test_youtube_pass_2026_11_03.py`.
+- **Listen before the slate**: `rehearse: true` on "Run show" runs the
+  pipeline through TTS and mix and commits NOTHING (the MP3 is a 3-day
+  artifact); `scripts/probe_audio_chain.py --script` renders a real minute
+  of a committed script through the real builders; **a change to
+  `_defaults.yaml`'s `audio:` / `tts:` values fails CI until the snapshot is
+  regenerated and `docs/listens.md` gains its line** (the guard confirms the
+  line, only the listener confirms the listening); the PR template asks for
+  the rehearsal link. Playbook: "Audio changes". Guards
+  `tests/test_listen_before_slate_2026_11_03.py`.
+- **Findability**: `engine.blog.article_schema_type` decides NewsArticle vs
+  BlogPosting from the show YAML and the curated topics; **the author stays
+  the show ORGANIZATION, never a Person**; `dateModified` comes from
+  corrections; **`engine.titles.web_page_title` is the one page-title shape**
+  (`<lead> · <Show>`, `WEB_TITLE_LEAD_MAX` 58); `news-sitemap.xml` reads each
+  post's own JSON-LD (never mtime) and is staged one path per `git add`.
+  Guards `tests/test_findability_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
