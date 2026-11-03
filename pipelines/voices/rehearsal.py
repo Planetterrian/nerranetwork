@@ -87,6 +87,13 @@ MUST_BEAT = (("overlap_events", "lower"), ("self_answered_turns", "lower"),
 #: 50 s; the target band is 12-20 s, so "not lose" is "not further from the
 #: band than current").
 MUST_NOT_LOSE = ("mira_turn_sec_median", (12.0, 20.0))
+#: Printed beside the verdict, never gating it (Nov 3 2026, the beat before
+#: the question): the share of her question turns with no sentence of her
+#: own before the question, the label it can regrow into, the echo, and how
+#: long after the guest's last word she begins (a slower reasoning effort
+#: shows there first). Read the pair label / bare together.
+READ_BESIDE = ("bare_question_rate", "label_open_rate", "echo_open_rate",
+               "turn_gap_ms_median")
 #: What the fixture's persona may carry into the room (Voximplant's
 #: customData has to fit the whole JSON; a persona over this is cut at a
 #: line end).
@@ -1170,6 +1177,16 @@ def report_markdown(summary: Dict[str, Dict[str, Any]], result: Dict[str, Any],
             lines.append(f"| {ch['metric']} | {fmt(ch.get('proposed'))} | {fmt(ch.get('current'))} "
                          f"| {ch.get('rule', '')} | {ok} |")
         lines.append("")
+    beside = [(key, {arm: s["medians"].get(key) for arm, s in summary.items()})
+              for key in READ_BESIDE]
+    if any(v is not None for _, by_arm in beside for v in by_arm.values()):
+        lines.append("Read beside the verdict (never gating it):")
+        lines.append("")
+        lines.append("| metric | " + " | ".join(summary) + " |")
+        lines.append("|---|" + "---|" * len(summary))
+        for key, by_arm in beside:
+            lines.append(f"| {key} | " + " | ".join(fmt(by_arm[arm]) for arm in summary) + " |")
+        lines.append("")
     for arm, s in summary.items():
         lines.append(f"- **{arm}**: {s['rooms']} room(s), fixtures {', '.join(s['fixtures'])}"
                      + (f", listen: {s['listen_url']}" if s.get("listen_url") else ""))
@@ -1315,7 +1332,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     r.add_argument("--turn-silence-ms", type=int, default=None,
                    help="override the end-of-turn silence for this arm")
     r.add_argument("--reasoning-effort", default="",
-                   help="interview_runs.reasoning_effort for this arm (low|none|high)")
+                   help="interview_runs.reasoning_effort for this arm (none|low|medium|high)")
     r.add_argument("--tools", choices=("default", "none"), default="default")
     r.add_argument("--prompt-file", default="",
                    help="use this file as the prompt instead of compiling/looking one up")

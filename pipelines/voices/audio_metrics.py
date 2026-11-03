@@ -30,6 +30,10 @@ The eight measures and what each answers:
   previous turn.
 * ``echo_open_rate`` — the share of her turns whose first four words appear
   in the guest's previous thirty; the tic with no banned-phrase list.
+* ``bare_question_rate`` (Nov 3 2026, a note beside ``label_open_rate``) —
+  the share of her question turns with no sentence of her own before the
+  question; the three shapes of a question turn (label, bare, reaction)
+  add to one, so the pair says whether a reaction rule regrew the label.
 * ``closing_round_complete`` — from the scenario trace: every round
   question asked, one per turn, each followed by the guest.
 * ``seams`` — session rotations and drops with guest speech within two
@@ -209,6 +213,64 @@ def echo_open_rate(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> O
 #: the question of the turn ("Deadwood showing itself. Where does that leave...").
 LABEL_MAX_WORDS = 8
 _GREETING = {"hello", "hi", "hey", "welcome", "thanks", "thank", "sure", "yes", "right", "okay", "ok"}
+#: A sentence of her own before the question counts as a beat (a reaction)
+#: only from this many words, a leading greeting word not counted: "Right."
+#: and "Thanks, Michael." are not a sentence about the answer.
+REACTION_MIN_WORDS = 4
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+")
+#: The three shapes a question turn can take. They are exclusive and cover
+#: every judged turn, so their shares add to one.
+QUESTION_TURN_SHAPES = ("label", "bare", "reaction")
+
+
+def question_turn_shape(text: str) -> Optional[str]:
+    """Which of the three shapes one of Mira's turns has, or ``None`` when it
+    asks nothing (no ``?``) and is not judged.
+
+    ``label``: the first sentence is one to ``LABEL_MAX_WORDS`` words of her
+    own, no question in it, not a greeting (exactly ``label_open_rate``'s
+    rule, so the two measures never double-count). ``bare``: nothing of her
+    own before the first question; a one-sentence question turn, a question
+    after a greeting or a name alone. ``reaction``: a declarative of at
+    least ``REACTION_MIN_WORDS`` words before the first question (Nov 3
+    2026: the beat the brief asks for after a real answer; content is not
+    read, so a setup line counts the same as a reaction).
+    """
+    text = (text or "").strip()
+    if "?" not in text:
+        return None
+    sentences = _SENTENCE_RE.split(text)
+    first = sentences[0]
+    if len(sentences) >= 2 and not first.endswith("?"):
+        head = _norm_words(first)
+        if 1 <= len(head) <= LABEL_MAX_WORDS and head[0] not in _GREETING:
+            return "label"
+    for sentence in sentences:
+        if "?" in sentence:
+            break
+        words = _norm_words(sentence)
+        if words and words[0] in _GREETING:
+            words = words[1:]
+        if len(words) >= REACTION_MIN_WORDS:
+            return "reaction"
+    return "bare"
+
+
+def question_turn_shapes(mira_turns: Sequence[dict]) -> Dict[str, int]:
+    """Counts of ``label`` / ``bare`` / ``reaction`` over Mira's question
+    turns, with ``judged`` their total (``label + bare + reaction``)."""
+    counts = {shape: 0 for shape in QUESTION_TURN_SHAPES}
+    for m in mira_turns:
+        shape = question_turn_shape(" ".join(m["words"]))
+        if shape:
+            counts[shape] += 1
+    counts["judged"] = sum(counts[shape] for shape in QUESTION_TURN_SHAPES)
+    return counts
+
+
+def _shape_rate(mira_turns: Sequence[dict], shape: str) -> Optional[float]:
+    counts = question_turn_shapes(mira_turns)
+    return round(counts[shape] / counts["judged"], 3) if counts["judged"] else None
 
 
 def label_open_rate(mira_turns: Sequence[dict]) -> Optional[float]:
@@ -216,20 +278,19 @@ def label_open_rate(mira_turns: Sequence[dict]) -> Optional[float]:
     answer before the question (Oct 27 2026, Glenn Broder's hour: nearly every
     turn did, "Collective fattening." among them; echo_open_rate saw 0%
     because the words were hers, not his)."""
-    judged = 0
-    labels = 0
-    for m in mira_turns:
-        text = " ".join(m["words"]).strip()
-        if "?" not in text:
-            continue
-        judged += 1
-        first = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)
-        if len(first) < 2 or first[0].endswith("?"):
-            continue
-        head = _norm_words(first[0])
-        if 1 <= len(head) <= LABEL_MAX_WORDS and head[0] not in _GREETING:
-            labels += 1
-    return round(labels / judged, 3) if judged else None
+    return _shape_rate(mira_turns, "label")
+
+
+def bare_question_rate(mira_turns: Sequence[dict]) -> Optional[float]:
+    """Share of Mira's question turns that go straight to the question with
+    no sentence of her own before it (Nov 3 2026: Ep15, the first room on
+    the brief that banned the grade and the echo, had 15 of 28 question
+    turns bare against 5 of 37 on Ep12; the guest's answers shortened from
+    178 words to 58 across the hour). A host who asks and does not react is
+    an answering machine with good questions. Read beside ``label_open_rate``:
+    a reaction rule can regrow the label, and the two together say which way
+    the room moved."""
+    return _shape_rate(mira_turns, "bare")
 
 
 def guest_words_per_answer(guest_turns: Sequence[dict]) -> Tuple[Optional[float], Optional[float]]:
@@ -468,7 +529,15 @@ def measure_audio(words_by_role: Dict[str, List[dict]],
         out["turn_gap_ms_p90"] = _percentile(gaps, 0.9)
         out["self_answered_turns"] = self_answered(guest_turns, mira_turns)
         out["echo_open_rate"] = echo_open_rate(guest_turns, mira_turns)
-        out["label_open_rate"] = label_open_rate(mira_turns)
+        # The three shapes of a question turn add to one: label (a few words
+        # of hers before the question), bare (no sentence of hers before
+        # it) and reaction (a declarative of REACTION_MIN_WORDS or more).
+        shapes = question_turn_shapes(mira_turns)
+        judged = shapes["judged"] or None
+        out["label_open_rate"] = round(shapes["label"] / judged, 3) if judged else None
+        out["bare_question_rate"] = round(shapes["bare"] / judged, 3) if judged else None
+        out["reaction_open_rate"] = round(shapes["reaction"] / judged, 3) if judged else None
+        out["question_turn_shapes"] = shapes
         out["interruptions_audio"] = sum(1 for g in gaps if g < INTERRUPTION_MS)
         out["dead_air_turns_audio"] = sum(1 for g in gaps if g > DEAD_AIR_MS)
     if trace:
@@ -658,9 +727,27 @@ TARGETS: Dict[str, Tuple[str, float]] = {
     "mira_turn_sec_median_high": ("down", 20.0),
     "echo_open_rate": ("down", 0.10),
     "label_open_rate": ("down", 0.35),
+    "bare_question_rate": ("down", 0.25),
     "guest_words_trend": ("up", 1.0),
     "seams": ("down", 0.0),
 }
+
+
+def metric_value(row: Dict[str, Any], metric: str) -> Any:
+    """One room's value for ``metric``: the ``episode_metrics`` column, or
+    the measure of the same name under ``notes`` / ``notes.audio`` (where
+    ``label_open_rate`` and ``bare_question_rate`` ride; ``COLUMNS`` is
+    unchanged). ``None`` when the room did not measure it."""
+    value = row.get(metric)
+    if value is not None:
+        return value
+    notes = row.get("notes")
+    if not isinstance(notes, dict):
+        return None
+    if notes.get(metric) is not None:
+        return notes.get(metric)
+    audio = notes.get("audio")
+    return audio.get(metric) if isinstance(audio, dict) else None
 
 
 def is_green(metric: str, row: Dict[str, Any]) -> Optional[bool]:
@@ -684,7 +771,7 @@ def is_green(metric: str, row: Dict[str, Any]) -> Optional[bool]:
         return None if value is None else bool(value)
     if metric not in TARGETS:
         return None
-    value = row.get(metric)
+    value = metric_value(row, metric)
     if value is None:
         return None
     direction, threshold = TARGETS[metric]

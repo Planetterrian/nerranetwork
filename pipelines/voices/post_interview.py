@@ -1369,7 +1369,8 @@ def audio_metrics_basis_text(metrics: dict) -> str:
     if metrics.get("metrics_basis") == "audio":
         return ("AUDIO. overlap_sec, overlap_events, turn_gap_ms_*, "
                 "mira_turn_sec_*, guest_words_per_answer_median, guest_words_trend, "
-                "self_answered_turns, echo_open_rate and label_open_rate were measured from each "
+                "self_answered_turns, echo_open_rate, label_open_rate and bare_question_rate "
+                "were measured from each "
                 "speaker's own recording with word timestamps. Believe them over "
                 "your reading of the transcript. interruptions, repeated_questions "
                 "and mira_mean_turn_sec are the older transcript estimates kept "
@@ -1716,8 +1717,11 @@ def main() -> int:
                         for k in ("dead_air_basis", "longest_silence_sec",
                                   "silences")
                         if (metrics.get("notes") or {}).get(k) is not None},
-                     # Oct 27 2026: measured, not a column.
-                     "label_open_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("label_open_rate")},
+                     # Oct 27 2026: measured, not a column. Nov 3 2026: the
+                     # bare question beside it; label, bare and reaction add
+                     # to one, so the grader reads the pair.
+                     "label_open_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("label_open_rate"),
+                     "bare_question_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("bare_question_rate")},
                     ensure_ascii=False),
                 audio_basis=audio_metrics_basis_text(metrics),
                 cleaned_transcript=cleaned,

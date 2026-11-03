@@ -462,6 +462,8 @@ def record_shipped_metrics(interview_id: str, shipped: Dict[str, Any]) -> bool:
 LESSON_METRICS = {
     "overlap_events_per_10min", "self_answered_turns", "mira_turn_sec_median",
     "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams",
+    # Nov 3 2026: the number a "react before the question" lesson names.
+    "bare_question_rate",
 }
 
 
@@ -1029,6 +1031,7 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             ("self-answered turns", "self_answered_turns", ""),
             ("echo openers", "echo_open_rate", "%"),
             ("label openers", "label_open_rate", "%"),
+            ("bare questions", "bare_question_rate", "%"),
             ("guest words per answer", "guest_words_per_answer_median", ""),
         ) if m.get("metrics_basis") == "audio" else ()
         for label, key, suffix in audio_rows + (
