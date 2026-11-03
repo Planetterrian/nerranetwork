@@ -114,6 +114,10 @@ def _reach(yt: Optional[dict], op3: Optional[dict],
         for video in (block or {}).get("videos") or []:
             if (video.get("published") or "") < cutoff:
                 continue
+            # Nov 3 2026: an RSS-ingested copy (kind ``rss_copy``) carries the
+            # feed's description, not a funnel link; it is not a stage here.
+            if (video.get("kind") or "") == "rss_copy":
+                continue
             slug = video.get("show_slug") or _dir
             channel = (video.get("channel") or "en").lower()
             views = int(video.get("views") or 0)

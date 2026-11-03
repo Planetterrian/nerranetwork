@@ -103,6 +103,19 @@ A growth number that flatters is worse than none, so:
   report shows how much of the picture it is missing rather than
   implying it sees everything.
 
+### The site is not a funnel stage for video (Nov 3 2026)
+
+The Short's job is written once (`engine/release_schedule.py`,
+`docs/youtube_feedback_loop.md`, here). **EN**: the hook Short is the
+trailer for a subscriber-fed long-form channel, scored on
+`short_subs_per_1k_views_14d_en` and `long_d3_median_en_7d`, never on site
+sessions. **RU / FR**: the Shorts feed is the product, scored on
+`short_reach_d3_median_<ch>_7d` (`_ru_`, `_fr_`); the only ask is the
+YouTube subscribe. Video → site sessions stay in this report as a
+measured stage (the link still carries its campaign id), but no Short is
+re-aimed to move them, and a Short experiment carries its channel's job
+metric or it is not an experiment.
+
 ---
 
 ## 3. The RU SpaceX pilot

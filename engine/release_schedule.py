@@ -29,6 +29,18 @@ datetime, or ``None`` when the slot has already passed for that day (or is
 closer than the surface's minimum lead). ``None`` means "publish now" —
 every caller treats any failure the same way, so a scheduling problem can
 never cost an upload or a send.
+
+What each surface is for (Nov 3 2026, written once so no review re-aims the
+Short). **EN**: the hook Short is the trailer for a subscriber-fed long-form
+channel; it is scored on ``short_subs_per_1k_views_14d_en`` and
+``long_d3_median_en_7d`` (the long-form's views at a fixed age), never on
+site sessions — the site is not a funnel stage for video. **RU / FR**: the
+Shorts feed is the product; each channel is scored on
+``short_reach_d3_median_<ch>_7d`` (``short_reach_d3_median_ru_7d``,
+``short_reach_d3_median_fr_7d``) and the only ask is the YouTube subscribe.
+The same paragraph is in ``docs/youtube_feedback_loop.md`` and
+``docs/funnel.md``; a Short experiment carries its channel's job metric or it
+is not an experiment.
 """
 from __future__ import annotations
 

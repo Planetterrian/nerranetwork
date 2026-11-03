@@ -137,6 +137,11 @@ def youtube_videos_by_slug(yt: Dict[str, Any]) -> Dict[str, List[dict]]:
     out: Dict[str, List[dict]] = {}
     for dir_name, payload in (yt.get("shows") or {}).items():
         for v in (payload or {}).get("videos") or []:
+            # Nov 3 2026: an RSS-ingested copy (kind ``rss_copy``) is joined
+            # to the stats for the dashboard's copies count only; the
+            # headline reads the uploads the pipeline made.
+            if str(v.get("kind") or "") == "rss_copy":
+                continue
             slug = str(v.get("show_slug") or dir_name)
             out.setdefault(slug, []).append(v)
     return out

@@ -1933,6 +1933,11 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
 # and the per-day floor under which a median is null rather than noise.
 EARLY_REACH_AGE_DAYS = 3
 EARLY_REACH_MIN_VIDEOS = 3
+# Nov 3 2026: the analytics fetch joins YouTube Podcasts' RSS-ingested copies
+# of the long-form to the stats as kind ``rss_copy`` so their views are read.
+# Every instrument here reads the INDEXED kinds; the copies are counted by
+# ``youtube_rss_copies_14d_<ch>`` and nowhere else.
+INDEXED_VIDEO_KINDS = ("long", "short")
 
 
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
@@ -2007,6 +2012,9 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
         for v in show.get("videos", []):
             pub = str(v.get("published") or "")[:10]
             if not (win_lo <= pub <= win_hi):
+                continue
+            # An RSS copy is not an upload the index knows (Nov 3 2026).
+            if (v.get("kind") or "") not in INDEXED_VIDEO_KINDS and v.get("kind"):
                 continue
             ch = str(v.get("channel") or "en")
             rows_seen[ch] = rows_seen.get(ch, 0) + 1
@@ -2387,6 +2395,25 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     reach = build_early_reach_section(root)
     out["short_reach_d3_median_en_7d"] = (
         ((reach.get("channels") or {}).get("en") or {}).get("short_median_7d"))
+    # Nov 3 2026 — the Short's job written per channel: RU/FR are scored on
+    # their own age-3 Shorts reach (the Shorts feed is the product there),
+    # EN on subscribers per 1k Short views and the long-form's views at a
+    # fixed age (the Short is the trailer). Null under 10 videos, never 0.
+    for _ch in ("ru", "fr"):
+        out[f"short_reach_d3_median_{_ch}_7d"] = (
+            ((reach.get("channels") or {}).get(_ch) or {}).get("short_median_7d"))
+    out["long_d3_median_en_7d"] = (
+        ((reach.get("channels") or {}).get("en") or {}).get("long_median_7d"))
+    # The open hold of EN longs at a FIXED age (the curve's ratio nearest 5%
+    # elapsed, recorded by track_early_reach at each snapshot age): the read
+    # every long-form arm is scored on. Null under 8 longs at age 7.
+    out["long_hold5_age7_median_en"] = _long_avp_at_age(
+        root, anchor_d, field="hold5_by_age", digits=2)
+    # RSS-ingested copies the channel carries beside the rendered long-form
+    # (fetch_youtube_analytics ``unindexed_recent``): copies published in the
+    # last 14 analytics days. Null when the uploads read is absent — never 0.
+    for _ch in ("en", "ru", "fr"):
+        out[f"youtube_rss_copies_14d_{_ch}"] = _rss_copies_14d(stats, _ch, win_lo)
 
     # Long-form render time (Sep 12 2026): median long_form_render_duration_s
     # over the last 7 days of metrics files. Renders ran 530-1,200 s per
@@ -2680,8 +2707,22 @@ def _hook_motion_ab_ratio(root: Path, *, age: str = "3", min_n: int = 10):
     return round(statistics.median(motion) / base, 2) if base > 0 else None
 
 
+def _rss_copies_14d(stats: dict, channel: str, win_lo: str) -> Optional[int]:
+    """Count of RSS-ingested copies (``kind: rss_copy``) the channel's
+    uploads read attributed in the last 14 analytics days; ``None`` when the
+    channel block carries no ``unindexed_recent`` (the read failed or has
+    not run) — never a fake zero."""
+    block = ((stats.get("channels") or {}).get(channel) or {})
+    entries = block.get("unindexed_recent")
+    if not isinstance(entries, list):
+        return None
+    return sum(1 for e in entries
+               if isinstance(e, dict) and e.get("kind") == "rss_copy"
+               and str(e.get("published") or "")[:10] >= win_lo)
+
+
 def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 14,
-                     min_n: int = 8):
+                     min_n: int = 8, field: str = "avp_by_age", digits: int = 1):
     """Median EN long-form retention at a FIXED age (Oct 28 2026).
 
     ``long_form_median_avp_en_14d`` reads the live snapshot over every long
@@ -2690,6 +2731,8 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
     not the content. This reads each long's retention at the same age from
     ``api/youtube_early_reach.json``, over the longs that reached that age in
     the ``window_days`` before the anchor. ``None`` under ``min_n`` videos.
+    ``field`` picks the by-age record (Nov 3 2026: ``hold5_by_age`` /
+    ``hold25_by_age`` from the retention curves, rounded to ``digits``).
     """
     data = _load_json(root / "api" / "youtube_early_reach.json") or {}
     vids = data.get("videos") if isinstance(data, dict) else None
@@ -2709,7 +2752,7 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
             continue
         if not (lo < pub <= hi):
             continue
-        val = (rec.get("avp_by_age") or {}).get(str(age))
+        val = (rec.get(field) or {}).get(str(age))
         if val is None:
             continue
         try:
@@ -2719,7 +2762,7 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
     if len(vals) < min_n:
         return None
     vals.sort()
-    return round(vals[len(vals) // 2], 1)
+    return round(vals[len(vals) // 2], digits)
 
 
 def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:
@@ -2735,6 +2778,10 @@ def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:
         for v in show.get("videos", []):
             curve = v.get("retention_curve")
             if not curve or (v.get("channel") or "en") != "en":
+                continue
+            # Nov 3 2026: the top Shorts carry curves too (hook-Short
+            # readouts); a Short's 5% point is ~1.6 s and never pools here.
+            if (v.get("kind") or "long") != "long":
                 continue
             if slugs is not None:
                 hit = (v.get("show_slug") or "") in slugs
@@ -2807,12 +2854,18 @@ def build_early_reach_section(root: Path) -> Dict[str, Any]:
         prior = _pool("short", max(0, len(ordered) - 14), max(0, len(ordered) - 7))
         med = lambda v: (v[len(v) // 2] if len(v) >= 10 else None)  # noqa: E731
         r_med, p_med = med(recent), med(prior)
+        # Nov 3 2026: the long-form's reach at the same fixed age, the EN
+        # Short's second job metric (``long_d3_median_en_7d``). Same floor.
+        l_recent = _pool("long", max(0, len(ordered) - 7), len(ordered))
+        l_prior = _pool("long", max(0, len(ordered) - 14), max(0, len(ordered) - 7))
         channels[ch] = {
             "days": rows,
             "short_median_7d": r_med,
             "short_median_prior_7d": p_med,
             "short_wow_pct": (round(100.0 * (r_med - p_med) / p_med, 1)
                               if r_med is not None and p_med else None),
+            "long_median_7d": med(l_recent),
+            "long_median_prior_7d": med(l_prior),
         }
     section.update({
         "configured": True,
@@ -2829,18 +2882,25 @@ def build_early_reach_section(root: Path) -> Dict[str, Any]:
 
 def build_retention_curves_section(root: Path) -> Dict[str, Any]:
     """Where long-form viewers actually LEAVE, from the per-video
-    audience-retention curves the analytics fetch collects for each
-    channel's top recent longs (Aug 2026). Renders as a dashboard card;
+    audience-retention curves the analytics fetch collects (Aug 2026; since
+    Nov 3 2026 for EVERY long of the last 14 days, so the card also groups
+    the open hold BY SHOW — median hold at 5% / 25% elapsed over the longs
+    published in the last 14 days, with n). Renders as a dashboard card;
     the honest-null rules apply — no curves means an unconfigured card,
-    never zeros.
+    never zeros. Longs only: the top Shorts carry curves for the hook-Short
+    readouts and a Short's 5% point is ~1.6 s.
     """
     stats = _load_json(root / "api" / "youtube_stats.json") or {}
+    anchor = _parse_iso(stats.get("generated") or "")
+    anchor_d = (anchor.date() if anchor else _dt.date.today())
+    win_lo = (anchor_d - _dt.timedelta(days=14)).isoformat()
     rows: List[Dict[str, Any]] = []
     by_channel: Dict[str, List[float]] = {}
+    by_show: Dict[tuple, Dict[str, List[float]]] = {}
     for dir_name, show in (stats.get("shows") or {}).items():
         for v in show.get("videos", []):
             curve = v.get("retention_curve")
-            if not curve:
+            if not curve or (v.get("kind") or "long") != "long":
                 continue
             try:
                 pts = {float(p["t"]): float(p["ratio"]) for p in curve}
@@ -2861,22 +2921,35 @@ def build_retention_curves_section(root: Path) -> Dict[str, Any]:
                 }
                 rows.append(row)
                 by_channel.setdefault(ch, []).append(row["hold_5pct"])
+                if str(v.get("published") or "")[:10] >= win_lo:
+                    b = by_show.setdefault((dir_name, ch), {"h5": [], "h25": []})
+                    b["h5"].append(row["hold_5pct"])
+                    b["h25"].append(row["hold_25pct"])
             except (KeyError, TypeError, ValueError):
                 continue
     if not rows:
         return {"configured": False,
                 "note": "No retention curves yet — they accrue from the "
-                        "nightly analytics fetch (top 5 recent longs per "
-                        "channel)."}
+                        "nightly analytics fetch (every long of the last "
+                        "14 days)."}
     rows.sort(key=lambda r: -(r.get("views") or 0))
+    _med = lambda v: (sorted(v)[len(v) // 2] if v else None)  # noqa: E731
+    shows_out = [
+        {"show": dir_name, "channel": ch, "n": len(b["h5"]),
+         "hold5_median": _med(b["h5"]), "hold25_median": _med(b["h25"])}
+        for (dir_name, ch), b in by_show.items()]
+    shows_out.sort(key=lambda r: (-r["n"], r["show"], r["channel"]))
     return {
         "configured": True,
         "as_of": stats.get("generated"),
+        "window_days": 14,
         "note": ("audienceWatchRatio at 5/10/25/50% elapsed. The 5% mark "
                  "is ~30-45 s in — the open cliff. Baseline 2026-08-17: "
-                 "EN mean ~0.50 at 5%."),
+                 "EN mean ~0.50 at 5%. By show: median over the longs "
+                 "published in the last 14 days (n)."),
         "mean_hold_5pct_by_channel": {
             ch: round(sum(v) / len(v), 2) for ch, v in by_channel.items()},
+        "by_show": shows_out,
         "videos": rows[:20],
     }
 
@@ -4263,6 +4336,7 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                     for dir_name, s in (data.get("shows") or {}).items()
                     for v in s.get("videos", [])
                     if int(v.get("subscribers_gained", 0) or 0) > 0
+                    and (v.get("kind") or "") != "rss_copy"
                 ),
                 key=lambda r: r["subscribers_gained"],
                 reverse=True,
@@ -4275,6 +4349,10 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
             for dir_name, s in (data.get("shows") or {}).items():
                 for v in s.get("videos") or []:
                     if not isinstance(v, dict):
+                        continue
+                    # Nov 3 2026: an RSS-ingested copy is counted by
+                    # youtube_rss_copies_14d_<ch>, never as the show's upload.
+                    if (v.get("kind") or "") == "rss_copy":
                         continue
                     slug = str(v.get("show_slug") or "").strip() or str(dir_name)
                     if slug in dir_to_slug:

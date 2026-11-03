@@ -328,6 +328,14 @@ For each show, verify:
 - [ ] Apple Podcasts: submitted and approved
 - [ ] Spotify: submitted and live
 - [ ] YouTube Music: RSS synced
+  (Nov 3 2026: this ingestion is what put an "Ep N: <hook>" copy of every
+  rendered long-form on the channel — 12 RSS podcasts of 402-616 episodes
+  on the Podcasts tab, half the EN channel's videos unknown to the repo.
+  `scripts/fetch_youtube_analytics.py` reconciles the uploads nightly
+  (`unindexed_recent`, `kind: rss_copy`); removing the RSS podcasts for the
+  shows that render their own long-form, and setting the API-fed playlist as
+  the podcast instead, is a Studio step for the operator on Nov 16 — see
+  `docs/youtube_feedback_loop.md`.)
 - [ ] Amazon Music: submitted and live
 - [ ] Podcast Index: indexed
 - [ ] Pocket Casts: submitted

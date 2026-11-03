@@ -310,3 +310,19 @@ class TestSpokenOpenArmSplit:
             if e.get("metric") == "long_open_hold_5pct_en":
                 assert str(e.get("shipped")) < "2026-09-22", (
                     f"{e['id']} reopens long_open_hold_5pct_en; score the arm metric")
+
+
+class TestYoutubeMeasurementKeys:
+    """Nov 3 2026 (youtube-measurement): the Short's job metrics per channel
+    and the RSS-copies count are live keys — a register entry may name them,
+    and removing one must fail here, not render 'no data yet' forever."""
+
+    KEYS = ("long_hold5_age7_median_en", "long_d3_median_en_7d",
+            "short_reach_d3_median_ru_7d", "short_reach_d3_median_fr_7d",
+            "youtube_rss_copies_14d_en", "youtube_rss_copies_14d_ru",
+            "youtube_rss_copies_14d_fr")
+
+    def test_keys_are_in_the_computable_set(self):
+        computable = set(gd._experiment_live_metrics(ROOT).keys())
+        missing = [k for k in self.KEYS if k not in computable]
+        assert not missing, missing

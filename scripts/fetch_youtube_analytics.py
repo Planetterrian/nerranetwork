@@ -33,6 +33,12 @@ YouTube Analytics API v2 (https://developers.google.com/youtube/analytics):
 ``views,estimatedMinutesWatched,averageViewDuration,averageViewPercentage``.
 Impressions / click-through are Studio-only and intentionally omitted.
 
+Nov 3 2026: the Data API's uploads playlist is read back too
+(``channels.<ch>.unindexed_recent`` — the videos the per-show indexes do not
+know, with YouTube Podcasts' RSS-ingested copies attributed as ``rss_copy``),
+and a retention curve is fetched for every long of the last 14 days, stamped
+``curve_fetched_at``.
+
 Usage::
 
     python scripts/fetch_youtube_analytics.py                  # write the file
@@ -47,6 +53,7 @@ import argparse
 import datetime as _dt
 import json
 import logging
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -80,6 +87,44 @@ _BATCH = 200
 # never grows unbounded.
 _CHANNEL_HISTORY_PATH = "api/youtube_channel_history.json"
 _CHANNEL_HISTORY_MAX_ROWS = 800
+
+# Nov 3 2026 — the channel the repo can see. The per-show indexes carried
+# 2,434 EN rows against a channel ``video_count`` of 4,822: half the
+# channel was YouTube Podcasts' RSS-ingested copies ("Ep N: <hook>" at the
+# render's exact duration, the square cover as the still), competing with
+# the rendered long-form for the same subscribers and taking 37% of the
+# first-day long views on ten visible pairs. The uploads playlist is read
+# back over this many days and diffed against the indexes; a copy whose
+# episode number and hook prefix match an index row is attributed to its
+# show as kind ``rss_copy`` and joins the metrics batch, so its views and
+# subscribers are read. Every consumer that reads the indexed kinds
+# (``INDEXED_KINDS``) ignores it — the copies are counted by the dashboard's
+# ``youtube_rss_copies_14d_<ch>`` and nowhere else.
+UPLOADS_SINCE_DAYS = 35
+INDEXED_KINDS = ("long", "short")
+RSS_COPY_KIND = "rss_copy"
+# The feed title shape (engine.titles.episode_title): "Ep 653: <hook>" on the
+# English shows, "Выпуск 41: <hook>" on the Russian ones.
+_RSS_COPY_TITLE_RE = re.compile(r"^(?:Ep|Выпуск)\s?(\d+):\s*(.*)$", re.IGNORECASE)
+_HOOK_PREFIX_MIN_CHARS = 8
+# The policy file read for the nightly ``::warning::`` (a show that renders
+# its own long-form and still has RSS copies beside it).
+_POLICY_PATH = "api/youtube_policy.json"
+
+# Nov 3 2026 — a retention curve for EVERY long. The fetch read curves for
+# the top FIVE longs per channel by views, so the file carried 37 curves
+# and the spoken-open A/B ended at n = 1 per arm. Now every long published
+# in the last ``RETENTION_CURVE_DAYS`` is queried (newest first, at most
+# ``RETENTION_CURVE_MAX`` a night across the channels — one Analytics
+# query each, on the Analytics API's own quota), plus the channel's top
+# ``RETENTION_CURVE_SHORTS_TOP`` Shorts by views for the hook-Short readouts
+# (a Short's 5% point is ~1.6 s; never pooled with the longs). A curve is
+# stamped ``curve_fetched_at`` so a carried-forward one is never read as
+# fresh, and a failed curve never joins ``_FAILED_QUERIES`` (it is
+# informational, like the traffic-source day series).
+RETENTION_CURVE_DAYS = 14
+RETENTION_CURVE_MAX = 150
+RETENTION_CURVE_SHORTS_TOP = 20
 
 
 def _load_index(digests_dir: Path) -> List[dict]:
@@ -452,6 +497,169 @@ def _channel_snapshot(credentials) -> Optional[dict]:
         return None
 
 
+def _data_service(credentials):
+    """Build the YouTube Data API v3 client; None if libs/creds unusable."""
+    try:
+        from googleapiclient.discovery import build
+        return build("youtube", "v3", credentials=credentials,
+                     cache_discovery=False)
+    except Exception as exc:  # noqa: BLE001 — optional read, never fatal
+        logger.warning("Could not build Data API service: %s", str(exc)[:200])
+        return None
+
+
+def _channel_uploads(credentials, *, since_days: int = UPLOADS_SINCE_DAYS,
+                     service=None, today: Optional[_dt.date] = None,
+                     ) -> Optional[List[dict]]:
+    """Every video on the channel's uploads playlist published in the last
+    *since_days* days: ``[{video_id, title, published}]``, newest first.
+
+    ``channels().list(part="contentDetails", mine=True)`` names the uploads
+    playlist; ``playlistItems().list`` pages it (1 quota unit a page, ~10
+    pages a channel) until an item is older than the window. **None on any
+    failure** — the caller then writes NO ``unindexed_recent`` keys (absent,
+    never 0) and the snapshot is never marked degraded by this read.
+    """
+    service = service or _data_service(credentials)
+    if service is None:
+        return None
+    today = today or _dt.date.today()
+    cutoff = (today - _dt.timedelta(days=since_days)).isoformat()
+    try:
+        resp = service.channels().list(part="contentDetails", mine=True).execute()
+        items = resp.get("items") or []
+        if not items:
+            return None
+        uploads_id = (((items[0].get("contentDetails") or {})
+                       .get("relatedPlaylists") or {}).get("uploads"))
+        if not uploads_id:
+            return None
+        out: List[dict] = []
+        page_token = None
+        for _page in range(60):   # 3,000 items — far past a 35-day window
+            kwargs = dict(part="snippet,contentDetails", playlistId=uploads_id,
+                          maxResults=50)
+            if page_token:
+                kwargs["pageToken"] = page_token
+            page = service.playlistItems().list(**kwargs).execute()
+            older = False
+            for it in page.get("items") or []:
+                cd = it.get("contentDetails") or {}
+                sn = it.get("snippet") or {}
+                vid = cd.get("videoId") or (sn.get("resourceId") or {}).get("videoId")
+                published = str(cd.get("videoPublishedAt") or sn.get("publishedAt") or "")[:10]
+                if not vid:
+                    continue
+                if published and published < cutoff:
+                    older = True
+                    break
+                out.append({"video_id": vid,
+                            "title": str(sn.get("title") or ""),
+                            "published": published})
+            page_token = page.get("nextPageToken")
+            if older or not page_token:
+                break
+        return out
+    except Exception as exc:  # noqa: BLE001 — optional read, never fatal
+        logger.warning("Channel uploads read failed: %s", str(exc)[:200])
+        return None
+
+
+def _norm_text(text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", str(text or "").casefold())).strip()
+
+
+def _hook_prefix_match(remainder: str, hook: str) -> bool:
+    """The feed title's hook part is ``clip_words(hook)`` — a word-boundary
+    prefix of the hook (or the whole hook)."""
+    a = _norm_text(remainder.rstrip("…. "))
+    b = _norm_text(hook)
+    if min(len(a), len(b)) < _HOOK_PREFIX_MIN_CHARS:
+        return False
+    return a.startswith(b) or b.startswith(a)
+
+
+def attribute_rss_copies(uploads: List[dict], index_rows: List[dict]) -> List[dict]:
+    """Diff the uploads playlist against the index rows of the same channel.
+
+    Returns every upload whose id is not in the indexes, newest first. An
+    entry whose title reads ``Ep N: <hook prefix>`` with N and the hook
+    prefix matching an index row carries ``show_slug``, ``_dir``,
+    ``episode`` and ``kind: "rss_copy"``; the others carry only
+    ``video_id`` / ``title`` / ``published``. Pure — the fetch and the
+    guards both call it.
+    """
+    known = {str(r.get("video_id")) for r in index_rows if r.get("video_id")}
+    by_episode: Dict[int, List[dict]] = defaultdict(list)
+    for r in index_rows:
+        try:
+            by_episode[int(r.get("episode"))].append(r)
+        except (TypeError, ValueError):
+            continue
+    out: List[dict] = []
+    for up in uploads or []:
+        vid = str(up.get("video_id") or "")
+        if not vid or vid in known:
+            continue
+        entry = {"video_id": vid, "title": str(up.get("title") or ""),
+                 "published": str(up.get("published") or "")[:10]}
+        m = _RSS_COPY_TITLE_RE.match(entry["title"])
+        if m:
+            # The long's row first — its hook is the episode's; the Shorts
+            # carry the same hook, so any row settles it.
+            cands = sorted(by_episode.get(int(m.group(1)), []),
+                           key=lambda r: 0 if r.get("kind") == "long" else 1)
+            for cand in cands:
+                if _hook_prefix_match(m.group(2), cand.get("hook") or ""):
+                    entry.update({
+                        "show_slug": cand.get("show_slug") or "",
+                        "_dir": cand.get("_dir") or "",
+                        "episode": cand.get("episode"),
+                        "hook": cand.get("hook") or "",
+                        "kind": RSS_COPY_KIND,
+                    })
+                    break
+        out.append(entry)
+    return out
+
+
+def _public_unindexed(entries: List[dict]) -> List[dict]:
+    """The snapshot's copy of an unindexed entry (no ``_dir``, no hook)."""
+    keep = ("video_id", "title", "published", "show_slug", "episode", "kind")
+    return [{k: e[k] for k in keep if k in e} for e in entries]
+
+
+def rss_copy_warnings(payload: Dict[str, object], policy: Optional[Dict[str, object]],
+                      ) -> List[str]:
+    """One ``::warning::`` line per show that renders its own long-form
+    (``publish_long_form`` on in the policy) and still has RSS-ingested
+    copies beside it in the uploads window; one ``::notice::`` line per
+    channel with any unindexed upload. [] when the uploads read is absent.
+    """
+    lines: List[str] = []
+    pol_channels = ((policy or {}).get("channels") or {}) if isinstance(policy, dict) else {}
+    for ch, block in sorted(((payload.get("channels") or {}).items())):
+        entries = (block or {}).get("unindexed_recent")
+        if not isinstance(entries, list) or not entries:
+            continue
+        by_show: Dict[str, int] = defaultdict(int)
+        for e in entries:
+            if e.get("kind") == RSS_COPY_KIND and e.get("show_slug"):
+                by_show[str(e["show_slug"])] += 1
+        for slug, n in sorted(by_show.items()):
+            entry = (pol_channels.get(ch) or {}).get(slug) or {}
+            if entry.get("publish_long_form") is True:
+                lines.append(
+                    f"::warning::YouTube RSS copies — {slug} on {ch}: {n} RSS-ingested "
+                    f"cop{'y' if n == 1 else 'ies'} in the last {UPLOADS_SINCE_DAYS} days "
+                    "beside its rendered long-form (Studio → Content → Podcasts)")
+        lines.append(
+            f"::notice::YouTube uploads — channel {ch}: {len(entries)} upload(s) in the "
+            f"last {UPLOADS_SINCE_DAYS} days are not in any per-show index "
+            f"({sum(by_show.values())} attributed as RSS copies)")
+    return lines
+
+
 def _channel_day_series(service, days: int = 30) -> List[dict]:
     """Channel-level daily views/subscribersGained series (Analytics v2).
 
@@ -551,9 +759,15 @@ def snapshot_regression(new: Dict[str, object], old: Optional[Dict[str, object]]
     """
     if not isinstance(old, dict) or not old:
         return None
-    old_shows = old.get("shows") or {}
-    old_n = sum(len((sh or {}).get("videos") or []) for sh in old_shows.values())
-    new_n = sum(len((sh or {}).get("videos") or []) for sh in (new.get("shows") or {}).values())
+    # Nov 3 2026: the share counts the INDEXED kinds only — an attributed
+    # RSS copy (``rss_copy``) is a joined row, not a video the index knows,
+    # and the first night with copies must neither pass nor refuse on them.
+    def _indexed_n(doc):
+        return sum(1 for sh in ((doc or {}).get("shows") or {}).values()
+                   for v in ((sh or {}).get("videos") or [])
+                   if (v.get("kind") or "") in INDEXED_KINDS)
+    old_n = _indexed_n(old)
+    new_n = _indexed_n(new)
     degraded = new.get("degraded") or {}
     if degraded.get("failed_queries") and not old.get("degraded"):
         return (f"{len(degraded['failed_queries'])} analytics quer(ies) failed "
@@ -750,6 +964,13 @@ def fetch(digests_dir: Path, days: int,
 
     metrics_by_video: Dict[str, dict] = {}
     channels_block: Dict[str, dict] = {}
+    # Attributed RSS copies (kind ``rss_copy``) that join the shows block.
+    copy_rows: List[dict] = []
+    # The night's curve candidates: every long of the last RETENTION_CURVE_DAYS
+    # and each channel's top Shorts, queried AFTER the channel loop in ONE
+    # newest-first order across the channels, inside RETENTION_CURVE_MAX.
+    long_curve_candidates: List[dict] = []
+    short_curve_candidates: List[dict] = []
     any_data = False
     del _FAILED_QUERIES[:]
     for channel, rows in by_channel.items():
@@ -760,7 +981,24 @@ def fetch(digests_dir: Path, days: int,
         service = _analytics_service(creds)
         if service is None:
             continue
-        ids = [r["video_id"] for r in rows]
+        # Nov 3 2026: the uploads playlist, diffed against the indexes.
+        # None = the read failed → no keys (absent, never 0), never degraded.
+        uploads = _channel_uploads(creds, today=today)
+        unindexed: Optional[List[dict]] = None
+        channel_copy_rows: List[dict] = []
+        if uploads is not None:
+            unindexed = attribute_rss_copies(uploads, rows)
+            for e in unindexed:
+                if e.get("kind") == RSS_COPY_KIND and e.get("_dir"):
+                    channel_copy_rows.append({
+                        "video_id": e["video_id"], "show_slug": e.get("show_slug", ""),
+                        "episode": e.get("episode"), "kind": RSS_COPY_KIND,
+                        "channel": channel, "title": e.get("title", ""),
+                        "hook": e.get("hook", ""), "published": e.get("published", ""),
+                        "_dir": e["_dir"],
+                    })
+            copy_rows.extend(channel_copy_rows)
+        ids = [r["video_id"] for r in rows] + [r["video_id"] for r in channel_copy_rows]
         for i in range(0, len(ids), _BATCH):
             batch = ids[i:i + _BATCH]
             got = _query_batch(service, batch, start, end)
@@ -802,23 +1040,43 @@ def fetch(digests_dir: Path, days: int,
         traffic_days = _traffic_source_day_series(service)
         search_terms = _search_terms(service, demo_start, end)
 
-        # Retention curves for the channel's top recent LONGS (28d, by
-        # views, capped at 5 — one API call each). The curve is the
-        # measurement the scene scheduler + hook-first directive have
-        # been missing; Shorts curves are less actionable (35 s clips).
-        _recent_longs = sorted(
+        # Retention curves (Nov 3 2026): EVERY long published in the last
+        # RETENTION_CURVE_DAYS — the curve is the measurement the scene
+        # scheduler, the hook-first directive and every long-form arm need
+        # read at a fixed age — plus the channel's top
+        # RETENTION_CURVE_SHORTS_TOP Shorts by views for the hook-Short
+        # readouts. They are CANDIDATES here; the queries run after the
+        # channel loop, in ONE newest-first order across the channels —
+        # spent channel by channel, the EN longs alone (118 in the 14 days
+        # to Nov 3) emptied the budget before @NerraRU or @NerraFR was asked
+        # for a single curve. A video the metrics batch did not return has
+        # nowhere to carry a curve and is not a candidate.
+        curve_lo = (today - _dt.timedelta(days=RETENTION_CURVE_DAYS)).isoformat()
+        for r in rows:
+            if (r.get("kind") or "") != "long" \
+                    or (r.get("published") or "") < curve_lo \
+                    or metrics_by_video.get(r["video_id"]) is None:
+                continue
+            long_curve_candidates.append(
+                {"service": service, "start": demo_start, "video_id": r["video_id"],
+                 "published": str(r.get("published") or "")})
+        _top_shorts = sorted(
             (r for r in rows
-             if (r.get("kind") or "") == "long"
-             and (r.get("published") or "") >= demo_start),
+             if (r.get("kind") or "") == "short"
+             and (r.get("published") or "") >= demo_start
+             and metrics_by_video.get(r["video_id"]) is not None),
             key=lambda r: -float((metrics_by_video.get(r["video_id"]) or {})
-                                 .get("views", 0) or 0))[:5]
-        for r in _recent_longs:
-            curve = _retention_curve(service, r["video_id"],
-                                     demo_start, end)
-            if curve:
-                m = metrics_by_video.get(r["video_id"])
-                if m is not None:
-                    m["retention_curve"] = curve
+                                 .get("views", 0) or 0))[:RETENTION_CURVE_SHORTS_TOP]
+        for r in _top_shorts:
+            short_curve_candidates.append(
+                {"service": service, "start": demo_start, "video_id": r["video_id"],
+                 "views": float((metrics_by_video.get(r["video_id"]) or {})
+                                .get("views", 0) or 0)})
+
+        if unindexed is not None:
+            snap["unindexed_recent"] = _public_unindexed(unindexed)
+            snap["unindexed_recent_count"] = len(unindexed)
+            snap["unindexed_since_days"] = UPLOADS_SINCE_DAYS
 
         if snap or series or all_rows or geo or traffic:
             snap["day_series"] = series
@@ -838,20 +1096,58 @@ def fetch(digests_dir: Path, days: int,
         logger.info("No analytics returned (no scope / no data yet) — no-op")
         return None
 
+    # The curve queries, in ONE order across the channels: every long of the
+    # last RETENTION_CURVE_DAYS newest first (a long's first nights are its
+    # fixed-age reads — a 13-day-old EN long never outranks last night's FR
+    # one), then the top Shorts by views, inside the night's budget. One
+    # Analytics query each; stamped ``curve_fetched_at`` = tonight. A long
+    # past the budget keeps the curve it was fetched on an earlier night.
+    long_curve_candidates.sort(key=lambda c: c["published"], reverse=True)
+    short_curve_candidates.sort(key=lambda c: -c["views"])
+    curve_budget = RETENTION_CURVE_MAX
+    for c in long_curve_candidates + short_curve_candidates:
+        if curve_budget <= 0:
+            logger.info("retention-curve budget (%d) spent — %d candidate(s) wait "
+                        "for another night", RETENTION_CURVE_MAX,
+                        len(long_curve_candidates) + len(short_curve_candidates)
+                        - RETENTION_CURVE_MAX)
+            break
+        curve_budget -= 1
+        curve = _retention_curve(c["service"], c["video_id"], c["start"], end)
+        if curve:
+            m = metrics_by_video.get(c["video_id"])
+            if m is not None:
+                m["retention_curve"] = curve
+                m["curve_fetched_at"] = end
+
     # Assemble per-show structure for the updater + dashboard. Keyed by the
     # show's output-dir name (where the updater writes the perf file back).
-    prev_curves: Dict[str, list] = {}
+    # {video_id: (curve, curve_fetched_at)} — a carried-forward curve keeps
+    # the date it was fetched (None when the old file never stamped one),
+    # so no reader can take it for tonight's.
+    prev_curves: Dict[str, tuple] = {}
     try:
         _prev = json.loads(Path(out_path).read_text(encoding="utf-8")) \
             if out_path and Path(out_path).exists() else {}
         for _sh in (_prev.get("shows") or {}).values():
             for _v in _sh.get("videos", []):
                 if _v.get("retention_curve") and _v.get("video_id"):
-                    prev_curves[_v["video_id"]] = _v["retention_curve"]
+                    prev_curves[_v["video_id"]] = (
+                        _v["retention_curve"], _v.get("curve_fetched_at"))
     except Exception:  # noqa: BLE001 — carry-forward is best-effort
         prev_curves = {}
+
+    def _curve_fields(vid: str, m: dict) -> dict:
+        if m.get("retention_curve"):
+            return {"retention_curve": m["retention_curve"],
+                    "curve_fetched_at": m.get("curve_fetched_at")}
+        prev = prev_curves.get(vid)
+        if prev:
+            return {"retention_curve": prev[0], "curve_fetched_at": prev[1]}
+        return {}
+
     shows: Dict[str, dict] = defaultdict(lambda: {"videos": []})
-    for v in videos:
+    for v in videos + copy_rows:
         m = metrics_by_video.get(v["video_id"])
         if not m:
             continue
@@ -881,15 +1177,13 @@ def fetch(digests_dir: Path, days: int,
             "average_view_percentage": float(m.get("averageViewPercentage", 0) or 0),
             "subscribers_gained": int(float(m.get("subscribersGained", 0) or 0)),
             "subscribers_lost": int(float(m.get("subscribersLost", 0) or 0)),
-            # Retention curve: fetched fresh for the channel's top recent
-            # longs (one API call each), otherwise CARRIED FORWARD from
-            # the previous stats file — the top-5 set shifts nightly, so
-            # without carry-forward the instrument never accumulated
-            # past ~10-15 curves (Sep 2026).
-            **({"retention_curve": m.get("retention_curve")
-                or prev_curves.get(v["video_id"])}
-               if (m.get("retention_curve") or prev_curves.get(v["video_id"]))
-               else {}),
+            # Retention curve: fetched fresh tonight (every long of the
+            # last RETENTION_CURVE_DAYS, the top Shorts), otherwise CARRIED
+            # FORWARD from the previous stats file with the date it was
+            # fetched — without carry-forward the instrument never
+            # accumulated past ~10-15 curves (Sep 2026); without the date a
+            # carried curve read as fresh (Nov 2026).
+            **_curve_fields(v["video_id"], m),
         })
 
     payload = {
@@ -899,7 +1193,14 @@ def fetch(digests_dir: Path, days: int,
         # unchanged, so every existing consumer (performance updater,
         # policy builder, gallery retention) keeps working.
         "schema_version": 2,
-        "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+        # Nov 3 2026: ``generated`` carries the DATE the fetch started on
+        # (``end``, the date every ``curve_fetched_at`` is stamped with) and
+        # the clock time of assembly. The reach file records a hold only
+        # from a curve fetched on the snapshot's own date, so a fetch that
+        # crossed UTC midnight between its start and its assembly had
+        # stamped two dates and lost every age-7 hold for the night.
+        "generated": _dt.datetime.now(_dt.timezone.utc).replace(
+            year=today.year, month=today.month, day=today.day).isoformat(),
         "window_days": days,
         "channels": channels_block,
         "shows": shows,
@@ -972,6 +1273,16 @@ def main() -> int:
                       flush=True)
         except Exception:  # noqa: BLE001 — the alarm never blocks the fetch
             logger.debug("view-cliff check failed", exc_info=True)
+
+    # Nov 3 2026: RSS-ingested copies beside a rendered long-form. The
+    # policy file is yesterday's (the policy step runs after this one);
+    # unreadable = no policy = notices only.
+    try:
+        _policy = json.loads((_ROOT / _POLICY_PATH).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        _policy = None
+    for line in rss_copy_warnings(payload, _policy):
+        print(line, flush=True)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
