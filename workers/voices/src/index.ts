@@ -4835,12 +4835,16 @@ export async function runTick(env: Env, fired: Date, source: TickSource): Promis
   // the SLOT's, whichever clock is running it.
   const minute = slot.getUTCMinutes();
   const halfHour = minute % 30 === 0;
+  // Nov 3 2026: the fire-tick catch-all is hourly. fireTickDue is fail-open
+  // (an unreadable Supabase dispatches), so the unconditional tick is pure
+  // redundancy; at :00/:30 it was 48 of the day's 83 fire-tick runs.
+  const hourTop = minute === 0;
   const gate2Hour = slot.getUTCHours() === 17 && minute === 0;
   {
     try {
-      // Oct 13 2026: gated on the schedule (fireTickDue); the half-hour
-      // ticks dispatch unconditionally as the catch-all.
-      if (halfHour || await fireTickDue(env)) {
+      // Oct 13 2026: gated on the schedule (fireTickDue); the top-of-hour
+      // tick dispatches unconditionally as the catch-all.
+      if (hourTop || await fireTickDue(env)) {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       }
     } catch (err: any) {

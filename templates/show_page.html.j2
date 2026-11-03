@@ -1644,7 +1644,7 @@
         // --- Stock widget (Tesla + SpaceX) ---
         const STOCK_TICKER = {{ stock_widget.ticker | tojson }};
         const STOCK_JSON = {{ stock_widget.json_path | tojson }};
-        const STOCK_YAHOO = {{ stock_widget.yahoo_symbol | tojson }};
+        const MARKETS_API = {{ stock_widget.markets_api | tojson }};
         async function loadStock() {
             // Tracks whether the same-origin snapshot already populated a
             // valid price. If so, a later Yahoo-fallback failure must NOT
@@ -1711,56 +1711,47 @@
                                 updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
-                        // Do NOT return — fall through to Yahoo attempts.
-                        // This lets a live trading-hours quote from Yahoo upgrade
-                        // the displayed price + timestamp for visitors during the day.
+                        // Do NOT return — fall through to the markets route.
+                        // A live quote upgrades the snapshot's price and
+                        // timestamp for visitors during the session.
                     }
                 }
-            } catch { /* fall through to Yahoo */ }
+            } catch { /* fall through to the markets route */ }
 
-            // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
-            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/' + STOCK_YAHOO + '?interval=1d&range=5d';
-            // Yahoo Finance v6 quote API — alternative endpoint
-            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + STOCK_YAHOO;
-            const proxies = [
-                url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-                url => 'https://corsproxy.io/?' + encodeURIComponent(url),
-                url => url
-            ];
-
-            // Try chart API first (most reliable for price + previous close)
-            for (const makeUrl of proxies) {
-                try {
-                    const resp = await fetch(makeUrl(yahooUrl), { signal: AbortSignal.timeout(8000) });
-                    if (!resp.ok) continue;
-                    const data = await resp.json();
-                    const result = data?.chart?.result?.[0];
-                    if (!result?.meta) continue;
-                    const meta = result.meta;
-                    const price = meta.regularMarketPrice;
-                    const prev = meta.chartPreviousClose || meta.previousClose;
-                    if (price && prev) {
-                        displayPrice(price, prev, meta.marketState || null);
+            // LIVE: the network's own markets route (workers/gallery/src/
+            // markets.ts, the one quote source since Oct 29 2026). Nov 3
+            // 2026: this block used to send every visitor's browser to two
+            // free CORS proxies with a Yahoo Finance URL — a proxy sees the
+            // visitor's IP, can inject content and fails unpredictably.
+            // ``prev_close`` is the last bar dated before the quote's own
+            // day (landmine #22); ``state`` is "live" while the regular
+            // session is open, else "close".
+            try {
+                const resp = await fetch(MARKETS_API + '?symbols=' + encodeURIComponent(STOCK_TICKER), {
+                    mode: 'cors',
+                    credentials: 'omit',
+                    signal: AbortSignal.timeout(6000),
+                });
+                if (resp.ok) {
+                    const body = await resp.json();
+                    const q = (body && Array.isArray(body.quotes) ? body.quotes : [])
+                        .find(x => x && x.symbol === STOCK_TICKER);
+                    if (q && q.price > 0 && q.prev_close > 0 && q.as_of) {
+                        displayPrice(q.price, q.prev_close, q.state === 'live' ? 'REGULAR' : 'CLOSED');
+                        const updatedEl = document.getElementById('stock-updated');
+                        if (updatedEl) {
+                            try {
+                                const d = new Date(q.as_of);
+                                updatedEl.textContent = (q.state === 'live' ? 'Live ' : 'Close ') +
+                                    d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                            } catch (_) {}
+                        }
                         return;
                     }
-                } catch { /* try next proxy */ }
-            }
+                }
+            } catch { /* the snapshot above stands */ }
 
-            // Fallback: try quote API
-            for (const makeUrl of proxies) {
-                try {
-                    const resp = await fetch(makeUrl(yahooQuoteUrl), { signal: AbortSignal.timeout(8000) });
-                    if (!resp.ok) continue;
-                    const data = await resp.json();
-                    const quote = data?.quoteResponse?.result?.[0];
-                    if (quote?.regularMarketPrice && quote?.regularMarketPreviousClose) {
-                        displayPrice(quote.regularMarketPrice, quote.regularMarketPreviousClose, quote.marketState);
-                        return;
-                    }
-                } catch { /* try next proxy */ }
-            }
-
-            // All Yahoo fallbacks failed. Only show the error if the
+            // The route did not answer. Only show the error if the
             // same-origin snapshot didn't already populate a good price.
             if (!havePrimary) showStockError('Market data unavailable');
         }

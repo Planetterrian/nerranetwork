@@ -442,3 +442,114 @@ class TestSmallPageDefects:
     def test_the_dead_buttondown_embed_tracker_is_gone(self):
         js = (ROOT / "assets" / "js" / "tracking.js").read_text(encoding="utf-8")
         assert "embed-subscribe" not in js and "attachNewsletterTracking" not in js
+
+
+class TestSpaceXSaysClosedFridayBeforeMondaysOpen:
+    """Ep149 (Monday Nov 2, run at 03:30 New York) spoke Friday's close as
+    "closed at" beside a hook about pre-market trading. Before Monday's
+    09:30 open the last bar is Friday's and the sentence says so; a weekday
+    after the close is still "closed at"."""
+
+    def _ny(self, weekday_date: str, hhmm: str):
+        import datetime as dt
+        from zoneinfo import ZoneInfo
+        h, m = (int(x) for x in hhmm.split(":"))
+        y, mo, d = (int(x) for x in weekday_date.split("-"))
+        return dt.datetime(y, mo, d, h, m, tzinfo=ZoneInfo("America/New_York"))
+
+    def test_monday_before_the_open_is_fridays_close(self):
+        from shows.hooks.spacex import _price_sentence
+        out = _price_sentence(134.72, "-6.4%", "yfinance_history", now=self._ny("2026-11-02", "03:30"))
+        assert "closed Friday at" in out
+
+    def test_sunday_is_fridays_close_too(self):
+        from shows.hooks.spacex import _price_sentence
+        assert "closed Friday at" in _price_sentence(134.72, "-6.4%", "yfinance_history",
+                                                     now=self._ny("2026-11-01", "08:00"))
+
+    def test_a_weekday_evening_is_plain_closed_at(self):
+        from shows.hooks.spacex import _price_sentence
+        out = _price_sentence(134.72, "-6.4%", "yfinance_history", now=self._ny("2026-11-03", "21:30"))
+        assert "closed at" in out and "Friday" not in out
+
+    def test_monday_pre_market_live_quote_is_trading_at(self):
+        from shows.hooks.spacex import _price_sentence
+        out = _price_sentence(136.1, "+1.0%", "yfinance_fast_info", now=self._ny("2026-11-02", "07:30"))
+        assert "is trading at" in out
+
+
+class TestShowPagesAskOurOwnMarketsRoute:
+    """tesla.html and spacex.html sent every visitor's browser to
+    api.allorigins.win and corsproxy.io with a Yahoo Finance URL (a free
+    proxy sees the IP, can inject content, fails unpredictably) although the
+    network has had its own markets route since Oct 29. The templates and
+    the generator name no proxy; the widget asks the route."""
+
+    PROXIES = ("allorigins", "corsproxy", "query1.finance.yahoo", "query2.finance.yahoo")
+
+    def test_no_template_or_generator_names_a_cors_proxy(self):
+        for rel in ("templates/show_page.html.j2", "templates/spacex_dashboard.html.j2",
+                    "generate_html.py", "templates/base.html.j2"):
+            text = (ROOT / rel).read_text(encoding="utf-8")
+            for host in self.PROXIES:
+                assert host not in text, f"{rel} still names {host}"
+
+    def test_the_widget_reads_the_markets_route(self):
+        src = (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8")
+        assert "stock_widget.markets_api" in src and "prev_close" in src
+        import generate_html as G
+        from engine.newsroom import LIVE_MARKETS_API
+        assert all("yahoo_symbol" not in w for w in G._STOCK_WIDGETS.values())
+        assert LIVE_MARKETS_API.startswith("https://api.nerranetwork.com/")
+
+
+class TestTopWorldNamesTheDesksItRead:
+    """Four of the five desks are members-only by design (Oct 15), so the
+    public WYNTK line "This edition draws on 1 of the 5 Omni View regional
+    desks" read as a daily defect, and the registry promised five desks
+    "which publish earlier each morning". A partial intake names the desks
+    read; the registry promises no cadence."""
+
+    def test_a_partial_intake_names_the_desks(self):
+        from shows.hooks.omni_view_world import intake_line
+        assert intake_line(1, 5, ["North America"]) == \
+            "This edition also draws on the Omni View North America desk."
+        assert "Europe and North America desks" in intake_line(2, 5, ["Europe", "North America"])
+        assert "all 5" in intake_line(5, 5, ["a", "b", "c", "d", "e"])
+        assert intake_line(0, 5, []) == ""
+
+    def test_the_hook_passes_the_names(self):
+        src = (ROOT / "shows" / "hooks" / "omni_view_world.py").read_text(encoding="utf-8")
+        assert "intake_line(desks_live, len(DESKS), desk_names)" in src
+
+    def test_the_registry_promises_no_desk_cadence(self):
+        import yaml
+        meta = yaml.safe_load((ROOT / "shows" / "network_meta.yaml").read_text(encoding="utf-8"))
+        shows = meta.get("shows", meta)
+        tw = shows["omni_view_world"] if isinstance(shows, dict) else next(s for s in shows if s["slug"] == "omni_view_world")
+        blob = " ".join(str(v) for v in tw.values() if isinstance(v, str)).lower()
+        assert "publish earlier each morning" not in blob
+        assert "five regional desks" not in blob
+
+
+class TestTheConsentBarIsCompact:
+    """The cookie banner was 147 px on a phone — a third of the first
+    screen — over the lead picture: heading, a three-line paragraph, three
+    stacked buttons. Heading and text share one two-line block and the
+    equal-weight actions sit in one row."""
+
+    def test_the_copy_block_exists_and_clamps(self):
+        base = (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8")
+        assert '<div class="nn-consent-copy">' in base
+        import re
+        css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
+        assert re.search(r"#nn-consent-banner \.nn-consent-copy \{[^}]*-webkit-line-clamp: 2", css)
+
+    def test_accept_and_reject_keep_equal_metrics(self):
+        css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
+        assert 'data-nn-consent="accept-all"]' not in css and 'data-nn-consent="reject-all"]' not in css
+
+    def test_the_phone_actions_sit_in_one_row(self):
+        css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
+        phone = css.split("@media (max-width: 480px) {\n  #nn-consent-banner", 1)[1].split("}\n}", 1)[0]
+        assert "flex-wrap: nowrap" in phone

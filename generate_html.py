@@ -1786,12 +1786,14 @@ _NAV_T = {
 
 
 # Shows that render a live stock-price pill in the hero. Each show's
-# pipeline hook writes the same-origin JSON; the page JS reads it first
-# and falls back to Yahoo Finance via CORS proxies. yahoo_symbol is the
-# fallback ticker queried at query{1,2}.finance.yahoo.com.
+# pipeline hook writes the same-origin JSON (the printed build-time value);
+# the page JS reads it first and then asks the network's own markets route
+# (engine.newsroom.LIVE_MARKETS_API, the gallery Worker) for the live quote.
+# Nov 3 2026: it used to fall back to Yahoo Finance through two free CORS
+# proxies — every visitor's IP and URL to a third party, on every view.
 _STOCK_WIDGETS: dict = {
-    "tesla": {"ticker": "TSLA", "json_path": "/api/tsla.json", "yahoo_symbol": "TSLA"},
-    "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json", "yahoo_symbol": "SPCX"},
+    "tesla": {"ticker": "TSLA", "json_path": "/api/tsla.json"},
+    "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json"},
 }
 
 # Soft Personal one-field hero form — pages YouTube actually lands on
@@ -3558,10 +3560,14 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         narrative_page_url = ""
 
     # Live stock-price pill (Tesla + SpaceX). Each show's pipeline hook
-    # writes a same-origin api/<ticker>.json the page JS reads first, with
-    # a Yahoo-Finance CORS-proxy fallback. SPCX joined when SpaceX IPO'd
-    # June 2026.
+    # writes a same-origin api/<ticker>.json the page JS reads first; the
+    # live quote comes from the network's markets route (Nov 3 2026 — the
+    # Yahoo-Finance CORS-proxy fallback is gone). SPCX joined when SpaceX
+    # IPO'd June 2026.
     stock_widget = _STOCK_WIDGETS.get(slug)
+    if stock_widget:
+        from engine.newsroom import LIVE_MARKETS_API
+        stock_widget = dict(stock_widget, markets_api=LIVE_MARKETS_API)
 
     # Offshore North (Sep 19 2026): the show page carries the campaign's
     # headline facts from the verified record (see generate_offshore_north_dashboard).

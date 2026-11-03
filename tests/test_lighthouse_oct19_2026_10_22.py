@@ -41,7 +41,9 @@ class TestConsentBannerSSR:
     def test_css_is_compact_bar_gated_on_needed_class(self):
         css = _read("styles/main.css")
         assert "html.nn-consent-needed #nn-consent-banner:not([hidden])" in css
-        assert "max-height: 4.2em" in css
+        # The text is capped so it can never grow into the LCP element: a
+        # max-height until Nov 3 2026, a two-line clamp since (the compact bar).
+        assert "max-height: 4.2em" in css or "-webkit-line-clamp: 2" in css
         # Full-bleed bottom bar, not the old floating card.
         assert re.search(r"#nn-consent-banner\s*\{[^}]*bottom:\s*0", css, re.S)
 

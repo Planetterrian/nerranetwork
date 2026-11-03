@@ -60,12 +60,16 @@ def todays_desk_digests(root: Path, date: _dt.date) -> List[Tuple[object, str]]:
     return out
 
 
-def intake_line(desks_live: int, desks_total: int) -> str:
+def intake_line(desks_live: int, desks_total: int, names: Optional[List[str]] = None) -> str:
     """The sentence the digest's WYNTK ends on — data-side, never typed.
 
     Top World is assembled from whichever desks published before it ran
-    (plan §3.9 "intake honesty"): the reader is told how many, in the
-    show's own words, and the number is the count of desk digests read."""
+    (plan §3.9 "intake honesty"): the reader is told which, in the show's
+    own words. Nov 3 2026: four of the five desks are members-only by
+    design (Oct 15), so a daily "draws on 1 of the 5 desks" read as a
+    defect on every public page; a partial intake NAMES the desks read
+    (``names``) instead of counting the ones a reader cannot hear. The
+    tally stays in the ``desks_live_at_publish`` metric."""
     if desks_live <= 0:
         # Oct 16 2026: since the desks became members-only (Oct 15) a day
         # with no desk digest is usually a day no desk was made, and "had
@@ -76,6 +80,14 @@ def intake_line(desks_live: int, desks_total: int) -> str:
         return ""
     if desks_live >= desks_total:
         return f"This edition draws on all {desks_total} Omni View regional desks."
+    clean = [str(n).strip() for n in (names or []) if str(n).strip()]
+    if clean:
+        if len(clean) == 1:
+            listed = clean[0]
+        else:
+            listed = ", ".join(clean[:-1]) + " and " + clean[-1]
+        plural = "desks" if len(clean) > 1 else "desk"
+        return f"This edition also draws on the Omni View {listed} {plural}."
     return (f"This edition draws on {desks_live} of the {desks_total} Omni View regional desks "
             "live by press time.")
 
@@ -101,11 +113,13 @@ def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
     lines: List[str] = []
     live = todays_desk_digests(root, date)
     desks_live = 0
+    desk_names: List[str] = []
     for d, text in live:
         items = desk_items(text)
         if not items:
             continue
         desks_live += 1
+        desk_names.append(d.name)
         lines.append(f"{d.region}:")
         for n, it in enumerate(items):
             lines.append(f"- [{it['section']}] {it['title']} — {it['summary']} ({it['url']})")
@@ -116,7 +130,7 @@ def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
                     "source_name": it["outlet"] or d.name,
                     "published_date": date.isoformat(),
                 })
-    intake = intake_line(desks_live, len(DESKS))
+    intake = intake_line(desks_live, len(DESKS), desk_names)
     metrics = {"desks_live_at_publish": desks_live, "desks_total": len(DESKS)}
     if not lines:
         note = (
