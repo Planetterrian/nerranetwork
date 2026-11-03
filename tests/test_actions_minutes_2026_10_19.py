@@ -164,7 +164,8 @@ class TestWorkflowWiring:
 
 class TestTestWorkflowsSkipGeneratedPushes:
     GENERATED = ["digests/**", "blog/**", "api/**", "site/data/**", "*.rss", "*.html",
-                 "claims/**", "topics/**", "ru/**", "fr/**", "sitemap.xml", "specials/**"]
+                 "claims/**", "topics/**", "ru/**", "fr/**", "sitemap.xml", "news-sitemap.xml",
+                 "specials/**"]
 
     def _on(self, name):
         wf = yaml.safe_load((ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8"))

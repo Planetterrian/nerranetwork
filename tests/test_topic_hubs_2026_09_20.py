@@ -252,18 +252,33 @@ class TestTitleLimitHasOneOwner:
 
     def test_blog_titles_are_per_episode_and_within_budget(self):
         """The Sep 3 review's deferred item turns out to be shipped already —
-        this pins it so it cannot regress."""
-        from engine.titles import WEB_TITLE_LEAD_MAX
+        this pins it so it cannot regress. Nov 3 2026: the shape is
+        ``"<lead> · <Show>"`` (engine.titles.web_page_title; no episode
+        number), judged on pages rendered HERE from the newest committed
+        Tesla digests — never on the committed pages, which carry whatever
+        shape their last regeneration gave them."""
+        import html as _html
+        from engine.blog import extract_blog_metadata, generate_blog_post_html
+        from engine.titles import WEB_TITLE_LEAD_MAX, WEB_TITLE_SEPARATOR
+        import generate_html as G
+
+        cfg = G.NETWORK_SHOWS["tesla"]
         seen = []
-        for path in sorted((ROOT / "blog" / "tesla").glob("ep*.html"))[-12:]:
-            m = re.search(r"<title>(.*?)</title>",
-                          path.read_text(encoding="utf-8", errors="ignore"), re.S)
+        for path in sorted((ROOT / "digests" / "tesla_shorts_time").glob("*_Ep*.md"))[-6:]:
+            md = path.read_text(encoding="utf-8")
+            meta = extract_blog_metadata(md, "tesla", path.name, file_path=path)
+            meta["_md_path"] = path
+            page = generate_blog_post_html(md, meta, cfg, G._get_jinja_env(), related_posts=[])
+            m = re.search(r"<title>(.*?)</title>", page, re.S)
             if m:
-                seen.append(m.group(1).strip())
-        assert len(seen) >= 6, "not enough committed Tesla posts to judge"
+                seen.append(_html.unescape(m.group(1).strip()))
+        assert len(seen) >= 6, "not enough committed Tesla digests to judge"
         assert len(set(seen)) == len(seen), "blog <title>s are not unique"
+        tail = f"{WEB_TITLE_SEPARATOR}{cfg['name']}"
         for title in seen:
-            lead = title.split(" — Ep")[0]
+            assert title.endswith(tail), title
+            assert " — Ep" not in title and " | " not in title, title
+            lead = title[: -len(tail)]
             assert len(lead) <= WEB_TITLE_LEAD_MAX, (lead, len(lead))
 
 

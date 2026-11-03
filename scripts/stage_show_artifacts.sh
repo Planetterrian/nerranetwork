@@ -24,6 +24,10 @@ git add '*.rss' || true
 git add '*.html' || true
 git add -A blog/ || true
 git add sitemap.xml || true
+# One add per path: `git add a b` stages NOTHING when either path is
+# absent (same all-or-nothing pathspec rule as the checkout below), and
+# news-sitemap.xml exists only once a finalize run has written it.
+git add news-sitemap.xml || true
 # Tesla cached price for the public website widget. Written
 # by ``shows/hooks/tesla.py`` every Tesla run, consumed by
 # ``tesla.html`` JS so the stock pill doesn't depend on

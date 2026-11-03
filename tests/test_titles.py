@@ -22,10 +22,12 @@ from engine.titles import (
     NEWSLETTER_SUBJECT_MAX,
     PODCAST_EPISODE_TITLE_MAX,
     WEB_TITLE_LEAD_MAX,
+    WEB_TITLE_SEPARATOR,
     YOUTUBE_TITLE_MAX,
     clip_words,
     episode_title,
     fits,
+    web_page_title,
 )
 
 ELLIPSIS = "…"
@@ -165,6 +167,45 @@ class TestSurfacesStayWithinTheirCaps:
             hook, WEB_TITLE_LEAD_MAX)
 
 
+SHOW_NAMES = ["Tesla Shorts Time", "Привет, Русский!", "The Age of AI", "Omni View"]
+
+
+class TestWebPageTitle:
+    """Nov 3 2026: a page ``<title>`` is ``"<lead> · <Show>"`` — the lead
+    clipped to WEB_TITLE_LEAD_MAX on a word, the show whole, no episode
+    number — so the show name begins inside the ~60 characters a search
+    result displays."""
+
+    @pytest.mark.parametrize("show", SHOW_NAMES)
+    @pytest.mark.parametrize("hook", HOOKS)
+    def test_shape_and_budget(self, hook, show):
+        out = web_page_title(hook, show)
+        assert out.endswith(show)
+        lead = out[: -len(show)] if out != show else ""
+        if lead:
+            assert lead.endswith(WEB_TITLE_SEPARATOR), out
+            lead = lead[: -len(WEB_TITLE_SEPARATOR)]
+            assert len(lead) <= WEB_TITLE_LEAD_MAX, (lead, len(lead))
+            assert lead == clip_words(hook, WEB_TITLE_LEAD_MAX)
+            assert not _splits_a_word(hook, lead), (hook, lead)
+        assert " — Ep" not in out and "| " not in out
+
+    def test_lead_budget_leaves_the_show_inside_the_displayed_window(self):
+        # Google renders ~60 characters; with a 58-character lead the
+        # separator and the show's first letter are still inside it.
+        assert WEB_TITLE_LEAD_MAX + len(WEB_TITLE_SEPARATOR) <= 62
+        assert WEB_TITLE_LEAD_MAX == 58
+
+    def test_no_lead_is_the_show_alone_and_the_show_is_never_doubled(self):
+        assert web_page_title("", "Tesla Shorts Time") == "Tesla Shorts Time"
+        assert web_page_title(None, "Tesla Shorts Time") == "Tesla Shorts Time"
+        assert web_page_title("Models & Agents", "Models & Agents") == "Models & Agents"
+        assert web_page_title("models & agents", "Models & Agents") == "Models & Agents"
+
+    def test_short_lead_is_untouched(self):
+        assert web_page_title("Short one", "Omni View") == "Short one · Omni View"
+
+
 class TestProperties:
     def test_random_hooks_always_fit_and_never_split(self):
         """The guarantee has to hold for hooks nobody has written yet."""
@@ -189,3 +230,17 @@ class TestProperties:
             hook = " ".join(rng.choice(words) for _ in range(rng.randint(1, 40)))
             num = rng.randint(1, 9999)
             assert len(episode_title(hook, num)) <= PODCAST_EPISODE_TITLE_MAX
+
+    def test_web_page_titles_keep_the_show_and_the_budget_for_any_hook(self):
+        rng = random.Random(20261103)
+        words = ["Tesla", "registrations", "rose", "248", "percent", "жилья",
+                 "T-cell", "$2B", "1.6-trillion", "Musk's", "extraordinarily"]
+        for _ in range(1500):
+            hook = " ".join(rng.choice(words) for _ in range(rng.randint(1, 30)))
+            show = rng.choice(SHOW_NAMES)
+            out = web_page_title(hook, show)
+            assert out.endswith(show), (hook, out)
+            lead = out[: -len(show) - len(WEB_TITLE_SEPARATOR)]
+            assert len(lead) <= WEB_TITLE_LEAD_MAX, (hook, out)
+            if len(hook.split()[0]) <= WEB_TITLE_LEAD_MAX:
+                assert not _splits_a_word(hook, lead), (hook, out)

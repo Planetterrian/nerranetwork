@@ -5849,7 +5849,11 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
             "Independent news and podcast network: free shows on AI, Tesla, "
             "SpaceX, investing, world news, space, science and more, every "
             "claim checked against its source. Produced in Vancouver, Canada."),
-        "logo": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
+        # Nov 3 2026: the accounts that exist (network_social_sameas fed only
+        # about.html) and the wordmark PNG as an ImageObject — the SVG icon
+        # string was not a logo a search engine reads.
+        "logo": _blog.publisher_logo_ld(),
+        "sameAs": network_social_sameas(),
         "hasPart": [
             {k: v for k, v in {
                 "@type": "PodcastSeries",
@@ -6523,6 +6527,130 @@ def generate_sitemap(*, dry_run=False, out=None):
 
     out_path.write_text(_strip_lone_surrogates(xml), encoding="utf-8")
     print(f"Wrote {out_path} ({len(urls)} URLs)")
+    return out_path
+
+
+#: Google News reads a news sitemap for articles published in the last two
+#: days; older URLs are ignored, so the window is the whole point.
+NEWS_SITEMAP_HOURS = 48
+NEWS_SITEMAP_PUBLICATION = "Nerra Network"
+NEWS_SITEMAP_FILE = "news-sitemap.xml"
+_LD_JSON_RE = re.compile(
+    r'<script type="application/ld\+json">\s*(.*?)\s*</script>', re.S)
+
+
+def _post_article_ld(ep_file) -> dict:
+    """The article block (NewsArticle / BlogPosting) of a rendered post's
+    first ``ld+json`` script, or ``{}`` when the page carries none."""
+    try:
+        text = ep_file.read_text(encoding="utf-8", errors="ignore")
+    except Exception:  # noqa: BLE001
+        return {}
+    m = _LD_JSON_RE.search(text[:120000]) or _LD_JSON_RE.search(text)
+    if not m:
+        return {}
+    try:
+        data = json.loads(m.group(1))
+    except ValueError:
+        return {}
+    blocks = data if isinstance(data, list) else [data]
+    for block in blocks:
+        if isinstance(block, dict) and block.get("@type") in (
+                _blog.ARTICLE_TYPE_NEWS, _blog.ARTICLE_TYPE_BLOG):
+            return block
+    return {}
+
+
+def generate_news_sitemap(*, dry_run=False, out=None, now=None, blog_dir=None):
+    """Write ``news-sitemap.xml``: the NewsArticle posts published in the
+    last ``NEWS_SITEMAP_HOURS`` hours, newest first, in Google's news-sitemap
+    extension (publication name + language, publication_date, title).
+
+    Nov 3 2026 (findability): Organic Search was 19 sessions in 28 days on
+    2,966 sitemap URLs, and no surface told Google which pages were NEWS,
+    or when. Each entry is read from the rendered post's own JSON-LD —
+    ``datePublished`` (never file mtime, never the build clock: the sitemap
+    lastmod rule), ``headline`` and ``inLanguage`` — and only a post whose
+    article block is a ``NewsArticle`` qualifies: a narrative essay, a
+    lesson, a dialogue or an interview is not news and is not listed.
+    Redirect stubs are skipped. An empty window writes a valid empty
+    urlset, so the file always exists and always validates.
+
+    *now* (UTC) and *blog_dir* are for tests; *out* overrides the
+    destination the same way ``generate_sitemap`` allows.
+    """
+    from xml.sax.saxutils import escape as _esc
+    from datetime import datetime, timedelta, timezone
+
+    base = "https://nerranetwork.com"
+    now = now or datetime.now(timezone.utc)
+    today = now.date()
+    floor = (now - timedelta(hours=NEWS_SITEMAP_HOURS)).date()
+    _stubs = redirect_stub_paths()
+    blog_dir = Path(blog_dir) if blog_dir else ROOT / "blog"
+
+    rows: list[tuple[str, str, str, str]] = []  # (loc, date, language, title)
+    if blog_dir.is_dir():
+        for show_dir in sorted(blog_dir.iterdir()):
+            if not show_dir.is_dir():
+                continue
+            for ep_file in sorted(show_dir.glob("ep*.html")):
+                rel = f"blog/{show_dir.name}/{ep_file.name}"
+                if rel in _stubs:
+                    continue
+                # A cheap date read first: the window excludes almost every
+                # page before its JSON-LD has to be parsed.
+                try:
+                    head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+                except Exception:  # noqa: BLE001
+                    continue
+                m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', head)
+                if not m:
+                    continue
+                try:
+                    published = datetime.strptime(m.group(1), "%Y-%m-%d").date()
+                except ValueError:
+                    continue
+                if published < floor or published > today:
+                    continue
+                article = _post_article_ld(ep_file)
+                if article.get("@type") != _blog.ARTICLE_TYPE_NEWS:
+                    continue
+                title = " ".join(str(article.get("headline") or "").split())
+                if not title:
+                    continue
+                language = str(article.get("inLanguage") or "en").strip() or "en"
+                rows.append((f"{base}/{rel}", published.isoformat(), language, title))
+
+    rows.sort(key=lambda r: (r[1], r[0]), reverse=True)
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+             '        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">']
+    for loc, published, language, title in rows:
+        lines += [
+            "  <url>",
+            f"    <loc>{_esc(loc)}</loc>",
+            "    <news:news>",
+            "      <news:publication>",
+            f"        <news:name>{_esc(NEWS_SITEMAP_PUBLICATION)}</news:name>",
+            f"        <news:language>{_esc(language)}</news:language>",
+            "      </news:publication>",
+            f"      <news:publication_date>{published}</news:publication_date>",
+            f"      <news:title>{_esc(title)}</news:title>",
+            "    </news:news>",
+            "  </url>",
+        ]
+    lines.append("</urlset>")
+    lines.append("")
+    xml = "\n".join(lines)
+
+    out_path = Path(out) if out else ROOT / NEWS_SITEMAP_FILE
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(rows)} news URLs)")
+        return None
+    out_path.write_text(_strip_lone_surrogates(xml), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(rows)} news URLs)")
     return out_path
 
 
@@ -9976,6 +10104,7 @@ def main():
         generate_language_hub_pages(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
+        generate_news_sitemap(dry_run=args.dry_run)
         # Regenerate JSON API for mobile app
         try:
             import subprocess
@@ -10022,6 +10151,7 @@ def main():
         generate_all_blogs(dry_run=args.dry_run)
     if args.sitemap:
         generate_sitemap(dry_run=args.dry_run)
+        generate_news_sitemap(dry_run=args.dry_run)
     if args.player:
         generate_player_page(dry_run=args.dry_run)
     if args.how_to_listen:

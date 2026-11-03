@@ -33,12 +33,14 @@ __all__ = [
     "YOUTUBE_TITLE_MAX",
     "PODCAST_EPISODE_TITLE_MAX",
     "WEB_TITLE_LEAD_MAX",
+    "WEB_TITLE_SEPARATOR",
     "NEWSLETTER_SUBJECT_MAX",
     "EMAIL_ALSO_LINE_MAX",
     "ELLIPSIS",
     "clip_words",
     "episode_title",
     "fits",
+    "web_page_title",
 ]
 
 # --- Limits -----------------------------------------------------------
@@ -52,10 +54,18 @@ YOUTUBE_TITLE_MAX = 100
 #: missing and that YouTube was silently enforcing for us.
 PODCAST_EPISODE_TITLE_MAX = 100
 
-#: Lead portion of an HTML ``<title>`` before the episode/brand tail.
-#: Google renders ~60 chars total; this leaves room for " — EpN | Show"
-#: while keeping the first words — the ones that get read — intact.
-WEB_TITLE_LEAD_MAX = 62
+#: Lead portion of an HTML ``<title>`` before the show tail.
+#: Google renders ~60 characters of a title. Nov 3 2026: every episode
+#: page shipped ``<hook>… — Ep653 | Tesla Shorts Time`` (median 88
+#: characters, 97.8% over 60), so a search result never showed the show.
+#: The tail is now ``" · <Show>"`` with no episode number (the number
+#: stays in the page's h1 pill and breadcrumb), and the lead budget is 58
+#: so the show name BEGINS inside the displayed window on most results.
+#: Built by :func:`web_page_title`; nothing else assembles a page title.
+WEB_TITLE_LEAD_MAX = 58
+
+#: What sits between the lead and the show name in a page ``<title>``.
+WEB_TITLE_SEPARATOR = " · "
 
 #: Email clients truncate subject lines around here on mobile.
 NEWSLETTER_SUBJECT_MAX = 78
@@ -219,6 +229,33 @@ def is_fragment_title(text: str) -> bool:
 def fits(text: str, limit: int) -> bool:
     """True when *text* needs no clipping for *limit*."""
     return len((text or "").strip()) <= limit
+
+
+def web_page_title(lead: str, show_name: str, *, limit: int = WEB_TITLE_LEAD_MAX) -> str:
+    """The HTML ``<title>`` of an episode page: ``"<lead> · <Show>"``.
+
+    *lead* is the episode's headline (or, for an interview, the guest's
+    name and identifier), clipped to *limit* through :func:`clip_words`
+    so it ends on a word; *show_name* follows whole, never clipped — it is
+    the part that tells a searcher which show this is. No episode number:
+    the page's h1 pill and breadcrumb carry it, and in a ~60-character
+    search result it only displaced the show.
+
+    An empty lead gives the show name alone, and a lead that IS the show
+    name (the no-hook fallback) is not doubled.
+
+    >>> web_page_title("Tesla registrations in Sweden rose 248 percent", "Tesla Shorts Time")
+    'Tesla registrations in Sweden rose 248 percent · Tesla Shorts Time'
+    """
+    lead_text = clip_words(lead, limit)
+    show = (show_name or "").strip()
+    if not lead_text:
+        return show
+    if not show:
+        return lead_text
+    if lead_text.casefold() == show.casefold():
+        return show
+    return f"{lead_text}{WEB_TITLE_SEPARATOR}{show}"
 
 
 def episode_title(
