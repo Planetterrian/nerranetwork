@@ -833,3 +833,10 @@ class TestTheEmailsArchiveCopyCarriesTheNews:
         assert "(from" not in tesla  # public at 12:00Z = the 7:00 ET send
         spacex = nde.render_for(composed.body, ["nerra-member", "SpaceX Daily"])
         assert "(from 8:00 AM ET)" in spacex  # still private when the email lands
+
+
+class TestTheExpansionShareIsALiveMetric:
+    def test_the_register_can_name_it(self):
+        import importlib
+        gd = importlib.import_module("scripts.generate_dashboard")
+        assert "digest_expansion_fired_share_7d" in gd._experiment_live_metrics(ROOT)

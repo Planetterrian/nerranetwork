@@ -2250,6 +2250,10 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
     """
     cutoff = anchor_d - _dt.timedelta(days=days)
     n_all = regen = n_x = posted = queued = 0
+    # Nov 3 2026: how often the digest expansion retry fires (recorded by
+    # run_show since this date; it fired on 7/7 flagship episodes and 0/7
+    # cohort episodes in the week to Nov 2 with nothing reading it).
+    n_exp = exp_fired = 0
     # Oct 19 2026: how much of the sourced list the digest reports.
     reported_pcts: List[float] = []
     also_today: List[int] = []
@@ -2272,6 +2276,10 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
             n_all += 1
             if counters.get("digest_structural_regen"):
                 regen += 1
+            if "digest_expansion_fired" in counters:
+                n_exp += 1
+                if counters.get("digest_expansion_fired") is True:
+                    exp_fired += 1
             if counters.get("prompt_articles_reported_pct") is not None:
                 reported_pcts.append(float(counters["prompt_articles_reported_pct"]))
             if counters.get("digest_also_today_items") is not None:
@@ -2284,6 +2292,7 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
                         queued += 1
     return {
         "digest_structural_regen_share_7d": round(regen / n_all, 2) if n_all >= min_n else None,
+        "digest_expansion_fired_share_7d": round(exp_fired / n_exp, 2) if n_exp >= min_n else None,
         "x_posted_share_7d": round(posted / n_x, 2) if n_x >= min_n else None,
         "x_queued_share_7d": round(queued / n_x, 2) if n_x >= min_n else None,
         # Oct 19 2026 (report-more-sourced-news): mean share of the articles
