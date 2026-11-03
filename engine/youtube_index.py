@@ -104,6 +104,7 @@ def record_video(
     publish_at: str = "",
     preview_url: str = "",
     map_cut_s: Optional[float] = None,
+    render_duration_s: Optional[float] = None,
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -158,6 +159,19 @@ def record_video(
         if map_cut_s is not None:
             try:
                 row["map_cut_s"] = round(float(map_cut_s), 2)
+            except (TypeError, ValueError):
+                pass
+        # Nov 3 2026: seconds the long-form render took, written by the dub
+        # paths (engine/ru_dub.py, engine/lang_dub.py) which have no
+        # metrics file — run_show records the same number as the episode
+        # metric ``long_form_render_duration_s``. The reader is the
+        # efficiency readout of the dub long-forms (translate-job minutes
+        # by channel) — committed data instead of the runs API. Only
+        # written when set.
+        if render_duration_s is not None:
+            try:
+                row["long_form_render_duration_s"] = round(
+                    float(render_duration_s), 1)
             except (TypeError, ValueError):
                 pass
         # Idempotent upsert keyed on video_id.

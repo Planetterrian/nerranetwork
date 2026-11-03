@@ -92,10 +92,12 @@ class TestVelocityMath:
 
     def test_channels_and_kinds_are_separate_buckets(self):
         mod = _load_script()
+        # Nov 3 2026: a dub long is a rate only from its seventh day, so
+        # the RU long here is seven days old (14 views / 7 days).
         vel = mod.collect_velocities(_stats([
             _vid(kind="long", channel="en", published="2026-07-11", views=8),
             _vid(kind="short", channel="en", published="2026-07-12", views=8),
-            _vid(kind="long", channel="ru", published="2026-07-11", views=4),
+            _vid(kind="long", channel="ru", published="2026-07-06", views=14),
         ]))
         assert vel[("tesla", "en", "long")] == [4.0]
         assert vel[("tesla", "en", "short")] == [8.0]
@@ -1260,3 +1262,33 @@ class TestDubLongFormsNeedTheFullRead:
             assert long_vpd is None and tier == "C", ch
         tier, long_vpd, _s, _r = mod.compute_tier([9.0, 9.0], [20.0] * 5, "C", "en")
         assert long_vpd == 9.0
+
+
+class TestLongFormPolicyInstrument:
+    """Nov 3 2026: the long dimension reads the reach file as an INSTRUMENT
+    (the full scenarios are in tests/test_long_form_policy_instrument_2026_11_03.py)."""
+
+    def test_a_dub_long_at_age_three_is_not_a_velocity(self):
+        mod = _load_script()
+        assert mod.LONG_MIN_AGE_DAYS == {"en": 2, "ru": 7, "fr": 7}
+        vel = mod.collect_velocities(_stats([
+            _vid(kind="long", channel="fr", published="2026-07-10", views=30),  # 3 days
+            _vid(kind="long", channel="fr", published="2026-07-06", views=14),  # 7 days
+        ]))
+        assert vel[("tesla", "fr", "long")] == [2.0]
+
+    def test_ru_fr_entries_carry_the_hook_short_reach(self):
+        mod = _load_script()
+        reach = _reach(_dead_rows("spacex", ch="fr", views=38))
+        obs = mod.collect_hook_short_reach(reach)[("spacex", "fr")]
+        e = mod.advance_dead_shorts(None, obs, "fr", datetime.date(2026, 9, 22),
+                                    have_reach=True)
+        assert e["hook_short_d3_median_21d"] == 38 and e["hook_short_n_21d"] == 8
+        assert e["shorts_probe_weekly"] is False and e["shorts_dead_pending"] is None
+
+    def test_the_dub_long_overlay_is_shipped_off(self):
+        mod = _load_script()
+        assert mod.DUB_LONG_RELATIVE_ENABLED is False
+        dead = {"long_d3_median": 13.0, "long_n": 5, "hook_d3_median": 49.0}
+        tier, *_ = mod.compute_tier([9.0] * 4, [20.0] * 5, "C", "fr", dub_long_read=dead)
+        assert tier == "A"
