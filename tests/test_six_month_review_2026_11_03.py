@@ -759,3 +759,77 @@ class TestTheEditionCutsBeforeThePlatformAsk:
         assert hit and hit["kind"] == "promo" and hit["anchor"] == "frame"
         assert not hit.get("includes_platform_ask")
         assert hit["raw_seconds"] >= tr["segments"][-3]["end"] - 1.0
+
+
+class TestTheEmailsArchiveCopyCarriesTheNews:
+    """The "View this email in your browser" page, the share links' target
+    and what a search engine indexes is Buttondown's ARCHIVE copy, rendered
+    with no subscriber in the context: Django's ``in``/``not in`` both read
+    False there, so the Nov 2 archive carried the hero, an empty "Also on
+    Nerra today" heading and the footer. Every condition now opens with
+    ``not subscriber or`` / ``subscriber and``; the subject drops the
+    podcast app's "<Weekday> edition — " prefix; the preheader is two more
+    stories; release notes are judged at the send, not the compose clock."""
+
+    DAY = __import__("datetime").date(2026, 11, 2)
+    NOW = __import__("datetime").datetime(2026, 11, 2, 11, 40, tzinfo=__import__("datetime").timezone.utc)
+
+    @staticmethod
+    def _story(slug, name, ep, day, hook, headlines=()):
+        return {"slug": slug, "show_name": name, "hook": hook, "episode_num": ep,
+                "date_raw": day.isoformat(), "post_url": f"blog/{slug}/ep{ep:03d}.html",
+                "headlines": list(headlines), "duration_s": 600, "guest": ""}
+
+    def _front(self):
+        shows = {}
+        for slug, name in (("spacex", "SpaceX Daily"), ("tesla", "Tesla Shorts Time"),
+                           ("mag7", "MAG 7 Daily"), ("vancouver", "Vancouver Daily News"),
+                           ("omni_view", "Omni View")):
+            shows[slug] = {"name": name, "brand_color": "#336699", "show_page": f"{slug}.html",
+                           "members_only": False, "schedule": "Daily",
+                           "stories": [self._story(slug, name, 100, self.DAY, f"{name} lead story",
+                                                   ["One", "Two", "Three"])]}
+        shows["nerra_daily"] = {"name": "Nerra Daily", "members_only": False,
+                                "stories": [self._story("nerra_daily", "Nerra Daily", 74, self.DAY,
+                                                        "Monday edition — TSMC revival talks, Nordic Tesla gains, and AI protein labs")]}
+        return {"shows": shows}
+
+    @pytest.fixture
+    def composed(self, monkeypatch):
+        from engine import nerra_daily_email as nde
+        monkeypatch.setattr(nde, "already_sent", lambda day, root=None, **k: {})
+        monkeypatch.setattr(nde, "video_links", lambda slug, root, now: {
+            100: {"long": "https://www.youtube.com/watch?v=aaaaaaaaaaa", "long_at": "2026-11-02T12:00:00Z"}}
+            if slug == "tesla" else ({100: {"long": "https://www.youtube.com/watch?v=bbbbbbbbbbb",
+                                            "long_at": "2026-11-02T13:00:00Z"}} if slug == "spacex" else {}))
+        monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [])
+        return nde.compose(self.DAY, now=self.NOW, front=self._front(), trial_days=7)
+
+    def test_the_archive_renders_the_default_copy_with_every_one_liner(self, composed):
+        from engine import nerra_daily_email as nde
+        archive = nde.render_for(composed.body, [], subscriber=False)
+        assert "Today on Nerra" in archive  # the default block (five cards)
+        assert "SpaceX Daily lead story" in archive and "Tesla Shorts Time lead story" in archive
+        assert "Also on Nerra today" in archive
+        follower = nde.render_for(composed.body, ["nerra-member", "Tesla Shorts Time"])
+        assert "Today on Nerra" not in follower and "Your shows today" in follower
+
+    def test_every_condition_tolerates_an_absent_subscriber(self, composed):
+        import re
+        for cond in re.findall(r"\{% if (.*?) %\}", composed.body):
+            if cond in ("True", "False"):
+                continue
+            assert cond.startswith("not subscriber or ") or cond.startswith("subscriber and "), cond
+
+    def test_the_subject_is_the_story_and_the_preheader_two_more(self, composed):
+        assert not composed.subject.startswith("Monday edition")
+        assert composed.subject.startswith("TSMC revival talks")
+        assert composed.preheader.startswith("Also: ") and " · " in composed.preheader
+
+    def test_release_notes_are_judged_at_the_send(self, composed):
+        from engine import nerra_daily_email as nde
+        # Only cards carry release notes, so each follower's copy decides.
+        tesla = nde.render_for(composed.body, ["nerra-member", "Tesla Shorts Time"])
+        assert "(from" not in tesla  # public at 12:00Z = the 7:00 ET send
+        spacex = nde.render_for(composed.body, ["nerra-member", "SpaceX Daily"])
+        assert "(from 8:00 AM ET)" in spacex  # still private when the email lands

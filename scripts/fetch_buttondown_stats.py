@@ -269,7 +269,11 @@ def fetch_recent_emails(api_key: str, *, days: int = 30, limit: int = 40,
         out.append(_email_row(rec, rec["when"], api_key, kind="nerra_daily"))
 
     url: Optional[str] = f"{BUTTONDOWN_API_BASE}/emails"
-    params: Optional[dict] = {"page_size": "50"}
+    # Newest first, inside the window, sent only — the OpenAPI accepts all
+    # three (the default order had put the window's rows past page 8).
+    params: Optional[dict] = {"page_size": "50", "ordering": "-publish_date",
+                              "publish_date__start": cutoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                              "status": "sent"}
     list_ok = False
     pages = 0
     while url and pages < EMAIL_LIST_MAX_PAGES and len(out) < limit:

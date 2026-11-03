@@ -36,6 +36,7 @@ from __future__ import annotations
 import datetime as dt
 import html
 import json
+import re
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -78,7 +79,7 @@ HEADLINES_PER_CARD = 3
 #: An episode older than this is never news in today's email.
 WINDOW_DAYS = 2
 #: Episodes listed per followed show in the Sunday week list.
-WEEK_LIST_MAX = 5
+WEEK_LIST_MAX = 3
 #: Most-played episodes in the Sunday block.
 MOST_PLAYED_MAX = 5
 #: Where a sent email's record lives (committed; the idempotency key).
@@ -118,27 +119,50 @@ def _tag_literal(tag: str) -> Optional[str]:
     return None
 
 
+# Nov 3 2026: every condition also decides the ARCHIVE copy — the "View this
+# email in your browser" page, the share links' target, what a search engine
+# indexes — where Buttondown renders with NO subscriber in the context. There
+# Django's ``in`` / ``not in`` both evaluate to False (the lookup raises and
+# the operator swallows it), so the Nov 2 archive carried the hero, an empty
+# "Also on Nerra today" heading and the footer: no card, no line, no news.
+# A "not followed" condition therefore opens with ``not subscriber or`` (an
+# absent reader reads the default copy: five cards and every one-liner) and a
+# "followed" condition with ``subscriber and``. Django precedence is
+# ``not`` > ``and`` > ``or`` and ``or`` short-circuits, so no parentheses are
+# needed; :func:`render_for` evaluates the same subset with ``subscriber``.
+
 def tag_in(tag: str) -> str:
-    """``{% if '<tag>' in subscriber.tags %}`` (never true for a bad tag)."""
+    """``{% if subscriber and '<tag>' in subscriber.tags %}`` (never true for a bad tag)."""
     lit = _tag_literal(tag)
-    return "{% if " + (f"{lit} in subscriber.tags" if lit else "False") + " %}"
+    return "{% if " + (f"subscriber and {lit} in subscriber.tags" if lit else "False") + " %}"
 
 
 def tag_not_in(tag: str) -> str:
     lit = _tag_literal(tag)
-    return "{% if " + (f"{lit} not in subscriber.tags" if lit else "True") + " %}"
+    return "{% if " + (f"not subscriber or {lit} not in subscriber.tags" if lit else "True") + " %}"
 
 
 def any_of(tags: Iterable[str]) -> str:
-    """``{% if 'a' in subscriber.tags or 'b' in subscriber.tags %}``."""
+    """``{% if not subscriber or 'a' in subscriber.tags or 'b' in subscriber.tags %}``
+    — true for a reader who follows any of *tags*, and on the archive."""
     lits = [lit for lit in (_tag_literal(t) for t in tags) if lit]
     if not lits:
         return "{% if False %}"
-    return "{% if " + " or ".join(f"{lit} in subscriber.tags" for lit in lits) + " %}"
+    return "{% if not subscriber or " + " or ".join(f"{lit} in subscriber.tags" for lit in lits) + " %}"
+
+
+def any_not_in(tags: Iterable[str]) -> str:
+    """``{% if not subscriber or 'a' not in subscriber.tags or 'b' not in … %}``
+    — true for a reader who does NOT follow at least one of *tags* (the
+    "Also on Nerra today" heading has something under it), and on the archive."""
+    lits = [lit for lit in (_tag_literal(t) for t in tags) if lit]
+    if not lits:
+        return "{% if False %}"
+    return "{% if not subscriber or " + " or ".join(f"{lit} not in subscriber.tags" for lit in lits) + " %}"
 
 
 def none_of(tags: Iterable[str]) -> str:
-    """``{% if 'a' not in subscriber.tags and 'b' not in subscriber.tags %}``.
+    """``{% if not subscriber or 'a' not in subscriber.tags and 'b' not in subscriber.tags %}``.
 
     Django's ``{% if %}`` has no parentheses, so every condition in this
     module is a flat ``and`` / ``or`` chain or a nested ``{% if %}``.
@@ -146,7 +170,7 @@ def none_of(tags: Iterable[str]) -> str:
     lits = [lit for lit in (_tag_literal(t) for t in tags) if lit]
     if not lits:
         return "{% if True %}"
-    return "{% if " + " and ".join(f"{lit} not in subscriber.tags" for lit in lits) + " %}"
+    return "{% if not subscriber or " + " and ".join(f"{lit} not in subscriber.tags" for lit in lits) + " %}"
 
 
 ENDIF = "{% endif %}"
@@ -629,6 +653,14 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
     from engine.titles import NEWSLETTER_SUBJECT_MAX, clip_words
 
     now = now or dt.datetime.now(dt.timezone.utc)
+    # Release notes ("Watch (from 7:00 AM ET)") are judged at the SEND, not
+    # at the compose clock: the Nov 2 copy was composed at 6:43 ET for a
+    # 7:00 ET send and every "(from 7:00 AM ET)" note was false on arrival.
+    try:
+        from engine.release_schedule import newsletter_send_time
+        send_at = newsletter_send_time(EMAIL_SLUG, now) or now
+    except Exception:  # noqa: BLE001 — the compose clock is the fallback
+        send_at = now
     front = front if front is not None else load_front(root)
     shows = eligible_shows(front, root)
     sent = already_sent(day, root)
@@ -669,7 +701,7 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
     # --- Your shows --------------------------------------------------------
     lines.append("<div>" + any_of(published_tags) + _heading("Your shows today") + ENDIF + "</div>")
     videos_by_slug = {p.show.slug: video_links(p.show.slug, root, now) for p in picks}
-    cards = {p.show.slug: card_html(p, edition_ep=edition_ep, now=now,
+    cards = {p.show.slug: card_html(p, edition_ep=edition_ep, now=send_at,
                                     videos=videos_by_slug.get(p.show.slug, {}), day=day)
              for p in picks}
     for pick in picks:
@@ -697,7 +729,9 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         else:
             also.append("<div>" + tag_not_in(pick.show.tag) + line + ENDIF + "</div>")
     if also:
-        lines.append(_heading("Also on Nerra today"))
+        # The heading only when at least one published show is not followed
+        # (a reader following everything got the heading over nothing).
+        lines.append(any_not_in(published_tags) + _heading("Also on Nerra today") + ENDIF)
         lines.extend(also)
 
     # --- Sunday: the week ----------------------------------------------------
@@ -737,6 +771,11 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
 
     lead_hook = (edition or {}).get("hook") or (picks[0].story.get("hook") if picks else "")
     lead_hook = str(lead_hook or _when(day)).strip().rstrip(" .")
+    # The edition's title carries "<Weekday> edition — " for the podcast app
+    # (engine.daily_edition.edition_hook); in an inbox showing ~40
+    # characters that prefix was the whole subject (Nov 2: "Monday edition —
+    # TSMC revival talks, Nor…"). The email's subject is the story.
+    lead_hook = re.sub(r"^(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day edition\s*[—–-]\s*", "", lead_hook).strip()
     suffix = f" · {EMAIL_NAME}"
     # The name rides on the subject when the whole headline still fits;
     # otherwise the headline wins (the From line and the hero say Nerra
@@ -745,9 +784,17 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         subject = lead_hook + suffix
     else:
         subject = clip_words(lead_hook, NEWSLETTER_SUBJECT_MAX)
-    others = [p.show.name for p in picks[:4]]
-    preheader = (("Today: " + ", ".join(others)) if others else "Today on Nerra") + \
-        (f", and {len(picks) - 4} more" if len(picks) > 4 else "")
+    # The preheader is a second and third story, not a list of show names
+    # (Nov 3 2026); the show list stays when the day has fewer than two.
+    more_hooks = [clip_words(str(p.story.get("hook") or "").strip().rstrip(" ."), 60)
+                  for p in picks[:3]]
+    more_hooks = [h for h in more_hooks if h and h.lower() != lead_hook.lower()][:2]
+    if len(more_hooks) >= 2:
+        preheader = "Also: " + " · ".join(more_hooks)
+    else:
+        others = [p.show.name for p in picks[:4]]
+        preheader = (("Today: " + ", ".join(others)) if others else "Today on Nerra") + \
+            (f", and {len(picks) - 4} more" if len(picks) > 4 else "")
     archive_slug = f"nerra-daily-{day.isoformat()}"
 
     featured = None
@@ -800,14 +847,15 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
 # Rendering one subscriber's copy (tests, the preview, the size guard)
 # ---------------------------------------------------------------------------
 
-def render_for(body: str, tags: Iterable[str]) -> str:
+def render_for(body: str, tags: Iterable[str], *, subscriber: bool = True) -> str:
     """Render the Django ``{% if %}`` subset this module emits, for *tags*.
 
     Buttondown does this per subscriber. This is the same evaluation, for
     the operator's preview and for the tests, so a condition that is never
     true (a typo in a tag) is caught before it is sent. Supports exactly
-    what :func:`tag_in` / :func:`any_of` / :func:`none_of` produce, nested
-    ``{% if %}`` and ``{% else %}``.
+    what :func:`tag_in` / :func:`any_of` / :func:`any_not_in` /
+    :func:`none_of` produce, nested ``{% if %}`` and ``{% else %}``.
+    ``subscriber=False`` renders the ARCHIVE copy (no reader in the context).
     """
     import re
 
@@ -818,6 +866,10 @@ def render_for(body: str, tags: Iterable[str]) -> str:
         expr = expr.strip()
         if expr in ("True", "False"):
             return expr == "True"
+        if expr == "subscriber":
+            return subscriber
+        if expr == "not subscriber":
+            return not subscriber
         if " or " in expr:
             return any(truth(part) for part in expr.split(" or "))
         if " and " in expr:
