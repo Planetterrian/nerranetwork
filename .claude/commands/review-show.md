@@ -261,8 +261,10 @@ have very different real-world hit rates. Apply these rules:
    predictions into docs only; the rotation could not score them.) A doc
    containing predictions without a matching ledger entry is an unfinished
    deliverable.
-5. Update the show's quality-pass notes in `CLAUDE.md` (concise — follow the
-   existing June 2026 entries' style) if behavior changed.
+5. If behavior changed, add the rules that bind to `CLAUDE.md` — at most ten
+   lines (the rules, the guard's name, the link); the narrative goes to
+   `docs/reviews/` or `docs/claude_md_history/`, never into `CLAUDE.md`.
+   `tests/test_claude_md_size.py` enforces the size.
 6. Branch named `agent/review-<slug>-<YYYYMMDD>` (this exact prefix is how
    the scheduler detects an in-flight review and skips the slug). Commit,
    push with `git push -u origin <branch>`, then open a **draft** PR via
