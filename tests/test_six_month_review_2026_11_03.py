@@ -713,6 +713,28 @@ class TestTheDailyAuditReadsTheProse:
         assert "shattered.io" in pre and "Teslarati" in pre
         assert mod._real_names_preamble("") == ""
 
+    def test_the_verified_claims_are_handed_over_and_memory_doubt_is_a_note(self, tmp_path):
+        import importlib
+        import json
+        mod = importlib.import_module("review_episodes")
+        ledger = tmp_path / "Show_Ep001_20261103_claims.json"
+        ledger.write_text(json.dumps({"version": 2, "gate": {}, "claims": [
+            {"id": "1", "claim": "Tesla posted 130.7 percent growth in Norway.", "status": "verified_from_fetched"},
+            {"id": "2", "claim": "The pack holds spare room for LFP cells.", "status": "verified"},
+            {"id": "3", "claim": "A sentence nothing vouched for.", "status": "unverified_not_found"},
+        ]}), encoding="utf-8")
+        pre = mod._verified_claims_preamble(ledger)
+        assert pre.startswith("VERIFIED CLAIMS")
+        assert "130.7 percent" in pre and "spare room" in pre
+        assert "nothing vouched for" not in pre
+        assert mod._verified_claims_preamble(None) == ""
+        src = (ROOT / "review_episodes.py").read_text(encoding="utf-8")
+        assert 'claims_file = output_dir / f"{stem}_claims.json"' in src
+        assert "FACTUAL_DOUBT" in src and "contradict only YOUR OWN knowledge" in src
+        assert '"AI review: Factual Doubt (reviewer memory only)"' in src
+        # the split: a source contradiction stays a finding; memory doubt is info
+        assert 'contradict ITSELF, or contradict a source' in src
+
 
 class TestTheEditionCutsBeforeThePlatformAsk:
     """Nerra Daily Ep074 carried ten "A rating on Apple Podcasts or Spotify

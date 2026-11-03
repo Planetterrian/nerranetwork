@@ -90,6 +90,10 @@ class EpisodeReview:
     #: (Nov 3 2026) — the text the AI review reads, so "ex A I", "Ess Pee
     #: See Ex" and "D N A" are never graded as garbles.
     reader_path: Optional[Path] = None
+    #: The committed claims ledger (``*_claims.json``), when the gate wrote
+    #: one (Nov 3 2026) — its verified entries are handed to the AI review
+    #: as facts not to dispute from memory.
+    claims_path: Optional[Path] = None
     digest_text: str = ""
     tts_text: str = ""
     reader_text: str = ""
@@ -670,6 +674,7 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
             stem = md_file.stem  # e.g. Tesla_Shorts_Time_Pod_Ep414_20260322
             tts_file = output_dir / f"{stem}_tts.txt"
             reader_file = output_dir / f"{stem}_reader.txt"
+            claims_file = output_dir / f"{stem}_claims.json"
             metrics_file = output_dir / f"metrics_ep{ep_num:03d}.json"
             chapters_file = output_dir / f"chapters_ep{ep_num:03d}.json"
 
@@ -681,6 +686,7 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
                 digest_path=md_file if md_file.exists() else None,
                 tts_path=tts_file if tts_file.exists() else None,
                 reader_path=reader_file if reader_file.exists() else None,
+                claims_path=claims_file if claims_file.exists() else None,
                 metrics_path=metrics_file if metrics_file.exists() else None,
                 chapters_path=chapters_file if chapters_file.exists() else None,
             )
@@ -1691,6 +1697,38 @@ def _real_names_preamble(digest_text: str, limit: int = 40) -> str:
             "own sources — not errors, not garbles): " + "; ".join(names[:limit]) + "\n\n")
 
 
+def _verified_claims_preamble(claims_path: Optional[Path], limit: int = 40) -> str:
+    """The episode's claims the gate VERIFIED against their cited sources,
+    handed to the reviewer as facts it may not dispute from memory (Nov 3
+    2026). The model's training data lags the 24-hour cycle; a verified
+    claim that contradicts it is the model's error, not the episode's."""
+    if not claims_path or not claims_path.exists():
+        return ""
+    try:
+        data = json.loads(claims_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — a malformed ledger is not the review's problem
+        return ""
+    entries = data.get("claims") if isinstance(data, dict) else data
+    if not isinstance(entries, list):
+        return ""
+    claims: List[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        status = str(entry.get("status") or "")
+        text = " ".join(str(entry.get("claim") or "").split())
+        if status.startswith("verified") and text and text not in claims:
+            claims.append(text)
+        if len(claims) >= limit:
+            break
+    if not claims:
+        return ""
+    return ("VERIFIED CLAIMS (each checked against its cited source before publication; "
+            "do NOT dispute these from memory — a claim here that contradicts what you "
+            "remember is newer than your training data):\n"
+            + "\n".join(f"- {c}" for c in claims) + "\n\n")
+
+
 def ai_review_episode(ep: EpisodeReview) -> None:
     """Use Grok to review episode quality. Requires GROK_API_KEY."""
     api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
@@ -1706,6 +1744,7 @@ def ai_review_episode(ep: EpisodeReview) -> None:
     if not text:
         return
     real_names = _real_names_preamble(ep.digest_text)
+    verified_claims = _verified_claims_preamble(ep.claims_path)
 
     # Truncate to avoid massive prompts — the AI reviewer only needs enough
     # text to assess quality, not the full transcript.  Truncate at a
@@ -1744,10 +1783,15 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"flag it.\n\n"
         f"{'NOTE: The text below is a REVIEW EXCERPT that ends with [END OF REVIEW EXCERPT]. The full episode is LONGER than what you see here. Do NOT flag the episode as incomplete or abruptly ending. ONLY flag INCOMPLETE if the content itself contains obvious signs of being cut off mid-sentence within the body of the text.' if _was_truncated else ''}\n\n"
         f"{real_names}"
+        f"{verified_claims}"
         f"TEXT:\n{text}\n\n"
         f"Check for these specific problems and rate each YES or NO:\n"
-        f"1. FACTUAL_ERRORS: Are there obvious factual errors or contradictions? "
+        f"1. FACTUAL_ERRORS: Does the episode contradict ITSELF, or contradict a source "
+        f"it quotes or links, or get arithmetic wrong on its own numbers? "
         f"(Do NOT flag the episode date or year as an error.)\n"
+        f"1b. FACTUAL_DOUBT: Does a claim contradict only YOUR OWN knowledge, with no "
+        f"source in the episode disagreeing? Name it here, never under FACTUAL_ERRORS: "
+        f"the episode is newer than you are and its claims were checked against their sources.\n"
         f"2. INCOHERENT: Are there sentences with no clear referent, or passages "
         f"that do not make sense? A publisher's name, a product or project name, "
         f"a model or code identifier, or a spelled-out acronym is NOT incoherence.\n"
@@ -1764,6 +1808,7 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"caveats; 8-9 = strong episode; 10 = exemplary, no caveats.\n\n"
         f"Format your response EXACTLY like this (one per line):\n"
         f"FACTUAL_ERRORS: YES/NO — [brief explanation if YES]\n"
+        f"FACTUAL_DOUBT: YES/NO — [brief explanation if YES]\n"
         f"INCOHERENT: YES/NO — [brief explanation if YES]\n"
         f"REPETITIVE: YES/NO — [brief explanation if YES]\n"
         f"OFF_TOPIC: YES/NO — [brief explanation if YES]\n"
@@ -1844,6 +1889,16 @@ def ai_review_episode(ep: EpisodeReview) -> None:
                 f"AI review: {check.replace('_', ' ').title()}",
                 m.group(1).strip(),
             ))
+
+    # Nov 3 2026: a claim that contradicts only the reviewer's memory is a
+    # note, never a finding — the claims gate checked it against its source.
+    m = re.search(r"FACTUAL_DOUBT:\s*YES\s*[—–-]\s*(.+)", review_text)
+    if m:
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "info",
+            "AI review: Factual Doubt (reviewer memory only)",
+            m.group(1).strip(),
+        ))
 
     warning_checks = ["OFF_TOPIC", "TONE_BREAK", "INCOMPLETE"]
     for check in warning_checks:
