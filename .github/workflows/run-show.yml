@@ -908,8 +908,13 @@ jobs:
           STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
           STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
         run: |
-          # Regenerate show page (static episodes) + blog posts for this show
-          python generate_html.py --show ${{ matrix.show }} --blogs
+          # Regenerate show page (static episodes) + blog posts for this show.
+          # --latest 3 (Nov 3 2026): the newest three posts and the one before
+          # them, not the whole archive — every old post used to be rewritten
+          # for its three "You Might Also Like" cards (258 of Tesla's 264
+          # files in one plain show commit). The nightly's full rebuild is the
+          # path a template change reaches old posts by.
+          python generate_html.py --show ${{ matrix.show }} --blogs --latest 3
 
       - name: Commit and push output
         # Run on `always()` so a failure in a *peripheral* later step

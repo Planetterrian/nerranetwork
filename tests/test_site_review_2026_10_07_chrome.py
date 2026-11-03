@@ -38,14 +38,18 @@ def _strip_jinja_comments(text: str) -> str:
 
 
 class TestStylesheetBraces:
-    def test_braces_balance_and_never_close_below_zero(self):
+    # styles/blog.css (Nov 3 2026) is the post stylesheet that left the
+    # blog template's <style> block; the same stray brace would break it.
+    @pytest.mark.parametrize("sheet", ["main.css", "blog.css"])
+    def test_braces_balance_and_never_close_below_zero(self, sheet):
+        css = (ROOT / "styles" / sheet).read_text(encoding="utf-8")
         depth = 0
-        for i, ch in enumerate(_strip_css_comments(CSS)):
+        for i, ch in enumerate(_strip_css_comments(css)):
             if ch == "{":
                 depth += 1
             elif ch == "}":
                 depth -= 1
-                assert depth >= 0, f"unmatched '}}' at char {i} of main.css"
+                assert depth >= 0, f"unmatched '}}' at char {i} of {sheet}"
         assert depth == 0
 
     def test_phone_only_rules_stay_inside_the_phone_query(self):

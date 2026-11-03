@@ -3833,13 +3833,71 @@ _SHOW_DIRS = {
 }
 
 
-def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
+#: "You Might Also Like" reads the post's OWN week (Nov 3 2026): candidates
+#: dated from this many days before the post ...
+RELATED_WINDOW_BEFORE_DAYS = 7
+#: ... to this many days after it (the morning's sibling episodes land on
+#: the same date or the next one).
+RELATED_WINDOW_AFTER_DAYS = 1
+#: The newest candidates the picker samples from.
+RELATED_SAMPLE_POOL = 12
+
+
+def _contemporaneous(candidates, post_date):
+    """The candidates a post dated *post_date* (ISO) may recommend: the
+    other shows' posts of the same week, NEAREST the post's date first —
+    its own day, then the day before it ahead of the day after (the day
+    before already existed when the post was first rendered, so a weekday
+    post with a dozen same-day siblings is never re-drawn by the next
+    morning's episodes; a thin Saturday takes Friday's and Sunday's). A
+    post with nothing in its window takes the nearest-dated posts BEFORE
+    it (stable: a new episode is always newer than an old post), and the
+    network's very first posts, which have nothing before them, take the
+    nearest after. An undated candidate cannot be placed and is left out;
+    an unparseable *post_date* keeps the undated behaviour."""
+    from datetime import date, timedelta
+
+    try:
+        day = date.fromisoformat((post_date or "")[:10])
+    except ValueError:
+        return candidates
+    dated = [p for p in candidates if len(p.get("date_iso") or "") >= 10]
+    lo = (day - timedelta(days=RELATED_WINDOW_BEFORE_DAYS)).isoformat()
+    hi = (day + timedelta(days=RELATED_WINDOW_AFTER_DAYS)).isoformat()
+    window = [p for p in dated if lo <= p["date_iso"][:10] <= hi]
+    if window:
+        def nearness(p):
+            try:
+                delta = (date.fromisoformat(p["date_iso"][:10]) - day).days
+            except ValueError:
+                delta = RELATED_WINDOW_BEFORE_DAYS + 1
+            return (abs(delta), delta)
+        return sorted(window, key=nearness)
+    before = [p for p in dated if p["date_iso"][:10] <= day.isoformat()]
+    if before:
+        return sorted(before, key=lambda p: p["date_iso"][:10],
+                      reverse=True)[:RELATED_SAMPLE_POOL]
+    return sorted(dated, key=lambda p: p["date_iso"][:10])[:RELATED_SAMPLE_POOL]
+
+
+def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed="",
+                             post_date=""):
     """Pick up to *want* cross-show posts for a blog post's rec section.
 
     The show's curated sibling (``NETWORK_SHOWS[slug]["related_show"]``)
     always takes the first slot when it has a recent post, so the
     on-brand recommendation is deterministic; remaining slots are
     sampled from the latest cross-show pool.
+
+    *post_date* (the post's ISO date, Nov 3 2026) narrows the pool to the
+    post's own week — ``RELATED_WINDOW_BEFORE_DAYS`` before it to
+    ``RELATED_WINDOW_AFTER_DAYS`` after — so an October post recommends
+    October's stories and, once its week has passed, never changes again.
+    Before this the pool was the network's newest posts whatever the post's
+    date, so every post in the network was rewritten every morning: 32,647
+    ``blog/`` rewrites in the week to Nov 3, Tesla's plain show commit
+    touching 258 old posts whose only change was these three cards. An
+    empty *post_date* keeps the undated behaviour for callers without one.
     """
     if not cross_show_posts:
         return []
@@ -3853,12 +3911,15 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
     # would make every post in a show recommend the identical three, so the
     # seed is the post, not the show.
     #
-    # This makes a re-run with the SAME candidate pool byte-identical. It does
-    # not freeze the recommendations: the pool is the newest cross-show posts,
-    # so they still move as the network publishes.
+    # This makes a re-run with the SAME candidate pool byte-identical. With
+    # *post_date* the candidate set is the post's own week, so the pool
+    # gaining a newer episode changes nothing a post older than a day
+    # recommends (Nov 3 2026).
     rng = random.Random(zlib.crc32(seed.encode("utf-8")) if seed else None)
     related = []
     candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
+    if post_date:
+        candidates = _contemporaneous(candidates, post_date)
     curated_slug = (NETWORK_SHOWS.get(slug) or {}).get("related_show")
     curated = next(
         (p for p in candidates if p.get("show_slug") == curated_slug),
@@ -3871,7 +3932,7 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
     if len(candidates) <= remaining:
         related.extend(candidates[:remaining])
     else:
-        related.extend(rng.sample(candidates[:12], remaining))
+        related.extend(rng.sample(candidates[:RELATED_SAMPLE_POOL], remaining))
     return related
 
 
@@ -3945,7 +4006,7 @@ def _translated_bodies_for_episode(digest_dir, meta) -> dict:
 
 
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
-                        output_dir=None):
+                        output_dir=None, latest=None):
     """Generate blog post HTML pages for all episodes of a show.
 
     *cross_show_posts*: optional list of dicts from other shows for
@@ -3956,6 +4017,14 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     a guard that wants to assert on a post has to render its own — the
     committed file still carries the previous chrome. Same reason
     ``generate_blog_index`` and ``generate_editorial_page`` take one.
+
+    *latest* (Nov 3 2026): render only the newest *latest* posts by episode
+    number plus the post before them — the neighbour whose "next episode"
+    link the newest post changed — instead of the whole archive. This is
+    the per-show regen every show run, video job and multilingual sweep
+    calls (``--show <slug> --blogs --latest 3``); the nightly's full
+    rebuild stays the path a template change reaches old posts by. With it
+    the returned list holds only the posts rendered.
 
     Returns list of (metadata_dict, output_path) tuples.
     """
@@ -4022,16 +4091,25 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     _video_links = episode_video_links(digest_dir / "youtube_videos.json",
                                        include_scheduled=True)
 
-    for i, meta in enumerate(all_meta):
+    # The newest ``latest`` posts and the one before them (its next-episode
+    # nav is what the newest post changed); everything older is untouched.
+    first_index = 0
+    if latest and latest > 0:
+        first_index = max(0, len(all_meta) - latest - 1)
+
+    for i in range(first_index, len(all_meta)):
+        meta = all_meta[i]
         prev_post = all_meta[i - 1] if i > 0 else None
         next_post = all_meta[i + 1] if i < len(all_meta) - 1 else None
 
         md_text = meta["_md_path"].read_text(encoding="utf-8")
 
-        # Pick up to 3 recent posts from other shows for cross-show recs.
-        # Seeded on this post's own stem so a rebuild is reproducible.
+        # Pick up to 3 posts from other shows for cross-show recs: the
+        # post's own week, seeded on this post's own stem so a rebuild is
+        # reproducible and a post older than its week never changes.
         _related = _pick_cross_show_related(
-            slug, cross_show_posts, seed=meta["_md_path"].stem)
+            slug, cross_show_posts, seed=meta["_md_path"].stem,
+            post_date=meta.get("date_iso", ""))
 
         html = generate_blog_post_html(
             md_text, meta, cfg, env,
@@ -4201,12 +4279,27 @@ def generate_network_blog_index(*, dry_run=False, all_posts=None):
 
 
 def _cross_show_pool():
-    """Recent posts from every show, newest first, for "You Might Also Like".
+    """Every published post of every show, newest first, for "You Might
+    Also Like".
 
     One builder for both callers (Oct 7 2026). Only ``generate_all_blogs``
     used to collect a pool, so the per-show regen — the path run_show and the
     Voices publisher take for every new episode — passed ``None`` and every
     post it wrote rendered no recommendations at all.
+
+    Nov 3 2026: the whole archive, not the last six episodes per show. The
+    picker reads a post's own week (``_pick_cross_show_related(post_date=)``),
+    so an October post needs October's posts in the pool. The walk reads the
+    show directories' TOP level only — ``glob`` never descends, and a
+    members-only episode's text sits in ``members/`` where no public
+    surface reads it (the Oct 13 gated-shows rule). Measured at 0.8 s over
+    2,751 digests, so it is not a cost. ``site/data/search-index.json`` was
+    measured and NOT used as the source: its title and hook come from the
+    content lake's own parser and differ from the posts' on 138 of 2,747
+    rows (39 of them the label "What You Need to Know:"), and it is rebuilt
+    by the finalize job, a lag behind the morning's episodes; the digests
+    are what the posts themselves are rendered from. One row per episode
+    (a re-run's later filename wins, as ``generate_blog_posts`` decides).
     """
     from engine.blog import extract_blog_metadata
 
@@ -4215,16 +4308,15 @@ def _cross_show_pool():
         digest_dir = ROOT / "digests" / _SHOW_DIRS.get(slug, slug)
         if not digest_dir.exists():
             continue
-        md_files = sorted(digest_dir.glob("*.md"))[-6:]  # Last 6 episodes per show
-        for md_file in md_files:
+        rows: dict[int, dict] = {}
+        for md_file in sorted(digest_dir.glob("*.md")):  # top level only
             try:
                 md_text = md_file.read_text(encoding="utf-8")
                 meta = extract_blog_metadata(md_text, slug, md_file.name, file_path=md_file)
-                # A recommendation must be a page that exists.
                 ep = meta.get("episode_num", 0)
-                if not ep or _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                if not ep:
                     continue
-                pool.append({
+                rows[ep] = {
                     "show_slug": slug,
                     "show_name": cfg["name"],
                     "show_color": cfg["brand_color"],
@@ -4234,9 +4326,14 @@ def _cross_show_pool():
                     "url": f"../../blog/{slug}/ep{ep:03d}.html",
                     "date": meta.get("date", ""),
                     "date_iso": meta.get("date_iso", ""),
-                })
+                }
             except Exception:
                 pass
+        for ep, row in rows.items():
+            # A recommendation must be a page that exists.
+            if _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                continue
+            pool.append(row)
     # Newest first, on the ISO date: the display date is "October 06, 2026",
     # which sorts by month NAME (September after October).
     pool.sort(key=lambda p: p.get("date_iso", ""), reverse=True)
@@ -9624,6 +9721,19 @@ def main():
         help="Generate pages for a specific show slug (e.g. tesla, omni_view)",
     )
     parser.add_argument(
+        "--latest",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "With --show --blogs: render only the newest N posts and the "
+            "one before them (plus the show's blog index pages), not the "
+            "whole archive. The show run, the video job and the multilingual "
+            "sweep pass 3 (Nov 3 2026); the nightly's full rebuild is how a "
+            "template change reaches every old post."
+        ),
+    )
+    parser.add_argument(
         "--blog-aggregates",
         action="store_true",
         help=(
@@ -9774,7 +9884,8 @@ def main():
         # nightly rebuild. run_show never hit it because it writes the post
         # HTML itself before calling here.
         if args.blogs:
-            generate_blog_posts(args.show, dry_run=args.dry_run)
+            generate_blog_posts(args.show, dry_run=args.dry_run,
+                                latest=args.latest)
         # The show's claims ledger page + the network totals (Oct 1 2026):
         # a new episode adds a row, so the per-episode path refreshes it.
         # Own ledger page ONLY — never the network claims.html (see the

@@ -1920,7 +1920,8 @@ def generate_blog_post_html(
             from generate_html import _cross_show_pool, _pick_cross_show_related
             _md_stem = Path(metadata.get("_md_path") or metadata.get("filename") or "").stem
             related_posts = _pick_cross_show_related(
-                show_slug, _cross_show_pool(), seed=_md_stem)
+                show_slug, _cross_show_pool(), seed=_md_stem,
+                post_date=metadata.get("date_iso", ""))
         except Exception:  # noqa: BLE001 - recommendations never block a post
             related_posts = []
 

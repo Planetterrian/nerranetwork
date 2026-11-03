@@ -25,13 +25,18 @@
  * a regenerated page already has them and is passed through untouched.
  * Bump VERSION when this file's behaviour changes; old caches are deleted on
  * activate. A broken worker is replaced by publishing a new sw.js.
+ *
+ * Nov 3 2026: the episode posts load styles/blog.css (the 39 KB <style>
+ * block every post used to inline). It is under /styles/, so it is served
+ * network first like main.css (the Oct 30 rule) and precached beside it.
  */
-var VERSION = 'nn-2026-10-30';
+var VERSION = 'nn-2026-11-03';
 var PAGES = VERSION + '-pages';
 var STATIC = VERSION + '-static';
 var DATA = VERSION + '-data';
 var PAGE_LIMIT = 40;
-var PRECACHE = ['/offline.html', '/styles/main.css', '/assets/js/nn-player.js', '/assets/js/nn-app.js',
+var PRECACHE = ['/offline.html', '/styles/main.css', '/styles/blog.css',
+  '/assets/js/nn-player.js', '/assets/js/nn-app.js',
   '/assets/js/nn-markets.js',
   '/assets/app/icon-192.png', '/assets/nerra-logo-icon.svg'];
 
