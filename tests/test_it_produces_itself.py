@@ -250,7 +250,7 @@ class TestTheContentLake:
 class TestSheOwnsWhatSheIs:
     def test_the_claim_is_made_once_and_then_earned(self):
         assert "WHAT YOU ARE." in PROMPT
-        assert "first AI to host and produce a podcast end to end" in PROMPT
+        assert "An AI host: {{mira_spoken_claim}}" in PROMPT  # engine.brand owns the clause (Nov 3 2026)
         assert "as a fact rather than a boast, then be good at the job" in PROMPT
 
     def test_the_guest_experience_is_named_not_ignored(self):

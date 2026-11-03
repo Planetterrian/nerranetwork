@@ -696,6 +696,20 @@ MIRA_PAGE_DESCRIPTION = (
 )
 
 
+# Nov 3 2026: the one clause Mira may SPEAK about what the show is. The
+# Voices prompts (the live brief, the narration, the editor) had said "the
+# first podcast researched, hosted and produced end to end by an AI" since
+# Sep 14 — the broad shape this module refuses to make, because a prior-art
+# search found it disprovable, and the Sep 21 rotation rule that the on-air
+# line carries the narrow claim and no superlative. A spoken line can carry
+# neither the basis nor the correction invitation, so it carries no
+# superlative: the term that is ours, in words a host can say in a clause.
+MIRA_SPOKEN_CLAIM = (
+    "on this show an AI asks the questions, and the guest decides whether "
+    "the conversation is published at all"
+)
+
+
 def mira_claim_paragraphs() -> list:
     """The claim, its basis and its footnote, in the order they are read."""
     return [

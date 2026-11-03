@@ -124,8 +124,10 @@ class TestWhatSheSaysAtTheTop:
     def test_she_introduces_herself_and_the_show(self):
         assert "HOW TO OPEN" in PROMPT
         assert "you are Mira, the AI who hosts {{show_name}}" in _flat(PROMPT)
-        assert ("first podcast hosted and run end to end by an AI"
-                in _flat(PROMPT))
+        # Nov 3 2026: the spoken claim is engine.brand's narrow one, rendered
+        # through {{mira_spoken_claim}} — never the broad "first podcast" shape.
+        assert "{{mira_spoken_claim}}" in _flat(PROMPT)
+        assert "first podcast" not in _flat(PROMPT)
 
     def test_the_claim_is_made_once_and_not_as_a_boast(self):
         flat = _flat(PROMPT)
@@ -155,7 +157,8 @@ class TestWhatSheSaysAtTheTop:
         assert "been ambushed" in FIRE
 
     def test_the_produced_episode_says_it_too(self):
-        assert "first podcast hosted and run end to end by an AI" in NARRATION
+        assert "{{mira_spoken_claim}}" in NARRATION
+        assert "first podcast" not in NARRATION
         assert "never as a boast" in NARRATION
         assert "never the same wording as the cold open" in NARRATION
 

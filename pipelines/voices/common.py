@@ -654,6 +654,13 @@ def llm(prompt: str, *, temperature: float = 0.5, max_tokens: int = 3500,
     return (text or "").strip()
 
 
+def _brand_spoken_claim() -> str:
+    """engine.brand.MIRA_SPOKEN_CLAIM, imported lazily so the Voices
+    pipeline's import graph stays independent of the site engine."""
+    from engine.brand import MIRA_SPOKEN_CLAIM
+    return MIRA_SPOKEN_CLAIM
+
+
 def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
     """The show tokens every prompt may use: {{show_name}}, {{show_slug}},
     {{show_short_label}}, {{show_premise}}, {{opening_line}},
@@ -670,6 +677,9 @@ def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
         "closing_question": s.closing_question,
         "cohost_name": cohost_name(),
         "cohost_block": "",
+        # Nov 3 2026: the one clause she may speak about what the show is;
+        # engine.brand owns it (the prompts had typed a broader claim).
+        "mira_spoken_claim": _brand_spoken_claim(),
     }
 
 

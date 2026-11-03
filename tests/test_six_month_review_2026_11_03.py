@@ -919,3 +919,42 @@ class TestTheAttributionTailIsMeasured:
     def test_the_snapshot_table_carries_the_columns(self):
         src = (ROOT / "scripts" / "review_snapshot.py").read_text(encoding="utf-8")
         assert "| commas | tail | short |" in src
+
+
+class TestMiraSpeaksTheNarrowClaim:
+    """Since Sep 14 the Voices prompts had Mira say "the first podcast
+    researched, hosted and produced end to end by an AI" — the broad shape
+    engine.brand refuses (prior art since 2024) — on every cold open, live
+    to every guest, and in the editor's brief. The spoken clause has one
+    owner now and carries no superlative."""
+
+    PROMPTS = ROOT / "pipelines" / "voices" / "prompts"
+    BROAD = ("first podcast", "first ai to host", "end to end by an ai",
+             "end to end by an artificial intelligence", "first-of-its-kind")
+
+    def test_no_voices_prompt_types_the_broad_claim(self):
+        offenders = []
+        for path in sorted(self.PROMPTS.glob("*.txt")):
+            low = path.read_text(encoding="utf-8").lower()
+            for phrase in self.BROAD:
+                if phrase in low:
+                    offenders.append(f"{path.name}: {phrase!r}")
+        assert not offenders, offenders
+
+    def test_the_three_sites_render_the_brand_clause(self):
+        from engine import brand
+        from pipelines.voices.common import load_prompt
+        assert "first" not in brand.MIRA_SPOKEN_CLAIM.lower()
+        assert "guest decides whether" in brand.MIRA_SPOKEN_CLAIM
+        for name in ("mira_system_prompt.txt", "mira_narration.txt", "auto_edit.txt"):
+            raw = (self.PROMPTS / name).read_text(encoding="utf-8")
+            assert "{{mira_spoken_claim}}" in raw, name
+            rendered = load_prompt(name)
+            assert brand.MIRA_SPOKEN_CLAIM in rendered, name
+            assert "{{mira_spoken_claim}}" not in rendered, name
+
+    def test_the_spoken_clause_matches_the_on_air_rotation_line(self):
+        from engine import brand, network_promo
+        mira = next(s for s in network_promo.NETWORK_SURFACES if s["id"] == "mira")
+        assert "guest decides whether the conversation is published at all" in mira["spoken"]
+        assert "guest decides whether the conversation is published at all" in brand.MIRA_SPOKEN_CLAIM
