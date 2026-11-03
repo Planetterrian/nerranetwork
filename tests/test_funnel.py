@@ -140,7 +140,14 @@ class TestDestinations:
 
     def test_a_show_without_a_funnel_block_falls_back_to_its_show_page(self):
         cfg = load_config(ROOT / "shows" / "omni_view.yaml")
-        assert funnel.destination_for(cfg, channel="ru") == cfg.publishing.rss_link
+        assert funnel.destination_for(cfg, channel="en") == cfg.publishing.rss_link
+
+    def test_a_dub_channel_without_a_destination_gets_the_language_front_page(self):
+        # Nov 3 2026: it used to get the English show page (see
+        # tests/test_six_month_review_2026_11_03.py::TestDubViewersLandOnTheirLanguage).
+        cfg = load_config(ROOT / "shows" / "omni_view.yaml")
+        assert funnel.destination_for(cfg, channel="ru") == \
+            "https://nerranetwork.com/ru/index.html"
 
     def test_the_ru_landing_page_exists_at_the_configured_url(self):
         # The slug/filename landmine, applied to the funnel: nothing in
