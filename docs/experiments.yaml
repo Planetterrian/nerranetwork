@@ -2261,7 +2261,15 @@ experiments:
     area: growth
     shipped: 2026-09-19
     readout: 2026-10-20
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): MISS. No select_personal_upsell event in
+      28 days of api/ga4_stats.json site_events; join.html is in neither top_pages
+      nor landing_pages (under 6 views); api/funnel.json capture is null, so no
+      attributed capture. The on-air plug reached the feeds and nothing reached the
+      site.
+
+      '
     baseline: >
       Nerra Personal is live and sellable (real Stripe links, provisioned
       Worker, 200 on the sample edition, buy.stripe.com appearing as a 7-session
@@ -2415,7 +2423,16 @@ experiments:
     area: funnel
     shipped: 2026-09-21
     readout: 2026-10-21
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. api/member_metrics.json reports
+      paid_active_total 2 (the third check holds); api/funnel.json capture is null
+      (capture.by_source has no row) and select_personal_upsell never fired (the
+      first two fail). Buttondown tag_counts exist per show (14 subscribers) but
+      by_source is empty because no first-party form sent a source until Sep 21 and
+      the list has grown by about two a week since.
+
+      '
     hypothesis: >
       Phase 1 made CLICKS traceable and the capture end stayed dark, so no
       change to the Personal funnel — the operator's first priority — could be
@@ -2522,7 +2539,14 @@ experiments:
     area: growth
     shipped: 2026-09-21
     readout: 2026-10-21
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. /explore.html was viewed 9 times
+      in 28 days (api/ga4_stats.json top_pages) and appears in no landing-page row,
+      so the existence check holds for visits and fails for landings; Search Console
+      is still unread. The footer fact holds (guards green).
+
+      '
     hypothesis: >
       @NerraNetwork's audience is 99.4% male and 37% over 55 while the catalogue
       already holds the shows that would broaden it — a Russian language course,
@@ -2935,7 +2959,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. ai_chips 56 downloads in 30
+      days, weekly 0/0/31/25; the search line is $7.66 of its $16.35 a month ($0.53
+      per download). Read from api/audience_headline.json on 2026-11-02; OP3 lists
+      only a show''s top episodes, so median first-week downloads read 0-2 here and
+      are not the ruler for a show this size. The cohort is about 4% of network
+      downloads six weeks in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2949,7 +2982,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. mag7 46 downloads in 30
+      days, weekly 0/12/23/11 ($0.30 per download). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2963,7 +3005,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. peptides 110 downloads in 30
+      days, weekly 27/21/22/40 (the cohort''s largest audience). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2977,7 +3028,17 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. longevity 20 downloads in 30
+      days, weekly 6/2/4/6; the merge-or-monthly question (same host, format and
+      caveat prompt as Peptides at 6 against 43 a week) is the operator''s. Read
+      from api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -3101,7 +3162,16 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. vancouver 99 downloads in 30
+      days, weekly 36/33/10/14 (falling since the Oct 17 Pacific slot). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -3118,6 +3188,11 @@ experiments:
     shipped: 2026-09-23
     readout: 2026-11-06
     status: reading
+    interim: '
+      INTERIM 2026-11-03 (readout 2026-11-06): 7 downloads in 30 days, weekly
+      0/1/1/5; the skip rate is the number to read on the 6th.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The first number read is the
       skip rate (plan §4.6: the thinnest show in the plan); the audience
@@ -3130,7 +3205,17 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. prediction_markets 64
+      downloads in 30 days, weekly 20/13/15/15; posture held (no pick language on
+      the Board, How It Works verified against abstracts). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The first things read are
       posture and shape, not audience: zero pick or recommendation language,
@@ -3147,7 +3232,18 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. the four public-weeks desks
+      earned 35-56 downloads in 30 days each before the Oct 16 members-only gate and
+      0-5 a week since; Top World 93 in 30 days, weekly 30/22/12/23;
+      omni_view_north_america unresolved on OP3. Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. Read first: region purity on
       three episodes per desk, sub-region spread across the week (the hook's
@@ -3499,7 +3595,17 @@ experiments:
     area: growth
     shipped: 2026-10-01
     readout: 2026-11-01
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): MISS. api/apple_ratings.json: 4 ratings on
+      2026-10-02 (spacex 2, age_of_ai 1, MAB 1) to 7 on 2026-11-02 (spacex 3, tesla
+      1, FF 1, age_of_ai 1, MAB 1): +3 against a target of +10; two shows gained a
+      first rating (tesla, FF) against three. The ask aired on alternate days as
+      designed; 13 shows still point at Apple pages that do not exist (directory
+      rows PENDING), which caps what the ask can do. The closing''s ask count is an
+      operator decision (review doc section 5).
+
+      '
     baseline: "Apple ratings on 2026-10-01 (first fetch, 15 shows with a page): age_of_ai 1, MAB 1, spacex 2, twelve shows 0; no closing anywhere said 'follow'; 11 English shows + 6 desks had no ask"
     target: >
       Apple rating_count_total up by >= 10 across the network by the readout
@@ -3974,7 +4080,16 @@ experiments:
     area: quality
     shipped: 2026-10-09
     readout: 2026-10-23
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY HIT, LATENCY MISS. 22 of 22
+      episodes served grok-4.6 (0 fallbacks); script_digest_overlap_pct median 6.6
+      (target <= 20), coverage 72 (>= 70), entity retention 89 (>= 70);
+      generate_podcast_script p95 628 s against the 300 s gate and over the 600 s
+      request timeout; wall p95 2,500 s. The arm writes; it also fails the
+      playbook''s latency gate every week. Decision C18 in the review doc.
+
+      '
     baseline: >
       Oct 2-8 slates: the grok-4.3 flagship scripts read the digest aloud —
       SpaceX 64% verbatim 8-grams (FF 68%, Planetterrian 68%, First
@@ -4405,7 +4520,15 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): UC HIT, FPD PARTIAL. Unintended
+      Consequences: 22/22 on grok-4.7, overlap 18.0, coverage 80, script p95 169 s.
+      First Principles: 22/22 on 4.7, overlap 23.6 (target <= 20, missed), coverage
+      83, script p95 105 s. No episode lost; the low-effort 4.7 arm is the fastest
+      script stage on the network.
+
+      '
     baseline: >
       Script stage on grok-4.3 (Oct 5-11): UC 64-80% of the script copied
       verbatim from the written episode (Ep134-139), FPD 69-87% (Ep122-127),
@@ -4431,7 +4554,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. 22/22 on 4.6; overlap 26.5
+      (target <= 20, missed), coverage 77, entity retention 91; script p95 278 s
+      (passes). No episode lost.
+
+      '
     baseline: >
       Planetterrian on grok-4.3, Ep205-210: script_digest_overlap_pct
       62-77%, coverage 76-91%, script call 27-63 s, runs 300-445 s. SpaceX's
@@ -4451,7 +4580,16 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): Tesla QUALITY HIT, LATENCY MISS; FF
+      PARTIAL. Tesla: 22/22 on 4.6, overlap 19.3, coverage 77, script p95 561 s
+      (gate 300), wall p95 2,424 (< 2,700). Fascinating Frontiers: 22/22 on 4.6,
+      overlap 29.8 (target <= 20, missed), coverage 84, script p95 297 (passes),
+      wall p95 2,461. No episode lost. The attribution-tail share grew with the arm
+      (Tesla 0 to 10% of body sentences; script_attribution_tail_pct, Nov 3).
+
+      '
     baseline: >
       Tesla on the 4.3 combined path, Ep626-631: script_digest_overlap_pct
       2.5-72 (4 of 6 under 13), coverage 39-95%, runs 1,120-1,930 s. FF on
@@ -4474,7 +4612,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY HIT, LATENCY MARGINAL. 22/22 on
+      4.6; overlap 4.1, coverage 80, entity retention 72; script p95 330 s (gate
+      300), wall p95 2,638 (< 2,700). No episode lost.
+
+      '
     baseline: >
       MIT on the 4.3 combined path, Ep192-197: script_digest_overlap_pct
       49-62, coverage 88-100%, runs 1,360-1,800 s.
@@ -4494,7 +4638,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY PARTIAL, LATENCY MISS. 22/22 on
+      4.6; overlap 20.7 (target <= 20, at the line), coverage 82; script p95 504 s
+      (gate 300), wall p95 3,029 s (target < 2,700, missed). No episode lost.
+
+      '
     baseline: >
       Models & Agents on grok-4.3, Ep195-200 (4 combined, 2 two-pass):
       script_digest_overlap_pct 33-65, coverage 78-84%, runs 1,100-2,135 s.
@@ -4885,6 +5035,16 @@ experiments:
     shipped: 2026-10-15
     readout: 2026-11-12
     status: reading
+    interim: '
+      INTERIM 2026-11-03 (readout 2026-11-12): the mechanism works and the product
+      vanished. Every desk has skipped 18 straight days on no_member_demand since
+      Oct 16 (72 episodes, 0 produced) because the two paying members carry none of
+      the five; no desk episode reached a public surface (holds); Top World reads
+      the desks that ran (none). Before the gate the four non-NA desks earned 35-56
+      downloads in 30 days each. public_weekly or retire is the operator''s decision
+      (review doc section 5).
+
+      '
     baseline: >
       Oct 2026: the five desks published daily to public feeds, blogs and
       newsletters (Mira, ~10-12 min each). No show was gated. The gallery
@@ -5219,7 +5379,17 @@ experiments:
     area: site
     shipped: 2026-10-18
     readout: 2026-11-01
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): INCONCLUSIVE. api/ga4_stats.json
+      site_events over 28 days carries no play_short, select_short_show or
+      play_short_unavailable row against 160 homepage views (app_open 13,
+      episode_play 9 on /); play_video fired 4 times site-wide. Either the reel is
+      not pressed or the events do not reach GA4 under denied consent; at this
+      traffic no rate can be read. Decision deferred with site_design-1 (the front
+      page cut).
+
+      '
     baseline: >
       Six still images linking out to YouTube; no on-site Short plays; the
       homepage's show discovery from video measured nowhere.
@@ -6240,3 +6410,30 @@ experiments:
       engine/landing_test.py: stemmed tokens, one unique shared word
       suffices, no fallback to candidates[0] when prompts are known (the
       show's cover renders instead). Guard: TestTheLeadPictureIsThisStorysScene.
+
+  - id: ru-spacex-pilot-2026-07-30
+    title: "The RU SpaceX pilot: a lander, a capture and a Sunday letter for @NerraRU"
+    area: distribution
+    shipped: 2026-07-30
+    readout: 2026-11-03
+    status: done
+    outcome: >
+      READ 2026-11-03 (six-month review): MISS. api/funnel.json pilots:
+      spacex-ru reach 5,966 views in 30 days to 6 click sessions (0.017%) and
+      captures null; tesla-ru 4,901 to 1. The Buttondown tag ru-spacex has
+      never had a subscriber, so send_ru_spacex_weekly.py has logged "nothing
+      to send" every Sunday since July. The RU audience acts in the Shorts
+      feed (89% of @NerraRU views), not on an email form. The Sunday workflow
+      is retired and the landers ask for the YouTube subscribe in the
+      ru-fr-audience-surfaces item of the review; the lander stays as the
+      channel's link target (engine.funnel destination).
+    baseline: >
+      Registered at close so the record carries the verdict; the pilot's
+      design is in docs/funnel.md.
+    target: >
+      Captures on the ru-spacex tag and a weekly letter sent; neither
+      happened in three months.
+    notes: >
+      Lesson for the register: a capture surface for a Shorts-feed audience
+      needs the ask the platform can act on (subscribe), and an experiment
+      with no entry of its own could not be scored.
