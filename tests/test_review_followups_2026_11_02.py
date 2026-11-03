@@ -122,6 +122,12 @@ OVERCLAIMS = (
     "guest-approved transcript",
     "see the transcript before anything",
     "and approve it before it publishes",
+    # Nov 3 2026: the gate-2 email and review page said it another way
+    # ("nothing goes out until you have heard it and said yes") beside the
+    # seven-day auto-approve they describe. Any "nothing ... until you" shape.
+    "nothing goes out until you",
+    "nothing is published until you",
+    "nothing publishes until you",
 )
 
 SURFACES = (
@@ -134,6 +140,10 @@ SURFACES = (
     "pipelines/producer/prompts/followup_reply.txt",
     "pipelines/producer/guest_reply.py",
     "pipelines/voices/publish_episode.py",
+    "workers/voices/src/index.ts",
+    "templates/email/voices_transcript_for_approval.j2",
+    "templates/email/voices_booking_confirmation.j2",
+    "templates/email/voices_prep_brief.j2",
 )
 
 
