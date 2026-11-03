@@ -15,6 +15,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional
 
+from engine.audio import LOUDNESS_TOLERANCE_LU, PUBLISHED_LOUDNESS_LUFS, measure_loudness
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,6 +82,52 @@ def validate_mp3(mp3_path: Path, min_bytes: int = 100_000, min_duration: float =
 
     # ffprobe unavailable — size check alone is sufficient
     logger.info("MP3 validated (size only): %s (%d bytes)", mp3_path.name, size)
+    return True
+
+
+def validate_loudness(
+    mp3_path: Path,
+    target: float = PUBLISHED_LOUDNESS_LUFS,
+    tolerance: float = LOUDNESS_TOLERANCE_LU,
+) -> bool:
+    """Read the finished file's integrated loudness against the published
+    target and SAY when it is out of the band.
+
+    Nov 3 2026: Unintended Consequences, Vancouver and Collingwood shipped
+    208 episodes at -25 LUFS against the network's -16 (their voice-only
+    path never had the final loudnorm) and no check read the number —
+    ``validate_mp3`` looks at bytes and duration only. One ebur128 decode
+    (``engine.audio.measure_loudness``) closes that hole.
+
+    LOG-ONLY FOR NOW, BY DESIGN: a reading outside ``target ± tolerance``
+    logs a ``::warning::`` and the function still returns True, so a miss
+    never fails the run — a hard fail would cost an episode on the first
+    day the band turns out to be wrong for a show. One week of readings
+    (``audio_loudness_in_spec_share_7d`` on the dashboard) comes first;
+    then the band becomes a hard fail (``::error::`` + False) here. A file
+    ffmpeg cannot measure is a pass with a log line — unmeasured is not
+    "quiet", and never a zero.
+    """
+    measured = measure_loudness(mp3_path)
+    integrated = measured.get("I") if measured else None
+    if integrated is None:
+        logger.info("Loudness not measured for %s — nothing to check", mp3_path.name)
+        return True
+    lra = measured.get("LRA")
+    peak = measured.get("TP")
+    if abs(integrated - target) > tolerance:
+        logger.warning(
+            "::warning::%s is %.1f LUFS integrated against the published %.0f "
+            "(band ±%.1f LU; LRA %s LU, true peak %s dBTP) — read "
+            "engine.audio.PUBLISHED_LOUDNESS and the show's mix path. "
+            "Log-only until a week of readings is in; the episode ships.",
+            mp3_path.name, integrated, target, tolerance, lra, peak,
+        )
+        return True
+    logger.info(
+        "Loudness validated: %s at %.1f LUFS (LRA %s LU, true peak %s dBTP)",
+        mp3_path.name, integrated, lra, peak,
+    )
     return True
 
 
@@ -306,6 +354,10 @@ def run_post_validation(
     if mp3_path is not None:
         if not validate_mp3(mp3_path):
             all_passed = False
+        else:
+            # Nov 3 2026: log-only on purpose (see validate_loudness) — its
+            # verdict never reaches all_passed until a week of readings is in.
+            validate_loudness(mp3_path)
 
     if rss_path is not None:
         if not validate_rss(rss_path, expected_episode_num=episode_num):

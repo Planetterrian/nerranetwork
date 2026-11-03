@@ -1827,6 +1827,7 @@ def build_edition_metrics(
     x_post_skipped: str = "",
     x_post_queued: Optional[bool] = None,
     x_post_queued_for: str = "",
+    loudness: Optional[dict] = None,
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1893,4 +1894,12 @@ def build_edition_metrics(
         # enqueue failed, or a skip named in x_post_skipped); None = not tried.
         "x_post_queued": x_post_queued,
         "x_post_queued_for": x_post_queued_for or "",
+        # Nov 3 2026: the finished edition file's own loudness, read once by
+        # engine.audio.measure_loudness after the join (the same three keys
+        # run_show records per episode). None = unmeasured, never 0 — the
+        # UC chapter sat 9.7 LU under its neighbours inside Ep074 and no
+        # number said so.
+        "audio_integrated_lufs": (loudness or {}).get("I"),
+        "audio_loudness_range_lu": (loudness or {}).get("LRA"),
+        "audio_true_peak_dbtp": (loudness or {}).get("TP"),
     }

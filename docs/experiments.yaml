@@ -6145,6 +6145,7 @@ experiments:
     shipped: 2026-11-03
     readout: 2026-11-17
     status: reading
+    metric: audio_loudness_in_spec_share_7d
     baseline: >
       Measured on the shipped MP3s: Unintended Consequences, Vancouver and
       Collingwood at -24.9 to -25.6 LUFS (every episode since their first;
@@ -6165,8 +6166,10 @@ experiments:
       path, engine/daily_edition.segment_trim_cmd levels every segment.
       Guards: TestVoiceOnlyShowsReachThePublishedLoudness,
       TestTheMusicBedAndFadesShipAsDesigned,
-      TestTheMixKeepsTheThemesStereoImage. The back-catalogue re-master and
-      an audio_integrated_lufs metric are proposals, not shipped.
+      TestTheMixKeepsTheThemesStereoImage. audio_integrated_lufs /
+      audio_loudness_range_lu / audio_true_peak_dbtp are recorded per episode
+      since Nov 3 (log-only band check for a week, then a hard fail); the
+      back-catalogue re-master is a proposal, not shipped.
 
   - id: digest-expansion-metric-2026-11-03
     title: "The digest expansion retry is a metric"

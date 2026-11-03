@@ -16,6 +16,7 @@ Music mixing supports three modes configured via YAML:
 """
 
 import logging
+import re
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -272,6 +273,78 @@ def normalize_voice(input_path: Path, output_path: Path,
 #: The network's published loudness (Apple Podcasts / Spotify spec), the
 #: same target ``_final_mix_cmd`` masters every show to.
 PUBLISHED_LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+#: The same target as a number, and the band a shipped file may sit in
+#: before a run says so (Nov 3 2026). 1.5 LU is the Personal builder's
+#: correction threshold (``engine.personal_edition.SEGMENT_LOUDNESS_TOLERANCE_LU``,
+#: pinned equal by tests/test_audio_loudness_metric_2026_11_03.py).
+PUBLISHED_LOUDNESS_LUFS = -16.0
+LOUDNESS_TOLERANCE_LU = 1.5
+
+# ffmpeg's ebur128 summary block, as printed on stderr after the decode:
+#
+#     Integrated loudness:
+#       I:         -16.2 LUFS
+#       ...
+#     Loudness range:
+#       LRA:         6.1 LU
+#       ...
+#     True peak:
+#       Peak:       -1.5 dBFS
+#
+# (the true-peak unit is printed as dBFS; the figure IS the true peak in
+# dBTP when the filter runs with ``peak=true``). A silent file prints
+# ``-inf`` for the peak, which no pattern below matches: that key is None.
+_EBUR_I_RE = re.compile(r"^\s*I:\s+(-?[\d.]+)\s+LUFS", re.M)
+_EBUR_LRA_RE = re.compile(r"^\s*LRA:\s+(-?[\d.]+)\s+LU\b", re.M)
+_EBUR_TP_RE = re.compile(r"True peak:\s*\n\s*Peak:\s+(-?[\d.]+)\s+dB", re.M)
+
+
+def measure_loudness(path: Path, *, timeout: int = 600) -> Optional[Dict[str, Optional[float]]]:
+    """Integrated loudness, loudness range and true peak of one audio file,
+    from ONE ``ffmpeg -af ebur128=peak=true`` decode (seconds for a
+    half-hour episode).
+
+    Returns ``{"I": LUFS, "LRA": LU, "TP": dBTP}`` or ``None`` when ffmpeg
+    cannot say (missing binary, unreadable file, timeout, no summary) —
+    never a zero, never an exception. ``I`` is always a float when a dict
+    comes back; ``LRA`` / ``TP`` may be ``None`` for a figure ffmpeg did
+    not print as a number (``-inf`` on silence).
+
+    Nov 3 2026: three shows shipped 208 episodes at -25 LUFS against the
+    published -16 and nothing read the number — ``audio_duration_s`` was
+    the only thing the pipeline recorded about its audio. This is the one
+    reader; ``engine.personal_edition.measure_lufs`` wraps it.
+    """
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-nostats", "-hide_banner", "-i", str(path),
+             "-af", "ebur128=peak=true", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=timeout)
+    except Exception as exc:  # noqa: BLE001 — a measurement, never a blocker
+        logger.warning("Loudness measurement failed for %s: %s", path, exc)
+        return None
+    stderr = proc.stderr or ""
+    idx = stderr.rfind("Summary:")
+    if idx < 0:
+        logger.warning("Loudness measurement produced no ebur128 summary for %s", path)
+        return None
+    summary = stderr[idx:]
+
+    def _num(rx):
+        m = rx.search(summary)
+        if not m:
+            return None
+        try:
+            return float(m.group(1))
+        except ValueError:
+            return None
+
+    integrated = _num(_EBUR_I_RE)
+    if integrated is None:
+        logger.warning("Loudness summary carried no integrated figure for %s", path)
+        return None
+    return {"I": integrated, "LRA": _num(_EBUR_LRA_RE), "TP": _num(_EBUR_TP_RE)}
 
 
 def master_voice_track(input_path: Path, output_path: Path, *,

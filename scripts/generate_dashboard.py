@@ -2257,6 +2257,11 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
     # Oct 19 2026: how much of the sourced list the digest reports.
     reported_pcts: List[float] = []
     also_today: List[int] = []
+    # Nov 3 2026: the published loudness, read from the mix stage's record
+    # (audio_integrated_lufs / audio_loudness_range_lu — three shows shipped
+    # 208 episodes at -25 LUFS with nothing reading the number).
+    lufs: List[float] = []
+    lra: List[float] = []
     digests = root / "digests"
     for show_dir in (sorted(digests.iterdir()) if digests.is_dir() else []):
         if not show_dir.is_dir():
@@ -2284,6 +2289,10 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
                 reported_pcts.append(float(counters["prompt_articles_reported_pct"]))
             if counters.get("digest_also_today_items") is not None:
                 also_today.append(int(counters["digest_also_today_items"]))
+            if counters.get("audio_integrated_lufs") is not None:
+                lufs.append(float(counters["audio_integrated_lufs"]))
+            if counters.get("audio_loudness_range_lu") is not None:
+                lra.append(float(counters["audio_loudness_range_lu"]))
             if "x_posted" in counters:
                 n_x += 1
                 if counters.get("x_posted") is True:
@@ -2304,7 +2313,26 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
         "also_today_items_7d": (
             round(sum(also_today) / len(also_today), 1)
             if len(also_today) >= min_n else None),
+        # Nov 3 2026 (audio-published-loudness): the share of measured
+        # episodes whose integrated loudness sits inside the published band
+        # (engine.audio owns the target and the tolerance), and the median
+        # loudness range. Null under min_n measured episodes, never 0 — an
+        # unmeasured file records no key, so it is absent here, not quiet.
+        "audio_loudness_in_spec_share_7d": _loudness_in_spec_share(lufs, min_n),
+        "audio_loudness_range_median_7d": (
+            round(sorted(lra)[len(lra) // 2], 1) if len(lra) >= min_n else None),
     }
+
+
+def _loudness_in_spec_share(lufs: List[float], min_n: int) -> Optional[float]:
+    """Share of readings within ``PUBLISHED_LOUDNESS_LUFS ± LOUDNESS_TOLERANCE_LU``;
+    None under ``min_n`` readings."""
+    from engine.audio import LOUDNESS_TOLERANCE_LU, PUBLISHED_LOUDNESS_LUFS
+
+    if len(lufs) < min_n:
+        return None
+    in_spec = sum(1 for v in lufs if abs(v - PUBLISHED_LOUDNESS_LUFS) <= LOUDNESS_TOLERANCE_LU)
+    return round(in_spec / len(lufs), 2)
 
 
 def _experiment_live_metrics(root: Path) -> Dict[str, Any]:

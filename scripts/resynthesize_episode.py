@@ -838,6 +838,20 @@ def main() -> int:
     voice_for_mix = insert_story_breaks(config, art, script, art.raw_mp3)
     audio_duration = mix_episode(config, voice_for_mix, art.final_mp3)
     logger.info("Mixed: %s (%.0fs)", art.final_mp3.name, audio_duration)
+    # Nov 3 2026: the repaired file's loudness, read the way run_show reads
+    # the original's (engine.audio.measure_loudness). This tool has no
+    # metrics sink — the committed metrics_ep*.json belongs to the run that
+    # made the episode — so the three keys go to the log under their names.
+    from engine.audio import measure_loudness
+    loudness = measure_loudness(art.final_mp3)
+    if loudness:
+        logger.info(
+            "Repaired audio loudness: audio_integrated_lufs=%s "
+            "audio_loudness_range_lu=%s audio_true_peak_dbtp=%s",
+            loudness.get("I"), loudness.get("LRA"), loudness.get("TP"),
+        )
+    else:
+        logger.warning("Repaired audio loudness: unmeasured")
 
     floor = config.min_audio_duration
     if floor and audio_duration < floor:

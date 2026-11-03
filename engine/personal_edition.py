@@ -1819,24 +1819,17 @@ SEGMENT_TARGET_LUFS = -16.0
 SEGMENT_LOUDNESS_TOLERANCE_LU = 1.5
 SEGMENT_MAX_GAIN_DB = 12.0
 
-_LUFS_RE = re.compile(r"I:\s+(-?[\d.]+) LUFS")
-
-
 def measure_lufs(path: Path, *, timeout: int = 600) -> Optional[float]:
-    """Integrated loudness via ffmpeg's ebur128 (decode-only: seconds per
-    ten-minute segment). None when ffmpeg can't say."""
-    import subprocess
+    """Integrated loudness (LUFS) of one file, or None when ffmpeg can't say.
 
-    try:
-        proc = subprocess.run(
-            ["ffmpeg", "-nostats", "-i", str(path), "-af", "ebur128",
-             "-f", "null", "-"],
-            capture_output=True, text=True, timeout=timeout)
-    except Exception:  # noqa: BLE001
-        return None
-    tail = proc.stderr[proc.stderr.rfind("Integrated loudness"):]
-    m = _LUFS_RE.search(tail)
-    return float(m.group(1)) if m else None
+    Nov 3 2026: a thin wrapper over the one reader,
+    :func:`engine.audio.measure_loudness` (the module that owns audio), kept
+    for its callers' float-or-None shape (``_level_segment`` in
+    scripts/build_personal_feeds.py)."""
+    from engine.audio import measure_loudness
+
+    measured = measure_loudness(path, timeout=timeout)
+    return None if measured is None else measured.get("I")
 
 
 def segment_gain_db(measured: Optional[float]) -> float:
