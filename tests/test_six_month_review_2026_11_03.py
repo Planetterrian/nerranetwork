@@ -297,3 +297,29 @@ class TestStripModeLedgersAreNotAllMalformed:
                 out = read_sidecar(path)
                 statuses = [c["status"] for c in out["claims"]]
                 assert statuses and "malformed" not in statuses, (path.name, statuses[:5])
+
+
+class TestSiteHeadlineCarriesEngagedSessions:
+    """733 of the 999 sessions in the 28 days to Nov 2 were eight spike days
+    of 0.6-9 s visits to one page (98.8% bounce, one session per user); the
+    dashboard repeated 999. GA4's engaged session is the human floor and is
+    fetched, totalled (null, never 0, when the column is absent) and printed."""
+
+    def test_the_fetcher_requests_and_totals_engaged_sessions(self):
+        src = (ROOT / "scripts" / "fetch_ga4_stats.py").read_text(encoding="utf-8")
+        core = src.split("core_metrics = [", 1)[1].split("]", 1)[0]
+        assert '"engagedSessions"' in core
+        assert '"engaged_sessions"' in src.split("totals = {", 1)[1].split("}", 1)[0]
+
+    def test_totals_are_null_without_the_column(self):
+        # The committed day_series predates the column: the total must read
+        # None rather than a zero that looks like nobody stayed.
+        rows = [{"date": "20261102", "sessions": 5, "activeUsers": 5, "screenPageViews": 5}]
+        engaged = (sum(int(r.get("engagedSessions", 0)) for r in rows)
+                   if any("engagedSessions" in r for r in rows) else None)
+        assert engaged is None
+
+    def test_the_dashboard_prints_engaged_beside_sessions(self):
+        html = (ROOT / "management.html").read_text(encoding="utf-8")
+        assert "engaged_sessions" in html
+        assert html.count("engaged_sessions != null") >= 2

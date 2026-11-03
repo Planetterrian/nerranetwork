@@ -131,7 +131,13 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         raise RuntimeError("unconfigured")
 
     date_range = [{"startDate": f"{days}daysAgo", "endDate": "today"}]
+    # Nov 3 2026: ``engagedSessions`` beside ``sessions`` — 733 of the
+    # headline 999 sessions in the 28 days to Nov 2 were eight spike days of
+    # 0.6-9 s visits to one page (/personal-interest.html, 98.8% bounce,
+    # one session per user). GA4's engaged session (10 s, a conversion or a
+    # second page) is the human floor; the dashboard prints both.
     core_metrics = [{"name": "activeUsers"}, {"name": "sessions"},
+                    {"name": "engagedSessions"},
                     {"name": "screenPageViews"},
                     {"name": "averageSessionDuration"}]
 
@@ -259,6 +265,9 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
     totals = {
         "active_users": sum(int(r.get("activeUsers", 0)) for r in day_series),
         "sessions": sum(int(r.get("sessions", 0)) for r in day_series),
+        # None (never 0) when the rows carry no engagedSessions column.
+        "engaged_sessions": (sum(int(r.get("engagedSessions", 0)) for r in day_series)
+                             if any("engagedSessions" in r for r in day_series) else None),
         "page_views": sum(int(r.get("screenPageViews", 0))
                           for r in day_series),
     }

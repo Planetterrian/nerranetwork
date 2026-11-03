@@ -827,7 +827,9 @@
   tiles.appendChild(statTile("Site active users · 28d",
     site.configured && site.totals ? compact(site.totals.active_users) : "—",
     { sub: site.configured && site.totals
-        ? fmt(site.totals.sessions) + " sessions · " + fmt(site.totals.page_views) + " page views"
+        ? fmt(site.totals.sessions) + " sessions" +
+          (site.totals.engaged_sessions != null ? " (" + fmt(site.totals.engaged_sessions) + " engaged)" : "") +
+          " · " + fmt(site.totals.page_views) + " page views"
         : "GA4 not configured",
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
@@ -1002,7 +1004,19 @@
       card.appendChild(h("div", { class: "headline",
         html: fmt(t.active_users) + "<small>users · " + (site.days || 28) + "d</small>" +
               "&nbsp;&nbsp;" + fmt(t.sessions) + "<small>sessions</small>" +
+              (t.engaged_sessions != null
+                ? "&nbsp;&nbsp;" + fmt(t.engaged_sessions) + "<small>engaged</small>"
+                : "") +
               "&nbsp;&nbsp;" + fmt(t.page_views) + "<small>views</small>" }));
+      if (t.engaged_sessions != null && t.sessions) {
+        // Nov 3 2026: 733 of 999 sessions were sub-10 s hits on one page.
+        // GA4's engaged session (10 s, a conversion or a second page) is the
+        // human floor; the raw count is what a scanner can inflate.
+        card.appendChild(h("p", { class: "fine-list",
+          text: "Engaged sessions are the human floor: " +
+                Math.round(100 * t.engaged_sessions / t.sessions) + "% of sessions lasted 10 s, " +
+                "converted or read a second page." }));
+      }
       if (siteSpark.length > 1) {
         const sparkWrap = h("div", { style: "margin:6px 0 2px;" });
         const sv = sparkline(siteSpark, { w: 560, h: 44, title: "Daily active users" });
