@@ -72,6 +72,12 @@ Branch `claude/gifted-albattani-m71t3f`; guards in `tests/test_six_month_review_
 **Newsletter**
 28. The Nerra Daily email's archive copy carries the news (`not subscriber or` / `subscriber and` conditions; the Nov 2 archive had carried the hero, an empty heading and the footer); the "Also" heading only over lines; the subject drops the podcast app's "<Weekday> edition — " prefix; the preheader is two more stories; release notes are judged at the send; Sunday lists show 3; the signup button says when the email arrives.
 
+**Added after the propose phase was briefed**
+29. The consent bar is `role="region"`, never a modal dialog (template and `consent.js`).
+30. `engine/video_feed.py` item titles clip through `engine.titles`.
+31. `engine/script_audit.py` measures the attribution tail (`script_attribution_tail_pct`: sentences ending ", X reported." / ", according to X.") and the short-sentence share (`script_short_sentence_pct`, nine words or fewer) as read-only baselines, with two columns in the review snapshot. Calibrated on the committed scripts: Tesla 0.0% → 10.4% tail between Oct 1–10 and Oct 27–Nov 2, SpaceX 0.6 → 5.2, FF 0 → 6.2, the grok-4.7 cohort under 3% both windows; the short-sentence share FELL on every flagship (Tesla 32.9 → 17.7). The prompt-side shape rewrite waits on this baseline.
+32. Mira's spoken self-description has one owner, `engine.brand.MIRA_SPOKEN_CLAIM` ("on this show an AI asks the questions, and the guest decides whether the conversation is published at all"), rendered into the live brief, the narration prompt and the editor's brief through `{{mira_spoken_claim}}`. Since Sep 14 all three had said "the first podcast researched, hosted and produced end to end by an AI" — the broad shape `engine.brand` refused on Sep 20 — on every cold open and live to every guest. ⚠️ The live brief changed one clause: candidate rehearsal PASS plus one listen before a booked room. Past narration files keep what aired.
+
 ## 4. The ranked plan
 
 _(Filled from the synthesis: SCORECARD.md, the proposals and the skeptics' verdicts.)_
