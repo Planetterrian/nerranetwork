@@ -884,3 +884,38 @@ class TestTheVideoFeedTitleHasTheOneOwner:
         assert item_titles, titles
         assert all(len(t) <= PODCAST_EPISODE_TITLE_MAX for t in item_titles)
         assert all(not t.endswith("word39") for t in item_titles)
+
+
+class TestTheAttributionTailIsMeasured:
+    """content_discipline.txt forbade the trailing ", X reported" tag since
+    Sep 5; nothing measured it, and the grok-4.6 arms grew one (Tesla 0% ->
+    10% of body sentences). Read-only baselines; no warning threshold yet."""
+
+    SCRIPT = (
+        "Tesla's robotaxi zone grew from twenty-five to two hundred fifty-four square miles, Digitaltoday reports. "
+        "F S D Supervised is now approved for public roads in Latvia, according to Not A Tesla App. "
+        "The pack keeps spare room for L F P cells later, Teslarati reports. "
+        "Teslarati says the Cybercab battery pack was built with spare room, and the cells can change later. "
+        "That is the whole change. "
+        "Norway registered its best October ever, with demand rising in every region the company reports on.\n"
+    )
+
+    def test_the_tail_counts_only_sentences_that_end_on_an_attribution(self):
+        from engine import script_audit as sa
+        sents = sa._body_sentences(self.SCRIPT)
+        assert len(sents) == 6
+        tails = [s for s in sents if sa.ATTRIBUTION_TAIL_RE.search(s.strip())]
+        assert len(tails) == 3, tails
+        assert sa.attribution_tail_pct(self.SCRIPT) == pytest.approx(50.0)
+        assert sa.short_sentence_pct(self.SCRIPT) == pytest.approx(100.0 / 6)
+
+    def test_the_audit_records_both_as_metrics(self):
+        from engine import script_audit as sa
+        m = sa.audit_script(self.SCRIPT).to_metrics()
+        assert m["script_attribution_tail_pct"] == 50.0
+        assert m["script_short_sentence_pct"] == pytest.approx(16.7)
+        assert sa.attribution_tail_pct("") is None and sa.short_sentence_pct("") is None
+
+    def test_the_snapshot_table_carries_the_columns(self):
+        src = (ROOT / "scripts" / "review_snapshot.py").read_text(encoding="utf-8")
+        assert "| commas | tail | short |" in src

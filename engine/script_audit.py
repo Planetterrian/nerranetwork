@@ -228,6 +228,9 @@ class ScriptAudit:
     #: Oct 3 2026 — share of the hook's salient words spoken in the first
     #: ``HOOK_LEAD_SENTENCES`` body sentences (see ``hook_leads_body``).
     hook_leads_body: Optional[float] = None
+    #: Nov 3 2026 — see ``attribution_tail_pct`` / ``short_sentence_pct``.
+    attribution_tail_pct: Optional[float] = None
+    short_sentence_pct: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -259,6 +262,10 @@ class ScriptAudit:
             m["script_commas_per_100w"] = round(self.commas_per_100w, 1)
         if self.digest_commas_per_100w is not None:
             m["digest_commas_per_100w"] = round(self.digest_commas_per_100w, 1)
+        if self.attribution_tail_pct is not None:
+            m["script_attribution_tail_pct"] = round(self.attribution_tail_pct, 1)
+        if self.short_sentence_pct is not None:
+            m["script_short_sentence_pct"] = round(self.short_sentence_pct, 1)
         return m
 
     def warnings(self) -> List[str]:
@@ -650,6 +657,56 @@ def entity_retention(script_text: str, digest_text: str) -> Optional[float]:
     return len(ents & have) / len(ents)
 
 
+# Nov 3 2026 — the attribution tail. The grok-4.6 script arms obey
+# content_discipline.txt's "named once per story" literally and put the
+# outlet at the END of a sentence, story after story: Tesla went 0% -> 10%
+# of body sentences between Oct 1-10 and Oct 27-Nov 2 (SpaceX 0.6 -> 5.2,
+# FF 0 -> 6.2) while the grok-4.7 cohort stayed under 3%. The prompt rule
+# existed and nothing measured it — the fourth prompt-only rule in six
+# months. Read-only: the number is the baseline any prompt change is
+# scored against; a rule that changes the script belongs in the prompt.
+_ATTRIBUTION_VERBS = (
+    "reported|reports|said|says|noted|notes|wrote|writes|added|confirmed|"
+    "announced|showed|found|told|explained|stated|revealed|warned"
+)
+ATTRIBUTION_TAIL_RE = re.compile(
+    r",\s+(?:according to\s+[A-Z][^,;]{0,45}|(?:the\s+)?[A-Z][^,;]{0,45}\s(?:"
+    + _ATTRIBUTION_VERBS
+    + r"))[.!?]?$"
+)
+#: A sentence of this many words or fewer is "short" for ``short_sentence_pct``.
+#: The owner's Nov 2 note read Tesla Ep653 (28% of sentences under ten words)
+#: as a ticker; measured over the windows the share FELL (Tesla 33% -> 18%),
+#: so the number is recorded, never warned on, until a review reads it.
+SHORT_SENTENCE_MAX_WORDS = 9
+
+
+def _body_sentences(script_text: str) -> List[str]:
+    return [
+        s for s in _closing_cut(split_sentences(script_text))
+        if not _is_identity_line(s)
+    ]
+
+
+def attribution_tail_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences that END on an attribution (", X reported." /
+    ", according to X."). None when the script has no body sentences."""
+    sentences = _body_sentences(script_text)
+    if not sentences:
+        return None
+    hits = sum(1 for s in sentences if ATTRIBUTION_TAIL_RE.search(s.strip()))
+    return 100.0 * hits / len(sentences)
+
+
+def short_sentence_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences of ``SHORT_SENTENCE_MAX_WORDS`` words or fewer."""
+    sentences = _body_sentences(script_text)
+    if not sentences:
+        return None
+    hits = sum(1 for s in sentences if len(s.split()) <= SHORT_SENTENCE_MAX_WORDS)
+    return 100.0 * hits / len(sentences)
+
+
 def commas_per_100_words(text: str) -> Optional[float]:
     """Commas per 100 words, or None on an empty text. Read-only: a low
     number on a fallback-model episode is the model's text, never a TTS
@@ -734,6 +791,8 @@ def audit_script(
         digest_coverage=digest_coverage(script_text, digest_text) if digest_text else None,
         commas_per_100w=commas_per_100_words(script_text),
         digest_commas_per_100w=commas_per_100_words(digest_text) if digest_text else None,
+        attribution_tail_pct=attribution_tail_pct(script_text),
+        short_sentence_pct=short_sentence_pct(script_text),
     )
 
 
