@@ -23,9 +23,19 @@ email carries:
   (:data:`PAID_TAG`, which the account Worker sets and removes).
 
 The data is ``api/personal_front.json`` (the homepage build's per-show story
-rows: full hook, headlines, post link) plus the shows' YouTube indexes.
-Nothing here calls a model. Every link to the site is funnel-tagged through
-:func:`engine.funnel.newsletter_link`.
+rows: full hook, the deck — one or two sentences of the digest's own prose on
+the hook's story, ``engine.landing_test.story_deck`` — headlines, post link)
+plus the shows' YouTube indexes. Nothing here calls a model. Every link to
+the site is funnel-tagged through :func:`engine.funnel.newsletter_link`.
+
+Nov 3 2026 — the email reads as a briefing: a compact masthead so the first
+phone screen carries news (the first show headline sat at y = 788 px on a
+390 px phone under the full hero, a featured card repeating the subject and
+a paragraph about the layout), a sourced deck under every card, two more
+headlines in sentence case, the edition's card after the reader's shows,
+"Also on Nerra today" as short headlines grouped by subject, and every
+headline whole (the interview and most-played rows had printed clipped feed
+titles ending "…").
 
 Russian shows keep their own daily email (``newsletter.delivery: own``) and
 are never sections here: a different audience in a different language.
@@ -74,8 +84,32 @@ DEFAULT_SHOWS: Tuple[str, ...] = (
 #: site's third-busiest landing page; an interview published inside the
 #: window is news like any other show's episode.
 EXCLUDED_SLUGS = frozenset({"nerra_daily"})
-#: Headlines under each card's lead (the card's own hook excluded).
-HEADLINES_PER_CARD = 3
+#: Headlines under each card's deck (the card's own hook excluded). Three
+#: until Nov 3 2026; the deck carries the story now, and the headlines are
+#: the "Also in this episode" run.
+HEADLINES_PER_CARD = 2
+#: Where Gmail clips a message (the whole HTML part, Buttondown's wrapper
+#: included) and the margin the warning keeps under it.
+GMAIL_CLIP_BYTES = 102_000
+SIZE_MARGIN_BYTES = 2_000
+#: Bytes Buttondown adds around the body it is given. The send script had
+#: warned at 95,000 bytes of OUR copy while saying "including Buttondown's
+#: own wrapper", a number nobody had measured. Measured Nov 3 2026 as an
+#: UPPER BOUND from the archive page of the Nov 2 send (its chrome before and
+#: after our blocks: 17,096 + 8,943 bytes; the archive page carries a site
+#: head, a subscribe form and a settings blob the delivered email does not,
+#: so the real wrapper is smaller). Re-measure ONCE from a draft sent to a
+#: test mailbox (``--mode draft --test-to``; the message's HTML part minus
+#: the composed copy) and replace the number and the date. Never read
+#: ``/v1/emails/{id}`` for it: its ``body`` is the body as submitted.
+BUTTONDOWN_WRAPPER_BYTES = 26_039
+BUTTONDOWN_WRAPPER_MEASURED = "2026-11-03, archive page of the Nov 2 send (upper bound)"
+
+
+def size_warning_bytes() -> int:
+    """The largest copy of OUR body that still clears Gmail's clip with the
+    wrapper and a margin on top."""
+    return GMAIL_CLIP_BYTES - BUTTONDOWN_WRAPPER_BYTES - SIZE_MARGIN_BYTES
 #: An episode older than this is never news in today's email.
 WINDOW_DAYS = 2
 #: Episodes listed per followed show in the Sunday week list.
@@ -149,6 +183,17 @@ def any_of(tags: Iterable[str]) -> str:
     if not lits:
         return "{% if False %}"
     return "{% if not subscriber or " + " or ".join(f"{lit} in subscriber.tags" for lit in lits) + " %}"
+
+
+def followed_any_of(tags: Iterable[str]) -> str:
+    """``{% if subscriber and 'a' in subscriber.tags or subscriber and 'b' in … %}``
+    — true only for a READER who follows one of *tags*; never on the archive
+    copy, which has no reader (the "Your shows today" heading had rendered
+    there over nothing, above the default set — Nov 3 2026)."""
+    lits = [lit for lit in (_tag_literal(t) for t in tags) if lit]
+    if not lits:
+        return "{% if False %}"
+    return "{% if " + " or ".join(f"subscriber and {lit} in subscriber.tags" for lit in lits) + " %}"
 
 
 def any_not_in(tags: Iterable[str]) -> str:
@@ -462,8 +507,31 @@ def week_records(slug: str, day: dt.date, root: Path = ROOT) -> List[Dict[str, A
         return []
 
 
+def record_hook(slug: str, episode: int, root: Path = ROOT) -> str:
+    """The episode's whole hook from its summaries record, or ``""``."""
+    try:
+        from generate_html import NETWORK_SHOWS
+        from engine import landing_test as lt
+        cfg = NETWORK_SHOWS.get(slug) or {}
+        if not cfg.get("json_path"):
+            return ""
+        rec = lt.record_by_number(root / cfg["json_path"], int(episode))
+        if not rec:
+            return ""
+        return ((rec.get("hook") or "").strip()
+                or lt.hook_from_markdown(rec.get("content") or rec.get("summary") or ""))
+    except Exception:  # noqa: BLE001 — the clipped title is the fallback
+        return ""
+
+
 def most_played(root: Path = ROOT, limit: int = MOST_PLAYED_MAX) -> List[Dict[str, Any]]:
-    """The week's most-downloaded episodes (``site/data/popular_episodes.json``)."""
+    """The week's most-downloaded episodes (``site/data/popular_episodes.json``).
+
+    The file's ``title`` is the FEED title, clipped to 100 characters with
+    its ``Ep N:`` label ("…for a full-duration static…" on the Nov 1 send);
+    the whole hook is read from the episode's record and the clipped title
+    stands in only when the record is missing (Nov 3 2026).
+    """
     from engine import landing_test as lt
 
     try:
@@ -486,7 +554,7 @@ def most_played(root: Path = ROOT, limit: int = MOST_PLAYED_MAX) -> List[Dict[st
             "slug": slug,
             "show_name": row.get("show_name") or slug,
             "episode_num": int(ep),
-            "title": lt.strip_episode_label(title),
+            "title": record_hook(slug, int(ep), root) or lt.strip_episode_label(title),
             "url": row.get("blog_url") or "",
             "downloads_7d": row.get("downloads_7d"),
         })
@@ -523,9 +591,16 @@ def _release_note(at: str, now: dt.datetime) -> str:
     return f" (from {when})" if when else ""
 
 
+_MUTED_LABEL = ('font-size:12px;font-weight:700;letter-spacing:0.06em;'
+                'text-transform:uppercase;color:#475569;')
+
+
 def card_html(pick: Pick, *, edition_ep: int, now: dt.datetime,
               videos: Dict[int, dict], day: dt.date) -> str:
-    """One show's card: lead headline, a few more, and where to hear it."""
+    """One show's card: the hook, the deck (the digest's own sentences on
+    that story), two more headlines under "Also in this episode", and where
+    to hear it. The title link carries ``card-title`` so dark mode keeps it
+    a headline, not a link (``engine.newsletter_template``)."""
     from engine.funnel import newsletter_link
 
     show, story = pick.show, pick.story
@@ -546,12 +621,16 @@ def card_html(pick: Pick, *, edition_ep: int, now: dt.datetime,
     hook = _esc(story.get("hook") or "")
     if story.get("guest") and story.get("guest") not in (story.get("hook") or ""):
         hook = f"{_esc(story['guest'])}: {hook}"
-    title = (f'<div style="font-size:17px;font-weight:700;line-height:1.4;margin:0 0 8px;">'
+    title = (f'<div class="card-title" style="font-size:17px;font-weight:700;line-height:1.4;margin:0 0 8px;">'
              f'<a href="{_esc(read or post)}" style="color:#0f172a;text-decoration:none;">{hook}</a></div>')
+    deck = str(story.get("deck") or "").strip()
+    deck_html = (f'<p class="deck" style="margin:0 0 10px;font-size:15px;line-height:1.6;'
+                 f'color:#1f2937;">{_esc(deck)}</p>') if deck else ""
     heads = [h for h in (story.get("headlines") or []) if str(h).strip()][:HEADLINES_PER_CARD]
     items = ""
     if heads:
-        items = ('<ul style="margin:0 0 10px;padding-left:18px;font-size:15px;'
+        items = (f'<div class="text-muted" style="{_MUTED_LABEL}margin:0 0 4px;">Also in this episode</div>'
+                 '<ul style="margin:0 0 10px;padding-left:18px;font-size:15px;'
                  'line-height:1.55;color:#334155;">'
                  + "".join(f'<li>{_esc(h)}</li>' for h in heads)
                  + "</ul>")
@@ -573,19 +652,93 @@ def card_html(pick: Pick, *, edition_ep: int, now: dt.datetime,
             'margin:0 0 14px;"><tr><td class="card" style="padding:14px 16px;'
             f'border:1px solid #eef0f3;border-left:4px solid {show.brand};'
             f'border-radius:10px;{_BODY_FONT}">'
-            f"{eyebrow}{title}{items}{action_row}</td></tr></table>")
+            f"{eyebrow}{title}{deck_html}{items}{action_row}</td></tr></table>")
+
+
+def also_headline(story: Dict[str, Any]) -> str:
+    """The short headline of an "Also on Nerra today" line: the hook clipped
+    through ``engine.titles`` (:data:`engine.titles.EMAIL_ALSO_LINE_MAX`),
+    and, when the clip reads as a fragment, the digest's own first headline
+    instead — the full hook is one click away."""
+    from engine.titles import EMAIL_ALSO_LINE_MAX, clip_words, is_fragment_title
+
+    hook = str(story.get("hook") or "").strip()
+    line = clip_words(hook, EMAIL_ALSO_LINE_MAX)
+    if line != hook and is_fragment_title(line):
+        heads = [str(h).strip() for h in (story.get("headlines") or []) if str(h).strip()]
+        if heads:
+            line = clip_words(heads[0], EMAIL_ALSO_LINE_MAX)
+    return line
 
 
 def also_line(pick: Pick, *, edition_ep: int) -> str:
+    """One line: the show as a muted label, the short headline as a plain
+    link (no underline — a run of seventeen underlined spoken hooks read as
+    a list, not a briefing)."""
     from engine.funnel import newsletter_link
 
     show, story = pick.show, pick.story
     ep = int(story.get("episode_num") or 0)
     post = _absolute(story.get("post_url") or "")
     href = newsletter_link(post, show.slug, ep) if post else _absolute(show.show_page)
-    return ('<p style="margin:0 0 10px;font-size:15px;line-height:1.5;color:#1f2937;">'
-            f'<strong style="color:{show.brand_text};">{_esc(show.name)}</strong> · '
-            f'<a href="{_esc(href)}" style="{_LINK}">{_esc(story.get("hook") or "")}</a></p>')
+    return ('<p style="margin:0 0 8px;font-size:15px;line-height:1.5;color:#1f2937;">'
+            f'<span class="text-muted" style="{_MUTED_LABEL}">{_esc(show.name)}</span> · '
+            f'<a href="{_esc(href)}" style="color:#0f172a;text-decoration:none;font-weight:600;">'
+            f'{_esc(also_headline(story))}</a></p>')
+
+
+def also_groups(picks: Sequence[Pick]) -> List[Tuple[str, List[Pick]]]:
+    """The "Also on Nerra today" lines grouped by subject, in
+    ``engine.landing_test.SECTION_ORDER``: ``[(heading, picks), …]``.
+
+    A subject label is worth printing over two or more lines; the
+    singletons (and a show with no hub) gather under one "Elsewhere on
+    Nerra" label at the end — the Nov 2 distribution would have been twelve
+    labels for seventeen lines otherwise. With no subject group at all the
+    lines run unlabelled (heading ``""``).
+    """
+    from engine import landing_test as lt
+    from engine import topic_hubs
+
+    order: Dict[str, int] = {}
+    for index, hub_id in enumerate(lt.SECTION_ORDER):
+        hub = topic_hubs.hub_by_id(hub_id)
+        if hub and hub.get("heading"):
+            order.setdefault(hub["heading"], index)
+    by_heading: Dict[str, List[Pick]] = {}
+    for pick in picks:
+        heading = str(pick.story.get("hub_heading") or "").strip()
+        by_heading.setdefault(heading if heading in order else "", []).append(pick)
+    groups: List[Tuple[str, List[Pick]]] = []
+    rest: List[Pick] = []
+    for heading in sorted((h for h in by_heading if h), key=order.__getitem__):
+        members = by_heading[heading]
+        if len(members) >= 2:
+            groups.append((heading, members))
+        else:
+            rest.extend(members)
+    rest.extend(by_heading.get("", []))
+    rest.sort(key=picks.index)
+    if rest:
+        groups.append(("Elsewhere on Nerra" if groups else "", rest))
+    return groups
+
+
+def also_label(heading: str, members: Sequence[Pick], *, default_slugs: Sequence[str],
+               published_tags: Sequence[str]) -> str:
+    """A subject label, rendered only when a line will follow it.
+
+    A reader who follows at least one of today's shows (or the archive)
+    sees a line for every show of the group they do not follow; a reader
+    who follows none of them has the default cards instead, so only the
+    group's non-default shows give them a line.
+    """
+    label = (f'<p class="text-muted" style="margin:14px 0 6px;{_MUTED_LABEL}">'
+             f'{_esc(heading)}</p>')
+    inner = "<div>" + any_not_in([p.show.tag for p in members]) + label + ENDIF + "</div>"
+    if any(p.show.slug not in default_slugs for p in members):
+        return "<div>" + any_of(published_tags) + inner + "{% else %}" + label + ENDIF + "</div>"
+    return "<div>" + any_of(published_tags) + inner + ENDIF + "</div>"
 
 
 def week_list_html(show: EmailShow, rows: List[Dict[str, Any]]) -> str:
@@ -642,6 +795,7 @@ class Composed:
     edition_ep: int
     sunday: bool
     archive_slug: str
+    archive_url: str = ""
 
 
 def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = None,
@@ -689,17 +843,11 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         default_slugs = [p.show.slug for p in picks[:3]]
 
     lines: List[str] = []
-    edition_note = ""
-    if edition is not None:
-        dur = _duration_words(edition.get("duration_s"))
-        edition_note = ("Today's edition carries every show of the morning in one "
-                        "episode" + (f", {dur}" if dur else "")
-                        + ", introduced by Mira, our AI host. ")
-    lines.append(_note(_esc(edition_note) + "Below: your shows, one card each, then "
-                       "one line on everything else Nerra published."))
+    # No paragraph about the layout: the masthead's lead line says what
+    # follows, and the first thing a reader sees is the first card.
 
     # --- Your shows --------------------------------------------------------
-    lines.append("<div>" + any_of(published_tags) + _heading("Your shows today") + ENDIF + "</div>")
+    lines.append("<div>" + followed_any_of(published_tags) + _heading("Your shows today") + ENDIF + "</div>")
     videos_by_slug = {p.show.slug: video_links(p.show.slug, root, now) for p in picks}
     cards = {p.show.slug: card_html(p, edition_ep=edition_ep, now=send_at,
                                     videos=videos_by_slug.get(p.show.slug, {}), day=day)
@@ -718,21 +866,30 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
     lines.append("<div>" + none_of(published_tags) + default_html + ENDIF + "</div>")
 
     # --- Also on Nerra today ----------------------------------------------
-    also = []
+    also: Dict[str, str] = {}
     for pick in picks:
         line = also_line(pick, edition_ep=edition_ep)
         if pick.show.slug in default_slugs:
             # A default reader already has this show's card; everyone else who
             # does not follow it gets the line.
-            also.append("<div>" + tag_not_in(pick.show.tag) + any_of(published_tags)
-                        + line + ENDIF + ENDIF + "</div>")
+            also[pick.show.slug] = ("<div>" + tag_not_in(pick.show.tag) + any_of(published_tags)
+                                    + line + ENDIF + ENDIF + "</div>")
         else:
-            also.append("<div>" + tag_not_in(pick.show.tag) + line + ENDIF + "</div>")
+            also[pick.show.slug] = "<div>" + tag_not_in(pick.show.tag) + line + ENDIF + "</div>"
     if also:
         # The heading only when at least one published show is not followed
         # (a reader following everything got the heading over nothing).
-        lines.append(any_not_in(published_tags) + _heading("Also on Nerra today") + ENDIF)
-        lines.extend(also)
+        # Wrapped in <div> like every conditional block: a line opening on
+        # ``{%`` is markdown to the body renderer, and the Nov 1 and Nov 2
+        # sends carried this heading as escaped ``&lt;h2 …&gt;`` text.
+        lines.append("<div>" + any_not_in(published_tags) + _heading("Also on Nerra today") + ENDIF + "</div>")
+        # Short headlines in subject groups (Nov 3 2026); every line keeps
+        # its own condition.
+        for heading, members in also_groups(picks):
+            if heading:
+                lines.append(also_label(heading, members, default_slugs=default_slugs,
+                                        published_tags=published_tags))
+            lines.extend(also[p.show.slug] for p in members)
 
     # --- Sunday: the week ----------------------------------------------------
     if sunday:
@@ -809,18 +966,39 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
             "listen_url": newsletter_link(f"{post}#listen", EMAIL_SLUG, edition_ep) if post else "",
         }
 
+    # The masthead's one lead line: what follows, and the whole morning in
+    # one listen. It precedes every heading, so the archive copy (no reader
+    # in the context) does not open on one either.
+    lead_bits = ["Your shows below, then the rest of Nerra"]
+    if featured and featured["listen_url"] and edition is not None:
+        dur = _duration_words(edition.get("duration_s"))
+        if dur:
+            lead_bits.append(f'<a href="{_esc(featured["listen_url"])}" '
+                             'style="color:#ffffff;text-decoration:underline;font-weight:600;">'
+                             f'▶ {_esc(dur)}</a>, the whole morning in one listen')
+    masthead_lead = ('<p style="margin:6px 0 2px;font-size:13px;line-height:1.5;'
+                     'color:#ffffff;">' + " · ".join(lead_bits) + "</p>")
+
     from engine.newsletter import BUTTONDOWN_USERNAME
+    archive_url = f"https://buttondown.com/{BUTTONDOWN_USERNAME}/archive/{archive_slug}/"
     wrapped = wrap_with_branding(
         EMAIL_SLUG,
         body,
-        daily_label="Sunday" if sunday else "Today",
+        daily_label=day.strftime("%A"),
         daily_date=day,
         preheader=preheader,
         featured_episode=featured,
         adjacent_shows=None,
         show_reply_share=True,
-        archive_url=f"https://buttondown.com/{BUTTONDOWN_USERNAME}/archive/{archive_slug}/",
+        archive_url=archive_url,
         issue_number=edition_ep or None,
+        # Nov 3 2026: the first screen is the news. The compact masthead
+        # replaces the 350 px hero, the edition's card follows the reader's
+        # own shows, and its eyebrow says what it is.
+        hero="compact",
+        featured_position="after_body",
+        featured_eyebrow="🎧 Hear all of it",
+        masthead_lead_html=masthead_lead,
     )
     # The shared footer (listen / blog / gallery / data / start here) is
     # built for every newsletter and carries no campaign; in this email every
@@ -840,7 +1018,8 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         included[EMAIL_SLUG] = [edition_ep]
     return Composed(subject=subject, body=wrapped, preheader=preheader,
                     included=included, sections=[p.show.slug for p in picks],
-                    edition_ep=edition_ep, sunday=sunday, archive_slug=archive_slug)
+                    edition_ep=edition_ep, sunday=sunday, archive_slug=archive_slug,
+                    archive_url=archive_url)
 
 
 # ---------------------------------------------------------------------------

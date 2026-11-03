@@ -5372,7 +5372,8 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
                 continue
             story["stamp"] = _nr.stamp(record.get("date"), _nr.published_at(record), now)
             row = _lt.story_json(story, record=record,
-                                 duration_s=durations.get(story.get("episode_num")))
+                                 duration_s=durations.get(story.get("episode_num")),
+                                 show_dir=root / Path(cfg["json_path"]).parent)
             try:
                 links = videos.get(int(story.get("episode_num") or 0)) or {}
             except (TypeError, ValueError):

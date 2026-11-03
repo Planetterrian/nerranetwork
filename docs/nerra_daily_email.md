@@ -30,23 +30,47 @@ Measured on Nov 1 2026, before the change:
 ## What a reader gets
 
 One email at 7:00 AM Eastern, Monday to Sunday. Buttondown renders it per
-subscriber with Django templating on their tags:
+subscriber with Django templating on their tags. Since Nov 3 2026 it reads as
+a briefing — the first phone screen is the first card, not the hero:
 
-1. **Today's Nerra Daily edition** (the featured card).
+1. **The masthead:** one row (cover, "Nerra Daily", the date) and one line:
+   "Your shows below, then the rest of Nerra · ▶ 2 h 36 min, the whole
+   morning in one listen". No paragraph about the layout.
 2. **Your shows today:** one card per followed show.
-   - The lead headline, then three more.
+   - The lead headline (the episode's whole hook).
+   - **The deck:** one or two sentences of the digest's own prose on that
+     story (`engine.landing_test.story_deck`, written into
+     `api/personal_front.json` by the homepage build; no model call). A
+     sentence the claims gate flagged is never printed; a digest with no
+     matching item gets no deck rather than another story's prose.
+   - **Also in this episode:** two more headlines in sentence case
+     (`sentence_case_headline`, names kept as the digest capitalises them);
+     the hook's own story is never listed again
+     (`engine.newsroom.headline_within_hook`).
    - Listen, Read, Watch and the 30-second Short.
    - A video still scheduled says when it goes public.
 3. **For a reader who follows none of today's shows:** five shows in full
    (SpaceX, Tesla, Top World, Models & Agents, Fascinating Frontiers), with
    "Choose your shows" linking to My Nerra.
-4. **Also on Nerra today:** one line for every other show that published.
-5. **Sundays only:**
-   - "Most played this week", one episode per show.
+4. **Also on Nerra today:** one short headline per other show that
+   published (`engine.titles.EMAIL_ALSO_LINE_MAX`; a clip that reads as a
+   fragment gives way to the digest's own headline), the show as a muted
+   label, grouped by subject in the front page's section order. A subject
+   label appears only over two or more lines; the rest gather under
+   "Elsewhere on Nerra".
+5. **🎧 Hear all of it:** today's Nerra Daily edition, after the reader's
+   own shows.
+6. **Sundays only:**
+   - "Most played this week", one episode per show, each named by its
+     whole hook (the OP3 file carries the clipped feed title).
    - "Your week": each followed show's last seven days.
-6. **The Personal line:** "Hear this as your own daily episode… Try it free
+7. **The Personal line:** "Hear this as your own daily episode… Try it free
    for N days." A paying member sees their own edition instead.
-7. **The manage line:** choose your shows, or Sundays only, on My Nerra.
+8. **The manage line:** choose your shows, or Sundays only, on My Nerra.
+
+The archive copy ("View this email in your browser", no reader in the
+context) opens on the masthead line and carries the default set; the
+"Your shows today" heading is a reader's and never renders there.
 
 An episode counts as news for two days. An episode published after the
 7:00 AM email (Vancouver, a weekly show's late run) arrives the next morning.
@@ -90,8 +114,21 @@ drift-guarded.
   - Before anything goes to Buttondown, it renders three copies (a new
     reader, a two-show follower, everything) and refuses on a contrast
     failure or an unbalanced template.
-  - It warns when the largest copy passes 95 KB. Gmail clips at about
-    102 KB.
+  - It warns when the largest copy passes the size budget
+    (`engine.nerra_daily_email.size_warning_bytes()`): Gmail's 102 KB clip
+    minus Buttondown's wrapper minus a 2 KB margin. The wrapper
+    (`BUTTONDOWN_WRAPPER_BYTES`, with its measured date) is an UPPER BOUND
+    read from the archive page of the Nov 2 send (26,039 bytes of chrome
+    around our blocks; the archive page carries a site head, a subscribe
+    form and a settings blob the email does not). Measured on Nov 3 2026
+    against that budget: the Monday follow-everything copy is 63 KB, the
+    Sunday one 80 KB (a warning until the real wrapper is measured). The
+    one-time operator measurement: send a draft to a test mailbox
+    (`--mode draft --test-to`), take the message's HTML part size minus
+    the composed copy, and replace the number and date. Never read
+    `/v1/emails/{id}` for it — its `body` is the body as submitted. Each
+    send's marker records `largest_copy_bytes`, `size_budget_bytes` and the
+    `archive_url` of the sent copy.
 - **When it runs:**
   - `nerra-daily.yml` runs it right after the edition publishes.
   - `nerra-daily-email.yml` is the fallback (12:25 and 13:25 UTC) and the

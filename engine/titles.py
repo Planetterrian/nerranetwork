@@ -34,6 +34,7 @@ __all__ = [
     "PODCAST_EPISODE_TITLE_MAX",
     "WEB_TITLE_LEAD_MAX",
     "NEWSLETTER_SUBJECT_MAX",
+    "EMAIL_ALSO_LINE_MAX",
     "ELLIPSIS",
     "clip_words",
     "episode_title",
@@ -58,6 +59,14 @@ WEB_TITLE_LEAD_MAX = 62
 
 #: Email clients truncate subject lines around here on mobile.
 NEWSLETTER_SUBJECT_MAX = 78
+
+#: One "Also on Nerra today" line in the Nerra Daily email (Nov 3 2026):
+#: a short headline a reader scans, not the whole spoken hook (63-150
+#: characters, median 104, on the Nov 2 send — 48% of a two-show copy's
+#: words). The full hook is one click away on the episode page. Clipped
+#: through ``clip_words``; a clip that reads as a fragment
+#: (``is_fragment_title``) gives way to the digest's own headline.
+EMAIL_ALSO_LINE_MAX = 72
 
 #: Anthology-book chapter titles (EPUB table of contents + audiobook
 #: chapter markers). Not a platform cap — a readability one: store TOC

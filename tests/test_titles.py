@@ -18,6 +18,7 @@ import re
 import pytest
 
 from engine.titles import (
+    EMAIL_ALSO_LINE_MAX,
     NEWSLETTER_SUBJECT_MAX,
     PODCAST_EPISODE_TITLE_MAX,
     WEB_TITLE_LEAD_MAX,
@@ -51,7 +52,8 @@ HOOKS = [
     "",
 ]
 
-CAPS = [20, 40, WEB_TITLE_LEAD_MAX, NEWSLETTER_SUBJECT_MAX, YOUTUBE_TITLE_MAX]
+CAPS = [20, 40, WEB_TITLE_LEAD_MAX, EMAIL_ALSO_LINE_MAX, NEWSLETTER_SUBJECT_MAX,
+        YOUTUBE_TITLE_MAX]
 
 
 def _splits_a_word(original: str, clipped: str) -> bool:
