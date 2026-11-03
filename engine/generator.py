@@ -2286,6 +2286,18 @@ _COMBINED_TAIL = (
 # was written from, so a later regeneration cannot ship a stale script.
 _STASHED_COMBINED: Optional[Dict[str, str]] = None
 
+#: The last digest call's expansion-retry outcome (Nov 3 2026), reset at the
+#: top of every call's expansion block; ``None`` before any call.
+_LAST_DIGEST_EXPANSION: Optional[Dict[str, object]] = None
+
+
+def last_digest_expansion() -> Optional[Dict[str, object]]:
+    """``{"fired", "attempts", "floor", "words_before", "words_after",
+    "improved"}`` for the most recent :func:`generate_digest` call, or
+    ``None``. run_show records it as ``digest_expansion_*`` metrics so the
+    readout of any floor or model change has the number the logs held."""
+    return dict(_LAST_DIGEST_EXPANSION) if _LAST_DIGEST_EXPANSION else None
+
 
 def combined_generation_enabled(config: Any, template_vars: Optional[Dict[str, Any]] = None) -> bool:
     """True when this run writes digest + script in one call.
@@ -2910,6 +2922,17 @@ def generate_digest(
         # retry grows never counts as growth), and a show may allow a
         # second pass while the digest sits under 90% of its floor.
         _attempts = max(1, int(getattr(config.llm, "digest_expansion_attempts", 1) or 1))
+        # Nov 3 2026: the expansion's outcome is a METRIC. It fired on 7/7
+        # episodes of every flagship in the week to Nov 2 and 0/7 on the
+        # cohort, was logged and costed, and nothing recorded whether it
+        # fired or what it changed (``digest_expansion_*`` via
+        # :func:`last_digest_expansion`, read by run_show).
+        global _LAST_DIGEST_EXPANSION
+        _LAST_DIGEST_EXPANSION = {
+            "fired": False, "attempts": 0, "floor": int(min_digest_words),
+            "words_before": digest_prose_word_count(text), "words_after": None,
+            "improved": False,
+        }
         for _attempt in range(1, _attempts + 1):
             word_count = digest_prose_word_count(text)
             if word_count >= min_digest_words:
@@ -2926,6 +2949,8 @@ def generate_digest(
                 "retry %d/%d", config.name, word_count, min_digest_words,
                 _attempt, _attempts,
             )
+            _LAST_DIGEST_EXPANSION["fired"] = True
+            _LAST_DIGEST_EXPANSION["attempts"] = _attempt
             expansion_prompt = prompt + _build_digest_expansion_retry_prompt(
                 word_count,
                 min_digest_words,
@@ -2973,6 +2998,8 @@ def generate_digest(
                         config.name, word_count, expanded_wc,
                     )
                     text = expanded
+                    _LAST_DIGEST_EXPANSION["words_after"] = expanded_wc
+                    _LAST_DIGEST_EXPANSION["improved"] = True
                     if tracker and "usage" in meta_exp:
                         try:
                             from engine.tracking import record_llm_usage

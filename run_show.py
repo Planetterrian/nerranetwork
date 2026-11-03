@@ -2633,6 +2633,21 @@ def run(args: argparse.Namespace) -> None:
         try:
             with metrics.stage("generate_digest"):
                 x_thread = generate_digest(template_vars, config, tracker=tracker)
+            # Nov 3 2026: the expansion retry's outcome is recorded (it had
+            # fired on every flagship episode of the week, logged and costed,
+            # with nothing reading whether it fired or what it changed).
+            try:
+                from engine.generator import last_digest_expansion
+                _exp = last_digest_expansion()
+                if _exp:
+                    metrics.record("digest_expansion_fired", bool(_exp.get("fired")))
+                    metrics.record("digest_expansion_attempts", int(_exp.get("attempts") or 0))
+                    metrics.record("digest_expansion_words_before", int(_exp.get("words_before") or 0))
+                    if _exp.get("words_after") is not None:
+                        metrics.record("digest_expansion_words_after", int(_exp["words_after"]))
+                    metrics.record("digest_expansion_floor", int(_exp.get("floor") or 0))
+            except Exception as _exp_exc:  # noqa: BLE001 — a metric never breaks a run
+                logger.debug("digest expansion metric skipped: %s", _exp_exc)
         except LLMRefusalError as e:
             logger.error("PIPELINE ABORTED: %s", e)
             logger.error(

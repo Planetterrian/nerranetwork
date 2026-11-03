@@ -162,7 +162,10 @@ def final_mix(
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mix][voice_sc];"
+        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mono][voice_sc];"
+        # Nov 3 2026: the voice branch is stereo before amix, so the theme's
+        # image survives (every shipped file had been dual-mono).
+        "[voice_mono]aformat=channel_layouts=stereo[voice_mix];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"

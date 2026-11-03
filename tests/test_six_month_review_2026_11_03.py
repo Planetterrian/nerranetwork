@@ -638,3 +638,77 @@ class TestNoBracketedPlaceholderReachesAPage:
         import re
         for path in sorted((ROOT / "digests" / "tesla_shorts_time").glob("Tesla_Shorts_Time_Pod_Ep6*.md")):
             assert not re.search(r"(?m)^\s*\[Brief ", path.read_text(encoding="utf-8")), path.name
+
+
+class TestTheMixKeepsTheThemesStereoImage:
+    """Every shipped music show was dual-mono (L-R vs mid -210 dB) although
+    the themes are wide: amix negotiated the mono voice's layout and -ac 2
+    duplicated it. The voice branch is stereo before amix."""
+
+    def test_the_voice_branch_is_stereo_before_amix(self):
+        from engine.audio import _final_mix_cmd
+        cmd = _final_mix_cmd("/v.wav", "/m.mp3", "/out.mp3")
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        assert "aformat=channel_layouts=stereo[voice_mix]" in fc
+        assert fc.index("aformat=channel_layouts=stereo") < fc.index("amix=inputs=2")
+
+
+class TestAISIsSpelledOut:
+    def test_the_marine_transponder_acronym(self):
+        from assets.pronunciation import apply_pronunciation_fixes
+        out = apply_pronunciation_fixes("The boat switched its AIS transponder off while AI tools ran.")
+        assert "A I S transponder" in out and "A I tools" in out and "A I's" not in out
+
+
+class TestTheDigestExpansionIsAMetric:
+    """The expansion retry fired on 7/7 episodes of every flagship in the
+    week to Nov 2 and 0/7 on the cohort; it was logged and costed, and no
+    metric said whether it fired or what it changed."""
+
+    def test_generator_exposes_the_last_outcome(self):
+        from engine import generator as G
+        assert callable(G.last_digest_expansion)
+        src = (ROOT / "engine" / "generator.py").read_text(encoding="utf-8")
+        assert '_LAST_DIGEST_EXPANSION["fired"] = True' in src
+        assert '_LAST_DIGEST_EXPANSION["improved"] = True' in src
+
+    def test_run_show_records_it_after_the_digest_call(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        for key in ("digest_expansion_fired", "digest_expansion_attempts",
+                    "digest_expansion_words_before", "digest_expansion_words_after",
+                    "digest_expansion_floor"):
+            assert f'metrics.record("{key}"' in src, key
+
+
+class TestTheDailyAuditReadsTheProse:
+    """The audit's AI review read the TTS-normalised text and the first
+    12,000 characters: 12 of 75 INCOHERENT criticals in 16 days named a
+    pronunciation spelling, a real publisher or a real name, and 17 of a
+    week's 113 scripts were scored on an excerpt. It reads the reader prose
+    with the digest's own names listed as real, defines REPETITIVE as
+    restatement, and reads 24,000 characters."""
+
+    def test_the_reader_text_is_preferred_and_the_limit_is_wider(self):
+        src = (ROOT / "review_episodes.py").read_text(encoding="utf-8")
+        assert "text = ep.reader_text or ep.tts_text or ep.digest_text" in src
+        assert "_REVIEW_CHAR_LIMIT = 24000" in src
+        assert 'reader_file = output_dir / f"{stem}_reader.txt"' in src
+
+    def test_the_prompt_defines_restatement_and_exempts_names(self):
+        src = (ROOT / "review_episodes.py").read_text(encoding="utf-8")
+        assert "re-tell a story the body already told" in src
+        assert "spelled-out acronym is NOT incoherence" in src
+        assert "verbatim or near-verbatim" not in src
+
+    def test_the_real_names_preamble_lists_sources_and_outlets(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("review_episodes", ROOT / "review_episodes.py")
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        digest = ("# Show\n\n### Top News\n\n1. **Samsung wins the HBM4 order: shattered.io**\n"
+                  "Body.\nSource: [shattered.io](https://shattered.io/x)\n\n"
+                  "2. **Colossus 2 names its Spam cluster: Teslarati**\nBody.\n"
+                  "Source: [Teslarati](https://www.teslarati.com/y)\n")
+        pre = mod._real_names_preamble(digest)
+        assert pre.startswith("REAL NAMES IN THIS EPISODE")
+        assert "shattered.io" in pre and "Teslarati" in pre
+        assert mod._real_names_preamble("") == ""

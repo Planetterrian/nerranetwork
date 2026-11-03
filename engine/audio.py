@@ -858,7 +858,14 @@ def _final_mix_cmd(
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mix][voice_sc];"
+        # Nov 3 2026: the voice branch is made stereo BEFORE amix. With a
+        # mono voice and a stereo theme, amix negotiated the mono layout and
+        # ``-ac 2`` duplicated it — every shipped file was dual-mono (L-R
+        # vs mid -210 dB) although the themes are wide (-3 dB) and the
+        # references carry width. A centred voice over a stereo bed is the
+        # standard podcast picture; the voice itself is unchanged.
+        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mono][voice_sc];"
+        "[voice_mono]aformat=channel_layouts=stereo[voice_mix];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"

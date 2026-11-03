@@ -194,6 +194,8 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "GenAI": "Gen A I",
     "xAI's": "ex A I's",
     "xAI": "ex A I",
+    # Nov 3 2026: the marine transponder (Offshore North Ep010 aired "A I's").
+    "AIS": "A I S",
     "AIs": "A I's",
     "AI's": "A I's",
     "AI": "A I",

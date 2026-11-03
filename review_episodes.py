@@ -86,8 +86,13 @@ class EpisodeReview:
     tts_path: Optional[Path] = None
     metrics_path: Optional[Path] = None
     chapters_path: Optional[Path] = None
+    #: The pre-pronunciation prose (``*_reader.txt``), when the run wrote one
+    #: (Nov 3 2026) — the text the AI review reads, so "ex A I", "Ess Pee
+    #: See Ex" and "D N A" are never graded as garbles.
+    reader_path: Optional[Path] = None
     digest_text: str = ""
     tts_text: str = ""
+    reader_text: str = ""
     metrics: dict = field(default_factory=dict)
     issues: List[Issue] = field(default_factory=list)
 
@@ -664,6 +669,7 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
             # Find companion files
             stem = md_file.stem  # e.g. Tesla_Shorts_Time_Pod_Ep414_20260322
             tts_file = output_dir / f"{stem}_tts.txt"
+            reader_file = output_dir / f"{stem}_reader.txt"
             metrics_file = output_dir / f"metrics_ep{ep_num:03d}.json"
             chapters_file = output_dir / f"chapters_ep{ep_num:03d}.json"
 
@@ -674,6 +680,7 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
                 date=target_date.isoformat(),
                 digest_path=md_file if md_file.exists() else None,
                 tts_path=tts_file if tts_file.exists() else None,
+                reader_path=reader_file if reader_file.exists() else None,
                 metrics_path=metrics_file if metrics_file.exists() else None,
                 chapters_path=chapters_file if chapters_file.exists() else None,
             )
@@ -682,6 +689,11 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
                 review.digest_text = review.digest_path.read_text(encoding="utf-8")
             if review.tts_path:
                 review.tts_text = review.tts_path.read_text(encoding="utf-8")
+            if review.reader_path:
+                try:
+                    review.reader_text = review.reader_path.read_text(encoding="utf-8")
+                except OSError:
+                    review.reader_text = ""
             if review.metrics_path:
                 try:
                     review.metrics = json.loads(review.metrics_path.read_text(encoding="utf-8"))
@@ -1650,20 +1662,58 @@ def write_review_credit_file(
     return save_usage(tracker, out_dir, filename=filename)
 
 
+_SOURCE_DOMAIN_RE = re.compile(r"(?im)^\s*(?:[-*]\s*)?\**Source:?\**\s*\[([^\]]{2,60})\]\(https?://")
+_BOLD_ITEM_RE = re.compile(r"(?m)^\s*(?:\d+\.\s*)?\*\*([^*\n]{3,110})\*\*")
+
+
+def _real_names_preamble(digest_text: str, limit: int = 40) -> str:
+    """A short list of the names the digest itself vouches for — its Source
+    publishers and its bold item titles — so the reviewer does not grade a
+    real outlet or a real product name as a garble (Nov 3 2026)."""
+    if not digest_text:
+        return ""
+    names: List[str] = []
+    for m in _SOURCE_DOMAIN_RE.finditer(digest_text):
+        name = m.group(1).strip()
+        if name and name not in names:
+            names.append(name)
+    for m in _BOLD_ITEM_RE.finditer(digest_text):
+        title = m.group(1).strip().rstrip(":")
+        outlet = title.rsplit(":", 1)[-1].strip() if ":" in title else ""
+        for cand in (outlet,):
+            if cand and len(cand) <= 40 and cand not in names:
+                names.append(cand)
+        if len(names) >= limit:
+            break
+    if not names:
+        return ""
+    return ("REAL NAMES IN THIS EPISODE (publishers and titles from the episode's "
+            "own sources — not errors, not garbles): " + "; ".join(names[:limit]) + "\n\n")
+
+
 def ai_review_episode(ep: EpisodeReview) -> None:
     """Use Grok to review episode quality. Requires GROK_API_KEY."""
     api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
     if not api_key:
         return
 
-    text = ep.tts_text or ep.digest_text
+    # Nov 3 2026: the review reads the PROSE the script was written as, not
+    # the TTS-normalised text. In the 16 days to Nov 2, 12 of 75 INCOHERENT
+    # criticals named a pronunciation spelling ("ex A I", "Ess Pee See Ex",
+    # "D N A"), a real publisher (shattered.io) or a real name (Musk's
+    # "Spam" and "Gun Range" clusters) — artifacts of the instrument.
+    text = ep.reader_text or ep.tts_text or ep.digest_text
     if not text:
         return
+    real_names = _real_names_preamble(ep.digest_text)
 
     # Truncate to avoid massive prompts — the AI reviewer only needs enough
     # text to assess quality, not the full transcript.  Truncate at a
     # sentence boundary to avoid mid-word cuts that confuse the reviewer.
-    _REVIEW_CHAR_LIMIT = 12000
+    # Nov 3 2026: 24,000 — at 12,000, 17 of a week's 113 scripts were cut
+    # (six of seven Modern Investing episodes at 83-93%), and the score was
+    # a score of the excerpt.
+    _REVIEW_CHAR_LIMIT = 24000
     _was_truncated = len(text) > _REVIEW_CHAR_LIMIT
     if _was_truncated:
         # Find the last sentence-ending punctuation before the limit
@@ -1693,12 +1743,17 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"your pre-2024 training data but is consistent with current 2026 reality, do NOT "
         f"flag it.\n\n"
         f"{'NOTE: The text below is a REVIEW EXCERPT that ends with [END OF REVIEW EXCERPT]. The full episode is LONGER than what you see here. Do NOT flag the episode as incomplete or abruptly ending. ONLY flag INCOMPLETE if the content itself contains obvious signs of being cut off mid-sentence within the body of the text.' if _was_truncated else ''}\n\n"
+        f"{real_names}"
         f"TEXT:\n{text}\n\n"
         f"Check for these specific problems and rate each YES or NO:\n"
         f"1. FACTUAL_ERRORS: Are there obvious factual errors or contradictions? "
         f"(Do NOT flag the episode date or year as an error.)\n"
-        f"2. INCOHERENT: Are there sections that don't make sense or seem garbled?\n"
-        f"3. REPETITIVE: Are stories or paragraphs repeated verbatim or near-verbatim?\n"
+        f"2. INCOHERENT: Are there sentences with no clear referent, or passages "
+        f"that do not make sense? A publisher's name, a product or project name, "
+        f"a model or code identifier, or a spelled-out acronym is NOT incoherence.\n"
+        f"3. REPETITIVE: Is the same point made again in different words inside a "
+        f"story, or does a deep-dive section re-tell a story the body already told? "
+        f"(Restatement counts; a hook and the body that develops it do not.)\n"
         f"4. OFF_TOPIC: Is significant content unrelated to the show's topic?\n"
         f"5. TONE_BREAK: Are there abrupt tone shifts or inappropriate language?\n"
         f"6. INCOMPLETE: Does the episode feel like it ends abruptly or is missing sections?\n"
