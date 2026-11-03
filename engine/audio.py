@@ -275,10 +275,19 @@ PUBLISHED_LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
 
 
 def master_voice_track(input_path: Path, output_path: Path, *,
-                       declick: str = "standard") -> Path:
+                       denoise: bool = True, declick: str = "standard") -> Path:
     """A voice-only track finished like a show: the voice chain, then the
     published -16 LUFS. For audio that reaches a listener without going
-    through :func:`mix_with_music` (the translated tracks).
+    through :func:`mix_with_music` (the translated tracks, and since Nov 3
+    2026 the shows with no music file).
+
+    Nov 3 2026: Unintended Consequences, Vancouver and Collingwood — the
+    three run_show shows with no ``audio.music_file`` — shipped every
+    episode at -25 LUFS (161 + 41 + 6 episodes, and their slot in Nerra
+    Daily beside neighbours at -16.5): ``normalize_voice`` ends on the
+    chain's ``loudnorm=I=-18`` + 4:1 compressor, which lands ~7.6 dB under
+    its own target, and only the music mix's final ``loudnorm=I=-16`` ever
+    recovered it. The voice-only path calls this instead.
 
     Oct 29 2026: the FR/RU/ES tracks shipped Grok's raw output, measured at
     -26 LUFS against the English episodes' -16, so every per-language feed
@@ -292,7 +301,7 @@ def master_voice_track(input_path: Path, output_path: Path, *,
     duration = get_audio_duration(Path(input_path)) or 0.0
     subprocess.run(
         ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(input_path),
-         "-af", voice_chain_filters(declick=declick) + "," + PUBLISHED_LOUDNESS,
+         "-af", voice_chain_filters(denoise=denoise, declick=declick) + "," + PUBLISHED_LOUDNESS,
          "-ar", "44100", "-ac", "1", *codec, out],
         check=True, capture_output=True, timeout=max(600, int(duration * 3) + 120),
     )
@@ -633,13 +642,27 @@ def _music_overlap_cmd(music_in: str, overlap_out: str,
     ]
 
 
+#: The fade curve of every music piece that is meant to reach silence.
+#: Nov 3 2026: ``log`` holds within 2 dB of unity for ~97% of the fade and
+#: plunges in the last 1%, so the YAML's "10 s log fade-out to silence"
+#: shipped as a 3 dB dip and a hard cut on every music show since the module
+#: was written; ``qsin`` reaches -21 dB over a 10 s fade and -40 in its last
+#: second (measured on a sine, ``docs/reviews/network_review_2026_11_03.md``).
+FADE_CURVE = "qsin"
+
+
 def _music_fadeout_cmd(music_in: str, fadeout_out: str,
                        start: int = 8, duration: int = 18,
                        volume: float = 0.4) -> list:
+    # ``-ss``/``-t`` are INPUT options here (before ``-i``). Nov 3 2026: as
+    # output options the filter graph saw the source from t=0, the fade ran
+    # over source 0-30 s and the output window kept source 18-48 s: 12 s of
+    # music and 18 s of digital silence under the opening on every music
+    # show since Feb 16 2026 — the operator's "music cuts off too soon".
     return [
-        "ffmpeg", "-y", "-threads", "0", "-i", music_in,
-        "-ss", str(start), "-t", str(duration),
-        "-af", f"volume={volume},afade=t=out:curve=log:st=0:d={duration}",
+        "ffmpeg", "-y", "-threads", "0",
+        "-ss", str(start), "-t", str(duration), "-i", music_in,
+        "-af", f"volume={volume},afade=t=out:curve={FADE_CURVE}:st=0:d={duration}",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         fadeout_out,
@@ -661,8 +684,10 @@ def _music_outro_cmd(music_in: str, outro_out: str,
         af_parts.append(
             f"afade=t=in:curve=log:st=0:d={fade_in_duration}"
         )
+    # The outro's fade-out reaches silence (FADE_CURVE); the fade-in keeps
+    # ``log`` on purpose — it rises fast, which is the May 15 preference.
     af_parts.append(
-        f"afade=t=out:curve=log:st={fade_out_start}:d={fade_out_duration}"
+        f"afade=t=out:curve={FADE_CURVE}:st={fade_out_start}:d={fade_out_duration}"
     )
     return [
         "ffmpeg", "-y", "-threads", "0",

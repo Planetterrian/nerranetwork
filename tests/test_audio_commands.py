@@ -102,10 +102,12 @@ def music_overlap(music_in: str, overlap_out: str) -> list:
 
 
 def music_fadeout(music_in: str, fadeout_out: str) -> list:
-    """18-second fadeout from 8s mark with logarithmic curve."""
+    """18-second fadeout from the 8 s mark. Nov 3 2026: ``-ss``/``-t`` are
+    INPUT options (before ``-i``) so the fade runs over the piece the output
+    keeps, and the curve reaches silence (``qsin``)."""
     return [
-        "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-ss", "8", "-t", "18",
-        "-af", "volume=0.4,afade=t=out:curve=log:st=0:d=18",
+        "ffmpeg", "-y", "-threads", "0", "-ss", "8", "-t", "18", "-i", music_in,
+        "-af", "volume=0.4,afade=t=out:curve=qsin:st=0:d=18",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         fadeout_out,
@@ -117,7 +119,7 @@ def music_outro(music_in: str, outro_out: str) -> list:
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-stream_loop", "-1", "-i", music_in, "-t", "30",
-        "-af", "volume=0.4,afade=t=in:curve=log:st=0:d=2,afade=t=out:curve=log:st=27:d=3",
+        "-af", "volume=0.4,afade=t=in:curve=log:st=0:d=2,afade=t=out:curve=qsin:st=27:d=3",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         outro_out,
@@ -294,7 +296,7 @@ class TestMusicSegments:
         assert cmd[cmd.index("-t") + 1] == "18"
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.4" in af
-        assert "afade=t=out:curve=log:st=0:d=18" in af
+        assert "afade=t=out:curve=qsin:st=0:d=18" in af
 
     def test_outro_stream_loop_and_fades(self):
         cmd = music_outro("/music.mp3", "/outro.mp3")
@@ -304,7 +306,7 @@ class TestMusicSegments:
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.4" in af
         assert "afade=t=in:curve=log:st=0:d=2" in af
-        assert "afade=t=out:curve=log:st=27:d=3" in af
+        assert "afade=t=out:curve=qsin:st=27:d=3" in af
 
 
 class TestSilenceGeneration:
@@ -443,7 +445,7 @@ class TestMusicTimingConstants:
         # Fade in: 0-2s
         assert "afade=t=in:curve=log:st=0:d=2" in af
         # Fade out: 27-30s (starts at 27, 3s duration)
-        assert "afade=t=out:curve=log:st=27:d=3" in af
+        assert "afade=t=out:curve=qsin:st=27:d=3" in af
 
 
 class TestConcatListContent:

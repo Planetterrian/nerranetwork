@@ -553,3 +553,88 @@ class TestTheConsentBarIsCompact:
         css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
         phone = css.split("@media (max-width: 480px) {\n  #nn-consent-banner", 1)[1].split("}\n}", 1)[0]
         assert "flex-wrap: nowrap" in phone
+
+
+class TestVoiceOnlyShowsReachThePublishedLoudness:
+    """Unintended Consequences, Vancouver and Collingwood — the three
+    run_show shows with no music file — shipped every episode at -25 LUFS
+    (208 episodes, and their slot in Nerra Daily beside neighbours at
+    -16.5): the voice-only path ended on ``normalize_voice`` (the chain's
+    loudnorm -18 + a 4:1 compressor, ~7.6 dB under) and only the music mix's
+    final loudnorm -16 ever recovered a show. The voice-only path masters to
+    the published target, and the edition levels every segment."""
+
+    def test_run_show_masters_the_voice_only_path(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        block = src.split("# 10. Audio mixing", 1)[1].split("_mix_duration = time.monotonic() - t0", 1)[0]
+        assert "master_voice_track(Path(voice_for_mix), final_mp3" in block
+        assert "normalize_voice(" not in block
+
+    def test_master_voice_track_takes_the_shows_denoise_setting(self):
+        import inspect
+        from engine.audio import master_voice_track
+        assert "denoise" in inspect.signature(master_voice_track).parameters
+
+    def test_the_master_is_the_published_target(self):
+        from engine.audio import PUBLISHED_LOUDNESS
+        assert "I=-16" in PUBLISHED_LOUDNESS
+
+    def test_every_edition_segment_is_levelled(self):
+        from pathlib import Path as P
+        from engine.audio import PUBLISHED_LOUDNESS
+        from engine.daily_edition import segment_trim_cmd
+        for cut in (480.0, None):
+            cmd = segment_trim_cmd(P("in.mp3"), P("out.flac"), cut)
+            af = cmd[cmd.index("-af") + 1]
+            assert PUBLISHED_LOUDNESS in af
+            if cut is not None:
+                assert af.index("afade") < af.index("loudnorm")
+
+
+class TestTheMusicBedAndFadesShipAsDesigned:
+    """``_music_fadeout_cmd`` passed ``-ss``/``-t`` as OUTPUT options, so the
+    30 s bed under the opening was 12 s of music and 18 s of digital silence
+    on every music show since Feb 2026 (the operator's "music cuts off too
+    soon"); and ``afade curve=log`` holds within 2 dB for 97% of a fade, so
+    the YAML's "10 s fade-out to silence" shipped as a hard cut."""
+
+    def test_the_bed_is_trimmed_at_the_input(self):
+        from engine.audio import _music_fadeout_cmd
+        cmd = _music_fadeout_cmd("/m.mp3", "/f.mp3", start=18, duration=30, volume=0.3)
+        assert cmd.index("-ss") < cmd.index("-i") and cmd.index("-t") < cmd.index("-i")
+        assert cmd[cmd.index("-ss") + 1] == "18" and cmd[cmd.index("-t") + 1] == "30"
+
+    def test_fades_to_silence_use_a_curve_that_reaches_it(self):
+        from engine.audio import FADE_CURVE, _music_fadeout_cmd, _music_outro_cmd
+        assert FADE_CURVE in ("qsin", "tri", "esin", "par")
+        bed = _music_fadeout_cmd("/m.mp3", "/f.mp3")
+        assert f"afade=t=out:curve={FADE_CURVE}" in bed[bed.index("-af") + 1]
+        outro_af = _music_outro_cmd("/m.mp3", "/o.mp3", fade_out_start=20, fade_out_duration=10)
+        assert f"afade=t=out:curve={FADE_CURVE}:st=20:d=10" in outro_af[outro_af.index("-af") + 1]
+
+
+class TestNoBracketedPlaceholderReachesAPage:
+    """``shows/prompts/tesla_digest.txt`` carried the literal
+    "[Brief 1-sentence sign-off inviting feedback at @teslashortstime.]";
+    the model reproduced it verbatim in Ep643 and Ep653 and it reached the
+    blog (the Aug 15 class: a format template whose placeholder reads as
+    content). The prompt describes the sentence's shape; the sanitizer
+    scrubs any bracketed instruction line; no committed Tesla digest of the
+    window carries one."""
+
+    def test_the_prompt_has_no_bracketed_placeholder_line(self):
+        import re
+        text = (ROOT / "shows" / "prompts" / "tesla_digest.txt").read_text(encoding="utf-8")
+        assert not re.search(r"(?m)^\s*\[Brief ", text)
+
+    def test_the_sanitizer_scrubs_a_bracketed_instruction_line(self):
+        from engine.newsletter_sanitizer import scrub_scaffold as scrub
+        body = "Great episode.\n\n[Brief 1-sentence sign-off inviting feedback at @teslashortstime.]\n\nBye."
+        out = scrub(body)
+        cleaned = out[0] if isinstance(out, tuple) else out
+        assert "[Brief" not in cleaned and "Great episode." in cleaned and "Bye." in cleaned
+
+    def test_no_recent_tesla_digest_carries_the_placeholder(self):
+        import re
+        for path in sorted((ROOT / "digests" / "tesla_shorts_time").glob("Tesla_Shorts_Time_Pod_Ep6*.md")):
+            assert not re.search(r"(?m)^\s*\[Brief ", path.read_text(encoding="utf-8")), path.name

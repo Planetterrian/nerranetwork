@@ -68,4 +68,4 @@ That resilience matters because training runs for FSD and Optimus stretch across
 
 The practical payoff appears in capital efficiency. Higher sustained utilization means fewer racks are needed to deliver the same training throughput, which directly lowers the cost per inference hour and per robot training cycle. As Optimus and unsupervised FSD both scale, that cost curve determines whether the economics close at fleet volumes or remain gated by compute spend. The architecture therefore influences not only reliability metrics but the unit economics of the two programs that now drive the largest share of Tesla’s forward investment. Vertical integration of silicon, firmware, and data-center controls gives Tesla a closed loop that external GPU clusters cannot match without similar custom engineering.
 ---
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

@@ -68,4 +68,4 @@ The economics hinge on whether internal cell output can reach cost parity or bet
 
 For customers, the practical test will be whether the integrated supply chain shortens lead times or lowers installed prices once the facility is online. The filing itself does not guarantee either outcome; it simply removes one layer of supplier margin from the equation and shifts execution risk onto Tesla's own manufacturing performance. State tax incentives under review could reduce the net capital outlay, yet they also tie the project to local employment and output targets that must be met to retain the benefits. Over time the plant could serve as a template for similar facilities in other markets if the Texas model proves repeatable. The broader implication is that Tesla is treating solar hardware as a core manufacturing competency rather than a sourced accessory, which changes how the energy business competes on price and availability against traditional module makers.
 ---
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

@@ -878,13 +878,19 @@ def segment_trim_cmd(
     """Re-encode one published episode into a splice-ready segment,
     optionally trimmed at *cut_final_seconds* (final-MP3 timeline) with a
     short fade so the ducked music bed never hard-cuts."""
+    from engine.audio import PUBLISHED_LOUDNESS
+
+    # Nov 3 2026: every segment is levelled to the published -16 LUFS. A
+    # segment that already sits there is unchanged in gain; a show that
+    # shipped quiet (Unintended Consequences at -25 inside Ep074, a 9.7 LU
+    # step into the next chapter) no longer makes the edition uneven.
+    filters = [PUBLISHED_LOUDNESS]
     cmd = ["ffmpeg", "-y", "-i", str(in_path)]
     if cut_final_seconds is not None:
         fade_start = max(0.0, cut_final_seconds - PROMO_FADE_SECONDS)
-        cmd += [
-            "-t", f"{cut_final_seconds:.2f}",
-            "-af", f"afade=t=out:st={fade_start:.2f}:d={PROMO_FADE_SECONDS}",
-        ]
+        cmd += ["-t", f"{cut_final_seconds:.2f}"]
+        filters.insert(0, f"afade=t=out:st={fade_start:.2f}:d={PROMO_FADE_SECONDS}")
+    cmd += ["-af", ",".join(filters)]
     return cmd + SEGMENT_ENCODE_ARGS + [str(out_path)]
 
 

@@ -63,4 +63,4 @@ The same pattern appears in energy products where local rate structures and inte
 
 For Tesla the result is a fragmented deployment map: features and hardware reach customers at different speeds depending on local rules rather than engineering readiness alone. That fragmentation raises the cost of support, testing, and customer communication while slowing the revenue recognition tied to each new capability. Over time the company’s ability to standardize across borders will depend less on code quality and more on how quickly regulators converge on common standards for AI assistants and grid storage. The business-model implication is clear: every month of regulatory delay directly reduces the present value of the services and energy revenue streams that investors already price into the stock.
 ---
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

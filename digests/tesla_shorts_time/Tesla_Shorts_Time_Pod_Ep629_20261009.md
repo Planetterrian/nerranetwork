@@ -68,5 +68,4 @@ Heat pump systems in electric vehicles must balance efficiency, component count,
 That reduction matters because every kilogram saved improves range and every eliminated part lowers both bill-of-materials cost and potential failure points over the vehicle’s life. Rivals that retain separate heaters must either accept the added weight or develop their own integrated solutions, each carrying its own validation and supply-chain overhead. Tesla’s approach therefore trades a marginal efficiency question for a structural simplification that scales across every vehicle produced.
 
 The open variable remains real-world winter data. Without published test results the patent cannot yet confirm whether cabin comfort, defrost speed, or battery preconditioning hold up under sustained sub-zero conditions. Until those numbers appear, the design’s advantage stays theoretical on the efficiency ledger while its manufacturing benefit is already locked in.
-
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

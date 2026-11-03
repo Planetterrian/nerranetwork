@@ -5469,7 +5469,7 @@ def run(args: argparse.Namespace) -> None:
                     logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
 
                 # 10. Audio mixing
-                from engine.audio import get_audio_duration, mix_with_music, normalize_voice
+                from engine.audio import get_audio_duration, master_voice_track, mix_with_music
 
                 final_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.mp3"
 
@@ -5507,13 +5507,16 @@ def run(args: argparse.Namespace) -> None:
                         metrics.record("story_break_cues", len(story_cue_starts))
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
-                        normalize_voice(voice_for_mix, final_mp3,
-                                        denoise=config.audio.voice_denoise,
-                                        declick=config.audio.voice_declick)
+                        master_voice_track(Path(voice_for_mix), final_mp3,
+                                           denoise=config.audio.voice_denoise,
+                                           declick=config.audio.voice_declick)
                 else:
-                    normalize_voice(voice_for_mix, final_mp3,
-                                    denoise=config.audio.voice_denoise,
-                                    declick=config.audio.voice_declick)
+                    # Nov 3 2026: the voice-only path masters to the published
+                    # -16 LUFS like every music show (it shipped at -25 on
+                    # UC, Vancouver and Collingwood for 208 episodes).
+                    master_voice_track(Path(voice_for_mix), final_mp3,
+                                       denoise=config.audio.voice_denoise,
+                                       declick=config.audio.voice_declick)
                 if voice_for_mix != raw_mp3:
                     Path(voice_for_mix).unlink(missing_ok=True)
 
