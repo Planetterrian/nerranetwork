@@ -839,8 +839,13 @@ def lint_board_venue_mix(digest: str, context: Optional[dict] = None) -> Optiona
 # rule in code. A section is read-sourced when a URL it cites, or an outlet it
 # names, belongs to an article that carried full text into the prompt.
 
-#: Deep-dive sections that must be built from a read article.
-DEEP_DIVE_FETCHED_SECTIONS = ("The Teardown",)
+#: Deep-dive sections that must be built from a read article. Nov 3 2026:
+#: Env Intel's Practitioner Deep Dive joins (shows/env_intel.yaml opts into
+#: the lint) — the section is built from one regulation or guidance document
+#: the run READ, never a career the host does not have. A show that lists
+#: ``deep_dive_fetched_source`` with a section name missing here gets a lint
+#: that can never fire; ``tests/test_env_intel_sources_2026_11_03.py`` pins it.
+DEEP_DIVE_FETCHED_SECTIONS = ("The Teardown", "Practitioner Deep Dive")
 #: Below this much text an article was a teaser, not a read page.
 READ_ARTICLE_MIN_CHARS = 1200
 

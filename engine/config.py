@@ -1450,6 +1450,14 @@ class ShowConfig:
     # script (engine/host_experience.py, Oct 30 2026, Offshore North).
     # Opt-in; False = every other show byte-identical.
     host_experience_filter: bool = False
+    # Which shapes that filter removes (Nov 3 2026, Env Intel): ``frames``
+    # (default — Dan's flying / foiling / sailing frames and the "Dan's lens"
+    # label, the Offshore North path, byte-identical) or ``experience``
+    # (first-person professional-experience claims — "the mistake I see most
+    # often", "in my experience", "I've seen", "my clients" — the invented
+    # consulting career Env Intel's prompt used to ask for). Validated
+    # against ``engine.host_experience.HOST_EXPERIENCE_MODES`` at load.
+    host_experience_mode: str = "frames"
     # How far back the X account fetch looks. 24 (default) = the prompt
     # every show has always sent; the weekly shows read their whole week.
     x_lookback_hours: int = 24
@@ -1695,6 +1703,19 @@ def discover_show_slugs(shows_dir: Path | None = None) -> list[str]:
     return slugs
 
 
+def _host_experience_mode(value) -> str:
+    """``host_experience_mode`` as written, defaulting to ``frames``; an
+    unknown mode RAISES at load (the access.mode rule) rather than letting
+    run_show's non-fatal wrapper turn it into a filter that removes nothing."""
+    from engine.host_experience import HOST_EXPERIENCE_MODES
+
+    mode = str(value or "frames").strip().lower()
+    if mode not in HOST_EXPERIENCE_MODES:
+        raise ValueError(
+            f"host_experience_mode must be one of {HOST_EXPERIENCE_MODES}, got {value!r}")
+    return mode
+
+
 def load_config(yaml_path: str | Path) -> ShowConfig:
     """Load a show configuration from a YAML file.
 
@@ -1751,6 +1772,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         max_prompt_articles=int(data.get("max_prompt_articles", 0) or 0),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
         host_experience_filter=bool(data.get("host_experience_filter", False)),
+        host_experience_mode=_host_experience_mode(data.get("host_experience_mode")),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
         digest_lints_blocking=[str(x) for x in (data.get("digest_lints_blocking") or [])],

@@ -3542,10 +3542,13 @@ def run(args: argparse.Namespace) -> None:
         # Host-experience lines (Oct 30 2026, Offshore North): the brief's
         # "Dan's lens" and any sentence drawn from the host's own flying,
         # foiling or sailing. Opt-in, before the source-integrity gate.
+        # Nov 3 2026: ``host_experience_mode: experience`` (Env Intel) removes
+        # first-person professional-experience claims instead.
         if getattr(config, "host_experience_filter", False):
             try:
                 from engine.host_experience import strip_host_experience
-                x_thread, _host_n = strip_host_experience(x_thread)
+                x_thread, _host_n = strip_host_experience(
+                    x_thread, mode=getattr(config, "host_experience_mode", "frames"))
                 if _host_n:
                     logger.info("Removed %d host-experience sentence(s) from the digest",
                                 _host_n)
@@ -4484,7 +4487,9 @@ def run(args: argparse.Namespace) -> None:
             if getattr(config, "host_experience_filter", False):
                 try:
                     from engine.host_experience import strip_host_experience
-                    podcast_script, _host_s = strip_host_experience(podcast_script)
+                    podcast_script, _host_s = strip_host_experience(
+                        podcast_script,
+                        mode=getattr(config, "host_experience_mode", "frames"))
                     if _host_s:
                         logger.info("Removed %d host-experience sentence(s) from the script",
                                     _host_s)

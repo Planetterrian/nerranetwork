@@ -21,10 +21,27 @@ stale_article_days: 3
 # digest prompt now leaves an empty section out. A/B-listen the next
 # thin-day episode (landmine #17).
 absence_sentence_filter: true
+# Nov 3 2026 (six-month review): the digest prompt had asked the Practitioner
+# Deep Dive for "the wisdom that comes from experience" and supplied the line
+# it wanted; five of the last six episodes narrated an invented consulting
+# career in the first person ("The mistake I see most often is…") to a
+# professional audience, from a host who is not an environmental consultant
+# and from no source. The prompt now builds the section from a guidance
+# document the run READ; this removes any first-person experience claim the
+# model writes anyway (engine/host_experience.py, mode ``experience`` —
+# Offshore North's ``frames`` path is untouched). Metrics: the existing
+# digest_host_experience_removed / script_host_experience_removed.
+host_experience_filter: true
+host_experience_mode: experience
 x_posts_as_sources: secondary
 digest_lints:
 - x_only_lead
 - items_without_source
+# Nov 3 2026: the Practitioner Deep Dive must be built from an article whose
+# full text was read (engine.digest_lint.lint_deep_dive_fetched_source; the
+# section joins DEEP_DIVE_FETCHED_SECTIONS in the digest-lints pass). The
+# finding rides the one-shot structural regeneration, never a script retry.
+- deep_dive_fetched_source
 preferred_domains:
 - canada.ca
 - ontario.ca
@@ -32,7 +49,13 @@ preferred_domains:
 - alberta.ca
 - quebec.ca
 - gazette.gc.ca
-- iea.org
+# Nov 3 2026: the guidance hosts the Deep Dive is built from — CCME
+# guidelines and the Alberta Energy Regulator's directives (ECCC's current
+# guidance lives on canada.ca above). iea.org left the list to stay inside
+# the Sep 24 sourcing pass's eight-domain cap: it is not a Canadian
+# regulator or guidance publisher.
+- ccme.ca
+- aer.ca
 slug: env_intel
 memory_enabled: true   # Aug 2026 expansion: narrative memory (regulatory arcs / world-news arcs) — see engine/show_memory.py.
 description: Daily environmental regulatory, science, and compliance briefing for Canadian environmental professionals covering all provinces, territories, and federal jurisdictions.
@@ -99,13 +122,11 @@ sources:
     label: Google News Environmental Science
   - url: "https://news.google.com/rss/search?q=clean+energy+canada+renewable+when%3A1d&hl=en-CA&gl=CA&ceid=CA:en"
     label: Google News Clean Energy Canada
-  # Reddit — community environmental coverage
-  - url: "https://www.reddit.com/r/environment/.rss"
-    label: r/environment
-  - url: "https://www.reddit.com/r/climate/.rss"
-    label: r/climate
-  - url: "https://www.reddit.com/r/britishcolumbia/.rss"
-    label: r/britishcolumbia
+  # Nov 3 2026: the three Reddit feeds (r/environment, r/climate,
+  # r/britishcolumbia) are gone — a forum thread is not a source a
+  # practitioner can act on, and Ep075 cited one. The content tracker
+  # carried 20 r/environment URLs; articles_in_prompt read 15 (Ep074) and
+  # 21 (Ep075) before the change — read the next Mondays' metrics beside it.
 
 web_search_queries:
   - "British Columbia environment news today"
@@ -265,6 +286,18 @@ llm:
   min_digest_words: 950
   podcast_expand_below_target: false
   min_podcast_word_floor: 450
+  # Nov 3 2026 (register env-intel-sourced-deep-dive-2026-11-03): the
+  # SCRIPT stage runs grok-4.7 at low effort, streamed — the UC/FPD pattern
+  # (docs/model_upgrade_playbook.md rules 1, 2 and 7). Measured Oct 2026:
+  # 68% of the grok-4.3 combined script was digest text read aloud and the
+  # 4.7 low-effort arm is the fastest script stage on the network. The
+  # digest stays grok-4.3; the show runs Mondays only, so a latency miss
+  # costs no weekday slate. Read scripts/model_trial_report.py after four
+  # Mondays before any widening; read the arm from the credit file's
+  # podcast_script_generation.model, never from this line.
+  podcast_model: grok-4.7
+  podcast_reasoning_effort: low
+  stream: true
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
@@ -298,7 +331,7 @@ publishing:
   rss_title: "Environmental Intelligence"
   # June 2026: say the real cadence (odd weekdays, not daily) and lead
   # with the scannable Compliance Brief — the B2B differentiator.
-  rss_description: "The environmental compliance briefing for Canadian practitioners, published every Monday. Each episode opens with a scannable Compliance Brief you can forward to your team, then regulatory updates across provincial and federal jurisdictions, contaminated sites and remediation news, and a practitioner field lesson with the most common mistake and its fix."
+  rss_description: "The environmental compliance briefing for Canadian practitioners, published every Monday. Each episode opens with a scannable Compliance Brief you can forward to your team, then regulatory updates across provincial and federal jurisdictions, contaminated sites and remediation news, and a practitioner deep dive built from a regulation or guidance document, with every threshold and section number traced to its source."
   rss_link: https://nerranetwork.com/env-intel.html
   rss_author: Environmental Intelligence
   rss_email: patrick@planetterrian.com
@@ -412,8 +445,13 @@ chapters:
     # "most common mistake + fix" beat instead (present in 7/7 recent
     # episodes: "The mistake I see most often…" / "the most common
     # mistake…").
+    # Nov 3 2026: that beat was an invented first-person experience claim
+    # and the host-experience filter now removes it before synthesis, so the
+    # spoken pattern no longer fires; the chapter starts where the digest
+    # section's own words begin (``digest_section``, the Oct 5 fallback).
     - pattern: "practitioner deep dive|mistake I see most often|most common mistake"
       title: "Practitioner Deep Dive"
+      digest_section: "Practitioner Deep Dive"
     - pattern: "action items|if you're working on"
       title: "Action Items"
     - pattern: "week ahead|mark your calendar"
