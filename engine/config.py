@@ -1288,14 +1288,15 @@ class YouTubeConfig:
 
     # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
     # The closing seconds of every long-form video overlay an outro card
-    # composited from COMMITTED screenshots of nerranetwork.com (the
-    # show's page + the network home page — engine/promo_card.py), with
-    # the URL in Nerra cyan, a localized newsletter line, and a QR to
+    # rendered from DATA (engine/promo_card.py, Nov 3 2026): this show's
+    # cover in its brand colour, a wall of the other free shows' covers,
+    # the tagline from engine.brand, the URL in Nerra cyan and a QR to
     # the funnel-tagged show page (utm_content=outro). Shorts end cards
-    # additionally paste the network home page's show-grid band as a
-    # framed strip (``shorts_end_card_site_panel``). Render/metadata
-    # only — outside landmine #17. Best-effort everywhere: missing
-    # screenshots or a failed composite ship the legacy ending.
+    # additionally paste a strip of show covers (``shorts_end_card_site_panel``).
+    # The network value in _defaults.yaml is 3 s (the dataclass keeps the
+    # Aug 2026 6 s for a caller that bypasses the YAML). Render/metadata
+    # only — outside landmine #17. Best-effort everywhere: a failed
+    # composite ships the legacy ending.
     outro_card_enabled: bool = True
     outro_card_duration_seconds: float = 6.0
     shorts_end_card_site_panel: bool = True

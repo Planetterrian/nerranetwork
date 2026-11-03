@@ -114,6 +114,56 @@ NETWORK_PROMISE_SHORT = ("Every story sourced. Every claim checked against its s
                          "Read the article or hear the episode.")
 
 
+def network_tagline_for(lang: str = "en") -> str:
+    """The tagline in one of the site's languages (``en`` / ``ru`` / ``fr``).
+
+    Any other code reads English. One lookup for every surface keyed by a
+    language or a dub channel — the YouTube outro card, the channel banners —
+    so a card never types a third spelling of the sentence.
+    """
+    token = (lang or "en").strip().lower()
+    return {"ru": NETWORK_TAGLINE_RU, "fr": NETWORK_TAGLINE_FR}.get(token, NETWORK_TAGLINE)
+
+
+# --- The YouTube channels' banners (Nov 3 2026) ----------------------------
+#
+# The live @NerraNetwork banner promised the free shows carried no
+# advertising and listed a switched-off language track for weeks after both
+# claims were retired, because its text was typed into a build script nobody
+# re-ran, and the @NerraRU banner described a channel whose views are
+# SpaceX, astronomy and Tesla as "finance and language". The
+# two lines under the wordmark are written HERE; scripts/build_youtube_banners.py
+# renders them into brand-refresh-2026/assets/nerra-youtube-banner*.svg and a
+# guard reads the committed SVGs back against these strings. No show count,
+# no language list and no vendor: each of those aged the last banner.
+
+#: The strap under the tagline on the dub channels: the subjects their viewers
+#: arrive on (search terms: Starship, Tesla, astronomy), in their language.
+_YOUTUBE_BANNER_STRAPS = {
+    "ru": "STARSHIP · TESLA · АСТРОНОМИЯ  ·  ИСТОЧНИКИ НАЗВАНЫ  ·  ПО-РУССКИ",
+    "fr": "STARSHIP · TESLA · ASTRONOMIE  ·  SOURCES NOMMÉES  ·  EN FRANÇAIS",
+}
+
+
+def youtube_banner_lines(channel: str = "en") -> tuple:
+    """``(tagline, strap)`` for one channel's banner.
+
+    The English strap is derived from ``NETWORK_SUBJECTS`` (one owner of the
+    subject list); the dub channels' straps lead with what those audiences
+    watch. Unknown channels read English.
+    """
+    token = (channel or "en").strip().lower()
+    tagline = network_tagline_for(token)
+    strap = _YOUTUBE_BANNER_STRAPS.get(token)
+    if strap is None:
+        subjects = " · ".join(
+            s.strip().upper()
+            for s in NETWORK_SUBJECTS.replace(" and more", "").split(",")
+            if s.strip())
+        strap = f"{subjects}  ·  SOURCES NAMED"
+    return tagline, strap
+
+
 #: Where sponsor enquiries go. One address for now; split it out when there
 #: is a second person to read it.
 SPONSOR_EMAIL = CONTACT_EMAIL

@@ -1,12 +1,16 @@
 name: Capture Site Screenshots
 
-# The long-form outro card and the Shorts end card show real screenshots
-# of nerranetwork.com (engine/promo_card.py). Those screenshots are
-# committed under assets/site_screens/ so a render never touches the
-# network, and until Oct 18 2026 nothing refreshed them: the outro was
-# still showing the homepage from Sep 30 after the front page was rebuilt.
-# This runs scripts/capture_site_screens.py on a runner once a month and
-# on demand (after a site redesign), and commits the five PNGs (~2 MB).
+# Refreshes the committed screenshots of nerranetwork.com under
+# assets/site_screens/ once a month and on demand (after a site redesign).
+# Since Nov 3 2026 the outro card and the Shorts end card render from the
+# show registry (engine/promo_card.py), not from these files: the only
+# capture that ever ran was Aug 9 2026, and this workflow's Nov 1 run was
+# green with every page failed and nothing committed, so every video showed
+# the Aug 9 homepage (a retired no-advertising promise, a four-language
+# list) for 86 days. The script now
+# exits non-zero when it captures nothing, and the step below refuses a run
+# that changed no file — a capture that silently keeps the old pictures is
+# the defect, whichever showcase design the operator keeps.
 
 on:
   workflow_dispatch:
@@ -45,6 +49,19 @@ jobs:
 
       - name: Capture the pages
         run: python scripts/capture_site_screens.py
+
+      - name: Refuse a run that changed nothing
+        # The site's front page changes every day, so a capture that leaves
+        # every committed PNG byte-identical did not capture (Nov 1 2026).
+        run: |
+          set -euo pipefail
+          if git status --porcelain -- assets/site_screens | grep -q .; then
+            echo "screenshots refreshed:"
+            git status --porcelain -- assets/site_screens
+          else
+            echo "::error::capture_site_screens wrote nothing new — the committed screenshots are as old as before"
+            exit 1
+          fi
 
       - uses: ./.github/actions/safe-commit-push
         with:

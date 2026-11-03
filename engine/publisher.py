@@ -2110,12 +2110,13 @@ def generate_shorts_end_card(
     text-burned thumbnail made the end card look like a slide of a
     slide. The CTA copy still lives below the image.
 
-    ``site_image_path`` (Aug 2026 site showcase) is a committed
-    screenshot of nerranetwork.com (see ``engine.promo_card``); when it
-    loads, its show-grid band is pasted as a framed strip between the
-    CTA sub-line and the footer, and the footer URL flips to Nerra cyan
-    so the strip and the address read as one unit. Any failure keeps
-    the legacy card byte-for-byte.
+    ``site_image_path`` (Aug 2026 site showcase; rendered from data since
+    Nov 3 2026) is the PNG ``engine.promo_card.short_site_panel`` writes —
+    a strip of the network's show covers at ``promo_card.SHORT_STRIP_SIZE``
+    (anything else is resized to it, never cropped); when it loads it is
+    pasted as a framed strip between the CTA sub-line and the footer, and
+    the footer URL flips to Nerra cyan so the strip and the address read
+    as one unit. Any failure keeps the legacy card byte-for-byte.
 
     Falls back to a text-only render when neither image loads.
     """
@@ -2206,18 +2207,19 @@ def generate_shorts_end_card(
     draw.text((sub_x, sub_y), sub_text, font=sub_font,
               fill=(0, 212, 255))
 
-    # Site strip (Aug 2026 site showcase): the network home page's
-    # show-grid band, framed, in the gap between the sub-line (~0.77)
-    # and the footer (0.93). Best-effort — a missing/unreadable
-    # screenshot keeps the legacy card exactly.
+    # Site strip (Aug 2026 site showcase): the network's wall of show
+    # covers (engine.promo_card.short_site_panel), framed, in the gap
+    # between the sub-line (~0.77) and the footer (0.93). Best-effort — a
+    # missing/unreadable panel keeps the legacy card exactly.
     site_strip_rendered = False
     if site_image_path is not None:
         try:
-            from engine.promo_card import render_short_site_strip
+            from engine.promo_card import SHORT_STRIP_SIZE
 
-            strip_w, strip_h = 832, 260
-            strip = render_short_site_strip(
-                Path(site_image_path), strip_w, strip_h)
+            strip_w, strip_h = SHORT_STRIP_SIZE
+            strip = Image.open(Path(site_image_path)).convert("RGB")
+            if strip.size != (strip_w, strip_h):
+                strip = strip.resize((strip_w, strip_h), Image.LANCZOS)
             strip_x = (width - strip_w) // 2
             strip_y = int(height * 0.785)
             bg.paste(strip, (strip_x, strip_y))

@@ -1,12 +1,14 @@
-"""Drift guards for the site-showcase video endings (Aug 2026).
+"""Drift guards for the site-showcase video endings (Aug 2026; data-rendered
+since Nov 3 2026).
 
-The operator asked for the end of every Short and long-form video to
-show nerranetwork.com — the show page and the whole-network page — so
-viewers see the site (all shows, transcripts, newsletters) behind the
-channel. Pieces under guard:
+The operator asked for the end of every Short and long-form video to point
+viewers at nerranetwork.com — the whole network behind the channel. Pieces
+under guard:
 
-* ``engine/promo_card.py`` — outro card + Shorts site strip composited
-  from COMMITTED screenshots (``assets/site_screens/``).
+* ``engine/promo_card.py`` — outro card + Shorts cover strip rendered from
+  the show registry and ``engine.brand`` (never from a screenshot: the one
+  capture ever taken shipped "ad-free" and "4 languages" on every video for
+  86 days — see ``tests/test_youtube_brand_surfaces_2026_11_03.py``).
 * ``engine/funnel.py`` — ``PLACEMENT_OUTRO`` in the closed placement
   vocabulary (QR scans separable from Shorts end-card taps in GA4).
 * ``engine/video.py`` — outro overlay threaded through BOTH long-form
@@ -51,34 +53,47 @@ class TestOutroPlacement:
 
 
 # ---------------------------------------------------------------------------
-# Committed screenshots + promo card
+# The outro card renders from data
 # ---------------------------------------------------------------------------
 
-class TestScreenshotAssets:
-    def test_committed_screenshots_exist(self):
-        screens = PROJECT_ROOT / "assets" / "site_screens"
-        for name in ("network_home", "show_spacex", "show_tesla",
-                     "show_fascinating_frontiers", "ru_spacex"):
-            assert (screens / f"{name}.png").exists(), (
-                f"assets/site_screens/{name}.png missing — the outro/"
-                "end-card showcase composites from committed screenshots; "
-                "run scripts/capture_site_screens.py")
+class TestOutroRendersFromData:
+    """Nov 3 2026: no screenshot bytes, the brand tagline, the free-show
+    count, and a card whenever PIL can draw one."""
 
-    def test_capture_script_exists(self):
-        assert (PROJECT_ROOT / "scripts" / "capture_site_screens.py").exists()
+    def test_the_module_reads_no_screenshot(self):
+        src = (PROJECT_ROOT / "engine" / "promo_card.py").read_text(encoding="utf-8")
+        assert "site_screens" not in src.split('"""', 2)[2], (
+            "promo_card composites a committed screenshot again")
+        assert "SCREENS_DIR" not in src.split('"""', 2)[2]
+        assert "render_short_site_strip" not in src
 
+    def test_headline_is_the_brand_tagline_per_channel(self):
+        from engine import brand, promo_card
 
-class TestPromoCard:
-    def test_screenshot_resolution_priority(self):
+        assert promo_card._texts("en")["headline"] == brand.NETWORK_TAGLINE
+        assert promo_card._texts("ru")["headline"] == brand.NETWORK_TAGLINE_RU
+        assert promo_card._texts("fr")["headline"] == brand.NETWORK_TAGLINE_FR
+        assert promo_card._texts("zz")["headline"] == brand.NETWORK_TAGLINE
+
+    def test_sub_line_carries_the_free_show_count(self):
         from engine import promo_card
+        import generate_html
 
-        # RU channel prefers the RU lander for spacex…
-        assert promo_card.site_screenshot_for("spacex", "ru").name == \
-            "ru_spacex.png"
-        # …EN gets the show page; a show without a page gets None.
-        assert promo_card.site_screenshot_for("spacex", "en").name == \
-            "show_spacex.png"
-        assert promo_card.site_screenshot_for("dp_pod", "en") is None
+        count = len(generate_html._public_shows())
+        assert count > 0
+        assert promo_card._texts("en")["sub"].startswith(f"All {count} free shows")
+
+    def test_show_wall_is_free_shows_flagships_first(self):
+        from engine import brand, promo_card
+        import generate_html
+
+        wall = promo_card.show_wall()
+        slugs = [r["slug"] for r in wall]
+        assert slugs[:len(brand.FLAGSHIP_SHOW_SLUGS)] == list(brand.FLAGSHIP_SHOW_SLUGS)
+        public = {s["slug"] for s in generate_html._public_shows()}
+        assert set(slugs) <= public
+        assert all(r["cover"].startswith("assets/covers/") for r in wall)
+        assert "tesla" not in [r["slug"] for r in promo_card.show_wall(exclude_slug="tesla")]
 
     def test_outro_card_renders_all_channels(self, tmp_path):
         from engine.promo_card import generate_outro_card
@@ -93,13 +108,38 @@ class TestPromoCard:
             assert out is not None and out.exists()
             assert Image.open(out).size == (1920, 1080)
 
-    def test_outro_card_none_without_screenshots(self, tmp_path, monkeypatch):
+    def test_the_show_tile_is_this_shows_cover(self, tmp_path):
+        """The left tile is the show's own cover, pixel for pixel."""
+        from engine import promo_card
+        from engine.share_cards import _cover_fill, _inset, _open
+        from PIL import Image
+        import numpy as np
+
+        out = promo_card.generate_outro_card(
+            tmp_path / "tesla.png", show_slug="tesla", show_name="Tesla Shorts Time")
+        card = np.asarray(Image.open(out).convert("RGB"), dtype=float)
+        me = promo_card.show_entry("tesla")
+        expect = np.asarray(_cover_fill(_inset(_open(me["cover"])), (548, 548)), dtype=float)
+        x0, y0 = 200, 205  # the tile slot (margin 160 + 40, band_y)
+        inner = (slice(60, 488), slice(60, 488))  # clear of the rounded corners
+        got = card[y0:y0 + 548, x0:x0 + 548][inner]
+        assert float(abs(got - expect[inner]).mean()) < 1.0
+
+    def test_a_missing_cover_still_renders_a_card(self, tmp_path, monkeypatch):
+        """Never ``None`` while PIL can draw: no cover → the wall and the
+        copy; no registry at all → the typographic card."""
         from engine import promo_card
 
-        monkeypatch.setattr(promo_card, "SCREENS_DIR", tmp_path / "nope")
-        out = promo_card.generate_outro_card(
-            tmp_path / "card.png", show_slug="spacex")
-        assert out is None
+        monkeypatch.setattr(promo_card, "show_entry", lambda slug: {
+            "slug": slug, "name": "Ghost", "cover": "assets/covers/does-not-exist.jpg",
+            "brand_color": "#123456"})
+        out = promo_card.generate_outro_card(tmp_path / "ghost.png", show_slug="ghost")
+        assert out is not None and out.exists()
+
+        monkeypatch.setattr(promo_card, "show_wall", lambda exclude_slug="": [])
+        monkeypatch.setattr(promo_card, "show_entry", lambda slug: None)
+        out = promo_card.generate_outro_card(tmp_path / "bare.png", show_slug="ghost")
+        assert out is not None and out.exists()
 
     def test_outro_card_survives_missing_qrcode(self, tmp_path, monkeypatch):
         """No qrcode package → card still renders, just without a QR."""
@@ -111,12 +151,15 @@ class TestPromoCard:
             link_url="https://nerranetwork.com/x")
         assert out is not None and out.exists()
 
-    def test_short_site_panel_defaults_to_network_home(self):
-        from engine.promo_card import short_site_panel
+    def test_short_site_panel_is_a_cover_strip(self):
+        from engine import promo_card
+        from PIL import Image
 
-        assert short_site_panel("tesla", "en").name == "network_home.png"
-        # RU lander wins for the show that has one.
-        assert short_site_panel("spacex", "ru").name == "ru_spacex.png"
+        panel = promo_card.short_site_panel("tesla", "en")
+        assert panel is not None and panel.exists()
+        assert Image.open(panel).size == promo_card.SHORT_STRIP_SIZE
+        # The same picture serves every channel — and the second call is cached.
+        assert promo_card.short_site_panel("tesla", "ru") == panel
 
 
 # ---------------------------------------------------------------------------
@@ -218,7 +261,7 @@ class TestShortsEndCardSitePanel:
 
     def test_site_panel_changes_card(self, tmp_path):
         from engine.publisher import generate_shorts_end_card
-        from engine.promo_card import network_screenshot
+        from engine.promo_card import short_site_panel
         from PIL import Image
         import numpy as np
 
@@ -227,11 +270,11 @@ class TestShortsEndCardSitePanel:
         with_site = tmp_path / "site.png"
         generate_shorts_end_card(cover, plain, show_name="Test")
         generate_shorts_end_card(cover, with_site, show_name="Test",
-                                 site_image_path=network_screenshot())
+                                 site_image_path=short_site_panel("tesla", "en"))
         a = np.asarray(Image.open(plain).convert("RGB"), dtype=float)
         b = np.asarray(Image.open(with_site).convert("RGB"), dtype=float)
         assert a.shape == b.shape == (1920, 1080, 3)
-        # The strip band must actually contain the screenshot.
+        # The strip band must actually contain the cover strip.
         band = slice(int(1920 * 0.785), int(1920 * 0.785) + 260)
         assert float(abs(a[band] - b[band]).mean()) > 1.0
 
@@ -270,6 +313,9 @@ class TestConfigAndWiring:
         cfg = load_config(PROJECT_ROOT / "shows" / "tesla.yaml")
         assert cfg.youtube.outro_card_enabled is True
         assert cfg.youtube.shorts_end_card_site_panel is True
+        # Nov 3 2026: 3 s, so YouTube's own end screen (Studio) has its
+        # 5-20 s over the closing — END_SCREEN traffic was 1 view in 90 days.
+        assert cfg.youtube.outro_card_duration_seconds == pytest.approx(3.0)
 
     def test_run_show_wires_outro_and_panel(self):
         src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
