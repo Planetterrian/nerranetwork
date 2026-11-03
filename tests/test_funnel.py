@@ -37,7 +37,11 @@ class TestCampaignRoundTrip:
         "privet_russian", "dp_pod",
     ])
     @pytest.mark.parametrize("channel", ["en", "ru", "fr", "zh"])
-    @pytest.mark.parametrize("kind", ["short", "long", "episode", "email"])
+    # Every member of KINDS, written out: a kind that is not round-tripped
+    # here can drift silently into `unattributed` (Nov 3 2026 added "ad";
+    # "post" and "book" had shipped without a round trip).
+    @pytest.mark.parametrize("kind", ["short", "long", "episode", "email",
+                                      "post", "book", "ad"])
     @pytest.mark.parametrize("episode", [1, 45, 573, 1204])
     @pytest.mark.parametrize("variant", ["", "stills", "grok_video"])
     def test_round_trip(self, show, channel, kind, episode, variant):

@@ -170,6 +170,12 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
         "by_channel": {},
         "by_campaign": {},
         "by_variant": {},
+        # Nov 3 2026: sessions per campaign KIND, so the email has a funnel
+        # row (``email``) and a paid click (``ad``) is countable apart from
+        # the Shorts — until now every kind landed under channel ``en``.
+        "by_kind": {},
+        # ``null`` until the stage is measured; then the email's own row.
+        "email": None,
         "totals": {"sessions": 0, "engaged_sessions": 0},
         # Everything GA4 reported that is NOT one of our campaigns —
         # organic search, direct, referrals, and any surface we have not
@@ -187,6 +193,8 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
     per_variant: Dict[str, Dict[str, int]] = defaultdict(
         lambda: {"sessions": 0, "engaged_sessions": 0, "campaigns": 0})
     per_campaign: Dict[str, Dict[str, Any]] = {}
+    per_kind: Dict[str, Dict[str, Any]] = defaultdict(
+        lambda: {"sessions": 0, "engaged_sessions": 0, "_names": set()})
     other: Dict[str, int] = defaultdict(int)
 
     for row in (ga4.get("campaigns") or []):
@@ -208,6 +216,9 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
         per_show[parsed.show]["engaged_sessions"] += engaged
         per_channel[parsed.channel]["sessions"] += sessions
         per_channel[parsed.channel]["engaged_sessions"] += engaged
+        per_kind[parsed.kind]["sessions"] += sessions
+        per_kind[parsed.kind]["engaged_sessions"] += engaged
+        per_kind[parsed.kind]["_names"].add(name)
         if parsed.variant:
             v = per_variant[parsed.variant]
             v["sessions"] += sessions
@@ -229,6 +240,22 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
     out["by_show"] = {k: dict(v) for k, v in sorted(per_show.items())}
     out["by_channel"] = {k: dict(v) for k, v in sorted(per_channel.items())}
     out["by_variant"] = {k: dict(v) for k, v in sorted(per_variant.items())}
+    out["by_kind"] = {
+        k: {"sessions": v["sessions"], "engaged_sessions": v["engaged_sessions"],
+            "campaigns": len(v["_names"])}
+        for k, v in sorted(per_kind.items())
+    }
+    # The email's funnel row. A measured zero is a zero (the stage was read
+    # and no email campaign earned a session); only an unread stage is null.
+    email = out["by_kind"].get("email") or {"sessions": 0,
+                                            "engaged_sessions": 0,
+                                            "campaigns": 0}
+    out["email"] = {
+        "sessions_28d": email["sessions"],
+        "engaged_sessions_28d": email["engaged_sessions"],
+        "campaigns": email["campaigns"],
+        "window_days": out["window_days"],
+    }
     out["by_campaign"] = dict(sorted(
         per_campaign.items(),
         key=lambda kv: kv[1]["sessions"], reverse=True)[:100])
@@ -239,13 +266,63 @@ def _clicks(ga4: Optional[dict]) -> Dict[str, Any]:
     return out
 
 
+def _site_sessions(ga4: Optional[dict]) -> Dict[str, Any]:
+    """The site's session count as a number of READERS (Nov 3 2026).
+
+    ``fetch_ga4_stats`` names the landing pages whose sessions are not
+    readers (``landing_anomalies``: >= 50 sessions and a bounce >= 95% or a
+    mean engagement under 3 s — the untagged ad campaign that put 492
+    sub-10 s sessions on /personal-interest.html) and totals the rest as
+    ``sessions_excluding_anomalies``. This block carries BOTH numbers and
+    the sentence that explains the gap; the exclusion is a judgement rule
+    and is printed, never applied silently. ``None`` where the breakdown
+    report was not read — "492 raw, anomalies unread" is not "492 readers".
+    """
+    totals = (ga4 or {}).get("totals") or {}
+    raw = totals.get("sessions")
+    anomalies = (ga4 or {}).get("landing_anomalies")
+    out: Dict[str, Any] = {
+        "configured": raw is not None,
+        "sessions_raw": raw,
+        "engaged_sessions_raw": totals.get("engaged_sessions"),
+        "anomalous_sessions": None,
+        "anomalous_landings": None,
+        "sessions": None,
+        "exclusion": None,
+        "anomalies": None,
+    }
+    if raw is None or not isinstance(anomalies, list):
+        return out
+    excluded = sum(int(a.get("sessions") or 0) for a in anomalies)
+    out["anomalous_sessions"] = excluded
+    out["anomalous_landings"] = len(anomalies)
+    out["sessions"] = totals.get("sessions_excluding_anomalies")
+    if out["sessions"] is None:
+        out["sessions"] = max(0, int(raw) - excluded)
+    out["exclusion"] = totals.get("anomaly_exclusion")
+    out["anomalies"] = [
+        {k: a.get(k) for k in ("path", "sessions", "engaged_sessions",
+                                "bounce_rate", "mean_engagement_s", "reasons",
+                                "channels", "devices", "countries")}
+        for a in anomalies[:10]
+    ]
+    return out
+
+
 def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]:
     """Sessions that landed on a configured funnel destination."""
     out: Dict[str, Any] = {
         "configured": isinstance((ga4 or {}).get("landing_pages"), list),
         "by_destination": {},
-        "totals": {"sessions": 0},
+        # ``sessions`` is the readers' count: a destination the fetcher
+        # names as an anomalous landing is kept in ``sessions_raw`` and
+        # flagged on its row, never counted as a visit (Nov 3 2026).
+        "totals": {"sessions": 0, "sessions_raw": 0,
+                   "excluded_sessions": None, "exclusion": None},
     }
+    # The site-wide readers' number and the printed exclusion ride on every
+    # answer, like the engagement counts below.
+    out["site"] = _site_sessions(ga4)
     # Oct 28 2026: the on-site engagement counts are their own report and
     # say for themselves whether it was read; they ride on every answer, so
     # a consumer never meets a missing key when the landing report is absent.
@@ -264,6 +341,13 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
         path = urlparse(url).path or "/"
         wanted.setdefault(path, []).append(key)
 
+    anomalies = ga4.get("landing_anomalies")
+    anomalous_paths = (
+        {str(a.get("path") or ""): a for a in anomalies}
+        if isinstance(anomalies, list) else None)
+    if anomalous_paths is not None:
+        out["totals"]["excluded_sessions"] = 0
+
     agg: Dict[str, Dict[str, Any]] = {}
     for row in (ga4.get("landing_pages") or []):
         raw = (row.get("landingPagePlusQueryString") or "")
@@ -272,13 +356,32 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
         if not keys:
             continue
         sessions = int(row.get("sessions") or 0)
+        anomalous = bool(anomalous_paths) and path in anomalous_paths
         for key in keys:
             entry = agg.setdefault(key, {
-                "path": path, "sessions": 0, "users": 0,
+                "path": path, "sessions": 0, "sessions_raw": 0, "users": 0,
+                "anomalous": False,
             })
-            entry["sessions"] += sessions
+            entry["sessions_raw"] += sessions
             entry["users"] += int(row.get("activeUsers") or 0)
-        out["totals"]["sessions"] += sessions
+            if anomalous:
+                entry["anomalous"] = True
+                entry["anomaly_reasons"] = anomalous_paths[path].get("reasons")
+            else:
+                entry["sessions"] += sessions
+        out["totals"]["sessions_raw"] += sessions
+        if anomalous:
+            out["totals"]["excluded_sessions"] += sessions
+        else:
+            out["totals"]["sessions"] += sessions
+    excluded = out["totals"]["excluded_sessions"]
+    if excluded:
+        landings = sum(1 for e in agg.values() if e["anomalous"])
+        out["totals"]["exclusion"] = (
+            f"{excluded:,} sessions on {landings} anomalous funnel landing"
+            f"{'' if landings == 1 else 's'} excluded")
+    elif excluded == 0:
+        out["totals"]["exclusion"] = "no anomalous funnel landings"
     out["by_destination"] = dict(sorted(agg.items()))
     return out
 
@@ -600,6 +703,16 @@ def main(argv: Optional[List[str]] = None) -> int:
              out, stages["reach"]["totals"]["youtube_views"],
              stages["click"]["totals"]["sessions"],
              stages["capture"].get("total_subscribers"))
+    site = (stages["visit"].get("site") or {})
+    if site.get("exclusion"):
+        # The exclusion is printed wherever the number is: a judgement rule
+        # that moves the headline by half is never applied silently.
+        log.info("site sessions: %s raw -> %s readers (%s)",
+                 site.get("sessions_raw"), site.get("sessions"),
+                 site["exclusion"])
+    elif site.get("configured"):
+        log.info("site sessions: %s raw; landing anomalies not read "
+                 "(readers' count null)", site.get("sessions_raw"))
     if missing:
         log.warning("::warning::funnel stages with no data source: %s — "
                     "those stages report null, not zero", ", ".join(missing))

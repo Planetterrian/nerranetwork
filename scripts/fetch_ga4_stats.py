@@ -84,7 +84,162 @@ ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
                      "play_video", "build_lineup_start", "personal_feed_add",
                      "app_install_prompt", "app_installed", "app_open",
                      # Oct 29 2026: the app offer sheet (nn-app.js).
-                     "app_sheet"]
+                     "app_sheet",
+                     # Nov 3 2026: real-user vitals (assets/js/tracking.js) —
+                     # one web_vital event per metric per page (LCP, CLS,
+                     # INP) with params name / rating / page_type. Every
+                     # speed number the network had was a lab number. It is
+                     # an engagement row, never a capture; the per-rating
+                     # read is the ``web_vitals`` report below.
+                     "web_vital"]
+
+# ---- Landing anomalies (Nov 3 2026) -----------------------------------------
+# A landing page whose sessions are not readers. 492 of the 999 sessions in
+# the 28 days to Nov 2 landed on /personal-interest.html at a 98.8% bounce,
+# one session per user, 0.6-9 s a visit, in eight spikes (288 on Oct 15) —
+# the untagged Google Ads campaign that targets the page, arriving as Direct
+# under denied ad_storage. Every site decision since Sep 25 was read through
+# that denominator. A page is ANOMALOUS when it took at least
+# ``ANOMALY_MIN_SESSIONS`` in the window and either bounced at or above
+# ``ANOMALY_BOUNCE`` (GA4's bounce is 1 - engaged/sessions) or held visitors
+# under ``ANOMALY_ENGAGEMENT_S`` on average. The funnel's visit stage and the
+# dashboard's site headline SUBTRACT those sessions and PRINT the exclusion
+# with the raw total beside it — a judgement rule is never applied silently.
+ANOMALY_MIN_SESSIONS = 50
+ANOMALY_BOUNCE = 0.95
+ANOMALY_ENGAGEMENT_S = 3.0
+# How many labels of each dimension an anomaly row carries (channel, device,
+# country), so the operator can see WHAT hit the page.
+ANOMALY_MIX_TOP = 3
+# A share or a rate is null under this many sessions — the funnel's floor.
+RATE_FLOOR = 30
+
+
+def _mix(counts: Dict[str, int], total: int) -> List[Dict[str, Any]]:
+    rows = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:ANOMALY_MIX_TOP]
+    return [{"label": label, "sessions": n,
+             "share_pct": round(100.0 * n / total, 1) if total else None}
+            for label, n in rows]
+
+
+def landing_anomalies(rows: Any, *, min_sessions: int = ANOMALY_MIN_SESSIONS,
+                      bounce: float = ANOMALY_BOUNCE,
+                      engagement_s: float = ANOMALY_ENGAGEMENT_S
+                      ) -> Any:
+    """Landing pages whose sessions are not readers, from the
+    ``landing_breakdown`` report (landing page x channel x device x country
+    with sessions, engagedSessions, averageSessionDuration).
+
+    ``None`` when the report was not read (never ``[]`` — an empty list says
+    "measured, every landing page looks human"). Each row carries the page's
+    sessions, engaged sessions, bounce, mean engagement, the rules it failed,
+    and its channel / device / country mix, sorted by sessions.
+    """
+    if not isinstance(rows, list):
+        return None
+    pages: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        raw = str(row.get("landingPagePlusQueryString") or "")
+        path = raw.split("?", 1)[0] or "/"
+        try:
+            sessions = int(row.get("sessions") or 0)
+        except (TypeError, ValueError):
+            sessions = 0
+        if sessions <= 0:
+            continue
+        try:
+            engaged = int(row.get("engagedSessions") or 0)
+        except (TypeError, ValueError):
+            engaged = 0
+        try:
+            avg = float(row.get("averageSessionDuration") or 0.0)
+        except (TypeError, ValueError):
+            avg = 0.0
+        page = pages.setdefault(path, {
+            "path": path, "sessions": 0, "engaged_sessions": 0, "_dur": 0.0,
+            "channels": {}, "devices": {}, "countries": {},
+        })
+        page["sessions"] += sessions
+        page["engaged_sessions"] += min(engaged, sessions)
+        page["_dur"] += sessions * avg
+        for key, dim in (("channels", "sessionDefaultChannelGroup"),
+                         ("devices", "deviceCategory"),
+                         ("countries", "country")):
+            label = str(row.get(dim) or "(not set)")
+            page[key][label] = page[key].get(label, 0) + sessions
+
+    out: List[Dict[str, Any]] = []
+    for page in pages.values():
+        n = page["sessions"]
+        if n < min_sessions:
+            continue
+        bounce_rate = 1.0 - page["engaged_sessions"] / n
+        mean_s = page["_dur"] / n
+        reasons = []
+        if bounce_rate >= bounce:
+            reasons.append(f"bounce {round(100 * bounce_rate)}% (floor {round(100 * bounce)}%)")
+        if mean_s < engagement_s:
+            reasons.append(f"mean engagement {mean_s:.1f} s (under {engagement_s:g} s)")
+        if not reasons:
+            continue
+        out.append({
+            "path": page["path"],
+            "sessions": n,
+            "engaged_sessions": page["engaged_sessions"],
+            "bounce_rate": round(bounce_rate, 4),
+            "mean_engagement_s": round(mean_s, 1),
+            "reasons": reasons,
+            "channels": _mix(page["channels"], n),
+            "devices": _mix(page["devices"], n),
+            "countries": _mix(page["countries"], n),
+        })
+    out.sort(key=lambda r: (-r["sessions"], r["path"]))
+    return out
+
+
+def exclusion_sentence(anomalies: Any) -> Any:
+    """The one line both the funnel and the dashboard print beside the raw
+    total: ``"492 sessions on 1 anomalous landing excluded"``. ``None`` when
+    the anomalies were not read; a measured clean window says so."""
+    if not isinstance(anomalies, list):
+        return None
+    if not anomalies:
+        return "no anomalous landing pages in the window"
+    sessions = sum(int(a.get("sessions") or 0) for a in anomalies)
+    n = len(anomalies)
+    return (f"{sessions:,} sessions on {n} anomalous landing"
+            f"{'' if n == 1 else 's'} excluded")
+
+
+# ---- Real-user vitals (Nov 3 2026) -------------------------------------------
+WEB_VITALS = ("LCP", "CLS", "INP")
+WEB_VITAL_RATINGS = ("good", "needs-improvement", "poor")
+
+
+def web_vitals_summary(rows: Any) -> Any:
+    """Per vital: counts by rating and the good share (null under
+    ``RATE_FLOOR`` samples), from the ``web_vitals`` report (``name`` x
+    ``rating`` x eventCount). ``None`` when the report was not read."""
+    if not isinstance(rows, list):
+        return None
+    out: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        name = str(row.get("customEvent:name") or row.get("name") or "").upper()
+        rating = str(row.get("customEvent:rating") or row.get("rating") or "").lower()
+        if name not in WEB_VITALS or rating not in WEB_VITAL_RATINGS:
+            continue
+        try:
+            count = int(row.get("eventCount") or 0)
+        except (TypeError, ValueError):
+            count = 0
+        vital = out.setdefault(name, {r: 0 for r in WEB_VITAL_RATINGS})
+        vital[rating] += count
+    for vital in out.values():
+        total = sum(vital[r] for r in WEB_VITAL_RATINGS)
+        vital["total"] = total
+        vital["good_share_pct"] = (round(100.0 * vital["good"] / total, 1)
+                                   if total >= RATE_FLOOR else None)
+    return out
 
 
 def _session():
@@ -199,6 +354,28 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         "orderBys": [{"metric": {"metricName": "sessions"}, "desc": True}],
         "limit": 50,
     }))
+    # Nov 3 2026: the report above has ONE dimension, so a burst on a page
+    # could not be read beside its source, device or country. This one
+    # carries the mix; ``landing_anomalies`` names the pages whose sessions
+    # are not readers (see the constants above). Best effort: None when
+    # unread, so a failed report can never read as "no anomalies".
+    try:
+        landing_breakdown = _rows(_run_report(session, prop, {
+            "dateRanges": date_range,
+            "dimensions": [{"name": "landingPagePlusQueryString"},
+                           {"name": "sessionDefaultChannelGroup"},
+                           {"name": "deviceCategory"},
+                           {"name": "country"}],
+            "metrics": [{"name": "sessions"}, {"name": "engagedSessions"},
+                        {"name": "averageSessionDuration"}],
+            "orderBys": [{"metric": {"metricName": "sessions"},
+                          "desc": True}],
+            "limit": 300,
+        }))
+    except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
+        logger.warning("GA4 landing breakdown unavailable: %s", exc)
+        landing_breakdown = None
+    anomalies = landing_anomalies(landing_breakdown)
     # Conversions by campaign. `newsletter_signup` is fired by the funnel
     # landing pages' capture form (templates/ru_landing.html.j2), so this
     # is the only GA4 view that reports the funnel's last step. Best
@@ -262,6 +439,31 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         # clicked", None is "we could not read it".
         site_events = None
 
+    # Real-user vitals (Nov 3 2026): web_vital events by vital and rating.
+    # The event parameters ``name`` and ``rating`` are queryable only once
+    # they are registered as event-scoped custom dimensions on the property
+    # (GA Admin -> Custom definitions); until then the API answers 400 and
+    # this reads None — "not read", never "no vitals".
+    try:
+        web_vitals = _rows(_run_report(session, prop, {
+            "dateRanges": date_range,
+            "dimensions": [{"name": "customEvent:name"},
+                           {"name": "customEvent:rating"}],
+            "metrics": [{"name": "eventCount"}],
+            "dimensionFilter": {
+                "filter": {
+                    "fieldName": "eventName",
+                    "stringFilter": {"value": "web_vital"},
+                },
+            },
+            "limit": 100,
+        }))
+    except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
+        logger.warning("GA4 web vitals report unavailable (register the "
+                       "web_vital parameters name and rating as event-scoped "
+                       "custom dimensions): %s", exc)
+        web_vitals = None
+
     totals = {
         "active_users": sum(int(r.get("activeUsers", 0)) for r in day_series),
         "sessions": sum(int(r.get("sessions", 0)) for r in day_series),
@@ -271,6 +473,15 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         "page_views": sum(int(r.get("screenPageViews", 0))
                           for r in day_series),
     }
+    # The readers' number beside the raw one (Nov 3 2026). None, never 0,
+    # when the breakdown report was not read; the sentence is what the
+    # funnel's visit stage and the dashboard print beside the raw total.
+    excluded = (sum(int(a.get("sessions") or 0) for a in anomalies)
+                if isinstance(anomalies, list) else None)
+    totals["anomalous_landing_sessions"] = excluded
+    totals["sessions_excluding_anomalies"] = (
+        max(0, totals["sessions"] - excluded) if excluded is not None else None)
+    totals["anomaly_exclusion"] = exclusion_sentence(anomalies)
     return {
         "fetched_at": dt.datetime.now(dt.timezone.utc).isoformat(
             timespec="seconds"),
@@ -288,6 +499,12 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         # v3 — on-site engagement, kept out of `conversions` on purpose (see
         # CONVERSION_EVENTS / ENGAGEMENT_EVENTS above).
         "site_events": site_events,
+        # v4 (Nov 3 2026) — the landing mix, the pages excluded from the
+        # readers' count, and real-user vitals. None when unread.
+        "landing_breakdown": landing_breakdown,
+        "landing_anomalies": anomalies,
+        "web_vitals": web_vitals,
+        "web_vitals_summary": web_vitals_summary(web_vitals),
     }
 
 

@@ -38,6 +38,8 @@
     whatsapp: 'src-whatsapp',
     telegram: 'src-telegram',
     email_share: 'src-email-share',
+    // Nov 3 2026 — a paid click, tagged by engine.funnel.ad_link.
+    google_ads: 'src-google-ads',
   };
 
   function queryParams() {

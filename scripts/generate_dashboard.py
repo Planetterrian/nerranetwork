@@ -4344,6 +4344,18 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 # the network publishes in 5 languages, so where the audience
                 # actually is is a programming signal, not a vanity metric.
                 "countries": (data.get("countries") or [])[:8],
+                # Nov 3 2026: the landing pages whose sessions are not
+                # readers (fetch_ga4_stats.landing_anomalies — >= 50
+                # sessions and a 95% bounce or under 3 s), with what hit
+                # them; the totals carry sessions_excluding_anomalies and
+                # the printed exclusion. None when the breakdown report was
+                # not read — never [] for "not read".
+                "landing_anomalies": (
+                    data["landing_anomalies"][:5]
+                    if isinstance(data.get("landing_anomalies"), list)
+                    else None),
+                # Real-user vitals by rating (None when unread).
+                "web_vitals_summary": data.get("web_vitals_summary"),
             }
         except Exception as exc:  # noqa: BLE001
             section["site"] = {"configured": True, "error": str(exc)}
@@ -4761,9 +4773,14 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
                    "attributed sessions",
                    (click.get("unattributed") or {}).get("sessions"),
                    "unattributed"),
+            # Nov 3 2026: the readers' count; a destination the fetcher
+            # names as an anomalous landing is excluded and the exclusion
+            # is printed as the secondary, never applied silently.
             _stage("visit", "Visit", visit.get("configured"),
                    (visit.get("totals") or {}).get("sessions"),
-                   "landings on a funnel page"),
+                   "landings on a funnel page",
+                   (visit.get("totals") or {}).get("excluded_sessions"),
+                   "excluded as anomalous landings"),
             # The subscriber TOTAL is measured as soon as Buttondown
             # answers; only its per-source breakdown needs the tag fetch.
             _stage("capture", "Capture", capture.get("total_configured"),
@@ -4772,6 +4789,12 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
                    "signup events (window)"),
         ],
         "capture_attribution_configured": bool(capture.get("configured")),
+        # The site-wide readers' number beside the raw one, with the
+        # sentence that explains the gap (build_funnel._site_sessions).
+        "visit_site": visit.get("site") or {},
+        # Sessions per campaign kind — the email's row and the paid row.
+        "click_by_kind": click.get("by_kind") or {},
+        "click_email": click.get("email"),
         "rates": data.get("network_rates") or {},
         "pilots": data.get("pilots") or {},
         "by_source": capture.get("by_source") or {},

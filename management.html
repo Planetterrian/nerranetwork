@@ -824,12 +824,22 @@
     { delta: chSum("subscribers_delta_7d"), deltaSuffix: " · 7d",
       sub: compact(yt.network_views != null ? yt.network_views : chSum("total_views")) +
            " video views · " + Object.keys(yt.channels || {}).length + " channels" }));
+  // Nov 3 2026: the readers' count leads and the raw count stays beside it
+  // — 492 of 999 sessions were one anomalous landing page (an untagged ad
+  // campaign). The exclusion is printed wherever the number is.
+  const siteSessionsText = (t) => {
+    t = t || {};
+    const engaged = (t.engaged_sessions != null ? fmt(t.engaged_sessions) + " engaged" : "");
+    if (t.sessions_excluding_anomalies != null) {
+      return fmt(t.sessions_excluding_anomalies) + " sessions excl. anomalous landings (" +
+        fmt(t.sessions) + " raw" + (engaged ? ", " + engaged : "") + ")";
+    }
+    return fmt(t.sessions) + " sessions" + (engaged ? " (" + engaged + ")" : "");
+  };
   tiles.appendChild(statTile("Site active users · 28d",
     site.configured && site.totals ? compact(site.totals.active_users) : "—",
     { sub: site.configured && site.totals
-        ? fmt(site.totals.sessions) + " sessions" +
-          (site.totals.engaged_sessions != null ? " (" + fmt(site.totals.engaged_sessions) + " engaged)" : "") +
-          " · " + fmt(site.totals.page_views) + " page views"
+        ? siteSessionsText(site.totals) + " · " + fmt(site.totals.page_views) + " page views"
         : "GA4 not configured",
       spark: siteSpark,
       sparkTitle: "Daily active users, last " + siteSpark.length + " days" }));
@@ -1003,7 +1013,10 @@
       const t = site.totals || {};
       card.appendChild(h("div", { class: "headline",
         html: fmt(t.active_users) + "<small>users · " + (site.days || 28) + "d</small>" +
-              "&nbsp;&nbsp;" + fmt(t.sessions) + "<small>sessions</small>" +
+              (t.sessions_excluding_anomalies != null
+                ? "&nbsp;&nbsp;" + fmt(t.sessions_excluding_anomalies) + "<small>sessions · readers</small>" +
+                  "&nbsp;&nbsp;" + fmt(t.sessions) + "<small>raw</small>"
+                : "&nbsp;&nbsp;" + fmt(t.sessions) + "<small>sessions</small>") +
               (t.engaged_sessions != null
                 ? "&nbsp;&nbsp;" + fmt(t.engaged_sessions) + "<small>engaged</small>"
                 : "") +
@@ -1016,6 +1029,32 @@
           text: "Engaged sessions are the human floor: " +
                 Math.round(100 * t.engaged_sessions / t.sessions) + "% of sessions lasted 10 s, " +
                 "converted or read a second page." }));
+      }
+      // Nov 3 2026: the landing pages whose sessions are not readers, and
+      // what hit them (channel, device, country). A judgement rule, printed
+      // beside the raw total — never applied silently, never hidden.
+      if (t.anomaly_exclusion) {
+        card.appendChild(h("p", { class: "fine-list", html:
+          "<span class='k'>Excluded:</span> " + esc(t.anomaly_exclusion) }));
+        const mix = (list) => (list || []).slice(0, 2).map((m) =>
+          m.label + " " + (m.share_pct != null ? Math.round(m.share_pct) + "%" : fmt(m.sessions))).join(", ");
+        (site.landing_anomalies || []).forEach((a) => {
+          card.appendChild(h("p", { class: "fine-list", text:
+            a.path + " · " + fmt(a.sessions) + " sessions · " + (a.reasons || []).join("; ") +
+            " · " + mix(a.channels) + " · " + mix(a.devices) + " · " + mix(a.countries) }));
+        });
+      } else if (t.sessions != null) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "Landing anomalies not read yet — the raw session count is the only one." }));
+      }
+      // Real-user vitals (web_vital events): the good share per vital, a dash
+      // under 30 samples.
+      const wv = site.web_vitals_summary;
+      if (wv && Object.keys(wv).length) {
+        card.appendChild(h("p", { class: "fine-list", html:
+          "<span class='k'>Real-user vitals:</span> " + ["LCP", "CLS", "INP"].filter((n) => wv[n]).map((n) =>
+            n + " good " + (wv[n].good_share_pct != null
+              ? wv[n].good_share_pct + "%" : "— (n=" + fmt(wv[n].total) + ")")).join(" · ") }));
       }
       if (siteSpark.length > 1) {
         const sparkWrap = h("div", { style: "margin:6px 0 2px;" });
@@ -2089,6 +2128,21 @@
           card.appendChild(row);
         });
 
+        // Nov 3 2026: the site's readers beside its raw sessions, with the
+        // exclusion sentence; and the email's own funnel row.
+        const vs = funnel.visit_site || {};
+        if (vs.exclusion) {
+          card.appendChild(h("p", { class: "fine-list", text:
+            "Site sessions: " + fmtOrDash(vs.sessions_raw) + " raw → " +
+            fmtOrDash(vs.sessions) + " readers · " + vs.exclusion }));
+        }
+        const em = funnel.click_email;
+        if (em) {
+          card.appendChild(h("p", { class: "fine-list", text:
+            "Email: " + fmtOrDash(em.sessions_28d) + " sessions · " +
+            fmtOrDash(em.engaged_sessions_28d) + " engaged · " +
+            fmtOrDash(em.campaigns) + " campaigns · " + (em.window_days || 28) + "d" }));
+        }
         const r = funnel.rates || {};
         const pctOrDash = (v) =>
           (v === null || v === undefined) ? "—" : Number(v).toFixed(2) + "%";
