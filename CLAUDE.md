@@ -1876,6 +1876,27 @@ details in the review doc §4 and `docs/experiments.yaml`):
   a pattern); `DEEP_DIVE_FETCHED_SECTIONS` lists the section — a YAML opt-in
   for a section missing there is a lint that never fires. ⚠️ AUDIO Mondays.
   Guards `tests/test_env_intel_sources_2026_11_03.py`.
+- **A digest's expansion floor counts FACTS, never words, on Planetterrian
+  first** (`llm.min_digest_facts`; `engine.script_audit.digest_fact_profile`
+  is the ONE fact-state test; the retry ranks the Oct 19 stories floor first,
+  never lengthens the deep dive, and is kept only when the fact count ROSE;
+  0 is the word test, byte-identical). The four new density columns carry
+  no threshold until a baseline week is in. ⚠️ AUDIO: thin days ship shorter
+  and denser. Guards `tests/test_digest_fact_floor_2026_11_03.py`.
+- **The back catalogue is re-mastered in place, by a GAIN**
+  (`scripts/remaster_episodes.py`, Actions "Re-master Episodes", dry run by
+  default): never a two-pass loudnorm (its linear mode falls back to dynamic
+  silently at these peaks); **the upload is refused outside −16 ± 1.5 LUFS or
+  over −1 dBTP**; the SAME R2 key, the feed item keeps its GUID; a pull-back
+  never goes through the OP3 prefix. One episode listened to before the
+  batch (⚠️ AUDIO). Guards `tests/test_remaster_episodes_2026_11_03.py`.
+- **Mira's beat before the question** (⚠️ AUDIO, the room): the CRITICAL
+  list's last line is the beat by shape, the opener prohibitions stay;
+  `audio_metrics.bare_question_rate` — a question turn is a label, is bare,
+  or carries a reaction, and the three add to one, so **read label and bare
+  together**; the room-side baseline is the first audio-measured room, never
+  the hand-edited Ep15. Ships to a booked room only on a two-arm rehearsal
+  PASS plus one listen. Guards `tests/test_mira_beat_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 

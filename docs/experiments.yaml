@@ -6586,6 +6586,105 @@ experiments:
       eight-domain cap; chapter falls back to its digest_section; feed
       description no longer promises "the most common mistake". Guards
       tests/test_env_intel_sources_2026_11_03.py.
+  - id: digest-fact-floor-2026-11-03
+    title: "Planetterrian's digest expansion floor counts facts, not words"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: digest_expansion_fired_share_7d
+    baseline: >
+      The word floor (min_digest_words 1,400) fired the expansion retry on
+      7 of 7 Planetterrian episodes in the week to Nov 2 (every flagship the
+      same; the cohort 0 of 7) and the digest it bought was ~62% fact-free
+      against 10-17% on the cohort — the best predictor of the daily audit's
+      Repetitive flag (AUC 0.72; 9 Repetitive criticals on Planetterrian in
+      16 days). Fact-bearing story sentences on Ep219-232: 11-25, median 20;
+      a floor of 18 would have fired on 2 of 14 days.
+    target: >
+      Two weeks after merge, on Planetterrian: digest_expansion_fired_share_7d
+      from ~1.0 toward 0.15 (the retry fires on a thin day only);
+      digest_fact_free_pct (the snapshot's new column) from ~62 toward
+      10-22; Repetitive criticals in the audit down; podcast_script_word_count
+      and script_digest_coverage_pct read beside so a drop in words is seen as
+      the trade. Then decide Tesla's join (floor from its own 14-day
+      median: 15/32/45); SpaceX, MIT and MAB stay out of the first week.
+    notes: >
+      llm.min_digest_facts (0 = the word test, byte-identical);
+      engine.generator.digest_fact_count delegates to
+      engine.script_audit.digest_fact_profile (the ONE fact-state test);
+      the retry ranks the Oct 19 stories floor first, asks for fact-bearing
+      sentences from unused material, never lengthens the deep dive, and is
+      kept only when the fact count rose; metrics
+      digest_expansion_floor_facts / _facts_before / _facts_after. Four
+      read-only instrument columns (digest/script fact-free, attribution
+      opener, caveat) carry no threshold until a baseline week is in; the
+      opener share counts company-reports sentences too. The prompt-side
+      half is the flagship-prompts-by-shape item. A/B-listen the first thin
+      day (landmine 17). Guards tests/test_digest_fact_floor_2026_11_03.py.
+  - id: remaster-voice-only-back-catalogue-2026-11-03
+    title: "The 208 voice-only episodes are re-mastered in place, by a gain"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      unintended_consequences (161 items), vancouver (41) and collingwood (6)
+      shipped every episode at -24.9 to -25.6 LUFS, 9 LU under every other
+      show in a listener's queue; inside Nerra Daily their chapter stepped
+      9.7 LU. UC Ep161 measured -25.6 LUFS / -4.8 dBTP; +9.6 dB through a
+      -2.0 dBFS limiter re-measures at -16.4 LUFS / -1.4 dBTP, LRA 2.2,
+      sample-identical duration.
+    target: >
+      After the operator's one-episode listen and the three batches
+      (Actions "Re-master Episodes", apply=true): every item on the three
+      feeds reads inside -16 ± 1.5 LUFS and at or under -1 dBTP in
+      digests/<dir>/remaster_log.json, every enclosure URL and GUID
+      unchanged, duration within a second of the original, zero refused
+      uploads; a dry run afterwards plans nothing.
+    notes: >
+      scripts/remaster_episodes.py: the episode is resolved from the feed's
+      enclosure (never publishing.base_url), pulled back without the OP3
+      prefix, measured by engine.audio.measure_loudness, skipped when in
+      band, otherwise volume + alimiter (ceiling -2.0 dBFS, never a two-pass
+      loudnorm whose linear mode falls back to dynamic at these peaks),
+      re-measured, refused outside the band, uploaded to the SAME key
+      (asserted first), the feed item refreshed with keep_existing_guid.
+      YouTube, the Apple video MP4 and past Nerra Daily editions keep the
+      old level. Guards tests/test_remaster_episodes_2026_11_03.py.
+  - id: age-of-ai-beat-2026-11-03
+    title: "Mira's beat before the question: a host who reacts, measured as bare_question_rate"
+    area: voices
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      Recomputed on the six committed transcripts (a question turn whose
+      first Mira sentence ends in a question mark): Ep15 15/28 = 0.54 bare
+      (post hand-edit), Ep12 0.14, Ep13 0.30, Ep14 0.24, NV3 0.16, NV4 0.20;
+      Mira's median words per turn 17-18; mira_turn_s 3.2-5.8 on every
+      audio-measured room against the 12-20 s band; the guest's answers
+      shortened across the hour (Ep15 178 -> 58 words). The room-side
+      baseline is the FIRST audio-measured room on the deployed brief.
+    target: >
+      On the fifth real room after the new brief deploys (two-arm rehearsal
+      PASS at medium effort on the adrian and vincent fixtures plus one
+      operator listen first): bare_question_rate at or under 0.25 with
+      label_open_rate not rising (the three shapes add to one — read them
+      together), mira_turn_sec_median from 5 s toward 8-12 s,
+      guest_words_trend at or above 1.0, the PACING grade and survey_rating
+      not down.
+    notes: >
+      The CRITICAL list's last line is the beat, by shape (after a real
+      answer, one sentence of what it changes or what it cost, then the
+      question); the opener prohibitions stay in HOW TO REACT.
+      audio_metrics.bare_question_rate rides in episode_metrics.notes.audio
+      (no migration; is_green reads it through metric_value), target
+      ("down", 0.25); the grader is handed it, a lesson may name it, the
+      rehearsal report prints it beside the verdict. The echo stripper
+      (post_interview.strip_echo_lines) removes HER words from the GUEST's
+      lines, so the beat must be in her own words. Guards
+      tests/test_mira_beat_2026_11_03.py; narrative docs/mira_craft_notes.md.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency
