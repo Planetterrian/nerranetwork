@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 from engine.feed_categories import apply_categories
+from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words
 from engine.summaries_io import load_summaries
 
 logger = logging.getLogger(__name__)
@@ -275,7 +276,10 @@ def build_language_feed(
         fe = fg.add_entry(order="append")
         fe.id(guid)
         fe.guid(guid, permalink=False)
-        title = track.get("title") or rec.get("episode_title") or f"Episode {num}"
+        # The translated title runs 15-20% longer than its English source;
+        # engine/titles.py owns the limit (Nov 3 2026 — a raw title here).
+        title = clip_words(track.get("title") or rec.get("episode_title") or f"Episode {num}",
+                           PODCAST_EPISODE_TITLE_MAX)
         desc = track.get("description") or title
         fe.title(title)
         fe.description(_markdown_to_rss_html(desc))

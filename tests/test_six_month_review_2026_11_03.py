@@ -74,7 +74,7 @@ class TestDubViewersLandOnTheirLanguage:
     SpaceX on French). The language's front page is the fallback; a
     language the site does not publish in keeps the show page."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def load(self):
         from engine.config import load_config
         return lambda slug: load_config(ROOT / "shows" / f"{slug}.yaml")
@@ -103,3 +103,136 @@ class TestDubViewersLandOnTheirLanguage:
         from engine import funnel
         for lang in funnel._hub_languages():
             assert (ROOT / lang / "index.html").exists(), f"{lang}/index.html is linked but not generated"
+
+
+class TestButtondownEmailReadFollowsPagesAndRecords:
+    """``fetch_recent_emails`` read ONE unordered page of 50 from ``/emails``
+    and filtered it to the window — the night after the first Nerra Daily
+    send it returned ``[]`` (the page held older emails). The committed send
+    record (``digests/nerra_daily/email/<date>.json``) is the primary read
+    and the list is followed through ``next``."""
+
+    @staticmethod
+    def _resp(status=200, body=None):
+        from unittest.mock import MagicMock
+        resp = MagicMock()
+        resp.status_code = status
+        resp.json.return_value = body if body is not None else {}
+        return resp
+
+    def _now(self):
+        import datetime as dt
+        return dt.datetime.now(dt.timezone.utc)
+
+    def test_the_list_is_followed_past_a_page_of_old_emails(self, tmp_path):
+        from unittest.mock import patch
+        import scripts.fetch_buttondown_stats as F
+        import datetime as dt
+        old = (self._now() - dt.timedelta(days=200)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        new = (self._now() - dt.timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        page1 = {"results": [{"id": f"em_old{i}", "status": "sent", "publish_date": old,
+                              "slug": f"tesla-ep{i}"} for i in range(50)],
+                 "next": "https://api.buttondown.com/v1/emails?page=2"}
+        page2 = {"results": [{"id": "em_new", "status": "sent", "publish_date": new,
+                              "slug": "nerra-daily-2026-11-02", "subject": "Nerra Daily"}],
+                 "next": None}
+        with patch.object(F.requests, "get", side_effect=[self._resp(body=page1), self._resp(body=page2)]), \
+             patch("engine.newsletter.email_analytics", return_value={"recipients": 14, "opens": 7}):
+            rows = F.fetch_recent_emails("key", records_dir=tmp_path)
+        assert [r["id"] for r in rows] == ["em_new"]
+        assert rows[0]["kind"] == "nerra_daily" and rows[0]["recipients"] == 14
+
+    def test_a_committed_send_is_read_even_when_the_list_fails(self, tmp_path):
+        from unittest.mock import patch
+        import scripts.fetch_buttondown_stats as F
+        import json
+        created = (self._now()).strftime("%Y-%m-%dT%H:%M:%SZ")
+        (tmp_path / "2026-11-02.json").write_text(json.dumps({
+            "date": "2026-11-02", "email_id": "em_rec", "created_at": created,
+            "subject": "Nerra Daily — Nov 2"}), encoding="utf-8")
+        with patch.object(F.requests, "get", return_value=self._resp(status=500)), \
+             patch("engine.newsletter.email_analytics", return_value={"recipients": 14, "opens": 5, "clicks": 1}):
+            rows = F.fetch_recent_emails("key", records_dir=tmp_path)
+        assert rows and rows[0]["id"] == "em_rec" and rows[0]["kind"] == "nerra_daily"
+        assert rows[0]["slug"] == "nerra-daily-2026-11-02"
+        assert F.summarize_nerra_daily(rows)["sends"] == 1
+
+    def test_nothing_readable_is_none_not_empty(self, tmp_path):
+        from unittest.mock import patch
+        import scripts.fetch_buttondown_stats as F
+        with patch.object(F.requests, "get", return_value=self._resp(status=500)):
+            assert F.fetch_recent_emails("key", records_dir=tmp_path) is None
+
+    def test_the_real_records_dir_is_the_committed_one(self):
+        import scripts.fetch_buttondown_stats as F
+        assert F.SEND_RECORDS_DIR == ROOT / "digests" / "nerra_daily" / "email"
+
+
+class TestHandoffRevisionJudgesAlignedHandoffs:
+    """Nerra Daily's handoff-variety revision measured the DRAFT before
+    ``realign_handoffs`` moved its handoffs onto the segments they introduce,
+    so a shifted draft was judged (and revised) against the wrong segments
+    and the realigned text shipped unrevised. The order is realign, then
+    revise, and the revision is realigned before it is adopted."""
+
+    def test_realign_runs_before_the_variety_revision(self):
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        body = src.split("def _generate_links(", 1)[1].split("\ndef ", 1)[0]
+        assert "links = realign_handoffs(links, segments)" in body
+        assert body.index("realign_handoffs(links, segments)") < body.index("_enforce_handoff_variety(")
+
+    def test_the_revised_draft_is_realigned_before_adoption(self):
+        src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+        body = src.split("def _enforce_handoff_variety(", 1)[1].split("\ndef ", 1)[0]
+        assert "realign_handoffs(revised, segments)" in body
+        assert body.index("realign_handoffs(revised, segments)") < body.index("return adopt_revised_handoffs(links, revised, segments)")
+
+
+class TestFeedTitlesHaveOneOwner:
+    """Two feed-title writers had grown outside ``engine/titles.py``: a
+    correction with ``amend_headline`` wrote the headline raw into the RSS
+    ``<title>`` and the per-language feeds wrote the translated title raw."""
+
+    def test_an_amended_rss_title_is_clipped_through_titles(self, tmp_path):
+        from engine import corrections as C
+        from engine.titles import PODCAST_EPISODE_TITLE_MAX
+        headline = "Corrected: " + " ".join(["word"] * 40)
+        rss = tmp_path / "f.rss"
+        rss.write_text("<rss><channel><item><title>Ep 1: Old hook</title>"
+                       "<itunes:title>Ep 1: Old hook</itunes:title>"
+                       "<itunes:episode>1</itunes:episode>"
+                       "<description><![CDATA[<b>Old hook</b> body]]></description></item>"
+                       "</channel></rss>", encoding="utf-8")
+        n = C.amend_rss_feed(rss, 1, {"headline": headline, "replacements": []}, dry_run=False)
+        assert n >= 1
+        out = rss.read_text(encoding="utf-8")
+        import re
+        titles = re.findall(r"<(?:itunes:)?title>(.*?)</(?:itunes:)?title>", out)
+        assert titles and all(t.startswith("Ep 1: ") for t in titles)
+        assert all(len(t) <= PODCAST_EPISODE_TITLE_MAX for t in titles), [len(t) for t in titles]
+
+    def test_the_language_feed_clips_the_translated_title(self, tmp_path):
+        import json
+        import xml.etree.ElementTree as ET
+        pytest.importorskip("feedgen")
+        from engine import language_feeds
+        from engine.titles import PODCAST_EPISODE_TITLE_MAX
+        long_title = "Ép 4 : " + " ".join(["mot"] * 60)
+        summaries = tmp_path / "summaries_demo.json"
+        summaries.write_text(json.dumps({"podcast": "demo", "summaries": [{
+            "date": "2026-06-15", "episode_num": 4, "episode_title": "Ep 4: English title",
+            "audio_url": "https://audio.nerranetwork.com/demo/Ep004.mp3",
+            "translations": {"fr": {
+                "audio_url": "https://audio.nerranetwork.com/demo/Ep004.fr.mp3",
+                "title": long_title, "description": "description française",
+                "duration_sec": 347.7}}}]}, ensure_ascii=False), encoding="utf-8")
+        out = tmp_path / language_feeds.feed_filename("demo_podcast.rss", "fr")
+        result = language_feeds.build_language_feed(
+            slug="demo", lang="fr", summaries_path=summaries, out_path=out,
+            guid_prefix="demo", channel_title="Demo (Français)", channel_description="d",
+            channel_link="https://nerranetwork.com/demo.html", channel_author="Patrick",
+            channel_email="x@example.com", channel_image="https://nerranetwork.com/c.jpg")
+        assert result is not None
+        titles = [it.find("title").text for it in ET.parse(out).getroot().find("channel").findall("item")]
+        assert titles and all(len(t) <= PODCAST_EPISODE_TITLE_MAX for t in titles), titles
+        assert titles[0].startswith("Ép 4 :")

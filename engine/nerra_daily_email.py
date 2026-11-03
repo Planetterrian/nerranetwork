@@ -67,8 +67,12 @@ DEFAULT_SHOWS: Tuple[str, ...] = (
     "spacex", "tesla", "omni_view_world", "models_agents",
     "fascinating_frontiers",
 )
-#: Never a section: the edition itself and the interview room with no feed.
-EXCLUDED_SLUGS = frozenset({"nerra_daily", "nerra_voices"})
+#: Never a section: the edition itself (the email IS its notes). Nov 3 2026:
+#: ``nerra_voices`` left this set — the comment had called it "the interview
+#: room with no feed" while the show had four published episodes and the
+#: site's third-busiest landing page; an interview published inside the
+#: window is news like any other show's episode.
+EXCLUDED_SLUGS = frozenset({"nerra_daily"})
 #: Headlines under each card's lead (the card's own hook excluded).
 HEADLINES_PER_CARD = 3
 #: An episode older than this is never news in today's email.

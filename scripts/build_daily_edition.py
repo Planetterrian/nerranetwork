@@ -258,12 +258,16 @@ def _generate_links(
                 )
             links = parse_links_json(text, handoff_count)
             if links:
-                links = _enforce_handoff_variety(
-                    links, prompt, segments, handoff_count, tracker)
                 # Oct 16 2026: a handoff must introduce the segment that
                 # follows it (Ep049/055/057 shifted by one from mid-edition).
+                # Nov 3 2026: realign BEFORE the variety revision — the
+                # revision used to judge (and rewrite) the shifted draft
+                # against the wrong segments, and the realigned text then
+                # shipped unrevised.
                 from engine.daily_edition import realign_handoffs
                 links = realign_handoffs(links, segments)
+                links = _enforce_handoff_variety(
+                    links, prompt, segments, handoff_count, tracker)
                 return links, "llm"
             from engine.daily_edition import links_reply_problem
             _annotate("warning", f"Nerra Daily link generation attempt {attempt} "
@@ -308,6 +312,11 @@ def _enforce_handoff_variety(links: dict, prompt: str, segments: List[Segment],
                 model=str((meta or {}).get("model") or LINKS_MODEL),
             )
         revised = parse_links_json(text, handoff_count)
+        if revised:
+            # The revision is judged on the segments it introduces, like
+            # the draft it replaces (Nov 3 2026).
+            from engine.daily_edition import realign_handoffs
+            revised = realign_handoffs(revised, segments)
     except Exception as exc:  # noqa: BLE001 — the first draft still ships
         _annotate("warning", f"Nerra Daily handoff revision failed ({exc}) "
                              "— keeping the first draft")
