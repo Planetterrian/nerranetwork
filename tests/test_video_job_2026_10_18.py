@@ -291,7 +291,9 @@ class TestTheWorkflows:
         assert "scripts/create_recovery_pr.sh" in VIDEO_WF
 
     def test_the_show_run_switches_it_on_and_starts_it(self):
-        assert ("NERRA_VIDEO_JOB: ${{ github.event.inputs.test_mode == 'true' && '0' "
+        # Nov 3 2026: a rehearsal (listen before the slate) renders no video either.
+        assert ("NERRA_VIDEO_JOB: ${{ (github.event.inputs.test_mode == 'true' "
+                "|| github.event.inputs.rehearse == 'true') && '0' "
                 "|| vars.NERRA_VIDEO_JOB || '1' }}") in RUN_WF
         assert "actions: write" in RUN_WF
         commit = RUN_WF.index("- name: Commit and push output")

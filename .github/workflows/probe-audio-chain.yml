@@ -1,14 +1,45 @@
 # Read-only probe of the audio chain on fresh Grok audio (Oct 29 2026) — see
-# scripts/probe_audio_chain.py. Synthesises one short passage on the show
-# voice and on Mira (~900 characters), runs every stage old and new (Mira's
-# piece, the voice chain, a story pause, the joins), prints clicks, pause
-# floor and hiss per file, and attaches the audio so the operator can listen.
+# scripts/probe_audio_chain.py. With no `script` input it synthesises one
+# short passage on the show voice and on Mira (~900 characters), runs every
+# stage old and new (Mira's piece, the voice chain, a story pause, the
+# joins), prints clicks, pause floor and hiss per file, and attaches the
+# audio so the operator can listen.
+#
+# Nov 3 2026 (listen before the slate): with `script` set to a committed
+# digests/<dir>/<ep>_tts.txt it voices the first `seconds` of that REAL
+# script on the show's voice (about 1,200 characters for 75 s, cents of
+# TTS) and renders each named chain `variants` entry and the full mix
+# through the real builders with the show's own theme — before/after MP3s
+# plus loudness, clicks and hiss per file. A tts.dialogue_mode show (the DP
+# Pod) renders at every DIALOGUE_SPEEDS automatically.
+#
 # Publishes nothing. Runs on a push that changes the probe (so a session
 # branch can run it before merge) and on demand.
 name: Probe audio chain
 
 on:
   workflow_dispatch:
+    inputs:
+      script:
+        description: 'A committed TTS script, e.g. digests/tesla_shorts_time/<ep>_tts.txt (empty = the Oct 29 fixture passage)'
+        required: false
+        type: string
+        default: ''
+      seconds:
+        description: 'How much of the script to voice (seconds)'
+        required: false
+        type: string
+        default: '75'
+      variants:
+        description: 'Comma-separated chain variants (legacy, no_denoise, strong_declick, glue); a name the builders on this tree do not offer is reported and skipped'
+        required: false
+        type: string
+        default: 'legacy'
+      voice:
+        description: 'Grok voice id (empty = the show''s tts.voice_id)'
+        required: false
+        type: string
+        default: ''
   push:
     branches: ['claude/**']
     paths:
@@ -35,7 +66,17 @@ jobs:
       - name: Probe the audio chain
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        run: python3 scripts/probe_audio_chain.py
+          PROBE_SCRIPT: ${{ github.event.inputs.script }}
+          PROBE_SECONDS: ${{ github.event.inputs.seconds }}
+          PROBE_VARIANTS: ${{ github.event.inputs.variants }}
+          PROBE_VOICE: ${{ github.event.inputs.voice }}
+        run: |
+          ARGS=()
+          if [ -n "$PROBE_SCRIPT" ]; then
+            ARGS+=(--script "$PROBE_SCRIPT" --seconds "${PROBE_SECONDS:-75}" --variants "${PROBE_VARIANTS:-legacy}")
+            [ -n "$PROBE_VOICE" ] && ARGS+=(--voice "$PROBE_VOICE")
+          fi
+          python3 scripts/probe_audio_chain.py "${ARGS[@]}"
       - name: Attach the audio
         if: always()
         uses: actions/upload-artifact@v7

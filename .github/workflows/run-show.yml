@@ -140,6 +140,11 @@ on:
         required: false
         type: boolean
         default: false
+      rehearse:
+        description: 'Listen before the slate (Nov 3 2026): the full pipeline through TTS and mix (run_show --rehearse), then STOP. The MP3 and its TTS script are uploaded as a 3-day artifact; nothing is committed or published and the episode numbering is untouched. Single-show dispatch.'
+        required: false
+        type: boolean
+        default: false
       force_rerun:
         description: 'Run even if this show already published an episode today (intentional same-day replacement — without this, a dispatch for an already-published show skips cleanly)'
         required: false
@@ -585,10 +590,13 @@ jobs:
           # bad episode) set force_rerun=true in the dispatch form.
           # Deep-dive specials are exempt: they are standalone episodes
           # that legitimately land beside the daily.
+          # Nov 3 2026: a rehearsal publishes nothing, so a same-day episode
+          # is no reason to skip it — the operator rehearses AFTER the
+          # morning's episode, on the day's real script.
           RECHECK="false"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             RECHECK="true"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] &&                [ "${{ github.event.inputs.force_rerun }}" != "true" ] &&                [ -z "${{ github.event.inputs.deep_dive }}" ]; then
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] &&                [ "${{ github.event.inputs.force_rerun }}" != "true" ] &&                [ -z "${{ github.event.inputs.deep_dive }}" ] &&                [ "${{ github.event.inputs.rehearse }}" != "true" ]; then
             RECHECK="true"
           fi
           if [ "$RECHECK" = "true" ]; then
@@ -617,6 +625,16 @@ jobs:
           if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
             EXTRA_FLAGS="--test"
             echo "::notice::test_mode=true — running with --test (fetch + digest only, no TTS/R2/RSS/X/commit)"
+            if [ "${{ github.event.inputs.rehearse }}" = "true" ]; then
+              echo "::warning::rehearse=true ignored: test_mode stops before TTS, so there is no audio to rehearse"
+            fi
+          elif [ "${{ github.event.inputs.rehearse }}" = "true" ]; then
+            # Nov 3 2026 (listen before the slate): the full pipeline through
+            # TTS and mix, then run_show's rehearsal stop — artifacts are
+            # renamed rehearsal_* and nothing below publishes or commits.
+            # Every test_mode guard in this job also reads this input.
+            EXTRA_FLAGS="--rehearse"
+            echo "::notice::rehearse=true — running with --rehearse (fetch + digest + script + TTS + mix, then STOP: no R2/RSS/X/commit; the MP3 is uploaded as an artifact)"
           fi
           # Deep-dive special (Aug 2026): the ONLY production path to a
           # manual-force special (queue entries with deep_dive.enabled: false
@@ -672,13 +690,14 @@ jobs:
           # Oct 17 2026: run_show pushes the audio episode (feed, summaries,
           # blog post, transcript) before the video renders, through
           # scripts/checkpoint_publish.sh. Off in test_mode, which never
-          # commits.
-          NERRA_AUDIO_FIRST_PUSH: ${{ github.event.inputs.test_mode == 'true' && '0' || '1' }}
+          # commits, and off in a rehearsal (Nov 3 2026), which never
+          # publishes.
+          NERRA_AUDIO_FIRST_PUSH: ${{ (github.event.inputs.test_mode == 'true' || github.event.inputs.rehearse == 'true') && '0' || '1' }}
           # Oct 18 2026: the video renders in its own job (render-video.yml),
           # with its own time limit; this run stops at the audio checkpoint
           # and leaves a handoff marker. Repo variable NERRA_VIDEO_JOB=0 puts
           # the video back inline in this job.
-          NERRA_VIDEO_JOB: ${{ github.event.inputs.test_mode == 'true' && '0' || vars.NERRA_VIDEO_JOB || '1' }}
+          NERRA_VIDEO_JOB: ${{ (github.event.inputs.test_mode == 'true' || github.event.inputs.rehearse == 'true') && '0' || vars.NERRA_VIDEO_JOB || '1' }}
           # June 2026: secrets are passed directly as env vars instead of
           # being written to a .env file via a heredoc + sed strip — same
           # effect (load_dotenv never overrides existing env), no secrets
@@ -783,6 +802,35 @@ jobs:
           # stale branch merged the trial-era block back over this one.)
           NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'medium' }}
 
+      - name: Upload the rehearsal
+        # Nov 3 2026 (listen before the slate): the only output of a
+        # rehearsal is this artifact — the MP3 run_show mixed through the
+        # real chain and the exact text it synthesized, under the
+        # rehearsal_ prefix the rehearsal stop gave them. Three days: a
+        # listen happens the same day or not at all. The digest .md and
+        # chapters are left out on purpose (nothing here is a record).
+        if: github.event.inputs.rehearse == 'true' && steps.pipeline.outputs.skipped != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: rehearsal-${{ matrix.show }}-${{ github.run_id }}
+          path: |
+            digests/**/rehearsal_*.mp3
+            digests/**/rehearsal_*_tts.txt
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Discard the rehearsal's working tree
+        # --rehearse writes its rehearsal_* files and the run's tracker /
+        # memory updates into digests/. Nothing below commits in a
+        # rehearsal, and this leaves nothing for a later `git add -A
+        # digests/` to find (landmine #1's third recurrence came from
+        # exactly that). Best-effort, never fails the job.
+        if: always() && github.event.inputs.rehearse == 'true'
+        run: |
+          git checkout -- digests/ shows/topic_queues/ 2>/dev/null || true
+          git clean -fdq -- digests/ 2>/dev/null || true
+          git status --short | head -20 || true
+
       - name: Commit skip state (queue cooldown + skip marker)
         # A source_integrity_failed skip publishes nothing and the normal
         # commit step is skipped — so the ONLY durable records of the skip
@@ -795,8 +843,9 @@ jobs:
         # episode … no skip marker was present" and pages the operator
         # for a pipeline failure that didn't happen (UC 2026-08-30).
         # Narrow by design: commits ONLY those two paths, best-effort,
-        # never fails the job.
-        if: always() && steps.pipeline.outputs.skipped == 'true'
+        # never fails the job. Never in a rehearsal (Nov 3 2026): a
+        # rehearsal commits nothing, and the real run records its own skip.
+        if: always() && steps.pipeline.outputs.skipped == 'true' && github.event.inputs.rehearse != 'true'
         run: |
           SKIP_DIR="digests/${{ matrix.show }}"
           [ "${{ matrix.show }}" = "tesla" ] && SKIP_DIR="digests/tesla_shorts_time"
@@ -830,7 +879,8 @@ jobs:
 
       - name: Validate output
         # test_mode is fetch + digest only: there is no audio to validate.
-        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        # A rehearsal's audio is validated by the operator's ear (Nov 3 2026).
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         run: |
           # shellcheck disable=SC2044
           SHOW="${{ matrix.show }}"
@@ -882,11 +932,11 @@ jobs:
           echo "Output validation passed"
 
       - name: Regenerate network RSS
-        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         run: python generate_network_rss.py
 
       - name: Regenerate show HTML pages
-        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
           # Search Console ownership tag. Read by generate_html.py since
@@ -940,7 +990,9 @@ jobs:
         # .md before its early exit, and this step used to commit and push it
         # to main as "Auto-generated: <show> <date>" — which also trips the
         # same-day duplicate guard and blocks that day's real episode.
-        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        # A rehearsal NEVER commits either (Nov 3 2026): its MP3 is the
+        # artifact above, and its rehearsal_* files were discarded.
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         env:
           # scripts/create_recovery_pr.sh posts a stranded-episode alert to
           # this webhook. It was reading the var but the step never passed it
@@ -1006,7 +1058,7 @@ jobs:
         # push above lands; render-video.yml renders, uploads and posts from
         # it. No marker (a show with no video, NERRA_VIDEO_JOB=0) = no-op.
         # A lost dispatch is started by render-video.yml's scheduled sweep.
-        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/video_job.py dispatch --show "${{ matrix.show }}"
@@ -1018,7 +1070,7 @@ jobs:
         # it published a public episode of an auto-translated show whose
         # video is not still rendering (render-video.yml dispatches then).
         # The sweep's two cron passes remain the catch-all.
-        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/followup_dispatch.py multilingual --show "${{ matrix.show }}"
@@ -1031,7 +1083,7 @@ jobs:
         # AFTER the release — a straggler, or a re-run after a failed morning
         # — wakes it here. always(): a failed run adds no segment, but past
         # the hold it is the morning's last wake-up (the Oct 18 lesson).
-        if: always() && github.event.inputs.test_mode != 'true'
+        if: always() && github.event.inputs.test_mode != 'true' && github.event.inputs.rehearse != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/followup_dispatch.py nerra-daily --show "${{ matrix.show }}"
@@ -1071,7 +1123,8 @@ jobs:
   # -----------------------------------------------------------------------
   finalize:
     needs: run
-    if: always() && needs.run.result != 'skipped'
+    # A rehearsal (Nov 3 2026) commits nothing, so there is nothing to finalize.
+    if: always() && needs.run.result != 'skipped' && github.event.inputs.rehearse != 'true'
     runs-on: ubuntu-26.04
     concurrency:
       group: finalize-shared-pages
@@ -1173,6 +1226,7 @@ jobs:
           git add watch.html || true
           git add blog/index.html || true
           git add sitemap.xml || true
+          git add news-sitemap.xml || true
           git add api/*.json || true
           git add blog*.rss || true
           git add network.rss || true
