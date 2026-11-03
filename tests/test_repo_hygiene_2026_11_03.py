@@ -177,3 +177,47 @@ class TestTheServiceWorkerServesTheSheet:
         precache = self.SW.split("var PRECACHE = [", 1)[1].split("];", 1)[0]
         assert "'/styles/main.css'" in precache and "'/styles/blog.css'" in precache
         assert (ROOT / "styles" / "blog.css").is_file()
+
+
+class TestTheStagingScriptUntracksWhatTheIgnoreRulesExclude:
+    """Nov 3 2026: main kept carrying the spliced FLAC after .gitignore
+    excluded it, because a tracked file stays tracked through every later
+    ``git add -A``. The one staging list stages the deletion of any tracked
+    path under digests/ that the ignore rules exclude, on every show run."""
+
+    SCRIPT = ROOT / "scripts" / "stage_show_artifacts.sh"
+
+    def test_the_line_follows_the_add_all(self):
+        src = self.SCRIPT.read_text(encoding="utf-8")
+        add = src.index("git add -A digests/")
+        untrack = src.index("git ls-files -ci --exclude-standard -z -- digests")
+        assert add < untrack
+        assert "xargs -0 -r git rm -q --cached --" in src
+
+    def test_it_untracks_an_ignored_tracked_file_and_leaves_it_on_disk(self, tmp_path):
+        repo = tmp_path / "r"
+        repo.mkdir()
+        env = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+               "GIT_COMMITTER_EMAIL": "t@t", "HOME": str(tmp_path), "PATH": "/usr/bin:/bin"}
+        run = lambda *a: subprocess.run(["git", *a], cwd=repo, env=env, check=True,
+                                        capture_output=True)
+        run("init", "-q")
+        (repo / "digests" / "show" / "youtube_tmp").mkdir(parents=True)
+        flac = repo / "digests" / "show" / "youtube_tmp" / "ep1_short_source.flac"
+        flac.write_bytes(b"fLaC" + b"\0" * 64)
+        keep = repo / "digests" / "show" / "ep1.md"
+        keep.write_text("# ep1\n")
+        run("add", "-A", "digests")
+        run("commit", "-q", "-m", "tracked before the rule")
+        (repo / ".gitignore").write_text("digests/**/*.flac\n")
+        run("add", ".gitignore")
+        # The two staging lines as the script runs them.
+        subprocess.run("git add -A digests/ || true; git ls-files -ci --exclude-standard -z -- digests "
+                       "| xargs -0 -r git rm -q --cached -- || true", shell=True, cwd=repo,
+                       env=env, check=True)
+        staged = subprocess.run(["git", "diff", "--cached", "--name-status"], cwd=repo, env=env,
+                                capture_output=True, text=True, check=True).stdout
+        assert "D\tdigests/show/youtube_tmp/ep1_short_source.flac" in staged
+        assert "ep1.md" not in staged
+        assert flac.exists()
+

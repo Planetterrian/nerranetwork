@@ -12,6 +12,14 @@ set -u
 
 # Stage all generated output
 git add -A digests/ || true
+# Nov 3 2026: a file the ignore rules exclude stays TRACKED once it is in
+# the index, and `git add -A` carries every later version of it — the hook
+# Short's spliced FLAC rode this line into main for days after .gitignore
+# excluded it (landmine #1's third recurrence, 571 MB). Stage the deletion
+# of any tracked path under digests/ that the ignore rules now exclude;
+# the index only — the file stays on disk for the run that made it.
+git ls-files -ci --exclude-standard -z -- digests 2>/dev/null \
+  | xargs -0 -r git rm -q --cached -- 2>/dev/null || true
 git add '*.rss' || true
 git add '*.html' || true
 git add -A blog/ || true
