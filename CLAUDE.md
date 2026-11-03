@@ -1822,6 +1822,46 @@ defects they proved in code were fixed the same day. Rules that bind:
   the Voices Worker's fire-tick catch-all is hourly; a correction's headline
   and a translated feed title clip through `engine.titles`.
 
+**Shipped from the review's ranked plan the same day** (each with its guard;
+details in the review doc §4 and `docs/experiments.yaml`):
+- **Loudness, range and true peak are metrics** (`engine.audio.measure_loudness`,
+  one ebur128 pass; `audio_integrated_lufs` / `audio_loudness_range_lu` /
+  `audio_true_peak_dbtp` per episode and on the edition record;
+  `validate_loudness` warns outside −16 ± 1.5 LUFS, log-only for a week;
+  `audio_loudness_in_spec_share_7d`). Guards `tests/test_audio_loudness_metric_2026_11_03.py`.
+- **The Age of AI edit encodes with the network's one master setting**
+  (`engine.audio.JOIN_MP3_ENCODE_ARGS`, VBR `-q:a 0`, never a CBR cap) and its
+  pads loop the adjacent piece's own room tone (`engine.story_breaks.write_room_tone_pad`,
+  zeros only as a fallback); `digital_zero_sec` / `encode_kbps` measured from the
+  shipped file. Guards `tests/test_voices_encode_and_room_tone_2026_11_03.py`.
+- **A paid link goes through `engine.funnel`** (`KIND_AD`, `MEDIUM_CPC`,
+  `SOURCE_GOOGLE_ADS`, `ad_link()`, `scripts/funnel_link.py`); **a landing
+  anomaly is excluded and PRINTED** beside the raw total (`fetch_ga4_stats.landing_anomalies`:
+  ≥ 50 sessions and a 95% bounce or under 3 s; None when unread, never 0);
+  real-user vitals are GA4 `web_vital` events. Guards `tests/test_funnel_denominator_2026_11_03.py`.
+- **`engine/promo_card.py` opens nothing under `assets/site_screens`**: the
+  outro card and the Shorts end-card strip render from the covers,
+  `engine.brand.network_tagline_for(channel)` and the free-show count;
+  `outro_card_duration_seconds` is 3.0; the banners' lines come from
+  `engine.brand.youtube_banner_lines`; the capture script exits non-zero when
+  it captures nothing. Guards `tests/test_youtube_brand_surfaces_2026_11_03.py`.
+- **The Nerra Daily email carries a deck of the digest's own sentences under
+  every card** (`engine.landing_test.story_deck`, no model call; a flagged
+  sentence never prints), **a hook's story is never listed again under it**
+  (`engine.newsroom.headline_within_hook`), the masthead is compact and the
+  edition card follows the body, an "Also" line is `engine.titles.EMAIL_ALSO_LINE_MAX`,
+  the size guard subtracts Buttondown's wrapper. Guards `tests/test_nerra_daily_email_2026_11_03.py`.
+- **A post recommends its OWN WEEK** (`_pick_cross_show_related(post_date=)`,
+  7 days before to 1 after, nearest first) so old posts stop being rewritten
+  every morning; **the per-show regen is `--blogs --latest 3`** on every show
+  run, video job and multilingual sweep (the nightly's full rebuild reaches old
+  posts); **`styles/blog.css` is the one blog stylesheet** (network-first in
+  `sw.js`); **no tracked blob over 2 MB under `digests/`**. Guards
+  `tests/test_repo_hygiene_2026_11_03.py`, `tests/test_blog_related_stability_2026_11_03.py`.
+- **CLAUDE.md is the rules** (≤ 165 KB, `tests/test_claude_md_size.py`): every
+  dated pass's narrative lives verbatim under `docs/claude_md_history/`; a
+  pass adds at most ten lines here.
+
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
 [history](docs/claude_md_history/2026_10_29_hiss_clicks.md); register `audio-clean-joins-2026-10-29`, `audio-tracks-and-mira-declick-2026-10-29`; guards `tests/test_audio_quality_2026_10_29.py`.
