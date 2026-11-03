@@ -296,6 +296,27 @@ def _salient(text: str) -> set:
     return {w for w in words if (len(w) >= 4 or w.isdigit()) and w not in _STOP}
 
 
+#: Suffixes folded before a headline word is compared with a scene prompt
+#: (Nov 3 2026): "robots" and "Robotic", "models" and "modeling", "protein"
+#: and "proteins" are one subject. Longest first.
+_STEM_SUFFIXES = ("ically", "ation", "ingly", "ments", "ings", "ment", "ness",
+                  "ics", "ies", "ing", "ers", "ic", "al", "ed", "er", "es", "s")
+
+
+def _stem(word: str) -> str:
+    for suf in _STEM_SUFFIXES:
+        if word.endswith(suf) and len(word) - len(suf) >= 3:
+            return word[: -len(suf)]
+    return word
+
+
+def _stems(text: str) -> set:
+    """Stemmed salient tokens of a headline or a scene prompt; three-letter
+    nouns count ("lab", "car", "ice")."""
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return {_stem(w) for w in words if (len(w) >= 3 or w.isdigit()) and w not in _STOP}
+
+
 def scene_prompts(slice_path: Path, slug: str, episode_num: Optional[int],
                   episode_date: str) -> Dict[str, str]:
     """``image_id -> prompt`` for one episode, from the show's full gallery
@@ -319,8 +340,14 @@ def scene_prompts(slice_path: Path, slug: str, episode_num: Optional[int],
     return out
 
 
-#: A scene must share this many salient words with the headline to be
-#: preferred over the episode's first scene.
+#: A scene must share this many stemmed salient words with the headline to
+#: be its picture; ONE shared word is enough when no other scene of the
+#: episode shares any (Nov 3 2026 — the Nov 2 front page led with a coral
+#: reef under a protein-engineering headline because the three lab scenes
+#: scored 1 each on exact words and the chooser fell back to the first scene
+#: in slice order). When the episode's prompts are known and no scene
+#: matches, the story gets NO scene (the template shows the show's cover):
+#: a picture of a different story under a headline is a false claim.
 SCENE_MATCH_MIN_WORDS = 2
 
 
@@ -366,7 +393,7 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
         return None
     base = (index.get("base_url") or "").rstrip("/")
     overrides = index.get("overrides") or {}
-    hook_words = _salient(hook)
+    hook_words = _stems(hook)
     prompts = prompts or {}
     avoid = set(avoid_urls)
     order = ((LANDSCAPE_USE, "landscape"), (PORTRAIT_USE, "portrait"))
@@ -382,15 +409,20 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
                 f"{base}/{ep[e_slug]}/{ep[e_date]}/{ep[e_id]}/{row[i_id]}.thumb.webp"
                 if base else "")
             if url.startswith("https://"):
-                score = len(hook_words & _salient(prompts.get(str(row[i_id]), "")))
+                score = len(hook_words & _stems(prompts.get(str(row[i_id]), "")))
                 candidates.append((score, position, url))
         if not candidates:
             continue
         fresh = [c for c in candidates if c[2] not in avoid]
         candidates = fresh or candidates
         best = max(candidates, key=lambda c: (c[0], -c[1]))
-        if best[0] >= SCENE_MATCH_MIN_WORDS:
+        runner_up = max((c[0] for c in candidates if c is not best), default=0)
+        if best[0] >= SCENE_MATCH_MIN_WORDS or (best[0] == 1 and runner_up == 0):
             return {"url": best[2], "orientation": orientation, "matched": True}
+        if prompts and hook_words:
+            # The episode's prompts are known and none depicts this headline
+            # in this orientation: try the other orientation, then nothing.
+            continue
         return {"url": candidates[0][2], "orientation": orientation, "matched": False}
     return None
 

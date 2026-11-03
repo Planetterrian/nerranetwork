@@ -452,7 +452,38 @@ def _show_host_name(show_slug: str) -> str:
             return host
     except Exception:  # noqa: BLE001 — a byline must never break a build
         pass
+    # Nov 3 2026: a registry-only show (Nerra Daily — no shows/<slug>.yaml by
+    # design) fell through to "Patrick" on every one of its 74 posts while
+    # Mira anchors it. The registry's ``host`` field is read first.
+    registry_host = _registry_host(show_slug)
+    if registry_host:
+        return _REGISTRY_HOST_NAMES.get(registry_host, registry_host.title())
     return "Patrick"
+
+
+#: ``shows/network_meta.yaml`` ``host`` values → the byline name and kind.
+_REGISTRY_HOST_NAMES = {"mira": "Mira", "patrick": "Patrick", "dan": "Dan"}
+_REGISTRY_AI_HOSTS = frozenset({"mira"})
+
+
+@lru_cache(maxsize=1)
+def _registry_hosts() -> dict:
+    """slug -> ``host`` from the registry, for shows without a YAML."""
+    try:
+        import yaml
+        path = Path(__file__).resolve().parent.parent / "shows" / "network_meta.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        shows = data.get("shows", data)
+        items = shows.items() if isinstance(shows, dict) else (
+            (s.get("slug"), s) for s in shows if isinstance(s, dict))
+        return {str(slug): str((cfg or {}).get("host") or "").strip().lower()
+                for slug, cfg in items if isinstance(cfg, dict) and cfg.get("host")}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _registry_host(show_slug: str) -> str:
+    return _registry_hosts().get(show_slug, "")
 
 
 def _show_host_kind(show_slug: str) -> str:
@@ -469,6 +500,8 @@ def _show_host_kind(show_slug: str) -> str:
             return kind
     except Exception:  # noqa: BLE001 — a provenance line must never break a build
         pass
+    if _registry_host(show_slug) in _REGISTRY_AI_HOSTS:
+        return "ai"
     return "human"
 
 

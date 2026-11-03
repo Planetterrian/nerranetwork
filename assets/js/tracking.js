@@ -29,34 +29,6 @@
         }
     }
 
-    // ----- Newsletter signup tracking -----
-    // Buttondown forms post to a target popup window — we tag them
-    // before submission so they can be associated with the visitor.
-    function attachNewsletterTracking() {
-        var forms = document.querySelectorAll('form[action*="buttondown.com/api/emails/embed-subscribe"]');
-        forms.forEach(function (form) {
-            form.addEventListener('submit', function () {
-                var tags = [];
-                form.querySelectorAll('input[name="tag"]:checked').forEach(function (cb) {
-                    tags.push(cb.value);
-                });
-                // transport_type beacon: the form navigates to
-                // Buttondown immediately after submit, and non-beacon
-                // gtag hits fired during unload are frequently lost —
-                // fatal for an Ads campaign optimizing on this
-                // conversion (June 2026 marketing-readiness review).
-                track('newsletter_signup', {
-                    tags: tags.join(','),
-                    tag_count: tags.length,
-                    location: window.location.pathname,
-                    transport_type: 'beacon',
-                });
-                // No Ads send_to conversion labels — GA4 key events are
-                // imported into Google Ads as conversions.
-            });
-        });
-    }
-
     // ----- Outbound podcast directory tracking -----
     // Detects clicks on Apple Podcasts, Spotify, and RSS subscribe
     // buttons so we can attribute subscriber acquisition channels.
@@ -135,7 +107,6 @@
 
     // ----- Init on DOM ready -----
     function init() {
-        attachNewsletterTracking();
         attachOutboundTracking();
         attachCheckoutTracking();
         attachAudioTracking();

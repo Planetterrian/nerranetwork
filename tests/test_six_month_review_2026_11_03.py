@@ -323,3 +323,122 @@ class TestSiteHeadlineCarriesEngagedSessions:
         html = (ROOT / "management.html").read_text(encoding="utf-8")
         assert "engaged_sessions" in html
         assert html.count("engaged_sessions != null") >= 2
+
+
+class TestTheLeadPictureIsThisStorysScene:
+    """The Nov 2 front page led with a coral reef under "AI cloud lab uses
+    robots and models to compress protein engineering": the chooser compared
+    exact words ("robots" vs "Robotic", "models" vs "molecular models" scored
+    one each, under the floor of two) and fell back to the first scene in
+    slice order. Tokens are stemmed now, one unique match is enough, and when
+    the episode's prompts are known and none depicts the headline the story
+    gets no scene (the template shows the show's cover) rather than another
+    story's picture."""
+
+    @staticmethod
+    def _index():
+        base = "https://g.example"
+        ef = ["show_slug", "episode_date", "episode_id"]
+        imf = ["image_id", "episode", "intended_use"]
+        from engine.landing_test import LANDSCAPE_USE
+        return {"base_url": base, "episode_fields": ef, "image_fields": imf,
+                "episodes": [["pt", "2026-11-02", "ep232"]],
+                "images": [["coral", 0, LANDSCAPE_USE], ["robotic", 0, LANDSCAPE_USE],
+                           ["pipette", 0, LANDSCAPE_USE]]}
+
+    PROMPTS = {
+        "coral": "Sparse crown-of-thorns starfish on diverse coral formations in sunlit clear ocean water",
+        "robotic": "Robotic machinery handling molecular models in a high-tech facility during nighttime",
+        "pipette": "Robotic arms pipetting protein samples into microplates inside an automated lab at dusk",
+    }
+    HOOK = "AI cloud lab uses robots and models to compress protein engineering from years to weeks"
+
+    def test_stems_match_the_lab_scene_not_the_first_scene(self):
+        from engine.landing_test import episode_scene
+        out = episode_scene(self._index(), "pt", 232, "2026-11-02", hook=self.HOOK, prompts=self.PROMPTS)
+        assert out and out["matched"] is True
+        assert "/coral." not in out["url"] and ("/robotic." in out["url"] or "/pipette." in out["url"])
+
+    def test_a_headline_no_scene_depicts_gets_no_scene(self):
+        from engine.landing_test import episode_scene
+        out = episode_scene(self._index(), "pt", 232, "2026-11-02",
+                            hook="Treasury auction yields climb as dealers absorb record supply",
+                            prompts=self.PROMPTS)
+        assert out is None
+
+    def test_without_prompts_the_first_scene_still_stands_in(self):
+        from engine.landing_test import episode_scene
+        out = episode_scene(self._index(), "pt", 232, "2026-11-02", hook=self.HOOK, prompts={})
+        assert out and out["matched"] is False and "/coral." in out["url"]
+
+    def test_a_single_shared_word_wins_only_when_unique(self):
+        from engine.landing_test import episode_scene
+        prompts = {"coral": "Coral reef under sunlight", "robotic": "Protein folding diagram on a screen",
+                   "pipette": "A quiet harbour at dawn"}
+        out = episode_scene(self._index(), "pt", 232, "2026-11-02", hook="New protein map", prompts=prompts)
+        assert out and out["matched"] and "/robotic." in out["url"]
+        prompts["pipette"] = "A protein sample in a vial"  # two scenes tie at one word: not unique
+        assert episode_scene(self._index(), "pt", 232, "2026-11-02", hook="New protein map", prompts=prompts) is None
+
+    def test_stemming_folds_plurals_and_adjectives(self):
+        from engine.landing_test import _stems
+        assert _stems("robots models engineering") & _stems("Robotic machinery handling molecular models") >= {"robot", "model"}
+
+
+class TestRegistryOnlyShowsCreditTheirHost:
+    """Every Nerra Daily post said "By Patrick": the byline read
+    ``publishing.host_name`` from a show YAML Nerra Daily does not have (it is
+    registry-only by design). The registry's ``host`` is read for those."""
+
+    def test_nerra_daily_is_mira_and_an_ai_host(self):
+        from engine.blog import _show_host_kind, _show_host_name
+        assert _show_host_name("nerra_daily") == "Mira"
+        assert _show_host_kind("nerra_daily") == "ai"
+
+    def test_yaml_shows_are_unchanged(self):
+        from engine.blog import _show_host_kind, _show_host_name
+        assert _show_host_name("offshore_north") == "Dan"
+        assert _show_host_name("tesla") == "Patrick" and _show_host_kind("tesla") == "human"
+
+
+class TestImageryCreditNamesItsSource:
+    """Every YouTube description credited "Photos via Pexels:" over two
+    identical Grok lines (run_show appends the credit at two sites; no show
+    has used Pexels since June)."""
+
+    def test_grok_credits_are_labelled_imagery_and_said_once(self):
+        from engine.config import load_config
+        from engine.video_metadata import build_long_form_metadata
+        cfg = load_config(ROOT / "shows" / "tesla.yaml")
+        meta = build_long_form_metadata(
+            cfg, episode_num=999, today_str="2026-11-03", hook="A hook for the test",
+            digest_text="# Tesla Shorts Time\n\nA hook for the test\n\n### Top News\n\n1. **Item: Outlet** body.",
+            audio_url="https://audio.nerranetwork.com/x.mp3",
+            photo_attribution=["Imagery generated by Grok Imagine (xAI).",
+                               "Imagery generated by Grok Imagine (xAI)."])
+        text = meta["description"]
+        assert text.count("Imagery generated by Grok Imagine (xAI).") == 1
+        assert "Imagery:" in text and "Photos via Pexels" not in text
+
+    def test_a_pexels_credit_keeps_its_own_label(self):
+        from engine.config import load_config
+        from engine.video_metadata import build_long_form_metadata
+        cfg = load_config(ROOT / "shows" / "tesla.yaml")
+        text = build_long_form_metadata(
+            cfg, episode_num=999, today_str="2026-11-03", hook="A hook for the test",
+            digest_text="# Tesla Shorts Time\n\nA hook for the test",
+            audio_url="https://audio.nerranetwork.com/x.mp3",
+            photo_attribution=["Photo by A. Person on Pexels",
+                               "Imagery generated by Grok Imagine (xAI)."])["description"]
+        assert "Photos via Pexels:\nPhoto by A. Person on Pexels" in text
+        assert "Imagery:\nImagery generated by Grok Imagine (xAI)." in text
+
+
+class TestSmallPageDefects:
+    def test_the_explore_page_does_not_nest_a_second_main(self):
+        src = (ROOT / "templates" / "explore_page.html.j2").read_text(encoding="utf-8")
+        assert "<main" not in src and 'id="main-content"' not in src
+
+    def test_the_dead_buttondown_embed_tracker_is_gone(self):
+        js = (ROOT / "assets" / "js" / "tracking.js").read_text(encoding="utf-8")
+        assert "embed-subscribe" not in js and "attachNewsletterTracking" not in js
