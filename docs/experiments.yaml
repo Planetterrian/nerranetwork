@@ -6115,3 +6115,125 @@ experiments:
       flagged in 65 was the next story's own). The
       dub long-form, the language feeds and the episode are untouched.
       Guards: tests/test_dub_shorts_skip_map_2026_11_01.py.
+
+  - id: six-month-review-2026-11-03
+    title: "The six-month review: 28 measured defects fixed the same day; the ranked plan"
+    area: network
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      docs/reviews/network_review_2026_11_03.md. Fourteen readers over every
+      surface found the factory and the trust record sound and the audience
+      flat outside the feeds; three shows at -25 LUFS for 208 episodes, a
+      12-second opening bed since February, dual-mono mixes, a front page
+      leading with another story's picture, a newsletter whose archive copy
+      carried no news, a daily audit grading TTS spellings as garbles, 571 MB
+      of FLAC in git.
+    target: >
+      Every guard in tests/test_six_month_review_2026_11_03.py green on main;
+      the first A/B-listens (UC, Tesla open/close, Nerra Daily) accepted by
+      the operator; the plan's ship-now items merged; readouts named per
+      entry below.
+    notes: >
+      Umbrella entry. The listens are the gate for the audio items
+      (landmine #17); the operator items are in the review doc §5.
+
+  - id: audio-published-loudness-2026-11-03
+    title: "Voice-only shows master to -16 LUFS; the opening bed lasts; fades reach silence; stereo under the voice"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      Measured on the shipped MP3s: Unintended Consequences, Vancouver and
+      Collingwood at -24.9 to -25.6 LUFS (every episode since their first;
+      208 episodes), their chapter inside Nerra Daily Ep074 at -25.0 beside
+      -16.5 neighbours (a 9.7 LU step); the opening bed 12 s of music then
+      18 s of digital silence (_music_fadeout_cmd's -ss as an output
+      option); no outro ever fading (afade curve=log holds within 2 dB for
+      97% of the fade); every file dual-mono (L-R vs mid -210 dB).
+    target: >
+      The next episode of each no-music show at -16 +/- 1 LUFS integrated
+      (ffmpeg ebur128); Tesla's bed audible through ~45 s and its last
+      second under -40 dBFS; L-R vs mid above -40 dB on a music show; the
+      operator's listens accepted. A failed listen reverts one constant
+      (FADE_CURVE) or one call (master_voice_track).
+    notes: >
+      engine/audio.py (master_voice_track gains denoise; FADE_CURVE; the
+      stereo voice branch in _final_mix_cmd), run_show.py's voice-only
+      path, engine/daily_edition.segment_trim_cmd levels every segment.
+      Guards: TestVoiceOnlyShowsReachThePublishedLoudness,
+      TestTheMusicBedAndFadesShipAsDesigned,
+      TestTheMixKeepsTheThemesStereoImage. The back-catalogue re-master and
+      an audio_integrated_lufs metric are proposals, not shipped.
+
+  - id: digest-expansion-metric-2026-11-03
+    title: "The digest expansion retry is a metric"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: digest_expansion_fired_share_7d
+    baseline: >
+      The retry fired on 7/7 episodes of Tesla, SpaceX, FF, Planetterrian,
+      Omni View, Modern Investing, UC and FPD in the week to Nov 2 and 0/7
+      on the grok-4.7 cohort, logged and costed with nothing recording it;
+      the digests it lengthens land at their floors (Tesla 1,578 vs 1,600)
+      and the padding it adds is the best predictor of a Repetitive audit
+      flag (digest fact-free share, AUC 0.72).
+    target: >
+      A read, not a move: the share per show on the dashboard, so the fact
+      floor and item-floor proposals of the review can be scored on it.
+    notes: >
+      engine/generator.last_digest_expansion; run_show records
+      digest_expansion_fired/_attempts/_words_before/_words_after/_floor;
+      scripts/generate_dashboard._episode_counter_shares. Guard:
+      TestTheDigestExpansionIsAMetric.
+
+  - id: email-archive-copy-2026-11-03
+    title: "The Nerra Daily email's archive copy carries the news; the subject is the story"
+    area: newsletter
+    shipped: 2026-11-03
+    readout: 2026-11-29
+    status: reading
+    baseline: >
+      The Nov 2 archive (the "View this email in your browser" page, the
+      share links' target) carried the hero, an empty "Also on Nerra today"
+      heading and the footer; the subject opened on "Monday edition - "
+      (17 of an inbox's ~40 visible characters); the preheader was a list
+      of show names; every "(from 7:00 AM ET)" release note was false by
+      delivery.
+    target: >
+      The next real send's archive shows the five default cards and every
+      one-liner (verify once with --mode draft: the no-subscriber Django
+      behaviour is inferred); subject and preheader read as two stories;
+      open and click counts on the dashboard from the first nightly with
+      >= 30 recipients.
+    notes: >
+      engine/nerra_daily_email.py (not subscriber or / subscriber and
+      conditions, render_for(subscriber=False), any_not_in, the subject
+      prefix strip, the preheader, send_at for release notes,
+      WEEK_LIST_MAX 3). Guard: TestTheEmailsArchiveCopyCarriesTheNews.
+
+  - id: front-page-lead-scene-2026-11-03
+    title: "The front page's lead picture is the story's own scene, never another story's"
+    area: website
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      Nov 2: a coral reef under "AI cloud lab uses robots and models to
+      compress protein engineering" (the three lab scenes scored one exact
+      word each, under the floor of two, and the chooser fell back to the
+      first scene in slice order); the RU and FR hubs showed the same
+      class.
+    target: >
+      Over two weeks of homepage builds, every lead and top-story picture
+      whose episode has scene prompts is matched (image_url present only
+      with matched true), checked by replaying each day's leads through
+      engine.landing_test.episode_scene against the committed slices.
+    notes: >
+      engine/landing_test.py: stemmed tokens, one unique shared word
+      suffices, no fallback to candidates[0] when prompts are known (the
+      show's cover renders instead). Guard: TestTheLeadPictureIsThisStorysScene.

@@ -7710,6 +7710,99 @@ Operator:
   `PERSONAL_ADMIN_TOKEN=… python scripts/sync_email_tags.py --lineups`.
 - Preview with Actions "Nerra Daily email", mode `draft` with `test_to`.
 
+### The six-month review (Nov 3 2026)
+
+Operator-directed: *the best, most interesting, most informative, most
+trustworthy, best-sounding shows; the best landing page, website, YouTube
+pipeline and newsletter of any news network; delivered efficiently; Mira's
+Age of AI built further; an alternative to traditional news networks that
+grows in languages and content; beautiful on every surface.* Review
+[`docs/reviews/network_review_2026_11_03.md`](docs/reviews/network_review_2026_11_03.md);
+register `six-month-review-2026-11-03` and four entries beside it; guards
+`tests/test_six_month_review_2026_11_03.py`. Fourteen readers, one per
+surface, read the committed record against the best in each industry; the
+defects they proved in code were fixed the same day. Rules that bind:
+
+- **A no-music show masters to the published loudness like every music
+  show.** `run_show`'s voice-only path calls `engine.audio.master_voice_track`
+  (the translated tracks' finisher), never `normalize_voice` alone: its chain
+  ends on `loudnorm=I=-18` plus a 4:1 compressor and lands ~7.6 dB under its
+  own target, and only the music mix's final `loudnorm=I=-16` ever recovered a
+  show. UC, Vancouver and Collingwood shipped 208 episodes at -25 LUFS, and
+  their chapter inside Nerra Daily stepped 9.7 LU. **Nerra Daily levels every
+  segment** (`segment_trim_cmd` carries `PUBLISHED_LOUDNESS`). A loudness
+  defect is a number nothing read for six months; the back-catalogue re-master
+  and an `audio_integrated_lufs` metric are the review's open items.
+- **`-ss`/`-t` are INPUT options on a music piece** (`_music_fadeout_cmd`): as
+  output options the filter graph saw the source from t=0 and the 30 s bed
+  under the opening shipped as 12 s of music and 18 s of digital silence on
+  every music show since Feb 2026. **A fade to silence uses `FADE_CURVE`
+  (`qsin`)**: ffmpeg's `log` holds within 2 dB for 97% of the fade and
+  plunges in the last 1%, so the YAML's "10 s fade-out to silence" had never
+  shipped. **The voice branch is stereo before `amix`** — a mono voice made
+  `amix` negotiate mono and `-ac 2` duplicated it: every music show was
+  dual-mono (L-R vs mid -210 dB). Audio is checked for envelope and image
+  now, not loudness and clicks alone (⚠️ AUDIO on all three — A/B-listen).
+- **A story's picture is its own scene or none.** `engine.landing_test.episode_scene`
+  matches stemmed salient tokens ("robots" / "Robotic"), accepts one shared
+  word when no other scene shares any, and when the episode's prompts are
+  known and none depicts the headline returns `None` (the template shows the
+  show's cover) — never `candidates[0]`. The Nov 2 front page led with a coral
+  reef under a protein-engineering headline two lines below the promise that
+  every story is sourced.
+- **A month abbreviation is a month only when a day or a year follows it**
+  (`assets.pronunciation.replace_dates`; "March-a-Lago", "January Ferrigan"
+  aired on Nerra Daily). `AIS` is spelled.
+- **The Nerra Daily email's conditions also decide its ARCHIVE copy.**
+  Buttondown renders the "View this email in your browser" page with no
+  subscriber in the context, where Django's `in` / `not in` both read False;
+  every "not followed" condition opens with `not subscriber or`, every
+  "followed" one with `subscriber and` (`render_for(subscriber=False)` is the
+  archive). The subject drops the podcast app's "<Weekday> edition — "
+  prefix; release notes are judged at the SEND (`newsletter_send_time`),
+  never the compose clock; a signup button says when the email arrives, never
+  "Check your email" (nothing sent one).
+- **The Buttondown email read follows pages and the committed send records**
+  (`digests/nerra_daily/email/*.json` carry the `email_id`): one unordered page
+  of 50 had read `sends 0` the night after the first send.
+- **A dub channel with no destination of its own lands on its language's
+  front page** (`engine.funnel.destination_for`: the channel's destination,
+  then `ru/index.html` / `fr/index.html` for a language the site publishes in,
+  then `default`), never the English show page.
+- **The daily audit reads the prose** (`*_reader.txt`), lists the digest's own
+  publishers and item titles as real names, defines REPETITIVE as restatement
+  and INCOHERENT as referent-less, and reads 24,000 characters: 12 of 75
+  INCOHERENT criticals in 16 days had named a pronunciation spelling,
+  `shattered.io` or Musk's cluster names, and 17 of a week's 113 scripts were
+  scored on an excerpt.
+- **A show still on `on_failure: strip` renders every claim "malformed"** on
+  `claims.html` (its policy-2 sidecar carries no per-entry status). No show
+  pins strip now (Peptides and Longevity moved to flag), and
+  `engine.claims_ledger` labels a status-less entry from the gate's own lists.
+- **`digests/*/youtube_tmp/*_short_source.*` and `digests/**/*.flac` are
+  ignored** — the hook Short's spliced FLAC rode the video job's `git add -A
+  digests/` into main for three days (571 MB; landmine #1's third
+  recurrence). `TestNoEpisodeAudioIsTracked` sweeps every media extension.
+- **The digest expansion retry is a metric** (`digest_expansion_fired` and
+  four companions; `digest_expansion_fired_share_7d` on the dashboard): it
+  fired on 7/7 episodes of every flagship in the week to Nov 2 and 0/7 on the
+  cohort, costed and unrecorded, and the padding it adds is the best predictor
+  of a Repetitive audit flag (digest fact-free share, AUC 0.72). The fact
+  floor that would replace the word floor is the review's first shows item.
+- Also fixed: the gate-2 email and review page no longer say "nothing goes
+  out until you have heard it and said yes" (the Nov 2 guard sweeps that
+  shape across the Worker and the Voices templates); Nerra Daily posts say
+  "By Mira"; Top World's intake line names the desks it read instead of "1 of
+  the 5"; the edition's promo cut lands before the platform ask (ten rating
+  asks in Ep074) and realigns handoffs BEFORE the variety revision; SpaceX
+  says "closed Friday at" before Monday's open; tesla.html / spacex.html / the
+  SpaceX dashboard ask the network's own markets route instead of Yahoo
+  through two free CORS proxies; a compact cookie bar; Nerra Voices is a
+  section of the one email; imagery credits are labelled by source; the Tesla
+  digest's bracketed sign-off placeholder (seven digests since July) is gone;
+  the Voices Worker's fire-tick catch-all is hourly; a correction's headline
+  and a translated feed title clip through `engine.titles`.
+
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
 Operator listen: hiss and clicks on Nerra Daily, on Mira's intro and on the
