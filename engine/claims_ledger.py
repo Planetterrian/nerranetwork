@@ -208,6 +208,54 @@ def normalise_entry(entry: dict, *, legacy: bool) -> Optional[dict]:
     }
 
 
+def _statuses_from_gate(entries: List[dict], gate: dict) -> List[dict]:
+    """Give a status-less policy-2 entry the status the gate's own lists
+    imply (Nov 3 2026).
+
+    A show still on ``on_failure: strip`` writes a policy-2 sidecar whose
+    entries carry no ``status`` (``flag_unverified`` is the flag path's
+    writer), and the pages read every one of them as ``malformed`` — every
+    Peptides Weekly and Longevity Weekly claim on ``claims.html`` for a
+    month, 138 of 138 on the last six episodes each. The gate's
+    ``verified_claims``, ``failed_verifications`` and ``shape_errors`` say
+    what the writer would have written, so the page says that instead.
+    Entries that already carry a status are returned unchanged."""
+    if not entries or all(isinstance(e, dict) and e.get("status") for e in entries):
+        return entries
+    try:
+        from engine.claims import status_for_verification
+    except Exception:  # noqa: BLE001 — the ledger page must still render
+        return entries
+
+    def _ids(key: str) -> set:
+        raw = gate.get(key)
+        return {str(v.get("id") or "") for v in raw if isinstance(v, dict)} \
+            if isinstance(raw, list) else set()
+
+    verified = _ids("verified_claims")
+    failed = {str(v.get("id") or ""): v for v in (gate.get("failed_verifications") or [])
+              if isinstance(v, dict)}
+    malformed = {str(e).split(":", 1)[0].strip() for e in (gate.get("shape_errors") or [])}
+    out: List[dict] = []
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict) or entry.get("status"):
+            out.append(entry)
+            continue
+        cid = str(entry.get("id") or f"c{i + 1}")
+        if cid in malformed:
+            status = "malformed"
+        elif cid in verified:
+            status = "verified"
+        elif cid in failed:
+            status = status_for_verification(failed[cid])
+        else:
+            # Anchored and unchecked — what the flag writer records when
+            # no verdict exists for the entry.
+            status = "verified"
+        out.append(dict(entry, status=status))
+    return out
+
+
 def read_sidecar(path: Union[str, Path]) -> Optional[dict]:
     """One sidecar → ``{"policy_version", "claims", "flagged_sentences",
     "stripped_sentences", "gate_passed"}``; ``None`` when unreadable."""
@@ -227,6 +275,8 @@ def read_sidecar(path: Union[str, Path]) -> Optional[dict]:
     entries = data.get("claims") if isinstance(data.get("claims"), list) else []
     legacy = policy < 2 and not any(
         isinstance(e, dict) and e.get("status") for e in entries)
+    if not legacy:
+        entries = _statuses_from_gate(entries, gate)
     claims = [c for c in (normalise_entry(e, legacy=legacy) for e in entries) if c]
 
     def _sentences(key: str) -> List[str]:

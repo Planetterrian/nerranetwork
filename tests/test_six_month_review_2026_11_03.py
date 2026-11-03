@@ -236,3 +236,64 @@ class TestFeedTitlesHaveOneOwner:
         titles = [it.find("title").text for it in ET.parse(out).getroot().find("channel").findall("item")]
         assert titles and all(len(t) <= PODCAST_EPISODE_TITLE_MAX for t in titles), titles
         assert titles[0].startswith("Ép 4 :")
+
+
+class TestStripModeLedgersAreNotAllMalformed:
+    """Peptides Weekly and Longevity Weekly were still on ``on_failure:
+    strip``; the strip path writes a policy-2 sidecar with no per-entry
+    status, and ``claims.html`` read every one of their claims as
+    "malformed" (138 of 138 on the last six episodes each). The pages now
+    read a status-less entry from the gate's own lists, and no show pins
+    strip any more — flag has been the network policy since Oct 1 2026."""
+
+    def test_no_show_still_pins_strip_mode(self):
+        import yaml
+        pinned = []
+        for path in sorted((ROOT / "shows").glob("*.yaml")):
+            if path.stem.startswith("_"):
+                continue
+            cfg = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            mode = ((cfg.get("source_integrity") or {}).get("on_failure") or "").lower()
+            if mode == "strip":
+                pinned.append(path.stem)
+        assert pinned == [], f"strip mode is no longer the network policy: {pinned}"
+
+    def test_a_status_less_policy_2_entry_takes_the_gate_verdict(self, tmp_path):
+        import json
+        from engine.claims_ledger import read_sidecar
+        side = tmp_path / "x_claims.json"
+        side.write_text(json.dumps({
+            "version": 1,
+            "gate": {"policy_version": 2, "passed": True,
+                     "verified_claims": [{"id": "c1"}],
+                     "failed_verifications": [{"id": "c2", "passed": False, "resolved": True,
+                                               "unreachable": False}],
+                     "shape_errors": ["c3: missing quote"]},
+            "claims": [
+                {"id": "c1", "claim": "A verified sentence.", "source_url": "https://a.example/1"},
+                {"id": "c2", "claim": "A quote that did not match.", "source_url": "https://a.example/2"},
+                {"id": "c3", "claim": "A malformed entry.", "source_url": "https://a.example/3"},
+                {"id": "c4", "claim": "Anchored, never checked.", "source_url": "https://a.example/4"},
+            ]}), encoding="utf-8")
+        out = read_sidecar(side)
+        by_id = {c["id"]: c["status"] for c in out["claims"]}
+        assert by_id == {"c1": "verified", "c2": "unverified_quote_mismatch",
+                         "c3": "malformed", "c4": "verified"}
+
+    def test_an_entry_with_a_status_is_left_alone(self, tmp_path):
+        import json
+        from engine.claims_ledger import read_sidecar
+        side = tmp_path / "y_claims.json"
+        side.write_text(json.dumps({"gate": {"policy_version": 2, "verified_claims": [{"id": "c1"}]},
+                                    "claims": [{"id": "c1", "claim": "Flagged on purpose.",
+                                                "status": "unverified_unreachable"}]}), encoding="utf-8")
+        assert read_sidecar(side)["claims"][0]["status"] == "unverified_unreachable"
+
+    def test_the_committed_health_ledgers_now_read_as_checked(self):
+        from engine.claims_ledger import read_sidecar
+        for slug in ("peptides", "longevity"):
+            paths = sorted((ROOT / "digests" / slug).glob("*_claims.json"))[-3:]
+            for path in paths:
+                out = read_sidecar(path)
+                statuses = [c["status"] for c in out["claims"]]
+                assert statuses and "malformed" not in statuses, (path.name, statuses[:5])
