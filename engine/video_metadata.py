@@ -742,8 +742,8 @@ def build_long_form_metadata(
             line = (line or "").strip()
             if line and line not in cleaned:
                 cleaned.append(line)
-        generated = [l for l in cleaned if "grok" in l.lower()]
-        photos = [l for l in cleaned if l not in generated]
+        generated = [c for c in cleaned if "grok" in c.lower()]
+        photos = [c for c in cleaned if c not in generated]
         if generated:
             tail_pieces.append("Imagery:\n" + "\n".join(generated))
         if photos:
