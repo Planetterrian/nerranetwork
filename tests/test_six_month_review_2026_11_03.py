@@ -5,6 +5,7 @@ Each class pins one rule the review found broken on main. See
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -840,3 +841,46 @@ class TestTheExpansionShareIsALiveMetric:
         import importlib
         gd = importlib.import_module("scripts.generate_dashboard")
         assert "digest_expansion_fired_share_7d" in gd._experiment_live_metrics(ROOT)
+
+
+class TestTheConsentBarIsNotAModal:
+    """A bottom bar that never receives focus told assistive tech the rest of
+    the page was inert (role=dialog + aria-modal=true). It is a region."""
+
+    def test_the_template_and_the_script_agree(self):
+        base = (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8")
+        js = (ROOT / "assets" / "js" / "consent.js").read_text(encoding="utf-8")
+        banner = re.search(r'<div id="nn-consent-banner"[^>]*>', base).group(0)
+        assert 'role="region"' in banner and "aria-modal" not in banner
+        assert "setAttribute('role', 'region')" in js
+        assert "aria-modal" not in js
+
+
+class TestTheVideoFeedTitleHasTheOneOwner:
+    def test_the_feed_item_title_clips_through_engine_titles(self, tmp_path):
+        import json
+
+        from engine import video_feed
+        from engine.titles import PODCAST_EPISODE_TITLE_MAX
+
+        long_hook = " ".join(f"word{i}" for i in range(40))
+        summaries = tmp_path / "summaries_x.json"
+        summaries.write_text(json.dumps([{
+            "episode_num": 7, "date": "2026-11-01", "datetime": "2026-11-01T12:00:00+00:00",
+            "episode_title": long_hook, "summary": "notes",
+            "video": {"url": "https://audio.nerranetwork.com/video/x/ep007.mp4",
+                      "bytes": 10, "duration_sec": 60.0, "filename": "ep007.mp4"},
+        }]), encoding="utf-8")
+        out = tmp_path / "x.video.rss"
+        video_feed.build_video_feed(
+            slug="tesla", summaries_path=summaries, out_path=out,
+            guid_prefix="tesla", channel_title="Tesla Shorts Time (Video)",
+            channel_description="d", channel_link="https://nerranetwork.com/tesla.html",
+            channel_author="Nerra Network", channel_email="feeds@example.invalid",
+        )
+        xml = out.read_text(encoding="utf-8")
+        titles = re.findall(r"<title>(.*?)</title>", xml)
+        item_titles = [t for t in titles if t.startswith("word0")]
+        assert item_titles, titles
+        assert all(len(t) <= PODCAST_EPISODE_TITLE_MAX for t in item_titles)
+        assert all(not t.endswith("word39") for t in item_titles)

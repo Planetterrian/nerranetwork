@@ -416,8 +416,9 @@
         var t = bannerCopy();
         var banner = document.createElement('div');
         banner.id = 'nn-consent-banner';
-        banner.setAttribute('role', 'dialog');
-        banner.setAttribute('aria-modal', 'true');
+        // A bottom bar that never takes focus is a region, not a modal
+        // dialog: a modal flag tells assistive tech the page behind it is inert.
+        banner.setAttribute('role', 'region');
         banner.setAttribute('aria-label', t.label);
         banner.innerHTML = '' +
             '<div class="nn-consent-inner">' +
