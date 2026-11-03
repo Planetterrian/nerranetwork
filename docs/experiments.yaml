@@ -180,6 +180,15 @@ experiments:
     shipped: 2026-08-09
     readout: 2026-08-23
     status: done
+    update_2026_11_03: '
+      The committed screenshots the card composited were taken once (Aug 9) and
+      never again: every long-form outro and every Shorts end-card strip showed the
+      retired no-advertising promise, a four-language list and sixteen tiles for 86
+      days, and the monthly capture workflow''s Nov 1 run was green with nothing
+      committed. Since Nov 3 the card renders from data (youtube-brand-
+      surfaces-2026-11-03) and no render opens assets/site_screens.
+
+      '
     target: >
       utm_content=outro sessions appearing in api/funnel.json (QR scans)
       and click-through from video surfaces up vs the pre-08-09 level;
@@ -6437,3 +6446,106 @@ experiments:
       Lesson for the register: a capture surface for a Shorts-feed audience
       needs the ask the platform can act on (subscribe), and an experiment
       with no entry of its own could not be scored.
+
+  - id: funnel-denominator-2026-11-03
+    title: "The site's number is a number of readers: paid links tagged through engine.funnel, landing anomalies excluded and printed"
+    area: distribution
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    metric: attribution_coverage_pct
+    baseline: >
+      api/ga4_stats.json, 28 days to Nov 2: 999 sessions, 898 Direct, 492
+      landing on /personal-interest.html at a 98.8% bounce in eight spike
+      days (288 on Oct 15) with 2 submits; the Google Ads final URLs carried
+      no campaign id and Consent Mode denies ad_storage by default, so paid
+      clicks read as Direct. attribution_coverage_pct 1.6.
+    target: >
+      Once the Ads final URLs carry the CLI's tagged URL (operator): the
+      paid sessions appear under stages.click.by_kind.ad and
+      attribution_coverage_pct rises above 30; totals.sessions_excluding_anomalies
+      and the printed anomaly_exclusion lead the dashboard's site headline;
+      web_vitals_summary reads non-null once the GA4 custom dimensions exist.
+    notes: >
+      engine.funnel KIND_AD / MEDIUM_CPC / SOURCE_GOOGLE_ADS / ad_link,
+      scripts/funnel_link.py, fetch_ga4_stats.landing_anomalies (>= 50
+      sessions and a 95% bounce or under 3 s mean engagement; channel,
+      device and country mix per row; None when unread), build_funnel's
+      visit stage and the email's click rows, real-user vitals as GA4
+      web_vital events. Guards tests/test_funnel_denominator_2026_11_03.py.
+
+  - id: youtube-brand-surfaces-2026-11-03
+    title: "The YouTube outro card and Shorts end-card strip render from data; channel copy from engine.brand"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The burned outro card (6 s) on every long-form and the Shorts end-card
+      strip composited an Aug 9 screenshot reading "0 ADS · 4 LANGUAGES";
+      traffic_sources END_SCREEN delivered 1 view in 90 days; the live
+      @NerraNetwork banner said "100% AD-FREE · EN · FR · RU · ZH".
+    target: >
+      No render reads assets/site_screens; the card shows the show's cover,
+      a wall of the other free shows, the brand tagline in the channel's
+      language and the free-show count; outro_card_duration_seconds 3.0 so
+      a Studio end-screen template has room. Readout: END_SCREEN traffic on
+      Tesla and SpaceX long-forms over the 14 days after the operator applies
+      the template, against the other shows; the banners uploaded (operator).
+    notes: >
+      engine/promo_card.py, engine/brand.youtube_banner_lines /
+      network_tagline_for, scripts/build_youtube_banners.py (cairosvg),
+      docs/youtube_channel_copy.md, the capture workflow fails loudly.
+      Render only, never audio. Guards tests/test_youtube_brand_surfaces_2026_11_03.py.
+      A/B-look: the card is a cover wall now, not a picture of the site.
+
+  - id: nerra-daily-email-briefing-2026-11-03
+    title: "The Nerra Daily email reads as a briefing: a deck under every card, the first phone screen carries news"
+    area: newsletter
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      Nov 2 send: the first show headline at y=788 on a 390 px phone (a
+      350 px hero, a featured card repeating the subject, a paragraph about
+      the format); cards were the spoken hook plus three outlet headlines,
+      two of Tesla's three the hook's own story; 17 "Also" lines of full
+      spoken sentences were 39% of a two-show copy; titles ended in "…".
+    target: >
+      First show card inside 250 px on a phone (226 measured on the new
+      render); every card carries a deck lifted from the digest's own prose
+      with no model call; no headline repeats its hook's story (0 false
+      drops on 3,561 headlines); open and click rates on the dashboard once
+      the measurement item ships and 30 recipients exist.
+    notes: >
+      engine.landing_test.story_deck, engine.newsroom.headline_within_hook,
+      wrap_with_branding(hero="compact", featured_position="after_body"),
+      engine.titles.EMAIL_ALSO_LINE_MAX 72, BUTTONDOWN_WRAPPER_BYTES
+      (upper bound from the archive page; operator measures it once from a
+      draft). Guards tests/test_nerra_daily_email_2026_11_03.py.
+
+  - id: repo-hygiene-2026-11-03
+    title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
+    area: efficiency
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      32,647 blog/ rewrites in the week to Nov 3; Tesla's plain show commit
+      fb848782e touched 264 files, 258 of them old posts whose only change
+      was the three "You Might Also Like" cards; 105 Pages deploys a day;
+      39 KB of identical inline CSS in each of 2,747 posts (~108 MB).
+    target: >
+      One week after merge (the first nightly rewrites every post once for
+      the stylesheet move): files per "Auto-generated: <show>" commit under
+      20 and blog/ rewrites a day under 300; no post older than a day
+      changes its cards; no tracked blob over 2 MB under digests/.
+    notes: >
+      _pick_cross_show_related(post_date=) reads the post's own week
+      (RELATED_WINDOW_BEFORE_DAYS 7 / AFTER 1, nearest first);
+      generate_html.py --show X --blogs --latest 3 on every show run, video
+      job and multilingual sweep; styles/blog.css (network-first in sw.js,
+      VERSION nn-2026-11-03); the size guard. Guards
+      tests/test_blog_related_stability_2026_11_03.py,
+      tests/test_repo_hygiene_2026_11_03.py.
+
