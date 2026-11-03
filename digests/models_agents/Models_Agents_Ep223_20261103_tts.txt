@@ -1,0 +1,127 @@
+A large language model, or L L M, edited just zero point zero one six percent of a small model's weights.
+
+The edit raised a math benchmark from seven point nine percent to forty-eight point one percent.
+
+This is Models and Agents, episode two hundred twenty-three.
+
+Zyphra's sparse attention retrofit, Deep Principle's open scientific model, and LinearB's studio for coding agents follow, then Things to Try.
+
+Researchers at MIT's Computer Science and Artificial Intelligence Laboratory, or CSAIL, showed a general-purpose L L M can read a smaller network's weights as text, identify what it was trained to do, and rewrite those weights from natural-language instructions, with no gradient descent and no retraining.
+
+G P T six Astra, Analytics India Magazine reports, received only the seventeen thousand two hundred fifty-three raw weights of each of four identical-architecture networks and correctly named every game.
+
+Those networks had been trained on Breakout, Pong, Pac-Man, and Freeway, and the same model also wrote new networks from scratch.
+
+On Qwen three point five-zero point eight B it lifted GSM8K from thirteen point eight percent to sixty-seven point one percent and IFEval, an instruction-following benchmark, from twenty-one percent to sixty-two point three percent.
+
+The weight changes mainly shut down repetitive reasoning loops; they did not add new mathematical ability.
+
+Rikiya Takehi, Jayden Teoh, Alex Zhang, and Omar Khattab published the work November second, and it is still preliminary and has not been peer-reviewed.
+
+Zyphra Hierarchical Attention, or ZHA, is a sparse attention method from Zyphra A I that retrofits frozen L L M's with a hierarchical tree index.
+
+MarkTechPost says the design reaches subquadratic scaling, so cost grows slower than the square of sequence length.
+
+After four billion tokens of distillation, the approach matches dense attention on reasoning and two hundred fifty-six thousand retrieval benchmarks.
+
+It remains compatible with existing model weights.
+
+Hydrogen-one point zero arrived from Deep Principle as a seven hundred fifty-three billion open-weight scientific model.
+
+It was post-trained from Z dot A I's GLM-five point three on chemistry, materials science, and life-sciences data, plus laboratory records and agent trajectories.
+
+The model reports a FrontierScience-Research win over G P T six Astra and ships under the MIT License.
+
+LinearB launched Agentic Studio to feed context to engineering leaders and coding agents.
+
+The platform turns software-delivery telemetry into a knowledge graph that both humans and agents can query in plain language, CityBiz reports.
+
+Early users report that A I assisted pull requests are now two point six times larger at the seventy-fifth percentile, yet review wait times have grown more than fivefold.
+
+A new effort-skill layer matches agent compute to change risk and business impact.
+
+Regulated industries that need governed, observable agent deployments are the audience for Kravos A I's public beta of its enterprise-grade agent infrastructure platform.
+
+Voice of ASEAN says that is the scale the offering is aimed at.
+
+SMARE, from Ebix and intentyx, discovers agents inside enterprise systems and establishes accountability baselines.
+
+Unite A I says it flags when observed behavior deviates from approved business purpose even when credentials remain valid.
+
+Ebix will integrate the engine for insurance, financial services, and healthcare clients.
+
+Celestia launched Voyager, a payment chain claiming twenty-one million transactions per second, or TPS, for A I agent micropayments.
+
+TechFlow says the architecture decouples payment execution from consensus and uses a parallelized lightweight state machine for the high-frequency, low-value transactions expected from autonomous agents.
+
+Hugging Face proposed Model Integration Contracts, or MIC, for fast regression testing.
+
+The standard packages a tiny fixture model, a runnable usage example, and human-reviewed baseline outputs so runners on CPU can catch integration bugs on every pull request without full graphics processing unit, or G P U, suites.
+
+The UMT5 bug that allowed decoder lookahead was caught by such a fixture after it had lived in main for weeks.
+
+Simon Willison shipped L L M zero point three seven with new Open A I compatible endpoint support and G P T six point one models.
+
+The release adds G P T six point one sol and G P T six point one terra, switches the default to the cheaper G P T six-luna, and improves embedding handling for mixed content types such as Gemini Embedding two.
+
+Twelve contributors, almost all using A I assistance, landed fixes in the update.
+
+A searchable map of ten years of machine learning papers is live as atlas dot scime dot A I from Reddit's Machine Learning community.
+
+Every accepted paper from ICML, NeurIPS, ICLR, CVPR, and AAAI since twenty sixteen was grouped into one thousand two hundred sixty topics, and results tables and ablations were extracted from seventy-nine thousand full texts.
+
+Each topic page shows benchmark records over time, which baselines recent papers actually compare against, and direct links to the source papers.
+
+Karpathy demonstrated one-prompt browser-extension creation with Claude Code.
+
+A single instruction to create and deploy an extension that shows YouTube thumbnails from halfway through the video with a toggle produced a working extension.
+
+Elsewhere, Open A I raised its bug-bounty maximum to one hundred seventy-two thousand dollars and partnered with Cathedral Systems on A I assisted security research, with the new ranges applying retroactively to the past thirty days and more than quadrupling rewards for critical findings.
+
+Heimstaden deployed ChatGPT Enterprise and Codex across European residential property management and reports cost reductions and employee empowerment from the rollout.
+
+Anthropic opened applications for its paid research residency program, and academics, technical founders, and staff-level engineers can apply by November twenty-second with no machine learning background required.
+
+Open A I introduced LifeVal, a benchmark for everyday personal-assistant tasks derived from ChatGPT user feedback, covering childcare, government services, and personal finance scenarios.
+
+Point L L M zero point three seven at G P T six-luna on an embedding job that mixes text with audio or images, and check the updated mixed content-type handling.
+
+On atlas dot scime dot A I, pull the topic page for a domain you work in and note the baselines recent papers actually compare against before you choose a reference implementation.
+
+Put LinearB's early-access effort skill on a live pull-request queue and watch how it sizes agent compute to change risk.
+
+Run Hugging Face's Model Integration Contract fixture recipe against a model you maintain, on CPU, so integration regressions get caught before they reach main.
+
+Open A I is expected to widen LifeVal and publish detailed task-level breakdowns in the coming weeks.
+
+Anthropic will announce residency decisions after applications close.
+
+Hugging Face is gathering community feedback on the Model Integration Contract specification before it names the format a recommended standard.
+
+Static batches stall a G P U until the slowest sequence finishes, so pop the hood on continuous batching: new requests join an in-flight batch as soon as earlier sequences finish.
+
+The key engineering move is dynamic key-value cache management, where each request keeps its own key-value cache slice that can be appended to on the fly while the attention mask is recomputed for the current active set.
+
+That removes the classic constraint that all requests must finish together and replaces it with a scheduler that decides, at every step, which sequences to run and which to pause.
+
+The throughput gain is largest when request lengths vary widely.
+
+A fleet seeing a mix of short chat turns and long document summaries can reach two to four times higher tokens per second than static batching at the same model size.
+
+The tradeoff is added scheduling overhead and more complex memory fragmentation, because the key-value cache is no longer a single contiguous block.
+
+Most production servers therefore combine continuous batching with paged attention or block-wise cache allocation to keep fragmentation under control.
+
+Use continuous batching when average request length is short relative to the model context and arrival rate is high, and fall back to static or semi-static batching when requests are uniformly long or when strict per-request latency service-level agreements dominate.
+
+Cache-eviction policies must be tuned per workload; an aggressive eviction rule that works for chat can silently drop long-context retrieval sessions.
+
+Before we go, Celestia has full Voyager benchmark traces and integration guides for agent-payment workloads coming.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Space X Daily, the daily companion for following Space X as a public company, from Starship to the stock ticker.
+
+Find every show, free, at nerranetwork dot com. Live dashboards — T S L A, Space X launches, the investing scoreboard — are all at nerranetwork dot com data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

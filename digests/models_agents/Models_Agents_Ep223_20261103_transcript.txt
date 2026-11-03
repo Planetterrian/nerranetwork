@@ -1,0 +1,106 @@
+A large language model, or LLM, edited just 0.016% of a small model's weights. The edit raised a math benchmark from 7.9% to 48.1%. This is Models & Agents, Episode 223. Zyphra's Sparse Attention Retrofit, Deep Principles, Open Scientific Model, and Linear B's Studio for Coding Agents Follow. Then Things to Try. Researchers at MIT's Computer Science and Artificial Intelligence Lab
+laboratory, or CSAILE, showed a general-purpose LLM can read a smaller network's weights
+as text, identify what it was trained to do, and rewrite those weights from natural
+language instructions, with no gradient descent and no retraining.
+GPT-6 ASTRA, Analytics India Magazine Reports, received only the 17,253 raw weights of each
+of four identical architecture networks, and correctly named every game.
+Those networks had been trained on breakout, pong, Pac-Man, and Freeway, and the same
+model also wrote new networks from scratch. On QN 3.50.8B, it lifted GSM 8K from 13.8%
+to 67.1%, and IFA Val, an instruction following benchmark, from 21% to 62.3%. The weight changes
+is mainly shut down repetitive reasoning loops. They did not add new mathematical ability.
+Rikia Takehi, Jaden Teo, Alex Zhang, and Omar Qatab published the work November 2nd, and
+it is still preliminary and has not been peer-reviewed. Zyfra Hierarchical Attention, or
+ZHA, is a sparse attention method from Zyfra AI that retrofits frozen LLMs with a hierarchical
+tree index. Mark TechPost says the design reaches subquadratic scaling, so cost grows
+slower than the square of sequence length. After 4 billion tokens of distillation, the
+approach matches dense attention on reasoning and 256,000 retrieval benchmarks. It remains
+compatible with existing model weights. Hydrogen 1.0 arrived from deep principle as a 753 billion
+open-weight scientific model. It was post-trained from Z.AI's GLM 5.3 on chemistry,
+material science, and life sciences data, plus laboratory records and agent trajectories.
+The model reports a frontier science research win over GPT-6 astra and ships under the MIT license.
+Linear B launched a Genetic Studio to feed context to engineering leaders and coding agents.
+The platform turns software delivery telemetry into a knowledge graph that both humans and agents
+can query in plain language.
+CityBiz reports.
+Early users report that AI-assisted pull requests are now 2.6 times larger at the 75th
+percentile.
+Yet review wait times have grown more than fivefold.
+A new effort skill layer matches agent compute to change risk and business impact.
+Regulated industries that need governed, observable agent deployments are the audience
+for Krabo's AI's public beta of its enterprise-grade agent infrastructure platform. Voice of ASEAN
+says that is the scale the offering is aimed at. Smare from EBIX and Intentix discovers agents inside
+enterprise systems and establishes accountability baselines. Unite AI says it flags when observed
+behavior deviates from approved business purpose, even when credentials remain valid. EBIX will
+integrate the engine for insurance, financial services, and health care clients. Celestia
+launched Voyager, a payment chain claiming 21 million transactions per second, or TPS,
+for AI agent micropayments. TechFlow says the architecture decouples payment execution
+from consensus and uses a paralyzed lightweight state machine for the high-frequency low-value
+transactions expected from autonomous agents. Hugging face proposed model integration contracts
+or MIC for fast regression testing.
+The standard package is a tiny fixture model, a runnable usage example,
+and human-reviewed baseline outputs so runners on CPU can catch integration bugs
+on every pull request without full graphics processing unit, or GPU suites.
+The UMT-5 bug that allowed decoder look-ahead was caught by such a fixture
+after it had lived in Maine for weeks.
+Simon Willison shipped LLM 0.37 with new open AI compatible endpoint support and GPT 6.1 models.
+The release adds GPT 6.1 sole and GPT 6.1 Terra,
+switches the default to the cheaper GPT 6 Luna,
+and improves embedding handling for mixed content types such as Gemini embedding 2.12.
+Contributors almost all using AI assistance landed fixes in the update.
+A searchable map of 10 years of machine learning papers is live as atlas.skim.ai from reddits
+machine learning community.
+Every accepted paper from ICML, NURRIPS, ICLR, CVPR and AI since 2016 was grouped into
+1,260 topics and results tables and ablations were extracted from 79,000 full texts.
+posts. Each topic page shows benchmark records over time, which baselines recent papers actually
+compare against and direct links to the source papers. CarPathy demonstrated one-promp browser
+extension creation with Claude code, a single instruction to create and deploy an extension
+that shows YouTube thumbnails from halfway through the video, with a toggle produced a working
+extension. Elsewhere, OpenAI raised its bug bounty maximum to $172,000, and partnered with
+cathedral systems on AI-assisted security research, with the new ranges applying retroactively
+to the past 30 days, and more than quadrupling rewards for critical findings.
+Heimstadt and deployed chat GPT Enterprise and Codex across European residential property
+management, and reports cost reductions and employee empowerment from the rollout.
+Andthropic opened applications for its paid research residency program.
+In academics, technical founders and staff-level engineers can apply by November 22nd, with no
+machine learning background required. OpenAI introduced LifeVal, a benchmark for everyday
+personal assistant tasks derived from chat GPT user feedback, covering child care, government
+services, and personal finance scenarios. Point LLM 0.37 at GPT-6 Luna on an embedding job
+that mixes text with audio or images, and check the updated mix content type handling.
+On atlas.skim.ai, pull the topic page for a domain you work in, and note the baselines
+recent papers actually compare against before you choose a reference implementation.
+Put linear B's early access effort skill on a live pull request queue, and watch how it
+sizes agent compute to change risk.
+Run hugging faces model integration contract fixture recipe against a model you maintain
+on CPU so integration regressions get caught before they reach main.
+OpenAI is expected to widen lifevowl and publish detailed task level breakdowns in the coming weeks.
+Andthropic will announce residency decisions after applications close.
+Hugging faces gathering community feedback on the model integration contract specification
+before it names the format a recommended standard.
+Static batches stall a GPU until the slowest sequence finishes, so pop the hood on continuous
+batching.
+New requests join an in-flight batch as soon as earlier sequences finish.
+The key engineering move is dynamic key value cache management, where each request keeps
+its own key value cache slice that can be appended to on the fly, while the attention mask
+is recomputed for the current active set.
+That removes the classic constraint that all requests must finish together and replaces
+This is it with a scheduler that decides at every step which sequences to run and which
+to pause.
+The throughput gain is largest when request lengths vary widely.
+A fleet seeing a mix of short chat turns and long document summaries can reach two to
+four times higher tokens per second than static batching at the same model size.
+The tradeoff is added scheduling overhead and more complex memory fragmentation because
+the key value cache is no longer a single contiguous block.
+Most production servers therefore combine continuous batching with page detention or blockwise cache allocation to keep fragmentation under control.
+Use continuous batching when average request length is short relative to the model context and arrival rate is high and fall back to static or semi-static batching when requests are uniformly long or when strict per request latency service level agreements dominate.
+Cache eviction policies must be tuned per workload, an aggressive eviction rule that works for chat can silently drop long context retrieval sessions.
+Before we go, Celestia has full voyage or benchmark traces and integration guides for agent payment workloads coming.
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch
+than listen, find us on YouTube at Narin Network, links in the show notes. And before you go,
+this show is part of the Narin Network, a family of daily podcasts on tech, science, and markets.
+Each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed,
+here's your next listen, SpaceX Daily, the daily companion for following SpaceX as a public company.
+from Starship to the Stock ticker. Find every show free at narennetwork.com, live
+dashboards, T-S-L-A, SpaceX launches, the investing scoreboard, are all at narennetwork.com
+data. This episode used AI voice synthesis of my voice. Editorial selection and
+analysis are my own.
