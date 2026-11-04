@@ -1,0 +1,29 @@
+name: TEMP diag room clock
+on:
+  push:
+    branches: [claude/project-thread-o1l615]
+    paths: ['pipelines/voices/diag_room_clock.py', '.github/workflows/zz_tmp_diag_room_clock.yml']
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        run_id: ['43ff31a6-e248-4352-8f47-6f5414ee0f49', 'ea81618b-d36f-43bd-bc2d-2146c7d2ab2d']
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - name: Diagnose
+        run: python pipelines/voices/diag_room_clock.py "${{ matrix.run_id }}"
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
