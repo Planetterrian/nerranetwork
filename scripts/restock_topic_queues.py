@@ -116,6 +116,50 @@ def topics_needed(unproduced_count: int, cfg: RestockConfig) -> int:
     return min(max(target - unproduced_count, 0), cfg.max_new_per_run)
 
 
+def category_needs(queue: list, cfg: RestockConfig) -> dict:
+    """Per balanced category, how many new topics that arm needs (Nov 4 2026).
+
+    An alternating show consumes each arm at ``episodes_per_week / n``. The
+    total runway can sit at the trigger while one arm is EMPTY: on Nov 3
+    First Principles held 28 unproduced topics, every one a
+    ``concrete_example``, so the total read exactly 4.0 weeks, the restock
+    never fired, and the alternation had already broken on air. An arm whose
+    own runway is under ``trigger_weeks`` needs topics up to its share of
+    ``target_weeks``; an arm above its trigger needs none. ``{}`` for a show
+    with no balanced categories.
+    """
+    arms = tuple(cfg.balanced_categories or ())
+    if not arms:
+        return {}
+    per_arm_rate = cfg.episodes_per_week / len(arms)
+    target = math.ceil(cfg.target_weeks * per_arm_rate)
+    out = {}
+    for cat in arms:
+        n = sum(1 for e in queue if isinstance(e, dict)
+                and not e.get("produced") and e.get("category") == cat)
+        out[cat] = (max(target - n, 0)
+                    if runway_weeks(n, per_arm_rate) < cfg.trigger_weeks else 0)
+    return out
+
+
+def prefer_categories(entries: list, needs: dict) -> list:
+    """Order validated candidates so each short arm's candidates come first,
+    up to that arm's need, then everything else in the model's order —
+    ``ground_candidates`` keeps the first ``needed`` that a search sources."""
+    if not needs or not any(needs.values()):
+        return list(entries)
+    taken = {cat: 0 for cat in needs}
+    first, rest = [], []
+    for e in entries:
+        cat = e.get("category")
+        if needs.get(cat, 0) > taken.get(cat, 0):
+            taken[cat] += 1
+            first.append(e)
+        else:
+            rest.append(e)
+    return first + rest
+
+
 def slugify_id(title: str) -> str:
     """Queue-id from a title: lowercase, hyphenated, trimmed to ~5 words."""
     words = re.findall(r"[a-z0-9]+", title.lower())
@@ -263,8 +307,14 @@ def ground_candidates(entries: list[dict], needed: int, *, research=None,
 from engine.topic_queue import interleave_by_category, resequence_unproduced  # noqa: E402,F401
 
 
-def build_prompt(cfg: RestockConfig, queue: list[dict], needed: int) -> str:
-    """Render the show's restock prompt with queue history + counts."""
+def build_prompt(cfg: RestockConfig, queue: list[dict], needed: int,
+                 arm_needs: dict | None = None) -> str:
+    """Render the show's restock prompt with queue history + counts.
+
+    ``arm_needs`` (``category_needs``): when an arm of an alternating show is
+    short, the guidance names the count each arm needs instead of asking for
+    an even split, so a restock never refills the full arm and leaves the
+    empty one empty."""
     template = (ROOT / cfg.prompt_file).read_text(encoding="utf-8")
     lines = []
     for e in queue:
@@ -272,7 +322,14 @@ def build_prompt(cfg: RestockConfig, queue: list[dict], needed: int) -> str:
             state = "produced" if e.get("produced") else "queued"
             lines.append(f"- [{state}] ({e.get('category', '?')}) {e['title']}")
     balance = ""
-    if cfg.balanced_categories:
+    if arm_needs and any(arm_needs.values()):
+        wanted = ", ".join(f"{n} topics of {cat}" for cat, n in arm_needs.items() if n)
+        balance = (
+            f"Category counts: write {wanted}. The show alternates between "
+            f"{', '.join(cfg.balanced_categories)} episode by episode, and "
+            f"the queue is short on exactly these."
+        )
+    elif cfg.balanced_categories:
         per = math.ceil(needed / len(cfg.balanced_categories))
         balance = (
             f"Balance the categories: roughly {per} topics for each of "
@@ -345,6 +402,11 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
         1 for e in queue if isinstance(e, dict) and not e.get("produced"))
     weeks = runway_weeks(unproduced, cfg.episodes_per_week)
     needed = topics_needed(unproduced, cfg)
+    # Nov 4 2026: an alternating show restocks when ONE arm runs short, even
+    # with the total above the trigger (category_needs).
+    arm_needs = category_needs(queue, cfg)
+    if sum(arm_needs.values()) > needed:
+        needed = min(sum(arm_needs.values()), cfg.max_new_per_run)
     if force and needed == 0:
         needed = min(
             max(math.ceil(cfg.target_weeks * cfg.episodes_per_week) - unproduced, 0),
@@ -362,12 +424,13 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
                 cfg.slug, weeks, unproduced, needed)
 
     # Ask for extras so validation losses don't leave us short.
-    prompt = build_prompt(cfg, queue, needed + max(4, needed // 3))
+    prompt = build_prompt(cfg, queue, needed + max(4, needed // 3), arm_needs)
     candidates, model_used = generate_candidates(prompt)
     result["model"] = model_used
     # Oct 11 2026: validate every candidate, then keep only those a web
     # search can source (ground_candidates) until `needed` are found.
-    valid = validate_and_dedupe(candidates, queue, cfg, len(candidates))
+    valid = prefer_categories(
+        validate_and_dedupe(candidates, queue, cfg, len(candidates)), arm_needs)
     accepted = ground_candidates(valid, needed)
     result["ungrounded"] = len(valid) - len(accepted) if len(accepted) < needed else 0
     result["added"] = len(accepted)
