@@ -1980,6 +1980,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
   Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
 
+### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
+
+Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
+**`docs/outstanding.md` is the one tracker for operator items** (owner, status, date, evidence); no parallel list. **The network's zone is "Vancouver time", never "Pacific Time"** (B.C. is UTC−7 all year from Nov 1 2026). **A hold is only a waiting sense** ("I'll hold the silence better" is not one). **The hello invite stays off (`HELLO_INVITES: "0"`) until its Cal.com page exists.** **A candidate scenario upload is read back before it is rehearsed**; the `current` arm is rebound to the fixture's guest. **A chase reads the person, never the row.** **A correction reaches `episode_records`.**
+
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
 [history](docs/claude_md_history/2026_10_29_hiss_clicks.md); register `audio-clean-joins-2026-10-29`, `audio-tracks-and-mira-declick-2026-10-29`; guards `tests/test_audio_quality_2026_10_29.py`.

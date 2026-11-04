@@ -282,7 +282,7 @@ def generate_brief(interview: dict, app: dict) -> dict:
 
 
 def when_text(iso: str, guest_tz: str = "") -> str:
-    """"Thursday, September 24 at 9:45 AM Pacific Time", with the guest's own
+    """"Thursday, September 24 at 9:45 AM Vancouver time", with the guest's own
     clock alongside when we know their zone (Sept 30 2026: was UTC)."""
     from pipelines.voices.common import pacific_time
     return pacific_time(iso, guest_tz or None)

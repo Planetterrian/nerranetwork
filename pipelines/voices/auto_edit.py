@@ -62,7 +62,7 @@ COLD_OPEN_SEC = (4.0, 20.0)
 
 
 def recorded_on(run: dict, interview: dict) -> dt.date:
-    """The day the conversation happened, in Pacific Time. Oct 27 2026: the
+    """The day the conversation happened, in Vancouver time. Oct 27 2026: the
     slug was dated from the run row's creation, which happens the day before
     (Glenn Broder, recorded Oct 27, cut as glenn_broder_2026_10_26)."""
     from zoneinfo import ZoneInfo

@@ -78,7 +78,7 @@ def test_two_hour_reminder_has_audio_steps_and_test_nudge():
     assert "listeners tell us" in body
     assert "Check my microphone" in body
     assert "&test=1" in body and "Please take 30 seconds now" in body
-    assert "Pacific" in body or "PT" in body or "PDT" in body
+    assert "Vancouver time" in body  # Nov 4 2026: B.C. is UTC-7 all year; never "Pacific"
 
 
 def test_two_hour_reminder_thanks_a_guest_who_passed():

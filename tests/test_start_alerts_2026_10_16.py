@@ -114,7 +114,7 @@ class TestFiveMinutesBefore:
         assert mail["to"] == "meridan@example.com"
         assert "5 minutes" in mail["subject"] and "studio is open" in mail["subject"]
         assert "interview=iv-mz" in mail["html"] and "Check my microphone" in mail["html"]
-        assert "1:30 PM Pacific Time" in mail["html"]
+        assert "1:30 PM Vancouver time" in mail["html"]
         assert "Sincerely" in mail["html"]
         sms = world["sms"][0]
         assert sms["to"] == "+12145550100" and "about 5 minutes" in sms["text"]

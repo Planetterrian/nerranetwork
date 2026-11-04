@@ -802,9 +802,16 @@ def room_offsets(run: dict, durations: dict | None = None) -> dict:
     """
     import datetime as _dt
 
+    import re as _re
+
     def when(stamp):
+        # Nov 4 2026: the room writes one-digit fractions ("00:26:57.7Z"),
+        # which fromisoformat accepts only from Python 3.11; on an older
+        # interpreter every offset silently became 0.0. Pad the fraction.
+        text = _re.sub(r"\.(\d{1,6})\d*", lambda m: "." + m.group(1).ljust(6, "0"),
+                       str(stamp).replace("Z", "+00:00"), count=1)
         try:
-            return _dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+            return _dt.datetime.fromisoformat(text)
         except Exception:  # noqa: BLE001
             return None
 

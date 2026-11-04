@@ -186,21 +186,21 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Привет, Русский! | LIVE | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | FR dub feeds (4) | LIVE (2026-07-23) | LIVE | n/a (playlists) | -- | LIVE (2026-07-27) | -- | -- |
 | RU dub feeds (4) | LIVE (2026-07-23) | LIVE (all 4 as of 2026-08-16) | n/a (playlists) | -- | LIVE (2026-07-27) | -- | -- |
-| AI Chips & Data Centres Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| MAG 7 Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Peptides Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Longevity Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Vancouver Daily News | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Collingwood Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Prediction Markets Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View Top World News | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View North America | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View Europe | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View Asia Pacific | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View Africa & Middle East | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Omni View Central & South America | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| AI Chips & Data Centres Daily | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| MAG 7 Daily | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Peptides Weekly | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Longevity Weekly | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Vancouver Daily News | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Collingwood Weekly | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Prediction Markets Daily | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Omni View Top World News | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Omni View North America | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Europe | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Omni View Asia Pacific | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Omni View Africa & Middle East | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
+| Omni View Central & South America | LIVE (verified 2026-11-04) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
 | Offshore North | -- (draft: artwork was 1200 px) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
-| Nerra Daily | LIVE | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Nerra Daily | LIVE (id 6805616718) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | LIVE (OP3 resolves, 2026-11-03) | -- | -- |
 
 Apple 2026-07-23 publish pass: the last 7 drafts (The DP Pod, Age of AI,
 Le Temps des Shorts Tesla, SpaceX Quotidien, Frontières Fascinantes,
@@ -322,6 +322,18 @@ committed that day):
   public form (podcastindex.org/add, hCaptcha). Apple-approved shows are
   often picked up by the index within days, so check `api/op3_stats.json`
   for `resolved: true` first.
+
+Status check, 2026-11-04 (Nov 4 handoff, iTunes Search API + `api/op3_stats.json`
+of Nov 3): **all 13 cohort shows are LIVE on Apple**; their IDs are now
+`apple_show_id` in each `shows/<slug>.yaml`, and Nerra Daily's
+(6805616718) is `apple_podcasts_url` in `shows/network_meta.yaml`. Still
+not on Apple: Offshore North (draft) and Nerra Voices (never submitted).
+**Podcast Index is missing six feeds, not fifteen**: OP3 resolves every
+English feed except `nerra_voices`, `offshore_north` and
+`omni_view_north_america`, plus the French-only feeds `env_intel:fr`,
+`first_principles:fr` and `models_agents:fr`. Add those six at
+podcastindex.org/add; the rest already resolve. Tracked in
+[`docs/outstanding.md`](outstanding.md).
 
 
 ## Post-Submission Checklist
