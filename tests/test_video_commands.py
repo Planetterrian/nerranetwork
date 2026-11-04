@@ -2655,7 +2655,9 @@ class TestPillV2:
             lambda cmd, **kw: type("R", (), {"returncode": 0})())
         build_short_video(audio, cover, tmp_path / "short.mp4",
                           duration=55.0, show_name="Tesla Shorts Time")
-        assert (tmp_path / "_show_pill_v2_tesla_shorts_time.png").exists()
+        # Nov 4 2026: the Shorts show pill grows to fit a long name, so
+        # its cache name moved to v3 (the long-form keeps v2).
+        assert (tmp_path / "_show_pill_v3_tesla_shorts_time.png").exists()
         assert (tmp_path / "_url_pill_v2.png").exists()
         # Stale v1 names must not be written.
         assert not (tmp_path / "_show_pill_tesla_shorts_time.png").exists()

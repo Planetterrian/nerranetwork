@@ -415,7 +415,8 @@ _PILL_ACCENT_WIDTH = 6
 
 def _make_brand_pill(output_path: Path,
                      *, text: str = _BRAND_PILL_TEXT,
-                     width: int = 220, height: int = 60) -> Path:
+                     width: int = 220, height: int = 60,
+                     max_width: Optional[int] = None) -> Path:
     """Render a rounded-rect brand pill as an RGBA PNG. Idempotent.
 
     *text* is the displayed string. Width auto-fits via font shrink
@@ -436,6 +437,21 @@ def _make_brand_pill(output_path: Path,
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     from PIL import Image, ImageDraw, ImageFont
+
+    if max_width and max_width > width:
+        # Nov 4 2026: a long show name ("AI Chips & Data Centres Daily",
+        # "The DP Pod: The Do Positive Podcast") shrank to ~14 px inside a
+        # fixed 320 px pill and read as unreadable fine print on a phone.
+        # When the caller gives room, the pill GROWS to hold the name at
+        # the top of the font ladder, up to *max_width*; past that the
+        # ladder below shrinks it as before.
+        try:
+            _probe = ImageFont.truetype(_find_font(), 56)
+            _bb = _probe.getbbox(text)
+            _need = ((_bb[2] - _bb[0]) + 64 + 1) // 2
+            width = max(width, min(int(max_width), int(_need)))
+        except (IOError, OSError):
+            pass
 
     # 2x supersample: every geometry/font value below is doubled, then
     # the finished pill is LANCZOS-downscaled to the requested size.
@@ -493,12 +509,105 @@ def _make_brand_pill(output_path: Path,
 
 
 def _make_show_pill(show_name: str, output_path: Path,
-                    *, width: int = 320, height: int = 60) -> Path:
+                    *, width: int = 320, height: int = 60,
+                    max_width: Optional[int] = None) -> Path:
     """Render a per-show branded pill. Wider default (320) so longer
     show names fit at a readable font size. Used in conjunction with
-    ``_make_url_pill`` for two-corner network branding."""
+    ``_make_url_pill`` for two-corner network branding. ``max_width``
+    lets the pill grow to fit a long name (the Shorts builder passes
+    :data:`_SHORT_SHOW_PILL_MAX_W`)."""
     return _make_brand_pill(output_path, text=show_name,
-                            width=width, height=height)
+                            width=width, height=height,
+                            max_width=max_width)
+
+
+# Nov 4 2026 — the Shorts show pill may grow to this width. The persistent
+# subscribe pill sits on the same row at top-left and ends at ~x=544 for
+# the longest cadence phrase ("Subscribe · weekly episodes"), so a pill
+# anchored at W-w-24 stays clear of it up to 1080 - 24 - 544 - 24 = 488.
+_SHORT_SHOW_PILL_MAX_W = 480
+
+# Nov 4 2026 — the vertical cover card. Every show cover is SQUARE
+# (3000x3000), and the Shorts cover fallback scaled it to FILL 1080x1920
+# then centre-cropped, which threw away 44% of its width: "AI CHIPS",
+# "DATA CENTRES", "THE NERRA NETWORK" and the tagline row all ran off both
+# edges (AI Chips Ep044's X clip, Nov 4), and the tagline then sat exactly
+# where the caption card is. The card shows the WHOLE cover, fitted to
+# the frame width with a margin the cover-fallback push-in (zoom ≤ 1.08)
+# never reaches, over a blurred, darkened fill of the same art. The cover
+# block spans y≈190-1030 on the 1920 frame: clear of the corner pills
+# (y 24-84), above the opening hook, the caption card (MarginV 340,
+# social 480) and the URL pill. Only a still whose aspect is wider than this ratio gets a card; a
+# portrait still keeps the fill-and-crop it was made for.
+_COVER_CARD_MAX_VERTICAL_ASPECT = 0.75
+_COVER_CARD_SIDE_FRAC = 840 / 1080
+_COVER_CARD_TOP_FRAC = 190 / 1920
+# On a card the opening hook moves below the cover (block centre
+# h*0.62 ≈ y1190; a 4-line hook spans ~1082-1298) instead of h*0.55,
+# which put it on top of the cover's own tagline row.
+_COVER_CARD_HOOK_Y_FRAC = 0.62
+_COVER_CARD_SCALE = 2  # rendered at 2x: the zoompan prescale is 2.0
+
+
+def _vertical_cover_card(cover_path: Path, output_path: Path, *,
+                         width: int = 1080, height: int = 1920) -> Optional[Path]:
+    """Compose a *width* x *height* card holding the whole cover.
+
+    Returns *output_path*, or ``None`` when the image cannot be read or is
+    already portrait (the caller then uses the image as it is). Never
+    raises — the Short always ships.
+    """
+    try:
+        from PIL import Image, ImageFilter, ImageEnhance, ImageDraw
+
+        with Image.open(cover_path) as src:
+            src.load()
+            img = src.convert("RGB")
+        if img.height <= 0 or img.width / img.height <= _COVER_CARD_MAX_VERTICAL_ASPECT:
+            return None
+        if output_path.exists():
+            return output_path
+        k = _COVER_CARD_SCALE
+        W, H = width * k, height * k
+        # Backdrop: the same art filling the frame, blurred and darkened
+        # so the edges carry the show's colour without competing.
+        scale = max(W / img.width, H / img.height)
+        fill = img.resize((max(1, round(img.width * scale)),
+                           max(1, round(img.height * scale))), Image.LANCZOS)
+        left = (fill.width - W) // 2
+        top = (fill.height - H) // 2
+        fill = fill.crop((left, top, left + W, top + H))
+        fill = fill.resize((W // 16, H // 16), Image.LANCZOS)
+        fill = fill.filter(ImageFilter.GaussianBlur(8))
+        fill = fill.resize((W, H), Image.BICUBIC)
+        fill = ImageEnhance.Brightness(fill).enhance(0.35)
+        # Foreground: the whole cover, fitted to the card width.
+        side_w = round(W * _COVER_CARD_SIDE_FRAC)
+        fg_scale = side_w / img.width
+        fg = img.resize((side_w, max(1, round(img.height * fg_scale))),
+                        Image.LANCZOS)
+        x = (W - fg.width) // 2
+        y = round(H * _COVER_CARD_TOP_FRAC)
+        if y + fg.height > H:
+            y = max(0, (H - fg.height) // 2)
+        mask = Image.new("L", fg.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [(0, 0), (fg.width - 1, fg.height - 1)], radius=24 * k, fill=255,
+        )
+        # Soft shadow under the cover lifts it off the backdrop.
+        shadow = Image.new("L", (W, H), 0)
+        shadow.paste(mask, (x, y + 12 * k))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(18 * k))
+        fill.paste(Image.new("RGB", (W, H), (0, 0, 0)), (0, 0),
+                   shadow.point(lambda v: int(v * 0.6)))
+        fill.paste(fg, (x, y), mask)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        fill.save(output_path, "PNG")
+        return output_path
+    except Exception as exc:  # noqa: BLE001 — the cover still works as is
+        logger.warning("Vertical cover card skipped (%s): %s",
+                       cover_path, exc)
+        return None
 
 
 def _make_url_pill(output_path: Path,
@@ -2115,8 +2224,14 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              caption_margin_v: Optional[int] = None,
                              fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
                              punch_text: Optional[str] = None,
-                             subscribe_pill: Optional[str] = None) -> str:
+                             subscribe_pill: Optional[str] = None,
+                             cover_card: bool = False) -> str:
     """filter_complex for the 1080x1920 Shorts build.
+
+    ``cover_card`` (Nov 4 2026): the background is a
+    :func:`_vertical_cover_card`, so the opening hook sits below the cover
+    (``_COVER_CARD_HOOK_Y_FRAC``) instead of over its tagline. ``False`` is
+    byte-identical.
 
     ``subscribe_pill`` (Oct 25 2026) draws a persistent subscribe pill
     top-left from ~3 s to the end card; ``None`` is byte-identical.
@@ -2308,7 +2423,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             escaped_line = _drawtext_escape(line)
             offset_px = (i - (n_lines - 1) / 2.0) * line_h
             sign = "+" if offset_px >= 0 else "-"
-            y_expr = f"h*0.55{sign}{abs(offset_px):.0f}"
+            y_expr = (f"h*{_COVER_CARD_HOOK_Y_FRAC:.2f}" if cover_card
+                      else "h*0.55") + f"{sign}{abs(offset_px):.0f}"
             is_last = (i == n_lines - 1)
             line_label = hook_label if is_last else f"[hookln{i}]"
             # July 31 2026 (B3): fade the hook in over 250 ms and out
@@ -2996,7 +3112,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     progress_bar: bool = False,
                     fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
                     punch_text: Optional[str] = None,
-                    subscribe_pill: Optional[str] = None) -> List[str]:
+                    subscribe_pill: Optional[str] = None,
+                    cover_card: bool = False) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -3068,7 +3185,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  progress_bar=progress_bar,
                                  fact_cards=fact_cards,
                                  punch_text=punch_text,
-                                 subscribe_pill=subscribe_pill),
+                                 subscribe_pill=subscribe_pill,
+                                 cover_card=cover_card),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -3603,8 +3721,9 @@ def build_short_video(audio_path: Path, cover_path: Path,
     kb_seed = _kb_seed_from_stem(output_path.stem)
     if show_name:
         slug = "".join(c if c.isalnum() else "_" for c in show_name.lower()).strip("_")
-        brand_path = work_dir / f"_show_pill_v2_{slug}.png"
-        _make_show_pill(show_name, brand_path)
+        brand_path = work_dir / f"_show_pill_v3_{slug}.png"
+        _make_show_pill(show_name, brand_path,
+                        max_width=_SHORT_SHOW_PILL_MAX_W)
         url_pill_path = work_dir / "_url_pill_v2.png"
         _make_url_pill(url_pill_path)
         if drop_url_pill:
@@ -3617,7 +3736,21 @@ def build_short_video(audio_path: Path, cover_path: Path,
         _make_brand_pill(brand_path)
         url_pill_path = None
 
-    bg_path: Path = cover_path
+    # Nov 4 2026: a square cover is never centre-cropped to 9:16 — it
+    # becomes a vertical card that shows all of it (see
+    # _vertical_cover_card). Every place below that falls back to the
+    # cover falls back to the card.
+    _card = _vertical_cover_card(
+        cover_path, work_dir / f"_cover_card_v1_{cover_path.stem}.png",
+    )
+    cover_bg: Path = _card or cover_path
+    if scene_paths:
+        scene_paths = [
+            cover_bg if Path(p) == Path(cover_path) else p
+            for p in scene_paths
+        ]
+
+    bg_path: Path = cover_bg
     bg_is_video = False
     bg_full_length = False
 
@@ -3629,7 +3762,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
     if len(usable_clips) >= max(1, int(min_clips)):
         try:
             visuals = _build_short_hybrid_sequence(
-                list(scene_paths or []) or [cover_path],
+                list(scene_paths or []) or [cover_bg],
                 usable_clips,
                 duration=duration,
                 nominal_clip_seconds=clip_seconds,
@@ -3650,7 +3783,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
             )
             bg_is_video = False
             bg_full_length = False
-            bg_path = cover_path
+            bg_path = cover_bg
 
     if not bg_is_video and scene_paths and len(scene_paths) >= 2:
         if scene_change_times:
@@ -3731,6 +3864,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
         fact_cards=fact_cards,
         punch_text=punch_text,
         subscribe_pill=subscribe_pill,
+        cover_card=(not bg_is_video and _card is not None),
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
