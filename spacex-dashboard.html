@@ -66,10 +66,10 @@
     
     
     
-    <script defer src="assets/js/tracking.js?v=50a382c6"></script>
+    <script defer src="assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=29ee3e76">
+    <link rel="stylesheet" href="styles/main.css?v=8beed5df">
 
     
 <style>
@@ -1249,7 +1249,7 @@
                       data-nn-subscribe="footer"
                       data-source="src-nerranetwork"
                       data-label-loading="Subscribing…"
-                      data-label-done="Check your email ✓"
+                      data-label-done="You're in — Nerra Daily arrives at 7 AM ET ✓"
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Nerra Daily by email</h4>
@@ -1833,21 +1833,17 @@
       const r=await fetch('/api/spcx.json',{cache:'no-cache',signal:AbortSignal.timeout(4000)});
       if(r.ok){ const c=await r.json(); if(c.price>0) applyPrice(c, c.market_state||null); }
     }catch(_){}
-    // UPGRADE: live Yahoo v8 chart quote via CORS proxies (current price +
-    // marketState). Only overwrites when it returns a valid quote.
-    const chartUrl='https://query2.finance.yahoo.com/v8/finance/chart/SPCX?interval=1d&range=5d';
-    const proxies=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-                   u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>u];
-    for(const mk of proxies){
-      try{
-        const resp=await fetch(mk(chartUrl),{signal:AbortSignal.timeout(8000)});
-        if(!resp.ok) continue;
-        const meta=(await resp.json())?.chart?.result?.[0]?.meta;
-        if(!meta) continue;
-        const price=meta.regularMarketPrice, prev=meta.chartPreviousClose||meta.previousClose;
-        if(price>0 && prev>0){ applyPrice({price:price, prev_close:prev}, meta.marketState||null); return; }
-      }catch(_){}
-    }
+    // UPGRADE: the network's own markets route (workers/gallery/src/
+    // markets.ts; Nov 3 2026 — this used to go to Yahoo through two free
+    // CORS proxies). Only overwrites when it returns a valid quote.
+    try{
+      const resp=await fetch('https://api.nerranetwork.com/api/markets?symbols=SPCX',{mode:'cors',credentials:'omit',signal:AbortSignal.timeout(6000)});
+      if(resp.ok){
+        const body=await resp.json();
+        const q=((body&&body.quotes)||[]).find(x=>x&&x.symbol==='SPCX');
+        if(q&&q.price>0&&q.prev_close>0){ applyPrice({price:q.price, prev_close:q.prev_close}, q.state==='live'?'REGULAR':'CLOSED'); }
+      }
+    }catch(_){}
   }
 
   // PRIMARY: same-origin cache written by the pipeline. Fallback: live API.
@@ -1875,7 +1871,7 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="assets/js/footer-subscribe.js?v=01f5ec43" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="assets/js/footer-subscribe.js?v=708996ab" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
@@ -1900,11 +1896,13 @@
           }).catch(function () { return null; });
       } catch (e) { window.nnAccount = Promise.resolve(null); }
     })();
-    </script><div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
+    </script><div id="nn-consent-banner" role="region" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">
             <button type="button" class="nn-consent-close" aria-label="Close">&times;</button>
-            <h2 class="nn-consent-heading" id="nn-consent-heading">Cookies on Nerra</h2>
-            <div class="nn-consent-text">Some cookies keep the site working. Before you choose, Google gets only basic, cookie-free signals (for example, that a page loaded), with no cookies or IDs that identify you. With your OK you can also turn on: Analytics, which uses Google Analytics cookies to show us which pages and episodes are useful, and Ad measurement, which uses Google Ads to measure sign-ups from our ads. When you sign up for Personal tips, Ad measurement also sends Google a coded (hashed) version of your email. Change your mind any time from Cookie settings at the bottom of every page. <a class="nn-consent-privacy" href="privacy-policy.html">Privacy policy</a>.</div>
+            <div class="nn-consent-copy">
+                <h2 class="nn-consent-heading" id="nn-consent-heading">Cookies on Nerra</h2>
+                <div class="nn-consent-text">Some cookies keep the site working. Before you choose, Google gets only basic, cookie-free signals (for example, that a page loaded), with no cookies or IDs that identify you. With your OK you can also turn on: Analytics, which uses Google Analytics cookies to show us which pages and episodes are useful, and Ad measurement, which uses Google Ads to measure sign-ups from our ads. When you sign up for Personal tips, Ad measurement also sends Google a coded (hashed) version of your email. Change your mind any time from Cookie settings at the bottom of every page. <a class="nn-consent-privacy" href="privacy-policy.html">Privacy policy</a>.</div>
+            </div>
             <div class="nn-consent-actions">
                 <button type="button" class="nn-consent-btn" data-nn-consent="accept-all">Accept all</button>
                 <button type="button" class="nn-consent-btn" data-nn-consent="reject-all">Reject all</button>
