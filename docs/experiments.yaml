@@ -6811,6 +6811,136 @@ experiments:
       mtime), written by the finalize step and staged one path per add; an
       initial empty file is committed so the URL robots.txt names never
       404s. Guards tests/test_findability_2026_11_03.py.
+  - id: deep-dive-distinct-2026-11-03
+    title: "The deep dive is a second story: a containment measure on every flagship essay"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-10
+    status: decide
+    baseline: >
+      Replayed on each show's last eight digests at a 0.5 containment
+      threshold: Tesla 3/8 (Ep647 0.595, item 9 retold as the First
+      Principles essay), Planetterrian 4/8, SpaceX 2/8, FF 2/8, M&A 1/8,
+      MAG 7 0/8, Omni View 0/8. The Tesla ledger's do_not_retry had asked
+      for a data-side gate before any prompt fix of the essay.
+    target: >
+      A week of deep_dive_contains_body_item readings in the episode
+      metrics on every flagship (deep_dive_distinct_measure, never firing).
+      Decision on Nov 10: list the firing form (deep_dive_distinct) on Tesla
+      and Planetterrian only if digest_structural_regen_share_7d stays under
+      0.22 with it counted in, and the flagship-prompts-by-shape essays have
+      moved the share at or over 0.5 down.
+    notes: >
+      engine.digest_lint.deep_dive_item_containment reads every item shape
+      the shows write (numbered, bold title alone, inline bold head with a
+      URL, Omni View's "### N) Title"); an essay never scores against
+      itself. DEEP_DIVE_FETCHED_SECTIONS reads every essay;
+      DEEP_DIVE_FETCHED_FIRING_SECTIONS (The Teardown, Practitioner Deep
+      Dive) are the only ones that fire until a section's prompt states the
+      Source-line rule. Guards tests/test_deep_dive_distinct_2026_11_03.py.
+  - id: narrative-hooks-sourced-2026-11-03
+    title: "A narrative show's hook figure is sourced: in a read research article or the episode's own ledger"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-24
+    status: reading
+    baseline: >
+      UC fired 14 of its last 14 digests against an empty research context
+      (Ep161's hook figures 500 and 1954 sat in no read page); with the
+      ledger and research articles in context the replay fires on the hooks
+      whose figure traces nowhere.
+    target: >
+      Three weeks after merge on UC and FPD: hook_figures_unsourced at 0 on
+      at least 80% of shipped episodes, the one-shot regeneration firing on
+      under a quarter of them, and no episode skipped for it (the lint never
+      blocks). A/B-listen the first regenerated episode.
+    notes: >
+      engine.digest_lint hook_figure_sourced (a context lint): every
+      digit-written hook figure must match a figure in a read (>= 1200
+      chars) research article or in the episode's claims ledger (context,
+      a fenced block, or the generation's stash); spelled numbers measure 0.
+      Guards tests/test_deep_dive_distinct_2026_11_03.py.
+  - id: voices-spend-and-metrics-2026-11-03
+    title: "Mira's rooms become readable: a credit file per room, survey, grades, yield and cost per room"
+    area: voices
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    metric: voices_cost_per_room_usd
+    baseline: >
+      The operator's priority show recorded $0.00 in every cost rollup while
+      rehearsals burned ~870 Voice Agent minutes (the usage recorder
+      returned silently on the SDK's usage object); survey, grades and
+      yield lived only in Supabase and no surface read them. Rooms before
+      Nov 3 have no credit file and are not back-filled.
+    target: >
+      After the nightly carries VOICES_SUPABASE_URL / _SERVICE_KEY: every
+      room since merge has a credit file, api/voices_metrics.json reads
+      survey, grades, yield and cost with null (never 0) where a table could
+      not be read, the Mission Control card is populated, and
+      voices_cost_per_room_usd, voices_survey_mean_30d and
+      voices_pacing_grade_median_5 are numbers. The credit-stop ping at
+      03:00 ET is seen in the log before the next xAI billing stop.
+    notes: >
+      pipelines/voices/costs.py; engine.tracking.voice_agent_rate_per_min()
+      (XAI_VOICE_COST_PER_MIN; basis estimated until the invoice is read);
+      scripts/build_voices_metrics.py is the one writer of published: true
+      on room files; rehearsals sum on their own line. Guards
+      tests/test_voices_metrics_2026_11_03.py,
+      tests/test_cost_rollup_2026_10_02.py.
+  - id: flagship-prompts-by-shape-2026-11-03
+    title: "Write for the ear, by shape: the outlet inside the first-fact sentence, no sentence counts, no essay as a length lever"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      script_attribution_tail_pct (the share of body sentences ending on
+      ", X reported."), Oct 27-Nov 2: Tesla 10.4%, SpaceX 5.2%, FF 6.2%
+      (Oct 1-10: 0.0 / 0.6 / 0.0); the shared paragraph counted sentences,
+      every podcast prompt counted sentences per line, Tesla's quoted
+      "according to Teslarati" and Omni View's "Reuters reports" were
+      specimens, the essays carried LENGTHEN clauses.
+    target: >
+      Two weeks after merge: script_attribution_tail_pct at or under 3% on
+      Tesla and 2% on SpaceX and FF, with script_digest_coverage_pct at or
+      over 70 and script_entity_retention_pct at or over 75 on the same
+      episodes (a tail removed by dropping the fact is a MISS); the
+      operator's A/B listen on Tesla's first episode.
+    notes: >
+      shows/prompts/_shared/content_discipline.txt and 34 show prompts,
+      by shape (no new specimen); the new-show template; X-post items get
+      a shape and engine.titles.X_ITEM_TITLE_MAX (110); Omni View's
+      Understanding the Issue and M&A's Under the Hood now end on a Source
+      line and enter the claims coverage floor. Not done on purpose: Top
+      World's one-sentence Also Today outlet drop (operator) and SpaceX's
+      Engineering Deep Dive clause. Guards
+      tests/test_flagship_prompts_2026_11_03.py.
+  - id: voice-dynamics-glue-2026-11-03
+    title: "The voice chain's compressor is a named stage; a 2:1 glue on Tesla and Top World first"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-10
+    status: decide
+    metric: audio_loudness_range_median_7d
+    baseline: >
+      The voice chain's 4:1 compressor pressed every show to 1.6-3.0 LU of
+      loudness range against NPR's 4.9-5.2; on a speech-shaped fixture the
+      legacy chain measures 2.1 LU and glue 4.8, both inside -16 +/- 1.5
+      LUFS at or under -1 dBTP.
+    target: >
+      After three episodes each on Tesla and Top World: each show's own
+      audio_loudness_range_lu at 4-5 LU, true peak at or under -1.5 dBTP,
+      integrated loudness in spec; then the operator's A/B on phone speaker
+      and headphones decides the network flip (DEFAULT_VOICE_DYNAMICS, one
+      constant) after one DP Pod listen. The network median here moves
+      little with two shows; read the per-show metric.
+    notes: >
+      engine.audio.VOICE_DYNAMICS {legacy, glue}; DEFAULT_VOICE_DYNAMICS is
+      what every surface with no setting of its own ships (edition pieces,
+      translated tracks, specials); audio.voice_dynamics in the two trial
+      YAMLs only; an unknown name raises at load. Guards
+      tests/test_voice_dynamics_2026_11_03.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency

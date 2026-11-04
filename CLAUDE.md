@@ -1924,6 +1924,27 @@ details in the review doc §4 and `docs/experiments.yaml`):
   (`<lead> · <Show>`, `WEB_TITLE_LEAD_MAX` 58); `news-sitemap.xml` reads each
   post's own JSON-LD (never mtime) and is staged one path per `git add`.
   Guards `tests/test_findability_2026_11_03.py`.
+- **A deep dive is a second story, measured** (`deep_dive_distinct_measure`;
+  the firing form is listed only after a week under the 0.22 regen ceiling);
+  **only `DEEP_DIVE_FETCHED_FIRING_SECTIONS` fire** — an essay whose prompt
+  does not state the Source-line rule is measured, never regenerated; **a
+  narrative hook figure sits in a read research article or the episode's
+  ledger** (`hook_figure_sourced`, UC/FPD; ⚠️ AUDIO). Guards
+  `tests/test_deep_dive_distinct_2026_11_03.py`.
+- **Mira's rooms are costed and read**: `pipelines/voices/costs.py` normalises
+  the SDK usage object; one Voice Agent rate (`engine.tracking.voice_agent_rate_per_min`);
+  a room is an episode only once `scripts/build_voices_metrics.py` marks it
+  `published`; `api/voices_metrics.json` is null, never 0, where a table was
+  unread. Guards `tests/test_voices_metrics_2026_11_03.py`.
+- **Write for the ear, by shape**: the outlet sits INSIDE the first-fact
+  sentence and never ends one; no prompt or template counts sentences per
+  line; no item has a two-sentence floor; no essay is a length lever;
+  **`engine.titles.X_ITEM_TITLE_MAX` clips every X-post heading** (⚠️ AUDIO).
+  Guards `tests/test_flagship_prompts_2026_11_03.py`.
+- **The voice compressor is a named stage** (`engine.audio.VOICE_DYNAMICS`):
+  **the network flips by `DEFAULT_VOICE_DYNAMICS` after the listen, never per
+  surface and never in `_defaults.yaml` ahead of it**; `glue` on Tesla and
+  Top World only (⚠️ AUDIO). Guards `tests/test_voice_dynamics_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
