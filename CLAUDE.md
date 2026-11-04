@@ -1967,6 +1967,13 @@ details in the review doc §4 and `docs/experiments.yaml`):
   earlier date's row is never rewritten; **the open rate is over the last
   seven SENDS' summed recipients, null under `RATE_FLOOR`**; the Nerra Daily
   tile is never hidden. Guards `tests/test_email_measurement_2026_11_03.py`.
+- **The daily audit is an instrument**: every YES quotes its sentence and
+  `engine.claims.fuzzy_contains` must find it in the text read — an unquoted
+  flag is info, counted as ungrounded, never a finding; the score persists in
+  `api/editorial_score_history.json` (`editorial_score_14d_<slug>`; null,
+  never 0); ONE rolling issue; **a promised length is computed from the last
+  14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
+  Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 

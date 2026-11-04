@@ -7154,6 +7154,41 @@ experiments:
       _email_live_metrics, the management.html tile, the nightly add-paths.
       No back-fill from git history. Guards
       tests/test_email_measurement_2026_11_03.py.
+  - id: editorial-score-instrument-2026-11-04
+    title: "The daily audit is an instrument: quoted flags, a persisted score per show, one rolling issue"
+    area: quality
+    shipped: 2026-11-04
+    readout: 2026-11-24
+    status: reading
+    metric: editorial_score_14d_spacex
+    baseline: >
+      The audit's 1-10 lived only in issue titles; SpaceX, 30% of downloads,
+      averaged 5.23 in October (30 episodes) and 5.38 Oct 18 - Nov 2 with
+      INCOHERENT on 11 of 16; the network's 14-day mean was 6.27 (211
+      episodes); 151 dated audit issues were open; Top World's pages promised
+      "about twelve minutes" against 9.4 delivered.
+    target: >
+      When the 14-day window lies wholly after the change (Nov 24):
+      editorial_score_14d_spacex at or above 6.3, read beside the other
+      shows under the same reviewer (the instrument itself changed Nov 3);
+      summary.audit_flags_grounded_share read for a baseline week before any
+      target; one rolling issue and no open dated issue that is not a
+      three-episode repeat.
+    criteria: >
+      HIT when SpaceX's 14-day mean reaches 6.3 with the network mean not
+      falling; a rise that comes only from flags turning ungrounded is read
+      as an instrument change, not an improvement.
+    readout_plan: >
+      api/editorial_score_history.json; editorial_score_14d_* on the
+      dashboard; api/daily-review.json summary (audit_flags_grounded_share,
+      ai_reviewed vs ai_scored); the open issue list.
+    notes: >
+      review_episodes.py parse_review_reply / apply_review_reply (a YES must
+      quote a sentence engine.claims.fuzzy_contains finds),
+      append_editorial_score_history, GhIssues; reviewer_max_tokens 3000;
+      engine.cadence.episode_length_for_slug + COMPUTED_LENGTH_SHOWS (empty;
+      the operator opts a show in) + scripts/check_promised_lengths.py.
+      Guards tests/test_daily_audit_instrument_2026_11_03.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency
