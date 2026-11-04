@@ -12,6 +12,16 @@
 # Seed dates reflect the June 2026 manual passes (PRs #573-585: per-show
 # quality passes June 9-10 plus the website / prompt-voice / workflow
 # network-scope passes on June 10).
+#
+# rotation_only: targets dated by THIS file and by the review AGENT'S OWN
+# ledger entries (those carrying `generated_by`), never by a slate review's
+# entry. Every slate review appends to docs/reviews/ledger/network.yaml, so
+# under the plain ledger rule `network` looked freshly reviewed (2026-10-14, a
+# slate pass) while the agent — the only writer of scored_prior_predictions —
+# was weeks from reaching it (70 of 94 predictions pending, three empty scored
+# blocks, Nov 3 2026). The agent's merged network review still advances it.
+rotation_only:
+  - network
 targets:
   tesla: 2026-06-10
   # Prompt + Grok API/Voice infra review July 9 2026 (cache routing, TTS speed).

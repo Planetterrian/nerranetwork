@@ -2701,6 +2701,78 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out.update(_pinned_model_metrics(root, anchor_d))
     out.update(_episode_counter_shares(root, anchor_d))
     out.update(_voices_live_metrics(root))
+    out.update(_script_stage_p95_metrics(root, anchor_d))
+    return out
+
+
+#: The shows whose script stage runs on a pinned model arm (Oct 9-11 2026,
+#: grok-4.6 on the script call only). ``docs/model_upgrade_playbook.md``
+#: gates a model change on the stage's p95 staying under half the request
+#: timeout, and until Nov 3 2026 nothing read that number on a schedule.
+_SCRIPT_ARM_SHOWS = ("spacex", "tesla", "models_agents", "modern_investing",
+                     "fascinating_frontiers", "planetterrian")
+
+_OUTPUT_DIR_RE = re.compile(r"(?m)^\s*output_dir:\s*['\"]?([^'\"\s#]+)")
+
+
+def _show_digest_dir(root: Path, slug: str) -> Path:
+    """The show's digest directory from its YAML ``episode.output_dir``
+    (Tesla writes to ``digests/tesla_shorts_time``, not ``digests/tesla``);
+    ``digests/<slug>`` when the YAML names none."""
+    try:
+        m = _OUTPUT_DIR_RE.search((root / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+    except OSError:
+        m = None
+    return root / (m.group(1) if m else f"digests/{slug}")
+
+
+def _script_stage_p95_metrics(root: Path, anchor_d: _dt.date, days: int = 14,
+                              min_n: int = 5) -> Dict[str, Any]:
+    """``script_stage_p95_s_14d_<show>``: nearest-rank p95 of the
+    ``generate_podcast_script`` stage over the last 14 days of committed
+    ``metrics_ep*.json``, per script-arm show (Nov 3 2026, efficiency-6).
+
+    Each episode is dated by its SIBLING DIGEST FILENAME
+    (``_episode_dates_from_digests``) — never mtime, which a fresh checkout
+    rewrites. Null under ``min_n`` episodes, never a fake zero. Consumers:
+    the six script-arm register entries (``*-script-grok46-2026-10-*``,
+    ``narrative-script-grok47-2026-10-11``) and the Levers card; the
+    nightly ``scripts/model_trial_report.py --out api/model_trial.json`` is
+    the same read with the playbook's gate applied.
+    """
+    cutoff = anchor_d - _dt.timedelta(days=days)
+    out: Dict[str, Any] = {}
+    for slug in _SCRIPT_ARM_SHOWS:
+        show_dir = _show_digest_dir(root, slug)
+        key = f"script_stage_p95_s_{days}d_{slug}"
+        if not show_dir.is_dir():
+            out[key] = None
+            continue
+        dates = _episode_dates_from_digests(show_dir)
+        durations: List[float] = []
+        for mf in show_dir.glob("metrics_ep*.json"):
+            m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
+            if not m:
+                continue
+            d = dates.get(int(m.group(1)))
+            if d is None or d < cutoff:
+                continue
+            try:
+                stages = (json.loads(mf.read_text(encoding="utf-8")) or {}).get("stages") or []
+            except (OSError, ValueError, TypeError):
+                continue
+            for st in stages:
+                if (isinstance(st, dict) and st.get("name") == "generate_podcast_script"
+                        and isinstance(st.get("duration_s"), (int, float))):
+                    durations.append(float(st["duration_s"]))
+        if len(durations) < min_n:
+            out[key] = None
+            continue
+        durations.sort()
+        # Nearest-rank, the trial report's own percentile: an interpolated
+        # p95 on 14 samples invents precision the data does not have.
+        idx = min(len(durations) - 1, max(0, int(round(0.95 * len(durations))) - 1))
+        out[key] = round(durations[idx], 1)
     return out
 
 

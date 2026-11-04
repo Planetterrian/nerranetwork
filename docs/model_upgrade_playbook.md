@@ -254,6 +254,16 @@ baseline. It exits 1 when an LLM stage's p95 passes 50% of the request
 timeout, regresses more than 50% against baseline, or any stage failed.
 Render and fetch stages are reported but never gate a MODEL trial.
 
+**It runs nightly since Nov 3 2026** (`nightly-maintenance.yml`, step "Read
+the script-arm latency gate"): a ROLLING window (`--since` defaults to today
+minus 14 days — a fixed date measures an ever-longer past) over the six shows
+whose script stage runs on a pinned model arm, against the 600 s request
+timeout the run uses, written to `api/model_trial.json` with `--out`. A show's
+digest directory is read from its YAML `episode.output_dir` (Tesla writes to
+`digests/tesla_shorts_time`). The dashboard carries the same read as the live
+metric `script_stage_p95_s_14d_<show>` so a register entry can name it. The
+first nightly read (Nov 4 2026): SpaceX p95 903 s — 150% of the timeout.
+
 ## Staged migrations on record
 
 | Date | Change | Outcome |

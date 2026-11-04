@@ -38,6 +38,10 @@
 #   baseline:  (optional) the number when the change shipped
 #   target:    (optional) what success looks like
 #   criteria:  (optional, decide entries) the decision rule
+#   readout_plan: (optional) the file or command that answers the
+#              readout. From Nov 3 2026 an entry needs a computable
+#              metric OR criteria + readout_plan, or it is a note, not
+#              an experiment (scripts/readout_register.py).
 #   notes:     (optional) one line of context
 #
 # Prune done entries older than ~a quarter.
@@ -6319,6 +6323,10 @@ experiments:
       the first A/B-listens (UC, Tesla open/close, Nerra Daily) accepted by
       the operator; the plan's ship-now items merged; readouts named per
       entry below.
+    criteria: >
+      HIT when every guard in the review's test file stays green on main for two weeks and each ranked item reads at its own entry; a reverted fix is a MISS for that fix.
+    readout_plan: >
+      Run Tests history on main for tests/test_six_month_review_2026_11_03.py; docs/reviews/network_review_2026_11_03.md section 4 against each item's own register entry.
     notes: >
       Umbrella entry. The listens are the gate for the audio items
       (landmine #17); the operator items are in the review doc §5.
@@ -6397,6 +6405,10 @@ experiments:
       behaviour is inferred); subject and preheader read as two stories;
       open and click counts on the dashboard from the first nightly with
       >= 30 recipients.
+    criteria: >
+      HIT when the first real send's archive page shows the default cards and every one-liner; any missing section is a MISS.
+    readout_plan: >
+      Buttondown's 'View this email in your browser' page for the first send after merge, beside engine.nerra_daily_email.render_for(subscriber=False).
     notes: >
       engine/nerra_daily_email.py (not subscriber or / subscriber and
       conditions, render_for(subscriber=False), any_not_in, the subject
@@ -6420,6 +6432,10 @@ experiments:
       whose episode has scene prompts is matched (image_url present only
       with matched true), checked by replaying each day's leads through
       engine.landing_test.episode_scene against the committed slices.
+    criteria: >
+      HIT when no lead or top-story picture over two weeks of builds is an unmatched scene (image_url only with matched true).
+    readout_plan: >
+      Replay each committed day's leads through engine.landing_test.episode_scene against the committed homepage slices.
     notes: >
       engine/landing_test.py: stemmed tokens, one unique shared word
       suffices, no fallback to candidates[0] when prompts are known (the
@@ -6470,6 +6486,10 @@ experiments:
       attribution_coverage_pct rises above 30; totals.sessions_excluding_anomalies
       and the printed anomaly_exclusion lead the dashboard's site headline;
       web_vitals_summary reads non-null once the GA4 custom dimensions exist.
+    criteria: >
+      HIT when, after the Ads URLs are tagged, paid sessions appear under stages.click.by_kind.ad and the anomaly exclusion prints beside the raw total.
+    readout_plan: >
+      api/funnel.json (stages.click.by_kind, totals.sessions_excluding_anomalies) and api/ga4_stats.json (landing_anomalies, web_vitals_summary).
     notes: >
       engine.funnel KIND_AD / MEDIUM_CPC / SOURCE_GOOGLE_ADS / ad_link,
       scripts/funnel_link.py, fetch_ga4_stats.landing_anomalies (>= 50
@@ -6496,6 +6516,10 @@ experiments:
       a Studio end-screen template has room. Readout: END_SCREEN traffic on
       Tesla and SpaceX long-forms over the 14 days after the operator applies
       the template, against the other shows; the banners uploaded (operator).
+    criteria: >
+      HIT when END_SCREEN traffic on the Tesla and SpaceX long-forms rises over the 14 days after the Studio end-screen template, against the other shows.
+    readout_plan: >
+      api/youtube_stats.json traffic_sources END_SCREEN per show, 14 days before and after the Studio step.
     notes: >
       engine/promo_card.py, engine/brand.youtube_banner_lines /
       network_tagline_for, scripts/build_youtube_banners.py (cairosvg),
@@ -6521,6 +6545,10 @@ experiments:
       with no model call; no headline repeats its hook's story (0 false
       drops on 3,561 headlines); open and click rates on the dashboard once
       the measurement item ships and 30 recipients exist.
+    criteria: >
+      HIT when the first show card sits inside 250 px on a 390 px phone and no headline repeats its hook's story on the first week of sends.
+    readout_plan: >
+      A phone screenshot of the first send after merge; digests/nerra_daily/email/*.json records for the week.
     notes: >
       engine.landing_test.story_deck, engine.newsroom.headline_within_hook,
       wrap_with_branding(hero="compact", featured_position="after_body"),
@@ -6552,6 +6580,10 @@ experiments:
       merge carries long_form_render_duration_s; no publish_long_form flipped
       by the dub overlay (DUB_LONG_RELATIVE_ENABLED is False). The operator
       reads the ratio and the pooled rate before deciding the overlay (C17).
+    criteria: >
+      HIT when every policy entry on every channel carries the five long-form keys (None, never 0, where unmeasured) and no dub long flips while the overlay is off.
+    readout_plan: >
+      api/youtube_policy.json entries; digests/*/youtube_videos.{ru,fr}.json long rows (long_form_render_duration_s).
     notes: >
       scripts/update_youtube_policy.py collect_long_reach / long_reach_keys /
       dub_long_read / dub_long_gate_reason; LONG_MIN_AGE_DAYS per channel
@@ -6583,6 +6615,10 @@ experiments:
       script-stage arm read from the credit files' per-call model, with
       scripts/model_trial_report.py showing no quality drop and a faster
       script stage. A/B-listen the first Monday (landmine 17).
+    criteria: >
+      HIT when four Mondays ship no first-person experience sentence and every Practitioner Deep Dive names a read document or is left out.
+    readout_plan: >
+      digests/env_intel/metrics_ep*.json (digest_host_experience_removed, deep_dive_source_read); the replay in tests/test_env_intel_sources_2026_11_03.py; scripts/model_trial_report.py --since 2026-11-09.
     notes: >
       shows/prompts/env_intel_{digest,podcast}.txt rebuilt by shape;
       engine/host_experience.py mode "experience" (host_experience_mode;
@@ -6647,6 +6683,10 @@ experiments:
       digests/<dir>/remaster_log.json, every enclosure URL and GUID
       unchanged, duration within a second of the original, zero refused
       uploads; a dry run afterwards plans nothing.
+    criteria: >
+      HIT when every item on the three feeds reads inside -16 +/- 1.5 LUFS at or under -1 dBTP with its enclosure URL and GUID unchanged.
+    readout_plan: >
+      digests/{unintended_consequences,vancouver,collingwood}/remaster_log.json; a dry run of Actions 'Re-master Episodes' afterwards plans nothing.
     notes: >
       scripts/remaster_episodes.py: the episode is resolved from the feed's
       enclosure (never publishing.base_url), pulled back without the OP3
@@ -6679,6 +6719,10 @@ experiments:
       together), mira_turn_sec_median from 5 s toward 8-12 s,
       guest_words_trend at or above 1.0, the PACING grade and survey_rating
       not down.
+    criteria: >
+      HIT when bare_question_rate is at or under 0.25 on the fifth room after deploy with label_open_rate not rising.
+    readout_plan: >
+      interview episode_metrics.notes.audio in Supabase (bare_question_rate, label_open_rate, mira_turn_sec_median, guest_words_trend) and the rehearsal report's 'Read beside the verdict' table.
     notes: >
       The CRITICAL list's last line is the beat, by shape (after a real
       answer, one sentence of what it changes or what it cost, then the
@@ -6770,6 +6814,10 @@ experiments:
       and one probe run on a committed script in the record; zero
       network-wide audio reversals and under 10 re-synthesis runs in the
       four weeks.
+    criteria: >
+      HIT when every audio:/tts: change in four weeks carries a docs/listens.md line and no audio change is reversed network-wide within 48 hours of its merge.
+    readout_plan: >
+      docs/listens.md; git log -- shows/_defaults.yaml engine/audio.py; the Actions 'Re-synthesize Episode' run list.
     notes: >
       run-show.yml rehearse input (full pipeline through TTS and mix, the
       MP3 and TTS text as a 3-day artifact, nothing committed, the
@@ -6800,6 +6848,10 @@ experiments:
       titles; zero rich-result errors on the sampled posts. A flat read
       after six weeks closes the entry as a MISS, not a reason to add
       schema.
+    criteria: >
+      HIT when organic sessions per 28 days exceed 60 six weeks after merge with news-sitemap.xml accepted; flat is a MISS, never a reason to add schema.
+    readout_plan: >
+      api/ga4_stats.json channels (Organic Search); Search Console's sitemap and rich-result reports for news-sitemap.xml.
     notes: >
       engine/blog.py article_schema_type (NewsArticle on the 24 news shows;
       BlogPosting for a lesson, an interview, a dialogue, a narrative) with
@@ -6830,6 +6882,10 @@ experiments:
       and Planetterrian only if digest_structural_regen_share_7d stays under
       0.22 with it counted in, and the flagship-prompts-by-shape essays have
       moved the share at or over 0.5 down.
+    criteria: >
+      List deep_dive_distinct on Tesla and Planetterrian on Nov 10 only if digest_structural_regen_share_7d stays under 0.22 with it counted in.
+    readout_plan: >
+      deep_dive_contains_body_item in digests/<show>/metrics_ep*.json for the week; digest_structural_regen_share_7d on the dashboard.
     notes: >
       engine.digest_lint.deep_dive_item_containment reads every item shape
       the shows write (numbered, bold title alone, inline bold head with a
@@ -6854,6 +6910,10 @@ experiments:
       at least 80% of shipped episodes, the one-shot regeneration firing on
       under a quarter of them, and no episode skipped for it (the lint never
       blocks). A/B-listen the first regenerated episode.
+    criteria: >
+      HIT when hook_figures_unsourced is 0 on at least 80% of UC and FPD episodes and the regeneration fires on under a quarter of them.
+    readout_plan: >
+      hook_figures_unsourced in digests/{unintended_consequences,first_principles}/metrics_ep*.json for three weeks.
     notes: >
       engine.digest_lint hook_figure_sourced (a context lint): every
       digit-written hook figure must match a figure in a read (>= 1200
@@ -6907,6 +6967,10 @@ experiments:
       over 70 and script_entity_retention_pct at or over 75 on the same
       episodes (a tail removed by dropping the fact is a MISS); the
       operator's A/B listen on Tesla's first episode.
+    criteria: >
+      HIT when script_attribution_tail_pct is at or under 3% on Tesla and 2% on SpaceX and FF with coverage at or over 70 and entity retention at or over 75 on the same episodes.
+    readout_plan: >
+      scripts/review_snapshot.py density table per show (tail, coverage, retention) over the two weeks after merge.
     notes: >
       shows/prompts/_shared/content_discipline.txt and 34 show prompts,
       by shape (no new specimen); the new-show template; X-post items get
@@ -6957,6 +7021,10 @@ experiments:
       the stylesheet move): files per "Auto-generated: <show>" commit under
       20 and blog/ rewrites a day under 300; no post older than a day
       changes its cards; no tracked blob over 2 MB under digests/.
+    criteria: >
+      HIT when files per 'Auto-generated: <show>' commit stay under 20 and blog/ rewrites under 300 a day a week after merge.
+    readout_plan: >
+      git log --since on main: files per 'Auto-generated' commit and blog/ paths per day; tests/test_repo_hygiene_2026_11_03.py on main.
     notes: >
       _pick_cross_show_related(post_date=) reads the post's own week
       (RELATED_WINDOW_BEFORE_DAYS 7 / AFTER 1, nearest first);

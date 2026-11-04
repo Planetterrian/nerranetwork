@@ -326,3 +326,50 @@ class TestYoutubeMeasurementKeys:
         computable = set(gd._experiment_live_metrics(ROOT).keys())
         missing = [k for k in self.KEYS if k not in computable]
         assert not missing, missing
+
+
+class TestNewEntriesAreReadable:
+    """Nov 3 2026 (review-loop-closes): an entry shipped on or after
+    ``readout_register.REGISTER_READABLE_SINCE`` carries a metric the
+    generator computes OR ``criteria`` plus a ``readout_plan`` naming the
+    file/command that answers it. An entry with neither is a note, not an
+    experiment — 74 such entries sat past their readout with no way to read
+    them. The rule is shared with ``scripts/readout_register.py`` (which
+    lists offenders under ``notes_not_experiments``) and binds new entries
+    only."""
+
+    @staticmethod
+    def _rule():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "readout_register", ROOT / "scripts" / "readout_register.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_committed_register_passes(self):
+        rr = self._rule()
+        computable = set(gd._experiment_live_metrics(ROOT).keys())
+        data = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        defects = {e["id"]: rr.readability_defect(e, computable)
+                   for e in data["experiments"]}
+        bad = {k: v for k, v in defects.items() if v}
+        assert not bad, (
+            f"register entries shipped on/after {rr.REGISTER_READABLE_SINCE} with no "
+            f"readout path (add a computable metric, or criteria + readout_plan): {bad}")
+
+    def test_a_fixture_entry_shipped_after_the_rule_with_neither_fails(self):
+        rr = self._rule()
+        computable = set(gd._experiment_live_metrics(ROOT).keys())
+        entry = {"id": "fixture-2026-11-04", "title": "x", "area": "quality",
+                 "shipped": "2026-11-04", "readout": "2026-11-18",
+                 "status": "reading", "target": "something goes up"}
+        assert rr.readability_defect(entry, computable), "a note passed as an experiment"
+        entry["criteria"] = "sessions up 20%"
+        entry["readout_plan"] = "python scripts/fetch_ga4_stats.py; api/ga4_stats.json"
+        assert rr.readability_defect(entry, computable) is None
+        del entry["criteria"]
+        entry["metric"] = "long_form_median_avp_en_14d"
+        assert rr.readability_defect(entry, computable) is None
+        entry["metric"] = "no_such_metric_7d"
+        assert "does not compute" in rr.readability_defect(entry, computable)

@@ -164,11 +164,13 @@ have very different real-world hit rates. Apply these rules:
   shape, the current stock of a queue, or a file the day's runs have not
   committed yet is red on days nothing is wrong: judge episodes at least
   a day old, treat floors as runways, pin fixtures on what they mean.
-- **Closed-unmerged review PRs are NOT automatically rejections.** Before
-  writing `do_not_retry` from a closed PR, check its closure comment:
-  infrastructure closes (content landed via another PR, unmergeable
-  branch, API failures) leave the ideas live. Record a rejection only on
-  an explicit operator signal.
+- **A review PR closed WITHOUT a label is unknown; `rejected` is the
+  signal.** `scripts/review_pr_outcomes.py` (nightly) asks for a label on
+  every unlabelled closed-unmerged `agent/review-*` PR and, on `rejected`,
+  splices the PR's proposed items into that ledger's `do_not_retry`.
+  Infrastructure closes are `superseded` (content landed another way) or
+  `stale` (unmergeable branch, API failure) and leave the ideas live. Never
+  write `do_not_retry` from a bare close.
 
 ## Phase 3 — Implement
 

@@ -43,11 +43,14 @@ What makes this *iterative development* rather than isolated reviews:
    effect gets a ledger `predictions:` entry (metric, baseline, expected).
    The next review of that show starts by scoring them `hit`/`partial`/
    `miss` — a `miss` reopens the problem with a different approach.
-2. **Your verdicts are learned.** Before reviewing a show, the agent reads
-   closed-unmerged `agent/review-<slug>-*` PRs (rejections) and checks git
-   for reverts of prior review commits (failed A/B listens). Both land in
-   the ledger's `do_not_retry` list and are never re-proposed without an
-   explicit argument that the evidence no longer applies.
+2. **Your verdicts are learned.** A closed-unmerged `agent/review-<slug>-*`
+   PR is recorded by the label you give it: the nightly
+   `scripts/review_pr_outcomes.py` asks for one (`rejected` / `superseded` /
+   `stale`) and, on `rejected`, writes the PR's proposed items into the
+   ledger's `do_not_retry` list; a close without a label is unknown. Reverts
+   of prior review commits (failed A/B listens) land there too. Neither is
+   re-proposed without an explicit argument that the evidence no longer
+   applies.
 3. **Deferred items are a structured backlog**, carried in the ledger and
    re-evaluated every pass instead of being lost in prose.
 4. **The playbook improves itself** — on `network` runs the agent

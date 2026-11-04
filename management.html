@@ -1666,6 +1666,74 @@
       grid.appendChild(card);
     }
 
+    // Readouts due — the reading side of the register (Nov 3 2026).
+    // api/register_readouts.json is written by scripts/readout_register.py
+    // AFTER the dashboard build each night, so it is fetched on its own:
+    // every reading/decide entry past its readout, with the LIVE value
+    // beside baseline/target where it names a metric, else the target text
+    // and the days overdue for a human read. Missing file = card says so.
+    {
+      const card = sectionCard("Readouts due",
+        "api/register_readouts.json · read, then write the outcome");
+      card.classList.add("mc-card-wide");
+      let rd = null;
+      try {
+        const r = await fetch("api/register_readouts.json", { cache: "no-store" });
+        if (r.ok) rd = await r.json();
+      } catch (e) { rd = null; }
+      if (!rd) {
+        card.appendChild(h("p", { class: "fine-list",
+          text: "No api/register_readouts.json yet — the nightly writes it " +
+                "after the dashboard build." }));
+      } else {
+        const strict = (rd.strict_failures || []).length;
+        card.appendChild(h("div", { style: "font-size:13px;margin-top:6px;", html:
+          "<span class='k'>" + esc(rd.due_count) + "</span> due · " +
+          "<span class='k'>" + esc(rd.with_metric_count) + "</span> with a live metric · " +
+          "<span class='k'>" + esc(rd.needs_human_read_count) + "</span> need a human read" +
+          (strict ? " · <span class='t-delta down'>" + esc(strict) + " past " +
+                    esc(rd.strict_overdue_days) + "d with no outcome</span>" : "") +
+          " <span style='color:var(--ink-3)'>(as of " + esc(rd.today) + ")</span>" }));
+        const list = h("div", { class: "lever-list" });
+        (rd.with_metric || []).forEach((r) => {
+          const row = h("div", { class: "lever-row" });
+          row.appendChild(h("div", { html:
+            "<strong>" + esc(r.title || r.id) + "</strong> " +
+            "<span class='t-delta down'>+" + esc(r.days_overdue) + "d</span>" }));
+          row.appendChild(h("div", { class: "fine-list", html:
+            esc(r.metric) + ": live <span class='k'>" +
+            (r.live === null || r.live === undefined ? "no data yet" : esc(r.live)) +
+            "</span>" +
+            (r.baseline != null ? " · baseline " + esc(r.baseline) : "") +
+            (r.target ? " · target " + esc(r.target) : "") }));
+          list.appendChild(row);
+        });
+        (rd.needs_human_read || []).forEach((r) => {
+          const row = h("div", { class: "lever-row" });
+          row.appendChild(h("div", { html:
+            "<strong>" + esc(r.title || r.id) + "</strong> " +
+            "<span class='t-delta down'>+" + esc(r.days_overdue) + "d</span>" +
+            (r.outcome ? " <span style='color:var(--ink-3)'>outcome drafted</span>" : "") }));
+          if (r.target || r.readout_plan) {
+            const det = h("details", { class: "lever-more" });
+            det.appendChild(h("summary", { text: "what answers it" }));
+            if (r.target) det.appendChild(h("p", { class: "fine-list", html:
+              "<span class='k'>Target:</span> " + esc(r.target) }));
+            if (r.readout_plan) det.appendChild(h("p", { class: "fine-list", html:
+              "<span class='k'>Readout plan:</span> " + esc(r.readout_plan) }));
+            row.appendChild(det);
+          }
+          list.appendChild(row);
+        });
+        card.appendChild(list);
+        card.appendChild(h("p", { class: "fine-list", text:
+          "A readout the machine drafts is a draft; the outcome goes into " +
+          "docs/experiments.yaml by hand. An entry with neither a metric nor " +
+          "criteria + readout_plan is a note, not an experiment (CI binds new entries)." }));
+      }
+      grid.appendChild(card);
+    }
+
     // Staggered Shorts + deferred comments health.
     {
       const card = sectionCard("Staggered Shorts",

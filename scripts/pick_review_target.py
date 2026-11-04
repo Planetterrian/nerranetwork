@@ -20,6 +20,17 @@ Ledger dates are read by regex, not yaml.safe_load — three committed
 ledgers contain unquoted ": " inside list items and must never be
 reserialized (see CLAUDE.md, review-agent section).
 
+Nov 3 2026: a target listed under ``rotation_only:`` in the state file is
+dated by the state file and the review AGENT'S OWN ledger entries only —
+the entries ``run_show_review.py`` writes, which carry ``generated_by`` —
+never by a slate review's entry. Every slate review appends to the network
+ledger, so under the plain max() rule ``network`` read as reviewed on
+2026-10-14 (a slate pass) while the agent — the only thing that writes
+``scored_prior_predictions`` — was weeks from reaching it; its ledger held
+70 pending predictions of 94 and three empty scored blocks. The agent's own
+pass still advances the rotation through the entry it lands, with no
+state-file write.
+
 Exit codes: 0 = slug printed, 2 = no eligible target (all excluded).
 
 Usage:
@@ -48,14 +59,37 @@ def _latest_ledger_date(ledger_dir: Path, slug: str) -> str:
     return max(dates) if dates else ""
 
 
+_AGENT_ENTRY_RE = re.compile(r"^\s*generated_by:", re.M)
+
+
+def _latest_agent_ledger_date(ledger_dir: Path, slug: str) -> str:
+    """Newest date of an entry the review AGENT wrote (``generated_by:``,
+    stamped by ``run_show_review.update_ledger``), or "" when none. A slate
+    review's hand-written entry carries no such key and does not count."""
+    path = ledger_dir / f"{slug}.yaml"
+    if not path.exists():
+        return ""
+    text = path.read_text(encoding="utf-8")
+    dates = []
+    starts = [m.start() for m in _LEDGER_DATE_RE.finditer(text)]
+    for i, start in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(text)
+        if _AGENT_ENTRY_RE.search(text, start, end):
+            dates.append(_LEDGER_DATE_RE.match(text, start).group(1))
+    return max(dates) if dates else ""
+
+
 def pick_target(state_path: Path, excludes: set[str],
                 ledger_dir: Path | None = None) -> str | None:
     if ledger_dir is None:
         ledger_dir = state_path.parent / "ledger"
     data = yaml.safe_load(state_path.read_text(encoding="utf-8"))
     targets = data.get("targets") or {}
+    rotation_only = set(data.get("rotation_only") or [])
     candidates = {
-        slug: max(str(last_reviewed), _latest_ledger_date(ledger_dir, slug))
+        slug: max(str(last_reviewed),
+                  (_latest_agent_ledger_date if slug in rotation_only
+                   else _latest_ledger_date)(ledger_dir, slug))
         for slug, last_reviewed in targets.items()
         if slug not in excludes
     }
