@@ -129,11 +129,28 @@
     },
     "image": "https://nerranetwork.com/assets/covers/fascinating-frontiers.jpg",
     "transcript": "https://nerranetwork.com/blog/fascinating_frontiers/ep243.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.fr.mp3",
+        "inLanguage": "fr"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.ru.mp3",
+        "inLanguage": "ru"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr",
+      "ru"
+    ]
   }
 ]
     </script>
@@ -1111,21 +1128,30 @@
     
 
     
-    
-    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="ru" aria-pressed="false">Русский</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3" data-nn-card data-title="A 3,200-pound NASA spacecraft is expected to reenter Earth&#39;s atmosphere within hours." data-show="Fascinating Frontiers" data-cover="../../assets/covers/fascinating-frontiers.jpg">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3" data-nn-card data-title="A 3,200-pound NASA spacecraft is expected to reenter Earth&#39;s atmosphere within hours." data-show="Fascinating Frontiers" data-cover="../../assets/covers/fascinating-frontiers.jpg"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.mp3", "title": "A 3,200-pound NASA spacecraft is expected to reenter Earth\u0027s atmosphere within hours.", "desc": "A 3,200-pound NASA spacecraft is expected to reenter Earth\u0027s atmosphere within hours."},
+  "fr": {"url": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.fr.mp3", "title": "Ép. 243 : Un vaisseau spatial de la NASA de 3 200 livres devrait rentrer dans l\u0027atmosphère terrestre d\u0027ici quelques heures.", "desc": "Un vaisseau spatial de la NASA de 3 200 livres devrait rentrer dans l\u0027atmosphère terrestre d\u0027ici quelques heures."},
+  "ru": {"url": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep243_20261104.ru.mp3", "title": "Эпизод 243: Ожидается, что 3200-фунтовый космический аппарат NASA войдёт в атмосферу Земли в ближайшие часы.", "desc": "Ожидается, что 3200-фунтовый космический аппарат NASA войдёт в атмосферу Земли в ближайшие часы."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1205,6 +1231,168 @@
 <p>Picture a rover on Mars that must decide in minutes whether a boulder blocking its path is a loose rock the size of a suitcase or a buried slab the size of a truck. The difference determines whether the machine wastes hours chipping at immovable stone or simply drives around it. On Earth we make that judgment by eye and a quick kick; on another world the rover has no such intuition. Virginia Tech engineers are teaching machines to listen instead. Their method starts with a simple tap. An instrumented hammer strikes the visible part of a rock while a scanning laser Doppler vibrometer records the vibrations that travel through the buried portion and back out. Eighteen concrete blocks of different sizes and burial depths were planted in sand to create a training set. The team measured vibrations at multiple points on each exposed surface, then fed the frequency patterns and visible geometry into a compact neural network with only two hidden layers. Once trained, the model could estimate burial depth from new vibration readings. The approach works because vibrations travel differently through loose sand than through solid rock; a buried boulder returns a distinct signature compared with a surface pebble. On Mars or the Moon the same principle could let a robotic excavator know when further effort is pointless. Erik Komendera, who once worked as an engineer at NASA Langley Research Center, led the project with Ph.D. candidate Yiyan Ruan. Their results appear in the IEEE Sensors Journal under DOI 10.1109/jsen.2026.3733381. The researchers note that estimating burial depth remains tricky because feedback is affected by rock geometry and the way soil holds the object. By carefully selecting features from vibration measurements and exposed geometry they produced reliable data with a small neural network. Those models could one day guide a robotic excavator on Mars to handle obstacles correctly in the terrain. For now the team plans to continue building datasets and testing their approach on Earth. The same vibration technique could prove useful for determining the components of unstable rock formations, measuring underground caverns, and even helping with disaster cleanup after events that leave hazards buried. The core question remains open: how well will the trained models perform when the “soil” is actually Martian regolith whose grain size, moisture, and temperature are only partly known. Field tests on analog terrains will decide whether the method graduates from laboratory sandboxes to actual planetary surfaces. The work shows that a compact sensor suite and modest computing power can turn a simple hammer strike into actionable knowledge about what lies hidden beneath an alien surface.</p>
 <hr>
 <p>A quiet day still delivered concrete progress on everything from reentry predictions to subsurface sensing.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Un engin spatial de la NASA pesant trois mille deux cents livres devrait rentrer dans l’atmosphère terrestre d’ici quelques heures.</p>
+<p>Ici Fascinating Frontiers, l’épisode deux cent quarante-trois.</p>
+<p>Une proclamation spatiale de la Maison-Blanche, la sonde Hera de l’Europe auprès d’un astéroïde binaire, et une plateforme d’atterrissage lunaire construite par des étudiants arrivent ensuite, avec Pleins feux cosmiques plus tard.</p>
+<p>La Force spatiale des États-Unis, selon Spaceflight Now, prévoit maintenant la rentrée entre onze heures quarante-deux et treize heures quarante-deux, temps moyen de Greenwich, aujourd’hui.</p>
+<p>Cette prévision couvre une bande située surtout au-dessus de l’océan, restant à moins de vingt et un degrés au nord ou au sud de l’équateur.</p>
+<p>L’observatoire Neil Gehrels Swift est en service depuis plus de deux décennies.</p>
+<p>Ces années ont été consacrées à des observations en rayons X et en ultraviolet des sursauts gamma et d’autres événements transitoires.</p>
+<p>Selon la dernière mise à jour, l’engin spatial pourrait retomber sur Terre dès ce soir.</p>
+<p>Une proclamation présidentielle rapportée par NASA Watch déclare que le système solaire et tout l’espace extra-atmosphérique au-delà de la Terre sont ouverts à l’exploration, au développement, à l’utilisation et à une présence permanente par les citoyens américains.</p>
+<p>Le texte invoque l’autorité constitutionnelle et fait référence aux missions Artemis deux et Artemis trois prévue.</p>
+<p>Il souligne le succès d’Artemis deux en avril et décrit Artemis trois comme l’une des campagnes de vols d’essai les plus complexes du programme spatial de la nation.</p>
+<p>Le document fixe l’objectif d’un retour sur la Lune d’ici deux mille vingt-huit et d’envoyer un Américain sur Mars.</p>
+<p>Il réaffirme que les États-Unis mèneront la construction d’installations et l’établissement d’une présence permanente pour étendre l’exploration américaine.</p>
+<p>La sonde Hera de l’Europe, selon Space point com, s’est approchée du système d’astéroïdes binaires d’assez près pour distinguer les deux corps.</p>
+<p>Les images montrent le plus petit, Dimorphos, la cible de l’essai antérieur de déviation DART de la NASA, distingué de Didymos.</p>
+<p>La sonde peut maintenant résoudre la paire comme des objets distincts sur sa trajectoire d’approche.</p>
+<p>Des étudiants et des chercheurs de l’université de l’Alabama à Huntsville, selon Universe Today, ont mené cet été trois essais de mise à feu de moteur-fusée sur une plateforme prototype.</p>
+<p>La conception capturait et redirigeait les gaz d’échappement par un système d’évacuation intégré.</p>
+<p>Le prototype a démontré sa capacité à gérer les gaz d’échappement d’une fusée sans endommager la surface environnante.</p>
+<p>Ces essais marquent un progrès vers une infrastructure d’atterrissage sûre pour les futures bases lunaires.</p>
+<p>Le télescope spatial Hubble, selon Space point com, reste en bon état, mais il affronte une traînée atmosphérique croissante.</p>
+<p>La NASA demande aux entreprises des concepts qui pourraient relever son orbite et prolonger sa mission scientifique.</p>
+<p>La demande vise des options pour contrer la dégradation progressive causée par l’atmosphère résiduelle à l’altitude de Hubble.</p>
+<p>Une astromobile sur Mars n’a parfois que quelques minutes pour juger un rocher sur son chemin, un morceau détaché de la taille d’une valise ou une dalle enterrée aussi grosse qu’un camion.</p>
+<p>Cette différence décide si la machine passe des heures à piquer une pierre qui ne bougera pas, ou si elle dévie et contourne.</p>
+<p>Sur Terre, une personne règle ça d’un coup d’œil et d’un coup de pied, mais une astromobile sur un autre monde n’a rien de ce ressenti.</p>
+<p>Des ingénieurs de Virginia Tech, selon Phys point org, apprennent aux machines à écouter pour trouver la réponse, à la place.</p>
+<p>La méthode commence par un tapotement sur le rocher qui dépasse encore du sol.</p>
+<p>Un marteau équipé de capteurs frappe cette face exposée, et un vibromètre laser Doppler à balayage enregistre comment la vibration traverse la masse enterrée et en ressort.</p>
+<p>Pour entraîner le système, l’équipe a planté dix-huit blocs de béton dans le sable, chacun d’une taille différente et placé à une profondeur différente.</p>
+<p>Ils ont mesuré la vibration en plusieurs points de chaque surface exposée.</p>
+<p>Ces motifs de fréquences, avec la géométrie visible de chaque bloc, ont alimenté un réseau de neurones construit avec seulement deux couches cachées.</p>
+<p>Une fois ce réseau entraîné, il pouvait estimer la profondeur d’enfouissement à partir d’un nouvel ensemble de lectures de vibration.</p>
+<p>Le sable meuble et la roche solide transmettent la vibration différemment, donc un rocher enterré renvoie une signature qu’un caillou posé en surface ne produit pas.</p>
+<p>Sur Mars ou sur la Lune, un excavateur robotisé pourrait utiliser ce contraste pour cesser de gaspiller du travail sur un rocher qu’il ne peut pas déplacer.</p>
+<p>Erik Komendera a dirigé le projet avec Yiyan Ruan, doctorant.</p>
+<p>Komendera est professeur adjoint en génie mécanique ; il a auparavant travaillé comme ingénieur au centre de recherche Langley de la NASA.</p>
+<p>Les résultats paraissent dans l’IEEE Sensors Journal.</p>
+<p>La rigidité du sol, l’angle de contact et la forme du rocher changent tous le signal qui revient.</p>
+<p>La profondeur d’enfouissement reste difficile à lire, parce que le retour dépend de la géométrie du rocher et de la façon dont le sol l’agrippe.</p>
+<p>L’équipe a sélectionné des caractéristiques à partir des données de vibration et de la forme exposée, et cette sélection a produit des estimations fiables même avec le petit réseau.</p>
+<p>Pour l’instant, ils prévoient de continuer à construire des jeux de données et à tester la méthode sur Terre.</p>
+<p>Les mêmes outils pourraient évaluer des formations rocheuses instables, mesurer des cavernes souterraines, ou aider après des catastrophes qui laissent des dangers sous les débris.</p>
+<p>La façon dont ces modèles se comporteront dans le régolithe martien reste ouverte, parce que la taille des grains, l’humidité et la température là-bas ne sont que partiellement connues.</p>
+<p>Des essais sur un terrain analogique décideront si un bac à sable de laboratoire suffit, ou si la méthode peut fonctionner sur une vraie surface planétaire.</p>
+<p>Des chercheurs proposent que trouver des signaux extraterrestres exige non seulement la bonne direction, mais aussi le bon moment.</p>
+<p>L’approche applique la théorie des jeux pour modéliser les attentes mutuelles entre civilisations sur le moment de transmettre ou de recevoir.</p>
+<p>Une détection réussie dépend d’hypothèses coordonnées sur les horaires de transmission à travers les distances interstellaires.</p>
+<p>Des collisions fréquentes entre étoiles dans l’univers primitif, selon Space point com, auraient pu permettre une croissance rapide des trous noirs supermassifs.</p>
+<p>Le même processus pourrait expliquer les mystérieux petits points rouges observés par le télescope spatial James Webb.</p>
+<p>Les collisions auraient fourni un mécanisme pour que les trous noirs atteignent des masses énormes sur de courtes échelles de temps cosmiques.</p>
+<p>De nouvelles simulations rapportées par Phys point org montrent que, pour les astéroïdes irréguliers, l’endroit précis où les rayons X d’une explosion nucléaire frappent peut affecter de façon importante le changement de trajectoire qui en résulte.</p>
+<p>Les surfaces bosselées créent un transfert de quantité de mouvement inégal dont il faut tenir compte dans la planification de la déviation.</p>
+<p>Un objet surnommé Capotauro est apparu dans les premières images de James Webb comme une possible galaxie primitive.</p>
+<p>Des images prises à trois ans et demi d’intervalle ont montré que la source rouge pâle avait changé de position, l’identifiant plutôt comme une naine brune froide.</p>
+<p>Le mouvement a révélé que l’objet est proche plutôt qu’une galaxie lointaine à grand décalage vers le rouge.</p>
+<p>Airbus, selon SpaceNews, a développé un dispositif appelé DETUMBLER conçu pour empêcher les satellites hors service de tourner de façon incontrôlée, réduisant le risque de collision dans les orbites encombrées.</p>
+<p>Il offre une solution légère pour les satellites qui tombent en panne avant une désorbitation contrôlée.</p>
+<p>Le dispositif assure une stabilisation passive en rotation sans exiger de systèmes de contrôle actifs.</p>
+<p>Trois astronautes des États-Unis à bord de la Station spatiale internationale, ou I S S, ont déposé électroniquement leurs bulletins de mi-mandat depuis l’orbite, selon Space point com.</p>
+<p>L’équipage a utilisé une transmission sécurisée via le système de satellites de suivi et de relais de données de la NASA pour joindre les responsables électoraux du comté au Texas.</p>
+<p>Les Américains votent depuis l’espace depuis mille neuf cent quatre-vingt-dix-sept, grâce à une loi du Texas qui a d’abord permis à David Wolf de voter depuis Mir.</p>
+<p>Le processus achemine le bulletin chiffré depuis la station via le centre d’essais de White Sands, au Nouveau-Mexique.</p>
+<p>De White Sands, il va au centre de contrôle de mission du centre spatial Johnson avant la livraison finale au greffier du comté.</p>
+<p>Anil Menon, Luke Delaney et Jessica Watkins ont chacun remplis un formulaire électronique dans leur compartiment de la station.</p>
+<p>Ils ont envoyé ces formulaires au comté de Harris.</p>
+<p>La mission lunaire Artemis quatre de la NASA, selon Space point com, exigera un nombre inconnu de vols de ravitailleurs Starship sur deux orbites distinctes.</p>
+<p>Le plan implique plusieurs rendez-vous et transferts de propergol avant que l’atterrisseur puisse descendre vers la surface.</p>
+<p>L’architecture exige une coordination précise entre les véhicules ravitailleurs et l’atterrisseur dans des régimes orbitaux différents.</p>
+<p>En bref autour du domaine, la Thaïlande, selon CNA, élargit ses programmes de satellites et ses partenariats de lancement pour accroître son rôle dans les activités spatiales de l’Asie du Sud-Est.</p>
+<p>Une météorite ancienne du Sahara, selon Reddit, voit sa composition étudiée pour des indices de processus liés à l’eau sur Mars primitive.</p>
+<p>Les observations de James Webb de la galaxie Leviathan, selon Phys point org, montrent des étoiles étalées sur une vaste zone plutôt qu’un noyau concentré, dans une vue d’une époque où l’univers avait environ un milliard et demi d’années, une distribution stellaire étendue contrairement aux galaxies poussiéreuses compactes typiques.</p>
+<p>Une étude sur des rats rapportée par Live Science suggère qu’une exposition prolongée aux rayons cosmiques galactiques pourrait produire des changements du tissu cardiaque qui durent des années après le retour, une préoccupation soulevée pour les équipages vers Mars.</p>
+<p>Après onze heures quarante-deux à treize heures quarante-deux, temps moyen de Greenwich, aujourd’hui, les prochains rapports de suivi devraient dire si l’observatoire Neil Gehrels Swift a achevé sa descente, et quel tronçon d’océan se trouvait sous la trajectoire.</p>
+<p>Voilà pour Fascinating Frontiers aujourd’hui. Si ça vous a plu, une note ou un avis sur Apple Podcasts ou Spotify aide vraiment les nouveaux auditeurs à trouver l’émission. Je suis Patrick, à Vancouver. Merci d’explorer avec moi, et je vous retrouve la prochaine fois. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Petit conseil du réseau : essayez Modern Investing Techniques ensuite — des stratégies modernes pour les investisseurs canadiens et américains. Chaque émission de Nerra Network est gratuite sur nerranetwork point com. Et si vous préférez n’entendre que vos émissions, dans votre ordre, Nerra Personal vous construit une édition quotidienne privée — les détails sont sur nerranetwork point com join.</p>
+<p>Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="ru" hidden>
+                <p class="blog-translated-note">Русский — AI-translated from the English episode.</p>
+                <p>Космический аппарат НАСА весом три тысячи двести фунтов, как ожидается, войдёт в атмосферу Земли в ближайшие часы.</p>
+<p>Это «Захватывающие рубежи», выпуск двести сорок три.</p>
+<p>Дальше — космическая прокламация Белого дома, европейский аппарат «Гера» у двойного астероида и студенческая лунная посадочная площадка, а позже — «Космический прожектор».</p>
+<p>Космические силы Соединённых Штатов, по данным «Спейсфлайт Нау», теперь прогнозируют вход в атмосферу сегодня между одиннадцатью сорока двумя и тринадцатью сорока двумя по среднему времени по Гринвичу.</p>
+<p>Этот прогноз охватывает полосу, которая лежит в основном над океаном и остаётся в пределах двадцати одного градуса к северу или к югу от экватора.</p>
+<p>Обсерватория Нила Герелса «Свифт» работала больше двух десятилетий.</p>
+<p>Эти годы ушли на рентгеновские и ультрафиолетовые наблюдения гамма-всплесков и других быстротечных явлений.</p>
+<p>По последним данным, аппарат может упасть на Землю уже сегодня ночью.</p>
+<p>Президентская прокламация, о которой сообщает «НАСА Вотч», объявляет, что Солнечная система и всё космическое пространство за пределами Земли открыты для исследования, освоения, использования и постоянного присутствия американских граждан.</p>
+<p>Текст ссылается на конституционные полномочия и упоминает «Артемиду два» и запланированные миссии «Артемиды три».</p>
+<p>В нём отмечается апрельский успех «Артемиды два», а «Артемида три» названа одной из самых сложных кампаний испытательных полётов в космической программе страны.</p>
+<p>Документ ставит цель вернуться на Луну к две тысячи двадцать восьмому году и отправить американца на Марс.</p>
+<p>Он подтверждает, что Соединённые Штаты будут лидировать в строительстве объектов и в создании постоянного присутствия, чтобы расширить американское исследование космоса.</p>
+<p>Европейский аппарат «Гера», по данным «Спейс точка ком», подошёл к системе двойного астероида достаточно близко, чтобы различить оба тела.</p>
+<p>На снимках виден меньший Диморфос — цель более раннего испытания НАСА по отклонению «Дарт» — отдельно от Дидима.</p>
+<p>Зонд теперь различает пару как отдельные объекты на своей траектории сближения.</p>
+<p>Студенты и исследователи Университета Алабамы в Хантсвилле, по данным «Юниверс Тудей», этим летом провели три огневых испытания ракетного двигателя на прототипе площадки.</p>
+<p>Конструкция улавливала и отводила выхлоп через встроенную систему вентиляции.</p>
+<p>Прототип показал способность справляться с ракетным выхлопом, не повреждая окружающую поверхность.</p>
+<p>Испытания отмечают прогресс на пути к безопасной посадочной инфраструктуре для будущих лунных баз.</p>
+<p>Космический телескоп «Хаббл», по данным «Спейс точка ком», остаётся в порядке, но сталкивается с растущим атмосферным торможением.</p>
+<p>НАСА просит компании предложить концепции, которые могли бы поднять его орбиту и продлить научную миссию.</p>
+<p>Запрос ищет варианты, как противодействовать постепенному снижению орбиты из-за остаточной атмосферы на высоте «Хаббла».</p>
+<p>У марсохода на Марсе могут быть всего минуты, чтобы оценить валун на пути: то ли это рыхлый обломок размером с чемодан, то ли зарытая плита размером с грузовик.</p>
+<p>Эта разница решает, потратит ли машина часы, оббивая камень, который не сдвинется, или свернёт в сторону и объедет.</p>
+<p>На Земле человек закрывает этот вопрос взглядом и пинком, а у ровера на другом мире такого чувства нет.</p>
+<p>Инженеры Вирджиния Тек, по данным «Физ точка орг», учат машины вместо этого слушать ответ.</p>
+<p>Метод начинается с удара по тому камню, который ещё торчит из земли.</p>
+<p>Молоток с датчиками бьёт по открытой грани, а сканирующий лазерный доплеровский виброметр записывает, как вибрация проходит сквозь зарытую массу и возвращается наружу.</p>
+<p>Чтобы обучить систему, команда закопала в песок восемнадцать бетонных блоков — каждый другого размера и на другой глубине.</p>
+<p>Они измеряли вибрацию в нескольких точках на каждой открытой поверхности.</p>
+<p>Эти частотные картины вместе с видимой геометрией каждого блока попали в нейронную сеть, построенную всего с двумя скрытыми слоями.</p>
+<p>Когда сеть обучили, она смогла оценивать глубину залегания по новому набору показаний вибрации.</p>
+<p>Рыхлый песок и сплошной камень проводят вибрацию по-разному, поэтому зарытый валун возвращает сигнатуру, которой нет у камешка, лежащего на поверхности.</p>
+<p>На Марсе или на Луне роботизированный экскаватор мог бы использовать этот контраст, чтобы не тратить работу на камень, который не сдвинуть.</p>
+<p>Проект возглавил Эрик Комендера вместе с аспирантом Иянь Жуанем.</p>
+<p>Комендера — доцент кафедры машиностроения, ранее работавший инженером в исследовательском центре НАСА Лэнгли.</p>
+<p>Результаты опубликованы в журнале «Ай-трипл-И Сенсорс».</p>
+<p>Жёсткость грунта, угол контакта и форма камня — всё это меняет сигнал, который возвращается.</p>
+<p>Глубину залегания по-прежнему трудно считать, потому что отклик зависит от геометрии камня и от того, как грунт его держит.</p>
+<p>Команда отобрала признаки из данных вибрации и из открытой формы, и этот отбор дал надёжные оценки даже при маленькой сети.</p>
+<p>Пока они планируют и дальше собирать наборы данных и испытывать метод на Земле.</p>
+<p>Те же инструменты могли бы оценивать неустойчивые скальные образования, измерять подземные полости или помогать после катастроф, когда под завалами остаются опасности.</p>
+<p>Как эти модели поведут себя в марсианском реголите, пока открытый вопрос, потому что размер зёрен, влажность и температура там известны лишь частично.</p>
+<p>Испытания на аналоговом грунте решат, хватит ли лабораторной песочницы или метод сможет работать на настоящей планетной поверхности.</p>
+<p>Исследователи предлагают, что поиск внеземных сигналов требует не только верного направления, но и верного момента.</p>
+<p>Подход применяет теорию игр, чтобы смоделировать взаимные ожидания цивилизаций о том, когда передавать или принимать.</p>
+<p>Успешное обнаружение зависит от согласованных допущений о расписании передач через межзвёздные расстояния.</p>
+<p>Частые столкновения звёзд в ранней Вселенной, по данным «Спейс точка ком», могли позволить быстрый рост сверхмассивных чёрных дыр.</p>
+<p>Тот же процесс может объяснить загадочные маленькие красные точки, которые наблюдал космический телескоп «Джеймс Уэбб».</p>
+<p>Столкновения дали бы механизм, благодаря которому чёрные дыры набирали бы огромные массы за короткие космические сроки.</p>
+<p>Новые компьютерные модели, о которых сообщает «Физ точка орг», показывают, что для астероидов неправильной формы точное место, куда бьёт рентгеновское излучение от ядерного взрыва, может существенно повлиять на итоговое изменение траектории.</p>
+<p>Бугристые поверхности создают неравномерную передачу импульса, которую нужно учитывать при планировании отклонения.</p>
+<p>Объект по прозвищу Капотауро появился на ранних снимках «Джеймса Уэбба» как возможная ранняя галактика.</p>
+<p>Снимки, сделанные с интервалом в три с половиной года, показали, что слабый красный источник сместился, и его опознали как холодный коричневый карлик.</p>
+<p>Движение показало, что объект находится рядом, а не является далёкой галактикой с большим красным смещением.</p>
+<p>«Эрбас», по данным «Спейс Ньюс», разработал устройство под названием Детамблер, которое должно остановить кувыркание мёртвых спутников и снизить риск столкновений на переполненных орбитах.</p>
+<p>Оно предлагает лёгкое решение для спутников, которые отказывают до управляемого сведения с орбиты.</p>
+<p>Устройство даёт пассивную стабилизацию вращения без активных систем управления.</p>
+<p>Трое астронавтов Соединённых Штатов на борту Международной космической станции, или эм-ка-эс, отправили электронные бюллетени на промежуточных выборах с орбиты, по данным «Спейс точка ком».</p>
+<p>Экипаж использовал защищённую передачу через спутниковую систему слежения и ретрансляции данных НАСА, чтобы достичь избирательных чиновников округа в Техасе.</p>
+<p>Американцы голосуют из космоса с тысяча девятьсот девяносто седьмого года по закону Техаса, который впервые позволил Дэвиду Вулфу проголосовать с «Мира».</p>
+<p>Процесс направляет зашифрованный бюллетень со станции через испытательный полигон Уайт-Сэндс в Нью-Мексико.</p>
+<p>Из Уайт-Сэндс он идёт в Центр управления полётами в Космическом центре Джонсона, а затем окончательно доставляется секретарю округа.</p>
+<p>Анил Менон, Люк Делейни и Джессика Уоткинс каждый заполнили электронную форму в своих отсеках станции.</p>
+<p>Они отправили эти формы в округ Харрис.</p>
+<p>Лунная миссия НАСА «Артемида четыре», по данным «Спейс точка ком», потребует неизвестное число полётов танкеров «Старшип» на двух отдельных орбитах.</p>
+<p>План включает несколько сближений и перекачек топлива, прежде чем посадочный аппарат сможет спуститься на поверхность.</p>
+<p>Архитектура требует точной координации между танкерами и посадочными аппаратами в разных орбитальных режимах.</p>
+<p>Коротко из разных уголков отрасли: Таиланд, по данным Си-Эн-Эй, расширяет спутниковые программы и партнёрства по запускам, чтобы усилить свою роль в космической деятельности Юго-Восточной Азии.</p>
+<p>Древний метеорит из Сахары, по данным «Реддит», изучают по составу в поисках следов процессов, связанных с водой, на раннем Марсе.</p>
+<p>Наблюдения «Джеймса Уэбба» галактики «Левиафан», по данным «Физ точка орг», показывают звёзды, разбросанные по большой площади, а не в сжатом ядре — это вид из эпохи, когда Вселенной было около полутора миллиардов лет, протяжённое звёздное распределение, не похожее на типичные компактные пыльные галактики.</p>
+<p>Исследование на крысах, о котором сообщает «Лайв Сайенс», предполагает, что длительное воздействие галактических космических лучей может вызвать изменения сердечной ткани, сохраняющиеся годы после возвращения, — это вызывает опасения для экипажей на Марс.</p>
+<p>После промежутка с одиннадцати сорока двух до тринадцати сорока двух по среднему времени по Гринвичу сегодня следующие сообщения слежения должны сказать, завершила ли обсерватория Нила Герелса «Свифт» снижение и какой участок океана оказался под траекторией.</p>
+<p>Это всё на сегодня в «Захватывающих рубежах». Если вам понравилось, оценка или отзыв в «Эппл Подкастс» или в «Спотифай» очень помогает новым слушателям найти шоу. Я Патрик в Ванкувере. Спасибо, что исследовали вместе со мной, и увидимся в следующий раз. А если вам больше нравится смотреть, чем слушать, найдите нас на «Ютубе» — «Нерра Нетворк», ссылка в заметках к выпуску.</p>
+<p>Быстрый совет от сети: попробуйте дальше «Современные инвестиционные техники» — современные стратегии для канадских и американских инвесторов. Каждое шоу «Нерра Нетворк» бесплатно на нерранетворк точка ком. А если вы хотите слышать только свои шоу и в своём порядке, «Нерра Персонал» собирает вам частный ежедневный выпуск — подробности на нерранетворк точка ком джойн.</p>
+<p>В этом выпуске использован синтез моего голоса искусственным интеллектом — отбор материалов и анализ мои собственные.</p>
             </div>
             
 
@@ -1837,17 +2025,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/planetterrian/ep233.html" class="blog-related-card" style="--card-show-color: #017A99">
+                    <a href="../../blog/tesla/ep654.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>New modeling shows U.S. structural fire losses could nearly triple by 2060 without added protections or climate action.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla's FSD fleet logged 45.3 million supervised miles on November 2 alone, reaching 17 billion cumulative.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/omni_view/ep225.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/longevity/ep007.html" class="blog-related-card" style="--card-show-color: #3F6212">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>US strikes on Iran’s Qeshm Island raise the risk of higher energy costs for households worldwide.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #3F6212, white 35%)">Longevity Weekly</span>
+                        <h3>Nearly twelve thousand older adults in a randomised trial had fewer falls and injuries.</h3>
                         
                     </a>
                     
