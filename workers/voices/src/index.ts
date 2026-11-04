@@ -1248,10 +1248,13 @@ function bookingPhone(p: any): string {
   return "";
 }
 
-// Sept 30 2026: every time a person reads is Pacific, the network's zone
+// Sept 30 2026: every time a person reads is in the network's zone
 // (Vancouver), with the guest's own clock alongside when we know it. Mirrors
-// pacific_time in pipelines/voices/common.py.
+// pacific_time in pipelines/voices/common.py. Nov 4 2026: B.C. stays on
+// UTC-7 all year from Nov 1 2026, so the label is the city, never
+// "Pacific Time" (California is an hour behind it all winter).
 const PACIFIC_TZ = "America/Vancouver";
+const VANCOUVER_LABEL = "Vancouver time";
 
 function pacificTime(iso: unknown, guestTz?: string | null, dateOnly = false): string {
   const d = new Date(String(iso ?? ""));
@@ -1262,7 +1265,7 @@ function pacificTime(iso: unknown, guestTz?: string | null, dateOnly = false): s
     { timeZone: tz, hour: "numeric", minute: "2-digit" });
   const pDay = day(PACIFIC_TZ);
   if (dateOnly) return pDay;
-  let out = `${pDay} at ${clock(PACIFIC_TZ)} Pacific Time`;
+  let out = `${pDay} at ${clock(PACIFIC_TZ)} ${VANCOUVER_LABEL}`;
   if (guestTz) {
     try {
       const gClock = clock(guestTz);
@@ -1277,7 +1280,7 @@ function pacificTime(iso: unknown, guestTz?: string | null, dateOnly = false): s
   return out;
 }
 
-/** The booked time as the guest reads it: Pacific, and their own clock. */
+/** The booked time as the guest reads it: Vancouver, and their own clock. */
 function attendeeTimeZone(p: any): string | null {
   const tz = p?.attendees?.[0]?.timeZone ?? null;
   return tz ? String(tz) : null;

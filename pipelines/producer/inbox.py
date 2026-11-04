@@ -221,7 +221,7 @@ BOOKED = ("scheduled", "briefed")
 
 
 def _day(iso: Optional[str]) -> str:
-    """The day in Pacific Time (a 6 pm Pacific slot is tomorrow in UTC)."""
+    """The day in Vancouver time (a 6 pm Vancouver slot is tomorrow in UTC)."""
     from pipelines.voices.common import pacific_time
     return pacific_time(iso, date_only=True) if iso else ""
 

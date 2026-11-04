@@ -100,6 +100,39 @@ def next_step(app: Dict[str, Any], now: Optional[datetime] = None) -> Optional[s
     return None
 
 
+#: An interview in one of these states has been recorded (or is being):
+#: the person behind it is never chased to book one.
+RECORDED_INTERVIEW_STATUSES = ("in_progress", "completed", "editorial_review",
+                               "awaiting_guest", "approved_by_guest", "approved",
+                               "published")
+
+
+def recorded_elsewhere(app: Dict[str, Any]) -> Optional[str]:
+    """The id of another application by the same email whose interview was
+    recorded, or None.
+
+    Nov 4 2026: Stuart Berkowitz had two applications, one "invited" and one
+    "approved". He was interviewed on Oct 23 under the approved one; the
+    invited one sent "pick a time" on Oct 26 and he asked whether the
+    interview had failed. A chase is about booking, so it reads the person,
+    not the row."""
+    from urllib.parse import quote
+    email = (app.get("email") or "").strip().lower()
+    if not email:
+        return None
+    others = [a for a in sb_select("guest_applications",
+                                   f"email=ilike.{quote(email, safe='')}&select=id&limit=20")
+              if a.get("id") != app.get("id")]
+    if not others:
+        return None
+    ids = ",".join(str(a["id"]) for a in others)
+    done = sb_select("interviews",
+                     f"application_id=in.({ids})"
+                     f"&status=in.({','.join(RECORDED_INTERVIEW_STATUSES)})"
+                     "&select=application_id&limit=1")
+    return str(done[0]["application_id"]) if done else None
+
+
 def candidates(limit: int = 200) -> List[Dict[str, Any]]:
     return sb_select("guest_applications",
                      f"status=eq.invited&source=eq.email&select={COLUMNS}"
@@ -123,6 +156,15 @@ def process(app: Dict[str, Any], *, gmail: GmailClient, policy: Policy,
     line = {"application_id": app["id"], "guest_name": app.get("name"),
             "thread_id": app.get("email_thread_id"), "step": step, "action": "none"}
     if step is None:
+        return line
+    twin = recorded_elsewhere(app)
+    if twin:
+        line["action"] = "close"
+        line["reason"] = f"same person already interviewed (application {twin})"
+        if not dry_run:
+            sb_update("guest_applications", f"id=eq.{app['id']}", {
+                "status": "lapsed", "producer_closed_reason": "already_interviewed",
+                "producer_acted_at": _now().isoformat()})
         return line
     thread = gmail.get_thread(app["email_thread_id"])
     if newest_is_inbound(thread, gmail.user):
