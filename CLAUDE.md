@@ -1962,6 +1962,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   (`_rank_shows_by_channel_views`, `engine.language_front.lead_rotation_for`;
   the English page passes neither); **the RU landers ask for the subscribe and
   the RSS, never an email**. Guards `tests/test_site_languages_2026_10_18.py`.
+- **`api/buttondown_history.json` is the newsletter's one series** (a row a
+  night from `scripts/fetch_buttondown_stats.py`, which owns its readers): an
+  earlier date's row is never rewritten; **the open rate is over the last
+  seven SENDS' summed recipients, null under `RATE_FLOOR`**; the Nerra Daily
+  tile is never hidden. Guards `tests/test_email_measurement_2026_11_03.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 

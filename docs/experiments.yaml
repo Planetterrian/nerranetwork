@@ -6243,6 +6243,7 @@ experiments:
     shipped: 2026-11-01
     readout: 2026-11-29
     status: reading
+    metric: email_click_sessions_28d
     baseline: >
       Oct 31 2026: 14 Buttondown subscribers (2 paid), email 3 sessions to the
       site in 28 days, about 19 per-show daily sends attempted a morning (ten
@@ -7124,6 +7125,35 @@ experiments:
       ru-spacex-weekly.yml retired (the script survives one release with its
       test). Guards tests/test_site_languages_2026_10_18.py,
       tests/test_ru_spacex_pilot.py.
+  - id: email-measurement-2026-11-04
+    title: "The email can be judged: a nightly subscriber and tag history, four live metrics, a tile that is never hidden"
+    area: funnel
+    shipped: 2026-11-04
+    readout: 2026-11-29
+    status: reading
+    metric: email_open_rate_7d
+    baseline: >
+      Nov 2 2026: the Mission Control tile was hidden at "sends 0"; the
+      newsletter had no series ("the list grew by two" came from a ledger
+      note); no email register metric; 14 subscribers; 3 email sessions to
+      the site in 28 days (Oct 31).
+    target: >
+      By the readout: api/buttondown_history.json holds at least 25 nightly
+      rows; email_open_rate_7d is a number on every night with seven sends
+      and 30 summed recipients (null below, never 0);
+      email_subscribers_delta_7d is a number from Nov 11.
+    criteria: >
+      HIT when the history holds at least 25 rows and the four email_*
+      keys are non-null on the readout night.
+    readout_plan: >
+      api/buttondown_history.json; the experiments live metrics in
+      api/dashboard.json; python scripts/review_snapshot.py network.
+    notes: >
+      scripts/fetch_buttondown_stats.py (history + readers),
+      build_audience_headline network.email, generate_dashboard
+      _email_live_metrics, the management.html tile, the nightly add-paths.
+      No back-fill from git history. Guards
+      tests/test_email_measurement_2026_11_03.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency
