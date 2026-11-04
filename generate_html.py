@@ -2175,6 +2175,61 @@ def _rank_shows_by_audience(shows, path=None):
     return ranked + rest
 
 
+FUNNEL_PATH = ROOT / "api" / "funnel.json"
+
+
+def _channel_views_by_show(lang, path=None):
+    """Slug -> 30-day YouTube views on the ``lang`` channel, read from the
+    committed ``api/funnel.json`` (``stages.reach.by_show[slug].by_channel
+    [lang].views``, rebuilt nightly by scripts/build_funnel.py).
+
+    ``None`` when the file is missing or unreadable — the callers then fall
+    back to the English ranking — and ``{}`` when it is readable but no show
+    has a row on that channel. A show with no row, or with 0 views, is absent
+    from the mapping (never written as 0).
+    """
+    path = FUNNEL_PATH if path is None else Path(path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        by_show = ((data.get("stages") or {}).get("reach") or {}).get("by_show") or {}
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(by_show, dict):
+        return None
+    out = {}
+    for slug, entry in by_show.items():
+        channel = (entry.get("by_channel") or {}).get(lang) if isinstance(entry, dict) else None
+        views = channel.get("views") if isinstance(channel, dict) else None
+        if isinstance(views, (int, float)) and views > 0:
+            out[slug] = views
+    return out
+
+
+def _rank_shows_by_channel_views(shows, lang, path=None):
+    """Return ``shows`` ranked by the ``lang`` YouTube channel's own 30-day
+    views, for that language's front page (``<lang>/index.html``).
+
+    Nov 3 2026: both language hubs ranked their shows with
+    ``_rank_shows_by_audience`` — ENGLISH RSS downloads — so ru/index.html
+    put SpaceX and Tesla first and Fascinating Frontiers last while
+    @NerraRU's views ran FF 20,074 > SpaceX 5,966 > Tesla 4,901. A show with
+    no row on the channel (Modern Investing on ru and fr, the native Russian
+    shows) keeps its ``display_order`` place AFTER the ranked ones; ties fall
+    back to ``display_order``. A missing or unreadable file, or a file with
+    no row for the channel at all, falls back to the English ranking. Only
+    the language hubs use this: the English homepage keeps
+    ``_rank_shows_by_audience``.
+    """
+    views = _channel_views_by_show(lang, path)
+    if not views:
+        return _rank_shows_by_audience(shows)
+    ranked = [s for s in shows if s["slug"] in views]
+    rest = [s for s in shows if s["slug"] not in views]
+    # Python's sort is stable, so equal counts keep display_order.
+    ranked.sort(key=lambda s: -views[s["slug"]])
+    return ranked + rest
+
+
 def _build_all_shows_list():
     """Build a list of all shows with metadata needed by templates."""
     shows = [
@@ -6747,7 +6802,25 @@ def _count_languages() -> int:
 # Copy per show. Kept here rather than in the show YAML because it is page
 # copy, not pipeline config, and because it must be written by someone who
 # can read it — an auto-translated landing page is exactly the thing that
-# makes an audience distrust a signup form.
+# makes an audience distrust it.
+#
+# Nov 3 2026 (six-month review, register ``ru-spacex-pilot-2026-07-30``:
+# MISS): the Sunday letter the page promised («Хроника SpaceX» / «Хроника
+# Tesla») captured nobody in three months, while 89% of @NerraRU's views
+# arrive from the Shorts feed. The one ask is now the two things that
+# audience actually does — subscribe to the channel, add the Russian RSS —
+# and no page copy may promise a letter again. The button labels are shared
+# (``_RU_LANDING_ASK``); ``ask_title`` / ``ask_description`` are per show.
+_RU_LANDING_ASK = {
+    "subscribe_label": "Подписаться на @NerraRU",
+    "rss_label": "Добавить RSS в приложение",
+    "hub_label": "Все подкасты по-русски",
+    "ask_note": (
+        "Без писем и форм: подписка на YouTube или RSS в вашем "
+        "подкаст-приложении — и новые выпуски находят вас сами."
+    ),
+}
+
 _RU_LANDING_COPY = {
     "spacex": {
         "show_name_ru": "SpaceX по-русски",
@@ -6758,15 +6831,10 @@ _RU_LANDING_COPY = {
             "контраргумент в каждом выпуске и никакого пересказа "
             "заголовков."
         ),
-        "magnet_title": "«Хроника SpaceX» — письмо по воскресеньям",
-        "magnet_description": (
-            "Одно письмо в неделю: главное за семь дней одним списком, "
-            "окно следующего запуска и ссылки на выпуски, которые стоит "
-            "послушать. По-русски."
-        ),
-        "magnet_note": (
-            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
-            "в каждом письме."
+        "ask_title": "Новый выпуск — каждый день",
+        "ask_description": (
+            "Подпишитесь на канал @NerraRU, где каждый выпуск выходит "
+            "по-русски, или добавьте RSS-ленту в своё подкаст-приложение."
         ),
         "listen_note": (
             "Русская озвучка выходит вслед за английским выпуском — "
@@ -6786,15 +6854,11 @@ _RU_LANDING_COPY = {
             "TSLA и один честный контраргумент в каждом выпуске. "
             "Источники названы, никакого пересказа заголовков."
         ),
-        "magnet_title": "«Хроника Tesla» — письмо по воскресеньям",
-        "magnet_description": (
-            "Одно письмо в неделю: главное о Tesla за семь дней одним "
-            "списком и ссылки на выпуски, которые стоит послушать. "
-            "По-русски."
-        ),
-        "magnet_note": (
-            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
-            "в каждом письме."
+        "ask_title": "Новый выпуск — каждый день",
+        "ask_description": (
+            "Подпишитесь на канал @NerraRU, где каждый выпуск о Tesla "
+            "выходит по-русски, или добавьте RSS-ленту в своё "
+            "подкаст-приложение."
         ),
         "listen_note": (
             "Русская озвучка выходит вслед за английским выпуском — "
@@ -7003,8 +7067,29 @@ def generate_ru_landing_page(slug, *, dry_run=False):
         "external": True,
     })
 
-    capture_list = ((show_yaml.get("funnel") or {}).get("capture_tag")
-                    or "gallery")
+    # The one ask (Nov 3 2026): the channel subscribe and the Russian feed.
+    # ``channel_subscribe_url`` is the one owner of the subscribe URL; the
+    # feed is this show's own RU track; the hub link is internal and so
+    # carries no utm_* (engine.funnel's rule). Nothing here posts to the
+    # subscribe Worker any more — ``funnel.capture_tag`` in the show YAML
+    # stays as data for scripts/build_funnel.py's pilot rows.
+    from engine.video_metadata import channel_subscribe_url
+    ask_links = [{
+        "kind": "subscribe",
+        "label": _RU_LANDING_ASK["subscribe_label"],
+        "url": channel_subscribe_url("ru"),
+        "external": True,
+    }]
+    if ru_feed:
+        ask_links.append({
+            "kind": "rss",
+            "label": _RU_LANDING_ASK["rss_label"],
+            "url": ru_feed,
+            "external": False,
+        })
+    hub_path = _show_lang.language_hub_path("ru")
+    hub_link = ({"label": _RU_LANDING_ASK["hub_label"],
+                 "url": f"{prefix}{hub_path}"} if hub_path else None)
 
     env = _get_jinja_env()
     template = env.get_template("ru_landing.html.j2")
@@ -7025,7 +7110,9 @@ def generate_ru_landing_page(slug, *, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "episodes": _ru_landing_episodes(slug),
         "listen_links": listen_links,
-        "capture_list": capture_list,
+        "ask_links": ask_links,
+        "ask_note": _RU_LANDING_ASK["ask_note"],
+        "hub_link": hub_link,
         # One ask per landing page. The footer's show-picker offers
         # fifteen English show names and would tag a Russian visitor
         # onto English dailies — a competing CTA and the wrong one.
@@ -7426,11 +7513,22 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
         lang, in_language, network_shows=NETWORK_SHOWS, root=ROOT,
         gallery_root=gallery_root, blog_url_for=_post, audio_url_for=_audio,
         now=now, hub_for=_lt.hub_by_slug(in_language))
-    ranked = _rank_shows_by_audience(in_language)
+    # Nov 3 2026: the channel's own views rank this page, and only a show the
+    # channel's audience watches (views > 0) or a show made in the language
+    # may be the rotated lead — a Canadian markets story from a show with no
+    # row on the channel led both hubs on Nov 2. No funnel file: the English
+    # ranking and the English rotation, as before.
+    channel_views = _channel_views_by_show(lang)
+    ranked = _rank_shows_by_channel_views(in_language, lang)
+    lead_shows = None
+    if channel_views is not None:
+        lead_shows = [s["slug"] for s in in_language
+                      if s.get("page_lang") == lang or channel_views.get(s["slug"], 0) > 0]
     page = _front.assemble(
         stories, lang=lang, audience_order=[s["slug"] for s in ranked],
         flagships=_brand.FLAGSHIP_SHOW_SLUGS,
-        section_headings=copy.get("section_headings") or {})
+        section_headings=copy.get("section_headings") or {},
+        lead_shows=lead_shows)
     tagline = {"ru": _brand.NETWORK_TAGLINE_RU, "fr": _brand.NETWORK_TAGLINE_FR}.get(
         lang, _brand.NETWORK_TAGLINE)
 

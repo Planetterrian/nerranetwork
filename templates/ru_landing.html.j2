@@ -1,15 +1,22 @@
 {# ---------------------------------------------------------------------
-   Russian-language funnel landing page (July 2026 pilot).
+   Russian-language funnel landing page (July 2026 pilot; the ask rewritten
+   Nov 3 2026).
 
    ONE destination, ONE thing to do. Every @NerraRU Short and long-form
    description for a show with `funnel.destinations.ru` set points here
-   instead of at the English homepage, and the only ask above the fold is
-   an email address in exchange for one clearly-described weekly letter.
+   instead of at the English homepage. The only ask above the fold is the
+   one a Shorts-feed audience can act on: subscribe to the channel, or add
+   the Russian RSS to a podcast app (`ask_links`, built by generate_html
+   from engine.video_metadata.channel_subscribe_url and the show's own RU
+   feed). The email form and its Sunday letter are gone — three months,
+   zero captures (register `ru-spacex-pilot-2026-07-30`: MISS) — and no copy
+   here may promise a letter again. One internal link (no UTM) leads to the
+   Russian front page, `hub_link`.
 
-   Everything below the capture block is proof, not another ask: the next
-   launch window, the latest Russian episodes, and where to subscribe in
-   a podcast app. Deliberately no navigation-style link farm — a second
-   call to action is how a landing page stops converting.
+   Everything below the ask is proof, not another ask: the next launch
+   window, the latest Russian episodes, and where to listen in a podcast
+   app. Deliberately no navigation-style link farm — a second call to
+   action is how a landing page stops converting.
    --------------------------------------------------------------------- #}
 {% extends "base.html.j2" %}
 {% from "_macros.html.j2" import ai_badge %}
@@ -93,47 +100,34 @@
     color: var(--nn-text-muted);
     margin: 0 0 1rem;
   }
-  .ru-form { display: flex; gap: .6rem; flex-wrap: wrap; }
-  .ru-form input[type="email"] {
-    flex: 1 1 15rem;
-    min-width: 0;
-    padding: .8rem 1rem;
+  .ru-ask { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .ru-ask a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    flex: 1 1 14rem;
+    padding: .8rem 1.3rem;
     border-radius: 10px;
     border: 1px solid var(--nn-border-hover);
-    background: rgba(0, 0, 0, .28);
     color: var(--nn-text);
-    font: inherit;
-    font-size: .98rem;
-  }
-  .ru-form input[type="email"]:focus {
-    outline: 2px solid var(--nn-cyan);
-    outline-offset: 1px;
-  }
-  .ru-form button {
-    flex: 0 0 auto;
-    padding: .8rem 1.5rem;
-    border: 0;
-    border-radius: 10px;
-    background: var(--nn-gradient);
-    color: #fff;
+    text-decoration: none;
     font: inherit;
     font-weight: 700;
-    cursor: pointer;
+    text-align: center;
   }
-  .ru-form button[disabled] { opacity: .6; cursor: default; }
-  .ru-form-note {
+  .ru-ask a:hover { border-color: var(--nn-cyan); color: var(--nn-cyan); }
+  .ru-ask a.ru-ask-primary {
+    border-color: transparent;
+    background: var(--nn-gradient);
+    color: #fff;
+  }
+  .ru-ask a.ru-ask-primary:hover { color: #fff; filter: brightness(1.08); }
+  .ru-ask-note {
     font-size: .8rem;
     color: var(--nn-text-muted);
     margin: .8rem 0 0;
   }
-  .ru-form-status {
-    margin: .85rem 0 0;
-    font-size: .93rem;
-    font-weight: 600;
-    min-height: 1.2em;
-  }
-  .ru-form-status[data-state="ok"] { color: var(--nn-cyan); }
-  .ru-form-status[data-state="error"] { color: #ff9a9a; }
 
   /* ---- Proof blocks ---- */
   .ru-panel {
@@ -198,9 +192,9 @@
     .ru-hero { padding-top: calc(var(--nav-height) + 1.5rem); }
     .ru-hero-inner { grid-template-columns: 1fr; gap: 1.75rem; }
     /* The ask stays above the cover art on phones. Visitors arrive here
-       from a Short, on a phone, with one thing to do — pushing the form
-       a full screen down behind decorative artwork is how a landing
-       page loses the traffic it just paid for. */
+       from a Short, on a phone, with one thing to do — pushing the
+       buttons a full screen down behind decorative artwork is how a
+       landing page loses the traffic it just paid for. */
     .ru-hero h1 { font-size: clamp(1.9rem, 8vw, 2.4rem); }
     .ru-hero-desc { font-size: 1rem; margin-bottom: 1.25rem; }
     .ru-hero-art img { max-width: 180px; }
@@ -233,17 +227,15 @@
         <p class="ru-hero-desc">{{ hero_description }}</p>
 
         <div class="ru-capture">
-          <h2>{{ magnet_title }}</h2>
-          <p>{{ magnet_description }}</p>
-          <form class="ru-form" id="ru-capture-form" novalidate>
-            <label class="sr-only" for="ru-capture-email">Электронная почта</label>
-            <input type="email" id="ru-capture-email" name="email"
-                   placeholder="вы@почта.ru" required
-                   autocomplete="email" inputmode="email">
-            <button type="submit" id="ru-capture-submit">Подписаться</button>
-          </form>
-          <p class="ru-form-status" id="ru-capture-status" role="status" aria-live="polite"></p>
-          <p class="ru-form-note">{{ magnet_note }}</p>
+          <h2>{{ ask_title }}</h2>
+          <p>{{ ask_description }}</p>
+          <div class="ru-ask" id="ru-ask">
+            {%- for link in ask_links | default([]) %}
+            <a href="{{ link.url }}" data-ask="{{ link.kind }}"{% if loop.first %} class="ru-ask-primary"{% endif %}{% if link.external %} target="_blank" rel="noopener"{% endif %}>{{ link.label }}</a>
+            {%- endfor %}
+          </div>
+          <p class="ru-ask-note">{{ ask_note }}{% if hub_link %}
+            <a href="{{ hub_link.url }}" hreflang="ru">{{ hub_link.label }}</a>{% endif %}</p>
         </div>
       </div>
       <div class="ru-hero-art">
@@ -313,87 +305,6 @@
 <script>
 (function () {
   "use strict";
-
-  // The Worker that owns Buttondown (same origin as the gallery gate).
-  var API_BASE = (window.NN_GALLERY_API_BASE ||
-    "https://api.nerranetwork.com").replace(/\/+$/, "");
-  var LIST = {{ capture_list | tojson }};
-
-  // Which surface sent this visitor. Mirrors engine.funnel.source_tag()
-  // and the Worker's own allow-list — anything not on it is dropped
-  // rather than guessed, so an unattributed capture stays honestly
-  // unattributed instead of being credited to the wrong channel.
-  var SOURCE_TAGS = {
-    "youtube": "src-youtube",
-    "youtube_ru": "src-youtube-ru",
-    "youtube_fr": "src-youtube-fr",
-    "podcast": "src-podcast",
-    "newsletter": "src-newsletter",
-    "x": "src-x"
-  };
-
-  function params() {
-    try { return new URLSearchParams(window.location.search); }
-    catch (e) { return new URLSearchParams(""); }
-  }
-  var qs = params();
-  var sourceTag = SOURCE_TAGS[(qs.get("utm_source") || "").toLowerCase()] || "";
-  var campaign = qs.get("utm_campaign") || "";
-
-  var form = document.getElementById("ru-capture-form");
-  var input = document.getElementById("ru-capture-email");
-  var button = document.getElementById("ru-capture-submit");
-  var status = document.getElementById("ru-capture-status");
-
-  function say(text, state) {
-    status.textContent = text;
-    status.setAttribute("data-state", state || "");
-  }
-
-  if (form) {
-    form.addEventListener("submit", function (ev) {
-      ev.preventDefault();
-      var email = (input.value || "").trim();
-      if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
-        say("Проверьте адрес электронной почты.", "error");
-        input.focus();
-        return;
-      }
-      button.disabled = true;
-      say("Отправляем…", "");
-
-      fetch(API_BASE + "/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: email, list: LIST, source: sourceTag })
-      }).then(function (resp) {
-        return resp.json().catch(function () { return {}; })
-          .then(function (data) { return { ok: resp.ok, data: data }; });
-      }).then(function (r) {
-        if (!r.ok || !r.data || r.data.ok !== true) {
-          throw new Error("subscribe failed");
-        }
-        form.hidden = true;
-        say(r.data.alreadySubscribed
-          ? "Вы уже подписаны — письмо придёт в воскресенье."
-          : "Готово! Первое письмо придёт в ближайшее воскресенье.", "ok");
-        // Conversion event: this is the ONLY place the funnel learns that
-        // a visit became a capture, and the campaign carries the show,
-        // channel and episode that earned it (see engine/funnel.py).
-        if (typeof window.gtag === "function") {
-          window.gtag("event", "newsletter_signup", {
-            list: LIST,
-            source: sourceTag || "direct",
-            campaign: campaign || "direct"
-          });
-        }
-      }).catch(function () {
-        button.disabled = false;
-        say("Не получилось подписаться. Попробуйте ещё раз позже.", "error");
-      });
-    });
-  }
 
   // ---- Next launch (same api/spacex_launches.json the data hub reads) ----
   var panel = document.getElementById("ru-launch-panel");

@@ -37,7 +37,7 @@ import json
 import re
 from datetime import date
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence
 
 from engine import titles as _titles
 from engine import topic_hubs as _hubs
@@ -846,17 +846,29 @@ def _beat(story: Dict[str, Any]) -> str:
     return _SAME_BEAT.get(hub, hub) or story.get("slug", "")
 
 
-def _rotated_lead(ordered: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    """The newest day's pictured story from today's subject in
-    ``LEAD_ROTATION`` (the audience ranking still picks WITHIN a subject)."""
+def _rotated_lead(ordered: Sequence[Dict[str, Any]],
+                  rotation: Sequence[str] = LEAD_ROTATION,
+                  lead_slugs: Optional[Collection[str]] = None) -> Optional[Dict[str, Any]]:
+    """The newest day's pictured story from today's subject in ``rotation``
+    (the audience ranking still picks WITHIN a subject).
+
+    ``rotation`` defaults to the network's ``LEAD_ROTATION``; a language front
+    page passes the subjects its own audience has a story in (Nov 3 2026), so
+    the day's index runs over THAT list. ``lead_slugs`` narrows the candidates
+    to those shows (``None``: every show) — the language pages' rule that the
+    lead comes from a show the channel's audience watches or a show made in
+    the language, never from a show with no row on the channel. An empty
+    rotation picks nothing and the caller's fallbacks decide.
+    """
     newest = ordered[0].get("date_obj") if ordered else None
-    if not newest:
+    if not newest or not rotation:
         return None
     pictured = [s for s in ordered
-                if s.get("date_obj") == newest and s["image_orientation"] == "landscape"]
-    start = newest.toordinal() % len(LEAD_ROTATION)
-    for i in range(len(LEAD_ROTATION)):
-        hub = LEAD_ROTATION[(start + i) % len(LEAD_ROTATION)]
+                if s.get("date_obj") == newest and s["image_orientation"] == "landscape"
+                and (lead_slugs is None or s.get("slug") in lead_slugs)]
+    start = newest.toordinal() % len(rotation)
+    for i in range(len(rotation)):
+        hub = rotation[(start + i) % len(rotation)]
         pick = next((s for s in pictured if s.get("hub_id") == hub), None)
         if pick is not None:
             return pick
@@ -907,7 +919,9 @@ def merge_retellings(ordered: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def assemble(stories: Iterable[Dict[str, Any]], *,
              audience_order: Sequence[str] = (),
              live_hub_ids: Iterable[str] = (),
-             flagships: Sequence[str] = ()) -> Dict[str, Any]:
+             flagships: Sequence[str] = (),
+             lead_rotation: Sequence[str] = LEAD_ROTATION,
+             lead_slugs: Optional[Collection[str]] = None) -> Dict[str, Any]:
     """Lay the stories out: lead, flagships, top stories, latest list, sections.
 
     Deterministic: newest date first, then the audience ranking (30-day
@@ -919,6 +933,11 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     band every day, in the given order, and so never also runs as the lead, a
     top story or a section story; it still appears in the Latest list, which
     is the chronological record.
+
+    ``lead_rotation`` / ``lead_slugs`` are the subjects the lead rotates
+    through and the shows it may come from (``_rotated_lead``); the defaults
+    are the English front page's — every subject in ``LEAD_ROTATION``, every
+    show. The language fronts pass their own (``engine.language_front``).
     """
     rank = {slug: n for n, slug in enumerate(audience_order)}
     ordered = sorted(stories, key=_order_key(rank))
@@ -948,7 +967,7 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     # comes first: its landscape story, then any of its stories with a
     # picture, and only then an older landscape lead.
     newest = pool[0].get("date_obj")
-    lead = (_rotated_lead(pool)
+    lead = (_rotated_lead(pool, lead_rotation, lead_slugs)
             or next((s for s in pool if s.get("date_obj") == newest
                      and s["image_orientation"] == "landscape"), None)
             or next((s for s in pool if s.get("date_obj") == newest and s["image_url"]), None)

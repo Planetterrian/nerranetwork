@@ -249,12 +249,41 @@ def collect_stories(lang: str, public: Sequence[Dict[str, Any]], *,
     return stories
 
 
+def lead_rotation_for(stories: Iterable[Dict[str, Any]],
+                      lead_shows: Iterable[str],
+                      rotation: Sequence[str] = _lt.LEAD_ROTATION) -> List[str]:
+    """The subjects of ``rotation`` that have a story from one of
+    ``lead_shows`` — the page's own lead rotation, in ``rotation``'s order.
+
+    Nov 3 2026: both hubs led with Modern Investing's Treasury-auction /
+    TFSA story because the lead rotated through the ENGLISH subject list and
+    "markets" had MIT as its only candidate — a show with no row on either
+    channel. A subject none of the audience's shows has a story in is
+    skipped, so the day's index runs over the subjects this audience can
+    actually be led from. Deterministic; no model call.
+    """
+    eligible = set(lead_shows)
+    present = {s.get("hub_id") for s in stories if s.get("slug") in eligible}
+    return [hub for hub in rotation if hub in present]
+
+
 def assemble(stories: Iterable[Dict[str, Any]], *, lang: str,
              audience_order: Sequence[str] = (), flagships: Sequence[str] = (),
-             section_headings: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+             section_headings: Optional[Dict[str, str]] = None,
+             lead_shows: Optional[Iterable[str]] = None) -> Dict[str, Any]:
     """The English assembler's layout, with the section headings and the
     edition date written in *lang*. Sections never link the English topic
-    hubs (``hub_url`` stays empty)."""
+    hubs (``hub_url`` stays empty).
+
+    ``lead_shows`` (Nov 3 2026) are the slugs whose story may lead the page:
+    the shows the language's YouTube channel actually watches (views > 0 in
+    ``api/funnel.json``) plus the shows made in the language. The lead then
+    rotates only through the subjects those shows have a story in
+    (``lead_rotation_for``) and is picked only from them; every other story
+    still runs as a top story, in its section and in the Latest rail. ``None``
+    keeps the English rotation over every show (the behaviour before this
+    date, and the fallback when the funnel file is missing).
+    """
     # Oct 19 2026: a native show's story whose headline is not in the page's
     # language (Привет, Русский! writes its hooks in English) never leads
     # the page or runs as a top story — Ep74's "Today we step into the
@@ -262,8 +291,14 @@ def assemble(stories: Iterable[Dict[str, Any]], *, lang: str,
     # rail, marked ``lang="en"``.
     stories = list(stories)
     foreign = [s for s in stories if s.get("lang")]
-    page = _lt.assemble([s for s in stories if not s.get("lang")],
-                        audience_order=audience_order, live_hub_ids=(), flagships=flagships)
+    in_lang = [s for s in stories if not s.get("lang")]
+    if lead_shows is None:
+        rotation, lead_slugs = _lt.LEAD_ROTATION, None
+    else:
+        lead_slugs = frozenset(lead_shows)
+        rotation = lead_rotation_for(in_lang, lead_slugs)
+    page = _lt.assemble(in_lang, audience_order=audience_order, live_hub_ids=(),
+                        flagships=flagships, lead_rotation=rotation, lead_slugs=lead_slugs)
     if foreign:
         placed = {id(s) for s in [page.get("lead"), *page.get("top", []), *page.get("latest", []),
                                    *page.get("more", []), *page.get("flagships", []),

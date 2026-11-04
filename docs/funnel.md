@@ -133,17 +133,26 @@ every description POINTS AT cannot drift apart (the slug/filename
 landmine applied to the funnel; guarded by a test that resolves the
 configured URL to a file on disk).
 
-**One reason to give an email.** «Хроника SpaceX» — one Russian letter
-every Sunday: the week's episodes, the next launch window, links to the
-audio. Nothing else on the page asks for anything; the site footer's
-fifteen-English-show picker is suppressed via `hide_footer_subscribe`
-(default false, so no other page changed).
+**One reason to give an email** *(retired 2026-11-03)*. «Хроника SpaceX» —
+one Russian letter every Sunday: the week's episodes, the next launch
+window, links to the audio. Three months on, the form had captured nobody
+(`api/funnel.json pilots`: 5,966 views → 6 click sessions, captures null;
+the `ru-spacex` tag never had a subscriber), while 89% of @NerraRU's views
+came from the Shorts feed. The ask is now the one that audience can act on:
+**Subscribe to @NerraRU** (`engine.video_metadata.channel_subscribe_url`)
+and **add the Russian RSS to a podcast app**, plus one internal (no UTM)
+link to `ru/index.html`. No form, no capture script, no conversion event;
+the page is measured by engaged sessions. The site footer's
+fifteen-English-show picker is still suppressed via `hide_footer_subscribe`
+(default false, so no other page changed). Register:
+`ru-spacex-pilot-2026-07-30` (MISS).
 
-**The letter is actually sent.** `scripts/send_ru_spacex_weekly.py` +
-`.github/workflows/ru-spacex-weekly.yml` (Sundays 15:00 UTC, after the
-episode and its RU translation). Composed entirely from artifacts that
-already exist — `translations.ru` in the summaries file and
-`api/spacex_launches.json`. Guards, in firing order: no API key -> clean
+**The letter was actually sent** *(retired 2026-11-03)*.
+`scripts/send_ru_spacex_weekly.py` stays for one release (module docstring
+says so; `TestWeeklyLetter` pins its rules until both go);
+`.github/workflows/ru-spacex-weekly.yml` is deleted. It composed entirely
+from artifacts that already exist — `translations.ru` in the summaries file
+and `api/spacex_launches.json`. Guards, in firing order: no API key -> clean
 no-op; no Russian episodes in the window -> **no send** (an empty issue
 spends the only attention this pilot has); already sent this ISO week ->
 refused.
@@ -313,7 +322,7 @@ Guards: `tests/test_funnel_denominator_2026_11_03.py`;
 | `engine/shorts_ab.py` | variant assignment + treatment assets + fallbacks |
 | `scripts/build_funnel.py` | joins the four datasets -> `api/funnel.json` |
 | `scripts/build_shorts_ab_report.py` | scores the A/B -> `api/shorts_ab.json` |
-| `scripts/send_ru_spacex_weekly.py` | «Хроника SpaceX» |
+| `scripts/send_ru_spacex_weekly.py` | «Хроника SpaceX» (retired 2026-11-03; one release) |
 | `templates/ru_landing.html.j2` | the Russian landing page |
 | `workers/gallery/src/handlers.ts` | `resolveSubscribeTags` (server-side allow-list) |
 | `tests/test_funnel.py` | build/parse round-trip + every surface is tagged |
