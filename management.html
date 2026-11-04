@@ -804,6 +804,24 @@
       spark: (ahn.weekly_downloads || []).map((n) => Number(n || 0)),
       sparkTitle: "Weekly RSS downloads (last element = current partial week)" }));
 
+  // Nov 3 2026: the editorial number beside the audience number — the
+  // daily audit's 1-10 over 14 days (api/editorial_score_history.json).
+  // A dash, never 0, where fewer reviews than the floor exist.
+  const es = data.editorial_score || {};
+  const esn = es.network || {};
+  const esLow = (es.lowest || []).map((slug) =>
+    showName(slug) + " " + Number(((es.shows || {})[slug] || {}).mean).toFixed(2));
+  tiles.appendChild(statTile("Editorial score · 14d",
+    es.configured && esn.mean != null ? Number(esn.mean).toFixed(2) + "/10" : "—",
+    { ops: true,
+      sub: es.configured
+        ? (fmt(esn.n) + " scored episodes · " + fmt(esn.critical) + " criticals" +
+           (esLow.length ? " · lowest " + esLow.join(", ") : "") +
+           " · flags quoting a found sentence " +
+           (esn.flags_grounded_share == null ? "—"
+             : Math.round(100 * esn.flags_grounded_share) + "%"))
+        : "no audit history yet" }));
+
   const weeklyHist = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
   const allTimeSub = op3.all_time_incomplete
     ? "incomplete history (below 30d) · since " + (op3.all_time_since || "?")

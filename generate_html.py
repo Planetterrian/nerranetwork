@@ -1957,6 +1957,22 @@ def _merge_scaffolded_network_registry() -> None:
 _merge_scaffolded_network_registry()
 
 
+def _apply_published_episode_lengths() -> None:
+    """Every show dict's ``episode_length`` goes through ``engine.cadence``
+    (Nov 3 2026): the hardcoded entries and the network_meta.yaml ones alike.
+    A show in ``engine.cadence.COMPUTED_LENGTH_SHOWS`` prints the median of
+    its last 14 episodes; every other show keeps its registry string,
+    byte-identical, until the operator's yes."""
+    from engine.cadence import published_episode_length
+    for slug, cfg in NETWORK_SHOWS.items():
+        if isinstance(cfg, dict) and "episode_length" in cfg:
+            cfg["episode_length"] = published_episode_length(
+                slug, str(cfg.get("episode_length") or ""))
+
+
+_apply_published_episode_lengths()
+
+
 def _apply_seo_meta_overrides() -> None:
     """Pin approved SEO metas onto registry entries (incl. YAML-sourced shows).
 

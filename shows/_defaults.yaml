@@ -79,7 +79,10 @@ llm:
   # FACTUAL_ERRORS, so 4.7-era rates are read against each other, never
   # against the 4.6 era.
   reviewer_model: grok-4.7
-  reviewer_max_tokens: 1500
+  # Nov 4 2026: every YES the daily audit raises now quotes its sentence,
+  # and QUALITY_SCORE comes after the seven flag lines; 1,500 tokens was
+  # sized for bare YES/NO lines and a capped reply loses the score first.
+  reviewer_max_tokens: 3000
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model
   # that honors reasoning_effort (e.g. grok-4.5). Empty = omit param —

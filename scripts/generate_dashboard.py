@@ -2745,6 +2745,7 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out.update(_episode_counter_shares(root, anchor_d))
     out.update(_voices_live_metrics(root))
     out.update(_script_stage_p95_metrics(root, anchor_d))
+    out.update(_editorial_score_live_metrics(root))
     return out
 
 
@@ -2816,6 +2817,99 @@ def _script_stage_p95_metrics(root: Path, anchor_d: _dt.date, days: int = 14,
         # p95 on 14 samples invents precision the data does not have.
         idx = min(len(durations) - 1, max(0, int(round(0.95 * len(durations))) - 1))
         out[key] = round(durations[idx], 1)
+    return out
+
+
+#: Nov 3 2026 — the daily audit's 1-10, read from the committed history
+#: (review_episodes.append_editorial_score_history). A show's mean needs two
+#: reviews in the window (a weekly show has two in fourteen days); the
+#: network mean needs ten. Null below, never 0.
+EDITORIAL_SCORE_WINDOW_DAYS = 14
+EDITORIAL_SCORE_MIN_SHOW = 2
+EDITORIAL_SCORE_MIN_NETWORK = 10
+
+
+def build_editorial_score_section(root: Path, today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """The editorial score beside the audience headline (Nov 3 2026).
+
+    Fourteen days of ``api/editorial_score_history.json`` by episode date:
+    per show the mean score, how many reviews, and the critical count; the
+    network mean; and the share of the audit's YES flags that quoted a
+    sentence found in the text (rows from before the quote rule carry no
+    grounding and are not in that share)."""
+    data = _load_json(root / "api" / "editorial_score_history.json")
+    rows = data.get("rows") if isinstance(data, dict) else None
+    if not isinstance(rows, list) or not rows:
+        return {"configured": False,
+                "note": ("No api/editorial_score_history.json rows yet — the daily "
+                         "audit (review_episodes.py) appends one per reviewed episode.")}
+    today = today or _dt.date.today()
+    lo = (today - _dt.timedelta(days=EDITORIAL_SCORE_WINDOW_DAYS)).isoformat()
+    hi = today.isoformat()
+    per: Dict[str, Dict[str, Any]] = {}
+    all_scores: List[float] = []
+    critical_total = grounded = ungrounded = 0
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        day = str(r.get("date") or "")
+        if not (lo < day <= hi):
+            continue
+        slug = str(r.get("show") or "")
+        if not slug:
+            continue
+        s = per.setdefault(slug, {"scores": [], "critical": 0, "reviews": 0})
+        s["reviews"] += 1
+        s["critical"] += int(r.get("critical") or 0)
+        critical_total += int(r.get("critical") or 0)
+        if isinstance(r.get("score"), (int, float)):
+            s["scores"].append(float(r["score"]))
+            all_scores.append(float(r["score"]))
+        if isinstance(r.get("grounded"), list) and isinstance(r.get("ungrounded"), list):
+            grounded += len(r["grounded"])
+            ungrounded += len(r["ungrounded"])
+    shows: Dict[str, Any] = {}
+    for slug, s in sorted(per.items()):
+        n = len(s["scores"])
+        shows[slug] = {
+            "mean": (round(sum(s["scores"]) / n, 2) if n >= EDITORIAL_SCORE_MIN_SHOW else None),
+            "n": n,
+            "reviews": s["reviews"],
+            "critical": s["critical"],
+        }
+    lowest = sorted((slug for slug, s in shows.items() if s["mean"] is not None),
+                    key=lambda slug: (shows[slug]["mean"], slug))
+    n_all = len(all_scores)
+    return {
+        "configured": True,
+        "window_days": EDITORIAL_SCORE_WINDOW_DAYS,
+        "as_of": hi,
+        "updated": data.get("updated"),
+        "network": {
+            "mean": (round(sum(all_scores) / n_all, 2)
+                     if n_all >= EDITORIAL_SCORE_MIN_NETWORK else None),
+            "n": n_all,
+            "critical": critical_total,
+            "flags_grounded_share": (round(grounded / (grounded + ungrounded), 3)
+                                     if grounded + ungrounded else None),
+        },
+        "shows": shows,
+        "lowest": lowest[:3],
+    }
+
+
+def _editorial_score_live_metrics(root: Path) -> Dict[str, Any]:
+    """``editorial_score_14d_mean`` and ``editorial_score_14d_<slug>`` for
+    every show YAML and every slug in the history — a key always exists,
+    null when unmeasured."""
+    section = build_editorial_score_section(root)
+    shows = section.get("shows") or {}
+    slugs = {p.stem for p in _list_show_yaml_paths(root / "shows")} | set(shows)
+    out: Dict[str, Any] = {
+        "editorial_score_14d_mean": (section.get("network") or {}).get("mean"),
+    }
+    for slug in sorted(slugs):
+        out[f"editorial_score_14d_{slug}"] = (shows.get(slug) or {}).get("mean")
     return out
 
 
@@ -3920,6 +4014,9 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "investor": investor,
         # Nov 3 2026: Mira's rooms — survey, grades, yield, cost per room.
         "voices": build_voices_section(root),
+        # Nov 3 2026: the daily audit's editorial score, 14 days per show —
+        # the tile beside the audience headline.
+        "editorial_score": build_editorial_score_section(root),
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
