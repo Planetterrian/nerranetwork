@@ -7005,6 +7005,125 @@ experiments:
       translated tracks, specials); audio.voice_dynamics in the two trial
       YAMLs only; an unknown name raises at load. Guards
       tests/test_voice_dynamics_2026_11_03.py.
+  - id: review-loop-closes-2026-11-04
+    title: "The review loop closes: the register is read nightly, network is reachable, closed review PRs are labelled"
+    area: quality
+    shipped: 2026-11-04
+    readout: 2026-12-02
+    status: reading
+    baseline: >
+      74 register entries were past their readout on Nov 3 and nothing read
+      them on a schedule (60 due, 57 past their date on Nov 4 after the
+      Nov 3 scoring); the network ledger held 70 of 94 predictions unscored
+      because every slate pass advanced its rotation date; seven review PRs
+      closed unmerged since Oct 20 carried no label, so do_not_retry learned
+      nothing from them.
+    target: >
+      Four weeks after merge: api/register_readouts.json written every
+      night; no entry 14 days past readout without an outcome or a metric
+      (the nightly's --strict warning silent); the agent's first network
+      review scores the pending network predictions; every review PR closed
+      unmerged since merge carries a label, and each rejected one has its
+      do_not_retry line.
+    criteria: >
+      HIT when the nightly's --strict warning is silent for a week and the
+      network ledger's pending predictions are scored by an agent review.
+    readout_plan: >
+      api/register_readouts.json (due, past_due, notes_not_experiments);
+      docs/reviews/ledger/network.yaml; the review PRs' labels.
+    notes: >
+      scripts/readout_register.py (readability rule from Nov 3: a computable
+      metric or criteria + readout_plan), scripts/review_pr_outcomes.py
+      (one ask per PR; rejected text-splices do_not_retry),
+      pick_review_target rotation_only, model_trial_report rolling window.
+      Guards tests/test_review_loop_2026_11_03.py.
+  - id: script-arm-latency-2026-11-04
+    title: "The model-upgrade latency gate is read nightly on the script-arm shows"
+    area: efficiency
+    shipped: 2026-11-04
+    readout: 2026-11-18
+    status: decide
+    metric: script_stage_p95_s_14d_spacex
+    baseline: >
+      First rolling read (Nov 4, 14 days): SpaceX's script stage p95 903 s
+      against the 600 s request timeout (the playbook's gate is half the
+      timeout); the six script-arm entries had been scored once by hand on
+      Nov 3 (SpaceX 628 s, Tesla 561 s, MIT 330 s, M&A wall p95 3,029 s).
+    criteria: >
+      Playbook rule 7: a script arm whose p95 stays over half the request
+      timeout for two weeks is either moved to low reasoning effort (one
+      show first, A/B-listened) or given a larger script budget with the run
+      envelope recomputed; the operator decides which.
+    readout_plan: >
+      api/model_trial.json (per show and stage, nightly) and the
+      script_stage_p95_s_14d_<show> live metrics on the dashboard.
+    notes: >
+      scripts/model_trial_report.py --out api/model_trial.json on
+      ROLLING_WINDOW_DAYS; a show's digest dir is its YAML output_dir (Tesla
+      reads digests/tesla_shorts_time). Guards
+      tests/test_review_loop_2026_11_03.py::TestModelTrialNightly.
+  - id: interview-publish-parity-2026-11-04
+    title: "The interview shows inherit the publish surface: VTT, person and funding tags, whole-clause titles, a title bundle on YouTube"
+    area: voices
+    shipped: 2026-11-04
+    readout: 2026-12-02
+    status: reading
+    baseline: >
+      6 of 19 interview feed titles ended in an ellipsis; no interview feed
+      item carried a podcast:transcript tag; About sections printed labels
+      and bare domains as biographies (seven committed blurbs); the YouTube
+      long-form shipped the waveform with the feed title and no chapters
+      (27 views on 3 videos, 1.5% watched).
+    target: >
+      Four weeks after merge: every interview episode published since
+      carries a VTT and a podcast:transcript tag (plus the five backfilled),
+      no new feed title ends in an ellipsis, no About prints a placeholder;
+      the interview_v2 long-forms' day-3 views and age-7 retention read
+      against the three waveform longs, camera and waveform apart.
+    criteria: >
+      HIT when the feed checks hold on every episode published after merge
+      and the interview_v2 longs out-read the waveform longs at day 3.
+    readout_plan: >
+      grep -c podcast:transcript on age_of_ai_podcast.rss and
+      nerra_voices_podcast.rss; digests/age_of_ai/youtube_videos.json rows
+      with variant interview_v2 against api/youtube_early_reach.json.
+    notes: >
+      engine.titles.fit_first_clause; publish_episode.feed_podcast_tags;
+      engine.interviews.is_guest_prose; video_kind recorded, camera_missing
+      never ships the waveform. Operator: one vtt_backfill run and
+      refresh_post for Ep12-14 and NV Ep3-4. Guards
+      tests/test_voices_feed_parity_2026_11_03.py,
+      tests/test_age_of_ai_youtube_2026_11_03.py.
+  - id: language-fronts-own-audience-2026-11-04
+    title: "The Russian and French fronts rank and lead from their own channel's audience"
+    area: reach
+    shipped: 2026-11-04
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The French front led with a Canadian markets story for an audience
+      90% in France; both hubs ranked shows in the English order; the RU
+      landers asked for an email whose Sunday letter no subscriber's tag
+      reached in three months (0 captures); ru/index.html read 8 views in
+      28 days.
+    target: >
+      By Dec 1: on at least 80% of committed days the hub's lead comes from
+      a show in its channel's top three by views; ru/index.html and
+      fr/index.html engaged sessions and RU/FR click.by_channel read
+      (small absolute numbers expected); no lander promises a letter.
+    criteria: >
+      HIT when the lead rule holds on 80% of days; the engagement numbers
+      are read beside it, not judged at this volume.
+    readout_plan: >
+      The committed ru/index.html and fr/index.html per day against
+      api/funnel.json channel views; api/ga4_stats.json engaged sessions for
+      the two hubs.
+    notes: >
+      generate_html._rank_shows_by_channel_views,
+      engine.language_front.lead_rotation_for, the hubs' own share cards;
+      ru-spacex-weekly.yml retired (the script survives one release with its
+      test). Guards tests/test_site_languages_2026_10_18.py,
+      tests/test_ru_spacex_pilot.py.
   - id: repo-hygiene-2026-11-03
     title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
     area: efficiency

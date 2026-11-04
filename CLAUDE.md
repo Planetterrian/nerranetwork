@@ -1945,6 +1945,23 @@ details in the review doc §4 and `docs/experiments.yaml`):
   **the network flips by `DEFAULT_VOICE_DYNAMICS` after the listen, never per
   surface and never in `_defaults.yaml` ahead of it**; `glue` on Tesla and
   Top World only (⚠️ AUDIO). Guards `tests/test_voice_dynamics_2026_11_03.py`.
+- **The register is read nightly** (`scripts/readout_register.py` →
+  `api/register_readouts.json`); **an entry from Nov 3 on needs a computable
+  metric or `criteria` + `readout_plan`**; a drafted readout is a draft, the
+  outcome goes in by hand. **A `rotation_only` review target is dated by the
+  agent's own ledger entries, never a slate's**; a review PR closed unmerged
+  is labelled, and only `rejected` writes `do_not_retry`. The latency gate
+  runs nightly (`api/model_trial.json`). Guards `tests/test_review_loop_2026_11_03.py`.
+- **The interview shows inherit the publish surface**: a title that does not
+  fit gives its FIRST CLAUSE whole (`engine.titles.fit_first_clause`); the VTT
+  comes from the EDIT transcript only; **a label or a URL is never a biography**
+  (`engine.interviews.is_guest_prose`); **a camera episode never ships the
+  waveform** (`camera_missing`, nothing uploaded). Guards
+  `tests/test_{voices_feed_parity,age_of_ai_youtube}_2026_11_03.py`.
+- **A language hub ranks and leads from its own channel's audience**
+  (`_rank_shows_by_channel_views`, `engine.language_front.lead_rotation_for`;
+  the English page passes neither); **the RU landers ask for the subscribe and
+  the RSS, never an email**. Guards `tests/test_site_languages_2026_10_18.py`.
 
 ### Hiss and clicks: joins, Mira's voice, story pauses (Oct 29 2026)
 
