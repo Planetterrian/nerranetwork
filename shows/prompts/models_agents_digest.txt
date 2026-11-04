@@ -73,7 +73,7 @@ If fewer than 5 quality articles are available today, cover what is available wi
 
 ━━━━━━━━━━━━━━━━━━━━
 [Instruction — DEPTH OVER BREADTH (news items). Do not copy this heading or this paragraph into the output.]
-Builders hate high-level AI summaries. Depth follows facts (exact model names, benchmark numbers, pricing, named labs), and a qualifying story that earns only one sentence goes to Also Today rather than being cut. Extract every concrete fact the source provides; never invent scores or dollar figures. CONTINUITY BUDGET: when a story touches a tracked program in the narrative memory above, add at most ONE continuity sentence in the whole digest (prefer the date / "yesterday"; never write "EpN"). On thin-news days, LENGTHEN the Under the Hood / deep-dive section first rather than padding news items with "this sits within the ongoing…" boilerplate.
+Builders hate high-level AI summaries. Depth follows facts (exact model names, benchmark numbers, pricing, named labs), and a qualifying story that earns only one sentence goes to Also Today rather than being cut. Extract every concrete fact the source provides; never invent scores or dollar figures. CONTINUITY BUDGET: when a story touches a tracked program in the narrative memory above, add at most ONE continuity sentence in the whole digest (prefer the date / "yesterday"; never write "EpN"). Under the Hood is not a length lever: it grows only by figures from its fetched page, never to reach a word count, and news items are never padded with "this sits within the ongoing…" boilerplate — a thin day ships a shorter digest.
 
 ### Top Story
 The most significant AI development today. 4-6 sentences:
@@ -89,7 +89,7 @@ Source: [EXACT URL FROM PRE-FETCHED — no modifications]
 ### Model Updates
 **4-6 items** tracking new model releases, updates, benchmarks, or capability changes. Hit the upper end of the range when content is available — listeners can scan past items they don't care about, but they can't read items you didn't write. For each:
 **[the story's actual headline — the event itself, then a colon and the outlet's plain name. NEVER the literal word "Title", NEVER a markdown link or @handle inside the bold heading; the URL goes ONLY on the Source line]**
-**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at least two and at most six — never a fixed count, never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. Required ingredients where the source provides them:
+**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at most six — never a fixed count; a one-fact story is one sentence, or goes to Also Today — never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. The outlet lives in the heading and on the Source line; no body sentence ends on the outlet's name. Required ingredients where the source provides them:
 - **Exact model name + version** (Claude 4.7 Opus, Llama 4.5-405B-Instruct, GPT-5o-mini), parameter count, context window length in tokens.
 - **Benchmark numbers** — at most two per item, each with the comparison that gives it meaning (the previous version, the leading rival, or the price), never a run of decimals; and every model, benchmark, library or file format a general technical listener would not know gets a few words saying what it is on first mention.
 - **Pricing** — $/M input tokens, $/M output tokens, free tier limits.
@@ -102,7 +102,7 @@ Source: [EXACT URL]
 ### Agent & Tool Developments
 **4-5 items** covering agent frameworks, autonomous tools, computer use, MCP servers, or agentic capabilities. For each:
 **[the story's actual headline, then a colon and the outlet's plain name — never the literal word "Title", never a link or @handle in the heading]**
-**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at least two and at most six — never a fixed count, never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. Required ingredients where the source provides them:
+**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at most six — never a fixed count; a one-fact story is one sentence, or goes to Also Today — never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. The outlet lives in the heading and on the Source line; no body sentence ends on the outlet's name. Required ingredients where the source provides them:
 - **Named framework / SDK / model the tool wraps** — LangGraph 0.5, OpenAI Agents SDK, Claude Computer Use, MCP server name.
 - **Concrete capability claim with a number** — "completes 73% of GAIA-Test in under 10 tool calls", "supports 12 concurrent browser tabs."
 - **Install + run command** if the source provides it ("npm install ...", "pip install ...", a one-line Docker invocation).
@@ -115,7 +115,7 @@ Source: [EXACT URL]
 ### Practical & Community
 **4-5 items** highlighting open-source projects, tutorials, API changes, or developer tools. For each:
 **[the story's actual headline, then a colon and the outlet's plain name — never the literal word "Title", never a link or @handle in the heading]**
-**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at least two and at most six — never a fixed count, never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. Required ingredients where the source provides them:
+**Concrete substance only.** Sentence count follows fact count: as many sentences as the source gives distinct facts, at most six — never a fixed count; a one-fact story is one sentence, or goes to Also Today — never a closing sentence that restates the first in different words, and never a sentence saying that figures, details, or timelines were not provided. The outlet lives in the heading and on the Source line; no body sentence ends on the outlet's name. Required ingredients where the source provides them:
 - **Repo / package + version + GitHub stars** when the source carries them.
 - **What problem it solves** in one concrete sentence, not "improves developer experience."
 - **Quickstart command** or a code-line example if the source includes one.
@@ -124,12 +124,16 @@ Source: [EXACT URL]
 - **One concrete gotcha** — license restriction, breaking change vs prior major, dependency on a paid API.
 Source: [EXACT URL]
 
+[Instruction — the Also Today run on this show. Do not copy this paragraph into the output.]
+On this show the Also Today run is grouped before it is written: several preprints or papers on one technique or one problem become ONE item — a heading that names the theme and the venue, one sentence saying what the group found, and a Source line per paper — never one line per paper (Ep222 ran thirty-six one-liners).
+
 <<include: _shared/also_today.txt>>
 
 
 ━━━━━━━━━━━━━━━━━━━━
 ### Under the Hood: [Topic Title]
-An engineering teardown of ONE AI concept, architecture, or technique. This section uses YOUR OWN knowledge of ML systems, distributed computing, and AI engineering — not just today's articles — to reveal how something ACTUALLY works beneath the marketing.
+An engineering teardown of ONE AI concept, architecture, or technique, to reveal how something ACTUALLY works beneath the marketing. It is built from ONE fetched background page in the list above — an article or paper whose full text is printed and that no news item uses — named in the sentence that first uses it: every figure, benchmark and quoted design choice comes from that page, and a mechanism sentence with no page behind it says plainly, once, that it is the host's own explanation. The section ends on that page's Source line; on a day no printed page carries the subject, the teardown is the host's own explanation, says so once, and carries no Source line.
+Source: [EXACT URL of the background page — the line is left out only when the section is the host's own explanation]
 
 ## Topic selection (instruction — do not echo into output): Choose the technology where the gap between public perception and engineering reality is WIDEST. Prioritize: (1) techniques that sound like magic but have elegant engineering explanations, (2) concepts where the press release hides important tradeoffs, (3) architectural decisions that seem obvious but have counterintuitive reasons.
 

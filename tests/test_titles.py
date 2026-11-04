@@ -23,6 +23,7 @@ from engine.titles import (
     PODCAST_EPISODE_TITLE_MAX,
     WEB_TITLE_LEAD_MAX,
     WEB_TITLE_SEPARATOR,
+    X_ITEM_TITLE_MAX,
     YOUTUBE_TITLE_MAX,
     clip_words,
     episode_title,
@@ -55,7 +56,7 @@ HOOKS = [
 ]
 
 CAPS = [20, 40, WEB_TITLE_LEAD_MAX, EMAIL_ALSO_LINE_MAX, NEWSLETTER_SUBJECT_MAX,
-        YOUTUBE_TITLE_MAX]
+        YOUTUBE_TITLE_MAX, X_ITEM_TITLE_MAX]
 
 
 def _splits_a_word(original: str, clipped: str) -> bool:
@@ -165,6 +166,22 @@ class TestSurfacesStayWithinTheirCaps:
         from engine.blog import _clip_words
         assert _clip_words(hook, WEB_TITLE_LEAD_MAX) == clip_words(
             hook, WEB_TITLE_LEAD_MAX)
+
+    @pytest.mark.parametrize("hook", HOOKS)
+    def test_x_post_item_heading(self, hook):
+        """Nov 3 2026: an X post's heading in a digest item is clipped here,
+        never sliced in ``engine.fetcher`` (``desc[:100]``), and a post that
+        arrives WITH a title is clipped the same way — M&A Ep222 made an
+        entire 60-word post the item heading."""
+        from engine.fetcher import _x_post_entry
+        post = (hook + " ") * 4
+        for title in ("", post):
+            entry = _x_post_entry(title=title, desc=post, url="https://x.com/a/status/1",
+                                  link="", post_date="", label="A", handle="a",
+                                  now_iso="2026-11-03T00:00:00+00:00")
+            assert len(entry["title"]) <= X_ITEM_TITLE_MAX
+            assert entry["title"] == clip_words(title or post.strip(), X_ITEM_TITLE_MAX)
+            assert not _splits_a_word(post.strip(), entry["title"])
 
 
 SHOW_NAMES = ["Tesla Shorts Time", "Привет, Русский!", "The Age of AI", "Omni View"]

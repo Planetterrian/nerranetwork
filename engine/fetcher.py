@@ -1036,10 +1036,14 @@ def _x_post_entry(
     # no prompt ever sees them (engine.listener_noise also guards the text
     # that ships).
     from engine.listener_noise import strip_engagement_noise
+    from engine.titles import X_ITEM_TITLE_MAX, clip_words
     title = strip_engagement_noise(title or "")[0].strip()
     desc = strip_engagement_noise(desc or "")[0].strip()
+    # Nov 3 2026: a whole post is never a heading — the title is clipped
+    # word-safe through engine.titles (the one owner of every limit); the
+    # post's full text stays in ``description`` for the item body.
     return {
-        "title": title or desc[:100],
+        "title": clip_words(title or desc, X_ITEM_TITLE_MAX),
         "description": desc,
         "url": link or url,
         "x_url": url,
@@ -1086,7 +1090,10 @@ def _parse_url_extraction(
             if stripped and "http" not in stripped and len(stripped) > 15:
                 desc_parts.append(stripped)
         desc = " ".join(desc_parts[:3])[:300] if desc_parts else ""
-        title = desc[:100] if desc else f"Post by @{author_handle}"
+        # Nov 3 2026: the heading is clipped through engine.titles, never a
+        # slice (the same rule as ``_x_post_entry``).
+        from engine.titles import X_ITEM_TITLE_MAX, clip_words
+        title = clip_words(desc, X_ITEM_TITLE_MAX) if desc else f"Post by @{author_handle}"
 
         label = labels.get(author_handle, f"@{author_handle}")
         # Sep 30 2026: a post the fallback parser could not date is undated,

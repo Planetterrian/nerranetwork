@@ -125,10 +125,20 @@ _REPLY_ONLY = re.compile(
     r"(?:post|tweet|thread|reply|video|clip|update))?"
     r"\s+with\s+(?:" + _RQUOTE + r"|" + _REMOJI + r")"
     r"(?:\s*(?:,|and)\s*(?:" + _RQUOTE + r"|" + _REMOJI + r"))*\s*[.!]?$")
+# Nov 3 2026: the verb set widened with discussed | pointed to | contrasted |
+# compared | noted | weighed in after the Oct 31 sweep was re-run over every
+# committed ``_tts.txt`` (2,670 scripts) and every digest: 24 sentences
+# matched the new verbs and every one reported only what replies did
+# ("Commenters pointed to the Blackbird's maintenance intensity…", SpaceX
+# Ep149; "Users discussed the implications of the July 16 target date…",
+# Ep030; "Responses pointed to museum replicas…", FF Ep085). The SUBJECT
+# list is unchanged — the shape stays "replies/commenters/users <verb>…",
+# so a named person's words ("Musk noted that…") are never removed.
 _REPLIES_ONLY = re.compile(
     r"^(?:replies|commenters|followers|users|other users|responses)\s+"
     r"(?:quickly\s+|immediately\s+)?"
-    r"(?:speculated|joked|piled in|reacted|cheered|celebrated|chimed in)\b[^.!?]*[.!?]?$",
+    r"(?:speculated|joked|piled in|reacted|cheered|celebrated|chimed in|"
+    r"discussed|pointed to|contrasted|compared|noted|weighed in)\b[^.!?]*[.!?]?$",
     re.IGNORECASE)
 _ENGAGEMENT_SENT = re.compile(
     r"^" + _META_SUBJECT + r"\b[^.!?]*?\b(?:received|drew|got|sparked|generated|attracted)\s+"

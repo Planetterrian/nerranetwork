@@ -380,8 +380,12 @@ class TestContentDisciplineShared:
 
     def test_snippet_exists_and_is_shape_only(self):
         text = (ROOT / "shows/prompts/_shared/content_discipline.txt").read_text(encoding="utf-8")
+        # Nov 3 2026 (tests/test_flagship_prompts_2026_11_03.py): the words
+        # that read as a COUNT ("one sentence per distinct fact", "five facts
+        # gets five sentences") left the snippet — the grok-4.6 arms read them
+        # as a ticker — and the paragraph now opens on the shape instead.
         for token in ("source material, not a draft", "eight consecutive words", "owner per fact",
-                      "one sentence per distinct fact", "ends on its last fact",
+                      "Sentences follow facts", "ends on its last fact",
                       "ONE audible callback", "named once"):
             assert token in text, token
         # No quotable specimen sentence anywhere in the snippet.

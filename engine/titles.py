@@ -36,6 +36,7 @@ __all__ = [
     "WEB_TITLE_SEPARATOR",
     "NEWSLETTER_SUBJECT_MAX",
     "EMAIL_ALSO_LINE_MAX",
+    "X_ITEM_TITLE_MAX",
     "ELLIPSIS",
     "clip_words",
     "episode_title",
@@ -135,6 +136,17 @@ X_TEASER_TWO_LINK_TEXT_MAX = 180
 #: is shown whole; the ticker is a single scrolling line, so it clips
 #: word-safe here.
 LANDING_TICKER_MAX = 90
+
+#: An X post's heading in a digest item (Nov 3 2026). ``engine.fetcher``
+#: builds every post into an article dict whose ``title`` becomes the bold
+#: ``**Title: Outlet**`` heading of a digest item, and it had sliced the
+#: post's text at 100 characters (``desc[:100]``, two sites) — a title
+#: slice outside this module — while a post that CAME with a title kept
+#: it whole, so Models & Agents Ep222 made an entire 60-word post the item
+#: heading. The Oct 12 2026 heading rule lets a bold ``Title: Outlet`` line
+#: run to 110 characters; the heading is clipped here, word-safe, and the
+#: post's full text stays in ``description`` for the item body.
+X_ITEM_TITLE_MAX = 110
 
 #: Share cards (Oct 18 2026, ``engine/share_cards.py``): the hook printed on
 #: an episode's 1200x630 link preview. Four lines of the card's floor size
