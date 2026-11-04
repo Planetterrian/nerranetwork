@@ -138,7 +138,16 @@ def _drain_search_usage(into: dict) -> None:
 # ---------------------------------------------------------------------------
 
 def digests_dir(show: Any) -> Path:
-    sub = getattr(show, "audio_subdir", None) or f"digests/{getattr(show, 'slug', 'age_of_ai')}"
+    """The show's committed digest directory. A show object with neither an
+    ``audio_subdir`` nor a ``slug`` resolves to the pipeline's default show
+    (``pipelines.voices.shows.DEFAULT_SHOW``): the slug lives in one place."""
+    sub = getattr(show, "audio_subdir", None)
+    if not sub:
+        slug = getattr(show, "slug", None)
+        if not slug:
+            from pipelines.voices.shows import DEFAULT_SHOW
+            slug = DEFAULT_SHOW
+        sub = f"digests/{slug}"
     return ROOT / sub
 
 
