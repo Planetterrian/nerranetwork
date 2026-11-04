@@ -71,26 +71,29 @@ for ev in run.get("scenario_trace") or []:
     if ev["e"] in ("grok", "leg", "room") and any(k in ev["d"] for k in (
             "hand", "bridged", "dropped", "rescued", "joined", "left", "closed", "opened")):
         print(f"  {(t - t0).total_seconds():7.1f}s  {ev['e']}: {ev['d'][:90]}")
-curve("mira raw vs guest R", ml, gr, base)
-mix_url = log.get("voximplant_mix_record_url")
-if mix_url:
-    try:
-        mix = dl(mix_url, W / "mix.mp3")
-        mm = chan(mix, 0, W / "mix0.wav")
-        curve("room mix recorder vs guest R", mm, gr, 0.0, span=120)
-    except Exception as exc:  # noqa: BLE001
-        print("mix recorder not fetched:", exc)
-leg = (tracks.get("leg_local") or {}).get("url")
-if leg:
-    ll = dl(leg, W / "leg_local.flac")
-    lL = chan(ll, 0, W / "leg_L.wav")
-    lR = chan(ll, 1, W / "leg_R.wav")
-    curve("leg_local L (browser take) vs raw guest L", lL, gl, 0.0, win_s=20, step_s=20, span=10)
-    curve("leg_local R vs raw guest R", lR, gr, 0.0, win_s=60, step_s=120, span=10)
-for role in ("guest", "mira"):
-    u = (tracks.get("processed") or {}).get(role)
-    if u:
-        p = dl(u, W / f"proc_{role}.wav")
-        curve(f"processed {role} vs guest R" if role == "mira" else
-              f"processed {role} vs raw guest L", p, gr if role == "mira" else gl,
-              0.0, win_s=40, step_s=20, span=60)
+u = (tracks.get("processed") or {}).get("mira")
+if u:
+    dl(u, W / "proc_mira.wav")
+
+# --- the fix, on the real tapes ---
+import logging  # noqa: E402
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+for name in ("audio.local_tracks",):
+    logging.getLogger(name).setLevel(logging.INFO)
+logging.getLogger("audio.local_tracks").addFilter(lambda r: "ffmpeg:" not in r.getMessage())
+import post_interview as pi  # noqa: E402
+from audio.local_tracks import align_by_sessions, clock_residuals  # noqa: E402
+joins = pi.join_offsets(run)
+gj = (joins["guest"] or [0.0])[0]
+changes = [c - gj for c in pi.mira_session_changes(run)]
+print("\n=== FIX: session changes (guest clock):", changes)
+pieces: list = []
+res = align_by_sessions(ml, gr, W / "fix", changes, expected=-gj, fill_gaps=True, pieces_out=pieces)
+print("FIX pieces:", pieces)
+print("FIX result:", res)
+if res:
+    curve("FIX placed mira vs guest R", res[0], gr, 0.0, win_s=30, step_s=15, span=90)
+old = (tracks.get("processed") or {}).get("mira")
+if old:
+    print("OLD processed mira short-window residuals:",
+          clock_residuals(W / "proc_mira.wav", gr, W / "oldcheck")[:20])

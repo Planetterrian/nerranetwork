@@ -716,6 +716,295 @@ def align_to_room(track_wav: Path, room_wav: Path, workdir: Path,
     return out, delay, 0
 
 
+# ---------------------------------------------------------------------------
+# Mira's own recorder across her session changes (Nov 4 2026, Blaine Mathieu)
+# ---------------------------------------------------------------------------
+# Mira's recorder loses room time every time her Voice Agent session changes:
+# a 30-minute hand-over or a rescue after a dropped socket. Measured on the
+# Blaine Mathieu tape, window by window against the room as the guest heard
+# it: +17.06 s for the first 24 minutes, +36.96 s from the hand-over, +59.0 s
+# from the rescue four and a half minutes later. Priyanka Sharma's, the same
+# morning: +79.3, +75.9, +87.3 at her two rescues. Scott Pulcini's lost 137 s
+# over two rescues. The time goes missing right AFTER the change, never
+# before it, and nowhere else.
+#
+# The blind search (room_pieces: 150 s windows every 200 s) cannot see two
+# jumps four minutes apart, so Blaine's tape came back as two pieces, the
+# second one wrong for its last seven minutes, and the verification threw the
+# whole track out. Mira's processed track, the review mix both Patrick and
+# the guest listen to, the transcript and the cut the auto-edit made from
+# that transcript all had her twenty-two seconds off for the end of the hour.
+# Priyanka's passed its check with her opening three seconds out and a
+# minute after her second rescue eleven seconds out, because the check is as
+# coarse as the search.
+#
+# The room's own trace says when every session changed, so the seams are not
+# searched for: each stretch between two changes is measured on its own, in
+# short windows, and the exact sample of each seam is the change point that
+# best splits the two delays. The result is checked in short windows too.
+SESSION_WINDOW_SEC = 30.0
+SESSION_STEP_SEC = 10.0
+SESSION_MAX_LOSS_SEC = 300.0   # the most room time one change has been seen to cost
+SESSION_AGREE_SEC = 0.5
+SESSION_MIN_CORR = 0.6
+SESSION_STRONG_CORR = 0.85
+SESSION_SEAM_SEARCH_SEC = 25.0
+CHECK_WINDOW_SEC = 30.0
+CHECK_STEP_SEC = 15.0
+CHECK_SPAN_SEC = 90.0
+CHECK_STRONG_CORR = 0.75
+
+
+def _best_delay(track: np.ndarray, room: np.ndarray, t0: int, window: int,
+                d_lo: float, d_hi: float) -> Tuple[Optional[float], float]:
+    """The delay in [d_lo, d_hi] (seconds; room[t + d] matches track[t]) at
+    which the track window starting at frame ``t0`` best matches the room,
+    and its normalised correlation."""
+    sr = ROOM_ENVELOPE_SR
+    a = track[t0:t0 + window].astype(np.float64)
+    if len(a) < window:
+        return None, 0.0
+    a = a - a.mean()
+    na = float(np.linalg.norm(a))
+    if na == 0.0:
+        return None, 0.0
+    b_lo = max(0, t0 + int(np.floor(d_lo * sr)))
+    b_hi = min(len(room), t0 + int(np.ceil(d_hi * sr)) + window)
+    if b_hi - b_lo < window:
+        return None, 0.0
+    b = room[b_lo:b_hi].astype(np.float64)
+    n = len(b) - window + 1
+    nfft = 1 << (len(b) + window - 1).bit_length()
+    num = np.fft.irfft(np.fft.rfft(b, nfft) * np.conj(np.fft.rfft(a, nfft)), nfft)[:n]
+    c1 = np.concatenate([[0.0], np.cumsum(b)])
+    c2 = np.concatenate([[0.0], np.cumsum(b * b)])
+    s1 = c1[window:window + n] - c1[:n]
+    s2 = c2[window:window + n] - c2[:n]
+    nb = np.sqrt(np.maximum(s2 - s1 * s1 / window, 0.0))
+    corr = np.where(nb > 0, num / (na * np.where(nb > 0, nb, 1.0)), 0.0)
+    k = int(np.argmax(corr))
+    return (b_lo + k - t0) / sr, float(corr[k])
+
+
+def _agreed_delay(picks: list) -> Tuple[Optional[float], int, float]:
+    """The delay most of ``picks`` [(delay, corr)] agree on: (delay, how many
+    agree, their median correlation), or (None, 0, 0) when nothing does."""
+    if not picks:
+        return None, 0, 0.0
+    best, best_weight = None, 0.0
+    for d, _ in picks:
+        weight = sum(c for e, c in picks if abs(e - d) <= SESSION_AGREE_SEC)
+        if weight > best_weight:
+            best, best_weight = d, weight
+    near = [(d, c) for d, c in picks if abs(d - best) <= SESSION_AGREE_SEC]
+    strengths = [c for _, c in near]
+    if len(near) < 2 and max(strengths) < SESSION_STRONG_CORR:
+        return None, 0, 0.0
+    return (float(np.median([d for d, _ in near])), len(near),
+            float(np.median(strengths)))
+
+
+def _change_point(track: np.ndarray, room: np.ndarray, lo: int, hi: int,
+                  d_a: float, d_b: float) -> int:
+    """The frame in [lo, hi) where the track stops sitting at ``d_a`` and
+    starts sitting at ``d_b``: the split that best explains both sides,
+    scored frame by frame. Silence scores nothing either way, so a seam in a
+    pause lands anywhere in it, which is harmless."""
+    sr = ROOM_ENVELOPE_SR
+    lo, hi = max(0, lo), min(len(track), hi)
+    if hi - lo < 2:
+        return lo
+    t = track - track.mean()
+    r = room - room.mean()
+    idx = np.arange(lo, hi)
+
+    def lane(d: float) -> np.ndarray:
+        at = idx + int(round(d * sr))
+        ok = (at >= 0) & (at < len(r))
+        out = np.zeros(len(idx))
+        out[ok] = t[idx[ok]] * r[at[ok]]
+        return out
+
+    sa, sb = lane(d_a), lane(d_b)
+    before = np.concatenate([[0.0], np.cumsum(sa)])
+    after = np.concatenate([np.cumsum(sb[::-1])[::-1], [0.0]])
+    return lo + int(np.argmax(before + after))
+
+
+def session_pieces(track_wav: Path, room_wav: Path, workdir: Path,
+                   changes: list, expected: Optional[float] = None,
+                   span: float = ROOM_EXPECTED_SPAN_SEC) -> Optional[list]:
+    """Mira's recording as pieces at one delay each, split where her session
+    changed. ``changes`` are the moments (on ``room_wav``'s clock, seconds,
+    a few seconds' error is fine) at which a session stopped feeding her
+    recorder. Same shape as ``room_pieces``; ``None`` when a stretch in which
+    she spoke cannot be measured, because a guess is worse than a refusal."""
+    sr = ROOM_ENVELOPE_SR
+    workdir = Path(workdir)
+    track = _whole_envelope(Path(track_wav), workdir)
+    room = _whole_envelope(Path(room_wav), workdir)
+    total = len(track) / sr
+    window, step = int(SESSION_WINDOW_SEC * sr), int(SESSION_STEP_SEC * sr)
+    voiced = float(np.percentile(track, 75)) if len(track) else 0.0
+    changes = sorted(float(c) for c in changes if c is not None)
+    base = float(expected or 0.0)
+    d_lo, d_hi = base - span, base + span
+    prev: Optional[float] = None
+    seams: list[int] = [0]
+    delays: list[float] = []
+    stats: list[Tuple[int, float]] = []
+    for k in range(len(changes) + 1):
+        start = seams[-1]
+
+        def measure(guess: float) -> Tuple[Optional[float], int, float, int]:
+            # The stretch runs from the last seam to where the next change
+            # lands at this delay. Measured twice: once at the delay before
+            # it, then again at its own, so the last windows do not reach
+            # into the next stretch.
+            end = (int((changes[k] - guess) * sr) if k < len(changes)
+                   else len(track))
+            end = min(len(track), max(start, end))
+            picks = []
+            for t0 in range(start, max(start, end - window) + 1, step):
+                d, c = _best_delay(track, room, t0, window, d_lo, d_hi)
+                if d is not None and c >= SESSION_MIN_CORR:
+                    picks.append((d, c))
+            return (*_agreed_delay(picks), end)
+
+        d, n, agree, end = measure(prev if prev is not None else base)
+        if d is not None:
+            d2, n2, agree2, end = measure(d)
+            if d2 is not None:
+                d, n, agree = d2, n2, agree2
+        if d is None:
+            spoke = (end > start
+                     and float(np.mean(track[start:end] > voiced)) > 0.05)
+            if prev is None and spoke:
+                logger.warning("session pieces: Mira's first stretch never "
+                               "correlated with the room")
+                return None
+            # Nothing in this stretch to measure it by: silence goes
+            # anywhere, and speech placed wrong fails the check below.
+            d = prev if prev is not None else base
+            n, agree = 0, 0.0
+        if k > 0 and abs(d - delays[-1]) > ROOM_RESIDUAL_SEC:
+            # The trace says roughly where; the audio says exactly where.
+            guess = seams[-1]
+            seams[-1] = _change_point(
+                track, room, guess - int(SESSION_SEAM_SEARCH_SEC * sr),
+                guess + int(SESSION_SEAM_SEARCH_SEC * sr), delays[-1], d)
+        elif k > 0:
+            # No time lost at this change: one stretch with the one before.
+            n_before, agree_before = stats.pop()
+            seams.pop()
+            before = delays.pop()
+            d = before if n == 0 else float(np.median([d, before]))
+            n += n_before
+            agree = max(agree, agree_before)
+        delays.append(d)
+        stats.append((n, agree))
+        prev = d
+        if k < len(changes):
+            seams.append(min(len(track), max(seams[-1], int((changes[k] - d) * sr))))
+        # A later stretch can only have LOST time, within reason.
+        d_lo, d_hi = d - 5.0, d + SESSION_MAX_LOSS_SEC
+    pieces = []
+    for i, d in enumerate(delays):
+        a = seams[i] / sr
+        b = seams[i + 1] / sr if i + 1 < len(seams) else total
+        pieces.append({"from": round(a, 3), "to": round(max(a, b), 3),
+                       "delay": round(d, 3), "windows": stats[i][0],
+                       "agreement": round(stats[i][1], 3)})
+    logger.info("session pieces: %s", ", ".join(
+        f"{p['from']:.0f}-{p['to']:.0f}s at {p['delay']:+.2f}s ({p['windows']}w)"
+        for p in pieces))
+    return pieces
+
+
+def clock_residuals(track_wav: Path, room_wav: Path, workdir: Path) -> list:
+    """Every short window of a PLACED track that matches the room strongly
+    somewhere other than where it sits: [{"at", "delay", "corr"}, ...]. Empty
+    means every stretch that can be measured is on the clock. Short windows
+    on purpose: the check has to be able to see a four-minute stretch."""
+    sr = ROOM_ENVELOPE_SR
+    workdir = Path(workdir)
+    track = _whole_envelope(Path(track_wav), workdir)
+    room = _whole_envelope(Path(room_wav), workdir)
+    window, step = int(CHECK_WINDOW_SEC * sr), int(CHECK_STEP_SEC * sr)
+    off = []
+    for t0 in range(0, max(0, min(len(track), len(room)) - window), step):
+        d, c = _best_delay(track, room, t0, window, -CHECK_SPAN_SEC, CHECK_SPAN_SEC)
+        if d is None or c < CHECK_STRONG_CORR or abs(d) <= ROOM_RESIDUAL_SEC:
+            continue
+        off.append({"at": round(t0 / sr, 1), "delay": round(d, 2), "corr": round(c, 2)})
+    return off
+
+
+def _gaps_between(pieces: list) -> list:
+    """Room-clock stretches that no piece covers: the time the recorder lost."""
+    gaps = []
+    for a, b in zip(pieces, pieces[1:]):
+        lo = a["to"] + a["delay"]
+        hi = b["from"] + b["delay"]
+        if hi - lo > 0.05:
+            gaps.append((round(lo, 3), round(hi, 3)))
+    return gaps
+
+
+def fill_from_room(track_wav: Path, room_wav: Path, gaps: list, out: Path) -> Path:
+    """Lay the room as the guest heard it into the stretches the recorder
+    lost. Only for a room with nobody in it but the guest and Mira, where
+    that channel is Mira and nothing else: she can speak during the
+    seconds her own recorder lost, and the guest heard every word."""
+    if not gaps:
+        return Path(track_wav)
+    keep = "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in gaps)
+    _run(["ffmpeg", "-y", "-i", track_wav, "-i", room_wav, "-filter_complex",
+          f"[1:a]aformat=channel_layouts=mono,volume='if({keep},1,0)':eval=frame[r];"
+          "[0:a]aformat=channel_layouts=mono[m];"
+          "[m][r]amix=inputs=2:duration=first:normalize=0[o]",
+          "-map", "[o]", "-ar", TARGET_SR, "-ac", "1", "-c:a", "pcm_s16le", out])
+    return Path(out)
+
+
+def align_by_sessions(track_wav: Path, room_wav: Path, workdir: Path,
+                      changes: list, expected: Optional[float] = None,
+                      fill_gaps: bool = False,
+                      pieces_out: Optional[list] = None,
+                      ) -> Optional[Tuple[Path, float, int]]:
+    """Place Mira's recording on the room's clock in the pieces her session
+    changes made, and check the result in short windows. ``(path, first
+    delay, windows)``, or ``None`` when it cannot be placed and checked."""
+    workdir = Path(workdir)
+    workdir.mkdir(parents=True, exist_ok=True)
+    try:
+        pieces = session_pieces(track_wav, room_wav, workdir, changes,
+                                expected=expected)
+    except Exception:  # noqa: BLE001 — the blind search still stands
+        logger.exception("session pieces failed")
+        return None
+    if not pieces:
+        return None
+    if pieces_out is not None:
+        pieces_out[:] = pieces
+    out = place_pieces(track_wav, pieces, workdir / "sessions")
+    gaps = _gaps_between(pieces)
+    if fill_gaps and gaps:
+        out = fill_from_room(out, room_wav, gaps, workdir / "sessions" /
+                             (Path(track_wav).stem + "_filled.wav"))
+        logger.info("session pieces: filled %s from the room",
+                    ", ".join(f"{a:.0f}-{b:.0f}s" for a, b in gaps))
+    off = clock_residuals(out, room_wav, workdir / "sessions")
+    if off:
+        logger.warning("session pieces: still off after placing: %s", ", ".join(
+            f"{o['at']:.0f}s {o['delay']:+.2f}s ({o['corr']:.2f})" for o in off[:8]))
+        return None
+    windows = sum(p["windows"] for p in pieces)
+    logger.info("session pieces: %s verified in %.0f s windows",
+                Path(track_wav).name, CHECK_WINDOW_SEC)
+    return out, pieces[0]["delay"], max(windows, ROOM_MIN_WINDOWS)
+
+
 def place_at(track_wav: Path, delay: float, workdir: Path) -> Path:
     """Shift a track by a delay somebody else worked out.
 

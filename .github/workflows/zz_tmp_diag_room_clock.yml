@@ -2,7 +2,7 @@ name: TEMP diag room clock
 on:
   push:
     branches: [claude/project-thread-o1l615]
-    paths: ['pipelines/voices/diag_room_clock.py', '.github/workflows/zz_tmp_diag_room_clock.yml']
+    paths: ['pipelines/voices/diag_room_clock.py', '.github/workflows/zz_tmp_diag_room_clock.yml', 'pipelines/voices/audio/local_tracks.py']
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        run_id: ['43ff31a6-e248-4352-8f47-6f5414ee0f49', 'ea81618b-d36f-43bd-bc2d-2146c7d2ab2d']
+        run_id: ['43ff31a6-e248-4352-8f47-6f5414ee0f49', 'ea81618b-d36f-43bd-bc2d-2146c7d2ab2d', 'a3d927d4-a1a4-489c-a954-1b846948554d', '35cdf6f4-9dc6-470a-8895-089eadefcee8']
     steps:
       - uses: actions/checkout@v7
         with:

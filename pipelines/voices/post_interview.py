@@ -48,7 +48,8 @@ from common import (  # noqa: E402
 sys.path.insert(0, str(Path(__file__).parent))
 from address import first_name, written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
-    ROOM_MIN_WINDOWS, ROOM_RESIDUAL_SEC, align_to_reference, align_to_room,
+    ROOM_MIN_WINDOWS, ROOM_RESIDUAL_SEC, align_by_sessions, align_to_reference, align_to_room,
+    clock_residuals,
     fetch_local_track, gate_to_reference, place_phrases,
     place_at, room_pieces, whole_file_delay,
 )
@@ -484,6 +485,48 @@ def join_offsets(run: dict) -> dict:
     return out
 
 
+def mira_session_changes(run: dict) -> list:
+    """Seconds from the room opening to every moment one of Mira's Voice
+    Agent sessions stopped feeding her recorder: a hand-over at the
+    30-minute cap, or a dropped socket before a rescue. Her recorder loses
+    room time right after each of these and nowhere else (Nov 4 2026,
+    Blaine Mathieu: 20 s at the hand-over, 22 s at the rescue)."""
+    import datetime as _dt
+    import re as _re
+
+    def when(stamp):
+        text = _re.sub(r"\.(\d{1,6})\d*", lambda m: "." + m.group(1).ljust(6, "0"),
+                       str(stamp).replace("Z", "+00:00"), count=1)
+        try:
+            return _dt.datetime.fromisoformat(text)
+        except Exception:  # noqa: BLE001
+            return None
+
+    opened, out, bridged = None, [], []
+    for event in run.get("scenario_trace") or []:
+        if not isinstance(event, dict):
+            continue
+        at, kind, what = when(event.get("t")), event.get("e"), str(event.get("d", ""))
+        if at is None:
+            continue
+        if opened is None and kind == "room" and what.startswith("opened"):
+            opened = at
+            continue
+        if opened is None or kind != "grok":
+            continue
+        at_sec = round(max(0.0, (at - opened).total_seconds()), 2)
+        if what.startswith("connection dropped") or what.startswith("handing over to a fresh session"):
+            out.append(at_sec)
+        elif _re.match(r"session \d+ bridged", what):
+            bridged.append(at_sec)
+    # The room keeps a bounded trace and drops its older lines; a change whose
+    # own line went is still known by the new session bridging.
+    for at_sec in bridged:
+        if not any(0.0 <= at_sec - c <= 15.0 for c in out):
+            out.append(round(max(0.0, at_sec - 1.5), 2))
+    return sorted(out)
+
+
 def build_tracks(run: dict, raw: Path, workdir: Path,
                  host_raw: Path | None = None,
                  mira_raw: Path | None = None,
@@ -630,9 +673,35 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
             continue
         expect = host_delay if role == "host" and host_windows else expected_delay(role)
         role_pieces: list = []
-        shifted, delay, windows = align_to_room(track, guest_r, workdir / "room",
-                                                expected=expect,
-                                                pieces_out=role_pieces)
+        placed = None
+        # Nov 4 2026 (Blaine Mathieu): her recorder loses time at every
+        # session change, so it is placed in the pieces the room's trace says
+        # it was made in, and checked in short windows. The blind search is
+        # what is left when that cannot be done.
+        changes = ([c - guest_join for c in mira_session_changes(run)]
+                   if role == "mira" and sources.get("mira") == "voximplant" else [])
+        if changes:
+            placed = align_by_sessions(track, guest_r, workdir / "room", changes,
+                                       expected=expect,
+                                       # The guest's right channel is Mira alone
+                                       # only when nobody else was in the room.
+                                       fill_gaps=host is None,
+                                       pieces_out=role_pieces)
+        if placed is not None:
+            shifted, delay, windows = placed
+        else:
+            role_pieces = []
+            shifted, delay, windows = align_to_room(track, guest_r, workdir / "room",
+                                                    expected=expect,
+                                                    pieces_out=role_pieces)
+            # The blind search's own check is as coarse as its search; a
+            # track it passed must also hold in short windows.
+            if role == "mira" and windows >= ROOM_MIN_WINDOWS and changes:
+                off = clock_residuals(shifted, guest_r, workdir / "room")
+                if off:
+                    logger.warning("mira: off the clock in short windows after the "
+                                   "blind search: %s", off[:6])
+                    windows = 0
         if len(role_pieces) > 1:
             pieces[role] = role_pieces
         alignment[role] = delay
