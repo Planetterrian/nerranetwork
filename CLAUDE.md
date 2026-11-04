@@ -1980,6 +1980,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
   Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
 
+### Mira builds on the answer; she does not sum it up (Nov 4 2026)
+
+Register `mira-react-builds-2026-11-04`; notes `docs/mira_craft_notes.md`; guards `tests/test_mira_builds_2026_11_04.py`.
+**What she says after an answer is a bridge built from one thing the guest said, never a phrase folded from it, and never the same shape twice** (HOW TO REACT, by shape). **`one_liner_rate` reads the sameness beside label and bare.** **`learning.SUPERSEDED_BY_BRIEF` keeps lessons the brief now governs out of the prompt; it ships and rehearses with the brief.** ⚠️ AUDIO, the room: a rehearsal PASS plus one listen before merge.
+
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 
 Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.

@@ -91,9 +91,11 @@ MUST_NOT_LOSE = ("mira_turn_sec_median", (12.0, 20.0))
 #: the question): the share of her question turns with no sentence of her
 #: own before the question, the label it can regrow into, the echo, and how
 #: long after the guest's last word she begins (a slower reasoning effort
-#: shows there first). Read the pair label / bare together.
-READ_BESIDE = ("bare_question_rate", "label_open_rate", "echo_open_rate",
-               "turn_gap_ms_median")
+#: shows there first). Read the pair label / bare together, and
+#: one_liner_rate beside them (Nov 4 2026: the same short line before every
+#: question).
+READ_BESIDE = ("bare_question_rate", "label_open_rate", "one_liner_rate",
+               "echo_open_rate", "turn_gap_ms_median")
 #: What the fixture's persona may carry into the room (Voximplant's
 #: customData has to fit the whole JSON; a persona over this is cut at a
 #: line end).

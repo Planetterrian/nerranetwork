@@ -328,3 +328,50 @@ overlaps and self-answered turns (neither may rise) and turn_gap_ms_median
 (a slower effort shows there first). A PASS plus one operator listen ships
 it; the rooms booked before that run the deployed brief. The register
 entry's readout is the fifth real room.
+
+## Blaine Mathieu, Nov 4 2026: the same short line before every question
+
+What happened. The first room on the Nov 3 beat. After nearly every answer
+Mira said one pithy line folded from it (a wave against a river, retrofit
+as table stakes, "different, not better" in his own terms) and then a short
+question, often a generic one about what surprised him or where it breaks
+down. Each line was fine; together they were a formula, and Patrick heard
+it as a summary she gave every time a guest finished. The measures read
+it only in part: label_open_rate 0.355, reaction_open_rate 0.29,
+bare_question_rate 0.355, her median turn 5.3 s against the 12-20 s band.
+A twelve-word aphorism is a "reaction" to `question_turn_shape`, so the
+shapes looked mixed while the turns sounded identical.
+
+Why. She did what she was told. The brief's last critical line asked for
+one sentence of what the answer changes, then the question. Three standing
+network lessons in the same prompt asked her to ask the new question
+directly, to send most turns straight to the next question, and to deliver
+each question in one short sentence. The only turn that satisfies all four
+is one short line and one short question. The good turn of the hour was
+the one that broke the pattern: she set his bank example beside a fact from
+the research about a manufacturer that went the other way, and the question
+came out of that.
+
+What changed. HOW TO REACT now says what the turn after an answer is FOR:
+a bridge to the next question, built from one particular thing the guest
+said (joined to something earlier, set beside a fact from the brief or the
+research, a consequence or tension they have not named, or her own
+different view), one to three sentences as the thought needs, then the
+question that thought makes necessary. Folding the answer into a phrase is
+named by shape, and the turn is to vary, so a listener cannot predict its
+shape. The critical line follows it. The three lessons, and a fourth
+(two closing questions, from before the room ran the closing round) that
+would have been next in line, stay out of the prompt through
+`learning.SUPERSEDED_BY_BRIEF`, keyed by id, so the change ships and
+rehearses as one piece; retire the rows once the brief is live.
+`audio_metrics.one_liner_rate` (exactly one sentence of at most fourteen
+words before the question) measures the sameness, target under 0.35; the
+recounted excerpt of this room reads about 0.59.
+
+Before any booked room hears this brief: a two-arm rehearsal on a fixture
+with long arcs (`adrian`), proposed = this branch, current = the deployed
+brief; read one_liner_rate beside label and bare (the cure is variety, not
+the bare question again), mira_turn_sec_median moving toward the band,
+guest_words_per_answer_median and guest_words_trend, overlaps and
+self-answered turns (neither may rise). A PASS plus one operator listen
+ships it.

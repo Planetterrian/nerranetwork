@@ -233,7 +233,7 @@ class TestLessonsAreFiveAndPositive:
         # The HOW TO LISTEN beat once offered "their own word handed back",
         # the phrase that taught the echo the prompt's last rule forbids.
         assert "own word handed back" not in _flat(PROMPT)
-        assert "what struck you, or what it changes" in _flat(PROMPT)
+        assert "Never fold their answer into a phrase." in _flat(PROMPT)
 
     def test_the_show_cap_is_six(self):
         import learning

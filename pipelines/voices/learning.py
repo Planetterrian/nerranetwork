@@ -54,6 +54,28 @@ MAX_SHOW_LESSONS = 6             # this show's own format and subject (Oct 21 20
 # five lines, show-specific first, and the network scope fills in only while
 # the show has fewer than five of its own.
 PROMPT_LESSONS_MAX = 5
+#: Standing lessons the brief now governs (Nov 4 2026, Blaine Mathieu's
+#: hour). Each told her to keep turns short and go straight to the next
+#: question, beside a brief that asked for one sentence before it; the room
+#: met both with a pithy line folded from the answer and a short question,
+#: on most turns. The rewritten HOW TO REACT owns what she says after an
+#: answer, and the closing round is the room's to run, so these stay out of
+#: the prompt. Keyed by id, so the record in ``show_lessons`` is untouched;
+#: retiring the rows (``retire_lessons``) once this brief has shipped makes
+#: the entries inert. Rehearsed with the brief, never apart from it.
+SUPERSEDED_BY_BRIEF = {
+    # "ask the new question directly" (the echo ban stays in HOW TO REACT)
+    "6c89834c-3557-4739-ab12-c11f99e18502": "react-builds-2026-11-04",
+    # "Most turns go straight to the next question" (the grade, restate and
+    # label bans stay in HOW TO REACT)
+    "8c69e55d-73c4-4c46-afdc-b32abe16d8ee": "react-builds-2026-11-04",
+    # "Deliver each question in one short sentence" (one question per turn
+    # and the silence after it stay in HOW TO LISTEN)
+    "1d5a5f84-838e-419d-b305-7dd73e8d7939": "react-builds-2026-11-04",
+    # "the two closing questions": the room runs the whole closing round
+    # since Oct 21; this would be the next lesson in line
+    "854dfc33-4c44-4e40-ac46-623494b3aa88": "react-builds-2026-11-04",
+}
 # Oct 21 2026: a lesson that QUOTES the line it bans hands Mira the specimen
 # (the network rule: de-seed by shape, never with a quotable example). The
 # weekly pass asks for unquoted lessons, but a lesson edited by hand reaches
@@ -938,6 +960,10 @@ def prompt_lessons(show_slug: str) -> List[dict]:
             key = str(row.get("lesson") or "").strip().lower()
             if not key or key in seen:
                 continue
+            if str(row.get("id") or "") in SUPERSEDED_BY_BRIEF:
+                logger.info("lesson %s is governed by the brief now (%s); left out",
+                            row.get("id"), SUPERSEDED_BY_BRIEF[str(row.get("id"))])
+                continue
             if quotes_a_specimen(row.get("lesson")):
                 logger.warning("lesson %s quotes a line and stays out of the "
                                "prompt; reword it to describe the habit",
@@ -1032,6 +1058,7 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             ("echo openers", "echo_open_rate", "%"),
             ("label openers", "label_open_rate", "%"),
             ("bare questions", "bare_question_rate", "%"),
+            ("one-line openers", "one_liner_rate", "%"),
             ("guest words per answer", "guest_words_per_answer_median", ""),
         ) if m.get("metrics_basis") == "audio" else ()
         for label, key, suffix in audio_rows + (

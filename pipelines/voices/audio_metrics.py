@@ -34,6 +34,9 @@ The eight measures and what each answers:
   the share of her question turns with no sentence of her own before the
   question; the three shapes of a question turn (label, bare, reaction)
   add to one, so the pair says whether a reaction rule regrew the label.
+* ``one_liner_rate`` (Nov 4 2026, a note) — the share of her question
+  turns with exactly one short sentence of her own before the question:
+  the same shape on every turn, which a listener hears as a formula.
 * ``closing_round_complete`` — from the scenario trace: every round
   question asked, one per turn, each followed by the guest.
 * ``seams`` — session rotations and drops with guest speech within two
@@ -293,6 +296,67 @@ def bare_question_rate(mira_turns: Sequence[dict]) -> Optional[float]:
     return _shape_rate(mira_turns, "bare")
 
 
+#: Nov 4 2026 (Blaine Mathieu's hour): the one-liner. A question turn whose
+#: only words of her own before the question are ONE short sentence. The
+#: Nov 3 beat asked for exactly one sentence of what the answer changes, and
+#: the standing lessons asked for short turns that go straight on; the room
+#: met both with a pithy line folded from the answer, then a short question,
+#: on most turns of the hour. The label (``LABEL_MAX_WORDS``) is the short
+#: end of it; a twelve-word aphorism reads as a reaction to
+#: ``question_turn_shape`` and is the same habit to a listener. Content is
+#: not read: the measure is the SAMEness, so read it beside the three shapes.
+ONE_LINER_MAX_WORDS = 14
+
+
+def question_turn_lead(text: str) -> Optional[List[str]]:
+    """The sentences of Mira's own before the first question in a turn, a
+    leading greeting word dropped; ``None`` when the turn asks nothing."""
+    text = (text or "").strip()
+    if "?" not in text:
+        return None
+    lead: List[str] = []
+    for sentence in _SENTENCE_RE.split(text):
+        if "?" in sentence:
+            break
+        words = _norm_words(sentence)
+        greeted = bool(words) and words[0] in _GREETING
+        while words and words[0] in _GREETING:
+            words = words[1:]
+        # A greeting with a name or a word after it is not a line of hers
+        # about the answer (question_turn_shape's rule).
+        if greeted and len(words) < REACTION_MIN_WORDS:
+            continue
+        if words:
+            lead.append(" ".join(words))
+    return lead
+
+
+def is_one_liner(text: str) -> Optional[bool]:
+    """True when the only words of hers before the question are one sentence
+    of at most ``ONE_LINER_MAX_WORDS`` words; ``None`` when not judged."""
+    lead = question_turn_lead(text)
+    if lead is None:
+        return None
+    return len(lead) == 1 and len(lead[0].split()) <= ONE_LINER_MAX_WORDS
+
+
+def one_liner_rate(mira_turns: Sequence[dict]) -> Optional[float]:
+    """Share of Mira's question turns that put one short line of her own in
+    front of the question (Nov 4 2026). A host who does it on every turn is
+    predictable; what she says after an answer should build on it (a link to
+    something said earlier, a fact, a consequence, her own view) or, when the
+    answer leads straight on, give way to the question. Read beside
+    ``bare_question_rate``: the cure is variety, not the opposite habit."""
+    judged = hits = 0
+    for m in mira_turns:
+        verdict = is_one_liner(" ".join(m["words"]))
+        if verdict is None:
+            continue
+        judged += 1
+        hits += 1 if verdict else 0
+    return round(hits / judged, 3) if judged else None
+
+
 def guest_words_per_answer(guest_turns: Sequence[dict]) -> Tuple[Optional[float], Optional[float]]:
     """Median words per guest turn, and last-third median / first-third."""
     counts = [len(t["words"]) for t in guest_turns]
@@ -538,6 +602,7 @@ def measure_audio(words_by_role: Dict[str, List[dict]],
         out["bare_question_rate"] = round(shapes["bare"] / judged, 3) if judged else None
         out["reaction_open_rate"] = round(shapes["reaction"] / judged, 3) if judged else None
         out["question_turn_shapes"] = shapes
+        out["one_liner_rate"] = one_liner_rate(mira_turns)
         out["interruptions_audio"] = sum(1 for g in gaps if g < INTERRUPTION_MS)
         out["dead_air_turns_audio"] = sum(1 for g in gaps if g > DEAD_AIR_MS)
     if trace:
@@ -728,6 +793,7 @@ TARGETS: Dict[str, Tuple[str, float]] = {
     "echo_open_rate": ("down", 0.10),
     "label_open_rate": ("down", 0.35),
     "bare_question_rate": ("down", 0.25),
+    "one_liner_rate": ("down", 0.35),
     "guest_words_trend": ("up", 1.0),
     "seams": ("down", 0.0),
 }
