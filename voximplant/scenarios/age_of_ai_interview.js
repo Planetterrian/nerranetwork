@@ -744,7 +744,14 @@ const HOLD_REPLY_MIN_SPEECH_MS = 800;   // shorter is a cough or a word to someo
 // answer, never a hold.
 const HOLD_ENTER_RE = /\b((i (have|need|got|gotta) to|let me|i'?ll( just)?|i'?m going to|i'?m gonna) (take|grab|answer|get) (this|that|a|the|another) (call|phone)|(another|a|the) call (coming|is coming) in|my (phone|other line)('s| is) ringing|(give|bear with) me (just )?(a|one) (moment|minute|second|sec)|bear with me|(hold|hang) on (just )?(a|one) (moment|minute|second|sec)|excuse me (for )?(just )?(a|one) (moment|minute|second|sec)|(i'?ll|i will) be (right )?back|be right back)\b/i;
 // Mira saying she will wait is the same signal from the other side.
-const MIRA_HOLD_RE = /\b(i'?ll wait|i will wait|i'?ll be (right )?here|i'?ll hold|whenever you'?re back)\b/i;
+// Nov 4 2026 (rehearsal 115ba095): "That's fair, and I'll hold the silence
+// better" -- her reply to the guest's improvement -- matched a bare
+// "i'll hold", the room went on hold at closing question 7 of 7 with the
+// guest present, and nobody spoke for three minutes. Only the waiting
+// senses count now: "I'll wait" (not "wait less/longer"), "I'll be
+// (right) here" (not "here next month"), "I'll hold on" (not "hold on
+// to"), "whenever you're back".
+const MIRA_HOLD_RE = /\b((i'?ll|i will) wait\b(?!\s+(less|longer))|(i'?ll|i will) be (right )?here\b(?!\s+(next|again|in|for)\b)|(i'?ll|i will) hold on\b(?!\s+to\b)|whenever you'?re back\b)/i;
 // The guest turning back to her.
 const HOLD_EXIT_RE = /\b(m(i|ee)ra|sorry about that|sorry (for|about) the (wait|interruption)|(i'?m|i am) back|where were we|thanks for (waiting|your patience|bearing with me)|back to (you|it|our|the)|you were (asking|saying)|your question|(as|like) i was saying|(okay|ok|all right|alright),? (i'?m|i am) (here|back))\b/i;
 // "Back." said as its own sentence: the fourth rehearsal's guest came back on

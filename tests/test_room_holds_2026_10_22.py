@@ -209,6 +209,21 @@ class TestHoldMode:
         out = sim("phrases", ["Of course, I'll wait.", "Take your time with that answer."])
         assert out["phrases"][0]["mira_wait"] and not out["phrases"][1]["mira_wait"]
 
+    def test_only_the_waiting_senses_are_a_hold(self):
+        """Nov 4 2026 rehearsal: "I'll hold the silence better", her reply to
+        the guest's suggested improvement, put the room on hold at the last
+        closing question with the guest still there."""
+        waits = ["Of course, I'll wait.", "I'll be right here.", "Take your time, I'll be here.",
+                 "I'll hold on.", "Whenever you're back.", "I will wait for you."]
+        not_waits = ["That's fair, and I'll hold the silence better.", "I'll hold that thought.",
+                     "I'll hold onto that.", "I'll hold on to that one.",
+                     "I'll wait less before I come in.", "I'll wait longer next time.",
+                     "I'll be here next month if you want to come back.",
+                     "Take your time with that answer."]
+        out = sim("phrases", waits + not_waits)["phrases"]
+        assert [p["mira_wait"] for p in out[:len(waits)]] == [True] * len(waits), out[:len(waits)]
+        assert [p["mira_wait"] for p in out[len(waits):]] == [False] * len(not_waits), out[len(waits):]
+
     def test_everything_that_could_speak_or_prompt_holds(self):
         assert "if (holdMode && !holdCheckInRequested) return;" in _fn("function requestTurn(agent)")
         assert "if (holdMode) { holdPausesSkipped += 1; return; }" in _fn("function decideTurn()")
