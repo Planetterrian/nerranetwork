@@ -232,6 +232,7 @@ class TestVoicesQueriesReachPostgREST:
     def test_the_hello_query_uses_the_interviews_column_and_a_safe_instant(self, monkeypatch):
         import datetime as dt
         _gs, hs = self._voices()
+        monkeypatch.setenv("HELLO_INVITES", "1")
         seen = []
         monkeypatch.setattr(hs, "sb_select", lambda table, q: seen.append((table, q)) or [])
         hs.send_hello_invites(now=dt.datetime(2026, 10, 27, 16, 27, tzinfo=dt.timezone.utc))

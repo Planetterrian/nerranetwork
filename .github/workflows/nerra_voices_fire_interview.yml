@@ -55,6 +55,9 @@ jobs:
           # the closing page (CALCOM_BOOKING_URL, else the live Cal.com pages).
           CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
           CALCOM_BOOKING_URL_HELLO: ${{ secrets.CALCOM_BOOKING_URL_HELLO }}
+          # Nov 4 2026: paused until the hello event type exists in Cal.com
+          # (the invite linked to a page that 404s). "1" turns it back on.
+          HELLO_INVITES: "0"
       - run: python pipelines/voices/fire_interviews.py
         env:
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}

@@ -147,6 +147,7 @@ class TestThePreCallHello:
         assert hs.hello_booking_url(_Show()) == "https://cal.com/x/age-of-ai-hello"
 
     def test_invites_go_to_guests_without_an_agenda_once(self, monkeypatch):
+        monkeypatch.setenv("HELLO_INVITES", "1")
         now = dt.datetime(2026, 10, 21, 12, 0, tzinfo=dt.timezone.utc)
         rows = [{"id": "i1", "application_id": "a1"}, {"id": "i2", "application_id": "a2"}]
         apps = {"a1": {"id": "a1", "name": "Jane Doe", "email": "j@x.io"},

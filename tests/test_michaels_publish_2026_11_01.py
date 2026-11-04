@@ -84,3 +84,16 @@ def test_the_transcript_note_says_the_edit_is_edited():
     assert "edited for length" in pe.EDIT_TRANSCRIPT_NOTE
     assert "approve, cut from or refuse before publication" in pe.EDIT_TRANSCRIPT_NOTE
     assert "as it was recorded" not in pe.EDIT_TRANSCRIPT_NOTE
+
+
+def test_the_hello_invite_is_paused_until_its_page_exists(monkeypatch):
+    """Nov 4 2026: the invite linked to cal.com/.../age-of-ai-hello, which was
+    never created (Luke Miler: 404). Off unless HELLO_INVITES says on."""
+    import hello_sessions as hs
+    monkeypatch.delenv("HELLO_INVITES", raising=False)
+    monkeypatch.setattr(hs, "sb_select", lambda *a, **k: (_ for _ in ()).throw(AssertionError("queried")))
+    assert hs.send_hello_invites() == 0
+    wf = (ROOT / ".github" / "workflows" / "nerra_voices_fire_interview.yml").read_text(encoding="utf-8")
+    assert 'HELLO_INVITES: "0"' in wf
+    monkeypatch.setenv("HELLO_INVITES", "1")
+    assert hs.invites_enabled()

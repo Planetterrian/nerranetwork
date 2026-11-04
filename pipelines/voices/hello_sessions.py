@@ -99,9 +99,23 @@ def _iso(t: dt.datetime) -> str:
     return t.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def invites_enabled() -> bool:
+    """Nov 4 2026 (Patrick): the invite is PAUSED. The Cal.com page it links
+    to (``age-of-ai-hello``) was never created, so the five guests invited
+    since Oct 30 (Tamara Laine, Blaine Mathieu, Priyanka Sharma, Stan Lewis,
+    Luke Miler) got a dead link, and Luke wrote back that it 404s. Set
+    ``HELLO_INVITES=1`` on the fire workflow to turn it back on once the
+    hello event type exists in Cal.com."""
+    return os.environ.get("HELLO_INVITES", "").strip().lower() in ("1", "true", "on", "yes")
+
+
 def send_hello_invites(now: Optional[dt.datetime] = None) -> int:
     """Invite every guest whose interview is two to four days out and who has
-    no agenda yet. Returns the number sent."""
+    no agenda yet. Returns the number sent; 0 while :func:`invites_enabled`
+    is off."""
+    if not invites_enabled():
+        logger.info("hello invites paused (HELLO_INVITES is not set); none sent")
+        return 0
     now = now or dt.datetime.now(dt.timezone.utc)
     lo, hi = now + INVITE_AHEAD[0], now + INVITE_AHEAD[1]
     # Oct 28 2026: this query had returned HTTP 400 on every run since it
