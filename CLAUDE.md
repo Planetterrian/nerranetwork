@@ -822,6 +822,11 @@ Best-effort — any failure ships the legacy render (`engine/visual_reuse.py`). 
 [history](docs/claude_md_history/2026_10_28_age_ai_pause.md); guards `tests/test_{guest_video,mira_researches_on_her_own,turn_cues,second_test_room,video_sync_and_shorts,michaels_post_production}_2026_10_28.py`, `tests/test_michaels_publish_2026_11_01.py`, `workers/voices/test/guest_video.test.ts`.
 **The guest's camera is recorded in the browser, never through the call**; **a video take never touches `local_<role>_url`**; **a take is appended in the database, never read-and-written**; **`voices.local_video` is false until a test room with a person on camera passes and the operator has watched it**; **publish uses the video only while `video_of` is the edit being published** and never for an audio-only guest; **Mira moves only while she speaks** — measured from the audio, never the transcript; the Voximplant video is never a source. A research finding reaches her as ONE sourced note that never starts a turn and never corrects the guest; **the trace never carries the guest's words**. No prosody rule goes into the room ([`docs/reviews/turn_cues_2026_10_28.md`](docs/reviews/turn_cues_2026_10_28.md)); an adaptive wait is a room change — rehearsal and a listen first. Software audio devices are never chosen; **post-production never loops on a line**.
 
+### Mira's recorder loses time at every session change (Nov 4 2026)
+
+Guards `tests/test_mira_session_clock_2026_11_04.py`.
+**Mira's own track is placed in the pieces her session changes made** (`post_interview.mira_session_changes` from the trace → `local_tracks.align_by_sessions`; a hand-over or a rescue costs her recorder 7–137 s right after it), **and checked in 30 s windows** (`clock_residuals`; the blind search's 150 s check passed tracks four minutes off). The lost seconds are filled from the guest's right channel only with no co-host. `pipelines/voices/retrack_run.py` rebuilds a processed run's tracks, mix and transcript (dry run by default; sends nothing).
+
 ### Members-only limited series (Oct 18 2026)
 
 [history](docs/claude_md_history/2026_10_18_members_only_limited.md); doc [`docs/specials.md`](docs/specials.md); guards `tests/test_specials_2026_10_18.py`.
