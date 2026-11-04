@@ -112,6 +112,15 @@ How it was built: eight proposers (one per goal area) wrote 78 proposals from th
 
 **Refuted (dropped):** a sonic identity sting under the identity line (audio-7; re-filed as an operator asset item); a weekly release slot for the interview shows (voices-5; a next-morning option would stand); the adaptive end-of-turn wait as written (voices-6; measure first-audio latency first); the guest-experience column (voices-10; a panel under a new field name would stand); a hook-only rewrite instead of the digest regeneration (efficiency-10; it would leave the combined stash stale).
 
+**What shipped on this branch** (each with a guard test and a register entry in `docs/experiments.yaml`; ⚠️ marks a change a listener hears):
+- A1 `funnel-denominator` (f16161596); A4 `youtube-brand-surfaces` (8a1cbf5bb); A6 `email-redesign` (7ed32edaf); A10 `repo-hygiene` (4994ba6f6); A11 `long-form-policy-instrument` (f91e662ed).
+- A2 `youtube-measurement` (0505c457b); A12 `listen-before-slate` (ec06ad40c); A13 `findability` (c8432422c); A5 `voices-spend-and-metrics` (a82b27b37).
+- B1 ⚠️ `env-intel-sourced-deep-dive` (4409f6ff8); B2 ⚠️ `flagship-prompts-by-shape` (1780738f8); B3 ⚠️ `digest-fact-floor` (75f81d2d3); B4 ⚠️ `digest-lints-pass` (f2356d670); B5 ⚠️ `voice-dynamics-glue` (52258b5d3); B6 ⚠️ `remaster-voice-only-back-catalogue` (4e7751e8f, a tool the operator runs); B7 ⚠️ `mira-beat-before-the-question` (90c386ff7).
+- Also from the proposals: the loudness, range and true-peak metrics (4d24d738c), the Age of AI edit's one master encode and room-tone pads (bef7f5c80), CLAUDE.md back to the rules (edbc6b85d).
+- In progress when this list was written, and recorded here as they land: A3 `review-loop-closes`, A7 `email-measurement`, A8 `audit-instrument`, A9 `interview-publish-parity`, A14 `ru-fr-audience-surfaces`.
+
+Deviations from the briefs, each argued in its commit: the flagship essays' fetched-source lint is measure-only until each prompt states the Source-line rule (firing it would have spent the regeneration daily on six shows); the credit-stop ping runs at 03:00 ET, the slot the Voices Worker's hourly catch-all guarantees; the re-master limiter ceiling is −2.0 dBFS, because −1.0 re-measured at −0.5 dBTP after the encode on the real UC Ep161; Top World's one-sentence Also Today outlet drop is left to the operator.
+
 The full ranking with each item's merges, confidence and one-line reasoning, and every skeptic's verdict, are the session's scratch record (`RANKING.md`, `verdicts.json`); the work items as implemented are listed in the pull request.
 
 ## 5. Operator items
@@ -169,6 +178,16 @@ Reads only a person can do:
 - Is a welcome email configured at the Buttondown account level? The signup button now says when the email arrives instead of "Check your email".
 - Verify the email's archive copy on the next real send (Actions "Nerra Daily email", mode `draft`): the Django "no subscriber" behaviour is inferred from the Nov 2 archive, not documented.
 - Listen: a Patrick minute against an NPR minute at equal loudness (the chain's LRA 1.6–3.0 against NPR's 4.9–5.2 is the compressor; a listen decides whether it is a defect); the Olya voice reading the English half of a Russian lesson; the English-trained clone reading Russian and French to a native ear.
+
+From the items shipped on this branch (each item's commit and register entry carry the detail):
+- Listens, before the slate trusts them: Env Intel's first Monday (Nov 9) against Ep075; Tesla's first episode on the prompts by shape, then SpaceX and FF, reading `script_attribution_tail_pct` beside coverage and entity retention; Planetterrian's first thin day on the fact floor; the first glue episodes on Tesla and Top World on a phone speaker and headphones, and one DP Pod before any network flip of `DEFAULT_VOICE_DYNAMICS`; the first UC or FPD episode regenerated for an unsourced hook figure; one Modern Investing explainer and one Привет, Русский! episode (their twins of the retired rules changed too).
+- The back-catalogue re-master: Actions "Re-master Episodes" with `show=unintended_consequences`, `episodes=161`, `apply=false`; then `apply=true` for that one episode; listen after the edge cache turns over (up to four hours) beside Tesla Ep653; then `all` for UC (161), Vancouver (41) and Collingwood (6). Read the job summary, not its colour.
+- Mira's beat: a two-arm candidate rehearsal at medium effort on the adrian and vincent fixtures, PASS, then one listen, before a booked room hears the new brief. Until then do not merge this branch ahead of a booked room, or run that room from the deployed brief: `fire_interviews` reads the brief from the repository at fire time. The same gate covers the one-clause change to Mira's spoken self-description.
+- The first rehearsal: Actions "Run Podcast Show" with `rehearse: true` on Tesla or SpaceX (the artifact lands, nothing is committed); Actions "Probe audio chain" with a committed `_tts.txt` as `script`.
+- Nightly secrets: `VOICES_SUPABASE_URL` and `VOICES_SUPABASE_SERVICE_KEY` on nightly-maintenance's "Build Nerra Voices metrics" step (until then `api/voices_metrics.json` reads null everywhere); read the xAI invoice once and set `XAI_VOICE_COST_PER_MIN` if the Voice Agent rate is not $0.05 a minute.
+- Search Console: submit `https://nerranetwork.com/news-sitemap.xml` (it fills as posts are re-rendered as NewsArticle over the first day).
+- Decisions with the numbers now on the record: the dub long overlay (`DUB_LONG_RELATIVE_ENABLED` in `scripts/update_youtube_policy.py`); listing `deep_dive_distinct` on Tesla and Planetterrian after a week of readings (Nov 10); Tesla joining the fact floor after Planetterrian's two-week readout; the outro card is a wall of show covers now (delete `assets/site_screens/` and its capture workflow if it stays).
+- Pre-existing and unrelated, seen while testing: `tests/test_network_quality_pass.py::TestNarrativeQueueRunway::test_first_principles_alternation_stocked` fails because the committed First Principles queue holds no `opportunity_area` entry; the restock automation's alarm is doing its job.
 
 ## 6. Open questions
 
