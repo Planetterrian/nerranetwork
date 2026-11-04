@@ -748,7 +748,9 @@ SESSION_MAX_LOSS_SEC = 300.0   # the most room time one change has been seen to 
 SESSION_AGREE_SEC = 0.5
 SESSION_MIN_CORR = 0.6
 SESSION_STRONG_CORR = 0.85
-SESSION_SEAM_SEARCH_SEC = 25.0
+SESSION_SEAM_SEARCH_SEC = 10.0
+SLIP_SEC = 0.25               # a slip this size inside a stretch is placed too
+SLIP_MIN_WINDOWS = 3
 CHECK_WINDOW_SEC = 30.0
 CHECK_STEP_SEC = 15.0
 CHECK_SPAN_SEC = 90.0
@@ -781,7 +783,11 @@ def _best_delay(track: np.ndarray, room: np.ndarray, t0: int, window: int,
     s1 = c1[window:window + n] - c1[:n]
     s2 = c2[window:window + n] - c2[:n]
     nb = np.sqrt(np.maximum(s2 - s1 * s1 / window, 0.0))
-    corr = np.where(nb > 0, num / (na * np.where(nb > 0, nb, 1.0)), 0.0)
+    # A near-flat stretch of the room divides by almost nothing and "matches"
+    # anything; it is not a candidate.
+    live = nb > 0.05 * float(nb.max() or 1.0)
+    corr = np.where(live, num / (na * np.where(live, nb, 1.0)), 0.0)
+    corr = np.clip(corr, 0.0, 1.0)
     k = int(np.argmax(corr))
     return (b_lo + k - t0) / sr, float(corr[k])
 
@@ -912,13 +918,60 @@ def session_pieces(track_wav: Path, room_wav: Path, workdir: Path,
     for i, d in enumerate(delays):
         a = seams[i] / sr
         b = seams[i + 1] / sr if i + 1 < len(seams) else total
-        pieces.append({"from": round(a, 3), "to": round(max(a, b), 3),
-                       "delay": round(d, 3), "windows": stats[i][0],
-                       "agreement": round(stats[i][1], 3)})
+        pieces += _slips({"from": round(a, 3), "to": round(max(a, b), 3),
+                          "delay": round(d, 3), "windows": stats[i][0],
+                          "agreement": round(stats[i][1], 3)}, track, room)
     logger.info("session pieces: %s", ", ".join(
         f"{p['from']:.0f}-{p['to']:.0f}s at {p['delay']:+.2f}s ({p['windows']}w)"
         for p in pieces))
     return pieces
+
+
+def _slips(piece: dict, track: np.ndarray, room: np.ndarray) -> list:
+    """A stretch between two session changes can still slip a fraction of a
+    second (Blaine Mathieu's sat 0.6 s early for two minutes before the
+    hand-over). Windows that agree on another delay for three in a row
+    become a piece of their own; anything shorter stays where it is."""
+    sr = ROOM_ENVELOPE_SR
+    window, step = int(SESSION_WINDOW_SEC * sr), int(SESSION_STEP_SEC * sr)
+    a, b, d = int(piece["from"] * sr), int(piece["to"] * sr), piece["delay"]
+    picks = []
+    for t0 in range(a, max(a, b - window) + 1, step):
+        e, c = _best_delay(track, room, t0, window, d - 3.0, d + 3.0)
+        if e is not None and c >= SESSION_MIN_CORR:
+            picks.append((t0, e, c))
+    runs: list = []
+    for pick in picks:
+        if runs and abs(pick[1] - float(np.median([p[1] for p in runs[-1]]))) <= SLIP_SEC / 2:
+            runs[-1].append(pick)
+        else:
+            runs.append([pick])
+    runs = [r for r in runs if len(r) >= SLIP_MIN_WINDOWS]
+    # Neighbouring runs at the same delay are one run.
+    merged: list = []
+    for r in runs:
+        if merged and abs(float(np.median([p[1] for p in r]))
+                          - float(np.median([p[1] for p in merged[-1]]))) <= SLIP_SEC:
+            merged[-1] = merged[-1] + r
+        else:
+            merged.append(r)
+    if len(merged) < 2:
+        return [piece]
+    out, start = [], a
+    for k, r in enumerate(merged):
+        dr = float(np.median([p[1] for p in r]))
+        if k + 1 < len(merged):
+            nxt = merged[k + 1]
+            dn = float(np.median([p[1] for p in nxt]))
+            end = _change_point(track, room, r[-1][0], nxt[0][0] + window, dr, dn)
+        else:
+            end = b
+        out.append({"from": round(start / sr, 3), "to": round(max(start, end) / sr, 3),
+                    "delay": round(dr, 3), "windows": len(r),
+                    "agreement": round(float(np.median([p[2] for p in r])), 3)})
+        start = end
+    out[0]["from"] = piece["from"]
+    return out
 
 
 def clock_residuals(track_wav: Path, room_wav: Path, workdir: Path) -> list:
@@ -936,7 +989,14 @@ def clock_residuals(track_wav: Path, room_wav: Path, workdir: Path) -> list:
         d, c = _best_delay(track, room, t0, window, -CHECK_SPAN_SEC, CHECK_SPAN_SEC)
         if d is None or c < CHECK_STRONG_CORR or abs(d) <= ROOM_RESIDUAL_SEC:
             continue
-        off.append({"at": round(t0 / sr, 1), "delay": round(d, 2), "corr": round(c, 2)})
+        # Where it sits must be clearly worse than where it matches best: she
+        # says some things twice, and a repeat matches as well as the original.
+        _, here = _best_delay(track, room, t0, window, -ROOM_RESIDUAL_SEC,
+                              ROOM_RESIDUAL_SEC)
+        if here >= c - 0.25:
+            continue
+        off.append({"at": round(t0 / sr, 1), "delay": round(d, 2),
+                    "corr": round(c, 2), "here": round(here, 2)})
     return off
 
 
