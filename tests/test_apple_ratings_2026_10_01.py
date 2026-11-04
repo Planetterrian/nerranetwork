@@ -207,8 +207,10 @@ class TestBuildRatings:
         assert targets["tesla"].endswith("/id1855142939")
         assert "spacex" in targets, "spacex has only a YAML apple_show_id"
         assert all(u.startswith("https://podcasts.apple.com/") for u in targets.values())
-        # The September cohort has no Apple page yet (never submitted).
-        assert "ai_chips" not in targets
+        # Nov 4 2026: the September cohort is live on Apple (IDs in each YAML);
+        # Nerra Voices has never been submitted, so it has no page yet.
+        assert targets["ai_chips"].endswith("/id6818850243")
+        assert "nerra_voices" not in targets
 
     def test_main_writes_file_with_mocked_fetch(self, tmp_path, monkeypatch):
         monkeypatch.setattr(far, "rating_targets", lambda: self._TARGETS[:1])

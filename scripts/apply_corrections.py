@@ -29,6 +29,7 @@ if str(ROOT) not in sys.path:
 
 from engine.corrections import (  # noqa: E402
     apply_episode_amendments,
+    apply_replacements,
     corrections_for,
     has_text_amendments,
     load_corrections,
@@ -68,6 +69,84 @@ def _show_dir_and_rss(slug: str):
     return digests, [p for p in rss if p.is_file()]
 
 
+#: The interview shows keep a content-lake row per episode
+#: (``episode_records``) that Mira reads back to the next guest.
+INTERVIEW_SHOWS = ("age_of_ai", "nerra_voices")
+#: The text columns of an episode record a correction can reach.
+RECORD_TEXT_FIELDS = ("summary", "claims", "predictions", "quotes",
+                      "follow_ups", "unanswered")
+
+
+def amend_record_fields(record: dict, entries: list) -> tuple[dict, int]:
+    """Pure: the changed text columns of one ``episode_records`` row after
+    every entry's ``replacements``, and the hit count. Headlines are not
+    applied (a record has no title)."""
+    replacements = [r for c in entries for r in (c.get("replacements") or [])]
+    hits = 0
+
+    def walk(obj):
+        nonlocal hits
+        if isinstance(obj, str):
+            new, n = apply_replacements(obj, replacements)
+            hits += n
+            return new
+        if isinstance(obj, list):
+            return [walk(v) for v in obj]
+        if isinstance(obj, dict):
+            return {k: walk(v) for k, v in obj.items()}
+        return obj
+
+    patch = {}
+    for field in RECORD_TEXT_FIELDS:
+        if field not in record:
+            continue
+        before = hits
+        new = walk(record[field])
+        if hits > before:
+            patch[field] = new
+    return patch, hits
+
+
+def amend_episode_record(slug: str, episode: int, entries: list, *, apply: bool) -> int:
+    """Carry the correction into the interview's ``episode_records`` row.
+
+    Nov 4 2026: Michael Kamins' Pyvot correction reached the package and the
+    post but not ``episode_records``, whose summary, claims and predictions
+    still said "Pivot" — the record Mira quotes to the next guest. Returns
+    the hit count; a missing Supabase configuration is logged, never fatal,
+    and leaves the record for a run that has it."""
+    if slug not in INTERVIEW_SHOWS:
+        return 0
+    try:
+        sys.path.insert(0, str(ROOT / "pipelines" / "voices"))
+        from common import sb_select, sb_update
+        interviews = sb_select("interviews", f"show=eq.{slug}&episode_number=eq.{episode}"
+                                             "&select=id&limit=1")
+        if not interviews and slug == "age_of_ai":
+            # Rows from before the show column default to The Age of AI.
+            interviews = sb_select("interviews", f"show=is.null&episode_number=eq.{episode}"
+                                                 "&select=id&limit=1")
+        if not interviews:
+            logger.warning("episode record: no interview for %s Ep%s", slug, episode)
+            return 0
+        records = sb_select("episode_records",
+                            f"interview_id=eq.{interviews[0]['id']}"
+                            "&select=id," + ",".join(RECORD_TEXT_FIELDS))
+    except Exception as exc:  # noqa: BLE001 — the text surfaces are already done
+        logger.warning("episode record NOT amended (%s): %s", type(exc).__name__, exc)
+        return 0
+    total = 0
+    for record in records:
+        patch, hits = amend_record_fields(record, entries)
+        total += hits
+        if patch:
+            logger.info("  episode_records %s: %s hit(s) in %s", record["id"], hits,
+                        ", ".join(patch))
+            if apply:
+                sb_update("episode_records", f"id=eq.{record['id']}", patch)
+    return total
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--show", required=True, help="Show slug (YAML name)")
@@ -105,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         dry_run=not args.apply,
         rss_paths=rss_paths,
     )
+    record_hits = amend_episode_record(args.show, args.episode, amending, apply=args.apply)
     mode = "APPLY" if args.apply else "DRY-RUN"
     logger.info(
         "%s ep %s: %s hits across %s file(s)",
@@ -112,6 +192,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     for path in report["files_touched"]:
         logger.info("  %s", path)
+    if record_hits:
+        logger.info("%s ep %s: %s hit(s) in the episode record", mode, args.episode, record_hits)
 
     if args.apply and args.regen_blog:
         logger.info("Regenerating blog posts for %s…", args.show)

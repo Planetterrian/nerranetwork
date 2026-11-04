@@ -729,7 +729,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
 
 
 def when_text(iso: str, guest_tz: str = "") -> str:
-    """Same wording as the prep brief: Pacific Time (the network's zone), with
+    """Same wording as the prep brief: Vancouver time (the network's zone), with
     the guest's own clock alongside when the booking told us their zone."""
     return pacific_time(iso, guest_tz or None)
 

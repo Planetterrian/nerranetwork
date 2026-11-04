@@ -468,15 +468,20 @@ def send_email(to: str, subject: str, html_body: str,
     logger.info("Email sent to %s: %s", to, subject)
 
 
-# Sept 30 2026: every time Patrick or a guest reads is Pacific, the network's
-# zone (Vancouver), with the guest's own clock alongside when we know it.
+# Sept 30 2026: every time Patrick or a guest reads is in the network's zone
+# (Vancouver), with the guest's own clock alongside when we know it.
 # Mirrors pacificTime() in workers/voices/src/index.ts.
+# Nov 4 2026: B.C. stays on UTC-7 all year from Nov 1 2026 (tzdata 2026c:
+# America/Vancouver is "MST"), so Vancouver is no longer "Pacific Time" —
+# California guests read "9:30 AM Pacific Time (8:30 AM PST where you are)".
+# The label is the city, the computation stays the zone.
+VANCOUVER_LABEL = "Vancouver time"
 PACIFIC_TZ = "America/Vancouver"
 
 
 def pacific_time(iso: Any, guest_tz: Optional[str] = None, *,
                  date_only: bool = False) -> str:
-    """"Monday, October 5 at 1:45 PM Pacific Time", plus "(4:45 PM EDT where
+    """"Monday, October 5 at 1:45 PM Vancouver time", plus "(4:45 PM EDT where
     you are)" when the guest's zone is known and differs. "" if unparseable."""
     import datetime as _dt
     from zoneinfo import ZoneInfo
@@ -493,7 +498,7 @@ def pacific_time(iso: Any, guest_tz: Optional[str] = None, *,
 
     def clock(x):
         return f"{x.hour % 12 or 12}:{x:%M} {'AM' if x.hour < 12 else 'PM'}"
-    out = f"{day} at {clock(p)} Pacific Time"
+    out = f"{day} at {clock(p)} {VANCOUVER_LABEL}"
     if guest_tz:
         try:
             g = t.astimezone(ZoneInfo(str(guest_tz)))

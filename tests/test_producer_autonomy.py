@@ -517,7 +517,7 @@ class TestDigest:
                            "1 booking link sent, 1 invited, 1 reply sent, 1 nudge")
         assert "Waiting on you (1)" in html and "possible guest?" in html
         assert "https://mail.google.com/mail/u/0/#all/t2" in html
-        assert "Dr. Lena Ortiz" in html and "Thursday, September 10 at 10:00 AM Pacific Time" in html
+        assert "Dr. Lena Ortiz" in html and "Thursday, September 10 at 10:00 AM Vancouver time" in html
         assert "New Person" in html and "pitched planetterrian" in html
         assert "HttpError: 429" in html
         assert "3 invited and waiting, 1 approved and not yet booked, 2 interviews scheduled" in html

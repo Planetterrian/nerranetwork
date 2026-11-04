@@ -205,8 +205,12 @@ def upload_scenario(path: Path,
                     supabase_url: Optional[str] = None,
                     supabase_service_key: Optional[str] = None,
                     xai_api_key: Optional[str] = None,
-                    room_prefix: Optional[str] = None) -> Dict[str, Any]:
+                    room_prefix: Optional[str] = None,
+                    verify: bool = False) -> Dict[str, Any]:
     """Create or update the scenario source from *path* (deploy step).
+
+    ``verify`` reads the scenario back (``read_back_scenario``) and raises
+    when the account does not hold the source just sent.
 
     ``__SUPABASE_URL__``, ``__SUPABASE_SERVICE_KEY__``, ``__XAI_API_KEY__``
     and ``__GROK_VOICE_MODEL__`` in the source are substituted here so the committed
@@ -264,14 +268,44 @@ def upload_scenario(path: Path,
           f"session cap {session_max} min", flush=True)
 
     try:
-        return _call("SetScenarioInfo",
-                     required_scenario_name=scenario_name,
-                     scenario_script=source)
+        result = _call("SetScenarioInfo",
+                       required_scenario_name=scenario_name,
+                       scenario_script=source)
     except VoximplantError:
         # First deploy: the scenario doesn't exist yet.
-        return _call("AddScenario",
-                     scenario_name=scenario_name,
-                     scenario_script=source)
+        result = _call("AddScenario",
+                       scenario_name=scenario_name,
+                       scenario_script=source)
+    if verify:
+        result = {**result, "read_back": read_back_scenario(scenario_name, source)}
+    return result
+
+
+def _normalised_script(text: str) -> str:
+    return (text or "").replace("\r\n", "\n").strip()
+
+
+def read_back_scenario(scenario_name: str, expected_source: str) -> Dict[str, Any]:
+    """Read *scenario_name* back from the account and confirm it holds
+    *expected_source*. Raises ``VoximplantError`` when it does not.
+
+    Nov 4 2026: a candidate rehearsal reported PASS while the account showed
+    ``age_of_ai_interview_candidate`` last modified three days earlier, so
+    nothing proved the room under test was this ref's code and not an older
+    copy. The modified time alone cannot prove it either (an unchanged
+    source may keep its old time), so the check is the script itself."""
+    data = _call("GetScenarios", scenario_name=scenario_name, with_script=True)
+    rows = [r for r in (data.get("result") or [])
+            if r.get("scenario_name") == scenario_name]
+    if not rows:
+        raise VoximplantError(f"read-back: no scenario named {scenario_name!r}")
+    row = rows[0]
+    if _normalised_script(row.get("scenario_script", "")) != _normalised_script(expected_source):
+        raise VoximplantError(
+            f"read-back: {scenario_name} does not hold the uploaded source "
+            f"(account copy modified {row.get('modified')})")
+    return {"scenario_id": row.get("scenario_id"), "modified": row.get("modified"),
+            "matches": True}
 
 
 def candidate_source(source: str, room_prefix: str = CANDIDATE_ROOM_PREFIX) -> str:
@@ -291,7 +325,7 @@ def upload_candidate_scenario(path: Optional[Path] = None) -> Dict[str, Any]:
     (same deploy-time substitutions, its own name and room prefix). The live
     ``age_of_ai_interview`` is never touched."""
     return upload_scenario(path or _SCENARIO_PATH, scenario_name=CANDIDATE_SCENARIO_NAME,
-                           room_prefix=CANDIDATE_ROOM_PREFIX)
+                           room_prefix=CANDIDATE_ROOM_PREFIX, verify=True)
 
 
 def upload_fixture_scenario(path: Optional[Path] = None) -> Dict[str, Any]:

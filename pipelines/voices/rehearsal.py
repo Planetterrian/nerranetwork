@@ -239,9 +239,42 @@ def fixture_persona(fixture: Dict[str, Any], root: Path = ROOT) -> str:
 # The configuration under test
 # ---------------------------------------------------------------------------
 
-def current_prompt() -> str:
+def rebind_guest(prompt: str, old_name: str, new_name: str) -> str:
+    """The last real prompt with its guest's name replaced by the fixture's.
+
+    Nov 4 2026: the ``current`` arm ran the last real Nerra Voices prompt
+    verbatim, so Mira greeted fixture roddy as "Hello, Elliot" and the two
+    arms were not talking to the same guest. The full name goes first, then
+    the first name on word boundaries, so "Elliott" or "Elliotson" is never
+    touched. A blank name on either side returns the prompt unchanged."""
+    old_name, new_name = (old_name or "").strip(), (new_name or "").strip()
+    if not old_name or not new_name or old_name == new_name:
+        return prompt
+    out = prompt.replace(old_name, new_name)
+    old_first, new_first = old_name.split()[0], new_name.split()[0]
+    if old_first != new_first:
+        out = re.sub(r"(?<![\w'])" + re.escape(old_first) + r"(?![\w'])", new_first, out)
+    return out
+
+
+def _run_guest_name(run: Dict[str, Any]) -> str:
+    """The name of the guest a real run was compiled for, or ""."""
+    from common import sb_select
+    interview_id = run.get("interview_id")
+    if not interview_id:
+        return ""
+    interviews = sb_select("interviews", f"id=eq.{interview_id}&select=application_id&limit=1")
+    app_id = (interviews[0] if interviews else {}).get("application_id")
+    if not app_id:
+        return ""
+    apps = sb_select("guest_applications", f"id=eq.{app_id}&select=name&limit=1")
+    return str((apps[0] if apps else {}).get("name") or "")
+
+
+def current_prompt(fixture: Optional[Dict[str, Any]] = None) -> str:
     """The prompt the last real interview actually ran on: the honest
-    baseline, whatever the repo's prompt file says today."""
+    baseline, whatever the repo's prompt file says today. With a fixture,
+    the guest is rebound to the fixture's name (``rebind_guest``)."""
     from common import sb_select
     rows = sb_select("interview_runs",
                      "session_kind=eq.interview&status=eq.completed"
@@ -251,7 +284,14 @@ def current_prompt() -> str:
                          "session_kind=eq.interview&order=created_at.desc&limit=1")
     if not rows or not rows[0].get("mira_system_prompt"):
         raise RuntimeError("no completed interview run to take the current prompt from")
-    return rows[0]["mira_system_prompt"]
+    prompt = rows[0]["mira_system_prompt"]
+    if fixture:
+        old = _run_guest_name(rows[0])
+        if not old:
+            logger.warning("current arm: the last run's guest is unknown; the prompt "
+                           "still names them, not fixture %s", fixture.get("id"))
+        prompt = rebind_guest(prompt, old, fixture.get("name") or "")
+    return prompt
 
 
 def _original_guest(fixture: Dict[str, Any]) -> Dict[str, Any]:
@@ -1240,7 +1280,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     elif args.arm == "proposed":
         prompt = proposed_prompt(fixture)
     else:
-        prompt = current_prompt()
+        prompt = current_prompt(fixture)
     tools: Optional[list] = [] if args.tools == "none" else None
     if args.minutes < ROOM_MIN_MINUTES:
         print(f"::warning::the room reads {args.minutes} planned minutes as a 45-minute "
