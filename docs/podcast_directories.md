@@ -30,6 +30,7 @@ English shows:
 | Unintended Consequences | `https://nerranetwork.com/unintended_consequences_podcast.rss` |
 | The DP Pod | `https://nerranetwork.com/dp_pod_podcast.rss` |
 | Age of AI | `https://nerranetwork.com/age_of_ai_podcast.rss` |
+| Nerra Voices | `https://nerranetwork.com/nerra_voices_podcast.rss` |
 
 Russian-native shows (@NerraRU):
 
@@ -180,6 +181,7 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Unintended Consequences | LIVE | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | The DP Pod | LIVE (2026-07-23) | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | Age of AI | LIVE (2026-07-23) | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
+| Nerra Voices | PENDING (2026-11-04, not yet submitted) | PENDING (2026-11-04, not yet submitted) | -- | PENDING (2026-11-04, not yet submitted) | PENDING (2026-11-04, not yet submitted — OP3 resolves feeds through it) | -- | -- |
 | Финансы Просто | LIVE | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | Привет, Русский! | LIVE | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | FR dub feeds (4) | LIVE (2026-07-23) | LIVE | n/a (playlists) | -- | LIVE (2026-07-27) | -- | -- |

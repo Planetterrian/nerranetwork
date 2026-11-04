@@ -1067,6 +1067,24 @@ NETWORK_BRAND = "Nerra Network"
 PODCAST_GUID_NAMESPACE = uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6")
 
 VTT_TRANSCRIPT_TYPE = "text/vtt"
+#: A transcript tag that points at the episode PAGE's transcript section
+#: (Nov 4 2026, the interview shows: ``…/ep012.html#transcript``).
+HTML_TRANSCRIPT_TYPE = "text/html"
+
+
+def transcript_tag_type(url: str) -> str:
+    """The Podcasting 2.0 ``type`` of a ``<podcast:transcript>`` URL, by its
+    shape: the JSON every in-repo reader uses, an HTML page (its fragment
+    and query ignored), else plain text. The JSON and plain branches are
+    byte-identical to what every run_show feed has always carried."""
+    path = (url or "").split("#", 1)[0].split("?", 1)[0].lower()
+    if path.endswith(".json"):
+        return "application/json"
+    if path.endswith((".html", ".htm")):
+        return HTML_TRANSCRIPT_TYPE
+    return "text/plain"
+
+
 ATOM_NS = "http://www.w3.org/2005/Atom"
 
 
@@ -1326,10 +1344,7 @@ def _inject_transcript_tag(
                     vtt_el.set("type", VTT_TRANSCRIPT_TYPE)
                 transcript_el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
                 transcript_el.set("url", transcript_url)
-                if transcript_url.endswith(".json"):
-                    transcript_el.set("type", "application/json")
-                else:
-                    transcript_el.set("type", "text/plain")
+                transcript_el.set("type", transcript_tag_type(transcript_url))
                 break
 
         tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")

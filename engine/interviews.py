@@ -59,6 +59,46 @@ _HEADING_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$", re.M)
 _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _BOLD_LINE_RE = re.compile(r"^\*\*(.+?)\*\*\s*$", re.M)
 _BULLET_RE = re.compile(r"^[-*]\s+(.+?)\s*$", re.M)
+
+#: The About section's line of what the guest came to talk about (Nov 4
+#: 2026): the application's own topics, printed by the Voices publisher
+#: when the bio is thin. Parsed out of the prose so it never renders as
+#: "In their own words".
+TOPICS_LINE_LABEL = "What they came to talk about"
+_TOPICS_LINE_RE = re.compile(
+    r"^\*\*" + re.escape(TOPICS_LINE_LABEL) + r":\*\*\s*(.+?)\s*$", re.M)
+
+#: Under this many words the About prose is a label, not a biography.
+GUEST_PROSE_MIN_WORDS = 4
+#: A sentence of fewer than this many words must end on a full stop to
+#: count as prose; from here on the length alone says it is.
+GUEST_PROSE_SENTENCE_WORDS = 12
+#: The sentence the Voices publisher printed when it had no bio at all.
+_PLACEHOLDER_BIO_RE = re.compile(r"joined Mira for this conversation\.?$")
+_BARE_DOMAIN_RE = re.compile(r"^(?:https?://)?[\w.-]+\.[a-z]{2,}(?:/\S*)?$", re.I)
+
+
+def is_guest_prose(text: str) -> bool:
+    """True when *text* reads as the guest's own words — a sentence or more
+    — rather than a label, a bare URL or a domain.
+
+    Nov 4 2026: 8 of 18 About sections were under 25 words ("WorkID talk",
+    "longevityresearch.ca", a bare URL, the publisher's own placeholder
+    sentence) and the page printed each under "In their own words". A
+    sentence ends on a full stop or runs to a dozen words; a label does
+    neither; a URL is a link; the placeholder is nobody's words.
+    """
+    flat = " ".join((text or "").split())
+    if not flat or _BARE_DOMAIN_RE.match(flat) or _PLACEHOLDER_BIO_RE.search(flat):
+        return False
+    words = flat.split()
+    if len(words) < GUEST_PROSE_MIN_WORDS:
+        return False
+    if len(words) >= GUEST_PROSE_SENTENCE_WORDS:
+        return True
+    return bool(re.search(r"[.!?…]['\")\u201d]?$", flat))
+
+
 #: One transcript line: ``[MM:SS] Speaker: text``. The label is whatever the
 #: cleaner wrote — "Mira", the guest's first name, or the co-host's.
 _SPEAKER_LINE_RE = re.compile(r"^\[\d{1,2}:\d{2}(?::\d{2})?\]\s+([A-Za-z][\w'\-]*):", re.M)
@@ -118,6 +158,11 @@ def _stray_link(text: str) -> Optional[dict]:
         return {"label": md.group(1).strip(), "url": md.group(2)}
     if re.fullmatch(r"https?://\S+", stripped):
         return {"label": _link_label(stripped), "url": stripped}
+    # A bare domain ("longevityresearch.ca", Nerra Voices Ep004) is a link
+    # the guest typed without its scheme, not a biography.
+    if " " not in stripped and _BARE_DOMAIN_RE.match(stripped):
+        url = f"https://{stripped}"
+        return {"label": _link_label(url), "url": url}
     return None
 
 
@@ -138,6 +183,9 @@ def parse_interview_digest(md_text: str) -> dict:
         "guest_name": "",
         "guest_identifier": "",
         "guest_blurb": "",
+        # Nov 4 2026: the application's topics, when the About section
+        # carries them in place of a thin bio ("" when it does not).
+        "came_to_talk_about": "",
         "audio_url": "",
         "takeaway": "",
         "talking_points": [],
@@ -178,6 +226,10 @@ def parse_interview_digest(md_text: str) -> dict:
             if bold:
                 result["guest_identifier"] = bold.group(1).strip()
             prose = _BOLD_LINE_RE.sub("", body)
+            topics = _TOPICS_LINE_RE.search(prose)
+            if topics:
+                result["came_to_talk_about"] = " ".join(topics.group(1).split())
+                prose = _TOPICS_LINE_RE.sub("", prose)
             prose = _strip_rules(prose)
             # Some digests put nothing in this section but the guest's own
             # URL (Ep006 is a bare link to a team page). That is a link, not
@@ -186,7 +238,9 @@ def parse_interview_digest(md_text: str) -> dict:
             stray = _stray_link(prose)
             if stray:
                 result["guest_links"].append(stray)
-            elif prose:
+            elif is_guest_prose(prose):
+                # A two-word label or the placeholder sentence is not the
+                # guest's words and never renders as "In their own words".
                 result["guest_blurb"] = " ".join(prose.split())
 
         elif low == _SECTION_TALKING:

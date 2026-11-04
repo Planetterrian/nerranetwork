@@ -250,7 +250,12 @@ class TestInterviewPost:
                                           "sameAs": ["https://www.linkedin.com/in/hoganshrum"]}
 
     def test_the_bio_is_labelled_as_the_guests_own_words(self, ep4):
-        assert "In their own words" in ep4
+        # Nov 4 2026: Ep4's About section is the publisher's placeholder
+        # sentence ("… joined Mira for this conversation."), which is nobody's
+        # words — engine.interviews.is_guest_prose drops the label there. The
+        # label still stands over a bio the guest wrote (Ep15).
+        assert "In their own words" not in ep4
+        assert "In their own words" in _post(15, 14, None)
 
     def test_the_feedback_row_asks_for_a_guest(self, ep4, tesla):
         assert "Suggest a guest" in ep4

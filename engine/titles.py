@@ -39,6 +39,7 @@ __all__ = [
     "X_ITEM_TITLE_MAX",
     "ELLIPSIS",
     "clip_words",
+    "fit_first_clause",
     "episode_title",
     "fits",
     "web_page_title",
@@ -206,6 +207,140 @@ def clip_words(text: str, limit: int, *, ellipsis: str = ELLIPSIS) -> str:
     # is genuinely nowhere to break, so the hard cut stands. That is the
     # only path that can split a word.
     return cut.rstrip(_TRAILING) + ellipsis
+
+
+# --- A title fitted whole --------------------------------------------
+
+#: Where a sentence breaks into clauses, strongest first. These are tried
+#: in this order before a word boundary is looked for.
+CLAUSE_SEPARATORS = (" — ", ": ", "; ")
+
+#: Words a sentence can be cut BEFORE and still read as a whole thought:
+#: conjunctions, relative pronouns, subordinators and the prepositions that
+#: open a trailing phrase. Matched as whole lower-case words. "of" is
+#: deliberately absent — "the loss of" cut before "of" is a stub.
+CLAUSE_BREAK_WORDS = frozenset({
+    "but", "and", "or", "nor", "yet", "so", "while", "whereas", "because",
+    "since", "although", "though", "unless", "until", "that", "which", "who",
+    "whom", "whose", "where", "when", "whenever", "once", "after", "before",
+    "as", "by", "without", "with", "to", "than", "now", "then", "across",
+    "into", "from", "for", "in", "on", "at", "over", "under", "within",
+    "through", "via", "despite", "amid", "between", "toward", "towards",
+    "against", "about", "beyond", "instead",
+})
+
+#: Words a clause may never END on: an article, a possessive or a
+#: demonstrative leaves the noun it announces behind ("…fights the").
+#: Review of Nov 4 2026: a break word that opens a hyphenated compound
+#: ("so-called", "on-site", "co-founder") is not a break at all, and the
+#: cut in front of it had left exactly this kind of stub.
+CLAUSE_STUB_TAIL_WORDS = frozenset({
+    "the", "a", "an", "its", "their", "his", "her", "our", "your", "my",
+    "this", "these", "those", "every", "each", "very",
+})
+
+#: A first clause shorter than this many words is a stub, not a title;
+#: :func:`fit_first_clause` falls through to :func:`clip_words` instead.
+FIRST_CLAUSE_MIN_WORDS = 5
+
+#: How many words after a comma are read to tell a list comma ("copy,
+#: targeting and optimization") from a clause break.
+_LIST_COMMA_LOOKAHEAD_WORDS = 3
+
+
+def _is_list_comma(text: str, at: int) -> bool:
+    """True when the comma at *at* separates list items, not clauses."""
+    words = text[at + 1:].split()
+    for i, word in enumerate(words[:_LIST_COMMA_LOOKAHEAD_WORDS + 1]):
+        if word.strip(",;:").lower() in ("and", "or"):
+            return True
+        if i < _LIST_COMMA_LOOKAHEAD_WORDS and word.endswith(","):
+            return True
+    return False
+
+
+def _closes_a_list(head: str) -> bool:
+    """True when *head* ends inside a comma list ("…for copy, targeting"),
+    so a cut before the "and" / "or" that follows would leave a list open."""
+    tail = head.rsplit(",", 1)
+    return len(tail) == 2 and len(tail[1].split()) <= _LIST_COMMA_LOOKAHEAD_WORDS
+
+
+def _clause_breaks(text: str):
+    """Offsets where *text* may be cut: at a clause comma, and before each
+    clause-break word (the offset is the whitespace in front of it). A
+    conjunction that closes a comma list is not a break."""
+    offsets = set()
+    for m in re.finditer(r",\s", text):
+        if not _is_list_comma(text, m.start()):
+            offsets.add(m.start())
+    # A whole word only: "so" in "so-called", "on" in "on-site" and "co" in
+    # "co-founder" open a compound, not a clause.
+    for m in re.finditer(r"\s([A-Za-z]+)(?![\w-])", text):
+        word = m.group(1).lower()
+        if word not in CLAUSE_BREAK_WORDS:
+            continue
+        if word in ("and", "or", "nor") and _closes_a_list(text[:m.start()]):
+            continue
+        offsets.add(m.start())
+    return sorted(offsets)
+
+
+def _whole_clause(head: str, limit: int) -> bool:
+    words = head.split()
+    tail = words[-1].strip(_TRAILING).lower() if words else ""
+    return (bool(head) and len(head) <= limit
+            and len(words) >= FIRST_CLAUSE_MIN_WORDS
+            and tail not in CLAUSE_BREAK_WORDS
+            and tail not in CLAUSE_STUB_TAIL_WORDS)
+
+
+def fit_first_clause(text: str, limit: int, *, ellipsis: str = ELLIPSIS) -> str:
+    """*text* whole when it fits *limit*, else its first clause, else
+    :func:`clip_words`.
+
+    Nov 4 2026. Every interview episode's feed title is ``Ep<n>: <guest> —
+    <thesis>`` and the thesis is a full sentence of 180-260 characters, so
+    six of nineteen titles ended in an ellipsis the moment ``clip_words``
+    met the 100-character feed cap. A sentence has a shape a cut can
+    follow: the strongest separators first (:data:`CLAUSE_SEPARATORS`, in
+    that order, the first whose head fits), then the LONGEST prefix that
+    ends right before a clause break — a comma that is not a list comma,
+    or a conjunction / relative pronoun / subordinator / trailing-phrase
+    preposition (:data:`CLAUSE_BREAK_WORDS`, matched as a whole word, so
+    the "so" of "so-called" is never a break). A head under
+    :data:`FIRST_CLAUSE_MIN_WORDS` words, or one that ends on an article,
+    a possessive or a demonstrative (:data:`CLAUSE_STUB_TAIL_WORDS`), is a
+    stub and does not count.
+    When no clause fits, the result is ``clip_words(text, limit)`` with its
+    ellipsis — the one honest sign that the sentence was cut mid-thought.
+
+    The result is always ``<= limit`` and never splits a word.
+
+    >>> fit_first_clause("A founder builds verified credentials that replace CVs", 50)
+    'A founder builds verified credentials'
+    >>> fit_first_clause("Short enough already", 50)
+    'Short enough already'
+    """
+    text = (text or "").strip()
+    if limit <= 0:
+        return ""
+    if len(text) <= limit:
+        return text
+    for sep in CLAUSE_SEPARATORS:
+        head, found, _tail = text.partition(sep)
+        if found:
+            head = head.rstrip(_TRAILING)
+            if _whole_clause(head, limit):
+                return head
+    best = ""
+    for at in _clause_breaks(text):
+        head = text[:at].rstrip(_TRAILING)
+        if _whole_clause(head, limit) and len(head) > len(best):
+            best = head
+    if best:
+        return best
+    return clip_words(text, limit, ellipsis=ellipsis)
 
 
 #: A Short title shorter than this many words is a fragment, not a headline.

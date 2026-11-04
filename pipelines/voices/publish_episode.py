@@ -71,6 +71,36 @@ EDIT_TRANSCRIPT_NOTE = (
     "publication."
 )
 
+#: Nov 4 2026 (voices-7): a WebVTT cue from the edit transcript ends where
+#: the next stamped line starts, but never later than this — a cut line's
+#: gap would otherwise hang one speaker's words over the next one's.
+VTT_CUE_MAX_SECONDS = 20.0
+#: The last cue has no next line; it runs this long.
+VTT_LAST_CUE_SECONDS = 6.0
+
+#: Under this many words a bio is thin, and the About section prints the
+#: facts the pipeline holds beside it (voices-7). A label ("WorkID talk")
+#: or a bare URL is never printed as prose at all — engine.interviews
+#: .is_guest_prose is the one test, here and on the page.
+BIO_MIN_WORDS = 40
+
+#: Podcasting 2.0 channel tags the interview feeds never carried (voices-7:
+#: 0 podcast:transcript / person / funding tags on 19 items while every
+#: run_show feed had them). The label is run_show's, verbatim.
+FUNDING_LABEL = "Support the Nerra Network"
+
+#: What the video index records as ``video_kind`` (voices-3 / youtube-8).
+VIDEO_KIND_CAMERA = "camera"                   # the guest beside Mira, from the studio take
+VIDEO_KIND_WAVEFORM = "waveform"               # the waveform over the cover: no camera on the record
+VIDEO_KIND_CAMERA_MISSING = "camera_missing"   # a camera cut on the record that would not fetch: NO upload
+#: The index's ``variant`` for a long uploaded with the title bundle, the
+#: thumbnail and the chapter block, so the reach file reads before/after.
+YOUTUBE_VARIANT = "interview_v2"
+#: Mira's studio still: the thumbnail base when the guest's photo may not be used.
+MIRA_STUDIO_STILL = ROOT / "assets" / "mira" / "mira-studio.jpg"
+#: How much of the edit transcript the title bundle reads.
+TITLE_BUNDLE_TRANSCRIPT_WORDS = 1500
+
 
 def _next_episode_number(show: VoiceShow) -> int:
     summaries = show.summaries_path
@@ -319,9 +349,12 @@ def interview_episode_title(episode_num: int, guest: str, thesis: str) -> str:
     The thesis is a full sentence and Ep5–Ep11 shipped 220–254-character
     titles that Apple, Spotify and YouTube (which ingests the feed) each
     cut mid-word. The label and the guest's name are kept whole; only the
-    thesis is clipped, at a word boundary, by ``engine.titles``.
+    thesis gives way, and ``engine.titles`` decides how (Nov 4 2026: its
+    first clause, whole — six of nineteen titles had ended in an ellipsis
+    because the whole sentence was clipped at a word). Nothing here
+    splits the text itself.
     """
-    from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words
+    from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words, fit_first_clause
 
     label = f"Ep{episode_num}: {(guest or '').strip()}"
     thesis = (thesis or "").strip()
@@ -330,7 +363,108 @@ def interview_episode_title(episode_num: int, guest: str, thesis: str) -> str:
     room = PODCAST_EPISODE_TITLE_MAX - len(label) - len(" — ")
     if room < 20:
         return clip_words(label, PODCAST_EPISODE_TITLE_MAX)
-    return f"{label} — {clip_words(thesis, room)}"
+    return f"{label} — {fit_first_clause(thesis, room)}"
+
+
+def application_topics(app: dict) -> list:
+    """The guest's own topics from the application, as clean strings (the
+    Worker stores a list; older rows a JSON string). Mirrors the parse in
+    ``common.interview_subject``."""
+    topics = (app or {}).get("topics")
+    if isinstance(topics, str):
+        try:
+            topics = json.loads(topics)
+        except ValueError:
+            topics = [topics]
+    if not isinstance(topics, list):
+        return []
+    out: list = []
+    for t in topics:
+        item = " ".join(str(t or "").split()).strip(" ;,.")
+        if item and item != "[object Object]" and item.lower() not in {x.lower() for x in out}:
+            out.append(item)
+    return out[:5]
+
+
+def transcript_segments(transcript: str) -> list:
+    """The edit transcript's stamped lines as ``[{start, end, text}]`` for
+    ``engine.transcripts.segments_to_vtt``: a cue runs to the next line's
+    stamp, capped at :data:`VTT_CUE_MAX_SECONDS`; the last cue runs
+    :data:`VTT_LAST_CUE_SECONDS`; the text names the speaker."""
+    from edit_transcript import parse_lines
+    lines = parse_lines(transcript or "")
+    out = []
+    for i, (start, who, text) in enumerate(lines):
+        if not text:
+            continue
+        nxt = next((t for t, _w, _x in lines[i + 1:] if t > start), None)
+        end = (start + VTT_LAST_CUE_SECONDS if nxt is None
+               else min(nxt, start + VTT_CUE_MAX_SECONDS))
+        out.append({"start": start, "end": end, "text": f"{who}: {text}"})
+    return out
+
+
+def transcript_vtt_path(show: VoiceShow, episode_num: int, when: dt.date) -> Path:
+    """Beside the digest, named as the digest is, so the publish workflow's
+    add-paths (``digests/<slug>/``) commit it with the post."""
+    return (ROOT / show.audio_subdir
+            / f"{show.episode_prefix}_Ep{episode_num:03d}_{when:%Y%m%d}.vtt")
+
+
+def write_transcript_vtt(pkg: dict, show: VoiceShow, episode_num: int,
+                         when: dt.date) -> Path | None:
+    """The WebVTT of the EDIT transcript, or None when the package has none.
+
+    Nov 4 2026 (voices-7). Every run_show feed has carried a text/vtt
+    ``<podcast:transcript>`` since Oct 1; the two interview feeds carried
+    none, on the one show whose whole value is words a listener may want
+    to read. Only the edit transcript qualifies: it is on the published
+    file's clock (edit_transcript.transcript_of_the_edit); the room's is
+    on a clock nobody hears, and a VTT on the wrong clock is worse than
+    none.
+    """
+    text = str((pkg or {}).get("edit_transcript") or "").strip()
+    if not text:
+        return None
+    segments = transcript_segments(text)
+    if not segments:
+        return None
+    from engine.transcripts import segments_to_vtt
+    path = transcript_vtt_path(show, episode_num, when)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(segments_to_vtt(segments), encoding="utf-8")
+    logger.info("transcript VTT written: %s (%d cues)", path.name, len(segments))
+    return path
+
+
+def transcript_vtt_url(show: VoiceShow, path: Path) -> str:
+    """Where Pages serves the committed VTT (same shape run_show uses)."""
+    return f"{show.base_url}/{show.audio_subdir}/{path.name}"
+
+
+def feed_podcast_tags(show: VoiceShow, episode_num: int, vtt_path: Path | None,
+                      host_name: str = "") -> dict:
+    """The Podcasting 2.0 kwargs ``engine.publisher.update_rss_feed`` takes
+    and run_show passes (run_show.py's feed call): the Support button, the
+    host, and — when the edit transcript gave one — the transcript, as
+    the page's section (text/html) and the VTT Apple reads."""
+    from engine.brand import MIRA_HOST_NAME
+    tags = {
+        "funding_url": f"{show.base_url}/support.html",
+        "funding_label": FUNDING_LABEL,
+        "person_name": (host_name or "").strip() or MIRA_HOST_NAME,
+        "person_url": f"{show.base_url}/mira.html",
+    }
+    if vtt_path is not None:
+        tags["transcript_url"] = f"{show.post_url(episode_num)}#transcript"
+        tags["transcript_vtt_url"] = transcript_vtt_url(show, vtt_path)
+    return tags
+
+
+def _host_name(cfg) -> str:
+    """``publishing.host_name`` from the show YAML (both interview shows say
+    Mira), the same field run_show reads for ``person_name``."""
+    return str(getattr(getattr(cfg, "publishing", None), "host_name", "") or "").strip()
 
 
 def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
@@ -372,10 +506,30 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     parts.append(f"[Listen to the full conversation]({audio_url})")
     parts.append("---")
 
+    # Nov 4 2026 (voices-7): 8 of 18 About sections were under 25 words —
+    # "WorkID talk", "longevityresearch.ca", a bare URL, or this function's
+    # own placeholder sentence — because this printed ``bio or <placeholder>``.
+    # Now: the bio only when it is the guest's own prose (a label is not a
+    # biography, a URL is a link); beside a thin bio, the facts the pipeline
+    # holds — the role line and the application's topics; the placeholder
+    # only when there is nothing at all. Never a model-written bio.
+    from engine.interviews import TOPICS_LINE_LABEL, is_guest_prose, _stray_link
+    topics = application_topics(app)
+    links = guest_links(app)
+    bio_is_prose = is_guest_prose(bio)
     parts.append(f"### About {name}")
     if role:
         parts.append(f"**{role}**")
-    parts.append(bio or f"{name} joined Mira for this conversation.")
+    if bio_is_prose:
+        parts.append(bio)
+    elif bio:
+        stray = _stray_link(bio)
+        if stray and stray["url"].lower() not in {l["url"].lower() for l in links}:
+            links.append(stray)
+    if len(bio.split()) < BIO_MIN_WORDS and topics:
+        parts.append(f"**{TOPICS_LINE_LABEL}:** {'; '.join(topics)}")
+    if not (role or bio_is_prose or topics):
+        parts.append(f"{name} joined Mira for this conversation.")
     parts.append("---")
 
     body = "\n\n".join(notes.split("\n\n")[1:]).strip()
@@ -403,7 +557,6 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
         parts.append("\n".join(lines))
         parts.append("---")
 
-    links = guest_links(app)
     if links:
         parts.append(f"### Where to find {name}")
         parts.append("\n".join(f"- [{l['label']}]({l['url']})" for l in links))
@@ -533,7 +686,7 @@ def share_card_link(show: VoiceShow, episode_num: int) -> str:
 
 def published_email(show: VoiceShow, app: dict, pkg: dict,
                     episode_num: int, when: dt.date | None = None,
-                    run: dict | None = None) -> tuple:
+                    run: dict | None = None, youtube: dict | None = None) -> tuple:
     """Subject and body of the note the guest gets when their episode is out.
 
     Sept 20 2026. John Capobianco's team asked twice where the episode would
@@ -590,6 +743,17 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
     card = share_card_link(show, episode_num)
     if card:
         parts.append(f"<p>The episode's share card, for a post of your own: {link(card)}</p>")
+    # Nov 4 2026: when the YouTube thumbnail carries the guest's own photo
+    # (only ever with the review page's picture choice), the note says so
+    # — a face at 1280x720 on a public video is a larger use than the
+    # avatar on the post, and the guest hears it from us first.
+    yt = youtube or {}
+    if yt.get("thumbnail_base") == "guest_photo" and yt.get("video_id"):
+        watch = f"https://www.youtube.com/watch?v={yt['video_id']}"
+        parts.append("<p>On YouTube the episode's thumbnail uses your profile photo, "
+                     "as you allowed on the review page: "
+                     f"{link(watch)}. If you would rather it did not, reply and "
+                     "I will change it the same day.</p>")
     invitation = return_invitation_html(pkg, when or dt.date.today())
     parts += [
         "<p>If anything on the page is wrong, a link, a title, a spelling, "
@@ -637,12 +801,12 @@ def fill_social_links(pkg: dict, url: str) -> None:
 
 
 def tell_the_guest(show: VoiceShow, app: dict, pkg: dict, episode_num: int,
-                   run: dict | None = None) -> None:
+                   run: dict | None = None, youtube: dict | None = None) -> None:
     """Send :func:`published_email` once; a failure never unpublishes anything."""
     if pkg.get("publish_package_sent_at"):
         logger.info("publish-day note already sent %s", pkg["publish_package_sent_at"])
         return
-    subject, body = published_email(show, app, pkg, episode_num, run=run)
+    subject, body = published_email(show, app, pkg, episode_num, run=run, youtube=youtube)
     to = str(app.get("email") or "").strip()
     cc = [str(app.get("publicist_email") or "").strip()]
     try:
@@ -702,6 +866,22 @@ def publish_one(interview_id: str) -> int:
         if not any(u in description.lower() for u in have):
             description = (description.rstrip() + "\n\n" + links_block).strip()
 
+    # The show's full config: the distribution flags below, and the host
+    # name the feed's <podcast:person> carries. None = distribution skipped.
+    cfg = _show_config(show)
+    # Nov 4 2026 (voices-7): the fifth instance of the bypass-run_show
+    # class. The transcript VTT, the Support button and the host reach the
+    # feed through the same kwargs run_show passes; the VTT is written
+    # beside the digest BEFORE the feed so its item carries the tag from
+    # the first build. A VTT failure costs the tag, never the episode.
+    vtt_path = None
+    try:
+        vtt_path = write_transcript_vtt(pkg, show, episode_num, today)
+    except Exception:  # noqa: BLE001 — the episode still publishes
+        logger.exception("transcript VTT not written (non-fatal)")
+    podcast_tags = feed_podcast_tags(show, episode_num, vtt_path,
+                                     host_name=_host_name(cfg))
+
     # Duration + file size need the real file — fetch headers/bytes to tmp.
     with tempfile.TemporaryDirectory(prefix=f"{show.slug}_publish_") as tmp:
         local_mp3 = (Path(tmp)
@@ -754,6 +934,10 @@ def publish_one(interview_id: str) -> int:
             # bypasses run_show and kept the MP3 — Oct 8 2026 review).
             episode_page_url=(
                 f"https://nerranetwork.com/blog/{show.slug}/ep{episode_num:03d}.html"),
+            # transcript_url / transcript_vtt_url / funding_url / person_name
+            # (+ label, person_url): feed_podcast_tags, the one place they
+            # are built for this path.
+            **podcast_tags,
         )
 
     # Oct 25 2026: the photo from the guest's public profile, beside their
@@ -812,12 +996,15 @@ def publish_one(interview_id: str) -> int:
     # after the episode is recorded as published: the audio in the feed is the
     # product, and a failed email or upload must never cost the episode or
     # make the sweep re-publish it.
-    cfg = _show_config(show)
     maybe_send_newsletter(show, cfg, episode_num, today,
                           interview.get("episode_thesis") or "",
                           digest_path)
+    yt_outcome: dict = {}
     long_id = maybe_publish_youtube(show, cfg, episode_num, today, title, description,
-                                    audio_url, app.get("name") or "", video_url=video)
+                                    audio_url, app.get("name") or "", video_url=video,
+                                    pkg=pkg, app=app, photo=photo,
+                                    thesis=interview.get("episode_thesis") or "",
+                                    outcome=yt_outcome)
     shorts = episode_shorts(run, pkg)
     maybe_publish_shorts(show, cfg, episode_num, today, shorts,
                          app.get("name") or "", long_video_id=long_id or "")
@@ -833,7 +1020,7 @@ def publish_one(interview_id: str) -> int:
     # The site is regenerated in this run but the workflow commits and
     # deploys it after this script returns, so the page may lag the email by
     # a few minutes. The link is right; the guest will not race it.
-    tell_the_guest(show, app, pkg, episode_num, run=run)
+    tell_the_guest(show, app, pkg, episode_num, run=run, youtube=yt_outcome)
     fill_social_links(pkg, show.post_url(episode_num))
     return 0
 
@@ -1017,43 +1204,167 @@ def render_episode_video(show: VoiceShow, audio_url: str, out: Path,
         return None
 
 
+def _head_status(url: str) -> int:
+    """The HTTP status a HEAD of *url* answers, 0 when the request fails."""
+    try:
+        return int(requests.head(url, timeout=60, allow_redirects=True).status_code)
+    except Exception:  # noqa: BLE001
+        logger.warning("HEAD %s failed", url)
+        return 0
+
+
+def transcript_excerpt(pkg: dict | None, words: int = TITLE_BUNDLE_TRANSCRIPT_WORDS) -> str:
+    """The first *words* of the edit transcript (else the room's), for the
+    title bundle's content excerpt."""
+    pkg = pkg or {}
+    text = pkg.get("edit_transcript") or pkg.get("transcript_cleaned") or ""
+    return " ".join(str(text).split()[:words])
+
+
+def youtube_title_for(feed_title: str, guest_name: str, candidates: list) -> str:
+    """The long-form's YouTube title (youtube-8 stage 1).
+
+    The bundle's first candidate that fits ``engine.titles.YOUTUBE_TITLE_MAX``
+    with the guest's name in it — a candidate without the name takes it as a
+    prefix first — else the feed title, which carries the name by shape. The
+    interview's value is the person, so a title without the guest never ships
+    (guard: tests/test_age_of_ai_youtube_2026_11_03.py). engine.titles owns
+    the limit; nothing here slices.
+    """
+    from engine.titles import YOUTUBE_TITLE_MAX, clip_words, fits
+    guest = " ".join((guest_name or "").split())
+    for cand in candidates or []:
+        text = " ".join(str(cand or "").split())
+        if not text:
+            continue
+        if guest and guest.lower() not in text.lower():
+            text = f"{guest}: {text}"
+        if fits(text, YOUTUBE_TITLE_MAX) and (not guest or guest.lower() in text.lower()):
+            return text
+    return clip_words(feed_title, YOUTUBE_TITLE_MAX)
+
+
+def thumbnail_base_for(pkg: dict | None, photo: str, tmp: Path) -> tuple:
+    """``(image path or None, "guest_photo" | "mira_studio")``.
+
+    The guest's photo ONLY when the review-page choice allows a picture
+    (``editorial_packages.guest_video_ok`` is True — the same choice that
+    puts their camera in the video): a 1280x720 face on a monetized channel
+    is a larger reuse than the 40 px avatar on the post, so the post's
+    consent is not borrowed for it. Otherwise Mira's studio still.
+    """
+    if photo and (pkg or {}).get("guest_video_ok") is True:
+        local = _download(str(photo), Path(tmp) / "guest_photo.img")
+        if local is not None:
+            return local, "guest_photo"
+    return (MIRA_STUDIO_STILL if MIRA_STUDIO_STILL.exists() else None), "mira_studio"
+
+
+def episode_thumbnail(show: VoiceShow, show_name: str, episode_num: int, when: dt.date,
+                      guest_name: str, role: str, punch_text: str, base: Path,
+                      tmp: Path) -> Path | None:
+    """The 1280x720 thumbnail every other long-form carries, rendered by
+    ``engine.publisher.generate_episode_thumbnail`` on *base* with the guest
+    (and who they are) as its one line. Best-effort: None means the upload
+    goes without one, as before."""
+    from engine.publisher import generate_episode_thumbnail
+    out = Path(tmp) / f"{show.episode_prefix}_Ep{episode_num:03d}_thumb.jpg"
+    hook = f"{guest_name} — {role}" if role else guest_name
+    try:
+        path, _font = generate_episode_thumbnail(
+            Path(base), episode_num=episode_num, date_str=f"{when:%B %-d, %Y}",
+            output_path=out, hook=hook, show_name=show_name,
+            punch_text=punch_text or "")
+        return Path(path)
+    except Exception as exc:  # noqa: BLE001 — the upload goes without a thumbnail
+        logger.warning("::warning::thumbnail not rendered for %s Ep%d: %s",
+                       show.slug, episode_num, exc)
+        return None
+
+
+def chapter_block_for(pkg: dict | None) -> str:
+    """The ``0:00 Title`` block YouTube reads into the seek bar, from the
+    chapters the transcript vouches for (the same list the post prints);
+    "" when fewer than two render."""
+    from engine.video_metadata import _format_chapter_block
+    return _format_chapter_block(vouched_chapters(pkg or {}))
+
+
 def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                           title: str, description: str, audio_url: str,
-                          guest_name: str, video_url: str = "") -> str:
-    """Upload the episode's waveform video to YouTube, if the show enables it.
+                          guest_name: str, video_url: str = "", *,
+                          pkg: dict | None = None, app: dict | None = None,
+                          photo: str = "", thesis: str = "",
+                          outcome: dict | None = None) -> str:
+    """Upload the episode's video to YouTube, if the show enables it.
 
-    Deliberately minimal: one long-form upload of the video the produce step
-    already rendered and paid for. No Shorts, no dubs, no adaptive-policy tier
-    — those live in run_show's YouTube stage and porting them is a much larger
-    job than this show needs to have a video presence. The upload is recorded
-    in ``digests/<slug>/youtube_videos.json``, which is the file the analytics
-    fetcher, the adaptive policy and the subscriber tracker already glob, so
-    the episode shows up in the feedback loop without any further wiring.
+    One long-form upload: the camera cut (the guest beside Mira) when the
+    edit carries one, else the waveform over the cover. No dubs, no
+    adaptive-policy tier — those live in run_show's YouTube stage and
+    porting them is a larger job than this show needs to have a video
+    presence. The upload is recorded in ``digests/<slug>/youtube_videos.json``,
+    which the analytics fetcher, the adaptive policy and the subscriber
+    tracker already glob.
+
+    Nov 4 2026 (youtube-8 stage 1 + voices-3): the upload carries the
+    packaging every other long-form has — a title from
+    ``engine.youtube_titles.generate_title_bundle`` that keeps the guest's
+    name, a 1280x720 thumbnail, the chapter block in the description — and
+    the index row says which video shipped (``video_kind``) and that this
+    packaging was on (``variant``). Three longs had gone up as the feed
+    title over a waveform: 27 views, 1.5% watched.
+
+    **A camera episode never ships the waveform.** When the edit's camera
+    cut is on the record but its URL does not answer 200, nothing is
+    uploaded (YouTube cannot replace a video's file later), the index gets
+    no row, ``outcome["video_kind"]`` reads ``camera_missing`` and the
+    operator is told. Before this the same case set ``render_locally`` and
+    silently uploaded the waveform.
+
+    *outcome*, when given, is filled with ``video_kind`` / ``video_id`` /
+    ``title`` / ``thumbnail_base`` for the publish-day mail.
     """
+    out = outcome if outcome is not None else {}
     if cfg is None or not getattr(getattr(cfg, "youtube", None), "enabled", False):
         return ""
     yt = cfg.youtube
-    # Oct 28 2026: the video version (the guest beside Mira) when there is
-    # one for this edit; else the waveform video, as before.
-    video_url = video_url or waveform_video_url(audio_url)
-    # Oct 11 2026: render here when the produce step left no video. The
-    # edit path (assemble_edit — every ``_edit_`` episode, Ep5 onward)
-    # never renders one, so the derived URL 404'd on every publish and the
-    # show had uploaded NOTHING since YouTube was switched on (Sep 20): no
-    # digests/age_of_ai/youtube_videos.json exists.
-    render_locally = not video_url
+    pkg = pkg or {}
+    app = app or {}
+    channel = getattr(yt, "channel", "en") or "en"
+    show_name = getattr(cfg, "name", "") or show.name
+
     if video_url:
-        try:
-            probe = requests.head(video_url, timeout=60, allow_redirects=True)
-            if probe.status_code != 200:
-                logger.warning("No waveform video at %s (HTTP %s) — rendering "
-                               "one from the episode audio", video_url,
-                               probe.status_code)
-                render_locally = True
-        except Exception:  # noqa: BLE001
-            logger.warning("HEAD %s failed — rendering the waveform video "
-                           "from the episode audio", video_url)
+        # The video version (the guest beside Mira) for this edit.
+        status = _head_status(video_url)
+        if status != 200:
+            logger.warning(
+                "::warning::YouTube skipped for %s Ep%d: the edit's camera cut %s "
+                "answered HTTP %s. A camera episode never ships the waveform — "
+                "re-run the video cut for this interview, then upload by hand.",
+                show.slug, episode_num, video_url, status)
+            out.update({"video_kind": VIDEO_KIND_CAMERA_MISSING, "video_id": "",
+                        "camera_status": status})
+            try:
+                notify_operator(show.slack(
+                    f"Ep{episode_num}: the camera cut {video_url} answered HTTP "
+                    f"{status}; YouTube skipped rather than ship the waveform."))
+            except Exception:  # noqa: BLE001
+                logger.exception("could not notify the operator")
+            return ""
+        video_kind = VIDEO_KIND_CAMERA
+        render_locally = False
+    else:
+        # The waveform the produce step rendered, else one rendered here
+        # (Oct 11 2026: the edit path never renders one, so the derived
+        # URL 404'd on every publish and the show had uploaded nothing).
+        video_kind = VIDEO_KIND_WAVEFORM
+        video_url = waveform_video_url(audio_url)
+        render_locally = not video_url
+        if video_url and _head_status(video_url) != 200:
+            logger.warning("No waveform video at %s — rendering one from the "
+                           "episode audio", video_url)
             render_locally = True
+    out["video_kind"] = video_kind
 
     try:
         from engine.funnel import PLACEMENT_DESCRIPTION, episode_link
@@ -1061,14 +1372,24 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
             add_video_to_playlist, get_channel_credentials_from_env,
             upload_video,
         )
+        from engine.youtube_titles import generate_title_bundle
         from engine.utils import strip_speech_tags
 
-        credentials = get_channel_credentials_from_env(
-            getattr(yt, "channel", "en") or "en")
+        credentials = get_channel_credentials_from_env(channel)
         if credentials is None:
             logger.warning("::warning::YouTube skipped for %s Ep%d: no channel "
                            "credentials in the environment", show.slug, episode_num)
             return ""
+
+        tags = list(getattr(yt, "tags", None) or [])[:15]
+        # One Grok call: titles + the thumbnail's punch text. Never raises;
+        # an empty bundle falls back to the feed title and no punch text.
+        bundle = generate_title_bundle(
+            hook=(thesis or "").strip() or title, digest_text=transcript_excerpt(pkg),
+            show_name=show_name, episode_num=episode_num, keywords=tags,
+            channel=channel, tracker=None,
+        ) or {}
+        yt_title = youtube_title_for(title, guest_name, bundle.get("titles") or [])
 
         # show.page_url is already absolute (shows.py builds it from the
         # registry). Every published link goes through engine.funnel — see
@@ -1078,10 +1399,12 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
             placement=PLACEMENT_DESCRIPTION,
         )
         body = strip_speech_tags(description or "").strip()
+        chapters = chapter_block_for(pkg)
         full_description = "\n\n".join(x for x in (
             body,
+            chapters,
             f"Full episode, transcript and every other show: {page}",
-            f"{cfg.name} is hosted by Mira, an AI. Every episode says so, and "
+            f"{show_name} is hosted by Mira, an AI. Every episode says so, and "
             "every guest is sent their own transcript to approve, cut from or "
             "refuse before it is published.",
         ) if x)
@@ -1098,14 +1421,21 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                     with local.open("wb") as fh:
                         for chunk in resp.iter_content(1 << 16):
                             fh.write(chunk)
+            base, thumb_base = thumbnail_base_for(pkg, photo, Path(tmp))
+            role = ", ".join(x for x in (app.get("title"), app.get("organization")) if x)
+            thumbnail = (episode_thumbnail(show, show_name, episode_num, when, guest_name,
+                                           role, bundle.get("punch_text") or "", base,
+                                           Path(tmp))
+                         if base is not None else None)
             result = upload_video(
                 local,
                 credentials=credentials,
-                title=title,
+                title=yt_title,
                 description=full_description,
-                tags=list(getattr(yt, "tags", None) or [])[:15],
+                tags=tags,
                 category_id=int(getattr(yt, "category_id", 24) or 24),
                 privacy_status=getattr(yt, "privacy_status", "public") or "public",
+                thumbnail_path=thumbnail,
                 contains_synthetic_media=True,
             )
         video_id = getattr(result, "video_id", "") or ""
@@ -1119,10 +1449,14 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                 add_video_to_playlist(video_id, playlist, credentials=credentials)
             except Exception:  # noqa: BLE001 — the video is up either way
                 logger.exception("playlist add failed for %s (non-fatal)", video_id)
-        _record_youtube_video(show, episode_num, when, title, video_id,
-                              guest_name, getattr(yt, "channel", "en") or "en")
-        logger.info("YouTube: %s Ep%d uploaded as %s",
-                    show.slug, episode_num, video_id)
+        thumbnail_base = thumb_base if thumbnail is not None else ""
+        _record_youtube_video(show, episode_num, when, yt_title, video_id,
+                              guest_name, channel, variant=YOUTUBE_VARIANT,
+                              video_kind=video_kind, thumbnail_base=thumbnail_base)
+        out.update({"video_id": video_id, "title": yt_title,
+                    "thumbnail_base": thumbnail_base, "chapters": bool(chapters)})
+        logger.info("YouTube: %s Ep%d uploaded as %s (%s, %s)",
+                    show.slug, episode_num, video_id, video_kind, YOUTUBE_VARIANT)
         return video_id
     except Exception:  # noqa: BLE001 — the episode is already published
         logger.exception("YouTube upload failed for %s Ep%d (non-fatal)",
@@ -1226,8 +1560,16 @@ def maybe_publish_shorts(show: VoiceShow, cfg, episode_num: int, when: dt.date,
 
 def _record_youtube_video(show: VoiceShow, episode_num: int, when: dt.date,
                           title: str, video_id: str, guest_name: str,
-                          channel: str, kind: str = "long") -> None:
-    """Append to the per-show video index the rest of the network already reads."""
+                          channel: str, kind: str = "long", *,
+                          variant: str = "", video_kind: str = "",
+                          thumbnail_base: str = "") -> None:
+    """Append to the per-show video index the rest of the network already reads.
+
+    Nov 4 2026: a long also records ``variant`` (:data:`YOUTUBE_VARIANT`),
+    ``video_kind`` (camera | waveform) and ``thumbnail_base``, so
+    ``api/youtube_early_reach.json`` can read the camera cuts and the
+    packaged uploads apart from the three waveform longs before them.
+    Keys are written only when given, so a Short's row is unchanged."""
     index = ROOT / show.audio_subdir / "youtube_videos.json"
     data = {"schema_version": 2, "videos": []}
     if index.exists():
@@ -1249,10 +1591,91 @@ def _record_youtube_video(show: VoiceShow, episode_num: int, when: dt.date,
         "published": when.isoformat(),
         "watch_url": f"https://www.youtube.com/watch?v={video_id}",
         "channel": channel,
+        **({"variant": variant} if variant else {}),
+        **({"video_kind": video_kind} if video_kind else {}),
+        **({"thumbnail_base": thumbnail_base} if thumbnail_base else {}),
     })
     index.parent.mkdir(parents=True, exist_ok=True)
     index.write_text(json.dumps(data, indent=2, ensure_ascii=False),
                      encoding="utf-8")
+
+
+def _feed_item(rss_path: Path, episode_num: int) -> tuple:
+    """``(guid, has_transcript_tag)`` of the feed item numbered *episode_num*
+    (``<itunes:episode>``), or ``("", False)`` when the feed has none."""
+    import xml.etree.ElementTree as ET
+    itunes = "{http://www.itunes.com/dtds/podcast-1.0.dtd}"
+    podcast = "{https://podcastindex.org/namespace/1.0}"
+    if not rss_path.exists():
+        return "", False
+    channel = ET.parse(str(rss_path)).getroot().find("channel")
+    for item in (channel.findall("item") if channel is not None else []):
+        num = item.find(f"{itunes}episode")
+        guid = item.find("guid")
+        if num is None or guid is None or not guid.text:
+            continue
+        if str(num.text or "").strip() == str(episode_num):
+            return guid.text.strip(), item.find(f"{podcast}transcript") is not None
+    return "", False
+
+
+def _summary_entry(show: VoiceShow, episode_num: int) -> dict | None:
+    if not show.summaries_path.exists():
+        return None
+    data = json.loads(show.summaries_path.read_text(encoding="utf-8")) or {}
+    return next((e for e in (data.get("episodes") or [])
+                 if int(e.get("episode") or 0) == episode_num), None)
+
+
+def vtt_backfill(slug: str = "") -> int:
+    """Write the transcript VTT beside every PUBLISHED episode whose package
+    carries an edit transcript, and put the transcript tags on that item in
+    the feed (``VTT_BACKFILL=1``; one show with ``VOICES_SHOW``).
+
+    Nov 4 2026 (voices-7). The feed's other items are untouched and no item
+    moves; once an item carries the tags, ``update_rss_feed``'s preserved-tag
+    pass keeps them through every later rebuild — it re-emits only what the
+    feed already carries, which is why this has to inject the first copy.
+    An episode whose package has no edit transcript (assembled before the
+    edit had one, or on the produce path) is LISTED, never given a VTT on
+    the room's clock. Rewriting those posts is the operator's
+    ``refresh_post`` run per interview.
+    """
+    from shows import VOICE_SHOW_SLUGS, get_show
+    from engine.publisher import _inject_transcript_tag
+    written, tagged, skipped = 0, 0, []
+    for s in ([slug] if slug else list(VOICE_SHOW_SLUGS)):
+        show = get_show(s)
+        host = _host_name(_show_config(show))
+        rows = sb_select("interviews", f"status=eq.published&show=eq.{s}"
+                                       "&episode_number=not.is.null"
+                                       "&order=episode_number.asc")
+        for interview in rows:
+            num = int(interview.get("episode_number") or 0)
+            pkgs = sb_select("editorial_packages",
+                             f"interview_id=eq.{interview['id']}&status=eq.published"
+                             "&order=created_at.desc&limit=1")
+            pkg = pkgs[0] if pkgs else {}
+            entry = _summary_entry(show, num)
+            if not num or entry is None:
+                skipped.append(f"{s} Ep{num}: no summaries record")
+                continue
+            when = dt.date.fromisoformat(str(entry["date"])[:10])
+            path = write_transcript_vtt(pkg, show, num, when)
+            if path is None:
+                skipped.append(f"{s} Ep{num}: no edit transcript on the package")
+                continue
+            written += 1
+            guid, has_tag = _feed_item(show.rss_path, num)
+            if guid and not has_tag:
+                tags = feed_podcast_tags(show, num, path, host_name=host)
+                _inject_transcript_tag(show.rss_path, guid, tags["transcript_url"],
+                                       transcript_vtt_url=tags["transcript_vtt_url"])
+                tagged += 1
+    logger.info("VTT backfill: %d written, %d feed item(s) tagged", written, tagged)
+    for line in skipped:
+        logger.warning("::warning::VTT backfill skipped %s", line)
+    return 0
 
 
 def refresh_post(interview_id: str) -> int:
@@ -1317,12 +1740,16 @@ def main() -> int:
     """``INTERVIEW_ID`` publishes one episode; without it, sweep.
     ``REFRESH_POST=1`` with an ``INTERVIEW_ID`` rewrites an already
     published episode's post and pages instead (see :func:`refresh_post`).
+    ``VTT_BACKFILL=1`` writes the transcript VTTs for every published
+    episode that has an edit transcript (see :func:`vtt_backfill`).
 
     The sweep is what the scheduled workflow runs. It is idempotent —
     ``publish_one`` flips both rows to ``published``, so a second pass
     finds nothing — and one failing episode never blocks the others.
     """
     interview_id = os.environ.get("INTERVIEW_ID", "").strip()
+    if os.environ.get("VTT_BACKFILL", "").strip() in ("1", "true"):
+        return vtt_backfill(os.environ.get("VOICES_SHOW", "").strip())
     if interview_id and os.environ.get("REFRESH_POST", "").strip() in ("1", "true"):
         return refresh_post(interview_id)
     if interview_id:

@@ -371,10 +371,20 @@ class TestTheStudio:
         assert "video version" in STUDIO
         assert "audio only" in STUDIO.lower()
 
-    def test_guests_get_it_only_after_a_test_room_and_test_rooms_always_do(self):
+    def test_guests_get_it_after_the_test_room_and_the_switch_is_explicit_on_both_shows(self):
+        """Nov 4 2026: the switch is written in BOTH show YAMLs (Age of AI
+        had inherited the pipeline default and had no line to flip), and
+        the pipeline reads what is written — so the operator's flip after
+        the watched test room is one line per show, and this guard follows
+        the setting instead of pinning False forever."""
+        import yaml
         from shows import get_show
-        assert get_show("age_of_ai").local_video is False
-        assert get_show("nerra_voices").local_video is False
+        for slug in ("age_of_ai", "nerra_voices"):
+            raw = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+            setting = (raw.get("voices") or {}).get("local_video")
+            assert isinstance(setting, bool), (
+                f"shows/{slug}.yaml must say voices.local_video: true|false explicitly")
+            assert get_show(slug).local_video is setting
         # The run row is seeded from the show's switch (with the guest's own
         # pages, for the room's lookups).
         assert "room_log_seed(show, app)" in FIRE
