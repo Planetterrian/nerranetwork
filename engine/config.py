@@ -373,6 +373,15 @@ class AudioConfig:
     # hosts: her Grok voice leaves ~1 click a minute through the standard
     # pass. Patrick's voice measures clean and stays ``standard``.
     voice_declick: str = "standard"
+    # Nov 3 2026: the voice chain's dynamics stage by name
+    # (``engine.audio.VOICE_DYNAMICS``). Empty = the module default
+    # (``engine.audio.DEFAULT_VOICE_DYNAMICS``, the 4:1 ``legacy``
+    # compressor every show has shipped since May 2026); ``glue`` is the
+    # 2:1 soft-knee trial on Tesla and Top World first (⚠️ AUDIO). The
+    # network flips in engine/audio.py by one constant after the operator's
+    # listen, never here and never in _defaults.yaml ahead of it. An unknown
+    # name raises at load (``_audio_config``).
+    voice_dynamics: str = ""
     # Oct 13 2026 (engine/story_breaks.py): seconds of silence spliced into
     # the voice track where a new story starts, before the music mix. 0 =
     # off (the dataclass default — the exact pre-change audio); the network
@@ -1729,6 +1738,24 @@ def _host_experience_mode(value) -> str:
     return mode
 
 
+def _audio_config(raw) -> AudioConfig:
+    """The ``audio:`` block as an :class:`AudioConfig`; ``voice_dynamics``
+    (Nov 3 2026) must name an ``engine.audio.VOICE_DYNAMICS`` stage or be
+    empty, and an unknown name RAISES at load (the access.mode rule): a
+    misspelt trial value that quietly shipped the legacy chain would make
+    the trial's readout measure nothing."""
+    from engine.audio import VOICE_DYNAMICS
+
+    audio = _build_nested(AudioConfig, raw)
+    name = str(audio.voice_dynamics or "").strip().lower()
+    if name and name not in VOICE_DYNAMICS:
+        raise ValueError(
+            f"audio.voice_dynamics must be one of {sorted(VOICE_DYNAMICS)} or empty, "
+            f"got {audio.voice_dynamics!r}")
+    audio.voice_dynamics = name
+    return audio
+
+
 def load_config(yaml_path: str | Path) -> ShowConfig:
     """Load a show configuration from a YAML file.
 
@@ -1814,7 +1841,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         max_grok_images_per_episode=int(data.get("max_grok_images_per_episode", 0) or 0),
         llm=_build_nested(LLMConfig, data.get("llm")),
         tts=_build_nested(TTSConfig, data.get("tts")),
-        audio=_build_nested(AudioConfig, data.get("audio")),
+        audio=_audio_config(data.get("audio")),
         publishing=_build_nested(PublishingConfig, data.get("publishing")),
         episode=_build_nested(EpisodeConfig, data.get("episode")),
         storage=_build_nested(StorageConfig, data.get("storage")),

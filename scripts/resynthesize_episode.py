@@ -322,12 +322,14 @@ def mix_episode(config, raw_mp3: Path, final_mp3: Path) -> float:
                 config.audio, "outro_fade_out_duration", 6.0),
             denoise=config.audio.voice_denoise,
             declick=config.audio.voice_declick,
+            dynamics=config.audio.voice_dynamics or None,
         )
     else:
         if music_path:
             logger.warning("Music file not found: %s — voice only", music_path)
         normalize_voice(raw_mp3, final_mp3, denoise=config.audio.voice_denoise,
-                        declick=config.audio.voice_declick)
+                        declick=config.audio.voice_declick,
+                        dynamics=config.audio.voice_dynamics or None)
 
     return get_audio_duration(final_mp3) or 0.0
 

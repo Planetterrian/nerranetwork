@@ -103,10 +103,11 @@ DIALOGUE_SPEEDS = (1.0, 1.05)
 #: Named chain variants: each is keyword arguments for the real builders
 #: (``voice_chain_filters`` / ``master_voice_track`` / ``mix_with_music``),
 #: layered over the show's own ``audio.voice_denoise`` / ``voice_declick``.
-#: ``legacy`` is the chain as it ships. A name whose arguments the builders
-#: on this tree do not accept (``glue`` until the dynamics change lands in
-#: ``engine/audio.py``) is reported as unavailable and skipped — the probe
-#: never approximates a chain the engine does not own.
+#: ``legacy`` is the chain as it ships network-wide; ``glue`` is the Nov 3
+#: 2026 2:1 soft-knee trial (``engine.audio.VOICE_DYNAMICS``). A name whose
+#: arguments the builders on this tree do not accept is reported as
+#: unavailable and skipped — the probe never approximates a chain the
+#: engine does not own.
 VARIANTS: Dict[str, Dict[str, object]] = {
     "legacy": {},
     "no_denoise": {"denoise": False},

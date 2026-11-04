@@ -523,6 +523,22 @@ class TestEngineCommandBuilderParity:
         from engine.config import AudioConfig
         assert AudioConfig().voice_denoise is True
 
+    def test_voice_dynamics_legacy_is_this_reference_and_glue_is_two_to_one(self):
+        """Nov 3 2026: the compressor is a NAMED stage (engine.audio
+        VOICE_DYNAMICS). ``legacy`` is this file's reference chain byte for
+        byte — the 4:1 every show has shipped — and ``glue`` is the 2:1
+        soft-knee trial; both keep loudnorm -> acompressor -> alimiter."""
+        from engine.audio import VOICE_DYNAMICS, voice_chain_filters
+
+        ref = voice_normalization_full("/tmp/v.mp3", "/tmp/o.mp3")
+        assert voice_chain_filters(dynamics="legacy") == ref[ref.index("-af") + 1]
+        assert VOICE_DYNAMICS["legacy"] in ref[ref.index("-af") + 1]
+        glue = voice_chain_filters(dynamics="glue")
+        assert "acompressor=" in glue and "ratio=2" in glue and "knee=6" in glue
+        assert "ratio=4" not in glue
+        for af in (voice_chain_filters(dynamics="legacy"), glue):
+            assert af.index("loudnorm") < af.index("acompressor") < af.index("alimiter")
+
     def test_voice_norm_fallback_matches(self):
         from engine.audio import _voice_norm_fallback_cmd
         ref = voice_normalization_fallback("/tmp/v.mp3", "/tmp/o.mp3")

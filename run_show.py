@@ -5533,6 +5533,7 @@ def run(args: argparse.Namespace) -> None:
                             ),
                             denoise=config.audio.voice_denoise,
                             declick=config.audio.voice_declick,
+                            dynamics=config.audio.voice_dynamics or None,
                             breathers=story_cue_starts or None,
                         )
                         metrics.record("story_break_cues", len(story_cue_starts))
@@ -5540,14 +5541,16 @@ def run(args: argparse.Namespace) -> None:
                         logger.warning("Music file not found: %s — using voice only", music_path)
                         master_voice_track(Path(voice_for_mix), final_mp3,
                                            denoise=config.audio.voice_denoise,
-                                           declick=config.audio.voice_declick)
+                                           declick=config.audio.voice_declick,
+                                           dynamics=config.audio.voice_dynamics or None)
                 else:
                     # Nov 3 2026: the voice-only path masters to the published
                     # -16 LUFS like every music show (it shipped at -25 on
                     # UC, Vancouver and Collingwood for 208 episodes).
                     master_voice_track(Path(voice_for_mix), final_mp3,
                                        denoise=config.audio.voice_denoise,
-                                       declick=config.audio.voice_declick)
+                                       declick=config.audio.voice_declick,
+                                       dynamics=config.audio.voice_dynamics or None)
                 if voice_for_mix != raw_mp3:
                     Path(voice_for_mix).unlink(missing_ok=True)
 

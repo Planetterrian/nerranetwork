@@ -272,7 +272,9 @@ class TestTheProbeRendersARealMinute:
         call = src[src.index("                        mix_with_music(\n"):]
         call = call[:call.index(")\n") + 1]
         named = set(re.findall(r"\b([a-z_]+)=", call))
-        named -= {"denoise", "declick", "breathers"}  # the variant's own, and the cues
+        # the variant's own (denoise / declick, and since Nov 3 2026 the
+        # dynamics stage name), and the cues
+        named -= {"denoise", "declick", "dynamics", "breathers"}
         _, config = probe.show_for_script(ROOT / self.TESLA)
         assert set(probe.mix_kwargs(config)) == named
 

@@ -359,6 +359,12 @@ tts:
 audio:
   music_file: assets/music/tesla_shorts_time.mp3
   transition_sting: assets/music/transition_sting.mp3
+  # Nov 3 2026 trial (engine.audio.VOICE_DYNAMICS): the 2:1 soft-knee glue
+  # in place of the network's 4:1 compressor, which measured as the cause
+  # of every show's 1.6-3.0 LU loudness range against NPR's 5. Tesla is
+  # the Patrick music show in the pair (Top World the Mira one); the
+  # network flips in engine/audio.py after the operator's A/B listen.
+  voice_dynamics: glue
   # May 12 2026 retune (see shows/_defaults.yaml). Voice enters at 10 s,
   # music continues 45 s under voice with a 30 s log-fade, post-voice
   # outro is 20 s with a slow 15 s fade-out.
