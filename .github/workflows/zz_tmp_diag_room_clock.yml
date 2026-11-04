@@ -22,6 +22,7 @@ jobs:
           python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
+      - uses: ./.github/actions/setup-ffmpeg
       - name: Diagnose
         run: python pipelines/voices/diag_room_clock.py "${{ matrix.run_id }}"
         env:
