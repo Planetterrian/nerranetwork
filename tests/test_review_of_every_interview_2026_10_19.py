@@ -64,7 +64,8 @@ class TestThePromptTeachesRhythm:
                      "it doesn't feel like a conversation"):
             assert said in notes, said
             assert said not in flat, said
-        assert "give it one specific human beat in plain words" in flat
+        # Nov 4 2026: the beat became a build (tests/test_mira_builds_2026_11_04.py).
+        assert "What you say after an answer is the bridge to the next question" in flat
         assert "never with a grade of the answer" in flat
 
     def test_a_short_answer_needs_no_acknowledgment_but_a_real_one_does(self):

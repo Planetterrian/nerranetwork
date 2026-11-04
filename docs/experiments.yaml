@@ -7250,3 +7250,35 @@ experiments:
       podcast_playlist_id yet (uploads publish and warn); Patrick runs
       scripts/create_youtube_playlists.py <client_secrets> en once.
       Peptides and Longevity stay off (medical-content policy review).
+
+  - id: mira-react-builds-2026-11-04
+    title: "What Mira says after an answer builds toward the next question, measured as one_liner_rate"
+    area: voices
+    shipped: 2026-11-04
+    readout: 2026-12-04
+    status: reading
+    baseline: >
+      Blaine Mathieu's room (Nov 4, the first on the Nov 3 beat):
+      label_open_rate 0.355, bare_question_rate 0.355, reaction_open_rate
+      0.29, mira_turn_sec_median 5.3 s, guest_words_per_answer_median 79.5;
+      one_liner_rate about 0.59 on the recounted transcript excerpt.
+    target: >
+      On the fifth real room after the brief ships (rehearsal PASS plus one
+      operator listen first): one_liner_rate under 0.35 with
+      bare_question_rate not above 0.25, mira_turn_sec_median moving toward
+      the 12-20 s band, guest_words_trend at or above 1.0, and the PACING
+      grade and survey_rating not down.
+    criteria: >
+      HIT when one_liner_rate is under 0.35 and bare_question_rate at or
+      under 0.25 on the fifth room after deploy; MISS when one_liner_rate
+      is at or above 0.5; else INCONCLUSIVE.
+    readout_plan: >
+      interview episode_metrics.notes.audio in Supabase (one_liner_rate,
+      bare_question_rate, label_open_rate, mira_turn_sec_median,
+      guest_words_trend) and the rehearsal report's 'Read beside the
+      verdict' table.
+    notes: >
+      HOW TO REACT rewritten by shape (build on one thing said, then the
+      question it makes necessary; vary the turn); the critical list's last
+      line follows it. learning.SUPERSEDED_BY_BRIEF keeps four network
+      lessons out of the prompt. Guards tests/test_mira_builds_2026_11_04.py.

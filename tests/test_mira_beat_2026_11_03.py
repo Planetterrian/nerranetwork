@@ -313,8 +313,9 @@ class TestTheBriefCarriesTheBeat:
         bullets = self._bullets()
         assert len(bullets) == 7
         assert '"' not in self.BLOCK
-        assert bullets[-1] == ("After a real answer, one sentence in plain words of what it changes "
-                               "or what it cost, then the question.")
+        # Nov 4 2026: the beat became a build (tests/test_mira_builds_2026_11_04.py);
+        # it is still the list's last line, still by shape.
+        assert bullets[-1].startswith("After a real answer, build on one thing they said")
 
     def test_the_prohibition_left_the_critical_list_and_stayed_in_how_to_react(self):
         assert "never a grade, never an echo" not in self.BLOCK
@@ -324,8 +325,9 @@ class TestTheBriefCarriesTheBeat:
         assert "A short answer needs no acknowledgment" in flat
 
     def test_the_beat_in_how_to_listen_is_still_there(self):
+        # Nov 4 2026: HOW TO LISTEN hands the reaction to HOW TO REACT.
         listen = PROMPT[PROMPT.index("HOW TO LISTEN"):PROMPT.index("IT IS THEIR HOUR")]
-        assert "what struck you, or what it changes" in _flat(listen)
+        assert "build on it. Then the next question one step down" in _flat(listen)
 
     def test_by_shape_only(self):
         # No specimen line, no number, no guest, no date in the brief.
