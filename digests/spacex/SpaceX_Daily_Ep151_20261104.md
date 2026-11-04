@@ -1,0 +1,50 @@
+# SpaceX Daily
+> **Colossus 2 now leads global AI compute with 1.11 million H100 equivalents at its Memphis site.**
+
+### Top News
+
+1. **Colossus 2 tops AI compute rankings**
+   SpaceXAI’s Colossus 2 cluster reached an estimated 1.11 million H100-equivalent GPUs at the Memphis facility, surpassing OpenAI’s Stargate at 1.02 million. Blackwell systems continue to be added with further expansions planned. Power, cooling, and hardware delivery remain the practical constraints on further scaling. The firm noted that SpaceX is already achieving its supercompute goals while other projects struggle to reach targets. Source: [x.com](https://x.com/MarioNawfal/status/2117927333935956252/video/1)
+
+2. **SemiAnalysis sees SpaceX matching Google’s 27-year data-center footprint in 18 months**
+   The firm projects SpaceX could reach 13 GW of AI compute capacity by 2027, with more than 9 GW already identified across sites and 3.6 GW under active construction. MiniHard took roughly five months to complete while Gun Range targets four months from start to first systems. SPAM began construction last month and aims for first compute in December. The analysts wrote that SpaceX may be the fastest datacenter builder in the world, even more so than Chinese peers, and that the projected buildout would be roughly equivalent to all of Google’s datacenter capacity from 1999-2026 in just 1.5 years. MiniHard expansion at the Colossus 2 complex took about five months while Gun Range on a former police training site in Southaven, Mississippi, is targeting four months. A separate project known as SPAM, which began construction last month, is aiming to have its first computing systems running in December, potentially beating the 91-day timeline of the first Colossus II deployment. SpaceX’s original Colossus cluster took 122 days to come online. Source: [finance.biggo.com](https://finance.biggo.com/news/33da14df-26b5-4e4d-a356-b4e03cad9b9d) Source: [tradingview.com](https://www.tradingview.com/news/stocktwits:839268376094b:0-spacex-could-match-google-s-27-year-data-center-buildout-in-18-months-outpace-even-chinese-rivals-semianalysis/)
+
+3. **Colossus 2 storage architecture takes shape**
+   VAST Data and DDN are supplying storage across the five Colossus 2 sites east of the Mississippi, with multiple-exabyte total capacity expected. GunRange will run training workloads on roughly 220,000 GB200 GPUs while Spam will handle inference on about 200,000 GB300 GPUs. Both sites are slated for operation by year-end. Colossus 2 is actually multiple datacenters with names such as Macrohard, Digital Optimus, Macroharder, Minihard, GunRange, and Spam. GunRange, located on a former Southaven police department site along Tulane Road, will have approximately 220,000 GB200 GPUs with 800 Gb NICs configured for AI training. Spam, at the former Hormel Foods cold-storage warehouse at 2929 Stateline Road West in Southaven, will have slightly fewer GPUs at around 200,000 GB300s and is being built for inferencing work. GunRange will be operational by the end of this month with Spam coming fully online by the end of December. Colossus 2 will house around 1.2 million Blackwell GPUs in its five sites by the end of 2026. Source: [blocksandfiles.com](https://www.blocksandfiles.com/flash/2026/11/04/musks-colossus-dc-cluster-whats-the-storage-situation/5307253)
+
+4. **Grok Bot adds shopping and order-tracking tools**
+   The new shopping experience inside Grok Bot lets users compare items, locate the best deal, and have the bot track orders. Elon Musk called the feature “great” on X. The Bot can find the best deal, compare items, and track all orders within the same interface. Source: [x.com](https://x.com/elonmusk/status/2117893633009651980)
+
+5. **Crew Dragon completes docking at the space station**
+   The SpaceX Dragon spacecraft docked successfully and the station crew entered the vehicle. The docking occurred after a standard approach sequence. Source: [reuters.com](https://www.reuters.com/video/watch/idOVA4H3ADD/)
+
+6. **Superbird-9 clarification issued after Starship speculation**
+   Eric Berger confirmed that Superbird-9 is not scheduled to launch on Starship next year after fielding questions about an earlier report. The clarification came in response to online claims that had misinterpreted prior coverage. Source: [x.com](https://x.com/SciGuySpace/status/2117795743373070598)
+
+7. **NASA seeks commercial options for Hubble reboost or deorbit**
+   Administrator Jared Isaacman said an uncontrolled reentry is unacceptable and that any funded mission should prioritize extending science return. The RFI remains open through the end of November. Isaacman noted that commercial capture and servicing capabilities have matured since earlier concepts were evaluated. Hubble continues to operate with two functional gyroscopes out of six and has shifted to single-gyro mode, reducing available observation time by roughly 12 percent. Source: [nasaspaceflight.com](https://www.nasaspaceflight.com/2026/11/uncontrolled-reentry-boost-hubble-science-isaacman/)
+
+8. **Starship refueling count for Artemis IV remains unconfirmed**
+   A discussion on r/SpaceXLounge notes that the exact number of tanker flights needed for a crewed lunar landing is still unknown and that the refueling architecture is not simple. The thread highlights that both the launch count and operational complexity remain open variables. Source: [reddit.com](https://www.reddit.com/r/SpaceXLounge/comments/1xna7g7/do_we_know_how_many_starship_launches_spacex_will/)
+
+### Also Today
+**Rocket Lab spacecraft assembly draws engineering praise:** SciGuySpace highlighted the assembly work on a Rocket Lab spacecraft as an impressive piece of engineering. Source: [x.com](https://x.com/SciGuySpace/status/2117639925688336447)
+
+## Community Buzz
+
+**Memories of a high-stakes array repair.** NASASpaceflight recalled Scott Parazynski’s STS-120 spacewalk 19 years ago, when he rode the Canadarm2 and inspection boom to cut a snagged wire and install five crew-made cufflink braces on the P6 solar array. Douglas Wheelock monitored clearances from the truss during the seven-hour-and-nineteen-minute EVA that restored full array deployment. Source: [x.com](https://x.com/NASASpaceflight/status/2117647999572861223)
+
+**Digitizing shuttle-era video hits a quality pause.** NASASpaceflight reported it is 20 percent through mission video digitization but has paused to improve presentation of the original VHS-grade footage. The team is evaluating methods to present the material effectively before resuming the ordered sequence of missions. Source: [x.com](https://x.com/NASASpaceflight/status/2117601984748654918)
+
+**Atlantis launched 32 years ago today.** NASASpaceflight noted that STS-66 lifted off on 3 November 1994 carrying the ATLAS-3 payload to study solar output and ozone chemistry. Donald R. McMonagle commanded the mission with Curtis L. Brown Jr. as pilot; the crew also deployed and retrieved the CRISTA-SPAS satellite. Source: [x.com](https://x.com/NASASpaceflight/status/2117597399308808580)
+
+## The Counterpoint
+SemiAnalysis flagged a possible power shortfall exceeding 300 MW at Colossus 2 even as construction timelines compress. The firm noted that most operators still require 8–12 months for comparable builds while SpaceX targets four-to-five-month cycles. Resolving the gap will require either faster grid interconnection or additional on-site generation. The analysts also observed that SpaceX raised its overall target from 10 GW to 13 GW only two months after skeptics questioned whether the earlier plan was achievable. Source: [tradingview.com](https://www.tradingview.com/news/stocktwits:839268376094b:0-spacex-could-match-google-s-27-year-data-center-buildout-in-18-months-outpace-even-chinese-rivals-semianalysis/)
+
+### Engineering Deep Dive
+SpaceX is collapsing the traditional data-center construction timeline by running multiple work fronts in parallel and repurposing existing industrial sites rather than starting from greenfield. At Gun Range the former police training facility allowed foundation and structural steel work to begin while site utilities were still being finalized, cutting the build from the industry norm of eight to twelve months down to four. The same approach at Starbase converted cleared land into simultaneous frame and roof erection within weeks, showing that the critical path is now limited by material delivery and inspection sequencing rather than sequential civil works. Parallel execution works only when the design is frozen early and when the owner controls both the site and the supply chain; SpaceX satisfies both conditions. The resulting Idiot Index for a finished MW of AI capacity is therefore falling faster than power or cooling constraints alone would predict, because the dominant cost driver—time on site—is being attacked directly. If the four-to-five-month cadence holds through the remaining Colossus 2 sites, the company will have demonstrated that purpose-built AI factories can be stood up at roughly twice the speed of conventional hyperscale builds without violating physics or code. SemiAnalysis identified more than 9 GW across specific sites, including 3.6 GW currently under active construction, and noted that the MiniHard expansion took about five months while Gun Range is targeting four months. SPAM, which began construction last month, aims to have first computing systems running in December. The analysts added that SpaceX raised its target from 10 GW only two months after skeptics questioned whether the earlier plan was achievable, and they now believe SpaceX may be the fastest datacenter builder in the world. Source: [finance.biggo.com](https://finance.biggo.com/news/33da14df-26b5-4e4d-a356-b4e03cad9b9d) Source: [tradingview.com](https://www.tradingview.com/news/stocktwits:839268376094b:0-spacex-could-match-google-s-27-year-data-center-buildout-in-18-months-outpace-even-chinese-rivals-semianalysis/)
+
+### Market Watch
+SPCX is at $141.31, +3.6% versus the previous close.
+
+SpaceX is one of the most consequential engineering stories of this era.
