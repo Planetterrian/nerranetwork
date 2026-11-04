@@ -258,6 +258,13 @@ def gather_network_context() -> str:
         parts.append("\n".join(lines))
     for ledger in sorted((ROOT / "docs" / "reviews" / "ledger").glob("*.yaml")):
         parts.append(f"## LEDGER {ledger.name}\n" + _read(ledger, 6000))
+    # Nov 3 2026: the network target's deterministic snapshot (the audience
+    # headline and the Nerra Daily email line), as a show review reads its own.
+    try:
+        from review_snapshot import build_snapshot
+        parts.append("## DETERMINISTIC SNAPSHOT\n" + build_snapshot("network"))
+    except Exception as exc:  # noqa: BLE001 — the review runs without it
+        parts.append(f"## DETERMINISTIC SNAPSHOT\n(unavailable: {exc})")
     return "\n\n".join(parts)
 
 

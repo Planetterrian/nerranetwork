@@ -866,13 +866,20 @@
   tiles.appendChild(statTile("Newsletter", bd.configured ? fmt(bd.subscriber_count) : "—",
     { sub: bd.configured ? "subscribers · Buttondown" : "not configured" }));
   // Nov 2026: the one network email. Counts over its last seven sends;
-  // a dash, never 0, where Buttondown has not reported yet.
+  // a dash, never 0, where Buttondown has not reported yet. Nov 3 2026: the
+  // tile is never hidden — a night that read 0 sends had made it vanish,
+  // which says "no email" where the truth was "not read yet".
   const nd = bd.nerra_daily || {};
-  if (bd.configured && nd.sends) {
-    tiles.appendChild(statTile("Nerra Daily email", fmtOrDash(nd.last_recipients),
-      { sub: "recipients last send · " + fmtOrDash(nd.opens) + " opens · " +
-             fmtOrDash(nd.clicks) + " clicks over " + fmt(nd.sends) + " sends" }));
-  }
+  const subsDelta = bd.subscribers_delta_7d;
+  const subsDeltaText = "subscribers " + (subsDelta == null ? "—"
+    : (subsDelta > 0 ? "+" : "") + Number(subsDelta).toLocaleString()) + " · 7d";
+  tiles.appendChild(statTile("Nerra Daily email",
+    bd.configured ? fmtOrDash(nd.last_recipients) : "—",
+    { sub: !bd.configured ? "Buttondown not configured"
+        : (nd.sends
+            ? "recipients last send · " + fmtOrDash(nd.opens) + " opens · " +
+              fmtOrDash(nd.clicks) + " clicks over " + fmtOrDash(nd.sends) + " sends"
+            : "no send read yet") + " · " + subsDeltaText }));
   tiles.appendChild(statTile("Image library", gallery.configured ? compact(gallery.image_count) : "—",
     { sub: gallery.configured
         ? "CC-licensed images on /gallery.html"

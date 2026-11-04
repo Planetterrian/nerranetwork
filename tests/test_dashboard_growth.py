@@ -312,6 +312,20 @@ class TestSpokenOpenArmSplit:
                     f"{e['id']} reopens long_open_hold_5pct_en; score the arm metric")
 
 
+class TestEmailMeasurementKeys:
+    """Nov 3 2026 (email-measurement): the Nerra Daily email's four register
+    metrics are live keys — the email's register entry may name them, and
+    removing one must fail here, not render 'no data yet' forever."""
+
+    KEYS = ("email_recipients_last", "email_open_rate_7d",
+            "email_click_sessions_28d", "email_subscribers_delta_7d")
+
+    def test_keys_are_in_the_computable_set(self):
+        computable = set(gd._experiment_live_metrics(ROOT).keys())
+        missing = [k for k in self.KEYS if k not in computable]
+        assert not missing, missing
+
+
 class TestYoutubeMeasurementKeys:
     """Nov 3 2026 (youtube-measurement): the Short's job metrics per channel
     and the RSS-copies count are live keys — a register entry may name them,

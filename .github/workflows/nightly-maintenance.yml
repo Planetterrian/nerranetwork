@@ -83,6 +83,9 @@ jobs:
         #     podcasts.apple.com show pages (Oct 2026). Needs no secret;
         #     it is the only readout of the on-air "rate us" ask. Its
         #     output must stay in the add-paths whitelist below.
+        #   * fetch_buttondown_stats.py also appends one row a night to
+        #     api/buttondown_history.json (Nov 3 2026 — the newsletter's
+        #     only series); it too must stay in the whitelist below.
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
@@ -547,6 +550,7 @@ jobs:
             api/op3_stats.json
             api/op3_history.json
             api/buttondown_stats.json
+            api/buttondown_history.json
             api/member_metrics.json
             api/voices_metrics.json
             api/ga4_stats.json

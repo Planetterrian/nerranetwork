@@ -2374,6 +2374,47 @@ def _loudness_in_spec_share(lufs: List[float], min_n: int) -> Optional[float]:
     return round(in_spec / len(lufs), 2)
 
 
+def _buttondown_anchor(stats: dict) -> _dt.date:
+    """The Buttondown read's own date (the stats file's ``fetched_at``), so
+    a delta is anchored on the read, never the dashboard's build clock."""
+    when = _parse_iso(str((stats or {}).get("fetched_at") or ""))
+    return when.date() if when else _dt.date.today()
+
+
+def _email_live_metrics(root: Path) -> Dict[str, Any]:
+    """The Nerra Daily email's register metrics (Nov 3 2026). None, never 0,
+    where unread; ``scripts.fetch_buttondown_stats`` owns the history, the
+    send rows and the 30-recipient floor.
+
+    * ``email_recipients_last`` — the newest send's recipients.
+    * ``email_open_rate_7d`` — opens over recipients summed across the last
+      SEVEN sends (``RATE_FLOOR`` on the sum, never a rate per send).
+    * ``email_click_sessions_28d`` — GA4 sessions on parsed ``email``
+      campaigns (``api/funnel.json`` click stage); a measured 0 is 0.
+    * ``email_subscribers_delta_7d`` — the list's change over seven days
+      from ``api/buttondown_history.json``.
+    """
+    from scripts.fetch_buttondown_stats import (
+        HISTORY_NAME, load_history, nerra_daily_sends, open_rate_last_sends,
+        subscribers_delta)
+
+    stats = _load_json(root / "api" / "buttondown_stats.json") or {}
+    sends = nerra_daily_sends(stats)
+    last = sends[0].get("recipients") if sends else None
+    click = (((_load_json(root / "api" / "funnel.json") or {}).get("stages") or {})
+             .get("click") or {})
+    email = click.get("email") if click.get("configured") else None
+    sessions = (email or {}).get("sessions_28d")
+    return {
+        "email_recipients_last": last if isinstance(last, int) else None,
+        "email_open_rate_7d": open_rate_last_sends(sends, 7),
+        "email_click_sessions_28d": sessions if isinstance(sessions, int) else None,
+        "email_subscribers_delta_7d": subscribers_delta(
+            load_history(root / "api" / HISTORY_NAME),
+            as_of=_buttondown_anchor(stats)),
+    }
+
+
 def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     """Compute the small closed vocabulary of live experiment metrics.
 
@@ -2693,6 +2734,8 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # day-3 views of motion_open hook Shorts over the same shows' control-day
     # hook Shorts, from the age-matched reach file. Null under 10 per arm.
     out["hook_motion_vs_control_d3"] = _hook_motion_ab_ratio(root)
+    # Nov 3 2026 — the Nerra Daily email's four register metrics.
+    out.update(_email_live_metrics(root))
 
     # Sep 24 2026 — the grok-4.7 resilience pass reads out here: the share
     # of pinned-model episodes that fell back to the network default over
@@ -4395,6 +4438,8 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     if bd_path.exists():
         try:
             data = json.loads(bd_path.read_text(encoding="utf-8"))
+            from scripts.fetch_buttondown_stats import (
+                HISTORY_NAME, load_history, subscribers_delta)
             section["newsletter"] = {
                 "configured": True,
                 "fetched_at": data.get("fetched_at"),
@@ -4404,6 +4449,12 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 # under 30 recipients) and the per-tag follow counts.
                 "nerra_daily": data.get("nerra_daily"),
                 "tag_counts": data.get("tag_counts"),
+                # Nov 3 2026: the list's 7-day change from the nightly
+                # history (api/buttondown_history.json); null until the
+                # history holds a row a week older than the read.
+                "subscribers_delta_7d": subscribers_delta(
+                    load_history(root / "api" / HISTORY_NAME),
+                    as_of=_buttondown_anchor(data)),
             }
         except Exception as exc:  # noqa: BLE001
             section["newsletter"] = {"configured": True, "error": str(exc)}

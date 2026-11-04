@@ -10,6 +10,7 @@ cost, and the OP3 download trend.
 Usage:
     python scripts/review_snapshot.py tesla
     python scripts/review_snapshot.py modern_investing --episodes 15
+    python scripts/review_snapshot.py network     # the network target: audience + email
 
 Output is markdown on stdout. Read-only; safe to run anywhere.
 """
@@ -424,7 +425,62 @@ def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
     return "\n".join(lines)
 
 
+#: The review target that is not a show (``docs/reviews/review_state.yaml``).
+#: Nerra Daily is not a target of its own; its email is read here.
+NETWORK_TARGET = "network"
+
+
+def email_line(em: dict, marker: dict | None) -> str:
+    """The Nerra Daily email in one line (Nov 3 2026): the numbers from the
+    audience headline's ``email`` block, the archive link from the newest
+    send record. A dash where unread, never 0."""
+    def d(v):
+        return "—" if v is None else str(v)
+
+    delta = em.get("subscribers_delta_7d")
+    marker = marker or {}
+    return (
+        f"- Email (Nerra Daily): last send {d(em.get('last_recipients'))} recipients · "
+        f"last 7 days {d(em.get('sends_7d'))} sends, {d(em.get('opens_7d'))} opens, "
+        f"{d(em.get('clicks_7d'))} clicks, {d(em.get('unsubscribes_7d'))} unsubscribes · "
+        f"subscribers {d(em.get('subscribers'))} "
+        f"({'—' if delta is None else f'{delta:+d}'} 7d) · "
+        f"newest send record {d(marker.get('date'))} · archive {marker.get('archive_url') or '—'}"
+    )
+
+
+def network_snapshot(root: Path | None = None) -> str:
+    """The ``network`` target's snapshot: the audience headline's network
+    line and the email (there is no show directory to read)."""
+    root = root or ROOT
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    lines = ["# Review snapshot: network", "", "## Audience headline"]
+    em: dict = {}
+    try:
+        from scripts.build_audience_headline import build_headline, headline_line
+        doc = build_headline(root)
+        em = (doc.get("network") or {}).get("email") or {}
+        lines.append("- " + headline_line(doc))
+    except Exception as exc:  # noqa: BLE001 — the snapshot must always render
+        lines.append(f"- (audience headline unavailable: {exc})")
+    lines += ["", "## Email"]
+    marker = None
+    try:
+        from engine.nerra_daily_email import MARKER_DIR
+        records = sorted((root / MARKER_DIR).glob("*.json"))
+        if records:
+            marker = json.loads(records[-1].read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — an unreadable record prints a dash
+        marker = None
+    lines.append(email_line(em, marker))
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_snapshot(slug: str, episodes: int = 10) -> str:
+    if slug == NETWORK_TARGET:
+        return network_snapshot()
     show_yaml = ROOT / "shows" / f"{slug}.yaml"
     if not show_yaml.exists():
         raise SystemExit(f"unknown show: {slug} (no shows/{slug}.yaml)")
@@ -750,7 +806,7 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("slug", help="show slug matching shows/<slug>.yaml")
+    parser.add_argument("slug", help="show slug matching shows/<slug>.yaml, or 'network'")
     parser.add_argument("--episodes", type=int, default=10)
     args = parser.parse_args()
     print(build_snapshot(args.slug, args.episodes))

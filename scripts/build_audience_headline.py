@@ -12,13 +12,17 @@ review snapshot's first section and the daily summary line all read:
   downloads of episodes old enough to have had a first week, YouTube
   average view percentage over the window (views-weighted, Shorts and
   long-form separately);
-* network — the same numbers rolled up, plus newsletter subscribers.
+* network — the same numbers rolled up, plus newsletter subscribers and
+  (Nov 3 2026) the email: the list's 7-day change from the nightly history,
+  the last send's recipients, and the opens / clicks / unsubscribes of the
+  sends of the last seven days.
 
 Honesty rules (the funnel report's): a number that cannot be measured is
 ``null``, never 0; a week-over-week change needs a non-zero prior week;
 the CURRENT OP3 week is partial and is never compared.
 
-Reads:  api/op3_stats.json, api/youtube_stats.json, api/buttondown_stats.json
+Reads:  api/op3_stats.json, api/youtube_stats.json, api/buttondown_stats.json,
+        api/buttondown_history.json
 Writes: api/audience_headline.json (``--out``)
 """
 from __future__ import annotations
@@ -147,6 +151,63 @@ def youtube_videos_by_slug(yt: Dict[str, Any]) -> Dict[str, List[dict]]:
     return out
 
 
+#: The email block's window (days back from ``as_of``, today included).
+EMAIL_WINDOW_DAYS = 7
+
+
+def email_headline(bd: Dict[str, Any], history_rows: Optional[list],
+                   today: _dt.date) -> Dict[str, Any]:
+    """The email's numbers (Nov 3 2026). ``scripts.fetch_buttondown_stats``
+    owns the history and its readers. Null where unread, never 0: a window
+    with no send has no opens to count (``sends_7d`` says 0 when the list
+    WAS read and held none)."""
+    from scripts.fetch_buttondown_stats import nerra_daily_sends, subscribers_delta
+
+    sends = nerra_daily_sends(bd)
+    window = None
+    if sends is not None:
+        cutoff = today - _dt.timedelta(days=EMAIL_WINDOW_DAYS)
+        window = [s for s in sends
+                  if (_parse_day(s.get("publish_date")) or cutoff) > cutoff]
+
+    def total(key: str) -> Optional[int]:
+        values = [s.get(key) for s in window or [] if isinstance(s.get(key), int)]
+        return sum(values) if values else None
+
+    count = (bd or {}).get("subscriber_count")
+    last = sends[0].get("recipients") if sends else None
+    return {
+        "subscribers": count if isinstance(count, int) else None,
+        "subscribers_delta_7d": subscribers_delta(history_rows, as_of=today),
+        "last_recipients": last if isinstance(last, int) else None,
+        "sends_7d": len(window) if window is not None else None,
+        "opens_7d": total("opens"),
+        "clicks_7d": total("clicks"),
+        "unsubscribes_7d": total("unsubscriptions"),
+    }
+
+
+def _email_history(root: Path) -> Optional[list]:
+    from scripts.fetch_buttondown_stats import HISTORY_NAME, load_history
+
+    return load_history(root / "api" / HISTORY_NAME)
+
+
+def email_line(em: Dict[str, Any]) -> str:
+    """The email's part of the summary line; a dash where unread."""
+    def d(v: Any) -> str:
+        return "—" if v is None else str(v)
+
+    if not em or em.get("sends_7d") is None:
+        head = "email: sends unread"
+    elif em.get("sends_7d") == 0:
+        head = "email: no send read in 7d"
+    else:
+        head = f"email: last send {d(em.get('last_recipients'))} recipients"
+    return (f"{head}, 7d {d(em.get('opens_7d'))} opens / {d(em.get('clicks_7d'))} clicks"
+            f" / {d(em.get('unsubscribes_7d'))} unsubscribes")
+
+
 def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, Any]:
     today = today or _dt.date.today()
     op3 = _load(root / "api" / "op3_stats.json")
@@ -205,6 +266,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
         "first_week_top_shows": [{"show": slug, "median": m} for slug, m in fw_top],
         "youtube": youtube_retention(all_videos, today),
         "newsletter_subscribers": bd.get("subscriber_count") if bd else None,
+        "email": email_headline(bd, _email_history(root), today),
         "shows_measured": len(measured),
         # Feeds OP3 answered 404 for this run — prefixed and recording,
         # but not yet indexed. Never counted in shows_measured.
@@ -222,6 +284,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
             "wow_pct": "last COMPLETE week of RSS downloads vs the week before (the current week is partial and never compared); null when the prior week is 0 or unmeasured",
             "first_week": "median downloads_7d of episodes published 7-30 days ago — each such episode's downloads_7d is its first week",
             "youtube": f"views-weighted averageViewPercentage over videos published in the last {YOUTUBE_WINDOW_DAYS} days, Shorts and long-form separately",
+            "email": f"Nerra Daily: the last send's recipients, and opens / clicks / unsubscribes summed over the sends of the last {EMAIL_WINDOW_DAYS} days (Buttondown's counts as of the nightly read); subscribers_delta_7d from api/buttondown_history.json; null where unread",
         },
         "network": network,
         "shows": shows,
@@ -248,7 +311,11 @@ def headline_line(doc: Dict[str, Any]) -> str:
     if yt.get("short") is not None or yt.get("long") is not None:
         parts.append(f"YouTube retention shorts {yt.get('short') if yt.get('short') is not None else '—'}% / long {yt.get('long') if yt.get('long') is not None else '—'}%")
     subs = n.get("newsletter_subscribers")
-    parts.append(f"newsletter: {subs if subs is not None else 'unmeasured'}")
+    em = n.get("email") or {}
+    delta = em.get("subscribers_delta_7d")
+    parts.append(f"newsletter: {subs if subs is not None else 'unmeasured'}"
+                 + (f" ({delta:+d} 7d)" if delta is not None else ""))
+    parts.append(email_line(em))
     unindexed = n.get("shows_unindexed") or []
     if unindexed:
         parts.append(f"{len(unindexed)} feed(s) not yet indexed by OP3")

@@ -12,9 +12,15 @@ envelope whose ``count`` field is the total number of subscribers. If the
 field is ever missing we skip rather than guess (no page-walking — a
 wrong number shown publicly is worse than none).
 
+Nov 3 2026: each run also appends ONE row for its date to
+``buttondown_history.json`` beside the stats file (the list size, the tag
+counts the email's readouts need and the Nerra Daily counts), so a readout
+compares two dates instead of a ledger note. A row is never rewritten on a
+later day; a re-run on the same day fills in only what it read.
+
 Usage::
 
-    python scripts/fetch_buttondown_stats.py                 # write api/buttondown_stats.json
+    python scripts/fetch_buttondown_stats.py                 # write api/buttondown_stats.json (+ history)
     python scripts/fetch_buttondown_stats.py --dry-run       # print, write nothing
     python scripts/fetch_buttondown_stats.py --out /tmp/b.json
 """
@@ -28,7 +34,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _ROOT = _SCRIPT_DIR.parent
@@ -37,8 +43,9 @@ if str(_ROOT) not in sys.path:
 
 import requests  # noqa: E402  (after sys.path fix)
 
-logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                    format="%(levelname)s %(message)s")
+# Logging is configured in main(): the dashboard, the audience headline and
+# the review snapshot import this module for the history readers below, and
+# an import must not install a root handler in their processes.
 log = logging.getLogger("buttondown_stats")
 
 BUTTONDOWN_API_BASE = "https://api.buttondown.com/v1"
@@ -332,9 +339,160 @@ def summarize_nerra_daily(emails: list) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# The nightly history (Nov 3 2026)
+# ---------------------------------------------------------------------------
+
+#: One row a night, beside the stats file (``api/buttondown_history.json`` on
+#: the nightly — on its add-paths whitelist). Until this file the newsletter
+#: had no series at all: "the list grew by two" was read off a ledger note.
+HISTORY_NAME = "buttondown_history.json"
+#: Rows kept (one a day; the oldest drop off the front, nothing else moves).
+HISTORY_MAX_ROWS = 800
+#: The Soft Personal capture's tag (the gallery Worker applies it from
+#: /personal-interest.html, ``workers/gallery/src/handlers.ts``).
+INTEREST_TAG = "personal-interest"
+#: The Nerra Daily block each row keeps (``summarize_nerra_daily``'s keys:
+#: the last seven sends' counts and the last send's recipients).
+NERRA_DAILY_HISTORY_KEYS = ("sends", "last_recipients", "recipients",
+                            "opens", "clicks", "unsubscriptions")
+#: A delta's current row is at most this many days old: a history the
+#: nightly stopped writing is not "the last seven days".
+HISTORY_STALE_DAYS = 3
+
+
+def history_tags(root: Path = _ROOT) -> List[str]:
+    """The tags every history row counts: the audience tags (free account,
+    gallery signup, paid), every show a reader can follow in the email, and
+    the two choices that have no other series (Sundays only; the Personal
+    interest form). ``engine.nerra_daily_email`` owns the names and the map."""
+    from engine import nerra_daily_email as nde
+
+    tags = {nde.MEMBER_TAG, nde.GALLERY_TAG, nde.PAID_TAG, nde.WEEKLY_ONLY_TAG,
+            INTEREST_TAG}
+    try:
+        tags.update(nde.email_show_tags(root).values())
+    except Exception as exc:  # noqa: BLE001 — a row with fewer tags beats no row
+        log.warning("buttondown: email show tags unavailable for the history: %s", exc)
+    return sorted(tags)
+
+
+def history_row(stats: dict, tags: Sequence[str]) -> dict:
+    """One night's row from the stats this run wrote. Null, never 0, for what
+    the run could not read: a tag reads 0 only when the tag counts WERE read
+    (and no subscriber carries it) — never after a failed read, and never
+    from an empty breakdown beside a non-zero list."""
+    date = str(stats.get("fetched_at") or "")[:10] or _dt.date.today().isoformat()
+    count = stats.get("subscriber_count")
+    tag_counts = stats.get("tag_counts")
+    tags_read = (isinstance(tag_counts, dict) and not stats.get("attribution_warning")
+                 and not (isinstance(count, int) and count > 0 and not tag_counts))
+    nd = stats.get("nerra_daily")
+    return {
+        "date": date,
+        "subscriber_count": count if isinstance(count, int) else None,
+        "tag_counts": ({t: int(tag_counts.get(t) or 0) for t in tags}
+                       if tags_read else None),
+        "nerra_daily": ({k: nd.get(k) for k in NERRA_DAILY_HISTORY_KEYS}
+                        if isinstance(nd, dict) else None),
+    }
+
+
+def load_history(path: Path) -> Optional[list]:
+    """The history's rows, oldest first: ``[]`` when the file does not exist
+    yet, ``None`` when it exists and cannot be read (never mistaken for an
+    empty history — the next write would erase it)."""
+    if not path.exists():
+        return []
+    try:
+        rows = (json.loads(path.read_text(encoding="utf-8")) or {}).get("rows")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else None
+
+
+def append_history(path: Path, row: dict) -> bool:
+    """Add *row* for its date; never rewrite an earlier date's row.
+
+    A second run on the same date updates that date's row only where the new
+    read produced a value (a refused read never blanks what the earlier run
+    read). An unreadable file is left alone (``False``), never replaced by a
+    one-row history.
+    """
+    rows = load_history(path)
+    if rows is None:
+        log.warning("buttondown: %s is unreadable — history left untouched", path)
+        return False
+    same = [r for r in rows if r.get("date") == row["date"]]
+    if same:
+        merged = dict(same[-1])
+        merged.update({k: v for k, v in row.items() if v is not None})
+        rows = [r for r in rows if r.get("date") != row["date"]] + [merged]
+    else:
+        rows = rows + [row]
+    rows.sort(key=lambda r: str(r.get("date") or ""))
+    rows = rows[-HISTORY_MAX_ROWS:]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"rows": rows}, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+    return True
+
+
+def subscribers_delta(rows: Optional[list], *, as_of: _dt.date,
+                      days: int = 7) -> Optional[int]:
+    """The list's change over *days*: the newest row on or before *as_of*
+    (at most :data:`HISTORY_STALE_DAYS` old) against the newest row at least
+    *days* before it. ``None``, never 0, when either row is missing or its
+    count was not read."""
+    dated = []
+    for r in rows or []:
+        try:
+            d = _dt.date.fromisoformat(str(r.get("date") or "")[:10])
+        except ValueError:
+            continue
+        if d <= as_of and isinstance(r.get("subscriber_count"), int):
+            dated.append((d, r["subscriber_count"]))
+    if not dated:
+        return None
+    dated.sort()
+    cur_d, cur = dated[-1]
+    if (as_of - cur_d).days > HISTORY_STALE_DAYS:
+        return None
+    base = [n for d, n in dated if d <= cur_d - _dt.timedelta(days=days)]
+    return cur - base[-1] if base else None
+
+
+def nerra_daily_sends(stats: dict) -> Optional[list]:
+    """The Nerra Daily rows of the stats file's ``emails`` list, newest first;
+    ``None`` when the list was not read (an older file, a failed read). An
+    empty list is a read that found no send."""
+    emails = (stats or {}).get("emails")
+    if not isinstance(emails, list):
+        return None
+    sends = [e for e in emails if isinstance(e, dict) and e.get("kind") == "nerra_daily"]
+    sends.sort(key=lambda e: str(e.get("publish_date") or ""), reverse=True)
+    return sends
+
+
+def open_rate_last_sends(sends: Optional[list], n: int = 7) -> Optional[float]:
+    """Opens over recipients summed across the last *n* sends that report
+    both; ``None`` under :data:`RATE_FLOOR` summed recipients — never a rate
+    per send, never 0 for an unread send."""
+    paired = [(e["recipients"], e["opens"]) for e in (sends or [])[:n]
+              if isinstance(e.get("recipients"), int) and isinstance(e.get("opens"), int)]
+    recipients = sum(r for r, _ in paired)
+    if recipients < RATE_FLOOR:
+        return None
+    return round(sum(o for _, o in paired) / recipients, 3)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
+                        format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="api/buttondown_stats.json")
+    parser.add_argument("--history", default=None,
+                        help=f"default: {HISTORY_NAME} beside --out")
     parser.add_argument("--dry-run", action="store_true",
                         help="print JSON to stdout, write nothing")
     args = parser.parse_args(argv)
@@ -410,6 +568,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
     log.info("buttondown: wrote %s (%d subscribers)", out_path, count)
+
+    history_path = Path(args.history) if args.history else out_path.parent / HISTORY_NAME
+    try:
+        if append_history(history_path, history_row(stats, history_tags())):
+            log.info("buttondown: history row for %s in %s",
+                     stats["fetched_at"][:10], history_path)
+    except Exception as exc:  # noqa: BLE001 — the history never breaks the stats
+        log.warning("buttondown: history not written: %s", exc)
     return 0
 
 
