@@ -22,6 +22,16 @@ frame_memory: true
 # (PT Ep193 / FF Ep192-195 / Tesla Ep614 shipped source-less items unnoticed).
 digest_lints:
 - items_without_source
+# Nov 3 2026 (digest-lints pass): the deep dive is a second STORY, never a
+# second pass. deep_dive_distinct_measure records how much of a body item's
+# vocabulary the essay carries (deep_dive_contains_body_item) and never
+# fires; the firing form, deep_dive_distinct, is listed only after a week of
+# readings with digest_structural_regen_share_7d under 0.22.
+# deep_dive_fetched_source measures whether the essay was built from a read
+# page (deep_dive_source_read); it fires only on the sections whose prompt
+# states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
+- deep_dive_distinct_measure
+- deep_dive_fetched_source
 # Sections that cite an earlier story by contract — never overlap duplicates (Sep 24 2026).
 digest_overlap_exempt_sections:
 - The Counterpoint
