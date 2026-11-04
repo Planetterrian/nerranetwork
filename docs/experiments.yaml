@@ -7218,3 +7218,35 @@ experiments:
       tests/test_blog_related_stability_2026_11_03.py,
       tests/test_repo_hygiene_2026_11_03.py.
 
+  - id: cohort-youtube-ai-chips-mag7-2026-11-04
+    title: "AI Chips and MAG 7 join the EN YouTube channel (launch plan §7 step 2)"
+    area: reach
+    shipped: 2026-11-04
+    readout: 2026-11-25
+    status: reading
+    baseline: >
+      Neither show had a YouTube upload; RSS 7d downloads 24 (AI Chips) and
+      12 (MAG 7) on api/audience_headline.json, Nov 3. EN channel ~13 uploads
+      a day (Oct 27 - Nov 1) against the 30/day cadence ceiling; EN longs
+      published since Oct 7 averaged 95 views and 1.5 subscribers per 1,000
+      views; Models & Agents, the nearest topic, 98 views per long.
+    target: >
+      Three weeks after merge each show's long-form reads a day-3 median at
+      or above the EN long median for the same weeks, and its hook Short
+      clears the channel's dead-Shorts floor.
+    criteria: >
+      HIT when, from api/youtube_early_reach.json and the stored snapshots,
+      both shows' long-form day-3 medians reach the EN long-form median for
+      Nov 5 - Nov 25 and neither show lands on the dead-Shorts tier; MISS
+      when both sit under half of it; else INCONCLUSIVE.
+    readout_plan: >
+      api/youtube_early_reach.json (kind long and short, age 3) filtered to
+      ai_chips and mag7 against the EN channel; api/youtube_policy.json
+      entries for both slugs; api/dashboard.json efficiency.per_show
+      cost_7d_usd for the render cost.
+    notes: >
+      youtube.enabled true on both YAMLs; SEED_TIERS en B;
+      YOUTUBE_ENABLED_SHOWS; AI Chips' breaker 8 -> 12 USD/week. No
+      podcast_playlist_id yet (uploads publish and warn); Patrick runs
+      scripts/create_youtube_playlists.py <client_secrets> en once.
+      Peptides and Longevity stay off (medical-content policy review).

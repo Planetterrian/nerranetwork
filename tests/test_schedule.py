@@ -234,6 +234,10 @@ YOUTUBE_ENABLED_SHOWS = {
     # produce step already renders. One insert per interview, on a show that
     # publishes when an interview is ready, so the quota math is unchanged.
     "age_of_ai",
+    # Nov 4 2026: launch plan §7 step (2) — AI Chips and MAG 7 join the EN
+    # channel (long-form + one Short, seed tier B) after four weeks of RSS
+    # data. Register cohort-youtube-ai-chips-mag7-2026-11-04.
+    "ai_chips", "mag7",
     # Sep 9 2026 (operator-directed): env_intel + finansy_prosto PAUSED —
     # ~10 and ~6 views per upload over 14 days, the lowest on their channels.
     # MIT's RU/FR dubs were culled 2026-09-02. Blocks stay in the YAMLs for

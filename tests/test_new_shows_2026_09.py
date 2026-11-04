@@ -284,6 +284,7 @@ class TestScaffoldRepairs:
 # ---------------------------------------------------------------------------
 
 PHASE1 = ("ai_chips", "mag7", "peptides", "longevity")
+YOUTUBE_ON = {"ai_chips", "mag7"}
 WEEKLY = {"peptides": "thursday", "longevity": "wednesday"}
 
 
@@ -300,7 +301,11 @@ class TestPhase1ShowWiring:
         assert c.max_weekly_cost_usd > 0, "breaker must be TOP-level to take effect"
         # Oct 1 2026: the newsletter is ON for the launch cohort (the show
         # page offered the signup since launch; the Worker keeps the tag now).
-        assert c.youtube.enabled is False and c.newsletter.enabled is True
+        # Nov 4 2026: AI Chips and MAG 7 are on YouTube (launch plan §7
+        # step 2); Peptides and Longevity stay off until a medical-content
+        # policy review.
+        assert c.youtube.enabled is (slug in YOUTUBE_ON)
+        assert c.newsletter.enabled is True
         # Oct 11 2026: the second wave posts on @nerranetwork from Oct 24.
         if c.publishing.x_enabled:
             assert c.publishing.x_env_prefix == "NERRANETWORK_X_"
