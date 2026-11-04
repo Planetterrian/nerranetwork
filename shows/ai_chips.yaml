@@ -212,7 +212,10 @@ min_articles: 6
 min_articles_skip: 4
 
 # Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
-max_weekly_cost_usd: 8.0
+# Nov 4 2026: 8.0 -> 12.0 with YouTube on. Text alone ran $5.38/7d; the
+# video adds ~13 Grok scenes and an even-day hook motion clip per episode,
+# so 8.0 would trip the breaker mid-week on a normal week.
+max_weekly_cost_usd: 12.0
 
 multilingual:
   enabled: false
@@ -308,6 +311,9 @@ publishing:
   x_handle: '@nerranetwork'
   x_post_format: clip
   x_start_date: '2026-10-24'
+  # Nov 4 2026: with the YouTube long-form on, the full episode rides
+  # as a reply under the X post like the other @nerranetwork clip shows.
+  x_long_form: true
   host_name: Patrick
   host_kind: human
 
@@ -370,7 +376,13 @@ content_tracking:
   section_patterns: {}
 
 youtube:
-  enabled: false                 # OFF at launch (plan §7; EN channel cadence)
+  # Nov 4 2026: ON, step (2) of the launch plan's YouTube path
+  # (docs/new_shows_plan_2026_09_22.md §7): after four weeks of RSS data AI
+  # Chips and MAG 7 join the EN channel at one Short each plus the
+  # long-form (seed tier B). The EN channel uploads ~13 a day against the
+  # 30/day cadence ceiling, so +4 a day leaves room. Register
+  # cohort-youtube-ai-chips-mag7-2026-11-04.
+  enabled: true
   channel: en
   category_id: 28
   shorts_start_mode: smart

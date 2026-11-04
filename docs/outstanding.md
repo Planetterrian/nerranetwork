@@ -26,6 +26,8 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 | Buttondown: send the "Nerra Daily email" test draft | open | 2026-11-04 | None has reached the inbox, so `BUTTONDOWN_WRAPPER_BYTES` is unknown. |
 | Stripe: set `STRIPE_SECRET_KEY` | open | 2026-11-04 | `api/member_metrics.json` (Nov 3 22:23 UTC): `stripe_configured: false`. |
 | YouTube Studio: banners, descriptions, RU/FR trailers, end screens (note the start date) | open | 2026-11-04 | RSS-podcast removal is the Nov 16 item. |
+| YouTube: podcast playlists for AI Chips and MAG 7 | open | 2026-11-04 | Both shows upload to the EN channel from their next run once the PR merges (`docs/reviews/youtube_audit_2026_11_04.md`). Run `python3 scripts/create_youtube_playlists.py <client_secrets.json> en`; it writes `podcast_playlist_id` into both YAMLs. |
+| YouTube: RU SpaceX and RU FF long-forms come back on tonight | decide | 2026-11-04 | `api/youtube_policy.json` (Nov 3): both compute tier A on the four-video read, night 1 of 2. Turn on `DUB_LONG_RELATIVE_ENABLED` (C17) if dub longs should stay off. |
 | Label the seven closed review PRs | open | 2026-11-04 | Only `rejected` writes `do_not_retry`. |
 | Decisions list and dated items (Nov 10, 16, 17, 18) | unchanged | 2026-11-04 | |
 | Podcast Index: add the six unindexed feeds at podcastindex.org/add | open | 2026-11-04 | `api/op3_stats.json` (Nov 3): `nerra_voices`, `offshore_north`, `omni_view_north_america` unresolved; plus `env_intel:fr`, `first_principles:fr`, `models_agents:fr`. |

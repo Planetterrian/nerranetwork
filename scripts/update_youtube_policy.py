@@ -254,6 +254,11 @@ SEED_TIERS: Dict[str, Dict[str, str]] = {
         # the dp-pod-youtube-shorts experiment asked for its own tier
         # line, and the dead-Shorts tier can only reach an enrolled slug).
         "dp_pod": "C",
+        # Nov 4 2026: launch plan §7 step (2). Seeded B (long-form + one
+        # Short) like Models & Agents; the velocity read and the weekly
+        # probes take over from there.
+        "ai_chips": "B",
+        "mag7": "B",
     },
     "ru": {
         "tesla": "C",

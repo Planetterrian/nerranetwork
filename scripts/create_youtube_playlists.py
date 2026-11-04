@@ -164,6 +164,33 @@ SHOWS: Dict[str, Dict[str, str]] = {
         ),
         "default_language": "ru",
     },
+    # Nov 4 2026: the first two launch-cohort shows on the EN channel.
+    "ai_chips": {
+        "channel": "en",
+        "title": "AI Chips & Data Centres Daily",
+        "description": (
+            "The silicon, the buildings and the power behind AI. Every day: "
+            "the chips and systems that shipped, the data centres that broke "
+            "ground or switched on, and the grid, cooling and supply-chain "
+            "constraints underneath them, with the numbers. AI-narrated, "
+            "every story sourced, from the Nerra Network.\n\n"
+            "https://nerranetwork.com/ai-chips.html"
+        ),
+        "default_language": "en",
+    },
+    "mag7": {
+        "channel": "en",
+        "title": "MAG 7 Daily",
+        "description": (
+            "Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla as "
+            "one daily desk: what they shipped, the research they published "
+            "and the rulings and deals that change what they can do. "
+            "Developments and numbers, never picks. Not financial advice. "
+            "AI-narrated, every story sourced, from the Nerra Network.\n\n"
+            "https://nerranetwork.com/mag7.html"
+        ),
+        "default_language": "en",
+    },
 }
 
 
