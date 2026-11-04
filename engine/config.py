@@ -122,6 +122,19 @@ class LLMConfig:
     # rescues genuinely-thin briefs without fighting the ceiling.
     min_digest_words: int = 0
     digest_expand_below_target: bool = False
+    # Nov 3 2026 (digest fact floor, one flagship first): when > 0 the
+    # expansion retry fires on FACTS, never on words — story-item
+    # sentences that carry a number, a name, a date or a quote the digest
+    # had not given before (engine.generator.digest_fact_count) — after
+    # the Oct 19 stories floor, and the retry is kept only when the fact
+    # count rose. ``min_digest_words`` stays as the recorded number. The
+    # word floor fired on 7/7 flagship episodes in the week to Nov 2 and
+    # the padding it bought was the best predictor of a Repetitive audit
+    # flag; a short, dense episode is the trade (Oct 10). Calibrate from
+    # the show's last 14 committed digests so an ordinary day clears it
+    # (Planetterrian: median 20, floor 18 fires on 2 of 14). 0 = the word
+    # test, byte-identical.
+    min_digest_facts: int = 0
     # Oct 14 2026 (slate readout): how many expansion passes a digest may
     # get. The pass is judged on PROSE (the ledger never counts) and a
     # second pass runs only when the first left the digest under
@@ -360,6 +373,15 @@ class AudioConfig:
     # hosts: her Grok voice leaves ~1 click a minute through the standard
     # pass. Patrick's voice measures clean and stays ``standard``.
     voice_declick: str = "standard"
+    # Nov 3 2026: the voice chain's dynamics stage by name
+    # (``engine.audio.VOICE_DYNAMICS``). Empty = the module default
+    # (``engine.audio.DEFAULT_VOICE_DYNAMICS``, the 4:1 ``legacy``
+    # compressor every show has shipped since May 2026); ``glue`` is the
+    # 2:1 soft-knee trial on Tesla and Top World first (⚠️ AUDIO). The
+    # network flips in engine/audio.py by one constant after the operator's
+    # listen, never here and never in _defaults.yaml ahead of it. An unknown
+    # name raises at load (``_audio_config``).
+    voice_dynamics: str = ""
     # Oct 13 2026 (engine/story_breaks.py): seconds of silence spliced into
     # the voice track where a new story starts, before the music mix. 0 =
     # off (the dataclass default — the exact pre-change audio); the network
@@ -1288,14 +1310,15 @@ class YouTubeConfig:
 
     # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
     # The closing seconds of every long-form video overlay an outro card
-    # composited from COMMITTED screenshots of nerranetwork.com (the
-    # show's page + the network home page — engine/promo_card.py), with
-    # the URL in Nerra cyan, a localized newsletter line, and a QR to
+    # rendered from DATA (engine/promo_card.py, Nov 3 2026): this show's
+    # cover in its brand colour, a wall of the other free shows' covers,
+    # the tagline from engine.brand, the URL in Nerra cyan and a QR to
     # the funnel-tagged show page (utm_content=outro). Shorts end cards
-    # additionally paste the network home page's show-grid band as a
-    # framed strip (``shorts_end_card_site_panel``). Render/metadata
-    # only — outside landmine #17. Best-effort everywhere: missing
-    # screenshots or a failed composite ship the legacy ending.
+    # additionally paste a strip of show covers (``shorts_end_card_site_panel``).
+    # The network value in _defaults.yaml is 3 s (the dataclass keeps the
+    # Aug 2026 6 s for a caller that bypasses the YAML). Render/metadata
+    # only — outside landmine #17. Best-effort everywhere: a failed
+    # composite ships the legacy ending.
     outro_card_enabled: bool = True
     outro_card_duration_seconds: float = 6.0
     shorts_end_card_site_panel: bool = True
@@ -1449,6 +1472,14 @@ class ShowConfig:
     # script (engine/host_experience.py, Oct 30 2026, Offshore North).
     # Opt-in; False = every other show byte-identical.
     host_experience_filter: bool = False
+    # Which shapes that filter removes (Nov 3 2026, Env Intel): ``frames``
+    # (default — Dan's flying / foiling / sailing frames and the "Dan's lens"
+    # label, the Offshore North path, byte-identical) or ``experience``
+    # (first-person professional-experience claims — "the mistake I see most
+    # often", "in my experience", "I've seen", "my clients" — the invented
+    # consulting career Env Intel's prompt used to ask for). Validated
+    # against ``engine.host_experience.HOST_EXPERIENCE_MODES`` at load.
+    host_experience_mode: str = "frames"
     # How far back the X account fetch looks. 24 (default) = the prompt
     # every show has always sent; the weekly shows read their whole week.
     x_lookback_hours: int = 24
@@ -1694,6 +1725,37 @@ def discover_show_slugs(shows_dir: Path | None = None) -> list[str]:
     return slugs
 
 
+def _host_experience_mode(value) -> str:
+    """``host_experience_mode`` as written, defaulting to ``frames``; an
+    unknown mode RAISES at load (the access.mode rule) rather than letting
+    run_show's non-fatal wrapper turn it into a filter that removes nothing."""
+    from engine.host_experience import HOST_EXPERIENCE_MODES
+
+    mode = str(value or "frames").strip().lower()
+    if mode not in HOST_EXPERIENCE_MODES:
+        raise ValueError(
+            f"host_experience_mode must be one of {HOST_EXPERIENCE_MODES}, got {value!r}")
+    return mode
+
+
+def _audio_config(raw) -> AudioConfig:
+    """The ``audio:`` block as an :class:`AudioConfig`; ``voice_dynamics``
+    (Nov 3 2026) must name an ``engine.audio.VOICE_DYNAMICS`` stage or be
+    empty, and an unknown name RAISES at load (the access.mode rule): a
+    misspelt trial value that quietly shipped the legacy chain would make
+    the trial's readout measure nothing."""
+    from engine.audio import VOICE_DYNAMICS
+
+    audio = _build_nested(AudioConfig, raw)
+    name = str(audio.voice_dynamics or "").strip().lower()
+    if name and name not in VOICE_DYNAMICS:
+        raise ValueError(
+            f"audio.voice_dynamics must be one of {sorted(VOICE_DYNAMICS)} or empty, "
+            f"got {audio.voice_dynamics!r}")
+    audio.voice_dynamics = name
+    return audio
+
+
 def load_config(yaml_path: str | Path) -> ShowConfig:
     """Load a show configuration from a YAML file.
 
@@ -1750,6 +1812,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         max_prompt_articles=int(data.get("max_prompt_articles", 0) or 0),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
         host_experience_filter=bool(data.get("host_experience_filter", False)),
+        host_experience_mode=_host_experience_mode(data.get("host_experience_mode")),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
         digest_lints_blocking=[str(x) for x in (data.get("digest_lints_blocking") or [])],
@@ -1778,7 +1841,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         max_grok_images_per_episode=int(data.get("max_grok_images_per_episode", 0) or 0),
         llm=_build_nested(LLMConfig, data.get("llm")),
         tts=_build_nested(TTSConfig, data.get("tts")),
-        audio=_build_nested(AudioConfig, data.get("audio")),
+        audio=_audio_config(data.get("audio")),
         publishing=_build_nested(PublishingConfig, data.get("publishing")),
         episode=_build_nested(EpisodeConfig, data.get("episode")),
         storage=_build_nested(StorageConfig, data.get("storage")),

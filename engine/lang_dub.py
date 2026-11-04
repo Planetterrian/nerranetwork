@@ -38,6 +38,7 @@ from __future__ import annotations
 import logging
 import re
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -472,6 +473,9 @@ def publish_lang_dub(
                     logger.warning("lang_dub[%s]: outro card failed (%s)",
                                    lang.code, exc)
                     outro_card = None
+            # Nov 3 2026: the render is timed (RU parity) and the number
+            # rides the index row — committed data for the dub readout.
+            _long_render_started = time.monotonic()
             try:
                 build_long_form_video(
                     audio, cover, long_mp4,
@@ -486,6 +490,10 @@ def publish_lang_dub(
                              lang.code, episode_num, exc)
                 result["status"] = "render_failed"
                 return result
+            result["long_form_render_duration_s"] = round(
+                time.monotonic() - _long_render_started, 1)
+            logger.info("lang_dub[%s]: long-form render took %.0fs",
+                        lang.code, result["long_form_render_duration_s"])
             try:
                 up = upload_video(
                     long_mp4, credentials=creds,
@@ -506,7 +514,9 @@ def publish_lang_dub(
                     video_id=up.video_id, show_slug=config.slug,
                     episode=episode_num, kind="long", title=title,
                     hook=title, published=date_str, watch_url=long_url,
-                    channel=lang.channel, index_path=idx_path)
+                    channel=lang.channel,
+                    render_duration_s=result["long_form_render_duration_s"],
+                    index_path=idx_path)
                 if playlist:
                     try:
                         add_video_to_playlist(credentials=creds,

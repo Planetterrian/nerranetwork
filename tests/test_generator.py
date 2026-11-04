@@ -469,10 +469,26 @@ class TestPodcastModelOverride:
     Empty default must be byte-identical to the old behaviour.
     """
 
-    def test_empty_default_uses_llm_model(self):
-        from engine.config import load_config
+    def test_empty_default_uses_llm_model(self, tmp_path):
+        """A show YAML whose llm block carries no ``podcast_model`` loads the
+        empty default. Nov 3 2026: this used to read a real show's YAML,
+        which is a state a show leaves (Env Intel joined the script arm that
+        day), so the fixture is a copy of one with the key removed."""
+        import shutil
+
+        import yaml
+
+        from engine.config import LLMConfig, load_config
+        assert LLMConfig().podcast_model == ""
         root = Path(__file__).resolve().parent.parent
-        cfg = load_config(root / "shows" / "env_intel.yaml")
+        shows = tmp_path / "shows"
+        shows.mkdir()
+        shutil.copy(root / "shows" / "_defaults.yaml", shows / "_defaults.yaml")
+        data = yaml.safe_load((root / "shows" / "env_intel.yaml").read_text(encoding="utf-8"))
+        (data.get("llm") or {}).pop("podcast_model", None)
+        (shows / "env_intel.yaml").write_text(yaml.safe_dump(data, allow_unicode=True),
+                                              encoding="utf-8")
+        cfg = load_config(shows / "env_intel.yaml")
         assert cfg.llm.podcast_model == ""
 
     def test_script_stage_honors_the_override(self, monkeypatch):

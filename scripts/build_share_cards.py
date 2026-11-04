@@ -32,7 +32,8 @@ sys.path.insert(0, str(ROOT))
 
 from engine import share_cards as S  # noqa: E402
 from engine.brand import (  # noqa: E402
-    FLAGSHIP_SHOW_SLUGS, NETWORK_PROMISE_SHORT, NETWORK_SUBJECTS, NETWORK_TAGLINE, network_promise,
+    FLAGSHIP_SHOW_SLUGS, NETWORK_PROMISE_SHORT, NETWORK_SUBJECTS, NETWORK_TAGLINE,
+    NETWORK_TAGLINE_FR, NETWORK_TAGLINE_RU, network_promise,
 )
 
 logger = logging.getLogger("build_share_cards")
@@ -130,7 +131,36 @@ def _page_cards(show_count: int) -> dict:
         "contact": ("Contact", "Get in touch",
                     "Press, partnerships, corrections, privacy and general feedback.",
                     (), ""),
+        # The language front pages (Nov 3 2026): every dub Short without a
+        # lander of its own now sends its viewer here (engine.funnel
+        # destination_for), and the hubs shared with the network card. Title
+        # and line in the language — engine.brand owns the taglines; the
+        # covers follow the channel's own view order (FF first on both).
+        "ru": ("По-русски", NETWORK_TAGLINE_RU,
+               "Два подкаста на русском и русская озвучка SpaceX Daily, "
+               "Tesla Shorts Time и Fascinating Frontiers — тот же выпуск, "
+               "тот же день. Бесплатно.",
+               ("fascinating_frontiers", "spacex", "tesla", "finansy_prosto"), ""),
+        "fr": ("En français", NETWORK_TAGLINE_FR,
+               "Les mêmes épisodes que l'original anglais, traduits et lus en "
+               "français le jour même : l'espace, Tesla, l'IA, les marchés. "
+               "Gratuit.",
+               ("fascinating_frontiers", "tesla", "spacex", "models_agents"), ""),
     }
+
+
+# Alt text written by hand in the page's language (the generic
+# "<kicker> — <title>. <sub>" line is English furniture around whatever the
+# card says). Keyed like _page_cards. The tagline inside it is engine.brand's
+# constant, never typed here (the one-owner rule the English card follows).
+_PAGE_CARD_ALT = {
+    "ru": (f"Nerra Network по-русски: {NETWORK_TAGLINE_RU} Два подкаста на "
+           "русском и русская озвучка SpaceX Daily, Tesla Shorts Time и "
+           "Fascinating Frontiers. Бесплатно."),
+    "fr": (f"Nerra Network en français : {NETWORK_TAGLINE_FR} Les mêmes "
+           "épisodes que l'original anglais, traduits et lus en français le "
+           "jour même. Gratuit."),
+}
 
 
 def _registry() -> dict:
@@ -235,7 +265,8 @@ def build_committed(check: bool = False) -> list[str]:
         emit(S.render_page_card(kicker=kicker, title=title, subtitle=sub,
                                 covers=_covers(shows, slugs), accent_color=accent,
                                 domain_path=path),
-             S.page_card_path(key), f"{kicker} — {title}. {sub}")
+             S.page_card_path(key),
+             _PAGE_CARD_ALT.get(key) or f"{kicker} — {title}. {sub}")
 
     for hub in H.TOPIC_HUBS:
         members = H.hub_shows(hub, all_shows)

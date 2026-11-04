@@ -1,0 +1,44 @@
+# tests/fixtures/defaults_audio_snapshot.yaml — the audio: and tts: sections of
+# shows/_defaults.yaml as last listened to (Nov 3 2026, listen before the slate).
+# tests/test_listen_before_slate_2026_11_03.py fails when a value here differs
+# from _defaults.yaml. Regenerate with
+#     python tests/test_listen_before_slate_2026_11_03.py --write
+# and add the docs/listens.md line that command prints. Never edit by hand.
+audio:
+  fade_duration: 30.0
+  fade_volume: 0.3
+  intro_duration: 3.0
+  intro_volume: 0.5
+  outro_crossfade: 0.0
+  outro_duration: 30.0
+  outro_fade_out_duration: 10.0
+  outro_volume: 0.5
+  overlap_duration: 15.0
+  overlap_volume: 0.4
+  story_break_cue: false
+  story_break_seconds: 1.0
+  transition_sting: assets/music/transition_sting.mp3
+  voice_denoise: true
+  voice_intro_delay: 0.0
+tts:
+  apply_text_normalization: 'on'
+  language_code: en
+  max_chars: 14000
+  model: eleven_flash_v2_5
+  provider: grok
+  similarity_boost: 0.75
+  speech_wrap_close: </fast>
+  speech_wrap_open: <fast>
+  spoken_text_gate: enforce
+  spoken_text_gate_max_unmatched_run: 40
+  spoken_text_gate_min_opening_match: 0.5
+  spoken_text_gate_retries: 1
+  stability: 0.5
+  story_tag_close: ''
+  story_tag_open: ''
+  story_tags: false
+  style: 0.0
+  tag_leak_hard_block: false
+  use_section_tts: false
+  use_speaker_boost: true
+  voice_id: kdif6sqjcyiq

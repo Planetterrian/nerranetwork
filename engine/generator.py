@@ -1774,6 +1774,26 @@ def digest_prose_word_count(text: str) -> int:
     return len(body.split())
 
 
+def digest_fact_count(text: str) -> int:
+    """Story-item sentences of *text* that carry a fact of their own — a
+    number, a name, a date or a quote the digest had not given before
+    (``engine.script_audit.digest_fact_profile`` owns the test; the hook,
+    What You Need to Know, the deep dive and the Source lines never
+    count). The digest FACT floor (``llm.min_digest_facts``) is measured
+    with this.
+
+    Nov 3 2026: the word floor was what the expansion retry produced, not
+    what the day gave — it fired on 7/7 episodes of every flagship in the
+    week to Nov 2, the committed digests landed at their floors, and the
+    padding it added (the digest's own fact-free share: Planetterrian 62%
+    against 10-17% on the cohort) was the best predictor of a Repetitive
+    audit flag (AUC 0.72). A fact count cannot be reached by restating.
+    """
+    from engine.script_audit import digest_fact_profile
+    facts, _total, _fact_free = digest_fact_profile(text or "")
+    return facts
+
+
 def digest_section_word_counts(text: str) -> List[Tuple[str, int]]:
     """``(header, prose words)`` for each ``##``/``###`` section of a digest.
 
@@ -1844,6 +1864,7 @@ def _build_digest_expansion_retry_prompt(
     narrative: bool = False,
     sections: Optional[List[Tuple[str, int]]] = None,
     item_shortfalls: Optional[List[Tuple[str, int, int]]] = None,
+    fact_floor: Optional[Tuple[int, int]] = None,
 ) -> str:
     """Build the one-shot expansion-retry prompt for a too-short digest/brief.
 
@@ -1856,6 +1877,11 @@ def _build_digest_expansion_retry_prompt(
     objection — rather than asking for more stories. Opt-in via
     ``llm.digest_expand_below_target``; mirrors
     ``_build_expansion_retry_prompt`` for the podcast stage.
+
+    ``fact_floor=(count, floor)`` (Nov 3 2026, ``llm.min_digest_facts``):
+    the retry asks for FACT-BEARING sentences from material not yet used,
+    never for length — the deep dive is not the length lever in this
+    branch — and the Oct 19 item-floor paragraph ranks above it.
     """
     if narrative:
         return (
@@ -1885,8 +1911,9 @@ def _build_digest_expansion_retry_prompt(
             + "Where the format above gives a section its own length, meet it; "
             "lengthen the sections furthest below their own spec first.\n"
         )
+    item_lines = ""
     if item_shortfalls:
-        section_lines += (
+        item_lines = (
             "ITEM FLOOR: these story sections carry fewer stories than the "
             "format requires —\n"
             + "".join(f"- {name}: {n} items, the floor is {floor}\n"
@@ -1895,9 +1922,57 @@ def _build_digest_expansion_retry_prompt(
             "above (each as its own item with a headline, its facts and its "
             "Source: line), choosing the stories not yet covered; never reach "
             "it by splitting or re-telling a story already in the draft, and "
-            "never by lengthening the items you have. The depth rule below "
-            "ranks second to this floor.\n"
+            "never by lengthening the items you have. "
+            + ("The fact floor below ranks second to this floor.\n" if fact_floor
+               else "The depth rule below ranks second to this floor.\n")
         )
+    depth_facts = (
+        "- Depth follows facts: develop each item to every fact its source "
+        "carries and no further — never thin high-level summaries, never "
+        "filler. A story whose material is a title and one sentence is "
+        "never dropped: where the format has an Also Today section it moves "
+        "there as one sentence with its Source: line, otherwise it stays at "
+        "two sentences. Do NOT invent facts to lengthen it.\n"
+        "- For every kept item, extract EVERY concrete fact the source text "
+        "actually provides (numbers, names, quotes, dates, mechanisms). "
+        "High-level restatement without those facts is a failure.\n"
+    )
+    depth_memory = (
+        "- If a narrative-memory / tracked-program block was provided, weave "
+        "at most ONE continuity sentence in the whole digest for items that "
+        "touch those programs (prefer the date / 'yesterday'; never write "
+        "'EpN') — continuity is not padding.\n\n"
+    )
+    if fact_floor:
+        facts, floor = fact_floor
+        return (
+            f"\n\n---\n"
+            f"{item_lines}"
+            f"FACT FLOOR: the digest you just wrote carries {facts} story "
+            f"sentences with a fact of their own — a number, a name, a date "
+            f"or a quote the digest had not given before — and the floor is "
+            f"{floor}. Length is not the measure. Rewrite it so it carries at "
+            f"least {floor} such sentences, by adding the stories in the "
+            f"material supplied above that the draft leaves out, and the "
+            f"facts in the articles already used that the draft leaves out. "
+            f"Every sentence you add carries a figure, a name, a date or a "
+            f"quote from that material; a sentence without one is never "
+            f"added, and no sentence already in the draft is restated or "
+            f"repeated verbatim. Keep the same structure and headline set "
+            f"(the claims ledger does not count).\n"
+            f"DEPTH RULES (news digests):\n"
+            f"{depth_facts}"
+            f"- Where the digest has a deep-dive / explainer / first-principles / "
+            f"closer-look section, it is not the length lever: it grows only by "
+            f"the figures, dates, names and quotes the material supplied above "
+            f"carries (the fetched article text, research abstracts, "
+            f"curriculum sources) — never by explanation in general terms, "
+            f"never by significance sentences ('this matters because…'), "
+            f"never from memory.\n"
+            f"{depth_memory}"
+            f"Here is your digest to make denser:\n\n{draft}"
+        )
+    section_lines += item_lines
     return (
         f"\n\n---\n"
         f"The digest you just wrote is only {word_count} words of prose — it "
@@ -1908,15 +1983,7 @@ def _build_digest_expansion_retry_prompt(
         f"Keep the same structure and headline set.\n"
         f"{section_lines}"
         f"DEPTH RULES (news digests):\n"
-        f"- Depth follows facts: develop each item to every fact its source "
-        f"carries and no further — never thin high-level summaries, never "
-        f"filler. A story whose material is a title and one sentence is "
-        f"never dropped: where the format has an Also Today section it moves "
-        f"there as one sentence with its Source: line, otherwise it stays at "
-        f"two sentences. Do NOT invent facts to lengthen it.\n"
-        f"- For every kept item, extract EVERY concrete fact the source text "
-        f"actually provides (numbers, names, quotes, dates, mechanisms). "
-        f"High-level restatement without those facts is a failure.\n"
+        f"{depth_facts}"
         f"- Where the digest has a deep-dive / explainer / first-principles / "
         f"closer-look section, LENGTHEN THAT SECTION first, from the material "
         f"supplied above (the fetched article text, research abstracts, "
@@ -1924,10 +1991,7 @@ def _build_digest_expansion_retry_prompt(
         f"but every figure, date, name and quote it adds comes from that "
         f"material — never from memory. Do not pad news items with "
         f"significance sentences ('this matters because…').\n"
-        f"- If a narrative-memory / tracked-program block was provided, weave "
-        f"at most ONE continuity sentence in the whole digest for items that "
-        f"touch those programs (prefer the date / 'yesterday'; never write "
-        f"'EpN') — continuity is not padding.\n\n"
+        f"{depth_memory}"
         f"Here is your short digest to expand:\n\n{draft}"
     )
 
@@ -2285,6 +2349,22 @@ _COMBINED_TAIL = (
 # engine.claims uses for the ledger. The stash also carries the digest it
 # was written from, so a later regeneration cannot ship a stale script.
 _STASHED_COMBINED: Optional[Dict[str, str]] = None
+
+#: The last digest call's expansion-retry outcome (Nov 3 2026), reset at the
+#: top of every call's expansion block; ``None`` before any call.
+_LAST_DIGEST_EXPANSION: Optional[Dict[str, object]] = None
+
+
+def last_digest_expansion() -> Optional[Dict[str, object]]:
+    """``{"fired", "attempts", "floor", "words_before", "words_after",
+    "improved", "floor_facts", "facts_before", "facts_after"}`` for the
+    most recent :func:`generate_digest` call, or ``None``. run_show records
+    it as ``digest_expansion_*`` metrics so the readout of any floor or
+    model change has the number the logs held. The three fact keys are
+    ``None`` unless the show runs the fact floor (``llm.min_digest_facts``);
+    ``facts_after`` is the retry's count whether or not it was kept, so a
+    discarded retry is read as "did not rise", never as silence."""
+    return dict(_LAST_DIGEST_EXPANSION) if _LAST_DIGEST_EXPANSION else None
 
 
 def combined_generation_enabled(config: Any, template_vars: Optional[Dict[str, Any]] = None) -> bool:
@@ -2910,29 +2990,81 @@ def generate_digest(
         # retry grows never counts as growth), and a show may allow a
         # second pass while the digest sits under 90% of its floor.
         _attempts = max(1, int(getattr(config.llm, "digest_expansion_attempts", 1) or 1))
+        # Nov 3 2026: the expansion's outcome is a METRIC. It fired on 7/7
+        # episodes of every flagship in the week to Nov 2 and 0/7 on the
+        # cohort, was logged and costed, and nothing recorded whether it
+        # fired or what it changed (``digest_expansion_*`` via
+        # :func:`last_digest_expansion`, read by run_show).
+        # Nov 3 2026 (digest fact floor, Planetterrian first): with
+        # ``llm.min_digest_facts`` set the retry fires on FACTS, never on
+        # words — the Oct 19 stories floor (digest_item_shortfalls) first,
+        # then story sentences carrying a number, a name, a date or a quote
+        # the digest had not given (digest_fact_count) — and the result is
+        # kept only when the fact count rose. The word floor had become what
+        # the retry produced, not what the day gave (7/7 flagship episodes
+        # in the week to Nov 2; the padding it bought was the best predictor
+        # of a Repetitive audit flag). 0 = the word test, byte-identical.
+        min_digest_facts = int(getattr(config.llm, "min_digest_facts", 0) or 0)
+        _narrative = bool(getattr(config, "narrative_mode", False))
+        # A narrative brief has no story items to count and its retry prompt
+        # asks for depth in words; the fact floor is a news-digest lever.
+        _fact_floor = min_digest_facts > 0 and not _narrative
+        global _LAST_DIGEST_EXPANSION
+        _LAST_DIGEST_EXPANSION = {
+            "fired": False, "attempts": 0, "floor": int(min_digest_words),
+            "words_before": digest_prose_word_count(text), "words_after": None,
+            "improved": False,
+            "floor_facts": min_digest_facts if _fact_floor else None,
+            "facts_before": digest_fact_count(text) if _fact_floor else None,
+            "facts_after": None,
+        }
         for _attempt in range(1, _attempts + 1):
             word_count = digest_prose_word_count(text)
-            if word_count >= min_digest_words:
-                break
-            if _attempt > 1 and word_count >= min_digest_words * DIGEST_EXPANSION_SECOND_PASS_SHARE:
+            fact_count = digest_fact_count(text) if _fact_floor else 0
+            if _fact_floor:
+                _shortfalls = digest_item_shortfalls(text, getattr(config, "slug", ""))
+                if not _shortfalls and fact_count >= min_digest_facts:
+                    break
+                if (_attempt > 1 and not _shortfalls
+                        and fact_count >= min_digest_facts * DIGEST_EXPANSION_SECOND_PASS_SHARE):
+                    logger.info(
+                        "Digest for '%s' carries %d fact sentences after expansion (>= %d%% of %d) — "
+                        "no second pass", config.name, fact_count,
+                        int(DIGEST_EXPANSION_SECOND_PASS_SHARE * 100), min_digest_facts,
+                    )
+                    break
                 logger.info(
-                    "Digest for '%s' is %d words after expansion (>= %d%% of %d) — "
-                    "no second pass", config.name, word_count,
-                    int(DIGEST_EXPANSION_SECOND_PASS_SHARE * 100), min_digest_words,
+                    "Digest for '%s' carries %d fact sentences (floor %d; %d story section(s) "
+                    "under their item floor) — firing expansion retry %d/%d on facts",
+                    config.name, fact_count, min_digest_facts, len(_shortfalls),
+                    _attempt, _attempts,
                 )
-                break
-            logger.info(
-                "Digest for '%s' is %d words (< %d target) — firing expansion "
-                "retry %d/%d", config.name, word_count, min_digest_words,
-                _attempt, _attempts,
-            )
+            else:
+                if word_count >= min_digest_words:
+                    break
+                if _attempt > 1 and word_count >= min_digest_words * DIGEST_EXPANSION_SECOND_PASS_SHARE:
+                    logger.info(
+                        "Digest for '%s' is %d words after expansion (>= %d%% of %d) — "
+                        "no second pass", config.name, word_count,
+                        int(DIGEST_EXPANSION_SECOND_PASS_SHARE * 100), min_digest_words,
+                    )
+                    break
+                logger.info(
+                    "Digest for '%s' is %d words (< %d target) — firing expansion "
+                    "retry %d/%d", config.name, word_count, min_digest_words,
+                    _attempt, _attempts,
+                )
+                _shortfalls = digest_item_shortfalls(text, getattr(config, "slug", ""))
+            _LAST_DIGEST_EXPANSION["fired"] = True
+            _LAST_DIGEST_EXPANSION["attempts"] = _attempt
             expansion_prompt = prompt + _build_digest_expansion_retry_prompt(
                 word_count,
                 min_digest_words,
                 text,
-                narrative=bool(getattr(config, "narrative_mode", False)),
+                narrative=_narrative,
                 sections=digest_section_word_counts(text),
-                item_shortfalls=digest_item_shortfalls(text, getattr(config, "slug", "")),
+                item_shortfalls=_shortfalls,
+                fact_floor=(fact_count, min_digest_facts) if _fact_floor else None,
             )
             try:
                 expanded, meta_exp = _digest_call(
@@ -2967,12 +3099,23 @@ def generate_digest(
                 if _si_enabled:
                     expanded = _carry_claims_ledger(text, expanded, config.name)
                 expanded_wc = digest_prose_word_count(expanded)
-                if expanded_wc > word_count:
+                if _fact_floor:
+                    # Judged on FACTS: a retry that grew by restating is
+                    # discarded however many words it added.
+                    expanded_fc = digest_fact_count(expanded)
+                    _LAST_DIGEST_EXPANSION["facts_after"] = expanded_fc
+                    _improved = expanded_fc > fact_count
+                else:
+                    _improved = expanded_wc > word_count
+                if _improved:
                     logger.info(
-                        "Digest expansion retry improved '%s' (%d -> %d prose words)",
+                        "Digest expansion retry improved '%s' (%d -> %d prose words%s)",
                         config.name, word_count, expanded_wc,
+                        f", {fact_count} -> {expanded_fc} fact sentences" if _fact_floor else "",
                     )
                     text = expanded
+                    _LAST_DIGEST_EXPANSION["words_after"] = expanded_wc
+                    _LAST_DIGEST_EXPANSION["improved"] = True
                     if tracker and "usage" in meta_exp:
                         try:
                             from engine.tracking import record_llm_usage
@@ -2986,6 +3129,13 @@ def generate_digest(
             )
                         except Exception as e:
                             logger.warning("Failed to record expansion LLM usage: %s", e)
+                elif _fact_floor:
+                    logger.warning(
+                        "Digest expansion retry for '%s' added no fact "
+                        "(%d -> %d fact sentences, %d -> %d prose words) — keeping original",
+                        config.name, fact_count, expanded_fc, word_count, expanded_wc,
+                    )
+                    break
                 else:
                     logger.warning(
                         "Digest expansion retry for '%s' did not lengthen "

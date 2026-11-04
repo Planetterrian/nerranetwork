@@ -46,7 +46,8 @@ YEAR_RE = re.compile(r"\b20\d\d\b")
 # names in a prompt means a dated story has crept back.
 PAST_GUESTS = ("Piper", "Cory", "Chad Law", "Jason Fishman", "Thor", "Roddy",
                "Scott Pulcini", "Sameer", "Viktor", "Jon Cheney", "Meridan",
-               "Dan Perra", "Capobianco", "Vincent", "Wolfberg", "Zerner")
+               "Dan Perra", "Capobianco", "Vincent", "Wolfberg", "Zerner",
+               "Kamins")
 
 
 def _flat(text: str) -> str:

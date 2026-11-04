@@ -197,9 +197,16 @@ class TestTooShort:
         monkeypatch.setattr(pi, "sb_update", lambda t, q, patch: updates.append((t, q, patch)))
         monkeypatch.setattr(pi, "notify_operator", lambda text, critical=False: pings.append(text))
         monkeypatch.setattr(pi, "send_email", lambda *a, **k: pytest.fail("the guest must not be emailed"))
+        # Nov 4 2026: the room ran, so its minutes are recorded even when it
+        # is too short to cut — into a recorder here, never the repository's
+        # digests/ (a fixture credit file there is fake cost data).
+        credits = []
+        monkeypatch.setattr(pi, "write_room_credit",
+                            lambda run, interview, show: credits.append(run["id"]))
         pi.handle_too_short({"id": "r1", "duration_sec": 73}, {"id": "iv1", "show": "nerra_voices"},
                             {"name": "Elliot Justin", "email": "e@x.test", "show": "nerra_voices"})
         assert updates == [("interviews", "id=eq.iv1", {"status": "missed"})]
+        assert credits == ["r1"]
         assert pings and "73 seconds" in pings[0] and "nothing was sent to them" in pings[0]
 
     def test_it_runs_before_any_recording_is_fetched(self):

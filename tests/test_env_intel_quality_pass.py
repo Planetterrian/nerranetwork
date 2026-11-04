@@ -231,10 +231,16 @@ class TestDeepDiveOpenerNotTic:
         prompt = _DIGEST_PROMPT.read_text(encoding="utf-8")
         assert "You arrive at a former gas station" not in prompt
 
-    def test_digest_prompt_requires_varied_deep_dive_opener(self):
+    def test_digest_prompt_asks_for_no_scenario_at_all(self):
+        # Nov 3 2026: the deep dive is built from a document the run READ;
+        # the invented "real-world scenario" opener (and its rotation
+        # instruction, which named the "You arrive at a" tic) went out with
+        # the invented experience it framed. tests/test_env_intel_sources_
+        # 2026_11_03.py pins the new shape.
         prompt = _DIGEST_PROMPT.read_text(encoding="utf-8").lower()
-        assert "you arrive at a" in prompt  # named explicitly as the tic to avoid
-        assert "rotate the entry point" in prompt
+        assert "you arrive at a" not in prompt
+        assert "rotate the entry point" not in prompt
+        assert "leave this section out" in prompt
 
     def test_podcast_prompt_bans_repetitive_deep_dive_lead_in(self):
         prompt = _PODCAST_PROMPT.read_text(encoding="utf-8").lower()

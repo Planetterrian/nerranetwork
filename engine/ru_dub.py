@@ -27,6 +27,7 @@ import logging
 import re
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -728,6 +729,10 @@ def publish_ru_dub(
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("ru_dub: outro card failed (%s)", exc)
                     outro_card = None
+            # Nov 3 2026: the render is timed, like run_show's, and the
+            # number rides the index row — the dub paths have no metrics
+            # file, and the Oct 30 readout had to take it from the runs API.
+            _long_render_started = time.monotonic()
             try:
                 build_long_form_video(
                     audio, cover, long_mp4,
@@ -741,6 +746,10 @@ def publish_ru_dub(
                              episode_num, exc)
                 result["status"] = "render_failed"
                 return result
+            result["long_form_render_duration_s"] = round(
+                time.monotonic() - _long_render_started, 1)
+            logger.info("ru_dub: long-form render took %.0fs",
+                        result["long_form_render_duration_s"])
 
             try:
                 up = upload_video(
@@ -762,6 +771,7 @@ def publish_ru_dub(
                     video_id=up.video_id, show_slug=config.slug, episode=episode_num,
                     kind="long", title=ru_title, hook=ru_title, published=date_str,
                     watch_url=long_url, channel="ru",
+                    render_duration_s=result["long_form_render_duration_s"],
                     index_path=PROJECT_ROOT / config.episode.output_dir
                     / "youtube_videos.ru.json")
                 pl = (getattr(yt, "ru_podcast_playlist_id", None) or "").strip()

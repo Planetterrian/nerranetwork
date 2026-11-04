@@ -58,4 +58,4 @@ Conventional lines treat cell manufacturing as a separate business from pack int
 
 Rivals that buy cells from outside suppliers face a different math. They can adopt an improved cell only after their supplier qualifies it, which inserts both time and a margin layer between the chemistry advance and the finished product. Tesla’s decision to keep cell production inside its own facilities removes that delay but also keeps the yield risk on its own balance sheet until the process stabilizes. The trade-off is visible in quarterly reports whenever a new cell generation moves from pilot to volume production. Investors therefore watch both the energy-density number and the utilization rate of the cell lines, because the second figure often determines whether the chemistry gain actually reaches the customer.
 ---
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

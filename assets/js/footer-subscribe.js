@@ -38,6 +38,8 @@
     whatsapp: 'src-whatsapp',
     telegram: 'src-telegram',
     email_share: 'src-email-share',
+    // Nov 3 2026 — a paid click, tagged by engine.funnel.ad_link.
+    google_ads: 'src-google-ads',
   };
 
   function queryParams() {
@@ -72,7 +74,7 @@
   function labels(form) {
     return {
       loading: form.getAttribute('data-label-loading') || 'Subscribing…',
-      done: form.getAttribute('data-label-done') || 'Check your email ✓',
+      done: form.getAttribute('data-label-done') || 'You\u2019re in \u2014 Nerra Daily arrives at 7 AM ET \u2713',
       idle: form.getAttribute('data-label-idle') || 'Subscribe',
       error: form.getAttribute('data-label-error') || 'Something went wrong — try again',
       needTags: form.getAttribute('data-label-need-tags') || 'Please pick at least one show to subscribe to.',

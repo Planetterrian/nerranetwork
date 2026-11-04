@@ -103,6 +103,19 @@ A growth number that flatters is worse than none, so:
   report shows how much of the picture it is missing rather than
   implying it sees everything.
 
+### The site is not a funnel stage for video (Nov 3 2026)
+
+The Short's job is written once (`engine/release_schedule.py`,
+`docs/youtube_feedback_loop.md`, here). **EN**: the hook Short is the
+trailer for a subscriber-fed long-form channel, scored on
+`short_subs_per_1k_views_14d_en` and `long_d3_median_en_7d`, never on site
+sessions. **RU / FR**: the Shorts feed is the product, scored on
+`short_reach_d3_median_<ch>_7d` (`_ru_`, `_fr_`); the only ask is the
+YouTube subscribe. Video → site sessions stay in this report as a
+measured stage (the link still carries its campaign id), but no Short is
+re-aimed to move them, and a Short experiment carries its channel's job
+metric or it is not an experiment.
+
 ---
 
 ## 3. The RU SpaceX pilot
@@ -120,17 +133,26 @@ every description POINTS AT cannot drift apart (the slug/filename
 landmine applied to the funnel; guarded by a test that resolves the
 configured URL to a file on disk).
 
-**One reason to give an email.** «Хроника SpaceX» — one Russian letter
-every Sunday: the week's episodes, the next launch window, links to the
-audio. Nothing else on the page asks for anything; the site footer's
-fifteen-English-show picker is suppressed via `hide_footer_subscribe`
-(default false, so no other page changed).
+**One reason to give an email** *(retired 2026-11-03)*. «Хроника SpaceX» —
+one Russian letter every Sunday: the week's episodes, the next launch
+window, links to the audio. Three months on, the form had captured nobody
+(`api/funnel.json pilots`: 5,966 views → 6 click sessions, captures null;
+the `ru-spacex` tag never had a subscriber), while 89% of @NerraRU's views
+came from the Shorts feed. The ask is now the one that audience can act on:
+**Subscribe to @NerraRU** (`engine.video_metadata.channel_subscribe_url`)
+and **add the Russian RSS to a podcast app**, plus one internal (no UTM)
+link to `ru/index.html`. No form, no capture script, no conversion event;
+the page is measured by engaged sessions. The site footer's
+fifteen-English-show picker is still suppressed via `hide_footer_subscribe`
+(default false, so no other page changed). Register:
+`ru-spacex-pilot-2026-07-30` (MISS).
 
-**The letter is actually sent.** `scripts/send_ru_spacex_weekly.py` +
-`.github/workflows/ru-spacex-weekly.yml` (Sundays 15:00 UTC, after the
-episode and its RU translation). Composed entirely from artifacts that
-already exist — `translations.ru` in the summaries file and
-`api/spacex_launches.json`. Guards, in firing order: no API key -> clean
+**The letter was actually sent** *(retired 2026-11-03)*.
+`scripts/send_ru_spacex_weekly.py` stays for one release (module docstring
+says so; `TestWeeklyLetter` pins its rules until both go);
+`.github/workflows/ru-spacex-weekly.yml` is deleted. It composed entirely
+from artifacts that already exist — `translations.ru` in the summaries file
+and `api/spacex_launches.json`. Guards, in firing order: no API key -> clean
 no-op; no Russian episodes in the window -> **no send** (an empty issue
 spends the only attention this pilot has); already sent this ISO week ->
 refused.
@@ -215,6 +237,83 @@ signal for a Short):
 
 ---
 
+## 5. The site's number becomes a number of readers (Nov 3 2026)
+
+`api/ga4_stats.json` read 999 sessions in 28 days, 898 of them Direct; 492
+landed on `/personal-interest.html` at a 98.8% bounce, one session per
+user, 0.6-9.4 s a visit, in eight spikes (288 on Oct 15). The privacy
+policy says "We run Google ads" and the page carries the Ads conversion
+tag, but the ads' final URLs carried no campaign id, and Consent Mode
+denies `ad_storage` by default — so every paid click arrived as Direct,
+while `utm_*` survives whatever the consent state. Every site decision
+since Sep 25 was read through that denominator.
+
+**Paid links go through the one owner.** `engine.funnel` gained
+`KIND_AD = "ad"`, `MEDIUM_CPC = "cpc"` and `SOURCE_GOOGLE_ADS =
+"google_ads"`. An ad belongs to no show, and `campaign_id` coerces a
+missing slug to `unknown`, so the shape is fixed:
+
+```
+nn-<product>-en-ad-ep<NNN>[-<ad_group>]
+  product   one of AD_PRODUCTS: personal | network   (what the ad sells)
+  ep<NNN>   the Ads account's campaign NUMBER
+  ad_group  the ad-group slug, normalised like every variant
+```
+
+`ad_link("personal-interest.html", 1, "personal-tips")` builds the final
+URL; `parse_campaign_id` is unchanged and stays the exact inverse. Every
+link the operator places by hand gets its URL from the CLI:
+
+```
+python scripts/funnel_link.py ad   --campaign 1 --variant personal-tips --to personal-interest.html
+python scripts/funnel_link.py post --show spacex --episode 150 --source x
+python scripts/funnel_link.py parse "<any url>"      # what the funnel would read
+```
+
+The Worker allow-list (`workers/gallery/src/handlers.ts` `SOURCE_TAGS`)
+and the client map (`assets/js/footer-subscribe.js` `UTM_SOURCE_TAGS`)
+carry `src-google-ads`, so a signup that arrived from an ad is
+attributable. **Operator:** set each Google Ads final URL to the CLI's
+URL (`wrangler deploy` in `workers/gallery` for the tag); read the
+campaign's placements for the spike days.
+
+**Landing anomalies are excluded and printed.** `fetch_ga4_stats.py`
+runs a second landing report (landing page x channel x device x country;
+sessions, engagedSessions, averageSessionDuration; limit 300) ->
+`landing_breakdown`, and `landing_anomalies` names the pages with >= 50
+sessions and a bounce >= 95% or a mean engagement under 3 s, each row
+carrying its mix. `totals.sessions_excluding_anomalies` and
+`totals.anomaly_exclusion` ("492 sessions on 1 anomalous landing
+excluded") sit beside the raw total. `build_funnel.py`'s visit stage
+carries the same in `stages.visit.site`, flags an anomalous funnel
+destination on its row and keeps it out of `totals.sessions`
+(`sessions_raw` kept), and the dashboard's site headline leads with the
+readers' count, the raw count beside it, the sentence and the anomaly
+rows under it. `None` wherever the breakdown was not read — "999 raw,
+anomalies unread" is never printed as 999 readers. The exclusion is a
+judgement rule: it is never applied silently and never hidden.
+
+**The email has a funnel row.** `stages.click.by_kind` counts sessions
+and engaged sessions per campaign kind (`email`, `post`, `short`, `long`,
+`ad`, ...), and `stages.click.email` is `{sessions_28d,
+engaged_sessions_28d, campaigns, window_days}`. `_captures()` reads
+`CONVERSION_EVENTS` only, so an ad click or an email click never counts
+as a subscriber.
+
+**Real-user vitals are events.** `assets/js/tracking.js` observes LCP,
+CLS and INP with the browser's `PerformanceObserver` (no library) and
+sends one `web_vital` event per metric per page when the page is hidden
+(`name`, `rating` good / needs-improvement / poor, `page_type`,
+`metric_value`). `web_vital` is in `ENGAGEMENT_EVENTS`; the `web_vitals`
+report (`customEvent:name` x `customEvent:rating`) and
+`web_vitals_summary` (good share per vital, null under 30 samples) feed
+the Website card. **Operator:** register the event parameters `name` and
+`rating` as event-scoped custom dimensions on the GA4 property; until
+then the report reads `None`, never "no vitals".
+
+Guards: `tests/test_funnel_denominator_2026_11_03.py`;
+`tests/test_funnel.py::TestCampaignRoundTrip` covers every kind.
+
 ## Files
 
 | Path | Role |
@@ -223,7 +322,7 @@ signal for a Short):
 | `engine/shorts_ab.py` | variant assignment + treatment assets + fallbacks |
 | `scripts/build_funnel.py` | joins the four datasets -> `api/funnel.json` |
 | `scripts/build_shorts_ab_report.py` | scores the A/B -> `api/shorts_ab.json` |
-| `scripts/send_ru_spacex_weekly.py` | «Хроника SpaceX» |
+| `scripts/send_ru_spacex_weekly.py` | «Хроника SpaceX» (retired 2026-11-03; one release) |
 | `templates/ru_landing.html.j2` | the Russian landing page |
 | `workers/gallery/src/handlers.ts` | `resolveSubscribeTags` (server-side allow-list) |
 | `tests/test_funnel.py` | build/parse round-trip + every surface is tagged |

@@ -173,8 +173,70 @@ def gather_show_context(slug: str, episodes: int = MAX_EPISODES) -> str:
     return "\n\n".join(parts)
 
 
+_PENDING_PREDICTION_RE = re.compile(
+    r"^(?P<indent>[ \t]*)-\s*metric:\s*(?P<metric>.+?)\s*$", re.M)
+
+
+def pending_predictions(ledger_path: Path) -> list[dict]:
+    """The ledger's ``verdict: pending`` predictions, each with the review
+    date it was made on. ``yaml.safe_load`` first; three committed ledgers
+    carry unquoted ``: `` inside list items, so a parse failure falls back to
+    a line scan that pairs each ``- metric:`` with the next ``verdict:``."""
+    text = _read(ledger_path)
+    if not text:
+        return []
+    out: list[dict] = []
+    try:
+        data = yaml.safe_load(text) or {}
+        for review in data.get("reviews") or []:
+            if not isinstance(review, dict):
+                continue
+            for p in review.get("predictions") or []:
+                if isinstance(p, dict) and str(p.get("verdict", "")).strip() == "pending":
+                    out.append({
+                        "date": str(review.get("date", "")),
+                        "metric": " ".join(str(p.get("metric", "")).split()),
+                        "baseline": " ".join(str(p.get("baseline", "")).split()),
+                        "expected": " ".join(str(p.get("expected", "")).split()),
+                    })
+        return out
+    except yaml.YAMLError:
+        pass
+    date = ""
+    current: dict | None = None
+    for line in text.splitlines():
+        dm = re.match(r"^\s*-\s*date:\s*['\"]?(\d{4}-\d{2}-\d{2})", line)
+        if dm:
+            date = dm.group(1)
+            continue
+        mm = _PENDING_PREDICTION_RE.match(line)
+        if mm:
+            current = {"date": date, "metric": mm.group("metric").strip(" '\""),
+                       "baseline": "", "expected": ""}
+            continue
+        if current is None:
+            continue
+        for key in ("baseline", "expected"):
+            km = re.match(rf"^\s*{key}:\s*(.*)$", line)
+            if km:
+                current[key] = km.group(1).strip(" '\"")
+        vm = re.match(r"^\s*verdict:\s*(\S+)", line)
+        if vm:
+            if vm.group(1).strip(" '\"") == "pending":
+                out.append(current)
+            current = None
+    return out
+
+
 def gather_network_context() -> str:
-    """Cross-cutting meta review: aggregate every ledger + workflow list."""
+    """Cross-cutting meta review: aggregate every ledger + workflow list.
+
+    Nov 3 2026: the network ledger's PENDING predictions lead the context in
+    full. Each ledger is truncated to 6,000 characters below and the network
+    ledger is ~1,000 lines, so the predictions at its tail — 70 pending of
+    94, with three empty ``scored_prior_predictions`` blocks — never reached
+    the model, and the one writer of that block had nothing to score.
+    """
     parts: list[str] = []
     # _claude_md_section already appends the Known Landmines block.
     section = _claude_md_section("network")
@@ -182,8 +244,27 @@ def gather_network_context() -> str:
         parts.append("## CLAUDE.md — network notes + landmines\n" + section)
     parts.append("## Workflows\n" + "\n".join(
         f"- {p.name}" for p in sorted((ROOT / ".github" / "workflows").glob("*.yml"))))
+    pending = pending_predictions(ROOT / "docs" / "reviews" / "ledger" / "network.yaml")
+    if pending:
+        lines = [f"## NETWORK LEDGER — {len(pending)} PENDING PREDICTIONS "
+                 "(score each one in scored_prior_predictions: hit | partial | miss, "
+                 "with one line of today's evidence from the committed record)"]
+        for p in pending:
+            lines.append(f"- [{p['date']}] metric: {p['metric']}")
+            if p["baseline"]:
+                lines.append(f"  baseline: {p['baseline']}")
+            if p["expected"]:
+                lines.append(f"  expected: {p['expected']}")
+        parts.append("\n".join(lines))
     for ledger in sorted((ROOT / "docs" / "reviews" / "ledger").glob("*.yaml")):
         parts.append(f"## LEDGER {ledger.name}\n" + _read(ledger, 6000))
+    # Nov 3 2026: the network target's deterministic snapshot (the audience
+    # headline and the Nerra Daily email line), as a show review reads its own.
+    try:
+        from review_snapshot import build_snapshot
+        parts.append("## DETERMINISTIC SNAPSHOT\n" + build_snapshot("network"))
+    except Exception as exc:  # noqa: BLE001 — the review runs without it
+        parts.append(f"## DETERMINISTIC SNAPSHOT\n(unavailable: {exc})")
     return "\n\n".join(parts)
 
 

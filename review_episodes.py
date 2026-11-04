@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Daily episode quality review.
 
-Scans all episodes produced today, runs automated quality checks, and
-optionally creates GitHub issues for problems found.
+Scans all episodes produced today, runs automated quality checks, records
+each reviewed episode's editorial score in api/editorial_score_history.json,
+and optionally edits the one rolling GitHub issue ("Daily Review — rolling";
+a dated issue only for a critical that repeats on three episodes running).
 
 Usage:
     python review_episodes.py [--date YYYY-MM-DD] [--create-issues] [--show SLUG]
@@ -86,10 +88,28 @@ class EpisodeReview:
     tts_path: Optional[Path] = None
     metrics_path: Optional[Path] = None
     chapters_path: Optional[Path] = None
+    #: The pre-pronunciation prose (``*_reader.txt``), when the run wrote one
+    #: (Nov 3 2026) — the text the AI review reads, so "ex A I", "Ess Pee
+    #: See Ex" and "D N A" are never graded as garbles.
+    reader_path: Optional[Path] = None
+    #: The committed claims ledger (``*_claims.json``), when the gate wrote
+    #: one (Nov 3 2026) — its verified entries are handed to the AI review
+    #: as facts not to dispute from memory.
+    claims_path: Optional[Path] = None
     digest_text: str = ""
     tts_text: str = ""
+    reader_text: str = ""
     metrics: dict = field(default_factory=dict)
     issues: List[Issue] = field(default_factory=list)
+    #: The AI review as an instrument (Nov 3 2026): the reviewer's 1-10
+    #: (None when the AI layer did not run — never 0), every check the
+    #: reply answered YES/NO, and which YES flags quoted a sentence that is
+    #: in the text (grounded) or did not (ungrounded, downgraded to info).
+    ai_reviewed: bool = False
+    quality_score: Optional[int] = None
+    flags: Dict[str, bool] = field(default_factory=dict)
+    grounded_flags: List[str] = field(default_factory=list)
+    ungrounded_flags: List[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -664,6 +684,8 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
             # Find companion files
             stem = md_file.stem  # e.g. Tesla_Shorts_Time_Pod_Ep414_20260322
             tts_file = output_dir / f"{stem}_tts.txt"
+            reader_file = output_dir / f"{stem}_reader.txt"
+            claims_file = output_dir / f"{stem}_claims.json"
             metrics_file = output_dir / f"metrics_ep{ep_num:03d}.json"
             chapters_file = output_dir / f"chapters_ep{ep_num:03d}.json"
 
@@ -674,6 +696,8 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
                 date=target_date.isoformat(),
                 digest_path=md_file if md_file.exists() else None,
                 tts_path=tts_file if tts_file.exists() else None,
+                reader_path=reader_file if reader_file.exists() else None,
+                claims_path=claims_file if claims_file.exists() else None,
                 metrics_path=metrics_file if metrics_file.exists() else None,
                 chapters_path=chapters_file if chapters_file.exists() else None,
             )
@@ -682,6 +706,11 @@ def discover_episodes(target_date: datetime.date, show_filter: str = "") -> List
                 review.digest_text = review.digest_path.read_text(encoding="utf-8")
             if review.tts_path:
                 review.tts_text = review.tts_path.read_text(encoding="utf-8")
+            if review.reader_path:
+                try:
+                    review.reader_text = review.reader_path.read_text(encoding="utf-8")
+                except OSError:
+                    review.reader_text = ""
             if review.metrics_path:
                 try:
                     review.metrics = json.loads(review.metrics_path.read_text(encoding="utf-8"))
@@ -1650,20 +1679,261 @@ def write_review_credit_file(
     return save_usage(tracker, out_dir, filename=filename)
 
 
+_SOURCE_DOMAIN_RE = re.compile(r"(?im)^\s*(?:[-*]\s*)?\**Source:?\**\s*\[([^\]]{2,60})\]\(https?://")
+_BOLD_ITEM_RE = re.compile(r"(?m)^\s*(?:\d+\.\s*)?\*\*([^*\n]{3,110})\*\*")
+
+
+def _real_names_preamble(digest_text: str, limit: int = 40) -> str:
+    """A short list of the names the digest itself vouches for — its Source
+    publishers and its bold item titles — so the reviewer does not grade a
+    real outlet or a real product name as a garble (Nov 3 2026)."""
+    if not digest_text:
+        return ""
+    names: List[str] = []
+    for m in _SOURCE_DOMAIN_RE.finditer(digest_text):
+        name = m.group(1).strip()
+        if name and name not in names:
+            names.append(name)
+    for m in _BOLD_ITEM_RE.finditer(digest_text):
+        title = m.group(1).strip().rstrip(":")
+        outlet = title.rsplit(":", 1)[-1].strip() if ":" in title else ""
+        for cand in (outlet,):
+            if cand and len(cand) <= 40 and cand not in names:
+                names.append(cand)
+        if len(names) >= limit:
+            break
+    if not names:
+        return ""
+    return ("REAL NAMES IN THIS EPISODE (publishers and titles from the episode's "
+            "own sources — not errors, not garbles): " + "; ".join(names[:limit]) + "\n\n")
+
+
+def _verified_claims_preamble(claims_path: Optional[Path], limit: int = 40) -> str:
+    """The episode's claims the gate VERIFIED against their cited sources,
+    handed to the reviewer as facts it may not dispute from memory (Nov 3
+    2026). The model's training data lags the 24-hour cycle; a verified
+    claim that contradicts it is the model's error, not the episode's."""
+    if not claims_path or not claims_path.exists():
+        return ""
+    try:
+        data = json.loads(claims_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — a malformed ledger is not the review's problem
+        return ""
+    entries = data.get("claims") if isinstance(data, dict) else data
+    if not isinstance(entries, list):
+        return ""
+    claims: List[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        status = str(entry.get("status") or "")
+        text = " ".join(str(entry.get("claim") or "").split())
+        if status.startswith("verified") and text and text not in claims:
+            claims.append(text)
+        if len(claims) >= limit:
+            break
+    if not claims:
+        return ""
+    return ("VERIFIED CLAIMS (each checked against its cited source before publication; "
+            "do NOT dispute these from memory — a claim here that contradicts what you "
+            "remember is newer than your training data):\n"
+            + "\n".join(f"- {c}" for c in claims) + "\n\n")
+
+
+# ---------------------------------------------------------------------------
+# The AI review as an instrument (Nov 3 2026)
+# ---------------------------------------------------------------------------
+#
+# The reviewer's 1-10 is the network's only daily editorial number. It read
+# flat at 6.1-6.2 from Sep 21, and 12 of 75 INCOHERENT criticals in the 16
+# days to Nov 2 were artifacts of the instrument. Every YES now quotes the
+# sentence it is about, and the quote must be FOUND in the text the reviewer
+# read (engine.claims.fuzzy_contains — string matching, no model call). A
+# flag with no quote, or a quote the text does not contain, is downgraded to
+# info and counted as ungrounded: a mechanical precision floor.
+
+#: (check, severity when grounded). Order is the reply's order.
+AUDIT_FINDING_CHECKS = (
+    ("FACTUAL_ERRORS", "warning"),
+    ("INCOHERENT", "critical"),
+    ("REPETITIVE", "critical"),
+    ("OFF_TOPIC", "warning"),
+    ("TONE_BREAK", "warning"),
+    ("INCOMPLETE", "warning"),
+)
+#: Every YES/NO the reply carries. FACTUAL_DOUBT is a note by design (the
+#: reviewer's memory only) and is never a finding, grounded or not.
+AUDIT_CHECKS = tuple(c for c, _ in AUDIT_FINDING_CHECKS) + ("FACTUAL_DOUBT",)
+#: A quote shorter than this is a phrase, not the sentence the flag is about
+#: — "Spam" is in the text and grounds nothing.
+AUDIT_QUOTE_MIN_WORDS = 4
+
+_LEADING_QUOTE_RE = re.compile(
+    r"^[\"“„«](?P<q>.+?)[\"”“»]\s*(?:[—–-]\s*.*)?$")
+_ANY_DOUBLE_QUOTE_RE = re.compile(r"[\"“„«]([^\"“”„«»\n]{3,800})[\"”“»]")
+_ANY_SINGLE_QUOTE_RE = re.compile(r"(?<!\w)['‘]([^'‘’\n]{3,800}?)['’](?!\w)")
+_ELLIPSIS_RE = re.compile(r"\s*\[?(?:\.{3}|…)\]?\s*")
+
+
+def _check_line(review_text: str, check: str) -> Optional[tuple]:
+    """``(verdict, rest)`` for one check's line of the reply, or None.
+
+    Tolerates the bold markers a model adds (``**INCOHERENT:** YES``)."""
+    m = re.search(
+        rf"(?<![A-Z_]){check}\**\s*:\s*\**\s*(YES|NO)\b\**(.*)",
+        review_text, re.IGNORECASE)
+    if not m:
+        return None
+    rest = re.sub(r"^[\s*]*(?:[—–:-]\s*)?", "", m.group(2)).strip()
+    return m.group(1).upper() == "YES", rest
+
+
+def _quote_candidates(rest: str) -> List[str]:
+    """Every quoted span in a flag's explanation, the leading one first."""
+    spans: List[str] = []
+    m = _LEADING_QUOTE_RE.match(rest)
+    if m:
+        spans.append(m.group("q"))
+    spans.extend(_ANY_DOUBLE_QUOTE_RE.findall(rest))
+    spans.extend(_ANY_SINGLE_QUOTE_RE.findall(rest))
+    return spans
+
+
+def quote_is_grounded(quote: str, text: str) -> bool:
+    """True when *quote* is a sentence-sized span found in *text*.
+
+    An elided quote ("first part … last part") is grounded when every
+    fragment of three words or more is found; the whole must still reach
+    ``AUDIT_QUOTE_MIN_WORDS``."""
+    from engine.claims import fuzzy_contains
+    fragments = [f.strip(" \"'“”‘’") for f in _ELLIPSIS_RE.split(quote or "")]
+    fragments = [f for f in fragments if f]
+    if sum(len(f.split()) for f in fragments) < AUDIT_QUOTE_MIN_WORDS:
+        return False
+    checked = [f for f in fragments if len(f.split()) >= 3]
+    return bool(checked) and all(fuzzy_contains(f, text) for f in checked)
+
+
+def parse_review_reply(review_text: str, reviewed_text: str) -> dict:
+    """The reviewer's reply as data: score, summary, YES/NO per check, and
+    each YES finding with its quote grounded (or not) in *reviewed_text*.
+
+    Pure — no model call — so a fixture reply can be scored in a test."""
+    score: Optional[int] = None
+    m = re.search(r"QUALITY_SCORE\**\s*:\s*\**\s*\[?\s*(\d+(?:\.\d+)?)", review_text or "")
+    if m:
+        value = int(float(m.group(1)) + 0.5)
+        score = value if 1 <= value <= 10 else None
+    summary_m = re.search(r"SUMMARY\**\s*:\s*\**\s*(.+)", review_text or "")
+    flags: Dict[str, bool] = {}
+    findings: List[dict] = []
+    severity_of = dict(AUDIT_FINDING_CHECKS)
+    for check in AUDIT_CHECKS:
+        line = _check_line(review_text or "", check)
+        if line is None:
+            continue
+        yes, rest = line
+        flags[check] = yes
+        if not yes:
+            continue
+        grounded = any(quote_is_grounded(q, reviewed_text)
+                       for q in _quote_candidates(rest))
+        findings.append({
+            "check": check,
+            "severity": severity_of.get(check, "info"),
+            "detail": rest,
+            "grounded": grounded,
+        })
+    return {
+        "score": score,
+        "summary": summary_m.group(1).strip() if summary_m else "",
+        "flags": flags,
+        "findings": findings,
+    }
+
+
+def apply_review_reply(ep: EpisodeReview, review_text: str, reviewed_text: str) -> None:
+    """Record one reviewer reply on the episode: the score, the flags, and
+    an Issue per YES — at its severity when its quote is found in the text,
+    as info when it is not."""
+    parsed = parse_review_reply(review_text, reviewed_text)
+    ep.ai_reviewed = True
+    ep.quality_score = parsed["score"]
+    ep.flags = dict(parsed["flags"])
+    summary = parsed["summary"]
+
+    for f in parsed["findings"]:
+        check = f["check"]
+        label = check.replace("_", " ").title()
+        if check == "FACTUAL_DOUBT":
+            # Nov 3 2026: a claim that contradicts only the reviewer's memory
+            # is a note, never a finding — the claims gate checked it
+            # against its source.
+            ep.issues.append(Issue(
+                ep.show_slug, ep.episode_num, "info",
+                "AI review: Factual Doubt (reviewer memory only)",
+                f["detail"],
+            ))
+            continue
+        if f["grounded"]:
+            ep.grounded_flags.append(check)
+            ep.issues.append(Issue(
+                ep.show_slug, ep.episode_num, f["severity"],
+                f"AI review: {label}", f["detail"],
+            ))
+        else:
+            ep.ungrounded_flags.append(check)
+            ep.issues.append(Issue(
+                ep.show_slug, ep.episode_num, "info",
+                f"AI review: {label} (ungrounded — no quoted sentence found in the text)",
+                f["detail"] or "(no explanation given)",
+            ))
+
+    quality_score = parsed["score"] or 0
+    if quality_score > 0 and quality_score <= 3:
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "critical",
+            f"AI quality score: {quality_score}/10",
+            f"Grok rated this episode {quality_score}/10. {summary}",
+        ))
+    elif quality_score > 0 and quality_score <= 5:
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "warning",
+            f"AI quality score: {quality_score}/10",
+            f"Grok rated this episode {quality_score}/10. {summary}",
+        ))
+    elif quality_score > 0:
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "info",
+            f"AI quality score: {quality_score}/10",
+            summary,
+        ))
+
+
 def ai_review_episode(ep: EpisodeReview) -> None:
     """Use Grok to review episode quality. Requires GROK_API_KEY."""
     api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
     if not api_key:
         return
 
-    text = ep.tts_text or ep.digest_text
+    # Nov 3 2026: the review reads the PROSE the script was written as, not
+    # the TTS-normalised text. In the 16 days to Nov 2, 12 of 75 INCOHERENT
+    # criticals named a pronunciation spelling ("ex A I", "Ess Pee See Ex",
+    # "D N A"), a real publisher (shattered.io) or a real name (Musk's
+    # "Spam" and "Gun Range" clusters) — artifacts of the instrument.
+    text = ep.reader_text or ep.tts_text or ep.digest_text
     if not text:
         return
+    real_names = _real_names_preamble(ep.digest_text)
+    verified_claims = _verified_claims_preamble(ep.claims_path)
 
     # Truncate to avoid massive prompts — the AI reviewer only needs enough
     # text to assess quality, not the full transcript.  Truncate at a
     # sentence boundary to avoid mid-word cuts that confuse the reviewer.
-    _REVIEW_CHAR_LIMIT = 12000
+    # Nov 3 2026: 24,000 — at 12,000, 17 of a week's 113 scripts were cut
+    # (six of seven Modern Investing episodes at 83-93%), and the score was
+    # a score of the excerpt.
+    _REVIEW_CHAR_LIMIT = 24000
     _was_truncated = len(text) > _REVIEW_CHAR_LIMIT
     if _was_truncated:
         # Find the last sentence-ending punctuation before the limit
@@ -1693,12 +1963,22 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"your pre-2024 training data but is consistent with current 2026 reality, do NOT "
         f"flag it.\n\n"
         f"{'NOTE: The text below is a REVIEW EXCERPT that ends with [END OF REVIEW EXCERPT]. The full episode is LONGER than what you see here. Do NOT flag the episode as incomplete or abruptly ending. ONLY flag INCOMPLETE if the content itself contains obvious signs of being cut off mid-sentence within the body of the text.' if _was_truncated else ''}\n\n"
+        f"{real_names}"
+        f"{verified_claims}"
         f"TEXT:\n{text}\n\n"
         f"Check for these specific problems and rate each YES or NO:\n"
-        f"1. FACTUAL_ERRORS: Are there obvious factual errors or contradictions? "
+        f"1. FACTUAL_ERRORS: Does the episode contradict ITSELF, or contradict a source "
+        f"it quotes or links, or get arithmetic wrong on its own numbers? "
         f"(Do NOT flag the episode date or year as an error.)\n"
-        f"2. INCOHERENT: Are there sections that don't make sense or seem garbled?\n"
-        f"3. REPETITIVE: Are stories or paragraphs repeated verbatim or near-verbatim?\n"
+        f"1b. FACTUAL_DOUBT: Does a claim contradict only YOUR OWN knowledge, with no "
+        f"source in the episode disagreeing? Name it here, never under FACTUAL_ERRORS: "
+        f"the episode is newer than you are and its claims were checked against their sources.\n"
+        f"2. INCOHERENT: Are there sentences with no clear referent, or passages "
+        f"that do not make sense? A publisher's name, a product or project name, "
+        f"a model or code identifier, or a spelled-out acronym is NOT incoherence.\n"
+        f"3. REPETITIVE: Is the same point made again in different words inside a "
+        f"story, or does a deep-dive section re-tell a story the body already told? "
+        f"(Restatement counts; a hook and the body that develops it do not.)\n"
         f"4. OFF_TOPIC: Is significant content unrelated to the show's topic?\n"
         f"5. TONE_BREAK: Are there abrupt tone shifts or inappropriate language?\n"
         f"6. INCOMPLETE: Does the episode feel like it ends abruptly or is missing sections?\n"
@@ -1707,13 +1987,18 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"major factual errors); 4-5 = significant quality gaps (thin "
         f"coverage, heavy repetition); 6-7 = publishable with minor "
         f"caveats; 8-9 = strong episode; 10 = exemplary, no caveats.\n\n"
+        f"EVERY YES MUST QUOTE: after YES, copy the one sentence the problem is in, "
+        f"exactly as it appears in the TEXT above, inside double quotes, then say why. "
+        f"A YES without a quoted sentence, or with a quote that is not in the TEXT, is "
+        f"discarded — if you cannot point at the sentence, answer NO.\n\n"
         f"Format your response EXACTLY like this (one per line):\n"
-        f"FACTUAL_ERRORS: YES/NO — [brief explanation if YES]\n"
-        f"INCOHERENT: YES/NO — [brief explanation if YES]\n"
-        f"REPETITIVE: YES/NO — [brief explanation if YES]\n"
-        f"OFF_TOPIC: YES/NO — [brief explanation if YES]\n"
-        f"TONE_BREAK: YES/NO — [brief explanation if YES]\n"
-        f"INCOMPLETE: YES/NO — [brief explanation if YES]\n"
+        f"FACTUAL_ERRORS: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"FACTUAL_DOUBT: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"INCOHERENT: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"REPETITIVE: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"OFF_TOPIC: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"TONE_BREAK: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
+        f"INCOMPLETE: YES/NO — [if YES: \"<the sentence, copied from the TEXT>\" — why]\n"
         f"QUALITY_SCORE: [1-10]\n"
         f"SUMMARY: [1-2 sentence overall assessment]\n"
     )
@@ -1769,102 +2054,151 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         logger.warning("AI review failed for %s Ep%d: %s", ep.show_slug, ep.episode_num, exc)
         return
 
-    # Parse AI review
-    quality_score = 0
-    m = re.search(r"QUALITY_SCORE:\s*(\d+)", review_text)
-    if m:
-        quality_score = int(m.group(1))
-
-    summary_m = re.search(r"SUMMARY:\s*(.+)", review_text)
-    summary = summary_m.group(1).strip() if summary_m else ""
-
-    # Flag critical AI findings
-    critical_checks = ["FACTUAL_ERRORS", "INCOHERENT", "REPETITIVE"]
-    for check in critical_checks:
-        m = re.search(rf"{check}:\s*YES\s*[—–-]\s*(.+)", review_text)
-        if m:
-            severity = "critical" if check in ("INCOHERENT", "REPETITIVE") else "warning"
-            ep.issues.append(Issue(
-                ep.show_slug, ep.episode_num, severity,
-                f"AI review: {check.replace('_', ' ').title()}",
-                m.group(1).strip(),
-            ))
-
-    warning_checks = ["OFF_TOPIC", "TONE_BREAK", "INCOMPLETE"]
-    for check in warning_checks:
-        m = re.search(rf"{check}:\s*YES\s*[—–-]\s*(.+)", review_text)
-        if m:
-            ep.issues.append(Issue(
-                ep.show_slug, ep.episode_num, "warning",
-                f"AI review: {check.replace('_', ' ').title()}",
-                m.group(1).strip(),
-            ))
-
-    if quality_score > 0 and quality_score <= 3:
-        ep.issues.append(Issue(
-            ep.show_slug, ep.episode_num, "critical",
-            f"AI quality score: {quality_score}/10",
-            f"Grok rated this episode {quality_score}/10. {summary}",
-        ))
-    elif quality_score > 0 and quality_score <= 5:
-        ep.issues.append(Issue(
-            ep.show_slug, ep.episode_num, "warning",
-            f"AI quality score: {quality_score}/10",
-            f"Grok rated this episode {quality_score}/10. {summary}",
-        ))
-    elif quality_score > 0:
-        ep.issues.append(Issue(
-            ep.show_slug, ep.episode_num, "info",
-            f"AI quality score: {quality_score}/10",
-            summary,
-        ))
+    # Parse the reply: every YES is grounded against the text the reviewer
+    # read, and the score and flags persist (Nov 3 2026).
+    apply_review_reply(ep, review_text, text)
 
 
 # ---------------------------------------------------------------------------
 # GitHub issue creation
 # ---------------------------------------------------------------------------
 
-def create_github_issue(
-    target_date: str,
-    episodes: List[EpisodeReview],
-    critical_only: bool = False,
-    missed_issues: Optional[List[Issue]] = None,
-) -> Optional[str]:
-    """Create a GitHub issue summarizing today's review.
+#: Nov 3 2026: ONE issue, edited in place with the day's table. The audit
+#: had opened a "Daily Review <date>" issue every day since May — 151 were
+#: open on Nov 3 and none had ever been closed by a person, so the queue
+#: carried no signal. A dated issue now opens only for a critical that
+#: repeats on REPEAT_CRITICAL_EPISODES of a show's episodes running.
+ROLLING_ISSUE_TITLE = "Daily Review — rolling"
+REPEAT_CRITICAL_EPISODES = 3
+_REPEAT_TITLE_MARK = "repeated critical — "
+#: GitHub refuses an issue body over 65,536 characters.
+_ISSUE_BODY_MAX = 60000
+#: Superseded dated issues closed per run (see close_superseded_daily_issues).
+_SWEEP_MAX_PER_RUN = 60
 
-    Returns the issue URL on success, None if no issues to report or gh fails.
-    """
-    all_issues: List[Issue] = list(missed_issues or [])
-    for ep in episodes:
-        all_issues.extend(ep.issues)
 
-    if critical_only:
-        all_issues = [i for i in all_issues if i.severity == "critical"]
+def critical_key(title: str) -> str:
+    """A critical's identity across days: its title with every number
+    replaced, so "AI quality score: 3/10" and "AI quality score: 2/10" are
+    the same critical."""
+    return re.sub(r"\d+(?:[.,]\d+)?", "N", str(title or "")).strip()
 
-    if not all_issues:
+
+class GhIssues:
+    """The ``gh`` calls the audit makes on issues. A test passes a fake with
+    the same five methods; every call here is best-effort and never raises."""
+
+    def _run(self, args: List[str], timeout: int = 30):
+        try:
+            return subprocess.run(["gh", *args], capture_output=True,
+                                  text=True, timeout=timeout)
+        except FileNotFoundError:
+            logger.warning("gh CLI not found — skipping issue work")
+        except Exception as exc:  # noqa: BLE001 — best-effort
+            logger.warning("gh %s failed: %s", " ".join(args[:2]), exc)
         return None
 
+    def ensure_label(self, name: str, color: str) -> None:
+        self._run(["label", "create", name, "--color", color, "--force"], timeout=10)
+
+    def list_open(self, label: str, limit: int = 1000) -> List[dict]:
+        result = self._run(["issue", "list", "--state", "open", "--label", label,
+                            "--json", "number,title,url", "--limit", str(limit)])
+        if result is None or result.returncode != 0:
+            if result is not None:
+                logger.warning("gh issue list failed: %s", result.stderr.strip()[:200])
+            return []
+        try:
+            return json.loads(result.stdout or "[]")
+        except json.JSONDecodeError:
+            return []
+
+    def create(self, title: str, body: str, labels: List[str]) -> Optional[str]:
+        result = self._run(["issue", "create", "--title", title, "--body", body,
+                            *[arg for lab in labels for arg in ("--label", lab)]])
+        if result is None or result.returncode != 0:
+            if result is not None:
+                logger.warning("gh issue create failed: %s", result.stderr.strip())
+            return None
+        return result.stdout.strip()
+
+    def edit(self, number: int, body: str) -> bool:
+        result = self._run(["issue", "edit", str(number), "--body", body])
+        return result is not None and result.returncode == 0
+
+    def close(self, number: int, comment: str) -> bool:
+        result = self._run(["issue", "close", str(number), "--reason", "not planned",
+                            "--comment", comment])
+        return result is not None and result.returncode == 0
+
+
+def find_repeated_criticals(
+    rows: List[dict], today: str, n: int = REPEAT_CRITICAL_EPISODES,
+) -> List[dict]:
+    """Criticals that a show's last *n* reviewed episodes ALL carry, when the
+    newest of them was reviewed today (so a streak opens its issue once, on
+    the day it reaches *n*, and a show that stopped publishing never does).
+
+    On a daily show that is three consecutive days; on a weekly show, three
+    weeks. Keys come from ``critical_key`` — numbers never split a streak."""
+    by_show: Dict[str, List[dict]] = {}
+    for row in rows or []:
+        if isinstance(row, dict) and row.get("show"):
+            by_show.setdefault(str(row["show"]), []).append(row)
+    out: List[dict] = []
+    for show, show_rows in sorted(by_show.items()):
+        last = sorted(show_rows, key=lambda r: (str(r.get("date") or ""),
+                                                int(r.get("episode") or 0)))[-n:]
+        if len(last) < n or str(last[-1].get("reviewed_on") or "") != today:
+            continue
+        common = set(last[0].get("criticals") or [])
+        for row in last[1:]:
+            common &= set(row.get("criticals") or [])
+        for key in sorted(common):
+            out.append({
+                "show": show,
+                "key": key,
+                "episodes": [int(r.get("episode") or 0) for r in last],
+                "dates": [str(r.get("date") or "") for r in last],
+            })
+    return out
+
+
+def _review_issue_body(
+    target_date: str,
+    episodes: List[EpisodeReview],
+    all_issues: List[Issue],
+) -> str:
+    """The day's review as markdown: missed/skipped, the episodes table
+    (with the editorial score and how many YES flags were grounded), and
+    the findings."""
     critical = [i for i in all_issues if i.severity == "critical"]
     warnings = [i for i in all_issues if i.severity == "warning"]
     infos = [i for i in all_issues if i.severity == "info"]
 
-    # Build issue title
-    n_shows = len(set(i.show for i in all_issues))
-    if critical:
-        title = f"Daily Review {target_date}: {len(critical)} critical issue(s) across {n_shows} show(s)"
-    else:
-        title = f"Daily Review {target_date}: {len(warnings)} warning(s) across {n_shows} show(s)"
-
     # Separate missed/skipped episode issues from per-episode issues
     _missed = [i for i in all_issues if i.episode == 0 and "Missed episode" in i.title]
     _skipped = [i for i in all_issues if i.episode == 0 and "Skipped episode" in i.title]
-    _missed_shows = {i.show for i in _missed} | {i.show for i in _skipped}
 
-    # Build issue body
+    grounded = sum(len(ep.grounded_flags) for ep in episodes)
+    ungrounded = sum(len(ep.ungrounded_flags) for ep in episodes)
+    scores = [ep.quality_score for ep in episodes if ep.quality_score is not None]
+
     body_lines = [
         f"## Daily Episode Review — {target_date}\n",
+        "_This issue is edited in place by every daily audit. A separate dated "
+        f"issue opens only when a critical repeats on {REPEAT_CRITICAL_EPISODES} of "
+        "a show's episodes running. The score history is "
+        "`api/editorial_score_history.json`._\n",
         f"**Episodes reviewed:** {len(episodes)}",
     ]
+    if scores:
+        body_lines.append(
+            f"**Editorial score (mean of {len(scores)}):** {sum(scores) / len(scores):.2f}/10")
+    if grounded + ungrounded:
+        body_lines.append(
+            f"**AI flags grounded in a quoted sentence:** {grounded} of "
+            f"{grounded + ungrounded} (ungrounded flags are listed as info)")
     if _missed:
         body_lines.append(f"**Missed episodes:** {len(_missed)} show(s) failed to produce output")
     if _skipped:
@@ -1897,8 +2231,8 @@ def create_github_issue(
 
     # Episodes summary table
     body_lines.append("### Episodes Reviewed\n")
-    body_lines.append("| Show | Episode | Issues |")
-    body_lines.append("|------|---------|--------|")
+    body_lines.append("| Show | Episode | Score | Issues |")
+    body_lines.append("|------|---------|-------|--------|")
     for ep in episodes:
         n_crit = sum(1 for i in ep.issues if i.severity == "critical")
         n_warn = sum(1 for i in ep.issues if i.severity == "warning")
@@ -1909,7 +2243,8 @@ def create_github_issue(
             status += f"{', ' if status else ''}{n_warn} warning(s)"
         if not status:
             status = "OK"
-        body_lines.append(f"| {ep.show_name} | Ep{ep.episode_num:03d} | {status} |")
+        score = "—" if ep.quality_score is None else f"{ep.quality_score}/10"
+        body_lines.append(f"| {ep.show_name} | Ep{ep.episode_num:03d} | {score} | {status} |")
 
     # Critical issues (exclude missed episodes — they have their own section)
     _ep_critical = [i for i in critical if i not in _missed]
@@ -1935,58 +2270,127 @@ def create_github_issue(
             body_lines.append(f"- **[{issue.show} Ep{issue.episode:03d}]** {issue.title}")
             body_lines.append(f"  {issue.detail}")
 
-    body_lines.append("\n---\n*Auto-generated by `review_episodes.py`*")
-
+    footer = "\n---\n*Auto-generated by `review_episodes.py`*"
     body = "\n".join(body_lines)
+    if len(body) + len(footer) > _ISSUE_BODY_MAX:
+        cut = body.rfind("\n", 0, _ISSUE_BODY_MAX - len(footer) - 200)
+        body = (body[:cut] + "\n\n_(truncated — the full list is in "
+                "`api/daily-review.json`)_")
+    return body + footer
 
-    # Assign labels
-    labels = ["automated-review"]
-    if critical:
-        labels.append("severity: critical")
-    if warnings:
-        labels.append("severity: warning")
 
-    # Ensure labels exist (auto-create if missing)
+def close_superseded_daily_issues(client: "GhIssues", rolling_url: str,
+                                  open_issues: Optional[List[dict]] = None) -> int:
+    """Close every dated ``Daily Review <date>: …`` issue with one comment
+    pointing at the rolling issue, oldest first and at most
+    ``_SWEEP_MAX_PER_RUN`` a run (each close is two writes; GitHub's
+    secondary rate limit and the audit step's budget both bound it — the
+    151 drain over three runs). Idempotent: nothing creates that title shape
+    any more, so once drained there is nothing left to close."""
+    if open_issues is None:
+        open_issues = client.list_open("automated-review")
+    dated = sorted((i for i in open_issues or []
+                    if _DAILY_TITLE_RE.match(str(i.get("title") or ""))),
+                   key=lambda i: int(i.get("number") or 0))[:_SWEEP_MAX_PER_RUN]
+    comment = (
+        "Superseded by the rolling daily review"
+        + (f": {rolling_url}" if rolling_url else "")
+        + ". The audit now edits one issue in place every day and opens a dated "
+        f"issue only when a critical repeats on {REPEAT_CRITICAL_EPISODES} of a "
+        "show's episodes running; the day's findings stay in "
+        "`api/daily-review.json` and the score in `api/editorial_score_history.json`."
+    )
+    closed = 0
+    for issue in dated:
+        if client.close(int(issue.get("number") or 0), comment):
+            closed += 1
+    if closed:
+        logger.info("Closed %d superseded dated daily-review issue(s)", closed)
+    return closed
+
+
+def create_github_issue(
+    target_date: str,
+    episodes: List[EpisodeReview],
+    critical_only: bool = False,
+    missed_issues: Optional[List[Issue]] = None,
+    client: Optional["GhIssues"] = None,
+    history_rows: Optional[List[dict]] = None,
+    edit_rolling: bool = True,
+) -> Optional[str]:
+    """Edit the rolling review issue with today's table; open a dated issue
+    for each critical that repeats on ``REPEAT_CRITICAL_EPISODES`` of a
+    show's episodes running; close the superseded dated issues.
+
+    Returns the rolling issue's URL (None when it could not be written or
+    ``edit_rolling`` is False — a single-show run never overwrites the
+    day's table)."""
+    client = client or GhIssues()
+    all_issues: List[Issue] = list(missed_issues or [])
+    for ep in episodes:
+        all_issues.extend(ep.issues)
+    if critical_only:
+        all_issues = [i for i in all_issues if i.severity == "critical"]
+
     _label_colors = {
         "automated-review": "c5def5",
         "severity: critical": "d73a4a",
-        "severity: warning": "fbca04",
     }
-    for label in labels:
-        try:
-            subprocess.run(
-                ["gh", "label", "create", label, "--color", _label_colors.get(label, "ededed"), "--force"],
-                capture_output=True, text=True, timeout=10,
-            )
-        except Exception:
-            pass  # Best-effort; issue creation will still work without labels
+    for label, color in _label_colors.items():
+        client.ensure_label(label, color)
 
-    # Create via gh CLI
-    try:
-        result = subprocess.run(
-            [
-                "gh", "issue", "create",
-                "--title", title,
-                "--body", body,
-                *[arg for lab in labels for arg in ("--label", lab)],
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if result.returncode == 0:
-            url = result.stdout.strip()
-            logger.info("Created GitHub issue: %s", url)
-            return url
+    open_issues = client.list_open("automated-review")
+
+    rolling_url: Optional[str] = None
+    if edit_rolling:
+        body = _review_issue_body(target_date, episodes, all_issues)
+        rolling = sorted((i for i in open_issues
+                          if str(i.get("title") or "") == ROLLING_ISSUE_TITLE),
+                         key=lambda i: int(i.get("number") or 0))
+        if rolling:
+            if client.edit(int(rolling[0].get("number") or 0), body):
+                rolling_url = str(rolling[0].get("url") or "") or None
+                logger.info("Updated the rolling review issue #%s", rolling[0].get("number"))
         else:
-            logger.warning("gh issue create failed: %s", result.stderr.strip())
-            return None
-    except FileNotFoundError:
-        logger.warning("gh CLI not found — skipping issue creation")
-        return None
-    except Exception as exc:
-        logger.warning("Failed to create GitHub issue: %s", exc)
-        return None
+            rolling_url = client.create(ROLLING_ISSUE_TITLE, body, ["automated-review"])
+            if rolling_url:
+                logger.info("Created the rolling review issue: %s", rolling_url)
+
+    rows = history_rows if history_rows is not None else load_editorial_score_history()
+    open_titles = {str(i.get("title") or "") for i in open_issues}
+    for rep in find_repeated_criticals(rows, target_date):
+        mark = f"{_REPEAT_TITLE_MARK}{rep['show']}: {rep['key']}"
+        if any(t.endswith(mark) for t in open_titles):
+            continue  # this streak already has its issue
+        show_name = SHOW_REGISTRY.get(rep["show"], {}).get("name", rep["show"])
+        lines = [
+            f"## {show_name}: the same critical on {len(rep['episodes'])} episodes running\n",
+            f"**Critical:** {rep['key']}\n",
+            "| Episode | Date |",
+            "|---------|------|",
+        ]
+        for num, day in zip(rep["episodes"], rep["dates"]):
+            lines.append(f"| Ep{num:03d} | {day} |")
+        today_detail = [i for ep in episodes if ep.show_slug == rep["show"]
+                        for i in ep.issues
+                        if i.severity == "critical" and critical_key(i.title) == rep["key"]]
+        if today_detail:
+            lines.append("\n### Today\n")
+            for issue in today_detail:
+                lines.append(f"- **[{issue.show} Ep{issue.episode:03d}]** {issue.title}")
+                lines.append(f"  {issue.detail}")
+        if rolling_url:
+            lines.append(f"\nThe day's full review: {rolling_url}")
+        lines.append("\n---\n*Auto-generated by `review_episodes.py`*")
+        url = client.create(f"Daily Review {target_date}: {mark}", "\n".join(lines),
+                            ["automated-review", "severity: critical"])
+        if url:
+            open_titles.add(f"Daily Review {target_date}: {mark}")
+            logger.info("Opened a repeated-critical issue: %s", url)
+
+    if edit_rolling and rolling_url:
+        close_superseded_daily_issues(client, rolling_url or "", open_issues)
+    return rolling_url
 
 
 # ---------------------------------------------------------------------------
@@ -2425,6 +2829,90 @@ def find_catch_up_episodes(
     return caught
 
 
+#: Nov 3 2026: the editorial score persists. It had lived only in an issue
+#: title and the day's daily-review.json (overwritten every run), so no
+#: surface could show a show's score over time: SpaceX's 5.38 over Oct
+#: 18-Nov 2 (the lowest daily show) was recomputed by hand from git history.
+#: One row per reviewed episode; the dashboard reads the 14-day window
+#: (scripts/generate_dashboard.py build_editorial_score_section). Committed
+#: by daily-audit.yml (on its add-paths whitelist).
+EDITORIAL_SCORE_HISTORY_PATH = PROJECT_ROOT / "api" / "editorial_score_history.json"
+EDITORIAL_SCORE_RETENTION_DAYS = 90
+
+
+def load_editorial_score_history(path: Optional[Path] = None) -> List[dict]:
+    """The committed rows, [] when the file is absent or unreadable."""
+    path = Path(path) if path else EDITORIAL_SCORE_HISTORY_PATH
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    rows = data.get("rows") if isinstance(data, dict) else None
+    return [r for r in (rows or []) if isinstance(r, dict)]
+
+
+def _editorial_row(ep: EpisodeReview, target_date: datetime.date) -> dict:
+    return {
+        "date": _episode_day(ep, target_date).isoformat(),
+        "show": ep.show_slug,
+        "episode": int(ep.episode_num),
+        "score": ep.quality_score,
+        "flags": {c: ep.flags[c] for c in AUDIT_CHECKS if c in ep.flags},
+        # None when the AI layer did not run — "no flags grounded" and "not
+        # measured" are different facts.
+        "grounded": list(ep.grounded_flags) if ep.ai_reviewed else None,
+        "ungrounded": list(ep.ungrounded_flags) if ep.ai_reviewed else None,
+        "critical": sum(1 for i in ep.issues if i.severity == "critical"),
+        "criticals": sorted({critical_key(i.title) for i in ep.issues
+                             if i.severity == "critical"}),
+        "reviewed_on": target_date.isoformat(),
+    }
+
+
+def append_editorial_score_history(
+    target_date: datetime.date,
+    episodes: List[EpisodeReview],
+    path: Optional[Path] = None,
+) -> List[dict]:
+    """Add one row per reviewed episode, prune past the retention window,
+    write the file, and return every kept row.
+
+    A re-review of the same episode (a second run the same day) replaces
+    its row — unless the new run had no AI layer and the old row did, in
+    which case the scored row stands. One row per line, so the daily commit
+    is a few lines of diff."""
+    path = Path(path) if path else EDITORIAL_SCORE_HISTORY_PATH
+    rows: Dict[tuple, dict] = {}
+    for row in load_editorial_score_history(path):
+        rows[(row.get("show"), row.get("episode"), row.get("date"))] = row
+    for ep in episodes:
+        new = _editorial_row(ep, target_date)
+        key = (new["show"], new["episode"], new["date"])
+        old = rows.get(key)
+        if (old and not ep.ai_reviewed
+                and (old.get("score") is not None or old.get("flags"))):
+            continue
+        rows[key] = new
+    cutoff = (target_date - datetime.timedelta(days=EDITORIAL_SCORE_RETENTION_DAYS)).isoformat()
+    kept = sorted((r for r in rows.values() if str(r.get("date") or "") >= cutoff),
+                  key=lambda r: (str(r.get("date") or ""), str(r.get("show") or ""),
+                                 int(r.get("episode") or 0)))
+    body = ",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in kept)
+    text = (
+        "{\n"
+        f'  "retention_days": {EDITORIAL_SCORE_RETENTION_DAYS},\n'
+        f'  "updated": "{target_date.isoformat()}",\n'
+        + ('  "rows": [\n' + body + "\n  ]\n" if kept else '  "rows": []\n')
+        + "}\n"
+    )
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not write %s: %s", path, exc)
+    return kept
+
+
 def run_review(
     target_date: datetime.date,
     create_issues: bool = False,
@@ -2594,16 +3082,25 @@ def run_review(
         print("COPY ABOVE THIS LINE INTO CLAUDE CODE")
         print("=" * 72)
 
-    # Create GitHub issue if requested
+    # The editorial score persists, one row per reviewed episode (Nov 3
+    # 2026). Before the issue step: the repeated-critical rule reads it.
+    history_rows: Optional[List[dict]] = None
+    try:
+        history_rows = append_editorial_score_history(target_date, episodes)
+    except Exception as exc:  # pragma: no cover — never block the report
+        logger.warning("Could not record the editorial score history: %s", exc)
+
+    # The rolling GitHub issue, edited in place with the day's table (Nov 3
+    # 2026); a dated issue only for a critical that repeats. A single-show
+    # run never overwrites the day's table.
     if create_issues:
-        has_actionable = any(
-            i.severity in ("critical", "warning")
-            for ep in episodes for i in ep.issues
-        ) or bool(missed_issues)
-        if has_actionable:
-            create_github_issue(target_date.isoformat(), episodes, missed_issues=missed_issues)
-        else:
-            logger.info("No actionable issues — skipping GitHub issue creation")
+        try:
+            create_github_issue(target_date.isoformat(), episodes,
+                                missed_issues=missed_issues,
+                                history_rows=history_rows,
+                                edit_rolling=not show_filter)
+        except Exception as exc:  # pragma: no cover — never block the report
+            logger.warning("GitHub issue step failed: %s", exc)
 
     # Always write structured JSON for automation + dashboard + daily-audit workflow
     json_path = PROJECT_ROOT / "api" / "daily-review.json"
@@ -2649,6 +3146,13 @@ def write_review_json(
         if issue.severity == "critical" and "Missed episode" in issue.title:
             retry_candidates.append(issue.show)
 
+    # Nov 3 2026: the audit's own precision floor. A YES flag is grounded
+    # when it quoted a sentence the text contains; the share is null when
+    # no flag was raised (unmeasured, never 0 or 1).
+    grounded = sum(len(ep.grounded_flags) for ep in episodes)
+    ungrounded = sum(len(ep.ungrounded_flags) for ep in episodes)
+    scores = [ep.quality_score for ep in episodes if ep.quality_score is not None]
+
     data = {
         "date": target_date.isoformat(),
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -2658,6 +3162,14 @@ def write_review_json(
             "warning_issues": len(warnings),
             "missed_episodes": len([i for i in missed_issues if i.severity == "critical"]),
             "skipped_episodes": len([i for i in missed_issues if i.severity == "warning"]),
+            "ai_reviewed": sum(1 for ep in episodes if ep.ai_reviewed),
+            "ai_scored": len(scores),
+            "quality_score_mean": (round(sum(scores) / len(scores), 2) if scores else None),
+            "audit_flags_grounded": grounded,
+            "audit_flags_ungrounded": ungrounded,
+            "audit_flags_grounded_share": (
+                round(grounded / (grounded + ungrounded), 3)
+                if grounded + ungrounded else None),
         },
         "remediation": {
             "auto_retry_shows": sorted(set(retry_candidates)),
@@ -2679,8 +3191,14 @@ def write_review_json(
             {
                 "show": ep.show_slug,
                 "episode_num": ep.episode_num,
+                "date": _episode_day(ep, target_date).isoformat(),
                 "critical": len([i for i in ep.issues if i.severity == "critical"]),
                 "warnings": len([i for i in ep.issues if i.severity == "warning"]),
+                # None when the AI layer did not run — never 0.
+                "quality_score": ep.quality_score,
+                "flags": {c: ep.flags[c] for c in AUDIT_CHECKS if c in ep.flags},
+                "grounded_flags": list(ep.grounded_flags),
+                "ungrounded_flags": list(ep.ungrounded_flags),
                 "issues": [
                     {"severity": i.severity, "title": i.title, "detail": i.detail}
                     for i in ep.issues

@@ -1786,12 +1786,14 @@ _NAV_T = {
 
 
 # Shows that render a live stock-price pill in the hero. Each show's
-# pipeline hook writes the same-origin JSON; the page JS reads it first
-# and falls back to Yahoo Finance via CORS proxies. yahoo_symbol is the
-# fallback ticker queried at query{1,2}.finance.yahoo.com.
+# pipeline hook writes the same-origin JSON (the printed build-time value);
+# the page JS reads it first and then asks the network's own markets route
+# (engine.newsroom.LIVE_MARKETS_API, the gallery Worker) for the live quote.
+# Nov 3 2026: it used to fall back to Yahoo Finance through two free CORS
+# proxies — every visitor's IP and URL to a third party, on every view.
 _STOCK_WIDGETS: dict = {
-    "tesla": {"ticker": "TSLA", "json_path": "/api/tsla.json", "yahoo_symbol": "TSLA"},
-    "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json", "yahoo_symbol": "SPCX"},
+    "tesla": {"ticker": "TSLA", "json_path": "/api/tsla.json"},
+    "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json"},
 }
 
 # Soft Personal one-field hero form — pages YouTube actually lands on
@@ -1953,6 +1955,22 @@ def _merge_scaffolded_network_registry() -> None:
 # curated resource blocks onto each scaffolded entry (NameError at import time
 # otherwise, which only fires once network_meta.yaml has its first entry).
 _merge_scaffolded_network_registry()
+
+
+def _apply_published_episode_lengths() -> None:
+    """Every show dict's ``episode_length`` goes through ``engine.cadence``
+    (Nov 3 2026): the hardcoded entries and the network_meta.yaml ones alike.
+    A show in ``engine.cadence.COMPUTED_LENGTH_SHOWS`` prints the median of
+    its last 14 episodes; every other show keeps its registry string,
+    byte-identical, until the operator's yes."""
+    from engine.cadence import published_episode_length
+    for slug, cfg in NETWORK_SHOWS.items():
+        if isinstance(cfg, dict) and "episode_length" in cfg:
+            cfg["episode_length"] = published_episode_length(
+                slug, str(cfg.get("episode_length") or ""))
+
+
+_apply_published_episode_lengths()
 
 
 def _apply_seo_meta_overrides() -> None:
@@ -2170,6 +2188,61 @@ def _rank_shows_by_audience(shows, path=None):
     rest = [s for s in shows if _downloads(s["slug"]) is None]
     # Python's sort is stable, so equal counts keep display_order.
     ranked.sort(key=lambda s: -_downloads(s["slug"]))
+    return ranked + rest
+
+
+FUNNEL_PATH = ROOT / "api" / "funnel.json"
+
+
+def _channel_views_by_show(lang, path=None):
+    """Slug -> 30-day YouTube views on the ``lang`` channel, read from the
+    committed ``api/funnel.json`` (``stages.reach.by_show[slug].by_channel
+    [lang].views``, rebuilt nightly by scripts/build_funnel.py).
+
+    ``None`` when the file is missing or unreadable — the callers then fall
+    back to the English ranking — and ``{}`` when it is readable but no show
+    has a row on that channel. A show with no row, or with 0 views, is absent
+    from the mapping (never written as 0).
+    """
+    path = FUNNEL_PATH if path is None else Path(path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        by_show = ((data.get("stages") or {}).get("reach") or {}).get("by_show") or {}
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(by_show, dict):
+        return None
+    out = {}
+    for slug, entry in by_show.items():
+        channel = (entry.get("by_channel") or {}).get(lang) if isinstance(entry, dict) else None
+        views = channel.get("views") if isinstance(channel, dict) else None
+        if isinstance(views, (int, float)) and views > 0:
+            out[slug] = views
+    return out
+
+
+def _rank_shows_by_channel_views(shows, lang, path=None):
+    """Return ``shows`` ranked by the ``lang`` YouTube channel's own 30-day
+    views, for that language's front page (``<lang>/index.html``).
+
+    Nov 3 2026: both language hubs ranked their shows with
+    ``_rank_shows_by_audience`` — ENGLISH RSS downloads — so ru/index.html
+    put SpaceX and Tesla first and Fascinating Frontiers last while
+    @NerraRU's views ran FF 20,074 > SpaceX 5,966 > Tesla 4,901. A show with
+    no row on the channel (Modern Investing on ru and fr, the native Russian
+    shows) keeps its ``display_order`` place AFTER the ranked ones; ties fall
+    back to ``display_order``. A missing or unreadable file, or a file with
+    no row for the channel at all, falls back to the English ranking. Only
+    the language hubs use this: the English homepage keeps
+    ``_rank_shows_by_audience``.
+    """
+    views = _channel_views_by_show(lang, path)
+    if not views:
+        return _rank_shows_by_audience(shows)
+    ranked = [s for s in shows if s["slug"] in views]
+    rest = [s for s in shows if s["slug"] not in views]
+    # Python's sort is stable, so equal counts keep display_order.
+    ranked.sort(key=lambda s: -views[s["slug"]])
     return ranked + rest
 
 
@@ -3558,10 +3631,14 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         narrative_page_url = ""
 
     # Live stock-price pill (Tesla + SpaceX). Each show's pipeline hook
-    # writes a same-origin api/<ticker>.json the page JS reads first, with
-    # a Yahoo-Finance CORS-proxy fallback. SPCX joined when SpaceX IPO'd
-    # June 2026.
+    # writes a same-origin api/<ticker>.json the page JS reads first; the
+    # live quote comes from the network's markets route (Nov 3 2026 — the
+    # Yahoo-Finance CORS-proxy fallback is gone). SPCX joined when SpaceX
+    # IPO'd June 2026.
     stock_widget = _STOCK_WIDGETS.get(slug)
+    if stock_widget:
+        from engine.newsroom import LIVE_MARKETS_API
+        stock_widget = dict(stock_widget, markets_api=LIVE_MARKETS_API)
 
     # Offshore North (Sep 19 2026): the show page carries the campaign's
     # headline facts from the verified record (see generate_offshore_north_dashboard).
@@ -3827,13 +3904,71 @@ _SHOW_DIRS = {
 }
 
 
-def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
+#: "You Might Also Like" reads the post's OWN week (Nov 3 2026): candidates
+#: dated from this many days before the post ...
+RELATED_WINDOW_BEFORE_DAYS = 7
+#: ... to this many days after it (the morning's sibling episodes land on
+#: the same date or the next one).
+RELATED_WINDOW_AFTER_DAYS = 1
+#: The newest candidates the picker samples from.
+RELATED_SAMPLE_POOL = 12
+
+
+def _contemporaneous(candidates, post_date):
+    """The candidates a post dated *post_date* (ISO) may recommend: the
+    other shows' posts of the same week, NEAREST the post's date first —
+    its own day, then the day before it ahead of the day after (the day
+    before already existed when the post was first rendered, so a weekday
+    post with a dozen same-day siblings is never re-drawn by the next
+    morning's episodes; a thin Saturday takes Friday's and Sunday's). A
+    post with nothing in its window takes the nearest-dated posts BEFORE
+    it (stable: a new episode is always newer than an old post), and the
+    network's very first posts, which have nothing before them, take the
+    nearest after. An undated candidate cannot be placed and is left out;
+    an unparseable *post_date* keeps the undated behaviour."""
+    from datetime import date, timedelta
+
+    try:
+        day = date.fromisoformat((post_date or "")[:10])
+    except ValueError:
+        return candidates
+    dated = [p for p in candidates if len(p.get("date_iso") or "") >= 10]
+    lo = (day - timedelta(days=RELATED_WINDOW_BEFORE_DAYS)).isoformat()
+    hi = (day + timedelta(days=RELATED_WINDOW_AFTER_DAYS)).isoformat()
+    window = [p for p in dated if lo <= p["date_iso"][:10] <= hi]
+    if window:
+        def nearness(p):
+            try:
+                delta = (date.fromisoformat(p["date_iso"][:10]) - day).days
+            except ValueError:
+                delta = RELATED_WINDOW_BEFORE_DAYS + 1
+            return (abs(delta), delta)
+        return sorted(window, key=nearness)
+    before = [p for p in dated if p["date_iso"][:10] <= day.isoformat()]
+    if before:
+        return sorted(before, key=lambda p: p["date_iso"][:10],
+                      reverse=True)[:RELATED_SAMPLE_POOL]
+    return sorted(dated, key=lambda p: p["date_iso"][:10])[:RELATED_SAMPLE_POOL]
+
+
+def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed="",
+                             post_date=""):
     """Pick up to *want* cross-show posts for a blog post's rec section.
 
     The show's curated sibling (``NETWORK_SHOWS[slug]["related_show"]``)
     always takes the first slot when it has a recent post, so the
     on-brand recommendation is deterministic; remaining slots are
     sampled from the latest cross-show pool.
+
+    *post_date* (the post's ISO date, Nov 3 2026) narrows the pool to the
+    post's own week — ``RELATED_WINDOW_BEFORE_DAYS`` before it to
+    ``RELATED_WINDOW_AFTER_DAYS`` after — so an October post recommends
+    October's stories and, once its week has passed, never changes again.
+    Before this the pool was the network's newest posts whatever the post's
+    date, so every post in the network was rewritten every morning: 32,647
+    ``blog/`` rewrites in the week to Nov 3, Tesla's plain show commit
+    touching 258 old posts whose only change was these three cards. An
+    empty *post_date* keeps the undated behaviour for callers without one.
     """
     if not cross_show_posts:
         return []
@@ -3847,12 +3982,15 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
     # would make every post in a show recommend the identical three, so the
     # seed is the post, not the show.
     #
-    # This makes a re-run with the SAME candidate pool byte-identical. It does
-    # not freeze the recommendations: the pool is the newest cross-show posts,
-    # so they still move as the network publishes.
+    # This makes a re-run with the SAME candidate pool byte-identical. With
+    # *post_date* the candidate set is the post's own week, so the pool
+    # gaining a newer episode changes nothing a post older than a day
+    # recommends (Nov 3 2026).
     rng = random.Random(zlib.crc32(seed.encode("utf-8")) if seed else None)
     related = []
     candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
+    if post_date:
+        candidates = _contemporaneous(candidates, post_date)
     curated_slug = (NETWORK_SHOWS.get(slug) or {}).get("related_show")
     curated = next(
         (p for p in candidates if p.get("show_slug") == curated_slug),
@@ -3865,7 +4003,7 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
     if len(candidates) <= remaining:
         related.extend(candidates[:remaining])
     else:
-        related.extend(rng.sample(candidates[:12], remaining))
+        related.extend(rng.sample(candidates[:RELATED_SAMPLE_POOL], remaining))
     return related
 
 
@@ -3939,7 +4077,7 @@ def _translated_bodies_for_episode(digest_dir, meta) -> dict:
 
 
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
-                        output_dir=None):
+                        output_dir=None, latest=None):
     """Generate blog post HTML pages for all episodes of a show.
 
     *cross_show_posts*: optional list of dicts from other shows for
@@ -3950,6 +4088,14 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     a guard that wants to assert on a post has to render its own — the
     committed file still carries the previous chrome. Same reason
     ``generate_blog_index`` and ``generate_editorial_page`` take one.
+
+    *latest* (Nov 3 2026): render only the newest *latest* posts by episode
+    number plus the post before them — the neighbour whose "next episode"
+    link the newest post changed — instead of the whole archive. This is
+    the per-show regen every show run, video job and multilingual sweep
+    calls (``--show <slug> --blogs --latest 3``); the nightly's full
+    rebuild stays the path a template change reaches old posts by. With it
+    the returned list holds only the posts rendered.
 
     Returns list of (metadata_dict, output_path) tuples.
     """
@@ -4016,16 +4162,25 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
     _video_links = episode_video_links(digest_dir / "youtube_videos.json",
                                        include_scheduled=True)
 
-    for i, meta in enumerate(all_meta):
+    # The newest ``latest`` posts and the one before them (its next-episode
+    # nav is what the newest post changed); everything older is untouched.
+    first_index = 0
+    if latest and latest > 0:
+        first_index = max(0, len(all_meta) - latest - 1)
+
+    for i in range(first_index, len(all_meta)):
+        meta = all_meta[i]
         prev_post = all_meta[i - 1] if i > 0 else None
         next_post = all_meta[i + 1] if i < len(all_meta) - 1 else None
 
         md_text = meta["_md_path"].read_text(encoding="utf-8")
 
-        # Pick up to 3 recent posts from other shows for cross-show recs.
-        # Seeded on this post's own stem so a rebuild is reproducible.
+        # Pick up to 3 posts from other shows for cross-show recs: the
+        # post's own week, seeded on this post's own stem so a rebuild is
+        # reproducible and a post older than its week never changes.
         _related = _pick_cross_show_related(
-            slug, cross_show_posts, seed=meta["_md_path"].stem)
+            slug, cross_show_posts, seed=meta["_md_path"].stem,
+            post_date=meta.get("date_iso", ""))
 
         html = generate_blog_post_html(
             md_text, meta, cfg, env,
@@ -4195,12 +4350,27 @@ def generate_network_blog_index(*, dry_run=False, all_posts=None):
 
 
 def _cross_show_pool():
-    """Recent posts from every show, newest first, for "You Might Also Like".
+    """Every published post of every show, newest first, for "You Might
+    Also Like".
 
     One builder for both callers (Oct 7 2026). Only ``generate_all_blogs``
     used to collect a pool, so the per-show regen — the path run_show and the
     Voices publisher take for every new episode — passed ``None`` and every
     post it wrote rendered no recommendations at all.
+
+    Nov 3 2026: the whole archive, not the last six episodes per show. The
+    picker reads a post's own week (``_pick_cross_show_related(post_date=)``),
+    so an October post needs October's posts in the pool. The walk reads the
+    show directories' TOP level only — ``glob`` never descends, and a
+    members-only episode's text sits in ``members/`` where no public
+    surface reads it (the Oct 13 gated-shows rule). Measured at 0.8 s over
+    2,751 digests, so it is not a cost. ``site/data/search-index.json`` was
+    measured and NOT used as the source: its title and hook come from the
+    content lake's own parser and differ from the posts' on 138 of 2,747
+    rows (39 of them the label "What You Need to Know:"), and it is rebuilt
+    by the finalize job, a lag behind the morning's episodes; the digests
+    are what the posts themselves are rendered from. One row per episode
+    (a re-run's later filename wins, as ``generate_blog_posts`` decides).
     """
     from engine.blog import extract_blog_metadata
 
@@ -4209,16 +4379,15 @@ def _cross_show_pool():
         digest_dir = ROOT / "digests" / _SHOW_DIRS.get(slug, slug)
         if not digest_dir.exists():
             continue
-        md_files = sorted(digest_dir.glob("*.md"))[-6:]  # Last 6 episodes per show
-        for md_file in md_files:
+        rows: dict[int, dict] = {}
+        for md_file in sorted(digest_dir.glob("*.md")):  # top level only
             try:
                 md_text = md_file.read_text(encoding="utf-8")
                 meta = extract_blog_metadata(md_text, slug, md_file.name, file_path=md_file)
-                # A recommendation must be a page that exists.
                 ep = meta.get("episode_num", 0)
-                if not ep or _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                if not ep:
                     continue
-                pool.append({
+                rows[ep] = {
                     "show_slug": slug,
                     "show_name": cfg["name"],
                     "show_color": cfg["brand_color"],
@@ -4228,9 +4397,14 @@ def _cross_show_pool():
                     "url": f"../../blog/{slug}/ep{ep:03d}.html",
                     "date": meta.get("date", ""),
                     "date_iso": meta.get("date_iso", ""),
-                })
+                }
             except Exception:
                 pass
+        for ep, row in rows.items():
+            # A recommendation must be a page that exists.
+            if _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                continue
+            pool.append(row)
     # Newest first, on the ISO date: the display date is "October 06, 2026",
     # which sorts by month NAME (September after October).
     pool.sort(key=lambda p: p.get("date_iso", ""), reverse=True)
@@ -5366,7 +5540,8 @@ def personal_front_payload(shows, *, gallery_root, now, root=None):
                 continue
             story["stamp"] = _nr.stamp(record.get("date"), _nr.published_at(record), now)
             row = _lt.story_json(story, record=record,
-                                 duration_s=durations.get(story.get("episode_num")))
+                                 duration_s=durations.get(story.get("episode_num")),
+                                 show_dir=root / Path(cfg["json_path"]).parent)
             try:
                 links = videos.get(int(story.get("episode_num") or 0)) or {}
             except (TypeError, ValueError):
@@ -5745,7 +5920,11 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
             "Independent news and podcast network: free shows on AI, Tesla, "
             "SpaceX, investing, world news, space, science and more, every "
             "claim checked against its source. Produced in Vancouver, Canada."),
-        "logo": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
+        # Nov 3 2026: the accounts that exist (network_social_sameas fed only
+        # about.html) and the wordmark PNG as an ImageObject — the SVG icon
+        # string was not a logo a search engine reads.
+        "logo": _blog.publisher_logo_ld(),
+        "sameAs": network_social_sameas(),
         "hasPart": [
             {k: v for k, v in {
                 "@type": "PodcastSeries",
@@ -6422,6 +6601,130 @@ def generate_sitemap(*, dry_run=False, out=None):
     return out_path
 
 
+#: Google News reads a news sitemap for articles published in the last two
+#: days; older URLs are ignored, so the window is the whole point.
+NEWS_SITEMAP_HOURS = 48
+NEWS_SITEMAP_PUBLICATION = "Nerra Network"
+NEWS_SITEMAP_FILE = "news-sitemap.xml"
+_LD_JSON_RE = re.compile(
+    r'<script type="application/ld\+json">\s*(.*?)\s*</script>', re.S)
+
+
+def _post_article_ld(ep_file) -> dict:
+    """The article block (NewsArticle / BlogPosting) of a rendered post's
+    first ``ld+json`` script, or ``{}`` when the page carries none."""
+    try:
+        text = ep_file.read_text(encoding="utf-8", errors="ignore")
+    except Exception:  # noqa: BLE001
+        return {}
+    m = _LD_JSON_RE.search(text[:120000]) or _LD_JSON_RE.search(text)
+    if not m:
+        return {}
+    try:
+        data = json.loads(m.group(1))
+    except ValueError:
+        return {}
+    blocks = data if isinstance(data, list) else [data]
+    for block in blocks:
+        if isinstance(block, dict) and block.get("@type") in (
+                _blog.ARTICLE_TYPE_NEWS, _blog.ARTICLE_TYPE_BLOG):
+            return block
+    return {}
+
+
+def generate_news_sitemap(*, dry_run=False, out=None, now=None, blog_dir=None):
+    """Write ``news-sitemap.xml``: the NewsArticle posts published in the
+    last ``NEWS_SITEMAP_HOURS`` hours, newest first, in Google's news-sitemap
+    extension (publication name + language, publication_date, title).
+
+    Nov 3 2026 (findability): Organic Search was 19 sessions in 28 days on
+    2,966 sitemap URLs, and no surface told Google which pages were NEWS,
+    or when. Each entry is read from the rendered post's own JSON-LD —
+    ``datePublished`` (never file mtime, never the build clock: the sitemap
+    lastmod rule), ``headline`` and ``inLanguage`` — and only a post whose
+    article block is a ``NewsArticle`` qualifies: a narrative essay, a
+    lesson, a dialogue or an interview is not news and is not listed.
+    Redirect stubs are skipped. An empty window writes a valid empty
+    urlset, so the file always exists and always validates.
+
+    *now* (UTC) and *blog_dir* are for tests; *out* overrides the
+    destination the same way ``generate_sitemap`` allows.
+    """
+    from xml.sax.saxutils import escape as _esc
+    from datetime import datetime, timedelta, timezone
+
+    base = "https://nerranetwork.com"
+    now = now or datetime.now(timezone.utc)
+    today = now.date()
+    floor = (now - timedelta(hours=NEWS_SITEMAP_HOURS)).date()
+    _stubs = redirect_stub_paths()
+    blog_dir = Path(blog_dir) if blog_dir else ROOT / "blog"
+
+    rows: list[tuple[str, str, str, str]] = []  # (loc, date, language, title)
+    if blog_dir.is_dir():
+        for show_dir in sorted(blog_dir.iterdir()):
+            if not show_dir.is_dir():
+                continue
+            for ep_file in sorted(show_dir.glob("ep*.html")):
+                rel = f"blog/{show_dir.name}/{ep_file.name}"
+                if rel in _stubs:
+                    continue
+                # A cheap date read first: the window excludes almost every
+                # page before its JSON-LD has to be parsed.
+                try:
+                    head = ep_file.read_text(encoding="utf-8", errors="ignore")[:20000]
+                except Exception:  # noqa: BLE001
+                    continue
+                m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', head)
+                if not m:
+                    continue
+                try:
+                    published = datetime.strptime(m.group(1), "%Y-%m-%d").date()
+                except ValueError:
+                    continue
+                if published < floor or published > today:
+                    continue
+                article = _post_article_ld(ep_file)
+                if article.get("@type") != _blog.ARTICLE_TYPE_NEWS:
+                    continue
+                title = " ".join(str(article.get("headline") or "").split())
+                if not title:
+                    continue
+                language = str(article.get("inLanguage") or "en").strip() or "en"
+                rows.append((f"{base}/{rel}", published.isoformat(), language, title))
+
+    rows.sort(key=lambda r: (r[1], r[0]), reverse=True)
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+             '        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">']
+    for loc, published, language, title in rows:
+        lines += [
+            "  <url>",
+            f"    <loc>{_esc(loc)}</loc>",
+            "    <news:news>",
+            "      <news:publication>",
+            f"        <news:name>{_esc(NEWS_SITEMAP_PUBLICATION)}</news:name>",
+            f"        <news:language>{_esc(language)}</news:language>",
+            "      </news:publication>",
+            f"      <news:publication_date>{published}</news:publication_date>",
+            f"      <news:title>{_esc(title)}</news:title>",
+            "    </news:news>",
+            "  </url>",
+        ]
+    lines.append("</urlset>")
+    lines.append("")
+    xml = "\n".join(lines)
+
+    out_path = Path(out) if out else ROOT / NEWS_SITEMAP_FILE
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(rows)} news URLs)")
+        return None
+    out_path.write_text(_strip_lone_surrogates(xml), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(rows)} news URLs)")
+    return out_path
+
+
 # ---------------------------------------------------------------------------
 # 404 page
 # ---------------------------------------------------------------------------
@@ -6515,7 +6818,25 @@ def _count_languages() -> int:
 # Copy per show. Kept here rather than in the show YAML because it is page
 # copy, not pipeline config, and because it must be written by someone who
 # can read it — an auto-translated landing page is exactly the thing that
-# makes an audience distrust a signup form.
+# makes an audience distrust it.
+#
+# Nov 3 2026 (six-month review, register ``ru-spacex-pilot-2026-07-30``:
+# MISS): the Sunday letter the page promised («Хроника SpaceX» / «Хроника
+# Tesla») captured nobody in three months, while 89% of @NerraRU's views
+# arrive from the Shorts feed. The one ask is now the two things that
+# audience actually does — subscribe to the channel, add the Russian RSS —
+# and no page copy may promise a letter again. The button labels are shared
+# (``_RU_LANDING_ASK``); ``ask_title`` / ``ask_description`` are per show.
+_RU_LANDING_ASK = {
+    "subscribe_label": "Подписаться на @NerraRU",
+    "rss_label": "Добавить RSS в приложение",
+    "hub_label": "Все подкасты по-русски",
+    "ask_note": (
+        "Без писем и форм: подписка на YouTube или RSS в вашем "
+        "подкаст-приложении — и новые выпуски находят вас сами."
+    ),
+}
+
 _RU_LANDING_COPY = {
     "spacex": {
         "show_name_ru": "SpaceX по-русски",
@@ -6526,15 +6847,10 @@ _RU_LANDING_COPY = {
             "контраргумент в каждом выпуске и никакого пересказа "
             "заголовков."
         ),
-        "magnet_title": "«Хроника SpaceX» — письмо по воскресеньям",
-        "magnet_description": (
-            "Одно письмо в неделю: главное за семь дней одним списком, "
-            "окно следующего запуска и ссылки на выпуски, которые стоит "
-            "послушать. По-русски."
-        ),
-        "magnet_note": (
-            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
-            "в каждом письме."
+        "ask_title": "Новый выпуск — каждый день",
+        "ask_description": (
+            "Подпишитесь на канал @NerraRU, где каждый выпуск выходит "
+            "по-русски, или добавьте RSS-ленту в своё подкаст-приложение."
         ),
         "listen_note": (
             "Русская озвучка выходит вслед за английским выпуском — "
@@ -6554,15 +6870,11 @@ _RU_LANDING_COPY = {
             "TSLA и один честный контраргумент в каждом выпуске. "
             "Источники названы, никакого пересказа заголовков."
         ),
-        "magnet_title": "«Хроника Tesla» — письмо по воскресеньям",
-        "magnet_description": (
-            "Одно письмо в неделю: главное о Tesla за семь дней одним "
-            "списком и ссылки на выпуски, которые стоит послушать. "
-            "По-русски."
-        ),
-        "magnet_note": (
-            "Одно письмо в неделю, ничего кроме. Отписка — одной ссылкой "
-            "в каждом письме."
+        "ask_title": "Новый выпуск — каждый день",
+        "ask_description": (
+            "Подпишитесь на канал @NerraRU, где каждый выпуск о Tesla "
+            "выходит по-русски, или добавьте RSS-ленту в своё "
+            "подкаст-приложение."
         ),
         "listen_note": (
             "Русская озвучка выходит вслед за английским выпуском — "
@@ -6771,8 +7083,29 @@ def generate_ru_landing_page(slug, *, dry_run=False):
         "external": True,
     })
 
-    capture_list = ((show_yaml.get("funnel") or {}).get("capture_tag")
-                    or "gallery")
+    # The one ask (Nov 3 2026): the channel subscribe and the Russian feed.
+    # ``channel_subscribe_url`` is the one owner of the subscribe URL; the
+    # feed is this show's own RU track; the hub link is internal and so
+    # carries no utm_* (engine.funnel's rule). Nothing here posts to the
+    # subscribe Worker any more — ``funnel.capture_tag`` in the show YAML
+    # stays as data for scripts/build_funnel.py's pilot rows.
+    from engine.video_metadata import channel_subscribe_url
+    ask_links = [{
+        "kind": "subscribe",
+        "label": _RU_LANDING_ASK["subscribe_label"],
+        "url": channel_subscribe_url("ru"),
+        "external": True,
+    }]
+    if ru_feed:
+        ask_links.append({
+            "kind": "rss",
+            "label": _RU_LANDING_ASK["rss_label"],
+            "url": ru_feed,
+            "external": False,
+        })
+    hub_path = _show_lang.language_hub_path("ru")
+    hub_link = ({"label": _RU_LANDING_ASK["hub_label"],
+                 "url": f"{prefix}{hub_path}"} if hub_path else None)
 
     env = _get_jinja_env()
     template = env.get_template("ru_landing.html.j2")
@@ -6793,7 +7126,9 @@ def generate_ru_landing_page(slug, *, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "episodes": _ru_landing_episodes(slug),
         "listen_links": listen_links,
-        "capture_list": capture_list,
+        "ask_links": ask_links,
+        "ask_note": _RU_LANDING_ASK["ask_note"],
+        "hub_link": hub_link,
         # One ask per landing page. The footer's show-picker offers
         # fifteen English show names and would tag a Russian visitor
         # onto English dailies — a competing CTA and the wrong one.
@@ -7194,11 +7529,22 @@ def generate_language_hub_page(lang, *, dry_run=False, output_dir=None,
         lang, in_language, network_shows=NETWORK_SHOWS, root=ROOT,
         gallery_root=gallery_root, blog_url_for=_post, audio_url_for=_audio,
         now=now, hub_for=_lt.hub_by_slug(in_language))
-    ranked = _rank_shows_by_audience(in_language)
+    # Nov 3 2026: the channel's own views rank this page, and only a show the
+    # channel's audience watches (views > 0) or a show made in the language
+    # may be the rotated lead — a Canadian markets story from a show with no
+    # row on the channel led both hubs on Nov 2. No funnel file: the English
+    # ranking and the English rotation, as before.
+    channel_views = _channel_views_by_show(lang)
+    ranked = _rank_shows_by_channel_views(in_language, lang)
+    lead_shows = None
+    if channel_views is not None:
+        lead_shows = [s["slug"] for s in in_language
+                      if s.get("page_lang") == lang or channel_views.get(s["slug"], 0) > 0]
     page = _front.assemble(
         stories, lang=lang, audience_order=[s["slug"] for s in ranked],
         flagships=_brand.FLAGSHIP_SHOW_SLUGS,
-        section_headings=copy.get("section_headings") or {})
+        section_headings=copy.get("section_headings") or {},
+        lead_shows=lead_shows)
     tagline = {"ru": _brand.NETWORK_TAGLINE_RU, "fr": _brand.NETWORK_TAGLINE_FR}.get(
         lang, _brand.NETWORK_TAGLINE)
 
@@ -9617,6 +9963,19 @@ def main():
         help="Generate pages for a specific show slug (e.g. tesla, omni_view)",
     )
     parser.add_argument(
+        "--latest",
+        type=int,
+        default=None,
+        metavar="N",
+        help=(
+            "With --show --blogs: render only the newest N posts and the "
+            "one before them (plus the show's blog index pages), not the "
+            "whole archive. The show run, the video job and the multilingual "
+            "sweep pass 3 (Nov 3 2026); the nightly's full rebuild is how a "
+            "template change reaches every old post."
+        ),
+    )
+    parser.add_argument(
         "--blog-aggregates",
         action="store_true",
         help=(
@@ -9767,7 +10126,8 @@ def main():
         # nightly rebuild. run_show never hit it because it writes the post
         # HTML itself before calling here.
         if args.blogs:
-            generate_blog_posts(args.show, dry_run=args.dry_run)
+            generate_blog_posts(args.show, dry_run=args.dry_run,
+                                latest=args.latest)
         # The show's claims ledger page + the network totals (Oct 1 2026):
         # a new episode adds a row, so the per-episode path refreshes it.
         # Own ledger page ONLY — never the network claims.html (see the
@@ -9858,6 +10218,7 @@ def main():
         generate_language_hub_pages(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
+        generate_news_sitemap(dry_run=args.dry_run)
         # Regenerate JSON API for mobile app
         try:
             import subprocess
@@ -9904,6 +10265,7 @@ def main():
         generate_all_blogs(dry_run=args.dry_run)
     if args.sitemap:
         generate_sitemap(dry_run=args.dry_run)
+        generate_news_sitemap(dry_run=args.dry_run)
     if args.player:
         generate_player_page(dry_run=args.dry_run)
     if args.how_to_listen:

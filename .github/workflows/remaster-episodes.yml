@@ -1,0 +1,167 @@
+name: Re-master Episodes
+
+# Bring PUBLISHED episodes to the network's -16 LUFS, in place.
+#
+# Nov 3 2026: Unintended Consequences, Vancouver and Collingwood — the
+# three shows with no music file — shipped every episode at -25 LUFS
+# (208 items on their feeds), 9 LU under every other show in a listener's
+# queue. The voice-only path masters to -16 from the next episode; the
+# back catalogue stays where it was until this runs.
+#
+# This is a GAIN, not a re-synthesis: no TTS spend, no spoken-text-gate
+# risk, no sample moves in time, so the chapters, transcript and VTT stay
+# right. scripts/remaster_episodes.py pulls each published MP3 back,
+# measures it, skips it when it is already in band, otherwise renders a
+# static gain through a limiter with the shows' one master encode,
+# re-measures, and REFUSES to upload a file outside -16 ± 1.5 LUFS or
+# over -1 dBTP.
+#
+# DRY RUN IS THE DEFAULT. Dispatch once to read the plan in the job
+# summary (before-reading and planned gain per episode); then dispatch
+# again with apply=true. The first apply should be ONE episode, listened
+# to on a phone speaker and on headphones beside a music show's episode,
+# before `all`.
+#
+# The upload goes to the SAME R2 key, so the enclosure URL never changes
+# and no subscriber is re-pointed; the feed item keeps its GUID, link and
+# enclosure and only its duration and byte length are corrected. The
+# edge may serve the old bytes for up to four hours (cache-control
+# max-age 14400); the run logs cf-cache-status after each upload.
+#
+# It does NOT touch YouTube, the Apple video feed's MP4 or a past Nerra
+# Daily edition that spliced the episode: those keep the old level.
+# Nerra Personal members already hear these shows levelled by the same
+# gain.
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Show slug (e.g. unintended_consequences)'
+        required: true
+        type: string
+      episodes:
+        description: 'Which episodes: a number (e.g. 161), all, or since:YYYYMMDD'
+        required: true
+        type: string
+      apply:
+        description: 'Upload, refresh the feed and write the log. Leave false for a dry run.'
+        required: false
+        type: boolean
+        default: false
+      limit:
+        description: 'Episodes rendered per run (0 = no cap). A batch the operator can listen to.'
+        required: false
+        type: string
+        default: '20'
+
+permissions:
+  contents: write
+
+concurrency:
+  # A run rewrites a show's feed and its remaster log. Two at once on the
+  # same show would race each other's commits.
+  group: remaster-${{ inputs.show }}
+  cancel-in-progress: false
+
+jobs:
+  remaster:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      # The gain is rendered and measured with ffmpeg; the composite
+      # falls back to the pinned static build when apt is down.
+      - name: Install ffmpeg
+        uses: ./.github/actions/setup-ffmpeg
+
+      - name: Re-master
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          SHOW_INPUT: ${{ inputs.show }}
+          EPISODES_INPUT: ${{ inputs.episodes }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          LIMIT_INPUT: ${{ inputs.limit }}
+        run: |
+          set -o pipefail
+          args="--show ${SHOW_INPUT} --limit ${LIMIT_INPUT:-20}"
+          case "${EPISODES_INPUT}" in
+            all) args="$args --all" ;;
+            since:*) args="$args --since ${EPISODES_INPUT#since:}" ;;
+            *) args="$args --episode ${EPISODES_INPUT}" ;;
+          esac
+          if [ "${APPLY_INPUT}" = "true" ]; then
+            args="$args --apply"
+          fi
+
+          # Keep the summary even when the run aborts: a refusal is the
+          # interesting case and the operator needs to see which episode
+          # and why.
+          set +e
+          # shellcheck disable=SC2086
+          python scripts/remaster_episodes.py $args 2>&1 \
+            | tee /tmp/remaster.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          # `|| true`: under `set -e` + pipefail a run that exited before
+          # printing REMASTER_SUMMARY (a slug typo, no matching item, a
+          # traceback) would otherwise kill this step here, before the
+          # summary and the env lines below — the abort case is the one
+          # the summary exists for.
+          applied=$(grep -o 'REMASTER_SUMMARY applied=[0-9]*' /tmp/remaster.txt | tail -1 | sed 's/.*=//' || true)
+          echo "remaster_status=$status" >> "$GITHUB_ENV"
+          echo "remaster_applied=${applied:-0}" >> "$GITHUB_ENV"
+
+          {
+            echo "## Re-master ${SHOW_INPUT} (${EPISODES_INPUT})"
+            echo
+            if [ "${APPLY_INPUT}" = "true" ]; then
+              echo "**Mode: APPLY** — ${applied:-0} episode(s) re-mastered, verified and uploaded to the same key."
+              if [ "$status" -ne 0 ]; then
+                echo "**Some episodes were refused or failed** — nothing was uploaded for those. See the log below."
+              fi
+            else
+              echo "**Mode: dry run** — nothing was written."
+              echo "Re-dispatch with \`apply: true\` to render, verify, upload and refresh the feed."
+            fi
+            echo
+            echo '```'
+            grep -v 'Loaded config' /tmp/remaster.txt | tail -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit $status
+
+      # Only the feed and the log are committed. The MP3s are gitignored
+      # and served from R2 (landmine #1 — episode audio never enters git
+      # history). A batch where one episode was refused still commits the
+      # feed for the ones that were uploaded: their byte lengths must
+      # follow the objects that already changed.
+      - name: Commit the feed and the log
+        if: ${{ !cancelled() && inputs.apply && env.remaster_applied != '0' }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            *.rss
+            digests/**/remaster_log.json
+          commit-message: |
+            Re-master ${{ inputs.show }} (${{ inputs.episodes }}) to -16 LUFS
+
+            A static gain through a limiter on the published audio, uploaded
+            to the same R2 key so the enclosure URL is unchanged. The feed
+            items keep their GUIDs and are corrected for duration and byte
+            length; remaster_log.json records the before/after readings.
+          recovery-on-failure: 'true'
+          recovery-show: ${{ inputs.show }}

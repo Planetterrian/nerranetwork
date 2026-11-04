@@ -1880,8 +1880,8 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        ${noteHtml}
        ${changesHtml}
        <p>${open.length
-         ? "Have another listen. Nothing goes out until you have heard it and said yes."
-         : "Thank you for the time you gave me. Your episode is edited and ready, and nothing goes out until you have heard it and said yes."}</p>
+         ? "Have another listen. You have a week to approve it, cut from it or refuse it; after that it goes ahead as sent, and a takedown stays available."
+         : "Thank you for the time you gave me. Your episode is edited and ready. You have a week to approve it, cut from it or refuse it; after that it goes ahead as sent, and a takedown stays available."}</p>
        <p><a href="${esc(link)}">Listen to the episode and read the transcript</a></p>
        <p>At the bottom of that page you pick one of three things: approve it
        as it stands, approve it with a small correction (like a name said
@@ -2208,15 +2208,15 @@ export function guestReviewState(pkg: any): ReviewState {
     return { code: "changes_pending",
       headline: `You asked for changes on ${dayOf(r.at || pkg?.guest_reviewed_at)}.`,
       detail: `${what ? `What you asked for: ${what}. ` : ""}Patrick has them. When the new cut is ready, Mira will ` +
-        "email you to listen again. Nothing is published until you have heard it." };
+        "email you to listen again before your week to approve, cut or refuse starts over." };
   }
   const done = lastResolved(pkg);
   if (status === "approved_by_patrick" && done) return { code: "changes_made",
     headline: `Your changes are made (${dayOf(done.resolved_at)}).`,
-    detail: "Listen again below, then choose. Nothing is published until you do." +
-      (pkg?.guest_review_deadline ? ` If we have not heard from you by ${dayOf(pkg.guest_review_deadline)}, we will take that as approval.` : "") };
+    detail: "Listen again below, then choose: approve it, cut from it or refuse it." +
+      (pkg?.guest_review_deadline ? ` If we have not heard from you by ${dayOf(pkg.guest_review_deadline)}, it goes ahead as sent; a takedown stays available afterwards.` : "") };
   if (status === "approved_by_patrick") return { code: "waiting",
-    headline: "Waiting for you. Nothing is published until you choose.",
+    headline: "Waiting for you: approve it, cut from it or refuse it.",
     detail: pkg?.guest_review_deadline
       ? `If we have not heard from you by ${dayOf(pkg.guest_review_deadline)}, we will take that as approval.`
       : "Take your time." };
@@ -2390,7 +2390,7 @@ button:disabled{opacity:.5;cursor:default}.secondary{background:#4a5568}
 ${stateBoxHtml(state)}
 <p>Here is the recording and the transcript: this is what would be published.
 Listen, read, and then make your choice at the bottom of the page.
-Nothing is published until you have chosen${deadline ? ` (or until ${esc(deadline)}, when silence counts as approval)` : ""}.</p>
+You have ${deadline ? `until ${esc(deadline)}` : "a week"} to approve it, cut from it or refuse it; after that it goes ahead as sent, and a takedown stays available afterwards.</p>
 ${listenUrl
   ? `<audio controls preload="none" src="${esc(listenUrl)}" style="width:100%;margin:1rem 0"></audio>`
   : `<p><em>The audio is still being processed — the transcript below is final. Check back shortly, or choose on the transcript alone.</em></p>`}
@@ -4835,12 +4835,16 @@ export async function runTick(env: Env, fired: Date, source: TickSource): Promis
   // the SLOT's, whichever clock is running it.
   const minute = slot.getUTCMinutes();
   const halfHour = minute % 30 === 0;
+  // Nov 3 2026: the fire-tick catch-all is hourly. fireTickDue is fail-open
+  // (an unreadable Supabase dispatches), so the unconditional tick is pure
+  // redundancy; at :00/:30 it was 48 of the day's 83 fire-tick runs.
+  const hourTop = minute === 0;
   const gate2Hour = slot.getUTCHours() === 17 && minute === 0;
   {
     try {
-      // Oct 13 2026: gated on the schedule (fireTickDue); the half-hour
-      // ticks dispatch unconditionally as the catch-all.
-      if (halfHour || await fireTickDue(env)) {
+      // Oct 13 2026: gated on the schedule (fireTickDue); the top-of-hour
+      // tick dispatches unconditionally as the catch-all.
+      if (hourTop || await fireTickDue(env)) {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       }
     } catch (err: any) {

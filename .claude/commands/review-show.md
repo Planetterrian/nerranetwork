@@ -164,11 +164,13 @@ have very different real-world hit rates. Apply these rules:
   shape, the current stock of a queue, or a file the day's runs have not
   committed yet is red on days nothing is wrong: judge episodes at least
   a day old, treat floors as runways, pin fixtures on what they mean.
-- **Closed-unmerged review PRs are NOT automatically rejections.** Before
-  writing `do_not_retry` from a closed PR, check its closure comment:
-  infrastructure closes (content landed via another PR, unmergeable
-  branch, API failures) leave the ideas live. Record a rejection only on
-  an explicit operator signal.
+- **A review PR closed WITHOUT a label is unknown; `rejected` is the
+  signal.** `scripts/review_pr_outcomes.py` (nightly) asks for a label on
+  every unlabelled closed-unmerged `agent/review-*` PR and, on `rejected`,
+  splices the PR's proposed items into that ledger's `do_not_retry`.
+  Infrastructure closes are `superseded` (content landed another way) or
+  `stale` (unmergeable branch, API failure) and leave the ideas live. Never
+  write `do_not_retry` from a bare close.
 
 ## Phase 3 — Implement
 
@@ -261,8 +263,10 @@ have very different real-world hit rates. Apply these rules:
    predictions into docs only; the rotation could not score them.) A doc
    containing predictions without a matching ledger entry is an unfinished
    deliverable.
-5. Update the show's quality-pass notes in `CLAUDE.md` (concise — follow the
-   existing June 2026 entries' style) if behavior changed.
+5. If behavior changed, add the rules that bind to `CLAUDE.md` — at most ten
+   lines (the rules, the guard's name, the link); the narrative goes to
+   `docs/reviews/` or `docs/claude_md_history/`, never into `CLAUDE.md`.
+   `tests/test_claude_md_size.py` enforces the size.
 6. Branch named `agent/review-<slug>-<YYYYMMDD>` (this exact prefix is how
    the scheduler detects an in-flight review and skips the slug). Commit,
    push with `git push -u origin <branch>`, then open a **draft** PR via

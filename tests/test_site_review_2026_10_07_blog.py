@@ -30,6 +30,19 @@ def _template(name: str) -> str:
     return re.sub(r"\{#.*?#\}", "", src, flags=re.S)
 
 
+def _blog_css() -> str:
+    """The post stylesheet (Nov 3 2026: the tail of the template's <style>
+    block moved to styles/blog.css, the above-the-fold head stays inline)."""
+    css = (ROOT / "styles" / "blog.css").read_text(encoding="utf-8")
+    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+
+
+def _post_css() -> str:
+    """Every rule a rendered post is styled by: the inline head, then the
+    shared sheet — the original block's order."""
+    return _template("blog_post.html.j2") + "\n" + _blog_css()
+
+
 def _latest_digest(show_dir: str) -> Path:
     paths = sorted(
         p for p in (ROOT / "digests" / show_dir).glob("*_Ep*_*.md")
@@ -202,12 +215,12 @@ class TestHeadingOutline:
 class TestReadability:
     def test_item_bodies_are_full_text_colour(self):
         block = re.search(r"\.blog-article \.blog-list-cont\s*\{([^}]*)\}",
-                          _template("blog_post.html.j2")).group(1)
+                          _blog_css()).group(1)
         assert "var(--nn-text)" in block and "muted" not in block
 
     def test_body_has_a_reading_measure(self):
         block = re.search(r"\.blog-article \.blog-body-lang\s*\{([^}]*)\}",
-                          _template("blog_post.html.j2")).group(1)
+                          _blog_css()).group(1)
         m = re.search(r"max-width:\s*(\d+)ch", block)
         assert m and 66 <= int(m.group(1)) <= 75
 
@@ -215,7 +228,7 @@ class TestReadability:
 class TestTextContrast:
     def test_chapter_times_use_the_text_variant(self):
         block = re.search(r"\.blog-chapter-list \.chapter-time\s*\{([^}]*)\}",
-                          _template("blog_post.html.j2")).group(1)
+                          _blog_css()).group(1)
         assert "var(--show-color-text" in block
 
     @pytest.mark.parametrize("name", ["blog_index.html.j2", "network_blog_index.html.j2"])

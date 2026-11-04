@@ -2633,6 +2633,30 @@ def run(args: argparse.Namespace) -> None:
         try:
             with metrics.stage("generate_digest"):
                 x_thread = generate_digest(template_vars, config, tracker=tracker)
+            # Nov 3 2026: the expansion retry's outcome is recorded (it had
+            # fired on every flagship episode of the week, logged and costed,
+            # with nothing reading whether it fired or what it changed).
+            try:
+                from engine.generator import last_digest_expansion
+                _exp = last_digest_expansion()
+                if _exp:
+                    metrics.record("digest_expansion_fired", bool(_exp.get("fired")))
+                    metrics.record("digest_expansion_attempts", int(_exp.get("attempts") or 0))
+                    metrics.record("digest_expansion_words_before", int(_exp.get("words_before") or 0))
+                    if _exp.get("words_after") is not None:
+                        metrics.record("digest_expansion_words_after", int(_exp["words_after"]))
+                    metrics.record("digest_expansion_floor", int(_exp.get("floor") or 0))
+                    # Nov 3 2026 (digest fact floor): on a show with
+                    # llm.min_digest_facts the retry fires and is judged on
+                    # facts; the digest-fact-floor-2026-11-03 readout reads
+                    # these beside digest_fact_free_pct from metrics_ep*.json.
+                    if _exp.get("floor_facts") is not None:
+                        metrics.record("digest_expansion_floor_facts", int(_exp["floor_facts"]))
+                        metrics.record("digest_expansion_facts_before", int(_exp.get("facts_before") or 0))
+                        if _exp.get("facts_after") is not None:
+                            metrics.record("digest_expansion_facts_after", int(_exp["facts_after"]))
+            except Exception as _exp_exc:  # noqa: BLE001 — a metric never breaks a run
+                logger.debug("digest expansion metric skipped: %s", _exp_exc)
         except LLMRefusalError as e:
             logger.error("PIPELINE ABORTED: %s", e)
             logger.error(
@@ -3527,10 +3551,13 @@ def run(args: argparse.Namespace) -> None:
         # Host-experience lines (Oct 30 2026, Offshore North): the brief's
         # "Dan's lens" and any sentence drawn from the host's own flying,
         # foiling or sailing. Opt-in, before the source-integrity gate.
+        # Nov 3 2026: ``host_experience_mode: experience`` (Env Intel) removes
+        # first-person professional-experience claims instead.
         if getattr(config, "host_experience_filter", False):
             try:
                 from engine.host_experience import strip_host_experience
-                x_thread, _host_n = strip_host_experience(x_thread)
+                x_thread, _host_n = strip_host_experience(
+                    x_thread, mode=getattr(config, "host_experience_mode", "frames"))
                 if _host_n:
                     logger.info("Removed %d host-experience sentence(s) from the digest",
                                 _host_n)
@@ -4469,7 +4496,9 @@ def run(args: argparse.Namespace) -> None:
             if getattr(config, "host_experience_filter", False):
                 try:
                     from engine.host_experience import strip_host_experience
-                    podcast_script, _host_s = strip_host_experience(podcast_script)
+                    podcast_script, _host_s = strip_host_experience(
+                        podcast_script,
+                        mode=getattr(config, "host_experience_mode", "frames"))
                     if _host_s:
                         logger.info("Removed %d host-experience sentence(s) from the script",
                                     _host_s)
@@ -5469,7 +5498,9 @@ def run(args: argparse.Namespace) -> None:
                     logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
 
                 # 10. Audio mixing
-                from engine.audio import get_audio_duration, mix_with_music, normalize_voice
+                from engine.audio import (
+                    get_audio_duration, master_voice_track, measure_loudness, mix_with_music,
+                )
 
                 final_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.mp3"
 
@@ -5502,18 +5533,24 @@ def run(args: argparse.Namespace) -> None:
                             ),
                             denoise=config.audio.voice_denoise,
                             declick=config.audio.voice_declick,
+                            dynamics=config.audio.voice_dynamics or None,
                             breathers=story_cue_starts or None,
                         )
                         metrics.record("story_break_cues", len(story_cue_starts))
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
-                        normalize_voice(voice_for_mix, final_mp3,
-                                        denoise=config.audio.voice_denoise,
-                                        declick=config.audio.voice_declick)
+                        master_voice_track(Path(voice_for_mix), final_mp3,
+                                           denoise=config.audio.voice_denoise,
+                                           declick=config.audio.voice_declick,
+                                           dynamics=config.audio.voice_dynamics or None)
                 else:
-                    normalize_voice(voice_for_mix, final_mp3,
-                                    denoise=config.audio.voice_denoise,
-                                    declick=config.audio.voice_declick)
+                    # Nov 3 2026: the voice-only path masters to the published
+                    # -16 LUFS like every music show (it shipped at -25 on
+                    # UC, Vancouver and Collingwood for 208 episodes).
+                    master_voice_track(Path(voice_for_mix), final_mp3,
+                                       denoise=config.audio.voice_denoise,
+                                       declick=config.audio.voice_declick,
+                                       dynamics=config.audio.voice_dynamics or None)
                 if voice_for_mix != raw_mp3:
                     Path(voice_for_mix).unlink(missing_ok=True)
 
@@ -5607,6 +5644,32 @@ def run(args: argparse.Namespace) -> None:
                             logger.warning("Debut song append failed (non-fatal): %s", exc)
                     else:
                         logger.warning("Debut song file not found: %s", _song_path)
+
+                # 10a-ter. The published loudness is a number the pipeline
+                # reads (Nov 3 2026). Three shows shipped 208 episodes at -25
+                # LUFS against the published -16 and nothing measured the file
+                # that went out: audio_duration_s was the only thing recorded
+                # about the audio. ONE ebur128 decode of the finished MP3
+                # (after every edit that changes it — the debut song above)
+                # records integrated loudness, loudness range and true peak.
+                # An unmeasured file records NOTHING (never a zero); the
+                # dashboard reads audio_loudness_in_spec_share_7d and
+                # audio_loudness_range_median_7d from these.
+                _loudness = measure_loudness(final_mp3)
+                if _loudness:
+                    if _loudness.get("I") is not None:
+                        metrics.record("audio_integrated_lufs", _loudness["I"])
+                    if _loudness.get("LRA") is not None:
+                        metrics.record("audio_loudness_range_lu", _loudness["LRA"])
+                    if _loudness.get("TP") is not None:
+                        metrics.record("audio_true_peak_dbtp", _loudness["TP"])
+                    logger.info(
+                        "Final audio loudness: %s LUFS integrated, LRA %s LU, "
+                        "true peak %s dBTP",
+                        _loudness.get("I"), _loudness.get("LRA"), _loudness.get("TP"),
+                    )
+                else:
+                    logger.warning("Final audio loudness: unmeasured (nothing recorded)")
 
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).

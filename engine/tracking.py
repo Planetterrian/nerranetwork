@@ -55,6 +55,11 @@ _STEP_LABELS = {
     "scene_briefs": "Scene briefs (YouTube imagery)",
     "youtube_titles": "YouTube title bundle",
     "episode_review": "Episode review (daily audit)",
+    # Nov 3 2026: the Nerra Voices pipeline's calls (pipelines/voices/costs.py).
+    # ``common.llm()`` discarded every usage object before this.
+    "voices_llm": "Nerra Voices (LLM)",
+    "editorial_passes": "Nerra Voices editorial passes",
+    "interview_retro": "Nerra Voices interview retrospective",
 }
 
 TTS_PROVIDER_PRICING = {
@@ -74,6 +79,26 @@ TTS_PROVIDER_PRICING = {
 # source-count reporting is priced rather than dropped.
 SEARCH_COST_PER_CALL = 0.005
 SEARCH_COST_PER_SOURCE = 0.025
+
+# xAI Voice Agent (Mira's live interview rooms, the rehearsal fixture rooms
+# and her narration takes) is billed per SESSION MINUTE. Nov 3 2026: this
+# rate had lived only in pipelines/voices/rehearsal.py and reached only the
+# rehearsal report — 34 rooms (~870 minutes) in two days were in no credit
+# file, and the interview shows read $0.00 on Mission Control. The figure is
+# an ESTIMATE until the operator reads the xAI invoice (the credit line is
+# labelled ``estimated``); XAI_VOICE_COST_PER_MIN overrides it. One owner of
+# the rate, like every other price in this module.
+VOICE_AGENT_COST_PER_MIN = 0.05
+VOICE_AGENT_RATE_BASIS = "estimated"
+
+
+def voice_agent_rate_per_min() -> float:
+    """The Voice Agent rate per session minute (env override, else the
+    estimate above)."""
+    try:
+        return float(os.getenv("XAI_VOICE_COST_PER_MIN", "").strip() or VOICE_AGENT_COST_PER_MIN)
+    except ValueError:
+        return VOICE_AGENT_COST_PER_MIN
 
 # xAI Grok pricing per 1M tokens (input/output/cached_input).
 # Only models actually reachable by the current code are listed — historical
@@ -490,6 +515,45 @@ def record_search_usage(
     )
 
 
+def record_voice_agent_usage(
+    tracker: dict,
+    minutes: float,
+    sessions: int = 1,
+    rate_per_min: float | None = None,
+    provider: str = "xai-voice-agent",
+) -> None:
+    """Record xAI Voice Agent session minutes (Mira's rooms).
+
+    Nov 3 2026: a live room is ONE session (Mira; the guest is a browser),
+    a rehearsal room is TWO (Mira and the fixture guest), a narration take
+    is one short session each. Additive, so a room file can take the
+    narration minutes after the room's own. The cost is ``minutes × rate``
+    at :func:`voice_agent_rate_per_min`, and the line carries ``basis:
+    estimated`` until the invoice is read — a reader must never take it for
+    a measured figure.
+    """
+    rate = float(rate_per_min) if rate_per_min is not None else voice_agent_rate_per_min()
+    agent = tracker["services"].setdefault(
+        "voice_agent",
+        {
+            "provider": provider,
+            "minutes": 0.0,
+            "sessions": 0,
+            "rate_per_min": rate,
+            "basis": VOICE_AGENT_RATE_BASIS,
+            "estimated_cost_usd": 0.0,
+        },
+    )
+    agent["provider"] = provider
+    agent["rate_per_min"] = rate
+    agent["basis"] = VOICE_AGENT_RATE_BASIS
+    agent["minutes"] = round(float(agent.get("minutes", 0.0) or 0.0) + float(minutes or 0.0), 2)
+    agent["sessions"] = int(agent.get("sessions", 0) or 0) + int(sessions or 0)
+    agent["estimated_cost_usd"] = round(
+        float(agent.get("estimated_cost_usd", 0.0) or 0.0) + float(minutes or 0.0) * rate, 6
+    )
+
+
 def record_render_seconds(tracker: dict, seconds: float) -> None:
     """Record video render wall-clock. Informational — never priced."""
     render = tracker.setdefault("render", {"video_seconds": 0.0})
@@ -562,10 +626,13 @@ def save_usage(
         # Hook-Short motion clips (Oct 2 2026) — see record_motion_clip_usage.
         motion = tracker["services"].get("motion_api") or {}
         motion_cost = float(motion.get("estimated_cost_usd", 0.0) or 0.0)
+        # Voice Agent minutes (Nov 3 2026) — see record_voice_agent_usage.
+        agent = tracker["services"].get("voice_agent") or {}
+        agent_cost = float(agent.get("estimated_cost_usd", 0.0) or 0.0)
 
         tracker["total_estimated_cost_usd"] = (
             grok["total_cost_usd"] + tts["estimated_cost_usd"]
-            + image_cost + search_cost + motion_cost
+            + image_cost + search_cost + motion_cost + agent_cost
         )
 
         # Write file
@@ -611,6 +678,16 @@ def save_usage(
                 motion.get("model") or motion.get("provider", "grok-imagine-video"),
                 motion.get("clips_generated", 0) or 0,
                 motion_cost,
+            )
+        if agent.get("minutes") or agent_cost:
+            logger.info(
+                "Voice Agent (%s): %.1f min over %d session(s) ($%.4f, %s at $%.3f/min)",
+                agent.get("provider", "xai-voice-agent"),
+                float(agent.get("minutes", 0.0) or 0.0),
+                int(agent.get("sessions", 0) or 0),
+                agent_cost,
+                agent.get("basis", VOICE_AGENT_RATE_BASIS),
+                float(agent.get("rate_per_min", 0.0) or 0.0),
             )
         if search.get("calls") or search_cost:
             logger.info(

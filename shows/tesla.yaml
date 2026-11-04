@@ -24,6 +24,16 @@ digest_lints:
 # Oct 8 2026: Ep627's hook added "Tesla Megapack deployments" to a story
 # whose item and source never mention them (Ep582 did the same).
 - hook_supported
+# Nov 3 2026 (digest-lints pass): the deep dive is a second STORY, never a
+# second pass. deep_dive_distinct_measure records how much of a body item's
+# vocabulary the essay carries (deep_dive_contains_body_item) and never
+# fires; the firing form, deep_dive_distinct, is listed only after a week of
+# readings with digest_structural_regen_share_7d under 0.22.
+# deep_dive_fetched_source measures whether the essay was built from a read
+# page (deep_dive_source_read); it fires only on the sections whose prompt
+# states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
+- deep_dive_distinct_measure
+- deep_dive_fetched_source
 preferred_domains:
 - tesla.com
 - ir.tesla.com
@@ -349,6 +359,12 @@ tts:
 audio:
   music_file: assets/music/tesla_shorts_time.mp3
   transition_sting: assets/music/transition_sting.mp3
+  # Nov 3 2026 trial (engine.audio.VOICE_DYNAMICS): the 2:1 soft-knee glue
+  # in place of the network's 4:1 compressor, which measured as the cause
+  # of every show's 1.6-3.0 LU loudness range against NPR's 5. Tesla is
+  # the Patrick music show in the pair (Top World the Mira one); the
+  # network flips in engine/audio.py after the operator's A/B listen.
+  voice_dynamics: glue
   # May 12 2026 retune (see shows/_defaults.yaml). Voice enters at 10 s,
   # music continues 45 s under voice with a 30 s log-fade, post-voice
   # outro is 20 s with a slow 15 s fade-out.

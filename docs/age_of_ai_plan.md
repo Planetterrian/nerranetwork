@@ -130,6 +130,19 @@ idempotency check.
       (`grok_session_log.tracks.sources`), and the transcript labels
       `Mira:` / `Patrick:` / `<Guest>:` land correctly.
 
+9. **Billing and the spend record (Nov 3 2026).** console.x.ai → Billing:
+   enable auto-reload (or raise the monthly limit above a slate's day) —
+   the Oct 23 credit stop killed 16 show runs and cancelled 11, and the
+   only prevention is on the billing page. In code the fire tick
+   (`fire_interviews.check_credit_before_slate`) pings xAI once at the
+   03:00 ET slot — the Worker's hourly catch-all tick, the one dispatched
+   whether or not an interview is near — and alerts the webhook + the
+   operator email on the quota wording, an hour before the first show; it
+   holds a key the Worker does not, which is why it lives there. Then add `VOICES_SUPABASE_URL`
+   / `VOICES_SUPABASE_SERVICE_KEY` to nightly-maintenance.yml's "Build
+   Nerra Voices metrics" step so `api/voices_metrics.json` carries the
+   survey, grades, yield and cost per room (the "Mira's rooms" card).
+
 Open decisions §11 stay with Patrick (caller ID bought vs shared, consent
 wording, Cal.com self-host vs cloud, Postmark vs Resend, slot windows,
 first three guests). Defaults implemented: dedicated caller ID assumed,
@@ -140,6 +153,23 @@ soft-cap-45 + hard-cap-50, auto-reschedule once then lapse.
 ~$4.50–7.00 per 45-min interview end-to-end (PSTN + Grok Voice + STT +
 editorial passes + TTS + storage); ~$120–180/yr at biweekly cadence. Same
 order as one daily show's API spend.
+
+**The record (Nov 3 2026).** Every room writes a credit file the network's
+cost rollup reads, `digests/<show>/credit_usage_<date>_room_<run id[:8]>.json`
+(`pipelines/voices/costs.py`): `services.grok_api` carries the editorial
+passes and the retrospective (`common.llm(step=…)` records every call's
+usage — before this it discarded it); `services.voice_agent` carries the
+room's Voice Agent minutes (one session; her narration takes are added by
+`narrate.py`) at `engine.tracking.voice_agent_rate_per_min()`, labelled
+`estimated` until the xAI invoice is read (`XAI_VOICE_COST_PER_MIN`
+overrides); `services.search_api.calls` is the room's `research_lookups`.
+`published` is false when written and set by `scripts/build_voices_metrics.py`
+from `interviews.status`, never by `publish_episode.py`; the rollup counts a
+room as an episode only then. A rehearsal room writes
+`credit_usage_<date>_rehearsal_<id8>.json` (two sessions) which the rollup
+sums under its own `rehearsal` line. The post-interview and rehearsal
+workflows commit these files themselves; the nightly commits the
+`published` flag it sets (the credit globs are in its add-paths).
 
 ## Quality gates philosophy (spec §6 — keep both manual)
 

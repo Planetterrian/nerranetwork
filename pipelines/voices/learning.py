@@ -430,12 +430,40 @@ def save_metrics(interview_id: str, metrics: Dict[str, Any]) -> None:
         logger.exception("episode_metrics insert failed (non-fatal)")
 
 
+def record_shipped_metrics(interview_id: str, shipped: Dict[str, Any]) -> bool:
+    """Put the shipped file's measurements (``audio_metrics.shipped_file_metrics``:
+    ``encode_kbps``, ``digital_zero_sec``) under ``notes.shipped`` of the
+    interview's ``episode_metrics`` row, keeping every other note. The row
+    is written by post-production before the edit exists, so this is a
+    merge, never ``save_metrics``'s replace; the table has no column for
+    either, and an unknown key fails the whole write. Returns whether a row
+    was updated. Never raises."""
+    if not interview_id or not shipped:
+        return False
+    try:
+        rows = sb_select("episode_metrics",
+                         f"interview_id=eq.{interview_id}&select=interview_id,notes")
+        if not rows:
+            logger.info("no episode_metrics row for %s yet — shipped-file "
+                        "metrics stay on the run row only", interview_id)
+            return False
+        notes = dict(rows[0].get("notes") or {})
+        notes["shipped"] = dict(shipped)
+        sb_update("episode_metrics", f"interview_id=eq.{interview_id}", {"notes": notes})
+        return True
+    except Exception:          # noqa: BLE001 — metrics never block an episode
+        logger.exception("shipped-file metrics not recorded (non-fatal)")
+        return False
+
+
 #: The audio measures a proposed lesson may name as the number that will
 #: say whether it worked (``show_lessons.metric``, Oct 21 2026). A lesson
 #: with no metric is retired by a human, never by the weekly pass.
 LESSON_METRICS = {
     "overlap_events_per_10min", "self_answered_turns", "mira_turn_sec_median",
     "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams",
+    # Nov 3 2026: the number a "react before the question" lesson names.
+    "bare_question_rate",
 }
 
 
@@ -1003,6 +1031,7 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             ("self-answered turns", "self_answered_turns", ""),
             ("echo openers", "echo_open_rate", "%"),
             ("label openers", "label_open_rate", "%"),
+            ("bare questions", "bare_question_rate", "%"),
             ("guest words per answer", "guest_words_per_answer_median", ""),
         ) if m.get("metrics_basis") == "audio" else ()
         for label, key, suffix in audio_rows + (

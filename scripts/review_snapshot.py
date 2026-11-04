@@ -10,6 +10,7 @@ cost, and the OP3 download trend.
 Usage:
     python scripts/review_snapshot.py tesla
     python scripts/review_snapshot.py modern_investing --episodes 15
+    python scripts/review_snapshot.py network     # the network target: audience + email
 
 Output is markdown on stdout. Read-only; safe to run anywhere.
 """
@@ -254,40 +255,80 @@ def _voices_rows(table: str, query: str) -> list[dict]:
         return []
 
 
-def _interview_episodes(out_dir: Path, episodes: int) -> list[tuple[int, Path]]:
-    return _latest([p for p in out_dir.glob("*_Ep*.md")], episodes)
+#: Nov 3 2026: the nightly's ``api/voices_metrics.json`` (scripts/
+#: build_voices_metrics.py) is the one place the dashboard and this snapshot
+#: read Mira's rooms from, once the file has existed a week and is fresh;
+#: before that, and whenever it is stale, the live Supabase read below is
+#: the fallback, so the review agent never loses the numbers.
+VOICES_METRICS_FILE = ROOT / "api" / "voices_metrics.json"
+VOICES_METRICS_READY_DAYS = 7
+VOICES_METRICS_FRESH_DAYS = 3
 
 
-def _digest_head(path: Path) -> tuple[str, str]:
-    """The hook line and the one-line summary of a digest."""
-    hook = summary = ""
-    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = raw.strip()
-        if not hook and line.startswith("> **"):
-            hook = line.strip("> *").strip()
-        elif not summary and line.startswith("**What You Need to Know:**"):
-            summary = line.split(":**", 1)[-1].strip()
-        if hook and summary:
-            break
-    return hook, summary
+def _parse_stamp(value):
+    """A tz-aware datetime from an ISO stamp, or None."""
+    from datetime import datetime, timezone
+    try:
+        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
 
-def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
-    """The craft record of an interview show: per-episode grade and audio
-    measures, the guest's own rating, and the standing lessons."""
-    lines = [f"# Review snapshot: {slug}", "",
-             f"Output dir: `{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}` "
-             "· interview show (Nerra Voices pipeline; no _tts.txt, chapters or credit "
-             "files are expected — the record is the digest and Supabase)", ""]
-    found = _interview_episodes(out_dir, episodes) if out_dir.exists() else []
-    lines.append(f"## Published episodes (last {len(found)})")
-    if not found:
-        lines.append("- (no episode digests committed yet)")
-    for num, path in found:
-        hook, summary = _digest_head(path)
-        lines.append(f"- Ep{num:03d} `{path.name}`: {hook or summary or '(no hook line)'}")
+def voices_metrics_for(slug: str, now=None, path: Path = VOICES_METRICS_FILE) -> dict | None:
+    """The show's block of api/voices_metrics.json when the file has
+    existed VOICES_METRICS_READY_DAYS and was built within
+    VOICES_METRICS_FRESH_DAYS; otherwise None (the live read is used)."""
+    from datetime import datetime, timedelta, timezone
+    import json
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    now = now or datetime.now(timezone.utc)
+    first = _parse_stamp(data.get("first_generated_at") or data.get("generated_at"))
+    built = _parse_stamp(data.get("generated_at"))
+    if not first or not built:
+        return None
+    if now - first < timedelta(days=VOICES_METRICS_READY_DAYS):
+        return None
+    if now - built > timedelta(days=VOICES_METRICS_FRESH_DAYS):
+        return None
+    block = (data.get("shows") or {}).get(slug)
+    return block if isinstance(block, dict) else None
+
+
+def _craft_lines_from_file(block: dict) -> list[str]:
+    """The grades, audio medians and survey as api/voices_metrics.json holds them."""
+    lines = []
+    grades = block.get("grades") or []
+    lines.append("## Grades and audio measures (api/voices_metrics.json, "
+                 f"last {len(grades)} graded rooms)")
+    if not grades:
+        lines.append("- (no graded rooms on file)")
+    for g in grades:
+        lines.append(f"- {str(g.get('date') or '')[:10]} overall {g.get('overall')} "
+                     f"· pacing {g.get('pacing')} · warmth {g.get('warmth')}")
+    medians = (block.get("audio") or {}).get("medians") or {}
+    cells = [f"{label} {medians[key]} (target {target})"
+             for key, label, target in _AUDIO_METRIC_ROWS if medians.get(key) is not None]
+    if cells:
+        lines.append("- medians over those rooms: " + " · ".join(cells))
     lines.append("")
+    survey = block.get("survey") or {}
+    lines.append("## The guest's own rating (24 h survey, api/voices_metrics.json)")
+    if survey.get("answered"):
+        lines.append(f"- {survey['answered']} answered · mean {survey.get('mean')} · "
+                     f"share 4 or 5 {survey.get('share_4_plus')}")
+    else:
+        lines.append("- (no survey answers on file)")
+    lines.append("")
+    return lines
 
+
+def _craft_lines_live(slug: str, episodes: int) -> list[str]:
+    """The same sections read live from Supabase (the fallback)."""
+    lines = []
     grades = _voices_rows("episode_grades",
                           f"show=eq.{slug}&order=created_at.desc&limit={episodes}")
     lines.append(f"## Grades and audio measures (last {len(grades)} graded rooms)")
@@ -325,6 +366,48 @@ def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
     else:
         lines.append("- (no survey answers read)")
     lines.append("")
+    return lines
+
+
+def _interview_episodes(out_dir: Path, episodes: int) -> list[tuple[int, Path]]:
+    return _latest([p for p in out_dir.glob("*_Ep*.md")], episodes)
+
+
+def _digest_head(path: Path) -> tuple[str, str]:
+    """The hook line and the one-line summary of a digest."""
+    hook = summary = ""
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not hook and line.startswith("> **"):
+            hook = line.strip("> *").strip()
+        elif not summary and line.startswith("**What You Need to Know:**"):
+            summary = line.split(":**", 1)[-1].strip()
+        if hook and summary:
+            break
+    return hook, summary
+
+
+def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
+    """The craft record of an interview show: per-episode grade and audio
+    measures, the guest's own rating, and the standing lessons."""
+    lines = [f"# Review snapshot: {slug}", "",
+             f"Output dir: `{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}` "
+             "· interview show (Nerra Voices pipeline; no _tts.txt, chapters or credit "
+             "files are expected — the record is the digest and Supabase)", ""]
+    found = _interview_episodes(out_dir, episodes) if out_dir.exists() else []
+    lines.append(f"## Published episodes (last {len(found)})")
+    if not found:
+        lines.append("- (no episode digests committed yet)")
+    for num, path in found:
+        hook, summary = _digest_head(path)
+        lines.append(f"- Ep{num:03d} `{path.name}`: {hook or summary or '(no hook line)'}")
+    lines.append("")
+
+    # Nov 3 2026: one number for the dashboard and the review agent — the
+    # nightly file once it has existed a week; the live read until then.
+    block = voices_metrics_for(slug)
+    lines.extend(_craft_lines_from_file(block) if block is not None
+                 else _craft_lines_live(slug, episodes))
 
     active_rows = _voices_rows("show_lessons",
                                f"status=eq.active&show=in.({slug},network)&order=decided_at.desc&limit=30")
@@ -342,7 +425,62 @@ def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
     return "\n".join(lines)
 
 
+#: The review target that is not a show (``docs/reviews/review_state.yaml``).
+#: Nerra Daily is not a target of its own; its email is read here.
+NETWORK_TARGET = "network"
+
+
+def email_line(em: dict, marker: dict | None) -> str:
+    """The Nerra Daily email in one line (Nov 3 2026): the numbers from the
+    audience headline's ``email`` block, the archive link from the newest
+    send record. A dash where unread, never 0."""
+    def d(v):
+        return "—" if v is None else str(v)
+
+    delta = em.get("subscribers_delta_7d")
+    marker = marker or {}
+    return (
+        f"- Email (Nerra Daily): last send {d(em.get('last_recipients'))} recipients · "
+        f"last 7 days {d(em.get('sends_7d'))} sends, {d(em.get('opens_7d'))} opens, "
+        f"{d(em.get('clicks_7d'))} clicks, {d(em.get('unsubscribes_7d'))} unsubscribes · "
+        f"subscribers {d(em.get('subscribers'))} "
+        f"({'—' if delta is None else f'{delta:+d}'} 7d) · "
+        f"newest send record {d(marker.get('date'))} · archive {marker.get('archive_url') or '—'}"
+    )
+
+
+def network_snapshot(root: Path | None = None) -> str:
+    """The ``network`` target's snapshot: the audience headline's network
+    line and the email (there is no show directory to read)."""
+    root = root or ROOT
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    lines = ["# Review snapshot: network", "", "## Audience headline"]
+    em: dict = {}
+    try:
+        from scripts.build_audience_headline import build_headline, headline_line
+        doc = build_headline(root)
+        em = (doc.get("network") or {}).get("email") or {}
+        lines.append("- " + headline_line(doc))
+    except Exception as exc:  # noqa: BLE001 — the snapshot must always render
+        lines.append(f"- (audience headline unavailable: {exc})")
+    lines += ["", "## Email"]
+    marker = None
+    try:
+        from engine.nerra_daily_email import MARKER_DIR
+        records = sorted((root / MARKER_DIR).glob("*.json"))
+        if records:
+            marker = json.loads(records[-1].read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — an unreadable record prints a dash
+        marker = None
+    lines.append(email_line(em, marker))
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_snapshot(slug: str, episodes: int = 10) -> str:
+    if slug == NETWORK_TARGET:
+        return network_snapshot()
     show_yaml = ROOT / "shows" / f"{slug}.yaml"
     if not show_yaml.exists():
         raise SystemExit(f"unknown show: {slug} (no shows/{slug}.yaml)")
@@ -466,8 +604,15 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                      "(a script that copies scores ~90%; one that drops stories scores under 55%).")
         lines.append("commas = commas per 100 words in the script / the digest (a fallback-model "
                      "episode reads 1-2; the cohort's grok-4.7 episodes 5-8; the voice pauses either way).")
-        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept | commas |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("tail = share of body sentences ending on an attribution (\", X reported.\" / \", according to X.\"); "
+                     "short = share of nine words or fewer. Both read-only baselines (Nov 3 2026).")
+        lines.append("fact-free = share of sentences with no fact of their own (no number, name, date or quote the text "
+                     "had not given before) in the digest's story items / the script's body — the review's best "
+                     "predictor of a Repetitive flag (flagships 44-62%, the cohort 10-22%); opener = share of body "
+                     "sentences opening on an attribution (\"X reports that…\"); caveat = share that only qualify "
+                     "evidence. All read-only (Nov 3 2026, digest fact floor).")
+        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept | commas | tail | short | fact-free (digest / script) | opener | caveat |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
         for num, path in tts_files:
             script_text = path.read_text(encoding="utf-8", errors="replace")
             digest_path = path.with_name(path.name.replace("_tts.txt", ".md"))
@@ -487,8 +632,15 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
             dcov = "n/a" if a.digest_coverage is None else f"{100 * a.digest_coverage:.0f}%"
             _c = "n/a" if a.commas_per_100w is None else f"{a.commas_per_100w:.1f}"
             _dc = "n/a" if a.digest_commas_per_100w is None else f"{a.digest_commas_per_100w:.1f}"
+            _tail = "n/a" if a.attribution_tail_pct is None else f"{a.attribution_tail_pct:.0f}%"
+            _short = "n/a" if a.short_sentence_pct is None else f"{a.short_sentence_pct:.0f}%"
+            _dff = "n/a" if a.digest_fact_free_pct is None else f"{a.digest_fact_free_pct:.0f}%"
+            _sff = "n/a" if a.script_fact_free_pct is None else f"{a.script_fact_free_pct:.0f}%"
+            _open = "n/a" if a.attribution_opener_pct is None else f"{a.attribution_opener_pct:.0f}%"
+            _cav = "n/a" if a.caveat_sentence_pct is None else f"{a.caveat_sentence_pct:.0f}%"
             lines.append(f"| ep{num} | {a.sentences} | {ovl} | {dcov} | {secs} | {a.repeated_facts} | "
-                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents} | {_c} / {_dc}{flag} |")
+                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents} | {_c} / {_dc} | {_tail} | {_short} | "
+                         f"{_dff} / {_sff} | {_open} | {_cav}{flag} |")
         lines.append("")
 
     # --- Fetch-filter leakage (July 18 2026 network meta-review) ---
@@ -654,7 +806,7 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("slug", help="show slug matching shows/<slug>.yaml")
+    parser.add_argument("slug", help="show slug matching shows/<slug>.yaml, or 'network'")
     parser.add_argument("--episodes", type=int, default=10)
     args = parser.parse_args()
     print(build_snapshot(args.slug, args.episodes))

@@ -213,11 +213,10 @@ class TestStoryPausesCarryRoomTone:
         assert 'metrics.record("story_break_room_tone"' in src
 
 
-class TestTheProbeIsReadOnly:
-    def test_workflow(self):
-        wf = _read(".github/workflows/probe-audio-chain.yml")
-        assert "contents: read" in wf and "scripts/probe_audio_chain.py" in wf
-        assert "upload-artifact" in wf and "git push" not in wf
+# TestTheProbeIsReadOnly moved to tests/test_listen_before_slate_2026_11_03.py
+# (Nov 3 2026): the probe renders a real minute of a committed script now, and
+# its guards live beside the rehearsal input's; this file keeps to the
+# dynamics item.
 
 
 class TestTranslatedTracksAreMastered:

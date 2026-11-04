@@ -188,7 +188,9 @@ jobs:
           STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
           STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
           STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
-        run: python generate_html.py --show "${{ inputs.show }}" --blogs
+        # --latest 3 (Nov 3 2026): the newest posts only — the video job used
+        # to re-render ~250 posts for 4.5-5.5 min to link one episode's video.
+        run: python generate_html.py --show "${{ inputs.show }}" --blogs --latest 3
 
       - name: Commit and push the video's artifacts
         id: commit

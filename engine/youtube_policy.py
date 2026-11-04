@@ -17,6 +17,29 @@ Design contract:
     metadata only, so it sits outside the landmine #17 A/B-listen gate.
   - Shorts never drop to 0: they are the cheapest probe and the only
     recovery signal for a show whose long-form is gated off.
+
+Policy entry keys the runtime reads: ``publish_long_form``,
+``shorts_per_episode``, ``shorts_probe_weekly``, ``tier``, ``reason``.
+
+Keys the nightly writes for a READER (Nov 3 2026, informational on every
+entry of every channel; the runtime never reads them) — the long-form
+instrument, from ``api/youtube_early_reach.json`` at a fixed age:
+  - ``long_d3_median_21d`` / ``long_n_21d``: median day-3 views of the
+    show's long-forms published in the last 21 days, and how many.
+  - ``long_vs_hook_ratio_21d``: that median over the show's hook-Short
+    day-3 median (``hook_short_d3_median_21d``, which RU/FR entries carry
+    too since this date; the dead-Shorts tier itself stays EN-only).
+  - ``long_subs_per_1k_age7_pooled_21d``: subscribers per 1,000 views at
+    age 7, POOLED over the show's longs (a per-show median reads 0 because
+    most longs convert nobody); None under 30 pooled views.
+  - ``long_channel_d3_median_21d``: the channel's pooled long median.
+  - ``dub_long_gated``: whether the dub long overlay
+    (``update_youtube_policy.DUB_LONG_RELATIVE``) forced the long off —
+    always False while ``DUB_LONG_RELATIVE_ENABLED`` is False, the shipped
+    state; the switch is the operator's.
+A dub channel's long-form velocity is read only from its seventh day
+(``update_youtube_policy.LONG_MIN_AGE_DAYS``), and the dub index rows
+(``youtube_videos.<lang>.json``) record ``long_form_render_duration_s``.
 """
 
 from __future__ import annotations

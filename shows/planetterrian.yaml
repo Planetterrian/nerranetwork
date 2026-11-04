@@ -23,6 +23,16 @@ x_posts_as_sources: secondary
 digest_lints:
 - x_only_lead
 - items_without_source
+# Nov 3 2026 (digest-lints pass): the deep dive is a second STORY, never a
+# second pass. deep_dive_distinct_measure records how much of a body item's
+# vocabulary the essay carries (deep_dive_contains_body_item) and never
+# fires; the firing form, deep_dive_distinct, is listed only after a week of
+# readings with digest_structural_regen_share_7d under 0.22.
+# deep_dive_fetched_source measures whether the essay was built from a read
+# page (deep_dive_source_read); it fires only on the sections whose prompt
+# states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
+- deep_dive_distinct_measure
+- deep_dive_fetched_source
 preferred_domains:
 - nature.com
 - science.org
@@ -336,6 +346,16 @@ llm:
   # (same root cause as FF). Expand thin briefs before the podcast stage.
   digest_expand_below_target: true
   min_digest_words: 1400
+  # Nov 3 2026 (digest-fact-floor-2026-11-03, this show first): the retry
+  # fires on FACTS, not words. The word floor above fired on 7 of 7
+  # episodes in the week to Nov 2 and the digest it bought was 62%
+  # fact-free (the cohort: 10-17%) — the best predictor of the audit's
+  # Repetitive flag, 9 criticals in 16 days here. Calibrated on Ep219-232:
+  # fact-bearing story sentences 11-25, median 20; 18 would have fired on
+  # 2 of 14 days (Ep221 at 14 facts in 74 sentences, Ep225 at 11 in 42),
+  # 20 on 7 of 14. min_digest_words stays as the recorded number.
+  # ⚠️ AUDIO: thin days ship shorter and denser — A/B-listen the first.
+  min_digest_facts: 18
   podcast_chain: true
 
 tts:

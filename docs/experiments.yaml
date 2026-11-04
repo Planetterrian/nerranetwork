@@ -7,6 +7,11 @@
 # and when do we decide" a rendered surface instead of tribal knowledge —
 # the same discipline as the review ledgers, applied to growth work.
 #
+# A Shorts entry carries its channel's JOB metric or it is not an
+# experiment (Nov 3 2026): EN Shorts are scored on
+# short_subs_per_1k_views_14d_en + long_d3_median_en_7d, RU/FR on
+# short_reach_d3_median_<ch>_7d (engine/release_schedule.py).
+#
 # Consumed by scripts/generate_dashboard.py::build_experiments_section.
 # Schema per entry:
 #   id:        unique slug
@@ -33,6 +38,10 @@
 #   baseline:  (optional) the number when the change shipped
 #   target:    (optional) what success looks like
 #   criteria:  (optional, decide entries) the decision rule
+#   readout_plan: (optional) the file or command that answers the
+#              readout. From Nov 3 2026 an entry needs a computable
+#              metric OR criteria + readout_plan, or it is a note, not
+#              an experiment (scripts/readout_register.py).
 #   notes:     (optional) one line of context
 #
 # Prune done entries older than ~a quarter.
@@ -180,6 +189,15 @@ experiments:
     shipped: 2026-08-09
     readout: 2026-08-23
     status: done
+    update_2026_11_03: '
+      The committed screenshots the card composited were taken once (Aug 9) and
+      never again: every long-form outro and every Shorts end-card strip showed the
+      retired no-advertising promise, a four-language list and sixteen tiles for 86
+      days, and the monthly capture workflow''s Nov 1 run was green with nothing
+      committed. Since Nov 3 the card renders from data (youtube-brand-
+      surfaces-2026-11-03) and no render opens assets/site_screens.
+
+      '
     target: >
       utm_content=outro sessions appearing in api/funnel.json (QR scans)
       and click-through from video surfaces up vs the pre-08-09 level;
@@ -2261,7 +2279,15 @@ experiments:
     area: growth
     shipped: 2026-09-19
     readout: 2026-10-20
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): MISS. No select_personal_upsell event in
+      28 days of api/ga4_stats.json site_events; join.html is in neither top_pages
+      nor landing_pages (under 6 views); api/funnel.json capture is null, so no
+      attributed capture. The on-air plug reached the feeds and nothing reached the
+      site.
+
+      '
     baseline: >
       Nerra Personal is live and sellable (real Stripe links, provisioned
       Worker, 200 on the sample edition, buy.stripe.com appearing as a 7-session
@@ -2415,7 +2441,16 @@ experiments:
     area: funnel
     shipped: 2026-09-21
     readout: 2026-10-21
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. api/member_metrics.json reports
+      paid_active_total 2 (the third check holds); api/funnel.json capture is null
+      (capture.by_source has no row) and select_personal_upsell never fired (the
+      first two fail). Buttondown tag_counts exist per show (14 subscribers) but
+      by_source is empty because no first-party form sent a source until Sep 21 and
+      the list has grown by about two a week since.
+
+      '
     hypothesis: >
       Phase 1 made CLICKS traceable and the capture end stayed dark, so no
       change to the Personal funnel — the operator's first priority — could be
@@ -2522,7 +2557,14 @@ experiments:
     area: growth
     shipped: 2026-09-21
     readout: 2026-10-21
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. /explore.html was viewed 9 times
+      in 28 days (api/ga4_stats.json top_pages) and appears in no landing-page row,
+      so the existence check holds for visits and fails for landings; Search Console
+      is still unread. The footer fact holds (guards green).
+
+      '
     hypothesis: >
       @NerraNetwork's audience is 99.4% male and 37% over 55 while the catalogue
       already holds the shows that would broaden it — a Russian language course,
@@ -2935,7 +2977,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. ai_chips 56 downloads in 30
+      days, weekly 0/0/31/25; the search line is $7.66 of its $16.35 a month ($0.53
+      per download). Read from api/audience_headline.json on 2026-11-02; OP3 lists
+      only a show''s top episodes, so median first-week downloads read 0-2 here and
+      are not the ruler for a show this size. The cohort is about 4% of network
+      downloads six weeks in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2949,7 +3000,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. mag7 46 downloads in 30
+      days, weekly 0/12/23/11 ($0.30 per download). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2963,7 +3023,16 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. peptides 110 downloads in 30
+      days, weekly 27/21/22/40 (the cohort''s largest audience). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -2977,7 +3046,17 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-27
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. longevity 20 downloads in 30
+      days, weekly 6/2/4/6; the merge-or-monthly question (same host, format and
+      caveat prompt as Peptides at 6 against 43 a week) is the operator''s. Read
+      from api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-22, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -3101,7 +3180,16 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. vancouver 99 downloads in 30
+      days, weekly 36/33/10/14 (falling since the Oct 17 Pacific slot). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The readout is four weeks after
       Episode 1: median first-week downloads per episode from
@@ -3118,6 +3206,11 @@ experiments:
     shipped: 2026-09-23
     readout: 2026-11-06
     status: reading
+    interim: '
+      INTERIM 2026-11-03 (readout 2026-11-06): 7 downloads in 30 days, weekly
+      0/1/1/5; the skip rate is the number to read on the 6th.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The first number read is the
       skip rate (plan §4.6: the thinnest show in the plan); the audience
@@ -3130,7 +3223,17 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. prediction_markets 64
+      downloads in 30 days, weekly 20/13/15/15; posture held (no pick language on
+      the Board, How It Works verified against abstracts). Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. The first things read are
       posture and shape, not audience: zero pick or recommendation language,
@@ -3147,7 +3250,18 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-28
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): BASELINE SET. the four public-weeks desks
+      earned 35-56 downloads in 30 days each before the Oct 16 members-only gate and
+      0-5 a week since; Top World 93 in 30 days, weekly 30/22/12/23;
+      omni_view_north_america unresolved on OP3. Read from
+      api/audience_headline.json on 2026-11-02; OP3 lists only a show''s top
+      episodes, so median first-week downloads read 0-2 here and are not the ruler
+      for a show this size. The cohort is about 4% of network downloads six weeks
+      in.
+
+      '
     target: >
       Scaffolded 2026-09-23, not yet on a cron. Read first: region purity on
       three episodes per desk, sub-region spread across the week (the hook's
@@ -3499,7 +3613,17 @@ experiments:
     area: growth
     shipped: 2026-10-01
     readout: 2026-11-01
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): MISS. api/apple_ratings.json: 4 ratings on
+      2026-10-02 (spacex 2, age_of_ai 1, MAB 1) to 7 on 2026-11-02 (spacex 3, tesla
+      1, FF 1, age_of_ai 1, MAB 1): +3 against a target of +10; two shows gained a
+      first rating (tesla, FF) against three. The ask aired on alternate days as
+      designed; 13 shows still point at Apple pages that do not exist (directory
+      rows PENDING), which caps what the ask can do. The closing''s ask count is an
+      operator decision (review doc section 5).
+
+      '
     baseline: "Apple ratings on 2026-10-01 (first fetch, 15 shows with a page): age_of_ai 1, MAB 1, spacex 2, twelve shows 0; no closing anywhere said 'follow'; 11 English shows + 6 desks had no ask"
     target: >
       Apple rating_count_total up by >= 10 across the network by the readout
@@ -3974,7 +4098,16 @@ experiments:
     area: quality
     shipped: 2026-10-09
     readout: 2026-10-23
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY HIT, LATENCY MISS. 22 of 22
+      episodes served grok-4.6 (0 fallbacks); script_digest_overlap_pct median 6.6
+      (target <= 20), coverage 72 (>= 70), entity retention 89 (>= 70);
+      generate_podcast_script p95 628 s against the 300 s gate and over the 600 s
+      request timeout; wall p95 2,500 s. The arm writes; it also fails the
+      playbook''s latency gate every week. Decision C18 in the review doc.
+
+      '
     baseline: >
       Oct 2-8 slates: the grok-4.3 flagship scripts read the digest aloud —
       SpaceX 64% verbatim 8-grams (FF 68%, Planetterrian 68%, First
@@ -4405,7 +4538,15 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): UC HIT, FPD PARTIAL. Unintended
+      Consequences: 22/22 on grok-4.7, overlap 18.0, coverage 80, script p95 169 s.
+      First Principles: 22/22 on 4.7, overlap 23.6 (target <= 20, missed), coverage
+      83, script p95 105 s. No episode lost; the low-effort 4.7 arm is the fastest
+      script stage on the network.
+
+      '
     baseline: >
       Script stage on grok-4.3 (Oct 5-11): UC 64-80% of the script copied
       verbatim from the written episode (Ep134-139), FPD 69-87% (Ep122-127),
@@ -4431,7 +4572,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): PARTIAL. 22/22 on 4.6; overlap 26.5
+      (target <= 20, missed), coverage 77, entity retention 91; script p95 278 s
+      (passes). No episode lost.
+
+      '
     baseline: >
       Planetterrian on grok-4.3, Ep205-210: script_digest_overlap_pct
       62-77%, coverage 76-91%, script call 27-63 s, runs 300-445 s. SpaceX's
@@ -4451,7 +4598,16 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): Tesla QUALITY HIT, LATENCY MISS; FF
+      PARTIAL. Tesla: 22/22 on 4.6, overlap 19.3, coverage 77, script p95 561 s
+      (gate 300), wall p95 2,424 (< 2,700). Fascinating Frontiers: 22/22 on 4.6,
+      overlap 29.8 (target <= 20, missed), coverage 84, script p95 297 (passes),
+      wall p95 2,461. No episode lost. The attribution-tail share grew with the arm
+      (Tesla 0 to 10% of body sentences; script_attribution_tail_pct, Nov 3).
+
+      '
     baseline: >
       Tesla on the 4.3 combined path, Ep626-631: script_digest_overlap_pct
       2.5-72 (4 of 6 under 13), coverage 39-95%, runs 1,120-1,930 s. FF on
@@ -4474,7 +4630,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY HIT, LATENCY MARGINAL. 22/22 on
+      4.6; overlap 4.1, coverage 80, entity retention 72; script p95 330 s (gate
+      300), wall p95 2,638 (< 2,700). No episode lost.
+
+      '
     baseline: >
       MIT on the 4.3 combined path, Ep192-197: script_digest_overlap_pct
       49-62, coverage 88-100%, runs 1,360-1,800 s.
@@ -4494,7 +4656,13 @@ experiments:
     area: quality
     shipped: 2026-10-11
     readout: 2026-10-25
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): QUALITY PARTIAL, LATENCY MISS. 22/22 on
+      4.6; overlap 20.7 (target <= 20, at the line), coverage 82; script p95 504 s
+      (gate 300), wall p95 3,029 s (target < 2,700, missed). No episode lost.
+
+      '
     baseline: >
       Models & Agents on grok-4.3, Ep195-200 (4 combined, 2 two-pass):
       script_digest_overlap_pct 33-65, coverage 78-84%, runs 1,100-2,135 s.
@@ -4885,6 +5053,16 @@ experiments:
     shipped: 2026-10-15
     readout: 2026-11-12
     status: reading
+    interim: '
+      INTERIM 2026-11-03 (readout 2026-11-12): the mechanism works and the product
+      vanished. Every desk has skipped 18 straight days on no_member_demand since
+      Oct 16 (72 episodes, 0 produced) because the two paying members carry none of
+      the five; no desk episode reached a public surface (holds); Top World reads
+      the desks that ran (none). Before the gate the four non-NA desks earned 35-56
+      downloads in 30 days each. public_weekly or retire is the operator''s decision
+      (review doc section 5).
+
+      '
     baseline: >
       Oct 2026: the five desks published daily to public feeds, blogs and
       newsletters (Mira, ~10-12 min each). No show was gated. The gallery
@@ -5219,7 +5397,17 @@ experiments:
     area: site
     shipped: 2026-10-18
     readout: 2026-11-01
-    status: reading
+    status: done
+    outcome: '
+      READ 2026-11-03 (six-month review): INCONCLUSIVE. api/ga4_stats.json
+      site_events over 28 days carries no play_short, select_short_show or
+      play_short_unavailable row against 160 homepage views (app_open 13,
+      episode_play 9 on /); play_video fired 4 times site-wide. Either the reel is
+      not pressed or the events do not reach GA4 under denied consent; at this
+      traffic no rate can be read. Decision deferred with site_design-1 (the front
+      page cut).
+
+      '
     baseline: >
       Six still images linking out to YouTube; no on-site Short plays; the
       homepage's show discovery from video measured nowhere.
@@ -6055,6 +6243,7 @@ experiments:
     shipped: 2026-11-01
     readout: 2026-11-29
     status: reading
+    metric: email_click_sessions_28d
     baseline: >
       Oct 31 2026: 14 Buttondown subscribers (2 paid), email 3 sessions to the
       site in 28 days, about 19 per-show daily sends attempted a morning (ten
@@ -6115,3 +6304,917 @@ experiments:
       flagged in 65 was the next story's own). The
       dub long-form, the language feeds and the episode are untouched.
       Guards: tests/test_dub_shorts_skip_map_2026_11_01.py.
+
+  - id: six-month-review-2026-11-03
+    title: "The six-month review: 28 measured defects fixed the same day; the ranked plan"
+    area: network
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      docs/reviews/network_review_2026_11_03.md. Fourteen readers over every
+      surface found the factory and the trust record sound and the audience
+      flat outside the feeds; three shows at -25 LUFS for 208 episodes, a
+      12-second opening bed since February, dual-mono mixes, a front page
+      leading with another story's picture, a newsletter whose archive copy
+      carried no news, a daily audit grading TTS spellings as garbles, 571 MB
+      of FLAC in git.
+    target: >
+      Every guard in tests/test_six_month_review_2026_11_03.py green on main;
+      the first A/B-listens (UC, Tesla open/close, Nerra Daily) accepted by
+      the operator; the plan's ship-now items merged; readouts named per
+      entry below.
+    criteria: >
+      HIT when every guard in the review's test file stays green on main for two weeks and each ranked item reads at its own entry; a reverted fix is a MISS for that fix.
+    readout_plan: >
+      Run Tests history on main for tests/test_six_month_review_2026_11_03.py; docs/reviews/network_review_2026_11_03.md section 4 against each item's own register entry.
+    notes: >
+      Umbrella entry. The listens are the gate for the audio items
+      (landmine #17); the operator items are in the review doc §5.
+
+  - id: audio-published-loudness-2026-11-03
+    title: "Voice-only shows master to -16 LUFS; the opening bed lasts; fades reach silence; stereo under the voice"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: audio_loudness_in_spec_share_7d
+    baseline: >
+      Measured on the shipped MP3s: Unintended Consequences, Vancouver and
+      Collingwood at -24.9 to -25.6 LUFS (every episode since their first;
+      208 episodes), their chapter inside Nerra Daily Ep074 at -25.0 beside
+      -16.5 neighbours (a 9.7 LU step); the opening bed 12 s of music then
+      18 s of digital silence (_music_fadeout_cmd's -ss as an output
+      option); no outro ever fading (afade curve=log holds within 2 dB for
+      97% of the fade); every file dual-mono (L-R vs mid -210 dB).
+    target: >
+      The next episode of each no-music show at -16 +/- 1 LUFS integrated
+      (ffmpeg ebur128); Tesla's bed audible through ~45 s and its last
+      second under -40 dBFS; L-R vs mid above -40 dB on a music show; the
+      operator's listens accepted. A failed listen reverts one constant
+      (FADE_CURVE) or one call (master_voice_track).
+    notes: >
+      engine/audio.py (master_voice_track gains denoise; FADE_CURVE; the
+      stereo voice branch in _final_mix_cmd), run_show.py's voice-only
+      path, engine/daily_edition.segment_trim_cmd levels every segment.
+      Guards: TestVoiceOnlyShowsReachThePublishedLoudness,
+      TestTheMusicBedAndFadesShipAsDesigned,
+      TestTheMixKeepsTheThemesStereoImage. audio_integrated_lufs /
+      audio_loudness_range_lu / audio_true_peak_dbtp are recorded per episode
+      since Nov 3 (log-only band check for a week, then a hard fail); the
+      back-catalogue re-master is a proposal, not shipped.
+
+  - id: digest-expansion-metric-2026-11-03
+    title: "The digest expansion retry is a metric"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: digest_expansion_fired_share_7d
+    baseline: >
+      The retry fired on 7/7 episodes of Tesla, SpaceX, FF, Planetterrian,
+      Omni View, Modern Investing, UC and FPD in the week to Nov 2 and 0/7
+      on the grok-4.7 cohort, logged and costed with nothing recording it;
+      the digests it lengthens land at their floors (Tesla 1,578 vs 1,600)
+      and the padding it adds is the best predictor of a Repetitive audit
+      flag (digest fact-free share, AUC 0.72).
+    target: >
+      A read, not a move: the share per show on the dashboard, so the fact
+      floor and item-floor proposals of the review can be scored on it.
+    notes: >
+      engine/generator.last_digest_expansion; run_show records
+      digest_expansion_fired/_attempts/_words_before/_words_after/_floor;
+      scripts/generate_dashboard._episode_counter_shares. Guard:
+      TestTheDigestExpansionIsAMetric.
+
+  - id: email-archive-copy-2026-11-03
+    title: "The Nerra Daily email's archive copy carries the news; the subject is the story"
+    area: newsletter
+    shipped: 2026-11-03
+    readout: 2026-11-29
+    status: reading
+    baseline: >
+      The Nov 2 archive (the "View this email in your browser" page, the
+      share links' target) carried the hero, an empty "Also on Nerra today"
+      heading and the footer; the subject opened on "Monday edition - "
+      (17 of an inbox's ~40 visible characters); the preheader was a list
+      of show names; every "(from 7:00 AM ET)" release note was false by
+      delivery.
+    target: >
+      The next real send's archive shows the five default cards and every
+      one-liner (verify once with --mode draft: the no-subscriber Django
+      behaviour is inferred); subject and preheader read as two stories;
+      open and click counts on the dashboard from the first nightly with
+      >= 30 recipients.
+    criteria: >
+      HIT when the first real send's archive page shows the default cards and every one-liner; any missing section is a MISS.
+    readout_plan: >
+      Buttondown's 'View this email in your browser' page for the first send after merge, beside engine.nerra_daily_email.render_for(subscriber=False).
+    notes: >
+      engine/nerra_daily_email.py (not subscriber or / subscriber and
+      conditions, render_for(subscriber=False), any_not_in, the subject
+      prefix strip, the preheader, send_at for release notes,
+      WEEK_LIST_MAX 3). Guard: TestTheEmailsArchiveCopyCarriesTheNews.
+
+  - id: front-page-lead-scene-2026-11-03
+    title: "The front page's lead picture is the story's own scene, never another story's"
+    area: website
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      Nov 2: a coral reef under "AI cloud lab uses robots and models to
+      compress protein engineering" (the three lab scenes scored one exact
+      word each, under the floor of two, and the chooser fell back to the
+      first scene in slice order); the RU and FR hubs showed the same
+      class.
+    target: >
+      Over two weeks of homepage builds, every lead and top-story picture
+      whose episode has scene prompts is matched (image_url present only
+      with matched true), checked by replaying each day's leads through
+      engine.landing_test.episode_scene against the committed slices.
+    criteria: >
+      HIT when no lead or top-story picture over two weeks of builds is an unmatched scene (image_url only with matched true).
+    readout_plan: >
+      Replay each committed day's leads through engine.landing_test.episode_scene against the committed homepage slices.
+    notes: >
+      engine/landing_test.py: stemmed tokens, one unique shared word
+      suffices, no fallback to candidates[0] when prompts are known (the
+      show's cover renders instead). Guard: TestTheLeadPictureIsThisStorysScene.
+
+  - id: ru-spacex-pilot-2026-07-30
+    title: "The RU SpaceX pilot: a lander, a capture and a Sunday letter for @NerraRU"
+    area: distribution
+    shipped: 2026-07-30
+    readout: 2026-11-03
+    status: done
+    outcome: >
+      READ 2026-11-03 (six-month review): MISS. api/funnel.json pilots:
+      spacex-ru reach 5,966 views in 30 days to 6 click sessions (0.017%) and
+      captures null; tesla-ru 4,901 to 1. The Buttondown tag ru-spacex has
+      never had a subscriber, so send_ru_spacex_weekly.py has logged "nothing
+      to send" every Sunday since July. The RU audience acts in the Shorts
+      feed (89% of @NerraRU views), not on an email form. The Sunday workflow
+      is retired and the landers ask for the YouTube subscribe in the
+      ru-fr-audience-surfaces item of the review; the lander stays as the
+      channel's link target (engine.funnel destination).
+    baseline: >
+      Registered at close so the record carries the verdict; the pilot's
+      design is in docs/funnel.md.
+    target: >
+      Captures on the ru-spacex tag and a weekly letter sent; neither
+      happened in three months.
+    notes: >
+      Lesson for the register: a capture surface for a Shorts-feed audience
+      needs the ask the platform can act on (subscribe), and an experiment
+      with no entry of its own could not be scored.
+
+  - id: funnel-denominator-2026-11-03
+    title: "The site's number is a number of readers: paid links tagged through engine.funnel, landing anomalies excluded and printed"
+    area: distribution
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      api/ga4_stats.json, 28 days to Nov 2: 999 sessions, 898 Direct, 492
+      landing on /personal-interest.html at a 98.8% bounce in eight spike
+      days (288 on Oct 15) with 2 submits; the Google Ads final URLs carried
+      no campaign id and Consent Mode denies ad_storage by default, so paid
+      clicks read as Direct. attribution_coverage_pct 1.6.
+    target: >
+      Once the Ads final URLs carry the CLI's tagged URL (operator): the
+      paid sessions appear under stages.click.by_kind.ad and
+      attribution_coverage_pct rises above 30; totals.sessions_excluding_anomalies
+      and the printed anomaly_exclusion lead the dashboard's site headline;
+      web_vitals_summary reads non-null once the GA4 custom dimensions exist.
+    criteria: >
+      HIT when, after the Ads URLs are tagged, paid sessions appear under stages.click.by_kind.ad and the anomaly exclusion prints beside the raw total.
+    readout_plan: >
+      api/funnel.json (stages.click.by_kind, totals.sessions_excluding_anomalies) and api/ga4_stats.json (landing_anomalies, web_vitals_summary).
+    notes: >
+      engine.funnel KIND_AD / MEDIUM_CPC / SOURCE_GOOGLE_ADS / ad_link,
+      scripts/funnel_link.py, fetch_ga4_stats.landing_anomalies (>= 50
+      sessions and a 95% bounce or under 3 s mean engagement; channel,
+      device and country mix per row; None when unread), build_funnel's
+      visit stage and the email's click rows, real-user vitals as GA4
+      web_vital events. Guards tests/test_funnel_denominator_2026_11_03.py.
+
+  - id: youtube-brand-surfaces-2026-11-03
+    title: "The YouTube outro card and Shorts end-card strip render from data; channel copy from engine.brand"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The burned outro card (6 s) on every long-form and the Shorts end-card
+      strip composited an Aug 9 screenshot reading "0 ADS · 4 LANGUAGES";
+      traffic_sources END_SCREEN delivered 1 view in 90 days; the live
+      @NerraNetwork banner said "100% AD-FREE · EN · FR · RU · ZH".
+    target: >
+      No render reads assets/site_screens; the card shows the show's cover,
+      a wall of the other free shows, the brand tagline in the channel's
+      language and the free-show count; outro_card_duration_seconds 3.0 so
+      a Studio end-screen template has room. Readout: END_SCREEN traffic on
+      Tesla and SpaceX long-forms over the 14 days after the operator applies
+      the template, against the other shows; the banners uploaded (operator).
+    criteria: >
+      HIT when END_SCREEN traffic on the Tesla and SpaceX long-forms rises over the 14 days after the Studio end-screen template, against the other shows.
+    readout_plan: >
+      api/youtube_stats.json traffic_sources END_SCREEN per show, 14 days before and after the Studio step.
+    notes: >
+      engine/promo_card.py, engine/brand.youtube_banner_lines /
+      network_tagline_for, scripts/build_youtube_banners.py (cairosvg),
+      docs/youtube_channel_copy.md, the capture workflow fails loudly.
+      Render only, never audio. Guards tests/test_youtube_brand_surfaces_2026_11_03.py.
+      A/B-look: the card is a cover wall now, not a picture of the site.
+
+  - id: nerra-daily-email-briefing-2026-11-03
+    title: "The Nerra Daily email reads as a briefing: a deck under every card, the first phone screen carries news"
+    area: newsletter
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      Nov 2 send: the first show headline at y=788 on a 390 px phone (a
+      350 px hero, a featured card repeating the subject, a paragraph about
+      the format); cards were the spoken hook plus three outlet headlines,
+      two of Tesla's three the hook's own story; 17 "Also" lines of full
+      spoken sentences were 39% of a two-show copy; titles ended in "…".
+    target: >
+      First show card inside 250 px on a phone (226 measured on the new
+      render); every card carries a deck lifted from the digest's own prose
+      with no model call; no headline repeats its hook's story (0 false
+      drops on 3,561 headlines); open and click rates on the dashboard once
+      the measurement item ships and 30 recipients exist.
+    criteria: >
+      HIT when the first show card sits inside 250 px on a 390 px phone and no headline repeats its hook's story on the first week of sends.
+    readout_plan: >
+      A phone screenshot of the first send after merge; digests/nerra_daily/email/*.json records for the week.
+    notes: >
+      engine.landing_test.story_deck, engine.newsroom.headline_within_hook,
+      wrap_with_branding(hero="compact", featured_position="after_body"),
+      engine.titles.EMAIL_ALSO_LINE_MAX 72, BUTTONDOWN_WRAPPER_BYTES
+      (upper bound from the archive page; operator measures it once from a
+      draft). Guards tests/test_nerra_daily_email_2026_11_03.py.
+
+  - id: long-form-policy-instrument-2026-11-03
+    title: "The long-form policy carries the Shorts tier's ruler on every entry; a dub long is a rate only from day seven"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-24
+    status: reading
+    baseline: >
+      The policy decided a 19-29 minute render per long on a 14-day velocity
+      of young videos against an absolute floor, while the Shorts tier read
+      the age-matched reach file relative to the channel. On the Nov 1 reach
+      file the FR long median at day 3 was 13 (n=17) against 49 for the FR
+      hook Short, RU 4 vs 62; pooled since Oct 1 EN longs converted 1.6
+      subscribers per 1,000 views, FR longs 6.3. RU/FR entries carried
+      hook_short_d3_median_21d null; two dub longs under two days old had
+      read as 4+ views a day.
+    target: >
+      Three weeks after merge: every entry of every channel in
+      api/youtube_policy.json carries long_d3_median_21d / long_n_21d /
+      long_vs_hook_ratio_21d / long_subs_per_1k_age7_pooled_21d /
+      long_channel_d3_median_21d (None where unmeasured, never 0) and RU/FR
+      carry hook_short_d3_median_21d; every dub index row written since
+      merge carries long_form_render_duration_s; no publish_long_form flipped
+      by the dub overlay (DUB_LONG_RELATIVE_ENABLED is False). The operator
+      reads the ratio and the pooled rate before deciding the overlay (C17).
+    criteria: >
+      HIT when every policy entry on every channel carries the five long-form keys (None, never 0, where unmeasured) and no dub long flips while the overlay is off.
+    readout_plan: >
+      api/youtube_policy.json entries; digests/*/youtube_videos.{ru,fr}.json long rows (long_form_render_duration_s).
+    notes: >
+      scripts/update_youtube_policy.py collect_long_reach / long_reach_keys /
+      dub_long_read / dub_long_gate_reason; LONG_MIN_AGE_DAYS per channel
+      {en 2, ru 7, fr 7}; engine/ru_dub.py and engine/lang_dub.py time the
+      long render into engine.youtube_index.record_video(render_duration_s=).
+      Guards tests/test_long_form_policy_instrument_2026_11_03.py,
+      tests/test_youtube_policy.py::TestLongFormPolicyInstrument.
+  - id: env-intel-sourced-deep-dive-2026-11-03
+    title: "Env Intel's Practitioner Deep Dive is built from a document the run read, never from an invented career"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The digest prompt asked the section for "the wisdom that comes from
+      experience" and supplied the line it wanted; five of the last six
+      episodes (to Ep075, Nov 2) narrated an invented consulting career in
+      the first person to a professional audience, from no source — 45 such
+      sentences across the 42 committed Env Intel digests and scripts. The
+      three Reddit feeds were in the source list (Ep075 cited one);
+      articles_in_prompt read 15 (Ep074) and 21 (Ep075).
+    target: >
+      Four Mondays after merge: no first-person professional-experience
+      sentence in any shipped Env Intel digest or script (the committed
+      replay in the guard stays at 0 for new files); every Practitioner Deep
+      Dive names a document whose full text was in the prompt
+      (deep_dive_source_read True on the metrics) or the section is left
+      out; articles_in_prompt holds at or above 15 without Reddit; the
+      script-stage arm read from the credit files' per-call model, with
+      scripts/model_trial_report.py showing no quality drop and a faster
+      script stage. A/B-listen the first Monday (landmine 17).
+    criteria: >
+      HIT when four Mondays ship no first-person experience sentence and every Practitioner Deep Dive names a read document or is left out.
+    readout_plan: >
+      digests/env_intel/metrics_ep*.json (digest_host_experience_removed, deep_dive_source_read); the replay in tests/test_env_intel_sources_2026_11_03.py; scripts/model_trial_report.py --since 2026-11-09.
+    notes: >
+      shows/prompts/env_intel_{digest,podcast}.txt rebuilt by shape;
+      engine/host_experience.py mode "experience" (host_experience_mode;
+      frames is byte-identical; unknown raises at load); DEEP_DIVE_FETCHED_SECTIONS
+      gains "Practitioner Deep Dive"; preferred ccme.ca / aer.ca inside the
+      eight-domain cap; chapter falls back to its digest_section; feed
+      description no longer promises "the most common mistake". Guards
+      tests/test_env_intel_sources_2026_11_03.py.
+  - id: digest-fact-floor-2026-11-03
+    title: "Planetterrian's digest expansion floor counts facts, not words"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: digest_expansion_fired_share_7d
+    baseline: >
+      The word floor (min_digest_words 1,400) fired the expansion retry on
+      7 of 7 Planetterrian episodes in the week to Nov 2 (every flagship the
+      same; the cohort 0 of 7) and the digest it bought was ~62% fact-free
+      against 10-17% on the cohort — the best predictor of the daily audit's
+      Repetitive flag (AUC 0.72; 9 Repetitive criticals on Planetterrian in
+      16 days). Fact-bearing story sentences on Ep219-232: 11-25, median 20;
+      a floor of 18 would have fired on 2 of 14 days.
+    target: >
+      Two weeks after merge, on Planetterrian: digest_expansion_fired_share_7d
+      from ~1.0 toward 0.15 (the retry fires on a thin day only);
+      digest_fact_free_pct (the snapshot's new column) from ~62 toward
+      10-22; Repetitive criticals in the audit down; podcast_script_word_count
+      and script_digest_coverage_pct read beside so a drop in words is seen as
+      the trade. Then decide Tesla's join (floor from its own 14-day
+      median: 15/32/45); SpaceX, MIT and MAB stay out of the first week.
+    notes: >
+      llm.min_digest_facts (0 = the word test, byte-identical);
+      engine.generator.digest_fact_count delegates to
+      engine.script_audit.digest_fact_profile (the ONE fact-state test);
+      the retry ranks the Oct 19 stories floor first, asks for fact-bearing
+      sentences from unused material, never lengthens the deep dive, and is
+      kept only when the fact count rose; metrics
+      digest_expansion_floor_facts / _facts_before / _facts_after. Four
+      read-only instrument columns (digest/script fact-free, attribution
+      opener, caveat) carry no threshold until a baseline week is in; the
+      opener share counts company-reports sentences too. The prompt-side
+      half is the flagship-prompts-by-shape item. A/B-listen the first thin
+      day (landmine 17). Guards tests/test_digest_fact_floor_2026_11_03.py.
+  - id: remaster-voice-only-back-catalogue-2026-11-03
+    title: "The 208 voice-only episodes are re-mastered in place, by a gain"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      unintended_consequences (161 items), vancouver (41) and collingwood (6)
+      shipped every episode at -24.9 to -25.6 LUFS, 9 LU under every other
+      show in a listener's queue; inside Nerra Daily their chapter stepped
+      9.7 LU. UC Ep161 measured -25.6 LUFS / -4.8 dBTP; +9.6 dB through a
+      -2.0 dBFS limiter re-measures at -16.4 LUFS / -1.4 dBTP, LRA 2.2,
+      sample-identical duration.
+    target: >
+      After the operator's one-episode listen and the three batches
+      (Actions "Re-master Episodes", apply=true): every item on the three
+      feeds reads inside -16 ± 1.5 LUFS and at or under -1 dBTP in
+      digests/<dir>/remaster_log.json, every enclosure URL and GUID
+      unchanged, duration within a second of the original, zero refused
+      uploads; a dry run afterwards plans nothing.
+    criteria: >
+      HIT when every item on the three feeds reads inside -16 +/- 1.5 LUFS at or under -1 dBTP with its enclosure URL and GUID unchanged.
+    readout_plan: >
+      digests/{unintended_consequences,vancouver,collingwood}/remaster_log.json; a dry run of Actions 'Re-master Episodes' afterwards plans nothing.
+    notes: >
+      scripts/remaster_episodes.py: the episode is resolved from the feed's
+      enclosure (never publishing.base_url), pulled back without the OP3
+      prefix, measured by engine.audio.measure_loudness, skipped when in
+      band, otherwise volume + alimiter (ceiling -2.0 dBFS, never a two-pass
+      loudnorm whose linear mode falls back to dynamic at these peaks),
+      re-measured, refused outside the band, uploaded to the SAME key
+      (asserted first), the feed item refreshed with keep_existing_guid.
+      YouTube, the Apple video MP4 and past Nerra Daily editions keep the
+      old level. Guards tests/test_remaster_episodes_2026_11_03.py.
+  - id: age-of-ai-beat-2026-11-03
+    title: "Mira's beat before the question: a host who reacts, measured as bare_question_rate"
+    area: voices
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      Recomputed on the six committed transcripts (a question turn whose
+      first Mira sentence ends in a question mark): Ep15 15/28 = 0.54 bare
+      (post hand-edit), Ep12 0.14, Ep13 0.30, Ep14 0.24, NV3 0.16, NV4 0.20;
+      Mira's median words per turn 17-18; mira_turn_s 3.2-5.8 on every
+      audio-measured room against the 12-20 s band; the guest's answers
+      shortened across the hour (Ep15 178 -> 58 words). The room-side
+      baseline is the FIRST audio-measured room on the deployed brief.
+    target: >
+      On the fifth real room after the new brief deploys (two-arm rehearsal
+      PASS at medium effort on the adrian and vincent fixtures plus one
+      operator listen first): bare_question_rate at or under 0.25 with
+      label_open_rate not rising (the three shapes add to one — read them
+      together), mira_turn_sec_median from 5 s toward 8-12 s,
+      guest_words_trend at or above 1.0, the PACING grade and survey_rating
+      not down.
+    criteria: >
+      HIT when bare_question_rate is at or under 0.25 on the fifth room after deploy with label_open_rate not rising.
+    readout_plan: >
+      interview episode_metrics.notes.audio in Supabase (bare_question_rate, label_open_rate, mira_turn_sec_median, guest_words_trend) and the rehearsal report's 'Read beside the verdict' table.
+    notes: >
+      The CRITICAL list's last line is the beat, by shape (after a real
+      answer, one sentence of what it changes or what it cost, then the
+      question); the opener prohibitions stay in HOW TO REACT.
+      audio_metrics.bare_question_rate rides in episode_metrics.notes.audio
+      (no migration; is_green reads it through metric_value), target
+      ("down", 0.25); the grader is handed it, a lesson may name it, the
+      rehearsal report prints it beside the verdict. The echo stripper
+      (post_interview.strip_echo_lines) removes HER words from the GUEST's
+      lines, so the beat must be in her own words. Guards
+      tests/test_mira_beat_2026_11_03.py; narrative docs/mira_craft_notes.md.
+  - id: youtube-one-video-per-episode-2026-11-03
+    title: "The channel the repo can see: RSS-ingested copies reconciled nightly, counted and nowhere else"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-30
+    status: reading
+    metric: youtube_rss_copies_14d_en
+    baseline: >
+      Of the 80 newest EN videos on the Videos tab, 40 were "Ep N: <hook>"
+      uploads at the rendered long's duration with the square cover as the
+      still: YouTube Podcasts' RSS-ingested copies. api/youtube_stats.json
+      channels.en video_count 4,822 against 2,434 indexed rows (49% unknown
+      to the repo; ru 1,560 vs 1,265); on ten visible pairs the copies took
+      41 of 112 first-day views (37%). The first nightly after merge sets the
+      counted baseline.
+    target: >
+      The first nightly writes channels.<ch>.unindexed_recent and attributes
+      the copies (kind rss_copy, read by youtube_rss_copies_14d_<ch> and
+      nowhere else; every instrument reads INDEXED_KINDS only). After the
+      Nov 16 Studio step (remove the RSS-fed podcast where a render exists;
+      landmine 15, no API): youtube_rss_copies_14d_en toward 0 over the
+      following fortnight, and long_d3_median_en_7d read against the RU/FR
+      control to see whether the render keeps the views the copy took.
+    notes: >
+      scripts/fetch_youtube_analytics.py _channel_uploads (35 days, one Data
+      API unit a page; keys ABSENT on a failed read, never 0); attribution by
+      episode number + hook prefix (the Russian "Выпуск" prefix too); the
+      nightly warns "YouTube RSS copies — <show> on <ch>" where a copy sits
+      beside a render. Guards tests/test_youtube_pass_2026_11_03.py,
+      tests/test_dashboard_growth.py::TestYoutubeMeasurementKeys.
+  - id: retention-curves-every-long-2026-11-03
+    title: "A retention curve for every long of the last 14 days, hold-at-5% by age"
+    area: youtube
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    metric: long_hold5_age7_median_en
+    baseline: >
+      The analytics fetch pulled audienceWatchRatio curves for the top FIVE
+      longs per channel a night, so the instrument never accumulated past
+      ~10-15 curves and a carried-forward curve read as fresh. The first
+      fortnight after merge sets the hold5 baseline at age 7.
+    target: >
+      Every EN/RU/FR long under 14 days old carries a retention_curve with
+      its curve_fetched_at (RETENTION_CURVE_MAX 150 a night, newest first
+      across channels); api/youtube_early_reach.json carries hold5_by_age /
+      hold25_by_age for longs only; long_hold5_age7_median_en is a number on
+      the dashboard (null until age-7 reads exist, never 0). Readout: the
+      median beside the open-cliff card, grouped by show; a show whose
+      hold5 at age 7 sits under the channel's median is a cold-open
+      question for the Nov 17 review, not a policy flip.
+    notes: >
+      A curve carries curve_fetched_at and a carried-forward one is never
+      read as fresh; a failed curve never joins _FAILED_QUERIES; the
+      snapshot's generated stamp carries the fetch's own date so a fetch
+      across UTC midnight loses no hold. On current volume the top Shorts
+      get no curve slots until long volume drops or the cap is raised. The
+      curve pass adds ~130 Analytics queries a night. Guards
+      tests/test_youtube_pass_2026_11_03.py.
+  - id: listen-before-slate-2026-11-03
+    title: "Listen before the slate: a rehearsal that commits nothing, a probe on a real script, a listens record"
+    area: efficiency
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      "Ship to the whole slate, then repair" was the audio pattern: the Oct 13
+      beat and the Oct 14 swell each shipped network-wide and were reversed
+      within a day, the Oct 20 breath tag reached 14 episodes before the
+      operator heard it and every one was re-voiced, 34 "Re-synthesize
+      Episode" runs in 14 days, 11 commits to shows/_defaults.yaml in
+      October (5 between Oct 13 and 20). run_show --rehearse existed and no
+      workflow exposed it; the probe rendered one fixed passage.
+    target: >
+      Four weeks after merge: every change to _defaults.yaml's audio: or
+      tts: values carries a docs/listens.md line and a regenerated snapshot
+      (the guard fails the PR otherwise); at least one rehearsal artifact
+      and one probe run on a committed script in the record; zero
+      network-wide audio reversals and under 10 re-synthesis runs in the
+      four weeks.
+    criteria: >
+      HIT when every audio:/tts: change in four weeks carries a docs/listens.md line and no audio change is reversed network-wide within 48 hours of its merge.
+    readout_plan: >
+      docs/listens.md; git log -- shows/_defaults.yaml engine/audio.py; the Actions 'Re-synthesize Episode' run list.
+    notes: >
+      run-show.yml rehearse input (full pipeline through TTS and mix, the
+      MP3 and TTS text as a 3-day artifact, nothing committed, the
+      same-day guard skipped, every publish step gated);
+      scripts/probe_audio_chain.py --script renders a real minute of a
+      committed script through the real builders with named chain variants;
+      tests/fixtures/defaults_audio_snapshot.yaml + the listens guard; the
+      PR template asks for the rehearsal link and who listened; the
+      playbook's "Audio changes" section. Guards
+      tests/test_listen_before_slate_2026_11_03.py.
+  - id: findability-2026-11-03
+    title: "Findability a search engine can read: NewsArticle schema, sameAs and logo, dateModified, short titles, a news sitemap"
+    area: funnel
+    shipped: 2026-11-03
+    readout: 2026-12-15
+    status: reading
+    baseline: >
+      Organic Search was 19 sessions in 28 days on 2,966 sitemap URLs
+      (api/ga4_stats.json channels), the same as Sep 10; the 17 topic hubs
+      received no landing session. Every post title was shaped
+      "<hook>… — EpN | Show" at a median 88 characters; posts carried
+      BlogPosting with no dateModified and no publisher logo; the
+      Organization had no sameAs; no news sitemap.
+    target: >
+      Six weeks after merge (Search Console needs the window): organic
+      sessions per 28 days above 60 (3x) with news-sitemap.xml accepted in
+      Search Console and the NewsArticle posts indexed under their short
+      titles; zero rich-result errors on the sampled posts. A flat read
+      after six weeks closes the entry as a MISS, not a reason to add
+      schema.
+    criteria: >
+      HIT when organic sessions per 28 days exceed 60 six weeks after merge with news-sitemap.xml accepted; flat is a MISS, never a reason to add schema.
+    readout_plan: >
+      api/ga4_stats.json channels (Organic Search); Search Console's sitemap and rich-result reports for news-sitemap.xml.
+    notes: >
+      engine/blog.py article_schema_type (NewsArticle on the 24 news shows;
+      BlogPosting for a lesson, an interview, a dialogue, a narrative) with
+      the author kept as the show ORGANIZATION (never a Person for a cloned
+      voice), publisher logo ImageObject, dateModified from corrections,
+      image the share card; engine/titles.py web_page_title ("<lead> · <Show>",
+      WEB_TITLE_LEAD_MAX 58); org sameAs from network_social_sameas();
+      generate_news_sitemap (48 h, from each post's own JSON-LD, never
+      mtime), written by the finalize step and staged one path per add; an
+      initial empty file is committed so the URL robots.txt names never
+      404s. Guards tests/test_findability_2026_11_03.py.
+  - id: deep-dive-distinct-2026-11-03
+    title: "The deep dive is a second story: a containment measure on every flagship essay"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-10
+    status: decide
+    baseline: >
+      Replayed on each show's last eight digests at a 0.5 containment
+      threshold: Tesla 3/8 (Ep647 0.595, item 9 retold as the First
+      Principles essay), Planetterrian 4/8, SpaceX 2/8, FF 2/8, M&A 1/8,
+      MAG 7 0/8, Omni View 0/8. The Tesla ledger's do_not_retry had asked
+      for a data-side gate before any prompt fix of the essay.
+    target: >
+      A week of deep_dive_contains_body_item readings in the episode
+      metrics on every flagship (deep_dive_distinct_measure, never firing).
+      Decision on Nov 10: list the firing form (deep_dive_distinct) on Tesla
+      and Planetterrian only if digest_structural_regen_share_7d stays under
+      0.22 with it counted in, and the flagship-prompts-by-shape essays have
+      moved the share at or over 0.5 down.
+    criteria: >
+      List deep_dive_distinct on Tesla and Planetterrian on Nov 10 only if digest_structural_regen_share_7d stays under 0.22 with it counted in.
+    readout_plan: >
+      deep_dive_contains_body_item in digests/<show>/metrics_ep*.json for the week; digest_structural_regen_share_7d on the dashboard.
+    notes: >
+      engine.digest_lint.deep_dive_item_containment reads every item shape
+      the shows write (numbered, bold title alone, inline bold head with a
+      URL, Omni View's "### N) Title"); an essay never scores against
+      itself. DEEP_DIVE_FETCHED_SECTIONS reads every essay;
+      DEEP_DIVE_FETCHED_FIRING_SECTIONS (The Teardown, Practitioner Deep
+      Dive) are the only ones that fire until a section's prompt states the
+      Source-line rule. Guards tests/test_deep_dive_distinct_2026_11_03.py.
+  - id: narrative-hooks-sourced-2026-11-03
+    title: "A narrative show's hook figure is sourced: in a read research article or the episode's own ledger"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-24
+    status: reading
+    baseline: >
+      UC fired 14 of its last 14 digests against an empty research context
+      (Ep161's hook figures 500 and 1954 sat in no read page); with the
+      ledger and research articles in context the replay fires on the hooks
+      whose figure traces nowhere.
+    target: >
+      Three weeks after merge on UC and FPD: hook_figures_unsourced at 0 on
+      at least 80% of shipped episodes, the one-shot regeneration firing on
+      under a quarter of them, and no episode skipped for it (the lint never
+      blocks). A/B-listen the first regenerated episode.
+    criteria: >
+      HIT when hook_figures_unsourced is 0 on at least 80% of UC and FPD episodes and the regeneration fires on under a quarter of them.
+    readout_plan: >
+      hook_figures_unsourced in digests/{unintended_consequences,first_principles}/metrics_ep*.json for three weeks.
+    notes: >
+      engine.digest_lint hook_figure_sourced (a context lint): every
+      digit-written hook figure must match a figure in a read (>= 1200
+      chars) research article or in the episode's claims ledger (context,
+      a fenced block, or the generation's stash); spelled numbers measure 0.
+      Guards tests/test_deep_dive_distinct_2026_11_03.py.
+  - id: voices-spend-and-metrics-2026-11-03
+    title: "Mira's rooms become readable: a credit file per room, survey, grades, yield and cost per room"
+    area: voices
+    shipped: 2026-11-03
+    readout: 2026-12-01
+    status: reading
+    metric: voices_cost_per_room_usd
+    baseline: >
+      The operator's priority show recorded $0.00 in every cost rollup while
+      rehearsals burned ~870 Voice Agent minutes (the usage recorder
+      returned silently on the SDK's usage object); survey, grades and
+      yield lived only in Supabase and no surface read them. Rooms before
+      Nov 3 have no credit file and are not back-filled.
+    target: >
+      After the nightly carries VOICES_SUPABASE_URL / _SERVICE_KEY: every
+      room since merge has a credit file, api/voices_metrics.json reads
+      survey, grades, yield and cost with null (never 0) where a table could
+      not be read, the Mission Control card is populated, and
+      voices_cost_per_room_usd, voices_survey_mean_30d and
+      voices_pacing_grade_median_5 are numbers. The credit-stop ping at
+      03:00 ET is seen in the log before the next xAI billing stop.
+    notes: >
+      pipelines/voices/costs.py; engine.tracking.voice_agent_rate_per_min()
+      (XAI_VOICE_COST_PER_MIN; basis estimated until the invoice is read);
+      scripts/build_voices_metrics.py is the one writer of published: true
+      on room files; rehearsals sum on their own line. Guards
+      tests/test_voices_metrics_2026_11_03.py,
+      tests/test_cost_rollup_2026_10_02.py.
+  - id: flagship-prompts-by-shape-2026-11-03
+    title: "Write for the ear, by shape: the outlet inside the first-fact sentence, no sentence counts, no essay as a length lever"
+    area: shows
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      script_attribution_tail_pct (the share of body sentences ending on
+      ", X reported."), Oct 27-Nov 2: Tesla 10.4%, SpaceX 5.2%, FF 6.2%
+      (Oct 1-10: 0.0 / 0.6 / 0.0); the shared paragraph counted sentences,
+      every podcast prompt counted sentences per line, Tesla's quoted
+      "according to Teslarati" and Omni View's "Reuters reports" were
+      specimens, the essays carried LENGTHEN clauses.
+    target: >
+      Two weeks after merge: script_attribution_tail_pct at or under 3% on
+      Tesla and 2% on SpaceX and FF, with script_digest_coverage_pct at or
+      over 70 and script_entity_retention_pct at or over 75 on the same
+      episodes (a tail removed by dropping the fact is a MISS); the
+      operator's A/B listen on Tesla's first episode.
+    criteria: >
+      HIT when script_attribution_tail_pct is at or under 3% on Tesla and 2% on SpaceX and FF with coverage at or over 70 and entity retention at or over 75 on the same episodes.
+    readout_plan: >
+      scripts/review_snapshot.py density table per show (tail, coverage, retention) over the two weeks after merge.
+    notes: >
+      shows/prompts/_shared/content_discipline.txt and 34 show prompts,
+      by shape (no new specimen); the new-show template; X-post items get
+      a shape and engine.titles.X_ITEM_TITLE_MAX (110); Omni View's
+      Understanding the Issue and M&A's Under the Hood now end on a Source
+      line and enter the claims coverage floor. Not done on purpose: Top
+      World's one-sentence Also Today outlet drop (operator) and SpaceX's
+      Engineering Deep Dive clause. Guards
+      tests/test_flagship_prompts_2026_11_03.py.
+  - id: voice-dynamics-glue-2026-11-03
+    title: "The voice chain's compressor is a named stage; a 2:1 glue on Tesla and Top World first"
+    area: audio
+    shipped: 2026-11-03
+    readout: 2026-11-10
+    status: decide
+    metric: audio_loudness_range_median_7d
+    baseline: >
+      The voice chain's 4:1 compressor pressed every show to 1.6-3.0 LU of
+      loudness range against NPR's 4.9-5.2; on a speech-shaped fixture the
+      legacy chain measures 2.1 LU and glue 4.8, both inside -16 +/- 1.5
+      LUFS at or under -1 dBTP.
+    target: >
+      After three episodes each on Tesla and Top World: each show's own
+      audio_loudness_range_lu at 4-5 LU, true peak at or under -1.5 dBTP,
+      integrated loudness in spec; then the operator's A/B on phone speaker
+      and headphones decides the network flip (DEFAULT_VOICE_DYNAMICS, one
+      constant) after one DP Pod listen. The network median here moves
+      little with two shows; read the per-show metric.
+    notes: >
+      engine.audio.VOICE_DYNAMICS {legacy, glue}; DEFAULT_VOICE_DYNAMICS is
+      what every surface with no setting of its own ships (edition pieces,
+      translated tracks, specials); audio.voice_dynamics in the two trial
+      YAMLs only; an unknown name raises at load. Guards
+      tests/test_voice_dynamics_2026_11_03.py.
+  - id: review-loop-closes-2026-11-04
+    title: "The review loop closes: the register is read nightly, network is reachable, closed review PRs are labelled"
+    area: quality
+    shipped: 2026-11-04
+    readout: 2026-12-02
+    status: reading
+    baseline: >
+      74 register entries were past their readout on Nov 3 and nothing read
+      them on a schedule (60 due, 57 past their date on Nov 4 after the
+      Nov 3 scoring); the network ledger held 70 of 94 predictions unscored
+      because every slate pass advanced its rotation date; seven review PRs
+      closed unmerged since Oct 20 carried no label, so do_not_retry learned
+      nothing from them.
+    target: >
+      Four weeks after merge: api/register_readouts.json written every
+      night; no entry 14 days past readout without an outcome or a metric
+      (the nightly's --strict warning silent); the agent's first network
+      review scores the pending network predictions; every review PR closed
+      unmerged since merge carries a label, and each rejected one has its
+      do_not_retry line.
+    criteria: >
+      HIT when the nightly's --strict warning is silent for a week and the
+      network ledger's pending predictions are scored by an agent review.
+    readout_plan: >
+      api/register_readouts.json (due, past_due, notes_not_experiments);
+      docs/reviews/ledger/network.yaml; the review PRs' labels.
+    notes: >
+      scripts/readout_register.py (readability rule from Nov 3: a computable
+      metric or criteria + readout_plan), scripts/review_pr_outcomes.py
+      (one ask per PR; rejected text-splices do_not_retry),
+      pick_review_target rotation_only, model_trial_report rolling window.
+      Guards tests/test_review_loop_2026_11_03.py.
+  - id: script-arm-latency-2026-11-04
+    title: "The model-upgrade latency gate is read nightly on the script-arm shows"
+    area: efficiency
+    shipped: 2026-11-04
+    readout: 2026-11-18
+    status: decide
+    metric: script_stage_p95_s_14d_spacex
+    baseline: >
+      First rolling read (Nov 4, 14 days): SpaceX's script stage p95 903 s
+      against the 600 s request timeout (the playbook's gate is half the
+      timeout); the six script-arm entries had been scored once by hand on
+      Nov 3 (SpaceX 628 s, Tesla 561 s, MIT 330 s, M&A wall p95 3,029 s).
+    criteria: >
+      Playbook rule 7: a script arm whose p95 stays over half the request
+      timeout for two weeks is either moved to low reasoning effort (one
+      show first, A/B-listened) or given a larger script budget with the run
+      envelope recomputed; the operator decides which.
+    readout_plan: >
+      api/model_trial.json (per show and stage, nightly) and the
+      script_stage_p95_s_14d_<show> live metrics on the dashboard.
+    notes: >
+      scripts/model_trial_report.py --out api/model_trial.json on
+      ROLLING_WINDOW_DAYS; a show's digest dir is its YAML output_dir (Tesla
+      reads digests/tesla_shorts_time). Guards
+      tests/test_review_loop_2026_11_03.py::TestModelTrialNightly.
+  - id: interview-publish-parity-2026-11-04
+    title: "The interview shows inherit the publish surface: VTT, person and funding tags, whole-clause titles, a title bundle on YouTube"
+    area: voices
+    shipped: 2026-11-04
+    readout: 2026-12-02
+    status: reading
+    baseline: >
+      6 of 19 interview feed titles ended in an ellipsis; no interview feed
+      item carried a podcast:transcript tag; About sections printed labels
+      and bare domains as biographies (seven committed blurbs); the YouTube
+      long-form shipped the waveform with the feed title and no chapters
+      (27 views on 3 videos, 1.5% watched).
+    target: >
+      Four weeks after merge: every interview episode published since
+      carries a VTT and a podcast:transcript tag (plus the five backfilled),
+      no new feed title ends in an ellipsis, no About prints a placeholder;
+      the interview_v2 long-forms' day-3 views and age-7 retention read
+      against the three waveform longs, camera and waveform apart.
+    criteria: >
+      HIT when the feed checks hold on every episode published after merge
+      and the interview_v2 longs out-read the waveform longs at day 3.
+    readout_plan: >
+      grep -c podcast:transcript on age_of_ai_podcast.rss and
+      nerra_voices_podcast.rss; digests/age_of_ai/youtube_videos.json rows
+      with variant interview_v2 against api/youtube_early_reach.json.
+    notes: >
+      engine.titles.fit_first_clause; publish_episode.feed_podcast_tags;
+      engine.interviews.is_guest_prose; video_kind recorded, camera_missing
+      never ships the waveform. Operator: one vtt_backfill run and
+      refresh_post for Ep12-14 and NV Ep3-4. Guards
+      tests/test_voices_feed_parity_2026_11_03.py,
+      tests/test_age_of_ai_youtube_2026_11_03.py.
+  - id: language-fronts-own-audience-2026-11-04
+    title: "The Russian and French fronts rank and lead from their own channel's audience"
+    area: reach
+    shipped: 2026-11-04
+    readout: 2026-12-01
+    status: reading
+    baseline: >
+      The French front led with a Canadian markets story for an audience
+      90% in France; both hubs ranked shows in the English order; the RU
+      landers asked for an email whose Sunday letter no subscriber's tag
+      reached in three months (0 captures); ru/index.html read 8 views in
+      28 days.
+    target: >
+      By Dec 1: on at least 80% of committed days the hub's lead comes from
+      a show in its channel's top three by views; ru/index.html and
+      fr/index.html engaged sessions and RU/FR click.by_channel read
+      (small absolute numbers expected); no lander promises a letter.
+    criteria: >
+      HIT when the lead rule holds on 80% of days; the engagement numbers
+      are read beside it, not judged at this volume.
+    readout_plan: >
+      The committed ru/index.html and fr/index.html per day against
+      api/funnel.json channel views; api/ga4_stats.json engaged sessions for
+      the two hubs.
+    notes: >
+      generate_html._rank_shows_by_channel_views,
+      engine.language_front.lead_rotation_for, the hubs' own share cards;
+      ru-spacex-weekly.yml retired (the script survives one release with its
+      test). Guards tests/test_site_languages_2026_10_18.py,
+      tests/test_ru_spacex_pilot.py.
+  - id: email-measurement-2026-11-04
+    title: "The email can be judged: a nightly subscriber and tag history, four live metrics, a tile that is never hidden"
+    area: funnel
+    shipped: 2026-11-04
+    readout: 2026-11-29
+    status: reading
+    metric: email_open_rate_7d
+    baseline: >
+      Nov 2 2026: the Mission Control tile was hidden at "sends 0"; the
+      newsletter had no series ("the list grew by two" came from a ledger
+      note); no email register metric; 14 subscribers; 3 email sessions to
+      the site in 28 days (Oct 31).
+    target: >
+      By the readout: api/buttondown_history.json holds at least 25 nightly
+      rows; email_open_rate_7d is a number on every night with seven sends
+      and 30 summed recipients (null below, never 0);
+      email_subscribers_delta_7d is a number from Nov 11.
+    criteria: >
+      HIT when the history holds at least 25 rows and the four email_*
+      keys are non-null on the readout night.
+    readout_plan: >
+      api/buttondown_history.json; the experiments live metrics in
+      api/dashboard.json; python scripts/review_snapshot.py network.
+    notes: >
+      scripts/fetch_buttondown_stats.py (history + readers),
+      build_audience_headline network.email, generate_dashboard
+      _email_live_metrics, the management.html tile, the nightly add-paths.
+      No back-fill from git history. Guards
+      tests/test_email_measurement_2026_11_03.py.
+  - id: editorial-score-instrument-2026-11-04
+    title: "The daily audit is an instrument: quoted flags, a persisted score per show, one rolling issue"
+    area: quality
+    shipped: 2026-11-04
+    readout: 2026-11-24
+    status: reading
+    metric: editorial_score_14d_spacex
+    baseline: >
+      The audit's 1-10 lived only in issue titles; SpaceX, 30% of downloads,
+      averaged 5.23 in October (30 episodes) and 5.38 Oct 18 - Nov 2 with
+      INCOHERENT on 11 of 16; the network's 14-day mean was 6.27 (211
+      episodes); 151 dated audit issues were open; Top World's pages promised
+      "about twelve minutes" against 9.4 delivered.
+    target: >
+      When the 14-day window lies wholly after the change (Nov 24):
+      editorial_score_14d_spacex at or above 6.3, read beside the other
+      shows under the same reviewer (the instrument itself changed Nov 3);
+      summary.audit_flags_grounded_share read for a baseline week before any
+      target; one rolling issue and no open dated issue that is not a
+      three-episode repeat.
+    criteria: >
+      HIT when SpaceX's 14-day mean reaches 6.3 with the network mean not
+      falling; a rise that comes only from flags turning ungrounded is read
+      as an instrument change, not an improvement.
+    readout_plan: >
+      api/editorial_score_history.json; editorial_score_14d_* on the
+      dashboard; api/daily-review.json summary (audit_flags_grounded_share,
+      ai_reviewed vs ai_scored); the open issue list.
+    notes: >
+      review_episodes.py parse_review_reply / apply_review_reply (a YES must
+      quote a sentence engine.claims.fuzzy_contains finds),
+      append_editorial_score_history, GhIssues; reviewer_max_tokens 3000;
+      engine.cadence.episode_length_for_slug + COMPUTED_LENGTH_SHOWS (empty;
+      the operator opts a show in) + scripts/check_promised_lengths.py.
+      Guards tests/test_daily_audit_instrument_2026_11_03.py.
+  - id: repo-hygiene-2026-11-03
+    title: "Old posts stop being rewritten every day; one shared blog stylesheet; a 2 MB blob guard"
+    area: efficiency
+    shipped: 2026-11-03
+    readout: 2026-11-17
+    status: reading
+    baseline: >
+      32,647 blog/ rewrites in the week to Nov 3; Tesla's plain show commit
+      fb848782e touched 264 files, 258 of them old posts whose only change
+      was the three "You Might Also Like" cards; 105 Pages deploys a day;
+      39 KB of identical inline CSS in each of 2,747 posts (~108 MB).
+    target: >
+      One week after merge (the first nightly rewrites every post once for
+      the stylesheet move): files per "Auto-generated: <show>" commit under
+      20 and blog/ rewrites a day under 300; no post older than a day
+      changes its cards; no tracked blob over 2 MB under digests/.
+    criteria: >
+      HIT when files per 'Auto-generated: <show>' commit stay under 20 and blog/ rewrites under 300 a day a week after merge.
+    readout_plan: >
+      git log --since on main: files per 'Auto-generated' commit and blog/ paths per day; tests/test_repo_hygiene_2026_11_03.py on main.
+    notes: >
+      _pick_cross_show_related(post_date=) reads the post's own week
+      (RELATED_WINDOW_BEFORE_DAYS 7 / AFTER 1, nearest first);
+      generate_html.py --show X --blogs --latest 3 on every show run, video
+      job and multilingual sweep; styles/blog.css (network-first in sw.js,
+      VERSION nn-2026-11-03); the size guard. Guards
+      tests/test_blog_related_stability_2026_11_03.py,
+      tests/test_repo_hygiene_2026_11_03.py.
+

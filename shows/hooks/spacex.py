@@ -409,7 +409,13 @@ def _price_sentence(
             _local = _local.astimezone(ZoneInfo("America/New_York"))
         except Exception:  # pragma: no cover
             pass
-        _day = " Friday" if _local.weekday() >= 5 else ""
+        # Nov 3 2026: before Monday's open the last bar is still Friday's —
+        # Ep149 (Mon Nov 2, 03:30 New York) spoke Friday's close as "closed
+        # at" beside a hook about pre-market trading. The verb comes from
+        # the clock (Sep 4 rule); so does the day.
+        _friday = (_local.weekday() >= 5
+                   or (_local.weekday() == 0 and _local.time() < datetime.time(9, 30)))
+        _day = " Friday" if _friday else ""
         return f"Ess Pee See Ex closed{_day} at {spoken}{change_part}. "
     return f"Ess Pee See Ex is trading at {spoken}{change_part}. "
 

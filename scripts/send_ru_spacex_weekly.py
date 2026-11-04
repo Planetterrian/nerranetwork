@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
-"""Send «Хроника SpaceX» — the Russian weekly letter the RU pilot promises.
+"""Send «Хроника SpaceX» — the Russian weekly letter the RU pilot promised.
 
-The landing page at ``ru/spacex.html`` asks for an email address in
+RETIRED 2026-11-03 (six-month review, register entry
+``ru-spacex-pilot-2026-07-30``: MISS). In three months the lander captured
+nobody — the ``ru-spacex`` / ``ru-tesla`` Buttondown tags never had a
+subscriber — so every Sunday this script logged "nothing to send" and
+returned 0. The Sunday workflow (``.github/workflows/ru-spacex-weekly.yml``)
+is deleted; the landers now ask for the YouTube subscribe and the Russian
+RSS, the two things a Shorts-feed audience actually does. The module stays
+for ONE release so ``tests/test_ru_spacex_pilot.py::TestWeeklyLetter`` keeps
+pinning its honesty rules (Russian audio only, no empty issue, one send per
+week); remove both together.
+
+The landing page at ``ru/spacex.html`` asked for an email address in
 exchange for exactly one thing: a Russian letter every Sunday with the
-week's episodes and the next launch window. This script is what keeps
-that promise. Without it the pilot's only asset would be a form that
+week's episodes and the next launch window. This script is what kept
+that promise. Without it the pilot's only asset would have been a form that
 collects addresses and never writes to them, which is worse than no
 form at all.
 

@@ -51,7 +51,13 @@ echo_open_rate is the share of her turns that opened on the guest's own
 last words. label_open_rate is the share of her question turns that opened
 on a few words of her own summing up the answer ("Deadwood showing
 itself."); over a third is a habit a listener hears, and a habit she has is
-a lesson to propose, with its turns as the evidence. guest_words_per_answer_median and guest_words_trend say whether
+a lesson to propose, with its turns as the evidence. bare_question_rate is
+the share of her question turns that went straight to the question with no
+sentence of her own before it; over a quarter is a host who asks and does
+not react, and a guest who is not reacted to gives shorter answers as the
+hour goes on. A question turn is a label, bare, or carries a reaction, and
+the three add to one, so read label_open_rate and bare_question_rate
+together: a room that fixes one by growing the other has not moved. guest_words_per_answer_median and guest_words_trend say whether
 her questions landed and whether answers grew as the hour went on. Grade
 turn_taking and pacing from these, and say in grade_why which number drove
 the grade. When the basis is TRANSCRIPT ONLY, leave turn_taking and pacing
@@ -188,7 +194,7 @@ Return ONE JSON object and nothing else — no prose, no code fences:
       "category": "pacing | questions | interruption | listening | tone",
       "lesson": "one sentence, addressed to Mira as a standing instruction, in the positive: what to do, not what to stop",
       "evidence": "the timestamp and a short quote showing where this went wrong",
-      "metric": "the measure that will show it worked: overlap_events_per_10min | self_answered_turns | mira_turn_sec_median | echo_open_rate | guest_words_trend | closing_round_complete | seams, or \"\" when none fits",
+      "metric": "the measure that will show it worked: overlap_events_per_10min | self_answered_turns | mira_turn_sec_median | echo_open_rate | bare_question_rate | guest_words_trend | closing_round_complete | seams, or \"\" when none fits",
       "confidence": "high | medium",
       "scope": "all_shows | this_show"
     }

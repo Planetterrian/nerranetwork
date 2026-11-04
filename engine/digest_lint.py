@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from engine.script_audit import _salient
+from engine.titles import HEADLINE_CHAPTER_TITLE_MAX, clip_words
 
 # ---------------------------------------------------------------------------
 # Parsing helpers (shared by every lint; deliberately forgiving — the
@@ -790,6 +791,161 @@ def lint_hook_supported(digest: str) -> Optional[LintFinding]:
     return LintFinding("hook_supported", "", metrics)
 
 
+# --- deep_dive_distinct / deep_dive_distinct_measure ------------------------
+# Nov 3 2026 (the six-month review's repetition reader, recomputed by the
+# skeptic with this module's own ``_salient``): the flagship deep dive was a
+# second PASS on a body item rather than a second STORY — Tesla Ep647's First
+# Principles repeats item 9 nearly clause for clause, Planetterrian Ep227's
+# Science Deep Dive IS item 10, SpaceX Ep143's Engineering Deep Dive carries
+# item 2's exact figures. Tesla's TOPIC DISTINCTNESS rule has been in the
+# prompt since Sep 5 and the Tesla ledger's ``do_not_retry`` forbids a third
+# prompt-only de-seed "without a data-side or gate change": this is that gate.
+#
+# The measure is the share of a body item's salient vocabulary the essay
+# carries (``|item ∩ essay| / |item|`` over items of eight or more salient
+# tokens; the best item wins). Replayed over each show's last eight digests
+# at ``DEEP_DIVE_DISTINCT_MAX`` 0.5: Tesla 3/8 (0.60, 0.51, 0.58),
+# Planetterrian 4/8 (0.56-0.67), SpaceX 2/8, Fascinating Frontiers 2/8,
+# Models & Agents 1/8, MAG 7 0/8, Omni View 0/8, AI Chips 0/8 (the control,
+# max 0.35). Two forms, so the regeneration share
+# (``digest_structural_regen_share_7d``, ceiling 0.22) is read before a show
+# pays for the rule: ``deep_dive_distinct_measure`` records the containment
+# and never fires; ``deep_dive_distinct`` fires and rides the one-shot
+# structural regeneration like every other lint (never a script retry). The
+# metric's consumer is the ``deep-dive-distinct-2026-11-03`` register
+# readout: the per-show median of ``deep_dive_contains_body_item`` from
+# ``metrics_ep*.json``.
+
+#: The essay sections, in the order the lint looks for them (the first
+#: present, non-empty one is judged).
+DEEP_DIVE_DISTINCT_SECTIONS = (
+    "Tesla First Principles", "Engineering Deep Dive", "Under the Hood",
+    "Science Deep Dive", "Cosmic Deep Dive", "Understanding the Issue",
+    "Planetterrian Spotlight", "Cosmic Spotlight", "The Thread",
+    "Practitioner Deep Dive",
+)
+#: At or above this share of a body item's salient vocabulary the essay is a
+#: second telling of that item.
+DEEP_DIVE_DISTINCT_MAX = 0.5
+#: An item with fewer salient tokens than this is a one-liner (Also Today),
+#: not a story an essay could re-tell.
+DEEP_DIVE_DISTINCT_MIN_ITEM_TOKENS = 8
+
+
+@dataclass
+class DeepDiveContainment:
+    section: str
+    #: Share of the best body item's salient vocabulary the essay carries.
+    share: float
+    #: 1-based position of that item among the digest's story items.
+    item_number: int
+    item_title: str
+
+
+def deep_dive_section(digest: str) -> Optional[Tuple[str, str]]:
+    """``(name, body)`` of the first present, non-empty deep-dive section."""
+    for name in DEEP_DIVE_DISTINCT_SECTIONS:
+        body = section_body(digest, name)
+        if body is not None and body.strip():
+            return name, body
+    return None
+
+
+_ITEM_TITLE_BOLD_RE = re.compile(r"^\s*(?:\d+[.)]\s*)?\*\*(.+?)\*\*")
+_ITEM_TITLE_PREFIX_RE = re.compile(r"^\s*\d+[.)]\s*")
+
+
+def _item_title(head: str) -> str:
+    """The item's title for the finding's note: the bold span of its head
+    line (``1. **Title**: Outlet`` → ``Title``; ``**Title:** body`` →
+    ``Title``), else the head without its number (an Omni View ``3) Title``
+    heading). Never a stray ``*``; clipped through ``engine.titles``."""
+    m = _ITEM_TITLE_BOLD_RE.match(head or "")
+    text = m.group(1) if m else _ITEM_TITLE_PREFIX_RE.sub("", head or "")
+    text = " ".join(text.replace("*", " ").split()).rstrip(":").strip()
+    return clip_words(text, HEADLINE_CHAPTER_TITLE_MAX)
+
+
+def deep_dive_item_containment(digest: str) -> Optional[DeepDiveContainment]:
+    """The body item whose salient vocabulary the deep dive carries most of,
+    or ``None`` when the digest has no deep-dive section or no item of
+    ``DEEP_DIVE_DISTINCT_MIN_ITEM_TOKENS`` to compare. Items are read from
+    every section EXCEPT the deep-dive sections, so an essay that opens on
+    a bold line never scores against itself."""
+    found = deep_dive_section(digest)
+    if found is None:
+        return None
+    name, body = found
+    essay = _salient(_prose(body))
+    if not essay:
+        return None
+    skip = {s.lower() for s in DEEP_DIVE_DISTINCT_SECTIONS}
+    best: Optional[DeepDiveContainment] = None
+    n = 0
+
+    def _consider(head: str, text: str) -> None:
+        nonlocal best
+        toks = _salient(_prose(text))
+        if len(toks) < DEEP_DIVE_DISTINCT_MIN_ITEM_TOKENS:
+            return
+        share = round(len(toks & essay) / len(toks), 3)
+        if best is None or share > best.share:
+            best = DeepDiveContainment(name, share, n, _item_title(head))
+
+    # The items are read in every shape the shows write (``story_item_count``,
+    # Oct 21 2026 — the two-shape reader "read every inline-headed item as
+    # missing"): a numbered item, a bold title alone on its line, a bold head
+    # carrying a URL (Models & Agents writes ``**Title:** body … Source:``
+    # inline) and an Omni View ``### N) Title`` heading, whose section IS the
+    # story — read as ONE item, so its ``**Read more (sources):**`` block
+    # never stands in for it.
+    for title, sec_body in sections(digest, full_titles=True):
+        short = title.split(":")[0].strip().strip("*")
+        if short.lower() in skip:
+            continue
+        if _HEADING_ITEM_RE.match(title):
+            n += 1
+            _consider(title, title + "\n" + sec_body)
+            continue
+        for block in items(sec_body):
+            head = block.splitlines()[0]
+            if not (_NUMBERED_ITEM_RE.match(head) or _HEADLINE_ITEM_RE.match(head)
+                    or (_BOLD_HEAD_RE.match(head) and urls_in(block))):
+                continue
+            n += 1
+            _consider(head, block)
+    return best
+
+
+def _deep_dive_distinct(digest: str, fire: bool) -> Optional[LintFinding]:
+    lint = "deep_dive_distinct" if fire else "deep_dive_distinct_measure"
+    best = deep_dive_item_containment(digest)
+    if best is None:
+        return None
+    metrics = {"deep_dive_contains_body_item": best.share}
+    if fire and best.share >= DEEP_DIVE_DISTINCT_MAX:
+        return LintFinding(
+            lint,
+            f"{best.section} re-tells item {best.item_number} ({best.item_title}) "
+            "— write it on the mechanism or the second story that item did not "
+            "touch, with figures from a fetched article it did not use",
+            metrics,
+        )
+    return LintFinding(lint, "", metrics)
+
+
+def lint_deep_dive_distinct(digest: str) -> Optional[LintFinding]:
+    """The firing form: at ``DEEP_DIVE_DISTINCT_MAX`` the finding rides the
+    one-shot structural regeneration."""
+    return _deep_dive_distinct(digest, fire=True)
+
+
+def lint_deep_dive_distinct_measure(digest: str) -> Optional[LintFinding]:
+    """The measure form: records ``deep_dive_contains_body_item`` and never
+    fires — a show reads a week of it before listing ``deep_dive_distinct``."""
+    return _deep_dive_distinct(digest, fire=False)
+
+
 # ---------------------------------------------------------------------------
 # Context lints (Oct 17 2026): checks that need the run's ARTICLE LIST, not
 # just the digest. run_show passes ``context={"articles": [...]}``; called
@@ -839,8 +995,30 @@ def lint_board_venue_mix(digest: str, context: Optional[dict] = None) -> Optiona
 # rule in code. A section is read-sourced when a URL it cites, or an outlet it
 # names, belongs to an article that carried full text into the prompt.
 
-#: Deep-dive sections that must be built from a read article.
-DEEP_DIVE_FETCHED_SECTIONS = ("The Teardown",)
+#: Deep-dive sections whose source status the lint READS
+#: (``deep_dive_source_read`` is measured on the first one present). Nov 3
+#: 2026: Env Intel's Practitioner Deep Dive joins (shows/env_intel.yaml opts
+#: into the lint) — the section is built from one regulation or guidance
+#: document the run READ, never a career the host does not have — and so do
+#: the flagship essays (``DEEP_DIVE_DISTINCT_SECTIONS``, the digest-lints
+#: pass), so the share of essays written from a read page is a number before
+#: it is a rule. A show that lists ``deep_dive_fetched_source`` with a section
+#: name missing here gets a lint that can never measure;
+#: ``tests/test_env_intel_sources_2026_11_03.py`` and
+#: ``tests/test_deep_dive_distinct_2026_11_03.py`` pin the names.
+DEEP_DIVE_FETCHED_SECTIONS = ("The Teardown",) + DEEP_DIVE_DISTINCT_SECTIONS
+#: The sections whose digest prompt STATES the rule (built from ONE article
+#: whose full text is printed, the outlet named, the section ending on its
+#: Source line): only these fire. The flagship essays are measured until
+#: their prompts carry the rule — replayed over each show's last eight
+#: digests on Nov 3 2026, Tesla's First Principles cites nothing but the
+#: show's own X handle (8/8), the Planetterrian, SpaceX, Omni View, Models &
+#: Agents and Fascinating Frontiers essays cite or name no article at all
+#: (0/8 each) and MAG 7's Thread ends on a Source line on 6/8, so a firing
+#: form would spend the one-shot regeneration on six shows every day against
+#: the 0.22 share ceiling (``digest_structural_regen_share_7d``). A section
+#: moves here when its prompt states the rule.
+DEEP_DIVE_FETCHED_FIRING_SECTIONS = ("The Teardown", "Practitioner Deep Dive")
 #: Below this much text an article was a teaser, not a read page.
 READ_ARTICLE_MIN_CHARS = 1200
 
@@ -871,7 +1049,10 @@ def deep_dive_source_status(body: str, articles) -> Tuple[Optional[bool], List[s
     arts = list(articles or [])
     read = read_articles(arts)
     read_urls = {_norm_url(a.get("url") or "") for a in read}
-    cited = [u for u in urls_in(body) if _norm_url(u)]
+    # A social post is never the article a deep dive was built from, and
+    # Tesla's essay ends on the show's own X handle (the feedback line):
+    # read as a citation, the essay was "built from an unread page" 8/8.
+    cited = [u for u in urls_in(body) if _norm_url(u) and not _X_HOST_RE.match(u)]
     if cited:
         if any(_norm_url(u) in read_urls for u in cited):
             return True, []
@@ -906,6 +1087,10 @@ def lint_deep_dive_fetched_source(digest: str, context: Optional[dict] = None) -
             # section out) is the only honest answer, and a retry cannot do
             # better, so this measures without firing.
             return LintFinding("deep_dive_fetched_source", "", metrics)
+        if name not in DEEP_DIVE_FETCHED_FIRING_SECTIONS:
+            # Measured, never fired: the prompt behind this essay does not
+            # state the rule yet (DEEP_DIVE_FETCHED_FIRING_SECTIONS).
+            return LintFinding("deep_dive_fetched_source", "", metrics)
         what = (", ".join(leaned_on) if leaned_on else "no named article")
         return LintFinding(
             "deep_dive_fetched_source",
@@ -916,6 +1101,85 @@ def lint_deep_dive_fetched_source(digest: str, context: Optional[dict] = None) -
             metrics,
         )
     return None
+
+
+# --- hook_figure_sourced (the narrative shows) ------------------------------
+# Nov 3 2026: Unintended Consequences Ep161's hook, "Over 500 native species
+# vanished…", rests on a ledger entry the gate marked unverified_unreachable
+# (the literature says about 200) and Ep160's "25 percent more housing
+# starts" on an unverified_quote_mismatch, while the Oct 10 rule says UC and
+# FPD lead on a named person and a SOURCED hook number. ``hook_supported``
+# checks a hook figure against the digest's own items; a narrative show has
+# no items, so its hook figure is checked against what the run READ: every
+# digit-written hook figure (``hook_figures``) must appear in the full text
+# of a read research article (``read_articles``, ``source_kind ==
+# "research"``) OR in the episode's own claims ledger — the skeptic's
+# amendment: a figure the page states in words is traced through the ledger
+# entry the model wrote for it (which the gate then verifies), never a false
+# fire on a spelled figure. The ledger is ``context["claims"]`` when the
+# caller supplies it, else a ```claims fence still in the digest text, else
+# the stash the generation stage left (``engine.claims.peek_stashed_claims``
+# — the ledger of the digest being linted; run_show is untouched). A figure
+# found nowhere fires and rides the one-shot structural regeneration; the
+# gate runs after the lints, so this is the pre-gate check. The metric's
+# consumer is the ``narrative-hooks-sourced-2026-11-03`` register readout.
+
+_LEDGER_TEXT_KEYS = ("claim", "supporting_quote", "episode_span")
+
+
+def _ledger_for(digest: str, context: dict) -> List[dict]:
+    if "claims" in context:
+        return [c for c in (context.get("claims") or []) if isinstance(c, dict)]
+    from engine.claims import extract_claims_block, peek_stashed_claims
+
+    _clean, fenced = extract_claims_block(digest or "")
+    if fenced is not None:
+        return fenced
+    return [c for c in (peek_stashed_claims() or []) if isinstance(c, dict)]
+
+
+def _ledger_figures(claims: List[dict]) -> List[str]:
+    out: List[str] = []
+    for c in claims:
+        out.extend(figures_in(" ".join(str(c.get(k) or "") for k in _LEDGER_TEXT_KEYS)))
+    return out
+
+
+def hook_unsourced_figures(digest: str, context: dict) -> Optional[List[str]]:
+    """Hook figures that sit in no read research article and no ledger
+    entry. ``None`` when the digest has no hook; ``[]`` when the hook
+    carries no digit-written figure."""
+    hook = hook_line(digest)
+    if not hook:
+        return None
+    figs = hook_figures(hook)
+    if not figs:
+        return []
+    carried: set = set()
+    for a in read_articles(context.get("articles") or []):
+        if a.get("source_kind") != "research":
+            continue
+        carried.update(figures_in(str(a.get("full_text") or "")))
+    carried.update(_ledger_figures(_ledger_for(digest, context)))
+    return [f for f in figs if not figure_matches(f, carried)]
+
+
+def lint_hook_figure_sourced(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context:
+        return None
+    missing = hook_unsourced_figures(digest, context)
+    if missing is None:
+        return None
+    metrics = {"hook_figures_unsourced": len(missing)}
+    if missing:
+        return LintFinding(
+            "hook_figure_sourced",
+            "the hook's " + ", ".join(missing) + " is in no fetched source — "
+            "lead on a figure the sources carry, or on the named person and "
+            "the measured thing without the number",
+            metrics,
+        )
+    return LintFinding("hook_figure_sourced", "", metrics)
 
 
 # ---------------------------------------------------------------------------
@@ -962,7 +1226,7 @@ def lint_pick_stop_loss(digest: str) -> Optional[LintFinding]:
     )
 
 
-CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source"})
+CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source", "hook_figure_sourced"})
 
 LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "wyntk_hook_match": lint_wyntk_hook_match,
@@ -979,6 +1243,9 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "pick_stop_loss": lint_pick_stop_loss,
     "board_venue_mix": lint_board_venue_mix,
     "deep_dive_fetched_source": lint_deep_dive_fetched_source,
+    "deep_dive_distinct": lint_deep_dive_distinct,
+    "deep_dive_distinct_measure": lint_deep_dive_distinct_measure,
+    "hook_figure_sourced": lint_hook_figure_sourced,
 }
 
 

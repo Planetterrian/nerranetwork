@@ -279,3 +279,52 @@ answer whether or not it is transcribed (`LAST_WORD_MIN_SPEECH_MS`); the
 closing session's prompt lists what the first recording already covered;
 since Oct 21 2026 the room hands the closing session each remaining
 question itself.
+
+## Michael Kamins, Oct 28 2026: a host who asks and does not react
+
+What happened. Ep15 was the first room on the brief rewritten on Oct 21,
+whose last critical line said to open a reply with the specific thing,
+never a grade, never an echo. The room obeyed. On the published transcript
+none of Mira's turns opens on an echo and none on a grade, and 15 of her 28
+question turns are a bare question with nothing of her own before it (Ep12
+5 of 37, Ep13 11 of 37, Ep14 4 of 17, Nerra Voices Ep3 6 of 38, Ep4 5 of
+25). Her median turn is 18 words; the room's own measure has her at 4.9 s a
+turn against the 12-20 s band; the guest's answers shortened from 178 words
+in the first third of the hour to 58 in the last; pacing has graded 3-5 on
+every real room since the rewrite. The rule removed the two bad openers and
+took the reaction with them: the beat (after a real answer, one specific
+human beat in plain words) sat mid-paragraph in HOW TO LISTEN with no
+weight, while the prohibition closed the critical list. A host who asks and
+does not react on four turns in ten is an answering machine with good
+questions, the complaint Jason Fishman made on Oct 1 in those words.
+
+A caveat the numbers carry. The published Ep15 is the hand re-cut of Oct
+29, which removed the echo openers that restated his answer; so the room
+reacted more than the transcript shows, with the echo the brief bans, and
+the editor left the bare questions. The room-side baseline is the first
+audio-measured room on the new brief, read from `episode_metrics`, never
+this transcript.
+
+What changed. `pipelines/voices/audio_metrics.bare_question_rate`: the
+share of her question turns with no sentence of her own before the
+question, measured beside `label_open_rate` (a question turn is a label, is
+bare, or carries a reaction of four words or more, and the three add to
+one, so a reaction rule that regrows the label is seen). It rides in
+`episode_metrics.notes`, has a target (under 0.25), may be named by a
+lesson, reaches the grader and the weekly pass. The beat is now the
+critical list's last line, stated by shape: one sentence in plain words of
+what the answer changes or what it cost, then the question. The two opener
+prohibitions stay where they were in HOW TO REACT, with the line that a
+short answer needs no acknowledgment beside them, so the beat is not a
+reflex. The edit keeps the beat it asks for: a reaction in her own words is
+never read as bleed, and the guest's line before it stays; a reaction in
+HIS words is the echo, and the stripper reads his line as her voice coming
+back. Before any booked room hears this brief: a two-arm rehearsal
+(`arms: both`, fixtures `adrian` for long arcs and `vincent` for terse
+answers), proposed = this brief at `reasoning_effort: medium`, current =
+the deployed brief at high; read bare_question_rate and label_open_rate
+together, mira_turn_sec_median against the band, guest_words_per_answer_median,
+overlaps and self-answered turns (neither may rise) and turn_gap_ms_median
+(a slower effort shows there first). A PASS plus one operator listen ships
+it; the rooms booked before that run the deployed brief. The register
+entry's readout is the fifth real room.

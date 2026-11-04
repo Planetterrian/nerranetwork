@@ -219,10 +219,12 @@ class TestXSourcePolicy:
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert "x_posts_as_sources" not in data, slug
             # They carry shape checks only — items_without_source (PR G, Sep
-            # 24) and hook_supported (Tesla, Oct 8) — never a policy on whose
-            # posts count.
+            # 24), hook_supported (Tesla, Oct 8) and the Nov 3 deep-dive
+            # measures — never a policy on whose posts count.
             assert set(data.get("digest_lints") or []) <= {
-                "items_without_source", "hook_supported"}, slug
+                "items_without_source", "hook_supported",
+                "deep_dive_distinct_measure", "deep_dive_distinct",
+                "deep_dive_fetched_source"}, slug
         for slug in ("omni_view", "models_agents"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert data["x_posts_as_sources"] == "secondary", slug
@@ -262,8 +264,11 @@ class TestSmallFixes:
         assert cfg.x_posts_as_sources == "linked_only"
         assert "Burnaby" in cfg.region_allowlist
         tesla = load_config(ROOT / "shows" / "tesla.yaml")
-        # PR G (Sep 24 2026) + hook_supported (Oct 8 2026, Ep627).
-        assert tesla.digest_lints == ["items_without_source", "hook_supported"]
+        # PR G (Sep 24 2026) + hook_supported (Oct 8 2026, Ep627) + the Nov 3
+        # 2026 deep-dive measures (digest-lints pass).
+        assert tesla.digest_lints == [
+            "items_without_source", "hook_supported",
+            "deep_dive_distinct_measure", "deep_dive_fetched_source"]
         assert tesla.x_posts_as_sources == "any" and tesla.region_allowlist == []
 
     def test_run_show_is_wired(self):

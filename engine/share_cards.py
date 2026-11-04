@@ -69,8 +69,12 @@ TEXT_MUTED = (148, 163, 184)
 NETWORK_NAME = "Nerra Network"
 # The words are engine.brand's (Oct 18 2026); a card never types its own.
 from engine.brand import (  # noqa: E402,F401
-    NETWORK_PROMISE_SHORT, NETWORK_TAGLINE, NETWORK_TAGLINE_RU, network_promise,
+    NETWORK_PROMISE_SHORT, NETWORK_TAGLINE, NETWORK_TAGLINE_FR, NETWORK_TAGLINE_RU,
+    network_promise,
 )
+#: The tagline in every site language: a card headlined with one of these
+#: does not sign with the English tagline again (the ru / fr hub cards).
+_TAGLINES = frozenset({NETWORK_TAGLINE, NETWORK_TAGLINE_RU, NETWORK_TAGLINE_FR})
 NETWORK_DOMAIN = "nerranetwork.com"
 
 # The record run_show writes beside a show's digests.
@@ -563,9 +567,10 @@ def render_page_card(*, kicker: str, title: str, subtitle: str = "",
     if grid:
         _covers_grid(img, covers, x0=grid[0], y0=grid[1], cols=grid[2], size=grid[3],
                      gap=18, radius=22)
-    # A card whose headline IS the tagline does not sign with it again.
+    # A card whose headline IS the tagline (in any site language) does not
+    # sign with it again.
     _footer(img, right_text=f"{NETWORK_DOMAIN}/{domain_path}" if domain_path else NETWORK_DOMAIN,
-            accent=accent, tagline="" if title == NETWORK_TAGLINE else NETWORK_TAGLINE)
+            accent=accent, tagline="" if title in _TAGLINES else NETWORK_TAGLINE)
     return _finish(img)
 
 

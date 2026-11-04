@@ -77,8 +77,11 @@ class TestMixWithMusicVoiceGuard:
             result = mix_with_music(voice, music, out)
             assert result == out
             # denoise flows through since the July 16 2026 hiss/tick fix
-            # (adeclick + afftdn stage, audio.voice_denoise config flag).
-            mock_norm.assert_called_once_with(voice, out, denoise=True, declick="standard")
+            # (adeclick + afftdn stage, audio.voice_denoise config flag);
+            # the dynamics stage name since Nov 3 2026 (None = the network
+            # default, engine.audio.DEFAULT_VOICE_DYNAMICS).
+            mock_norm.assert_called_once_with(voice, out, denoise=True, declick="standard",
+                                              dynamics=None)
 
 
 # ---------------------------------------------------------------------------

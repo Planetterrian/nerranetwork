@@ -1067,6 +1067,24 @@ NETWORK_BRAND = "Nerra Network"
 PODCAST_GUID_NAMESPACE = uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6")
 
 VTT_TRANSCRIPT_TYPE = "text/vtt"
+#: A transcript tag that points at the episode PAGE's transcript section
+#: (Nov 4 2026, the interview shows: ``…/ep012.html#transcript``).
+HTML_TRANSCRIPT_TYPE = "text/html"
+
+
+def transcript_tag_type(url: str) -> str:
+    """The Podcasting 2.0 ``type`` of a ``<podcast:transcript>`` URL, by its
+    shape: the JSON every in-repo reader uses, an HTML page (its fragment
+    and query ignored), else plain text. The JSON and plain branches are
+    byte-identical to what every run_show feed has always carried."""
+    path = (url or "").split("#", 1)[0].split("?", 1)[0].lower()
+    if path.endswith(".json"):
+        return "application/json"
+    if path.endswith((".html", ".htm")):
+        return HTML_TRANSCRIPT_TYPE
+    return "text/plain"
+
+
 ATOM_NS = "http://www.w3.org/2005/Atom"
 
 
@@ -1326,10 +1344,7 @@ def _inject_transcript_tag(
                     vtt_el.set("type", VTT_TRANSCRIPT_TYPE)
                 transcript_el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
                 transcript_el.set("url", transcript_url)
-                if transcript_url.endswith(".json"):
-                    transcript_el.set("type", "application/json")
-                else:
-                    transcript_el.set("type", "text/plain")
+                transcript_el.set("type", transcript_tag_type(transcript_url))
                 break
 
         tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
@@ -2110,12 +2125,13 @@ def generate_shorts_end_card(
     text-burned thumbnail made the end card look like a slide of a
     slide. The CTA copy still lives below the image.
 
-    ``site_image_path`` (Aug 2026 site showcase) is a committed
-    screenshot of nerranetwork.com (see ``engine.promo_card``); when it
-    loads, its show-grid band is pasted as a framed strip between the
-    CTA sub-line and the footer, and the footer URL flips to Nerra cyan
-    so the strip and the address read as one unit. Any failure keeps
-    the legacy card byte-for-byte.
+    ``site_image_path`` (Aug 2026 site showcase; rendered from data since
+    Nov 3 2026) is the PNG ``engine.promo_card.short_site_panel`` writes —
+    a strip of the network's show covers at ``promo_card.SHORT_STRIP_SIZE``
+    (anything else is resized to it, never cropped); when it loads it is
+    pasted as a framed strip between the CTA sub-line and the footer, and
+    the footer URL flips to Nerra cyan so the strip and the address read
+    as one unit. Any failure keeps the legacy card byte-for-byte.
 
     Falls back to a text-only render when neither image loads.
     """
@@ -2206,18 +2222,19 @@ def generate_shorts_end_card(
     draw.text((sub_x, sub_y), sub_text, font=sub_font,
               fill=(0, 212, 255))
 
-    # Site strip (Aug 2026 site showcase): the network home page's
-    # show-grid band, framed, in the gap between the sub-line (~0.77)
-    # and the footer (0.93). Best-effort — a missing/unreadable
-    # screenshot keeps the legacy card exactly.
+    # Site strip (Aug 2026 site showcase): the network's wall of show
+    # covers (engine.promo_card.short_site_panel), framed, in the gap
+    # between the sub-line (~0.77) and the footer (0.93). Best-effort — a
+    # missing/unreadable panel keeps the legacy card exactly.
     site_strip_rendered = False
     if site_image_path is not None:
         try:
-            from engine.promo_card import render_short_site_strip
+            from engine.promo_card import SHORT_STRIP_SIZE
 
-            strip_w, strip_h = 832, 260
-            strip = render_short_site_strip(
-                Path(site_image_path), strip_w, strip_h)
+            strip_w, strip_h = SHORT_STRIP_SIZE
+            strip = Image.open(Path(site_image_path)).convert("RGB")
+            if strip.size != (strip_w, strip_h):
+                strip = strip.resize((strip_w, strip_h), Image.LANCZOS)
             strip_x = (width - strip_w) // 2
             strip_y = int(height * 0.785)
             bg.paste(strip, (strip_x, strip_y))

@@ -54,6 +54,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, Optional
 from urllib.parse import quote, urlparse, urlunparse
 
@@ -70,6 +71,7 @@ CAMPAIGN_PREFIX = "nn"
 # utm_source — WHERE the click came from. YouTube is channel-qualified
 # because @NerraNetwork / @NerraRU / @NerraFR are separate audiences with
 # separate economics.
+DEFAULT_BASE_URL = "https://nerranetwork.com"
 SOURCE_YOUTUBE = "youtube"
 SOURCE_YOUTUBE_RU = "youtube_ru"
 SOURCE_YOUTUBE_FR = "youtube_fr"
@@ -87,6 +89,15 @@ SOURCE_LINKEDIN = "linkedin"
 SOURCE_WHATSAPP = "whatsapp"
 SOURCE_TELEGRAM = "telegram"
 SOURCE_EMAIL_SHARE = "email_share"
+# PAID traffic (Nov 3 2026). The site has run Google Ads to
+# /personal-interest.html since the Soft Personal page shipped (the privacy
+# policy says so; the page carries the Ads conversion tag) and the ads'
+# final URLs carried no campaign id. Consent Mode denies ``ad_storage`` by
+# default, so an untagged paid click arrived as Direct: 898 of 999 sessions
+# in the 28 days to Nov 2 were Direct, 492 of them 0.6-9 s visits to that
+# one page. ``utm_*`` is read whatever the consent state, which is the whole
+# reason this module owns every campaign id.
+SOURCE_GOOGLE_ADS = "google_ads"
 
 SHARE_SOURCES = frozenset({
     SOURCE_X, SOURCE_FACEBOOK, SOURCE_LINKEDIN,
@@ -96,6 +107,7 @@ SHARE_SOURCES = frozenset({
 SOURCES = frozenset({
     SOURCE_YOUTUBE, SOURCE_YOUTUBE_RU, SOURCE_YOUTUBE_FR,
     SOURCE_PODCAST, SOURCE_NEWSLETTER, SOURCE_X, SOURCE_SITE,
+    SOURCE_GOOGLE_ADS,
 }) | SHARE_SOURCES
 
 # utm_medium — WHAT KIND of thing the click came from.
@@ -109,11 +121,15 @@ MEDIUM_BOOK = "book"
 # A reader forwarding a page (the blog share row). Kept apart from
 # ``social`` (which is the network posting) so earned reach is countable.
 MEDIUM_SHARE = "share"
+# A paid click (Nov 2026). ``cpc`` is the value GA4's default channel
+# grouping reads as Paid Search / Paid Social, so a tagged ad lands in the
+# right channel group as well as in its campaign row.
+MEDIUM_CPC = "cpc"
 
 MEDIUMS = frozenset({
     MEDIUM_SHORT, MEDIUM_LONG, MEDIUM_EPISODE,
     MEDIUM_EMAIL, MEDIUM_SOCIAL, MEDIUM_WEB, MEDIUM_BOOK,
-    MEDIUM_SHARE,
+    MEDIUM_SHARE, MEDIUM_CPC,
 })
 
 # utm_content — WHICH PLACEMENT inside that thing.
@@ -146,7 +162,25 @@ PLACEMENTS = frozenset({
 # ``book`` (Aug 2026): anthology ebook/audiobook back matter. The campaign's
 # ``episode`` component carries the VOLUME number, not an episode number —
 # a volume is one asset the way an episode is.
-KINDS = frozenset({"short", "long", "episode", "email", "post", "book"})
+# ``ad`` (Nov 3 2026): a paid placement the operator sets up by hand. An ad
+# belongs to no show and no episode, and ``campaign_id`` coerces an empty
+# show slug to ``unknown`` (loudly), so the campaign shape is FIXED instead:
+#
+#     nn-<product>-en-ad-ep<NNN>[-<ad_group>]
+#
+# the show slot carries one of ``AD_PRODUCTS`` (what the ad sells —
+# ``personal`` for Nerra Personal, ``network`` for the free network), the
+# episode slot carries the Ads account's campaign NUMBER, and the variant
+# carries the ad-group slug. ``parse_campaign_id`` is unchanged and stays the
+# exact inverse; ``scripts/build_funnel.py`` reads these rows like any other
+# and ``by_kind["ad"]`` is where paid sessions show up.
+KIND_AD = "ad"
+KINDS = frozenset({"short", "long", "episode", "email", "post", "book",
+                   KIND_AD})
+
+AD_PRODUCT_PERSONAL = "personal"
+AD_PRODUCT_NETWORK = "network"
+AD_PRODUCTS = frozenset({AD_PRODUCT_PERSONAL, AD_PRODUCT_NETWORK})
 
 # YouTube channel token -> utm_source. Unknown channels fall back to a
 # generic ``youtube_<token>`` so a new dub channel is attributable the day
@@ -363,6 +397,7 @@ def episode_link(
         "email": MEDIUM_EMAIL,
         "post": MEDIUM_SOCIAL,
         "book": MEDIUM_BOOK,
+        KIND_AD: MEDIUM_CPC,
     }.get(kind_norm, MEDIUM_WEB)
     return funnel_link(
         destination,
@@ -450,6 +485,58 @@ def network_link(
     )
 
 
+def ad_link(
+    destination: str,
+    campaign_no: int,
+    variant: str = "",
+    *,
+    product: str = AD_PRODUCT_PERSONAL,
+    source: str = SOURCE_GOOGLE_ADS,
+    placement: str = PLACEMENT_BODY,
+    base_url: str = NETWORK_BASE_URL,
+) -> str:
+    """The final URL for a PAID placement the operator sets up by hand.
+
+    *destination* is a site path (``personal-interest.html``) or a full
+    URL; *campaign_no* is the Ads account's campaign number (the episode
+    slot — see ``KIND_AD``); *variant* is the ad-group slug (normalised to
+    ``[a-z0-9_]`` like every variant, so ``personal-tips`` round-trips as
+    ``personal_tips``); *product* names what the ad sells and must be one
+    of ``AD_PRODUCTS`` — an unknown product is coerced to ``network`` with
+    a warning, the module's loud-then-coerce rule, because a URL that
+    fails to parse would land every paid session in ``unattributed`` and
+    the report would say the campaign earned nothing.
+
+    Before Nov 3 2026 the Google Ads final URLs carried no campaign id and
+    every paid click read as Direct; under denied ``ad_storage`` the UTM
+    parameters are the only attribution that survives.
+
+    >>> ad_link("personal-interest.html", 1, "personal-tips")
+    'https://nerranetwork.com/personal-interest.html?utm_source=google_ads&utm_medium=cpc&utm_campaign=nn-personal-en-ad-ep001-personal_tips&utm_content=body'
+    """
+    dest = (destination or "").strip()
+    if not dest:
+        return ""
+    if "://" not in dest:
+        dest = f"{base_url.rstrip('/')}/{dest.lstrip('/')}"
+    prod = _norm(product)
+    if prod not in AD_PRODUCTS:
+        logger.warning(
+            "funnel: ad product %r is not one of %s — coercing to %r so the "
+            "campaign stays parseable (campaign %s)",
+            product, sorted(AD_PRODUCTS), AD_PRODUCT_NETWORK, campaign_no,
+        )
+        prod = AD_PRODUCT_NETWORK
+    return funnel_link(
+        dest,
+        source=source or SOURCE_GOOGLE_ADS,
+        medium=MEDIUM_CPC,
+        campaign=campaign_id(prod, campaign_no, channel="en", kind=KIND_AD,
+                             variant=variant),
+        placement=placement,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Destinations — where a surface's viewers are actually sent
 # ---------------------------------------------------------------------------
@@ -457,30 +544,70 @@ def network_link(
 def destination_for(config, *, channel: str = "en") -> str:
     """Resolve one show's funnel destination for a publishing *channel*.
 
-    Priority: ``funnel.destinations[<channel>]`` -> ``funnel.destinations
-    ["default"]`` -> the show page (``publishing.rss_link``) ->
-    ``publishing.base_url``.
+    Priority for the English channel: ``funnel.destinations["en"]`` ->
+    ``funnel.destinations["default"]`` -> the show page
+    (``publishing.rss_link``) -> ``publishing.base_url``.
+
+    Priority for a dub channel (Nov 3 2026): ``funnel.destinations[<lang>]``
+    -> the language's own front page (``ru/index.html``, ``fr/index.html``;
+    ``engine.show_lang.language_hub_path``) when the site publishes in that
+    language -> ``destinations["default"]`` -> the show page. Before this,
+    a dub channel with no destination of its own fell through to the ENGLISH
+    show page: every @NerraRU and @NerraFR Short of Fascinating Frontiers
+    and Modern Investing, and every French Tesla and SpaceX Short, sent a
+    viewer to a page they could not read. ``default`` is the English default.
 
     The per-channel override is the whole point of the RU SpaceX pilot:
     @NerraRU Shorts get a Russian landing page with one call to action,
     while @NerraNetwork keeps sending viewers to the English show page.
     """
+    token = _norm(channel) or "en"
+    dests: dict = {}
     funnel_cfg = getattr(config, "funnel", None)
     if funnel_cfg is not None and getattr(funnel_cfg, "enabled", True):
-        dests = getattr(funnel_cfg, "destinations", None) or {}
-        if isinstance(dests, dict):
-            token = _norm(channel) or "en"
-            for key in (token, "default"):
-                value = (dests.get(key) or "").strip()
-                if value:
-                    return value
-
+        raw = getattr(funnel_cfg, "destinations", None) or {}
+        if isinstance(raw, dict):
+            dests = raw
     publishing = getattr(config, "publishing", None)
+
+    def _dest(key: str) -> str:
+        return (dests.get(key) or "").strip() if dests else ""
+
+    if _dest(token):
+        return _dest(token)
+    if token != "en" and token in _hub_languages():
+        from engine.show_lang import language_hub_path
+        hub = language_hub_path(token)
+        if hub:
+            base = (getattr(publishing, "base_url", "") or "").strip() or DEFAULT_BASE_URL
+            return f"{base.rstrip('/')}/{hub}"
+    if _dest("default"):
+        return _dest("default")
     for attr in ("rss_link", "base_url"):
         value = (getattr(publishing, attr, "") or "").strip()
         if value:
             return value
     return ""
+
+
+_HUB_LANGUAGES: Optional[frozenset] = None
+
+
+def _hub_languages() -> frozenset:
+    """The non-English languages with a front page of their own, derived from
+    the show YAMLs exactly as the site generator derives them
+    (``engine.show_lang.site_languages``). Cached per process."""
+    global _HUB_LANGUAGES
+    if _HUB_LANGUAGES is None:
+        try:
+            from engine.show_lang import site_languages
+            shows_dir = Path(__file__).resolve().parents[1] / "shows"
+            slugs = sorted(p.stem for p in shows_dir.glob("*.yaml")
+                           if not p.stem.startswith("_"))
+            _HUB_LANGUAGES = frozenset(c for c in site_languages(slugs) if c != "en")
+        except Exception:  # noqa: BLE001 — never let a link builder raise
+            _HUB_LANGUAGES = frozenset()
+    return _HUB_LANGUAGES
 
 
 def capture_tags(

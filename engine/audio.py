@@ -16,6 +16,7 @@ Music mixing supports three modes configured via YAML:
 """
 
 import logging
+import re
 import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -122,8 +123,50 @@ DECLICK_FILTERS = {
     "strong": "adeclick=w=75:t=2",
 }
 
+#: The voice chain's dynamics stage by name, and the one the network ships
+#: (Nov 3 2026). ``legacy`` is the 4:1 compressor the chain has carried
+#: since May 2026 — the May 8 retune moved its attack and makeup, never its
+#: threshold or ratio. Measured on the six-month review: every show ships a
+#: loudness range of 1.6-3.0 LU against 4.9-5.2 on NPR News Now and Up
+#: First, and 90-99% of a show's 3-second windows sit within 2 LU of the
+#: integrated value against 75% on NPR. This stage is the cause: NPR's own
+#: file keeps LRA 4.7 through the final loudnorm alone, 4.8 through the
+#: chain with no compressor, 2.8 through ``legacy`` and 4.1 through ``glue``
+#: on the same pre-stages. ``glue`` is a 2:1 compressor whose soft knee
+#: opens 3 dB under a -12 dB threshold: it catches a shouted sentence and
+#: leaves the read alone (a -16 dB threshold is the fallback if a voice's
+#: peaks read hot through it). The trial is two shows' YAML
+#: (``audio.voice_dynamics: glue``: Tesla, a Patrick music show, and Top
+#: World, a Mira show); every surface with no setting of its own — Nerra
+#: Daily's Mira pieces, the translated tracks, the specials — reads
+#: ``DEFAULT_VOICE_DYNAMICS``, so the network flips here, by one constant,
+#: after the operator's A/B listen (landmine #17), and reverts the same way.
+#: ``engine.tts_dialogue._match_turn_levels`` is upstream and unaffected;
+#: a dialogue show may show more turn-to-turn drift with less compression,
+#: so the DP Pod is listened to before any network flip.
+VOICE_DYNAMICS = {
+    "legacy": "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1",
+    "glue": "acompressor=threshold=-12dB:ratio=2:attack=15:release=250:knee=6",
+}
+DEFAULT_VOICE_DYNAMICS = "legacy"
 
-def voice_chain_filters(*, denoise: bool = True, declick: str = "standard") -> str:
+
+def voice_dynamics_filter(dynamics: Optional[str] = None) -> str:
+    """The ``acompressor`` stage for *dynamics* (a :data:`VOICE_DYNAMICS`
+    name); ``None`` or ``""`` is :data:`DEFAULT_VOICE_DYNAMICS`. An unknown
+    name RAISES — a misspelt trial value must never ship the legacy chain
+    under the trial's label (the readout would then measure nothing)."""
+    name = dynamics or DEFAULT_VOICE_DYNAMICS
+    try:
+        return VOICE_DYNAMICS[name]
+    except KeyError:
+        raise ValueError(
+            f"voice dynamics must be one of {sorted(VOICE_DYNAMICS)}, got {dynamics!r}"
+        ) from None
+
+
+def voice_chain_filters(*, denoise: bool = True, declick: str = "standard",
+                        dynamics: Optional[str] = None) -> str:
     """The network's voice cleanup chain as one ffmpeg ``-af`` string.
 
     One owner for every voice the network publishes: the show voices go
@@ -134,6 +177,10 @@ def voice_chain_filters(*, denoise: bool = True, declick: str = "standard") -> s
     a 35-second intro and a pause floor ~3 dB hissier than a show's; the
     chain measured 11 -> 1 clicks and -67.3 -> -71.5 dB of pause hiss on
     the same intro.
+
+    *dynamics* names the compressor stage (:data:`VOICE_DYNAMICS`); ``None``
+    is the network's :data:`DEFAULT_VOICE_DYNAMICS`, so a caller that passes
+    nothing follows the network value.
     """
     return (
         # ``afade=t=in:st=0:d=0.05`` (May 22 2026) ramps the very
@@ -150,13 +197,14 @@ def voice_chain_filters(*, denoise: bool = True, declick: str = "standard") -> s
         + (f"{DECLICK_FILTERS.get(declick, 'adeclick')},afftdn=nr=9:nf=-42:tn=1,"
            if denoise else "")
         + "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
-        "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
+        + voice_dynamics_filter(dynamics) + ","
         "alimiter=level_in=1:level_out=0.95:limit=0.95"
     )
 
 
 def _voice_norm_full_cmd(voice_in: str, voice_out: str,
-                         *, denoise: bool = True, declick: str = "standard") -> list:
+                         *, denoise: bool = True, declick: str = "standard",
+                         dynamics: Optional[str] = None) -> list:
     """Build the voice normalization ffmpeg command.
 
     Order matters — each stage operates on the output of the previous:
@@ -167,7 +215,10 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str,
                                 denoise (July 16 2026, see below; skipped
                                 when ``denoise`` is False)
       3. loudnorm I=-18      — voice-only LUFS target (mix gets re-norm'd to -16)
-      4. acompressor 4:1     — gentle dynamics control (NPR-ish consistency)
+      4. acompressor         — the dynamics stage, by name (``VOICE_DYNAMICS``:
+                                ``legacy`` 4:1, or ``glue`` 2:1 soft-knee; Nov 3
+                                2026 — the 4:1 measured as the cause of every
+                                show's 1.6-3.0 LU loudness range against NPR's 5)
       5. alimiter level_out=0.95 — peak protection, prevents clipping into mix
 
     July 16 2026 — hiss + tick cleanup (operator report: "audible hisses
@@ -213,7 +264,7 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str,
       sounded like clipping on enthusiastic delivery. +1 dB keeps
       perceived loudness without slamming the limiter.
     """
-    filters = voice_chain_filters(denoise=denoise, declick=declick)
+    filters = voice_chain_filters(denoise=denoise, declick=declick, dynamics=dynamics)
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af", filters,
@@ -235,7 +286,8 @@ def _voice_norm_fallback_cmd(voice_in: str, voice_out: str) -> list:
 
 
 def normalize_voice(input_path: Path, output_path: Path,
-                    *, denoise: bool = True, declick: str = "standard") -> Path:
+                    *, denoise: bool = True, declick: str = "standard",
+                    dynamics: Optional[str] = None) -> Path:
     """Normalize voice audio with a multi-stage filter chain.
 
     Tries the full chain (highpass -> lowpass -> declick/denoise ->
@@ -243,7 +295,9 @@ def normalize_voice(input_path: Path, output_path: Path,
     mismatch), falls back to loudnorm only.
 
     ``denoise=False`` skips the July 2026 adeclick + afftdn stage
-    (per-show opt-out via ``audio.voice_denoise: false``).
+    (per-show opt-out via ``audio.voice_denoise: false``). ``dynamics``
+    names the compressor stage (``VOICE_DYNAMICS``; per-show via
+    ``audio.voice_dynamics``; ``None`` follows the network default).
 
     When *output_path* ends in ``.wav``, output is lossless PCM to avoid
     an unnecessary lossy encoding pass (useful when the result will be
@@ -257,7 +311,7 @@ def normalize_voice(input_path: Path, output_path: Path,
     try:
         logger.info("Attempting voice normalization with full filter chain...")
         cmd = _voice_norm_full_cmd(str(input_path), str(output_path),
-                                   denoise=denoise, declick=declick)
+                                   denoise=denoise, declick=declick, dynamics=dynamics)
         subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
         logger.info("Voice normalization (full chain) succeeded.")
     except subprocess.CalledProcessError:
@@ -273,12 +327,94 @@ def normalize_voice(input_path: Path, output_path: Path,
 #: same target ``_final_mix_cmd`` masters every show to.
 PUBLISHED_LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
 
+#: The same target as a number, and the band a shipped file may sit in
+#: before a run says so (Nov 3 2026). 1.5 LU is the Personal builder's
+#: correction threshold (``engine.personal_edition.SEGMENT_LOUDNESS_TOLERANCE_LU``,
+#: pinned equal by tests/test_audio_loudness_metric_2026_11_03.py).
+PUBLISHED_LOUDNESS_LUFS = -16.0
+LOUDNESS_TOLERANCE_LU = 1.5
+
+# ffmpeg's ebur128 summary block, as printed on stderr after the decode:
+#
+#     Integrated loudness:
+#       I:         -16.2 LUFS
+#       ...
+#     Loudness range:
+#       LRA:         6.1 LU
+#       ...
+#     True peak:
+#       Peak:       -1.5 dBFS
+#
+# (the true-peak unit is printed as dBFS; the figure IS the true peak in
+# dBTP when the filter runs with ``peak=true``). A silent file prints
+# ``-inf`` for the peak, which no pattern below matches: that key is None.
+_EBUR_I_RE = re.compile(r"^\s*I:\s+(-?[\d.]+)\s+LUFS", re.M)
+_EBUR_LRA_RE = re.compile(r"^\s*LRA:\s+(-?[\d.]+)\s+LU\b", re.M)
+_EBUR_TP_RE = re.compile(r"True peak:\s*\n\s*Peak:\s+(-?[\d.]+)\s+dB", re.M)
+
+
+def measure_loudness(path: Path, *, timeout: int = 600) -> Optional[Dict[str, Optional[float]]]:
+    """Integrated loudness, loudness range and true peak of one audio file,
+    from ONE ``ffmpeg -af ebur128=peak=true`` decode (seconds for a
+    half-hour episode).
+
+    Returns ``{"I": LUFS, "LRA": LU, "TP": dBTP}`` or ``None`` when ffmpeg
+    cannot say (missing binary, unreadable file, timeout, no summary) —
+    never a zero, never an exception. ``I`` is always a float when a dict
+    comes back; ``LRA`` / ``TP`` may be ``None`` for a figure ffmpeg did
+    not print as a number (``-inf`` on silence).
+
+    Nov 3 2026: three shows shipped 208 episodes at -25 LUFS against the
+    published -16 and nothing read the number — ``audio_duration_s`` was
+    the only thing the pipeline recorded about its audio. This is the one
+    reader; ``engine.personal_edition.measure_lufs`` wraps it.
+    """
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-nostats", "-hide_banner", "-i", str(path),
+             "-af", "ebur128=peak=true", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=timeout)
+    except Exception as exc:  # noqa: BLE001 — a measurement, never a blocker
+        logger.warning("Loudness measurement failed for %s: %s", path, exc)
+        return None
+    stderr = proc.stderr or ""
+    idx = stderr.rfind("Summary:")
+    if idx < 0:
+        logger.warning("Loudness measurement produced no ebur128 summary for %s", path)
+        return None
+    summary = stderr[idx:]
+
+    def _num(rx):
+        m = rx.search(summary)
+        if not m:
+            return None
+        try:
+            return float(m.group(1))
+        except ValueError:
+            return None
+
+    integrated = _num(_EBUR_I_RE)
+    if integrated is None:
+        logger.warning("Loudness summary carried no integrated figure for %s", path)
+        return None
+    return {"I": integrated, "LRA": _num(_EBUR_LRA_RE), "TP": _num(_EBUR_TP_RE)}
+
 
 def master_voice_track(input_path: Path, output_path: Path, *,
-                       declick: str = "standard") -> Path:
+                       denoise: bool = True, declick: str = "standard",
+                       dynamics: Optional[str] = None) -> Path:
     """A voice-only track finished like a show: the voice chain, then the
     published -16 LUFS. For audio that reaches a listener without going
-    through :func:`mix_with_music` (the translated tracks).
+    through :func:`mix_with_music` (the translated tracks, and since Nov 3
+    2026 the shows with no music file).
+
+    Nov 3 2026: Unintended Consequences, Vancouver and Collingwood — the
+    three run_show shows with no ``audio.music_file`` — shipped every
+    episode at -25 LUFS (161 + 41 + 6 episodes, and their slot in Nerra
+    Daily beside neighbours at -16.5): ``normalize_voice`` ends on the
+    chain's ``loudnorm=I=-18`` + 4:1 compressor, which lands ~7.6 dB under
+    its own target, and only the music mix's final ``loudnorm=I=-16`` ever
+    recovered it. The voice-only path calls this instead.
 
     Oct 29 2026: the FR/RU/ES tracks shipped Grok's raw output, measured at
     -26 LUFS against the English episodes' -16, so every per-language feed
@@ -292,7 +428,8 @@ def master_voice_track(input_path: Path, output_path: Path, *,
     duration = get_audio_duration(Path(input_path)) or 0.0
     subprocess.run(
         ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", str(input_path),
-         "-af", voice_chain_filters(declick=declick) + "," + PUBLISHED_LOUDNESS,
+         "-af", voice_chain_filters(denoise=denoise, declick=declick, dynamics=dynamics)
+         + "," + PUBLISHED_LOUDNESS,
          "-ar", "44100", "-ac", "1", *codec, out],
         check=True, capture_output=True, timeout=max(600, int(duration * 3) + 120),
     )
@@ -311,7 +448,15 @@ def master_voice_track(input_path: Path, output_path: Path, *,
 JOIN_EDGE_FADE_SECONDS = 0.006
 
 #: The final encode of a joined MP3 when the caller names none: the shows'
-#: own archival master setting.
+#: own archival master setting, and the ONE owner of the network's master
+#: encode. VBR ``-q:a 0``, never a CBR cap: the shows' master, Nerra Daily
+#: (``engine.daily_edition.EDITION_ENCODE_ARGS`` ends on it), Nerra
+#: Personal and the Nerra Voices edit and narration all import it. Nov 3
+#: 2026: The Age of AI was the only published file at ``-b:a 128k`` CBR
+#: mono (``pipelines/voices/assemble_edit.py`` and ``narrate.py`` each
+#: carried their own copy of the encode). A caller adds its own ``-ar`` /
+#: ``-ac`` in front; the bitrate a mono 48 kHz speech file lands at under
+#: this setting is the encoder's, not a number anything here promises.
 JOIN_MP3_ENCODE_ARGS = ["-c:a", "libmp3lame", "-q:a", "0"]
 
 
@@ -633,13 +778,27 @@ def _music_overlap_cmd(music_in: str, overlap_out: str,
     ]
 
 
+#: The fade curve of every music piece that is meant to reach silence.
+#: Nov 3 2026: ``log`` holds within 2 dB of unity for ~97% of the fade and
+#: plunges in the last 1%, so the YAML's "10 s log fade-out to silence"
+#: shipped as a 3 dB dip and a hard cut on every music show since the module
+#: was written; ``qsin`` reaches -21 dB over a 10 s fade and -40 in its last
+#: second (measured on a sine, ``docs/reviews/network_review_2026_11_03.md``).
+FADE_CURVE = "qsin"
+
+
 def _music_fadeout_cmd(music_in: str, fadeout_out: str,
                        start: int = 8, duration: int = 18,
                        volume: float = 0.4) -> list:
+    # ``-ss``/``-t`` are INPUT options here (before ``-i``). Nov 3 2026: as
+    # output options the filter graph saw the source from t=0, the fade ran
+    # over source 0-30 s and the output window kept source 18-48 s: 12 s of
+    # music and 18 s of digital silence under the opening on every music
+    # show since Feb 16 2026 — the operator's "music cuts off too soon".
     return [
-        "ffmpeg", "-y", "-threads", "0", "-i", music_in,
-        "-ss", str(start), "-t", str(duration),
-        "-af", f"volume={volume},afade=t=out:curve=log:st=0:d={duration}",
+        "ffmpeg", "-y", "-threads", "0",
+        "-ss", str(start), "-t", str(duration), "-i", music_in,
+        "-af", f"volume={volume},afade=t=out:curve={FADE_CURVE}:st=0:d={duration}",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         fadeout_out,
@@ -661,8 +820,10 @@ def _music_outro_cmd(music_in: str, outro_out: str,
         af_parts.append(
             f"afade=t=in:curve=log:st=0:d={fade_in_duration}"
         )
+    # The outro's fade-out reaches silence (FADE_CURVE); the fade-in keeps
+    # ``log`` on purpose — it rises fast, which is the May 15 preference.
     af_parts.append(
-        f"afade=t=out:curve=log:st={fade_out_start}:d={fade_out_duration}"
+        f"afade=t=out:curve={FADE_CURVE}:st={fade_out_start}:d={fade_out_duration}"
     )
     return [
         "ffmpeg", "-y", "-threads", "0",
@@ -833,7 +994,14 @@ def _final_mix_cmd(
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mix][voice_sc];"
+        # Nov 3 2026: the voice branch is made stereo BEFORE amix. With a
+        # mono voice and a stereo theme, amix negotiated the mono layout and
+        # ``-ac 2`` duplicated it — every shipped file was dual-mono (L-R
+        # vs mid -210 dB) although the themes are wide (-3 dB) and the
+        # references carry width. A centred voice over a stereo bed is the
+        # standard podcast picture; the voice itself is unchanged.
+        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mono][voice_sc];"
+        "[voice_mono]aformat=channel_layouts=stereo[voice_mix];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
@@ -983,6 +1151,7 @@ def mix_with_music(
     outro_fade_out_duration: float = 6.0,
     denoise: bool = True,
     declick: str = "standard",
+    dynamics: Optional[str] = None,
     breathers: Optional[Sequence[float]] = None,
     breather_volume: float = BREATHER_VOLUME,
 ) -> Path:
@@ -1026,7 +1195,8 @@ def mix_with_music(
     """
     if not music_path.exists():
         logger.warning("Music file %s not found — returning voice-only.", music_path)
-        return normalize_voice(voice_path, output_path, denoise=denoise, declick=declick)
+        return normalize_voice(voice_path, output_path, denoise=denoise, declick=declick,
+                               dynamics=dynamics)
 
     # Voice file must exist AND be non-empty before we hand it to ffmpeg.
     # A 0-byte / missing voice file produces a cryptic ffmpeg error
@@ -1058,7 +1228,8 @@ def mix_with_music(
 
         # Normalize voice to lossless WAV — MP3 encoding happens once in final mix
         voice_mix = tmp_dir / "voice_normalized_mix.wav"
-        normalize_voice(voice_path, voice_mix, denoise=denoise, declick=declick)
+        normalize_voice(voice_path, voice_mix, denoise=denoise, declick=declick,
+                        dynamics=dynamics)
 
         # --- Apply voice intro delay if configured ---
         effective_voice_duration = voice_duration

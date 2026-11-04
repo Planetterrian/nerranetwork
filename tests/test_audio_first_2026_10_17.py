@@ -106,8 +106,9 @@ def test_checkpoint_needs_the_workflow_switch(monkeypatch):
 
 
 def test_the_workflow_turns_it_on_outside_test_mode():
-    assert ("NERRA_AUDIO_FIRST_PUSH: ${{ github.event.inputs.test_mode == 'true' && '0' || '1' }}"
-            in WF)
+    # Nov 3 2026: a rehearsal (listen before the slate) never publishes either.
+    assert ("NERRA_AUDIO_FIRST_PUSH: ${{ (github.event.inputs.test_mode == 'true' "
+            "|| github.event.inputs.rehearse == 'true') && '0' || '1' }}") in WF
     assert "bash scripts/stage_show_artifacts.sh" in WF
 
 

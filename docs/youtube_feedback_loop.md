@@ -57,6 +57,61 @@ generated separately from the spoken hook (`engine/youtube_titles.py`). It
 never touches the audio script or TTS, so it sits outside the A/B-listen gate.
 If the hint is empty (no data yet) the title prompt renders exactly as before.
 
+## What each surface is for (Nov 3 2026)
+
+Written once, here and in `engine/release_schedule.py` and `docs/funnel.md`,
+so no review re-aims the Short (five changes in thirteen days had pointed
+the end card at the site, then the subscribe; the description at the site,
+then the long).
+
+- **EN (@NerraNetwork)**: the hook Short is the **trailer for a
+  subscriber-fed long-form channel**. It is scored on
+  `short_subs_per_1k_views_14d_en` and `long_d3_median_en_7d` (the
+  long-form's views at a fixed age), never on site sessions — the site is
+  not a funnel stage for video.
+- **RU / FR (@NerraRU, @NerraFR)**: the **Shorts feed is the product**.
+  Each channel is scored on `short_reach_d3_median_<ch>_7d`
+  (`short_reach_d3_median_ru_7d`, `short_reach_d3_median_fr_7d`); the only
+  ask is the YouTube subscribe.
+- A Short experiment in `docs/experiments.yaml` carries its channel's job
+  metric or it is not an experiment.
+
+### The channel the repo can see (Nov 3 2026)
+
+- **RSS-ingested copies.** YouTube Podcasts ingested the shows' RSS feeds, so
+  the EN channel carried 4,822 videos against 2,434 index rows: every
+  rendered long-form had an "Ep N: <hook>" twin (the square cover as the
+  still, the render's exact duration) competing for the same subscribers and
+  taking ~37% of first-day long views on the visible pairs. The nightly
+  fetch now reads the uploads playlist back (`_channel_uploads`, 35 days,
+  1 quota unit a page), diffs it against the indexes and writes
+  `channels.<ch>.unindexed_recent` / `unindexed_recent_count` (keys ABSENT
+  when the read fails — null, never 0, and never a degraded snapshot). A copy
+  whose episode number and hook prefix match an index row is attributed as
+  `kind: rss_copy` and joins the metrics batch so its views are read; every
+  consumer of the indexed kinds (`INDEXED_KINDS`) ignores it, the reach file
+  skips it, and `snapshot_regression` counts indexed kinds only. The
+  dashboard key is `youtube_rss_copies_14d_<ch>`; the nightly prints a
+  `::warning::` for a show that renders its own long-form
+  (`publish_long_form` on in the policy) and still has copies beside it. The
+  Studio removal of the RSS podcasts is the operator's (Nov 16, after the
+  Podcasts-tab play counts are recorded).
+- **A retention curve for every long.** The fetch queried curves for the top
+  FIVE longs per channel, so the file carried 37 curves and the spoken-open
+  A/B ended at n = 1 per arm. Now every long of the last `RETENTION_CURVE_DAYS`
+  (14) is queried, newest first in ONE order across the channels (never
+  channel by channel — the EN longs alone would spend the budget before
+  @NerraRU or @NerraFR was asked), under `RETENTION_CURVE_MAX` (150) a night,
+  plus each channel's top `RETENTION_CURVE_SHORTS_TOP` (20) Shorts by views for
+  the hook-Short readouts. A curve is stamped `curve_fetched_at`; a
+  carried-forward curve keeps its old date and is never read as fresh. A
+  failed curve never joins `_FAILED_QUERIES`.
+- **The open hold at a fixed age.** `track_early_reach.merge_snapshot` records
+  `hold5_by_age` / `hold25_by_age` (the curve's ratio nearest 5% / 25%
+  elapsed) for LONGS only, first observation wins, from tonight's curve only;
+  the dashboard reads `long_hold5_age7_median_en` and groups the open-cliff
+  card by show (median hold at 5% / 25% over the last 14 days, n).
+
 ## Operator one-time setup
 
 Two GCP/OAuth steps — both required. Nightly logs on 2026-07-09 showed the

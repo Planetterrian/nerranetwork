@@ -28,6 +28,21 @@ insufficient reading and HOLDS that dimension of the active tier (a
 shorts-only show has no long-form data — that's not evidence its long-form
 got worse).
 
+Nov 3 2026 — the long dimension reads the Shorts tier's ruler too, as an
+INSTRUMENT. Every entry on every channel carries, from
+``api/youtube_early_reach.json`` (fixed age, never the rolling total):
+``long_d3_median_21d`` / ``long_n_21d`` (day-3 views of the show's long-forms
+published in the last 21 days), ``long_vs_hook_ratio_21d`` (that median over
+the show's hook-Short day-3 median), ``long_subs_per_1k_age7_pooled_21d``
+(subscribers per 1,000 views at age 7, POOLED over the show's longs — a
+per-show median is 0 because most longs convert nobody) and
+``long_channel_d3_median_21d``; RU/FR entries carry
+``hook_short_d3_median_21d`` / ``hook_short_n_21d`` like EN (the tier logic
+stays EN-only). A dub long is a velocity only from its seventh day
+(``LONG_MIN_AGE_DAYS``). The dub long overlay (``DUB_LONG_RELATIVE``) is
+SHIPPED OFF — ``DUB_LONG_RELATIVE_ENABLED`` is the operator's switch — so
+nothing here flips ``publish_long_form``.
+
 Best-effort by contract: a missing stats file or unreadable previous policy
 keeps the seeds and exits 0 (loud log, never a red nightly). The policy
 never edits show YAMLs — ``youtube.adaptive_publishing: false`` pins a show
@@ -81,8 +96,40 @@ LONG_PROBE_MIN_VIDEOS = 2
 # hook Shorts, and each costs ~29 minutes of render. A dub channel still
 # earns long-form back on the full four-video read.
 LONG_PROBE_CHANNELS = frozenset({"en"})
-#: A long-form's velocity is read from its third day on.
-LONG_MIN_AGE_DAYS = 2
+#: A long-form's velocity is read from its third day on (EN). Nov 3 2026:
+#: a DUB long is a rate only from its seventh day — the Oct 31 finding was
+#: a two-day burst read as a daily rate, twice, and the dub longs' day-3
+#: reading settles by day 7 (the reach file carries ages 2-7 on every row).
+LONG_MIN_AGE_DAYS: Dict[str, int] = {"en": 2, "ru": 7, "fr": 7}
+
+
+def long_min_age_days(channel: str) -> int:
+    return LONG_MIN_AGE_DAYS.get((channel or "en").lower(), LONG_MIN_AGE_DAYS["en"])
+
+
+# Nov 3 2026 — the long-form instrument (youtube-2 / efficiency-9). The
+# policy decides a 19-29 minute render per long on a 14-day velocity of
+# young videos against an absolute floor, while the Shorts tier reads the
+# age-matched reach file relative to the channel. On the Nov 1 file the FR
+# long median at day 3 was 13 (n=17) against 49 for the FR hook Short, RU
+# 4 vs 62 — and pooled since Oct 1 EN longs convert 1.6 subscribers per
+# 1,000 views, FR longs 6.3, so neither reading alone decides a switch-off.
+# The numbers are recorded on every entry; the overlay below is OFF until
+# the operator turns it on with those numbers in hand.
+LONG_REACH_WINDOW_DAYS = 21
+# A subscribers-per-1,000 rate needs this many pooled views (the funnel
+# report's 30-denominator floor) — a 1-in-6 reading is not a rate.
+LONG_SUBS_RATE_MIN_VIEWS = 30
+#: A dub long is dead when its day-3 median (longs at least
+#: ``long_min_age_days(channel)`` old, ``DUB_LONG_MIN_VIDEOS`` of them) is
+#: under this share of the SAME show's hook-Short day-3 median.
+DUB_LONG_RELATIVE = 0.5
+DUB_LONG_MIN_VIDEOS = 4
+DUB_LONG_CHANNELS = frozenset({"ru", "fr"})
+#: SHIPPED OFF (operator decision, group C17): True makes ``compute_tier``
+#: read the dub long overlay and force ``publish_long_form`` off through
+#: the ordinary two-night hysteresis; False records the numbers only.
+DUB_LONG_RELATIVE_ENABLED = False
 # July 18 2026 (operator decision): the long-form floor is CHANNEL-specific.
 # RU long-form earned 435 views across 68 videos (~9% retention) while RU
 # Shorts carried 7,028 — an RU long_vpd of ~1.2 is noise, not
@@ -262,7 +309,8 @@ def collect_velocities(stats: dict) -> Dict[Tuple[str, str, str], List[float]]:
             # Oct 31 2026: a long-form under two days old is its first-day
             # burst, not a daily rate (views / 1 day); two such dub longs
             # read as 4+ views a day and turned daily dub long-forms on.
-            if kind == "long" and days < LONG_MIN_AGE_DAYS:
+            # Nov 3 2026: on the dub channels the floor is seven days.
+            if kind == "long" and days < long_min_age_days(channel):
                 continue
             vpd = float(v.get("views") or 0) / max(1, days)
             out.setdefault((slug, channel, kind), []).append(vpd)
@@ -333,6 +381,133 @@ def channel_hook_medians(
     return {ch: _median(v) for ch, v in pooled.items()}
 
 
+def collect_long_reach(
+    reach: Optional[dict],
+    *,
+    window_days: int = LONG_REACH_WINDOW_DAYS,
+) -> Dict[Tuple[str, str], List[dict]]:
+    """Per (slug, channel): one row per long-form published within
+    *window_days* of the reach file's ``updated`` date, oldest first —
+    ``{"published", "age", "d3", "d7", "subs7"}`` (``age`` in days at the
+    file's date; ``d7`` / ``subs7`` None until observed). Only longs
+    observed at age 3 count, as for the hook Shorts.
+    """
+    out: Dict[Tuple[str, str], List[dict]] = {}
+    if not isinstance(reach, dict):
+        return out
+    as_of = _parse_date(str(reach.get("updated") or ""))
+    if as_of is None:
+        return out
+    cutoff = (as_of - _dt.timedelta(days=window_days)).isoformat()
+    for rec in (reach.get("videos") or {}).values():
+        if not isinstance(rec, dict) or rec.get("kind") != "long":
+            continue
+        pub = str(rec.get("published") or "")[:10]
+        pub_date = _parse_date(pub)
+        if pub_date is None or pub < cutoff:
+            continue
+        views = rec.get("views_by_age") or {}
+        subs = rec.get("subs_by_age") or {}
+        d3 = views.get("3")
+        if d3 is None:
+            continue
+        d7 = views.get("7")
+        subs7 = subs.get("7") if d7 is not None else None
+        key = (str(rec.get("show") or ""), (rec.get("channel") or "en").lower())
+        out.setdefault(key, []).append({
+            "published": pub,
+            "age": (as_of - pub_date).days,
+            "d3": int(d3),
+            "d7": int(d7) if d7 is not None else None,
+            "subs7": int(subs7) if subs7 is not None else None,
+        })
+    for rows in out.values():
+        rows.sort(key=lambda r: r["published"])
+    return out
+
+
+def channel_long_medians(
+    long_reach: Dict[Tuple[str, str], List[dict]],
+) -> Dict[str, Optional[float]]:
+    """Per channel: the median day-3 views of every show's long-forms in
+    the window (informational — the long overlay reads the show's own
+    hook Short, never the channel)."""
+    pooled: Dict[str, List[int]] = {}
+    for (_slug, channel), rows in long_reach.items():
+        pooled.setdefault(channel, []).extend(r["d3"] for r in rows)
+    return {ch: _median(v) for ch, v in pooled.items()}
+
+
+def long_reach_keys(
+    long_obs: Optional[List[dict]],
+    hook_obs: Optional[List[Tuple[str, int]]],
+) -> dict:
+    """The long-form instrument for one show × channel — the keys every
+    policy entry carries (None / 0 when unmeasured, never a fabricated 0).
+    """
+    rows = list(long_obs or [])
+    d3 = [r["d3"] for r in rows]
+    median = _median(d3)
+    hook_median = _median([v for _, v in (hook_obs or [])])
+    ratio = (round(median / hook_median, 2)
+             if median is not None and hook_median else None)
+    settled = [r for r in rows if r["d7"] is not None and r["subs7"] is not None]
+    views7 = sum(r["d7"] for r in settled)
+    subs7 = sum(r["subs7"] for r in settled)
+    per_1k = (round(1000.0 * subs7 / views7, 2)
+              if views7 >= LONG_SUBS_RATE_MIN_VIEWS else None)
+    return {
+        "long_d3_median_21d": median,
+        "long_n_21d": len(d3),
+        "long_vs_hook_ratio_21d": ratio,
+        "long_subs_per_1k_age7_pooled_21d": per_1k,
+    }
+
+
+def dub_long_read(
+    long_obs: Optional[List[dict]],
+    hook_obs: Optional[List[Tuple[str, int]]],
+    channel: str,
+) -> dict:
+    """What the dub long overlay reads: the day-3 median of the show's
+    longs that are at least ``long_min_age_days(channel)`` old, how many,
+    and the show's hook-Short day-3 median."""
+    min_age = long_min_age_days(channel)
+    settled = [r["d3"] for r in (long_obs or []) if r["age"] >= min_age]
+    return {
+        "long_d3_median": _median(settled),
+        "long_n": len(settled),
+        "hook_d3_median": _median([v for _, v in (hook_obs or [])]),
+        "min_age_days": min_age,
+    }
+
+
+def dub_long_gate_reason(channel: str, read: Optional[dict]) -> str:
+    """The overlay's verdict for one dub show: a reason string when it
+    forces ``publish_long`` off, ``""`` when it leaves the tier alone.
+    Off entirely while ``DUB_LONG_RELATIVE_ENABLED`` is False; a read
+    marked ``held`` (no reach file tonight) repeats last night's verdict —
+    a missing instrument never turns a gated long back on.
+    """
+    if not DUB_LONG_RELATIVE_ENABLED or not isinstance(read, dict):
+        return ""
+    if (channel or "en").lower() not in DUB_LONG_CHANNELS:
+        return ""
+    if read.get("held"):
+        return "dub long gate held (no reach file)"
+    n = int(read.get("long_n") or 0)
+    long_median = read.get("long_d3_median")
+    hook_median = read.get("hook_d3_median")
+    if n < DUB_LONG_MIN_VIDEOS or long_median is None or not hook_median:
+        return ""
+    if long_median < DUB_LONG_RELATIVE * hook_median:
+        return (f"dub long d3 median {long_median:g} < {DUB_LONG_RELATIVE:g} x "
+                f"hook Short {hook_median:g} (n={n}, longs >= "
+                f"{read.get('min_age_days', long_min_age_days(channel))}d old) "
+                f"-> long off")
+    return ""
+
+
 def dead_shorts_floor(channel_median: Optional[float]) -> float:
     """The median a show's hook Shorts must reach: half the channel's,
     never above the old absolute floor."""
@@ -355,7 +530,9 @@ def advance_dead_shorts(
     Returns the keys the policy entry carries: ``shorts_probe_weekly``,
     ``shorts_probe_since``, ``hook_short_d3_median_21d``,
     ``hook_short_n_21d``, ``shorts_dead_pending``, ``shorts_dead_streak``.
-    A channel outside SHORTS_PROBE_CHANNELS never enters. Without a reach
+    A channel outside SHORTS_PROBE_CHANNELS never enters — but since Nov 3
+    2026 it still carries its hook-Short reach number (the two channels
+    with two thirds of the views had ``null`` there). Without a reach
     file (``have_reach`` False) the previous state is held untouched —
     a missing instrument must never reset a show to daily Shorts, and
     must never enrol one either.
@@ -371,17 +548,18 @@ def advance_dead_shorts(
         "shorts_dead_pending": prev.get("shorts_dead_pending"),
         "shorts_dead_streak": int(prev.get("shorts_dead_streak") or 0),
     }
+    obs = list(observations or [])
+    views = [v for _, v in obs]
+    median = _median(views)
+    if have_reach:
+        state["hook_short_d3_median_21d"] = median
+        state["hook_short_n_21d"] = len(views)
     if (channel or "en").lower() not in SHORTS_PROBE_CHANNELS:
         return {**state, "shorts_probe_weekly": False, "shorts_probe_since": None,
                 "shorts_dead_pending": None, "shorts_dead_streak": 0}
     if not have_reach:
         return state
-    obs = list(observations or [])
-    views = [v for _, v in obs]
-    median = _median(views)
     floor = dead_shorts_floor(channel_median)
-    state["hook_short_d3_median_21d"] = median
-    state["hook_short_n_21d"] = len(views)
     state["hook_short_floor"] = round(floor, 2)
     p75 = _p75(views)
     dead = (len(views) >= DEAD_SHORTS_MIN_VIDEOS and median is not None
@@ -419,6 +597,8 @@ def compute_tier(
     short_vpds: List[float],
     active_tier: str,
     channel: str = "en",
+    *,
+    dub_long_read: Optional[dict] = None,
 ) -> Tuple[str, Optional[float], Optional[float], str]:
     """Computed tier for one show x channel, holding insufficient dimensions.
 
@@ -427,6 +607,12 @@ def compute_tier(
     dimension then holds whatever the ACTIVE tier already says — no data is
     not evidence of decline, and a shorts-only show structurally has no
     long-form data).
+
+    ``dub_long_read`` (Nov 3 2026) is the dub long overlay's input from
+    ``dub_long_read()``; omitted or ``None`` means no gate, and the gate is
+    inert anyway while ``DUB_LONG_RELATIVE_ENABLED`` is False. When it
+    fires, ``publish_long`` is False and the reason names both medians;
+    the ordinary two-night hysteresis then flips the active tier.
     """
     active_long, active_shorts = TIER_SETTINGS.get(active_tier, (False, 1))
     long_floor = LONG_VPD_FLOOR.get((channel or "en").lower(),
@@ -447,6 +633,9 @@ def compute_tier(
     publish_long = (long_vpd >= long_floor) if long_vpd is not None else active_long
     shorts = (shorts_for_vpd(short_vpd)
               if short_vpd is not None else active_shorts)
+    dub_gate = dub_long_gate_reason(channel, dub_long_read)
+    if dub_gate:
+        publish_long = False
 
     reasons: List[str] = []
     if long_vpd is None:
@@ -458,6 +647,8 @@ def compute_tier(
     else:
         reasons.append(f"long_vpd {long_vpd:.2f} "
                        f"{'>=' if publish_long else '<'} {long_floor}")
+    if dub_gate:
+        reasons.append(dub_gate)
     if short_vpd is None:
         reasons.append(f"shorts held ({len(short_vpds)} videos < "
                        f"{MIN_VIDEOS_CONFIDENT} in {WINDOW_DAYS}d)")
@@ -519,6 +710,8 @@ def build_policy(
     prev_channels = (previous or {}).get("channels") or {}
     hook_reach = collect_hook_short_reach(reach) if reach else {}
     hook_medians = channel_hook_medians(hook_reach)
+    long_reach = collect_long_reach(reach) if reach else {}
+    long_medians = channel_long_medians(long_reach)
     today = (_dt.datetime.fromisoformat(now_iso).date() if now_iso
              else _dt.datetime.now(_dt.timezone.utc).date())
 
@@ -535,13 +728,24 @@ def build_policy(
             prev_entry = prev_ch.get(slug)
             long_vpds = velocities.get((slug, channel, "long"), [])
             short_vpds = velocities.get((slug, channel, "short"), [])
+            long_obs = long_reach.get((slug, channel), [])
+            hook_obs = hook_reach.get((slug, channel), [])
+            # Nov 3 2026: the dub long overlay's read. No reach file tonight
+            # repeats last night's verdict (``held``), never resets it.
+            if reach:
+                dub_read: Optional[dict] = dub_long_read(long_obs, hook_obs, channel)
+            elif isinstance(prev_entry, dict) and prev_entry.get("dub_long_gated") is True:
+                dub_read = {"held": True}
+            else:
+                dub_read = None
             if stats:
                 active_for_hold = (
                     str(prev_entry.get("tier")) if isinstance(prev_entry, dict)
                     and prev_entry.get("tier") in TIER_SETTINGS else seed
                 )
                 computed, long_vpd, short_vpd, reason = compute_tier(
-                    long_vpds, short_vpds, active_for_hold, channel)
+                    long_vpds, short_vpds, active_for_hold, channel,
+                    dub_long_read=dub_read)
             else:
                 computed, long_vpd, short_vpd = seed, None, None
                 reason = "no stats data — holding seed tier."
@@ -625,6 +829,10 @@ def build_policy(
                 "shorts_streak": shorts_streak,
                 "shorts_channel_cap": cap,
                 **dead,
+                # Nov 3 2026: the long-form instrument, every channel.
+                **long_reach_keys(long_obs, hook_obs),
+                "long_channel_d3_median_21d": long_medians.get(channel),
+                "dub_long_gated": bool(stats and dub_long_gate_reason(channel, dub_read)),
                 "long_vpd": round(long_vpd, 3) if long_vpd is not None else None,
                 "short_vpd": round(short_vpd, 3) if short_vpd is not None else None,
                 "video_count_14d": len(long_vpds) + len(short_vpds),

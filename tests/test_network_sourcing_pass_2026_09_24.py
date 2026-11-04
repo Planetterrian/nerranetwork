@@ -83,8 +83,13 @@ class TestSourcingFloorOnTheNewsShows:
                 assert not c.get(key), (slug, key)
         for slug in NARRATIVE:
             c = _cfg(slug)
-            for key in ("preferred_domains", "x_posts_as_sources", "digest_lints"):
+            for key in ("preferred_domains", "x_posts_as_sources"):
                 assert not c.get(key), (slug, key)
+            # Nov 3 2026: the narrative shows carry the hook-figure lint
+            # (tests/test_deep_dive_distinct_2026_11_03.py) — a narrative-show
+            # check against what the run READ, never one of the news-show
+            # lints this pass put on the news shows.
+            assert set(c.get("digest_lints") or []) <= {"hook_figure_sourced"}, slug
 
     def test_hook_shape_experiment_is_not_disturbed(self):
         # The Sep 22 spoken-open experiment read the three arm shows against

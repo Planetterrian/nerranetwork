@@ -339,8 +339,9 @@ jobs:
         run: |
           # Regenerate just this show's pages so the per-episode language
           # switcher + per-language feed links render. Show-scoped, so parallel
-          # jobs never touch the same files.
-          python generate_html.py --show "${{ matrix.show }}" --blogs || \
+          # jobs never touch the same files. --latest 3 (Nov 3 2026): the
+          # newest posts only — a translation lands on today's episode.
+          python generate_html.py --show "${{ matrix.show }}" --blogs --latest 3 || \
             echo "::warning::HTML regen failed for ${{ matrix.show }} — next nightly regen will catch it"
 
       - name: Commit and push ${{ matrix.show }}

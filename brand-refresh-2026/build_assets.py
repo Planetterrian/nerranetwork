@@ -118,32 +118,23 @@ write("nerra-logo-stacked.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" view
   <text x="190" y="238" text-anchor="middle" textLength="300" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="14" fill="#94A3B8">INDEPENDENT PODCAST NETWORK</text>
 </svg>''')
 
-# ---------- 3. YouTube banner 2560x1440 ----------
+# ---------- 3. YouTube banners 2560x1440 (EN / RU / FR) ----------
+# Nov 3 2026: the banners' text comes from engine.brand through
+# scripts/build_youtube_banners.py — the strap typed here (a no-advertising
+# promise and a four-language list) had outlived both of its claims on the
+# live channel.
+# This script owns only the outlined wordmark; the banner module writes the
+# three SVGs and exports their PNGs when cairosvg is importable.
 wy, _ = wm_centered(1280, 770, 118, "#FFFFFF", "url(#nerraText)", gap_px=26)
-write("nerra-youtube-banner.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2560 1440" width="2560" height="1440" role="img" aria-label="Nerra Network YouTube banner">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0B0F1A"/><stop offset="55%" stop-color="#0F172A"/><stop offset="100%" stop-color="#161B2E"/></linearGradient>
-    {GRAD}{GLOWDEF}
-    <radialGradient id="glowL" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#6B47FF" stop-opacity="0.22"/><stop offset="100%" stop-color="#6B47FF" stop-opacity="0"/></radialGradient>
-    <radialGradient id="glowR" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00D4FF" stop-opacity="0.16"/><stop offset="100%" stop-color="#00D4FF" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect width="2560" height="1440" fill="url(#bg)"/>
-  <ellipse cx="560" cy="500" rx="900" ry="700" fill="url(#glowL)"/>
-  <ellipse cx="2050" cy="980" rx="900" ry="700" fill="url(#glowR)"/>
-  <g opacity="0.5" stroke="url(#nerra)" stroke-width="2" fill="none">
-    <line x1="300" y1="300" x2="520" y2="430" opacity="0.25"/><line x1="520" y1="430" x2="360" y2="640" opacity="0.2"/>
-    <line x1="2260" y1="1120" x2="2040" y2="980" opacity="0.25"/><line x1="2040" y1="980" x2="2230" y2="820" opacity="0.2"/>
-    <line x1="2180" y1="360" x2="2360" y2="300" opacity="0.2"/></g>
-  <g>
-    <circle cx="300" cy="300" r="7" fill="#00D4FF" opacity="0.5"/><circle cx="520" cy="430" r="9" fill="#6B47FF" opacity="0.5"/>
-    <circle cx="360" cy="640" r="6" fill="#00D4FF" opacity="0.4"/><circle cx="2260" cy="1120" r="7" fill="#00D4FF" opacity="0.5"/>
-    <circle cx="2040" cy="980" r="9" fill="#6B47FF" opacity="0.5"/><circle cx="2230" cy="820" r="6" fill="#00D4FF" opacity="0.4"/>
-    <circle cx="2180" cy="360" r="7" fill="#6B47FF" opacity="0.45"/><circle cx="2360" cy="300" r="6" fill="#00D4FF" opacity="0.4"/></g>
-  {mark(1180,470,scale=1.6)}
-  {wy}
-  <text x="1280" y="858" text-anchor="middle" textLength="640" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="500" font-size="38" fill="#CBD5E1">Feed your curiosity — not your anxiety.</text>
-  <text x="1280" y="918" text-anchor="middle" textLength="980" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="24" fill="#94A3B8">NEW EPISODES DAILY&#160;&#160;·&#160;&#160;SOURCES NAMED&#160;&#160;·&#160;&#160;EN · FR · RU</text>
-</svg>''')
+import importlib.util  # noqa: E402 — the banner module is loaded where it is used
+_spec = importlib.util.spec_from_file_location(
+    "build_youtube_banners",
+    os.path.join(os.path.dirname(HERE), "scripts", "build_youtube_banners.py"))
+_banners = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_banners)
+_banner_svgs = _banners.write_banners(wordmark=wy)
+for _p in _banner_svgs + _banners.export_pngs(_banner_svgs):
+    print("wrote", os.path.basename(str(_p)))
 
 # ---------- 4. Social banner 1500x500 ----------
 wb, _ = wm(310, 235, 78, "#FFFFFF", "url(#nerraText)")

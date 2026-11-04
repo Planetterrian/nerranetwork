@@ -187,9 +187,12 @@ class TestTargets:
     def test_green_reads_the_review_targets(self):
         row = {"overlap_events": 2, "duration_sec": 2700, "self_answered_turns": 0,
                "mira_turn_sec_median": 15.0, "echo_open_rate": 0.05,
-               "guest_words_trend": 1.3, "closing_round_complete": True, "seams": 0}
+               "guest_words_trend": 1.3, "closing_round_complete": True, "seams": 0,
+               # Nov 3 2026: the beat before the question rides in notes.audio.
+               "notes": {"audio": {"label_open_rate": 0.2, "bare_question_rate": 0.2}}}
         for metric in ("overlap_events_per_10min", "self_answered_turns", "mira_turn_sec_median",
-                       "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams"):
+                       "echo_open_rate", "guest_words_trend", "closing_round_complete", "seams",
+                       "label_open_rate", "bare_question_rate"):
             assert am.is_green(metric, row) is True, metric
 
     def test_an_unmeasured_room_is_never_green(self):

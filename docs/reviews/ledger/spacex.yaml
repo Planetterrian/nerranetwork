@@ -1176,4 +1176,21 @@ reviews:
     ab_listen_required: false
     rationale: Code-only locks so Ep121-class and Ep091-tape and host-ID regressions cannot return unnoticed.
   agent_cost_usd: 0.1983
+- date: '2026-11-03'
+  pr: null
+  doc: docs/reviews/network_review_2026_11_03.md
+  summary: 'Six-month network review. SpaceX is the lowest-scoring daily show on the daily audit: mean 5.23 over October (30 scored episodes) and 5.38 over Oct 18 - Nov 2 (16), with INCOHERENT flagged on 11 of those 16, while carrying about 30% of network downloads. No ledger row carried that number because the score lived only in an issue title. It now persists per reviewed episode (api/editorial_score_history.json, backfilled from the committed daily-review.json revisions), and the dashboard reads it as editorial_score_14d_spacex. Instrument note: from Nov 3 the reviewer reads the reader prose, and every YES flag must quote a sentence found in the text or it is downgraded to info, so compare SpaceX with the other shows under the same reviewer as well as with this baseline.'
+  shipped:
+  - 'daily audit: the 1-10 persists per reviewed episode (api/editorial_score_history.json, 90-day window); dashboard key editorial_score_14d_spacex'
+  - 'daily audit: every YES flag quotes its sentence; an unquoted or unfound flag is downgraded to info and counted as audit_flags_ungrounded'
+  - 'shows/hooks/spacex.py: the Monday market line says "closed Friday at" before the open'
+  - 'spacex digest and podcast prompts rewritten by shape (network prompts pass, Nov 3)'
+  deferred: []
+  predictions:
+  - metric: editorial_score_14d_spacex (daily-audit mean 1-10 over 14 days by episode date)
+    baseline: '5.23 (October, 30 episodes); 5.38 Oct 18 - Nov 2 (16 episodes, INCOHERENT on 11)'
+    expected: '>= 6.3 over the 14 days before the next SpaceX review'
+    verdict: pending
+    evidence: null
+  agent_cost_usd: null
 do_not_retry: []

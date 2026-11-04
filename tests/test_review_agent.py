@@ -506,6 +506,83 @@ class TestSnapshotOnShowsWithoutFetchFilters:
         assert "Fetch-filter leakage" not in report  # no patterns configured
 
 
+class TestRotationOnlyNetwork:
+    """Nov 3 2026: every slate review appends to the network ledger, so under
+    the max(state, ledger) rule ``network`` read as reviewed on 2026-10-14
+    while the agent — the only writer of ``scored_prior_predictions`` — was
+    weeks from reaching it (70 of 94 predictions pending). A slug under
+    ``rotation_only`` is dated by the state file and the agent's OWN entries
+    (``generated_by:``), never by a slate review's entry."""
+
+    def test_state_file_declares_network_rotation_only(self):
+        data = yaml.safe_load(STATE_PATH.read_text(encoding="utf-8"))
+        assert "network" in (data.get("rotation_only") or [])
+        assert set(data["rotation_only"]) <= set(data["targets"])
+
+    def test_committed_state_never_lets_a_slate_entry_push_network_back(self):
+        """On the Nov 4 2026 state this makes ``network`` the FIRST pick (the
+        brief's "within four rotations"): its newest slate entry (2026-10-14)
+        outdates the agent's own (2026-08-18), and under the old max() rule it
+        sat behind every target dated between the two. Written as the
+        invariant — nothing picked ahead of network is dated after the
+        agent's own network date — rather than today's rank, so the guard
+        tolerates the loop closing: once the agent's network review lands
+        (a ``generated_by`` entry), network waits its turn like every other
+        target and this test still passes."""
+        picker = _load_picker()
+        ledger_dir = STATE_PATH.parent / "ledger"
+        data = yaml.safe_load(STATE_PATH.read_text(encoding="utf-8"))
+        targets = data["targets"]
+        rotation_only = set(data.get("rotation_only") or [])
+
+        def effective(slug):
+            reader = (picker._latest_agent_ledger_date if slug in rotation_only
+                      else picker._latest_ledger_date)
+            return max(str(targets[slug]), reader(ledger_dir, slug))
+
+        excludes: set = set()
+        before = []
+        for _ in range(len(targets)):
+            slug = picker.pick_target(STATE_PATH, excludes)
+            assert slug is not None, "the rotation ran dry before reaching network"
+            if slug == "network":
+                break
+            before.append(slug)
+            excludes.add(slug)  # the review lands; the next rotation moves on
+        else:
+            raise AssertionError("network was never picked")
+        agent_date = effective("network")
+        dated_later = {s: effective(s) for s in before if effective(s) > agent_date}
+        assert not dated_later, (
+            f"network is dated {agent_date} by the agent's own entries, yet these "
+            f"targets dated later were picked ahead of it: {dated_later}")
+
+    def test_a_slate_entry_never_advances_a_rotation_only_slug(self, tmp_path):
+        picker = _load_picker()
+        state = tmp_path / "state.yaml"
+        state.write_text(
+            "rotation_only: [alpha]\ntargets:\n  alpha: 2026-06-01\n  beta: 2026-06-10\n"
+        )
+        ledger = tmp_path / "ledger"
+        ledger.mkdir()
+        # A slate review's hand-written entry (no generated_by) on 06-20.
+        (ledger / "alpha.yaml").write_text(
+            "reviews:\n  - date: '2026-06-20'\n    summary: slate pass\n"
+            "    predictions: []\n", encoding="utf-8")
+        assert picker.pick_target(state, set(), ledger_dir=ledger) == "alpha"
+        # The agent's own entry (generated_by) on 06-25 advances it.
+        (ledger / "alpha.yaml").write_text(
+            "reviews:\n  - date: '2026-06-20'\n    summary: slate pass\n"
+            "  - date: '2026-06-25'\n    generated_by: grok-4.5\n    summary: agent pass\n",
+            encoding="utf-8")
+        assert picker.pick_target(state, set(), ledger_dir=ledger) == "beta"
+        # A slug NOT under rotation_only keeps the plain ledger rule.
+        state.write_text("targets:\n  alpha: 2026-06-01\n  beta: 2026-06-10\n")
+        (ledger / "alpha.yaml").write_text(
+            "reviews:\n  - date: '2026-06-20'\n    summary: slate pass\n", encoding="utf-8")
+        assert picker.pick_target(state, set(), ledger_dir=ledger) == "beta"
+
+
 class TestSnapshotNumberPlaceholder:
     """Oct 30 2026: a number in the repeated-phrase report is ``#``. As
     ``0`` it read as a digit: "This is MAG 7 Daily, episode 24" printed as

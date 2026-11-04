@@ -493,13 +493,18 @@ def amend_rss_feed(rss_path: Union[str, Path], episode: int, entry: dict,
         block = raw[start:end]
         new_block, hits = apply_replacements(block, replacements)
         if headline:
+            from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words
+
             def _title_sub(m: re.Match) -> str:
                 inner = m.group(2)
-                # Keep "Ep N: " prefix when present.
+                # Keep "Ep N: " prefix when present. The headline absorbs
+                # the clipping (engine/titles.py owns the limit — a raw
+                # headline here is the "YouTube rewrote every title" class).
                 em = re.match(r"(Ep\s+\d+:\s*)(.*)", inner, re.I)
                 if em:
-                    return f"{m.group(1)}{em.group(1)}{headline}{m.group(3)}"
-                return f"{m.group(1)}{headline}{m.group(3)}"
+                    room = PODCAST_EPISODE_TITLE_MAX - len(em.group(1))
+                    return f"{m.group(1)}{em.group(1)}{clip_words(headline, room)}{m.group(3)}"
+                return f"{m.group(1)}{clip_words(headline, PODCAST_EPISODE_TITLE_MAX)}{m.group(3)}"
             new_block, n_title = _RSS_TITLE_RE.subn(_title_sub, new_block)
             hits += n_title
             # Description often opens with <b>hook</b>

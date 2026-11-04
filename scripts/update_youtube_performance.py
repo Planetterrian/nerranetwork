@@ -285,7 +285,11 @@ def main() -> int:
     # Keys are the show output-dir names (e.g. "tesla_shorts_time"), so the
     # perf file lands next to that show's index file.
     for dir_name, payload in shows.items():
-        videos = payload.get("videos") or []
+        # Nov 3 2026: the hints are mined from the titles the pipeline
+        # wrote; an RSS-ingested copy (kind ``rss_copy``, title "Ep N: <hook>")
+        # is joined to the stats for its views only.
+        videos = [v for v in (payload.get("videos") or [])
+                  if not isinstance(v, dict) or (v.get("kind") or "") != "rss_copy"]
         # Channel-generic hints (Aug 2026): the old two-way en/ru pair
         # meant FR rows — collected since the July index-glob fix — were
         # mined into nothing, and every future dub channel would silently

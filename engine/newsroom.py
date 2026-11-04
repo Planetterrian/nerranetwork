@@ -284,6 +284,59 @@ def same_story(a: str, b: str) -> bool:
                          frozenset(_stem(t) for t in _tokens(b)))
 
 
+#: ``headline_within_hook``: a headline is the hook's story when it shares
+#: this many WORDS with the hook and they are this share of the headline's
+#: own words (the hook may be a composite of two stories, so the headline's
+#: side is the one measured), or when it shares a FIGURE of two or more
+#: digits plus two more tokens.
+HOOK_MIN_SHARED_WORDS = 3
+HOOK_MIN_HEADLINE_SHARE = 0.4
+
+
+def _single_digit(token: str) -> bool:
+    return token.isdigit() and len(token) < 2
+
+
+def headline_within_hook(headline: str, hook: str) -> bool:
+    """Whether *headline* tells the story the episode's *hook* sold — the
+    ``same_story`` test, widened for a hook that is a composite of two
+    stories.
+
+    Nov 3 2026 (the Nerra Daily email): the Tesla card listed "Tesla's
+    October Registrations Surge in Northern Europe, Sweden Jumps 248%" under
+    the hook "Tesla registrations in Sweden rose 248 percent … while Norway
+    climbed 131 percent", because the hook covers two outlets' stories and
+    ``same_story`` measures the shorter set (3 of 10, 4 of 9 against the 0.5
+    floor). Here the headline's side is measured: three shared words that
+    are :data:`HOOK_MIN_HEADLINE_SHARE` of the headline's words, or a shared
+    figure of two or more digits plus two more tokens. A single digit never
+    counts — "Model 3", "GLP-1", "Gemini 4" and "Phase 3" name a product
+    family the show returns to every day, and with them counted the sweep
+    dropped "Tesla Cybercab Inverter Tech to Debut in Model 3" under a Model
+    3 page-update hook and "Mistral Large 4 drops … on new Artificial
+    Analysis index" under a Gemini 4 Carbon hook. Calibrated on 3,561
+    headlines from the last 25 records of every show: 22 more hook-story
+    headlines found than ``same_story`` (174 → 196), none of them a
+    different story; the six composite cases it still misses hinge on a
+    single digit and are accepted.
+    """
+    a_all = frozenset(_stem(t) for t in _tokens(headline))
+    b_all = frozenset(_stem(t) for t in _tokens(hook))
+    if _tokens_match(a_all, b_all):
+        return True
+    a = frozenset(t for t in a_all if not _single_digit(t))
+    b = frozenset(t for t in b_all if not _single_digit(t))
+    if len(a) < 2 or len(b) < 2:
+        return False
+    shared = a & b
+    words = {t for t in shared if not t.isdigit()}
+    if (len(words) >= HOOK_MIN_SHARED_WORDS
+            and len(words) / len(a) >= HOOK_MIN_HEADLINE_SHARE):
+        return True
+    figures = {t for t in shared if t.isdigit()}
+    return bool(figures) and len(shared) >= HOOK_MIN_SHARED_WORDS
+
+
 #: A research paper's title opens on its name — one coined token with two or
 #: more capitals ("ETAMem:", "MOSAIC:", "IceBERT:") before a colon.
 _PAPER_NAME_RE = re.compile(r"^\s*([A-Za-z0-9][\w\-]*[A-Z][\w\-]*)\s*:\s")

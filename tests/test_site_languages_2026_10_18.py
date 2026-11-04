@@ -384,3 +384,188 @@ class TestLanguageFrontPages:
                    "Cybercab", "Models", "Agents", "Beginners", "Привет"}
         leaked = {w for w in words if w not in allowed and not w.isupper()}
         assert not leaked, sorted(leaked)[:20]
+
+
+# ---------------------------------------------------------------------------
+# The hubs are their audiences' front pages (Nov 3 2026)
+# ---------------------------------------------------------------------------
+
+def _shows(*slugs):
+    """Show dicts in display order; ``slug:lang`` marks a native show."""
+    out = []
+    for n, item in enumerate(slugs):
+        slug, _, lang = item.partition(":")
+        out.append({"slug": slug, "name": slug, "display_order": n,
+                    "page_lang": lang or "en"})
+    return out
+
+
+def _funnel_file(tmp_path, by_show):
+    """A fixture api/funnel.json carrying only the reach rows."""
+    import json
+    f = tmp_path / "funnel.json"
+    f.write_text(json.dumps({"stages": {"reach": {"by_show": by_show}}}), encoding="utf-8")
+    return f
+
+
+#: FF-RU out-views SpaceX-RU and Tesla-RU; MIT has no ru row and no fr row.
+FIXTURE_REACH = {
+    "fascinating_frontiers": {"by_channel": {"en": {"views": 3185},
+                                             "fr": {"views": 3819}, "ru": {"views": 20074}}},
+    "spacex": {"by_channel": {"en": {"views": 10357}, "fr": {"views": 2680}, "ru": {"views": 5966}}},
+    "tesla": {"by_channel": {"en": {"views": 6553}, "fr": {"views": 3613}, "ru": {"views": 4901}}},
+    "modern_investing": {"by_channel": {"en": {"views": 769}}},
+    "models_agents": {"by_channel": {"en": {"views": 900}, "fr": {"views": 0}}},
+}
+
+
+class TestLanguageFrontsServeTheirAudience:
+    """Nov 2 2026: both hubs led with Modern Investing's Treasury-auction /
+    TFSA story and ranked their shows by ENGLISH downloads. The channel's own
+    views rank the page, the lead rotates only through subjects a show the
+    channel watches (or a native show) has a story in, and the hubs share
+    with a card in the language."""
+
+    def test_ranked_by_the_channels_own_views_then_display_order(self, tmp_path):
+        f = _funnel_file(tmp_path, FIXTURE_REACH)
+        shows = _shows("tesla", "spacex", "modern_investing", "finansy_prosto:ru",
+                       "fascinating_frontiers", "privet_russian:ru")
+        ru = [s["slug"] for s in G._rank_shows_by_channel_views(shows, "ru", path=f)]
+        # Ranked by RU views (FF > SpaceX > Tesla); a show with no ru row
+        # (MIT, the natives) keeps its display order AFTER every ranked show.
+        assert ru == ["fascinating_frontiers", "spacex", "tesla", "modern_investing",
+                      "finansy_prosto", "privet_russian"]
+        assert ru.index("modern_investing") > max(ru.index(s) for s in ("fascinating_frontiers", "spacex", "tesla"))
+        fr = [s["slug"] for s in G._rank_shows_by_channel_views(
+            _shows("tesla", "spacex", "modern_investing", "models_agents", "fascinating_frontiers"),
+            "fr", path=f)]
+        # 0 views is no row (never ranked as 0); MIT after every show with an fr row.
+        assert fr == ["fascinating_frontiers", "tesla", "spacex", "modern_investing", "models_agents"]
+        assert G._channel_views_by_show("fr", path=f) == {
+            "fascinating_frontiers": 3819, "spacex": 2680, "tesla": 3613}
+
+    def test_a_missing_or_empty_funnel_file_falls_back_to_the_english_ranking(
+            self, tmp_path, monkeypatch):
+        import json
+        audience = tmp_path / "audience.json"
+        audience.write_text(json.dumps({"shows": {"spacex": {"downloads_30d": 50},
+                                                  "tesla": {"downloads_30d": 20}}}))
+        monkeypatch.setattr(G, "AUDIENCE_HEADLINE_PATH", audience)
+        shows = _shows("tesla", "fascinating_frontiers", "spacex")
+        english = [s["slug"] for s in G._rank_shows_by_audience(shows)]
+        assert english == ["spacex", "tesla", "fascinating_frontiers"]
+        assert [s["slug"] for s in G._rank_shows_by_channel_views(
+            shows, "ru", path=tmp_path / "nope.json")] == english
+        assert G._channel_views_by_show("ru", path=tmp_path / "nope.json") is None
+        bad = tmp_path / "bad.json"
+        bad.write_text("{not json")
+        assert [s["slug"] for s in G._rank_shows_by_channel_views(shows, "ru", path=bad)] == english
+        # Readable, but no show has a row on this channel: the English ranking too.
+        f = _funnel_file(tmp_path, {"spacex": {"by_channel": {"en": {"views": 5}}}})
+        assert G._channel_views_by_show("zh", path=f) == {}
+        assert [s["slug"] for s in G._rank_shows_by_channel_views(shows, "zh", path=f)] == english
+
+    def test_only_the_language_hub_reads_the_channel_ranking(self):
+        src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        hub = src.split("def generate_language_hub_page(", 1)[1].split("\ndef ", 1)[0]
+        assert "ranked = _rank_shows_by_channel_views(in_language, lang)" in hub
+        assert "_rank_shows_by_audience(in_language)" not in hub
+        assert "lead_shows=lead_shows" in hub
+        home = src.split("def generate_network_page(", 1)[1].split("\ndef ", 1)[0]
+        assert "ranked = _rank_shows_by_audience(public)" in home
+        assert "_rank_shows_by_channel_views" not in home
+
+    def _story(self, slug, day, hub, lang=""):
+        return {"slug": slug, "date_obj": dt.date.fromisoformat(day), "image_url": "u",
+                "image_orientation": "landscape", "hub_id": hub, "lang": lang}
+
+    def test_the_lead_comes_from_a_show_the_channel_watches_or_a_native_show(self):
+        from engine import language_front as LF
+        from engine import landing_test as LT
+        from engine import brand as B
+
+        order = ["fascinating_frontiers", "spacex", "tesla", "modern_investing", "finansy_prosto"]
+        lead_shows = ["fascinating_frontiers", "spacex", "tesla", "finansy_prosto"]  # no MIT row
+        for k in range(14):
+            day = (dt.date(2026, 11, 2) + dt.timedelta(days=k)).isoformat()
+            stories = [self._story("modern_investing", day, "markets"),
+                       self._story("fascinating_frontiers", day, "space"),
+                       self._story("spacex", day, "space"), self._story("tesla", day, "tesla"),
+                       self._story("finansy_prosto", "2026-10-26", "markets")]
+            page = LF.assemble(stories, lang="ru", audience_order=order,
+                               flagships=B.FLAGSHIP_SHOW_SLUGS, lead_shows=lead_shows)
+            # Never the markets story whose only candidate has no ru row,
+            # whatever the day's index — and never a flagship (its own band).
+            assert page["lead"]["slug"] == "fascinating_frontiers", day
+            # MIT still runs on the page: a top story, never dropped.
+            assert "modern_investing" in {s["slug"] for s in page["top"]}
+        # lead_shows=None keeps the English rotation over every show: on a
+        # "markets" day MIT leads as before (the behaviour this replaced).
+        day = next(d for d in (dt.date(2026, 11, 2) + dt.timedelta(days=k) for k in range(7))
+                   if LT.LEAD_ROTATION[d.toordinal() % len(LT.LEAD_ROTATION)] == "markets")
+        stories = [self._story("modern_investing", day.isoformat(), "markets"),
+                   self._story("fascinating_frontiers", day.isoformat(), "space")]
+        assert LF.assemble(stories, lang="ru", audience_order=order,
+                           flagships=B.FLAGSHIP_SHOW_SLUGS)["lead"]["slug"] == "modern_investing"
+        assert LF.lead_rotation_for(stories, lead_shows) == ["space"]
+        assert LF.lead_rotation_for(stories, []) == []
+
+    def test_no_eligible_story_leaves_the_fallbacks_to_the_assembler(self):
+        from engine import language_front as LF
+        from engine import brand as B
+        # The only story of the day is MIT's: the newest day still leads
+        # (Oct 31 rule) rather than nothing — the restriction is on the
+        # rotation, never on whether the page has a lead.
+        stories = [self._story("modern_investing", "2026-11-02", "markets")]
+        page = LF.assemble(stories, lang="fr", audience_order=["modern_investing"],
+                           flagships=B.FLAGSHIP_SHOW_SLUGS, lead_shows=[])
+        assert page["lead"]["slug"] == "modern_investing"
+
+    def test_the_rendered_ru_hub_leads_from_the_channels_top_three(self, tmp_path, monkeypatch):
+        # Rendered through the real generator and template, with the funnel
+        # file replaced by the fixture (FF-RU out-views SpaceX-RU; MIT has no
+        # ru row) and every collected story moved onto one day with a
+        # landscape picture, so the lead is decided by the rule and not by
+        # which show happened to publish last.
+        from engine import language_front as LF
+        real = LF.collect_stories
+        top3 = sorted(FIXTURE_REACH, key=lambda s: -FIXTURE_REACH[s]["by_channel"].get("ru", {}).get("views", 0))[:3]
+
+        def pinned(*a, **k):
+            stories = real(*a, **k)
+            newest = max(s["date_obj"] for s in stories)
+            for s in stories:
+                s["date_obj"] = newest
+                s["image_url"] = s["image_url"] or "https://example.invalid/scene.jpg"
+                s["image_orientation"] = "landscape"
+            return stories
+
+        monkeypatch.setattr(G, "FUNNEL_PATH", _funnel_file(tmp_path, FIXTURE_REACH))
+        monkeypatch.setattr(LF, "collect_stories", pinned)
+        html = G.generate_language_hub_page("ru", output_dir=tmp_path, now=NOW).read_text(encoding="utf-8")
+        lead = html.split('<article class="lt-lead"', 1)[1].split("</article>", 1)[0]
+        show_page = re.search(r'<p class="lt-kicker">.*?<a href="\.\./([^"]+)">', lead, re.S).group(1)
+        slug = next(s["slug"] for s in G._build_all_shows_list() if s["show_page"] == show_page)
+        assert slug != "modern_investing"
+        assert slug in top3 or slug in ("finansy_prosto", "privet_russian"), slug
+
+    def test_the_hubs_share_with_a_card_in_their_language(self, hubs):
+        import json
+        from engine import share_cards as S
+        from engine import brand as B
+        alts = json.loads(S.MANIFEST_PATH.read_text(encoding="utf-8"))["alt"]
+        for lang, tagline in (("ru", B.NETWORK_TAGLINE_RU), ("fr", B.NETWORK_TAGLINE_FR)):
+            key = S.page_key_for_path(L.language_hub_path(lang))
+            assert key == lang
+            card = S.page_card_path(key)
+            assert card.is_file(), card
+            head = hubs[lang].split("</head>")[0]
+            assert f'property="og:image" content="https://nerranetwork.com/assets/share/pages/{lang}.jpg"' in head
+            alt = alts[card.relative_to(ROOT).as_posix()]
+            assert tagline in alt and B.NETWORK_TAGLINE not in alt, alt
+        assert CYRILLIC_WORD.search(alts["assets/share/pages/ru.jpg"])
+        assert "français" in alts["assets/share/pages/fr.jpg"]
+        # The card builder composes the alt from engine.brand's taglines; a
+        # typed copy of either sentence is the one-owner failure.
+        builder = (ROOT / "scripts" / "build_share_cards.py").read_text(encoding="utf-8")
+        assert B.NETWORK_TAGLINE_RU not in builder and B.NETWORK_TAGLINE_FR not in builder

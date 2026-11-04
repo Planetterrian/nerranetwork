@@ -132,6 +132,11 @@ const SOURCE_TAGS = new Set([
   "src-whatsapp",
   "src-telegram",
   "src-email-share",
+  // Nov 3 2026 — a PAID click. The Google Ads final URLs are tagged through
+  // engine.funnel.ad_link (utm_source=google_ads), so a signup that arrived
+  // from an ad is distinguishable from one that typed the address. Before
+  // this every paid session read as Direct under denied ad_storage.
+  "src-google-ads",
 ]);
 
 // Per-show newsletter tags a member may opt into from the join/footer

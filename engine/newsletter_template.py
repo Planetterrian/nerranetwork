@@ -380,6 +380,10 @@ _DARK_MODE_STYLE = """\
 
     /* Links. */
     .nn a, .nn a span { color:#93c5fd !important; }
+    /* A card's headline is a headline, not a link, in dark mode too: the
+     * Nerra Daily email's card titles turned link-blue (Nov 3 2026).
+     * Class-scoped under .nn and placed AFTER .nn a so it wins. */
+    .nn .card-title a { color:#ffffff !important; }
 
     /* Brand-color tokens — lighter dark-mode variants for AA contrast
      * on `#1e293b` cards. The original brand colors are preserved in
@@ -1325,6 +1329,70 @@ def _build_featured_episode_html(
     )
 
 
+def _build_masthead_html(show: Dict[str, str], pill_text: str, *,
+                         lead_html: str = "") -> str:
+    """The compact hero (Nov 3 2026, the Nerra Daily email): one 56 px row
+    in the brand gradient — a 40 px cover, the name at 18 px, the date pill
+    — and, under it, one short lead line the caller supplies (already
+    HTML; white text on the gradient, like the full hero's tagline). The
+    full hero put the first show headline at y = 788 px on a 390 px phone;
+    a news email's first screen is the news. Same VML fallback shape as
+    :func:`_build_hero_html` so Outlook desktop gets a solid brand cell.
+    """
+    name = show["name"]
+    cover_url = show["cover_url"]
+    brand = show["brand_color"]
+    brand_dark = show["brand_color_dark"]
+    font = ("font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+            "Roboto,Helvetica,Arial,sans-serif;")
+    alt_text = name.replace('"', "")
+    cover_cell = (
+        f'<td width="40" style="padding:0 10px 0 0;vertical-align:middle;">'
+        f'<img src="{cover_url}" alt="{alt_text}" width="40" height="40" '
+        f'style="display:block;border-radius:10px;width:40px;height:40px;'
+        f'object-fit:cover;color:#ffffff;font-size:12px;font-weight:700;" />'
+        f'</td>'
+        if cover_url else ""
+    )
+    pill_html = (
+        '<table role="presentation" border="0" cellpadding="0" '
+        'cellspacing="0" style="margin:0 0 0 auto;"><tr>'
+        '<td bgcolor="#0b1220" '
+        'style="background-color:#0b1220;color:#ffffff;font-size:11px;'
+        'font-weight:600;padding:5px 12px;border-radius:100px;'
+        f'letter-spacing:0.04em;text-transform:uppercase;{font}">'
+        f'{pill_text}</td></tr></table>'
+    )
+    return (
+        '<!--[if gte mso 9]>'
+        '<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" '
+        'stroke="false" '
+        'style="width:600px;mso-position-horizontal:center;">'
+        f'<v:fill type="solid" color="{brand_dark}" />'
+        '<v:textbox inset="0,0,0,0"><div>'
+        '<![endif]-->'
+        f'<table role="presentation" width="100%" cellpadding="0" '
+        f'cellspacing="0" border="0" bgcolor="{brand_dark}" '
+        f'style="background-color:{brand_dark};'
+        f'background:linear-gradient(135deg,{brand} 0%,'
+        f'{brand_dark} 100%);">'
+        f'<tr><td style="padding:8px 16px;{font}">'
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0"><tr>'
+        f'{cover_cell}'
+        f'<td style="vertical-align:middle;">'
+        f'<span style="color:#ffffff;font-size:18px;font-weight:700;'
+        f'line-height:40px;letter-spacing:-0.01em;">{name}</span></td>'
+        f'<td align="right" style="vertical-align:middle;">{pill_html}</td>'
+        '</tr></table>'
+        f'{lead_html}'
+        '</td></tr></table>'
+        '<!--[if gte mso 9]>'
+        '</div></v:textbox></v:rect>'
+        '<![endif]-->'
+    )
+
+
 def _build_cross_network_html(
     adjacent_shows: Optional[List[Dict[str, Any]]], brand: str
 ) -> str:
@@ -1856,9 +1924,21 @@ def wrap_with_branding(
     requires_financial_disclaimer: bool = False,
     archive_url: str = "",
     issue_number: Optional[int] = None,
+    hero: str = "full",
+    featured_position: str = "top",
+    featured_eyebrow: Optional[str] = None,
+    masthead_lead_html: str = "",
 ) -> str:
     """Wrap *markdown_body* with a branded hero, optional middle blocks,
     and footer.
+
+    *hero* is ``"full"`` (the cover, name, tagline and pill block every
+    per-show email carries) or ``"compact"`` (one row — see
+    :func:`_build_masthead_html` — with *masthead_lead_html* under it and
+    no tagline). *featured_position* is ``"top"`` (above the body) or
+    ``"after_body"``. *featured_eyebrow* replaces the cadence-aware default.
+    The defaults keep every existing caller byte-identical (Nov 3 2026: the
+    Nerra Daily email is the one compact, featured-after-body caller).
 
     The result is a single string suitable for Buttondown's email
     body — markdown in the middle is left untouched, and the inline
@@ -1881,6 +1961,11 @@ def wrap_with_branding(
     *daily_date* for daily episode newsletters. If neither is set,
     the hero pill falls back to today's date.
     """
+    if hero not in ("full", "compact"):
+        raise ValueError(f"hero must be 'full' or 'compact', not {hero!r}")
+    if featured_position not in ("top", "after_body"):
+        raise ValueError("featured_position must be 'top' or 'after_body', "
+                         f"not {featured_position!r}")
     show = _load_show_branding(slug)
 
     if week_ending is not None:
@@ -1891,7 +1976,10 @@ def wrap_with_branding(
         pill = _format_week_pill(None)
 
     preheader_div = _build_preheader_html(preheader)
-    hero = _build_hero_html(show, pill)
+    hero_block = (
+        _build_masthead_html(show, pill, lead_html=masthead_lead_html)
+        if hero == "compact" else _build_hero_html(show, pill)
+    )
     stats_block = _build_by_the_numbers_html(
         by_the_numbers, show["brand_color"], slug
     )
@@ -1933,10 +2021,11 @@ def wrap_with_branding(
         except Exception:  # noqa: BLE001 — best-effort fallback only
             featured_with_slug = None
     # Cadence-aware eyebrow: a daily must not say "this week".
-    featured_eyebrow = (
-        "🎧 Today's episode" if daily_date is not None
-        else "🎧 If you only have 10 minutes this week"
-    )
+    if featured_eyebrow is None:
+        featured_eyebrow = (
+            "🎧 Today's episode" if daily_date is not None
+            else "🎧 If you only have 10 minutes this week"
+        )
     featured_block = _build_featured_episode_html(
         featured_with_slug, show, eyebrow=featured_eyebrow
     )
@@ -2035,17 +2124,20 @@ def wrap_with_branding(
     # Every content block is stamped with the ``nn`` scope-marker class
     # (_scope_nn) so the dark-mode stylesheet recolors OUR content only
     # — never Buttondown's wrapper (June 2026 iPhone dark-mode fix).
+    featured_top = featured_block if featured_position == "top" else ""
+    featured_after = featured_block if featured_position == "after_body" else ""
     parts = [
         _DARK_MODE_STYLE,
     ] + [
         _scope_nn(p) for p in (
             preheader_div,
             view_in_browser,
-            hero,
+            hero_block,
             stats_block,
-            featured_block,
+            featured_top,
             disclaimer,
             body_wrapped,
+            featured_after,
             p_s_block,
             cross_network,
             reply_share,

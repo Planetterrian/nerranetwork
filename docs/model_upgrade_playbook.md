@@ -146,6 +146,96 @@ lengthen the client timeout. What binds now:
   dashboard and the trial report's fallback / time-to-first-token line
   before scoring a trial: a fallback episode is never a trial data point.
 
+## Audio changes (added 2026-11-03)
+
+The same discipline, for anything a listener hears. The record before this
+section: the Oct 13 story beat and the Oct 14 music swell each shipped to every
+show and were reversed within a day; the Oct 20 `[breath]` tag reached 14
+episodes before the operator heard it, and every one was re-voiced; 11 commits
+to `shows/_defaults.yaml` in October (five of them between Oct 13 and 20),
+and 13 since Oct 1. CLAUDE.md's Oct 20 rule — *a candidate is LISTENED to on a shipped
+episode before it ships to a slate* — had no mechanism. Now it has three, and
+a place to write the listen down.
+
+### A1. One show first — the value in that show's YAML
+
+`engine.config.load_config` deep-merges each show's YAML over
+`shows/_defaults.yaml`, so a trial of any `audio:` / `tts:` value IS that value
+in one or two show YAMLs (`voice_declick: strong` on Vancouver and `tts.speed`
+on the DP Pod are trials that stuck). There is no canary layer and there must
+not be one: a third place a value can live is against the one-owner rule.
+Pick a show whose voice and theme the change is about. Listen to the first
+episode. Then move the value to `_defaults.yaml` (or delete it).
+
+### A2. Listen before the slate, and have something to listen to
+
+- **A rehearsal of a show**: Actions "Run show" → the show → `rehearse: true`.
+  The run fetches, writes, synthesizes and mixes the day's real episode
+  through the real chain (`run_show.py --rehearse`), uploads the MP3 and the
+  exact text it voiced as a 3-day artifact, and commits and publishes
+  nothing (the episode numbering is untouched; the run's working tree is
+  discarded). Dispatch it on a branch that carries the change.
+- **A minute of a committed script through the builders**: Actions
+  "Probe audio chain" with `script` = a committed `digests/<dir>/<ep>_tts.txt`,
+  `seconds` (75), `variants` (`legacy` is the chain as shipped; a name the
+  builders on this tree do not offer is reported and skipped) and an
+  optional `voice`. The probe voices the first minute of the REAL script on
+  the show's voice (cents of TTS) and renders each variant through
+  `master_voice_track` and `mix_with_music` with the show's own theme and
+  settings; it attaches before/after audio with loudness, clicks and hiss
+  per file. A `tts.dialogue_mode` show renders at speed 1.0 and 1.05.
+  Locally, `--dry-run` prints the ffmpeg commands the builders would issue
+  with no API key. Nothing it writes goes under `digests/` or the feeds.
+- **A chain or mix builder change** (`voice_chain_filters`, `_final_mix_cmd`,
+  `_music_*_cmd`, `master_voice_track`): the probe on a flagship script AND a
+  Mira script, at minimum, before the PR is opened.
+
+### A3. The listen is written down
+
+`tests/fixtures/defaults_audio_snapshot.yaml` holds the `audio:` and `tts:`
+sections of `shows/_defaults.yaml`. `tests/test_listen_before_slate_2026_11_03.py`
+fails when a value differs from the snapshot, and it stays red until two
+things happen in the same PR: the snapshot is updated (the test file prints
+the command) AND `docs/listens.md` gains a line in the form
+
+    <key> — listened by <who> on <date>, episode <show> Ep<N> · snapshot <fingerprint>
+
+where the fingerprint is the one the failing test prints for the new values.
+This is a reminder with teeth, not proof: the guard can confirm that a line
+was written, never that the listening happened. The PR template asks for the
+rehearsal artifact link, the listener and the trial show beside it.
+
+### A4. Rollback is one line, and the readout is a listen
+
+A `_defaults.yaml` value reverts in one line (plus the snapshot and a
+`docs/listens.md` line saying what was heard). A builder change reverts by
+PR. The count of "Re-synthesize Episode" runs is NOT the readout for this
+section — most of those runs are corrections of content, not reversals of an
+audio change. The readout is `docs/listens.md`: one line per ⚠️ AUDIO change,
+and zero network-wide audio reversals inside 48 h of a merge.
+
+### A5. The operator's listening protocol (30 minutes, first session)
+
+Four listens nobody has done, each a question a measurement cannot answer.
+Each answer goes into `docs/experiments.yaml` as a `listen:` note on the
+entry it belongs to (hit / miss / inconclusive, and what was heard), so the
+next reviewer does not re-ask:
+
+1. **Brightness (Patrick's voice).** A blind A/B of one Tesla minute against
+   one NPR News Now minute, both normalized to -16 LUFS with the same
+   `loudnorm`, on the same headphones. The 5.5–8.5 kHz share measured
+   -13.2 dB against NPR's -20.7 — a listen, not a chain change, is the only
+   admissible next step.
+2. **Mira's residual ticks.** Omni View Top World Ep041 (2.57 clicks/min on
+   the measurement) on headphones: are the sub-millisecond ticks audible?
+3. **Collingwood's "calling wood".** Collingwood Ep006 at the place the
+   transcript reads "calling wood": real on the audio, or Whisper's?
+4. **FP's English halves on Olya.** Финансы Просто Ep090: how the English
+   terms sit on the Russian voice.
+
+Group C27 in the Nov 3 review's ranked plan. Prompts stay as they are
+(landmine #17): the protocol produces answers, not changes.
+
 ## The instrument (added 2026-09-21)
 
 `scripts/model_trial_report.py` answers rule 2 from the committed record, so
@@ -163,6 +253,16 @@ reports p50/p95/max per stage for the trial window against a trailing
 baseline. It exits 1 when an LLM stage's p95 passes 50% of the request
 timeout, regresses more than 50% against baseline, or any stage failed.
 Render and fetch stages are reported but never gate a MODEL trial.
+
+**It runs nightly since Nov 3 2026** (`nightly-maintenance.yml`, step "Read
+the script-arm latency gate"): a ROLLING window (`--since` defaults to today
+minus 14 days — a fixed date measures an ever-longer past) over the six shows
+whose script stage runs on a pinned model arm, against the 600 s request
+timeout the run uses, written to `api/model_trial.json` with `--out`. A show's
+digest directory is read from its YAML `episode.output_dir` (Tesla writes to
+`digests/tesla_shorts_time`). The dashboard carries the same read as the live
+metric `script_stage_p95_s_14d_<show>` so a register entry can name it. The
+first nightly read (Nov 4 2026): SpaceX p95 903 s — 150% of the timeout.
 
 ## Staged migrations on record
 

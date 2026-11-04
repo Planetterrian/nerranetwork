@@ -258,12 +258,16 @@ def _generate_links(
                 )
             links = parse_links_json(text, handoff_count)
             if links:
-                links = _enforce_handoff_variety(
-                    links, prompt, segments, handoff_count, tracker)
                 # Oct 16 2026: a handoff must introduce the segment that
                 # follows it (Ep049/055/057 shifted by one from mid-edition).
+                # Nov 3 2026: realign BEFORE the variety revision — the
+                # revision used to judge (and rewrite) the shifted draft
+                # against the wrong segments, and the realigned text then
+                # shipped unrevised.
                 from engine.daily_edition import realign_handoffs
                 links = realign_handoffs(links, segments)
+                links = _enforce_handoff_variety(
+                    links, prompt, segments, handoff_count, tracker)
                 return links, "llm"
             from engine.daily_edition import links_reply_problem
             _annotate("warning", f"Nerra Daily link generation attempt {attempt} "
@@ -308,6 +312,11 @@ def _enforce_handoff_variety(links: dict, prompt: str, segments: List[Segment],
                 model=str((meta or {}).get("model") or LINKS_MODEL),
             )
         revised = parse_links_json(text, handoff_count)
+        if revised:
+            # The revision is judged on the segments it introduces, like
+            # the draft it replaces (Nov 3 2026).
+            from engine.daily_edition import realign_handoffs
+            revised = realign_handoffs(revised, segments)
     except Exception as exc:  # noqa: BLE001 — the first draft still ships
         _annotate("warning", f"Nerra Daily handoff revision failed ({exc}) "
                              "— keeping the first draft")
@@ -385,7 +394,7 @@ def build_edition(
     skip_llm: bool = False,
     dry_run: bool = False,
 ) -> int:
-    from engine.audio import concatenate_audio, get_audio_duration
+    from engine.audio import concatenate_audio, get_audio_duration, measure_loudness
     from engine.daily_edition import discover_lineup
     from engine.publisher import (
         apply_op3_prefix,
@@ -562,11 +571,20 @@ def build_edition(
         final_mp3 = workdir / mp3_name
         concatenate_audio(splice, final_mp3, encode_args=EDITION_ENCODE_ARGS)
         duration = get_audio_duration(final_mp3) or 0.0
+        # Nov 3 2026: one ebur128 read of the finished file (integrated
+        # loudness, range, true peak) for the metrics record; None when
+        # ffmpeg cannot say, never 0.
+        loudness = measure_loudness(final_mp3)
         title = daily_title(episode_num, target_date, segments,
                             links.get("title", ""))
         chapters = build_chapters(chapter_pieces, title)
         logger.info("assembled %s: %.1f min, %d segments, title=%r",
                     mp3_name, duration / 60, len(segments), title)
+        if loudness:
+            logger.info("edition loudness: %s LUFS integrated, LRA %s LU, true peak %s dBTP",
+                        loudness.get("I"), loudness.get("LRA"), loudness.get("TP"))
+        else:
+            logger.warning("edition loudness: unmeasured")
 
         if dry_run:
             plan = {
@@ -672,6 +690,7 @@ def build_edition(
             x_post_skipped=x_post_skipped,
             x_post_queued=bool(x_post_queued_for),
             x_post_queued_for=x_post_queued_for,
+            loudness=loudness,
         )
         (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",

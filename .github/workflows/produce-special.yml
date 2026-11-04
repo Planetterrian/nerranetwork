@@ -224,7 +224,7 @@ jobs:
           # manufactured rebase conflicts on the commit that matters most.
           # The homepage card and the sitemap follow on the next finalize.
           git add -A specials/ ./*.rss ./*.html
-          git reset -q -- login.html index.html sitemap.xml 2>/dev/null || true
+          git reset -q -- login.html index.html sitemap.xml news-sitemap.xml 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -q -m "Members-only series released: $SERIES"
             if ! push_main; then

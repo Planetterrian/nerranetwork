@@ -29,6 +29,11 @@ on:
         required: false
         type: boolean
         default: false
+      vtt_backfill:
+        description: 'Only write the transcript VTT (and its feed tags) for every published episode that has an edit transcript; nothing else changes'
+        required: false
+        type: boolean
+        default: false
   repository_dispatch:
     types: [interview-publish]
 
@@ -63,6 +68,13 @@ jobs:
         env:
           INTERVIEW_ID: ${{ github.event.inputs.interview_id || github.event.client_payload.interview_id }}
           REFRESH_POST: ${{ github.event.inputs.refresh_post }}
+          # Nov 4 2026 (voices-7): the one-time VTT backfill for Ep12-15 /
+          # NV3-4; a sweep or a publish never runs it.
+          VTT_BACKFILL: ${{ github.event.inputs.vtt_backfill }}
+          # Nov 4 2026 (youtube-8 stage 1): the long-form's title bundle and
+          # thumbnail punch text are one Grok call (engine.youtube_titles);
+          # without the key the upload falls back to the feed title.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

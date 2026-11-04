@@ -228,6 +228,18 @@ class ScriptAudit:
     #: Oct 3 2026 — share of the hook's salient words spoken in the first
     #: ``HOOK_LEAD_SENTENCES`` body sentences (see ``hook_leads_body``).
     hook_leads_body: Optional[float] = None
+    #: Nov 3 2026 — see ``attribution_tail_pct`` / ``short_sentence_pct``.
+    attribution_tail_pct: Optional[float] = None
+    short_sentence_pct: Optional[float] = None
+    #: Nov 3 2026 (digest fact floor) — the fact-state instrument: the
+    #: digest's and the script's fact-free shares, sentences opening on an
+    #: attribution, sentences that only qualify evidence. All read-only;
+    #: read by review_snapshot's density table and the
+    #: ``digest-fact-floor-2026-11-03`` readout.
+    digest_fact_free_pct: Optional[float] = None
+    script_fact_free_pct: Optional[float] = None
+    attribution_opener_pct: Optional[float] = None
+    caveat_sentence_pct: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -259,6 +271,18 @@ class ScriptAudit:
             m["script_commas_per_100w"] = round(self.commas_per_100w, 1)
         if self.digest_commas_per_100w is not None:
             m["digest_commas_per_100w"] = round(self.digest_commas_per_100w, 1)
+        if self.attribution_tail_pct is not None:
+            m["script_attribution_tail_pct"] = round(self.attribution_tail_pct, 1)
+        if self.short_sentence_pct is not None:
+            m["script_short_sentence_pct"] = round(self.short_sentence_pct, 1)
+        if self.digest_fact_free_pct is not None:
+            m["digest_fact_free_pct"] = round(self.digest_fact_free_pct, 1)
+        if self.script_fact_free_pct is not None:
+            m["script_fact_free_pct"] = round(self.script_fact_free_pct, 1)
+        if self.attribution_opener_pct is not None:
+            m["script_attribution_opener_pct"] = round(self.attribution_opener_pct, 1)
+        if self.caveat_sentence_pct is not None:
+            m["script_caveat_sentence_pct"] = round(self.caveat_sentence_pct, 1)
         return m
 
     def warnings(self) -> List[str]:
@@ -650,6 +674,319 @@ def entity_retention(script_text: str, digest_text: str) -> Optional[float]:
     return len(ents & have) / len(ents)
 
 
+# Nov 3 2026 — the attribution tail. The grok-4.6 script arms obey
+# content_discipline.txt's "named once per story" literally and put the
+# outlet at the END of a sentence, story after story: Tesla went 0% -> 10%
+# of body sentences between Oct 1-10 and Oct 27-Nov 2 (SpaceX 0.6 -> 5.2,
+# FF 0 -> 6.2) while the grok-4.7 cohort stayed under 3%. The prompt rule
+# existed and nothing measured it — the fourth prompt-only rule in six
+# months. Read-only: the number is the baseline any prompt change is
+# scored against; a rule that changes the script belongs in the prompt.
+_ATTRIBUTION_VERBS = (
+    "reported|reports|said|says|noted|notes|wrote|writes|added|confirmed|"
+    "announced|showed|found|told|explained|stated|revealed|warned"
+)
+ATTRIBUTION_TAIL_RE = re.compile(
+    r",\s+(?:according to\s+[A-Z][^,;]{0,45}|(?:the\s+)?[A-Z][^,;]{0,45}\s(?:"
+    + _ATTRIBUTION_VERBS
+    + r"))[.!?]?$"
+)
+#: A sentence of this many words or fewer is "short" for ``short_sentence_pct``.
+#: The owner's Nov 2 note read Tesla Ep653 (28% of sentences under ten words)
+#: as a ticker; measured over the windows the share FELL (Tesla 33% -> 18%),
+#: so the number is recorded, never warned on, until a review reads it.
+SHORT_SENTENCE_MAX_WORDS = 9
+
+
+def _body_sentences(script_text: str) -> List[str]:
+    return [
+        s for s in _closing_cut(split_sentences(script_text))
+        if not _is_identity_line(s)
+    ]
+
+
+def attribution_tail_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences that END on an attribution (", X reported." /
+    ", according to X."). None when the script has no body sentences."""
+    sentences = _body_sentences(script_text)
+    if not sentences:
+        return None
+    hits = sum(1 for s in sentences if ATTRIBUTION_TAIL_RE.search(s.strip()))
+    return 100.0 * hits / len(sentences)
+
+
+def short_sentence_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences of ``SHORT_SENTENCE_MAX_WORDS`` words or fewer."""
+    sentences = _body_sentences(script_text)
+    if not sentences:
+        return None
+    hits = sum(1 for s in sentences if len(s.split()) <= SHORT_SENTENCE_MAX_WORDS)
+    return 100.0 * hits / len(sentences)
+
+
+# ---------------------------------------------------------------------------
+# Fact state (Nov 3 2026) — the one test behind the digest fact floor and
+# the fact-free shares
+# ---------------------------------------------------------------------------
+# Lifted from the six-month review's repetition guard (v4), calibrated on
+# 113 + 206 committed episodes: the DIGEST's own fact-free share was the best
+# predictor of the daily audit's "Repetitive" critical (AUC 0.72), and the
+# script inherits it (r 0.69) whether or not it copies the digest's words.
+# A sentence CARRIES A FACT when it holds a numeric phrase not given earlier
+# in the text, a quotation mark, or a capitalised mid-sentence token (a
+# name) not given earlier. Everything else is a second telling of what came
+# before, or a sentence with nothing in it. The walk is ordered — "earlier"
+# means the sentences before it in the same text — so the second telling of
+# a number counts for nothing, which is what makes the count a floor the
+# expansion retry cannot reach by padding (engine.generator.digest_fact_count).
+
+_FACT_STOP = frozenset("""
+a an the and or but so if then than that this these those there here it its it's they them their
+he she his her we our you your i me my is are was were be been being am do does did done has have
+had having will would shall should can could may might must of in on at to for from by with about
+into over under after before between among through during without within across around against
+up down out off again further once as not no nor only own same too very just also still yet even
+more most less least much many few some any all each every both either neither other another such
+what which who whom whose when where why how because while whether although though since until
+now today tonight week year years day days said says say reported reports noted notes according
+per cent percent point zero one two three four five six seven eight nine ten eleven twelve thirteen
+fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty sixty seventy eighty
+ninety hundred thousand million billion trillion half quarter dollars dollar cents first second third
+new like get got make made take took come came go went see saw way thing things time times
+company companies already still rather than
+""".split())
+_FACT_NUM_WORD_RE = re.compile(
+    r"\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|"
+    r"fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|"
+    r"ninety|hundred|thousand|million|billion|trillion|half|quarter|percent|dollars?|cents?)\b|\d",
+    re.IGNORECASE)
+_FACT_NUMERIC_PHRASE_RE = re.compile(
+    r"((?:\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|"
+    r"fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|"
+    r"eighty|ninety|hundred|thousand|million|billion|trillion|point|half|quarter)\b[\s,-]*){1,}|\d[\d,.]*)",
+    re.IGNORECASE)
+_FACT_QUOTE_RE = re.compile(r"[\"“”]")
+# A capitalised token that is not the first word of its sentence and does
+# not follow a sentence end inside the string (an abbreviation's dot).
+_FACT_CAP_MID_RE = re.compile(r"(?<!^)(?<![.!?]\s)\b([A-ZА-ЯЁ][\w'’-]{2,})\b")
+# Never split after a capital initial's dot ("B.C.", "U.S.", "C.C. Wei").
+_FACT_SENT_SPLIT_RE = re.compile(r"(?<![A-Z]\.)(?<![A-Z]\.[A-Z])(?<=[.!?…])\s+(?=[A-ZА-ЯЁ\"'“‘(\[])")
+_FACT_WORD_RE = re.compile(r"[^\W_][\w'’-]*", re.UNICODE)
+_FACT_MD_DECOR_RE = re.compile(r"[*_`>\[\]]|\(https?://\S+\)|https?://\S+|Source:\s*\S+")
+_FACT_LINK_BULLET_RE = re.compile(r"^\s*[-•]\s*\[.*$", re.MULTILINE)
+#: Sentences a news script spends on the identity line and the map before
+#: its first story (the review's body start); the fact walk still reads
+#: them so a name the map gives is not "new" when the story gives it again.
+SCRIPT_FACT_BODY_START = 3
+
+
+def _fact_stem(w: str) -> str:
+    w = re.sub(r"['’]s$", "", w)
+    for suf in ("ations", "ation", "ments", "ment", "ings", "ing", "edly", "ies", "ied", "ed", "es", "s", "ly"):
+        if len(w) - len(suf) >= 4 and w.endswith(suf):
+            w = w[: -len(suf)]
+            break
+    return w
+
+
+def _fact_salient(sentence: str) -> Set[str]:
+    return {
+        _fact_stem(w) for w in (t.lower() for t in _FACT_WORD_RE.findall(sentence))
+        if w not in _FACT_STOP and len(w) >= 3 and not w.isdigit() and not _FACT_NUM_WORD_RE.fullmatch(w)
+    }
+
+
+def fact_numeric_phrases(sentence: str) -> Set[str]:
+    """Normalised numeric phrases of *sentence* ("2.1-fold" -> "2.1 fold"
+    is not one; "2.1" is; "ten percent" is). A lone one/two/three/half/
+    point/quarter is a word, not a figure."""
+    out: Set[str] = set()
+    for m in _FACT_NUMERIC_PHRASE_RE.finditer(sentence):
+        p = " ".join(m.group(0).lower().replace("-", " ").replace(",", " ").split())
+        toks = p.split()
+        if not toks:
+            continue
+        if len(toks) == 1 and toks[0] in ("one", "two", "three", "half", "point", "quarter"):
+            continue
+        out.add(p)
+    return out
+
+
+def fact_state(sentence: str, seen_caps: Set[str], seen_nums: Set[str]) -> Tuple[bool, Set[str], Set[str]]:
+    """``(carries a NEW fact, caps, nums)`` for one sentence read after the
+    sentences whose names and figures are in *seen_caps* / *seen_nums*. A
+    new fact is a numeric phrase not given before, a quotation mark, or a
+    capitalised mid-sentence token not given before."""
+    caps = {c.lower() for c in _FACT_CAP_MID_RE.findall(sentence)} - _FACT_STOP
+    nums = fact_numeric_phrases(sentence)
+    new = bool(nums - seen_nums) or bool(_FACT_QUOTE_RE.search(sentence)) or bool(caps - seen_caps)
+    return new, caps, nums
+
+
+def fact_states(sentences: List[str]) -> List[bool]:
+    """The ordered fact walk: one bool per sentence, True where it carries
+    a fact the sentences before it did not."""
+    seen_caps: Set[str] = set()
+    seen_nums: Set[str] = set()
+    out: List[bool] = []
+    for s in sentences:
+        new, caps, nums = fact_state(s, seen_caps, seen_nums)
+        seen_caps |= caps
+        seen_nums |= nums
+        out.append(new)
+    return out
+
+
+def fact_sentences(text: str) -> List[str]:
+    """Sentences of *text* for the fact walk: speaker labels and speech
+    tags removed, never split on an abbreviation's dot."""
+    cleaned = _SPEECH_TAG_RE.sub(" ", _SPEAKER_PREFIX_RE.sub("", text or ""))
+    out: List[str] = []
+    for para in cleaned.split("\n"):
+        para = " ".join(para.split())
+        if not para:
+            continue
+        out.extend(s.strip() for s in _FACT_SENT_SPLIT_RE.split(para) if s.strip())
+    return out
+
+
+def digest_story_sentences(digest_text: str) -> List[str]:
+    """The sentences of a digest's STORY ITEMS, in order: every block
+    ``engine.digest_lint.story_items`` returns (a numbered item or a
+    bold-headline item, in any section), the Also Today run's one-liners
+    read as ``digest_lint.also_today_items`` reads them (any bold head,
+    inline or alone — a thin story moved there earns its sentence), and
+    Omni View's ``### N) Title`` story headings. The hook, What You Need
+    to Know, the deep dive and the other prose sections never count. The
+    head line, the Source tails, the link bullets, the URLs and the
+    markdown decor are removed."""
+    from engine.digest_lint import (
+        ALSO_TODAY_SECTION, _BOLD_HEAD_RE, _HEADING_ITEM_RE, _HEADLINE_ITEM_RE,
+        _NUMBERED_ITEM_RE, items, sections,
+    )
+
+    blocks: List[str] = []
+    for title, body in sections(digest_text):
+        if _HEADING_ITEM_RE.match(title or ""):
+            if body.strip():
+                blocks.append("**" + title.strip() + "**\n" + body)
+            continue
+        also_today = (title or "").strip().lower() == ALSO_TODAY_SECTION.lower()
+        for block in items(body):
+            head = block.splitlines()[0]
+            if (_NUMBERED_ITEM_RE.match(head) or _HEADLINE_ITEM_RE.match(head)
+                    or (also_today and _BOLD_HEAD_RE.match(head))):
+                blocks.append(block)
+    out: List[str] = []
+    for block in blocks:
+        lines = block.splitlines()
+        prose = "\n".join(lines[1:]) if len(lines) > 1 else re.sub(r"^\s*(?:\d+\.\s*)?\*\*[^*]*\*\*\s*", "", lines[0])
+        prose = _FACT_LINK_BULLET_RE.sub(" ", prose)
+        prose = _FACT_MD_DECOR_RE.sub(" ", prose)
+        prose = re.sub(r"^\s*(?:\d+[.)]|[-•])\s*", "", prose, flags=re.MULTILINE)
+        out.extend(fact_sentences(prose))
+    return out
+
+
+def digest_fact_profile(digest_text: str) -> Tuple[int, int, int]:
+    """``(fact-bearing sentences, story sentences, fact-free sentences)``
+    of a digest's story items. Fact-free is the review's rule: no new fact
+    AND at least three salient words — a four-word sentence with nothing
+    in it is noise, not a restatement."""
+    sentences = digest_story_sentences(digest_text)
+    states = fact_states(sentences)
+    facts = sum(1 for s in states if s)
+    fact_free = sum(1 for s, st in zip(sentences, states) if not st and len(_fact_salient(s)) >= 3)
+    return facts, len(sentences), fact_free
+
+
+def digest_fact_free_pct(digest_text: str) -> Optional[float]:
+    """Share of the digest's story-item sentences that carry no new fact
+    (the review's best predictor of a Repetitive flag; flagships 44-62%,
+    the cohort 10-22% in the week to Nov 2). None without story sentences."""
+    _facts, total, fact_free = digest_fact_profile(digest_text)
+    if not total:
+        return None
+    return 100.0 * fact_free / total
+
+
+def _fact_body_sentences(script_text: str) -> List[str]:
+    """The script's sentences for the fact walk, the disclosure / plug tail
+    cut as the review cut it."""
+    keep = []
+    for s in _closing_cut(fact_sentences(script_text)):
+        low = s.lower()
+        if "nerra network" in low or low.startswith("quick tip from the network") or low.startswith("before you go, this show"):
+            continue
+        keep.append(s)
+    return keep
+
+
+def script_fact_free_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences (after the identity line and the map) that
+    carry no new fact. None when the script has no body."""
+    sentences = _fact_body_sentences(script_text)
+    if len(sentences) <= SCRIPT_FACT_BODY_START:
+        return None
+    states = fact_states(sentences)
+    body = states[SCRIPT_FACT_BODY_START:]
+    return 100.0 * sum(1 for st in body if not st) / len(body)
+
+
+# A sentence that OPENS on who reported it — the swap an attribution-tail
+# rule invites ("X reports that …" where ", X reported." was). Publisher
+# verbs only: a company or a person saying a thing ("Tesla said it will …")
+# is the story, not its attribution. Read-only, no threshold — a baseline
+# week first, beside ``attribution_tail_pct``.
+ATTRIBUTION_OPENER_RE = re.compile(
+    r"^(?:[Aa]ccording to\s+(?:the\s+)?[A-Z]|(?:[Tt]he\s+)?[A-Z][\w'’.&-]*(?:\s+(?:[A-Z][\w'’.&-]*|of|and|the|&)){0,4}"
+    r"\s+(?:reports?|reported|reporting|writes|wrote|notes|noted)\b)"
+)
+
+
+def attribution_opener_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences that open on an attribution ("According to
+    X, …" / "X reports that …"). None without body sentences."""
+    sentences = _body_sentences(script_text)
+    if not sentences:
+        return None
+    hits = sum(1 for s in sentences if ATTRIBUTION_OPENER_RE.match(s.strip()))
+    return 100.0 * hits / len(sentences)
+
+
+# An evidence qualifier: the sentence says what the study is NOT, or how
+# far the finding reaches, in the shapes the health weeklies use. A
+# sentence is a CAVEAT sentence when it has the shape AND carries no new
+# fact — it only qualifies. Longevity Ep006 spent a quarter of its
+# sentences this way against a prompt that asks for the level once per
+# intervention; the number is read, never warned on, until a baseline is in.
+CAVEAT_SHAPE_RE = re.compile(
+    r"\b(?:observational|correlation(?:al|s)?\b|an? association\b|associational|preprint|"
+    r"not (?:yet )?peer[- ]reviewed|(?:in|on) (?:mice|rats|rodents|animals|cells|worms|flies|a dish)\b|"
+    r"animal (?:study|studies|data|model|models)|(?:does|did|do) not (?:prove|establish|show|mean|demonstrate|confirm)\b|"
+    r"(?:cannot|can't|can not|could not) (?:prove|establish|show|confirm|tell|say)\b|"
+    r"not (?:a |an )?(?:randomi[sz]ed|controlled|clinical|treatment|causal|proof|cure)\b|"
+    r"no (?:human|clinical|randomi[sz]ed) (?:data|trial|trials|evidence)\b|"
+    r"small (?:sample|study|trial|cohort)\b|(?:has|have|was|were) not been (?:tested|shown|proven|replicated|approved)\b|"
+    r"not approved\b|is not (?:yet )?(?:proof|evidence|a cure|approved)\b|"
+    r"evidence (?:is|remains) (?:thin|limited|preliminary|early|mixed)\b|"
+    r"preliminary|anecdotal|hypothesis[- ]generating|should not be read as|not medical advice)",
+    re.IGNORECASE,
+)
+
+
+def caveat_sentence_pct(script_text: str) -> Optional[float]:
+    """Share of body sentences that only qualify evidence (the caveat shape
+    with no new fact of their own). None when the script has no body."""
+    sentences = _fact_body_sentences(script_text)
+    if len(sentences) <= SCRIPT_FACT_BODY_START:
+        return None
+    states = fact_states(sentences)
+    body = list(zip(sentences, states))[SCRIPT_FACT_BODY_START:]
+    hits = sum(1 for s, st in body if not st and CAVEAT_SHAPE_RE.search(s))
+    return 100.0 * hits / len(body)
+
+
 def commas_per_100_words(text: str) -> Optional[float]:
     """Commas per 100 words, or None on an empty text. Read-only: a low
     number on a fallback-model episode is the model's text, never a TTS
@@ -734,6 +1071,12 @@ def audit_script(
         digest_coverage=digest_coverage(script_text, digest_text) if digest_text else None,
         commas_per_100w=commas_per_100_words(script_text),
         digest_commas_per_100w=commas_per_100_words(digest_text) if digest_text else None,
+        attribution_tail_pct=attribution_tail_pct(script_text),
+        short_sentence_pct=short_sentence_pct(script_text),
+        digest_fact_free_pct=digest_fact_free_pct(digest_text) if digest_text else None,
+        script_fact_free_pct=script_fact_free_pct(script_text),
+        attribution_opener_pct=attribution_opener_pct(script_text),
+        caveat_sentence_pct=caveat_sentence_pct(script_text),
     )
 
 

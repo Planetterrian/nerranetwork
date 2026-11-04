@@ -68,5 +68,4 @@ The 12.5 percent tariff already in place on Vietnamese goods, imposed after the 
 This dynamic illustrates how trade policy now sits alongside battery chemistry and factory throughput as a direct lever on gross margins. When component costs rise without offsetting volume gains or price increases, the effect appears first in energy storage and vehicle contribution margins before it reaches the income statement. The submissions show Tesla treating the Vietnamese hubs as integral to current production plans, which means any sustained tariff regime would require either price adjustments or margin compression across the affected product families.
 
 Tesla ends referral rewards to prioritize FSD subscriptions.
-
-[Brief 1-sentence sign-off inviting feedback at [@teslashortstime](https://x.com/teslashortstime).]
+(https://x.com/teslashortstime).]

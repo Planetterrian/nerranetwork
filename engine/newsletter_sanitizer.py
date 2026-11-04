@@ -212,6 +212,13 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     # the whole line before any reader surface sees it.
     (r"(?im)^\s*\[?ALREADY-COVERED NOTE\b.*(?:\n|$)", "",
      "'[ALREADY-COVERED NOTE' echo"),
+    # Nov 3 2026: the Tesla digest FORMATTING block's bracketed sign-off
+    # placeholder ("[Brief 1-sentence sign-off inviting feedback at ...]")
+    # was reproduced verbatim in two digests in fourteen days and reached
+    # the blog (Ep643, Ep653). The prompt describes the sentence's shape
+    # now; this scrubs any bracketed instruction line that still arrives.
+    (r"(?im)^\s*\[(?:Brief|Add|Insert|Write|Include)\b[^\]\n]{0,160}\]\s*$\n?", "",
+     "'[Brief ... sign-off ...]' bracketed instruction line"),
     # NOTE: box-drawing horizontal rules (━━━ / ─── / ═══) are NOT
     # scrubbed here — they're converted to proper ``<hr>`` separators
     # by ``engine.newsletter_body.replace_box_rules_with_hr`` in the

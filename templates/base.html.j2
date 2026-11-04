@@ -283,7 +283,7 @@
         'subscribe_email_aria': 'Адрес электронной почты' if _is_ru else 'Email address',
         'subscribe_button': 'Подписаться' if _is_ru else 'Subscribe',
         'subscribe_button_loading': 'Подписка…' if _is_ru else 'Subscribing…',
-        'subscribe_button_done': 'Проверьте почту ✓' if _is_ru else 'Check your email ✓',
+        'subscribe_button_done': 'Проверьте почту ✓' if _is_ru else 'You\'re in — Nerra Daily arrives at 7 AM ET ✓',
         'subscribe_button_error': 'Не удалось — попробуйте ещё раз' if _is_ru else 'Something went wrong — try again',
         'copyright_line': ('© ' ~ current_year ~ ' Nerra Network. Все шоу — независимое производство.') if _is_ru else ('© ' ~ current_year ~ ' Nerra Network. All shows independently produced.'),
         'ai_notice': 'Nerra Network использует ИИ-инструменты в производстве контента.' if _is_ru else 'Nerra Network uses AI tools in content production.',
@@ -907,11 +907,13 @@
         html.nn-consent-needed (head script) or Cookie settings reopen.
         Compact bottom bar — never the LCP element. Copy matches
         consent.js; handlers bound by consent.js. -#}
-    <div id="nn-consent-banner" role="dialog" aria-modal="true" aria-label="{{ t.consent_label }}" data-nn-consent-ssr="1">
+    <div id="nn-consent-banner" role="region" aria-label="{{ t.consent_label }}" data-nn-consent-ssr="1">
         <div class="nn-consent-inner">
             <button type="button" class="nn-consent-close" aria-label="{{ t.consent_close }}">&times;</button>
-            <h2 class="nn-consent-heading" id="nn-consent-heading">{{ t.consent_heading }}</h2>
-            <div class="nn-consent-text">{{ t.consent_body }}<a class="nn-consent-privacy" href="{{ path_prefix }}privacy-policy.html">{{ t.consent_privacy }}</a>.</div>
+            <div class="nn-consent-copy">
+                <h2 class="nn-consent-heading" id="nn-consent-heading">{{ t.consent_heading }}</h2>
+                <div class="nn-consent-text">{{ t.consent_body }}<a class="nn-consent-privacy" href="{{ path_prefix }}privacy-policy.html">{{ t.consent_privacy }}</a>.</div>
+            </div>
             <div class="nn-consent-actions">
                 <button type="button" class="nn-consent-btn" data-nn-consent="accept-all">{{ t.consent_accept }}</button>
                 <button type="button" class="nn-consent-btn" data-nn-consent="reject-all">{{ t.consent_reject }}</button>

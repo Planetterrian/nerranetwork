@@ -77,6 +77,13 @@ data/content_lake.db
 digests/*/youtube_tmp/*_slides.mp4
 digests/*/youtube_tmp/*_short_slides.mp4
 digests/*/youtube_tmp/*_short_short_slides.mp4
+# Nov 3 2026: the hook Short's spliced source (engine/short_furniture.py,
+# Oct 30) is a lossless FLAC of the whole episode beside its word JSON.
+# Thirteen of them (571 MB) rode the video job's "git add -A digests/" into
+# main in three days — landmine #1's third recurrence. Intermediates only.
+digests/*/youtube_tmp/*_short_source.flac
+digests/*/youtube_tmp/*_short_source.json
+digests/**/*.flac
 # Grok Imagine source scene JPEGs — also intermediate, only used to
 # render the slideshow MP4.
 digests/*/youtube_tmp/scenes_*/
@@ -160,3 +167,10 @@ e2e/test-results/
 e2e/playwright-report/
 e2e/blob-report/
 e2e/playwright/.cache/
+
+# Claude Code worktrees (isolated agent checkouts; auto-removed when the agent ends)
+.claude/worktrees/
+
+# Nov 3 2026: the audio probe (scripts/probe_audio_chain.py) leaves its
+# before/after audio here for the workflow to attach; never committed.
+probe_out/

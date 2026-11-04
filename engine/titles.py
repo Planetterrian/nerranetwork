@@ -33,11 +33,16 @@ __all__ = [
     "YOUTUBE_TITLE_MAX",
     "PODCAST_EPISODE_TITLE_MAX",
     "WEB_TITLE_LEAD_MAX",
+    "WEB_TITLE_SEPARATOR",
     "NEWSLETTER_SUBJECT_MAX",
+    "EMAIL_ALSO_LINE_MAX",
+    "X_ITEM_TITLE_MAX",
     "ELLIPSIS",
     "clip_words",
+    "fit_first_clause",
     "episode_title",
     "fits",
+    "web_page_title",
 ]
 
 # --- Limits -----------------------------------------------------------
@@ -51,13 +56,29 @@ YOUTUBE_TITLE_MAX = 100
 #: missing and that YouTube was silently enforcing for us.
 PODCAST_EPISODE_TITLE_MAX = 100
 
-#: Lead portion of an HTML ``<title>`` before the episode/brand tail.
-#: Google renders ~60 chars total; this leaves room for " — EpN | Show"
-#: while keeping the first words — the ones that get read — intact.
-WEB_TITLE_LEAD_MAX = 62
+#: Lead portion of an HTML ``<title>`` before the show tail.
+#: Google renders ~60 characters of a title. Nov 3 2026: every episode
+#: page shipped ``<hook>… — Ep653 | Tesla Shorts Time`` (median 88
+#: characters, 97.8% over 60), so a search result never showed the show.
+#: The tail is now ``" · <Show>"`` with no episode number (the number
+#: stays in the page's h1 pill and breadcrumb), and the lead budget is 58
+#: so the show name BEGINS inside the displayed window on most results.
+#: Built by :func:`web_page_title`; nothing else assembles a page title.
+WEB_TITLE_LEAD_MAX = 58
+
+#: What sits between the lead and the show name in a page ``<title>``.
+WEB_TITLE_SEPARATOR = " · "
 
 #: Email clients truncate subject lines around here on mobile.
 NEWSLETTER_SUBJECT_MAX = 78
+
+#: One "Also on Nerra today" line in the Nerra Daily email (Nov 3 2026):
+#: a short headline a reader scans, not the whole spoken hook (63-150
+#: characters, median 104, on the Nov 2 send — 48% of a two-show copy's
+#: words). The full hook is one click away on the episode page. Clipped
+#: through ``clip_words``; a clip that reads as a fragment
+#: (``is_fragment_title``) gives way to the digest's own headline.
+EMAIL_ALSO_LINE_MAX = 72
 
 #: Anthology-book chapter titles (EPUB table of contents + audiobook
 #: chapter markers). Not a platform cap — a readability one: store TOC
@@ -116,6 +137,17 @@ X_TEASER_TWO_LINK_TEXT_MAX = 180
 #: is shown whole; the ticker is a single scrolling line, so it clips
 #: word-safe here.
 LANDING_TICKER_MAX = 90
+
+#: An X post's heading in a digest item (Nov 3 2026). ``engine.fetcher``
+#: builds every post into an article dict whose ``title`` becomes the bold
+#: ``**Title: Outlet**`` heading of a digest item, and it had sliced the
+#: post's text at 100 characters (``desc[:100]``, two sites) — a title
+#: slice outside this module — while a post that CAME with a title kept
+#: it whole, so Models & Agents Ep222 made an entire 60-word post the item
+#: heading. The Oct 12 2026 heading rule lets a bold ``Title: Outlet`` line
+#: run to 110 characters; the heading is clipped here, word-safe, and the
+#: post's full text stays in ``description`` for the item body.
+X_ITEM_TITLE_MAX = 110
 
 #: Share cards (Oct 18 2026, ``engine/share_cards.py``): the hook printed on
 #: an episode's 1200x630 link preview. Four lines of the card's floor size
@@ -177,6 +209,140 @@ def clip_words(text: str, limit: int, *, ellipsis: str = ELLIPSIS) -> str:
     return cut.rstrip(_TRAILING) + ellipsis
 
 
+# --- A title fitted whole --------------------------------------------
+
+#: Where a sentence breaks into clauses, strongest first. These are tried
+#: in this order before a word boundary is looked for.
+CLAUSE_SEPARATORS = (" — ", ": ", "; ")
+
+#: Words a sentence can be cut BEFORE and still read as a whole thought:
+#: conjunctions, relative pronouns, subordinators and the prepositions that
+#: open a trailing phrase. Matched as whole lower-case words. "of" is
+#: deliberately absent — "the loss of" cut before "of" is a stub.
+CLAUSE_BREAK_WORDS = frozenset({
+    "but", "and", "or", "nor", "yet", "so", "while", "whereas", "because",
+    "since", "although", "though", "unless", "until", "that", "which", "who",
+    "whom", "whose", "where", "when", "whenever", "once", "after", "before",
+    "as", "by", "without", "with", "to", "than", "now", "then", "across",
+    "into", "from", "for", "in", "on", "at", "over", "under", "within",
+    "through", "via", "despite", "amid", "between", "toward", "towards",
+    "against", "about", "beyond", "instead",
+})
+
+#: Words a clause may never END on: an article, a possessive or a
+#: demonstrative leaves the noun it announces behind ("…fights the").
+#: Review of Nov 4 2026: a break word that opens a hyphenated compound
+#: ("so-called", "on-site", "co-founder") is not a break at all, and the
+#: cut in front of it had left exactly this kind of stub.
+CLAUSE_STUB_TAIL_WORDS = frozenset({
+    "the", "a", "an", "its", "their", "his", "her", "our", "your", "my",
+    "this", "these", "those", "every", "each", "very",
+})
+
+#: A first clause shorter than this many words is a stub, not a title;
+#: :func:`fit_first_clause` falls through to :func:`clip_words` instead.
+FIRST_CLAUSE_MIN_WORDS = 5
+
+#: How many words after a comma are read to tell a list comma ("copy,
+#: targeting and optimization") from a clause break.
+_LIST_COMMA_LOOKAHEAD_WORDS = 3
+
+
+def _is_list_comma(text: str, at: int) -> bool:
+    """True when the comma at *at* separates list items, not clauses."""
+    words = text[at + 1:].split()
+    for i, word in enumerate(words[:_LIST_COMMA_LOOKAHEAD_WORDS + 1]):
+        if word.strip(",;:").lower() in ("and", "or"):
+            return True
+        if i < _LIST_COMMA_LOOKAHEAD_WORDS and word.endswith(","):
+            return True
+    return False
+
+
+def _closes_a_list(head: str) -> bool:
+    """True when *head* ends inside a comma list ("…for copy, targeting"),
+    so a cut before the "and" / "or" that follows would leave a list open."""
+    tail = head.rsplit(",", 1)
+    return len(tail) == 2 and len(tail[1].split()) <= _LIST_COMMA_LOOKAHEAD_WORDS
+
+
+def _clause_breaks(text: str):
+    """Offsets where *text* may be cut: at a clause comma, and before each
+    clause-break word (the offset is the whitespace in front of it). A
+    conjunction that closes a comma list is not a break."""
+    offsets = set()
+    for m in re.finditer(r",\s", text):
+        if not _is_list_comma(text, m.start()):
+            offsets.add(m.start())
+    # A whole word only: "so" in "so-called", "on" in "on-site" and "co" in
+    # "co-founder" open a compound, not a clause.
+    for m in re.finditer(r"\s([A-Za-z]+)(?![\w-])", text):
+        word = m.group(1).lower()
+        if word not in CLAUSE_BREAK_WORDS:
+            continue
+        if word in ("and", "or", "nor") and _closes_a_list(text[:m.start()]):
+            continue
+        offsets.add(m.start())
+    return sorted(offsets)
+
+
+def _whole_clause(head: str, limit: int) -> bool:
+    words = head.split()
+    tail = words[-1].strip(_TRAILING).lower() if words else ""
+    return (bool(head) and len(head) <= limit
+            and len(words) >= FIRST_CLAUSE_MIN_WORDS
+            and tail not in CLAUSE_BREAK_WORDS
+            and tail not in CLAUSE_STUB_TAIL_WORDS)
+
+
+def fit_first_clause(text: str, limit: int, *, ellipsis: str = ELLIPSIS) -> str:
+    """*text* whole when it fits *limit*, else its first clause, else
+    :func:`clip_words`.
+
+    Nov 4 2026. Every interview episode's feed title is ``Ep<n>: <guest> —
+    <thesis>`` and the thesis is a full sentence of 180-260 characters, so
+    six of nineteen titles ended in an ellipsis the moment ``clip_words``
+    met the 100-character feed cap. A sentence has a shape a cut can
+    follow: the strongest separators first (:data:`CLAUSE_SEPARATORS`, in
+    that order, the first whose head fits), then the LONGEST prefix that
+    ends right before a clause break — a comma that is not a list comma,
+    or a conjunction / relative pronoun / subordinator / trailing-phrase
+    preposition (:data:`CLAUSE_BREAK_WORDS`, matched as a whole word, so
+    the "so" of "so-called" is never a break). A head under
+    :data:`FIRST_CLAUSE_MIN_WORDS` words, or one that ends on an article,
+    a possessive or a demonstrative (:data:`CLAUSE_STUB_TAIL_WORDS`), is a
+    stub and does not count.
+    When no clause fits, the result is ``clip_words(text, limit)`` with its
+    ellipsis — the one honest sign that the sentence was cut mid-thought.
+
+    The result is always ``<= limit`` and never splits a word.
+
+    >>> fit_first_clause("A founder builds verified credentials that replace CVs", 50)
+    'A founder builds verified credentials'
+    >>> fit_first_clause("Short enough already", 50)
+    'Short enough already'
+    """
+    text = (text or "").strip()
+    if limit <= 0:
+        return ""
+    if len(text) <= limit:
+        return text
+    for sep in CLAUSE_SEPARATORS:
+        head, found, _tail = text.partition(sep)
+        if found:
+            head = head.rstrip(_TRAILING)
+            if _whole_clause(head, limit):
+                return head
+    best = ""
+    for at in _clause_breaks(text):
+        head = text[:at].rstrip(_TRAILING)
+        if _whole_clause(head, limit) and len(head) > len(best):
+            best = head
+    if best:
+        return best
+    return clip_words(text, limit, ellipsis=ellipsis)
+
+
 #: A Short title shorter than this many words is a fragment, not a headline.
 FRAGMENT_TITLE_MIN_WORDS = 4
 #: ...or shorter than this many characters (the #Shorts tag excluded).
@@ -210,6 +376,33 @@ def is_fragment_title(text: str) -> bool:
 def fits(text: str, limit: int) -> bool:
     """True when *text* needs no clipping for *limit*."""
     return len((text or "").strip()) <= limit
+
+
+def web_page_title(lead: str, show_name: str, *, limit: int = WEB_TITLE_LEAD_MAX) -> str:
+    """The HTML ``<title>`` of an episode page: ``"<lead> · <Show>"``.
+
+    *lead* is the episode's headline (or, for an interview, the guest's
+    name and identifier), clipped to *limit* through :func:`clip_words`
+    so it ends on a word; *show_name* follows whole, never clipped — it is
+    the part that tells a searcher which show this is. No episode number:
+    the page's h1 pill and breadcrumb carry it, and in a ~60-character
+    search result it only displaced the show.
+
+    An empty lead gives the show name alone, and a lead that IS the show
+    name (the no-hook fallback) is not doubled.
+
+    >>> web_page_title("Tesla registrations in Sweden rose 248 percent", "Tesla Shorts Time")
+    'Tesla registrations in Sweden rose 248 percent · Tesla Shorts Time'
+    """
+    lead_text = clip_words(lead, limit)
+    show = (show_name or "").strip()
+    if not lead_text:
+        return show
+    if not show:
+        return lead_text
+    if lead_text.casefold() == show.casefold():
+        return show
+    return f"{lead_text}{WEB_TITLE_SEPARATOR}{show}"
 
 
 def episode_title(

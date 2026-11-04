@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from engine import video_index
+from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words
 from engine.feed_categories import apply_categories
 from engine.summaries_io import load_summaries
 
@@ -378,7 +379,10 @@ def build_video_feed(
         fe = fg.add_entry(order="append")
         fe.id(guid)
         fe.guid(guid, permalink=False)
-        title = rec.get("episode_title") or f"Episode {num}"
+        title = clip_words(
+            str(rec.get("episode_title") or f"Episode {num}"),
+            PODCAST_EPISODE_TITLE_MAX,
+        )
         desc = _episode_description(rec)
         fe.title(title)
         fe.description(_markdown_to_rss_html(desc))

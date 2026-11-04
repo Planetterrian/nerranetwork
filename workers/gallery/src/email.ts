@@ -56,6 +56,7 @@ export const EMAIL_SHOW_TAGS: Record<string, string> = {
   omni_view: "Omni View",
   vancouver: "Vancouver Daily News",
   age_of_ai: "The Age of AI",
+  nerra_voices: "Nerra Voices",
 };
 
 const SHOW_TAG_SET = new Set(

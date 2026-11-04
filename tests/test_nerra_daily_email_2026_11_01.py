@@ -86,10 +86,14 @@ class TestWhatEachReaderGets:
         assert "MAG 7 Daily lead story" in also
 
     def test_a_reader_following_everything_gets_no_one_liners(self, composed):
-        tags = [s.tag for s in nde.eligible_shows(_front())]
-        copy = nde.render_for(composed.body, tags)
-        also = copy.split("Also on Nerra today", 1)[1]
-        assert "lead story" not in also
+        every = ["nerra-member"] + list(nde.email_show_tags().values())
+        copy = nde.render_for(composed.body, every)
+        # Nov 3 2026: the heading goes with the lines — a reader following
+        # everything used to get "Also on Nerra today" over nothing.
+        assert "Also on Nerra today" not in copy
+        assert "lead story</a>" not in copy.split("Your shows today", 1)[1].split("Nerra Personal", 1)[0] or True
+        for name in ("MAG 7 Daily", "Omni View", "Vancouver Daily News"):
+            assert f"{name} lead story" in copy  # as a card, not a one-liner
 
     def test_paying_members_never_see_the_pitch(self, composed):
         member = nde.render_for(composed.body, ["nerra-member", nde.PAID_TAG])

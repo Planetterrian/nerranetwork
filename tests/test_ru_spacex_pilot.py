@@ -1,15 +1,18 @@
-"""Drift guards for the RU SpaceX funnel pilot (July 2026).
+"""Drift guards for the RU SpaceX funnel pilot (July 2026; the ask rewritten
+Nov 3 2026).
 
-The pilot is three promises to one audience, and each one can break
-silently:
+The pilot is promises to one audience, and each one can break silently:
 
   1. Every @NerraRU SpaceX Short points at ``ru/spacex.html``. If the
      page moves or stops being generated, the highest-reach surface in
      the network points at a 404 and nothing in the pipeline notices.
-  2. The page asks for an email in Russian, in exchange for one clearly
-     named letter. If English copy leaks in, the ask stops working.
-  3. That letter actually gets sent. A capture form whose newsletter
-     never arrives is worse than no form.
+  2. The page asks, in Russian, for the thing a Shorts-feed audience can
+     act on — subscribe to @NerraRU, add the Russian RSS — and promises
+     nothing it cannot deliver. The email form and its Sunday letter
+     captured nobody in three months (register ``ru-spacex-pilot-2026-07-30``:
+     MISS) and are gone; no copy may promise a letter again.
+  3. The retired letter's rules stay pinned (``TestWeeklyLetter``) for the
+     one release the script survives — remove both together.
 """
 
 from __future__ import annotations
@@ -45,13 +48,17 @@ class TestLandingPage:
     def test_it_declares_russian(self, landing_html):
         assert '<html lang="ru"' in landing_html
 
-    def test_it_has_exactly_one_capture_form(self, landing_html):
-        # A second call to action is how a landing page stops converting.
-        # In particular the site footer's show-picker must be suppressed:
-        # it offers fifteen ENGLISH show names and would tag a Russian
-        # visitor onto English dailies.
-        assert landing_html.count('id="ru-capture-form"') == 1
-        assert len(re.findall(r'<input\s+type="email"', landing_html)) == 1
+    def test_it_has_no_email_form(self, landing_html):
+        # Nov 3 2026: the capture form captured nobody in three months. No
+        # form, no email input, no post to the subscribe Worker and no
+        # conversion event — a surface that measures nothing must not
+        # pretend to. The site footer's show-picker stays suppressed: it
+        # offers fifteen ENGLISH show names and would tag a Russian
+        # visitor onto English dailies (one ask per landing page).
+        assert "<form" not in landing_html
+        assert not re.findall(r'<input\s+type="email"', landing_html)
+        assert "/api/subscribe" not in landing_html
+        assert "newsletter_signup" not in landing_html
         assert "nn-footer-subscribe" not in landing_html
 
     def test_other_pages_keep_the_footer_subscribe(self):
@@ -61,20 +68,35 @@ class TestLandingPage:
             pytest.skip("spacex.html not generated in this checkout")
         assert "nn-footer-subscribe" in other.read_text(encoding="utf-8")
 
-    def test_the_form_names_the_pilot_list(self, landing_html):
-        # Must match shows/spacex.yaml funnel.capture_tag and the
-        # Worker's SUBSCRIBE_LISTS key, or captures land untagged.
-        assert '"ru-spacex"' in landing_html
+    def test_it_asks_for_the_channel_subscribe_and_the_rss(self, landing_html):
+        # The ask a Shorts-feed audience (89% of @NerraRU's views) can act
+        # on: the channel's subscribe URL (one owner,
+        # engine.video_metadata) and the show's own Russian feed.
+        from engine.video_metadata import channel_subscribe_url
 
-    def test_it_posts_to_the_subscribe_worker(self, landing_html):
-        assert '/api/subscribe' in landing_html
+        ask = landing_html.split('id="ru-ask"', 1)[1].split("</div>", 1)[0]
+        assert f'href="{channel_subscribe_url("ru")}"' in ask
+        assert 'data-ask="subscribe"' in ask
+        assert 'href="../spacex_podcast.ru.rss"' in ask
+        assert 'data-ask="rss"' in ask
+        assert (ROOT / "spacex_podcast.ru.rss").is_file()
 
-    def test_it_fires_a_conversion_event(self, landing_html):
-        # The only place the funnel learns a visit became a capture.
-        assert "newsletter_signup" in landing_html
+    def test_the_hub_link_is_internal_and_carries_no_utm(self, landing_html):
+        # One line to the Russian front page; an internal link never
+        # carries a utm_* tag (engine.funnel's rule).
+        hub = re.findall(r'href="(\.\./ru/index\.html[^"]*)"[^>]*hreflang="ru"', landing_html)
+        assert hub, "the ask block links ru/index.html"
+        assert all("utm_" not in h for h in hub)
+        assert "utm_" not in landing_html.split('id="ru-ask"', 1)[1].split("</section>", 1)[0]
+
+    def test_it_promises_no_letter(self, landing_html):
+        # The Sunday letter is retired; the copy must not promise one
+        # (the register entry closes it as a MISS).
+        for phrase in ("Хроника", "письмо", "воскресень", "Электронная почта"):
+            assert phrase not in landing_html, phrase
 
     def test_the_cta_copy_is_russian(self, landing_html):
-        for phrase in ("Подписаться", "Хроника SpaceX", "выпуск"):
+        for phrase in ("Подписаться на @NerraRU", "Добавить RSS", "выпуск"):
             assert phrase in landing_html
 
     def test_it_links_the_russian_apple_show_not_the_english_one(
@@ -136,6 +158,29 @@ class TestGeneratorWiring:
         (shows / "fake.yaml").write_text(yaml_text, encoding="utf-8")
         monkeypatch.setattr(generate_html, "SHOWS_DIR", shows)
         assert generate_html._ru_landing_target("fake") == ""
+
+
+class TestRetiredLetter:
+    """Nov 3 2026: the Sunday letter never had a reader. The workflow is
+    gone; the script says so and survives one release for the rules below."""
+
+    def test_the_sunday_workflow_is_gone(self):
+        assert not (ROOT / ".github" / "workflows" / "ru-spacex-weekly.yml").exists()
+        for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
+            assert "send_ru_spacex_weekly" not in wf.read_text(encoding="utf-8"), wf.name
+
+    def test_the_script_says_it_is_retired(self):
+        src = (ROOT / "scripts" / "send_ru_spacex_weekly.py").read_text(encoding="utf-8")
+        assert "RETIRED 2026-11-03" in src.split('"""', 2)[1]
+
+    def test_the_lander_copy_cannot_promise_a_letter(self):
+        import generate_html
+
+        for slug, copy in generate_html._RU_LANDING_COPY.items():
+            text = " ".join(str(v) for v in copy.values())
+            assert "Хроника" not in text and "письмо" not in text, slug
+            assert "magnet_title" not in copy, slug
+        assert "письм" not in " ".join(generate_html._RU_LANDING_ASK.values())
 
 
 class TestWeeklyLetter:

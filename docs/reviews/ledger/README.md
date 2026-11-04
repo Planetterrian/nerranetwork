@@ -38,8 +38,11 @@ do_not_retry:                 # operator-rejected / reverted ideas. NEVER
   on the new review's findings list, attacked with a *different* approach.
 - A reverted prompt/audio commit is a failed A/B listen (landmine #17):
   record it under `do_not_retry` with the revert hash as evidence.
-- A closed-unmerged `agent/review-<slug>-*` PR is an operator rejection:
-  record the rejected ideas under `do_not_retry`.
+- A closed-unmerged `agent/review-<slug>-*` PR WITHOUT a label is unknown;
+  the `rejected` label is the signal. `scripts/review_pr_outcomes.py`
+  (nightly) asks for the label and, on `rejected`, splices the PR's proposed
+  items under `do_not_retry` by text (never a reserialize); `superseded` /
+  `stale` leave the ideas live.
 - `network.yaml` additionally feeds the meta-review: aggregate verdict rates
   by finding category to decide which kinds of findings the playbook should
   weight up or stop proposing.

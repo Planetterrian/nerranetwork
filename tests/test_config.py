@@ -536,7 +536,9 @@ class TestLoadConfigRealFiles:
         cfg = load_config(SHOWS_DIR / "env_intel.yaml")
         assert cfg.name == "Environmental Intelligence"
         assert cfg.slug == "env_intel"
-        assert len(cfg.sources) >= 24  # thenarwhal.ca removed 2026-04-16 (HTTP 415)
+        # thenarwhal.ca removed 2026-04-16 (HTTP 415); the three Reddit feeds
+        # removed 2026-11-03 (a forum thread is not a practitioner's source).
+        assert len(cfg.sources) >= 21
         assert cfg.sources[0].label == "BC Ministry of Environment"
         assert "contaminated sites" in cfg.keywords
         assert "CCME" in cfg.keywords

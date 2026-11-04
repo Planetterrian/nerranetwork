@@ -96,9 +96,13 @@ def main(argv=None) -> int:
         logger.error("Nerra Daily email blocked before sending: %s", exc)
         return 1
     biggest = max(len(c.encode()) for c in rendered.values())
-    if biggest > 95_000:
-        logger.warning("::warning::The largest copy is %d bytes; Gmail clips at about "
-                       "102 KB including Buttondown's own wrapper.", biggest)
+    budget = nde.size_warning_bytes()
+    if biggest > budget:
+        logger.warning("::warning::The largest copy is %d bytes against a budget of %d: Gmail "
+                       "clips at %d bytes including Buttondown's wrapper, measured at %d "
+                       "bytes (%s). Measure the wrapper from a draft sent to a test mailbox "
+                       "to tighten the budget.", biggest, budget, nde.GMAIL_CLIP_BYTES,
+                       nde.BUTTONDOWN_WRAPPER_BYTES, nde.BUTTONDOWN_WRAPPER_MEASURED)
 
     if args.mode == "preview":
         out = Path(args.out or ROOT / "outputs" / "nerra_daily_email")
@@ -109,6 +113,7 @@ def main(argv=None) -> int:
         (out / "meta.json").write_text(json.dumps({
             "subject": composed.subject, "preheader": composed.preheader,
             "sections": composed.sections, "included": composed.included,
+            "largest_copy_bytes": biggest, "size_budget_bytes": budget,
         }, indent=2), encoding="utf-8")
         logger.info("Preview written to %s", out)
         return 0
@@ -165,6 +170,8 @@ def main(argv=None) -> int:
         "sections": composed.sections,
         "included": composed.included,
         "largest_copy_bytes": biggest,
+        "size_budget_bytes": budget,
+        "archive_url": composed.archive_url,
     }, ROOT)
     logger.info("Nerra Daily email %s %s (%s).", email_id,
                 "scheduled" if when else "sent", composed.subject)

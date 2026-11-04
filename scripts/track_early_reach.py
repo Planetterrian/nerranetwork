@@ -47,6 +47,15 @@ MAX_AGE_DAYS = 7
 LONG_MAX_AGE_DAYS = 21
 PRUNE_DAYS = 60
 SCHEMA_VERSION = 1
+#: Nov 3 2026: the analytics fetch joins YouTube Podcasts' RSS-ingested
+#: copies of the long-form to the shows block as kind ``rss_copy`` (so their
+#: views are read); this file records the INDEXED uploads only, or the reach
+#: card would grow an unlabelled bucket beside short/long.
+SKIPPED_KINDS = ("rss_copy",)
+#: The curve's fixed-age open read: audienceWatchRatio nearest these elapsed
+#: fractions, recorded per age like views are. Longs only — a Short's 5%
+#: point is ~1.6 s and must never pool with a long's.
+HOLD_POINTS = {"hold5_by_age": 0.05, "hold25_by_age": 0.25}
 
 
 def _parse_date(s: Any) -> Optional[_dt.date]:
@@ -77,6 +86,22 @@ def snapshot_unusable(stats: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _curve_holds(curve: Any) -> Dict[str, float]:
+    """``{field: ratio}`` at the elapsed fraction nearest each HOLD_POINTS
+    entry; {} for a curve that does not parse."""
+    try:
+        pts = {float(p["t"]): float(p["ratio"]) for p in curve or []}
+    except (KeyError, TypeError, ValueError):
+        return {}
+    if not pts:
+        return {}
+    out: Dict[str, float] = {}
+    for field, t in HOLD_POINTS.items():
+        k = min(pts, key=lambda x: abs(x - t))
+        out[field] = round(pts[k], 4)
+    return out
+
+
 def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
     """Fold one analytics snapshot into *reach*; returns observations added."""
     gen = _parse_date(stats.get("generated"))
@@ -89,6 +114,8 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
             vid = v.get("video_id")
             pub = _parse_date(v.get("published"))
             if not vid or pub is None:
+                continue
+            if (v.get("kind") or "") in SKIPPED_KINDS:
                 continue
             age = (gen - pub).days
             max_age = LONG_MAX_AGE_DAYS if v.get("kind") == "long" else MAX_AGE_DAYS
@@ -144,6 +171,17 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
                         avd_by_age[key] = int(float(_avd)) if _avd is not None else None
                     except (TypeError, ValueError):
                         avd_by_age[key] = None
+            # Nov 3 2026: the open hold at a fixed age, from the curve the
+            # fetch stamped TONIGHT (``curve_fetched_at`` = the snapshot's
+            # date) — a carried-forward curve is an older age's reading and
+            # is never recorded under this one. First observation wins.
+            if v.get("kind") == "long" and v.get("retention_curve") \
+                    and str(v.get("curve_fetched_at") or "")[:10] == gen.isoformat():
+                holds = _curve_holds(v.get("retention_curve"))
+                for field, val in holds.items():
+                    by_age = rec.setdefault(field, {})
+                    if key not in by_age:
+                        by_age[key] = val
     cutoff = (gen - _dt.timedelta(days=PRUNE_DAYS)).isoformat()
     for vid in [k for k, r in videos.items() if str(r.get("published") or "") < cutoff]:
         del videos[vid]

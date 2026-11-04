@@ -80,6 +80,75 @@ class TestRunwayMath:
         assert rq.topics_needed(0, cfg) <= cfg.max_new_per_run
 
 
+class TestOneArmRunsDry:
+    """Nov 4 2026: First Principles held 28 unproduced topics, every one a
+    concrete_example. The total read exactly the 4.0-week trigger, the
+    restock never fired, and the alternation had already broken on air. An
+    alternating show restocks the arm that is short, by count."""
+
+    CFG = rq.RESTOCK_CONFIGS["first_principles"]
+
+    @staticmethod
+    def _queue(concrete, opportunity):
+        q = [{"id": f"c{i}", "title": f"Concrete {i}", "category": "concrete_example"}
+             for i in range(concrete)]
+        q += [{"id": f"o{i}", "title": f"Opportunity {i}", "category": "opportunity_area"}
+              for i in range(opportunity)]
+        return q
+
+    def test_the_nov_3_queue_needs_the_empty_arm_and_nothing_else(self):
+        q = self._queue(28, 0)
+        assert rq.topics_needed(28, self.CFG) == 0          # the total never fired
+        needs = rq.category_needs(q, self.CFG)
+        assert needs == {"concrete_example": 0, "opportunity_area": 28}
+
+    def test_a_balanced_queue_above_the_trigger_needs_nothing(self):
+        assert sum(rq.category_needs(self._queue(20, 20), self.CFG).values()) == 0
+
+    def test_produced_entries_never_count(self):
+        q = self._queue(28, 14)
+        for e in q:
+            if e["category"] == "opportunity_area":
+                e["produced"] = True
+        assert rq.category_needs(q, self.CFG)["opportunity_area"] == 28
+
+    def test_a_show_without_arms_is_unchanged(self):
+        assert rq.category_needs([], rq.RESTOCK_CONFIGS["unintended_consequences"]) == {}
+
+    def test_the_prompt_names_the_counts_the_arms_need(self, monkeypatch):
+        prompt = rq.build_prompt(self.CFG, self._queue(28, 0), 32,
+                                 {"concrete_example": 0, "opportunity_area": 28})
+        assert "28 topics of opportunity_area" in prompt
+        assert "topics of concrete_example" not in prompt
+        even = rq.build_prompt(self.CFG, self._queue(5, 5), 32)
+        assert "roughly 16 topics for each of" in even
+
+    def test_the_short_arm_is_kept_first(self):
+        cands = ([{"id": f"c{i}", "category": "concrete_example"} for i in range(3)]
+                 + [{"id": f"o{i}", "category": "opportunity_area"} for i in range(3)])
+        out = rq.prefer_categories(cands, {"concrete_example": 0, "opportunity_area": 2})
+        assert [e["id"] for e in out] == ["o0", "o1", "c0", "c1", "c2", "o2"]
+        assert rq.prefer_categories(cands, {}) == cands
+
+    def test_restock_show_asks_for_the_empty_arm(self, monkeypatch, tmp_path):
+        import dataclasses
+        qf = tmp_path / "q.yaml"
+        qf.write_text(yaml.safe_dump({"queue": self._queue(28, 0)}), encoding="utf-8")
+        cfg = dataclasses.replace(self.CFG, queue_file=str(qf))
+        seen = {}
+
+        def fake_generate(prompt):
+            seen["prompt"] = prompt
+            return [], "stub"
+        monkeypatch.setattr(rq, "ROOT", Path("/"))
+        monkeypatch.setattr(rq, "build_prompt",
+                            lambda c, q, n, arm=None: seen.update(n=n, arm=arm) or "p")
+        monkeypatch.setattr(rq, "generate_candidates", fake_generate)
+        result = rq.restock_show(cfg, dry_run=True, force=False)
+        assert result["needed"] == 28
+        assert seen["arm"] == {"concrete_example": 0, "opportunity_area": 28}
+
+
 class TestValidation:
     def _cfg(self):
         return rq.RESTOCK_CONFIGS["unintended_consequences"]

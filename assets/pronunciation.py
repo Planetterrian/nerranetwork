@@ -194,6 +194,8 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "GenAI": "Gen A I",
     "xAI's": "ex A I's",
     "xAI": "ex A I",
+    # Nov 3 2026: the marine transponder (Offshore North Ep010 aired "A I's").
+    "AIS": "A I S",
     "AIs": "A I's",
     "AI's": "A I's",
     "AI": "A I",
@@ -1127,9 +1129,17 @@ def replace_dates(text: str) -> str:
 
     Handles: 'February 15, 2026', '15 February, 2026', 'Feb 15, 2026'
     """
-    # Expand abbreviated months first
+    # Expand abbreviated months first — only where a DATE follows ("Mar 3",
+    # "Jan. 5, 2026", "Dec 2025"). Nov 3 2026: the bare \b{abbr}\b form had
+    # read "Mar-a-Lago" as "March-a-Lago" and "Jan Ferrigan" as "January
+    # Ferrigan" on air (a hyphen and a space are both word boundaries); a
+    # month abbreviation is a month only when a day or a year follows it.
     for abbr, full in MONTH_ABBREVIATIONS.items():
-        text = re.sub(rf"\b{abbr}\b", full, text)
+        text = re.sub(
+            rf"(?<![\w-]){abbr}\.?(?=,?\s+\d{{1,4}}\b)(?!-)",
+            full,
+            text,
+        )
 
     def _date(m: re.Match) -> str:
         month = m.group(1)

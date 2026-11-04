@@ -1211,25 +1211,39 @@ _VIRTUAL_COST_SLUGS = ("nerra_daily", "_review")
 #: ``services.multilingual`` and no file-level total — summed as $0 and
 #: counted as an episode until 2026-10-02, ~$58/30d invisible); ``motion``
 #: is the hook-Short clip (``services.motion_api``); ``review`` is the
-#: daily-audit reviewer. ``episodes`` counts EPISODE files only;
-#: ``files`` counts every credit file read.
+#: daily-audit reviewer. ``voice_agent`` (Nov 3 2026) is Mira's Voice Agent
+#: minutes on an interview room's file (``credit_usage_*_room_<id8>.json``,
+#: ``services.voice_agent``); ``rehearsal`` is the whole total of a
+#: rehearsal room's file (``credit_usage_*_rehearsal_<id8>.json``) so a
+#: fixture room never reads as show cost. ``episodes`` counts EPISODE files
+#: and PUBLISHED rooms only; ``files`` counts every credit file read.
 _COST_KEYS = ("grok", "tts", "images", "search", "multilingual", "motion",
-              "review", "total")
+              "review", "voice_agent", "rehearsal", "total")
 
 
 def _new_cost_bucket() -> Dict[str, Any]:
     return {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
             "multilingual": 0.0, "motion": 0.0, "review": 0.0,
+            "voice_agent": 0.0, "rehearsal": 0.0,
             "total": 0.0, "episodes": 0, "files": 0}
 
 
+_ROOM_CREDIT_RE = re.compile(r"_room_[0-9a-fA-F]{1,8}\.json$")
+_REHEARSAL_CREDIT_RE = re.compile(r"_rehearsal_[0-9a-fA-F]{1,8}\.json$")
+
+
 def _credit_file_kind(path: Path, slug: str) -> str:
-    """``episode`` | ``multilingual`` | ``review`` — what a credit file is."""
+    """``episode`` | ``multilingual`` | ``review`` | ``room`` | ``rehearsal``
+    — what a credit file is."""
     name = path.name
     if slug == "_review" or name.endswith("_review.json"):
         return "review"
     if name.endswith("_multilingual.json"):
         return "multilingual"
+    if _REHEARSAL_CREDIT_RE.search(name):
+        return "rehearsal"
+    if _ROOM_CREDIT_RE.search(name):
+        return "room"
     return "episode"
 
 
@@ -1287,12 +1301,24 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             motion = float(
                 ((data.get("services") or {}).get("motion_api") or {}).get("estimated_cost_usd") or 0.0
             )
+            # Mira's rooms (Nov 3 2026): the Voice Agent minutes on a room file.
+            voice_agent = float(
+                ((data.get("services") or {}).get("voice_agent") or {}).get("estimated_cost_usd") or 0.0
+            )
             kind = _credit_file_kind(f, slug)
-            components = grok + tts + images + search + multilingual + motion
+            components = grok + tts + images + search + multilingual + motion + voice_agent
             total = float(data.get("total_estimated_cost_usd") or components)
             # A reviewer file's spend is Grok tokens; it is reported under
             # ``review`` so the per-show LLM line stays per-episode.
             review = total if kind == "review" else 0.0
+            # A rehearsal room is spend with no episode: its whole total sits
+            # under ``rehearsal``, never under the show's voice_agent line.
+            rehearsal = total if kind == "rehearsal" else 0.0
+            if kind == "rehearsal":
+                voice_agent = 0.0
+            # A room counts as an episode only once the nightly metrics
+            # builder has set ``published`` from interviews.status.
+            is_episode = kind == "episode" or (kind == "room" and data.get("published") is True)
             daily_series[date_str] = round(daily_series.get(date_str, 0.0) + total, 4)
 
             def _add(bucket: Dict[str, Any]) -> None:
@@ -1303,11 +1329,14 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
                 bucket["multilingual"] += multilingual
                 bucket["motion"] += motion
                 bucket["review"] += review
+                bucket["voice_agent"] += voice_agent
+                bucket["rehearsal"] += rehearsal
                 bucket["total"] += total
                 bucket["files"] += 1
-                # A dub-track sidecar or a reviewer file is not an
-                # episode — credit files overstated episodes until now.
-                if kind == "episode":
+                # A dub-track sidecar, a reviewer file, a rehearsal room or
+                # an unpublished room is not an episode — credit files
+                # overstated episodes until now.
+                if is_episode:
                     bucket["episodes"] += 1
 
             if when >= d30:
@@ -1362,8 +1391,10 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "Weekly projection = actual last-7d spend across every credit "
                 f"file ({network_7.get('files', 0)} files: Grok + TTS + images + "
                 "search + multilingual dub tracks + hook-Short motion clips + "
-                f"the daily-audit reviewer). avg is per EPISODE ({episodes_7} "
-                "episode files; dub sidecars and reviewer files are spend, not "
+                "the daily-audit reviewer + Mira's Voice Agent rooms and "
+                f"rehearsals). avg is per EPISODE ({episodes_7} "
+                "episode files and published rooms; dub sidecars, reviewer "
+                "files, rehearsal rooms and unpublished rooms are spend, not "
                 "episodes). Monthly = last-30d total. Not a calendar forecast — "
                 "a trailing burn rate."
             ),
@@ -1933,6 +1964,11 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
 # and the per-day floor under which a median is null rather than noise.
 EARLY_REACH_AGE_DAYS = 3
 EARLY_REACH_MIN_VIDEOS = 3
+# Nov 3 2026: the analytics fetch joins YouTube Podcasts' RSS-ingested copies
+# of the long-form to the stats as kind ``rss_copy`` so their views are read.
+# Every instrument here reads the INDEXED kinds; the copies are counted by
+# ``youtube_rss_copies_14d_<ch>`` and nowhere else.
+INDEXED_VIDEO_KINDS = ("long", "short")
 
 
 def _load_json(path: Path) -> Optional[Dict[str, Any]]:
@@ -2007,6 +2043,9 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
         for v in show.get("videos", []):
             pub = str(v.get("published") or "")[:10]
             if not (win_lo <= pub <= win_hi):
+                continue
+            # An RSS copy is not an upload the index knows (Nov 3 2026).
+            if (v.get("kind") or "") not in INDEXED_VIDEO_KINDS and v.get("kind"):
                 continue
             ch = str(v.get("channel") or "en")
             rows_seen[ch] = rows_seen.get(ch, 0) + 1
@@ -2250,9 +2289,18 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
     """
     cutoff = anchor_d - _dt.timedelta(days=days)
     n_all = regen = n_x = posted = queued = 0
+    # Nov 3 2026: how often the digest expansion retry fires (recorded by
+    # run_show since this date; it fired on 7/7 flagship episodes and 0/7
+    # cohort episodes in the week to Nov 2 with nothing reading it).
+    n_exp = exp_fired = 0
     # Oct 19 2026: how much of the sourced list the digest reports.
     reported_pcts: List[float] = []
     also_today: List[int] = []
+    # Nov 3 2026: the published loudness, read from the mix stage's record
+    # (audio_integrated_lufs / audio_loudness_range_lu — three shows shipped
+    # 208 episodes at -25 LUFS with nothing reading the number).
+    lufs: List[float] = []
+    lra: List[float] = []
     digests = root / "digests"
     for show_dir in (sorted(digests.iterdir()) if digests.is_dir() else []):
         if not show_dir.is_dir():
@@ -2272,10 +2320,18 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
             n_all += 1
             if counters.get("digest_structural_regen"):
                 regen += 1
+            if "digest_expansion_fired" in counters:
+                n_exp += 1
+                if counters.get("digest_expansion_fired") is True:
+                    exp_fired += 1
             if counters.get("prompt_articles_reported_pct") is not None:
                 reported_pcts.append(float(counters["prompt_articles_reported_pct"]))
             if counters.get("digest_also_today_items") is not None:
                 also_today.append(int(counters["digest_also_today_items"]))
+            if counters.get("audio_integrated_lufs") is not None:
+                lufs.append(float(counters["audio_integrated_lufs"]))
+            if counters.get("audio_loudness_range_lu") is not None:
+                lra.append(float(counters["audio_loudness_range_lu"]))
             if "x_posted" in counters:
                 n_x += 1
                 if counters.get("x_posted") is True:
@@ -2284,6 +2340,7 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
                         queued += 1
     return {
         "digest_structural_regen_share_7d": round(regen / n_all, 2) if n_all >= min_n else None,
+        "digest_expansion_fired_share_7d": round(exp_fired / n_exp, 2) if n_exp >= min_n else None,
         "x_posted_share_7d": round(posted / n_x, 2) if n_x >= min_n else None,
         "x_queued_share_7d": round(queued / n_x, 2) if n_x >= min_n else None,
         # Oct 19 2026 (report-more-sourced-news): mean share of the articles
@@ -2295,6 +2352,66 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
         "also_today_items_7d": (
             round(sum(also_today) / len(also_today), 1)
             if len(also_today) >= min_n else None),
+        # Nov 3 2026 (audio-published-loudness): the share of measured
+        # episodes whose integrated loudness sits inside the published band
+        # (engine.audio owns the target and the tolerance), and the median
+        # loudness range. Null under min_n measured episodes, never 0 — an
+        # unmeasured file records no key, so it is absent here, not quiet.
+        "audio_loudness_in_spec_share_7d": _loudness_in_spec_share(lufs, min_n),
+        "audio_loudness_range_median_7d": (
+            round(sorted(lra)[len(lra) // 2], 1) if len(lra) >= min_n else None),
+    }
+
+
+def _loudness_in_spec_share(lufs: List[float], min_n: int) -> Optional[float]:
+    """Share of readings within ``PUBLISHED_LOUDNESS_LUFS ± LOUDNESS_TOLERANCE_LU``;
+    None under ``min_n`` readings."""
+    from engine.audio import LOUDNESS_TOLERANCE_LU, PUBLISHED_LOUDNESS_LUFS
+
+    if len(lufs) < min_n:
+        return None
+    in_spec = sum(1 for v in lufs if abs(v - PUBLISHED_LOUDNESS_LUFS) <= LOUDNESS_TOLERANCE_LU)
+    return round(in_spec / len(lufs), 2)
+
+
+def _buttondown_anchor(stats: dict) -> _dt.date:
+    """The Buttondown read's own date (the stats file's ``fetched_at``), so
+    a delta is anchored on the read, never the dashboard's build clock."""
+    when = _parse_iso(str((stats or {}).get("fetched_at") or ""))
+    return when.date() if when else _dt.date.today()
+
+
+def _email_live_metrics(root: Path) -> Dict[str, Any]:
+    """The Nerra Daily email's register metrics (Nov 3 2026). None, never 0,
+    where unread; ``scripts.fetch_buttondown_stats`` owns the history, the
+    send rows and the 30-recipient floor.
+
+    * ``email_recipients_last`` — the newest send's recipients.
+    * ``email_open_rate_7d`` — opens over recipients summed across the last
+      SEVEN sends (``RATE_FLOOR`` on the sum, never a rate per send).
+    * ``email_click_sessions_28d`` — GA4 sessions on parsed ``email``
+      campaigns (``api/funnel.json`` click stage); a measured 0 is 0.
+    * ``email_subscribers_delta_7d`` — the list's change over seven days
+      from ``api/buttondown_history.json``.
+    """
+    from scripts.fetch_buttondown_stats import (
+        HISTORY_NAME, load_history, nerra_daily_sends, open_rate_last_sends,
+        subscribers_delta)
+
+    stats = _load_json(root / "api" / "buttondown_stats.json") or {}
+    sends = nerra_daily_sends(stats)
+    last = sends[0].get("recipients") if sends else None
+    click = (((_load_json(root / "api" / "funnel.json") or {}).get("stages") or {})
+             .get("click") or {})
+    email = click.get("email") if click.get("configured") else None
+    sessions = (email or {}).get("sessions_28d")
+    return {
+        "email_recipients_last": last if isinstance(last, int) else None,
+        "email_open_rate_7d": open_rate_last_sends(sends, 7),
+        "email_click_sessions_28d": sessions if isinstance(sessions, int) else None,
+        "email_subscribers_delta_7d": subscribers_delta(
+            load_history(root / "api" / HISTORY_NAME),
+            as_of=_buttondown_anchor(stats)),
     }
 
 
@@ -2350,6 +2467,25 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     reach = build_early_reach_section(root)
     out["short_reach_d3_median_en_7d"] = (
         ((reach.get("channels") or {}).get("en") or {}).get("short_median_7d"))
+    # Nov 3 2026 — the Short's job written per channel: RU/FR are scored on
+    # their own age-3 Shorts reach (the Shorts feed is the product there),
+    # EN on subscribers per 1k Short views and the long-form's views at a
+    # fixed age (the Short is the trailer). Null under 10 videos, never 0.
+    for _ch in ("ru", "fr"):
+        out[f"short_reach_d3_median_{_ch}_7d"] = (
+            ((reach.get("channels") or {}).get(_ch) or {}).get("short_median_7d"))
+    out["long_d3_median_en_7d"] = (
+        ((reach.get("channels") or {}).get("en") or {}).get("long_median_7d"))
+    # The open hold of EN longs at a FIXED age (the curve's ratio nearest 5%
+    # elapsed, recorded by track_early_reach at each snapshot age): the read
+    # every long-form arm is scored on. Null under 8 longs at age 7.
+    out["long_hold5_age7_median_en"] = _long_avp_at_age(
+        root, anchor_d, field="hold5_by_age", digits=2)
+    # RSS-ingested copies the channel carries beside the rendered long-form
+    # (fetch_youtube_analytics ``unindexed_recent``): copies published in the
+    # last 14 analytics days. Null when the uploads read is absent — never 0.
+    for _ch in ("en", "ru", "fr"):
+        out[f"youtube_rss_copies_14d_{_ch}"] = _rss_copies_14d(stats, _ch, win_lo)
 
     # Long-form render time (Sep 12 2026): median long_form_render_duration_s
     # over the last 7 days of metrics files. Renders ran 530-1,200 s per
@@ -2598,6 +2734,8 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # day-3 views of motion_open hook Shorts over the same shows' control-day
     # hook Shorts, from the age-matched reach file. Null under 10 per arm.
     out["hook_motion_vs_control_d3"] = _hook_motion_ab_ratio(root)
+    # Nov 3 2026 — the Nerra Daily email's four register metrics.
+    out.update(_email_live_metrics(root))
 
     # Sep 24 2026 — the grok-4.7 resilience pass reads out here: the share
     # of pinned-model episodes that fell back to the network default over
@@ -2605,7 +2743,239 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # slates) and how many a same-model retry recovered.
     out.update(_pinned_model_metrics(root, anchor_d))
     out.update(_episode_counter_shares(root, anchor_d))
+    out.update(_voices_live_metrics(root))
+    out.update(_script_stage_p95_metrics(root, anchor_d))
+    out.update(_editorial_score_live_metrics(root))
     return out
+
+
+#: The shows whose script stage runs on a pinned model arm (Oct 9-11 2026,
+#: grok-4.6 on the script call only). ``docs/model_upgrade_playbook.md``
+#: gates a model change on the stage's p95 staying under half the request
+#: timeout, and until Nov 3 2026 nothing read that number on a schedule.
+_SCRIPT_ARM_SHOWS = ("spacex", "tesla", "models_agents", "modern_investing",
+                     "fascinating_frontiers", "planetterrian")
+
+_OUTPUT_DIR_RE = re.compile(r"(?m)^\s*output_dir:\s*['\"]?([^'\"\s#]+)")
+
+
+def _show_digest_dir(root: Path, slug: str) -> Path:
+    """The show's digest directory from its YAML ``episode.output_dir``
+    (Tesla writes to ``digests/tesla_shorts_time``, not ``digests/tesla``);
+    ``digests/<slug>`` when the YAML names none."""
+    try:
+        m = _OUTPUT_DIR_RE.search((root / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+    except OSError:
+        m = None
+    return root / (m.group(1) if m else f"digests/{slug}")
+
+
+def _script_stage_p95_metrics(root: Path, anchor_d: _dt.date, days: int = 14,
+                              min_n: int = 5) -> Dict[str, Any]:
+    """``script_stage_p95_s_14d_<show>``: nearest-rank p95 of the
+    ``generate_podcast_script`` stage over the last 14 days of committed
+    ``metrics_ep*.json``, per script-arm show (Nov 3 2026, efficiency-6).
+
+    Each episode is dated by its SIBLING DIGEST FILENAME
+    (``_episode_dates_from_digests``) — never mtime, which a fresh checkout
+    rewrites. Null under ``min_n`` episodes, never a fake zero. Consumers:
+    the six script-arm register entries (``*-script-grok46-2026-10-*``,
+    ``narrative-script-grok47-2026-10-11``) and the Levers card; the
+    nightly ``scripts/model_trial_report.py --out api/model_trial.json`` is
+    the same read with the playbook's gate applied.
+    """
+    cutoff = anchor_d - _dt.timedelta(days=days)
+    out: Dict[str, Any] = {}
+    for slug in _SCRIPT_ARM_SHOWS:
+        show_dir = _show_digest_dir(root, slug)
+        key = f"script_stage_p95_s_{days}d_{slug}"
+        if not show_dir.is_dir():
+            out[key] = None
+            continue
+        dates = _episode_dates_from_digests(show_dir)
+        durations: List[float] = []
+        for mf in show_dir.glob("metrics_ep*.json"):
+            m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
+            if not m:
+                continue
+            d = dates.get(int(m.group(1)))
+            if d is None or d < cutoff:
+                continue
+            try:
+                stages = (json.loads(mf.read_text(encoding="utf-8")) or {}).get("stages") or []
+            except (OSError, ValueError, TypeError):
+                continue
+            for st in stages:
+                if (isinstance(st, dict) and st.get("name") == "generate_podcast_script"
+                        and isinstance(st.get("duration_s"), (int, float))):
+                    durations.append(float(st["duration_s"]))
+        if len(durations) < min_n:
+            out[key] = None
+            continue
+        durations.sort()
+        # Nearest-rank, the trial report's own percentile: an interpolated
+        # p95 on 14 samples invents precision the data does not have.
+        idx = min(len(durations) - 1, max(0, int(round(0.95 * len(durations))) - 1))
+        out[key] = round(durations[idx], 1)
+    return out
+
+
+#: Nov 3 2026 — the daily audit's 1-10, read from the committed history
+#: (review_episodes.append_editorial_score_history). A show's mean needs two
+#: reviews in the window (a weekly show has two in fourteen days); the
+#: network mean needs ten. Null below, never 0.
+EDITORIAL_SCORE_WINDOW_DAYS = 14
+EDITORIAL_SCORE_MIN_SHOW = 2
+EDITORIAL_SCORE_MIN_NETWORK = 10
+
+
+def build_editorial_score_section(root: Path, today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """The editorial score beside the audience headline (Nov 3 2026).
+
+    Fourteen days of ``api/editorial_score_history.json`` by episode date:
+    per show the mean score, how many reviews, and the critical count; the
+    network mean; and the share of the audit's YES flags that quoted a
+    sentence found in the text (rows from before the quote rule carry no
+    grounding and are not in that share)."""
+    data = _load_json(root / "api" / "editorial_score_history.json")
+    rows = data.get("rows") if isinstance(data, dict) else None
+    if not isinstance(rows, list) or not rows:
+        return {"configured": False,
+                "note": ("No api/editorial_score_history.json rows yet — the daily "
+                         "audit (review_episodes.py) appends one per reviewed episode.")}
+    today = today or _dt.date.today()
+    lo = (today - _dt.timedelta(days=EDITORIAL_SCORE_WINDOW_DAYS)).isoformat()
+    hi = today.isoformat()
+    per: Dict[str, Dict[str, Any]] = {}
+    all_scores: List[float] = []
+    critical_total = grounded = ungrounded = 0
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        day = str(r.get("date") or "")
+        if not (lo < day <= hi):
+            continue
+        slug = str(r.get("show") or "")
+        if not slug:
+            continue
+        s = per.setdefault(slug, {"scores": [], "critical": 0, "reviews": 0})
+        s["reviews"] += 1
+        s["critical"] += int(r.get("critical") or 0)
+        critical_total += int(r.get("critical") or 0)
+        if isinstance(r.get("score"), (int, float)):
+            s["scores"].append(float(r["score"]))
+            all_scores.append(float(r["score"]))
+        if isinstance(r.get("grounded"), list) and isinstance(r.get("ungrounded"), list):
+            grounded += len(r["grounded"])
+            ungrounded += len(r["ungrounded"])
+    shows: Dict[str, Any] = {}
+    for slug, s in sorted(per.items()):
+        n = len(s["scores"])
+        shows[slug] = {
+            "mean": (round(sum(s["scores"]) / n, 2) if n >= EDITORIAL_SCORE_MIN_SHOW else None),
+            "n": n,
+            "reviews": s["reviews"],
+            "critical": s["critical"],
+        }
+    lowest = sorted((slug for slug, s in shows.items() if s["mean"] is not None),
+                    key=lambda slug: (shows[slug]["mean"], slug))
+    n_all = len(all_scores)
+    return {
+        "configured": True,
+        "window_days": EDITORIAL_SCORE_WINDOW_DAYS,
+        "as_of": hi,
+        "updated": data.get("updated"),
+        "network": {
+            "mean": (round(sum(all_scores) / n_all, 2)
+                     if n_all >= EDITORIAL_SCORE_MIN_NETWORK else None),
+            "n": n_all,
+            "critical": critical_total,
+            "flags_grounded_share": (round(grounded / (grounded + ungrounded), 3)
+                                     if grounded + ungrounded else None),
+        },
+        "shows": shows,
+        "lowest": lowest[:3],
+    }
+
+
+def _editorial_score_live_metrics(root: Path) -> Dict[str, Any]:
+    """``editorial_score_14d_mean`` and ``editorial_score_14d_<slug>`` for
+    every show YAML and every slug in the history — a key always exists,
+    null when unmeasured."""
+    section = build_editorial_score_section(root)
+    shows = section.get("shows") or {}
+    slugs = {p.stem for p in _list_show_yaml_paths(root / "shows")} | set(shows)
+    out: Dict[str, Any] = {
+        "editorial_score_14d_mean": (section.get("network") or {}).get("mean"),
+    }
+    for slug in sorted(slugs):
+        out[f"editorial_score_14d_{slug}"] = (shows.get(slug) or {}).get("mean")
+    return out
+
+
+def _median(values: List[float]) -> Optional[float]:
+    if not values:
+        return None
+    ordered = sorted(values)
+    return round(ordered[len(ordered) // 2], 2)
+
+
+def _voices_live_metrics(root: Path) -> Dict[str, Any]:
+    """Nov 3 2026: the interview shows' register metrics, read from
+    ``api/voices_metrics.json`` (scripts/build_voices_metrics.py). Pooled
+    over the voices shows: the mean survey rating answered in the last 30
+    days, the median pacing grade of the five most recently graded rooms,
+    the median cost of the ten most recently costed rooms. Null when the
+    file or the table is absent, never 0."""
+    data = _load_json(root / "api" / "voices_metrics.json") or {}
+    shows = (data.get("shows") or {}) if isinstance(data, dict) else {}
+    ratings: List[float] = []
+    graded: List[tuple] = []
+    costs: List[tuple] = []
+    for s in shows.values():
+        if not isinstance(s, dict):
+            continue
+        survey = s.get("survey") or {}
+        for r in survey.get("ratings_30d") or []:
+            try:
+                ratings.append(float(r))
+            except (TypeError, ValueError):
+                continue
+        for g in s.get("grades") or []:
+            if isinstance(g, dict) and g.get("pacing") is not None:
+                graded.append((str(g.get("date") or ""), float(g["pacing"])))
+        for c in (s.get("cost") or {}).get("rooms") or []:
+            if isinstance(c, dict) and c.get("total_usd") is not None:
+                costs.append((str(c.get("date") or ""), float(c["total_usd"])))
+    graded.sort(key=lambda t: t[0], reverse=True)
+    costs.sort(key=lambda t: t[0], reverse=True)
+    return {
+        "voices_survey_mean_30d": round(sum(ratings) / len(ratings), 2) if ratings else None,
+        "voices_pacing_grade_median_5": _median([v for _, v in graded[:5]]),
+        "voices_cost_per_room_usd": _median([v for _, v in costs[:10]]),
+    }
+
+
+def build_voices_section(root: Path) -> Dict[str, Any]:
+    """Mira's rooms (Nov 3 2026): ``api/voices_metrics.json`` as the
+    dashboard reads it. Nothing is computed here — the builder owns the
+    numbers, and a table it could not read is null on the card."""
+    data = _load_json(root / "api" / "voices_metrics.json")
+    if not isinstance(data, dict) or not data.get("shows"):
+        return {
+            "configured": False,
+            "shows": {},
+            "note": ("Not built yet — nightly runs scripts/build_voices_metrics.py "
+                     "(VOICES_SUPABASE_URL / VOICES_SUPABASE_SERVICE_KEY on that step)."),
+        }
+    return {
+        "configured": True,
+        "generated_at": data.get("generated_at"),
+        "first_generated_at": data.get("first_generated_at"),
+        "supabase_read": data.get("supabase_read"),
+        "unreadable": list(data.get("unreadable") or []),
+        "shows": data.get("shows") or {},
+    }
 
 
 # Sep 22 2026 — the spoken-open shape arm (shows/prompts hook_shape
@@ -2643,8 +3013,22 @@ def _hook_motion_ab_ratio(root: Path, *, age: str = "3", min_n: int = 10):
     return round(statistics.median(motion) / base, 2) if base > 0 else None
 
 
+def _rss_copies_14d(stats: dict, channel: str, win_lo: str) -> Optional[int]:
+    """Count of RSS-ingested copies (``kind: rss_copy``) the channel's
+    uploads read attributed in the last 14 analytics days; ``None`` when the
+    channel block carries no ``unindexed_recent`` (the read failed or has
+    not run) — never a fake zero."""
+    block = ((stats.get("channels") or {}).get(channel) or {})
+    entries = block.get("unindexed_recent")
+    if not isinstance(entries, list):
+        return None
+    return sum(1 for e in entries
+               if isinstance(e, dict) and e.get("kind") == "rss_copy"
+               and str(e.get("published") or "")[:10] >= win_lo)
+
+
 def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 14,
-                     min_n: int = 8):
+                     min_n: int = 8, field: str = "avp_by_age", digits: int = 1):
     """Median EN long-form retention at a FIXED age (Oct 28 2026).
 
     ``long_form_median_avp_en_14d`` reads the live snapshot over every long
@@ -2653,6 +3037,8 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
     not the content. This reads each long's retention at the same age from
     ``api/youtube_early_reach.json``, over the longs that reached that age in
     the ``window_days`` before the anchor. ``None`` under ``min_n`` videos.
+    ``field`` picks the by-age record (Nov 3 2026: ``hold5_by_age`` /
+    ``hold25_by_age`` from the retention curves, rounded to ``digits``).
     """
     data = _load_json(root / "api" / "youtube_early_reach.json") or {}
     vids = data.get("videos") if isinstance(data, dict) else None
@@ -2672,7 +3058,7 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
             continue
         if not (lo < pub <= hi):
             continue
-        val = (rec.get("avp_by_age") or {}).get(str(age))
+        val = (rec.get(field) or {}).get(str(age))
         if val is None:
             continue
         try:
@@ -2682,7 +3068,7 @@ def _long_avp_at_age(root: Path, anchor_d, *, age: int = 7, window_days: int = 1
     if len(vals) < min_n:
         return None
     vals.sort()
-    return round(vals[len(vals) // 2], 1)
+    return round(vals[len(vals) // 2], digits)
 
 
 def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:
@@ -2698,6 +3084,10 @@ def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:
         for v in show.get("videos", []):
             curve = v.get("retention_curve")
             if not curve or (v.get("channel") or "en") != "en":
+                continue
+            # Nov 3 2026: the top Shorts carry curves too (hook-Short
+            # readouts); a Short's 5% point is ~1.6 s and never pools here.
+            if (v.get("kind") or "long") != "long":
                 continue
             if slugs is not None:
                 hit = (v.get("show_slug") or "") in slugs
@@ -2770,12 +3160,18 @@ def build_early_reach_section(root: Path) -> Dict[str, Any]:
         prior = _pool("short", max(0, len(ordered) - 14), max(0, len(ordered) - 7))
         med = lambda v: (v[len(v) // 2] if len(v) >= 10 else None)  # noqa: E731
         r_med, p_med = med(recent), med(prior)
+        # Nov 3 2026: the long-form's reach at the same fixed age, the EN
+        # Short's second job metric (``long_d3_median_en_7d``). Same floor.
+        l_recent = _pool("long", max(0, len(ordered) - 7), len(ordered))
+        l_prior = _pool("long", max(0, len(ordered) - 14), max(0, len(ordered) - 7))
         channels[ch] = {
             "days": rows,
             "short_median_7d": r_med,
             "short_median_prior_7d": p_med,
             "short_wow_pct": (round(100.0 * (r_med - p_med) / p_med, 1)
                               if r_med is not None and p_med else None),
+            "long_median_7d": med(l_recent),
+            "long_median_prior_7d": med(l_prior),
         }
     section.update({
         "configured": True,
@@ -2792,18 +3188,25 @@ def build_early_reach_section(root: Path) -> Dict[str, Any]:
 
 def build_retention_curves_section(root: Path) -> Dict[str, Any]:
     """Where long-form viewers actually LEAVE, from the per-video
-    audience-retention curves the analytics fetch collects for each
-    channel's top recent longs (Aug 2026). Renders as a dashboard card;
+    audience-retention curves the analytics fetch collects (Aug 2026; since
+    Nov 3 2026 for EVERY long of the last 14 days, so the card also groups
+    the open hold BY SHOW — median hold at 5% / 25% elapsed over the longs
+    published in the last 14 days, with n). Renders as a dashboard card;
     the honest-null rules apply — no curves means an unconfigured card,
-    never zeros.
+    never zeros. Longs only: the top Shorts carry curves for the hook-Short
+    readouts and a Short's 5% point is ~1.6 s.
     """
     stats = _load_json(root / "api" / "youtube_stats.json") or {}
+    anchor = _parse_iso(stats.get("generated") or "")
+    anchor_d = (anchor.date() if anchor else _dt.date.today())
+    win_lo = (anchor_d - _dt.timedelta(days=14)).isoformat()
     rows: List[Dict[str, Any]] = []
     by_channel: Dict[str, List[float]] = {}
+    by_show: Dict[tuple, Dict[str, List[float]]] = {}
     for dir_name, show in (stats.get("shows") or {}).items():
         for v in show.get("videos", []):
             curve = v.get("retention_curve")
-            if not curve:
+            if not curve or (v.get("kind") or "long") != "long":
                 continue
             try:
                 pts = {float(p["t"]): float(p["ratio"]) for p in curve}
@@ -2824,22 +3227,35 @@ def build_retention_curves_section(root: Path) -> Dict[str, Any]:
                 }
                 rows.append(row)
                 by_channel.setdefault(ch, []).append(row["hold_5pct"])
+                if str(v.get("published") or "")[:10] >= win_lo:
+                    b = by_show.setdefault((dir_name, ch), {"h5": [], "h25": []})
+                    b["h5"].append(row["hold_5pct"])
+                    b["h25"].append(row["hold_25pct"])
             except (KeyError, TypeError, ValueError):
                 continue
     if not rows:
         return {"configured": False,
                 "note": "No retention curves yet — they accrue from the "
-                        "nightly analytics fetch (top 5 recent longs per "
-                        "channel)."}
+                        "nightly analytics fetch (every long of the last "
+                        "14 days)."}
     rows.sort(key=lambda r: -(r.get("views") or 0))
+    _med = lambda v: (sorted(v)[len(v) // 2] if v else None)  # noqa: E731
+    shows_out = [
+        {"show": dir_name, "channel": ch, "n": len(b["h5"]),
+         "hold5_median": _med(b["h5"]), "hold25_median": _med(b["h25"])}
+        for (dir_name, ch), b in by_show.items()]
+    shows_out.sort(key=lambda r: (-r["n"], r["show"], r["channel"]))
     return {
         "configured": True,
         "as_of": stats.get("generated"),
+        "window_days": 14,
         "note": ("audienceWatchRatio at 5/10/25/50% elapsed. The 5% mark "
                  "is ~30-45 s in — the open cliff. Baseline 2026-08-17: "
-                 "EN mean ~0.50 at 5%."),
+                 "EN mean ~0.50 at 5%. By show: median over the longs "
+                 "published in the last 14 days (n)."),
         "mean_hold_5pct_by_channel": {
             ch: round(sum(v) / len(v), 2) for ch, v in by_channel.items()},
+        "by_show": shows_out,
         "videos": rows[:20],
     }
 
@@ -3596,6 +4012,11 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "funnel": build_funnel_section(root),
         "benchmarks": benchmarks,
         "investor": investor,
+        # Nov 3 2026: Mira's rooms — survey, grades, yield, cost per room.
+        "voices": build_voices_section(root),
+        # Nov 3 2026: the daily audit's editorial score, 14 days per show —
+        # the tile beside the audience headline.
+        "editorial_score": build_editorial_score_section(root),
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
@@ -4114,6 +4535,8 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     if bd_path.exists():
         try:
             data = json.loads(bd_path.read_text(encoding="utf-8"))
+            from scripts.fetch_buttondown_stats import (
+                HISTORY_NAME, load_history, subscribers_delta)
             section["newsletter"] = {
                 "configured": True,
                 "fetched_at": data.get("fetched_at"),
@@ -4123,6 +4546,12 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 # under 30 recipients) and the per-tag follow counts.
                 "nerra_daily": data.get("nerra_daily"),
                 "tag_counts": data.get("tag_counts"),
+                # Nov 3 2026: the list's 7-day change from the nightly
+                # history (api/buttondown_history.json); null until the
+                # history holds a row a week older than the read.
+                "subscribers_delta_7d": subscribers_delta(
+                    load_history(root / "api" / HISTORY_NAME),
+                    as_of=_buttondown_anchor(data)),
             }
         except Exception as exc:  # noqa: BLE001
             section["newsletter"] = {"configured": True, "error": str(exc)}
@@ -4226,6 +4655,7 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                     for dir_name, s in (data.get("shows") or {}).items()
                     for v in s.get("videos", [])
                     if int(v.get("subscribers_gained", 0) or 0) > 0
+                    and (v.get("kind") or "") != "rss_copy"
                 ),
                 key=lambda r: r["subscribers_gained"],
                 reverse=True,
@@ -4238,6 +4668,10 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
             for dir_name, s in (data.get("shows") or {}).items():
                 for v in s.get("videos") or []:
                     if not isinstance(v, dict):
+                        continue
+                    # Nov 3 2026: an RSS-ingested copy is counted by
+                    # youtube_rss_copies_14d_<ch>, never as the show's upload.
+                    if (v.get("kind") or "") == "rss_copy":
                         continue
                     slug = str(v.get("show_slug") or "").strip() or str(dir_name)
                     if slug in dir_to_slug:
@@ -4307,6 +4741,18 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 # the network publishes in 5 languages, so where the audience
                 # actually is is a programming signal, not a vanity metric.
                 "countries": (data.get("countries") or [])[:8],
+                # Nov 3 2026: the landing pages whose sessions are not
+                # readers (fetch_ga4_stats.landing_anomalies — >= 50
+                # sessions and a 95% bounce or under 3 s), with what hit
+                # them; the totals carry sessions_excluding_anomalies and
+                # the printed exclusion. None when the breakdown report was
+                # not read — never [] for "not read".
+                "landing_anomalies": (
+                    data["landing_anomalies"][:5]
+                    if isinstance(data.get("landing_anomalies"), list)
+                    else None),
+                # Real-user vitals by rating (None when unread).
+                "web_vitals_summary": data.get("web_vitals_summary"),
             }
         except Exception as exc:  # noqa: BLE001
             section["site"] = {"configured": True, "error": str(exc)}
@@ -4724,9 +5170,14 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
                    "attributed sessions",
                    (click.get("unattributed") or {}).get("sessions"),
                    "unattributed"),
+            # Nov 3 2026: the readers' count; a destination the fetcher
+            # names as an anomalous landing is excluded and the exclusion
+            # is printed as the secondary, never applied silently.
             _stage("visit", "Visit", visit.get("configured"),
                    (visit.get("totals") or {}).get("sessions"),
-                   "landings on a funnel page"),
+                   "landings on a funnel page",
+                   (visit.get("totals") or {}).get("excluded_sessions"),
+                   "excluded as anomalous landings"),
             # The subscriber TOTAL is measured as soon as Buttondown
             # answers; only its per-source breakdown needs the tag fetch.
             _stage("capture", "Capture", capture.get("total_configured"),
@@ -4735,6 +5186,12 @@ def build_funnel_section(root: Path) -> Dict[str, Any]:
                    "signup events (window)"),
         ],
         "capture_attribution_configured": bool(capture.get("configured")),
+        # The site-wide readers' number beside the raw one, with the
+        # sentence that explains the gap (build_funnel._site_sessions).
+        "visit_site": visit.get("site") or {},
+        # Sessions per campaign kind — the email's row and the paid row.
+        "click_by_kind": click.get("by_kind") or {},
+        "click_email": click.get("email"),
         "rates": data.get("network_rates") or {},
         "pilots": data.get("pilots") or {},
         "by_source": capture.get("by_source") or {},

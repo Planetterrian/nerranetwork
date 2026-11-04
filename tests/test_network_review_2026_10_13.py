@@ -363,7 +363,8 @@ class TestSmallGuards:
     def test_voices_tick_is_gated_and_fails_open(self):
         src = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
         assert "async function fireTickDue" in src
-        assert "if (halfHour || await fireTickDue(env))" in src
+        # Nov 3 2026: the unconditional catch-all moved to the top of the hour.
+        assert "if (hourTop || await fireTickDue(env))" in src
         gate = src[src.index("async function fireTickDue"):src.index("async function interviewIsLive")]
         assert "catch" in gate and "return true;" in gate.split("catch")[-1]
         assert "status=in.(scheduled,briefed,in_progress)" in gate

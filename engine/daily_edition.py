@@ -47,6 +47,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
+from engine.audio import JOIN_MP3_ENCODE_ARGS
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -78,9 +80,9 @@ SEGMENT_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "flac"]
 PIECE_SUFFIX = ".flac"
 
 #: The one lossy encode of a finished edition: the shows' own master
-#: setting, so a segment reaches the listener one generation from its
-#: show's published file.
-EDITION_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-q:a", "0"]
+#: setting (``engine.audio.JOIN_MP3_ENCODE_ARGS`` owns it), so a segment
+#: reaches the listener one generation from its show's published file.
+EDITION_ENCODE_ARGS = ["-ar", "44100", "-ac", "2", *JOIN_MP3_ENCODE_ARGS]
 
 PROMO_FADE_SECONDS = 0.5
 PROMO_CUT_PAD_SECONDS = 0.15
@@ -678,6 +680,19 @@ _PRIMARY_PROMO_PATTERNS = [
 _YOUTUBE_LEAD_PATTERN = re.compile(
     r"\b(?:and\s+)?if you(?:\s+\w+){0,2}\s+rather watch th[ae]n listen\b"
 )
+#: The platform ask (``engine.intros._PLATFORM_ASKS``, Oct 1 2026) is two
+#: scripted sentences spoken on alternate days BEFORE the network frame. Nov
+#: 3 2026: the cut anchored on the frame, so 10 of Nerra Daily Ep074's 17
+#: seams kept "A rating on Apple Podcasts or Spotify takes ten seconds…" —
+#: ten rating asks in one edition. When the ask sits just before the frame
+#: cut, the cut moves to the ask (frame-grade: the words are the pipeline's
+#: own). Whisper-tolerant on the numbers and the app names.
+_PLATFORM_ASK_PATTERN = re.compile(
+    r"\b(?:if this show earns a place in your day\b"
+    r"|follow it in your podcast app so the next episode\b"
+    r"|(?:a\s+)?rating on apple podcasts or spotify takes (?:ten|10) seconds\b)"
+)
+PLATFORM_ASK_WINDOW_SECONDS = 25.0
 #: A cut anchored on the YouTube CTA alone (no frame matched after it) may
 #: never remove more than this much tail. The CTA is scripted only inside
 #: the closing, but the ceiling keeps a mid-episode "rather watch than
@@ -783,6 +798,8 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
         ) if i is not None
     ]
     lead_idx = _search_stream(stream, _YOUTUBE_LEAD_PATTERN)
+    ask_idx = _search_stream(stream, _PLATFORM_ASK_PATTERN)
+    includes_ask = False
     if primary_hits:
         idx = min(primary_hits)
         kind, anchor = "promo", "frame"
@@ -791,6 +808,12 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
             and 0 < stream[idx][1] - stream[lead_idx][1] <= YOUTUBE_LEAD_WINDOW_SECONDS
         ):
             idx = lead_idx
+        if (
+            ask_idx is not None
+            and 0 < stream[idx][1] - stream[ask_idx][1] <= PLATFORM_ASK_WINDOW_SECONDS
+        ):
+            idx = ask_idx
+            includes_ask = True
         cut = _cut_before(stream, idx)
     elif lead_idx is not None and _outro_follows(stream, lead_idx):
         # No frame words, but the scripted YouTube call-out is there with
@@ -847,6 +870,8 @@ def find_promo_cut(transcript: dict) -> Optional[dict]:
     hit = {"raw_seconds": round(cut, 2), "kind": kind}
     if anchor:
         hit["anchor"] = anchor
+    if includes_ask:
+        hit["includes_platform_ask"] = True
     return hit
 
 
@@ -878,13 +903,19 @@ def segment_trim_cmd(
     """Re-encode one published episode into a splice-ready segment,
     optionally trimmed at *cut_final_seconds* (final-MP3 timeline) with a
     short fade so the ducked music bed never hard-cuts."""
+    from engine.audio import PUBLISHED_LOUDNESS
+
+    # Nov 3 2026: every segment is levelled to the published -16 LUFS. A
+    # segment that already sits there is unchanged in gain; a show that
+    # shipped quiet (Unintended Consequences at -25 inside Ep074, a 9.7 LU
+    # step into the next chapter) no longer makes the edition uneven.
+    filters = [PUBLISHED_LOUDNESS]
     cmd = ["ffmpeg", "-y", "-i", str(in_path)]
     if cut_final_seconds is not None:
         fade_start = max(0.0, cut_final_seconds - PROMO_FADE_SECONDS)
-        cmd += [
-            "-t", f"{cut_final_seconds:.2f}",
-            "-af", f"afade=t=out:st={fade_start:.2f}:d={PROMO_FADE_SECONDS}",
-        ]
+        cmd += ["-t", f"{cut_final_seconds:.2f}"]
+        filters.insert(0, f"afade=t=out:st={fade_start:.2f}:d={PROMO_FADE_SECONDS}")
+    cmd += ["-af", ",".join(filters)]
     return cmd + SEGMENT_ENCODE_ARGS + [str(out_path)]
 
 
@@ -1798,6 +1829,7 @@ def build_edition_metrics(
     x_post_skipped: str = "",
     x_post_queued: Optional[bool] = None,
     x_post_queued_for: str = "",
+    loudness: Optional[dict] = None,
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1864,4 +1896,12 @@ def build_edition_metrics(
         # enqueue failed, or a skip named in x_post_skipped); None = not tried.
         "x_post_queued": x_post_queued,
         "x_post_queued_for": x_post_queued_for or "",
+        # Nov 3 2026: the finished edition file's own loudness, read once by
+        # engine.audio.measure_loudness after the join (the same three keys
+        # run_show records per episode). None = unmeasured, never 0 — the
+        # UC chapter sat 9.7 LU under its neighbours inside Ep074 and no
+        # number said so.
+        "audio_integrated_lufs": (loudness or {}).get("I"),
+        "audio_loudness_range_lu": (loudness or {}).get("LRA"),
+        "audio_true_peak_dbtp": (loudness or {}).get("TP"),
     }

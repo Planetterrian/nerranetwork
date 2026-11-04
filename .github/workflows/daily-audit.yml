@@ -291,6 +291,16 @@ jobs:
           SCHEDULER_STATUS_URL: ${{ vars.SCHEDULER_STATUS_URL }}
         run: python scripts/check_scheduler_deploy.py
 
+      - name: Promised episode length vs delivered (warning only)
+        # Nov 3 2026: seven shows promised minutes they did not deliver and
+        # nothing read the drift. Compares every public length string with
+        # the median audio of the show's last 14 episodes (engine.cadence);
+        # prints ::warning:: annotations and NEVER fails — it reads today's
+        # committed data, and the fix is the operator's copy decision.
+        if: always()
+        continue-on-error: true
+        run: python scripts/check_promised_lengths.py
+
       - name: Automated Remediation (retry missed shows using daily-review.json)
         if: always()
         env:
@@ -321,9 +331,13 @@ jobs:
         if: always()
         uses: ./.github/actions/safe-commit-push
         with:
+          # api/editorial_score_history.json (Nov 3 2026): the audit's
+          # score per reviewed episode — written every run, so it must be
+          # on this whitelist or it silently never lands.
           add-paths: |
             api/daily-review.json
             api/review_coverage.json
+            api/editorial_score_history.json
             digests/_review/*.json
           commit-message: "Daily audit artifacts"
 

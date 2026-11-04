@@ -385,6 +385,12 @@ def _web_title_lead_max() -> int:
     return WEB_TITLE_LEAD_MAX
 
 
+def _web_page_title(lead: str, show_name: str) -> str:
+    """``"<lead> · <Show>"`` from the module that owns every title shape."""
+    from engine.titles import web_page_title
+    return web_page_title(lead, show_name)
+
+
 def _topic_hubs_for(show_slug: str) -> list:
     """Topic hubs this show belongs to, for the post's subject links.
 
@@ -452,7 +458,38 @@ def _show_host_name(show_slug: str) -> str:
             return host
     except Exception:  # noqa: BLE001 — a byline must never break a build
         pass
+    # Nov 3 2026: a registry-only show (Nerra Daily — no shows/<slug>.yaml by
+    # design) fell through to "Patrick" on every one of its 74 posts while
+    # Mira anchors it. The registry's ``host`` field is read first.
+    registry_host = _registry_host(show_slug)
+    if registry_host:
+        return _REGISTRY_HOST_NAMES.get(registry_host, registry_host.title())
     return "Patrick"
+
+
+#: ``shows/network_meta.yaml`` ``host`` values → the byline name and kind.
+_REGISTRY_HOST_NAMES = {"mira": "Mira", "patrick": "Patrick", "dan": "Dan"}
+_REGISTRY_AI_HOSTS = frozenset({"mira"})
+
+
+@lru_cache(maxsize=1)
+def _registry_hosts() -> dict:
+    """slug -> ``host`` from the registry, for shows without a YAML."""
+    try:
+        import yaml
+        path = Path(__file__).resolve().parent.parent / "shows" / "network_meta.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        shows = data.get("shows", data)
+        items = shows.items() if isinstance(shows, dict) else (
+            (s.get("slug"), s) for s in shows if isinstance(s, dict))
+        return {str(slug): str((cfg or {}).get("host") or "").strip().lower()
+                for slug, cfg in items if isinstance(cfg, dict) and cfg.get("host")}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _registry_host(show_slug: str) -> str:
+    return _registry_hosts().get(show_slug, "")
 
 
 def _show_host_kind(show_slug: str) -> str:
@@ -469,7 +506,86 @@ def _show_host_kind(show_slug: str) -> str:
             return kind
     except Exception:  # noqa: BLE001 — a provenance line must never break a build
         pass
+    if _registry_host(show_slug) in _REGISTRY_AI_HOSTS:
+        return "ai"
     return "human"
+
+
+# ---------------------------------------------------------------------------
+# What a search engine is told about an episode page (Nov 3 2026)
+# ---------------------------------------------------------------------------
+
+#: The page that says what the network's authors are. The show Organization
+#: is the author of every post — a cloned voice reading model-written text
+#: and an AI persona are not Persons who wrote it — and its ``sameAs`` points
+#: a search engine at the disclosure that says so. Person entities stay for
+#: interview guests, who did say their words.
+AI_DISCLOSURE_URL = "https://nerranetwork.com/ai-disclosure.html"
+
+#: The rectangular wordmark PNG the Article/Organization ``publisher.logo``
+#: names (``scripts/render_logo_pngs.js`` renders it beside the SVG; the SVG
+#: itself is not a logo Google reads). Width and height are read from the
+#: file so the ImageObject never states a size the file does not have.
+PUBLISHER_LOGO_PATH = "assets/press/nerra-logo-horizontal.png"
+
+#: Curated subjects (``picker_tags.topics``) of shows whose posts are not
+#: news reports — a lesson, an interview series, a narrative essay — so they
+#: keep ``BlogPosting`` even where the show reads articles for its material.
+NOT_NEWS_TOPICS = frozenset({"language-learning", "interviews", "narrative"})
+
+ARTICLE_TYPE_NEWS = "NewsArticle"
+ARTICLE_TYPE_BLOG = "BlogPosting"
+
+
+@lru_cache(maxsize=64)
+def _show_yaml_fetches_news(show_slug: str) -> bool:
+    """True when ``shows/<slug>.yaml`` fetches articles for its episodes:
+    it lists ``sources``, is not a ``narrative_mode`` show and is not a
+    two-host dialogue (``tts.dialogue_mode``). A registry-only show (no
+    YAML) and an unreadable YAML read False."""
+    try:
+        import yaml
+        path = Path(__file__).resolve().parent.parent / "shows" / f"{show_slug}.yaml"
+        if not path.is_file():
+            return False
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001 — a schema type must never break a build
+        return False
+    if data.get("narrative_mode"):
+        return False
+    if (data.get("tts") or {}).get("dialogue_mode"):
+        return False
+    return bool(data.get("sources"))
+
+
+def article_schema_type(show_config: dict | None) -> str:
+    """``"NewsArticle"`` for a show that reports fetched articles, else
+    ``"BlogPosting"`` (narrative, lesson, dialogue and interview shows, and
+    the registry-only Nerra Daily)."""
+    cfg = show_config or {}
+    slug = str(cfg.get("slug") or "")
+    topics = set((cfg.get("picker_tags") or {}).get("topics") or [])
+    if not slug or topics & NOT_NEWS_TOPICS:
+        return ARTICLE_TYPE_BLOG
+    return ARTICLE_TYPE_NEWS if _show_yaml_fetches_news(slug) else ARTICLE_TYPE_BLOG
+
+
+@lru_cache(maxsize=1)
+def publisher_logo_ld() -> dict:
+    """The network's ``publisher.logo`` as an ImageObject, dimensions read
+    from the committed PNG's header (no size keys when unreadable)."""
+    logo = {"@type": "ImageObject", "url": f"https://nerranetwork.com/{PUBLISHER_LOGO_PATH}"}
+    try:
+        import struct
+        with (Path(__file__).resolve().parent.parent / PUBLISHER_LOGO_PATH).open("rb") as fh:
+            head = fh.read(24)
+        if head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR":
+            width, height = struct.unpack(">II", head[16:24])
+            logo["width"] = int(width)
+            logo["height"] = int(height)
+    except Exception:  # noqa: BLE001 — a logo never breaks a build
+        pass
+    return logo
 
 
 def _claims_sidecar_for(md_path) -> Optional[Path]:
@@ -1424,8 +1540,21 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
                    translations: dict | None = None,
                    guest_name: str = "",
                    guest_image: str = "",
-                   guest_same_as: list | None = None) -> str:
-    """Build Schema.org JSON-LD: BlogPosting + PodcastEpisode (as array).
+                   guest_same_as: list | None = None,
+                   image_url: str = "",
+                   corrections: list | None = None) -> str:
+    """Build Schema.org JSON-LD: the article + PodcastEpisode (as array).
+
+    The article is a ``NewsArticle`` on a show that reports fetched articles
+    and a ``BlogPosting`` everywhere else (:func:`article_schema_type`).
+    Either way the author is the show ORGANIZATION with ``sameAs`` on the
+    AI-disclosure page — never a Person: a cloned voice reading model-written
+    text is not an author, and ``ai-disclosure.html`` says so. *image_url*
+    is the episode's own share card (the page's og:image); the cover is the
+    fallback. ``dateModified`` is the newest correction filed against the
+    episode (*corrections*, from ``engine.corrections``) when one is newer
+    than ``datePublished``, else ``datePublished`` — never the build clock,
+    the same rule as the sitemap's lastmod.
 
     PodcastEpisode enables Google's podcast features in Search results, links
     each episode to its PodcastSeries, and surfaces episode number / duration
@@ -1434,29 +1563,44 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
     in_language = _show_lang.page_lang(
         show_config.get("slug") if show_config else None)
 
+    date_published = metadata.get("date_iso", "")
+    date_modified = max(
+        [date_published] + [str(c.get("date") or "") for c in (corrections or [])
+                            if isinstance(c, dict)]
+    )
+    show_page = (show_config or {}).get("show_page", "")
     blog_posting = {
         "@context": "https://schema.org",
-        "@type": "BlogPosting",
+        "@type": article_schema_type(show_config),
         "headline": metadata.get("title", ""),
         "description": metadata.get("hook", ""),
-        "datePublished": metadata.get("date_iso", ""),
+        "datePublished": date_published,
+        "dateModified": date_modified,
         "wordCount": metadata.get("word_count", 0),
         "articleSection": show_name,
         "inLanguage": in_language,
+        # A public post is always free to read: a members-only episode never
+        # renders one (engine/access.py moves its text under members/, and
+        # every public surface reads the top level).
+        "isAccessibleForFree": True,
         "author": {
             "@type": "Organization",
             "name": show_name,
-            "url": "https://nerranetwork.com",
+            "url": f"https://nerranetwork.com/{show_page}" if show_page else "https://nerranetwork.com",
+            "sameAs": [AI_DISCLOSURE_URL],
         },
         "publisher": {
             "@type": "Organization",
             "name": "Nerra Network",
             "url": "https://nerranetwork.com",
+            "logo": publisher_logo_ld(),
         },
         "url": blog_url,
         "mainEntityOfPage": blog_url,
     }
-    if show_config and show_config.get("podcast_image"):
+    if image_url:
+        blog_posting["image"] = image_url
+    elif show_config and show_config.get("podcast_image"):
         blog_posting["image"] = f"https://nerranetwork.com/{show_config['podcast_image']}"
     if show_config and show_config.get("meta_keywords"):
         blog_posting["keywords"] = show_config["meta_keywords"]
@@ -1594,7 +1738,7 @@ def _interview_page_title(interview: dict, show_config: dict, ep_num: int) -> st
         budget = _web_title_lead_max() - len(name) - 3
         if budget > 12:
             lead = f"{name} — {_clip_words(identifier, budget)}"
-    return f"{lead} | {show_config['name']} Ep{ep_num}"
+    return _web_page_title(lead, show_config["name"])
 
 
 def _episode_og_image(metadata: dict, show_config: dict, ep_num) -> str:
@@ -1869,6 +2013,10 @@ def generate_blog_post_html(
         guest_same_as=[link["url"] for link in (interview or {}).get("guest_links") or []
                        if re.match(r"^https://(?:www\.)?(?:x\.com/[A-Za-z0-9_]{1,15}/?$|"
                                    r"linkedin\.com/in/)", str(link.get("url", "")))],
+        # Nov 3 2026: the share card the page already names as og:image, and
+        # the corrections filed against this episode (dateModified).
+        image_url=_episode_og_image(metadata, show_config, ep_num),
+        corrections=corrections,
     )
 
     # A show can swap the post template from its registry entry, the same way
@@ -1887,7 +2035,8 @@ def generate_blog_post_html(
             from generate_html import _cross_show_pool, _pick_cross_show_related
             _md_stem = Path(metadata.get("_md_path") or metadata.get("filename") or "").stem
             related_posts = _pick_cross_show_related(
-                show_slug, _cross_show_pool(), seed=_md_stem)
+                show_slug, _cross_show_pool(), seed=_md_stem,
+                post_date=metadata.get("date_iso", ""))
         except Exception:  # noqa: BLE001 - recommendations never block a post
             related_posts = []
 
@@ -1905,10 +2054,12 @@ def generate_blog_post_html(
         # episodes reads "A marketing founder scaling PIPPA tests whether…" —
         # a search result that never says "Hogan Shrum", the one string
         # anybody looking for this episode would actually type.
+        # Nov 3 2026: "<lead> · <Show>", no episode number — the show name
+        # now begins inside the ~60 characters a result displays
+        # (engine.titles.web_page_title owns the shape and the budget).
         "page_title": (
             _interview_page_title(interview, show_config, ep_num)
-            or f"{_clip_words(metadata['title'], _web_title_lead_max())} — Ep{ep_num}"
-               f" | {show_config['name']}"
+            or _web_page_title(metadata["title"], show_config["name"])
         ),
         "meta_description": _blog_meta_description(metadata, show_config),
         "meta_keywords": show_config.get("meta_keywords", ""),

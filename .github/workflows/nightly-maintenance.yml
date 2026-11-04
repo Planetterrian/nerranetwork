@@ -83,6 +83,9 @@ jobs:
         #     podcasts.apple.com show pages (Oct 2026). Needs no secret;
         #     it is the only readout of the on-air "rate us" ask. Its
         #     output must stay in the add-paths whitelist below.
+        #   * fetch_buttondown_stats.py also appends one row a night to
+        #     api/buttondown_history.json (Nov 3 2026 — the newsletter's
+        #     only series); it too must stay in the whitelist below.
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
@@ -260,6 +263,18 @@ jobs:
       - name: Audit dead URLs (measured 404s)
         run: python scripts/audit_dead_urls.py || true
 
+      # Nov 3 2026: Mira's rooms become readable — the guest survey, the
+      # grades, the audio measures, bookings to published per month and the
+      # cost per room into api/voices_metrics.json, read by the dashboard's
+      # "Mira's rooms" card, the register metrics and review_snapshot. Null,
+      # never 0, where a table could not be read. Operator: add the two
+      # Voices secrets to THIS step (they are on the Voices workflows already).
+      - name: Build Nerra Voices metrics
+        env:
+          VOICES_SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          VOICES_SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+        run: python scripts/build_voices_metrics.py --out api/voices_metrics.json || echo "::warning::Voices metrics build failed (non-fatal)"
+
       - name: Build audience headline
         # Sep 12 2026: the one number every review starts from — last
         # complete week of RSS downloads vs the week before, first-week
@@ -278,6 +293,34 @@ jobs:
         # (observed 2026-08-10/11: a malformed feed flipped one card to fail
         # and two nights of analytics were computed and discarded).
         run: python scripts/generate_dashboard.py --out api/dashboard.json || echo "::error::Dashboard reports a failing landmine card — investigate, but nightly commit proceeds"
+
+      - name: Read the experiments register
+        # Nov 3 2026: 74 register entries sat past their readout with nothing
+        # reading them. Every reading/decide entry past its date, with the
+        # LIVE metric beside baseline/target where it names one, else listed
+        # for a human read -> api/register_readouts.json (the Mission Control
+        # "Readouts due" card). --strict exits 1 on an entry >= 14 days past
+        # readout with neither outcome nor metric: a warning here, never a
+        # failed nightly. The file is written either way.
+        run: python scripts/readout_register.py --strict --out api/register_readouts.json || echo "::warning::Register readouts >= 14 days overdue with no outcome — read them (api/register_readouts.json)"
+
+      - name: Read the script-arm latency gate
+        # The model-upgrade playbook's instrument, on a schedule for the first
+        # time (efficiency-6): a rolling 14-day window over the six shows whose
+        # script stage runs on a pinned model arm, against the 600 s request
+        # timeout the run uses. GATE: FAIL is a warning, never a failed
+        # nightly; the record goes to api/model_trial.json for the dashboard.
+        run: python scripts/model_trial_report.py --timeout-seconds 600 --shows spacex,tesla,models_agents,modern_investing,fascinating_frontiers,planetterrian --out api/model_trial.json || echo "::warning::script-arm latency gate FAIL (api/model_trial.json)"
+
+      - name: Record review PR outcomes
+        # A closed-unmerged agent/review-* PR without a label is unknown; the
+        # 'rejected' label is the signal. Asks for the label once per PR and
+        # splices a rejected PR's proposals into that ledger's do_not_retry
+        # (text-splice, never a reserialize). Needs pull-requests: write
+        # (granted above). Non-fatal.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/review_pr_outcomes.py || echo "::warning::review PR outcomes failed (non-fatal)"
 
       - name: Build audience contract
         # Versioned JSON Mission Control pins to — projects already-built
@@ -485,7 +528,12 @@ jobs:
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
             digests/**/*_claims.json
+            digests/age_of_ai/credit_usage_*.json
+            digests/nerra_voices/credit_usage_*.json
             api/dashboard.json
+            api/register_readouts.json
+            api/model_trial.json
+            docs/reviews/ledger/*.yaml
             api/audience_headline.json
             api/audience_contract.json
             api/daily-show-health.json
@@ -502,7 +550,9 @@ jobs:
             api/op3_stats.json
             api/op3_history.json
             api/buttondown_stats.json
+            api/buttondown_history.json
             api/member_metrics.json
+            api/voices_metrics.json
             api/ga4_stats.json
             api/spotify_stats.json
             api/apple_stats.json

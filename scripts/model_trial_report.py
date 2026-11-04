@@ -35,10 +35,23 @@ is the playbook's own arithmetic:
 
 Exit code 1 when the gate fails, so a workflow step can stop a widening.
 
+Nov 3 2026 (efficiency-6): the instrument had never run on a schedule while
+the script stage on the pinned grok-4.6 arms read p95 628 s on SpaceX — over
+the 600 s request timeout. ``--since`` now defaults to a ROLLING window
+(today minus ``ROLLING_WINDOW_DAYS``, never a fixed date that goes stale),
+``--out`` writes the per-show, per-stage record as JSON for the dashboard
+(``api/model_trial.json``; consumers: the six script-arm register entries
+``*-script-grok46-2026-10-*`` / ``narrative-script-grok47-2026-10-11`` and
+``tests/test_review_loop_2026_11_03.py``), and a
+show's digest directory is read from its YAML ``episode.output_dir`` —
+``--shows tesla`` used to look in ``digests/tesla``, which does not exist, and
+reported nothing. The nightly runs it on the six script-arm shows.
+
 Usage::
 
     python scripts/model_trial_report.py --since 2026-09-22
     python scripts/model_trial_report.py --since 2026-09-22 --shows omni_view
+    python scripts/model_trial_report.py --shows spacex,tesla --out api/model_trial.json
 """
 
 from __future__ import annotations
@@ -64,6 +77,28 @@ DEFAULT_TIMEOUT_S = float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", "300"))
 #: Playbook rule 2: p95 under half the request timeout. Above this a stage
 #: has no headroom for the variance a real morning produces.
 P95_TIMEOUT_SHARE_LIMIT = 0.50
+
+#: The rolling trial window when ``--since`` is not given: today minus this
+#: many days. A nightly read on a fixed date measures an ever-longer past.
+ROLLING_WINDOW_DAYS = 14
+
+_OUTPUT_DIR_RE = re.compile(r"(?m)^\s*output_dir:\s*['\"]?([^'\"\s#]+)")
+
+
+def show_dir_for(slug: str, root: Path = REPO_ROOT) -> Path:
+    """The show's digest directory: its YAML ``episode.output_dir`` when the
+    YAML names one (Tesla: ``digests/tesla_shorts_time``), else
+    ``digests/<slug>``."""
+    try:
+        m = _OUTPUT_DIR_RE.search((root / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+    except OSError:
+        m = None
+    return root / (m.group(1) if m else f"digests/{slug}")
+
+
+def rolling_since(today: Optional[_dt.date] = None) -> _dt.date:
+    """The default trial start: today minus ``ROLLING_WINDOW_DAYS``."""
+    return (today or _dt.date.today()) - _dt.timedelta(days=ROLLING_WINDOW_DAYS)
 
 #: Stages whose duration is dominated by an LLM call. Others (render, fetch)
 #: are reported but never gate a MODEL trial — they are not the model's.
@@ -187,10 +222,23 @@ def report(
     baseline_days: int,
     timeout_s: float,
     max_p95_regression_pct: float,
+    out_path: Optional[Path] = None,
 ) -> int:
     baseline_start = since - _dt.timedelta(days=baseline_days)
     failures: List[str] = []
     any_trial_data = False
+    doc: Dict[str, object] = {
+        "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "since": since.isoformat(),
+        "baseline_start": baseline_start.isoformat(),
+        "timeout_s": timeout_s,
+        "p95_timeout_share_limit": P95_TIMEOUT_SHARE_LIMIT,
+        "max_p95_regression_pct": max_p95_regression_pct,
+        "shows": {},
+        "consumers": ["docs/experiments.yaml: the six script-arm entries (*-script-grok46-2026-10-*, narrative-script-grok47-2026-10-11)",
+                      "tests/test_review_loop_2026_11_03.py"],
+    }
+    shows_doc: Dict[str, dict] = doc["shows"]  # type: ignore[assignment]
 
     print(f"Model trial report — trial from {since}, "
           f"baseline {baseline_start}..{since - _dt.timedelta(days=1)}")
@@ -199,7 +247,7 @@ def report(
           f"({P95_TIMEOUT_SHARE_LIMIT:.0%} of it)\n")
 
     for slug in shows:
-        show_dir = REPO_ROOT / "digests" / slug
+        show_dir = show_dir_for(slug)
         if not show_dir.is_dir():
             continue
         rows = collect(show_dir)
@@ -210,6 +258,9 @@ def report(
         if not trial:
             continue
         any_trial_data = True
+        show_doc: Dict[str, object] = {"stages": {}}
+        shows_doc[slug] = show_doc
+        failures_before = len(failures)
 
         print(f"=== {slug}")
         print(f"    {'stage':34} {'n':>3} {'p50':>8} {'p95':>8} {'max':>8}"
@@ -240,6 +291,13 @@ def report(
                 failures.append(
                     f"{slug}/{name}: {stats['failures']} failed stage(s) "
                     "in the trial window")
+            show_doc["stages"][name] = {  # type: ignore[index]
+                **stats,
+                "baseline_p95": b["p95"] if b else None,
+                "p95_timeout_share": (round(stats["p95"] / timeout_s, 3)
+                                      if stats["p95"] is not None else None),
+                "llm_stage": _is_llm_stage(name),
+            }
         trial_rows = [r for r in rows if r["date"] >= since]
         fallbacks = sum(1 for r in trial_rows if r.get("fallback"))
         retried = sum(1 for r in trial_rows if r.get("pinned_retries"))
@@ -250,7 +308,20 @@ def report(
             print(f"    pinned-model fallbacks {fallbacks}/{len(trial_rows)} episodes "
                   f"(not trial data points); same-model retries on {retried}; "
                   f"streamed digest time-to-first-token p50 {ttft_txt}")
+        show_doc["episodes"] = len(trial_rows)
+        show_doc["fallbacks"] = fallbacks
+        show_doc["gate_failures"] = failures[failures_before:]
         print()
+
+    doc["any_trial_data"] = any_trial_data
+    doc["failures"] = failures
+    doc["gate"] = ("no_data" if not any_trial_data
+                   else ("FAIL" if failures else "PASS"))
+    if out_path is not None:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(doc, indent=2, default=str) + "\n",
+                            encoding="utf-8")
+        print(f"wrote {out_path}")
 
     if not any_trial_data:
         print("No committed episodes on or after the trial date yet — "
@@ -274,8 +345,9 @@ def report(
 
 def main(argv: Optional[list] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--since", required=True,
-                        help="Trial start date, YYYY-MM-DD.")
+    parser.add_argument("--since", default=None,
+                        help="Trial start date, YYYY-MM-DD. Default: a ROLLING "
+                             f"window, today minus {ROLLING_WINDOW_DAYS} days.")
     parser.add_argument("--baseline-days", type=int, default=14)
     parser.add_argument("--shows", default="",
                         help="Comma-separated slugs; default is every show "
@@ -285,14 +357,20 @@ def main(argv: Optional[list] = None) -> int:
     parser.add_argument("--max-p95-regression-pct", type=float, default=50.0,
                         help="How much slower an LLM stage's p95 may get "
                              "before the gate fails.")
+    parser.add_argument("--out", type=Path, default=None,
+                        help="Write the per-show, per-stage record as JSON "
+                             "(the nightly writes api/model_trial.json).")
     args = parser.parse_args(argv)
 
-    try:
-        since = _dt.date.fromisoformat(args.since)
-    except ValueError:
-        print(f"--since must be YYYY-MM-DD, got {args.since!r}",
-              file=sys.stderr)
-        return 2
+    if args.since is None:
+        since = rolling_since()
+    else:
+        try:
+            since = _dt.date.fromisoformat(args.since)
+        except ValueError:
+            print(f"--since must be YYYY-MM-DD, got {args.since!r}",
+                  file=sys.stderr)
+            return 2
 
     if args.shows.strip():
         shows = [s.strip() for s in args.shows.split(",") if s.strip()]
@@ -303,7 +381,7 @@ def main(argv: Optional[list] = None) -> int:
         )
 
     return report(shows, since, args.baseline_days, args.timeout_seconds,
-                  args.max_p95_regression_pct)
+                  args.max_p95_regression_pct, out_path=args.out)
 
 
 if __name__ == "__main__":

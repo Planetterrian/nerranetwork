@@ -12,10 +12,22 @@ set -u
 
 # Stage all generated output
 git add -A digests/ || true
+# Nov 3 2026: a file the ignore rules exclude stays TRACKED once it is in
+# the index, and `git add -A` carries every later version of it — the hook
+# Short's spliced FLAC rode this line into main for days after .gitignore
+# excluded it (landmine #1's third recurrence, 571 MB). Stage the deletion
+# of any tracked path under digests/ that the ignore rules now exclude;
+# the index only — the file stays on disk for the run that made it.
+git ls-files -ci --exclude-standard -z -- digests 2>/dev/null \
+  | xargs -0 -r git rm -q --cached -- 2>/dev/null || true
 git add '*.rss' || true
 git add '*.html' || true
 git add -A blog/ || true
 git add sitemap.xml || true
+# One add per path: `git add a b` stages NOTHING when either path is
+# absent (same all-or-nothing pathspec rule as the checkout below), and
+# news-sitemap.xml exists only once a finalize run has written it.
+git add news-sitemap.xml || true
 # Tesla cached price for the public website widget. Written
 # by ``shows/hooks/tesla.py`` every Tesla run, consumed by
 # ``tesla.html`` JS so the stock pill doesn't depend on

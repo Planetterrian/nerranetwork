@@ -250,7 +250,7 @@ class TestTheContentLake:
 class TestSheOwnsWhatSheIs:
     def test_the_claim_is_made_once_and_then_earned(self):
         assert "WHAT YOU ARE." in PROMPT
-        assert "first AI to host and produce a podcast end to end" in PROMPT
+        assert "An AI host: {{mira_spoken_claim}}" in PROMPT  # engine.brand owns the clause (Nov 3 2026)
         assert "as a fact rather than a boast, then be good at the job" in PROMPT
 
     def test_the_guest_experience_is_named_not_ignored(self):
@@ -1904,7 +1904,7 @@ class TestTheGuestHearsTheMomentTheyAreOut:
     def test_it_is_sent_after_the_rows_flip_and_copies_the_publicist(self):
         pub = (V / "publish_episode.py").read_text(encoding="utf-8")
         flip = pub.index('{"status": "published", "episode_number": episode_num}')
-        assert pub.index("tell_the_guest(show, app, pkg, episode_num, run=run)") > flip
+        assert pub.index("tell_the_guest(show, app, pkg, episode_num, run=run, youtube=yt_outcome)") > flip
         assert 'cc = [str(app.get("publicist_email")' in pub
         assert "cc_operator=True, cc=cc" in pub
 

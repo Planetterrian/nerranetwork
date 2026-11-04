@@ -37,7 +37,7 @@ import json
 import re
 from datetime import date
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence
 
 from engine import titles as _titles
 from engine import topic_hubs as _hubs
@@ -229,19 +229,30 @@ _STORY_JSON_KEYS = ("slug", "show_name", "show_page", "brand_color", "hook",
 
 
 def story_json(story: Dict[str, Any], *, record: dict,
-               duration_s: Optional[int] = None) -> Dict[str, Any]:
+               duration_s: Optional[int] = None,
+               show_dir: Optional[Path] = None) -> Dict[str, Any]:
     """A :func:`build_story` dict as plain JSON for ``api/personal_front.json``.
 
     ``headlines`` carries up to :data:`PERSONAL_HEADLINES` of the episode's
     own story headlines (the hook's story excluded), read again from the
-    record because the homepage keeps only three. ``stamp`` is the
-    homepage's publication stamp without its build-time ``is_today``, which
-    the page recomputes against the reader's clock.
+    record because the homepage keeps only three. ``deck`` is one or two
+    sentences of the digest's own prose on the hook's story
+    (:func:`story_deck`; ``""`` when the digest has none), with any
+    sentence the claims gate flagged left out when *show_dir* (the show's
+    digest directory, where the committed sidecar lives) is given.
+    ``stamp`` is the homepage's publication stamp without its build-time
+    ``is_today``, which the page recomputes against the reader's clock.
     """
     out = {k: story.get(k) for k in _STORY_JSON_KEYS}
     content = record.get("content") or record.get("summary") or ""
-    out["headlines"] = more_headlines(content, story.get("hook") or "",
-                                      limit=PERSONAL_HEADLINES)
+    hook = story.get("hook") or ""
+    # Nov 3 2026: the headlines are sentence-cased here, where the digest's
+    # prose (the evidence for which words are names) is at hand — the email
+    # card and My Nerra print them under a sentence-case deck.
+    out["headlines"] = [sentence_case_headline(h, content)
+                        for h in more_headlines(content, hook, limit=PERSONAL_HEADLINES)]
+    flagged = flagged_sentences_for(show_dir, record) if show_dir else frozenset()
+    out["deck"] = story_deck(content, hook, flagged=flagged)
     stamp = story.get("stamp") or {}
     out["stamp"] = {k: stamp.get(k) for k in ("iso", "label", "short", "day", "has_time")}
     out["duration_s"] = int(duration_s) if duration_s else None
@@ -296,6 +307,27 @@ def _salient(text: str) -> set:
     return {w for w in words if (len(w) >= 4 or w.isdigit()) and w not in _STOP}
 
 
+#: Suffixes folded before a headline word is compared with a scene prompt
+#: (Nov 3 2026): "robots" and "Robotic", "models" and "modeling", "protein"
+#: and "proteins" are one subject. Longest first.
+_STEM_SUFFIXES = ("ically", "ation", "ingly", "ments", "ings", "ment", "ness",
+                  "ics", "ies", "ing", "ers", "ic", "al", "ed", "er", "es", "s")
+
+
+def _stem(word: str) -> str:
+    for suf in _STEM_SUFFIXES:
+        if word.endswith(suf) and len(word) - len(suf) >= 3:
+            return word[: -len(suf)]
+    return word
+
+
+def _stems(text: str) -> set:
+    """Stemmed salient tokens of a headline or a scene prompt; three-letter
+    nouns count ("lab", "car", "ice")."""
+    words = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return {_stem(w) for w in words if (len(w) >= 3 or w.isdigit()) and w not in _STOP}
+
+
 def scene_prompts(slice_path: Path, slug: str, episode_num: Optional[int],
                   episode_date: str) -> Dict[str, str]:
     """``image_id -> prompt`` for one episode, from the show's full gallery
@@ -319,8 +351,14 @@ def scene_prompts(slice_path: Path, slug: str, episode_num: Optional[int],
     return out
 
 
-#: A scene must share this many salient words with the headline to be
-#: preferred over the episode's first scene.
+#: A scene must share this many stemmed salient words with the headline to
+#: be its picture; ONE shared word is enough when no other scene of the
+#: episode shares any (Nov 3 2026 — the Nov 2 front page led with a coral
+#: reef under a protein-engineering headline because the three lab scenes
+#: scored 1 each on exact words and the chooser fell back to the first scene
+#: in slice order). When the episode's prompts are known and no scene
+#: matches, the story gets NO scene (the template shows the show's cover):
+#: a picture of a different story under a headline is a false claim.
 SCENE_MATCH_MIN_WORDS = 2
 
 
@@ -366,7 +404,7 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
         return None
     base = (index.get("base_url") or "").rstrip("/")
     overrides = index.get("overrides") or {}
-    hook_words = _salient(hook)
+    hook_words = _stems(hook)
     prompts = prompts or {}
     avoid = set(avoid_urls)
     order = ((LANDSCAPE_USE, "landscape"), (PORTRAIT_USE, "portrait"))
@@ -382,15 +420,20 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
                 f"{base}/{ep[e_slug]}/{ep[e_date]}/{ep[e_id]}/{row[i_id]}.thumb.webp"
                 if base else "")
             if url.startswith("https://"):
-                score = len(hook_words & _salient(prompts.get(str(row[i_id]), "")))
+                score = len(hook_words & _stems(prompts.get(str(row[i_id]), "")))
                 candidates.append((score, position, url))
         if not candidates:
             continue
         fresh = [c for c in candidates if c[2] not in avoid]
         candidates = fresh or candidates
         best = max(candidates, key=lambda c: (c[0], -c[1]))
-        if best[0] >= SCENE_MATCH_MIN_WORDS:
+        runner_up = max((c[0] for c in candidates if c is not best), default=0)
+        if best[0] >= SCENE_MATCH_MIN_WORDS or (best[0] == 1 and runner_up == 0):
             return {"url": best[2], "orientation": orientation, "matched": True}
+        if prompts and hook_words:
+            # The episode's prompts are known and none depicts this headline
+            # in this orientation: try the other orientation, then nothing.
+            continue
         return {"url": candidates[0][2], "orientation": orientation, "matched": False}
     return None
 
@@ -401,7 +444,7 @@ def more_headlines(content: str, hook: str, limit: int = MORE_HEADLINES) -> List
     in its own words, and that headline is the hook a second time
     (``engine.newsroom.same_story``)."""
     from engine.grok_imagine import extract_story_headlines
-    from engine.newsroom import same_story
+    from engine.newsroom import headline_within_hook
 
     hook_key = _norm(hook)
     out: List[str] = []
@@ -409,12 +452,308 @@ def more_headlines(content: str, hook: str, limit: int = MORE_HEADLINES) -> List
         key = _norm(headline)
         if not key or key == hook_key or key in hook_key or hook_key in key:
             continue
-        if same_story(headline, hook):
+        # Nov 3 2026: ``headline_within_hook`` — ``same_story`` widened for a
+        # hook that is two stories at once (the Nerra Daily email listed
+        # "Sweden Jumps 248%" under the Sweden-and-Norway hook).
+        if headline_within_hook(headline, hook):
             continue
         out.append(headline)
         if len(out) >= limit:
             break
     return out
+
+
+# ---------------------------------------------------------------------------
+# The deck: the digest's own sentences on the hook's story (Nov 3 2026)
+# ---------------------------------------------------------------------------
+
+#: A deck is at most this many sentences and about this many characters;
+#: a first sentence may run over by the grace, never cut mid-sentence.
+DECK_MAX_SENTENCES = 2
+DECK_MAX_CHARS = 240
+DECK_FIRST_SENTENCE_GRACE = 80
+
+#: A sentence ends on . ! ? followed by a capital or a digit; a single
+#: capital before the period ("U.S.", "D.C.") is an initial, not an end.
+_DECK_SENTENCE_RE = re.compile(r"(?<![A-Z]\.)(?<=[.!?])\s+(?=[A-Z0-9“\"‘'(])")
+#: ``Source: …`` tails on an item's last line, the parenthesised form too.
+_DECK_SOURCE_TAIL_RE = re.compile(r"\(?\bSource:.*$", re.M)
+#: A leading field label of a few words ("What happened (neutral):",
+#: "Context & perspectives:", "Market Pulse:") — the body's own label, not
+#: a sentence a reader wants.
+_DECK_LABEL_RE = re.compile(r"^([^.!?:\n]{1,48}?):\s+(?=\S)")
+_DECK_LABEL_MAX_WORDS = 4
+_DECK_LEAD_NUM_RE = re.compile(r"^\s*\d+[.)]\s*")
+_DECK_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+#: An item head's outlet tail: "— TSLAming (X)", ": Reuters".
+_DECK_OUTLET_TAIL_MAX_WORDS = 6
+
+
+def _deck_line_is_furniture(line: str) -> bool:
+    s = line.strip()
+    if not s:
+        return True
+    if s.startswith((">", "#", "- ", "* ", "• ", "|")):
+        return True
+    if re.fullmatch(r"[-*_]{3,}", s):
+        return True
+    # A bold-only line is a heading or a label, never prose.
+    return bool(re.fullmatch(r"\*\*[^*]+\*\*:?", s))
+
+
+def _deck_body_lines(item) -> List[str]:
+    """The prose lines of an aired item, its head and furniture removed."""
+    lines = (item.body or "").splitlines()
+    if item.kind == "item" and lines:
+        # The first line is the item's head: ``1. **Title** — Outlet`` or
+        # ``**Title: Outlet**``. Prose written on the head's own line
+        # (``**Title**: the body starts here``) is kept.
+        head = _DECK_LEAD_NUM_RE.sub("", lines[0])
+        after = _DECK_BOLD_RE.sub("", head, count=1).strip()
+        after = after.lstrip("—–-: ").strip()
+        if len(after.split()) <= _DECK_OUTLET_TAIL_MAX_WORDS:
+            after = ""
+        lines = ([after] if after else []) + lines[1:]
+    return [ln for ln in lines if not _deck_line_is_furniture(ln)]
+
+
+def _deck_pick(items: list, hook: str):
+    """The aired item that tells the hook's story, or ``None``."""
+    from engine.aired_items import _LEAD_SECTIONS
+    from engine.newsroom import headline_within_hook
+
+    for item in items:
+        if headline_within_hook(item.title, hook):
+            return item
+    for item in items:
+        if (item.section or "").strip().lower() in _LEAD_SECTIONS:
+            return item
+    if items and len(_salient(items[0].title) & _salient(hook)) >= 2:
+        return items[0]
+    return None
+
+
+def _norm_sentence(text: str) -> str:
+    """A sentence as the flagged-sentence test compares it: links
+    flattened, markdown and punctuation gone, one case."""
+    from engine.aired_items import _plain
+    return re.sub(r"[^a-z0-9]+", " ", _plain(text or "").lower()).strip()
+
+
+def _sentence_is_flagged(sentence: str, flagged: Iterable[str]) -> bool:
+    key = _norm_sentence(sentence)
+    if not key:
+        return False
+    for flag in flagged:
+        if not flag:
+            continue
+        if key == flag:
+            return True
+        # The gate records the claim's span, which can be a clause of the
+        # sentence ("Jose de Navarro changed that when he installed …" of a
+        # longer sentence) or the whole of it.
+        if min(len(key), len(flag)) >= 40 and (flag in key or key in flag):
+            return True
+    return False
+
+
+def story_deck(content: str, hook: str, *, max_sentences: int = DECK_MAX_SENTENCES,
+               max_chars: int = DECK_MAX_CHARS, flagged: Iterable[str] = ()) -> str:
+    """One or two sentences of the digest's own prose on the hook's story.
+
+    Nov 3 2026 (the Nerra Daily email): a card was the spoken hook, up to
+    three outlet headlines and a link row, so a reader learned no fact
+    without clicking. The sentences already exist, verified, in the
+    committed digest: this reads the aired item whose title is the hook's
+    story (:func:`engine.newsroom.headline_within_hook`), else the lead
+    section, else the first item when it shares two salient words with the
+    hook, and returns its first sentences — the head line, labels,
+    ``Source:`` tails and markdown gone. A record with no matching item gets
+    ``""``: the hook stands alone rather than under another story's prose.
+    A narrative episode (one ``essay`` item) opens on its cold open, which
+    is the point of the show. A sentence the claims gate flagged
+    (*flagged*: normalised sentences, see :func:`flagged_sentences_for`) is
+    never printed — the Oct 1 2026 rule that a flag is never hidden. No
+    sentence is ever cut: the deck stops before the sentence that would pass
+    *max_chars*, and only a first sentence may run over, by
+    :data:`DECK_FIRST_SENTENCE_GRACE`. Deterministic; no model call.
+    """
+    from engine.aired_items import _plain, extract_aired_items
+
+    items = [i for i in extract_aired_items(content or "")
+             if i.kind in ("item", "heading", "section", "essay")]
+    pick = _deck_pick(items, hook)
+    if pick is not None:
+        lines = _deck_body_lines(pick)
+    elif not items and content and not re.search(r"^(?:#|>)", content, re.M):
+        # Plain prose with no digest shape at all (an interview record's
+        # summary): the first paragraph is the deck.
+        lines = [ln for ln in content.splitlines() if not _deck_line_is_furniture(ln)]
+        lines = lines[:1]
+    else:
+        return ""
+    text = " ".join(_plain(_DECK_SOURCE_TAIL_RE.sub("", ln)) for ln in lines)
+    text = re.sub(r"\s+", " ", text).strip()
+    m = _DECK_LABEL_RE.match(text)
+    if m and len(m.group(1).split()) <= _DECK_LABEL_MAX_WORDS:
+        text = text[m.end():]
+    flagged = [f for f in flagged if f]
+    out: List[str] = []
+    total = 0
+    for sentence in _DECK_SENTENCE_RE.split(text):
+        sentence = sentence.strip()
+        if not sentence or len(sentence.split()) < 3:
+            continue
+        if flagged and _sentence_is_flagged(sentence, flagged):
+            continue
+        add = len(sentence) + (1 if out else 0)
+        limit = max_chars + (DECK_FIRST_SENTENCE_GRACE if not out else 0)
+        if total + add > limit:
+            break
+        out.append(sentence)
+        total += add
+        if len(out) >= max_sentences:
+            break
+    return " ".join(out)
+
+
+def flagged_sentences_for(show_dir, record: dict) -> frozenset:
+    """The sentences the claims gate flagged on this episode, normalised for
+    :func:`story_deck` — from the committed ``<stem>_claims.json`` beside
+    the digest (``engine.claims_ledger.read_sidecar``), found by episode
+    number (``*_EpNNN_*_claims.json``; a rerun's later file wins) or by the
+    record's audio stem. An episode with no sidecar has nothing flagged."""
+    if not show_dir or not isinstance(record, dict):
+        return frozenset()
+    show_dir = Path(show_dir)
+    if not show_dir.is_dir():
+        return frozenset()
+    paths: List[Path] = []
+    number = _episode_number(record)
+    if number:
+        paths.extend(sorted(show_dir.glob(f"*_Ep{int(number):03d}_*_claims.json")))
+    stem = Path(str(record.get("audio_url") or "").split("?")[0]).stem
+    if stem:
+        beside = show_dir / f"{stem}_claims.json"
+        if beside.is_file() and beside not in paths:
+            paths.append(beside)
+    if not paths:
+        return frozenset()
+    try:
+        from engine.claims_ledger import read_sidecar
+        side = read_sidecar(paths[-1])
+    except Exception:  # noqa: BLE001 — a sidecar that will not read flags nothing
+        side = None
+    if not side:
+        return frozenset()
+    return frozenset(_norm_sentence(s) for s in side.get("flagged_sentences") or [] if s)
+
+
+#: A headline reads as Title Case when this share of its words of four or
+#: more letters are capitalised, over at least this many such words.
+_TITLE_CASE_SHARE = 0.6
+_TITLE_CASE_MIN_WORDS = 3
+#: Always names, whatever the prose says.
+_CALENDAR_WORDS = frozenset(
+    "monday tuesday wednesday thursday friday saturday sunday january february "
+    "march april may june july august september october november december".split())
+_WORD_CORE_RE = re.compile(r"^([^\w]*)(.*?)([^\w]*)$", re.S)
+_POSSESSIVE_RE = re.compile(r"(?:'s|’s|')$")
+#: Lines that are a heading or a list carry Title Case of their own and are
+#: no evidence of a name; a bold head or label is removed from a line before
+#: it is read (an Omni View paragraph opens on ``**What happened:**``). The
+#: hook's blockquote is prose and is read with its marker removed.
+_PROSE_LINE_SKIP_RE = re.compile(r"^\s*(?:#|-\s|\*\s|•|\|)")
+
+
+def _case_evidence(prose: str) -> tuple:
+    """``(capitalised_mid_sentence, lowercase)`` counts per word of the
+    digest's prose — the evidence :func:`sentence_case_headline` reads: a
+    word the prose capitalises mid-sentence (and does not write lowercase
+    more often) is a name; one it never capitalises there is a common word."""
+    from collections import Counter
+
+    caps: Counter = Counter()
+    lower: Counter = Counter()
+    for line in (prose or "").splitlines():
+        if _PROSE_LINE_SKIP_RE.match(line):
+            continue
+        line = re.sub(r"^\s*>\s*", "", line)
+        line = re.sub(r"\*\*[^*]+\*\*:?", " ", line)
+        line = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", line)
+        for sentence in _DECK_SENTENCE_RE.split(line):
+            words = sentence.split()
+            for index, word in enumerate(words):
+                core = _POSSESSIVE_RE.sub("", _WORD_CORE_RE.match(word).group(2))
+                if not core.replace("-", "").isalpha():
+                    continue
+                if core[:1].isupper():
+                    if index > 0:
+                        caps[core.lower()] += 1
+                elif core[:1].islower():
+                    lower[core] += 1
+    return caps, lower
+
+
+def _keeps_case(core: str) -> bool:
+    """An acronym, a ticker, a product with an internal capital, a figure."""
+    if any(ch.isdigit() for ch in core):
+        return True
+    letters = [ch for ch in core if ch.isalpha()]
+    if len(letters) >= 2 and all(ch.isupper() for ch in letters):
+        return True
+    return any(ch.isupper() for ch in core[1:])
+
+
+def sentence_case_headline(headline: str, prose: str = "") -> str:
+    """A Title Case outlet headline in sentence case; anything else untouched.
+
+    Nov 3 2026 (the Nerra Daily email): the card's headlines are the digest
+    items' titles, which outlets write in Title Case, under a hook and a
+    deck in sentence case. A word is lowercased only when the headline reads
+    as Title Case (:data:`_TITLE_CASE_SHARE` of its longer words capitalised),
+    it is not the first word of a sentence, it is not an acronym or ticker
+    (EV, TSLA), an internal capital (YoY, SpaceX) or a figure, and the
+    digest's own prose does not capitalise it mid-sentence
+    (:func:`_case_evidence` — Norway, October and Supercharger are kept;
+    "sales", "growth" and a "New" that the prose writes lowercase more
+    often than in "New Zealand" are lowercased). A word the prose never
+    writes at all is lowercased too: the keep set is what the digest
+    capitalised, as an editor would check it. Never clips: limits and
+    truncation belong to ``engine.titles``.
+    """
+    headline = (headline or "").strip()
+    words = headline.split()
+    cores = [_WORD_CORE_RE.match(w).group(2) for w in words]
+    # The shape test reads the PLAIN words: an acronym, a ticker or a
+    # SpaceX-style brand is capitalised in any case and says nothing.
+    plain = [c for c in cores if c.replace("-", "").isalpha() and len(c) >= 4
+             and not _keeps_case(c)]
+    capitalised = [c for c in plain if c[:1].isupper()]
+    if len(plain) < _TITLE_CASE_MIN_WORDS or len(capitalised) / len(plain) < _TITLE_CASE_SHARE:
+        return headline
+    caps, lower = _case_evidence(prose)
+    out: List[str] = []
+    sentence_start = True
+    for word in words:
+        lead, core, trail = _WORD_CORE_RE.match(word).groups()
+        if not core:
+            out.append(word)
+            continue
+        parts = core.split("-")
+        new_parts = []
+        for i, part in enumerate(parts):
+            base = _POSSESSIVE_RE.sub("", part)
+            first = sentence_start and i == 0
+            key = base.lower()
+            name = (caps[key] > 0 and caps[key] >= lower[key]) or key in _CALENDAR_WORDS
+            if first or not part[:1].isupper() or _keeps_case(base) or name:
+                new_parts.append(part)
+            else:
+                new_parts.append(part[0].lower() + part[1:])
+        out.append(lead + "-".join(new_parts) + trail)
+        sentence_start = trail.rstrip("”\"’')").endswith((".", "!", "?"))
+    return " ".join(out)
 
 
 # ---------------------------------------------------------------------------
@@ -450,7 +789,13 @@ def build_story(show: Dict[str, Any], record: dict, *,
     """
     content = record.get("content") or record.get("summary") or ""
     raw_title = (record.get("episode_title") or record.get("title") or "").strip()
+    # The interview records carry the whole hook as ``hook``; their title is
+    # the feed title, clipped to 100 characters — "Michael Kamins — A CPG
+    # hiring veteran builds candidate-owned living portfolios that let AI…"
+    # was the Nov 2 email's card (Nov 3 2026). The news records have no
+    # ``hook`` key and are unchanged.
     hook = (hook_from_markdown(content) or hook_from_markdown(digest_text)
+            or (record.get("hook") or "").strip()
             or strip_episode_label(raw_title))
     if not hook:
         return None
@@ -501,17 +846,29 @@ def _beat(story: Dict[str, Any]) -> str:
     return _SAME_BEAT.get(hub, hub) or story.get("slug", "")
 
 
-def _rotated_lead(ordered: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    """The newest day's pictured story from today's subject in
-    ``LEAD_ROTATION`` (the audience ranking still picks WITHIN a subject)."""
+def _rotated_lead(ordered: Sequence[Dict[str, Any]],
+                  rotation: Sequence[str] = LEAD_ROTATION,
+                  lead_slugs: Optional[Collection[str]] = None) -> Optional[Dict[str, Any]]:
+    """The newest day's pictured story from today's subject in ``rotation``
+    (the audience ranking still picks WITHIN a subject).
+
+    ``rotation`` defaults to the network's ``LEAD_ROTATION``; a language front
+    page passes the subjects its own audience has a story in (Nov 3 2026), so
+    the day's index runs over THAT list. ``lead_slugs`` narrows the candidates
+    to those shows (``None``: every show) — the language pages' rule that the
+    lead comes from a show the channel's audience watches or a show made in
+    the language, never from a show with no row on the channel. An empty
+    rotation picks nothing and the caller's fallbacks decide.
+    """
     newest = ordered[0].get("date_obj") if ordered else None
-    if not newest:
+    if not newest or not rotation:
         return None
     pictured = [s for s in ordered
-                if s.get("date_obj") == newest and s["image_orientation"] == "landscape"]
-    start = newest.toordinal() % len(LEAD_ROTATION)
-    for i in range(len(LEAD_ROTATION)):
-        hub = LEAD_ROTATION[(start + i) % len(LEAD_ROTATION)]
+                if s.get("date_obj") == newest and s["image_orientation"] == "landscape"
+                and (lead_slugs is None or s.get("slug") in lead_slugs)]
+    start = newest.toordinal() % len(rotation)
+    for i in range(len(rotation)):
+        hub = rotation[(start + i) % len(rotation)]
         pick = next((s for s in pictured if s.get("hub_id") == hub), None)
         if pick is not None:
             return pick
@@ -562,7 +919,9 @@ def merge_retellings(ordered: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def assemble(stories: Iterable[Dict[str, Any]], *,
              audience_order: Sequence[str] = (),
              live_hub_ids: Iterable[str] = (),
-             flagships: Sequence[str] = ()) -> Dict[str, Any]:
+             flagships: Sequence[str] = (),
+             lead_rotation: Sequence[str] = LEAD_ROTATION,
+             lead_slugs: Optional[Collection[str]] = None) -> Dict[str, Any]:
     """Lay the stories out: lead, flagships, top stories, latest list, sections.
 
     Deterministic: newest date first, then the audience ranking (30-day
@@ -574,6 +933,11 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     band every day, in the given order, and so never also runs as the lead, a
     top story or a section story; it still appears in the Latest list, which
     is the chronological record.
+
+    ``lead_rotation`` / ``lead_slugs`` are the subjects the lead rotates
+    through and the shows it may come from (``_rotated_lead``); the defaults
+    are the English front page's — every subject in ``LEAD_ROTATION``, every
+    show. The language fronts pass their own (``engine.language_front``).
     """
     rank = {slug: n for n, slug in enumerate(audience_order)}
     ordered = sorted(stories, key=_order_key(rank))
@@ -603,7 +967,7 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     # comes first: its landscape story, then any of its stories with a
     # picture, and only then an older landscape lead.
     newest = pool[0].get("date_obj")
-    lead = (_rotated_lead(pool)
+    lead = (_rotated_lead(pool, lead_rotation, lead_slugs)
             or next((s for s in pool if s.get("date_obj") == newest
                      and s["image_orientation"] == "landscape"), None)
             or next((s for s in pool if s.get("date_obj") == newest and s["image_url"]), None)

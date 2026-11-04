@@ -79,7 +79,10 @@ llm:
   # FACTUAL_ERRORS, so 4.7-era rates are read against each other, never
   # against the 4.6 era.
   reviewer_model: grok-4.7
-  reviewer_max_tokens: 1500
+  # Nov 4 2026: every YES the daily audit raises now quotes its sentence,
+  # and QUALITY_SCORE comes after the seven flag lines; 1,500 tokens was
+  # sized for bare YES/NO lines and a capped reply loses the score first.
+  reviewer_max_tokens: 3000
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model
   # that honors reasoning_effort (e.g. grok-4.5). Empty = omit param —
@@ -590,17 +593,22 @@ youtube:
   release_schedule_enabled: true
   # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
   # Long-form videos fade in a 1920x1080 outro card over their last
-  # outro_card_duration_seconds: framed screenshots of the show's
-  # nerranetwork.com page + the network home page, the URL in Nerra
-  # cyan, a localized newsletter line, and a QR to the funnel-tagged
-  # show page (utm_content=outro). Shorts end cards paste the home
-  # page's show-grid band as a framed strip above the URL footer.
-  # Screenshots are committed at assets/site_screens/ and refreshed by
-  # scripts/capture_site_screens.py — the render never hits the network.
-  # Render/metadata only (outside landmine #17); best-effort — missing
-  # screenshots ship the legacy ending.
+  # outro_card_duration_seconds. Nov 3 2026: the card renders from DATA
+  # (engine/promo_card.py) — this show's cover framed in its brand colour,
+  # a wall of the other free shows' covers (generate_html._public_shows,
+  # flagships first), the tagline from engine.brand, the free-show count,
+  # the URL in Nerra cyan and a QR to the funnel-tagged show page
+  # (utm_content=outro). It had composited committed screenshots of the
+  # site, and the one capture ever taken (Aug 9) showed a retired
+  # no-advertising promise and a four-language list on every video for 86
+  # days. Shorts end cards paste a
+  # strip of show covers above the URL footer. The duration is 3 s (was
+  # 6) so YouTube's own interactive end screen, set in Studio, has its
+  # 5-20 s over the closing — END_SCREEN traffic was 1 view in 90 days.
+  # Render/metadata only (outside landmine #17); best-effort — a failed
+  # composite ships the legacy ending.
   outro_card_enabled: true
-  outro_card_duration_seconds: 6.0
+  outro_card_duration_seconds: 3.0
   shorts_end_card_site_panel: true
   # Sep 9 2026: Shorts end cards ask for the subscribe (the one goal the
   # card can move and YouTube measures per video), not "watch the full

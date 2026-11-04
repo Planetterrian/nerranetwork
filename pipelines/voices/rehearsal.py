@@ -87,6 +87,13 @@ MUST_BEAT = (("overlap_events", "lower"), ("self_answered_turns", "lower"),
 #: 50 s; the target band is 12-20 s, so "not lose" is "not further from the
 #: band than current").
 MUST_NOT_LOSE = ("mira_turn_sec_median", (12.0, 20.0))
+#: Printed beside the verdict, never gating it (Nov 3 2026, the beat before
+#: the question): the share of her question turns with no sentence of her
+#: own before the question, the label it can regrow into, the echo, and how
+#: long after the guest's last word she begins (a slower reasoning effort
+#: shows there first). Read the pair label / bare together.
+READ_BESIDE = ("bare_question_rate", "label_open_rate", "echo_open_rate",
+               "turn_gap_ms_median")
 #: What the fixture's persona may carry into the room (Voximplant's
 #: customData has to fit the whole JSON; a persona over this is cut at a
 #: line end).
@@ -105,10 +112,14 @@ LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 # Mira's median turn sat at 4-5 s in every fixture room whatever changed.
 # So one room of the proposed arm is the default, it is held to the review
 # §7.7 targets the room can be held to, and the report prints the room log.
-#: xAI's Voice Agent rate per session minute (an estimate for the report;
-#: override with XAI_VOICE_COST_PER_MIN). A room runs two sessions: Mira and
-#: the fixture guest.
-VOICE_COST_PER_MIN = float(os.environ.get("XAI_VOICE_COST_PER_MIN") or 0.05)
+#: xAI's Voice Agent rate per session minute. Nov 3 2026: ONE owner,
+#: ``engine.tracking`` (an estimate until the invoice is read;
+#: XAI_VOICE_COST_PER_MIN overrides it there). A room runs two sessions:
+#: Mira and the fixture guest — and each room now writes a credit file
+#: (``costs.write_rehearsal_credit_file``) the cost rollup reads.
+from engine.tracking import voice_agent_rate_per_min  # noqa: E402
+
+VOICE_COST_PER_MIN = voice_agent_rate_per_min()
 SESSIONS_PER_ROOM = 2
 #: The shortest room that reaches the closing round. The room reads a
 #: planned length under 15 minutes as its 45-minute default (plannedMin), so
@@ -591,7 +602,22 @@ def measure_and_write(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
     path = out_dir / f"{arm}_{fixture['id']}_{index}_{str(run['id'])[:8]}.json"
     path.write_text(json.dumps(record, indent=2), encoding="utf-8")
     logger.info("wrote %s", path)
+    write_credit_file(run, record)
     return path
+
+
+def write_credit_file(run: Dict[str, Any], record: Dict[str, Any]) -> Optional[Path]:
+    """Nov 3 2026: the room's two Voice Agent sessions as a credit file
+    under the show's digests dir (``credit_usage_<date>_rehearsal_<id8>.json``),
+    which the rollup sums under its own ``rehearsal`` line. Never raises."""
+    try:
+        import costs
+        from shows import show_for
+        return costs.write_rehearsal_credit_file(show_for(run), record,
+                                                 sessions_per_room=SESSIONS_PER_ROOM)
+    except Exception:  # noqa: BLE001
+        logger.exception("rehearsal credit file not written (non-fatal)")
+        return None
 
 
 def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
@@ -1170,6 +1196,16 @@ def report_markdown(summary: Dict[str, Dict[str, Any]], result: Dict[str, Any],
             lines.append(f"| {ch['metric']} | {fmt(ch.get('proposed'))} | {fmt(ch.get('current'))} "
                          f"| {ch.get('rule', '')} | {ok} |")
         lines.append("")
+    beside = [(key, {arm: s["medians"].get(key) for arm, s in summary.items()})
+              for key in READ_BESIDE]
+    if any(v is not None for _, by_arm in beside for v in by_arm.values()):
+        lines.append("Read beside the verdict (never gating it):")
+        lines.append("")
+        lines.append("| metric | " + " | ".join(summary) + " |")
+        lines.append("|---|" + "---|" * len(summary))
+        for key, by_arm in beside:
+            lines.append(f"| {key} | " + " | ".join(fmt(by_arm[arm]) for arm in summary) + " |")
+        lines.append("")
     for arm, s in summary.items():
         lines.append(f"- **{arm}**: {s['rooms']} room(s), fixtures {', '.join(s['fixtures'])}"
                      + (f", listen: {s['listen_url']}" if s.get("listen_url") else ""))
@@ -1315,7 +1351,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     r.add_argument("--turn-silence-ms", type=int, default=None,
                    help="override the end-of-turn silence for this arm")
     r.add_argument("--reasoning-effort", default="",
-                   help="interview_runs.reasoning_effort for this arm (low|none|high)")
+                   help="interview_runs.reasoning_effort for this arm (none|low|medium|high)")
     r.add_argument("--tools", choices=("default", "none"), default="default")
     r.add_argument("--prompt-file", default="",
                    help="use this file as the prompt instead of compiling/looking one up")

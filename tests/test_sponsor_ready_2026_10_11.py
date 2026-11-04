@@ -49,6 +49,67 @@ def _source_files():
     yield ROOT / "scripts" / "build_share_cards.py"
     yield ROOT / "brand-refresh-2026" / "build_assets.py"
     yield from (ROOT / "brand-refresh-2026" / "assets").glob("*.svg")
+    # Nov 3 2026: the channel copy the operator pastes into YouTube Studio
+    # and the banner builder (the live banner read "100% AD-FREE" for weeks
+    # after the ban because its text lived in a script nobody re-ran).
+    yield ROOT / "docs" / "youtube_channel_copy.md"
+    yield ROOT / "scripts" / "build_youtube_banners.py"
+
+
+# Nov 3 2026: what a channel surface must never carry, beside "ad-free" — the
+# retired TTS vendor the @NerraRU About still named, the ZH track (off since
+# Oct 9) and any language count, a typed show count (the site computes it),
+# a phone call, a model identifier.
+_CHANNEL_COPY_BANNED_RE = re.compile(
+    r"elevenlabs"
+    r"|\bZH\b"
+    r"|\b(?:\d+|four|четыр\w*|quatre)\s+(?:languages?|язык\w*|langues?)\b"
+    r"|\b\d+\+?\s+(?:free\s+)?(?:shows?|podcasts?|émissions?|шоу|подкаст\w*)\b"
+    r"|\bphones?\b|\btéléphon\w*|\bтелефон\w*"
+    r"|\bgrok-\d",
+    re.IGNORECASE)
+
+
+def _channel_copy_surfaces():
+    yield ROOT / "docs" / "youtube_channel_copy.md"
+    for name in ("nerra-youtube-banner.svg", "nerra-youtube-banner-ru.svg",
+                 "nerra-youtube-banner-fr.svg"):
+        yield ROOT / "brand-refresh-2026" / "assets" / name
+
+
+class TestYouTubeChannelCopy:
+    """The copy a viewer sees before any video is written from engine.brand."""
+
+    def test_surfaces_exist(self):
+        for path in _channel_copy_surfaces():
+            assert path.is_file(), path
+
+    def test_no_channel_surface_carries_the_retired_claims(self):
+        hits = []
+        for path in _channel_copy_surfaces():
+            for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                if _CHANNEL_COPY_BANNED_RE.search(line) or _AD_FREE_RE.search(line):
+                    hits.append(f"{path.relative_to(ROOT)}:{n}: {line.strip()[:100]}")
+        assert not hits, "a channel surface carries a retired claim:\n" + "\n".join(hits)
+
+    def test_the_vocabulary_catches_each_shape(self):
+        for bad in ("Daily ad-free shows", "voiced with ElevenLabs", "EN · FR · RU · ZH",
+                    "4 languages", "four languages", "на 4 языках", "16 shows",
+                    "26 free shows", "Mira phones guests", "grok-4.3"):
+            assert _CHANNEL_COPY_BANNED_RE.search(bad) or _AD_FREE_RE.search(bad), bad
+        for good in ("STARSHIP · TESLA · ASTRONOMIE", "nerranetwork.com/fr/",
+                     "the full episodes and the Shorts", "EN FRANÇAIS"):
+            assert not (_CHANNEL_COPY_BANNED_RE.search(good) or _AD_FREE_RE.search(good)), good
+
+    def test_the_doc_carries_the_brand_strings_verbatim(self):
+        from engine import brand
+        doc = (ROOT / "docs" / "youtube_channel_copy.md").read_text(encoding="utf-8")
+        for channel in ("en", "ru", "fr"):
+            tagline, strap = brand.youtube_banner_lines(channel)
+            assert tagline in doc, (channel, tagline)
+            assert strap in doc, (channel, strap)
+        assert brand.network_promise_visitor() in doc
+        assert "Nerra Network" in doc
 
 
 class TestNoAdFreePromise:

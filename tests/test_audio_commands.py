@@ -102,10 +102,12 @@ def music_overlap(music_in: str, overlap_out: str) -> list:
 
 
 def music_fadeout(music_in: str, fadeout_out: str) -> list:
-    """18-second fadeout from 8s mark with logarithmic curve."""
+    """18-second fadeout from the 8 s mark. Nov 3 2026: ``-ss``/``-t`` are
+    INPUT options (before ``-i``) so the fade runs over the piece the output
+    keeps, and the curve reaches silence (``qsin``)."""
     return [
-        "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-ss", "8", "-t", "18",
-        "-af", "volume=0.4,afade=t=out:curve=log:st=0:d=18",
+        "ffmpeg", "-y", "-threads", "0", "-ss", "8", "-t", "18", "-i", music_in,
+        "-af", "volume=0.4,afade=t=out:curve=qsin:st=0:d=18",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         fadeout_out,
@@ -117,7 +119,7 @@ def music_outro(music_in: str, outro_out: str) -> list:
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-stream_loop", "-1", "-i", music_in, "-t", "30",
-        "-af", "volume=0.4,afade=t=in:curve=log:st=0:d=2,afade=t=out:curve=log:st=27:d=3",
+        "-af", "volume=0.4,afade=t=in:curve=log:st=0:d=2,afade=t=out:curve=qsin:st=27:d=3",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         outro_out,
@@ -160,7 +162,10 @@ def final_mix(
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mix][voice_sc];"
+        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mono][voice_sc];"
+        # Nov 3 2026: the voice branch is stereo before amix, so the theme's
+        # image survives (every shipped file had been dual-mono).
+        "[voice_mono]aformat=channel_layouts=stereo[voice_mix];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
@@ -294,7 +299,7 @@ class TestMusicSegments:
         assert cmd[cmd.index("-t") + 1] == "18"
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.4" in af
-        assert "afade=t=out:curve=log:st=0:d=18" in af
+        assert "afade=t=out:curve=qsin:st=0:d=18" in af
 
     def test_outro_stream_loop_and_fades(self):
         cmd = music_outro("/music.mp3", "/outro.mp3")
@@ -304,7 +309,7 @@ class TestMusicSegments:
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.4" in af
         assert "afade=t=in:curve=log:st=0:d=2" in af
-        assert "afade=t=out:curve=log:st=27:d=3" in af
+        assert "afade=t=out:curve=qsin:st=27:d=3" in af
 
 
 class TestSilenceGeneration:
@@ -443,7 +448,7 @@ class TestMusicTimingConstants:
         # Fade in: 0-2s
         assert "afade=t=in:curve=log:st=0:d=2" in af
         # Fade out: 27-30s (starts at 27, 3s duration)
-        assert "afade=t=out:curve=log:st=27:d=3" in af
+        assert "afade=t=out:curve=qsin:st=27:d=3" in af
 
 
 class TestConcatListContent:
@@ -517,6 +522,22 @@ class TestEngineCommandBuilderParity:
         (the silent config-drop class from the June 2026 YouTube pass)."""
         from engine.config import AudioConfig
         assert AudioConfig().voice_denoise is True
+
+    def test_voice_dynamics_legacy_is_this_reference_and_glue_is_two_to_one(self):
+        """Nov 3 2026: the compressor is a NAMED stage (engine.audio
+        VOICE_DYNAMICS). ``legacy`` is this file's reference chain byte for
+        byte — the 4:1 every show has shipped — and ``glue`` is the 2:1
+        soft-knee trial; both keep loudnorm -> acompressor -> alimiter."""
+        from engine.audio import VOICE_DYNAMICS, voice_chain_filters
+
+        ref = voice_normalization_full("/tmp/v.mp3", "/tmp/o.mp3")
+        assert voice_chain_filters(dynamics="legacy") == ref[ref.index("-af") + 1]
+        assert VOICE_DYNAMICS["legacy"] in ref[ref.index("-af") + 1]
+        glue = voice_chain_filters(dynamics="glue")
+        assert "acompressor=" in glue and "ratio=2" in glue and "knee=6" in glue
+        assert "ratio=4" not in glue
+        for af in (voice_chain_filters(dynamics="legacy"), glue):
+            assert af.index("loudnorm") < af.index("acompressor") < af.index("alimiter")
 
     def test_voice_norm_fallback_matches(self):
         from engine.audio import _voice_norm_fallback_cmd

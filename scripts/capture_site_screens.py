@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Refresh the committed nerranetwork.com screenshots in assets/site_screens/.
 
-The outro/end-card showcase (``engine/promo_card.py``) composites real
-screenshots of the public site into the closing seconds of every long-form
-video and Short. Those screenshots are COMMITTED assets — the render
-pipeline never hits the network for them — so this script is the one
-place they get refreshed when the site's look changes.
+The screenshots are COMMITTED assets refreshed only by this script, and
+since Nov 3 2026 nothing in the render pipeline reads them: the outro card
+and the Shorts end-card strip render from the show registry
+(``engine/promo_card.py``). They stay for whichever showcase design the
+operator keeps — a capture that fails must say so, because the one that
+ran on Aug 9 2026 was the only one that ever did: the monthly workflow's
+Nov 1 run was green with every page failed and committed nothing, and the
+Aug 9 homepage ("ad-free", "4 languages") shipped on every video for 86
+days.
 
 Usage (operator laptop or a CI job with playwright + chromium):
 
@@ -13,10 +17,13 @@ Usage (operator laptop or a CI job with playwright + chromium):
     python scripts/capture_site_screens.py            # all pages
     python scripts/capture_site_screens.py --only network_home
 
-Best-effort by design: a missing playwright install exits 0 with a clear
-message (so an accidental CI wiring never fails a pipeline); individual
-page failures are logged and skipped. Output is downscaled to 1280px wide
-before writing so the repo cost stays ~0.4 MB/page.
+Exit status is the record: 0 only when at least one page was written;
+a missing playwright or a run that captured NOTHING exits non-zero with a
+``::error::`` annotation (the Oct 28 2026 class — a green step that fails
+every run). A page that fails while others succeed is a ``::warning::``
+naming the page; the pages that succeeded are still written. Output is
+downscaled to 1280px wide before writing so the repo cost stays
+~0.4 MB/page.
 
 The consent banner is suppressed by pre-seeding the site's own
 ``nn_consent_v1`` localStorage key (state=rejected) before navigation —
@@ -36,11 +43,9 @@ OUT_DIR = PROJECT_ROOT / "assets" / "site_screens"
 
 BASE = "https://nerranetwork.com"
 
-# name -> URL path. ``show_<slug>`` names are what
-# engine.promo_card.site_screenshot_for() resolves; ``<channel>_<slug>``
-# (e.g. ru_spacex) wins for that channel's dubs. Add a page here + rerun
-# to give another show its own page card (anything absent falls back to
-# the network_home shot, so this list only needs the shows that earn it).
+# name -> URL path. ``show_<slug>`` names one show's page; ``<channel>_<slug>``
+# (e.g. ru_spacex) a channel lander. Add a page here + rerun to capture
+# another page.
 PAGES = {
     "network_home": "/",
     "show_spacex": "/spacex.html",
@@ -61,25 +66,28 @@ try {
 """
 
 
-def capture(only: str = "") -> int:
+def capture(only: str = "", out_dir: Path = OUT_DIR) -> int:
+    """Capture the pages into ``out_dir``; the return value is the exit status."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        print("capture_site_screens: playwright not installed — skipping "
-              "(pip install playwright && playwright install chromium)")
-        return 0
+        print("::error::capture_site_screens: playwright not installed — "
+              "nothing captured (pip install playwright && playwright "
+              "install chromium)")
+        return 1
     try:
         from PIL import Image
     except ImportError:
         Image = None  # noqa: N806 — downscale becomes a no-op
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     pages = {k: v for k, v in PAGES.items() if not only or k == only}
     if not pages:
-        print(f"capture_site_screens: no page named {only!r}")
+        print(f"::error::capture_site_screens: no page named {only!r}")
         return 1
 
     captured = 0
+    failed = []
     with sync_playwright() as p:
         browser = p.chromium.launch()
         ctx = browser.new_context(viewport=VIEWPORT, device_scale_factor=2)
@@ -101,10 +109,12 @@ def capture(only: str = "") -> int:
                     "x": 0, "y": 0,
                     "width": VIEWPORT["width"], "height": VIEWPORT["height"],
                 })
-            except Exception as exc:  # noqa: BLE001 — per-page best-effort
-                print(f"capture_site_screens: {name} failed: {exc}")
+            except Exception as exc:  # noqa: BLE001 — named, never silent
+                print(f"::warning::capture_site_screens: {name} ({url}) "
+                      f"failed: {exc}")
+                failed.append(name)
                 continue
-            out = OUT_DIR / f"{name}.png"
+            out = out_dir / f"{name}.png"
             if Image is not None:
                 im = Image.open(io.BytesIO(png))
                 if im.width > TARGET_WIDTH:
@@ -119,7 +129,12 @@ def capture(only: str = "") -> int:
             captured += 1
             print(f"capture_site_screens: wrote {out}")
         browser.close()
-    print(f"capture_site_screens: {captured}/{len(pages)} pages captured")
+    print(f"capture_site_screens: {captured}/{len(pages)} pages captured"
+          + (f" (failed: {', '.join(failed)})" if failed else ""))
+    if captured == 0:
+        print("::error::capture_site_screens: no page was captured — the "
+              "committed screenshots were NOT refreshed")
+        return 1
     return 0
 
 

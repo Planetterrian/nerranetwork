@@ -733,9 +733,21 @@ def build_long_form_metadata(
     if audio_url:
         tail_pieces.append(f"Direct audio: {audio_url}")
     if photo_attribution:
-        cleaned = [line.strip() for line in photo_attribution if line.strip()]
-        if cleaned:
-            tail_pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
+        # Nov 3 2026: every description credited "Photos via Pexels:" over
+        # two identical Grok lines (run_show appends the Grok credit at two
+        # sites; no show has used Pexels since June). Label the block by
+        # its source and say each credit once.
+        cleaned: List[str] = []
+        for line in photo_attribution:
+            line = (line or "").strip()
+            if line and line not in cleaned:
+                cleaned.append(line)
+        generated = [c for c in cleaned if "grok" in c.lower()]
+        photos = [c for c in cleaned if c not in generated]
+        if generated:
+            tail_pieces.append("Imagery:\n" + "\n".join(generated))
+        if photos:
+            tail_pieces.append("Photos via Pexels:\n" + "\n".join(photos))
     if footage_attribution:
         cleaned = [line.strip() for line in footage_attribution
                    if line.strip()]

@@ -645,13 +645,37 @@ def notify_operator(text: str, *, critical: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 def llm(prompt: str, *, temperature: float = 0.5, max_tokens: int = 3500,
-        web_search: bool = False) -> str:
+        web_search: bool = False, step: str = "voices_llm") -> str:
+    """One model call. Returns the text; the usage goes to the run's
+    credit tracker (``pipelines/voices/costs.py``) under ``step``.
+
+    Nov 3 2026: this unpacked ``(text, _meta)`` and dropped the meta, so
+    every editorial pass, grade, brief and edit the show ever ran was billed
+    and recorded nowhere. ``costs.record_llm`` normalises the SDK usage
+    object first — ``engine.tracking.record_llm_usage_from_meta`` requires a
+    dict and otherwise returns False silently, the $0 path.
+    """
     from digests.xai_grok import grok_generate_text
-    text, _meta = grok_generate_text(
+    text, meta = grok_generate_text(
         prompt=prompt, temperature=temperature, max_tokens=max_tokens,
         enable_web_search=web_search,
     )
+    try:
+        try:
+            import costs
+        except ImportError:  # imported as pipelines.voices.common (the producer)
+            from pipelines.voices import costs
+        costs.record_llm(step, meta)
+    except Exception:  # noqa: BLE001 — accounting never breaks a call
+        logger.debug("LLM usage not recorded", exc_info=True)
     return (text or "").strip()
+
+
+def _brand_spoken_claim() -> str:
+    """engine.brand.MIRA_SPOKEN_CLAIM, imported lazily so the Voices
+    pipeline's import graph stays independent of the site engine."""
+    from engine.brand import MIRA_SPOKEN_CLAIM
+    return MIRA_SPOKEN_CLAIM
 
 
 def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
@@ -670,6 +694,9 @@ def show_prompt_subs(show: ShowRef = None) -> Dict[str, str]:
         "closing_question": s.closing_question,
         "cohost_name": cohost_name(),
         "cohost_block": "",
+        # Nov 3 2026: the one clause she may speak about what the show is;
+        # engine.brand owns it (the prompts had typed a broader claim).
+        "mira_spoken_claim": _brand_spoken_claim(),
     }
 
 

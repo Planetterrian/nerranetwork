@@ -6,6 +6,7 @@
  *   - Newsletter signup (Buttondown form submit)
  *   - Podcast directory click (Apple, Spotify, RSS)
  *   - Episode play (audio element play event)
+ *   - Real-user vitals (one web_vital event per metric per page)
  *
  * Cookie consent is managed via Google Consent Mode v2 — gtag is
  * loaded but ad/analytics storage is denied until the user accepts.
@@ -27,34 +28,6 @@
             // Never let tracking break the page
             if (window.console) console.warn('Tracking failed:', e);
         }
-    }
-
-    // ----- Newsletter signup tracking -----
-    // Buttondown forms post to a target popup window — we tag them
-    // before submission so they can be associated with the visitor.
-    function attachNewsletterTracking() {
-        var forms = document.querySelectorAll('form[action*="buttondown.com/api/emails/embed-subscribe"]');
-        forms.forEach(function (form) {
-            form.addEventListener('submit', function () {
-                var tags = [];
-                form.querySelectorAll('input[name="tag"]:checked').forEach(function (cb) {
-                    tags.push(cb.value);
-                });
-                // transport_type beacon: the form navigates to
-                // Buttondown immediately after submit, and non-beacon
-                // gtag hits fired during unload are frequently lost —
-                // fatal for an Ads campaign optimizing on this
-                // conversion (June 2026 marketing-readiness review).
-                track('newsletter_signup', {
-                    tags: tags.join(','),
-                    tag_count: tags.length,
-                    location: window.location.pathname,
-                    transport_type: 'beacon',
-                });
-                // No Ads send_to conversion labels — GA4 key events are
-                // imported into Google Ads as conversions.
-            });
-        });
     }
 
     // ----- Outbound podcast directory tracking -----
@@ -133,12 +106,75 @@
         });
     }
 
+    // ----- Real-user vitals (Nov 3 2026) -----
+    // LCP, CLS and INP from the browser's own PerformanceObserver — no
+    // library — sent once per page when it is hidden, as GA4 `web_vital`
+    // events with name / rating / page_type. Every speed number the network
+    // had was a lab number; this is what a visitor's device saw. Vitals are
+    // not PII and ride the same cookieless ping as episode_play under
+    // denied consent. scripts/fetch_ga4_stats.py reads them back
+    // (ENGAGEMENT_EVENTS + the web_vitals report) — an event nobody asks for
+    // is not a metric.
+    function attachWebVitals() {
+        if (typeof PerformanceObserver !== 'function') return;
+        var vitals = {};
+        function observe(type, onEntry, extra) {
+            try {
+                var po = new PerformanceObserver(function (list) {
+                    list.getEntries().forEach(onEntry);
+                });
+                var opts = { type: type, buffered: true };
+                if (extra) for (var k in extra) opts[k] = extra[k];
+                po.observe(opts);
+            } catch (e) { /* entry type unsupported here */ }
+        }
+        observe('largest-contentful-paint', function (e) { vitals.LCP = e.startTime; });
+        observe('layout-shift', function (e) {
+            if (!e.hadRecentInput) vitals.CLS = (vitals.CLS || 0) + e.value;
+        });
+        observe('event', function (e) {
+            if (e.interactionId && e.duration > (vitals.INP || 0)) vitals.INP = e.duration;
+        }, { durationThreshold: 40 });
+        // web.dev thresholds: [good upper bound, needs-improvement upper bound].
+        var LIMITS = { LCP: [2500, 4000], CLS: [0.1, 0.25], INP: [200, 500] };
+        function pageType() {
+            var p = window.location.pathname;
+            if (p === '/' || p === '/index.html') return 'home';
+            if (p.indexOf('/blog/') === 0) return 'post';
+            if (p.indexOf('/topics/') === 0) return 'topic';
+            if (/^\/(ru|fr)\/index\.html$/.test(p)) return 'hub';
+            return 'page';
+        }
+        var sent = false;
+        function send() {
+            if (sent) return;
+            sent = true;
+            Object.keys(LIMITS).forEach(function (name) {
+                var v = vitals[name];
+                if (typeof v !== 'number') return;
+                var lim = LIMITS[name];
+                track('web_vital', {
+                    transport_type: 'beacon',
+                    non_interaction: true,
+                    name: name,
+                    rating: v <= lim[0] ? 'good' : (v <= lim[1] ? 'needs-improvement' : 'poor'),
+                    metric_value: name === 'CLS' ? Math.round(v * 1000) / 1000 : Math.round(v),
+                    page_type: pageType(),
+                });
+            });
+        }
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') send();
+        });
+        window.addEventListener('pagehide', send);
+    }
+
     // ----- Init on DOM ready -----
     function init() {
-        attachNewsletterTracking();
         attachOutboundTracking();
         attachCheckoutTracking();
         attachAudioTracking();
+        attachWebVitals();
     }
 
     if (document.readyState === 'loading') {
