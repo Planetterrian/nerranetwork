@@ -72,7 +72,8 @@ on:
     - cron: '23 9 * * *'
 
 permissions:
-  contents: read
+  # write: the last step commits each room's credit file (Nov 3 2026).
+  contents: write
 
 concurrency:
   group: nerra-voices-rehearsal
@@ -249,3 +250,14 @@ jobs:
           path: outputs/rehearsals/
           retention-days: 14
           if-no-files-found: ignore
+      # Nov 3 2026: each room's two Voice Agent sessions as a credit file
+      # (pipelines/voices/costs.py), summed by the cost rollup under its own
+      # "rehearsal" line. A clean no-op when no room ran.
+      - name: Commit the rooms' credit files
+        if: ${{ always() }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/age_of_ai/credit_usage_*.json
+            digests/nerra_voices/credit_usage_*.json
+          commit-message: "Nerra Voices: rehearsal credit files"

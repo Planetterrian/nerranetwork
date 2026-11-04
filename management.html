@@ -2377,7 +2377,7 @@
 
   // Cost
   {
-    const card = sectionCard("Cost", "every credit file: Grok, TTS, images, search, dub tracks, motion clips, reviewer");
+    const card = sectionCard("Cost", "every credit file: Grok, TTS, images, search, dub tracks, motion clips, reviewer, Mira's rooms");
     const n7 = cost.network_last_7_days || {};
     card.appendChild(h("div", { class: "headline",
       html: money(n7.total) + "<small>7d</small>&nbsp;&nbsp;" +
@@ -2409,7 +2409,11 @@
       " · <span class='k'>Search</span> " + moneyOrDash(n7.search) +
       " · <span class='k'>Multilingual</span> " + moneyOrDash(n7.multilingual) +
       " · <span class='k'>Motion clips</span> " + moneyOrDash(n7.motion) +
-      " · <span class='k'>Reviewer</span> " + moneyOrDash(n7.review) }));
+      " · <span class='k'>Reviewer</span> " + moneyOrDash(n7.review) +
+      // Nov 3 2026: Mira's Voice Agent minutes (an estimated rate until the
+      // xAI invoice is read) and the rehearsal rooms, which are never show cost.
+      " · <span class='k'>Voice Agent</span> " + moneyOrDash(n7.voice_agent) +
+      " · <span class='k'>Rehearsals</span> " + moneyOrDash(n7.rehearsal) }));
     const proj = cost.projections || {};
     card.appendChild(h("p", { class: "fine-list", html:
       "<span class='k'>" + fmt(n7.files != null ? n7.files : n7.episodes) + "</span> credit files · " +
@@ -2451,6 +2455,48 @@
           text: money((per[slug].last_30_days || {}).total) + " · 30d" }));
         card.appendChild(row);
       });
+    }
+    opsGrid.appendChild(card);
+  }
+
+  // Mira's rooms (Nov 3 2026): api/voices_metrics.json through payload.voices.
+  // Every figure goes through fmtOrDash / moneyOrDash — a table the nightly
+  // could not read is null on the file and a dash here, never 0.
+  {
+    const vo = data.voices || {};
+    const card = sectionCard("Mira's rooms", "guest survey · grades · bookings to published · cost per room");
+    const moneyOrDash = (n) => (n === null || n === undefined || n === "") ? "—" : money(n);
+    if (!vo.configured) {
+      card.appendChild(h("p", { class: "fine-list", text: vo.note ||
+        "Not built yet — nightly runs scripts/build_voices_metrics.py." }));
+    } else {
+      const shows = vo.shows || {};
+      Object.keys(shows).forEach((slug) => {
+        const s = shows[slug] || {};
+        const sv = s.survey || {};
+        const last = (s.grades || [])[0] || {};
+        const y = s.yield || {};
+        const month = (y.months || {})[y.current_month] || {};
+        const cost = s.cost || {};
+        card.appendChild(h("div", { class: "headline", html:
+          esc(slug) + "&nbsp;&nbsp;" +
+          (sv.mean != null ? "★ " + Number(sv.mean).toFixed(2) : "—") +
+          "<small>survey mean · n " + fmtOrDash(sv.answered) + "</small>" }));
+        card.appendChild(h("p", { class: "fine-list", html:
+          "Last graded room: overall <span class='k'>" + fmtOrDash(last.overall) +
+          "</span> · pacing <span class='k'>" + fmtOrDash(last.pacing) + "</span>" +
+          (last.date ? " · " + esc(last.date) : "") +
+          " · this month bookings → published <span class='k'>" + fmtOrDash(month.booked) +
+          " → " + fmtOrDash(month.published) + "</span>" +
+          " · cost per room <span class='k'>" + moneyOrDash(cost.median_usd) + "</span>" +
+          (cost.rooms_costed ? " (" + fmt(cost.rooms_costed) + " costed · Voice Agent rate estimated)" : "") }));
+      });
+      if ((vo.unreadable || []).length) {
+        card.appendChild(h("p", { class: "platform-note", text:
+          "Not read this build (null, not zero): " + vo.unreadable.join(", ") }));
+      }
+      if (vo.generated_at) card.appendChild(h("p", { class: "fine-list",
+        text: "built " + ageText(vo.generated_at) + staleNote(vo.generated_at) }));
     }
     opsGrid.appendChild(card);
   }

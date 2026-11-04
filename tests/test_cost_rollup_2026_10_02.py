@@ -181,6 +181,74 @@ class TestAggregateCostsBuckets:
             assert word in note
 
 
+class TestVoiceRoomKinds:
+    """Nov 3 2026 (voices-spend-and-metrics): Mira's rooms are credit files
+    too. ``room`` files carry ``services.voice_agent`` and count as an
+    episode only once ``published: true`` (set by the nightly metrics
+    builder from interviews.status); ``rehearsal`` files sum under their
+    own line so a fixture room never reads as show cost."""
+
+    def _write(self, ddir: Path, name: str, payload: dict) -> None:
+        ddir.mkdir(parents=True, exist_ok=True)
+        (ddir / name).write_text(json.dumps(payload), encoding="utf-8")
+
+    @pytest.fixture
+    def rooms(self, tmp_path):
+        today = _dt.date.today().isoformat()
+        ddir = tmp_path / "digests" / "age_of_ai"
+        self._write(ddir, f"credit_usage_{today}_room_0f3c9a1e.json", {
+            "date": today, "kind": "room", "published": True,
+            "services": {
+                "grok_api": {"total_cost_usd": 0.12},
+                "tts_api": {"estimated_cost_usd": 0.0},
+                "search_api": {"calls": 3, "estimated_cost_usd": 0.015},
+                "voice_agent": {"minutes": 44.0, "sessions": 1, "rate_per_min": 0.05,
+                                "basis": "estimated", "estimated_cost_usd": 2.2},
+            },
+            "total_estimated_cost_usd": 2.335,
+        })
+        self._write(ddir, f"credit_usage_{today}_room_1a2b3c4d.json", {
+            "date": today, "kind": "room", "published": False,
+            "services": {"grok_api": {"total_cost_usd": 0.0},
+                         "tts_api": {"estimated_cost_usd": 0.0},
+                         "voice_agent": {"minutes": 10.0, "sessions": 1, "estimated_cost_usd": 0.5}},
+            "total_estimated_cost_usd": 0.5,
+        })
+        self._write(ddir, f"credit_usage_{today}_rehearsal_9b2d4e6f.json", {
+            "date": today, "kind": "rehearsal", "published": False,
+            "services": {"grok_api": {"total_cost_usd": 0.0},
+                         "tts_api": {"estimated_cost_usd": 0.0},
+                         "voice_agent": {"minutes": 30.6, "sessions": 2, "estimated_cost_usd": 1.53}},
+            "total_estimated_cost_usd": 1.53,
+        })
+        return tmp_path
+
+    def test_kinds(self, rooms):
+        gd = _load_dashboard_module()
+        ddir = rooms / "digests" / "age_of_ai"
+        kinds = {gd._credit_file_kind(p, "age_of_ai") for p in ddir.glob("*_room_*.json")}
+        assert kinds == {"room"}
+        assert gd._credit_file_kind(next(ddir.glob("*_rehearsal_*.json")), "age_of_ai") == "rehearsal"
+        assert gd._credit_file_kind(Path("credit_usage_2026-11-03_ep015.json"), "age_of_ai") == "episode"
+
+    def test_buckets_and_episode_counting(self, rooms):
+        gd = _load_dashboard_module()
+        out = gd.aggregate_costs(rooms, [{"slug": "age_of_ai", "name": "The Age of AI"}])
+        net7 = out["network_last_7_days"]
+        assert net7["voice_agent"] == pytest.approx(2.7)      # the two rooms, never the rehearsal
+        assert net7["rehearsal"] == pytest.approx(1.53)
+        assert net7["total"] == pytest.approx(2.335 + 0.5 + 1.53)
+        assert net7["files"] == 3
+        assert net7["episodes"] == 1                           # the published room only
+        show = out["per_show"]["age_of_ai"]["last_7_days"]
+        assert show["episodes"] == 1 and show["rehearsal"] == pytest.approx(1.53)
+        assert out["projections"]["avg_cost_per_episode_usd"] == pytest.approx(2.335 + 0.5 + 1.53)
+
+    def test_the_card_prints_the_two_lines(self):
+        src = (REPO_ROOT / "management.html").read_text(encoding="utf-8")
+        assert "n7.voice_agent" in src and "n7.rehearsal" in src
+
+
 class TestManagementCostCard:
     """The card renders the new lines, and never fabricates a $0.00."""
 

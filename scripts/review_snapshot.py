@@ -254,40 +254,80 @@ def _voices_rows(table: str, query: str) -> list[dict]:
         return []
 
 
-def _interview_episodes(out_dir: Path, episodes: int) -> list[tuple[int, Path]]:
-    return _latest([p for p in out_dir.glob("*_Ep*.md")], episodes)
+#: Nov 3 2026: the nightly's ``api/voices_metrics.json`` (scripts/
+#: build_voices_metrics.py) is the one place the dashboard and this snapshot
+#: read Mira's rooms from, once the file has existed a week and is fresh;
+#: before that, and whenever it is stale, the live Supabase read below is
+#: the fallback, so the review agent never loses the numbers.
+VOICES_METRICS_FILE = ROOT / "api" / "voices_metrics.json"
+VOICES_METRICS_READY_DAYS = 7
+VOICES_METRICS_FRESH_DAYS = 3
 
 
-def _digest_head(path: Path) -> tuple[str, str]:
-    """The hook line and the one-line summary of a digest."""
-    hook = summary = ""
-    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = raw.strip()
-        if not hook and line.startswith("> **"):
-            hook = line.strip("> *").strip()
-        elif not summary and line.startswith("**What You Need to Know:**"):
-            summary = line.split(":**", 1)[-1].strip()
-        if hook and summary:
-            break
-    return hook, summary
+def _parse_stamp(value):
+    """A tz-aware datetime from an ISO stamp, or None."""
+    from datetime import datetime, timezone
+    try:
+        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
 
-def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
-    """The craft record of an interview show: per-episode grade and audio
-    measures, the guest's own rating, and the standing lessons."""
-    lines = [f"# Review snapshot: {slug}", "",
-             f"Output dir: `{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}` "
-             "· interview show (Nerra Voices pipeline; no _tts.txt, chapters or credit "
-             "files are expected — the record is the digest and Supabase)", ""]
-    found = _interview_episodes(out_dir, episodes) if out_dir.exists() else []
-    lines.append(f"## Published episodes (last {len(found)})")
-    if not found:
-        lines.append("- (no episode digests committed yet)")
-    for num, path in found:
-        hook, summary = _digest_head(path)
-        lines.append(f"- Ep{num:03d} `{path.name}`: {hook or summary or '(no hook line)'}")
+def voices_metrics_for(slug: str, now=None, path: Path = VOICES_METRICS_FILE) -> dict | None:
+    """The show's block of api/voices_metrics.json when the file has
+    existed VOICES_METRICS_READY_DAYS and was built within
+    VOICES_METRICS_FRESH_DAYS; otherwise None (the live read is used)."""
+    from datetime import datetime, timedelta, timezone
+    import json
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    now = now or datetime.now(timezone.utc)
+    first = _parse_stamp(data.get("first_generated_at") or data.get("generated_at"))
+    built = _parse_stamp(data.get("generated_at"))
+    if not first or not built:
+        return None
+    if now - first < timedelta(days=VOICES_METRICS_READY_DAYS):
+        return None
+    if now - built > timedelta(days=VOICES_METRICS_FRESH_DAYS):
+        return None
+    block = (data.get("shows") or {}).get(slug)
+    return block if isinstance(block, dict) else None
+
+
+def _craft_lines_from_file(block: dict) -> list[str]:
+    """The grades, audio medians and survey as api/voices_metrics.json holds them."""
+    lines = []
+    grades = block.get("grades") or []
+    lines.append("## Grades and audio measures (api/voices_metrics.json, "
+                 f"last {len(grades)} graded rooms)")
+    if not grades:
+        lines.append("- (no graded rooms on file)")
+    for g in grades:
+        lines.append(f"- {str(g.get('date') or '')[:10]} overall {g.get('overall')} "
+                     f"· pacing {g.get('pacing')} · warmth {g.get('warmth')}")
+    medians = (block.get("audio") or {}).get("medians") or {}
+    cells = [f"{label} {medians[key]} (target {target})"
+             for key, label, target in _AUDIO_METRIC_ROWS if medians.get(key) is not None]
+    if cells:
+        lines.append("- medians over those rooms: " + " · ".join(cells))
     lines.append("")
+    survey = block.get("survey") or {}
+    lines.append("## The guest's own rating (24 h survey, api/voices_metrics.json)")
+    if survey.get("answered"):
+        lines.append(f"- {survey['answered']} answered · mean {survey.get('mean')} · "
+                     f"share 4 or 5 {survey.get('share_4_plus')}")
+    else:
+        lines.append("- (no survey answers on file)")
+    lines.append("")
+    return lines
 
+
+def _craft_lines_live(slug: str, episodes: int) -> list[str]:
+    """The same sections read live from Supabase (the fallback)."""
+    lines = []
     grades = _voices_rows("episode_grades",
                           f"show=eq.{slug}&order=created_at.desc&limit={episodes}")
     lines.append(f"## Grades and audio measures (last {len(grades)} graded rooms)")
@@ -325,6 +365,48 @@ def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
     else:
         lines.append("- (no survey answers read)")
     lines.append("")
+    return lines
+
+
+def _interview_episodes(out_dir: Path, episodes: int) -> list[tuple[int, Path]]:
+    return _latest([p for p in out_dir.glob("*_Ep*.md")], episodes)
+
+
+def _digest_head(path: Path) -> tuple[str, str]:
+    """The hook line and the one-line summary of a digest."""
+    hook = summary = ""
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not hook and line.startswith("> **"):
+            hook = line.strip("> *").strip()
+        elif not summary and line.startswith("**What You Need to Know:**"):
+            summary = line.split(":**", 1)[-1].strip()
+        if hook and summary:
+            break
+    return hook, summary
+
+
+def interview_show_section(slug: str, out_dir: Path, episodes: int = 10) -> str:
+    """The craft record of an interview show: per-episode grade and audio
+    measures, the guest's own rating, and the standing lessons."""
+    lines = [f"# Review snapshot: {slug}", "",
+             f"Output dir: `{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}` "
+             "· interview show (Nerra Voices pipeline; no _tts.txt, chapters or credit "
+             "files are expected — the record is the digest and Supabase)", ""]
+    found = _interview_episodes(out_dir, episodes) if out_dir.exists() else []
+    lines.append(f"## Published episodes (last {len(found)})")
+    if not found:
+        lines.append("- (no episode digests committed yet)")
+    for num, path in found:
+        hook, summary = _digest_head(path)
+        lines.append(f"- Ep{num:03d} `{path.name}`: {hook or summary or '(no hook line)'}")
+    lines.append("")
+
+    # Nov 3 2026: one number for the dashboard and the review agent — the
+    # nightly file once it has existed a week; the live read until then.
+    block = voices_metrics_for(slug)
+    lines.extend(_craft_lines_from_file(block) if block is not None
+                 else _craft_lines_live(slug, episodes))
 
     active_rows = _voices_rows("show_lessons",
                                f"status=eq.active&show=in.({slug},network)&order=decided_at.desc&limit=30")

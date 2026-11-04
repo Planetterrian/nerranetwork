@@ -193,11 +193,25 @@ def too_short(run: dict, interview: dict) -> bool:
     return 0 < seconds < MIN_INTERVIEW_SEC
 
 
+def write_room_credit(run: dict, interview: dict, show) -> None:
+    """Nov 3 2026: the room's credit file (``pipelines/voices/costs.py``) —
+    the editorial passes this process ran, the room's Voice Agent minutes,
+    its research lookups. ``published`` is false here; the nightly metrics
+    builder sets it from ``interviews.status``. Never fails the episode."""
+    try:
+        import costs
+        costs.write_room_credit_file(show, run, interview=interview, published=False)
+    except Exception:  # noqa: BLE001
+        logger.exception("room credit file failed (non-fatal)")
+
+
 def handle_too_short(run: dict, interview: dict, app: dict) -> int:
     """No package, no email to the guest: the interview is marked missed and
     Patrick is told, so he can reschedule it himself."""
     show = show_for(interview, app)
     sb_update("interviews", f"id=eq.{interview['id']}", {"status": "missed"})
+    # The room ran, so its minutes were spent (Nov 3 2026).
+    write_room_credit(run, interview, show)
     notify_operator(show.slack(
         f"{app.get('name') or 'the guest'}'s session lasted {run.get('duration_sec')} seconds, "
         "which is not an interview, so no episode was made and nothing was sent to them. "
@@ -1303,7 +1317,7 @@ def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
             if field == "transcript_cleaned":
                 budget = max(6000, min(32000, len(transcript) // 2))
             text = llm(base_prompt + strictness.format(error=error),
-                       temperature=0.3, max_tokens=budget)
+                       temperature=0.3, max_tokens=budget, step="editorial_passes")
             try:
                 candidate = parse_json_lenient(text) if field in JSON_PASSES else text
                 if field == "chapter_markers":
@@ -1725,7 +1739,7 @@ def main() -> int:
                     ensure_ascii=False),
                 audio_basis=audio_metrics_basis_text(metrics),
                 cleaned_transcript=cleaned,
-            ), temperature=0.3, max_tokens=2500)) or {}
+            ), temperature=0.3, max_tokens=2500, step="interview_retro")) or {}
             if not isinstance(graded, dict):
                 graded = {}
             proposed = save_proposed_lessons(
@@ -1752,6 +1766,8 @@ def main() -> int:
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"topical_show_fits": package["topical_show_fits"]})
         __import__("guest_thanks").after_room(run, interview, app, package.get("transcript_cleaned") or transcript, pkg)  # Oct 21 2026: the thank-you within the hour (or a hello's agenda); never raises
+        # Nov 3 2026: what this room cost, written where the spend happened.
+        write_room_credit(run, interview, show)
 
     # Oct 5 2026 (Piper Martz): a closing session is not an episode of its
     # own. The cut step splices it onto the edit of the interview it finishes

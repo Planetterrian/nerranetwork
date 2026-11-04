@@ -112,10 +112,14 @@ LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 # Mira's median turn sat at 4-5 s in every fixture room whatever changed.
 # So one room of the proposed arm is the default, it is held to the review
 # §7.7 targets the room can be held to, and the report prints the room log.
-#: xAI's Voice Agent rate per session minute (an estimate for the report;
-#: override with XAI_VOICE_COST_PER_MIN). A room runs two sessions: Mira and
-#: the fixture guest.
-VOICE_COST_PER_MIN = float(os.environ.get("XAI_VOICE_COST_PER_MIN") or 0.05)
+#: xAI's Voice Agent rate per session minute. Nov 3 2026: ONE owner,
+#: ``engine.tracking`` (an estimate until the invoice is read;
+#: XAI_VOICE_COST_PER_MIN overrides it there). A room runs two sessions:
+#: Mira and the fixture guest — and each room now writes a credit file
+#: (``costs.write_rehearsal_credit_file``) the cost rollup reads.
+from engine.tracking import voice_agent_rate_per_min  # noqa: E402
+
+VOICE_COST_PER_MIN = voice_agent_rate_per_min()
 SESSIONS_PER_ROOM = 2
 #: The shortest room that reaches the closing round. The room reads a
 #: planned length under 15 minutes as its 45-minute default (plannedMin), so
@@ -598,7 +602,22 @@ def measure_and_write(*, arm: str, fixture: Dict[str, Any], run: Dict[str, Any],
     path = out_dir / f"{arm}_{fixture['id']}_{index}_{str(run['id'])[:8]}.json"
     path.write_text(json.dumps(record, indent=2), encoding="utf-8")
     logger.info("wrote %s", path)
+    write_credit_file(run, record)
     return path
+
+
+def write_credit_file(run: Dict[str, Any], record: Dict[str, Any]) -> Optional[Path]:
+    """Nov 3 2026: the room's two Voice Agent sessions as a credit file
+    under the show's digests dir (``credit_usage_<date>_rehearsal_<id8>.json``),
+    which the rollup sums under its own ``rehearsal`` line. Never raises."""
+    try:
+        import costs
+        from shows import show_for
+        return costs.write_rehearsal_credit_file(show_for(run), record,
+                                                 sessions_per_room=SESSIONS_PER_ROOM)
+    except Exception:  # noqa: BLE001
+        logger.exception("rehearsal credit file not written (non-fatal)")
+        return None
 
 
 def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,

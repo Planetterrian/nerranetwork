@@ -1211,25 +1211,39 @@ _VIRTUAL_COST_SLUGS = ("nerra_daily", "_review")
 #: ``services.multilingual`` and no file-level total — summed as $0 and
 #: counted as an episode until 2026-10-02, ~$58/30d invisible); ``motion``
 #: is the hook-Short clip (``services.motion_api``); ``review`` is the
-#: daily-audit reviewer. ``episodes`` counts EPISODE files only;
-#: ``files`` counts every credit file read.
+#: daily-audit reviewer. ``voice_agent`` (Nov 3 2026) is Mira's Voice Agent
+#: minutes on an interview room's file (``credit_usage_*_room_<id8>.json``,
+#: ``services.voice_agent``); ``rehearsal`` is the whole total of a
+#: rehearsal room's file (``credit_usage_*_rehearsal_<id8>.json``) so a
+#: fixture room never reads as show cost. ``episodes`` counts EPISODE files
+#: and PUBLISHED rooms only; ``files`` counts every credit file read.
 _COST_KEYS = ("grok", "tts", "images", "search", "multilingual", "motion",
-              "review", "total")
+              "review", "voice_agent", "rehearsal", "total")
 
 
 def _new_cost_bucket() -> Dict[str, Any]:
     return {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
             "multilingual": 0.0, "motion": 0.0, "review": 0.0,
+            "voice_agent": 0.0, "rehearsal": 0.0,
             "total": 0.0, "episodes": 0, "files": 0}
 
 
+_ROOM_CREDIT_RE = re.compile(r"_room_[0-9a-fA-F]{1,8}\.json$")
+_REHEARSAL_CREDIT_RE = re.compile(r"_rehearsal_[0-9a-fA-F]{1,8}\.json$")
+
+
 def _credit_file_kind(path: Path, slug: str) -> str:
-    """``episode`` | ``multilingual`` | ``review`` — what a credit file is."""
+    """``episode`` | ``multilingual`` | ``review`` | ``room`` | ``rehearsal``
+    — what a credit file is."""
     name = path.name
     if slug == "_review" or name.endswith("_review.json"):
         return "review"
     if name.endswith("_multilingual.json"):
         return "multilingual"
+    if _REHEARSAL_CREDIT_RE.search(name):
+        return "rehearsal"
+    if _ROOM_CREDIT_RE.search(name):
+        return "room"
     return "episode"
 
 
@@ -1287,12 +1301,24 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             motion = float(
                 ((data.get("services") or {}).get("motion_api") or {}).get("estimated_cost_usd") or 0.0
             )
+            # Mira's rooms (Nov 3 2026): the Voice Agent minutes on a room file.
+            voice_agent = float(
+                ((data.get("services") or {}).get("voice_agent") or {}).get("estimated_cost_usd") or 0.0
+            )
             kind = _credit_file_kind(f, slug)
-            components = grok + tts + images + search + multilingual + motion
+            components = grok + tts + images + search + multilingual + motion + voice_agent
             total = float(data.get("total_estimated_cost_usd") or components)
             # A reviewer file's spend is Grok tokens; it is reported under
             # ``review`` so the per-show LLM line stays per-episode.
             review = total if kind == "review" else 0.0
+            # A rehearsal room is spend with no episode: its whole total sits
+            # under ``rehearsal``, never under the show's voice_agent line.
+            rehearsal = total if kind == "rehearsal" else 0.0
+            if kind == "rehearsal":
+                voice_agent = 0.0
+            # A room counts as an episode only once the nightly metrics
+            # builder has set ``published`` from interviews.status.
+            is_episode = kind == "episode" or (kind == "room" and data.get("published") is True)
             daily_series[date_str] = round(daily_series.get(date_str, 0.0) + total, 4)
 
             def _add(bucket: Dict[str, Any]) -> None:
@@ -1303,11 +1329,14 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
                 bucket["multilingual"] += multilingual
                 bucket["motion"] += motion
                 bucket["review"] += review
+                bucket["voice_agent"] += voice_agent
+                bucket["rehearsal"] += rehearsal
                 bucket["total"] += total
                 bucket["files"] += 1
-                # A dub-track sidecar or a reviewer file is not an
-                # episode — credit files overstated episodes until now.
-                if kind == "episode":
+                # A dub-track sidecar, a reviewer file, a rehearsal room or
+                # an unpublished room is not an episode — credit files
+                # overstated episodes until now.
+                if is_episode:
                     bucket["episodes"] += 1
 
             if when >= d30:
@@ -1362,8 +1391,10 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
                 "Weekly projection = actual last-7d spend across every credit "
                 f"file ({network_7.get('files', 0)} files: Grok + TTS + images + "
                 "search + multilingual dub tracks + hook-Short motion clips + "
-                f"the daily-audit reviewer). avg is per EPISODE ({episodes_7} "
-                "episode files; dub sidecars and reviewer files are spend, not "
+                "the daily-audit reviewer + Mira's Voice Agent rooms and "
+                f"rehearsals). avg is per EPISODE ({episodes_7} "
+                "episode files and published rooms; dub sidecars, reviewer "
+                "files, rehearsal rooms and unpublished rooms are spend, not "
                 "episodes). Monthly = last-30d total. Not a calendar forecast — "
                 "a trailing burn rate."
             ),
@@ -2669,7 +2700,73 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # slates) and how many a same-model retry recovered.
     out.update(_pinned_model_metrics(root, anchor_d))
     out.update(_episode_counter_shares(root, anchor_d))
+    out.update(_voices_live_metrics(root))
     return out
+
+
+def _median(values: List[float]) -> Optional[float]:
+    if not values:
+        return None
+    ordered = sorted(values)
+    return round(ordered[len(ordered) // 2], 2)
+
+
+def _voices_live_metrics(root: Path) -> Dict[str, Any]:
+    """Nov 3 2026: the interview shows' register metrics, read from
+    ``api/voices_metrics.json`` (scripts/build_voices_metrics.py). Pooled
+    over the voices shows: the mean survey rating answered in the last 30
+    days, the median pacing grade of the five most recently graded rooms,
+    the median cost of the ten most recently costed rooms. Null when the
+    file or the table is absent, never 0."""
+    data = _load_json(root / "api" / "voices_metrics.json") or {}
+    shows = (data.get("shows") or {}) if isinstance(data, dict) else {}
+    ratings: List[float] = []
+    graded: List[tuple] = []
+    costs: List[tuple] = []
+    for s in shows.values():
+        if not isinstance(s, dict):
+            continue
+        survey = s.get("survey") or {}
+        for r in survey.get("ratings_30d") or []:
+            try:
+                ratings.append(float(r))
+            except (TypeError, ValueError):
+                continue
+        for g in s.get("grades") or []:
+            if isinstance(g, dict) and g.get("pacing") is not None:
+                graded.append((str(g.get("date") or ""), float(g["pacing"])))
+        for c in (s.get("cost") or {}).get("rooms") or []:
+            if isinstance(c, dict) and c.get("total_usd") is not None:
+                costs.append((str(c.get("date") or ""), float(c["total_usd"])))
+    graded.sort(key=lambda t: t[0], reverse=True)
+    costs.sort(key=lambda t: t[0], reverse=True)
+    return {
+        "voices_survey_mean_30d": round(sum(ratings) / len(ratings), 2) if ratings else None,
+        "voices_pacing_grade_median_5": _median([v for _, v in graded[:5]]),
+        "voices_cost_per_room_usd": _median([v for _, v in costs[:10]]),
+    }
+
+
+def build_voices_section(root: Path) -> Dict[str, Any]:
+    """Mira's rooms (Nov 3 2026): ``api/voices_metrics.json`` as the
+    dashboard reads it. Nothing is computed here — the builder owns the
+    numbers, and a table it could not read is null on the card."""
+    data = _load_json(root / "api" / "voices_metrics.json")
+    if not isinstance(data, dict) or not data.get("shows"):
+        return {
+            "configured": False,
+            "shows": {},
+            "note": ("Not built yet — nightly runs scripts/build_voices_metrics.py "
+                     "(VOICES_SUPABASE_URL / VOICES_SUPABASE_SERVICE_KEY on that step)."),
+        }
+    return {
+        "configured": True,
+        "generated_at": data.get("generated_at"),
+        "first_generated_at": data.get("first_generated_at"),
+        "supabase_read": data.get("supabase_read"),
+        "unreadable": list(data.get("unreadable") or []),
+        "shows": data.get("shows") or {},
+    }
 
 
 # Sep 22 2026 — the spoken-open shape arm (shows/prompts hook_shape
@@ -3706,6 +3803,8 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "funnel": build_funnel_section(root),
         "benchmarks": benchmarks,
         "investor": investor,
+        # Nov 3 2026: Mira's rooms — survey, grades, yield, cost per room.
+        "voices": build_voices_section(root),
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),

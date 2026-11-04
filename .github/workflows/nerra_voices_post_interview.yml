@@ -18,7 +18,9 @@ on:
         required: true
 
 permissions:
-  contents: read
+  # write: the process job commits the room's credit file (Nov 3 2026)
+  # through the safe-commit-push composite, after the narration step.
+  contents: write
 
 # Duplicate webhook deliveries for the same interview must not run the
 # full mix + STT + editorial pipeline twice concurrently.
@@ -146,6 +148,25 @@ jobs:
           CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+
+      # Nov 3 2026: the room's credit file (pipelines/voices/costs.py) is
+      # written by the post step and extended by the narration step. This
+      # workflow had no commit step, so the file would never have reached
+      # main and the interview shows would have stayed at $0.00 on Mission
+      # Control. The composite rebases and retries on the push-busy main and
+      # is a clean no-op when the room wrote nothing. It sits BEFORE the
+      # gate-1 fallback, which stays the job's last step (Oct 22 2026 guard),
+      # and never fails the job: the fallback reads job.status as CUT_FAILED,
+      # and a lost push is accounting, never a word to Patrick about his cut.
+      - name: Commit the room's credit file
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/age_of_ai/credit_usage_*.json
+            digests/nerra_voices/credit_usage_*.json
+          commit-message: "Nerra Voices: room credit file"
 
       # Oct 22 2026: the gate-1 email normally comes from the assembler. If
       # the cut, the narration or the assembly failed after the package was

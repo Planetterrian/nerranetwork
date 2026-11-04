@@ -843,6 +843,64 @@ def credit_alert(interview: dict, app: dict, show, stop: str) -> None:
         logger.exception("credit alert email failed")
 
 
+#: Nov 3 2026: the credit stop that killed the Oct 23 slate (16 failed + 11
+#: cancelled show runs, 4 of 21 published on time) was found by the first
+#: show's pre-flight, hours after the account ran dry; the only earlier
+#: check was Mira's T-2h reminder above. This tick holds GROK_API_KEY, so at
+#: the 03:00 ET slot — an hour before the first show of the Eastern schedule
+#: (UC, 04:00 ET) — it sends the same one-token ping and, on the provider's
+#: quota wording, posts the quota message to the operator webhook and emails
+#: him. The Voices Worker holds no xAI key and runs UTC, which is why the
+#: ping lives here and not there. The slot is the TOP OF THE HOUR because
+#: that is the one tick the Worker dispatches unconditionally (its hourly
+#: catch-all, ``hourTop`` in workers/voices/src/index.ts); every other
+#: five-minute tick runs only while an interview is near its slot, and
+#: GitHub's own */5 cron arrives hours late — a half-hour slot would have
+#: been pinged almost never. The window is fifteen minutes so a run queued
+#: behind a live fire tick (the job's 15-minute cap) still lands inside it;
+#: a second tick in the window (an interview near, or GitHub's fallback
+#: cron) can at worst repeat the alert, never miss it.
+CREDIT_PING_TZ = "America/New_York"
+CREDIT_PING_SLOT = (3, 0)
+CREDIT_PING_SLOT_MINUTES = 15
+FIRST_SHOW_SLOT_EASTERN = "04:00"
+
+
+def credit_ping_due(now: "dt.datetime | None" = None) -> bool:
+    """True inside the 03:00-03:15 Eastern slot (wall time, never UTC)."""
+    from zoneinfo import ZoneInfo
+    t = (now or _now()).astimezone(ZoneInfo(CREDIT_PING_TZ))
+    hour, minute = CREDIT_PING_SLOT
+    return t.hour == hour and minute <= t.minute < minute + CREDIT_PING_SLOT_MINUTES
+
+
+def slate_credit_alert(stop: str) -> None:
+    """Tell Patrick before the slate what the first show would find."""
+    from engine.provider_quota import quota_message
+    text = (f"xAI credit stop before the slate: the first show runs at "
+            f"{FIRST_SHOW_SLOT_EASTERN} ET and every show after it would fail at "
+            "its pre-flight ping.\n\n" + quota_message("xAI", stop))
+    notify_operator(text, critical=True)
+    try:
+        send_email(OPERATOR_EMAIL, "xAI out of credit before this morning's slate",
+                   "<p>" + text.replace("\n", "<br>") + "</p>")
+    except Exception:  # noqa: BLE001
+        logger.exception("slate credit alert email failed")
+
+
+def check_credit_before_slate(now: "dt.datetime | None" = None) -> str:
+    """At the 03:00 ET slot, one ping. Returns the provider's words when it
+    is a billing stop (and alerts), else ""."""
+    if not credit_ping_due(now):
+        return ""
+    stop = xai_credit_stop()
+    if stop:
+        slate_credit_alert(stop)
+    else:
+        logger.info("credit check before the slate: xAI accepts requests")
+    return stop
+
+
 def send_reminders() -> None:
     lo, hi = _now() + REMINDER_AHEAD[0], _now() + REMINDER_AHEAD[1]
     due = sb_select(
@@ -1368,6 +1426,10 @@ def sweep_browser_no_shows() -> int:
 
 
 def main() -> int:
+    try:
+        check_credit_before_slate()
+    except Exception:  # noqa: BLE001 — never stops a fire
+        logger.exception("credit check before the slate failed")
     send_reminders()
     try:
         sweep_browser_no_shows()

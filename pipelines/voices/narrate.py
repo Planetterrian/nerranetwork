@@ -335,6 +335,10 @@ def narrate(slug: str) -> Dict[str, str]:
     only = {s.strip() for s in os.environ.get("NARRATION_SEGMENTS", "").split(",")
             if s.strip()}
     out: Dict[str, str] = {}
+    # Nov 3 2026: every take is a Voice Agent session; its minutes land on the
+    # room's credit file (costs.add_narration_usage) when the run is known.
+    take_minutes = 0.0
+    takes = 0
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         for seg in segments:
@@ -381,6 +385,8 @@ def narrate(slug: str) -> Dict[str, str]:
                         break
                     part = work / f"{seg_id}_{seq:03d}_{attempt}.mp3"
                     part.write_bytes(requests.get(url, timeout=180).content)
+                    takes += 1
+                    take_minutes += _duration(part) / 60.0
                     # Measured AFTER trimming: trailing silence would
                     # otherwise make a cut-off read look like a complete one.
                     trimmed = _trim(part)
@@ -402,7 +408,21 @@ def narrate(slug: str) -> Dict[str, str]:
             mp3 = _stitch(parts, work / f"{seg_id}.mp3", loudness)
             out[seg_id] = r2_upload(mp3, show.r2_key("narration", slug, f"{seg_id}.mp3"))
             logger.info("narration %s -> %s (%d takes)", seg_id, out[seg_id], len(parts))
+    record_narration_usage(show, minutes=take_minutes, sessions=takes)
     return out
+
+
+def record_narration_usage(show, *, minutes: float = 0.0, sessions: int = 0,
+                           tts_chars: int = 0) -> None:
+    """Nov 3 2026: the narration's spend onto the room's credit file. The
+    run is INTERVIEW_RUN_ID (the post-interview workflow sets it on this
+    step); without it nothing is recorded, and nothing ever fails here."""
+    try:
+        import costs
+        costs.add_narration_usage(show, os.environ.get("INTERVIEW_RUN_ID", "").strip(),
+                                  minutes=minutes, sessions=sessions, tts_chars=tts_chars)
+    except Exception:  # noqa: BLE001
+        logger.exception("narration usage not recorded (non-fatal)")
 
 
 def _narrate_with_tts(spec: dict, show, slug: str, voice: str) -> Dict[str, str]:
@@ -413,6 +433,9 @@ def _narrate_with_tts(spec: dict, show, slug: str, voice: str) -> Dict[str, str]
     with tempfile.TemporaryDirectory() as tmp:
         for seg_id, mp3 in synthesize_segments(spec["segments"], Path(tmp)).items():
             out[seg_id] = r2_upload(mp3, show.r2_key("narration", slug, f"{seg_id}.mp3"))
+    # The fallback path is Grok TTS, priced per character.
+    record_narration_usage(show, tts_chars=sum(
+        len(str(seg.get("text") or "")) for seg in spec["segments"]))
     return out
 
 
