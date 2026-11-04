@@ -1292,6 +1292,11 @@ RU reach is a Studio read, not a pipeline fix. A sub-10 s chapter is dropped (th
 [history](docs/claude_md_history/2026_10_30_hook_short_skips.md); register `shorts-skip-map-2026-10-30`; guards `tests/test_short_skips_map_2026_10_30.py`.
 **The hook Short renders from a spliced source** (`engine/short_furniture.py`; any failure renders as before; `youtube.shorts_skip_map`). **The episode, its feed audio and its long-form keep the map.**
 
+### A Short never crops the show's own cover (Nov 4 2026)
+
+Guards `tests/test_short_cover_card_2026_11_04.py`.
+**A square cover is never centre-cropped to 9:16**: the Shorts cover fallback (every X-only clip) renders `engine.video._vertical_cover_card` — the whole cover inside the push-in margin over a blurred fill — and the opening hook moves below it (`_COVER_CARD_HOOK_Y_FRAC`). **The Shorts show pill grows to fit the name up to `_SHORT_SHOW_PILL_MAX_W`** and never reaches the subscribe pill on its row.
+
 ### The dub hook Shorts skip the map too (Nov 1 2026)
 
 [history](docs/claude_md_history/2026_11_01_dub_hook_shorts.md); register `dub-shorts-skip-map-2026-11-01`; guards `tests/test_dub_shorts_skip_map_2026_11_01.py`.
