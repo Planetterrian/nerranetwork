@@ -7282,3 +7282,37 @@ experiments:
       question it makes necessary; vary the turn); the critical list's last
       line follows it. learning.SUPERSEDED_BY_BRIEF keeps four network
       lessons out of the prompt. Guards tests/test_mira_builds_2026_11_04.py.
+
+  - id: blaines-close-2026-11-05
+    title: "A guest who asks to end, ends; a typed presence check is a message, never a topic"
+    area: voices
+    shipped: 2026-11-05
+    readout: 2026-12-05
+    status: reading
+    baseline: >
+      Blaine Mathieu's room (Nov 4): three spoken requests to end went
+      unheard, two of her goodbyes were cut mid-sentence, the closing round
+      began after his goodbye and stopped at 1/7 when he left
+      (closing_round_complete false); "you still there" and "lets wrap it"
+      were steered as topics. Grades: pacing 4, turn_taking 5, overall 5.
+    target: >
+      Over the next five real rooms: no closing-round question asked after
+      a guest's recorded stop, no sign-off cancelled after one, and no typed
+      presence check or wrap-up steered as a topic; the PACING grade of a
+      room that ends early not below 5.
+    criteria: >
+      HIT when none of the five rooms' traces shows a round question or a
+      cancelled sign-off after "the guest asked to stop" and none steers a
+      presence check as a topic; MISS when any does; INCONCLUSIVE when no
+      room ends early.
+    readout_plan: >
+      interview_runs.scenario_trace for each room ("close" and "round"
+      lines after "the guest asked to stop"), grok_session_log.guest_feedback
+      (presence / wrap_up flags), and episode_grades.pacing.
+    notes: >
+      GUEST_STOP_RE and TYPED_WRAP_UP_RE widened to Blaine's shapes;
+      roundDueOnTheClock keeps the clock from starting a round after a stop;
+      a sign-off after a stop is accepted with no round in play;
+      TYPED_PRESENCE_RE / PRESENCE_STEER. Rehearsal: --early-wrap (fixture
+      beat ask_to_wrap at minute six). Guards
+      tests/test_blaines_close_2026_11_05.py.

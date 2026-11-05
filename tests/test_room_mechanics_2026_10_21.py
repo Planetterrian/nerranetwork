@@ -201,7 +201,7 @@ class TestTheClosingRoundIsAStateMachine:
 
     def test_the_round_begins_when_required_and_ends_on_the_last_word(self):
         checks = _fn("function startTimeChecks()")
-        assert "roundPendingStart = !roundActive && !roundClosed;" in checks
+        assert "roundPendingStart = roundPendingStart || roundDueOnTheClock();" in checks
         assert "room will hand you each closing question" in checks
         assert "if (roundPendingStart && spoke) {" in _fn("function decideTurn()")
         last = _fn("function askRoundLastWord()")

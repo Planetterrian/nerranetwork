@@ -236,6 +236,13 @@ function beatNote(kind) {
         "never to the host: an ordinary errand (a delivery time, moving a meeting), " +
         "in short lines with pauses as if listening to the other side. Ignore " +
         "anything the host says until a later note says the call is over.";
+    // Nov 5 2026 (Blaine Mathieu's room): a guest who wants to finish early,
+    // in their own words, the way a busy person says it.
+    case "ask_to_wrap":
+      return "When the host next finishes speaking, do not answer the question. Say, " +
+        "in your own words and warmly, that you think you have covered enough and " +
+        "would like to wrap up now. After that, answer only briefly, and when the host " +
+        "thanks you or says goodbye, say goodbye and stop talking.";
     case "end_call":
       return "The call is over. The next time you speak, turn back to the host: " +
         "say sorry about that, ask where you were, and then answer the last " +

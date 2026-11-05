@@ -869,6 +869,7 @@ function onGuestFeedback(leg, raw) {
   const text = kind === "topic" ? cleanFeedbackText(msg.text) : "";
   if (kind === "topic" && !text) { feedbackAck(leg, kind, "empty"); return; }
   if (kind === "topic" && !holdMode && TYPED_WRAP_UP_RE.test(text)) { typedWrapUp(leg, text, atMin); return; }
+  if (kind === "topic" && TYPED_PRESENCE_RE.test(text)) { typedPresence(leg, text, atMin); return; }
   const closing = roundActive || roundClosed || roundPendingStart || closingRequired;
   const applies = !holdMode && !closing;
   guestFeedback.push({ kind: kind, by: leg.role, at_min: atMin, text: text, applied: false, held: !applies });
@@ -892,7 +893,7 @@ function onGuestFeedback(leg, raw) {
 // the closing round begins at the next pause (or now, if nobody is talking).
 // The whole message must be the request (a topic such as "how we wrap up a
 // launch" is a subject, never a stop).
-const TYPED_WRAP_UP_RE = /^\s*(?:ok(?:ay)?[,\s]+)?(?:i think\s+)?(?:(?:we can|let'?s|can we|could we|ok to|time to|please|i'?d like to|i need to|i have to|we should)\s+)?(?:wrap(?:ping)?(?:\s+(?:it|this|things))?\s+up|stop|end|finish|close)(?:\s+(?:here|now|it|this|the interview|the recording|things|soon))*(?:\s+please)?\s*[.!?]*\s*$/i;
+const TYPED_WRAP_UP_RE = /^\s*(?:ok(?:ay)?[,\s]+)?(?:i think\s+)?(?:(?:we can|let'?s|lets|can we|could we|ok to|time to|please|i'?d like to|i need to|i have to|we should)\s+)?(?:wrap(?:ping)?(?:\s+(?:it|this|things))?(?:\s+up)?|stop|end|finish(?:\s+up)?|close)(?:\s+(?:here|now|it|this|the interview|the recording|things|soon))*(?:\s+please)?\s*[.!?]*\s*$/i;
 
 function typedWrapUp(leg, text, atMin) {
   guestFeedback.push({ kind: "topic", by: leg.role, at_min: atMin, text: text, applied: true,
@@ -919,6 +920,36 @@ function typedWrapUp(leg, text, atMin) {
     }
   }
   feedbackAck(leg, "topic", "applied");
+}
+
+// Nov 4 2026 (Blaine Mathieu's room): he typed "you still there" after a
+// silence, and the room handed it to her as a subject he wanted to reach; she
+// told him it was something he wanted to get to and asked what kept him coming
+// back to being here. A typed check that she is still there is a message to
+// her, never a topic: she says in a few words that she is here and carries on.
+// The whole message must be the check (a topic that mentions "there" stays one).
+const TYPED_PRESENCE_RE = /^\s*(?:(?:hey|hi|hello|mira)[,!.\s]+)*(?:(?:are\s+)?you\s+(?:still\s+)?(?:there|here|with me)|(?:can|do)\s+you\s+(?:still\s+)?hear\s+me|(?:is\s+)?any\s*one\s+there|hello)(?:[,\s]+mira)?\s*[.!?]*\s*$/i;
+const PRESENCE_STEER =
+  "[GUEST FEEDBACK, for this turn only; do not read it aloud and do not mention it] The" +
+  " guest has typed to check that you are still there. Say in a few words that you are" +
+  " here, then carry on from where the conversation was: if your last question went" +
+  " unanswered, put it to them again more simply; otherwise react to what they last said" +
+  " and ask your next question. Never treat their message as a subject to discuss.";
+
+function typedPresence(leg, text, atMin) {
+  const closing = roundActive || roundClosed || roundPendingStart;
+  const applies = !holdMode && !closing;
+  guestFeedback.push({ kind: "topic", by: leg.role, at_min: atMin, text: text, applied: false,
+                       held: !applies, presence: true });
+  if (!applies) {
+    trace("feedback", leg.role + " typed to check she is there during the " +
+      (holdMode ? "hold" : "closing round") + "; not steered");
+    feedbackAck(leg, "topic", holdMode ? "hold" : "closing");
+    return;
+  }
+  guestSteer = { line: PRESENCE_STEER, leg: leg, kind: "topic", index: guestFeedback.length - 1 };
+  trace("feedback", leg.role + " typed to check she is there; at her next turn");
+  feedbackAck(leg, "topic", "queued");
 }
 
 /** The steer a guest asked for, as this response's instructions (or ""). */
@@ -1148,7 +1179,13 @@ function noteHoldFromGuest(text) {
 // the rest of the hour. "I have to go" / "we need to run" only count when the
 // thought ends there (a full stop, a comma, "now", "in five minutes", "for a
 // meeting"), never when the sentence carries on into what has to be run.
-const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should) we (?:stop|end|wrap(?: it)? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: it)? up|end(?: it)?) (?:here|there|now)\b)/i;
+// Nov 4 2026, Blaine Mathieu: "I think we probably got enough here ... if you
+// want to do a final ending comment you can make it now", then "let's wrap it
+// up." and "we ended it" all went unheard (the last alternative wanted "here",
+// "there" or "now" after "let's wrap it up"), so the room cut two of her
+// goodbyes mid-sentence and started its closing round after his. The same
+// rule holds for every new shape: the thought ends there, or names the end.
+const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should) we (?:stop|end|wrap(?: it)? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: it)? up|end(?: it)?|finish(?: up)?)(?:(?: here| there| now)\b|(?=\s*(?:[.,!?;—-]|$)))|\bgot (?:it )?enough (?:here|for today|for now)(?=\s*(?:[.,!?;—-]|$))|\b(?:do|make|give|say) (?:a|your|any) (?:final|closing|ending|last)(?: (?:final|closing|ending))? (?:comment|comments|word|words|remark|remarks|thought|thoughts)\b|\bwe(?:'ve| have)? (?:already )?ended (?:it|the (?:interview|recording|podcast|show))\b|\bwe'?re (?:all )?(?:done|finished)(?: here| for today| now)?(?=\s*(?:[.,!?;—-]|$)))/i;
 let guestAskedToStop = false;
 let roundCloseBlocks = 0;
 const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through
@@ -2655,7 +2692,7 @@ function startTimeChecks() {
         // the hard cap. She began it at 49:50 and the room ended at 50:00,
         // mid-answer, with no thank-you.
         closingPermitted = true;
-        if (!closingRequired) { closingRequired = true; roundPendingStart = !roundActive && !roundClosed; trace("time", "closing round required at " + elapsed + " min"); }
+        if (!closingRequired) { closingRequired = true; roundPendingStart = roundPendingStart || roundDueOnTheClock(); trace("time", "closing round required at " + elapsed + " min"); }
         note += " The closing round begins when the current answer ends: the" +
           " room will hand you each closing question, one at a time, and you" +
           " add only a short reaction between them; it takes about " +
@@ -2685,8 +2722,9 @@ function startTimeChecks() {
   setTimeout(function () {
     if (roomEnded || !grokAgent || closingRequired || isHelloSession()) return;
     closingRequired = true; closingPermitted = true;
-    roundPendingStart = !roundActive && !roundClosed;
-    trace("time", "closing round required (scheduled note)");
+    roundPendingStart = roundPendingStart || roundDueOnTheClock();
+    trace("time", "closing round required (scheduled note)" +
+          (guestAskedToStop && !roundPendingStart ? "; the guest asked to stop, so no round" : ""));
     const note = "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
       " minutes remain. Once the current answer has finished, the room will hand" +
       " you the closing questions one at a time; you add only a short reaction" +
@@ -3166,7 +3204,10 @@ function catchSignOffBeforeTheRound(text) {
   if (!signOffBlockedByRound()) {
     // The room has stopped holding the round open (the guest asked to stop,
     // or it has already cut ROUND_CLOSE_BLOCKS_MAX goodbyes): this one stands.
-    if ((roundActive || roundPendingStart) && !roundClosed) {
+    // Nov 4 2026: a guest who asked to stop before any round was due is
+    // signing off with her too: the interview ends where she ended it, and
+    // the clock never starts a round after it.
+    if ((roundActive || roundPendingStart || guestAskedToStop) && !roundClosed) {
       acceptSignOff(guestAskedToStop ? "the guest asked to stop"
                                      : "the room had already cut " + roundCloseBlocks + " goodbyes");
     }
@@ -3185,6 +3226,18 @@ function catchSignOffBeforeTheRound(text) {
   roundLeadIn = SIGN_OFF_LEAD_IN;
   signedOffAt = Date.now();
   startRound("a sign-off came before it");
+}
+
+/**
+ * Nov 4 2026 (Blaine Mathieu's room). The clock starts the closing round
+ * only for a guest who has not asked to stop: his request at 35 minutes went
+ * unheard, the scheduled note came a minute later, and the round's first
+ * question went to him after he had said goodbye. A guest who TYPED to wrap
+ * up before the round still gets it (typedWrapUp sets roundPendingStart
+ * itself, and it is never cleared here).
+ */
+function roundDueOnTheClock() {
+  return !roundActive && !roundClosed && !guestAskedToStop;
 }
 
 /** A sign-off now would end an interview whose closing round is unfinished. */
