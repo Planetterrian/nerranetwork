@@ -381,7 +381,7 @@
          page sends each press to the room on this call; the room answers. -->
     <div class="feedback" id="feedbackPanel">
       <p class="fb-head"><b>Steer the conversation</b>
-        <span>Only Mira sees these, and only for her next line. If you're quiet, she acts on it straight away. They're kept with the interview's notes, never in the episode.</span></p>
+        <span>Only Mira sees these. She acts on them quietly at her next line, as soon as she finishes speaking, and never says you sent them. They're kept with the interview's notes, never in the episode.</span></p>
       <!-- Nov 5 2026: from the first week of rooms. Priyanka asked Mira to
            repeat a question twice out loud, and both guests asked to finish
            in words the room did not hear. -->
@@ -393,8 +393,8 @@
       </div>
       <div class="fb-chips hidden" id="fbAgenda"><span class="fb-label">Ask me about:</span></div>
       <form class="fb-form" id="fbForm">
-        <label for="fbText">Or type something you'd like to talk about</label>
-        <input id="fbText" type="text" maxlength="240" autocomplete="off" placeholder="A topic for Mira">
+        <label for="fbText">Or type a note to Mira</label>
+        <input id="fbText" type="text" maxlength="240" autocomplete="off" placeholder="A topic, or e.g. a follow-up you'd like">
         <button class="ghost" type="submit">Send to Mira</button>
       </form>
       <p id="fbStatus" role="status" aria-live="polite"></p>
@@ -1750,7 +1750,7 @@
     noted: "Thanks, noted. Mira keeps going.",
     queued_move_on: "Got it. Mira will change the subject at her next line.",
     queued_repeat: "Got it. Mira will ask that again, more simply.",
-    queued_topic: "Got it. Mira will take you there at her next line.",
+    queued_topic: "Got it. Mira has your note and will act on it at her next line.",
     applied: "Mira has it now.",
     applied_wrap_up: "Got it. Mira will start the closing questions now, then say goodbye.",
     closing: "The closing questions have started, so Mira will finish those first.",
@@ -1766,19 +1766,25 @@
     el.textContent = text || "";
     el.classList.toggle("warn", !!warn);
   }
+  // Nov 5 2026 (Patrick's test room): a typed note sent within ten seconds of
+  // a button press was refused by the cooldown and its words were cleared, so
+  // the note was lost without a trace. A note always goes (the room keeps the
+  // newest request), the box keeps its words when nothing was sent, and the
+  // cooldown only stops a button being pressed twice by accident.
   function sendFeedback(kind, text) {
-    if (!activeCall || !activeCall.sendMessage) { fbStatus(FB_TEXT.not_in_room, true); return; }
-    if (kind !== "good" && Date.now() < fbCooldown) {
+    if (!activeCall || !activeCall.sendMessage) { fbStatus(FB_TEXT.not_in_room, true); return false; }
+    if (kind !== "good" && kind !== "topic" && Date.now() < fbCooldown) {
       fbStatus("Mira has your last request. Give her a moment.", true);
-      return;
+      return false;
     }
     try {
       activeCall.sendMessage(JSON.stringify({ nn: 1, kind: kind, text: text || "" }));
-    } catch (e) { fbStatus(FB_TEXT.timeout, true); return; }
-    if (kind !== "good") fbCooldown = Date.now() + 10000;
+    } catch (e) { fbStatus(FB_TEXT.timeout, true); return false; }
+    if (kind !== "good" && kind !== "topic") fbCooldown = Date.now() + 4000;
     fbStatus("Sending…");
     if (fbWaiting) clearTimeout(fbWaiting);
     fbWaiting = setTimeout(function () { fbWaiting = null; fbStatus(FB_TEXT.timeout, true); }, 6000);
+    return true;
   }
   function onRoomMessage(raw) {
     var m = null;
@@ -1829,8 +1835,7 @@
     var input = document.getElementById("fbText");
     var text = input.value.trim();
     if (!text) { fbStatus(FB_TEXT.empty, true); return; }
-    sendFeedback("topic", text);
-    input.value = "";
+    if (sendFeedback("topic", text)) input.value = "";
   });
 
   // ---- 3b. In-call silence watchdog and microphone switcher --------------
@@ -2480,7 +2485,10 @@
   function makeCompositor(w, h, onPage) {
     var small = blurCanvas(SEG_W, SEG_H), sctx = small.getContext("2d", { willReadFrequently: true });
     var maskC = blurCanvas(SEG_W, SEG_H), mctx = maskC.getContext("2d");
-    var tiny = blurCanvas(Math.max(8, Math.round(w / 24)), Math.max(8, Math.round(h / 24)));
+    // Nov 5 2026: 18 px on a 1280-wide picture left a room readable behind
+    // the guest; the blur now scales with the picture (28 px at 1280).
+    var radius = Math.max(12, Math.round(w / 45));
+    var tiny = blurCanvas(Math.max(8, Math.round(w / 40)), Math.max(8, Math.round(h / 40)));
     var tctx = tiny.getContext("2d");
     var person = blurCanvas(w, h), pctx = person.getContext("2d");
     var out = blurCanvas(w, h, onPage), octx = out.getContext("2d");
@@ -2489,7 +2497,7 @@
     var last = -1;
     function background(src) {
       if (canFilter) {
-        octx.filter = "blur(18px)";
+        octx.filter = "blur(" + radius + "px)";
         octx.drawImage(src, 0, 0, w, h);
         octx.filter = "none";
         return;
