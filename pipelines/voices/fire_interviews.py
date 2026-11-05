@@ -519,12 +519,14 @@ def refresh_staged_prompt(run: dict, interview: dict) -> bool:
     try:
         app = sb_select("guest_applications", f"id=eq.{interview['application_id']}")[0]
         if is_closing_session(interview) or is_hello_session(interview):
-            prompt = compile_prompt_for(interview, app, None)
+            brief = None
         else:
             briefs = sb_select("interview_briefs", f"interview_id=eq.{interview['id']}")
             if not briefs:
                 return False
-            prompt = compile_prompt_for(interview, app, briefs[0])
+            brief = briefs[0]
+        prompt = compile_prompt_for(interview, app, brief)
+        seed = room_log_seed(show_for(interview, app), app, brief)
     except Exception:  # noqa: BLE001 — the staged prompt still works
         logger.exception("Refreshing the staged prompt for %s failed (non-fatal)",
                          interview.get("id"))
@@ -532,6 +534,16 @@ def refresh_staged_prompt(run: dict, interview: dict) -> bool:
     patch: dict = {}
     if prompt and prompt != (run.get("mira_system_prompt") or ""):
         patch["mira_system_prompt"] = prompt
+    # Nov 5 2026: and what the room reads off the log when it opens. Luke
+    # Miler's run was staged the day before the interview plan existed; his
+    # prompt was refreshed to say the room hands her the prepared questions,
+    # and the room, reading a log seeded without the plan, never handed one.
+    # The seed's keys are brought up to date; nothing else in the log moves.
+    log = run.get("grok_session_log") if isinstance(run.get("grok_session_log"), dict) else {}
+    merged = {k: v for k, v in log.items() if k not in ROOM_LOG_SEED_KEYS}
+    merged.update(seed)
+    if merged != log:
+        patch["grok_session_log"] = merged
     # The end-of-turn silence travels with the run too (Oct 19 2026: Jason
     # Shumard's run was staged at 1.3 s the day before it moved to 1.8 s).
     if run.get("turn_detection") != turn_detection():
@@ -589,6 +601,11 @@ def interview_plan(brief: dict | None) -> list:
                                 "section": section or "core"}))
     items.sort(key=lambda t: (t[0], t[1]))
     return [item for _, _, item in items][:PLAN_MAX]
+
+
+#: The grok_session_log keys room_log_seed writes, and only those: a staged
+#: run's refresh replaces these and leaves every other key as it is.
+ROOM_LOG_SEED_KEYS = ("interview_plan", "local_video", "guest_links")
 
 
 def room_log_seed(show, app: dict, brief: dict | None = None) -> dict:
