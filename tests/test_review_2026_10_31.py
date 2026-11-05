@@ -125,6 +125,12 @@ class TestTheLivePolicyAfterTheReset:
                     continue  # a native show's own long-form, not a dub
                 reason = entry.get("reason") or ""
                 assert "probe long" not in reason, (ch, slug, reason)
+                # Nov 5 2026: "long held (3 videos < 4 in 14d)" keeps the
+                # last full read's decision with no rate this night (FR
+                # Fascinating Frontiers, nightly of Nov 4). A hold switches
+                # nothing on, so it carries no long_vpd to check.
+                if "long held" in reason:
+                    continue
                 if (entry.get("publish_long_form")
                         and entry.get("computed") == entry.get("tier")):
                     vpd = entry.get("long_vpd")
