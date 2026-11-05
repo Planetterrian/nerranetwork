@@ -284,7 +284,8 @@ class TestAPersonCanJoinTheDraftRoom:
                             lambda email: {"id": "a", "email": email, "name": "Some One"})
         monkeypatch.setattr(rehearsal, "ensure_invite_interview",
                             lambda src, m: {"interview": {"id": "iv", "show": "age_of_ai"}})
-        monkeypatch.setattr(rehearsal, "invite_prompt", lambda src, m: "PROMPT")
+        monkeypatch.setattr(rehearsal, "_latest_brief", lambda src: {})
+        monkeypatch.setattr(rehearsal, "invite_prompt", lambda src, m, b=None: "PROMPT")
         monkeypatch.setattr(rehearsal, "build_run_row",
                             lambda **kw: {"grok_session_log": {"rehearsal": {}}})
         monkeypatch.setattr(rehearsal, "create_run", lambda row: {"id": "run-1", **row})

@@ -785,13 +785,31 @@ def ensure_invite_interview(source: Dict[str, Any], minutes: int) -> Dict[str, A
     return {"app": app, "interview": interview}
 
 
-def invite_prompt(source: Dict[str, Any], minutes: int) -> str:
+def _latest_brief(source: Dict[str, Any]) -> Dict[str, Any]:
+    """The newest brief prepared for one of this person's interviews, or {}.
+
+    Nov 5 2026: the test room compiled Mira's prompt with no brief at all, so
+    it carried no prepared questions and no interview plan, and a person could
+    not hear the room move through a plan in the one room built for a person.
+    """
+    from common import sb_select
+    interviews = sb_select("interviews",
+                           f"application_id=eq.{source['id']}&order=scheduled_at.desc&limit=20")
+    for interview in interviews:
+        briefs = sb_select("interview_briefs", f"interview_id=eq.{interview['id']}")
+        if briefs and (briefs[0].get("likely_questions") or []):
+            return briefs[0]
+    return {}
+
+
+def invite_prompt(source: Dict[str, Any], minutes: int,
+                  brief: Optional[Dict[str, Any]] = None) -> str:
     """What compile_mira_prompt writes today for this person, as a guest with
-    no co-host, for a room of ``minutes``."""
+    no co-host, for a room of ``minutes``, on their latest brief."""
     from fire_interviews import compile_mira_prompt
     interview = {"application_id": source["id"], "duration_min": minutes,
                  "show": source.get("show") or DEFAULT_SHOW, "host_mode": False}
-    return compile_mira_prompt(interview, source, {})
+    return compile_mira_prompt(interview, source, brief or {})
 
 
 def invite_link(interview: Dict[str, Any], scenario: str = "candidate") -> str:
@@ -840,10 +858,14 @@ def invite_one(*, email: str, minutes: int, scenario: str, out_dir: Path,
     source = _source_application(email)
     pair = ensure_invite_interview(source, minutes)
     person = {"id": "operator", "name": source.get("name") or "Guest"}
+    from fire_interviews import interview_plan
+    brief = _latest_brief(source)
+    plan = interview_plan(brief)
+    print(f"Test room brief: {len(plan)} prepared question(s) in the plan")
     row = build_run_row(interview=pair["interview"], arm="proposed", fixture=person,
-                        prompt=invite_prompt(source, minutes), minutes=minutes,
+                        prompt=invite_prompt(source, minutes, brief), minutes=minutes,
                         turn_silence_ms=None, reasoning_effort="", tools=None,
-                        scenario=scenario)
+                        scenario=scenario, plan=plan or None)
     row["grok_session_log"]["rehearsal"]["invite"] = True
     run = create_run(row)
     link = invite_link(pair["interview"], scenario)
