@@ -920,6 +920,47 @@ if (which === "server_turns_advance_the_round") {
   out.lastInstructions = instructions[instructions.length - 1];
   out.feedback = run("guestFeedback");
   out.askedToStop = run("guestAskedToStop");
+} else if (which === "blaine_stop_then_clock" || which === "blaine_no_stop_then_clock") {
+  // Nov 4 2026 (Blaine Mathieu's room): at 35 minutes he asked to end, she
+  // said goodbye, and the scheduled note a minute later started the closing
+  // round after his goodbye. The control arm: no stop, so the round is due.
+  run("closingPermitted = true; startTimeChecks();");
+  roomTurnStarts();
+  miraFinishes("What happens to the ones who can't move at that speed?");
+  responseDone();
+  guestSays(which === "blaine_stop_then_clock"
+    ? "Hey Mira, I think we probably got enough here. If you want to do a final ending comment you can make it now."
+    : "They have to find a way to move at that speed, and that is why the firm exists.", 4000);
+  out.askedToStop = run("guestAskedToStop");
+  advance(3000);
+  if (which === "blaine_stop_then_clock") {
+    roomTurnStarts();
+    miraFinishes("Blaine, thank you for bringing the river today. That's the end of the recording, you can hang up now.");
+    responseDone();
+  }
+  events.length = 0;
+  advance(3 * 60 * 1000);
+  out.cancels = events.filter(function (e) { return e === "cancel"; }).length;
+  out.state = state();
+  out.pendingStart = run("roundPendingStart");
+  out.thanksSent = run("closingThanksSent");
+} else if (which === "typed_presence" || which === "typed_presence_in_round") {
+  // Nov 4 2026 (Blaine Mathieu's room): "you still there", typed after a
+  // silence, went to her as a subject he wanted to reach.
+  if (which === "typed_presence_in_round") {
+    run("closingPermitted = true; closingRequired = true; startRound('test', -1);");
+    roomTurnStarts(); miraFinishes(handed()); responseDone();
+  } else {
+    roomTurnStarts();
+    miraFinishes("Where does your judgment enter that the agents genuinely can't supply?");
+    responseDone();
+  }
+  ctx.__raw = JSON.stringify({ nn: 1, kind: "topic", text: "you still there" });
+  run("onGuestFeedback(legs[0], __raw);");
+  out.steer = run("guestSteer && guestSteer.line");
+  out.feedback = run("guestFeedback");
+  out.acks = __acksOut();
+  out.state = state();
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

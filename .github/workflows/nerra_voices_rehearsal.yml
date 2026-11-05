@@ -57,6 +57,10 @@ on:
         description: 'The fixture steps away to take a call at minute four (both arms)'
         type: boolean
         default: false
+      early_wrap:
+        description: 'The fixture asks to finish at minute six, before the closing round (both arms)'
+        type: boolean
+        default: false
       invite_email:
         description: 'Email this address a test room for a PERSON instead of running a fixture (the draft room when candidate_scenario is on). The job waits up to 90 min for them to join, then measures the room.'
         type: string
@@ -176,7 +180,7 @@ jobs:
       # fixture behaviour, so either input refreshes it from this ref (its
       # default prefix stays "room-").
       - name: Upload this ref's fixture guest
-        if: ${{ (inputs.candidate_scenario || inputs.with_hold) && inputs.remeasure == '' && inputs.invite_email == '' }}
+        if: ${{ (inputs.candidate_scenario || inputs.with_hold || inputs.early_wrap) && inputs.remeasure == '' && inputs.invite_email == '' }}
         run: |
           python - <<'PY'
           from voximplant.api_clients.voximplant_client import (
@@ -192,9 +196,11 @@ jobs:
         run: |
           args=(--arm current --fixture "$FIXTURE" --minutes "$MINUTES" --repeat "$REPEAT" --out-dir "$OUT_DIR")
           [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
+          [ "$EARLY_WRAP" = "true" ] && args+=(--early-wrap)
           python pipelines/voices/rehearsal.py run "${args[@]}"
         env:
           WITH_HOLD: ${{ inputs.with_hold }}
+          EARLY_WRAP: ${{ inputs.early_wrap }}
       - name: Rehearse the proposed configuration
         if: ${{ env.ARMS != 'current' && inputs.remeasure == '' && inputs.invite_email == '' }}
         run: |
@@ -204,10 +210,12 @@ jobs:
           [ "$TOOLS" = "none" ] && args+=(--tools none)
           [ "$CANDIDATE" = "true" ] && args+=(--scenario candidate)
           [ "$WITH_HOLD" = "true" ] && args+=(--with-hold)
+          [ "$EARLY_WRAP" = "true" ] && args+=(--early-wrap)
           python pipelines/voices/rehearsal.py run "${args[@]}"
         env:
           CANDIDATE: ${{ inputs.candidate_scenario }}
           WITH_HOLD: ${{ inputs.with_hold }}
+          EARLY_WRAP: ${{ inputs.early_wrap }}
           TURN_SILENCE_MS: ${{ inputs.turn_silence_ms }}
           REASONING_EFFORT: ${{ inputs.reasoning_effort }}
           TOOLS: ${{ inputs.tools || 'default' }}

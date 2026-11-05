@@ -1985,6 +1985,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
 Register `mira-react-builds-2026-11-04`; notes `docs/mira_craft_notes.md`; guards `tests/test_mira_builds_2026_11_04.py`.
 **What she says after an answer is a bridge built from one thing the guest said, never a phrase folded from it, and never the same shape twice** (HOW TO REACT, by shape). **`one_liner_rate` reads the sameness beside label and bare.** **`learning.SUPERSEDED_BY_BRIEF` keeps lessons the brief now governs out of the prompt; it ships and rehearses with the brief.** ⚠️ AUDIO, the room: a rehearsal PASS plus one listen before merge.
 
+### The Age of AI: a guest who asks to end, ends (Nov 5 2026)
+
+Register `blaines-close-2026-11-05`; guards `tests/test_blaines_close_2026_11_05.py`; review [`docs/reviews/blaine_mathieu_2026_11_05.md`](docs/reviews/blaine_mathieu_2026_11_05.md).
+**A recorded stop means the clock never starts the closing round** (`roundDueOnTheClock`; a TYPED wrap-up still gets its round) and her goodbye after it stands. **A typed presence check is a message, never a topic** (`TYPED_PRESENCE_RE`). Widen a stop pattern only with its false positives in the guard. Rehearse with `early_wrap`. ⚠️ AUDIO, the room.
+
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 
 Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.

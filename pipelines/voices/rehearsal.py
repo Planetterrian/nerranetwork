@@ -79,6 +79,12 @@ HOLD_BEATS = [
     {"at_min": 7.0, "kind": "push_back"},
     {"at_min": 8.0, "kind": "ask_who"},
 ]
+#: Nov 5 2026 (Blaine Mathieu's room): a guest who asks, in their own words,
+#: to finish well before the closing round is due. The room must hear it as a
+#: stop, let her goodbye stand, and never start the round on the clock after.
+EARLY_WRAP_BEATS = [
+    {"at_min": 6.0, "kind": "ask_to_wrap"},
+]
 #: The §7.5 rule: proposed must beat current on these (lower is better for
 #: the first two, higher for the third) ...
 MUST_BEAT = (("overlap_events", "lower"), ("self_answered_turns", "lower"),
@@ -373,7 +379,8 @@ def _iso(t: dt.datetime) -> str:
 def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any],
                   prompt: str, minutes: int, turn_silence_ms: Optional[int],
                   reasoning_effort: str, tools: Optional[list],
-                  scenario: str = "deployed", with_hold: bool = False) -> Dict[str, Any]:
+                  scenario: str = "deployed", with_hold: bool = False,
+                  early_wrap: bool = False) -> Dict[str, Any]:
     """The interview_runs row for one rehearsal room. The scenario reads the
     same columns a live run carries; the only marker is session_kind."""
     from fire_interviews import MIRA_TOOLS, keyterms_for, room_clips, turn_detection
@@ -410,6 +417,7 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
             "turn_silence_ms": detection["silence_duration_ms"],
             "prompt_chars": len(prompt), "started": _iso(_now()),
             "scenario": scenario, "with_hold": bool(with_hold),
+            "early_wrap": bool(early_wrap),
         }},
     }
     if reasoning_effort:
@@ -436,13 +444,20 @@ def create_run(row: Dict[str, Any]) -> Dict[str, Any]:
 
 def start_fixture(run_id: str, fixture: Dict[str, Any], persona: str, minutes: int,
                   cough_clip: str = "", scenario: str = "deployed",
-                  with_hold: bool = False) -> Dict[str, Any]:
+                  with_hold: bool = False, early_wrap: bool = False) -> Dict[str, Any]:
     from voximplant.api_clients.voximplant_client import start_fixture_guest
     return start_fixture_guest(
         run_id, persona=persona, voice=fixture.get("voice") or "sal", minutes=minutes,
         speaks_first=bool(fixture.get("speaks_first")), fixture_id=fixture["id"],
         guest_name=fixture["name"], cough_clip=cough_clip or None,
-        beats=HOLD_BEATS if with_hold else None, room_prefix=SCENARIOS[scenario])
+        beats=fixture_beats(with_hold, early_wrap), room_prefix=SCENARIOS[scenario])
+
+
+def fixture_beats(with_hold: bool = False, early_wrap: bool = False) -> Optional[list]:
+    """The fixture's scheduled behaviours: the hold set, the early wrap-up,
+    both (in time order), or None for the fixture's own defaults."""
+    beats = (HOLD_BEATS if with_hold else []) + (EARLY_WRAP_BEATS if early_wrap else [])
+    return sorted(beats, key=lambda b: b["at_min"]) or None
 
 
 def wait_for_room(run_id: str, minutes: int) -> Dict[str, Any]:
@@ -665,18 +680,19 @@ def write_credit_file(run: Dict[str, Any], record: Dict[str, Any]) -> Optional[P
 def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
             turn_silence_ms: Optional[int], reasoning_effort: str,
             tools: Optional[list], cough_clip: str, out_dir: Path,
-            index: int, scenario: str = "deployed", with_hold: bool = False) -> Path:
+            index: int, scenario: str = "deployed", with_hold: bool = False,
+            early_wrap: bool = False) -> Path:
     """One room: create the run, send in the fixture, wait, measure, write."""
     pair = ensure_rehearsal_interview(fixture, minutes)
     row = build_run_row(interview=pair["interview"], arm=arm, fixture=fixture,
                         prompt=prompt, minutes=minutes, turn_silence_ms=turn_silence_ms,
                         reasoning_effort=reasoning_effort, tools=tools,
-                        scenario=scenario, with_hold=with_hold)
+                        scenario=scenario, with_hold=with_hold, early_wrap=early_wrap)
     run = create_run(row)
     logger.info("rehearsal run %s (%s, %s) created", run["id"], arm, fixture["id"])
     persona = fixture_persona(fixture)
     start_fixture(run["id"], fixture, persona, minutes, cough_clip,
-                  scenario=scenario, with_hold=with_hold)
+                  scenario=scenario, with_hold=with_hold, early_wrap=early_wrap)
     logger.info("fixture %s is calling into room %s", fixture["id"], run["id"])
     run = wait_for_room(run["id"], minutes)
     if room_refused(run.get("scenario_trace") or []):
@@ -1293,7 +1309,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
             run_one(arm=args.arm, fixture=fixture, minutes=args.minutes, prompt=prompt,
                     turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
                     tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
-                    scenario=args.scenario, with_hold=args.with_hold)
+                    scenario=args.scenario, with_hold=args.with_hold,
+                    early_wrap=args.early_wrap)
         except RoomsRefused as exc:
             print(f"::error::{exc}; no further room was placed")
             return 3
@@ -1403,6 +1420,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                    help="candidate = this checkout's room, uploaded beside the live one")
     r.add_argument("--with-hold", action="store_true",
                    help="the fixture steps away to take a call at minute four")
+    r.add_argument("--early-wrap", action="store_true",
+                   help="the fixture asks to finish at minute six, before the closing round")
     r.set_defaults(func=_cmd_run)
     iv = sub.add_parser("invite", help="email a person a test room, then measure it")
     iv.add_argument("--email", required=True)
