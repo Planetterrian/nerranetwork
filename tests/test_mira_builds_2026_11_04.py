@@ -143,7 +143,7 @@ class TestTheBriefAsksHerToBuild:
         assert "never with a grade of the answer, never with their last words echoed back" in flat
         assert "A short answer needs no acknowledgment" in flat
         assert "never perform a laugh, a sigh or a breath" in flat
-        assert "Once in each part, offer a view of your own and hand it back as a question" in flat   # Nov 5 2026
+        assert "Now and then offer a view of your own and hand it back as a question" in flat   # Nov 5 2026
 
     def test_the_old_one_sentence_beat_is_gone(self):
         flat = _flat(PROMPT)

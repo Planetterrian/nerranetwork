@@ -327,8 +327,8 @@ class TestTheBriefCarriesTheBeat:
     def test_the_beat_in_how_to_listen_is_still_there(self):
         # Nov 4 2026: HOW TO LISTEN hands the reaction to HOW TO REACT.
         listen = PROMPT[PROMPT.index("HOW TO LISTEN"):PROMPT.index("IT IS THEIR HOUR")]
-        # Nov 5 2026: two or three steps down, then move on (test_interview_plan_2026_11_05).
-        assert "build on it. Two or three steps down" in _flat(listen)
+        # Nov 5 2026: a thread is minutes of conversation (test_interview_plan_2026_11_05).
+        assert "build on it, and stay with it" in _flat(listen)
 
     def test_by_shape_only(self):
         # No specimen line, no number, no guest, no date in the brief.

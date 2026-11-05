@@ -1100,8 +1100,15 @@ if (which === "server_turns_advance_the_round") {
     out.handover = run("handoverNote()");
     out.minutes = run("minutesIn()");
   } else if (which === "plan_max_thread") {
+    // Answers of three quarters of a minute: six questions take five minutes,
+    // inside the first part's slot (due at 9), so only the cap moves the thread.
     out.turns = [];
-    for (let i = 0; i < 6; i++) out.turns.push(turn("And question number " + i + " on the lake?", 10000));
+    for (let i = 0; i < 7; i++) out.turns.push(turn("And question number " + i + " on the lake?", 45000));
+  } else if (which === "plan_short_answers") {
+    // Nov 5 2026 rehearsal: thirty-word answers. Seven questions in under two
+    // minutes is not a thread that has had its turns.
+    out.turns = [];
+    for (let i = 0; i < 7; i++) out.turns.push(turn("And question number " + i + " on the lake?", 10000));
   } else if (which === "plan_own_ask") {
     out.own = turn("I'm curious where insurers and regulators disagree about small autonomous boats?");
     out.next = turn("What did the regulators say to that?", 14 * 60 * 1000);   // past minute 16, the third part

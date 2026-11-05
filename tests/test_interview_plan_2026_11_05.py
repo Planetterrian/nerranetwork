@@ -10,12 +10,13 @@ answer and to go down from there again when the list ran out.
 
 These guards hold: the prepared questions travel to the room in running
 order; the room hands her the next one in words when a thread has had its
-turns, never before a thread has had two of her questions; a thread of five
-moves whatever the clock says; nothing is skipped or asked twice; the guest
+turns, never before a thread has had two of her questions and three
+minutes; a thread of six moves whatever the clock says, once it has had its
+minutes; nothing is skipped or asked twice; the guest
 and the close outrank the plan; a room with no plan behaves as before; the
-trace carries indices, never words; and the brief describes the shape (two
-or three steps, then move on out loud, one conversational turn of her own
-in each part) without a quoted line.
+trace carries indices, never words; and the brief describes the shape (a
+thread is minutes of conversation, the room hands each prepared question,
+a view of her own now and then) without a quoted line.
 """
 from __future__ import annotations
 
@@ -153,10 +154,22 @@ class TestTheRoomMovesOn:
         assert "differently each time" in line
         assert "in these words or very close to them" in line
 
-    def test_five_questions_on_one_thread_move_whatever_the_clock(self):
-        turns = sim("plan_max_thread")["turns"]
-        assert [bool(t["instructions"]) for t in turns] == [False, False, False, False, True, False]
-        assert HULL in turns[4]["instructions"]
+    def test_six_questions_on_one_thread_move_whatever_the_clock(self):
+        out = sim("plan_max_thread")
+        turns = out["turns"]
+        assert [bool(t["instructions"]) for t in turns] == [False, False, False, False, False, True, False]
+        assert HULL in turns[5]["instructions"]
+        assert plan_trace(out)[0] == "move to 2/4 queued (the thread has had 6 questions)"
+
+    def test_a_thread_is_minutes_not_only_questions(self):
+        # Nov 5 2026 rehearsal (run 42055299259): thirty-word answers, the cap
+        # fired two minutes into a thread and the plan was gone by minute 12.
+        out = sim("plan_short_answers")
+        assert not any(t["instructions"] for t in out["turns"])
+        assert out["turns"][-1]["plan"]["planThreadTurns"] == 7
+        assert plan_trace(out) == []
+        assert "const PLAN_MIN_THREAD_MIN = 3;" in SCENARIO
+        assert "const PLAN_MAX_THREAD_TURNS = 6;" in SCENARIO
 
     def test_a_question_she_reaches_herself_counts_and_nothing_is_skipped(self):
         out = sim("plan_own_ask")
@@ -247,18 +260,22 @@ class TestTheBriefHasAShape:
 
     def test_the_prepared_questions_are_the_running_order(self):
         assert "follow the conversation, not the list" not in PROMPT
-        assert "Prepared questions, one part of the hour each, in order:" in PROMPT
+        assert "Prepared questions; the room hands you each when its part of the hour is\ndue:" in PROMPT
 
-    def test_two_or_three_steps_then_the_next_question_out_loud(self):
-        assert "Two or three steps down is a thread; then the next prepared question," \
-            " out loud." in self.LISTEN
+    def test_a_thread_is_minutes_of_conversation(self):
+        # Nov 5 2026 rehearsal: "two or three steps" plus a numbered running
+        # order read as a checklist; she reached the whole plan by minute 12.
+        assert "build on it, and stay with it: a thread is a few minutes of real" \
+            " conversation." in self.LISTEN
+        assert "Two or three steps down" not in self.LISTEN
         assert "go down from there" not in self.LISTEN
         assert "Then the next question one step down" not in self.LISTEN
         assert "go back to the best thing they said and open it from a new side" in self.LISTEN
 
-    def test_one_conversational_turn_of_her_own_in_each_part(self):
-        assert "Once in each part, offer a view of your own and hand it back as a" \
-            " question; answer their questions first." in self.REACT
+    def test_a_view_of_her_own_now_and_then(self):
+        assert "Now and then offer a view of your own and hand it back as a" \
+            " question; answer theirs first." in self.REACT
+        assert "Once in each part" not in self.REACT
         assert "once or twice an hour" not in self.REACT
 
     def test_the_brief_stays_within_its_budget(self):
