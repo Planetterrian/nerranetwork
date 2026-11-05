@@ -205,6 +205,76 @@ reviews:
       ab_listen_required: false
       rationale: Ep023/Ep025 app chapters expose a section label the podcast prompt forbids speaking; metadata-only, no TTS field changes.
     agent_cost_usd: 0.1146
+  - date: '2026-11-05'
+    pr: null
+    doc: docs/reviews/omni_view_world_review_2026_11_05.md
+    generated_by: grok-4.5
+    summary: Prior Saturday/chapter fixes never shipped (Ep040 still multi-item Saturday; Ep037 still bare 'The Ten'); length ceiling remains an operator format-vs-promise decision; net-worth title filter false-positive’d Prop 40; Progress Watch absence and Both Sides place bugs look clear in Ep035–044.
+    scored_prior_predictions:
+    - metric: Saturday editions (weekday==5) whose The Ten section is a single story (not ≥5 ranked items)
+      verdict: miss
+      evidence: Ep040 (Sat 2026-11-01) multi-story Ten + week-in-review; Saturday lint from 2026-10-19 never shipped
+    - metric: _tts.txt files containing Progress Watch absence sentences (no sign of progress / day had none / nothing that meets a finished result)
+      verdict: hit
+      evidence: 'Ep035–044 transcripts: 0 absence shapes; PW uses ''a sign of progress'' when present (Ep036, 042–044)'
+    - metric: chapter JSON titles exactly equal to 'The Ten'
+      verdict: partial
+      evidence: 'Still 1/10: chapters_ep037.json title ''The Ten''; filter proposed 2026-10-19 not shipped'
+    - metric: Both Sides cold-open place token missing from the digest Both Sides block (Tirana/Toronto class)
+      verdict: hit
+      evidence: Ep035–044 Both Sides openers match dispute geography (UK/Israel/India–US/Mecca/US/Palantir/AGOA/NBA Rwanda/Iran); no Toronto-for-Albania class error
+    shipped: []
+    deferred:
+    - 'Operator decision: keep 5-developed+5-one-line and lower min_podcast_words + RSS ''twelve minutes'' to match median ~1200–1500, OR deepen items 6–10 / cut to 8 stories and only then keep 1750/12 min — do not ship another podcast-side length lever'
+    - 8-story vs 10-story cut after first-week download data (still ~2 median first-week downloads — too thin)
+    - Re-grade world feeds from a runner (check_feeds.py omni_view_world)
+    - YouTube enable is a data decision (plan §7; youtube.enabled still false)
+    - Surface desks_live_at_publish on the management dashboard (members-only desks)
+    - Tighten progress_watch_thin for bomb-threat reopen / single-bank earnings without public-welfare frame
+    - Any prompt-only write-longer / podcast_expand_below_target / word-floor pressure (do_not_retry)
+    predictions:
+    - metric: Saturday editions (date weekday==5) whose digest The Ten / The Story section is a single developed story (not ≥5 ranked items)
+      baseline: 0/1 in window (Ep040 multi-item; prior Ep019/025 also multi)
+      expected: 2/2 next Saturdays after Saturday lint ships and is opted in on omni_view_world
+      verdict: pending
+      evidence: null
+    - metric: chapter JSON titles exactly equal to 'The Ten'
+      baseline: 1/10 (Ep037)
+      expected: 0/10 on episodes ≥1 day old after chapter label filter ships
+      verdict: pending
+      evidence: null
+    - metric: digests retained / shipped whose title or lead matches exclude_title_patterns \bnet worth\b for wealth-tax/proposition ballots
+      baseline: 1/10 (Ep042 Prop 40 net-worth tax line)
+      expected: 0/10 after pattern narrow; celebrity 'net worth revealed' titles still excluded
+      verdict: pending
+      evidence: null
+    - metric: operator format-vs-promise decision recorded (lower floors+RSS minutes OR deepen/cut story format)
+      baseline: undecided; 6/10 scripts under 1750; do_not_retry podcast-side levers
+      expected: explicit decision in YAML and/or RSS copy before any new length prediction
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/digest_lint.py
+      kind: code
+      ab_listen_required: false
+      rationale: Ep040 (and prior Ep019/025) prove Saturday edition_note is ignored; meta-review favors deterministic lint over another prompt. No audio change until a Saturday passes the lint.
+    - file: shows/omni_view_world.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Opt Top World into the Saturday structural lint so a multi-item Saturday cannot publish.
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Ep037 still ships bare ''The Ten''; podcast prompt forbids speaking section names; metadata-only, no TTS field changes (landmine #17).'
+    - file: shows/omni_view_world.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'Ep042 leakage: Prop 40 ''tax on net worth'' is civic news, not paparazzi net-worth churn. Narrow exclude without re-opening celebrity profiles.'
+    - file: tests/test_omni_view_world_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a runway-tolerant drift-guard; avoids red main on same-day shape (Sep 2026 lesson).
+    agent_cost_usd: 0.1255
 do_not_retry:
   - idea: Podcast-side length levers for omni_view_world (raise min_podcast_words further, podcast_expand_below_target, or prompt pressure to hit 1750) — format ceiling is the constraint; escalate to operator format-vs-promise decision instead
     evidence: flagged 2026-10-19 (Grok review)
