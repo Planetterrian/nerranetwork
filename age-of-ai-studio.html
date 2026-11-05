@@ -133,6 +133,7 @@
   .feedback .fb-head { margin: 0 0 .6rem; }
   .feedback .fb-head span { color: var(--muted); font-size: .88rem; font-weight: 400; }
   .feedback button { padding: .55rem 1rem; }
+  #fbWrap { border-color: var(--err); }
   .fb-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: .7rem 0 0; align-items: center; }
   .fb-chips .fb-label { color: var(--muted); font-size: .88rem; }
   .fb-chips button { font-weight: 500; font-size: .9rem; text-align: left; max-width: 100%; }
@@ -206,6 +207,9 @@
     .feedback .fb-head span { display: block; font-size: .8rem; line-height: 1.4; margin-top: .15rem; }
     .feedback .row { flex-wrap: nowrap; gap: .5rem; }
     .feedback .row button { flex: 1 1 0; padding: .55rem .4rem; }
+    /* Nov 5 2026: four actions sit two by two on a phone. */
+    .feedback .row.fb-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .feedback .row.fb-actions button { font-size: .88rem; }
     .fb-chips { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: .25rem; }
     .fb-chips .fb-label, .fb-chips button { flex: 0 0 auto; white-space: nowrap; }
     .fb-form { flex-wrap: nowrap; margin-top: .6rem; }
@@ -377,10 +381,15 @@
          page sends each press to the room on this call; the room answers. -->
     <div class="feedback" id="feedbackPanel">
       <p class="fb-head"><b>Steer the conversation</b>
-        <span>Mira gets these privately at her next turn. They're kept with the interview's notes, never in the episode.</span></p>
-      <div class="row">
+        <span>Only Mira sees these, and only for her next line. If you're quiet, she acts on it straight away. They're kept with the interview's notes, never in the episode.</span></p>
+      <!-- Nov 5 2026: from the first week of rooms. Priyanka asked Mira to
+           repeat a question twice out loud, and both guests asked to finish
+           in words the room did not hear. -->
+      <div class="row fb-actions">
+        <button class="ghost" type="button" id="fbMove">New subject</button>
+        <button class="ghost" type="button" id="fbRepeat">Repeat the question</button>
         <button class="ghost" type="button" id="fbGood">Good question</button>
-        <button class="ghost" type="button" id="fbMove">Let's move on</button>
+        <button class="ghost" type="button" id="fbWrap">Let's wrap up</button>
       </div>
       <div class="fb-chips hidden" id="fbAgenda"><span class="fb-label">Ask me about:</span></div>
       <form class="fb-form" id="fbForm">
@@ -1739,9 +1748,11 @@
 
   var FB_TEXT = {
     noted: "Thanks, noted. Mira keeps going.",
-    queued_move_on: "Got it. When you finish what you're saying, Mira will move to something else.",
-    queued_topic: "Got it. Mira will take you there at her next turn.",
+    queued_move_on: "Got it. Mira will change the subject at her next line.",
+    queued_repeat: "Got it. Mira will ask that again, more simply.",
+    queued_topic: "Got it. Mira will take you there at her next line.",
     applied: "Mira has it now.",
+    applied_wrap_up: "Got it. Mira will start the closing questions now, then say goodbye.",
     closing: "The closing questions have started, so Mira will finish those first.",
     hold: "Mira is waiting for you. Just start talking when you're back.",
     empty: "Type what you'd like to talk about first.",
@@ -1777,7 +1788,8 @@
     if (m && m.nn === 1 && m.room === "ended") { roomEndReason = String(m.reason || "ended"); return; }
     if (!m || m.nn !== 1 || !m.status) return;
     if (fbWaiting) { clearTimeout(fbWaiting); fbWaiting = null; }
-    var key = m.status === "queued" ? "queued_" + m.ack : m.status;
+    var key = m.status === "queued" ? "queued_" + m.ack
+      : (m.status === "applied" && FB_TEXT["applied_" + m.ack]) ? "applied_" + m.ack : m.status;
     var warn = m.status === "closing" || m.status === "hold" || m.status === "empty" ||
       m.status === "full" || m.status === "not_in_room";
     if (FB_TEXT[key]) fbStatus(FB_TEXT[key], warn);
@@ -1797,6 +1809,21 @@
   }
   document.getElementById("fbGood").addEventListener("click", function () { sendFeedback("good"); });
   document.getElementById("fbMove").addEventListener("click", function () { sendFeedback("move_on"); });
+  document.getElementById("fbRepeat").addEventListener("click", function () { sendFeedback("repeat"); });
+  // Wrapping up starts the closing questions and cannot be taken back, so it
+  // takes a second press within five seconds.
+  var fbWrapArmed = null;
+  document.getElementById("fbWrap").addEventListener("click", function () {
+    var b = document.getElementById("fbWrap");
+    if (!fbWrapArmed) {
+      b.textContent = "Press again to wrap up";
+      fbWrapArmed = setTimeout(function () { fbWrapArmed = null; b.textContent = "Let's wrap up"; }, 5000);
+      return;
+    }
+    clearTimeout(fbWrapArmed); fbWrapArmed = null; b.textContent = "Let's wrap up";
+    fbCooldown = 0;
+    sendFeedback("wrap_up");
+  });
   document.getElementById("fbForm").addEventListener("submit", function (e) {
     e.preventDefault();
     var input = document.getElementById("fbText");

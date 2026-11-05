@@ -111,7 +111,7 @@ class TestTypedMessages:
     def test_presence_is_checked_before_a_topic(self):
         body = SCENARIO[SCENARIO.index("function onGuestFeedback("):]
         body = body[:body.index("\n}\n")]
-        assert body.index("TYPED_PRESENCE_RE.test(text)") < body.index("topicSteer(text)")
+        assert body.index("TYPED_PRESENCE_RE.test(text)") < body.index("steerLine(kind, text)")
 
     def test_the_steer_has_no_specimen(self):
         steer = SCENARIO[SCENARIO.index("const PRESENCE_STEER ="):]
