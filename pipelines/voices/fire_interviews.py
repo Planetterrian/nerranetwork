@@ -560,14 +560,49 @@ def is_closing_session(interview: dict) -> bool:
 TURN_SILENCE_MS = 1800
 
 
-def room_log_seed(show, app: dict) -> dict:
+#: Nov 5 2026: the running order of an interview's prepared questions. The
+#: room (voximplant/scenarios/age_of_ai_interview.js, "The shape of the hour")
+#: moves Mira to the next one when the thread in play has had its turns.
+PLAN_SECTION_ORDER = {"opening": 0, "core": 1, "tension": 2, "forward": 3}
+PLAN_MAX = 12
+PLAN_TEXT_MAX = 400
+
+
+def interview_plan(brief: dict | None) -> list:
+    """The brief's prepared questions in running order: the opening, the core
+    questions, the tension, the forward look; within a section, the order
+    they were written in. A question with no known section sits with the
+    core. Each item is ``{question, curious, section}``; at most PLAN_MAX."""
+    items = []
+    for i, q in enumerate((brief or {}).get("likely_questions") or []):
+        if isinstance(q, dict):
+            text = str(q.get("question") or "").strip()
+            curious = str(q.get("curious") or "").strip()
+            section = str(q.get("section") or "").strip().lower()
+        else:
+            text, curious, section = str(q or "").strip(), "", ""
+        if not text:
+            continue
+        rank = PLAN_SECTION_ORDER.get(section, PLAN_SECTION_ORDER["core"])
+        items.append((rank, i, {"question": text[:PLAN_TEXT_MAX],
+                                "curious": curious[:PLAN_TEXT_MAX],
+                                "section": section or "core"}))
+    items.sort(key=lambda t: (t[0], t[1]))
+    return [item for _, _, item in items][:PLAN_MAX]
+
+
+def room_log_seed(show, app: dict, brief: dict | None = None) -> dict:
     """What the room reads off grok_session_log when it opens: whether the
     studio records the guest's camera (Oct 28 2026, the show's switch), and
     the guest's own public pages, which tell the room's lookups who this
     guest is (Oct 28 2026: with them the opening lookup found Michael
-    Kamins' podcast of six days earlier; without, nothing)."""
+    Kamins' podcast of six days earlier; without, nothing). Nov 5 2026: and
+    the interview's plan, the prepared questions in running order."""
     from common import guest_links
     seed: dict = {}
+    plan = interview_plan(brief)
+    if len(plan) > 1:
+        seed["interview_plan"] = plan
     if getattr(show, "local_video", False):
         seed["local_video"] = True
     try:
@@ -679,9 +714,9 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     """
     show = show_for(interview, app)
     minutes = planned_minutes(interview, app)
-    questions = brief.get("likely_questions") or []
-    q_text = "\n".join(f"- {q.get('question', q) if isinstance(q, dict) else q}"
-                       for q in questions)
+    # Nov 5 2026: numbered, in the running order the room moves through.
+    q_text = "\n".join(f"{n}. {q['question']}"
+                       for n, q in enumerate(interview_plan(brief), 1))
     prompt = load_prompt(
         "mira_system_prompt.txt",
         show=show,
@@ -1118,7 +1153,8 @@ def fire_due_interviews() -> int:
                 **room_clips(show),
                 # Oct 28 2026: the studio records the guest's camera in the
                 # browser when the show says so (Worker studio-state reads it).
-                **({"grok_session_log": run_log} if (run_log := room_log_seed(show, app)) else {}),
+                **({"grok_session_log": run_log} if (run_log := room_log_seed(
+                    show, app, None if is_hello_session(interview) or is_closing_session(interview) else brief)) else {}),
                 **({"status": "staged"} if studio else {"status": "awaiting_guest"}),
             })
             if host_mode:

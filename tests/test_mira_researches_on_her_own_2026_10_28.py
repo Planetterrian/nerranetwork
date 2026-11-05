@@ -88,7 +88,7 @@ class TestTheRoomLooksThingsUp:
         assert seed["guest_links"][:2] == ["https://adalovelace.example", "https://x.com/ada"]
         assert all(u.startswith("https://") for u in seed["guest_links"])
         assert fi.room_log_seed(Show, {}) == {}
-        assert 'room_log_seed(show, app)' in (ROOT / "pipelines" / "voices"
+        assert 'room_log_seed(\n                    show, app,' in (ROOT / "pipelines" / "voices"
                                                / "fire_interviews.py").read_text(encoding="utf-8")
 
     def test_a_substantial_answer_is_looked_up_and_a_short_one_is_not(self, room):

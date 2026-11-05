@@ -7316,3 +7316,36 @@ experiments:
       TYPED_PRESENCE_RE / PRESENCE_STEER. Rehearsal: --early-wrap (fixture
       beat ask_to_wrap at minute six). Guards
       tests/test_blaines_close_2026_11_05.py.
+  - id: interview-plan-2026-11-05
+    title: "The shape of the hour: the room moves Mira through her prepared questions"
+    area: voices
+    shipped: 2026-11-05
+    readout: 2026-12-05
+    status: reading
+    baseline: >
+      The nine graded Age of AI rooms before it: 9 of 63 prepared questions
+      reached, most rooms one thread followed down for half the hour; grades
+      averaged overall 5.1, questions 5.6, pacing 4.4.
+    target: >
+      Over the next five real rooms on the candidate scenario: at least
+      two-thirds of each room's prepared questions reached, no thread longer
+      than six of her questions, and the questions and pacing grades each up
+      by at least one point on the baseline average.
+    criteria: >
+      HIT when the five rooms reach a median of at least two-thirds of their
+      plan with no thread over six questions and the questions and pacing
+      averages each rise a point; MISS when the plan share or the grades do
+      not move; INCONCLUSIVE when fewer than five rooms ran with a plan.
+    readout_plan: >
+      interview_runs.scenario_trace, the "plan" line "reached k/n ... longest
+      thread t questions" at the end of each room; episode_grades.questions
+      and .pacing for the same interviews against the nine-room baseline.
+    notes: >
+      fire_interviews.interview_plan orders the brief's questions (opening,
+      core, tension, forward) onto grok_session_log.interview_plan; the
+      scenario hands the next one in words when the thread has had two of
+      her questions and its slot is due, or five whatever the clock; a move
+      on press hands it too. The brief asks for two or three steps per
+      thread, a spoken move, and one conversational turn of her own in each
+      part. Guards tests/test_interview_plan_2026_11_05.py. ⚠️ AUDIO, the
+      room: a two-arm rehearsal PASS plus one listen before the deploy.

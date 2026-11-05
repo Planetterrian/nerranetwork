@@ -272,7 +272,7 @@ class TestSheOwnsWhatSheIs:
 
 class TestSheGuidesRatherThanHolds:
     def test_she_brings_a_perspective_and_hands_it_back(self):
-        assert "Bring your own view once or twice an hour" in PROMPT
+        assert "Once in each part, offer a view of your own" in " ".join(PROMPT.split())   # Nov 5 2026
         assert "hand it back as a question" in PROMPT
 
     def test_she_does_not_offer_false_comfort(self):
@@ -720,8 +720,11 @@ class TestSheDoesNotEndTheShowInTheMiddle:
         assert "then their last word as two separate questions" in self.PROMPT
 
     def test_she_follows_the_interesting_thing_down(self):
-        assert "Then the next question one step down" in self.PROMPT
-        assert "go back to the best thing they said and go down from there" in self.PROMPT
+        # Nov 5 2026 (tests/test_interview_plan_2026_11_05.py): still down, two
+        # or three steps, then the next prepared subject, out loud.
+        flat = " ".join(self.PROMPT.split())
+        assert "Two or three steps down is a thread; then the next prepared question, out loud" in flat
+        assert "go back to the best thing they said and open it from a new side" in flat
 
     def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
         # Sept 29 2026 (Chad Law): still asked, now in service of the subject.

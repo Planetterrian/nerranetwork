@@ -387,7 +387,7 @@ class TestTheStudio:
             assert get_show(slug).local_video is setting
         # The run row is seeded from the show's switch (with the guest's own
         # pages, for the room's lookups).
-        assert "room_log_seed(show, app)" in FIRE
+        assert "room_log_seed(\n                    show, app," in FIRE   # Nov 5 2026: and the brief's plan
         import fire_interviews as fi
 
         class On:

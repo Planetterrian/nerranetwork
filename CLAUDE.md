@@ -2000,6 +2000,11 @@ Register `blaines-close-2026-11-05`; guards `tests/test_blaines_close_2026_11_05
 Review [`docs/reviews/guest_steers_2026_11_05.md`](docs/reviews/guest_steers_2026_11_05.md); guards `tests/test_guest_steers_2026_11_05.py`.
 **A press in a silence takes her turn at once** (`steerWhenTheFloorIsFree`; anyone talking keeps the floor) **and a queued press replaces the dead-air nudge's note** (the note won every time). **A move-on or a repeat hands her her own last question in words.** The studio has New subject, Repeat the question, Good question and a two-press Let's wrap up. **"Wrap up the interview" is a stop.** ⚠️ AUDIO, the room.
 
+### The Age of AI: the shape of the hour (Nov 5 2026)
+
+Register `interview-plan-2026-11-05`; review [`docs/reviews/interview_structure_2026_11_05.md`](docs/reviews/interview_structure_2026_11_05.md); guards `tests/test_interview_plan_2026_11_05.py`.
+**The prepared questions are the running order** (`fire_interviews.interview_plan` → `grok_session_log.interview_plan`). **The room hands her the next one in words after two of her questions on a thread once its slot is due, or after five**, the first not yet reached; the guest and the close come first; no plan is the old room. ⚠️ AUDIO, the room.
+
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 
 Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
