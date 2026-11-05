@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="description" content="Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments. AI Chips & Data Centres Daily, episode 45.">
+    
+    <meta name="keywords" content="ai chips, gpu, data center, data centre, semiconductors, nvidia, tsmc, hbm, ai infrastructure, power grid"><title>Nvidia ships CUDA 13.5, taking Vera Rubin from early… · AI Chips & Data Centres Daily</title>
+    <meta name="theme-color" content="#4338CA"><!-- Open Graph -->
+    <meta property="og:title" content="Nvidia ships CUDA 13.5, taking Vera Rubin from early… · AI Chips & Data Centres Daily">
+    <meta property="og:description" content="Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments. AI Chips & Data Centres Daily, episode 45.">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://audio.nerranetwork.com/share/ai_chips/ep045-art.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:alt" content="AI Chips &amp; Data Centres Daily, episode 45: Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.">
+    <meta property="og:url" content="https://nerranetwork.com/blog/ai_chips/ep045.html">
+    <meta property="og:site_name" content="Nerra Network">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Nvidia ships CUDA 13.5, taking Vera Rubin from early… · AI Chips & Data Centres Daily">
+    <meta name="twitter:description" content="Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments. AI Chips & Data Centres Daily, episode 45.">
+    <meta name="twitter:image" content="https://audio.nerranetwork.com/share/ai_chips/ep045-art.jpg">
+    <meta name="twitter:image:alt" content="AI Chips &amp; Data Centres Daily, episode 45: Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments."><meta name="twitter:site" content="@nerranetwork">
+    <meta name="twitter:creator" content="@nerranetwork">
+
+    <link rel="canonical" href="https://nerranetwork.com/blog/ai_chips/ep045.html">
+
+    <!-- Google Fonts: DM Sans + Source Serif 4 (non-blocking: media=print onload swap) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"></noscript><script>
+    (function () {
+      try {
+        if (!localStorage.getItem('nn_consent_v1')) {
+          document.documentElement.classList.add('nn-consent-needed');
+        }
+      } catch (e) {
+        document.documentElement.classList.add('nn-consent-needed');
+      }
+      var d = document.documentElement;
+      d.classList.add('nn-js');
+      setTimeout(function () { if (!d.classList.contains('nn-ip-ready')) { d.classList.add('nn-ip-off'); } }, 5000);
+    })();
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%230B0F1A'/><line x1='50' y1='50' x2='28' y2='28' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='28' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='28' y2='72' stroke='%236B47FF' stroke-width='5' stroke-linecap='round'/><line x1='50' y1='50' x2='72' y2='72' stroke='%2300D4FF' stroke-width='5' stroke-linecap='round'/><circle cx='28' cy='28' r='8' fill='%2300D4FF'/><circle cx='72' cy='28' r='8' fill='%236B47FF'/><circle cx='28' cy='72' r='8' fill='%236B47FF'/><circle cx='72' cy='72' r='8' fill='%2300D4FF'/><circle cx='50' cy='50' r='13' fill='%236B47FF'/><circle cx='50' cy='50' r='5' fill='white'/></svg>"><link rel="manifest" href="../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../assets/app/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nerra">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    
+
+    
+    <script src="../../assets/js/consent.js"
+            data-nn-path-prefix="../../"
+            data-nn-ga4-id="G-6PWJCVQQ7B"
+            data-nn-ads-id="AW-949617778"></script>
+    
+    
+    
+    <script defer src="../../assets/js/tracking.js?v=6cfe7511"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="../../styles/main.css?v=8beed5df">
+
+    
+    <link rel="alternate" type="application/rss+xml" title="AI Chips & Data Centres Daily Blog RSS" href="https://nerranetwork.com/blog_ai_chips.rss">
+    <!-- Blog Post OG -->
+    <meta property="article:published_time" content="2026-11-05">
+    <meta property="article:author" content="AI Chips & Data Centres Daily">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": "Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.",
+    "description": "Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.",
+    "datePublished": "2026-11-05",
+    "dateModified": "2026-11-05",
+    "wordCount": 2294,
+    "articleSection": "AI Chips & Data Centres Daily",
+    "inLanguage": "en",
+    "isAccessibleForFree": true,
+    "author": {
+      "@type": "Organization",
+      "name": "AI Chips & Data Centres Daily",
+      "url": "https://nerranetwork.com/ai-chips.html",
+      "sameAs": [
+        "https://nerranetwork.com/ai-disclosure.html"
+      ]
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Nerra Network",
+      "url": "https://nerranetwork.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://nerranetwork.com/assets/press/nerra-logo-horizontal.png",
+        "width": 1264,
+        "height": 320
+      }
+    },
+    "url": "https://nerranetwork.com/blog/ai_chips/ep045.html",
+    "mainEntityOfPage": "https://nerranetwork.com/blog/ai_chips/ep045.html",
+    "image": "https://audio.nerranetwork.com/share/ai_chips/ep045-art.jpg",
+    "keywords": "ai chips, gpu, data center, data centre, semiconductors, nvidia, tsmc, hbm, ai infrastructure, power grid"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "PodcastEpisode",
+    "name": "Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.",
+    "description": "Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.",
+    "datePublished": "2026-11-05",
+    "url": "https://nerranetwork.com/blog/ai_chips/ep045.html",
+    "inLanguage": "en",
+    "episodeNumber": 45,
+    "partOfSeries": {
+      "@type": "PodcastSeries",
+      "name": "AI Chips & Data Centres Daily",
+      "url": "https://nerranetwork.com/ai-chips.html"
+    },
+    "image": "https://nerranetwork.com/assets/covers/ai-chips.jpg",
+    "transcript": "https://nerranetwork.com/blog/ai_chips/ep045.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/ai_chips/AI_Chips_Ep045_20261105.mp3",
+      "inLanguage": "en"
+    }
+  }
+]
+    </script>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://nerranetwork.com/"},
+    {"@type": "ListItem", "position": 2, "name": "AI Chips & Data Centres Daily", "item": "https://nerranetwork.com/ai-chips.html"},
+    {"@type": "ListItem", "position": 3, "name": "Blog", "item": "https://nerranetwork.com/blog/ai_chips/index.html"},
+    {"@type": "ListItem", "position": 4, "name": "Episode 45"}
+  ]
+}
+    </script>
+    
+
+    <style>
+        .blog-hero {
+            position: relative;
+            padding: var(--sp-20) var(--sp-6) var(--sp-12);
+            text-align: center;
+            overflow: hidden;
+        }
+        .blog-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--show-color) 15%, transparent), transparent 70%);
+            pointer-events: none;
+        }
+        .blog-hero-inner {
+            position: relative;
+            max-width: 760px;
+            margin: 0 auto;
+        }
+        .blog-show-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-2);
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+            margin-bottom: var(--sp-6);
+            text-decoration: none;
+            transition: border-color var(--duration) var(--ease);
+        }
+        .blog-show-badge:hover {
+            border-color: var(--show-color);
+        }
+        .blog-show-badge img {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+        }
+        .blog-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-5);
+        }
+        .blog-hero-hook {
+            font-family: var(--font-body);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: var(--nn-text-muted);
+            max-width: 620px;
+            margin: 0 auto var(--sp-8);
+        }
+        .blog-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--sp-5);
+            flex-wrap: wrap;
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+        }
+        .blog-meta-bar span {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+        }
+        .blog-meta-pill {
+            padding: 2px 10px;
+            border-radius: 100px;
+            background: color-mix(in srgb, var(--show-color) 15%, transparent);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .post-author {
+            color: var(--nn-text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Share buttons */
+        .share-buttons {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-3);
+            margin-top: var(--sp-10);
+            padding-top: var(--sp-6);
+            border-top: 1px solid var(--nn-border);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            color: var(--nn-text-muted);
+            flex-wrap: wrap;
+        }
+        .share-buttons a,
+        .share-buttons button {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            padding: var(--sp-2) var(--sp-4);
+            border-radius: 8px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-card);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
+        .share-buttons a:hover,
+        .share-buttons button:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+
+        /* Article body */
+        .blog-article-wrap {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 0 var(--sp-6) var(--sp-16);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: var(--sp-10);
+        }
+        @media (min-width: 1024px) {
+            .blog-article-wrap {
+                max-width: 1060px;
+                grid-template-columns: 200px minmax(0, 1fr);
+            }
+        }
+
+        /* Table of contents */
+        .blog-toc {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .blog-toc {
+                display: block;
+                position: sticky;
+                top: calc(var(--nav-height) + var(--sp-8));
+                align-self: start;
+                max-height: calc(100vh - var(--nav-height) - var(--sp-16));
+                overflow-y: auto;
+                padding-right: var(--sp-4);
+            }
+        }
+        .blog-toc-title {
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--nn-text-muted);
+            margin-bottom: var(--sp-3);
+            font-weight: 600;
+        }
+        .blog-toc a {
+            display: block;
+            padding: var(--sp-1) 0;
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            padding-left: var(--sp-3);
+            transition: all var(--duration) var(--ease);
+            line-height: 1.4;
+        }
+        .blog-toc a:hover,
+        .blog-toc a.active {
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
+            border-left-color: var(--show-color);
+        }
+        .blog-toc a.toc-h3 {
+            padding-left: var(--sp-6);
+            font-size: 0.75rem;
+        }
+
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
+        .blog-article {
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+    </style>
+    
+    <link rel="stylesheet" href="../../styles/blog.css?v=c634c5e8">
+
+
+    
+    
+    <style>:root {
+      --show-color: #4338CA;
+      --show-color-dark: #312E81;
+      --show-color-text: color-mix(in srgb, #4338CA, white 35%);
+    }</style>
+    
+    <style>
+        @media (max-width: 768px) {
+            .nn-footer-grid { grid-template-columns: 1fr; }
+            .nn-footer-col h4 {
+                cursor: pointer;
+                position: relative;
+                padding-right: 1.5rem;
+            }
+            .nn-footer-col h4::after {
+                content: '+';
+                position: absolute;
+                right: 0;
+                font-size: 1.2rem;
+                color: var(--nn-text-muted);
+            }
+            .nn-footer-col.expanded h4::after { content: '\2212'; }
+            .nn-footer-col > a,
+            .nn-footer-col > ul { display: none; }
+            .nn-footer-col.expanded > a,
+            .nn-footer-col.expanded > ul { display: block; }
+        }
+    </style>
+</head>
+<body><a href="#main-content" class="skip-link">Skip to content</a>
+    <!-- Navigation -->
+    <nav class="nn-nav" aria-label="Main navigation">
+        <div class="nn-nav-inner">
+            <a href="/" class="nn-nav-logo">
+                <img src="../../assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
+                <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
+            </a>
+
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Language" title="Site language and episode audio language"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">Site</div>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="en" hreflang="en"
+                       href="/" aria-current="page">English</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="fr" hreflang="fr"
+                       href="../../fr/index.html">Français</a>
+                    
+                    <a class="nn-lang-site" role="menuitem" lang="ru" hreflang="ru"
+                       href="../../ru/index.html">Русский</a>
+                    
+                    <div class="nn-lang-head nn-lang-sep">Episode audio</div>
+                    
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    
+                </div>
+            </div>
+
+            <ul class="nn-nav-links">
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Shows
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        <a href="../../explore.html" role="menuitem" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            Find your show
+                        </a>
+                        
+                        <span class="nn-nav-group-label">Hosted by Mira</span>
+                        
+                        <a href="../../nerra-daily.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily
+                        </a>
+                        
+                        <a href="../../age-of-ai.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI
+                        </a>
+                        
+                        <a href="../../nerra-voices.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Voices
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">World desks</span>
+                        
+                        <a href="../../omni-view-world.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Top World News
+                        </a>
+                        
+                        <a href="../../omni-view-north-america.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View North America
+                        </a>
+                        
+                        <a href="../../omni-view-europe.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Europe
+                        </a>
+                        
+                        <a href="../../omni-view-asia-pacific.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Asia Pacific
+                        </a>
+                        
+                        <a href="../../omni-view-africa-mideast.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Africa & Middle East
+                        </a>
+                        
+                        <a href="../../omni-view-latam.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Central & South America
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Local news</span>
+                        
+                        <a href="../../vancouver.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Vancouver Daily News
+                        </a>
+                        
+                        <a href="../../collingwood.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Collingwood Weekly
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">AI & compute</span>
+                        
+                        <a href="../../models-agents.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents
+                        </a>
+                        
+                        <a href="../../ai-chips.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            AI Chips & Data Centres Daily
+                        </a>
+                        
+                        <a href="../../models-agents-beginners.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Markets</span>
+                        
+                        <a href="../../modern-investing.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques
+                        </a>
+                        
+                        <a href="../../mag7.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            MAG 7 Daily
+                        </a>
+                        
+                        <a href="../../prediction-markets.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Prediction Markets Daily
+                        </a>
+                        
+                        <a href="../../tesla.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Health & longevity</span>
+                        
+                        <a href="../../planetterrian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily
+                        </a>
+                        
+                        <a href="../../peptides.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Peptides Weekly
+                        </a>
+                        
+                        <a href="../../longevity.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Longevity Weekly
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Every other show</span>
+                        
+                        <a href="../../omni-view.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View
+                        </a>
+                        
+                        <a href="../../fascinating-frontiers.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers
+                        </a>
+                        
+                        <a href="../../spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
+                        </a>
+                        
+                        <a href="../../env-intel.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence
+                        </a>
+                        
+                        <a href="../../unintended-consequences.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences
+                        </a>
+                        
+                        <a href="../../first-principles.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily
+                        </a>
+                        
+                        <a href="../../thedppod.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast
+                        </a>
+                        
+                        <a href="../../offshore-north.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North
+                        </a>
+                        
+                        
+                    </div>
+                </li>
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Blog
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu">
+                        <a href="../../blog/index.html" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            All Blog Posts
+                        </a>
+                        
+                        <span class="nn-nav-group-label">Hosted by Mira</span>
+                        
+                        <a href="../../blog/nerra_daily/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/age_of_ai/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI Blog
+                        </a>
+                        
+                        <a href="../../blog/nerra_voices/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Voices Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">World desks</span>
+                        
+                        <a href="../../blog/omni_view_world/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Top World News Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_north_america/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View North America Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_europe/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Europe Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_asia_pacific/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Asia Pacific Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_africa_mideast/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Africa & Middle East Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_latam/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Central & South America Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Local news</span>
+                        
+                        <a href="../../blog/vancouver/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Vancouver Daily News Blog
+                        </a>
+                        
+                        <a href="../../blog/collingwood/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Collingwood Weekly Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">AI & compute</span>
+                        
+                        <a href="../../blog/models_agents/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents Blog
+                        </a>
+                        
+                        <a href="../../blog/ai_chips/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            AI Chips & Data Centres Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/models_agents_beginners/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Markets</span>
+                        
+                        <a href="../../blog/modern_investing/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques Blog
+                        </a>
+                        
+                        <a href="../../blog/mag7/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            MAG 7 Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/prediction_markets/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Prediction Markets Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/tesla/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Health & longevity</span>
+                        
+                        <a href="../../blog/planetterrian/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/peptides/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Peptides Weekly Blog
+                        </a>
+                        
+                        <a href="../../blog/longevity/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Longevity Weekly Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Every other show</span>
+                        
+                        <a href="../../blog/omni_view/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Blog
+                        </a>
+                        
+                        <a href="../../blog/fascinating_frontiers/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers Blog
+                        </a>
+                        
+                        <a href="../../blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/env_intel/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence Blog
+                        </a>
+                        
+                        <a href="../../blog/unintended_consequences/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences Blog
+                        </a>
+                        
+                        <a href="../../blog/first_principles/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily Blog
+                        </a>
+                        
+                        <a href="../../blog/dp_pod/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The DP Pod: The Do Positive Podcast Blog
+                        </a>
+                        
+                        <a href="../../blog/offshore_north/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Offshore North Blog
+                        </a>
+                        
+                        
+                    </div>
+                </li>
+                
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        More
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu nn-nav-dropdown-menu--compact">
+                        <a href="../../mira.html">Mira, the AI host</a>
+                        <a href="../../topics/index.html">Browse by topic</a>
+                        <a href="../../books.html">Books</a>
+                        <a href="../../gallery.html">Image Gallery</a>
+                        <a href="../../data.html">Data & Dashboards</a>
+                        <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
+                        <a href="../../faq.html">FAQ</a>
+                        <a href="../../press.html">Media Kit</a>
+                        <a href="../../support.html">Support the Network</a>
+                    </div>
+                </li>
+                
+                
+                <li><a href="../../start-here.html">Start Here</a></li>
+                <li><a href="../../how-to-listen.html">Listen</a></li>
+                <li><a href="../../about.html">About</a></li>
+                <li><a href="../../player.html">Player</a></li>
+                
+                
+                <li><a id="nn-nav-account" href="../../join.html"
+                       style="border:1px solid var(--nn-border);border-radius:999px;padding:0.3rem 0.85rem;">Join</a></li>
+            </ul>
+
+            <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu. Closing is handled by ONE delegated listener in the
+         script block below (any link tapped closes the menu, clears the
+         body scroll lock and resets the hamburger's aria-expanded) — the
+         per-link inline onclick handlers were removed Sep 2026 after the
+         homepage's override forgot the body class and left the page
+         scroll-locked after tapping an in-page anchor. -->
+    <div id="mobileMenu" class="nn-mobile-menu">
+        <a id="nn-nav-account-m" href="../../join.html" style="font-weight:600;">Join</a>
+        
+        <a href="../../start-here.html">Start Here</a>
+        <a href="../../how-to-listen.html">How to Listen</a>
+        <a href="../../about.html">About</a>
+        <a href="../../player.html">Player</a>
+        
+        <a href="../../explore.html" style="font-weight:600;">Find your show</a>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
+            
+            <a href="../../nerra-daily.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Daily
+            </a>
+            
+            <a href="../../age-of-ai.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI
+            </a>
+            
+            <a href="../../nerra-voices.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Voices
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
+            
+            <a href="../../omni-view-world.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Top World News
+            </a>
+            
+            <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View North America
+            </a>
+            
+            <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Europe
+            </a>
+            
+            <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Asia Pacific
+            </a>
+            
+            <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Africa & Middle East
+            </a>
+            
+            <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Central & South America
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
+            
+            <a href="../../vancouver.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Vancouver Daily News
+            </a>
+            
+            <a href="../../collingwood.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Collingwood Weekly
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
+            
+            <a href="../../models-agents.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents
+            </a>
+            
+            <a href="../../ai-chips.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                AI Chips & Data Centres Daily
+            </a>
+            
+            <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
+            
+            <a href="../../modern-investing.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques
+            </a>
+            
+            <a href="../../mag7.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                MAG 7 Daily
+            </a>
+            
+            <a href="../../prediction-markets.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Prediction Markets Daily
+            </a>
+            
+            <a href="../../tesla.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
+            
+            <a href="../../planetterrian.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily
+            </a>
+            
+            <a href="../../peptides.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Peptides Weekly
+            </a>
+            
+            <a href="../../longevity.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Longevity Weekly
+            </a>
+            
+        </details>
+        
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">8</span></summary>
+            
+            <a href="../../omni-view.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View
+            </a>
+            
+            <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers
+            </a>
+            
+            <a href="../../spacex.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
+            </a>
+            
+            <a href="../../env-intel.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence
+            </a>
+            
+            <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences
+            </a>
+            
+            <a href="../../first-principles.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily
+            </a>
+            
+            <a href="../../thedppod.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                The DP Pod: The Do Positive Podcast
+            </a>
+            
+            <a href="../../offshore-north.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Offshore North
+            </a>
+            
+        </details>
+        
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">Language</div>
+            
+            <a href="../../fr/index.html" class="nn-mobile-show-link" lang="fr" hreflang="fr">Français</a>
+            
+            <a href="../../ru/index.html" class="nn-mobile-show-link" lang="ru" hreflang="ru">Русский</a>
+            
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">Blogs</div>
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">More</div>
+            <a href="../../mira.html" class="nn-mobile-show-link">Mira, the AI host</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
+            <a href="../../books.html" class="nn-mobile-show-link">Books</a>
+            <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
+            <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
+            <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
+            <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
+            <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
+        </div>
+    </div>
+
+    <main id="main-content">
+    
+    
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
+        <ol style="list-style:none;display:flex;flex-wrap:wrap;gap:var(--sp-1);padding:0;margin:0;color:var(--nn-text-muted);">
+            <li><a href="/" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
+            <li><a href="../../ai-chips.html" style="color:var(--nn-text-muted);text-decoration:none;">AI Chips & Data Centres Daily</a> <span aria-hidden="true">/</span></li>
+            <li><a href="../../blog/ai_chips/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 45</li>
+        </ol>
+    </nav>
+
+    
+    
+    <!-- Hero -->
+    <header class="blog-hero">
+        <div class="blog-hero-inner">
+            <a href="../../blog/ai_chips/index.html" class="blog-show-badge">
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp 400w, ../../assets/covers/ai-chips-800.webp 800w, ../../assets/covers/ai-chips.webp 1400w" sizes="60px">
+<img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily" width="40" height="40">
+</picture>
+                AI Chips & Data Centres Daily Blog
+            </a>
+            <h1><span class="nn-i18n-title">Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.</span></h1>
+            
+            <div class="blog-meta-bar">
+                <span class="post-author">By Patrick</span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    November 05, 2026
+                </span>
+                <span class="blog-meta-pill">Ep 45</span>
+                <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    10 min read
+                </span>
+                <a href="#listen" class="blog-listen-cta">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to podcast
+                </a>
+                
+            </div>
+        </div>
+    </header>
+    
+
+    
+    
+    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/ai_chips/AI_Chips_Ep045_20261105.mp3" data-nn-card data-title="Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments." data-show="AI Chips &amp; Data Centres Daily" data-cover="../../assets/covers/ai-chips.jpg">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/ai_chips/AI_Chips_Ep045_20261105.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
+    
+
+    <!-- Article with TOC sidebar -->
+    <div class="blog-article-wrap">
+        
+        <aside class="blog-toc">
+            <div class="blog-toc-title">Contents</div>
+            
+            <a href="#top-story" class="">Top Story</a>
+            
+            <a href="#silicon" class="">Silicon</a>
+            
+            <a href="#data-centres-power" class="">Data Centres & Power</a>
+            
+            <a href="#supply-chain-policy" class="">Supply Chain & Policy</a>
+            
+            <a href="#also-today" class="">Also Today</a>
+            
+            <a href="#the-teardown-when-the-unterminated-link-runs-out-of-millimetres" class="">The Teardown: When the Unterminated Link Runs Out of Millimetres</a>
+            
+            <a href="#on-the-horizon" class="">On the Horizon</a>
+            
+        </aside>
+        
+
+        <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
+            <p><strong>What You Need to Know:</strong> Nvidia has shipped CUDA 13.5, moving Vera Rubin into production on a platform it has described as up to 144 GPUs per rack. Samsung’s second Taylor, Texas fab is reported fully booked, mostly by AMD, for 2 nm HBM base dies. SEMI counted 3,756 million square inches of silicon wafers shipped in the third quarter.</p>
+<h2 id="top-story">Top Story</h2>
+<p>Nvidia on Wednesday shipped CUDA Toolkit 13.5, moving the Vera Rubin platform from early developer access to general availability for enterprise production, and shipped it with Linux driver 620.70.06. The platform pairs Rubin GPUs with Vera CPUs over NVLink-C2C. Nvidia said in June 2026 that Vera Rubin systems would pack up to 144 GPUs per rack and deliver more than 7 exaflops of AI-for-science throughput and 5 petaflops of native FP64. CUDA 13.5 adds tuned matrix-multiplication heuristics and kernel adjustments for the platform’s NVFP4 and MXFP8 operations, which Nvidia says lift throughput without per-shape autotuning. Rubin and later GPUs support the Windows Display Driver Model and Microsoft Compute Driver Model but no longer support Tesla Compute Cluster mode, so applications and deployment scripts built around TCC need reworking. The release also extends Windows on Arm support to DGX Station for Windows, and it adds Multi-Process Service v3 weighted timeslicing plus locality-domain controls that let an application choose uniform streaming-multiprocessor partitions or partitions that draw on every available SM. Source: <a href="https://finance.biggo.com/news/ce0054f3-0d38-4ea1-81c5-6016102ce678" target="_blank" rel="noopener">finance.biggo.com</a> · <a href="https://developer.nvidia.com/blog/nvidia-cuda-13-5-brings-nvidia-vera-rubin-ga-support/" target="_blank" rel="noopener">developer.nvidia.com</a></p>
+<h2 id="silicon">Silicon</h2>
+<p><strong>Samsung's 2 nm Taylor Fab 2 Reportedly Fully Booked, Mostly by AMD: TechPowerUp</strong></p>
+<p>Korea’s Maeil Business Newspaper, citing industry sources, reports that Samsung has booked the entire planned output of Taylor Fab 2 in Texas, with most of it going to AMD. The fab will make HBM base dies for AMD and NVIDIA on a 2 nm process, and AMD’s volume alone is described as enough to stretch the fab’s capacity. Samsung declined to comment, saying it cannot confirm customer-related details. The base die is the logic chip at the bottom of an HBM stack; Samsung plans to pair the Texas-made dies with DRAM produced in South Korea and ship finished HBM. Current HBM4 and sampled HBM4E use 4 nm base dies, so 2 nm or smaller is aimed at later HBM generations. The report follows Lisa Su’s October visit to Samsung, when Samsung reportedly wanted foundry orders from AMD in return for HBM AMD needs, and a March memorandum that made Samsung the primary HBM4 supplier for the Instinct MI455X. Source: <a href="https://www.techpowerup.com/354477/samsungs-2-nm-taylor-fab-2-reportedly-fully-booked-mostly-by-amd" target="_blank" rel="noopener">techpowerup.com</a></p>
+<p><strong>Arm Delivers a Record Second Quarter, Reaching $1.44B in Total Revenue: TechPowerUp</strong></p>
+<p>Arm, in a shareholder letter published November 4, 2026, reported second-quarter fiscal 2027 results for the quarter ended September 30, 2026. Total revenue rose 27 percent year over year to $1.44 billion, which Arm called its highest-ever second quarter. Licensing and other revenue was $773 million, up 50 percent year over year, and royalty revenue was $670 million, with data-center royalties doubling year over year. Partners reported more than 10 billion Arm-based chips shipped in the quarter, an increase of 1.5 billion chips year over year, on a platform Arm says is already used by more than 30 million developers. Arm’s own note on the quarter said both its IP business and its new silicon business are showing rapid growth on the same compute platform. Source: <a href="https://www.techpowerup.com/354485/arm-delivers-a-record-second-quarter-reaching-usd-1-44b-in-total-revenue" target="_blank" rel="noopener">techpowerup.com</a></p>
+<p><strong>AMD Guidance Points to Its First Quarter Ever With More Revenue Than Intel: TechPowerUp</strong></p>
+<p>AMD guided fourth-quarter revenue to approximately $17 billion, plus or minus 3 percent, or roughly $16.5 billion to $17.5 billion, while Intel expects $15 billion to $16 billion. The bottom of AMD’s range sits above the top of Intel’s, so the crossover holds unless either company misses guidance badly. AMD’s Data Center segment hit a record $8.5 billion in the third quarter, up 97 percent year over year, on EPYC demand and the launch of Instinct MI450 Series GPUs inside Helios racks. AMD expects that segment to grow about 50 percent sequentially in the fourth quarter, while Client and Gaming is expected to drop by more than 20 percent. Intel’s fourth-quarter outlook includes a two-week shutdown at Fab 28 in Israel that Intel says will cost about $300 million in fourth-quarter revenue. Source: <a href="https://www.techpowerup.com/354470/amd-guidance-points-to-its-first-quarter-ever-with-more-revenue-than-intel" target="_blank" rel="noopener">techpowerup.com</a></p>
+<p><strong>Universal Quantum Launches iQPU Integrated Trapped-Ion Processor: HPCwire</strong></p>
+<p>Universal Quantum on November 4, 2026 launched the iQPU, an integrated quantum processing unit meant to be manufactured, scaled, and deployed as a unit rather than a loose assembly of ion traps and control electronics. It combines a trapped-ion compute surface with built-in ultra-low-noise control and modular chip-to-chip interconnects the company calls UQConnect. The launch was announced from Haywards Heath, England, and Hamburg, Germany. Source: <a href="https://www.hpcwire.com/off-the-wire/universal-quantum-launches-iqpu-integrated-trapped-ion-processor/" target="_blank" rel="noopener">hpcwire.com</a></p>
+<h2 id="data-centres-power">Data Centres & Power</h2>
+<p><strong>Modular AI Data Centers Gain Ground as Crusoe Debuts Unit: Data Center Knowledge</strong></p>
+<p>Crusoe has debuted the Spark Liquid, a factory-built modular data-center unit rated at 3.5 megawatts, as a faster path to AI capacity than a conventional hall. Source: <a href="https://www.datacenterknowledge.com/modular-data-centers/modular-ai-data-centers-gain-ground-as-crusoe-debuts-unit" target="_blank" rel="noopener">datacenterknowledge.com</a></p>
+<p><strong>APS expects sales to double by 2041, plans extending coal use to 2038: Utility Dive</strong></p>
+<p>Arizona Public Service, in an integrated resource plan filed Friday with regulators, expects sales to double by 2041 and peak demand to grow about 3.4 percent a year over the next 15 years, driven by industry and data centers. The plan proposes extending coal use to 2038. Source: <a href="https://www.utilitydive.com/news/aps-sales-double-by-2041-proposes-extending-coal-use-to-2038/873648/" target="_blank" rel="noopener">utilitydive.com</a></p>
+<p><strong>atNorth signs deal with Calentix for heat reuse at SWE04 data center in Sollefteå, Sweden: Data Center Dynamics</strong></p>
+<p>atNorth has signed a deal with Calentix to reuse heat from the SWE04 data center in Sollefteå, Sweden, with the first delivery of heat expected in 2029. Source: <a href="https://www.datacenterdynamics.com/en/news/atnorth-signs-deal-with-calentix-for-heat-reuse-at-swe04-data-center-in-sollefte%C3%A5-sweden/" target="_blank" rel="noopener">datacenterdynamics.com</a></p>
+<p><strong>Local data center moratoria, limits, and restrictions voted in across the US: Data Center Dynamics</strong></p>
+<p>Local data-center moratoria, limits, and restrictions were voted in across the United States, and most of the anti-data-center measures passed, with Ohio leading the charge. Source: <a href="https://www.datacenterdynamics.com/en/news/local-data-center-moratoria-limits-and-restrictions-voted-in-across-the-us/" target="_blank" rel="noopener">datacenterdynamics.com</a></p>
+<h2 id="supply-chain-policy">Supply Chain & Policy</h2>
+<p><strong>Nvidia tells data center partners to cut China exposure, limits RTX chip sales to mainland: Data Center Dynamics</strong></p>
+<p>Nvidia has told data-center partners to cut China exposure and is limiting RTX chip sales to mainland China, as the United States and China both move to decouple. Source: <a href="https://www.datacenterdynamics.com/en/news/nvidia-tells-data-center-partners-to-cut-china-exposure-limits-rtx-chip-sales-to-mainland/" target="_blank" rel="noopener">datacenterdynamics.com</a></p>
+<p><strong>TSMC stock in focus as Tesla reopens Texas Terafab talks: ad-hoc-news.de</strong></p>
+<p>A November 2 report by El Fondo, citing supply-chain sources and a DigiTimes account, said Elon Musk had softened his earlier position and that talks could reopen toward TSMC taking primary responsibility for building and operating Tesla’s planned Terafab in Texas. Tesla and SpaceX had previously been described as planning to build and run the plant themselves, with TSMC potentially limited to subleasing part of the site. Equity ownership and investment arrangements are still under negotiation, and Tesla, SpaceX, and TSMC had not immediately commented. Intel was previously linked after Musk said Tesla planned to use Intel’s next-generation 14A process; the latest report did not clarify whether that role would change. On SpaceX’s third-quarter earnings call, Musk said he aimed to have a test chip operating around May or June 2027 at an Austin research fab, and described volume production at Terafab in the third or fourth quarter of 2028 as an aspiration. Source: <a href="https://www.ad-hoc-news.de/boerse/news/corporate-news/tsmc-stock-in-focus-as-tesla-reopens-texas-terafab-talks/70462128" target="_blank" rel="noopener">ad-hoc-news.de</a></p>
+<p><strong>Nintendo ROM chip supplier Macronix quits to focus on chips for AI data centers, reports indicate: Tom's Hardware</strong></p>
+<p>Macronix, one of Nintendo’s ROM chip manufacturers, is shutting down that business to reallocate manufacturing to NOR and NAND flash chips that the AI industry demands, according to reports. Source: <a href="https://www.tomshardware.com/video-games/nintendo/nintendo-rom-chip-supplier-macronix-quits-to-focus-on-chips-for-ai-data-centers-game-key-cards-may-be-more-available-as-large-game-storage-chips-become-more-expensive" target="_blank" rel="noopener">tomshardware.com</a></p>
+<p><strong>Worldwide Silicon Wafer Shipments Increase 13.4% Year-on-Year in Q3 2026, SEMI Reports: Semiconductor Digest</strong></p>
+<p>SEMI’s Silicon Manufacturers Group reported worldwide silicon wafer shipments of 3,756 million square inches in the third quarter of 2026, up 13.4 percent from 3,313 million square inches in the same quarter of 2025 and up 5.1 percent from 3,573 million square inches in the second quarter of 2026. Masatsugu Miura, chairman of SEMI SMG and a SUMCO sales and marketing general manager, said the increase was supported by AI-related demand that has broadened beyond advanced logic and memory to power devices and photonics, plus stronger industrial demand from robotics, AI server power supplies, and general-purpose industrial semiconductors. Bonding and advanced packaging also continued to support demand for 300 mm polished wafers. Source: <a href="https://www.semiconductor-digest.com/worldwide-silicon-wafer-shipments-increase-13-4-year-on-year-in-q3-2026-semi-reports/" target="_blank" rel="noopener">semiconductor-digest.com</a></p>
+<h2 id="also-today">Also Today</h2>
+<p><strong>Semiconductor Market Continues to Accelerate in Q3 2026: Semiconductor Digest</strong></p>
+<p>The European Semiconductor Industry Association said global semiconductor sales reached $517.7 billion in the third quarter of 2026, up 146.8 percent from the third quarter of 2025. Source: <a href="https://www.semiconductor-digest.com/semiconductor-market-continues-to-accelerate-in-q3-2026/" target="_blank" rel="noopener">semiconductor-digest.com</a></p>
+<p><strong>Intel Says EMIB Wafer Utilization Tops 90% as AI Chips Drive 70-Bridge Era: BigGo Finance</strong></p>
+<p>Intel says EMIB wafer utilization tops 90 percent as AI chips drive what it calls a 70-bridge era. Source: <a href="https://finance.biggo.com/news/c626509b-4130-4af6-9c86-fe5c722dfafd" target="_blank" rel="noopener">finance.biggo.com</a></p>
+<p><strong>GlobalFoundries Data Center Sales Up 81% Ahead of TSMC Deal: FourWeekMBA</strong></p>
+<p>GlobalFoundries’ data-center sales are up 81 percent ahead of a TSMC deal. Source: <a href="https://fourweekmba.com/ai-globalfoundries-data-center-sales-up-81-ahead-of-tsmc-deal/" target="_blank" rel="noopener">fourweekmba.com</a></p>
+<p><strong>Silicon Photonics Hits the Big Time: EE Times</strong></p>
+<p>EE Times reports a land grab in silicon photonics aimed at the power wall of copper interconnects, including a $125 million funding round for Salience Labs’ optical circuit switching. Source: <a href="https://www.eetimes.com/silicon-photonics-hits-the-big-time/" target="_blank" rel="noopener">eetimes.com</a></p>
+<p><strong>DIGITIMES Insight: TSMC, ASML's 2031 photomask target puts High NA EUV suppliers on the clock: digitimes</strong></p>
+<p>DIGITIMES reports that a TSMC and ASML photomask target for 2031 puts High NA EUV suppliers on the clock. Source: <a href="https://www.digitimes.com/news/a20261104PD234/asml-tsmc-euv-photomask-digitimes.html" target="_blank" rel="noopener">digitimes.com</a></p>
+<h2 id="the-teardown-when-the-unterminated-link-runs-out-of-millimetres">The Teardown: When the Unterminated Link Runs Out of Millimetres</h2>
+<p>A die-to-die wire inside an advanced package is not a shorter version of a board trace. Semiconductor Engineering, in a system-level signal-integrity piece by Muhammad Hassan, Mahmoud Mahany, and Mohamed Saleh, treats the channel as a stack of discontinuities: microbumps, through-silicon vias, redistribution layers, a silicon interposer or a silicon bridge, then the package transition into the next die. Each of those steps changes impedance and disturbs the return path. At multi-gigahertz rates the loss on those microscopic wires is dominated by skin effect, so insertion loss falls steeply and almost linearly with frequency. The same channel also changes character. At low frequency it behaves like a resistive-capacitive lump. At high frequency it behaves like a transmission line. That shift disperses the edge, spreads symbols into their neighbors, and shows up at the receiver pad as a shorter eye and more jitter.</p>
+<p>Crosstalk, not the dielectric, is the louder noise source. Routing gaps of 0.5 micrometres to 2 micrometres let capacitive and inductive coupling inject more noise than the physical dielectric attenuates. The copper itself is on that same scale: traces of 0.5 to 2 micrometres, embedded in deposited silicon dioxide or a low-k film that the foundry has planarized flat, because any waviness misaligns the mask and snaps the wire. A conventional board, by contrast, tolerates thickness variation and uses coarse geometries above 50 micrometres. Checking the die, the interposer, and the package as three separate models misses the coupling that only exists when they are stacked.</p>
+<p>Universal Chiplet Interconnect Express is the spec that turns that physics into two different electrical contracts. Semiconductor Engineering walks the split. Advanced packaging, the 2.5D interposer or bridge tier, is specified for an ultra-short reach of 2 millimetres or less, at up to 64 gigatransfers per second per pin under UCIe 3.0, with 64 single-ended mainband data lanes per module. Those signals are left unterminated at the receiver, and the energy target is 0.25 picojoules per bit. Standard packaging, the 2D laminate tier, stretches the channel to 25 millimetres, at 16 to 32 gigatransfers per second per pin, across 16 single-ended mainband lanes per module. The receiver uses 50-ohm parallel ground terminations to kill reflections off the longer trace, and the energy cost is 0.5 picojoules per bit. Physical-layer latency on the open spec is described as up to sub-2 nanoseconds. Compliance is not a lab courtesy: the extracted insertion loss, S21, has to stay strictly above a mandatory voltage-transfer-function mask.</p>
+<p>Take the energy numbers as a worked budget, using only those published targets. One bit on the advanced-package path is budgeted at 0.25 picojoules. The same bit on the laminate path is budgeted at 0.5 picojoules, twice the energy, because the termination has to absorb the reflection the short unterminated link never builds up. A module on the advanced path also carries 64 mainband lanes against 16 on the standard path, four times the lane count, at a peak rate of 64 gigatransfers per second against a standard-package band of 16 to 32. The bargain is the reach. Two millimetres is the advanced-package ceiling in that description; 25 millimetres is what the terminated laminate is allowed to span. Stretch the unterminated, 0.25-picojoule link toward that longer run and the reflection the termination was invented to kill comes back, the eye that already lost height to the linear roll-off closes further, and the S21 curve fails the mask even if the arithmetic of the link still “works” on a short channel.</p>
+<p>The unterminated advanced-package choice stops being the right electrical design once the physical span leaves that 2-millimetre reach, or once a bump map cannot keep aggressors inside the 0.5-to-2-micrometre gap regime without the coupling exceeding dielectric loss. At that point the designer is on the standard-package contract: fewer lanes, a lower transfer rate, a 50-ohm termination, and 0.5 picojoules per bit. Source: <a href="https://semiengineering.com/a-system-level-approach-to-protecting-3d-ic-signal-integrity/" target="_blank" rel="noopener">semiengineering.com</a></p>
+<h2 id="on-the-horizon">On the Horizon</h2>
+<ul>
+<li>Around May or June 2027: Musk’s stated aim for a test chip operating at an Austin research fab tied to the Terafab plan.
+</li>
+<li>2029: first heat delivery expected under atNorth’s Calentix reuse deal at SWE04 in Sollefteå.
+</li>
+<li>2038: the coal-use extension Arizona Public Service has proposed in the integrated resource plan filed Friday.
+</li>
+<li>2031: the TSMC and ASML photomask target DIGITIMES says now clocks High NA EUV suppliers.
+</li>
+</ul>
+            </div>
+            
+
+            <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://finance.biggo.com/news/ce0054f3-0d38-4ea1-81c5-6016102ce678" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=finance.biggo.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">finance.biggo.com</span>
+                    </a>
+                    
+                    <a href="https://www.techpowerup.com/354477/samsungs-2-nm-taylor-fab-2-reportedly-fully-booked-mostly-by-amd" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=techpowerup.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">techpowerup.com</span>
+                    </a>
+                    
+                    <a href="https://www.techpowerup.com/354485/arm-delivers-a-record-second-quarter-reaching-usd-1-44b-in-total-revenue" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=techpowerup.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">techpowerup.com</span>
+                    </a>
+                    
+                    <a href="https://www.techpowerup.com/354470/amd-guidance-points-to-its-first-quarter-ever-with-more-revenue-than-intel" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=techpowerup.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">techpowerup.com</span>
+                    </a>
+                    
+                    <a href="https://www.hpcwire.com/off-the-wire/universal-quantum-launches-iqpu-integrated-trapped-ion-processor/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=hpcwire.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">hpcwire.com</span>
+                    </a>
+                    
+                    <a href="https://www.datacenterknowledge.com/modular-data-centers/modular-ai-data-centers-gain-ground-as-crusoe-debuts-unit" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=datacenterknowledge.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">datacenterknowledge.com</span>
+                    </a>
+                    
+                    <a href="https://www.utilitydive.com/news/aps-sales-double-by-2041-proposes-extending-coal-use-to-2038/873648/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=utilitydive.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">utilitydive.com</span>
+                    </a>
+                    
+                    <a href="https://www.datacenterdynamics.com/en/news/atnorth-signs-deal-with-calentix-for-heat-reuse-at-swe04-data-center-in-sollefte%C3%A5-sweden/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=datacenterdynamics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">datacenterdynamics.com</span>
+                    </a>
+                    
+                    <a href="https://www.datacenterdynamics.com/en/news/local-data-center-moratoria-limits-and-restrictions-voted-in-across-the-us/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=datacenterdynamics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">datacenterdynamics.com</span>
+                    </a>
+                    
+                    <a href="https://www.datacenterdynamics.com/en/news/nvidia-tells-data-center-partners-to-cut-china-exposure-limits-rtx-chip-sales-to-mainland/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=datacenterdynamics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">datacenterdynamics.com</span>
+                    </a>
+                    
+                    <a href="https://www.ad-hoc-news.de/boerse/news/corporate-news/tsmc-stock-in-focus-as-tesla-reopens-texas-terafab-talks/70462128" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=ad-hoc-news.de&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">ad-hoc-news.de</span>
+                    </a>
+                    
+                    <a href="https://www.tomshardware.com/video-games/nintendo/nintendo-rom-chip-supplier-macronix-quits-to-focus-on-chips-for-ai-data-centers-game-key-cards-may-be-more-available-as-large-game-storage-chips-become-more-expensive" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=tomshardware.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">tomshardware.com</span>
+                    </a>
+                    
+                    <a href="https://www.semiconductor-digest.com/worldwide-silicon-wafer-shipments-increase-13-4-year-on-year-in-q3-2026-semi-reports/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=semiconductor-digest.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">semiconductor-digest.com</span>
+                    </a>
+                    
+                    <a href="https://www.semiconductor-digest.com/semiconductor-market-continues-to-accelerate-in-q3-2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=semiconductor-digest.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">semiconductor-digest.com</span>
+                    </a>
+                    
+                    <a href="https://finance.biggo.com/news/c626509b-4130-4af6-9c86-fe5c722dfafd" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=finance.biggo.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">finance.biggo.com</span>
+                    </a>
+                    
+                    <a href="https://fourweekmba.com/ai-globalfoundries-data-center-sales-up-81-ahead-of-tsmc-deal/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=fourweekmba.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">fourweekmba.com</span>
+                    </a>
+                    
+                    <a href="https://www.eetimes.com/silicon-photonics-hits-the-big-time/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=eetimes.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">eetimes.com</span>
+                    </a>
+                    
+                    <a href="https://www.digitimes.com/news/a20261104PD234/asml-tsmc-euv-photomask-digitimes.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=digitimes.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">digitimes.com</span>
+                    </a>
+                    
+                    <a href="https://semiengineering.com/a-system-level-approach-to-protecting-3d-ic-signal-integrity/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=semiengineering.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">semiengineering.com</span>
+                    </a>
+                    
+                </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (21)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Nvidia shipped CUDA Toolkit 13.5 on Wednesday, moving Vera Rubin from early developer access to general availability, alongside Linux driver 620.70.06.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/ce0054f3-0d38-4ea1-81c5-6016102ce678" target="_blank" rel="noopener" title="Nvidia CUDA 13.5 Goes Live With Full Vera Rubin Support for Production AI">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Nvidia said in June 2026 that Vera Rubin systems would pack up to 144 GPUs per rack and deliver more than 7 exaflops of AI-for-science throughput and 5 petaflops of native FP64.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/ce0054f3-0d38-4ea1-81c5-6016102ce678" target="_blank" rel="noopener" title="Nvidia CUDA 13.5 Goes Live With Full Vera Rubin Support for Production AI">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Rubin and later GPUs no longer support Tesla Compute Cluster mode.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/ce0054f3-0d38-4ea1-81c5-6016102ce678" target="_blank" rel="noopener" title="Nvidia CUDA 13.5 Goes Live With Full Vera Rubin Support for Production AI">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Maeil Business Newspaper reports Samsung has booked the entire planned output of Taylor Fab 2, mostly for AMD, to make 2 nm HBM base dies for AMD and NVIDIA.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/354477/samsungs-2-nm-taylor-fab-2-reportedly-fully-booked-mostly-by-amd" target="_blank" rel="noopener" title="Samsung's 2 nm Taylor Fab 2 Reportedly Fully Booked, Mostly by AMD">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Arm's Q2 FYE27 total revenue rose 27 percent year over year to $1.44 billion, with licensing and other revenue of $773 million and royalty revenue of $670 million.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/354485/arm-delivers-a-record-second-quarter-reaching-usd-1-44b-in-total-revenue" target="_blank" rel="noopener" title="(PR) Arm Delivers a Record Second Quarter, Reaching $1.44B in Total Revenue">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Arm partners reported more than 10 billion Arm-based chips shipped in the quarter, up 1.5 billion year over year, and data-center royalties doubled year over year.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/354485/arm-delivers-a-record-second-quarter-reaching-usd-1-44b-in-total-revenue" target="_blank" rel="noopener" title="(PR) Arm Delivers a Record Second Quarter, Reaching $1.44B in Total Revenue">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> AMD guided Q4 revenue to about $17 billion plus or minus 3 percent, above Intel's $15 billion to $16 billion range.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/354470/amd-guidance-points-to-its-first-quarter-ever-with-more-revenue-than-intel" target="_blank" rel="noopener" title="AMD Guidance Points to Its First Quarter Ever With More Revenue Than Intel">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> AMD's Data Center segment reached a record $8.5 billion in Q3, up 97 percent year over year.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/354470/amd-guidance-points-to-its-first-quarter-ever-with-more-revenue-than-intel" target="_blank" rel="noopener" title="AMD Guidance Points to Its First Quarter Ever With More Revenue Than Intel">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Universal Quantum launched the iQPU on November 4, 2026, combining a trapped-ion compute surface with ultra-low-noise control and UQConnect chip-to-chip interconnects.
+                            <span class="claim-source"><a href="https://www.hpcwire.com/off-the-wire/universal-quantum-launches-iqpu-integrated-trapped-ion-processor/" target="_blank" rel="noopener" title="Universal Quantum Launches iQPU Integrated Trapped-Ion Processor">hpcwire.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Crusoe debuted a 3.5 MW factory-built modular unit called Spark Liquid.
+                            <span class="claim-source"><a href="https://www.datacenterknowledge.com/modular-data-centers/modular-ai-data-centers-gain-ground-as-crusoe-debuts-unit" target="_blank" rel="noopener" title="Modular AI Data Centers Gain Ground as Crusoe Debuts Unit">datacenterknowledge.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Arizona Public Service expects sales to double by 2041, peak demand to grow about 3.4 percent annually over 15 years, and proposes extending coal use to 2038.
+                            <span class="claim-source"><a href="https://www.utilitydive.com/news/aps-sales-double-by-2041-proposes-extending-coal-use-to-2038/873648/" target="_blank" rel="noopener" title="APS expects sales to double by 2041, plans extending coal use to 2038">utilitydive.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> atNorth signed a heat-reuse deal with Calentix at SWE04 in Sollefteå, Sweden, with first heat delivery expected in 2029.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/atnorth-signs-deal-with-calentix-for-heat-reuse-at-swe04-data-center-in-sollefte%C3%A5-sweden/" target="_blank" rel="noopener" title="atNorth signs deal with Calentix for heat reuse at SWE04 data center in Sollefteå, Sweden">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Most anti-data-center local measures voted on across the US passed, with Ohio leading.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/local-data-center-moratoria-limits-and-restrictions-voted-in-across-the-us/" target="_blank" rel="noopener" title="Local data center moratoria, limits, and restrictions voted in across the US">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Nvidia has told data-center partners to cut China exposure and is limiting RTX chip sales to mainland China.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/nvidia-tells-data-center-partners-to-cut-china-exposure-limits-rtx-chip-sales-to-mainland/" target="_blank" rel="noopener" title="Nvidia tells data center partners to cut China exposure, limits RTX chip sales to mainland">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> A November 2 El Fondo report said talks could reopen toward TSMC building and operating Tesla's Texas Terafab, while equity terms remain unsettled.
+                            <span class="claim-source"><a href="https://www.ad-hoc-news.de/boerse/news/corporate-news/tsmc-stock-in-focus-as-tesla-reopens-texas-terafab-talks/70462128" target="_blank" rel="noopener" title="TSMC stock in focus as Tesla reopens Texas Terafab talks">ad-hoc-news.de</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Musk said he aimed to have a test chip operating around May or June 2027 at an Austin research fab, and described Terafab volume production in the third or fourth quarter of 2028 as an aspiration.
+                            <span class="claim-source"><a href="https://www.ad-hoc-news.de/boerse/news/corporate-news/tsmc-stock-in-focus-as-tesla-reopens-texas-terafab-talks/70462128" target="_blank" rel="noopener" title="TSMC stock in focus as Tesla reopens Texas Terafab talks">ad-hoc-news.de</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Macronix is shutting down its Nintendo ROM chip business to reallocate manufacturing to NOR and NAND flash for AI demand.
+                            <span class="claim-source"><a href="https://www.tomshardware.com/video-games/nintendo/nintendo-rom-chip-supplier-macronix-quits-to-focus-on-chips-for-ai-data-centers-game-key-cards-may-be-more-available-as-large-game-storage-chips-become-more-expensive" target="_blank" rel="noopener" title="Nintendo ROM chip supplier Macronix quits to focus on chips for AI data centers, reports indicate">tomshardware.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Worldwide silicon wafer shipments were 3,756 million square inches in Q3 2026, up 13.4 percent year over year and 5.1 percent quarter over quarter.
+                            <span class="claim-source"><a href="https://www.semiconductor-digest.com/worldwide-silicon-wafer-shipments-increase-13-4-year-on-year-in-q3-2026-semi-reports/?utm_source=rss&utm_medium=rss&utm_campaign=worldwide-silicon-wafer-shipments-increase-13-4-year-on-year-in-q3-2026-semi-reports" target="_blank" rel="noopener" title="Worldwide Silicon Wafer Shipments Increase 13.4% Year-on-Year in Q3 2026, SEMI Reports">semiconductor-digest.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Global semiconductor sales reached $517.7 billion in Q3 2026, up 146.8 percent from Q3 2025, according to ESIA.
+                            <span class="claim-source"><a href="https://www.semiconductor-digest.com/semiconductor-market-continues-to-accelerate-in-q3-2026/?utm_source=rss&utm_medium=rss&utm_campaign=semiconductor-market-continues-to-accelerate-in-q3-2026" target="_blank" rel="noopener" title="Semiconductor Market Continues to Accelerate in Q3 2026">semiconductor-digest.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> Intel says EMIB wafer utilization tops 90 percent in what it calls a 70-bridge era.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/c626509b-4130-4af6-9c86-fe5c722dfafd" target="_blank" rel="noopener" title="Intel Says EMIB Wafer Utilization Tops 90% as AI Chips Drive 70-Bridge Era">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span> UCIe advanced packaging targets reach of 2 mm or less, up to 64 GT/s per pin, 64 lanes, and 0.25 pJ/bit unterminated, while standard packaging targets up to 25 mm, 16 to 32 GT/s, 16 lanes, and 0.5 pJ/bit with 50-ohm terminations.
+                            <span class="claim-source"><a href="https://semiengineering.com/a-system-level-approach-to-protecting-3d-ic-signal-integrity/" target="_blank" rel="noopener" title="A System-Level Approach To Protecting 3D-IC Signal Integrity">semiengineering.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/ai_chips.html">Full ledger for this show →</a></p>
+                </details>
+                
+            </section>
+            
+
+            <!-- Chapters (July 2026): generated and shipped in the feeds
+                 for months but surfaced nowhere on the site. Data is on
+                 disk at build time, so this adds no generation cost. -->
+            
+            <section class="blog-chapters" id="chapters">
+                <h2>In this episode</h2>
+                <ol class="blog-chapter-list">
+                    <li>
+                        <span class="chapter-time" data-seconds="0.0">0:00</span>
+                        <span class="chapter-title">Introduction</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="21.4">0:21</span>
+                        <span class="chapter-title">Top Story</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="100.0">1:40</span>
+                        <span class="chapter-title">Samsung's 2 nm Taylor Fab 2 Reportedly Fully Booked, Mostly by AMD</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="169.7">2:50</span>
+                        <span class="chapter-title">Arm Delivers a Record Second Quarter, Reaching $1.44B in Total Revenue</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="214.4">3:34</span>
+                        <span class="chapter-title">AMD Guidance Points to Its First Quarter Ever With More Revenue Than Intel</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="271.3">4:31</span>
+                        <span class="chapter-title">Universal Quantum Launches iQPU Integrated Trapped-Ion Processor</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="293.9">4:54</span>
+                        <span class="chapter-title">Modular AI Data Centers Gain Ground as Crusoe Debuts Unit</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="306.7">5:07</span>
+                        <span class="chapter-title">APS expects sales to double by 2041, plans extending coal use to 2038</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="338.9">5:39</span>
+                        <span class="chapter-title">Local data center moratoria, limits, and restrictions voted in across the US</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="364.0">6:04</span>
+                        <span class="chapter-title">TSMC stock in focus as Tesla reopens Texas Terafab talks</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="525.2">8:45</span>
+                        <span class="chapter-title">The Teardown</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="717.9">11:58</span>
+                        <span class="chapter-title">On the Horizon</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="747.0">12:27</span>
+                        <span class="chapter-title">Tomorrow Teaser</span>
+                    </li>
+                    <li>
+                        <span class="chapter-time" data-seconds="755.2">12:35</span>
+                        <span class="chapter-title">Closing</span>
+                    </li>
+                </ol>
+                
+                <p class="chapter-foot"><a href="#transcript">Read the full transcript &darr;</a></p>
+                
+            </section>
+            <script>
+            /* Progressive enhancement: make chapters seek the player, but
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
+            (function () {
+                var audio = document.getElementById("nn-i18n-audio")
+                    || document.querySelector(".nn-iv-player audio");
+                if (!audio) return;
+                document.querySelectorAll(".blog-chapter-list li").forEach(function (li) {
+                    var stamp = li.querySelector(".chapter-time");
+                    if (!stamp) return;
+                    var at = parseFloat(stamp.getAttribute("data-seconds"));
+                    if (isNaN(at)) return;
+                    li.classList.add("is-seekable");
+                    li.addEventListener("click", function () {
+                        if (window.NNPlayer && window.NNPlayer.playElement && window.NNPlayer.playElement(audio, at)) { return; }
+                        try { audio.currentTime = at; audio.play(); } catch (e) {}
+                    });
+                });
+            })();
+            </script>
+            
+
+            <!-- Transcript -->
+            <section class="blog-transcript" id="transcript">
+                <details>
+                    <summary>
+                        <span class="transcript-head">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            Full episode transcript
+                            
+                            <span class="transcript-length">2,044 words</span>
+                            
+                        </span>
+                        
+                        <span class="transcript-preview" aria-hidden="true">Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.
+
+This is AI Chips and Data Centres, episode 45.
+
+After that, a Texas foundry booking for memory base dies, Arm's quarter against AMD's revenue guide, then heat, coal, and local votes, and a walk through how a die-to-die link loses its eye.</span>
+                        <span class="transcript-more">Read the whole thing &darr;</span>
+                        
+                    </summary>
+                    <div class="transcript-content">Nvidia ships CUDA 13.5, taking Vera Rubin from early access into production deployments.
+
+This is AI Chips and Data Centres, episode 45.
+
+After that, a Texas foundry booking for memory base dies, Arm's quarter against AMD's revenue guide, then heat, coal, and local votes, and a walk through how a die-to-die link loses its eye.
+
+The production drop landed Wednesday, BigGo Finance reports, with Linux driver six-twenty point seventy point oh-six. Yesterday the rack picture was already public. What changed is the toolkit: enterprise buyers can now treat Vera Rubin as a production stack, not an early-access board. Rubin graphics processors sit with Vera central processors over NVLink-C2C.
+
+Back in June twenty twenty-six, Nvidia described those systems as up to one hundred forty-four graphics processors in a rack, more than seven exaflops of AI-for-science throughput, and five petaflops of native FP64. The new toolkit tunes matrix-multiply heuristics and kernels for NVFP4 and MXFP8, and Nvidia says that raises throughput without tuning every matrix shape by hand.
+
+On Rubin and anything after it, Windows Display Driver Model and Microsoft's compute driver model stay; Tesla Compute Cluster mode does not, so a Windows script still built around that old mode has to be rewritten. Windows on Arm now reaches DGX Station for Windows.
+
+Multi-Process Service version three adds weighted timeslicing, and locality-domain controls let a job take equal streaming-multiprocessor slices or slices that use every streaming multiprocessor on the chip.
+
+Samsung's second fab in Taylor, Texas, is reported fully booked. TechPowerUp, citing an exclusive in Korea's Maeil Business Newspaper and industry sources, says the entire planned output of Taylor Fab Two is spoken for, most of it by AMD. The work is not AMD's processors. It is HBM base dies, the logic chip under the memory stack, on a two-nanometre process, for both AMD and NVIDIA.
+
+AMD's volume alone is described as enough to fill the fab. Samsung declined to comment and said it cannot confirm customer details. The plan, as reported, is to build those dies in Texas, stack them with DRAM made in South Korea, and ship finished high-bandwidth memory.
+
+Today's HBM4, and the HBM4E parts already sampled, use four-nanometre base dies, so two nanometres or smaller is aimed at later generations. The report ties the booking to Lisa Su's October visit, when Samsung reportedly asked for foundry orders in exchange for memory AMD needs, and to a March memorandum that made Samsung the primary HBM4 supplier for the Instinct MI455X.
+
+Arm published its shareholder letter on November fourth. For the second quarter of fiscal twenty twenty-seven, ended September thirtieth, revenue was one point four four billion dollars, up twenty-seven percent from a year earlier, and Arm called it the highest second quarter it has posted. Licensing and other revenue was seven hundred seventy-three million dollars, up fifty percent.
+
+Royalties were six hundred seventy million dollars, and data-center royalties doubled. Partners shipped more than ten billion Arm-based chips in the quarter, one and a half billion more than a year earlier, on a platform Arm says more than thirty million developers already use. Arm's own note adds that both the IP business and a new silicon business are growing fast on that same platform.
+
+AMD's fourth-quarter guide sits above Intel's for what TechPowerUp says would be the first time AMD's quarterly revenue tops Intel's. AMD pointed to about seventeen billion dollars, plus or minus three percent, roughly sixteen and a half to seventeen and a half billion. Intel's range is fifteen to sixteen billion.
+
+The low end of AMD's band is still above the high end of Intel's, unless one of them misses badly. The engine is the data center: a record eight and a half billion dollars in the third quarter, up ninety-seven percent year over year, on EPYC demand and Instinct MI450 graphics processors inside Helios racks.
+
+AMD expects that segment up about fifty percent from the third quarter to the fourth, while Client and Gaming falls more than twenty percent. Intel's softer fourth-quarter view includes a two-week shutdown at Fab Twenty-Eight in Israel, which Intel says costs about three hundred million dollars of fourth-quarter revenue.
+
+Universal Quantum launched the iQPU on November fourth, HPCwire reports, from Haywards Heath in England and Hamburg in Germany. It is an integrated trapped-ion processor meant to be built, scaled, and deployed as one unit, with the ion-trap surface, ultra-low-noise control, and a chip-to-chip link the company calls UQConnect in the same package.
+
+Crusoe has put a factory-built module on the market. Data Center Knowledge says the Spark Liquid unit is rated at three and a half megawatts, a liquid-cooled block meant to add AI capacity faster than a conventional hall.
+
+Arizona Public Service filed an integrated resource plan with regulators on Friday. Utility Dive says the utility expects sales to double by twenty forty-one, and peak demand to rise about three point four percent a year for the next fifteen years, pulled by industry and data centers. The same plan proposes keeping coal in the mix out to twenty thirty-eight.
+
+atNorth has signed Calentix to take heat off the SWE04 data center in Sollefteå, Sweden. Data Center Dynamics says the first heat delivery is expected in twenty twenty-nine.
+
+Voters across the United States put local data-center moratoria, limits, and restrictions on the ballot. Data Center Dynamics says most of the anti-data-center measures passed, and Ohio led the charge.
+
+Nvidia is telling data-center partners to cut their China exposure, and it is limiting RTX chip sales into mainland China, Data Center Dynamics reports, while Washington and Beijing both push to decouple.
+
+Tesla has reopened the Texas Terafab conversation, according to a November second report by El Fondo that cites supply-chain sources and a DigiTimes account, as carried by ad-hoc-news. Elon Musk is said to have softened an earlier stance, and the talks could put TSMC in charge of building and running the plant, not merely subleasing a corner while Tesla and SpaceX operate it.
+
+Equity and who puts in the money are still being negotiated. Tesla, SpaceX, and TSMC had not commented when that report ran. Intel had been tied to the project after Musk said Tesla planned to use Intel's next-generation fourteen-A process; this account does not say whether that changes if TSMC takes the fab.
+
+On SpaceX's third-quarter call, Musk said he wants a test chip running around May or June twenty twenty-seven at an Austin research fab, and he called volume production at Terafab in the third or fourth quarter of twenty twenty-eight an aspiration.
+
+Macronix is leaving the Nintendo ROM business. Tom's Hardware, citing reports, says one of Nintendo's ROM suppliers is shutting that line down so the tools can make NOR and NAND flash for AI data centers.
+
+SEMI's Silicon Manufacturers Group counted three thousand seven hundred fifty-six million square inches of silicon wafers shipped in the third quarter of twenty twenty-six.
+
+Semiconductor Digest has the release: that is up thirteen point four percent from three thousand three hundred thirteen million square inches a year earlier, and up five point one percent from three thousand five hundred seventy-three million square inches in the second quarter.
+
+Masatsugu Miura, who chairs the group and runs sales and marketing at SUMCO, said AI demand has spread past advanced logic and memory into power devices and photonics, while industrial demand improved on robotics, AI server power supplies, and general-purpose industrial chips. Bonding and advanced packaging kept pulling three-hundred-millimetre polished wafers.
+
+Also in the queue, the European Semiconductor Industry Association put global chip sales at five hundred seventeen point seven billion dollars in the third quarter, up one hundred forty-six point eight percent from a year earlier. Intel says EMIB wafer utilization is above ninety percent, in what it calls a seventy-bridge era.
+
+GlobalFoundries' data-center sales are up eighty-one percent ahead of a TSMC deal. EE Times describes a silicon-photonics land grab against the power wall of copper, including one hundred twenty-five million dollars raised by Salience Labs for optical circuit switching. DIGITIMES says a TSMC and ASML photomask target for twenty thirty-one now clocks High NA EUV suppliers.
+
+A die-to-die wire in an advanced package is a stack of discontinuities, not a short board trace. Semiconductor Engineering, in a piece by Muhammad Hassan, Mahmoud Mahany, and Mohamed Saleh, takes that channel apart at the bumps, the through-silicon vias, the redistribution layers, the interposer or silicon bridge, and the package step into the next die.
+
+Skin effect dominates those microscopic wires, so insertion loss falls steeply and almost in a straight line as frequency rises. Low frequency, the channel is a resistive-capacitive lump. High frequency, it is a transmission line. The edge disperses, symbols bleed into their neighbors, and the eye at the receiver pad gets shorter while jitter grows. Crosstalk is louder than the dielectric.
+
+Gaps of half a micrometre to two micrometres let capacitive and inductive coupling inject more noise than the insulator absorbs. The copper is on that same scale, half a micrometre to two micrometres, in silicon dioxide or a low-k film polished flat because any wave in the surface misaligns the mask and snaps the wire.
+
+A board can live with thickness variation and traces coarser than fifty micrometres. Model the die, the interposer, and the package apart, and you miss the coupling that only exists in the stack.
+
+Universal Chiplet Interconnect Express writes that physics as two contracts. Advanced packaging, the interposer or bridge, is for a reach of two millimetres or less, up to sixty-four gigatransfers a second per pin under UCIe three point zero, with sixty-four single-ended mainband lanes in a module. Those lines are unterminated at the receiver, budgeted at a quarter of a picojoule per bit.
+
+Standard packaging, the laminate, may run out to twenty-five millimetres, at sixteen to thirty-two gigatransfers a second, on sixteen mainband lanes, with fifty-ohm terminations to ground so the reflection dies, at half a picojoule per bit. Physical-layer latency on the open spec is described as under two nanoseconds.
+
+The extracted insertion loss has to stay above a mandatory voltage-transfer mask.
+
+One bit on the short path is budgeted at a quarter of a picojoule. The same bit on the laminate path is half a picojoule, twice the energy, because the termination has to swallow a reflection the short link never builds. The advanced module also carries four times the lanes, sixty-four against sixteen, at a peak of sixty-four gigatransfers a second against a standard band of sixteen to thirty-two.
+
+The price of that bargain is the span: two millimetres versus twenty-five. Push the unterminated quarter-picojoule link toward the longer run and the reflection returns, the eye that already shrank under the linear roll-off closes further, and the insertion-loss curve fails the mask even if the link math still looks fine on a short channel.
+
+That unterminated choice stops being the right electrical design once the span leaves two millimetres, or once the bump map cannot hold aggressors inside those half-to-two-micrometre gaps without coupling beating the dielectric. Then the contract is the laminate one: fewer lanes, a lower rate, a fifty-ohm termination, and half a picojoule a bit.
+
+On the horizon, around May or June twenty twenty-seven, Musk wants a test chip running at an Austin research fab tied to Terafab. In twenty twenty-nine, atNorth expects the first heat delivery from the Calentix deal at SWE04 in Sollefteå. Twenty thirty-eight is the coal date Arizona Public Service has proposed in the plan filed Friday.
+
+Twenty thirty-one is the TSMC and ASML photomask target DIGITIMES says now clocks High NA EUV suppliers.
+
+Before we go, watch whether Nvidia's instruction to data-center partners to cut China exposure shows up in the racks those partners actually order.
+
+That's AI Chips and Data Centres for today. I'm Patrick in Vancouver. Thanks for listening — see you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. Quick tip from the network: try Collingwood Weekly next — the week around the south Georgian Bay, every Friday. Every Nerra Network show is free at nerranetwork.com.
+
+Live dashboards — TSLA, SpaceX launches, the investing scoreboard — are all at nerranetwork.com/data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.</div>
+                </details>
+            </section>
+            <script>
+            /* Every "read the transcript" link on this page points at
+               #transcript, and landing on a collapsed box looks like the link
+               is broken. Open it when the fragment asks for it — including a
+               same-page click, which fires no navigation. */
+            (function () {
+                var box = document.querySelector('#transcript details');
+                if (!box) return;
+                function openIfTargeted() {
+                    if (location.hash === '#transcript') box.open = true;
+                }
+                openIfTargeted();
+                window.addEventListener('hashchange', openIfTargeted);
+            })();
+            </script>
+            
+
+            <!-- Story Tracker (narrative-memory shows only) -->
+            
+
+            <!-- Share Buttons --><div class="share-buttons">
+                <span>Share:</span>
+                <a href="https://twitter.com/intent/tweet?url=https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Dx%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody&text=Nvidia%20ships%20CUDA%2013.5%2C%20taking%20Vera%20Rubin%20from%20early%E2%80%A6%20%C2%B7%20AI%20Chips%20%26%20Data%20Centres%20Daily" target="_blank" rel="noopener" aria-label="Share on X">&#120143; Post</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Dlinkedin%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Dfacebook%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on Facebook">Facebook</a>
+                <a href="https://wa.me/?text=Nvidia%20ships%20CUDA%2013.5%2C%20taking%20Vera%20Rubin%20from%20early%E2%80%A6%20%C2%B7%20AI%20Chips%20%26%20Data%20Centres%20Daily%20%E2%80%94%20https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Dwhatsapp%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
+                <a href="https://t.me/share/url?url=https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Dtelegram%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody&amp;text=Nvidia%20ships%20CUDA%2013.5%2C%20taking%20Vera%20Rubin%20from%20early%E2%80%A6%20%C2%B7%20AI%20Chips%20%26%20Data%20Centres%20Daily" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
+                <a href="mailto:?subject=Nvidia%20ships%20CUDA%2013.5%2C%20taking%20Vera%20Rubin%20from%20early%E2%80%A6%20%C2%B7%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=https%3A//nerranetwork.com/blog/ai_chips/ep045.html%3Futm_source%3Demail_share%26utm_medium%3Dshare%26utm_campaign%3Dnn-ai_chips-en-post-ep045-share%26utm_content%3Dbody" aria-label="Share by email">&#9993; Email</a>
+                <button onclick="navigator.clipboard.writeText(window.location.href).then(function(){this.textContent='\u2713 Copied'}.bind(this))" aria-label="Copy link">&#128279; Copy link</button>
+            </div>
+
+            <!-- AI transparency badge (trust signal) -->
+            <div style="display:flex;justify-content:center;margin:var(--sp-4) 0;">
+                <a href="../../ai-disclosure.html" class="nn-ai-badge" rel="nofollow"
+   title="How we use AI — full transparency"
+   style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--nn-border);border-radius:100px;font-family:var(--font-ui);font-size:0.72rem;font-weight:600;color:var(--nn-text-muted);text-decoration:none;line-height:1.4;white-space:nowrap;">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
+  Made with AI — transparently
+</a>
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 21 sources</span> <span aria-hidden="true">·</span> <span>21 claims checked against their sources</span> <span aria-hidden="true">·</span> <span>voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep45&body=Re%3A%20https%3A//nerranetwork.com/blog/ai_chips/ep045.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            
+            
+            <aside class="nn-soft-personal-post" id="soft-personal-post"
+       style="margin:var(--sp-6) 0;padding:var(--sp-4) var(--sp-5);background:var(--nn-card);border:1px solid var(--nn-border);border-radius:14px;">
+    <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
+        Get a quiet nudge with occasional Personal tips. No charge, no card. Shows stay free either way.
+    </p>
+    <form method="post" action="#"
+          data-nn-subscribe="soft-personal"
+          data-list="personal-interest"
+          data-source="src-nerranetwork"
+          data-show="ai_chips"
+          data-form-id="blog-ai_chips-soft-personal"
+          data-label-loading="Saving…"
+          data-label-done="Saved ✓"
+          data-label-soft-done="You’re on the list. Shows stay free either way."
+          data-label-error="Couldn’t save that just now. Try again in a moment."
+          data-label-idle="Save my email"
+          style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
+        <label for="spi-post-email-ai_chips"
+               style="font-family:var(--font-ui);font-size:0.85rem;font-weight:600;color:var(--nn-text-muted);margin:0;">Email</label>
+        <input type="email" id="spi-post-email-ai_chips" name="email" required autocomplete="email"
+               placeholder="your@email.com"
+               aria-label="Email address"
+               style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:220px;"><div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+            <label for="spi-post-company-ai_chips">Company</label>
+            <input type="text" id="spi-post-company-ai_chips" name="company" tabindex="-1" autocomplete="off">
+        </div>
+        <button type="submit"
+                style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
+            Save my email
+        </button>
+    </form>
+    <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
+       style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
+    <p style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.82rem;line-height:1.45;color:var(--nn-text-muted);">
+        We’ll only email you about Nerra Personal. Unsubscribe anytime.
+        <a href="../../privacy-policy.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Privacy policy</a>.
+    </p>
+</aside>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+                <span>👋 Did this episode land?</span>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep45&body=Re: https://nerranetwork.com/blog/ai_chips/ep045.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=Re: https://nerranetwork.com/blog/ai_chips/ep045.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+            </div>
+            <aside class="episode-ask" style="margin:var(--sp-6) 0;padding:var(--sp-5);border-left:3px solid var(--show-color);background:color-mix(in srgb, var(--show-color), transparent 94%);font-family:var(--font-ui);font-size:0.98rem;line-height:1.55;color:var(--nn-text);">
+                
+                <p style="margin:0;">If this episode was useful, a rating or a short review on Apple Podcasts or Spotify is how the next listener finds the show — and following it in your app means the next episode is there when you are.</p>
+                
+            </aside>
+            
+
+            <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
+            
+            <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
+                <h3>Enjoy this episode? Get AI Chips & Data Centres Daily in Nerra Daily</h3>
+                <p>One email at 7 AM Eastern with the shows you pick. No spam, unsubscribe anytime.</p>
+                <form method="post" action="#"
+                      data-nn-subscribe="blog-cta"
+                      data-list="member"
+                      data-source="src-nerranetwork"
+                      data-form-id="blog-ai_chips-newsletter"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
+                    <input type="hidden" name="tag" value="AI Chips & Data Centres Daily">
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+            
+
+            <!-- Episode Navigation -->
+            
+
+            
+
+            
+
+            
+            
+            
+            <section class="blog-related" style="margin-top:1.4rem;">
+                <h2>More on this subject</h2>
+                <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
+                    
+                    <a href="../../topics/ai.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Artificial intelligence</a>
+                    
+                    <a href="../../topics/engineering.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Engineering</a>
+                    
+                    <a href="../../topics/ai-infrastructure.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">AI infrastructure</a>
+                    
+                    <a href="../../topics/index.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--nn-border);color:var(--nn-text-muted);text-decoration:none;font-size:.9rem;">All topics</a>
+                </div>
+            </section>
+            
+            
+            
+            <section class="blog-related" id="more-from-show" style="margin-top:1.4rem;">
+                <h2>More from AI Chips & Data Centres Daily</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="ep044.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 44</span>
+                        <h3>TSMC expects A16 volume production in 2027, a year ahead… · AI Chips & Data Centres Daily</h3>
+                    </a>
+                    
+                    <a href="ep043.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 43</span>
+                        <h3>Twenty billion pounds is lined up for up to one gigawatt… · AI Chips & Data Centres Daily</h3>
+                    </a>
+                    
+                    <a href="ep042.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 42</span>
+                        <h3>A 72-GPU Rubin rack now carries 20.7 terabytes of HBM4… · AI Chips & Data Centres Daily</h3>
+                    </a>
+                    
+                    <a href="ep041.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 41</span>
+                        <h3>Seven point three billion dollars of quarterly data… · AI Chips & Data Centres Daily</h3>
+                    </a>
+                    
+                    <a href="ep040.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 40</span>
+                        <h3>Six hundred million dollars is what a two-week Fab 28 halt…</h3>
+                    </a>
+                    
+                </div>
+                <p style="margin:.85rem 0 0;font-size:.9rem;">
+                    <a href="../../ai-chips.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">AI Chips & Data Centres Daily show page</a><span aria-hidden="true"> · </span>
+                    <a href="../../blog/ai_chips/index.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">All AI Chips & Data Centres Daily episodes</a>
+                </p>
+            </section>
+            
+            
+            <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/models_agents/ep224.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>OpenAI is now shipping prototype hardware and CAD tools built with GPT-6 Astra in under a week.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep217.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>ChatGPT now handles one in five searches that used to go straight to Google.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/first_principles/ep152.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
+                        <h3>Popcorn costing under fifty cents sells for eight dollars inside most movie theaters.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
+        </article>
+    </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="nn-footer">
+        <div class="container">
+            <div class="nn-footer-grid">
+                <div>
+                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
+                    <p class="nn-footer-desc">Feed your curiosity, not your anxiety. Independent news and podcasts from Vancouver, Canada.</p>
+                </div>
+                <div class="nn-footer-col nn-footer-col--shows">
+                    <h4>Shows</h4>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Hosted by Mira</li>
+                        
+                        <li><a href="../../nerra-daily.html">Nerra Daily</a></li>
+                        
+                        <li><a href="../../age-of-ai.html">The Age of AI</a></li>
+                        
+                        <li><a href="../../nerra-voices.html">Nerra Voices</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">World desks</li>
+                        
+                        <li><a href="../../omni-view-world.html">Omni View Top World News</a></li>
+                        
+                        <li><a href="../../omni-view-north-america.html">Omni View North America</a></li>
+                        
+                        <li><a href="../../omni-view-europe.html">Omni View Europe</a></li>
+                        
+                        <li><a href="../../omni-view-asia-pacific.html">Omni View Asia Pacific</a></li>
+                        
+                        <li><a href="../../omni-view-africa-mideast.html">Omni View Africa & Middle East</a></li>
+                        
+                        <li><a href="../../omni-view-latam.html">Omni View Central & South America</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Local news</li>
+                        
+                        <li><a href="../../vancouver.html">Vancouver Daily News</a></li>
+                        
+                        <li><a href="../../collingwood.html">Collingwood Weekly</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">AI & compute</li>
+                        
+                        <li><a href="../../models-agents.html">Models & Agents</a></li>
+                        
+                        <li><a href="../../ai-chips.html">AI Chips & Data Centres Daily</a></li>
+                        
+                        <li><a href="../../models-agents-beginners.html">Models & Agents for Beginners</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Markets</li>
+                        
+                        <li><a href="../../modern-investing.html">Modern Investing Techniques</a></li>
+                        
+                        <li><a href="../../mag7.html">MAG 7 Daily</a></li>
+                        
+                        <li><a href="../../prediction-markets.html">Prediction Markets Daily</a></li>
+                        
+                        <li><a href="../../tesla.html">Tesla Shorts Time</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Health & longevity</li>
+                        
+                        <li><a href="../../planetterrian.html">Planetterrian Daily</a></li>
+                        
+                        <li><a href="../../peptides.html">Peptides Weekly</a></li>
+                        
+                        <li><a href="../../longevity.html">Longevity Weekly</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Every other show</li>
+                        
+                        <li><a href="../../omni-view.html">Omni View</a></li>
+                        
+                        <li><a href="../../fascinating-frontiers.html">Fascinating Frontiers</a></li>
+                        
+                        <li><a href="../../spacex.html">SpaceX Daily</a></li>
+                        
+                        <li><a href="../../env-intel.html">Environmental Intelligence</a></li>
+                        
+                        <li><a href="../../unintended-consequences.html">Unintended Consequences</a></li>
+                        
+                        <li><a href="../../first-principles.html">First Principles Daily</a></li>
+                        
+                        <li><a href="../../thedppod.html">The DP Pod: The Do Positive Podcast</a></li>
+                        
+                        <li><a href="../../offshore-north.html">Offshore North</a></li>
+                        
+                    </ul>
+                    
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Blog</h4>
+                    <a href="../../blog/index.html">All Blog Posts</a>
+                    <a href="../../topics/index.html">Browse by topic</a>
+                    <a href="../../blog.rss">Blog RSS (All Shows)</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Listen</h4>
+                    <a href="../../how-to-listen.html" style="font-weight:600">How to Listen</a>
+                    <a href="../../player.html" style="font-weight:600">Network Player</a>
+                    <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
+                    <a href="../../network.rss">Network RSS</a>
+                    <a href="../../how-to-listen.html#feeds">All RSS feeds</a><span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">Other languages: <a href="../../fr/index.html" lang="fr" hreflang="fr">Français</a> · <a href="../../ru/index.html" lang="ru" hreflang="ru">Русский</a></span>
+                </div><div class="nn-footer-col">
+                    <h4>About</h4>
+                    <a href="../../about.html">About Nerra Network</a>
+                    <a href="../../start-here.html">Start Here</a>
+                    <a href="../../mira.html">Mira, the AI host</a>
+                    <a href="../../topics/index.html">Browse by topic</a>
+                    <a href="../../faq.html">FAQ</a>
+                    <a href="../../contact.html">Contact</a>
+                    <a href="../../press.html">Media Kit</a>
+                    <a href="../../sponsor.html">Advertise & Sponsor</a>
+                    <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
+                    <a href="../../ai-disclosure.html">AI Disclosure</a>
+                    <a href="../../privacy-policy.html">Privacy Policy</a>
+                    <a href="../../terms-of-service.html">Terms of Service</a>
+                    <a href="../../gallery.html">Image Gallery</a>
+                    <a href="../../books.html">Books</a>
+                    <a href="../../data.html">Data & Dashboards</a>
+                    <a href="../../support.html">Support the Network</a><a href="../../management.html?view=sponsor">Network Status</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Connect</h4>
+                    <a href="https://x.com/nerranetwork" target="_blank" rel="noopener">@nerranetwork <span style="opacity:.6;">(X)</span></a>
+                    <a href="https://www.youtube.com/@NerraNetwork" target="_blank" rel="noopener">@NerraNetwork <span style="opacity:.6;">(YouTube (English))</span></a>
+                    <a href="https://www.youtube.com/@NerraFR" target="_blank" rel="noopener">@NerraFR <span style="opacity:.6;">(YouTube (French))</span></a>
+                    <a href="https://www.youtube.com/@NerraRU" target="_blank" rel="noopener">@NerraRU <span style="opacity:.6;">(YouTube (Russian))</span></a>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime <span style="opacity:.6;">(Tesla Shorts Time)</span></a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews <span style="opacity:.6;">(Omni View)</span></a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian <span style="opacity:.6;">(Planetterrian)</span></a>
+                    <a href="../../contact.html">Contact</a>
+                </div>
+            </div>
+            <!-- Newsletter Subscribe — posts to the account Worker (Aug
+                 2026): every newsletter signup now creates a Nerra
+                 account (same identity as the gallery gate), so the
+                 member surface and the list grow together. -->
+            <div class="nn-footer-subscribe" id="newsletter-signup"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="You're in — Nerra Daily arrives at 7 AM ET ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
+                    <h4>Get Nerra Daily by email</h4>
+                    <p>One email at 7 AM Eastern, with the shows you pick:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(29)</span></summary>
+                    <div class="nn-subscribe-tags">
+                        <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models & Agents</label>
+                        
+                        <label><input type="checkbox" name="tag" value="AI Chips & Data Centres Daily"> AI Chips & Data Centres Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Peptides Weekly"> Peptides Weekly</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Longevity Weekly"> Longevity Weekly</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Top World News"> Omni View Top World News</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View North America"> Omni View North America</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Europe"> Omni View Europe</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Asia Pacific"> Omni View Asia Pacific</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Africa & Middle East"> Omni View Africa & Middle East</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Central & South America"> Omni View Central & South America</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Vancouver Daily News"> Vancouver Daily News</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Collingwood Weekly"> Collingwood Weekly</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
+                        
+                        <label><input type="checkbox" name="tag" value="MAG 7 Daily"> MAG 7 Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Prediction Markets Daily"> Prediction Markets Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        
+                        <label><input type="checkbox" name="tag" value="SpaceX Daily"> SpaceX Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
+                        
+                        <label><input type="checkbox" name="tag" value="First Principles Daily"> First Principles Daily</label>
+                        
+                        <label><input type="checkbox" name="tag" value="DP Pod"> The DP Pod: The Do Positive Podcast</label>
+                        
+                        <label><input type="checkbox" name="tag" value="The Age of AI"> The Age of AI</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Nerra Voices"> Nerra Voices</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
+                        
+                    </div>
+                    </details>
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;">
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
+                        <span style="opacity:0.5;margin:0 0.35rem;">·</span>
+                        <a href="../../join.html">Or start Nerra Personal →</a>
+                        <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                        <a class="nn-login-link" href="../../login.html" style="margin-left:0.75rem;">Sign in →</a>
+                    </p>
+                </form>
+            </div><div class="nn-app-card nn-footer-app" data-nn-install hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Free. Today's stories, your shows and the player on your home screen, in one tap. <a href="../../app.html">How it works</a></p>
+                <div class="nn-app-actions"><button type="button" class="nn-app-btn" data-nn-install-go>Install</button></div>
+            </div>
+            <div class="nn-app-card nn-app-ios nn-footer-app" data-nn-install-ios hidden>
+                <img src="../../assets/app/icon-192.png" alt="" width="52" height="52" loading="lazy">
+                <p><strong>Get the Nerra app</strong>Tap <kbd>Share</kbd> then <kbd>Add to Home Screen</kbd>. Free, and it opens straight to today's stories. <a href="../../app.html">How it works</a></p>
+            </div>
+            <div class="nn-footer-bottom">
+                <span>© 2026 Nerra Network. All shows independently produced.</span>
+                <a href="/">nerranetwork.com</a>
+            </div>
+            <div class="nn-footer-legal">
+                <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
+                <div>
+                    <a href="../../support.html">Support the network</a> &middot;
+                    <a href="../../app.html">Get the app</a> &middot;
+                    <a href="../../privacy-policy.html">Privacy</a> &middot;
+                    <a href="#" data-nn-cookie-settings="1">Cookie settings</a> &middot;
+                    <a href="../../terms-of-service.html">Terms</a> &middot;
+                    <a href="../../ai-disclosure.html">AI Disclosure</a></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Nav dropdowns: hover opens via CSS; click / Enter / Space toggle the
+    // `.open` class so keyboard and touch users can actually open them
+    // (until Sep 2026 focus set aria-expanded="true" while nothing was
+    // visible). Escape or an outside click closes any open menu.
+    (function () {
+        var dropdowns = Array.prototype.slice.call(document.querySelectorAll('.nn-nav-dropdown'));
+        function closeAll(except) {
+            dropdowns.forEach(function (d) {
+                if (d === except) return;
+                d.classList.remove('open');
+                var b = d.querySelector('.nn-nav-dropdown-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+        }
+        dropdowns.forEach(function (dd) {
+            var btn = dd.querySelector('.nn-nav-dropdown-btn');
+            if (!btn) return;
+            dd.addEventListener('mouseenter', function () { btn.setAttribute('aria-expanded', 'true'); });
+            dd.addEventListener('mouseleave', function () {
+                if (!dd.classList.contains('open')) btn.setAttribute('aria-expanded', 'false');
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var willOpen = !dd.classList.contains('open');
+                closeAll(dd);
+                dd.classList.toggle('open', willOpen);
+                btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            dd.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    dd.classList.remove('open');
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.focus();
+                }
+            });
+            dd.addEventListener('focusout', function () {
+                setTimeout(function () {
+                    if (!dd.contains(document.activeElement)) {
+                        dd.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }, 100);
+            });
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.nn-nav-dropdown')) closeAll(null);
+        });
+    })();
+    // Mobile menu: one delegated close handler for every link inside it.
+    (function () {
+        var menu = document.getElementById('mobileMenu');
+        var burger = document.querySelector('.nn-hamburger');
+        if (!menu) return;
+        menu.addEventListener('click', function (e) {
+            if (!e.target.closest('a')) return;
+            menu.classList.remove('open');
+            document.body.classList.remove('menu-open');
+            if (burger) burger.setAttribute('aria-expanded', 'false');
+        });
+    })();
+    // Footer accordions on narrow screens. Bound at every width (the CSS
+    // decides whether the toggle has any visible effect) so a rotate or
+    // resize after load can never strand the links hidden; headers are
+    // keyboard-operable.
+    document.querySelectorAll('.nn-footer-col h4').forEach(function (h4) {
+        h4.setAttribute('role', 'button');
+        h4.setAttribute('tabindex', '0');
+        h4.setAttribute('aria-expanded', 'false');
+        function toggle() {
+            var on = h4.parentElement.classList.toggle('expanded');
+            h4.setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+        h4.addEventListener('click', toggle);
+        h4.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+    });
+    </script>
+    
+<script>
+// Highlight active TOC entry on scroll
+(function() {
+    const toc = document.querySelector('.blog-toc');
+    if (!toc) return;
+    const links = toc.querySelectorAll('a');
+    const headings = [];
+    links.forEach(function(a) {
+        const id = a.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if (el) headings.push({ el: el, link: a });
+    });
+    if (!headings.length) return;
+    function onScroll() {
+        var current = headings[0];
+        for (var i = 0; i < headings.length; i++) {
+            if (headings[i].el.getBoundingClientRect().top <= 120) {
+                current = headings[i];
+            }
+        }
+        links.forEach(function(a) { a.classList.remove('active'); });
+        current.link.classList.add('active');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+})();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
+</script>
+
+
+    <!-- Centralized, improved global search -->
+    <script src="../../assets/js/search.js?v=eca36a37" defer></script>
+    <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=708996ab" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
+    <script src="../../assets/js/nn-app.js?v=cff26f8f" defer></script>
+    <script>
+    // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
+    // when the api.nerranetwork.com session cookie answers. Fail-silent —
+    // signed-out visitors, blocked cookies, or an unreachable Worker all
+    // leave the default Join link untouched.
+    // Oct 28 2026: the answer is shared as window.nnAccount (a promise of
+    // the account JSON, or null), so a page that personalizes (the front
+    // page's For you band) asks the Worker once, not twice.
+    (function () {
+      try {
+        window.nnAccount = fetch('https://api.nerranetwork.com/api/account', { credentials: 'include' })
+          .then(function (r) {
+            if (!r.ok) return null;
+            ['nn-nav-account', 'nn-nav-account-m'].forEach(function (id) {
+              var a = document.getElementById(id);
+              if (a) { a.textContent = 'My Nerra'; a.href = '../../account.html'; }
+            });
+            document.querySelectorAll('.nn-login-link').forEach(function (a) { a.style.display = 'none'; });
+            return r.json().catch(function () { return {}; });
+          }).catch(function () { return null; });
+      } catch (e) { window.nnAccount = Promise.resolve(null); }
+    })();
+    </script><div id="nn-consent-banner" role="region" aria-label="Cookies on Nerra" data-nn-consent-ssr="1">
+        <div class="nn-consent-inner">
+            <button type="button" class="nn-consent-close" aria-label="Close">&times;</button>
+            <div class="nn-consent-copy">
+                <h2 class="nn-consent-heading" id="nn-consent-heading">Cookies on Nerra</h2>
+                <div class="nn-consent-text">Some cookies keep the site working. Before you choose, Google gets only basic, cookie-free signals (for example, that a page loaded), with no cookies or IDs that identify you. With your OK you can also turn on: Analytics, which uses Google Analytics cookies to show us which pages and episodes are useful, and Ad measurement, which uses Google Ads to measure sign-ups from our ads. When you sign up for Personal tips, Ad measurement also sends Google a coded (hashed) version of your email. Change your mind any time from Cookie settings at the bottom of every page. <a class="nn-consent-privacy" href="../../privacy-policy.html">Privacy policy</a>.</div>
+            </div>
+            <div class="nn-consent-actions">
+                <button type="button" class="nn-consent-btn" data-nn-consent="accept-all">Accept all</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="reject-all">Reject all</button>
+                <button type="button" class="nn-consent-btn" data-nn-consent="choose">Choose</button>
+            </div>
+            <div class="nn-consent-panel" data-nn-consent-panel hidden>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="analytics">
+                    <span>Analytics</span>
+                </label>
+                <label class="nn-consent-toggle">
+                    <input type="checkbox" data-nn-toggle="ads">
+                    <span>Ad measurement</span>
+                </label>
+                <button type="button" class="nn-consent-btn" data-nn-consent="save">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
