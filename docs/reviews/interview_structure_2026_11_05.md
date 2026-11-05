@@ -178,3 +178,14 @@ rooms:
   lives in the trace.
 - The slot is even across the plan. Weighting the core questions longer is
   a later change, to make only after a readout.
+
+## Luke Miler's room ran without the plan
+
+Luke's run (`73274855`, Nov 5 20:00 UTC) was staged on Nov 4, before the plan
+existed. Each fire tick refreshed its prompt, so Mira was told the room would
+hand her the prepared questions. The tick never touched the run's
+`grok_session_log`, though, so the room opened with no `interview_plan` and
+handed her nothing. `refresh_staged_prompt` now also brings the room seed's
+keys (`ROOM_LOG_SEED_KEYS`) up to date while a run is still staged, and leaves
+every other key alone. Guard:
+`TestThePlanTravels::test_a_run_staged_before_the_plan_gets_it_on_the_next_tick`.

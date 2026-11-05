@@ -93,6 +93,36 @@ class TestThePlanTravels:
         fire = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
         assert "is_hello_session(interview) or is_closing_session(interview) else brief" in fire
 
+    def test_a_run_staged_before_the_plan_gets_it_on_the_next_tick(self, monkeypatch):
+        """Luke Miler, Nov 5 2026: his run was staged the day before the plan
+        existed. Its prompt was refreshed to say the room hands her the
+        prepared questions; its log was not, so the room never handed one."""
+        import fire_interviews as fi
+
+        class Show:
+            local_video = False
+        updates = []
+        monkeypatch.setattr(fi, "sb_select", lambda table, q="": (
+            [{"id": "app"}] if table == "guest_applications" else [self.BRIEF]))
+        monkeypatch.setattr(fi, "sb_update", lambda t, q, patch: updates.append((q, patch)) or [patch])
+        monkeypatch.setattr(fi, "compile_prompt_for", lambda iv, app, brief: "PROMPT")
+        monkeypatch.setattr(fi, "show_for", lambda iv, app=None: Show)
+        run = {"id": "run-1", "status": "staged", "mira_system_prompt": "PROMPT",
+               "turn_detection": fi.turn_detection(),
+               "grok_session_log": {"guest_links": ["https://old.example"], "other": 1}}
+        assert fi.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is True
+        q, patch = updates[0]
+        assert "status=eq.staged" in q
+        log = patch["grok_session_log"]
+        assert len(log["interview_plan"]) == 6
+        assert log["other"] == 1                  # a key the seed does not own stays
+        assert "guest_links" not in log           # a seed key with no value now goes
+        # Brought up to date once: the next tick writes nothing.
+        updates.clear()
+        run["grok_session_log"] = log
+        assert fi.refresh_staged_prompt(run, {"id": "iv", "application_id": "app"}) is False
+        assert updates == []
+
     def test_the_prompt_lists_them_numbered_in_the_same_order(self):
         import fire_interviews as fi
         plan = fi.interview_plan(self.BRIEF)
