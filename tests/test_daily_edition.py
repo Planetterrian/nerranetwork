@@ -843,6 +843,27 @@ class TestPromoCutHardening:
             "unintended_consequences", "first_principles",
             "models_agents_beginners", "env_intel", "offshore_north", "dp_pod",
         }
+        # Nov 5 2026: Peptides Weekly Ep008's AUDIO stopped ~60% into the
+        # script (the TTS derailed on a bracketed chemical name), so its
+        # transcript has no outro to find — not a matcher gap. Excluded only
+        # while the committed transcript still fails the spoken-text gate's
+        # coverage floor; a re-synthesized episode re-enters the sweep.
+        from engine.spoken_text_gate import (
+            DEFAULT_MIN_SCRIPT_COVERAGE, check_transcript_files,
+        )
+        truncated_audio = {"Peptides_Weekly_Ep008_20261105_transcript.json"}
+        for name in truncated_audio:
+            jp = next(iter((ROOT / "digests").glob(f"*/{name}")), None)
+            if jp is None:
+                continue
+            script = jp.with_name(name.replace("_transcript.json", "_tts.txt"))
+            report = check_transcript_files(
+                script.read_text(encoding="utf-8"), jp,
+                min_script_coverage=DEFAULT_MIN_SCRIPT_COVERAGE,
+            )
+            assert "script_not_spoken" in report.reasons, (
+                f"{name} now covers its script — drop it from truncated_audio"
+            )
         weak = []
         for slug in SPEC.lineup:
             for p in sorted(_glob.glob(str(ROOT / "digests" / slug / "*_transcript.json"))):
@@ -850,6 +871,8 @@ class TestPromoCutHardening:
                 if not m or m.group(1) < "20260815":
                     continue
                 if slug in cohort and m.group(1) < cohort_from:
+                    continue
+                if Path(p).name in truncated_audio:
                     continue
                 t = json.loads(Path(p).read_text(encoding="utf-8"))
                 hit = find_promo_cut(t)

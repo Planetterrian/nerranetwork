@@ -34,6 +34,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from engine.spoken_text_gate import check_transcript_files  # noqa: E402
+from engine.spoken_text_gate import DEFAULT_MIN_SCRIPT_COVERAGE  # noqa: E402
 
 RU_SHOWS = {"finansy_prosto", "privet_russian"}
 _DATE_RE = re.compile(r"_(\d{8})")
@@ -116,7 +117,10 @@ def main() -> int:
                  for s, n, d, t, j, x in _pairs(args.since, args.show))
     for show, name, date, tts, json_path, txt_path, language in pairs:
         script = tts.read_text(encoding="utf-8", errors="replace")
-        report = check_transcript_files(script, json_path, txt_path)
+        report = check_transcript_files(
+            script, json_path, txt_path,
+            min_script_coverage=(DEFAULT_MIN_SCRIPT_COVERAGE if language == "en" else None),
+        )
         if report.spoken_words < 50:
             continue
         rows.append({
@@ -125,6 +129,7 @@ def main() -> int:
             "passed": report.passed, "reasons": list(report.reasons),
             "opening_match": report.opening_match,
             "longest_unmatched_run": report.longest_unmatched_run,
+            "script_coverage": report.script_coverage,
             "unmatched_position": report.unmatched_position,
             "unmatched_snippet": report.unmatched_snippet,
             "segments_dropped": report.segments_dropped,
@@ -159,6 +164,9 @@ def main() -> int:
             f"  run={r['longest_unmatched_run']:3} open={r['opening_match']:.2f} "
             f"{r['show']}/{r['episode']} @{r['unmatched_position']:.0%} :: {r['unmatched_snippet'][:60]}"
         )
+    print(f"\n== English: lowest script coverage (top {args.top}) ==")
+    for r in sorted(en, key=lambda r: r["script_coverage"])[: args.top]:
+        print(f"  {r['script_coverage']:.3f} {r['show']}/{r['episode']}")
     failed = [r for r in rows if not r["passed"]]
     print(f"\n== gate FAILS ({len(failed)}) ==")
     for r in failed:

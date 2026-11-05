@@ -229,6 +229,8 @@ def gate_report(config, script: str, transcript_result):
             config.tts, "spoken_text_gate_min_opening_match", 0.5)),
         max_unmatched_run=int(getattr(
             config.tts, "spoken_text_gate_max_unmatched_run", 40)),
+        min_script_coverage=float(getattr(
+            config.tts, "spoken_text_gate_min_script_coverage", 0.65)),
     )
 
 
@@ -246,6 +248,8 @@ def read_committed_gate(config, art: EpisodeArtifacts):
         art.script_path.read_text(encoding="utf-8"),
         art.transcript_json,
         art.transcript_txt,
+        min_script_coverage=float(getattr(
+            config.tts, "spoken_text_gate_min_script_coverage", 0.65)),
     )
 
 
