@@ -1139,7 +1139,8 @@ export function roomCountersOf(payload: any): Record<string, unknown> {
   // move on / ask me about). Bounded and typed; the rest is dropped.
   if (Array.isArray(payload?.guest_feedback)) {
     out.guest_feedback = payload.guest_feedback.slice(0, 60)
-      .filter((f: any) => f && ["good", "move_on", "topic"].includes(String(f.kind)))
+      // Nov 5 2026: "repeat" and "wrap_up" are the studio's new buttons.
+      .filter((f: any) => f && ["good", "move_on", "topic", "repeat", "wrap_up"].includes(String(f.kind)))
       .map((f: any) => ({
         kind: String(f.kind),
         by: f.by === "host" ? "host" : "guest",

@@ -1,0 +1,139 @@
+"""What the first week of studio presses taught (Nov 3-4 2026, reviewed Nov 5).
+
+Priyanka Sharma pressed Move on four times and typed "I'd like to talk about
+the entrepreneurship in the industry"; every press was acked "applied" and
+Mira stayed on the board-of-pharmacy question, re-asking it three ways, until
+Priyanka SAID the subject aloud. A guest who presses is quiet (reading,
+typing), so the request waited for the dead-air nudge, and that turn also
+carried the note "put your last question to them again". The move-on also
+named no subject to leave. Then "I'd like to wrap up the interview now" went
+unheard, so the room cut her goodbye twice and she asked three more
+questions. She asked twice, out loud, for a question to be repeated.
+
+These guards hold: a press in a silence takes her turn at once; a queued
+press replaces the nudge's note; a guest still talking keeps the floor; the
+move-on and the repeat hand her her own last question in words; the studio's
+new Repeat and Wrap-up buttons reach the room and the Worker keeps them; the
+interview as the object of a stop is a stop.
+"""
+from __future__ import annotations
+
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+SCENARIO_PATH = ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js"
+SCENARIO = SCENARIO_PATH.read_text(encoding="utf-8")
+SIM = ROOT / "tests" / "fixtures" / "room_sim.js"
+STUDIO = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
+WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+NODE = shutil.which("node")
+needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed")
+
+LAST_Q = "Has any board pushed back on what you're proposing?"
+
+
+def sim(which: str) -> dict:
+    out = subprocess.run([NODE, str(SIM), str(SCENARIO_PATH), which],
+                         capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr[-2000:]
+    return json.loads(out.stdout)
+
+
+def _regex(name: str) -> re.Pattern:
+    head = f"const {name} = /"
+    rx = SCENARIO[SCENARIO.index(head) + len(head):]
+    return re.compile(rx[:rx.index("/i;")].replace("\\u2014", "—"), re.I)
+
+
+@needs_node
+class TestAPressInASilenceTakesHerTurn:
+    def test_move_on_while_quiet_goes_now_without_the_nudge(self):
+        out = sim("steer_while_quiet")
+        assert out["events"] == ["create"]
+        assert out["notes"] == []          # no "ask it again" note beside it
+        assert "leave this subject" in out["lastInstructions"]
+        assert [a["status"] for a in out["acks"]] == ["queued", "applied"]
+        assert any(t["d"] == "the floor is free; her turn now" for t in out["trace"])
+
+    def test_a_queued_press_replaces_the_nudge_note(self):
+        out = sim("steer_at_dead_air")
+        assert out["notes"] == []
+        assert "leave this subject" in out["lastInstructions"]
+        assert not any("nudge 1" in t["d"] for t in out["trace"])
+
+    def test_a_guest_still_talking_keeps_the_floor(self):
+        out = sim("steer_waits_for_speech")
+        assert out["eventsWhileSpeaking"] == []
+        assert out["events"] == ["create"]
+        assert "leave this subject" in out["lastInstructions"]
+        assert not any(t["d"] == "the floor is free; her turn now" for t in out["trace"])
+
+    def test_a_typed_topic_while_quiet_goes_now(self):
+        out = sim("steer_topic_while_quiet")
+        assert out["events"] == ["create"]
+        assert "entrepreneurship in the industry" in out["lastInstructions"]
+        # The typed words never reach the trace.
+        assert "entrepreneurship" not in json.dumps(out["trace"])
+
+
+@needs_node
+class TestSheIsHandedHerOwnQuestion:
+    def test_move_on_names_the_question_to_leave(self):
+        ins = sim("steer_while_quiet")["lastInstructions"]
+        assert "“" + LAST_Q + "”" in ins
+        assert "not another angle on the same subject" in ins
+
+    def test_repeat_hands_back_the_question(self):
+        out = sim("steer_repeat")
+        assert "“" + LAST_Q + "”" in out["lastInstructions"]
+        assert "more simply" in out["lastInstructions"]
+        assert out["feedback"][0]["kind"] == "repeat"
+
+
+@needs_node
+class TestTheWrapUpButton:
+    def test_it_is_a_stop_and_the_closing_round_begins(self):
+        out = sim("steer_wrap_up_button")
+        assert out["askedToStop"] is True
+        assert out["state"]["roundActive"] is True
+        assert out["feedback"][0] == {"kind": "wrap_up", "by": "guest", "at_min": out["feedback"][0]["at_min"],
+                                      "text": "", "applied": True, "held": False, "wrap_up": True}
+        assert out["acks"][-1] == {"nn": 1, "ack": "wrap_up", "status": "applied"}
+
+
+class TestTheInterviewAsTheObjectOfAStop:
+    STOP = _regex("GUEST_STOP_RE")
+
+    def test_her_words_are_a_stop(self):
+        for text in ("I'd like to wrap up the interview now.",
+                     "can we end the interview here",
+                     "let's wrap up the conversation",
+                     "let's stop the recording"):
+            assert self.STOP.search(text), text
+
+    def test_a_subject_or_a_later_intention_is_not(self):
+        for text in ("I'd like to end the interview with a story about my dad",
+                     "Let's try to talk about entrepreneurship in this space and then we can wrap up the interview.",
+                     "how would we end the interview"):
+            assert not self.STOP.search(text), text
+
+
+class TestTheStudioAndTheWorker:
+    def test_the_page_has_the_four_actions(self):
+        for bid, label in (("fbMove", "New subject"), ("fbRepeat", "Repeat the question"),
+                           ("fbGood", "Good question"), ("fbWrap", "Let's wrap up")):
+            assert f'id="{bid}">{label}</button>' in STUDIO
+        assert 'sendFeedback("repeat")' in STUDIO
+        assert 'sendFeedback("wrap_up")' in STUDIO
+        # Wrapping up cannot be taken back: it takes a second press.
+        assert "Press again to wrap up" in STUDIO
+
+    def test_the_room_and_the_worker_accept_the_new_kinds(self):
+        assert "repeat: true, wrap_up: true" in SCENARIO
+        assert '["good", "move_on", "topic", "repeat", "wrap_up"]' in WORKER

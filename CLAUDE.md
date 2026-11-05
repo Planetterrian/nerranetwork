@@ -1995,6 +1995,11 @@ Register `mira-react-builds-2026-11-04`; notes `docs/mira_craft_notes.md`; guard
 Register `blaines-close-2026-11-05`; guards `tests/test_blaines_close_2026_11_05.py`; review [`docs/reviews/blaine_mathieu_2026_11_05.md`](docs/reviews/blaine_mathieu_2026_11_05.md).
 **A recorded stop means the clock never starts the closing round** (`roundDueOnTheClock`; a TYPED wrap-up still gets its round) and her goodbye after it stands whatever the clock says (`stopWithoutRound`: no early-close cut, no time note, no round she starts herself; a spoken stop drops a queued round). **A typed presence check is a message, never a topic** (`TYPED_PRESENCE_RE`). Widen a stop pattern only with its false positives in the guard. Rehearse with `early_wrap`. ⚠️ AUDIO, the room.
 
+### The Age of AI: a guest's press takes her turn (Nov 5 2026)
+
+Review [`docs/reviews/guest_steers_2026_11_05.md`](docs/reviews/guest_steers_2026_11_05.md); guards `tests/test_guest_steers_2026_11_05.py`.
+**A press in a silence takes her turn at once** (`steerWhenTheFloorIsFree`; anyone talking keeps the floor) **and a queued press replaces the dead-air nudge's note** (the note won every time). **A move-on or a repeat hands her her own last question in words.** The studio has New subject, Repeat the question, Good question and a two-press Let's wrap up. **"Wrap up the interview" is a stop.** ⚠️ AUDIO, the room.
+
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 
 Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.

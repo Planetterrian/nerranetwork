@@ -809,15 +809,36 @@ let deadAirNudgesTotal = 0;
 // own state machine owns those turns. A typed topic is the guest's words: it
 // reaches her instructions fenced as a subject, never as an instruction, and
 // is never written to the trace.
-const FEEDBACK_KINDS = { good: true, move_on: true, topic: true };
+const FEEDBACK_KINDS = { good: true, move_on: true, topic: true, repeat: true, wrap_up: true };
 const FEEDBACK_MAX_CHARS = 240;
 const FEEDBACK_MAX_EVENTS = 60;
-const MOVE_ON_STEER =
+// Nov 5 2026 (Priyanka Sharma's room): she pressed Move on four times and
+// typed a subject once, every one acked "applied", and Mira stayed on the
+// board-of-pharmacy question until Priyanka SAID she wanted to talk about
+// entrepreneurship. Two causes. A guest who presses is usually silent (they are
+// reading or typing), so the request waited for the dead-air nudge, and that
+// turn also carried the note "put your last question to them again": the
+// conversation note won, and she re-asked it three ways. And the move-on named
+// no subject to leave, so after a long brief she read "a different subject" as
+// a different angle on the same one. Now the request takes her turn as soon as
+// the floor is free (steerWhenTheFloorIsFree), a queued request replaces the
+// nudge's note, and the move-on hands her the words of the question to leave.
+const MOVE_ON_STEER_HEAD =
   "[GUEST FEEDBACK, for this turn only; do not read it aloud and do not mention it] The" +
-  " guest has let you know, privately, that they would like to leave this line of" +
-  " questioning. In this turn, react to what they just said in one short sentence at most," +
-  " then ask one question on a different subject from your brief that you have not covered" +
-  " yet. Not a follow-up on the subject you were on, and never say that they asked to move on.";
+  " guest has let you know, privately, that they would like to leave this subject.";
+const MOVE_ON_STEER_TAIL =
+  " In this turn, if they answered your last question, react in one short sentence at" +
+  " most; if they did not, do not react. Then ask one question on a clearly different" +
+  " subject from your brief that you have not covered yet: not a follow-up, not another" +
+  " angle on the same subject, and never say that they asked to move on.";
+const REPEAT_STEER_HEAD =
+  "[GUEST FEEDBACK, for this turn only; do not read it aloud and do not mention it] The" +
+  " guest has asked, privately, to hear your last question again.";
+const REPEAT_STEER_TAIL =
+  " Put it to them again in one short line, more simply, and say nothing else. Never say" +
+  " that they asked.";
+const STEER_FLOOR_MS = 1500;     // a free floor this long after the press: her turn now
+let steerTimer = null;
 let guestSteer = null;           // { line, leg, kind }: applied at her next turn, then gone
 const guestFeedback = [];        // what the room received, for the end-of-room webhook
 let guestSteersApplied = 0;
@@ -844,6 +865,43 @@ function lastMiraLine() {
   return "";
 }
 
+/** The question at the end of her last line, in her own words (or the line). */
+function lastMiraQuestion() {
+  const line = cleanFeedbackText(lastMiraLine());
+  const qs = line.match(/[^.?!]*\?/g);
+  return (qs && qs.length ? qs[qs.length - 1] : line).trim().slice(0, FEEDBACK_MAX_CHARS);
+}
+
+/** Her last question, handed back as words, never a description of it. */
+function withLastQuestion(head, tail) {
+  const q = lastMiraQuestion();
+  return head + (q ? " Your last question was: \u201c" + q + "\u201d." : "") + tail;
+}
+
+/** The steer line for a press, built when it is queued. */
+function steerLine(kind, text) {
+  if (kind === "move_on") return withLastQuestion(MOVE_ON_STEER_HEAD, MOVE_ON_STEER_TAIL);
+  if (kind === "repeat") return withLastQuestion(REPEAT_STEER_HEAD, REPEAT_STEER_TAIL);
+  return topicSteer(text);
+}
+
+/** A guest who presses is usually silent: when nobody is talking, her line has
+ *  played out and no decision is pending, the request takes her turn now
+ *  instead of waiting for the dead-air nudge. Anyone talking first wins: the
+ *  request then rides the turn their pause gives her, as before. */
+function steerWhenTheFloorIsFree() {
+  if (steerTimer) clearTimeout(steerTimer);
+  steerTimer = setTimeout(function () {
+    steerTimer = null;
+    if (!guestSteer || roomEnded || holdMode || rotating || !grokAgent) return;
+    if (roundActive || roundPendingStart || closingThanksQueued) return;
+    if (inboundSpeaking || miraSpeaking || pendingTurn || turnDecisionTimer || miraAudible()) return;
+    trace("feedback", "the floor is free; her turn now");
+    cancelDeadAir();
+    requestTurn(grokAgent);
+  }, STEER_FLOOR_MS);
+}
+
 function feedbackAck(leg, kind, status) {
   if (!leg || !leg.call || !leg.call.sendMessage) return;
   try { leg.call.sendMessage(JSON.stringify({ nn: 1, ack: kind, status: status })); } catch (err) { /* the page shows "not confirmed" */ }
@@ -866,6 +924,11 @@ function onGuestFeedback(leg, raw) {
     feedbackAck(leg, kind, "noted");
     return;
   }
+  if (kind === "wrap_up") {
+    if (holdMode) { feedbackAck(leg, kind, "hold"); return; }
+    typedWrapUp(leg, "", atMin, "wrap_up");
+    return;
+  }
   const text = kind === "topic" ? cleanFeedbackText(msg.text) : "";
   if (kind === "topic" && !text) { feedbackAck(leg, kind, "empty"); return; }
   if (kind === "topic" && !holdMode && TYPED_WRAP_UP_RE.test(text)) { typedWrapUp(leg, text, atMin); return; }
@@ -879,11 +942,11 @@ function onGuestFeedback(leg, raw) {
     feedbackAck(leg, kind, holdMode ? "hold" : "closing");
     return;
   }
-  guestSteer = { line: kind === "move_on" ? MOVE_ON_STEER : topicSteer(text), leg: leg, kind: kind,
-                 index: guestFeedback.length - 1 };
-  trace("feedback", leg.role + ": " + (kind === "move_on" ? "move on" : "topic (" + text.length + " chars)") +
+  guestSteer = { line: steerLine(kind, text), leg: leg, kind: kind, index: guestFeedback.length - 1 };
+  trace("feedback", leg.role + ": " + (kind === "topic" ? "topic (" + text.length + " chars)" : kind.replace("_", " ")) +
     "; at her next turn");
   feedbackAck(leg, kind, "queued");
+  steerWhenTheFloorIsFree();
 }
 
 // Oct 28 2026 (Michael Kamins' room): "we can wrap up now", typed during the
@@ -895,8 +958,12 @@ function onGuestFeedback(leg, raw) {
 // launch" is a subject, never a stop).
 const TYPED_WRAP_UP_RE = /^\s*(?:ok(?:ay)?[,\s]+)?(?:i think\s+)?(?:(?:we can|let'?s|lets|can we|could we|ok to|time to|please|i'?d like to|i need to|i have to|we should)\s+)?(?:wrap(?:ping)?(?:\s+(?:it|this|things))?(?:\s+up)?|stop|end|finish(?:\s+up)?|close)(?:\s+(?:here|now|it|this|the interview|the recording|things|soon))*(?:\s+please)?\s*[.!?]*\s*$/i;
 
-function typedWrapUp(leg, text, atMin) {
-  guestFeedback.push({ kind: "topic", by: leg.role, at_min: atMin, text: text, applied: true,
+function typedWrapUp(leg, text, atMin, kind) {
+  // Nov 5 2026: the studio's "Let's wrap up" button comes here too (kind
+  // wrap_up, no text): both guests in the first week asked to finish, in
+  // words the room did not hear.
+  kind = kind || "topic";
+  guestFeedback.push({ kind: kind, by: leg.role, at_min: atMin, text: text, applied: true,
                        held: false, wrap_up: true });
   guestAskedToStop = true;
   dropGuestSteer("closing");
@@ -919,7 +986,7 @@ function typedWrapUp(leg, text, atMin) {
       roundPendingStart = true;
     }
   }
-  feedbackAck(leg, "topic", "applied");
+  feedbackAck(leg, kind, "applied");
 }
 
 // Nov 4 2026 (Blaine Mathieu's room): he typed "you still there" after a
@@ -950,6 +1017,7 @@ function typedPresence(leg, text, atMin) {
   guestSteer = { line: PRESENCE_STEER, leg: leg, kind: "topic", index: guestFeedback.length - 1 };
   trace("feedback", leg.role + " typed to check she is there; at her next turn");
   feedbackAck(leg, "topic", "queued");
+  steerWhenTheFloorIsFree();
 }
 
 /** The steer a guest asked for, as this response's instructions (or ""). */
@@ -960,7 +1028,7 @@ function dropGuestSteer(status) {
   const steer = guestSteer;
   guestSteer = null;
   if (guestFeedback[steer.index]) guestFeedback[steer.index].held = true;
-  trace("feedback", (steer.kind === "move_on" ? "move on" : "topic") + " dropped: " + status);
+  trace("feedback", steer.kind.replace("_", " ") + " dropped: " + status);
   feedbackAck(steer.leg, steer.kind, status);
 }
 
@@ -970,7 +1038,7 @@ function takeGuestSteer() {
   guestSteer = null;
   guestSteersApplied += 1;
   if (guestFeedback[steer.index]) guestFeedback[steer.index].applied = true;
-  trace("feedback", (steer.kind === "move_on" ? "move on" : "topic") + " applied at her turn");
+  trace("feedback", steer.kind.replace("_", " ") + " applied at her turn");
   feedbackAck(steer.leg, steer.kind, "applied");
   const base = sessionInstructions || (config && config.mira_system_prompt) || "";
   return (base ? base + "\n\n" : "") + steer.line;
@@ -1023,6 +1091,14 @@ function deadAirCheck() {
   if (inboundSpeaking || miraSpeaking || pendingTurn || miraAudible()) { armDeadAir(); return; }
   if (deadAirNudges >= DEAD_AIR_MAX_NUDGES) {
     trace("turn", "dead air continues; no more nudges until someone speaks");
+    return;
+  }
+  // Nov 5 2026: a guest's queued request IS this turn. The nudge's note ("put
+  // your last question to them again") beside a move-on is two instructions
+  // that disagree, and the note won three times in Priyanka Sharma's room.
+  if (guestSteer) {
+    trace("turn", "dead air after her line; the guest's request takes the turn");
+    requestTurn(grokAgent);
     return;
   }
   deadAirNudges += 1;
@@ -1189,7 +1265,12 @@ function noteHoldFromGuest(text) {
 // enough and would like to wrap up now, was unheard in both arms (four of her
 // sign-offs cancelled, the round started on the clock): "I'd like to wrap
 // up", "we've covered enough", "a good place to stop" are stops too.
-const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should|shall) we (?:stop|end|wrap(?: (?:it|this|things))? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: (?:it|this|things))? up|end(?: it)?|finish(?: up)?|call it a day)(?:(?: here| there| now)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:i'?d|i would|we'?d|we would) (?:like|love|prefer|want) to (?:wrap(?: (?:it|this|things))? up|stop|end(?: it)?|finish(?: up)?|call it a day)(?:(?: here| there| now| today| for today)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:we'?ve|we have) (?:covered|got|gotten) enough(?: (?:here|for today|for now|today|ground))?(?=\s*(?:[.,!?;—-]|$|and\b))|\b(?:good|great|natural|nice) (?:place|point|spot|time) to (?:stop|end|wrap(?: (?:it|this|things))? up|finish|leave it)(?=\s*(?:[.,!?;—-]|$))|\bgot (?:it )?enough (?:here|for today|for now)(?=\s*(?:[.,!?;—-]|$))|\b(?:do|make|give|say) (?:a|your|any) (?:final|closing|ending|last)(?: (?:final|closing|ending))? (?:comment|comments|word|words|remark|remarks|thought|thoughts)\b|\bwe(?:'ve| have)? (?:already )?ended (?:it|the (?:interview|recording|podcast|show))\b|\bwe'?re (?:all )?(?:done|finished)(?: here| for today| now)?(?=\s*(?:[.,!?;—-]|$)))/i;
+// Nov 5 2026 (Priyanka Sharma's room): "I'd like to wrap up the interview
+// now" went unheard (the object between the verb and "now" broke every
+// shape), so the room cut her goodbye twice mid-sentence and she asked three
+// more questions. The verb may take the interview as its object; the tail
+// rule is unchanged, so "end the interview with a story" is still no stop.
+const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should|shall) we (?:stop|end|wrap(?: (?:it|this|things))? up)(?: (?:the|this|our) (?:interview|conversation|recording|podcast|show|episode|session))?(?: here| there| now)?\b|let'?s (?:stop|wrap(?: (?:it|this|things))? up|end(?: it)?|finish(?: up)?|call it a day)(?: (?:the|this|our) (?:interview|conversation|recording|podcast|show|episode|session))?(?:(?: here| there| now)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:i'?d|i would|we'?d|we would) (?:like|love|prefer|want) to (?:wrap(?: (?:it|this|things))? up|stop|end(?: it)?|finish(?: up)?|call it a day)(?: (?:the|this|our) (?:interview|conversation|recording|podcast|show|episode|session))?(?:(?: here| there| now| today| for today)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:we'?ve|we have) (?:covered|got|gotten) enough(?: (?:here|for today|for now|today|ground))?(?=\s*(?:[.,!?;—-]|$|and\b))|\b(?:good|great|natural|nice) (?:place|point|spot|time) to (?:stop|end|wrap(?: (?:it|this|things))? up|finish|leave it)(?=\s*(?:[.,!?;—-]|$))|\bgot (?:it )?enough (?:here|for today|for now)(?=\s*(?:[.,!?;—-]|$))|\b(?:do|make|give|say) (?:a|your|any) (?:final|closing|ending|last)(?: (?:final|closing|ending))? (?:comment|comments|word|words|remark|remarks|thought|thoughts)\b|\bwe(?:'ve| have)? (?:already )?ended (?:it|the (?:interview|recording|podcast|show))\b|\bwe'?re (?:all )?(?:done|finished)(?: here| for today| now)?(?=\s*(?:[.,!?;—-]|$)))/i;
 let guestAskedToStop = false;
 let roundCloseBlocks = 0;
 const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through

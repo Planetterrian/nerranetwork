@@ -1024,6 +1024,52 @@ if (which === "server_turns_advance_the_round") {
   out.feedback = run("guestFeedback");
   out.acks = __acksOut();
   out.state = state();
+} else if (which === "steer_while_quiet" || which === "steer_at_dead_air" || which === "steer_waits_for_speech" ||
+           which === "steer_repeat" || which === "steer_topic_while_quiet") {
+  // Nov 5 2026 (Priyanka Sharma's room): presses made in a silence waited for
+  // the dead-air nudge, whose note told her to ask the same question again.
+  run("sessionInstructions = 'BRIEF: the guest runs a pharmacy.'; turnRequested = true;");
+  roomTurnStarts();
+  miraFinishes("Boards of pharmacy as the credible voice. Has any board pushed back on what you're proposing?");
+  responseDone();
+  events.length = 0; notes.length = 0; instructions.length = 0;
+  const kind = which === "steer_repeat" ? "repeat" : which === "steer_topic_while_quiet" ? "topic" : "move_on";
+  ctx.__m = JSON.stringify({ nn: 1, kind: kind, text: kind === "topic" ? "entrepreneurship in the industry" : "" });
+  if (which === "steer_at_dead_air") run("guestSteer = null;");
+  if (which === "steer_waits_for_speech") run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
+  if (which !== "steer_at_dead_air") run("onGuestFeedback(legs[0], __m);");
+  if (which === "steer_at_dead_air") {
+    // The press lands just before the nudge, after the floor check passed.
+    advance(19000);
+    run("onGuestFeedback(legs[0], __m); clearTimeout(steerTimer); steerTimer = null;");
+    advance(2000);
+  } else if (which === "steer_waits_for_speech") {
+    advance(3000);
+    out.eventsWhileSpeaking = events.slice();
+    run("inboundSpeaking = false; noteSpeechEnded(3000);");
+    ctx.__text = "We have mostly had good conversations with them."; run("remember('Guest', __text);");
+    run("scheduleTurnDecision(TURN_DECIDE_MS);");
+    advance(4000);
+  } else {
+    advance(2000);
+  }
+  out.events = events.slice();
+  out.notes = notes.slice();
+  out.lastInstructions = instructions[instructions.length - 1] || "";
+  out.acks = __acksOut();
+  out.feedback = run("guestFeedback");
+} else if (which === "steer_wrap_up_button") {
+  run("closingPermitted = false; turnRequested = true;");
+  roomTurnStarts();
+  miraFinishes("What would you tell someone defending a thesis tomorrow?");
+  responseDone();
+  ctx.__m = JSON.stringify({ nn: 1, kind: "wrap_up" });
+  run("onGuestFeedback(legs[0], __m);");
+  out.acks = __acksOut();
+  out.feedback = run("guestFeedback");
+  out.askedToStop = run("guestAskedToStop");
+  out.state = state();
+  out.closingRequired = run("closingRequired");
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),
