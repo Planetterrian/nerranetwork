@@ -1,0 +1,180 @@
+Together compiler delivers up to 2.6 times higher throughput for variable load inference without manual retuning. This is Models & Agents, Episode 225. OpenAI's new image models and Google's gray area classifiers come next. Then the agent papers, things to try, on the horizon, and under the hood. Together AI, Mark Tech Post reports, ship together compiler as an agent-driven loop that keeps rewriting the inference forward pass as traffic moves.
+It topped the strongest inference X setups in under 24 hours per model.
+Optimization is handled as continual compilation instead of a single static pass, with light
+agents watching token throughput and rewriting kernels live.
+The method stays model agnostic on existing checkpoints, an open source compiler loop code
+is coming with integration guides for VLLM and tensorRTLLM back ends.
+Images 2.6 landed with GPT image 2.6 flair and sunburst application programming interface,
+or API models.
+Flair generates images in as little as six seconds.
+Both models add GIF output, scalable vector graphics, or SVG, export, markup edits, and
+a complexity parameter, aimed at visual assets inside agent loops and design tools that
+need faster iteration.
+Google Research released Agile Deliberation, a human-in-the-loop setup that lets users
+define fuzzy visual concepts from borderline images.
+Across 18 live sessions, it lifted Gemini-based Classifier F1 by 10.5 points over 0 shot.
+Ambiguous examples go to human adjudication instead of locking a binary label too soon.
+SRM, on Archive, jointly evaluates targeted retrieval and global reconstruction on synthetic
+sets of 10 to 100 factual statements. QN 2.5 at 1.5 billion parameters reached 86.7% retrieval accuracy,
+and 45.7% reconstruction, while the 3 billion variant scored 72.2% and 18.5%. Reconstruction fell
+faster than retrieval as context grew, so retrieval only scores mismemory loss in small models.
+Base is a belief-aware critic that tracks epistemic status on top of a frozen large language
+model, or LLM. It chooses how many clarifying questions to ask more consistently than
+GRPO or Archer on the SimMC 2.1 reference game. The method records how many questions each
+ambiguous reference needs and penalizes premature answers. ProMemory separates maintaining future
+intentions from deciding when to realize them. It keeps pending objectives with supporting evidence.
+Check new observations against activation conditions and update state after actions complete.
+Delayed intention and open-ended assistance benchmarks showed consistent gains across
+multiple LLM backbones while limiting unnecessary interventions.
+Search-equipped agents got a stage-resolved cognitive bias analysis that logged queries, retrieved
+documents, openings, and final answers.
+The run covered 10 models across 1,000 synthetic search worlds.
+Final answers were more sensitive to initial evidence order during active search than when
+all evidence arrived at once, and dead end histories reduced strategy switching beyond
+what context length alone predicts.
+EditVito sits a 0.6 billion-parameter gate after a full context LLM rewrite of optical character
+recognition, or OCR output, and keeps or reverts each line block.
+The gate improved all five rewriters tested on Hype OC Repair 2026, cutting weighted character
+match error rate or CMARR by 0.0026 to 0.0044. It works on rewriters unseen during training
+and raises preference scores by 0.15 to 0.25. Fine-tuning a re-ranker on the answer each
+evidence set produces, plus a small comparison head is how rag-compice routes retrievers.
+sensors. Answer F1 rose 28% relative to the best fixed retriever, and most of that gain
+held under unseen corpora, retrievers, or readers. The router reads passage sets directly,
+so it is not stuck with query-only features. Geometry-aware regularization is the idea behind
+G-Edit, which uses a low-rank plus diagonal factor model to protect a core-knowledge subspace
+while loosening constraints on hard edits. On GPTJ and LLMA-38 billion, it beat baselines on both
+editing success and knowledge preservation across up to 10,000 sequential updates, with no retraining
+of the base model. On archive, CCD Wiki encodes clinical hypotheses as mutable entries bound to
+corroborating and contradicting evidence, so longitudinal cognitive behavioral therapy, or CBT,
+state's evidence grounded without backbone retraining.
+Remaining expert renormalization or unnormalized rerouting produces the lowest perplexity only
+when the inference time expert deactivation rule matches the training time weight rule
+and mismatches inflate perplexity 14 fold to 28,740 fold.
+Consultation value distillation estimates human consultation value offline via Monte Carlo
+rollouts and distills it into lightweight predictors that improve budgeted allocation across batch
+and sequential settings. Tandem Bench contains 1,200 multi-agent cooking questions,
+where the best native decision model reaches 62.50% accuracy, while optimality verification
+stays near chance. Cart Bench supplies 1,328 expert annotated criteria across 17 retail domains,
+and three of 10 evaluated models exceed 90% on core criteria, while none exceeds 45% on excellence criteria.
+A knowledge graph audit using an error rate times FanOutQ leaves 3.98 to 4.74 percentage points more errors
+than a joint model with identical actions on held out redock red graphs.
+Under deployable conditions, a learned conversational emotion shift model beats the predicted label baseline
+on all four primary corpora, with the largest gain on daily dialogues surviving home correction.
+On selective emotion forecasting, a state space filter exceeds the persistence baseline only
+when the historical state is observed, an estimated anchor's collapse performance below a direct
+forecaster. Glyphmine adapted on untranslated Lao retrieved English translations seven times as
+often as the strongest baseline when the script matched pre-training scripts. A pre-answer edit
+in a QN-34 billion case changes the emitted number from 17 to 15, while both runs first
+emit 1, and later multi-layer perceptron, or MLP, clamping reduces the final log odds
+gap to 0.0025 net. Confucius 4R2T2 is obtained by post-training QN-3 automatic speech recognition,
+or ASR, 1.7 billion on 1,500 hours of audio, while freezing the encoder, and it delivers
+stable text with low emission lag and generalizes beyond the adaptation languages.
+Continued pre-training on 375 million Tajik tokens, followed by supervised fine-tuning
+raised Belebelay accuracy 11.4 points above Quinn 38 billion, while English MMLU changed
+by only minus 1.2 points. Full history and distilled preference prompting raised preference
+realization by 0.204 to 0.244 points on a 0-2 scale, yet increased fabricated evidence
+failures from 5.8% to 10.1% to 10.4%. The best NTCIR-19 cyclame EVAL systems reached 98.1%
+pair accuracy on claim evidence support, but dropped 24.3 points when forced to judge each pair
+without contrastive examples. Model by harness interaction moved correct case rate by up to
+11.5 percentage points within one model, while the same model compliance reviewer cut banking
+conduct rule violations from 9.6% to 6.4%. Combined sparse attention on six hybrid models from 4 billion
+to 397 billion parameters, yields up to 2.23 times faster decoding at 256,000 context,
+while preserving accuracy on 21 long-context data sets.
+Asamese LM-E2B, a 2 billion model with expanded byte-level byte-paring coding,
+or BPE vocabulary, reaches 0.7488 bits per byte on floors 296.7% retrieval augmented generation,
+or RAG, score after parameter efficient continual pre-training and supervised fine-tuning.
+A 12-layer stack repeated four times exceeds a standard 48-layer transformer by 5.4 blimp points
+at matched inference compute, yet multimodal training lowers accuracy by 3.8 points in both architectures.
+An automated pipeline produced 6,575 datasets across eight behaviors that generalize across model families.
+and frontier models outperform humans at predicting the side effects.
+Jeff's second position probability advantage reaches 6.11 points on summaries
+and reversing reader endorsements changes perplexities selected humor text on 40.40% of pairs.
+Key value cache or KV cache reuse loses 19 to 100% of context-dependent questions.
+Restoring a few non-target chunks recovers little
+while re-computing the target chunk against the reused cache beats full pre-fill insertion in all seven tested settings.
+Higher-archical questions improve interpretability while maintaining task performance,
+and when question count is limited, shallower levels outperform deeper ones on general-purpose tasks.
+On the Joy Okanji Yomi benchmark, Ruby OPD reaches 97.13% accuracy and 0.70% sentence
+phoneme error rate under raw orthographic text while retaining strong controllability.
+Lex Mem yields 224 dialogues and 2018 question-answer instances from graph structures.
+And Lex Graph incrementally organizes dialogues into interconnected nodes and outperforms retrieval
+and memory-based baselines.
+Evil Guard improves success by 11.0% on ALF world, 5.9% on science world, and 2.7% on live
+code bench by training a pairwise selector on private test utility labels.
+ArcRag induces a query local graph interface at inference time, and executes cipher traversals,
+and it stays effective when the underlying graph construction changes from schema-guided
+to open information extraction.
+Libri's speech reel QA evaluates whether speech LM's can identify target words in streaming audio,
+and several commercial models still wait for the full turn before responding.
+Crescist's actor critic pipeline within Trinsic Semantic and Latency Rewards
+establishes new quality latency Pareto frontiers on both sentence and document level simultaneous translation benchmarks.
+In English query accuracy on Nigerian statistics sits at 20% versus 49% to 50% for UK and US facts and scale does not close the gap with the strongest models reaching at most 31%.
+Unsupported restrictions appear in 1.2% to 2.4% of readable handoff summaries and neutralizing false approvals cut unauthorized actions from 24% to 7% of 120 held outruns.
+A stacked ensemble of open-weight models improves precision in the correction step of political
+and social science research, while retaining estimate validity when measurement choice
+reverses regression sign.
+The 3,022 instance alto corpus improves tech facilitated gender-based violence recall after
+fine-tuning, though models still miscovert harms, with markedly higher error rates in Swahili.
+accurately. Accuracy drops sharply from apply to analyze in every open-weight series when
+reasoning over non-parametric memory, and evaluate items remain a bottleneck even for models
+near ceiling on other levels. A classifier ranks original papers closely with one paper
+acceptance predictor, yet shows no detectable agreement on which rewrites raised scores,
+and edit agreement stays near zero even at full 32-bit precision. The best cascade for detecting
+psychological harm risk factors achieve 0.79 macro-F1 on held out labels and reduces
+LLM judge calls by 97.1% on wild chat while clustering risk factor detections within
+conversations. GPT-5 answers 76% of controlled financial back testing facts correctly, but claims
+to know only 38% and answers 61% of the facts it says it does not know.
+SOSMAP summary scores to discrete verifiable facts, capturing information loss from transcription
+and translation error while aligning strongly with human judgment.
+Current agent systems, CIO finds, still need heavy human oversight before long horizon runs
+stay reliable.
+Andthropic's biology team used CLOD to map the first three-dimensional structure of a bacterial
+vault particle in days instead of weeks.
+Clouds still made simple mistakes on that particle work that required machine learning researcher intervention.
+Point together compiler at a bursty endpoint and log tokens per second before the agent loop starts and after it settles.
+Drop GPT image 2.6 flare into a design agent loop and time 6 second gift generation against the slower image APIs you used before.
+run QN 2.5 at 1.5 billion on SRRM and check whether reconstruction falls off
+faster than retrieval as context grows. Put base-style epistemic tracking on a
+reference resolution agent and compare how many clarifying questions it
+asks against GRPO. Slide Edit Veto onto noisy historical OCR pages and measure
+the character match error drop without retraining the re-writer. Openweight teams
+are expected to release larger recursive or hybrid recurrent checkpoints in the coming weeks.
+More labs will publish agent harness compliance audits that follow the banking rule study pattern.
+Additional multilingual factuality benchmarks modeled on NIJA facts are likely for other low resource regions.
+Let me pop the hood on recurrent depth, where Hawk and Griffin match Lama II after training on six times fewer tokens.
+The design reuses the same transformer layers in a loop instead of stacking new ones, so
+a small model gets more sequential compute steps without extra parameters.
+Each layer receives the current token representation, and a recurrent state carried from its own
+previous pass, the mechanism laid out in the block recurrent transformer paper.
+Complexity stays linear in sequence length, and the model can still refine its internal
+state over multiple iterations at inference.
+size, or initialize that recurrent state carelessly, and the model loses the ability to extrapolate
+beyond training lengths.
+Relaxed recursive transformers add depth-wise low-rank adaptation, or Laura, modules that
+loosen strict parameter sharing and recover most of the original accuracy at roughly one-quarter
+the parameter count.
+Recurrent Gemma's 2 billion and 9 billion variants reach downstream scores comparable to standard
+Gemma checkpoints, despite fewer training tokens, and they run with fixed memory cost on
+long sequences.
+Use recurrent depth when parameters or tokens are the bottleneck.
+Keep a deeper feed forward stack when you need the best single pass on short context.
+Before we go, stable prefix streaming recognition and policy learning simultaneous translation
+are the next systems do out.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes.
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow.
+And if you'd rather watch than listen,
+find us on YouTube at Narin Network,
+links in the show notes.
+Quick tip from the network.
+Try the do positive pod next.
+Good news and science and tech.
+Plus one concrete action you can take.
+Every Narin Network show is free at NarinNetwork.com.
+And on the website, every episode's visuals
+live in our free image gallery at narennetwork.com gallery royalty free under creative commons
+download with attribution this episode used AI voice synthesis of my voice editorial selection
+and analysis are my own.

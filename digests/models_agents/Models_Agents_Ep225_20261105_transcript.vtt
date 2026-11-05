@@ -1,0 +1,541 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.900
+Together compiler delivers up to 2.6 times higher throughput for variable load inference without manual retuning. This is Models &amp; Agents, Episode 225. OpenAI's new image models and Google's gray area classifiers come next. Then the agent papers, things to try, on the horizon, and under the hood. Together AI, Mark Tech Post reports, ship together compiler as an agent-driven loop that keeps rewriting the inference forward pass as traffic moves.
+
+00:00:29.900 --> 00:00:34.600
+It topped the strongest inference X setups in under 24 hours per model.
+
+00:00:35.320 --> 00:00:40.780
+Optimization is handled as continual compilation instead of a single static pass, with light
+
+00:00:40.780 --> 00:00:44.060
+agents watching token throughput and rewriting kernels live.
+
+00:00:44.720 --> 00:00:50.200
+The method stays model agnostic on existing checkpoints, an open source compiler loop code
+
+00:00:50.200 --> 00:00:55.080
+is coming with integration guides for VLLM and tensorRTLLM back ends.
+
+00:00:55.080 --> 00:01:02.636
+Images 2.6 landed with GPT image 2.6 flair and sunburst application programming interface,
+
+00:01:03.096 --> 00:01:04.276
+or API models.
+
+00:01:04.916 --> 00:01:07.756
+Flair generates images in as little as six seconds.
+
+00:01:08.296 --> 00:01:14.776
+Both models add GIF output, scalable vector graphics, or SVG, export, markup edits, and
+
+00:01:14.776 --> 00:01:20.096
+a complexity parameter, aimed at visual assets inside agent loops and design tools that
+
+00:01:20.096 --> 00:01:21.236
+need faster iteration.
+
+00:01:21.236 --> 00:01:27.036
+Google Research released Agile Deliberation, a human-in-the-loop setup that lets users
+
+00:01:27.036 --> 00:01:30.176
+define fuzzy visual concepts from borderline images.
+
+00:01:30.796 --> 00:01:37.336
+Across 18 live sessions, it lifted Gemini-based Classifier F1 by 10.5 points over 0 shot.
+
+00:01:38.076 --> 00:01:43.096
+Ambiguous examples go to human adjudication instead of locking a binary label too soon.
+
+00:01:44.132 --> 00:01:50.012
+SRM, on Archive, jointly evaluates targeted retrieval and global reconstruction on synthetic
+
+00:01:50.012 --> 00:01:59.572
+sets of 10 to 100 factual statements. QN 2.5 at 1.5 billion parameters reached 86.7% retrieval accuracy,
+
+00:02:00.112 --> 00:02:09.612
+and 45.7% reconstruction, while the 3 billion variant scored 72.2% and 18.5%. Reconstruction fell
+
+00:02:09.612 --> 00:02:15.612
+faster than retrieval as context grew, so retrieval only scores mismemory loss in small models.
+
+00:02:15.612 --> 00:02:21.854
+Base is a belief-aware critic that tracks epistemic status on top of a frozen large language
+
+00:02:21.854 --> 00:02:27.414
+model, or LLM. It chooses how many clarifying questions to ask more consistently than
+
+00:02:27.414 --> 00:02:33.894
+GRPO or Archer on the SimMC 2.1 reference game. The method records how many questions each
+
+00:02:33.894 --> 00:02:40.273
+ambiguous reference needs and penalizes premature answers. ProMemory separates maintaining future
+
+00:02:40.273 --> 00:02:45.493
+intentions from deciding when to realize them. It keeps pending objectives with supporting evidence.
+
+00:02:45.493 --> 00:02:51.273
+Check new observations against activation conditions and update state after actions complete.
+
+00:02:51.833 --> 00:02:56.253
+Delayed intention and open-ended assistance benchmarks showed consistent gains across
+
+00:02:56.253 --> 00:03:00.533
+multiple LLM backbones while limiting unnecessary interventions.
+
+00:03:01.557 --> 00:03:07.437
+Search-equipped agents got a stage-resolved cognitive bias analysis that logged queries, retrieved
+
+00:03:07.437 --> 00:03:09.717
+documents, openings, and final answers.
+
+00:03:10.277 --> 00:03:14.217
+The run covered 10 models across 1,000 synthetic search worlds.
+
+00:03:14.217 --> 00:03:19.237
+Final answers were more sensitive to initial evidence order during active search than when
+
+00:03:19.237 --> 00:03:24.257
+all evidence arrived at once, and dead end histories reduced strategy switching beyond
+
+00:03:24.257 --> 00:03:27.196
+what context length alone predicts.
+
+00:03:27.236 --> 00:03:33.816
+EditVito sits a 0.6 billion-parameter gate after a full context LLM rewrite of optical character
+
+00:03:33.816 --> 00:03:38.496
+recognition, or OCR output, and keeps or reverts each line block.
+
+00:03:38.496 --> 00:03:45.996
+The gate improved all five rewriters tested on Hype OC Repair 2026, cutting weighted character
+
+00:03:45.996 --> 00:03:54.816
+match error rate or CMARR by 0.0026 to 0.0044. It works on rewriters unseen during training
+
+00:03:54.816 --> 00:04:02.060
+and raises preference scores by 0.15 to 0.25. Fine-tuning a re-ranker on the answer each
+
+00:04:02.060 --> 00:04:07.480
+evidence set produces, plus a small comparison head is how rag-compice routes retrievers.
+
+00:04:07.480 --> 00:04:13.460
+sensors. Answer F1 rose 28% relative to the best fixed retriever, and most of that gain
+
+00:04:13.460 --> 00:04:19.340
+held under unseen corpora, retrievers, or readers. The router reads passage sets directly,
+
+00:04:19.680 --> 00:04:25.844
+so it is not stuck with query-only features. Geometry-aware regularization is the idea behind
+
+00:04:25.844 --> 00:04:31.684
+G-Edit, which uses a low-rank plus diagonal factor model to protect a core-knowledge subspace
+
+00:04:31.684 --> 00:04:38.784
+while loosening constraints on hard edits. On GPTJ and LLMA-38 billion, it beat baselines on both
+
+00:04:38.784 --> 00:04:45.024
+editing success and knowledge preservation across up to 10,000 sequential updates, with no retraining
+
+00:04:45.024 --> 00:04:52.002
+of the base model. On archive, CCD Wiki encodes clinical hypotheses as mutable entries bound to
+
+00:04:52.002 --> 00:04:58.182
+corroborating and contradicting evidence, so longitudinal cognitive behavioral therapy, or CBT,
+
+00:04:58.182 --> 00:05:01.582
+state's evidence grounded without backbone retraining.
+
+00:05:02.062 --> 00:05:08.222
+Remaining expert renormalization or unnormalized rerouting produces the lowest perplexity only
+
+00:05:08.222 --> 00:05:12.882
+when the inference time expert deactivation rule matches the training time weight rule
+
+00:05:13.142 --> 00:05:18.842
+and mismatches inflate perplexity 14 fold to 28,740 fold.
+
+00:05:19.282 --> 00:05:25.402
+Consultation value distillation estimates human consultation value offline via Monte Carlo
+
+00:05:25.402 --> 00:05:30.582
+rollouts and distills it into lightweight predictors that improve budgeted allocation across batch
+
+00:05:30.582 --> 00:05:36.682
+and sequential settings. Tandem Bench contains 1,200 multi-agent cooking questions,
+
+00:05:37.102 --> 00:05:43.742
+where the best native decision model reaches 62.50% accuracy, while optimality verification
+
+00:05:43.742 --> 00:05:52.362
+stays near chance. Cart Bench supplies 1,328 expert annotated criteria across 17 retail domains,
+
+00:05:52.362 --> 00:06:00.782
+and three of 10 evaluated models exceed 90% on core criteria, while none exceeds 45% on excellence criteria.
+
+00:06:01.462 --> 00:06:09.102
+A knowledge graph audit using an error rate times FanOutQ leaves 3.98 to 4.74 percentage points more errors
+
+00:06:09.102 --> 00:06:13.702
+than a joint model with identical actions on held out redock red graphs.
+
+00:06:14.162 --> 00:06:20.142
+Under deployable conditions, a learned conversational emotion shift model beats the predicted label baseline
+
+00:06:20.142 --> 00:06:26.042
+on all four primary corpora, with the largest gain on daily dialogues surviving home correction.
+
+00:06:26.722 --> 00:06:32.062
+On selective emotion forecasting, a state space filter exceeds the persistence baseline only
+
+00:06:32.062 --> 00:06:37.422
+when the historical state is observed, an estimated anchor's collapse performance below a direct
+
+00:06:37.422 --> 00:06:43.982
+forecaster. Glyphmine adapted on untranslated Lao retrieved English translations seven times as
+
+00:06:43.982 --> 00:06:49.862
+often as the strongest baseline when the script matched pre-training scripts. A pre-answer edit
+
+00:06:49.862 --> 00:06:56.222
+in a QN-34 billion case changes the emitted number from 17 to 15, while both runs first
+
+00:06:56.222 --> 00:07:02.402
+emit 1, and later multi-layer perceptron, or MLP, clamping reduces the final log odds
+
+00:07:02.402 --> 00:07:11.502
+gap to 0.0025 net. Confucius 4R2T2 is obtained by post-training QN-3 automatic speech recognition,
+
+00:07:11.502 --> 00:07:19.522
+or ASR, 1.7 billion on 1,500 hours of audio, while freezing the encoder, and it delivers
+
+00:07:19.522 --> 00:07:24.202
+stable text with low emission lag and generalizes beyond the adaptation languages.
+
+00:07:24.922 --> 00:07:31.222
+Continued pre-training on 375 million Tajik tokens, followed by supervised fine-tuning
+
+00:07:31.222 --> 00:07:38.522
+raised Belebelay accuracy 11.4 points above Quinn 38 billion, while English MMLU changed
+
+00:07:38.522 --> 00:07:44.282
+by only minus 1.2 points. Full history and distilled preference prompting raised preference
+
+00:07:44.282 --> 00:07:52.662
+realization by 0.204 to 0.244 points on a 0-2 scale, yet increased fabricated evidence
+
+00:07:52.662 --> 00:08:02.942
+failures from 5.8% to 10.1% to 10.4%. The best NTCIR-19 cyclame EVAL systems reached 98.1%
+
+00:08:02.942 --> 00:08:09.322
+pair accuracy on claim evidence support, but dropped 24.3 points when forced to judge each pair
+
+00:08:09.322 --> 00:08:15.062
+without contrastive examples. Model by harness interaction moved correct case rate by up to
+
+00:08:15.062 --> 00:08:21.042
+11.5 percentage points within one model, while the same model compliance reviewer cut banking
+
+00:08:21.042 --> 00:08:29.842
+conduct rule violations from 9.6% to 6.4%. Combined sparse attention on six hybrid models from 4 billion
+
+00:08:29.842 --> 00:08:37.882
+to 397 billion parameters, yields up to 2.23 times faster decoding at 256,000 context,
+
+00:08:38.322 --> 00:08:42.102
+while preserving accuracy on 21 long-context data sets.
+
+00:08:42.682 --> 00:08:48.162
+Asamese LM-E2B, a 2 billion model with expanded byte-level byte-paring coding,
+
+00:08:48.602 --> 00:08:58.142
+or BPE vocabulary, reaches 0.7488 bits per byte on floors 296.7% retrieval augmented generation,
+
+00:08:58.142 --> 00:09:03.822
+or RAG, score after parameter efficient continual pre-training and supervised fine-tuning.
+
+00:09:04.242 --> 00:09:11.422
+A 12-layer stack repeated four times exceeds a standard 48-layer transformer by 5.4 blimp points
+
+00:09:11.422 --> 00:09:18.662
+at matched inference compute, yet multimodal training lowers accuracy by 3.8 points in both architectures.
+
+00:09:19.162 --> 00:09:26.602
+An automated pipeline produced 6,575 datasets across eight behaviors that generalize across model families.
+
+00:09:26.602 --> 00:09:30.642
+and frontier models outperform humans at predicting the side effects.
+
+00:09:31.382 --> 00:09:36.142
+Jeff's second position probability advantage reaches 6.11 points on summaries
+
+00:09:36.142 --> 00:09:42.742
+and reversing reader endorsements changes perplexities selected humor text on 40.40% of pairs.
+
+00:09:43.402 --> 00:09:49.882
+Key value cache or KV cache reuse loses 19 to 100% of context-dependent questions.
+
+00:09:50.602 --> 00:09:53.162
+Restoring a few non-target chunks recovers little
+
+00:09:53.162 --> 00:09:59.922
+while re-computing the target chunk against the reused cache beats full pre-fill insertion in all seven tested settings.
+
+00:10:00.442 --> 00:10:04.702
+Higher-archical questions improve interpretability while maintaining task performance,
+
+00:10:05.182 --> 00:10:10.762
+and when question count is limited, shallower levels outperform deeper ones on general-purpose tasks.
+
+00:10:10.762 --> 00:10:20.102
+On the Joy Okanji Yomi benchmark, Ruby OPD reaches 97.13% accuracy and 0.70% sentence
+
+00:10:20.102 --> 00:10:24.882
+phoneme error rate under raw orthographic text while retaining strong controllability.
+
+00:10:25.502 --> 00:10:31.762
+Lex Mem yields 224 dialogues and 2018 question-answer instances from graph structures.
+
+00:10:32.102 --> 00:10:37.722
+And Lex Graph incrementally organizes dialogues into interconnected nodes and outperforms retrieval
+
+00:10:37.722 --> 00:10:39.142
+and memory-based baselines.
+
+00:10:39.142 --> 00:10:48.562
+Evil Guard improves success by 11.0% on ALF world, 5.9% on science world, and 2.7% on live
+
+00:10:48.562 --> 00:10:52.842
+code bench by training a pairwise selector on private test utility labels.
+
+00:10:53.382 --> 00:10:59.262
+ArcRag induces a query local graph interface at inference time, and executes cipher traversals,
+
+00:10:59.662 --> 00:11:03.842
+and it stays effective when the underlying graph construction changes from schema-guided
+
+00:11:03.842 --> 00:11:05.522
+to open information extraction.
+
+00:11:05.522 --> 00:11:12.202
+Libri's speech reel QA evaluates whether speech LM's can identify target words in streaming audio,
+
+00:11:12.662 --> 00:11:16.362
+and several commercial models still wait for the full turn before responding.
+
+00:11:17.142 --> 00:11:21.422
+Crescist's actor critic pipeline within Trinsic Semantic and Latency Rewards
+
+00:11:21.422 --> 00:11:29.142
+establishes new quality latency Pareto frontiers on both sentence and document level simultaneous translation benchmarks.
+
+00:11:29.142 --> 00:11:43.362
+In English query accuracy on Nigerian statistics sits at 20% versus 49% to 50% for UK and US facts and scale does not close the gap with the strongest models reaching at most 31%.
+
+00:11:43.362 --> 00:11:56.122
+Unsupported restrictions appear in 1.2% to 2.4% of readable handoff summaries and neutralizing false approvals cut unauthorized actions from 24% to 7% of 120 held outruns.
+
+00:11:56.122 --> 00:12:01.602
+A stacked ensemble of open-weight models improves precision in the correction step of political
+
+00:12:01.602 --> 00:12:06.362
+and social science research, while retaining estimate validity when measurement choice
+
+00:12:06.362 --> 00:12:07.862
+reverses regression sign.
+
+00:12:08.442 --> 00:12:14.782
+The 3,022 instance alto corpus improves tech facilitated gender-based violence recall after
+
+00:12:14.782 --> 00:12:20.742
+fine-tuning, though models still miscovert harms, with markedly higher error rates in Swahili.
+
+00:12:20.742 --> 00:12:25.802
+accurately. Accuracy drops sharply from apply to analyze in every open-weight series when
+
+00:12:25.802 --> 00:12:31.322
+reasoning over non-parametric memory, and evaluate items remain a bottleneck even for models
+
+00:12:31.322 --> 00:12:36.782
+near ceiling on other levels. A classifier ranks original papers closely with one paper
+
+00:12:36.782 --> 00:12:41.802
+acceptance predictor, yet shows no detectable agreement on which rewrites raised scores,
+
+00:12:42.362 --> 00:12:48.522
+and edit agreement stays near zero even at full 32-bit precision. The best cascade for detecting
+
+00:12:48.522 --> 00:12:55.362
+psychological harm risk factors achieve 0.79 macro-F1 on held out labels and reduces
+
+00:12:55.362 --> 00:13:02.222
+LLM judge calls by 97.1% on wild chat while clustering risk factor detections within
+
+00:13:02.222 --> 00:13:09.862
+conversations. GPT-5 answers 76% of controlled financial back testing facts correctly, but claims
+
+00:13:09.862 --> 00:13:14.762
+to know only 38% and answers 61% of the facts it says it does not know.
+
+00:13:14.762 --> 00:13:21.162
+SOSMAP summary scores to discrete verifiable facts, capturing information loss from transcription
+
+00:13:21.162 --> 00:13:25.122
+and translation error while aligning strongly with human judgment.
+
+00:13:25.662 --> 00:13:31.562
+Current agent systems, CIO finds, still need heavy human oversight before long horizon runs
+
+00:13:31.562 --> 00:13:32.482
+stay reliable.
+
+00:13:33.082 --> 00:13:38.382
+Andthropic's biology team used CLOD to map the first three-dimensional structure of a bacterial
+
+00:13:38.382 --> 00:13:40.542
+vault particle in days instead of weeks.
+
+00:13:40.542 --> 00:13:46.722
+Clouds still made simple mistakes on that particle work that required machine learning researcher intervention.
+
+00:13:47.543 --> 00:13:54.203
+Point together compiler at a bursty endpoint and log tokens per second before the agent loop starts and after it settles.
+
+00:13:54.723 --> 00:14:04.183
+Drop GPT image 2.6 flare into a design agent loop and time 6 second gift generation against the slower image APIs you used before.
+
+00:14:04.183 --> 00:14:11.223
+run QN 2.5 at 1.5 billion on SRRM and check whether reconstruction falls off
+
+00:14:11.223 --> 00:14:16.483
+faster than retrieval as context grows. Put base-style epistemic tracking on a
+
+00:14:16.483 --> 00:14:20.703
+reference resolution agent and compare how many clarifying questions it
+
+00:14:20.703 --> 00:14:27.503
+asks against GRPO. Slide Edit Veto onto noisy historical OCR pages and measure
+
+00:14:27.503 --> 00:14:32.521
+the character match error drop without retraining the re-writer. Openweight teams
+
+00:14:32.521 --> 00:14:37.521
+are expected to release larger recursive or hybrid recurrent checkpoints in the coming weeks.
+
+00:14:38.201 --> 00:14:43.621
+More labs will publish agent harness compliance audits that follow the banking rule study pattern.
+
+00:14:44.301 --> 00:14:50.721
+Additional multilingual factuality benchmarks modeled on NIJA facts are likely for other low resource regions.
+
+00:14:51.779 --> 00:14:58.419
+Let me pop the hood on recurrent depth, where Hawk and Griffin match Lama II after training on six times fewer tokens.
+
+00:14:58.419 --> 00:15:04.419
+The design reuses the same transformer layers in a loop instead of stacking new ones, so
+
+00:15:04.419 --> 00:15:08.339
+a small model gets more sequential compute steps without extra parameters.
+
+00:15:08.979 --> 00:15:14.019
+Each layer receives the current token representation, and a recurrent state carried from its own
+
+00:15:14.019 --> 00:15:18.659
+previous pass, the mechanism laid out in the block recurrent transformer paper.
+
+00:15:19.599 --> 00:15:24.099
+Complexity stays linear in sequence length, and the model can still refine its internal
+
+00:15:24.099 --> 00:15:26.439
+state over multiple iterations at inference.
+
+00:15:26.439 --> 00:15:32.519
+size, or initialize that recurrent state carelessly, and the model loses the ability to extrapolate
+
+00:15:32.519 --> 00:15:33.699
+beyond training lengths.
+
+00:15:34.319 --> 00:15:40.439
+Relaxed recursive transformers add depth-wise low-rank adaptation, or Laura, modules that
+
+00:15:40.439 --> 00:15:45.659
+loosen strict parameter sharing and recover most of the original accuracy at roughly one-quarter
+
+00:15:45.659 --> 00:15:46.659
+the parameter count.
+
+00:15:47.219 --> 00:15:52.699
+Recurrent Gemma's 2 billion and 9 billion variants reach downstream scores comparable to standard
+
+00:15:52.699 --> 00:15:58.119
+Gemma checkpoints, despite fewer training tokens, and they run with fixed memory cost on
+
+00:15:58.119 --> 00:15:58.919
+long sequences.
+
+00:15:59.619 --> 00:16:02.959
+Use recurrent depth when parameters or tokens are the bottleneck.
+
+00:16:03.359 --> 00:16:07.719
+Keep a deeper feed forward stack when you need the best single pass on short context.
+
+00:16:08.779 --> 00:16:14.039
+Before we go, stable prefix streaming recognition and policy learning simultaneous translation
+
+00:16:14.379 --> 00:16:15.939
+are the next systems do out.
+
+00:16:16.479 --> 00:16:18.139
+That's models and agents for today.
+
+00:16:18.599 --> 00:16:22.539
+If you found this useful, share it with someone who's trying to keep up with all these changes.
+
+00:16:22.539 --> 00:16:25.279
+and subscribe so you don't miss tomorrow's update.
+
+00:16:25.739 --> 00:16:27.359
+The AI world moves fast.
+
+00:16:27.539 --> 00:16:28.499
+We'll help you keep up.
+
+00:16:29.059 --> 00:16:29.679
+See you tomorrow.
+
+00:16:30.119 --> 00:16:31.659
+And if you'd rather watch than listen,
+
+00:16:32.159 --> 00:16:34.079
+find us on YouTube at Narin Network,
+
+00:16:34.519 --> 00:16:35.419
+links in the show notes.
+
+00:16:35.979 --> 00:16:36.999
+Quick tip from the network.
+
+00:16:37.559 --> 00:16:39.299
+Try the do positive pod next.
+
+00:16:39.839 --> 00:16:41.259
+Good news and science and tech.
+
+00:16:41.599 --> 00:16:43.599
+Plus one concrete action you can take.
+
+00:16:44.079 --> 00:16:47.299
+Every Narin Network show is free at NarinNetwork.com.
+
+00:16:47.759 --> 00:16:50.119
+And on the website, every episode's visuals
+
+00:16:50.119 --> 00:16:56.259
+live in our free image gallery at narennetwork.com gallery royalty free under creative commons
+
+00:16:56.259 --> 00:17:02.999
+download with attribution this episode used AI voice synthesis of my voice editorial selection
+
+00:17:02.999 --> 00:17:04.499
+and analysis are my own.
