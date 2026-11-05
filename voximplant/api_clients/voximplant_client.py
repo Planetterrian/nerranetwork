@@ -18,6 +18,7 @@ vars), per https://voximplant.com/docs/references/httpapi. All calls raise
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -266,6 +267,10 @@ def upload_scenario(path: Path,
         source = source.replace("__VOICES_WEBHOOK_SECRET__", webhook_secret)
     print(f"scenario deploys with Grok voice model {voice_model}, "
           f"session cap {session_max} min", flush=True)
+    if verify:
+        # Nov 5 2026: the read-back's proof is this marker, a hash of the
+        # exact source being sent. A stale account copy cannot carry it.
+        source = f"{BUILD_MARKER_PREFIX}{source_digest(source)}\n" + source
 
     try:
         result = _call("SetScenarioInfo",
@@ -281,8 +286,26 @@ def upload_scenario(path: Path,
     return result
 
 
+BUILD_MARKER_PREFIX = "// nerra-build: "
+
+
+def source_digest(source: str) -> str:
+    return hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
+
+
 def _normalised_script(text: str) -> str:
     return (text or "").replace("\r\n", "\n").strip()
+
+
+def _first_difference(got: str, want: str) -> str:
+    """Where two scripts first differ, as line/column and code points only,
+    never the text around it (the deployed copy carries secrets)."""
+    for i, (a, b) in enumerate(zip(got, want)):
+        if a != b:
+            line = want.count("\n", 0, i) + 1
+            col = i - (want.rfind("\n", 0, i) + 1) + 1
+            return f"line {line} col {col}: account U+{ord(a):04X}, sent U+{ord(b):04X}"
+    return "one is a prefix of the other"
 
 
 def read_back_scenario(scenario_name: str, expected_source: str) -> Dict[str, Any]:
@@ -293,19 +316,35 @@ def read_back_scenario(scenario_name: str, expected_source: str) -> Dict[str, An
     ``age_of_ai_interview_candidate`` last modified three days earlier, so
     nothing proved the room under test was this ref's code and not an older
     copy. The modified time alone cannot prove it either (an unchanged
-    source may keep its old time), so the check is the script itself."""
-    data = _call("GetScenarios", scenario_name=scenario_name, with_script=True)
+    source may keep its old time), so the check is the script itself.
+
+    Nov 5 2026: the first real read-back (rehearsal 41953433703) failed on a
+    copy uploaded one second earlier. ``with_script`` went out as the form
+    value "True", and the comparison was byte-for-byte against a copy the
+    API may hand back re-encoded. It now asks with "true" and passes when the
+    copy is identical OR carries this upload's build marker (the first line,
+    a hash of the exact source sent); a mismatch prints where, never what."""
+    data = _call("GetScenarios", scenario_name=scenario_name, with_script="true")
     rows = [r for r in (data.get("result") or [])
             if r.get("scenario_name") == scenario_name]
     if not rows:
         raise VoximplantError(f"read-back: no scenario named {scenario_name!r}")
     row = rows[0]
-    if _normalised_script(row.get("scenario_script", "")) != _normalised_script(expected_source):
-        raise VoximplantError(
-            f"read-back: {scenario_name} does not hold the uploaded source "
-            f"(account copy modified {row.get('modified')})")
+    got = _normalised_script(row.get("scenario_script", ""))
+    want = _normalised_script(expected_source)
+    exact = got == want
+    marker = want.split("\n", 1)[0] if want.startswith(BUILD_MARKER_PREFIX) else ""
+    if not exact:
+        detail = (f"account copy {len(got)} chars, sent {len(want)}; "
+                  f"{_first_difference(got, want) if got else 'no script returned'}")
+        print(f"read-back: {scenario_name} differs from the sent source ({detail})",
+              flush=True)
+        if not (marker and got.split("\n", 1)[0] == marker):
+            raise VoximplantError(
+                f"read-back: {scenario_name} does not hold the uploaded source "
+                f"(account copy modified {row.get('modified')}; {detail})")
     return {"scenario_id": row.get("scenario_id"), "modified": row.get("modified"),
-            "matches": True}
+            "matches": True, "exact": exact}
 
 
 def candidate_source(source: str, room_prefix: str = CANDIDATE_ROOM_PREFIX) -> str:

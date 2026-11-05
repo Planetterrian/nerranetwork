@@ -145,3 +145,59 @@ class TestItIsRehearsed:
         assert 'case "ask_to_wrap":' in fixture
         workflow = (ROOT / ".github" / "workflows" / "nerra_voices_rehearsal.yml").read_text(encoding="utf-8")
         assert "inputs.early_wrap" in workflow and workflow.count("--early-wrap") == 2
+
+
+class TestTheReadBackReadsBack:
+    """Rehearsal 41953433703 (Nov 5): the first real candidate read-back
+    failed on a copy uploaded one second earlier, so the early-wrap room was
+    never rehearsed. The proof is now this upload's build marker."""
+
+    @staticmethod
+    def _vc():
+        import importlib
+        return importlib.import_module("voximplant.api_clients.voximplant_client")
+
+    def _fake(self, monkeypatch, script):
+        vc = self._vc()
+        sent = {}
+
+        def fake_call(method, **params):
+            sent[method] = params
+            return {"result": [{"scenario_name": params["scenario_name"], "scenario_id": 7,
+                                "modified": "now", "scenario_script": script}]}
+        monkeypatch.setattr(vc, "_call", fake_call)
+        return vc, sent
+
+    def test_it_asks_for_the_script_in_the_api_s_spelling(self, monkeypatch):
+        vc, sent = self._fake(monkeypatch, "src")
+        vc.read_back_scenario("x", "src")
+        assert sent["GetScenarios"]["with_script"] == "true"
+
+    def test_a_re_encoded_copy_with_this_upload_s_marker_passes(self, monkeypatch):
+        body = "const DASH = \"\u2014\";\n"
+        marker = f"{self._vc().BUILD_MARKER_PREFIX}{self._vc().source_digest(body)}"
+        vc, _ = self._fake(monkeypatch, marker + "\nconst DASH = \"\\u2014\";\n")
+        out = vc.read_back_scenario("x", marker + "\n" + body)
+        assert out["matches"] is True and out["exact"] is False
+
+    def test_another_upload_s_marker_fails_and_names_no_text(self, monkeypatch):
+        vc, _ = self._fake(monkeypatch, "// nerra-build: 0000\nconst KEY = \"secret-a\";")
+        with pytest.raises(vc.VoximplantError, match="does not hold") as err:
+            vc.read_back_scenario("x", "// nerra-build: 1111\nconst KEY = \"secret-b\";")
+        assert "secret" not in str(err.value)
+
+    def test_the_verified_upload_carries_the_marker(self, monkeypatch):
+        vc = self._vc()
+        sent = {}
+
+        def fake_call(method, **params):
+            sent.setdefault(method, params)
+            if method == "GetScenarios":
+                return {"result": [{"scenario_name": params["scenario_name"],
+                                    "scenario_script": sent["SetScenarioInfo"]["scenario_script"]}]}
+            return {"result": 1}
+        monkeypatch.setattr(vc, "_call", fake_call)
+        for k in ("SUPABASE_URL", "SUPABASE_SERVICE_KEY", "GROK_API_KEY", "XAI_API_KEY"):
+            monkeypatch.setenv(k, "x")
+        vc.upload_candidate_scenario()
+        assert sent["SetScenarioInfo"]["scenario_script"].startswith(vc.BUILD_MARKER_PREFIX)
