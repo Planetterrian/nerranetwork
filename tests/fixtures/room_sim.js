@@ -944,6 +944,69 @@ if (which === "server_turns_advance_the_round") {
   out.state = state();
   out.pendingStart = run("roundPendingStart");
   out.thanksSent = run("closingThanksSent");
+} else if (which === "early_stop_then_goodbye" || which === "early_goodbye_no_stop") {
+  // Nov 5 2026 (candidate rehearsal on the early_wrap fixture): the stop was
+  // heard at six minutes of fifteen, then the early-close rule cut two of her
+  // goodbyes and she began the round herself with the show's question.
+  run("config.planned_minutes = 15; firstJoinAt = Date.now() - 6 * 60 * 1000;");
+  roomTurnStarts();
+  miraFinishes("What did the first river project teach you about the second?");
+  responseDone();
+  if (which === "early_stop_then_goodbye") {
+    guestSays("I think we've covered enough, and I\u2019d like to wrap up now.", 4000);
+  } else {
+    guestSays("The second one was cheaper because we had already made every mistake once.", 4000);
+  }
+  out.askedToStop = run("guestAskedToStop");
+  advance(3000);
+  events.length = 0; notes.length = 0;
+  const bye = "Thank you so much for this, it has been a pleasure. That's the end of the recording, you can hang up now.";
+  roomTurnStarts();
+  run("miraSpeaking = true; responseCancelledEarly = false;");
+  ctx.__text = bye; run("catchEarlyCloseOnDelta(__text);");
+  miraFinishes(bye);
+  responseDone();
+  out.cancels = events.filter(function (e) { return e === "cancel"; }).length;
+  out.carryOnNotes = notes.filter(function (n) { return /NOT over|carry on|too soon/i.test(n); }).length;
+  out.afterBye = state();
+  out.thanksSent = run("closingThanksSent");
+  // She then asks the show's own closing question herself.
+  if (which === "early_stop_then_goodbye") {
+    run("closingRequired = true;");
+    roomTurnStarts();
+    miraFinishes("Before you go: what's the one bet you're making for the next twelve months that you cannot prove yet?");
+    responseDone();
+  }
+  out.state = state();
+} else if (which === "early_stop_then_round_question") {
+  // The same stop, and she asks the show's closing question instead of
+  // saying goodbye: it is recorded, and the room never starts a round.
+  run("config.planned_minutes = 15; firstJoinAt = Date.now() - 6 * 60 * 1000;");
+  guestSays("I think we've covered enough, and I'd like to wrap up now.", 4000);
+  advance(3000);
+  run("closingRequired = true;");
+  roomTurnStarts();
+  miraFinishes("Before you go: what's the one bet you're making for the next twelve months that you cannot prove yet?");
+  responseDone();
+  out.state = state();
+  out.pendingStart = run("roundPendingStart");
+} else if (which === "stop_drops_the_queued_round" || which === "typed_wrap_up_keeps_its_round") {
+  // A round the clock queued, not begun, is dropped by a spoken stop; a
+  // typed wrap-up queues its own and keeps it.
+  run("closingPermitted = true; closingRequired = true;");
+  if (which === "stop_drops_the_queued_round") {
+    run("roundPendingStart = true;");
+    run("inboundSpeaking = true;");
+    ctx.__text = "Sorry, I have to go now.";
+    run("guestWordsChecks(__text);");
+  } else {
+    run("inboundSpeaking = true;");
+    ctx.__raw = JSON.stringify({ nn: 1, kind: "topic", text: "we can wrap up now" });
+    run("onGuestFeedback(legs[0], __raw);");
+  }
+  out.pendingStart = run("roundPendingStart");
+  out.stopWithoutRound = run("stopWithoutRound()");
+  out.state = state();
 } else if (which === "typed_presence" || which === "typed_presence_in_round") {
   // Nov 4 2026 (Blaine Mathieu's room): "you still there", typed after a
   // silence, went to her as a subject he wanted to reach.

@@ -157,7 +157,7 @@ class TestTheClosingRoundWaitsItsTurn:
         assert "function catchEarlyClosingRound(text)" in SCENARIO
         assert "try { catchEarlyClosingRound(text); }" in SCENARIO
         assert "lightning round" in SCENARIO[SCENARIO.index("const CLOSING_ROUND_RE"):][:200]
-        assert "if (roomEnded || !grokAgent || closingPermitted || isClosingSession()) return;" in SCENARIO
+        assert "if (roomEnded || !grokAgent || closingPermitted || guestAskedToStop || isClosingSession()) return;" in SCENARIO
 
 
 class TestCalComsOwnLinksWork:

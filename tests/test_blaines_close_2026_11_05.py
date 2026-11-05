@@ -142,6 +142,49 @@ class TestTheRoomLetsHimGo:
 
 
 @needs_node
+class TestAfterTheStopHerGoodbyeStands:
+    """Candidate rehearsal on the early_wrap fixture (Nov 5 2026): the stop
+    was heard at six minutes of fifteen, then the early-close rule cut two of
+    her goodbyes and she began the round herself; the room ran all seven."""
+
+    def test_her_early_goodbye_stands(self):
+        out = sim("early_stop_then_goodbye")
+        assert out["askedToStop"] is True
+        assert out["cancels"] == 0 and out["carryOnNotes"] == 0
+        assert out["afterBye"]["roundClosed"] is True and out["thanksSent"] is True
+        assert out["state"]["roundActive"] is False
+
+    def test_without_a_stop_an_early_goodbye_is_still_caught(self):
+        out = sim("early_goodbye_no_stop")
+        assert out["cancels"] == 1 and out["afterBye"]["roundClosed"] is False
+
+    def test_a_closing_question_she_asks_is_only_recorded(self):
+        out = sim("early_stop_then_round_question")
+        assert out["state"]["roundActive"] is False and out["pendingStart"] is False
+        assert any(x["d"] == "asked on her own: the show's own question" for x in out["trace"])
+        assert not any("asking her to hold it" in x["d"] for x in out["trace"])
+        assert not any("room-driven closing round begins" in x["d"] for x in out["trace"])
+
+    def test_a_spoken_stop_drops_a_queued_round(self):
+        out = sim("stop_drops_the_queued_round")
+        assert out["pendingStart"] is False and out["stopWithoutRound"] is True
+
+    def test_a_typed_wrap_up_keeps_its_round(self):
+        out = sim("typed_wrap_up_keeps_its_round")
+        assert out["pendingStart"] is True and out["stopWithoutRound"] is False
+
+
+class TestNoNoteContradictsTheStop:
+    def test_time_notes_are_silent_after_a_stop(self):
+        tick = SCENARIO[SCENARIO.index("timeCheckTimer = setInterval("):]
+        tick = tick[:tick.index("let note =")]
+        assert "if (stopWithoutRound()) return;" in tick
+        sched = SCENARIO[SCENARIO.index('trace("time", "closing round required (scheduled note)"'):]
+        sched = sched[:sched.index("const note =")]
+        assert "if (stopWithoutRound()) return;" in sched
+
+
+@needs_node
 class TestPresenceCheck:
     def test_it_is_a_message_not_a_topic(self):
         out = sim("typed_presence")

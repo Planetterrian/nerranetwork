@@ -393,7 +393,7 @@ class TestNeverCloseBeforeTheRound:
         assert "const ROUND_CLOSE_BLOCKS_MAX = 3;" in SCENARIO
 
     def test_a_sign_off_the_deltas_missed_is_caught_after(self):
-        assert "if (closingPermitted) { catchSignOffBeforeTheRound(text); return; }" in _fn("function catchEarlySignOff(text)")
+        assert "if (closingPermitted || guestAskedToStop) { catchSignOffBeforeTheRound(text); return; }" in _fn("function catchEarlySignOff(text)")
         body = _fn("function catchSignOffBeforeTheRound(text)")
         assert "signOffBlockedByRound()" in body and "rescueAllowed()" in body
         assert 'startRound("a sign-off came before it");' in body
