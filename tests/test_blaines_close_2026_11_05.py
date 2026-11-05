@@ -55,6 +55,30 @@ class TestHeAskedToStop:
                      "let's stop here", "I have to go."):
             assert self.STOP.search(text), text
 
+    def test_the_fixture_s_wrap_request_is_a_stop(self):
+        # Rehearsal 41955719743: told to say it had covered enough and would
+        # like to wrap up now, the fixture went unheard in both arms.
+        for text in ("I think we've covered enough, and I'd like to wrap up now.",
+                     "I would love to wrap things up here",
+                     "We have covered enough ground.",
+                     "this feels like a good place to stop.",
+                     "Let's wrap this up.", "shall we wrap things up?",
+                     "let's call it a day"):
+            assert self.STOP.search(text), text
+
+    def test_wrap_shapes_that_carry_on_are_not(self):
+        for text in ("I'd like to wrap up the launch story first",
+                     "I'd love to end on the river project",
+                     "we've covered enough of the theory, so the practice",
+                     "a good time to stop investing in the old stack",
+                     "we've got enough customers to fund it"):
+            assert not self.STOP.search(text), text
+
+    def test_a_curled_apostrophe_is_heard(self):
+        body = SCENARIO[SCENARIO.index("function guestWordsChecks("):]
+        body = body[:body.index("GUEST_STOP_RE.test")]
+        assert "[\\u2018\\u2019]" in body
+
     def test_a_sentence_that_carries_on_is_not(self):
         for text in ("all the tests that we need to run when we're actually working with these clients",
                      "let's wrap up the launch story first",

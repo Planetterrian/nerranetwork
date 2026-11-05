@@ -1185,7 +1185,11 @@ function noteHoldFromGuest(text) {
 // "there" or "now" after "let's wrap it up"), so the room cut two of her
 // goodbyes mid-sentence and started its closing round after his. The same
 // rule holds for every new shape: the thought ends there, or names the end.
-const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should) we (?:stop|end|wrap(?: it)? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: it)? up|end(?: it)?|finish(?: up)?)(?:(?: here| there| now)\b|(?=\s*(?:[.,!?;—-]|$)))|\bgot (?:it )?enough (?:here|for today|for now)(?=\s*(?:[.,!?;—-]|$))|\b(?:do|make|give|say) (?:a|your|any) (?:final|closing|ending|last)(?: (?:final|closing|ending))? (?:comment|comments|word|words|remark|remarks|thought|thoughts)\b|\bwe(?:'ve| have)? (?:already )?ended (?:it|the (?:interview|recording|podcast|show))\b|\bwe'?re (?:all )?(?:done|finished)(?: here| for today| now)?(?=\s*(?:[.,!?;—-]|$)))/i;
+// Nov 5 2026, rehearsal 41955719743: the fixture, told to say it had covered
+// enough and would like to wrap up now, was unheard in both arms (four of her
+// sign-offs cancelled, the round started on the clock): "I'd like to wrap
+// up", "we've covered enough", "a good place to stop" are stops too.
+const GUEST_STOP_RE = /\b(?:(?:(?:i|we) (?:have|need|got|gotta) to (?:go|run|leave|stop|hop off|jump off|wrap up)|i'?m (?:going to|gonna) have to (?:go|leave|stop|run))(?=\s*(?:[.,!?;\u2014-]|$|(?:right )?now\b|soon\b|shortly\b|in (?:a|one|two|five|ten|a few|just a|about \w+) (?:minute|minutes|moment|second|seconds|sec)\b|here\b|after (?:this|that)\b|(?:for|to) (?:another|a|my|the) (?:meeting|call|appointment|flight|class)\b|sorry\b|unfortunately\b|i'?m (?:so )?sorry\b))|(?:can|could|should|shall) we (?:stop|end|wrap(?: (?:it|this|things))? up)(?: here| there| now)?\b|let'?s (?:stop|wrap(?: (?:it|this|things))? up|end(?: it)?|finish(?: up)?|call it a day)(?:(?: here| there| now)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:i'?d|i would|we'?d|we would) (?:like|love|prefer|want) to (?:wrap(?: (?:it|this|things))? up|stop|end(?: it)?|finish(?: up)?|call it a day)(?:(?: here| there| now| today| for today)\b|(?=\s*(?:[.,!?;—-]|$)))|\b(?:we'?ve|we have) (?:covered|got|gotten) enough(?: (?:here|for today|for now|today|ground))?(?=\s*(?:[.,!?;—-]|$|and\b))|\b(?:good|great|natural|nice) (?:place|point|spot|time) to (?:stop|end|wrap(?: (?:it|this|things))? up|finish|leave it)(?=\s*(?:[.,!?;—-]|$))|\bgot (?:it )?enough (?:here|for today|for now)(?=\s*(?:[.,!?;—-]|$))|\b(?:do|make|give|say) (?:a|your|any) (?:final|closing|ending|last)(?: (?:final|closing|ending))? (?:comment|comments|word|words|remark|remarks|thought|thoughts)\b|\bwe(?:'ve| have)? (?:already )?ended (?:it|the (?:interview|recording|podcast|show))\b|\bwe'?re (?:all )?(?:done|finished)(?: here| for today| now)?(?=\s*(?:[.,!?;—-]|$)))/i;
 let guestAskedToStop = false;
 let roundCloseBlocks = 0;
 const ROUND_CLOSE_BLOCKS_MAX = 3;  // never trap a guest: after this many, a sign-off is let through
@@ -1502,6 +1506,9 @@ function remember(who, text) {
 
 /** What the guest's words mean for the room: a hold, a stop, an answer. */
 function guestWordsChecks(text) {
+  // Nov 5 2026: every pattern below spells the apostrophe straight; a
+  // transcript that curls it ("I\u2019d like to wrap up") must still match.
+  text = String(text || "").replace(/[\u2018\u2019]/g, "'");
   try {
     noteHoldFromGuest(text);
     noteResearchAsk(text);
