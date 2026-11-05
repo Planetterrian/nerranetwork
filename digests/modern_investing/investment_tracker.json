@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-11-04",
+    "last_updated": "2026-11-05",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -3707,7 +3707,8 @@
         "sp500": 0.64,
         "tsx": 0.29
       },
-      "reviewed_in_episode": 216
+      "reviewed_in_episode": 216,
+      "callback_in_episode": 222
     },
     {
       "episode_num": 209,
@@ -3854,7 +3855,7 @@
         "quoted_at": "2026-10-25T10:07:14.024851+00:00",
         "quote_source": "yahoo_option_chain"
       },
-      "current_price": 90.19
+      "current_price": 94.97
     },
     {
       "episode_num": 212,
@@ -4080,7 +4081,7 @@
       ],
       "resolved_symbol": "PEY.TO",
       "pick_reference_price": 25.58,
-      "current_price": 24.69
+      "current_price": 23.96
     },
     {
       "episode_num": 217,
@@ -4097,12 +4098,12 @@
       "trade_type": "weekly",
       "policy_version": 2,
       "horizon_sessions": 5,
-      "status": "open",
+      "status": "voided",
       "entry_price": null,
       "exit_price": null,
       "pnl_pct": null,
       "pnl_dollars": null,
-      "lesson": "",
+      "lesson": "Trade voided — market data was unavailable for evaluation.",
       "stop_loss": {
         "pct": 8.0
       },
@@ -4114,7 +4115,9 @@
       ],
       "resolved_symbol": "AMAT",
       "pick_reference_price": 390.09,
-      "current_price": 381.92
+      "current_price": 381.92,
+      "void_reason": "market_data_unavailable",
+      "void_disclosed_in_episode": 222
     },
     {
       "episode_num": 218,
@@ -4148,7 +4151,7 @@
       ],
       "resolved_symbol": "KMP-UN.TO",
       "pick_reference_price": 17.1,
-      "current_price": 17.43
+      "current_price": 17.66
     },
     {
       "episode_num": 219,
@@ -4182,7 +4185,7 @@
       ],
       "resolved_symbol": "H.TO",
       "pick_reference_price": 55.24,
-      "current_price": 56.03
+      "current_price": 57.18
     },
     {
       "episode_num": 220,
@@ -4216,7 +4219,7 @@
       ],
       "resolved_symbol": "BMO.TO",
       "pick_reference_price": 242.03,
-      "current_price": 240.56
+      "current_price": 247.61
     },
     {
       "episode_num": 221,
@@ -4249,18 +4252,52 @@
         "LL-028"
       ],
       "resolved_symbol": "PLTR",
-      "pick_reference_price": 175.4
+      "pick_reference_price": 175.4,
+      "current_price": 171.7
+    },
+    {
+      "episode_num": 222,
+      "date": "2026-11-05",
+      "symbol": "EFX.TO",
+      "market": "TSX",
+      "strategy": "Valuation entry on a Canadian energy-services name showing dividend sustainability amid higher oil prices.",
+      "confidence": "Medium",
+      "target_range": "+2 percent to +5 percent over the five-session window.",
+      "invalidation": "Daily close below the 50-session moving average.",
+      "structure": "long_equity",
+      "sector": "energy",
+      "strategy_family": "valuation",
+      "trade_type": "weekly",
+      "policy_version": 2,
+      "horizon_sessions": 5,
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "stop_loss": {
+        "pct": 8.0
+      },
+      "rules_in_effect": [
+        "LL-067",
+        "LL-066",
+        "LL-002",
+        "LL-068"
+      ],
+      "resolved_symbol": "EFX.TO",
+      "pick_reference_price": 28.49
     }
   ],
   "benchmark": {
-    "current_close": 25372.01,
-    "inception_to_date_pct": 13.4,
-    "ytd_pct": 9.19,
-    "last_updated": "2026-11-04"
+    "current_close": 25736.51,
+    "inception_to_date_pct": 15.03,
+    "ytd_pct": 10.76,
+    "last_updated": "2026-11-05"
   },
   "alpha": {
-    "inception_to_date_pct": -13.43,
-    "ytd_pct": -9.22,
+    "inception_to_date_pct": -15.06,
+    "ytd_pct": -10.79,
     "monthly": {}
   },
   "sectors": {
@@ -4275,16 +4312,16 @@
       "cumulative_pnl": 28.12
     },
     "energy": {
-      "trade_count": 2,
-      "exposure_pct": 20.0,
+      "trade_count": 3,
+      "exposure_pct": 30.0,
       "cumulative_pnl": -68.73
     },
-    "tech": {
-      "trade_count": 2,
-      "exposure_pct": 20.0,
+    "utilities": {
+      "trade_count": 1,
+      "exposure_pct": 10.0,
       "cumulative_pnl": 0.0
     },
-    "utilities": {
+    "tech": {
       "trade_count": 1,
       "exposure_pct": 10.0,
       "cumulative_pnl": 0.0
@@ -4378,7 +4415,6 @@
     }
   ],
   "used_segment_ids": [
-    "mit_real_estate_investing",
     "mit_crypto_portfolio_v2",
     "mit_profile_buffett_v2",
     "mit_profile_cathie_wood_v2",
@@ -4437,6 +4473,7 @@
     "mit_crypto_portfolio",
     "mit_asset_allocation",
     "mit_dividend_investing_v2",
-    "mit_options_intro"
+    "mit_options_intro",
+    "mit_technical_analysis_v2"
   ]
 }
