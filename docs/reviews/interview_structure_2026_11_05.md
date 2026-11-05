@@ -83,22 +83,22 @@ shape of the hour").
   at the end of the room: `reached k/n; room moves m, hers o; longest thread
   t questions`.
 
-**The brief has a shape.**
+**The brief names the shape, within its 1,600-word budget.**
 
-- The prepared questions are now headed as the running order, the shape of
-  the hour.
-- In HOW TO LISTEN, two or three steps is a thread. Then she moves on out
-  loud, the way an interviewer changes the subject. A thread that is still
-  alive may run on; one that is circling has had its turns.
-- When the list runs out, she reopens the best thing they said from a new
-  side, not further down.
-- In HOW TO REACT, once in each part of the hour she has the conversation
-  instead of asking the next question: a turn of her own in two or three
-  sentences (a view, or a connection to another guest or a fact), handed
-  back. When the guest asks her something, she answers it properly first.
-- The CRITICAL list keeps seven lines. The subject line now says the hour
-  goes "in parts".
-- There is no quoted line, and no guest or date appears in the brief.
+- The prepared questions are now headed as the running order, each one
+  opening a part of the hour.
+- In HOW TO LISTEN, two or three steps down is a thread, and then she asks
+  the next prepared question, out loud. When the list runs out, she reopens
+  the best thing they said from a new side, not further down.
+- In HOW TO REACT, once in each part of the hour she offers a view of her
+  own or a connection and hands it back. When the guest asks her something,
+  she answers it first. This replaces "once or twice an hour".
+- The CRITICAL list is unchanged.
+- To stay under the word budget, YOUR OWN VOICE loses its opening line
+  about scaffolding.
+- The craft of the move itself (close the thread with something it gave
+  her, signpost, never a summary) is in the room's one-turn instructions,
+  not the brief, because the room is what enforces it.
 
 **The question set is written as a running order.** Each question opens one
 part of the hour and must be worth a few minutes. Each one differs in

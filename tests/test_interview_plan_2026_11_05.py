@@ -247,24 +247,29 @@ class TestTheBriefHasAShape:
 
     def test_the_prepared_questions_are_the_running_order(self):
         assert "follow the conversation, not the list" not in PROMPT
-        assert "Prepared questions, in running order" in PROMPT
-        assert "They are the shape of the hour" in _flat(PROMPT)
+        assert "Prepared questions, one part of the hour each, in order:" in PROMPT
 
-    def test_two_or_three_steps_then_move_on_out_loud(self):
-        assert "Two or three steps is a thread." in self.LISTEN
-        assert "Then move on, out loud" in self.LISTEN
-        assert "close the thread with something it gave you" in self.LISTEN
-        assert "go back to the best thing they said and go down from there" not in self.LISTEN
+    def test_two_or_three_steps_then_the_next_question_out_loud(self):
+        assert "Two or three steps down is a thread; then the next prepared question," \
+            " out loud." in self.LISTEN
+        assert "go down from there" not in self.LISTEN
+        assert "Then the next question one step down" not in self.LISTEN
+        assert "go back to the best thing they said and open it from a new side" in self.LISTEN
 
     def test_one_conversational_turn_of_her_own_in_each_part(self):
-        assert "Once in each part of the hour" in self.REACT
-        assert "have the conversation rather than the next question" in self.REACT
-        assert "answer it properly before you ask anything" in self.REACT
+        assert "Once in each part, offer a view of your own and hand it back as a" \
+            " question; answer their questions first." in self.REACT
+        assert "once or twice an hour" not in self.REACT
 
-    def test_the_critical_list_names_the_parts_and_stays_seven_lines(self):
-        block = PROMPT[PROMPT.index("## CRITICAL INSTRUCTIONS"):]
-        assert block.count("\n- ") == 7
-        assert "in parts: two or three questions on a thread" in _flat(block)
+    def test_the_brief_stays_within_its_budget(self):
+        # tests/test_second_test_room_2026_10_28.py holds the brief under 1,600
+        # words; the structure is the room's job, so the brief only names it.
+        assert len(PROMPT.split()) < 1600
+
+    def test_the_move_s_craft_is_in_the_room_not_the_brief(self):
+        flat = SCENARIO.replace('" +\n  "', "")
+        assert "close this thread in one sentence that carries something it gave you" in flat
+        assert "never a summary of their answer" in flat
 
     def test_no_quoted_line_and_no_guest_in_the_new_text(self):
         for chunk in (self.LISTEN, self.REACT):

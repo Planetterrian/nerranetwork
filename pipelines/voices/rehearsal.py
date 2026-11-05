@@ -331,16 +331,25 @@ def requests_quote(value: str) -> str:
 def proposed_prompt(fixture: Dict[str, Any]) -> str:
     """What ``fire_interviews.compile_mira_prompt`` writes TODAY for this
     guest: the repo's prompt, the current lessons, the current blocks."""
-    return proposed_room(fixture)[0]
-
-
-def proposed_room(fixture: Dict[str, Any]) -> tuple:
-    """The proposed arm's prompt and its interview plan (Nov 5 2026), both
-    from the guest's real brief: what a live run row would carry today."""
-    from fire_interviews import compile_mira_prompt, interview_plan
+    from fire_interviews import compile_mira_prompt
     original = _original_guest(fixture)
-    prompt = compile_mira_prompt(original["interview"], original["app"], original["brief"])
-    return prompt, interview_plan(original["brief"])
+    return compile_mira_prompt(original["interview"], original["app"], original["brief"])
+
+
+def proposed_plan(fixture: Dict[str, Any]) -> Optional[list]:
+    """The proposed arm's interview plan (Nov 5 2026), from the guest's real
+    brief: what a live run row carries today. A brief that cannot be read is
+    no plan, said loudly: the room then runs as it did before."""
+    from fire_interviews import interview_plan
+    try:
+        plan = interview_plan(_original_guest(fixture)["brief"])
+    except Exception as exc:  # noqa: BLE001 — the room still runs, without a plan
+        print(f"::warning::no interview plan for fixture {fixture.get('id')}: {exc}")
+        return None
+    if len(plan) < 2:
+        print(f"::warning::fixture {fixture.get('id')}'s brief has {len(plan)} prepared "
+              "question(s); the room runs without a plan")
+    return plan
 
 
 def ensure_rehearsal_interview(fixture: Dict[str, Any], minutes: int) -> Dict[str, Any]:
@@ -1321,7 +1330,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if args.prompt_file:
         prompt = Path(args.prompt_file).read_text(encoding="utf-8")
     elif args.arm == "proposed":
-        prompt, plan = proposed_room(fixture)
+        prompt = proposed_prompt(fixture)
+        plan = proposed_plan(fixture)
     else:
         prompt = current_prompt(fixture)
     tools: Optional[list] = [] if args.tools == "none" else None
