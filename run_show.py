@@ -5276,6 +5276,9 @@ def run(args: argparse.Namespace) -> None:
                             max_unmatched_run=int(getattr(
                                 config.tts, "spoken_text_gate_max_unmatched_run", 40,
                             )),
+                            min_script_coverage=float(getattr(
+                                config.tts, "spoken_text_gate_min_script_coverage", 0.65,
+                            )),
                         )
                         if _gate_first is None:
                             _gate_first = _gate_report
@@ -5315,6 +5318,7 @@ def run(args: argparse.Namespace) -> None:
                     if _gate_report is not None:
                         metrics.record("spoken_text_opening_match", _gate_report.opening_match)
                         metrics.record("spoken_text_unmatched_run", _gate_report.longest_unmatched_run)
+                        metrics.record("spoken_text_script_coverage", _gate_report.script_coverage)
                         metrics.record("spoken_text_gate_reasons", list(_gate_report.reasons))
                         metrics.record("spoken_text_whisper_segments_dropped", _gate_report.segments_dropped)
                         metrics.record("spoken_text_whisper_loops_collapsed", _gate_report.loops_collapsed)

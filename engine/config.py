@@ -286,6 +286,9 @@ class TTSConfig:
     spoken_text_gate_retries: int = 1
     spoken_text_gate_min_opening_match: float = 0.5
     spoken_text_gate_max_unmatched_run: int = 40
+    # Nov 5 2026 (Peptides Weekly Ep008): audio that stops before the
+    # script does. ``engine.spoken_text_gate.DEFAULT_MIN_SCRIPT_COVERAGE``.
+    spoken_text_gate_min_script_coverage: float = 0.65
 
     # ---- Two-host dialogue mode (July 2026, dp_pod) ----
     # When True, the podcast script is speaker-labeled dialogue (one turn

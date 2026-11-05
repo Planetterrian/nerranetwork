@@ -33,6 +33,19 @@ Two measures, either one fails the gate:
   June is 22 (benchmark numbers Whisper writes as digits), so the
   threshold of 40 has roughly 2x margin on both sides.
 
+A third measure catches the opposite failure, audio that STOPS early:
+
+* ``script_coverage`` — the share of script words the aligned transcript
+  speaks. Peptides Weekly Ep008 (2026-11-05) derailed at a bracketed
+  chemical name ("sodium N-[8-(2-hydroxybenzoyl) amino caprylate"),
+  re-read its own opening for a few seconds and stopped: the last ~40% of
+  the script, the sign-off and the AI disclosure never reached the audio.
+  Its opening matched (0.93) and nothing foreign was spoken (run 19), so
+  both measures above passed. It scored 0.564; the lowest healthy English
+  episode since June scored 0.749 (n=2,016), so the floor of 0.65 has
+  ~0.1 margin on both sides. French dubs reach 0.65 legitimately, so the
+  floor is applied only where a caller passes it (the English master).
+
 Two Whisper artifacts are filtered BEFORE scoring, because a Whisper
 failure must never block an episode:
 
@@ -68,6 +81,10 @@ logger = logging.getLogger(__name__)
 DEFAULT_OPENING_WORDS = 30
 DEFAULT_MIN_OPENING_MATCH = 0.5
 DEFAULT_MAX_UNMATCHED_RUN = 40
+# Truncation floor (Nov 5 2026, Peptides Weekly Ep008): the share of the
+# script the aligned transcript speaks. Calibrated on the English master
+# only; the dub gate does not pass it.
+DEFAULT_MIN_SCRIPT_COVERAGE = 0.65
 # A single matched word inside a foreign passage ("hello", "the") does
 # not end the passage. Two consecutive matched words do.
 UNMATCHED_RUN_BRIDGE = 1
@@ -186,6 +203,17 @@ def opening_match(script_words: Sequence[str], spoken_words: Sequence[str],
     return round(matched / len(spoken), 3)
 
 
+def script_coverage(script_words: Sequence[str],
+                    spoken_words: Sequence[str]) -> float:
+    """Share of the script's words that the transcript speaks, in order."""
+    a = list(script_words)
+    if not a:
+        return 0.0
+    matcher = difflib.SequenceMatcher(None, a, list(spoken_words), autojunk=False)
+    matched = sum(block.size for block in matcher.get_matching_blocks())
+    return round(matched / len(a), 3)
+
+
 def longest_unmatched_run(script_words: Sequence[str],
                           spoken_words: Sequence[str],
                           bridge: int = UNMATCHED_RUN_BRIDGE,
@@ -239,6 +267,7 @@ class SpokenTextReport:
     spoken_words: int
     segments_dropped: int
     loops_collapsed: int
+    script_coverage: float = 1.0
     thresholds: dict = field(default_factory=dict)
 
     def summary(self) -> str:
@@ -247,6 +276,7 @@ class SpokenTextReport:
             f"spoken-text gate {verdict}",
             f"opening_match={self.opening_match:.2f}",
             f"longest_unmatched_run={self.longest_unmatched_run}",
+            f"script_coverage={self.script_coverage:.2f}",
         ]
         if self.reasons:
             parts.append("reasons=" + ",".join(self.reasons))
@@ -270,13 +300,15 @@ def check_spoken_text(
     opening_words: int = DEFAULT_OPENING_WORDS,
     min_opening_match: float = DEFAULT_MIN_OPENING_MATCH,
     max_unmatched_run: int = DEFAULT_MAX_UNMATCHED_RUN,
+    min_script_coverage: Optional[float] = None,
 ) -> SpokenTextReport:
     """Compare what was spoken (``segments`` from the Whisper JSON, or a
     plain ``transcript_text``) with the ``script_text`` sent to TTS.
 
     Prefer ``segments``: only they carry the timings the hallucination
     filter needs. ``transcript_text`` is the fallback for callers that
-    only have the ``.txt`` file.
+    only have the ``.txt`` file. ``min_script_coverage`` (None = not
+    enforced) fails audio that stops before the script does.
     """
     script_words = normalize_words(script_text)
     if segments is not None:
@@ -293,12 +325,15 @@ def check_spoken_text(
 
     opening = opening_match(script_words, spoken, opening_words) if spoken else 0.0
     run, snippet, position = longest_unmatched_run(script_words, spoken)
+    coverage = script_coverage(script_words, spoken) if spoken else 0.0
 
     if spoken and script_words:
         if opening < min_opening_match:
             reasons.append("opening_mismatch")
         if run >= max_unmatched_run:
             reasons.append("foreign_passage")
+        if min_script_coverage is not None and coverage < min_script_coverage:
+            reasons.append("script_not_spoken")
 
     return SpokenTextReport(
         passed=not reasons,
@@ -311,10 +346,12 @@ def check_spoken_text(
         spoken_words=len(spoken),
         segments_dropped=dropped,
         loops_collapsed=loops,
+        script_coverage=coverage,
         thresholds={
             "opening_words": opening_words,
             "min_opening_match": min_opening_match,
             "max_unmatched_run": max_unmatched_run,
+            "min_script_coverage": min_script_coverage,
         },
     )
 
