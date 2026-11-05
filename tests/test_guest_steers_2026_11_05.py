@@ -166,3 +166,47 @@ class TestTheTestRoomCarriesThePlan:
         assert seen["brief"] is brief
         plan = seen["row"]["plan"]
         assert [q["question"] for q in plan] == ["Where did it start?", "What changed?"]
+
+
+
+@needs_node
+class TestAPressWhileSheSpeaks:
+    """Nov 5 2026 (Patrick's test room): a press made while she talked waited
+    for the guest's answer to the question being left."""
+
+    def test_it_takes_her_turn_when_her_line_ends(self):
+        out = sim("steer_while_she_speaks")
+        assert out["eventsWhileSpeaking"] == []
+        assert out["events"] == ["create"]
+        assert "leave this subject" in out["lastInstructions"]
+        assert out["steerQueued"] is False
+
+    def test_the_guest_starting_to_talk_keeps_the_floor(self):
+        out = sim("steer_she_speaks_then_guest")
+        assert out["events"] == []
+        assert out["steerQueued"] is True
+
+
+class TestANoteIsQuiet:
+    def test_the_note_line_never_announces_itself(self):
+        start = SCENARIO.index("function topicSteer(text) {")
+        body = SCENARIO[start:SCENARIO.index("\n}\n", start)]
+        assert "wanted to get to" not in body
+        assert "never say that they sent it" in body
+        assert "follow-up" in body
+
+    def test_no_round_note_after_the_closing_thanks(self):
+        i = SCENARIO.index('trace("round", "asked again: "')
+        assert "if (roundClosed || closingThanksQueued) return;" in SCENARIO[i - 400:i]
+
+
+class TestThePageNeverLosesANote:
+    PAGE = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
+
+    def test_a_note_is_never_refused_by_the_cooldown(self):
+        fn = self.PAGE[self.PAGE.index("function sendFeedback(kind, text) {"):]
+        fn = fn[:fn.index("function onRoomMessage")]
+        assert 'kind !== "good" && kind !== "topic" && Date.now() < fbCooldown' in fn
+
+    def test_the_box_keeps_its_words_when_nothing_was_sent(self):
+        assert 'if (sendFeedback("topic", text)) input.value = "";' in self.PAGE

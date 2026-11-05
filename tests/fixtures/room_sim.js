@@ -1058,6 +1058,23 @@ if (which === "server_turns_advance_the_round") {
   out.lastInstructions = instructions[instructions.length - 1] || "";
   out.acks = __acksOut();
   out.feedback = run("guestFeedback");
+} else if (which === "steer_while_she_speaks" || which === "steer_she_speaks_then_guest") {
+  // Nov 5 2026 (Patrick's test room): a press made while she was talking
+  // waited for the guest to answer the question being left.
+  run("sessionInstructions = 'BRIEF: the guest runs a pharmacy.'; turnRequested = true;");
+  roomTurnStarts();
+  events.length = 0; notes.length = 0; instructions.length = 0;
+  ctx.__m = JSON.stringify({ nn: 1, kind: "move_on", text: "" });
+  run("miraSpeaking = true; onGuestFeedback(legs[0], __m);");
+  advance(4000);
+  out.eventsWhileSpeaking = events.slice();
+  miraFinishes("Boards of pharmacy as the credible voice. Has any board pushed back on what you're proposing?");
+  responseDone();
+  if (which === "steer_she_speaks_then_guest") run("inboundSpeaking = true; inboundSpokeAt = Date.now(); noteInboundStart();");
+  advance(1200);
+  out.events = events.slice();
+  out.lastInstructions = instructions[instructions.length - 1] || "";
+  out.steerQueued = run("!!guestSteer");
 } else if (which === "steer_wrap_up_button") {
   run("closingPermitted = false; turnRequested = true;");
   roomTurnStarts();
