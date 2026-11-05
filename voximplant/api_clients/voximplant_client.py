@@ -319,17 +319,26 @@ def read_back_scenario(scenario_name: str, expected_source: str) -> Dict[str, An
     source may keep its old time), so the check is the script itself.
 
     Nov 5 2026: the first real read-back (rehearsal 41953433703) failed on a
-    copy uploaded one second earlier. ``with_script`` went out as the form
-    value "True", and the comparison was byte-for-byte against a copy the
-    API may hand back re-encoded. It now asks with "true" and passes when the
+    copy uploaded one second earlier: the API returns the script only when
+    asked by ``scenario_id`` with ``with_script``, and the comparison was
+    byte-for-byte against a copy it may hand back re-encoded. It now finds
+    the id by name, asks for the script by id, and passes when the
     copy is identical OR carries this upload's build marker (the first line,
     a hash of the exact source sent); a mismatch prints where, never what."""
-    data = _call("GetScenarios", scenario_name=scenario_name, with_script="true")
+    data = _call("GetScenarios", scenario_name=scenario_name)
     rows = [r for r in (data.get("result") or [])
             if r.get("scenario_name") == scenario_name]
     if not rows:
         raise VoximplantError(f"read-back: no scenario named {scenario_name!r}")
     row = rows[0]
+    # The API returns the script only when the request names the scenario
+    # by id (rehearsal 41954692581 got 0 chars asking by name).
+    if row.get("scenario_id") is not None and not row.get("scenario_script"):
+        by_id = _call("GetScenarios", scenario_id=row["scenario_id"], with_script="true")
+        row = next((r for r in (by_id.get("result") or [])
+                    if r.get("scenario_id") == row["scenario_id"]), row)
+    if not row.get("scenario_script"):
+        print(f"read-back: no script in the row (keys: {sorted(row)})", flush=True)
     got = _normalised_script(row.get("scenario_script", ""))
     want = _normalised_script(expected_source)
     exact = got == want

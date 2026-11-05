@@ -150,7 +150,8 @@ class TestItIsRehearsed:
 class TestTheReadBackReadsBack:
     """Rehearsal 41953433703 (Nov 5): the first real candidate read-back
     failed on a copy uploaded one second earlier, so the early-wrap room was
-    never rehearsed. The proof is now this upload's build marker."""
+    never rehearsed; 41954692581 showed why (0 chars: the script comes back
+    only when asked by id). The proof is now this upload's build marker."""
 
     @staticmethod
     def _vc():
@@ -168,10 +169,20 @@ class TestTheReadBackReadsBack:
         monkeypatch.setattr(vc, "_call", fake_call)
         return vc, sent
 
-    def test_it_asks_for_the_script_in_the_api_s_spelling(self, monkeypatch):
-        vc, sent = self._fake(monkeypatch, "src")
-        vc.read_back_scenario("x", "src")
-        assert sent["GetScenarios"]["with_script"] == "true"
+    def test_it_asks_for_the_script_by_id(self, monkeypatch):
+        vc = self._vc()
+        calls = []
+
+        def fake_call(method, **params):
+            calls.append(params)
+            row = {"scenario_name": "x", "scenario_id": 7, "modified": "now"}
+            if params.get("scenario_id") == 7 and params.get("with_script") == "true":
+                row["scenario_script"] = "src"
+            return {"result": [row]}
+        monkeypatch.setattr(vc, "_call", fake_call)
+        assert vc.read_back_scenario("x", "src")["exact"] is True
+        assert calls[0] == {"scenario_name": "x"}
+        assert calls[1] == {"scenario_id": 7, "with_script": "true"}
 
     def test_a_re_encoded_copy_with_this_upload_s_marker_passes(self, monkeypatch):
         body = "const DASH = \"\u2014\";\n"
