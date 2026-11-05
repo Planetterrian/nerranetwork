@@ -137,3 +137,32 @@ class TestTheStudioAndTheWorker:
     def test_the_room_and_the_worker_accept_the_new_kinds(self):
         assert "repeat: true, wrap_up: true" in SCENARIO
         assert '["good", "move_on", "topic", "repeat", "wrap_up"]' in WORKER
+
+
+class TestTheTestRoomCarriesThePlan:
+    """Nov 5 2026: the person's test room compiled Mira's prompt with no brief,
+    so it carried no prepared questions and no interview plan."""
+
+    def test_the_invite_room_gets_the_latest_brief_and_its_plan(self, monkeypatch, tmp_path):
+        import sys
+        sys.path.insert(0, str(ROOT / "pipelines" / "voices"))
+        import rehearsal
+        brief = {"likely_questions": [{"question": "What changed?", "section": "core"},
+                                      {"question": "Where did it start?", "section": "opening"}]}
+        monkeypatch.setattr(rehearsal, "_source_application",
+                            lambda email: {"id": "a", "email": email, "name": "Some One"})
+        monkeypatch.setattr(rehearsal, "ensure_invite_interview",
+                            lambda src, m: {"interview": {"id": "iv", "show": "age_of_ai"}})
+        monkeypatch.setattr(rehearsal, "_latest_brief", lambda src: brief)
+        seen = {}
+        monkeypatch.setattr(rehearsal, "invite_prompt",
+                            lambda src, m, b=None: seen.setdefault("brief", b) and "PROMPT")
+        monkeypatch.setattr(rehearsal, "build_run_row",
+                            lambda **kw: seen.setdefault("row", kw) and {"grok_session_log": {"rehearsal": {}}})
+        monkeypatch.setattr(rehearsal, "create_run", lambda row: {"id": "run-1", **row})
+        monkeypatch.setattr(rehearsal, "wait_for_join", lambda run_id, m: {})
+        rehearsal.invite_one(email="someone@example.com", minutes=15, scenario="deployed",
+                             out_dir=tmp_path, wait_minutes=0, send=lambda *a: None)
+        assert seen["brief"] is brief
+        plan = seen["row"]["plan"]
+        assert [q["question"] for q in plan] == ["Where did it start?", "What changed?"]
