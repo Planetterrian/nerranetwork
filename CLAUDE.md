@@ -2003,7 +2003,7 @@ Review [`docs/reviews/guest_steers_2026_11_05.md`](docs/reviews/guest_steers_202
 ### The Age of AI: the shape of the hour (Nov 5 2026)
 
 Register `interview-plan-2026-11-05`; review [`docs/reviews/interview_structure_2026_11_05.md`](docs/reviews/interview_structure_2026_11_05.md); guards `tests/test_interview_plan_2026_11_05.py`.
-**The prepared questions are the running order** (`fire_interviews.interview_plan` → `grok_session_log.interview_plan`). **The room hands her the next one in words after two of her questions on a thread once its slot is due, or after five**, the first not yet reached; the guest and the close come first; no plan is the old room. ⚠️ AUDIO, the room.
+**The prepared questions are the running order** (`fire_interviews.interview_plan` → `grok_session_log.interview_plan`). **The room hands her the next one in words once its slot is due and the thread has had two questions and three minutes, or six and its minutes**; first not reached; guest and close first; no plan = old room. ⚠️ AUDIO, the room.
 
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 

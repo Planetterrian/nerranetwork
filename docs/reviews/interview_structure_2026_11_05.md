@@ -116,12 +116,52 @@ old time-check text.
   **Merge and deploy together, after a two-arm rehearsal PASS and one
   listen.** Without the room's hands, the brief alone still asks for two or
   three steps and a spoken move, but the structure is the room's job.
-- Nothing ships before Luke's room on Nov 5.
+- Nothing was meant to ship before Luke's room on Nov 5. The merge and
+  deploy came first (see below).
 
 The rehearsal report now shows, for each room, a "prepared questions" line
 and a "shape of the hour" section. Read those alongside the listen: did she
 close each thread with something it gave her, and did the moves sound like
 a host changing the subject or like a checklist?
+
+## The first rehearsal, and what changed after it
+
+The two-arm rehearsal of the first version (run 42055299259, Adrian, 30
+minutes) read FAIL. #1629 had already merged, and the scenario was deployed
+at 16:17 UTC, before the result was in.
+
+| metric | proposed | current |
+|---|---|---|
+| talking over | 4 | 0 |
+| self-answered turns | 8 | 5 |
+| guest words per answer (median) | 29 | 25 |
+| her turn length (median, s) | 4.7 | 3.8 |
+
+- **The comparison is confounded.** The current arm ran the room from
+  before #1623, and its closing round asked 1 of 7 questions. The
+  proposed arm asked all 7. `self_answered_turns` counts any two turns of
+  hers with no guest speech between them. Three of the round's re-asks
+  ("her turn asked nothing; … goes again") and the session hand-over at
+  24:01 produce that shape, as does a fast seven-question round for the
+  talking-over count.
+- **The real defect is pace.** She reached 4 of the 7 prepared questions
+  by herself, reading down the numbered list. The room's five-question cap
+  fired twice, at 9 and 12 minutes: with thirty-word answers, five
+  questions take about two minutes. Every question had been reached by
+  minute 12, and the thread after that ran for 22 of her questions before
+  the closing round.
+
+Changes:
+
+- **A thread is measured in minutes as well as questions.** No move is
+  made before the thread in play has had three minutes from its first
+  question (`PLAN_MIN_THREAD_MIN`). The cap is now six questions and
+  applies only after those minutes (`PLAN_MAX_THREAD_TURNS`).
+- **The brief no longer reads as a list to work down.** The prepared
+  questions are introduced as ones the room hands her when each part of
+  the hour is due. HOW TO LISTEN says to build on an answer and stay with
+  it, since a thread is a few minutes of real conversation. HOW TO REACT
+  offers a view of her own "now and then", rather than in every part.
 
 ## Readout
 

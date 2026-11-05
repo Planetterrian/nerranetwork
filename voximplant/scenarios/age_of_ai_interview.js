@@ -1093,12 +1093,14 @@ function takeGuestSteer() {
 // (grok_session_log.interview_plan, fire_interviews.interview_plan) and the
 // room spreads them across the time before the closing round. She asks the
 // first one herself (HOW TO OPEN). When the next one is due on the clock and
-// the thread in play has had at least PLAN_MIN_THREAD_TURNS of her questions,
-// or the thread has had PLAN_MAX_THREAD_TURNS whatever the clock says, the
+// the thread in play has had at least PLAN_MIN_THREAD_TURNS of her questions
+// and PLAN_MIN_THREAD_MIN minutes, or has had PLAN_MAX_THREAD_TURNS and its
+// minutes whatever the clock says, the
 // room hands her the next question IN WORDS for her next turn (never a
 // description of it) with one direction: close this thread with something it
 // gave you, say you are turning, ask it. Behind schedule, every thread gets
-// its two turns and the moves come sooner; nothing is dropped. A question
+// its two questions and three minutes and the moves come sooner; nothing is
+// dropped. A question
 // she reaches on her own counts as reached, and the room's next hand is the
 // first one not yet reached: none is asked twice and none is skipped.
 //
@@ -1109,13 +1111,15 @@ function takeGuestSteer() {
 const PLAN_MAX = 12;
 const PLAN_OPEN_MIN = 2;            // the opening question's slot ends here
 const PLAN_MIN_THREAD_TURNS = 2;    // a thread gets two of her questions before the room moves it
-const PLAN_MAX_THREAD_TURNS = 5;    // and at most five, whatever the clock says
+const PLAN_MIN_THREAD_MIN = 3;      // and three minutes of conversation, however short the answers
+const PLAN_MAX_THREAD_TURNS = 6;    // and at most six questions, once it has had its minutes
 const PLAN_OWN_OVERLAP = 0.6;       // her question carries this share of a prepared one's words
 const PLAN_TEXT_MAX = 400;
 let planCache = null;
 let planIndex = 0;                  // the prepared question in play (0 = the opening, hers)
 const planDone = { 0: true };       // index -> reached (by the room's hand or her own words)
 let planThreadTurns = 0;            // her questions on the thread in play
+let planThreadStartedAt = 0;        // when the thread in play got its first question of hers
 let planLongestThread = 0;
 let planMoves = 0;                  // moves the room handed her
 let planOwnMoves = 0;               // prepared questions she reached by herself
@@ -1178,12 +1182,23 @@ function planReachedCount() { return Object.keys(planDone).length; }
 function planMoveDue() {
   const k = planNext();
   if (k < 0) return "";
+  // Nov 5 2026 rehearsal (run 42055299259): with a guest who answers in
+  // thirty words, five questions took two minutes, the cap fired at minute
+  // nine and the plan was used up by minute twelve. A thread is measured in
+  // minutes of conversation as well as questions.
+  if (planThreadMinutes() < PLAN_MIN_THREAD_MIN) return "";
   if (planThreadTurns >= PLAN_MAX_THREAD_TURNS) return "the thread has had " + planThreadTurns + " questions";
   // The clock counts parts of the hour, not indices: the move to the third
   // part is due at the third slot whichever question fills it.
   const part = planReachedCount();
   if (planThreadTurns >= PLAN_MIN_THREAD_TURNS && minutesIn() >= planDueMin(part)) return "due at " + Math.round(planDueMin(part)) + " min";
   return "";
+}
+
+/** How long the thread in play has run, from its first question of hers. */
+function planThreadMinutes() {
+  if (!planThreadTurns || !planThreadStartedAt) return 0;
+  return (Date.now() - planThreadStartedAt) / 60000;
 }
 
 /** The words of prepared question k, for a turn of hers. */
@@ -1270,6 +1285,7 @@ function planNoteMiraLine(text) {
     planOwnMoves += 1;
     trace("plan", "she reached " + (k + 1) + "/" + interviewPlan().length + " herself at " + elapsedMin() + " min");
   }
+  if (planThreadTurns === 0) planThreadStartedAt = Date.now();   // a new thread starts here
   planThreadTurns += 1;
   if (planThreadTurns > planLongestThread) planLongestThread = planThreadTurns;
 }
