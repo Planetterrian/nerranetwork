@@ -1493,7 +1493,7 @@ function remember(who, text) {
     try { maybeAutoResearch(); }
     catch (err) { Logger.write("[aoa " + runId + "] auto research failed: " + err.message); }
     try {
-      if (closingRequired && !roundActive && !roundClosed && !isClosingSession()
+      if (closingRequired && !roundActive && !roundClosed && !isClosingSession() && !stopWithoutRound()
           && CLOSING_ROUND_RE.test(text || "")) startRound("she announced it", -1);
     } catch (err) { Logger.write("[aoa " + runId + "] round start check failed: " + err.message); }
   } else {
@@ -1514,7 +1514,10 @@ function guestWordsChecks(text) {
     noteResearchAsk(text);
     if (!guestAskedToStop && GUEST_STOP_RE.test(text || "")) {
       guestAskedToStop = true;
-      trace("close", "the guest asked to stop");
+      // Nov 5 2026: a round the clock had
+      // queued but not begun is not owed to a guest who has asked to stop.
+      if (!roundActive && roundPendingStart) { roundPendingStart = false; trace("close", "the guest asked to stop; the queued round is dropped"); }
+      else trace("close", "the guest asked to stop");
     }
     if (signedOffAt && !roundClosed && Date.now() - signedOffAt < SIGN_OFF_FAREWELL_MS &&
         GUEST_FAREWELL_RE.test(text || "")) {
@@ -2644,6 +2647,7 @@ function startTimeChecks() {
       // after they are back says where things stand.
       if (holdMode) return;
       if (roundClosed) return;   // the round is over; time means nothing now
+      if (stopWithoutRound()) return;   // the guest asked to stop; no note says otherwise
       const elapsed = elapsedMin();
       const remainMin = Math.max(0, plannedMin() - elapsed);
       // Sept 20 2026, Meridan Zerner. Mira ran a 45-minute interview for
@@ -2732,6 +2736,7 @@ function startTimeChecks() {
     roundPendingStart = roundPendingStart || roundDueOnTheClock();
     trace("time", "closing round required (scheduled note)" +
           (guestAskedToStop && !roundPendingStart ? "; the guest asked to stop, so no round" : ""));
+    if (stopWithoutRound()) return;   // no note hands her a round that is not coming
     const note = "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
       " minutes remain. Once the current answer has finished, the room will hand" +
       " you the closing questions one at a time; you add only a short reaction" +
@@ -2915,7 +2920,8 @@ function noteRoundQuestion(text) {
     // from minute 31 and she was saying goodbye at 34. A question she asks
     // herself is recorded (never asked again); the room starts the round
     // only when it is due (closingRequired), and starts it at the next one.
-    if (closingRequired && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()) {
+    if (closingRequired && !roundActive && !roundClosed && !isClosingSession() && !isHelloSession()
+        && !stopWithoutRound()) {
       startRound("she began it with " + label, ROUND_QUESTIONS.indexOf(q));
       return;
     }
@@ -3049,7 +3055,7 @@ let earlyClosings = 0;
 // is still answering: she hears the question out, then goes back into the
 // conversation and resumes the round when a time note says she may.
 function catchEarlyClosingRound(text) {
-  if (roomEnded || !grokAgent || closingPermitted || isClosingSession()) return;
+  if (roomEnded || !grokAgent || closingPermitted || guestAskedToStop || isClosingSession()) return;
   if (responseCancelledEarly) return;   // the room already stopped this sentence
   if (!CLOSING_ROUND_RE.test(text || "")) return;
   const elapsed = elapsedMin();
@@ -3090,7 +3096,8 @@ function catchEarlySignOff(text) {
   // A close that lands on an unanswered last-word question is wrong whatever
   // the clock says, so that rule runs first and on its own.
   if (catchClosingWithoutTheAnswer(text)) return;
-  if (closingPermitted) { catchSignOffBeforeTheRound(text); return; }
+  // Nov 5 2026: after a stop her goodbye stands whatever the clock says.
+  if (closingPermitted || guestAskedToStop) { catchSignOffBeforeTheRound(text); return; }
   if (!SIGN_OFF_RE.test(text || "")) return;
   const elapsed = elapsedMin();
   if (elapsed >= closingOpensAtMin()) return;
@@ -3133,7 +3140,7 @@ function catchEarlyCloseOnDelta(textSoFar) {
   const t = String(textSoFar || "");
   let why = "";
   if (SIGN_OFF_RE.test(t) && closingOnAnUnansweredQuestion()) why = "a sign-off on an unanswered last-word question";
-  else if (!closingPermitted && !isClosingSession() && elapsedMin() < closingOpensAtMin() - 1) {
+  else if (!closingPermitted && !guestAskedToStop && !isClosingSession() && elapsedMin() < closingOpensAtMin() - 1) {
     if (SIGN_OFF_RE.test(t)) why = "a sign-off at " + elapsedMin() + " min of " + plannedMin();
     else if (CLOSING_ROUND_RE.test(t) && !roundActive) why = "the closing round at " + elapsedMin() + " min of " + plannedMin();
   }
@@ -3245,6 +3252,20 @@ function catchSignOffBeforeTheRound(text) {
  */
 function roundDueOnTheClock() {
   return !roundActive && !roundClosed && !guestAskedToStop;
+}
+
+/**
+ * Nov 5 2026 (candidate rehearsal on the early_wrap fixture). The stop was
+ * heard at six minutes of fifteen, and still the early-close rule cut two of
+ * her goodbyes ("a sign-off at 6 min of 15"), the time notes went on telling
+ * her she was nowhere near the end, and four minutes later she asked the
+ * show's own question and the room ran all seven. A spoken stop with no round
+ * begun or queued means none of that: her goodbye stands, no note mentions a
+ * round, and a closing question she asks herself is only recorded. A typed
+ * wrap-up queues or starts its round, so it is never caught here.
+ */
+function stopWithoutRound() {
+  return guestAskedToStop && !roundActive && !roundPendingStart && !roundClosed;
 }
 
 /** A sign-off now would end an interview whose closing round is unfinished. */

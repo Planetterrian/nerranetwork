@@ -7896,7 +7896,11 @@ def _network_cost_ledger() -> dict:
         # hosting remainder absorbed ~$57 and the page claimed hosting was
         # 30% of spend — the largest line. Every measured bucket now lands
         # in the row its label names ("every language" is the dub tracks).
-        tts = float(rollup.get("tts") or 0) + float(rollup.get("multilingual") or 0)
+        # Nov 5 2026: the rollup gained Mira's live rooms (voice_agent) and
+        # their rehearsals, both Voice Agent minutes, and the remainder put
+        # hosting at 13%. They are voice spend and land in the voice row.
+        tts = (float(rollup.get("tts") or 0) + float(rollup.get("multilingual") or 0)
+               + float(rollup.get("voice_agent") or 0) + float(rollup.get("rehearsal") or 0))
         images = float(rollup.get("images") or 0) + float(rollup.get("motion") or 0)
         models = (float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
                   + float(rollup.get("review") or 0))
