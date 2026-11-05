@@ -1070,6 +1070,65 @@ if (which === "server_turns_advance_the_round") {
   out.askedToStop = run("guestAskedToStop");
   out.state = state();
   out.closingRequired = run("closingRequired");
+} else if (which.indexOf("plan_") === 0) {
+  // Nov 5 2026: the shape of the hour. Four prepared questions in a 45-minute
+  // room: the closing round opens at 30, so the moves fall due at 9, 16 and 23.
+  const PLAN = [
+    { question: "What made you start building boats in your garage?", curious: "how it began", section: "opening" },
+    { question: "How do you decide which hull design is worth testing at sea?", curious: "how you choose", section: "core" },
+    { question: "Where do the insurers and the regulators disagree about small autonomous boats?", curious: "", section: "tension" },
+    { question: "What will a harbour look like in ten years if your work succeeds?", curious: "", section: "forward" },
+  ];
+  ctx.__plan = which === "plan_none" ? null : PLAN;
+  run(`config = { planned_minutes: 45, mira_system_prompt: "BRIEF: the guest builds boats.",
+    grok_session_log: __plan ? { interview_plan: __plan } : {} };
+    planCache = null; firstJoinAt = Date.now() - 3 * 60 * 1000; closingPermitted = false;
+    turnRequested = true;`);   // her first line answers a turn the room asked for
+  const plan = function () { return run("({ planIndex, planThreadTurns, planMoves, planOwnMoves, planLongestThread })"); };
+  const turn = function (mira, guestMs) {
+    roomTurnStarts();
+    miraFinishes(mira);
+    guestSays("We tried it on the lake first, and it mostly worked.", guestMs || 30000);
+    advance(5000);
+    return { instructions: instructions[instructions.length - 1] || "", plan: plan() };
+  };
+  if (which === "plan_moves_on" || which === "plan_none") {
+    out.first = turn("How did the first boat come together?");
+    out.second = turn("What did that first one cost you?");
+    out.third = turn("And what happened next?", 5 * 60 * 1000);   // now past minute 9
+    out.after = turn("You turned the lake into a lab. I want to go somewhere else now: how do you choose a hull worth testing at sea?");
+    out.handover = run("handoverNote()");
+    out.minutes = run("minutesIn()");
+  } else if (which === "plan_max_thread") {
+    out.turns = [];
+    for (let i = 0; i < 6; i++) out.turns.push(turn("And question number " + i + " on the lake?", 10000));
+  } else if (which === "plan_own_ask") {
+    out.own = turn("I'm curious where insurers and regulators disagree about small autonomous boats?");
+    out.next = turn("What did the regulators say to that?", 14 * 60 * 1000);   // past minute 16, the third part
+    out.handover = run("handoverNote()");
+  } else if (which === "plan_yields") {
+    turn("How did the first boat come together?");
+    turn("What did that first one cost you?");
+    run("closingPermitted = true;");
+    out.closing = turn("And what happened next?", 6 * 60 * 1000);
+    run("closingPermitted = false;");
+    roomTurnStarts();
+    miraFinishes("Where did you test it?");
+    responseDone();
+    ctx.__m = JSON.stringify({ nn: 1, kind: "topic", text: "the sailing club" });
+    guestSays("The club lent us a mooring for the summer.", 20000);
+    run("onGuestFeedback(legs[0], __m);");
+    advance(5000);
+    out.steer = { instructions: instructions[instructions.length - 1] || "", plan: plan() };
+  } else if (which === "plan_move_on_press") {
+    roomTurnStarts();
+    miraFinishes("How did the first boat come together?");
+    responseDone();
+    ctx.__m = JSON.stringify({ nn: 1, kind: "move_on" });
+    run("onGuestFeedback(legs[0], __m);");
+    advance(4000);
+    out.press = { instructions: instructions[instructions.length - 1] || "", plan: plan() };
+  }
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

@@ -720,8 +720,11 @@ class TestSheDoesNotEndTheShowInTheMiddle:
         assert "then their last word as two separate questions" in self.PROMPT
 
     def test_she_follows_the_interesting_thing_down(self):
-        assert "Then the next question one step down" in self.PROMPT
-        assert "go back to the best thing they said and go down from there" in self.PROMPT
+        # Nov 5 2026 (tests/test_interview_plan_2026_11_05.py): still down, two
+        # or three steps, then the next prepared subject, out loud.
+        assert "go one step down" in self.PROMPT
+        assert "Two or three steps is a thread." in self.PROMPT
+        assert "go back to the best thing they said and open it from a new side" in self.PROMPT
 
     def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
         # Sept 29 2026 (Chad Law): still asked, now in service of the subject.

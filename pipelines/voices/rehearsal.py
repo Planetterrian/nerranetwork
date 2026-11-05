@@ -331,9 +331,16 @@ def requests_quote(value: str) -> str:
 def proposed_prompt(fixture: Dict[str, Any]) -> str:
     """What ``fire_interviews.compile_mira_prompt`` writes TODAY for this
     guest: the repo's prompt, the current lessons, the current blocks."""
-    from fire_interviews import compile_mira_prompt
+    return proposed_room(fixture)[0]
+
+
+def proposed_room(fixture: Dict[str, Any]) -> tuple:
+    """The proposed arm's prompt and its interview plan (Nov 5 2026), both
+    from the guest's real brief: what a live run row would carry today."""
+    from fire_interviews import compile_mira_prompt, interview_plan
     original = _original_guest(fixture)
-    return compile_mira_prompt(original["interview"], original["app"], original["brief"])
+    prompt = compile_mira_prompt(original["interview"], original["app"], original["brief"])
+    return prompt, interview_plan(original["brief"])
 
 
 def ensure_rehearsal_interview(fixture: Dict[str, Any], minutes: int) -> Dict[str, Any]:
@@ -380,9 +387,11 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
                   prompt: str, minutes: int, turn_silence_ms: Optional[int],
                   reasoning_effort: str, tools: Optional[list],
                   scenario: str = "deployed", with_hold: bool = False,
-                  early_wrap: bool = False) -> Dict[str, Any]:
+                  early_wrap: bool = False, plan: Optional[list] = None) -> Dict[str, Any]:
     """The interview_runs row for one rehearsal room. The scenario reads the
-    same columns a live run carries; the only marker is session_kind."""
+    same columns a live run carries; the only marker is session_kind. A
+    ``plan`` (fire_interviews.interview_plan) rides grok_session_log as it
+    does on a live run; the current arm carries none, as before."""
     from fire_interviews import MIRA_TOOLS, keyterms_for, room_clips, turn_detection
     from common import cohost_name
     from shows import show_for
@@ -420,6 +429,8 @@ def build_run_row(*, interview: Dict[str, Any], arm: str, fixture: Dict[str, Any
             "early_wrap": bool(early_wrap),
         }},
     }
+    if plan and len(plan) > 1:
+        row["grok_session_log"]["interview_plan"] = plan
     if reasoning_effort:
         row["reasoning_effort"] = reasoning_effort
     return row
@@ -681,13 +692,14 @@ def run_one(*, arm: str, fixture: Dict[str, Any], minutes: int, prompt: str,
             turn_silence_ms: Optional[int], reasoning_effort: str,
             tools: Optional[list], cough_clip: str, out_dir: Path,
             index: int, scenario: str = "deployed", with_hold: bool = False,
-            early_wrap: bool = False) -> Path:
+            early_wrap: bool = False, plan: Optional[list] = None) -> Path:
     """One room: create the run, send in the fixture, wait, measure, write."""
     pair = ensure_rehearsal_interview(fixture, minutes)
     row = build_run_row(interview=pair["interview"], arm=arm, fixture=fixture,
                         prompt=prompt, minutes=minutes, turn_silence_ms=turn_silence_ms,
                         reasoning_effort=reasoning_effort, tools=tools,
-                        scenario=scenario, with_hold=with_hold, early_wrap=early_wrap)
+                        scenario=scenario, with_hold=with_hold, early_wrap=early_wrap,
+                        plan=plan)
     run = create_run(row)
     logger.info("rehearsal run %s (%s, %s) created", run["id"], arm, fixture["id"])
     persona = fixture_persona(fixture)
@@ -988,6 +1000,12 @@ def room_log(trace: List[Dict[str, Any]], transcript: str = "") -> Dict[str, Any
         # started, findings handed to her, findings that arrived too late).
         "research": [{"at": _clock(at(i)), "line": d}
                      for i, (k, d) in enumerate(kinds) if k == "research"],
+        # Nov 5 2026: the shape of the hour, the prepared questions the room
+        # moved her through, and its own count at the end of the room.
+        "plan": [{"at": _clock(at(i)), "line": d}
+                 for i, (k, d) in enumerate(kinds) if k == "plan"],
+        "plan_summary": next((d for k, d in reversed(kinds)
+                              if k == "plan" and d.startswith("reached ")), None),
         "round": closing_round(events),
         "round_lines": [{"at": _clock(at(i)), "line": d}
                         for i, (k, d) in enumerate(kinds) if k in ("round", "close")],
@@ -1133,6 +1151,12 @@ def room_markdown(record: Dict[str, Any]) -> str:
             if q.get("late"):
                 heard += " (**late**)"
             out.append(f"| {q['question']} | {q.get('handed_at') or '—'} | {heard} |")
+    if log.get("plan_summary"):
+        out.append(f"- prepared questions: {log['plan_summary']}")
+    if log.get("plan"):
+        out += ["", "<details><summary>the shape of the hour, as the room traced it</summary>", ""]
+        out += [f"    {x['at']}  {x['line']}" for x in log["plan"]]
+        out += ["", "</details>"]
     if log.get("research"):
         out += ["", "<details><summary>quiet research, as the room traced it</summary>", ""]
         out += [f"    {x['at']}  {x['line']}" for x in log["research"]]
@@ -1293,10 +1317,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
         print(f"unknown fixture {args.fixture!r}; known: {', '.join(sorted(fixtures))}",
               file=sys.stderr)
         return 2
+    plan: Optional[list] = None
     if args.prompt_file:
         prompt = Path(args.prompt_file).read_text(encoding="utf-8")
     elif args.arm == "proposed":
-        prompt = proposed_prompt(fixture)
+        prompt, plan = proposed_room(fixture)
     else:
         prompt = current_prompt(fixture)
     tools: Optional[list] = [] if args.tools == "none" else None
@@ -1310,7 +1335,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
                     turn_silence_ms=args.turn_silence_ms, reasoning_effort=args.reasoning_effort,
                     tools=tools, cough_clip=args.cough_clip or "", out_dir=out_dir, index=i,
                     scenario=args.scenario, with_hold=args.with_hold,
-                    early_wrap=args.early_wrap)
+                    early_wrap=args.early_wrap, plan=plan)
         except RoomsRefused as exc:
             print(f"::error::{exc}; no further room was placed")
             return 3

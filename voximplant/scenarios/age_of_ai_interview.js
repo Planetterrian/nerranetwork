@@ -831,6 +831,10 @@ const MOVE_ON_STEER_TAIL =
   " most; if they did not, do not react. Then ask one question on a clearly different" +
   " subject from your brief that you have not covered yet: not a follow-up, not another" +
   " angle on the same subject, and never say that they asked to move on.";
+const PLAN_MOVE_ON_TAIL =
+  " In this turn, if they answered your last question, react in one short sentence at" +
+  " most; if they did not, do not react. Then turn to the next subject you prepared, and" +
+  " never say that they asked to move on. ";
 const REPEAT_STEER_HEAD =
   "[GUEST FEEDBACK, for this turn only; do not read it aloud and do not mention it] The" +
   " guest has asked, privately, to hear your last question again.";
@@ -942,7 +946,10 @@ function onGuestFeedback(leg, raw) {
     feedbackAck(leg, kind, holdMode ? "hold" : "closing");
     return;
   }
-  guestSteer = { line: steerLine(kind, text), leg: leg, kind: kind, index: guestFeedback.length - 1 };
+  // Nov 5 2026: with a plan, "move on" hands her the next prepared subject in words.
+  const planK = kind === "move_on" ? planNext() : -1;
+  guestSteer = { line: planK >= 0 ? withLastQuestion(MOVE_ON_STEER_HEAD, PLAN_MOVE_ON_TAIL + planQuestionLine(planK))
+    : steerLine(kind, text), leg: leg, kind: kind, index: guestFeedback.length - 1, plan: planK };
   trace("feedback", leg.role + ": " + (kind === "topic" ? "topic (" + text.length + " chars)" : kind.replace("_", " ")) +
     "; at her next turn");
   feedbackAck(leg, kind, "queued");
@@ -1040,8 +1047,224 @@ function takeGuestSteer() {
   if (guestFeedback[steer.index]) guestFeedback[steer.index].applied = true;
   trace("feedback", steer.kind.replace("_", " ") + " applied at her turn");
   feedbackAck(steer.leg, steer.kind, "applied");
+  if (steer.plan >= 0) planHanded(steer.plan, "the guest moved on");
+  else if (steer.kind === "topic" || steer.kind === "move_on") planThreadTurns = 0;   // their subject is the new thread
   const base = sessionInstructions || (config && config.mira_system_prompt) || "";
   return (base ? base + "\n\n" : "") + steer.line;
+}
+
+// ---------------------------------------------------------------------------
+// The shape of the hour (Nov 5 2026)
+// ---------------------------------------------------------------------------
+//
+// Patrick, after Blaine's room: "what Mira is lacking is a little more
+// structure to the interview with more prepared questions versus just asking
+// a question then repeating a short summary and continuing on the same
+// thread. A good interviewer usually knows when to move on and change the
+// subject." The record agreed: across the nine rooms before it she reached 9
+// of 63 prepared questions, and most rooms were one thread followed down for
+// half an hour, because her brief told her to ask "one step down" after every
+// answer and nothing in the room ever said a thread had had its turns.
+//
+// The prepared questions now arrive in running order on the run row
+// (grok_session_log.interview_plan, fire_interviews.interview_plan) and the
+// room spreads them across the time before the closing round. She asks the
+// first one herself (HOW TO OPEN). When the next one is due on the clock and
+// the thread in play has had at least PLAN_MIN_THREAD_TURNS of her questions,
+// or the thread has had PLAN_MAX_THREAD_TURNS whatever the clock says, the
+// room hands her the next question IN WORDS for her next turn (never a
+// description of it) with one direction: close this thread with something it
+// gave you, say you are turning, ask it. Behind schedule, every thread gets
+// its two turns and the moves come sooner; nothing is dropped. A question
+// she reaches on her own counts as reached, and the room's next hand is the
+// first one not yet reached: none is asked twice and none is skipped.
+//
+// The guest outranks the plan: a pending press, a hold, the closing round and
+// a guest who asked to stop all come first, and a move a barge-in cancels is
+// not handed again (the guest took the floor; the next move follows the
+// thread they opened). The trace carries indices and reasons, never words.
+const PLAN_MAX = 12;
+const PLAN_OPEN_MIN = 2;            // the opening question's slot ends here
+const PLAN_MIN_THREAD_TURNS = 2;    // a thread gets two of her questions before the room moves it
+const PLAN_MAX_THREAD_TURNS = 5;    // and at most five, whatever the clock says
+const PLAN_OWN_OVERLAP = 0.6;       // her question carries this share of a prepared one's words
+const PLAN_TEXT_MAX = 400;
+let planCache = null;
+let planIndex = 0;                  // the prepared question in play (0 = the opening, hers)
+const planDone = { 0: true };       // index -> reached (by the room's hand or her own words)
+let planThreadTurns = 0;            // her questions on the thread in play
+let planLongestThread = 0;
+let planMoves = 0;                  // moves the room handed her
+let planOwnMoves = 0;               // prepared questions she reached by herself
+let planTurnText = "";              // the instructions of the move waiting for her next turn
+let planTurnIndex = -1;
+
+function cleanPlanText(raw) {
+  return String(raw || "").replace(/[\u0000-\u001f\u007f“”"\[\]{}<>]/g, " ")
+    .replace(/\s+/g, " ").trim().slice(0, PLAN_TEXT_MAX);
+}
+
+/** The prepared questions in running order, from the run row ([] = no plan). */
+function interviewPlan() {
+  if (planCache) return planCache;
+  if (!config) return [];
+  const raw = config.grok_session_log && config.grok_session_log.interview_plan;
+  const out = [];
+  if (Array.isArray(raw)) {
+    for (let i = 0; i < raw.length && out.length < PLAN_MAX; i++) {
+      const item = raw[i] || {};
+      const q = cleanPlanText(typeof item === "string" ? item : item.question);
+      if (q) out.push({ question: q, curious: cleanPlanText(item.curious) });
+    }
+  }
+  planCache = out;
+  return out;
+}
+
+function planOn() {
+  return interviewPlan().length > 1 && !isHelloSession() && !isClosingSession();
+}
+
+function minutesIn() {
+  return (Date.now() - (firstJoinAt || Date.now())) / 60000;
+}
+
+/** The minute the move to prepared question k falls due. */
+function planDueMin(k) {
+  const n = interviewPlan().length;
+  const slot = Math.max(1, (closingOpensAtMin() - PLAN_OPEN_MIN) / Math.max(1, n));
+  return PLAN_OPEN_MIN + k * slot;
+}
+
+/** Nothing outranks the guest, and nothing runs into the close. */
+function planPaused() {
+  return holdMode || roundActive || roundPendingStart || roundClosed || closingPermitted ||
+    closingThanksQueued || stopWithoutRound() || !!guestSteer;
+}
+
+/** The first prepared question not yet reached, or -1 when the plan has run out. */
+function planNext() {
+  if (!planOn() || planPaused()) return -1;
+  for (let k = 0; k < interviewPlan().length; k++) if (!planDone[k]) return k;
+  return -1;
+}
+
+function planReachedCount() { return Object.keys(planDone).length; }
+
+/** Has the thread in play had its turns, and is the next question due? */
+function planMoveDue() {
+  const k = planNext();
+  if (k < 0) return "";
+  if (planThreadTurns >= PLAN_MAX_THREAD_TURNS) return "the thread has had " + planThreadTurns + " questions";
+  // The clock counts parts of the hour, not indices: the move to the third
+  // part is due at the third slot whichever question fills it.
+  const part = planReachedCount();
+  if (planThreadTurns >= PLAN_MIN_THREAD_TURNS && minutesIn() >= planDueMin(part)) return "due at " + Math.round(planDueMin(part)) + " min";
+  return "";
+}
+
+/** The words of prepared question k, for a turn of hers. */
+function planQuestionLine(k) {
+  const item = interviewPlan()[k];
+  return "Ask this question, in these words or very close to them: “" + item.question + "”" +
+    (item.curious ? " (what you want to find out: " + item.curious + ")" : "") + ".";
+}
+
+const PLAN_MOVE_HEAD =
+  "[ROOM, for this turn only; do not read it aloud and do not mention it] This thread has" +
+  " had its turns and the next subject you prepared is due. In this turn: if they just" +
+  " asked you something, answer it first in a sentence or two. Then close this thread in" +
+  " one sentence that carries something it gave you (a connection, a consequence, where" +
+  " you see it differently), never a summary of their answer. Then say, in your own words" +
+  " and differently each time, that you want to turn to something else. ";
+
+/** Queue the move for her next turn (decideTurn, when it is due). */
+function queuePlanMove(reason) {
+  const k = planNext();
+  if (k < 0 || nextTurnInstructions) return false;
+  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+  planTurnText = (base ? base + "\n\n" : "") + PLAN_MOVE_HEAD + planQuestionLine(k);
+  planTurnIndex = k;
+  nextTurnInstructions = planTurnText;
+  trace("plan", "move to " + (k + 1) + "/" + interviewPlan().length + " queued (" + reason + ")");
+  return true;
+}
+
+/** A turn carrying prepared question k has gone to her. */
+function planHanded(k, why) {
+  if (planDone[k]) return;
+  planDone[k] = true;
+  planIndex = k;
+  planThreadTurns = 0;
+  planMoves += 1;
+  trace("plan", "handed " + (k + 1) + "/" + interviewPlan().length + " at " + elapsedMin() + " min (" + why + ")");
+}
+
+/** requestTurn's bookkeeping: did the turn now going out carry the move? */
+function planTurnSent(instructions) {
+  if (planTurnIndex >= 0 && planTurnText && instructions === planTurnText) planHanded(planTurnIndex, "the room");
+  planTurnText = "";
+  planTurnIndex = -1;
+}
+
+const PLAN_STOPWORDS = { about: 1, after: 1, again: 1, been: 1, being: 1, could: 1, does: 1, from: 1,
+  have: 1, into: 1, just: 1, like: 1, more: 1, most: 1, only: 1, other: 1, over: 1, some: 1,
+  than: 1, that: 1, their: 1, them: 1, then: 1, there: 1, these: 1, they: 1, this: 1, those: 1,
+  what: 1, when: 1, where: 1, which: 1, while: 1, will: 1, with: 1, would: 1, your: 1, you: 1,
+  were: 1, want: 1, tell: 1, think: 1, thing: 1, things: 1, really: 1, people: 1 };
+function planWords(text) {
+  const out = {};
+  (String(text || "").toLowerCase().match(/[a-z][a-z'\-]{3,}/g) || []).forEach(function (w) {
+    if (!PLAN_STOPWORDS[w]) out[w.replace(/(ing|ed|es|s)$/, "")] = true;
+  });
+  return out;
+}
+
+/** Which later prepared question (if any) a line of hers asks, by its words. */
+function planQuestionAsked(text) {
+  const said = planWords(text);
+  const plan = interviewPlan();
+  for (let k = plan.length - 1; k > 0; k--) {
+    if (planDone[k]) continue;
+    const want = Object.keys(planWords(plan[k].question));
+    if (want.length < 4) continue;
+    const shared = want.filter(function (w) { return said[w]; }).length;
+    if (shared / want.length >= PLAN_OWN_OVERLAP) return k;
+  }
+  return -1;
+}
+
+/** A line of hers: one more question on the thread, or a prepared one reached. */
+function planNoteMiraLine(text) {
+  if (!planOn() || String(text || "").indexOf("?") < 0) return;
+  if (roundActive || roundClosed || closingThanksQueued) return;
+  if (minutesIn() < PLAN_OPEN_MIN && planIndex === 0) return;   // the hello and the opening
+  const k = planQuestionAsked(text);
+  if (k > 0) {
+    planDone[k] = true;
+    planIndex = k;
+    planThreadTurns = 0;
+    planOwnMoves += 1;
+    trace("plan", "she reached " + (k + 1) + "/" + interviewPlan().length + " herself at " + elapsedMin() + " min");
+  }
+  planThreadTurns += 1;
+  if (planThreadTurns > planLongestThread) planLongestThread = planThreadTurns;
+}
+
+/** Where the plan stands, for the next session's handover note. */
+function planHandoverLine() {
+  if (!planOn()) return "";
+  const n = interviewPlan().length;
+  const done = Object.keys(planDone).map(function (k) { return Number(k) + 1; }).sort(function (a, b) { return a - b; });
+  return "The room hands you the prepared questions one subject at a time; you are on number " +
+    (planIndex + 1) + " of " + n + ", and numbers " + done.join(", ") + " have been asked: never ask them again.\n";
+}
+
+/** One line for the end of the room. */
+function planSummary() {
+  if (!planOn()) return null;
+  return { questions: interviewPlan().length, reached: planReachedCount(), moves: planMoves,
+    own: planOwnMoves, longest_thread: planLongestThread };
 }
 
 /** Her audio is still playing out of the buffer. */
@@ -1565,6 +1788,8 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
     try { noteRoundTurnWithoutQuestion(text); }
     catch (err) { Logger.write("[aoa " + runId + "] round turn check failed: " + err.message); }
+    try { planNoteMiraLine(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] plan check failed: " + err.message); }
     // In a hold she speaks only her check-in; the reply window runs from the
     // end of that line, not from the moment the room asked for it.
     if (holdMode && holdCheckInAt) holdCheckInAt = Date.now();
@@ -1683,6 +1908,7 @@ function requestTurn(agent) {
   turnRequested = true;
   if (closingThanksQueued) closingThanksSent = true;
   const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk();
+  planTurnSent(instructions);
   const body = instructions ? { response: { instructions: instructions } } : {};
   nextTurnInstructions = "";
   turnRoundLabel = roundTurnRequested;
@@ -1787,6 +2013,11 @@ function decideTurn() {
     startRound("the answer in progress ended");
     return;
   }
+  // Nov 5 2026: the shape of the hour. A thread that has had its turns moves on.
+  if (spoke) {
+    const due = planMoveDue();
+    if (due) queuePlanMove(due);
+  }
   requestTurn(grokAgent);
 }
 
@@ -1824,6 +2055,7 @@ function handoverNote() {
       ? "Closing questions already asked and answered in this interview, never" +
         " to be asked again: " + Object.keys(roundAsked).join("; ") + ".\n"
       : "") +
+    planHandoverLine() +
     (said ? "Here is the conversation so far:\n" + said + "\n" : "") +
     "=== END HANDOVER ===\n";
 }
@@ -2755,13 +2987,19 @@ function startTimeChecks() {
           " not ask a final question, do not thank her for the conversation" +
           " and do not say anything about the recording finishing. You have" +
           " about " + left + " more minutes of real questions to ask before" +
-          " any of that. If you have reached the end of the prepared" +
+          " any of that. " + (planNext() >= 0
+            // Nov 5 2026: with a plan the room hands her the next subject;
+            // "the next question down" is what kept one thread for half an hour.
+            ? "The room hands you your next prepared question when this thread" +
+              " has had its turns; until then follow what they are telling you." +
+              " If a tangent has run on, bring it back now, out loud."
+            : "If you have reached the end of the prepared" +
           " questions, that is normal and early: go back to the subject they" +
           " came for. If any point under THE SUBJECT THEY CAME FOR has not" +
           " been reached yet, go there next; otherwise take the most" +
           " interesting thing they have said about that subject and ask the" +
           " next question down from it. If the last few minutes have been on" +
-          " a tangent, bring it back now, out loud (Chad Law, Sept 24 2026)." +
+          " a tangent, bring it back now, out loud (Chad Law, Sept 24 2026).") +
           " One question per turn, and let the answer finish.";
       } else if (remainMin > closingRoundMin()) {
         if (!closingPermitted) {
@@ -3779,6 +4017,9 @@ async function endRoom(reason) {
    roundRepromptTimer, holdTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
+  const plan = planSummary();
+  if (plan) trace("plan", "reached " + plan.reached + "/" + plan.questions + "; room moves " + plan.moves +
+    ", hers " + plan.own + "; longest thread " + plan.longest_thread + " questions");
   if (miraRecorder) { try { miraRecorder.stop(); } catch (ignored) {} }
   if (mixRecorder) { try { mixRecorder.stop(); } catch (ignored) {} }
   // Oct 27 2026: tell each page the room is closing, and why, before hanging
