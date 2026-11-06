@@ -1,0 +1,58 @@
+# Collingwood Weekly
+> **A dozen gold bars were seized in a Collingwood OPP probe that charged two people.**
+
+**What You Need to Know:** Collingwood OPP charged two people after a months-long drug trafficking probe that seized a dozen gold bars, weapons and cash, with search warrants for homes in Collingwood, Midland and other Ontario locations. Grey County is raising winter shelter capacity and telling drivers how to share the road with plows. Wasaga Beach’s Beach Drive remains closed from Spruce Street to 3rd Street while that rebuild continues.
+
+### The Week's Stories
+**Dozen gold bars, weapons and drugs seized during widespread probe: BarrieToday**
+Collingwood OPP led a months-long drug trafficking investigation that involved search warrants for homes in Collingwood, Midland and other locations across Ontario. Officers seized a dozen gold bars, guns, two crossbows, 29 cell phones, weapons, drugs and cash. Kawartha 411 reported that two Peterborough residents were charged. Barrie 360 described a massive seizure in the probe led by Collingwood OPP. The people charged are accused, not convicted. Source: [barrietoday.com](https://www.barrietoday.com/police-beat/dozen-gold-bars-weapons-and-drugs-seized-during-widespread-probe-opp-12982808) Source: [midlandtoday.ca](https://www.midlandtoday.ca/police-beat/gold-bars-guns-crossbows-cash-seized-during-drug-raids-12983011) Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/police-beat/12-gold-bars-29-cell-phones-2-crossbows-seized-during-drug-trafficking-arrests-12982791) Source: [kawartha411.ca](https://www.kawartha411.ca/2026/11/05/two-peterborough-residents-charged-in-collingwood-opp-drug-investigation/) Source: [barrie360.com](https://barrie360.com/collingwood-opp-ontario-drug-trafficking-investigation-seizures-2026/)
+
+**Beach Drive Construction Update: Town of Wasaga Beach**
+Beach Drive remains closed from Spruce Street to 3rd Street. The town says Beach Area 1 can still be reached from the Jenetta Street parking area, the Spruce Street lot, the 3rd Street lot (from 2nd Street and 3rd Street), the 4th Street lot and the Nancy Lot on Mosley Street. The Playland parking lot’s pedestrian crossing and beach access are closed for the year; parking, public washrooms and the municipal food-truck area there remain open. A wide path on 3rd Street, a mobility mat and a path to the municipal picnic area are the access the town describes for people who need it. The rebuild raises the road by about 5 feet, roughly 1.5 metres, after repeated flooding, and the province is partially funding the upgrade at about $10.9 million. The update said roundabout remediation on Mosley Street will begin and bring traffic disruptions, while paver, curb, sidewalk, grading and electrical work continues on Beach Drive. Source: [wasagabeach.com](https://www.wasagabeach.com/news/posts/beach-drive-construction-update-october-30-2026/)
+
+**Gbay Girls Give $44K to Georgian Bay charities: CTV News**
+Gbay Girls gave $44,000 to Georgian Bay charities. CTV News reported the gift this week. Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/article/gbay-girls-give-44k-to-georgian-bay-charities/)
+
+**Gala event raises over $345k for Brightshores Meaford Hospital: CollingwoodToday**
+A gala raised over $345,000 for Brightshores Meaford Hospital. CollingwoodToday reported the total. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/gala-event-raises-over-345k-for-brightshores-meaford-hospital-12974194)
+
+**Collingwood unveils veteran's crosswalk to honour service and sacrifice: CTV News**
+Collingwood has unveiled a veteran’s crosswalk to honour service and sacrifice. CTV News also described an interactive reminder of that sacrifice, and Simcoe.com headlined the crosswalk as ready in time for Remembrance Day. Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/video/2026/11/02/collingwood-unveils-veterans-crosswalk-to-honour-service-and-sacrifice/) Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/article/collingwood-residents-now-have-a-interactive-reminder-of-the-ultimate-sacrifice/) Source: [simcoe.com](https://www.simcoe.com/news/collingwood-wgoh-crosswalk/article_efeac00b-3036-5c18-8a0e-d885470e75d2.html)
+
+**Coroner's inquest called into Penetang superjail inmate's death: MidlandToday**
+A coroner’s inquest has been called into the death of Meaford resident Tanya Hornjakov. MidlandToday reported she died in hospital after being transferred from the Central North Correctional Centre four years ago; the headline identifies the case with the Penetang superjail. Source: [midlandtoday.ca](https://www.midlandtoday.ca/court/coroners-inquest-called-into-penetang-superjail-inmates-death-12980448)
+
+### Council & County
+**Grey County Tells Drivers to Get Ready for Winter: The Owen Sound Current**
+Grey County says its plows, salt domes and operators are ready, and it wants drivers in winter tires with a kit that includes a shovel, blanket, booster cables and a flashlight. Plows travel at 25 km/h to 60 km/h, and the county never recommends passing one. In a five-vehicle crash on Grey Road 14 in Southgate in January, whiteout conditions contributed to a collision that sent a plow operator to hospital. The county says drivers should not go around a barricade, should pull into a lot or driveway rather than stop on the road, and can check conditions, a map and cameras at roads.grey.ca. Stranded vehicles can be reported at 519-376-7337; anyone in danger should call 911. Voting on plow names runs until Friday, November 6 at ConnectGrey.ca and needs a registered account. The county received more than 650 suggestions and shortlisted names including Sled Zeppelin, Darth Blader, Frostadamous and Lady Penelope Plowington, Duchess of Drift; winners are to be announced November 10. Source: [owensoundcurrent.com](https://www.owensoundcurrent.com/p/grey-county-tells-drivers-to-get)
+
+**Have your say about Simcoe County District School Board policies: BarrieToday**
+The Simcoe County District School Board has a policy consultation open. BarrieToday reported the current period runs until December 4. Source: [barrietoday.com](https://www.barrietoday.com/local-news/have-your-say-about-simcoe-county-district-school-board-policies-12972490)
+
+**Notice of Construction: Schoonertown Bridge Expansion Joint Seal Replacement: Town of Wasaga Beach**
+The contract for Schoonertown Bridge expansion-joint seal replacement was scheduled to start November 2, 2026, weather permitting. The work is removal of the existing seals, cleaning of the joints and installation of new seals, with through traffic kept and only short lane reductions. The town anticipates one to two weeks, depending on weather. Contacts named by the town are Steve Empey, contract administrator at Ainley Group, and Mike Pinicivero, manager of engineering services. Source: [wasagabeach.com](https://www.wasagabeach.com/news/posts/notice-of-construction-schoonertown-bridge-expansion-joint-seal-replacement/)
+
+### The Closer Look
+**Grey County Increases Motel Rooms for Winter Shelter Program: The Owen Sound Current**
+Grey County is moving its short-term shelter program to winter operations, with an average of 47 motel rooms available per night, up from 44 in last year’s winter announcement. Those rooms include the county-owned and operated former motel in Owen Sound and other motels in Grey County. Bayshore Broadcasting said that Owen Sound building is a former motel on 9th Avenue East, converted into short-term housing. Capacity is typically increased from November 1 to March 31 and may be adjusted depending on temperatures and conditions.
+
+The county-owned motel entered the program after Grey County council, in January 2024, directed staff to finalize the purchase of the Diamond Motor Inn at 713 9th Avenue East for $3.05 million. At the time the program cost about $120 a room per night, and the purchase was projected to lower that to $52. In 2025 the county provided 9,324 nights of short-term housing. The program supported 366 unique adults and 59 youth aged 16 and younger. The average length of stay was 25 days. In 2025, 126 households moved from the program into self-contained accommodations when their stay ended. The Owen Sound Current reported in January that 155 households in Grey County were recorded as actively homeless at the end of 2025, a slight drop from the year before.
+
+Anne Marie Shaw, director of community services with Grey County, said, “Grey County winters can be harsh, especially for those without a safe place to stay.” She said the program “provides an important option for individuals and families who need somewhere safe, warm and welcoming to turn.” Housing case coordinators work with people in the program to connect them with services, identify housing plans and explore permanent housing. The county also supports Safe ‘N Sound Grey Bruce drop-in programming and a newly launched overnight shelter in Owen Sound. Grey County and community donations fund overnight operations at Safe ‘N Sound, and Owen Sound council approved up to $30,000 in city grants toward that shelter in July. The short-term shelter line is 519-376-5744, or stsp@grey.ca. Source: [owensoundcurrent.com](https://www.owensoundcurrent.com/p/grey-county-increases-motel-rooms) Source: [themeafordindependent.ca](https://themeafordindependent.ca/grey-county-ramps-up-short-term-shelter-for-the-winter/) Source: [bayshorebroadcasting.ca](https://www.bayshorebroadcasting.ca/2026/11/04/219888/)
+
+### Also Today
+**Wasaga Beach man wins $392K in RVH October 50/50 draw: CTV News**
+A Wasaga Beach resident took home more than $392,000 in Royal Victoria Regional Health Centre’s October 50/50 draw. Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/video/2026/11/02/wasaga-beach-man-wins-392k-in-rvh-october-5050-draw/)
+
+**Wasaga Beach woman gets new liver as her friend’s search inspires others to consider living donation: Simcoe.com**
+A Wasaga Beach woman has received a new liver, and her friend’s search is inspiring others to consider living donation. Source: [simcoe.com](https://www.simcoe.com/news/wasaga-liver-donation-transplant/article_ec960415-44f6-5fd9-88ee-6cf61ff4ee11.html)
+
+**Over 90 Students Gather for Fifth Annual Youth Climate Action Conference: Education News Canada**
+More than 90 students gathered for Grey County’s fifth annual Youth Climate Action Conference. Source: [educationnewscanada.com](https://educationnewscanada.com/article/education/level/k12/3/1225990/over-90-students-gather-for-fifth-annual-youth-climate-action-conference.html)
+
+### Roads & Weather Ahead
+Environment Canada has no watches or warnings in effect for Collingwood. Friday is showers, with the temperature steady near 11 and a UV index of 1, or low; Friday night stays showery with a low of plus 5. Saturday brings a few showers ending in the afternoon, then cloud and a 40 percent chance of showers, with a north wind of 20 km/h becoming light early in the afternoon and a high of 9. Saturday night is cloudy with a low of plus 2. Sunday is cloudy with a 30 percent chance of showers, windy, and a high of 8. Source: [weather.gc.ca](https://weather.gc.ca/rss/weather/44.5_-80.217_e.xml)
+
+### Sport
+**Collingwood CI loses to St. Peter's in battle for GB crown (8 photos): CollingwoodToday**
+St. Peter’s, a Barrie school, beat Collingwood Collegiate 4-1 in the battle for the GB crown. Panthers soccer coach Mike Bruni said, “Last year, we did well at OFSAA. Our goal is to bring home a medal. We can do it.” Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/collingwood-ci-loses-to-st-peters-in-battle-for-gb-crown-8-photos-12981902)
