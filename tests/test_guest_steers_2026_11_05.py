@@ -210,3 +210,39 @@ class TestThePageNeverLosesANote:
 
     def test_the_box_keeps_its_words_when_nothing_was_sent(self):
         assert 'if (sendFeedback("topic", text)) input.value = "";' in self.PAGE
+
+
+class TestAMoveIsABridgeNotACut:
+    """Nov 6 2026 (Patrick's second test room): every press took her turn
+    within seconds, but the change of subject landed as a cut, and a typed
+    subject was named as the guest's."""
+
+    def test_both_move_ons_carry_the_bridge(self):
+        for name in ("MOVE_ON_STEER_TAIL", "PLAN_MOVE_ON_TAIL"):
+            start = SCENARIO.index("const " + name + " =")
+            body = SCENARIO[start:SCENARIO.index(";\n", start)]
+            assert "STEER_BRIDGE" in body, name
+        bridge = SCENARIO[SCENARIO.index("const STEER_BRIDGE ="):]
+        bridge = bridge[:bridge.index(";\n")]
+        assert "never as a cut" in bridge
+        assert "one natural conversation" in bridge
+
+    def test_a_typed_subject_is_never_attributed_to_the_guest(self):
+        start = SCENARIO.index("function topicSteer(text) {")
+        body = SCENARIO[start:SCENARIO.index("\n}\n", start)]
+        assert "bridge to" in body
+        assert "never say or hint that it came from them" in body
+        assert "cannot tell it was asked for" in body
+
+
+class TestBlurThatSafariCanDraw:
+    """Nov 6 2026: Safari 27 has the canvas filter property but draws through
+    it unchanged, so the page said "blurred" over a sharp background."""
+
+    def test_the_filter_is_used_only_when_it_is_seen_to_blur(self):
+        assert "function canvasFilterBlurs()" in STUDIO
+        assert "var canFilter = canvasFilterBlurs();" in STUDIO
+        assert 'var canFilter = typeof octx.filter === "string";' not in STUDIO
+        fn = STUDIO[STUDIO.index("function canvasFilterBlurs()"):]
+        fn = fn[:fn.index("\n  }\n")]
+        assert "getImageData" in fn
