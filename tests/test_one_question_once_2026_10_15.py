@@ -39,7 +39,7 @@ class TestTheRoomKnowsWhatSheAsked:
 
     def test_the_closing_questions_are_recognised_as_she_says_them(self):
         qs = dict(_questions())
-        assert len(qs) == 7
+        assert len(qs) == 8
         said = {
             "the show's own question":
                 "What's the one bet you're making for the next 12 months that you cannot prove yet?",
@@ -51,6 +51,8 @@ class TestTheRoomKnowsWhatSheAsked:
                 "How was the experience of being interviewed by an AI, and what's one thing we could improve?",
             "whether they would like a follow-up interview":
                 "Would you like to come back for a follow-up interview in six months to a year?",
+            "how listeners can reach or follow them":
+                "And where can people find you online if they want to know more?",
         }
         for label, line in said.items():
             assert qs[label].search(line), label

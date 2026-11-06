@@ -68,8 +68,9 @@ SEAM_WINDOW_SEC = 2.0
 #: ``round: asked <n>/<N>: ...`` (Oct 21) or ``round: asked: <label>`` (Oct 19).
 #: The count a trace carries (its N) wins; this is the fallback for a trace
 #: without one. Seven since Oct 23 2026 (the two interview questions became
-#: one, and the follow-up interview joined).
-ROUND_QUESTIONS_DEFAULT = 7
+#: one, and the follow-up interview joined); eight since Nov 6 2026 (how
+#: listeners can reach or follow them).
+ROUND_QUESTIONS_DEFAULT = 8
 
 _WORD_RE = re.compile(r"[^\W_]+(?:'[^\W_]+)?", re.UNICODE)
 

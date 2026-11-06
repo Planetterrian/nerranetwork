@@ -319,7 +319,7 @@ if (which === "server_turns_advance_the_round") {
   out.afterReaction = state();
   guestSays("Yeah, it saves you three rounds of back-and-forth later.", 4000);
   advance(5000);
-  out.roundNotesAfterThought = instructions.filter(function (n) { return n.indexOf("[ROUND 1 of 7") >= 0; }).length;
+  out.roundNotesAfterThought = instructions.filter(function (n) { return n.indexOf("[ROUND 1 of 8") >= 0; }).length;
   out.roundConversationNotes = notes.filter(function (n) { return /^\[ROUND \d/.test(n); }).length;
   roomTurnStarts();
   miraFinishes("Messy now, clean later. What's the one bet you're making for the next twelve months that you cannot prove yet?");
@@ -347,7 +347,7 @@ if (which === "server_turns_advance_the_round") {
   out.afterFollowUp = state();
   guestSays("No, I never did.", 2000);
   advance(5000);
-  out.handedAgain = instructions.filter(function (n) { return n.indexOf("[ROUND 3 of 7") >= 0; }).length;
+  out.handedAgain = instructions.filter(function (n) { return n.indexOf("[ROUND 3 of 8") >= 0; }).length;
   roomTurnStarts();
   miraFinishes("Fair enough. Whose voice would you most like to hear on the show?");
   guestSays("My uncle, honestly.", 2000);
@@ -620,6 +620,7 @@ if (which === "server_turns_advance_the_round") {
   advance(5000);
   out.afterTrailedOff = state();
   ask("Would you like to come back for a follow-up interview in six months to a year, to talk about where your projects have gone and to see how much I've improved?", "I would.");
+  ask("How can listeners reach you or follow you if they want to know more?", "The firm's website, and I'm on LinkedIn.");
   ask("Is there anything you came wanting to say that the two of us never reached?", "The valley teaches you to love two things at once.");
   out.handed = instructions.slice(before);
   roomTurnStarts();
@@ -924,6 +925,8 @@ if (which === "server_turns_advance_the_round") {
   // Nov 4 2026 (Blaine Mathieu's room): at 35 minutes he asked to end, she
   // said goodbye, and the scheduled note a minute later started the closing
   // round after his goodbye. The control arm: no stop, so the round is due.
+  // A minute before the round falls due, whatever the round's length.
+  run("firstJoinAt = Date.now() - (plannedMin() - closingRoundMin() - 1) * 60 * 1000;");
   run("closingPermitted = true; startTimeChecks();");
   roomTurnStarts();
   miraFinishes("What happens to the ones who can't move at that speed?");

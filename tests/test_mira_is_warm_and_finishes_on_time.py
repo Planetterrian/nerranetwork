@@ -32,7 +32,7 @@ class TestTheOpeningIsWarm:
     def test_greeting_first_and_listening(self):
         flat = _flat(PROMPT)
         assert "WHO YOU ARE IN THE ROOM" in PROMPT
-        assert "Two short turns, each one ending so that you can listen" in flat
+        assert "Three short turns, each one ending so that you can listen" in flat
         assert "If they speak first, answer what they said" in flat
         assert "Hello by name, warmly" in flat
         assert flat.index("Hello by name, warmly") < flat.index("you are Mira, the AI who hosts {{show_name}}")
@@ -54,8 +54,9 @@ class TestTheOpeningIsWarm:
 
 
 class TestItFinishesOnTime:
-    def test_closing_required_nine_minutes_out(self):
-        assert "function closingRoundMin() { return Math.min(9, closingWindowMin()); }" in SCENARIO
+    def test_closing_required_ten_minutes_out(self):
+        # Nov 6 2026: ten, with where to reach them as the eighth question.
+        assert "function closingRoundMin() { return Math.min(10, closingWindowMin()); }" in SCENARIO
         assert "} else if (remainMin > closingRoundMin()) {" in SCENARIO
         assert "closing round required (scheduled note)" in SCENARIO
 
