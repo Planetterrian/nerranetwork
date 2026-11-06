@@ -18,9 +18,9 @@ jobs:
           python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
-      - uses: ./.github/actions/setup-ffmpeg
       - name: Words
         run: |
+          pip install -q imageio-ffmpeg && mkdir -p bin && ln -sf "$(python -c 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())')" bin/ffmpeg && export PATH=$PWD/bin:$PATH
           B=https://audio.nerranetwork.com/age_of_ai/raw/43ff31a6-e248-4352-8f47-6f5414ee0f49
           for r in guest mira; do
             curl -sSL -o $r.wav "${B}_${r}_rt20261104200204.wav"
