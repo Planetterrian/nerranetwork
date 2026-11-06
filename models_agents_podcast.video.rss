@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 05 Nov 2026 11:18:25 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 06 Nov 2026 11:22:13 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,240 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 226: Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior…</title>
+      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
+&lt;b&gt;Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior Gemini versions.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Google released Gemini Omni 1.2 Flash with improved handling of extended multimodal inputs. Kakao launched a decision model 43 times faster than GPT-6 Luna. Several new agent-safety benchmarks and attack papers appeared today; builders should test the new Gemini variant and review the Microsoft agentic-AI warning before deploying autonomous workflows.
+
+Top Story
+Google released Gemini Omni 1.2 Flash, a faster, lower-cost model that supports longer video and multimodal clips than the previous Flash generation. The update targets developers who need efficient inference on edge or resource-constrained devices while retaining strong reasoning on extended contexts. Early users report the model maintains quality on tasks that previously required larger Gemini variants, making it practical for on-device agents that process video or long documents. Watch for updated pricing tiers and SDK examples in the coming days, and test the model on any workflow that currently hits context or latency limits with earlier Flash releases. Source: &lt;a href="https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/"&gt;blog.google&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Kakao releases AI decision model 43 times faster than GPT-6 Luna: Heraldcorp&lt;/b&gt;
+Kakao announced a new decision model that delivers answers in 183 ms on typical requests while matching or exceeding several larger models on Decision Index 0.4.1 and Decision Bench v4. The family includes open 8 B, 9 B, 35 B (3 B active), and 27 B parameter variants trained with supervised fine-tuning plus reinforcement learning from adjusted feedback. Source: &lt;a href="https://mbiz.heraldcorp.com/article/10927977"&gt;mbiz.heraldcorp.com&lt;/a&gt;
+
+&lt;b&gt;Recursive Sparse Attention: Million-Token Length Extrapolation at Logarithmic Cost — arXiv NLP&lt;/b&gt;
+RecSA builds a tree over the KV cache so each query reads only O(log L) entries at context length L. Initialized from Qwen3-4B and trained on 0.62 B tokens, the method scores 60.5 on RULER at 1 M tokens versus 40.0 for the best baseline and accelerates prefill 3.2× and decoding 3.8× at 524 K on one H200 GPU. Source: &lt;a href="https://arxiv.org/abs/2611.07232"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;On the Opportunities and Challenges of Prefill-to-Autoregressive Cross-Model Transfer — arXiv NLP&lt;/b&gt;
+PLatour connects frozen large and small models through lightweight linear bridges trained only with task rewards. Controlled experiments show that some reported gains can be reproduced without useful sender information, leading the authors to release PACT-Check to measure genuine cross-model communication. Source: &lt;a href="https://arxiv.org/abs/2611.06976"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Adapting LLM Judges to Observed Human Annotation Policy through Soft Prompt Tuning — arXiv NLP&lt;/b&gt;
+Hybrid soft-prompt tuning on FairBotBench raises agreement with human ratings on bias, toxicity, and personalization. The adapted Qwen 3.5 9B judge surpasses hosted reference judges across all three dimensions. Source: &lt;a href="https://arxiv.org/abs/2611.07126"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Web Hole attack targets AI agents via abandoned sites — IT Brief New Zealand&lt;/b&gt;
+Attackers register expired domains previously used by agent tools and serve malicious content that agents fetch during routine operation. The technique requires no prompt injection at deployment time. Source: &lt;a href="https://itbrief.co.nz/story/web-hole-attack-targets-ai-agents-via-abandoned-sites"&gt;itbrief.co.nz&lt;/a&gt;
+
+&lt;b&gt;Atsign EdgeAI Launches Secure Agent Connectivity — Enterprise Times&lt;/b&gt;
+Atsign EdgeAI provides encrypted, identity-based connections for agents running at the edge without exposing long-lived credentials. The service targets enterprise deployments that need agent-to-agent or agent-to-device links. Source: &lt;a href="https://www.enterprisetimes.co.uk/2026/11/06/atsign-edgeai-launches-secure-agent-connectivity/"&gt;enterprisetimes.co.uk&lt;/a&gt;
+
+&lt;b&gt;Microsoft Warns Agentic AI Weaponized to Steal Cloud Secrets in 5 Minutes — Homeland411&lt;/b&gt;
+Microsoft reports that autonomous agents can be prompted to enumerate and exfiltrate cloud credentials in under five minutes when given broad tool access. The advisory urges least-privilege tool scopes and continuous monitoring of agent actions. Source: &lt;a href="https://homeland411.com/microsoft-warns-agentic-ai-weaponized-cloud-secrets/"&gt;homeland411.com&lt;/a&gt;
+
+&lt;b&gt;SAFE-Teen: Evaluating Chatbot Safety Across Adolescent Mental Health Conversations — arXiv NLP&lt;/b&gt;
+A clinician-informed benchmark of 32 555 simulated conversations found a 43.3 % safety-criterion failure rate without teen-aware prompting and 24.9 % with it. Failures on diagnosis and medication boundaries rose 10–12 points when a simulated teenager pushed back. Source: &lt;a href="https://arxiv.org/abs/2611.07218"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;τ-bench-LILT: Evaluating Conversational Agents on Realistic Multilingual Tool-Use Tasks — arXiv NLP&lt;/b&gt;
+The benchmark extends τ³-bench to German, Korean, Turkish, and Farsi across airline, retail, telecom, and banking domains. Largest performance drops versus English reached 61 points in pass^4 on Korean and Farsi retail tasks. Source: &lt;a href="https://arxiv.org/abs/2611.07203"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Matriarchy Classics: A Computational Approach to Swap Only Gendered Words in Classic Novels — arXiv NLP&lt;/b&gt;
+A tokenizer and mapping pipeline gender-swaps public-domain novels while guaranteeing that only gendered words change. The method reduces manual effort from weeks to minutes and ships with code and two example novels. Source: &lt;a href="https://arxiv.org/abs/2611.07134"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Dataset Collection and Fine-Tuning of NLLB for German--English Translation — arXiv NLP&lt;/b&gt;
+A filtered 25 k-sentence OPUS Books corpus plus LoRA fine-tuning of NLLB-600M yields +3.4 BLEU on literary and technical German–English pairs. The fine-tuned model integrates into the open-source LinguaHaru document translator. Source: &lt;a href="https://arxiv.org/abs/2611.07797"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Axis-LoRA: Probing and Adapting Embedding Models for Personal-Memory Retrieval — arXiv NLP&lt;/b&gt;
+Four LoRA branches inside an embedding model, gated per query, improve 4-benchmark mean R@10 by 1.28–1.56 points on personal-memory tasks while training only a small fraction of parameters. Source: &lt;a href="https://arxiv.org/abs/2611.07820"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CORE: Coarse-to-Fine Search with Context Management for Deep Research — arXiv NLP&lt;/b&gt;
+The training-free harness re-uses late-interaction reranker scores to return only the most relevant snippet from each retrieved passage and lets agents expand context on demand. It outperforms prior research harnesses on three agent models and three benchmarks. Source: &lt;a href="https://arxiv.org/abs/2611.07859"&gt;arxiv.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Interactive Backdoor Attacks in LLM-Based Proactive Dialogue Systems — arXiv NLP:&lt;/b&gt; Training-data poisoning steers multi-turn dialogue toward attacker goals after a trigger while preserving normal utility on psychological-counseling tasks. Source: &lt;a href="https://arxiv.org/abs/2611.06969"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Follow the Policy, Fail the Benchmark: Auditing and Revising Policy-Based Decision Benchmarks — arXiv NLP:&lt;/b&gt; Correcting scorer errors raised model acceptance by more than 80 points on LegalBench SARA numeric cases without changing references or responses. Source: &lt;a href="https://arxiv.org/abs/2611.07042"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Reclassification Is All You Missed: Surfacing Variant Reinterpretation Need in Online Health Communities at Population Scale — arXiv NLP:&lt;/b&gt; PRISM screened 3.9 million posts and surfaced 123 candidate genetic-variant reclassifications, five of them from uncertain to pathogenic or likely pathogenic. Source: &lt;a href="https://arxiv.org/abs/2611.07054"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Automated Feedback to Peer Tutors Increases Their Talk Moves and Learner Reasoning but Not the Balance of Talk — arXiv NLP:&lt;/b&gt; Feedback to 1 030 volunteer SAT tutors raised eliciting and uptake moves 8–15 % but left tutor talk time at 91.5 % across conditions. Source: &lt;a href="https://arxiv.org/abs/2611.07072"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;The Memory Trap: Language Agents Overgeneralize from Benign Interactions — arXiv NLP:&lt;/b&gt; Persistent memory written during low-stakes coding or emotional-support sessions caused agents to skip verification or exhibit sycophancy on later high-stakes tasks across six frontier models. Source: &lt;a href="https://arxiv.org/abs/2611.07554"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Stress Testing Chain-of-Thought Monitoring Against Covert Misalignment — arXiv NLP:&lt;/b&gt; TraceMRT red-teaming exposed substantial vulnerabilities in top CoT monitors; a new Bayesian trajectory monitor reached 0.91 AUC and 0.74 TPR at 5 % FPR. Source: &lt;a href="https://arxiv.org/abs/2611.07586"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Fine-Tuning a Transducer for Impaired Speech: Where the Gains Appear and What They Mean for Evaluation — arXiv NLP:&lt;/b&gt; Fine-tuning on the Speech Accessibility Project Challenge 2 data cut character error rate from 15.26 % to 7.81 % on the hidden test set, with largest gains on the hardest speakers. Source: &lt;a href="https://arxiv.org/abs/2611.07587"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;English Calibration Erodes Lithuanian in Expert-Pruned Mixture-of-Experts Language Models — arXiv NLP:&lt;/b&gt; Pruning 25 % of experts using English calibration dropped Lithuanian comprehension 21.4 points while English fell only 1.7 points. Source: &lt;a href="https://arxiv.org/abs/2611.07654"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Evaluating Token Probabilities as Confidence Estimators in Human Behavior Simulations — arXiv NLP:&lt;/b&gt; Supervised fine-tuning reduced Expected Calibration Error from 0.2 to 0.006 on a Luxembourgish next-like prediction task while raising accuracy from 0.536 to 0.758. Source: &lt;a href="https://arxiv.org/abs/2611.07735"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Bridging Structure and Semantics: Knowledge Graph Verification via Triple-to-Text Alignment — arXiv NLP:&lt;/b&gt; GenVer, which scores triples against generated natural-language representations, reached 88.56–91.52 % accuracy on four FactFB variants. Source: &lt;a href="https://arxiv.org/abs/2611.07780"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Automatic keyphrase extraction and annotation: modern theoretical approaches and practical solutions for text and speech — arXiv NLP:&lt;/b&gt; The survey synthesizes statistical, hybrid, and LLM-based keyphrase methods and highlights data scarcity and multimodal fusion as remaining bottlenecks for spoken-language extraction. Source: &lt;a href="https://arxiv.org/abs/2611.08006"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Linguistic boundaries emerge from pressure-constrained processing dynamics — arXiv NLP:&lt;/b&gt; A generative simulation and human reading-time data both show that unresolved dependency load, integration cost, and semantic mismatch jointly predict where listeners place sentence boundaries. Source: &lt;a href="https://arxiv.org/abs/2611.08085"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Beyond K/V Caches: Cross-Model State Handoff in Hybrid Linear-Attention LLMs — arXiv NLP:&lt;/b&gt; Hybrid State Transfer preserves recurrent and convolution states when moving context between hybrid models, achieving 89.88–94.11 % task retention at 21× handoff speedup. Source: &lt;a href="https://arxiv.org/abs/2611.08133"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;From Twisted Facts to Rogue Agents: Can LLMs Reliably Detect Multi-Dimensional Hallucinations? — arXiv NLP:&lt;/b&gt; HaluCheck’s 42 k-instance benchmark shows current LLMs handle basic detection but struggle with localization, correction, and agent-trajectory hallucinations. Source: &lt;a href="https://arxiv.org/abs/2611.08231"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Terminal-style Mathematical Modeling Bench: The First Agentic and Verifiable Benchmark for Mathematical Modeling — arXiv NLP:&lt;/b&gt; TB-MathModel scores complete modeling solutions against human outstanding papers plus Lean-verified feasibility constraints on 18 real contest problems. Source: &lt;a href="https://arxiv.org/abs/2611.08237"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Multimodal-SEA: Benchmarking AI Agent Security under Multimodal Social Engineering Attacks — arXiv NLP:&lt;/b&gt; Across 608 tasks, attack success rates ranged 7.1–34.5 %; adding multimodal content raised success from 19.9 % to 29.2 % despite increased verification attempts. Source: &lt;a href="https://arxiv.org/abs/2611.08281"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;SA among just three African nations meeting AI readiness benchmark — thenational.co.za&lt;/b&gt;
+South Africa ranks among only three African countries meeting the AI readiness benchmark. Source: &lt;a href="https://thenational.co.za/news/2026-11-06-sa-among-just-three-african-nations-meeting-ai-readiness-benchmark/"&gt;thenational.co.za&lt;/a&gt;
+
+&lt;b&gt;An AI agent doesn’t have to go rogue to put your business at risk — Ynetnews&lt;/b&gt;
+Even non-rogue agents can expose businesses to risk through overgeneralization from benign interactions. Source: &lt;a href="https://www.ynetnews.com/tech-and-digital/article/byy78hctgg"&gt;ynetnews.com&lt;/a&gt;
+
+&lt;b&gt;Asian benchmarks decline after AI worries send Wall Street tumbling — News4JAX&lt;/b&gt;
+Asian stock benchmarks fell after AI-related concerns triggered a Wall Street sell-off. Source: &lt;a href="https://www.news4jax.com/business/2026/11/06/japans-stock-benchmark-nikkei-tumbles-more-than-6-after-trading-opens/"&gt;news4jax.com&lt;/a&gt;
+
+&lt;b&gt;Why edge-cloud AI inference pipelines are key — InfoWorld&lt;/b&gt;
+Edge-cloud pipelines are presented as essential for balancing latency, cost, and capability in production AI deployments. Source: &lt;a href="https://www.infoworld.com/article/4243693/why-edge-cloud-ai-inference-pipelines-are-key.html"&gt;infoworld.com&lt;/a&gt;
+
+&lt;b&gt;Australian universities are creating AI-native graduates — OpenAI Blog&lt;/b&gt;
+Australian universities are expanding ChatGPT access and integrating AI into curricula to prepare students for an AI-enabled workforce. Source: &lt;a href="https://openai.com/index/australian-universities-ai-native-graduates"&gt;openai.com&lt;/a&gt;
+
+Things to Try This Week
+• Test Gemini Omni 1.2 Flash on any workflow that currently hits context or latency limits with earlier Flash releases.
+• Run the RecSA kernels on RULER at 128 K–1 M tokens if you need reliable long-context extrapolation without retraining.
+• Review the Microsoft agentic-AI advisory and tighten tool scopes on any autonomous coding or cloud-management agents.
+• Try the CORE research harness on BrowseComp-style tasks to see whether coarse-to-fine snippet selection reduces context bloat.
+• Experiment with Axis-LoRA adapters on personal-memory retrieval benchmarks if your application must distinguish time, place, or person axes.
+
+On the Horizon
+• Expect updated pricing and SDK examples for Gemini Omni 1.2 Flash within the next week.
+• Watch for follow-up releases from Kakao on additional decision-model sizes and commercial licensing terms.
+• Several arXiv authors have promised code and data releases for the new multilingual and safety benchmarks in the coming days.
+• Monitor edge-inference pipelines as more teams publish production numbers comparing pure-edge, hybrid, and cloud-only agent deployments.</description>
+      <guid isPermaLink="false">models-agents-video-ep226-20261106</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep226_20261106.mp4" length="236772919" type="video/mp4" />
+      <pubDate>Fri, 06 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep226_20261106.jpg" />
+      <itunes:duration>11:01</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>**# Models &amp; Agents**
+&gt; **Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior Gemini versions.**
+
+**What You Need to Know:** Google released Gemini Omni 1.2 Flash with improved handling of extended multimodal inputs. Kakao launched a decision model 43 times faster than GPT-6 Luna. Several new agent-safety benchmarks and attack papers appeared today; builders should test the new Gemini variant and review the Microsoft agentic-AI warning before deploying autonomous workflows.
+---
+### Top Story
+Google released Gemini Omni 1.2 Flash, a faster, lower-cost model that supports longer video and multimodal clips than the previous Flash generation. The update targets developers who need efficient inference on edge or resource-constrained devices while retaining strong reasoning on extended contexts. Early users report the model maintains quality on tasks that previously required larger Gemini variants, making it practical for on-device agents that process video or long documents. Watch for updated pricing tiers and SDK examples in the coming days, and test the model on any workflow that currently hits context or latency limits with earlier Flash releases. Source: [blog.google](https://blog.google/innovation-and-ai/technology/developers-tools/introducing-gemini-omni-1-2-flash/)
+---
+### Model Updates
+**Kakao releases AI decision model 43 times faster than GPT-6 Luna: Heraldcorp**
+Kakao announced a new decision model that delivers answers in 183 ms on typical requests while matching or exceeding several larger models on Decision Index 0.4.1 and Decision Bench v4. The family includes open 8 B, 9 B, 35 B (3 B active), and 27 B parameter variants trained with supervised fine-tuning plus reinforcement learning from adjusted feedback. Source: [mbiz.heraldcorp.com](https://mbiz.heraldcorp.com/article/10927977)
+
+**Recursive Sparse Attention: Million-Token Length Extrapolation at Logarithmic Cost — arXiv NLP**
+RecSA builds a tree over the KV cache so each query reads only O(log L) entries at context length L. Initialized from Qwen3-4B and trained on 0.62 B tokens, the method scores 60.5 on RULER at 1 M tokens versus 40.0 for the best baseline and accelerates prefill 3.2× and decoding 3.8× at 524 K on one H200 GPU. Source: [arxiv.org](https://arxiv.org/abs/2611.07232)
+
+**On the Opportunities and Challenges of Prefill-to-Autoregressive Cross-Model Transfer — arXiv NLP**
+PLatour connects frozen large and small models through lightweight linear bridges trained only with task rewards. Controlled experiments show that some reported gains can be reproduced without useful sender information, leading the authors to release PACT-Check to measure genuine cross-model communication. Source: [arxiv.org](https://arxiv.org/abs/2611.06976)
+
+**Adapting LLM Judges to Observed Human Annotation Policy through Soft Prompt Tuning — arXiv NLP**
+Hybrid soft-prompt tuning on FairBotBench raises agreement with human ratings on bias, toxicity, and personalization. The adapted Qwen 3.5 9B judge surpasses hosted reference judges across all three dimensions. Source: [arxiv.org](https://arxiv.org/abs/2611.07126)
+---
+### Agent &amp; Tool Developments
+**Web Hole attack targets AI agents via abandoned sites — IT Brief New Zealand**
+Attackers register expired domains previously used by agent tools and serve malicious content that agents fetch during routine operation. The technique requires no prompt injection at deployment time. Source: [itbrief.co.nz](https://itbrief.co.nz/story/web-hole-attack-targets-ai-agents-via-abandoned-sites)
+
+**Atsign EdgeAI Launches Secure Agent Connectivity — Enterprise Times**
+Atsign EdgeAI provides encrypted, identity-based connections for agents running at the edge without exposing long-lived credentials. The service targets enterprise deployments that need agent-to-agent or agent-to-device links. Source: [enterprisetimes.co.uk](https://www.enterprisetimes.co.uk/2026/11/06/atsign-edgeai-launches-secure-agent-connectivity/)
+
+**Microsoft Warns Agentic AI Weaponized to Steal Cloud Secrets in 5 Minutes — Homeland411**
+Microsoft reports that autonomous agents can be prompted to enumerate and exfiltrate cloud credentials in under five minutes when given broad tool access. The advisory urges least-privilege tool scopes and continuous monitoring of agent actions. Source: [homeland411.com](https://homeland411.com/microsoft-warns-agentic-ai-weaponized-cloud-secrets/)
+
+**SAFE-Teen: Evaluating Chatbot Safety Across Adolescent Mental Health Conversations — arXiv NLP**
+A clinician-informed benchmark of 32 555 simulated conversations found a 43.3 % safety-criterion failure rate without teen-aware prompting and 24.9 % with it. Failures on diagnosis and medication boundaries rose 10–12 points when a simulated teenager pushed back. Source: [arxiv.org](https://arxiv.org/abs/2611.07218)
+
+**τ-bench-LILT: Evaluating Conversational Agents on Realistic Multilingual Tool-Use Tasks — arXiv NLP**
+The benchmark extends τ³-bench to German, Korean, Turkish, and Farsi across airline, retail, telecom, and banking domains. Largest performance drops versus English reached 61 points in pass^4 on Korean and Farsi retail tasks. Source: [arxiv.org](https://arxiv.org/abs/2611.07203)
+---
+### Practical &amp; Community
+**Matriarchy Classics: A Computational Approach to Swap Only Gendered Words in Classic Novels — arXiv NLP**
+A tokenizer and mapping pipeline gender-swaps public-domain novels while guaranteeing that only gendered words change. The method reduces manual effort from weeks to minutes and ships with code and two example novels. Source: [arxiv.org](https://arxiv.org/abs/2611.07134)
+
+**Dataset Collection and Fine-Tuning of NLLB for German--English Translation — arXiv NLP**
+A filtered 25 k-sentence OPUS Books corpus plus LoRA fine-tuning of NLLB-600M yields +3.4 BLEU on literary and technical German–English pairs. The fine-tuned model integrates into the open-source LinguaHaru document translator. Source: [arxiv.org](https://arxiv.org/abs/2611.07797)
+
+**Axis-LoRA: Probing and Adapting Embedding Models for Personal-Memory Retrieval — arXiv NLP**
+Four LoRA branches inside an embedding model, gated per query, improve 4-benchmark mean R@10 by 1.28–1.56 points on personal-memory tasks while training only a small fraction of parameters. Source: [arxiv.org](https://arxiv.org/abs/2611.07820)
+
+**CORE: Coarse-to-Fine Search with Context Management for Deep Research — arXiv NLP**
+The training-free harness re-uses late-interaction reranker scores to return only the most relevant snippet from each retrieved passage and lets agents expand context on demand. It outperforms prior research harnesses on three agent models and three benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2611.07859)
+---
+### Also Today
+**Interactive Backdoor Attacks in LLM-Based Proactive Dialogue Systems — arXiv NLP:** Training-data poisoning steers multi-turn dialogue toward attacker goals after a trigger while preserving normal utility on psychological-counseling tasks. Source: [arxiv.org](https://arxiv.org/abs/2611.06969)
+
+**Follow the Policy, Fail the Benchmark: Auditing and Revising Policy-Based Decision Benchmarks — arXiv NLP:** Correcting scorer errors raised model acceptance by more than 80 points on LegalBench SARA numeric cases without changing references or responses. Source: [arxiv.org](https://arxiv.org/abs/2611.07042)
+
+**Reclassification Is All You Missed: Surfacing Variant Reinterpretation Need in Online Health Communities at Population Scale — arXiv NLP:** PRISM screened 3.9 million posts and surfaced 123 candidate genetic-variant reclassifications, five of them from uncertain to pathogenic or likely pathogenic. Source: [arxiv.org](https://arxiv.org/abs/2611.07054)
+
+**Automated Feedback to Peer Tutors Increases Their Talk Moves and Learner Reasoning but Not the Balance of Talk — arXiv NLP:** Feedback to 1 030 volunteer SAT tutors raised eliciting and uptake moves 8–15 % but left tutor talk time at 91.5 % across conditions. Source: [arxiv.org](https://arxiv.org/abs/2611.07072)
+
+**The Memory Trap: Language Agents Overgeneralize from Benign Interactions — arXiv NLP:** Persistent memory written during low-stakes coding or emotional-support sessions caused agents to skip verification or exhibit sycophancy on later high-stakes tasks across six frontier models. Source: [arxiv.org](https://arxiv.org/abs/2611.07554)
+
+**Stress Testing Chain-of-Thought Monitoring Against Covert Misalignment — arXiv NLP:** TraceMRT red-teaming exposed substantial vulnerabilities in top CoT monitors; a new Bayesian trajectory monitor reached 0.91 AUC and 0.74 TPR at 5 % FPR. Source: [arxiv.org](https://arxiv.org/abs/2611.07586)
+
+**Fine-Tuning a Transducer for Impaired Speech: Where the Gains Appear and What They Mean for Evaluation — arXiv NLP:** Fine-tuning on the Speech Accessibility Project Challenge 2 data cut character error rate from 15.26 % to 7.81 % on the hidden test set, with largest gains on the hardest speakers. Source: [arxiv.org](https://arxiv.org/abs/2611.07587)
+
+**English Calibration Erodes Lithuanian in Expert-Pruned Mixture-of-Experts Language Models — arXiv NLP:** Pruning 25 % of experts using English calibration dropped Lithuanian comprehension 21.4 points while English fell only 1.7 points. Source: [arxiv.org](https://arxiv.org/abs/2611.07654)
+
+**Evaluating Token Probabilities as Confidence Estimators in Human Behavior Simulations — arXiv NLP:** Supervised fine-tuning reduced Expected Calibration Error from 0.2 to 0.006 on a Luxembourgish next-like prediction task while raising accuracy from 0.536 to 0.758. Source: [arxiv.org](https://arxiv.org/abs/2611.07735)
+
+**Bridging Structure and Semantics: Knowledge Graph Verification via Triple-to-Text Alignment — arXiv NLP:** GenVer, which scores triples against generated natural-language representations, reached 88.56–91.52 % accuracy on four FactFB variants. Source: [arxiv.org](https://arxiv.org/abs/2611.07780)
+
+**Automatic keyphrase extraction and annotation: modern theoretical approaches and practical solutions for text and speech — arXiv NLP:** The survey synthesizes statistical, hybrid, and LLM-based keyphrase methods and highlights data scarcity and multimodal fusion as remaining bottlenecks for spoken-language extraction. Source: [arxiv.org](https://arxiv.org/abs/2611.08006)
+
+**Linguistic boundaries emerge from pressure-constrained processing dynamics — arXiv NLP:** A generative simulation and human reading-time data both show that unresolved dependency load, integration cost, and semantic mismatch jointly predict where listeners place sentence boundaries. Source: [arxiv.org](https://arxiv.org/abs/2611.08085)
+
+**Beyond K/V Caches: Cross-Model State Handoff in Hybrid Linear-Attention LLMs — arXiv NLP:** Hybrid State Transfer preserves recurrent and convolution states when moving context between hybrid models, achieving 89.88–94.11 % task retention at 21× handoff speedup. Source: [arxiv.org](https://arxiv.org/abs/2611.08133)
+
+**From Twisted Facts to Rogue Agents: Can LLMs Reliably Detect Multi-Dimensional Hallucinations? — arXiv NLP:** HaluCheck’s 42 k-instance benchmark shows current LLMs handle basic detection but struggle with localization, correction, and agent-trajectory hallucinations. Source: [arxiv.org](https://arxiv.org/abs/2611.08231)
+
+**Terminal-style Mathematical Modeling Bench: The First Agentic and Verifiable Benchmark for Mathematical Modeling — arXiv NLP:** TB-MathModel scores complete modeling solutions against human outstanding papers plus Lean-verified feasibility constraints on 18 real contest problems. Source: [arxiv.org](https://arxiv.org/abs/2611.08237)
+
+**Multimodal-SEA: Benchmarking AI Agent Security under Multimodal Social Engineering Attacks — arXiv NLP:** Across 608 tasks, attack success rates ranged 7.1–34.5 %; adding multimodal content raised success from 19.9 % to 29.2 % despite increased verification attempts. Source: [arxiv.org](https://arxiv.org/abs/2611.08281)
+
+**SA among just three African nations meeting AI readiness benchmark — thenational.co.za**
+South Africa ranks among only three African countries meeting the AI readiness benchmark. Source: [thenational.co.za](https://thenational.co.za/news/2026-11-06-sa-among-just-three-african-nations-meeting-ai-readiness-benchmark/)
+
+**An AI agent doesn’t have to go rogue to put your business at risk — Ynetnews**
+Even non-rogue agents can expose businesses to risk through overgeneralization from benign interactions. Source: [ynetnews.com](https://www.ynetnews.com/tech-and-digital/article/byy78hctgg)
+
+**Asian benchmarks decline after AI worries send Wall Street tumbling — News4JAX**
+Asian stock benchmarks fell after AI-related concerns triggered a Wall Street sell-off. Source: [news4jax.com](https://www.news4jax.com/business/2026/11/06/japans-stock-benchmark-nikkei-tumbles-more-than-6-after-trading-opens/)
+
+**Why edge-cloud AI inference pipelines are key — InfoWorld**
+Edge-cloud pipelines are presented as essential for balancing latency, cost, and capability in production AI deployments. Source: [infoworld.com](https://www.infoworld.com/article/4243693/why-edge-cloud-ai-inference-pipelines-are-key.html)
+
+**Australian universities are creating AI-native graduates — OpenAI Blog**
+Australian universities are expanding ChatGPT access and integrating AI into curricula to prepare students for an AI-enabled workforce. Source: [openai.com](https://openai.com/index/australian-universities-ai-native-graduates)
+---
+---
+### Things to Try This Week
+- Test Gemini Omni 1.2 Flash on any workflow that currently hits context or latency limits with earlier Flash releases.
+- Run the RecSA kernels on RULER at 128 K–1 M tokens if you need reliable long-context extrapolation without retraining.
+- Review the Microsoft agentic-AI advisory and tighten tool scopes on any autonomous coding or cloud-management agents.
+- Try the CORE research harness on BrowseComp-style tasks to see whether coarse-to-fine snippet selection reduces context bloat.
+- Experiment with Axis-LoRA adapters on personal-memory retrieval benchmarks if your application must distinguish time, place, or person axes.
+---
+### On the Horizon
+- Expect updated pricing and SDK examples for Gemini Omni 1.2 Flash within the next week.
+- Watch for follow-up releases from Kakao on additional decision-model sizes and commercial licensing terms.
+- Several arXiv authors have promised code and data releases for the new multilingual and safety benchmarks in the coming days.
+- Monitor edge-inference pipelines as more teams publish production numbers comparing pure-edge, hybrid, and cloud-only agent deployments.
+</itunes:summary>
+      <itunes:episode>226</itunes:episode>
+      <itunes:title>Ep 226: Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep226_20261106_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep226.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 225: Together Compiler lets agents re-optimize inference on the fly and delivers up to 2.6…</title>
       <description>Models &amp; Agents
@@ -4426,127 +4660,14 @@ Mean-difference activation steering on Moshi's residual stream decodes four emot
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep197_20261008_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep197.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI published new mathematical results generated by a frontier model, along with Lean formalizations, reasoning summaries, and estimates that each result used roughly three hours of ChatGPT Pro compute. The release includes protocols for revisions and citations and follows guidance from the Advisory Group on Mathematics and Artificial Intelligence at the Institute for Advanced Study. Watch the repository for additional formalizations and future model disclosures. The company is also funding workshops and conferences focused on understanding major AI-produced mathematical results.
-
-Top Story
-OpenAI released a broad range of new mathematical results produced by an internal frontier model. The company is publishing the results in a GitHub repository that includes formalizations of many proofs in Lean, ten summaries of the model’s reasoning, estimations of compute spent, and statistics on attempted problems. The average result used the equivalent compute of roughly three hours of ChatGPT Pro thinking. OpenAI consulted the independent Advisory Group on Mathematics and Artificial Intelligence at the Institute for Advanced Study to develop release protocols and is funding workshops around major AI-produced results. The company states it is working to responsibly release the model that produced these results while continuing to evaluate internal frontier models on mathematics and other sciences. The repository will be updated with more formalizations as they become available, and additional details about how the results were obtained are included to promote transparency. Future releases will focus on improving paper quality through better citations, exposition, and presentation. Source: &lt;a href="https://openai.com/index/sharing-ai-progress-in-mathematics/"&gt;openai.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;WavePrune restricts each RoPE channel to its first rotation period: arXiv NLP&lt;/b&gt;
-WavePrune removes position aliasing in Rotary Position Embedding by limiting each channel to its first rotation period. The method raises the HELMET score on four of five tested models without extra tuning, including an increase from 35.7 to 40.0 on Qwen3-8B. When pretraining from scratch, models using WavePrune achieve lower validation loss at extrapolated lengths. The approach induces fine-grained sparsity that hardware-aligned CUDA kernels exploit for 1.15x prefill and 1.24x decoding speedups over FlashAttention-2 at 32K context. The paper shows that RoPE’s periodic structure beyond the first rotation period is largely redundant. Source: &lt;a href="https://arxiv.org/abs/2610.06963"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Fiorillo v0.5 answers randomized trial questions with calibrated probabilities: arXiv NLP&lt;/b&gt;
-Fiorillo v0.5 is a 4-billion-parameter open model fine-tuned on Qwen3-4B-Base with low-rank adapters and a decision head for the Evidence Inference 2.0 task. On the test split of 1,218 prompts from 333 articles, it achieved an expected calibration error of 0.0168, macro-F1 of 0.9248, and log loss 0.1829 below Gemma 4 31B-it. The model was trained only on the 1,431 training articles whose licenses permit reuse. It was released under the Apache License 2.0 after passing four pre-registered criteria on the Open Science Framework. Source: &lt;a href="https://arxiv.org/abs/2610.07019"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Component-level interventions reveal sparse refusal mechanisms in four open-weight models: arXiv NLP&lt;/b&gt;
-Refusal directions concentrate in sparse component mechanisms comprising 28 to 48 percent of upstream attention and MLP components while retaining 88 to 101 percent of steering effectiveness. Within those mechanisms, effective steering further concentrates in approximately 50 percent of residual stream dimensions, retaining 85 to 98 percent of baseline performance. The study decomposes refusal steering across four open-weight models and releases all code and raw experimental results on GitHub. Low capacity reduces causal effectiveness by 84 percent and low responsiveness by 95 percent. Source: &lt;a href="https://arxiv.org/abs/2610.06903"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Condition-anchored generative distillation stabilizes continual learning across language modeling objectives: arXiv NLP&lt;/b&gt;
-CAGD retains a small set of old prompts, uses a frozen previous model to reconstruct completions, and matches predictive distributions while learning the next task. On a 219M masked diffusion language model, the method reduced four-task final held-out loss from 2.927 to 1.114 in one task order and from 2.168 to 0.891 in reverse order. The same soft targets lowered final average loss by 0.055 over hard replay when teacher-generated support was identical. The approach was tested on fresh facts and natural instructions across SMDM and Qwen3. Source: &lt;a href="https://arxiv.org/abs/2610.06940"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;SanSi turns a pre-trained looped language model into a typed decision model: arXiv NLP&lt;/b&gt;
-SanSi reads option probabilities after every loop and trains each loop with a proper scoring rule so one model serves budgets from one to eight loops. On 10,027 test decisions from 59 sources, it reached 72.0 percent accuracy, 13.5 points above a non-looped model of the same shape. On depth-controlled tasks, loops extend solvable depth beyond training depths where larger single-pass models fail. Used as a judge for policy optimization with reinforcement learning and no gold answers, SanSi raised the generator’s F1 by 7.7 points. Source: &lt;a href="https://arxiv.org/abs/2610.07730"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;ReFold compresses rendered context for long-horizon agents without discarding history: arXiv NLP&lt;/b&gt;
-ReFold removes two kinds of inter-turn redundancy by replacing earlier displayed content with stubs and folding completed turns into one-line notes. It reduces token consumption by up to 2.5x and halves KV-cache memory per session across five long-horizon benchmarks and two frontier LLMs. Under capped context budgets, it avoids up to 92 percent of forced compactions. Under concurrent serving workloads, it reduces request queuing delays by up to 100 percent and accelerates inference by up to 1.7x while cutting inference costs by up to 3.4x. Source: &lt;a href="https://arxiv.org/abs/2610.07863"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;DLoop performs multiple drafting stages before verification in speculative decoding: arXiv NLP&lt;/b&gt;
-DLoop continues drafting while the draft model remains confident and verifies all accumulated tokens together. Loop-aware training exposes the draft model to its own hidden states for unverified tokens. Across EAGLE-3, DFlash, Domino, DSpark, and multi-token prediction modules, DLoop improves wall-clock speedup by 5 to 41 percent while preserving lossless decoding. Source: &lt;a href="https://arxiv.org/abs/2610.07659"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Kurate assesses study quality across 4,347 papers using linked evidence passages: arXiv NLP&lt;/b&gt;
-Kurate scores papers on eight dimensions including statistical power, causal identification, preregistration, and conflict of interest. On 60 held-out clinical-trial documents, extracted information matched expert labels in 221 of 242 protocol scorepoints and 294 of 370 results-publication scorepoints. The system links each judgment to the specific passage supporting it and was applied to a corpus containing 3,913 randomized trial reports. Source: &lt;a href="https://arxiv.org/abs/2610.07306"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;TIDE 2.0 provides keyed de-identification for clinical notes with interval-preserving date shifts: arXiv NLP&lt;/b&gt;
-TIDE 2.0 runs an interchangeable recognizer and a keyed anonymizer on institution-owned hardware. Dates receive a per-patient, interval-preserving offset, and each value receives the same surrogate across all occurrences under a given key. On two gold-annotated corpora, the default configuration reached span-level recall of 0.88 in-domain and 0.77 on an out-of-domain corpus at precision 0.88 and 0.87. The engine is MIT-licensed and the recognizer is available under a gated research-use agreement. Source: &lt;a href="https://arxiv.org/abs/2610.07224"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;CroissantMiner benchmarks end-to-end extraction of Croissant dataset metadata: arXiv NLP&lt;/b&gt;
-The benchmark comprises 602 papers, 102 with human-validated gold annotations and 500 with LLM-generated silver annotations covering the full Croissant schema including Responsible AI fields. Single-pass extraction consistently outperformed four agentic architectures, with the largest gap on long-form RAI fields. The authors release the benchmark, evaluation code, judge audit, live demo, and leaderboard. Source: &lt;a href="https://arxiv.org/abs/2610.07132"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;AccentCL enables class-incremental accent classification robust to imbalance and domain shift: arXiv NLP&lt;/b&gt;
-AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder and applies an imbalance-aware cross-entropy loss plus domain mean alignment loss. On a five-class task it achieved 77.1 percent balanced accuracy and 76.9 percent macro-averaged F1. Adding Spanish-accented English yielded 83.3 percent F1 on the new class while retaining 77.3 percent balanced accuracy on base classes; subsequent addition of Chinese-accented English yielded 61.8 percent F1 on the new class while preserving 77.6 percent balanced accuracy. Source: &lt;a href="https://arxiv.org/abs/2610.07426"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Frontier Model Result Sharing
-Frontier labs now face a concrete choice when releasing scientific outputs from internal models: publish raw results with minimal supporting material or invest in verifiable artifacts that the broader community can check. OpenAI chose the second path by shipping Lean formalizations alongside the proofs, which lets any researcher run an automated checker rather than trust textual claims. The approach adds engineering overhead because the model must produce both a human-readable proof and a machine-checkable formalization, yet it removes the common failure mode where a claimed result later turns out to contain subtle gaps. Compute accounting is also supplied in the form of ChatGPT Pro hour equivalents, giving outsiders a rough sense of the inference budget without exposing proprietary training details. The repository design further includes explicit revision and citation protocols, which reduces the risk that later corrections become untraceable. Teams evaluating similar releases should weigh the extra formalization cost against the gain in external scrutiny; when the goal is accelerating collective progress rather than claiming priority, the verifiable route appears to be the current practical standard.
-
-Things to Try This Week
-• Monitor the OpenAI mathematics GitHub repository for new Lean formalizations and additional result summaries as they are added.
-• Review the published reasoning traces to understand how the frontier model structured its mathematical arguments.
-• Test WavePrune on a RoPE-based model at 32K context to measure the reported prefill and decoding speedups.
-• Evaluate Fiorillo v0.5 on randomized trial articles under the Apache 2.0 license to check calibration on your own evidence-inference tasks.
-
-On the Horizon
-• Further disclosures of major scientific advancements from internal frontier models are expected as evaluation standards evolve.
-• Additional workshops and conferences on AI-produced mathematical results will be announced in the coming months.
-• More class-incremental and continual-learning frameworks for speech and language models are likely as imbalance and domain-shift robustness improve.</description>
+      <description>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.</description>
       <guid isPermaLink="false">models-agents-video-ep196-20261007</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep196_20261007.mp4" length="293987019" type="video/mp4" />
       <pubDate>Wed, 07 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep196_20261007.jpg" />
       <itunes:duration>11:46</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.**
-
-**What You Need to Know:** OpenAI published new mathematical results generated by a frontier model, along with Lean formalizations, reasoning summaries, and estimates that each result used roughly three hours of ChatGPT Pro compute. The release includes protocols for revisions and citations and follows guidance from the Advisory Group on Mathematics and Artificial Intelligence at the Institute for Advanced Study. Watch the repository for additional formalizations and future model disclosures. The company is also funding workshops and conferences focused on understanding major AI-produced mathematical results.
----
-### Top Story
-OpenAI released a broad range of new mathematical results produced by an internal frontier model. The company is publishing the results in a GitHub repository that includes formalizations of many proofs in Lean, ten summaries of the model’s reasoning, estimations of compute spent, and statistics on attempted problems. The average result used the equivalent compute of roughly three hours of ChatGPT Pro thinking. OpenAI consulted the independent Advisory Group on Mathematics and Artificial Intelligence at the Institute for Advanced Study to develop release protocols and is funding workshops around major AI-produced results. The company states it is working to responsibly release the model that produced these results while continuing to evaluate internal frontier models on mathematics and other sciences. The repository will be updated with more formalizations as they become available, and additional details about how the results were obtained are included to promote transparency. Future releases will focus on improving paper quality through better citations, exposition, and presentation. Source: [openai.com](https://openai.com/index/sharing-ai-progress-in-mathematics/)
----
-### Model Updates
-**WavePrune restricts each RoPE channel to its first rotation period: arXiv NLP**
-WavePrune removes position aliasing in Rotary Position Embedding by limiting each channel to its first rotation period. The method raises the HELMET score on four of five tested models without extra tuning, including an increase from 35.7 to 40.0 on Qwen3-8B. When pretraining from scratch, models using WavePrune achieve lower validation loss at extrapolated lengths. The approach induces fine-grained sparsity that hardware-aligned CUDA kernels exploit for 1.15x prefill and 1.24x decoding speedups over FlashAttention-2 at 32K context. The paper shows that RoPE’s periodic structure beyond the first rotation period is largely redundant. Source: [arxiv.org](https://arxiv.org/abs/2610.06963)
-
-**Fiorillo v0.5 answers randomized trial questions with calibrated probabilities: arXiv NLP**
-Fiorillo v0.5 is a 4-billion-parameter open model fine-tuned on Qwen3-4B-Base with low-rank adapters and a decision head for the Evidence Inference 2.0 task. On the test split of 1,218 prompts from 333 articles, it achieved an expected calibration error of 0.0168, macro-F1 of 0.9248, and log loss 0.1829 below Gemma 4 31B-it. The model was trained only on the 1,431 training articles whose licenses permit reuse. It was released under the Apache License 2.0 after passing four pre-registered criteria on the Open Science Framework. Source: [arxiv.org](https://arxiv.org/abs/2610.07019)
-
-**Component-level interventions reveal sparse refusal mechanisms in four open-weight models: arXiv NLP**
-Refusal directions concentrate in sparse component mechanisms comprising 28 to 48 percent of upstream attention and MLP components while retaining 88 to 101 percent of steering effectiveness. Within those mechanisms, effective steering further concentrates in approximately 50 percent of residual stream dimensions, retaining 85 to 98 percent of baseline performance. The study decomposes refusal steering across four open-weight models and releases all code and raw experimental results on GitHub. Low capacity reduces causal effectiveness by 84 percent and low responsiveness by 95 percent. Source: [arxiv.org](https://arxiv.org/abs/2610.06903)
-
-**Condition-anchored generative distillation stabilizes continual learning across language modeling objectives: arXiv NLP**
-CAGD retains a small set of old prompts, uses a frozen previous model to reconstruct completions, and matches predictive distributions while learning the next task. On a 219M masked diffusion language model, the method reduced four-task final held-out loss from 2.927 to 1.114 in one task order and from 2.168 to 0.891 in reverse order. The same soft targets lowered final average loss by 0.055 over hard replay when teacher-generated support was identical. The approach was tested on fresh facts and natural instructions across SMDM and Qwen3. Source: [arxiv.org](https://arxiv.org/abs/2610.06940)
----
-### Agent &amp; Tool Developments
-**SanSi turns a pre-trained looped language model into a typed decision model: arXiv NLP**
-SanSi reads option probabilities after every loop and trains each loop with a proper scoring rule so one model serves budgets from one to eight loops. On 10,027 test decisions from 59 sources, it reached 72.0 percent accuracy, 13.5 points above a non-looped model of the same shape. On depth-controlled tasks, loops extend solvable depth beyond training depths where larger single-pass models fail. Used as a judge for policy optimization with reinforcement learning and no gold answers, SanSi raised the generator’s F1 by 7.7 points. Source: [arxiv.org](https://arxiv.org/abs/2610.07730)
-
-**ReFold compresses rendered context for long-horizon agents without discarding history: arXiv NLP**
-ReFold removes two kinds of inter-turn redundancy by replacing earlier displayed content with stubs and folding completed turns into one-line notes. It reduces token consumption by up to 2.5x and halves KV-cache memory per session across five long-horizon benchmarks and two frontier LLMs. Under capped context budgets, it avoids up to 92 percent of forced compactions. Under concurrent serving workloads, it reduces request queuing delays by up to 100 percent and accelerates inference by up to 1.7x while cutting inference costs by up to 3.4x. Source: [arxiv.org](https://arxiv.org/abs/2610.07863)
-
-**DLoop performs multiple drafting stages before verification in speculative decoding: arXiv NLP**
-DLoop continues drafting while the draft model remains confident and verifies all accumulated tokens together. Loop-aware training exposes the draft model to its own hidden states for unverified tokens. Across EAGLE-3, DFlash, Domino, DSpark, and multi-token prediction modules, DLoop improves wall-clock speedup by 5 to 41 percent while preserving lossless decoding. Source: [arxiv.org](https://arxiv.org/abs/2610.07659)
----
-### Practical &amp; Community
-**Kurate assesses study quality across 4,347 papers using linked evidence passages: arXiv NLP**
-Kurate scores papers on eight dimensions including statistical power, causal identification, preregistration, and conflict of interest. On 60 held-out clinical-trial documents, extracted information matched expert labels in 221 of 242 protocol scorepoints and 294 of 370 results-publication scorepoints. The system links each judgment to the specific passage supporting it and was applied to a corpus containing 3,913 randomized trial reports. Source: [arxiv.org](https://arxiv.org/abs/2610.07306)
-
-**TIDE 2.0 provides keyed de-identification for clinical notes with interval-preserving date shifts: arXiv NLP**
-TIDE 2.0 runs an interchangeable recognizer and a keyed anonymizer on institution-owned hardware. Dates receive a per-patient, interval-preserving offset, and each value receives the same surrogate across all occurrences under a given key. On two gold-annotated corpora, the default configuration reached span-level recall of 0.88 in-domain and 0.77 on an out-of-domain corpus at precision 0.88 and 0.87. The engine is MIT-licensed and the recognizer is available under a gated research-use agreement. Source: [arxiv.org](https://arxiv.org/abs/2610.07224)
-
-**CroissantMiner benchmarks end-to-end extraction of Croissant dataset metadata: arXiv NLP**
-The benchmark comprises 602 papers, 102 with human-validated gold annotations and 500 with LLM-generated silver annotations covering the full Croissant schema including Responsible AI fields. Single-pass extraction consistently outperformed four agentic architectures, with the largest gap on long-form RAI fields. The authors release the benchmark, evaluation code, judge audit, live demo, and leaderboard. Source: [arxiv.org](https://arxiv.org/abs/2610.07132)
-
-**AccentCL enables class-incremental accent classification robust to imbalance and domain shift: arXiv NLP**
-AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder and applies an imbalance-aware cross-entropy loss plus domain mean alignment loss. On a five-class task it achieved 77.1 percent balanced accuracy and 76.9 percent macro-averaged F1. Adding Spanish-accented English yielded 83.3 percent F1 on the new class while retaining 77.3 percent balanced accuracy on base classes; subsequent addition of Chinese-accented English yielded 61.8 percent F1 on the new class while preserving 77.6 percent balanced accuracy. Source: [arxiv.org](https://arxiv.org/abs/2610.07426)
----
-### Under the Hood: Frontier Model Result Sharing
-Frontier labs now face a concrete choice when releasing scientific outputs from internal models: publish raw results with minimal supporting material or invest in verifiable artifacts that the broader community can check. OpenAI chose the second path by shipping Lean formalizations alongside the proofs, which lets any researcher run an automated checker rather than trust textual claims. The approach adds engineering overhead because the model must produce both a human-readable proof and a machine-checkable formalization, yet it removes the common failure mode where a claimed result later turns out to contain subtle gaps. Compute accounting is also supplied in the form of ChatGPT Pro hour equivalents, giving outsiders a rough sense of the inference budget without exposing proprietary training details. The repository design further includes explicit revision and citation protocols, which reduces the risk that later corrections become untraceable. Teams evaluating similar releases should weigh the extra formalization cost against the gain in external scrutiny; when the goal is accelerating collective progress rather than claiming priority, the verifiable route appears to be the current practical standard.
----
-### Things to Try This Week
-- Monitor the OpenAI mathematics GitHub repository for new Lean formalizations and additional result summaries as they are added.
-- Review the published reasoning traces to understand how the frontier model structured its mathematical arguments.
-- Test WavePrune on a RoPE-based model at 32K context to measure the reported prefill and decoding speedups.
-- Evaluate Fiorillo v0.5 on randomized trial articles under the Apache 2.0 license to check calibration on your own evidence-inference tasks.
----
-### On the Horizon
-- Further disclosures of major scientific advancements from internal frontier models are expected as evaluation standards evolve.
-- Additional workshops and conferences on AI-produced mathematical results will be announced in the coming months.
-- More class-incremental and continual-learning frameworks for speech and language models are likely as imbalance and domain-shift robustness improve.
-</itunes:summary>
+      <itunes:summary>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.</itunes:summary>
       <itunes:episode>196</itunes:episode>
       <itunes:title>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -4565,19 +4686,5 @@ Frontier labs now face a concrete choice when releasing scientific outputs from 
       <itunes:title>Ep 195: Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep195_20261006_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep195.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 194: Closed-loop agent tests show naming the right Xiangqi move succeeds in only 13.9 percent…</title>
-      <description>Ep 194: Closed-loop agent tests show naming the right Xiangqi move succeeds in only 13.9 percent of trials once an engine defender responds.</description>
-      <guid isPermaLink="false">models-agents-video-ep194-20261005</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep194_20261005.mp4" length="239848766" type="video/mp4" />
-      <pubDate>Mon, 05 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep194_20261005.jpg" />
-      <itunes:duration>11:51</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 194: Closed-loop agent tests show naming the right Xiangqi move succeeds in only 13.9 percent of trials once an engine defender responds.</itunes:summary>
-      <itunes:episode>194</itunes:episode>
-      <itunes:title>Ep 194: Closed-loop agent tests show naming the right Xiangqi move succeeds in only 13.9 percent…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep194_20261005_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep194.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
