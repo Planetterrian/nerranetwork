@@ -180,6 +180,52 @@ def apply_windows(cuts: List[dict], windows: Any,
     return cleaned, len(rows)
 
 
+def windows_marked_on_the_edit(windows: Any) -> bool:
+    """True when any window still carries the edit's clock (``clock: "edit"``)."""
+    return any(isinstance(w, dict) and w.get("clock") == "edit" for w in windows or [])
+
+
+def windows_to_room_clock(windows: Any, clock: List[List[float]]) -> List[Dict[str, Any]]:
+    """The guest's windows, every one on the room's clock (Nov 6 2026).
+
+    The review page shows the transcript of the EDIT, so a line the guest
+    clicks carries the edit's time; ``apply_windows`` cuts on the room's.
+    Blaine Mathieu marked two lines at 26:59 and 27:06 of his episode, which
+    sit at 29:18 of the room, and the windows as stored would have cut a
+    different passage of his. *clock* is the stored ``edit_clock`` of the
+    edit the guest reviewed. A window that spans a seam becomes one window
+    per stretch of the room it covers; the part that falls on narration or a
+    gap has no room time and nothing to cut. A window already on the room's
+    clock passes through unchanged."""
+    out: List[Dict[str, Any]] = []
+    for w in windows or []:
+        if not isinstance(w, dict):
+            continue
+        if w.get("clock") != "edit":
+            out.append(w)
+            continue
+        try:
+            ws = float(w.get("start_sec", w.get("start")))
+            we = float(w.get("end_sec", w.get("end")))
+        except (TypeError, ValueError):
+            continue
+        for seg in clock or []:
+            a, b, ea = float(seg[0]), float(seg[1]), float(seg[2])
+            sc = float(seg[3]) if len(seg) > 3 else 1.0
+            if sc <= 0:
+                continue
+            eb = ea + (b - a) * sc
+            lo, hi = max(ws, ea), min(we, eb)
+            if hi <= lo:
+                continue
+            out.append({"start_sec": round(a + (lo - ea) / sc, 2),
+                        "end_sec": round(a + (hi - ea) / sc, 2),
+                        "line": str(w.get("line") or ""),
+                        "clock": "room",
+                        "edit_start_sec": ws, "edit_end_sec": we})
+    return out
+
+
 # ---------------------------------------------------------------------------
 # The transcript of the edit
 # ---------------------------------------------------------------------------

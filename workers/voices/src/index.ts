@@ -2652,7 +2652,14 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
   // Oct 21 2026: a cut the guest marks on a transcript line carries its
   // time window, so the edit can apply it in code (guest_redaction_windows);
   // the free-text box stays for anything a line cannot say.
-  const windows = redactionWindows(body?.windows);
+  // Nov 6 2026: the page shows the EDIT's transcript when there is one, so
+  // the times a click carries are the edit's; the assembler cuts on the
+  // room's clock and moves these onto it from the clock of the edit the guest
+  // reviewed (assemble_edit._windows_onto_the_room). Blaine Mathieu's two
+  // lines at 26:59 of his episode sit at 29:18 of the room.
+  const onTheEdit = !!String(pkg.edit_transcript ?? "").trim();
+  const windows = redactionWindows(body?.windows)
+    .map((w) => (onTheEdit ? { ...w, clock: "edit" } : w));
   if (windows.length) {
     const existing = Array.isArray(pkg.guest_redaction_windows) ? pkg.guest_redaction_windows : [];
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
@@ -2774,10 +2781,11 @@ export function redactionWindows(raw: unknown): Array<{ start_sec: number; end_s
 }
 
 export function mergeWindows(existing: any[], added: any[]): any[] {
-  const seen = new Set(existing.map((w) => `${w?.start_sec}-${w?.end_sec}`));
+  const keyOf = (w: any) => `${w?.clock ?? "room"}:${w?.start_sec}-${w?.end_sec}`;
+  const seen = new Set(existing.map(keyOf));
   const out = [...existing];
   for (const w of added) {
-    const key = `${w.start_sec}-${w.end_sec}`;
+    const key = keyOf(w);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(w);
