@@ -75,10 +75,12 @@ NEWSLETTER_SUBJECT_MAX = 78
 #: One "Also on Nerra today" line in the Nerra Daily email (Nov 3 2026):
 #: a short headline a reader scans, not the whole spoken hook (63-150
 #: characters, median 104, on the Nov 2 send — 48% of a two-show copy's
-#: words). The full hook is one click away on the episode page. Clipped
-#: through ``clip_words``; a clip that reads as a fragment
-#: (``is_fragment_title``) gives way to the digest's own headline.
-EMAIL_ALSO_LINE_MAX = 72
+#: words). The full hook is one click away on the episode page.
+#: Nov 6 2026: 72 cut eleven of eleven lines on the Nov 6 copy mid-thought.
+#: At 110, 42 of the 72 stories in api/personal_front.json print whole and
+#: one ends in an ellipsis; the rest take the digest's matching headline or
+#: the hook's first clause (``nerra_daily_email.also_headline``).
+EMAIL_ALSO_LINE_MAX = 110
 
 #: Anthology-book chapter titles (EPUB table of contents + audiobook
 #: chapter markers). Not a platform cap — a readability one: store TOC

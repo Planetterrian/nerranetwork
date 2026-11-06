@@ -76,7 +76,7 @@ def _front(day=DAY):
                        "members_only": False, "schedule": "Daily",
                        "stories": [_story(slug, name, 100, day,
                                           f"{name} lead story that runs long enough to need a clip "
-                                          f"at seventy-two characters, says the digest",
+                                          f"at one hundred and ten characters when the line is printed in the email, says the digest",
                                           [f"{name} second item", f"{name} third item", f"{name} fourth"],
                                           hub=hub, deck=f"{name} deck sentence one. Deck sentence two.")]}
     shows["nerra_daily"] = {"name": "Nerra Daily", "members_only": False,
@@ -332,12 +332,13 @@ class TestAlsoTodayReadsAsSections:
         assert len(lines) >= 5
         for line in lines:
             assert len(line) <= EMAIL_ALSO_LINE_MAX + len(ELLIPSIS)
-        assert "lead story that runs long enough to need a clip at seventy-two characters" not in also
+        assert "when the line is printed in the email, says the digest" not in also
         assert 'text-decoration:underline' not in also.split("Elsewhere on Nerra", 1)[0]
 
     def test_a_fragment_clip_falls_back_to_the_digests_headline(self):
         story = _story("tesla", "Tesla Shorts Time", 1, DAY,
-                       "iPhone Duo preorders open while the rest of Apple's lineup slips to next spring, Gurman says",
+                       "iPhone Duo preorders open while the rest of Apple's lineup slips to next spring and the "
+                       "Pro models move to the autumn, Gurman says",
                        ["Apple opens iPhone Duo preorders as the rest of the lineup slips"])
         assert nde.also_headline(story) == "Apple opens iPhone Duo preorders as the rest of the lineup slips"
         story["headlines"] = []

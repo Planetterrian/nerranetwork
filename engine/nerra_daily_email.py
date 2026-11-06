@@ -656,16 +656,28 @@ def card_html(pick: Pick, *, edition_ep: int, now: dt.datetime,
 
 
 def also_headline(story: Dict[str, Any]) -> str:
-    """The short headline of an "Also on Nerra today" line: the hook clipped
-    through ``engine.titles`` (:data:`engine.titles.EMAIL_ALSO_LINE_MAX`),
-    and, when the clip reads as a fragment, the digest's own first headline
-    instead — the full hook is one click away."""
-    from engine.titles import EMAIL_ALSO_LINE_MAX, clip_words, is_fragment_title
+    """The short headline of an "Also on Nerra today" line, never cut when a
+    whole line is available (Nov 6 2026: eleven of eleven lines on the Nov 6
+    copy ended in an ellipsis, because the median hook is 102 characters).
+    In order: the hook whole when it fits
+    :data:`engine.titles.EMAIL_ALSO_LINE_MAX`; the digest's own headline for
+    the hook's story (:func:`engine.newsroom.headline_within_hook`) when it
+    fits whole; the hook's first clause whole
+    (:func:`engine.titles.fit_first_clause`); and only then a clip, which
+    gives way to the digest's first headline when it reads as a fragment.
+    The full hook is one click away."""
+    from engine.newsroom import headline_within_hook
+    from engine.titles import EMAIL_ALSO_LINE_MAX, clip_words, fit_first_clause, is_fragment_title
 
     hook = str(story.get("hook") or "").strip()
-    line = clip_words(hook, EMAIL_ALSO_LINE_MAX)
+    if len(hook) <= EMAIL_ALSO_LINE_MAX:
+        return hook
+    heads = [str(h).strip() for h in (story.get("headlines") or []) if str(h).strip()]
+    for head in heads:
+        if len(head) <= EMAIL_ALSO_LINE_MAX and headline_within_hook(head, hook):
+            return head
+    line = fit_first_clause(hook, EMAIL_ALSO_LINE_MAX)
     if line != hook and is_fragment_title(line):
-        heads = [str(h).strip() for h in (story.get("headlines") or []) if str(h).strip()]
         if heads:
             line = clip_words(heads[0], EMAIL_ALSO_LINE_MAX)
     return line
@@ -858,10 +870,9 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
     # --- Readers who follow none of today's shows ----------------------------
     choose = newsletter_link(f"{SITE}/account.html#customize", EMAIL_SLUG, edition_ep, variant="choose")
     default_html = (_heading("Today on Nerra")
-                    + _note("This email carries the shows you follow. You don't follow any "
-                            "that published today, so here are a few of ours. "
+                    + _note("Here are a few of today's stories from across Nerra. "
                             + _a(choose, "Choose your shows", bold=True)
-                            + ": it takes a minute.")
+                            + " and this email carries the ones you pick. It takes a minute.")
                     + "".join(cards[s] for s in default_slugs))
     lines.append("<div>" + none_of(published_tags) + default_html + ENDIF + "</div>")
 
