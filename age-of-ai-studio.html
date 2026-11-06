@@ -2474,6 +2474,31 @@
       .catch(function (e) { blurLoading = null; throw e; });
     return blurLoading;
   }
+  // Nov 6 2026 (Patrick's test room, Safari 27 on a Mac): the page said his
+  // background was blurred and it was not. Safari has the canvas "filter"
+  // property but draws through it unchanged, so the background was drawn
+  // sharp. A filter is used only when it is seen to blur a test picture.
+  var filterBlurs = null;
+  function canvasFilterBlurs() {
+    if (filterBlurs !== null) return filterBlurs;
+    filterBlurs = false;
+    try {
+      var c = document.createElement("canvas");
+      c.width = 21; c.height = 1;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      if (typeof x.filter !== "string") return filterBlurs;
+      var dot = document.createElement("canvas");
+      dot.width = 21; dot.height = 1;
+      var d = dot.getContext("2d");
+      d.fillStyle = "#fff"; d.fillRect(10, 0, 1, 1);
+      x.filter = "blur(3px)";
+      x.drawImage(dot, 0, 0);
+      x.filter = "none";
+      // A real blur spreads the one white pixel to its neighbours.
+      filterBlurs = x.getImageData(7, 0, 1, 1).data[3] > 0;
+    } catch (e) { filterBlurs = false; }
+    return filterBlurs;
+  }
   function blurCanvas(w, h, onPage) {
     if (!onPage && typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(w, h);
     var c = document.createElement("canvas");
@@ -2493,7 +2518,10 @@
     var person = blurCanvas(w, h), pctx = person.getContext("2d");
     var out = blurCanvas(w, h, onPage), octx = out.getContext("2d");
     var mask = mctx.createImageData(SEG_W, SEG_H);
-    var canFilter = typeof octx.filter === "string";
+    var canFilter = canvasFilterBlurs();
+    // A middle step makes the shrink-and-grow blur soft rather than blocky.
+    var mid = blurCanvas(Math.max(16, Math.round(w / 10)), Math.max(16, Math.round(h / 10)));
+    var midctx = mid.getContext("2d");
     var last = -1;
     function background(src) {
       if (canFilter) {
@@ -2502,12 +2530,15 @@
         octx.filter = "none";
         return;
       }
-      // No canvas filter (older Safari): shrink and grow again, smoothed.
-      tctx.imageSmoothingEnabled = true;
-      tctx.drawImage(src, 0, 0, tiny.width, tiny.height);
+      // No working canvas filter (Safari): shrink and grow again, smoothed.
+      midctx.imageSmoothingEnabled = true; midctx.imageSmoothingQuality = "high";
+      midctx.drawImage(src, 0, 0, mid.width, mid.height);
+      tctx.imageSmoothingEnabled = true; tctx.imageSmoothingQuality = "high";
+      tctx.drawImage(mid, 0, 0, tiny.width, tiny.height);
+      midctx.drawImage(tiny, 0, 0, mid.width, mid.height);
       octx.imageSmoothingEnabled = true;
       octx.imageSmoothingQuality = "high";
-      octx.drawImage(tiny, 0, 0, w, h);
+      octx.drawImage(mid, 0, 0, w, h);
     }
     return {
       canvas: out,
