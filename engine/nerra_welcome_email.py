@@ -24,7 +24,7 @@ import html
 from dataclasses import dataclass
 from typing import List
 
-from engine.nerra_daily_email import EMAIL_NAME, EMAIL_SLUG, SITE
+from engine.nerra_daily_email import EMAIL_SLUG, SITE
 
 #: The campaign variant every welcome-email link carries.
 WELCOME_VARIANT = "welcome"
