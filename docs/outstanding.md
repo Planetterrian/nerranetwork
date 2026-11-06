@@ -24,7 +24,8 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 | GA4: two custom dimensions and three key events | open | 2026-11-04 | |
 | Google Ads: campaign and ad-group names for `scripts/funnel_link.py` | open | 2026-11-04 | |
 | Search Console: submit `news-sitemap.xml` | open | 2026-11-04 | The file is live (200, 18 KB). |
-| Buttondown: is a welcome email on? | open | 2026-11-04 | |
+| Buttondown: is a welcome email on? | answered: no (Patrick, Nov 6); draft in `engine/nerra_welcome_email.py`, sender not chosen | 2026-11-06 | |
+| Buttondown: turn on open and click tracking (off by default; every send reads 0) | open | 2026-11-06 | api/buttondown_stats.json |
 | Buttondown: send the "Nerra Daily email" test draft | open | 2026-11-04 | None has reached the inbox, so `BUTTONDOWN_WRAPPER_BYTES` is unknown. |
 | Stripe: set `STRIPE_SECRET_KEY` | open | 2026-11-04 | `api/member_metrics.json` (Nov 3 22:23 UTC): `stripe_configured: false`. |
 | YouTube Studio: banners, descriptions, RU/FR trailers, end screens (note the start date) | open | 2026-11-04 | RSS-podcast removal is the Nov 16 item. |

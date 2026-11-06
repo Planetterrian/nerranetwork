@@ -487,6 +487,20 @@ _DECK_LEAD_NUM_RE = re.compile(r"^\s*\d+[.)]\s*")
 _DECK_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
 #: An item head's outlet tail: "— TSLAming (X)", ": Reuters".
 _DECK_OUTLET_TAIL_MAX_WORDS = 6
+#: Nov 6 2026: a head that credits many outlets ("The Verge, Business
+#: Insider, Forbes, … FourWeekMBA") passed the six-word test and the Tesla
+#: card's deck opened on ten publisher names. A comma list of short names
+#: with no sentence end is a credit line, whatever its length.
+_DECK_OUTLET_LIST_ITEM_MAX_WORDS = 4
+#: Abbreviations a sentence never ends on: "on the morning of Oct. 6, 2026"
+#: split after "Oct." and the deck printed "… morning of Oct." (Nov 6 2026,
+#: Fascinating Frontiers Ep245).
+_DECK_NO_END_ABBREVIATIONS = frozenset({
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct",
+    "nov", "dec", "mr", "mrs", "ms", "dr", "prof", "st", "mt", "ft", "no",
+    "vs", "approx", "gen", "gov", "sen", "rep", "lt", "col", "sgt", "jr",
+    "sr", "inc", "corp", "co", "ltd", "est", "fig", "vol",
+})
 
 
 def _deck_line_is_furniture(line: str) -> bool:
@@ -511,10 +525,36 @@ def _deck_body_lines(item) -> List[str]:
         head = _DECK_LEAD_NUM_RE.sub("", lines[0])
         after = _DECK_BOLD_RE.sub("", head, count=1).strip()
         after = after.lstrip("—–-: ").strip()
-        if len(after.split()) <= _DECK_OUTLET_TAIL_MAX_WORDS:
+        if len(after.split()) <= _DECK_OUTLET_TAIL_MAX_WORDS or _is_outlet_list(after):
             after = ""
         lines = ([after] if after else []) + lines[1:]
     return [ln for ln in lines if not _deck_line_is_furniture(ln)]
+
+
+def _is_outlet_list(text: str) -> bool:
+    """A credit line of publishers: two or more commas, every part a short
+    name, and no sentence end."""
+    text = (text or "").strip()
+    if not text or text[-1] in ".!?":
+        return False
+    parts = [p.strip() for p in text.split(",")]
+    if len(parts) < 3 or any(not p for p in parts):
+        return False
+    return all(len(p.split()) <= _DECK_OUTLET_LIST_ITEM_MAX_WORDS for p in parts)
+
+
+def _deck_sentences(text: str) -> List[str]:
+    """*text* split on :data:`_DECK_SENTENCE_RE`, a piece that ends on an
+    abbreviation (:data:`_DECK_NO_END_ABBREVIATIONS`) joined to the next."""
+    out: List[str] = []
+    for piece in _DECK_SENTENCE_RE.split(text or ""):
+        if out:
+            last = re.search(r"([A-Za-z]+)\.$", out[-1])
+            if last and last.group(1).lower() in _DECK_NO_END_ABBREVIATIONS:
+                out[-1] = out[-1] + " " + piece
+                continue
+        out.append(piece)
+    return out
 
 
 def _deck_pick(items: list, hook: str):
@@ -600,7 +640,7 @@ def story_deck(content: str, hook: str, *, max_sentences: int = DECK_MAX_SENTENC
     flagged = [f for f in flagged if f]
     out: List[str] = []
     total = 0
-    for sentence in _DECK_SENTENCE_RE.split(text):
+    for sentence in _deck_sentences(text):
         sentence = sentence.strip()
         if not sentence or len(sentence.split()) < 3:
             continue

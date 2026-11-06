@@ -61,6 +61,7 @@ import requests  # noqa: E402
 
 from edit_transcript import (  # noqa: E402
     apply_windows, normalise_windows, transcript_of_the_edit, windows_hash,
+    windows_marked_on_the_edit, windows_to_room_clock,
 )
 from common import (  # noqa: E402
     OPERATOR_EMAIL, logger, package_review_token, r2_upload, sb_select,
@@ -849,6 +850,7 @@ def assemble(slug: str) -> dict:
     # the room clock) come out of the file THIS step builds, which is the one
     # that publishes. produce_episode applied them to a file nobody shipped.
     package = _live_package(run_id, _interview_id(spec, run))
+    _windows_onto_the_room(package, run)
     windows = normalise_windows((package or {}).get("guest_redaction_windows"))
     room_offset = float(spec.get("room_offset_sec") or 0.0)
     cuts, applied = apply_windows(cuts, windows, room_offset)
@@ -1060,6 +1062,33 @@ def assemble(slug: str) -> dict:
         # The episode exists either way; losing the email must not lose it.
         logger.exception("could not announce the episode — it is at %s", url)
     return {"url": url, "duration_sec": seconds}
+
+
+def _windows_onto_the_room(package: dict | None, run: dict) -> None:
+    """Move windows the guest marked on the edit's transcript onto the room's
+    clock, in place and on the package, before anything is cut (Nov 6 2026).
+
+    The stored edit clock is the one of the edit the guest reviewed, and this
+    build replaces it, so the result is written back at once: the next build
+    must never convert the same windows with a different clock. Refuses when
+    there is no clock, because cutting edit times as room times removes
+    words the guest never marked."""
+    raw = (package or {}).get("guest_redaction_windows") or []
+    if not windows_marked_on_the_edit(raw):
+        return
+    clock = (((run.get("grok_session_log") or {}).get("tracks") or {})
+             .get("edit") or {}).get("clock")
+    if not clock:
+        raise SystemExit("the guest marked lines on the edit's transcript and no "
+                         "edit clock is stored to place them on the room's clock")
+    moved = windows_to_room_clock(raw, clock)
+    sb_update("editorial_packages", f"id=eq.{package['id']}",
+              {"guest_redaction_windows": moved})
+    package["guest_redaction_windows"] = moved
+    for w in moved:
+        if w.get("edit_start_sec") is not None:
+            logger.info("guest window %.1f-%.1fs of the edit is %.1f-%.1fs of the room",
+                        w["edit_start_sec"], w["edit_end_sec"], w["start_sec"], w["end_sec"])
 
 
 def _live_package(run_id: str, interview_id: str) -> dict | None:

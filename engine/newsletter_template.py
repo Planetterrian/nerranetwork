@@ -21,6 +21,7 @@ Email-safe constraints driving the design:
 
 from __future__ import annotations
 
+import html
 import datetime
 import logging
 import re
@@ -1928,6 +1929,7 @@ def wrap_with_branding(
     featured_position: str = "top",
     featured_eyebrow: Optional[str] = None,
     masthead_lead_html: str = "",
+    pill_text: Optional[str] = None,
 ) -> str:
     """Wrap *markdown_body* with a branded hero, optional middle blocks,
     and footer.
@@ -1968,7 +1970,12 @@ def wrap_with_branding(
                          f"not {featured_position!r}")
     show = _load_show_branding(slug)
 
-    if week_ending is not None:
+    if pill_text is not None:
+        # Nov 6 2026: an email that is neither a daily nor a weekly (the
+        # welcome email) names itself; the dateless fallback below printed
+        # "WEEKLY DIGEST · <this week>" on it.
+        pill = html.escape(pill_text)
+    elif week_ending is not None:
         pill = _format_week_pill(week_ending)
     elif daily_date is not None:
         pill = _format_date_pill(daily_label or "Today", daily_date)
