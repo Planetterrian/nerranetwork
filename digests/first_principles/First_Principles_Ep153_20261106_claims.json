@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 2,
+    "claims_verified": 0,
+    "shape_errors": [],
+    "dropped_claims": [
+      {
+        "id": "3",
+        "claim": "The Fourdrinier brothers spent over £60,000 developing the machine and later received a £7,000 parliamentary grant in 1840.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://en.wikipedia.org/wiki/Fourdrinier_machine",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.britannica.com/topic/Fourdrinier-machine",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "In 1799 Nicolas-Louis Robert sketched a different arrangement: an endless wire belt that would form a continuous web of paper without seams or repeated mould changes.",
+      "Records from 1806 show hand-made paper selling for sixteen shillings per hundredweight while the same weight of machine-made paper later sold for three shillings nine pence."
+    ],
+    "flagged_count": 2,
+    "verified_count": 0
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Nicolas-Louis Robert obtained a French patent for a continuous papermaking machine in 1799.",
+      "episode_span": "In 1799 Nicolas-Louis Robert sketched a different arrangement: an endless wire belt that would form a continuous web of paper without seams or repeated mould changes.",
+      "source_url": "https://en.wikipedia.org/wiki/Fourdrinier_machine",
+      "supporting_quote": "Nicolas Louis Robert of France was granted a patent for a continuous paper making machine in 1799",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "2",
+      "claim": "Hand-made paper sold for sixteen shillings per hundredweight while machine-made paper sold for three shillings nine pence per hundredweight in the 1806 demonstration.",
+      "episode_span": "Records from 1806 show hand-made paper selling for sixteen shillings per hundredweight while the same weight of machine-made paper later sold for three shillings nine pence.",
+      "source_url": "https://www.britannica.com/topic/Fourdrinier-machine",
+      "supporting_quote": "machine-made paper could be sold at one-third the price of handmade paper",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    }
+  ]
+}
