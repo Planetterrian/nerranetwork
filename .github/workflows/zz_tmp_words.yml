@@ -24,8 +24,8 @@ jobs:
           B=https://audio.nerranetwork.com/age_of_ai/raw/43ff31a6-e248-4352-8f47-6f5414ee0f49
           for r in guest mira; do
             curl -sSL -o $r.wav "${B}_${r}_rt20261104200204.wav"
-            ffmpeg -nostdin -loglevel error -y -ss 1595 -t 75 -i $r.wav -ac 1 -ar 16000 w_$r.wav
-            echo "== silences $r"; ffmpeg -nostdin -i w_$r.wav -af silencedetect=n=-40dB:d=0.4 -f null - 2>&1 | grep -o 'silence_[a-z]*: [0-9.]*' | awk '{printf "%s %.2f\n",$1,$2+1595}'
+            ffmpeg -nostdin -loglevel error -y -ss 1745 -t 60 -i $r.wav -ac 1 -ar 16000 w_$r.wav
+            echo "== silences $r"; ffmpeg -nostdin -i w_$r.wav -af silencedetect=n=-40dB:d=0.4 -f null - 2>&1 | grep -o 'silence_[a-z]*: [0-9.]*' | awk '{printf "%s %.2f\n",$1,$2+1745}'
           done
           python - <<'P'
           from faster_whisper import WhisperModel
@@ -34,5 +34,5 @@ jobs:
               segs, _ = m.transcribe(f"w_{r}.wav", word_timestamps=True, vad_filter=False)
               print("== words", r)
               for s in segs:
-                  print(" ".join(f"{w.word.strip()}@{w.start+1595:.2f}-{w.end+1595:.2f}" for w in s.words))
+                  print(" ".join(f"{w.word.strip()}@{w.start+1745:.2f}-{w.end+1745:.2f}" for w in s.words))
           P
