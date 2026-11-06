@@ -24,6 +24,8 @@
  *   GET  /api/feed/<token>/<file>        - token-gated private feed/audio
  *   GET  /api/admin/personal-specs       - batch-builder input (bearer auth;
  *                                          tokens + prefs, NEVER emails)
+ *   GET  /api/admin/personal-feed-health - counts of fresh / behind private
+ *                                          feeds (Nov 6 2026; counts only)
  */
 
 import { MEMBER_SYMBOL_RE } from "./markets";
@@ -33,6 +35,8 @@ import {
   dispatchAvailable,
   dispatchPersonalBuild,
   noteRebuild,
+  readLatestEditionDate,
+  summariseFeedFreshness,
   todayIso,
   todayStatus,
 } from "./build";
@@ -1418,4 +1422,55 @@ export async function handleShowDemand(
   const demand = countShowDemand(records);
   const members = records.filter((r) => r.status === "active" && r.feed_token).length;
   return jsonResponse(request, 200, { ok: true, members, demand });
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/admin/personal-feed-health  (Nov 6 2026)
+// ---------------------------------------------------------------------------
+//
+// How fresh the members' PRIVATE feeds are: for every active paying member,
+// the newest edition date in personal/<token>/episodes.json, summarised as
+// COUNTS (engine/build summariseFeedFreshness) — never a name, city, email
+// or feed token, so the public repo's daily audit can hold the token that
+// reads it. Accepts PERSONAL_DEMAND_TOKEN or the full admin token, like
+// show-demand. Nov 2-6 2026: every batch run failed on a 401 and no member's
+// feed moved for five days while every public check stayed green.
+
+export async function handleFeedHealth(
+  request: Request,
+  env: Env,
+  now = new Date(),
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !env.PERSONAL_BUCKET
+      || !(env.PERSONAL_DEMAND_TOKEN || env.PERSONAL_ADMIN_TOKEN)) {
+    return notConfigured(request);
+  }
+  const auth = request.headers.get("Authorization") || "";
+  const allowed = [env.PERSONAL_DEMAND_TOKEN, env.PERSONAL_ADMIN_TOKEN]
+    .filter((t): t is string => !!t)
+    .map((t) => `Bearer ${t}`);
+  if (!allowed.some((exp) => bearerEquals(auth, exp))) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const latest: (string | null)[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.RATE_LIMIT_KV.list({ prefix: "member:", cursor });
+    for (const key of page.keys) {
+      const raw = await env.RATE_LIMIT_KV.get(key.name);
+      if (!raw) continue;
+      let rec: MemberRecord;
+      try {
+        rec = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      if (rec.status !== "active" || !rec.feed_token) continue;
+      latest.push(await readLatestEditionDate(env, rec.feed_token));
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return jsonResponse(request, 200, {
+    ok: true, ...summariseFeedFreshness(latest, todayIso(now)),
+  });
 }

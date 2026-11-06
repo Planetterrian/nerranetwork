@@ -178,7 +178,9 @@ def load_specs(args) -> List[PersonalSpec]:
     else:
         import requests
 
-        token = os.environ.get("PERSONAL_ADMIN_TOKEN", "")
+        # .strip(): a pasted secret routinely carries a trailing newline,
+        # and the Worker compares the bearer byte for byte.
+        token = os.environ.get("PERSONAL_ADMIN_TOKEN", "").strip()
         if not token:
             # Raise, don't return []. An empty list flows into main()'s
             # "no active subscribers — nothing to do" and exits 0, so a
@@ -194,6 +196,18 @@ def load_specs(args) -> List[PersonalSpec]:
             f"{API_BASE}/api/admin/personal-specs",
             headers={"Authorization": f"Bearer {token}"}, timeout=60,
         )
+        if resp.status_code == 401:
+            # Nov 2-6 2026: every run died here on a bare HTTPError after a
+            # token rotation updated the Worker but not this host. Say what
+            # to do; the daily audit (scripts/check_personal_feeds.py) pages
+            # on the stale feeds this leaves behind.
+            raise SystemExit(
+                "401 from /api/admin/personal-specs: this host's "
+                "PERSONAL_ADMIN_TOKEN does not match the gallery Worker's "
+                "secret. Set the batch repo's secret to the Worker's value "
+                "(or rotate both together); no member gets an edition until "
+                "they match."
+            )
         resp.raise_for_status()
         raw = resp.json().get("specs", [])
     specs = [s for s in (validate_spec(r) for r in raw) if s is not None]

@@ -40,6 +40,7 @@ import {
   handlePortal,
   handleAdminSpecs,
   handleShowDemand,
+  handleFeedHealth,
   handlePersonalFeed,
   handlePreferences,
   handleRebuild,
@@ -121,6 +122,8 @@ export default {
           return await handleEmailSync(request, env);
         case "GET /api/admin/show-demand":
           return await handleShowDemand(request, env);
+        case "GET /api/admin/personal-feed-health":
+          return await handleFeedHealth(request, env);
         case "GET /api/markets":
           // Oct 19 2026: live quotes for the front page's markets strip.
           return await handleMarkets(request, ctx);

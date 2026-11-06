@@ -1634,35 +1634,11 @@ Items 4–13 in full: [history](docs/claude_md_history/2026_02_resolved_issues_4
     `tests/test_{youtube_quota,youtube_quality_pass}.py`.
     [history](docs/claude_md_history/2026_05_landmine_20_youtube.md)
 
-21. **`min_articles_skip` is tuned per-show, not per-network (May 2026)**
-    — `engine/config.py` defaults `min_articles_skip` to `3` (a show
-    skips that day's run if fewer than 3 fresh articles survive
-    fetch + dedup). The default is a deliberately weak floor; every
-    show that needs a different threshold pins it explicitly in its
-    YAML. Current pinned values:
-
-    | Show | `min_articles_skip` | Rationale |
-    |---|---|---|
-    | `tesla` | 6 | Largest property; six-segment digest needs density. |
-    | `omni_view` | 4 | World-news scan; below 4 the digest reads thin. |
-    | `fascinating_frontiers` | 4 | Space/science; needs multiple beats. |
-    | `models_agents` | 4 | AI news firehose; sub-4 means a quiet day → skip. |
-    | `finansy_prosto` | 4 | Russian financial news scarcity → wait for a real day. |
-    | `modern_investing` | (default 3) | Markets always produce 3+ stories on a weekday. |
-    | `env_intel` | 2 | Alt-cadence (odd weekdays); 2 substantive stories enough. |
-    | `models_agents_beginners` | 2 | Re-uses M&A pool; lower bar OK because tone is explanatory. |
-    | `planetterrian` | 2 | Science/longevity/health show (NOT local news — that description was stale); primary-research days can be thin, so 2 is the realistic floor. |
-    | `privet_russian` | 1 | Bilingual lesson show; one solid theme is sufficient. |
-    | `unintended_consequences` | 0 | Narrative show — articles aren't the input, topic queue is. |
-    | `first_principles` | 0 | Narrative show — topic queue is the input (alternates concrete example / opportunity area). |
-
-    **Landmine:** changing the default from `3` would silently
-    re-tune four shows (the ones currently pinned at `4` would still
-    pass; the ones below `3` rely on the explicit override winning).
-    Always change the per-show YAML, not the default. The
-    `unintended_consequences` value of `0` is load-bearing — that
-    show pulls from `shows/topic_queues/unintended_consequences.yaml`
-    and never fetches news; raising it would block every episode.
+21. **`min_articles_skip` is tuned per-show, not per-network** — the
+    `engine/config.py` default `3` is a weak floor; change the per-show YAML,
+    never the default (shows below 3 rely on their override). **The narrative
+    shows' `0` is load-bearing** (they never fetch news). Per-show table:
+    [history](docs/claude_md_history/2026_05_landmine_21_min_articles_skip.md)
 
 22. **TSLA price source: multi-source fallback chain.**
     `shows/hooks/tesla.py:_fetch_tsla_price()` tries three sources; the same
@@ -1984,6 +1960,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   never 0); ONE rolling issue; **a promised length is computed from the last
   14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
   Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
+
+### The private Nerra Personal feeds are watched (Nov 6 2026)
+
+Guards `tests/test_personal_feed_health_2026_11_06.py`, `workers/gallery/test/feed_health.test.ts`; doc `docs/nerra_personal.md` "The private feeds are watched".
+**A green public check says nothing about the private feeds**: Nov 2-6 every batch run 401'd and no member feed moved. **The daily audit reads `/api/admin/personal-feed-health` (counts only) and fails when a member has no edition for today**; unread is a warning and null, never 0. **Rotating `PERSONAL_ADMIN_TOKEN` is the Worker AND the batch repo together.**
 
 ### Mira builds on the answer; she does not sum it up (Nov 4 2026)
 
