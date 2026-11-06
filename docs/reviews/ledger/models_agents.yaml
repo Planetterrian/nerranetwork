@@ -1335,6 +1335,97 @@ reviews:
     ab_listen_required: false
     rationale: 'Playbook: every behavioral fix gets a drift-guard; wiring guards must load real YAML via load_config (Oct 1 frame-memory empty-render lesson). Day-old tolerance avoids false red on in-flight runs.'
   agent_cost_usd: 0.2017
+- date: '2026-11-06'
+  pr: null
+  doc: docs/reviews/models_agents_review_2026_11_06.md
+  generated_by: grok-4.5
+  summary: Option C length (1200w) and names_to_keep shipped and hold the floor, but ep226 dropped Under the Hood entirely, names-kept stays ~4/10 ≥75% after the data-side lever, and the thrice-filed non-UTH digest_section wiring is correctly do_not_retry after the Nov-1 replay.
+  scored_prior_predictions:
+  - metric: episodes with distinct Model Updates chapter row when digest has Model Updates, last 10
+    verdict: miss
+    evidence: Only ep223 named Model Updates/Agent/Practical; ep217–222/224–226 story-autos + Also Today; digest_section lever now do_not_retry
+  - metric: episodes with Agent & Tool Developments and/or Practical & Community chapter rows when those digest sections have items, last 10
+    verdict: miss
+    evidence: 0/10 distinct Agent/Practical rows except ep223; same closed lever
+  - metric: Under the Hood chapter when deep-dive present, last 10 (regression watch)
+    verdict: partial
+    evidence: 9/10 ep217–225 have UTH; ep226 chapters_ep226.json + EN transcript omit UTH and pop-the-hood entirely
+  - metric: chapters_ep*.json titles containing "](" or "http", or early Practical & Community before 25% of script
+    verdict: hit
+    evidence: 0 link titles and 0 early P&C mis-fires in ep217–226
+  - metric: digest-verbatim median last 10 (grok-4.6 cohort hold)
+    verdict: hit
+    evidence: median ~20% (range 7–29%) under ≤35% hold bar
+  - metric: episodes below min_podcast_words (1500), last 10
+    verdict: hit
+    evidence: 'Option C shipped Nov-1: live min_podcast_words=1200; 0/10 under 1200 (ep218–220 sit in accepted 1200–1400 band)'
+  - metric: script_entity_retention_pct ≥75%, last 10
+    verdict: miss
+    evidence: only 4/10 ≥75% (80/82/70/73/78/59/81/63/57/52) after names_to_keep:true; ep226=52%
+  - metric: '"Everyone talks/Most people" UTH opener + keep-an-eye teaser (regression)'
+    verdict: hit
+    evidence: 0 contrast-cliché UTH openers when UTH airs; 0 keep-an-eye teasers; Before we go holds
+  shipped: []
+  deferred:
+  - Digest-driven / position-aware mid-item chapter titles (network-wide; story autos preferred after Nov-1 rejected section-label wiring)
+  - RSS title truncation ownership (hook under 120 vs 100-char title cap vs title-bundle optimized title)
+  - Same-day double publish Ep155+Ep156 prune (operator; renumbering unsafe)
+  - podcast:transcript from pre-pronunciation text or Whisper post-correct (network-wide LoRA/RAG/Quinn class)
+  - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items ≤40%)
+  - 'Narrative tracker: advance last_mentioned only on headline mentions; seed-only last_major_update nulls (data-side)'
+  - 'MAB sibling: Big Story / Deep Dive / Cool Stuff / Quick Bits required-anchor treatment'
+  - Sunday weekly_summary_segment must synthesize, not splice dailies’ sentences
+  - Brand anchors pop the hood / Before we go / pinned closing — do_not_retry de-seed or multi-variant closing re-expand
+  - UTH distinct-subject residual — readout via existing deep_dive_distinct_measure / deep_dive_fetched_source lints before more prompt text
+  - 'names-kept: if wiring-green and still ≤4/10 ≥75% after another full cohort, operator choose accept metric vs entity-drop rewrite-gate (new lever only — no fourth podcast entity paragraph)'
+  - facts×2 / copied section-header residual — watch one more grok-4.6 cohort before another content_discipline paragraph
+  - OP3 first-week ~29 dl/ep, −12.6% WoW, YT long ~11.1% — watch; no enclosure/path bug this pass
+  - Sep-24 source_integrity / per-ep x.com snapshot fields still missing — instrumentation, not show prompt
+  predictions:
+  - metric: 'episodes with Under the Hood chapter AND spoken pop-the-hood anchor when digest has ### Under the Hood, last 10'
+    baseline: 9/10 (ep226 missing both chapter and anchor)
+    expected: ≥9/10 sustained; 0 ep226-class full UTH drops after presence gate
+    verdict: pending
+    evidence: null
+  - metric: episodes below live min_podcast_words (1200), last 10
+    baseline: 0/10
+    expected: 0/10 sustained; do not rescore against retired 1500 line
+    verdict: pending
+    evidence: null
+  - metric: script_entity_retention_pct ≥75%, last 10 (post names_to_keep wiring verify)
+    baseline: 4/10 ≥75%
+    expected: ≥6/10 if wiring non-empty on entity-rich digests; if still ≤4/10 after another full cohort, mark lever exhausted and escalate operator accept-vs-rewrite-gate
+    verdict: pending
+    evidence: null
+  - metric: digest-verbatim median last 10 (grok-4.6 hold)
+    baseline: ~20%
+    expected: median ≤35% sustained; if median ≥45%, document experiment miss
+    verdict: pending
+    evidence: null
+  - metric: '"Everyone talks/Most people" UTH opener + keep-an-eye teaser (regression)'
+    baseline: 0/10 both
+    expected: ≤1/10 each sustained
+    verdict: pending
+    evidence: null
+  - metric: named Model Updates/Agent/Practical section chapter rows forced via digest_section
+    baseline: n/a — lever do_not_retry
+    expected: n/a-lever-not-shipped; story-auto + Also Today + UTH shape accepted
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: engine/generator.py (or run_show podcast accept path)
+    kind: code
+    ab_listen_required: false
+    rationale: 'P0/P1 structure: ep226 is a full deep-dive drop after 9/10 UTH holds. Enforcing the existing Sep-4 required anchor in code beats a third prompt reminder. ab_listen false — guard only fires on non-compliant scripts.'
+  - file: tests/test_models_agents_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'Playbook: every behavioral fix gets a drift-guard; wiring guards must use real YAML (Oct-1 frame-memory empty-render lesson); day-old tolerance avoids false red on today’s run.'
+  - file: shows/prompts/models_agents_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'Belt-and-suspenders with the code gate for ep226-class full-section drops. Shape + mandatory presence only; no replacement tic menu (meta-rule). A/B-listen required (landmine #17).'
+  agent_cost_usd: 0.2201
 do_not_retry:
 - idea: De-seed or rotate the 'Before we go' Tomorrow Teaser opener — Sep-4 closed it as a brand chapter anchor (same class as Tesla/SpaceX); residual keep-an-eye is already cleared
   evidence: flagged 2026-09-08 (Grok review)
