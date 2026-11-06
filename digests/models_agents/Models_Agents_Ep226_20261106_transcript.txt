@@ -1,0 +1,112 @@
+Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior Gemini versions. This is Models & Agents, Episode 226. Kakao's decision model, recursive sparse attention, and agent safety findings follow, then things to try. Google on its blog, aim the faster release at developers who need efficient inference on resource constrained devices, while keeping strong reasoning on extended contexts. Early users say it holds quality on work that previously needed
+needed larger Gemini variants, so on-device agents can process long documents and multimodal
+clips without stepping up a size class.
+Kakao, Harold Corp Reports, announced a decision model that answers typical requests
+in 183 milliseconds and runs 43 times faster than GPT-6 Luna.
+It matches or exceeds several larger models on Decision Index 0.4.1 and Decision Bench version
+4.
+The family ship says open 8 billion, 9 billion, 35 billion, with 3 billion active, and
+27 billion parameter variants, trained with supervised fine-tuning plus reinforcement
+learning from adjusted feedback, recursive sparse attention, posted on archive, builds
+a tree over the key value cache so each query reads only on the order of log L entries at
+context length L. Started from QN34B and trained on 0.62 billion tokens,
+REC SA scores 60.5 on ruler at 1 million tokens versus 40.0 for the best baseline.
+Pre-Fill speeds up 3.2 times and decoding 3.8 times at 524,000 tokens on 1H-200 GPU.
+Plattour connects frozen large and small models through lightweight linear bridges trained
+only with task rewards.
+Controlled experiments showed some reported gains can be reproduced without useful sender
+information.
+So, the authors released PACCHEC to measure genuine cross-model communication.
+Hybrid soft prompt tuning on Fairbought Bench raised agreement with human ratings on bias, toxicity, and personalization.
+The adapted QN 3.59B judge surpassed hosted reference judges across those three dimensions.
+Attackers, IT brief New Zealand reports, register expired domains previously used by agent tools and serve malicious content that agents fetch during routine operation.
+The Webhole technique needs no prompt injection at deployment time.
+AtSign edge AI, Enterprise Times reports, provides encrypted identity-based connections
+for agents running at the edge without exposing long-lived credentials.
+The service targets enterprise deployments that need agent-to-agent or agent-to-device links.
+Autonomous agents, Microsoft said in an advisory carried by Homeland 411, can be prompted
+to enumerate and exfiltrate cloud credentials in under five minutes when given broad tool access.
+The advisory urges lease-privileged tool scopes and continuous monitoring of agent actions.
+Safetyin, back on archive, is a clinician-informed benchmark of 32,555 simulated conversations
+that found a 43.3% safety criterion failure rate without teen-aware prompting and 24.9% with it.
+Failures on diagnosis and medication boundaries rose 10-12 points when a simulated teenager pushed back.
+German, Korean, Turkish, and Farsi now sit inside Tao Bench Lilt,
+which extends Tao 3 bench across airline, retail, telecom, and banking domains.
+The largest performance drops versus English reach 61 points in pass 4 on Korean and Farsi retail tasks.
+6.
+Matriarchy Classics ships a tokenizer and mapping pipeline that gender swaps public domain novels
+while guaranteeing that only gendered words change.
+The method cuts manual effort from weeks to minutes and comes with code and two example
+novels.
+The fine-tune model plugs into the open-source lingua-haru document translator.
+Axis Laura puts four Laura branches inside an embedding model, gated per query.
+4. Benchmark mean recall at 10 improved by 1.28 to 1.56 points on personal memory tasks while
+training only a small fraction of parameters. Core is a training-free research harness that
+reuses late interaction re-ranker scores to return only the most relevant snippet from each retrieved
+passage and lets agents expand context on demand. It outperformed prior research harnesses on three
+agent models and three benchmarks. From the rest of today's papers, interactive backdoor
+attacks, poison training data, so multi-turn dialogue steers toward attacker goals after
+a trigger, while normal utility holds on psychological counseling tasks. Correcting score errors
+raised model acceptance by more than 80 points on legal bench Sara numeric cases without changing
+references or responses. Prism screened 3.9 million posts and surfaced 123 candidate genetic
+variant reclassifications. Five of them from uncertain to pathogenic or likely pathogenic.
+Feedback to 1,030 volunteer SAT tutors raised eliciting and uptake moves 8-15 percent,
+but left tutor talktime at 91.5 percent across conditions. Persistent memory written during low
+stakes coding or emotional support sessions caused agents to skip verification or exhibit sick
+fancy on later high stakes tasks across six frontier models.
+Trace MRT, red teaming exposed substantial vulnerabilities in top chain of thought monitors,
+and a new Bayesian trajectory monitor reached 0.91 area under the curve and 0.74 true positive
+rate at 5% false positive rate.
+Fine-tuning on the Speech Accessibility Project challenged two data cat character error rate
+from 15.26% to 7.81% on the hidden test set, with the largest gains on the hardest speakers.
+Pruning 25% of experts using English calibration dropped Lithuanian comprehension 21.4 points,
+while English fell only 1.7 points.
+Supervised fine-tuning reduced expected calibration error from 0.2 to 0.006 on a Luxembourgish
+next-like prediction task, while raising accuracy from 0.536-0.758. Genver, which scores triples
+against generated natural language representations, reached 88.56-91.52% accuracy on four-fact
+FB variants. A key phrase survey synthesizes statistical, hybrid, and LLM-based methods,
+and flags data scarcity and multimodal fusion as remaining bottlenecks for spoken language
+extraction. A generative simulation and human reading time data both show that unresolved
+dependency load, integration cost, and semantic mismatch jointly predict where listeners play
+sentence boundaries. Hybrid state transfer preserves recurrent and convolution states when moving
+context between hybrid models, achieving 89.88 to 94.11 percent task retention at 21 times
+hand-off speed-up.
+Hallouchex 42,000 instance benchmark shows current LLMs handle basic detection, but struggle
+with localization, correction, and agent trajectory hallucinations.
+TB math model scores complete modeling solutions against human outstanding papers, plus lean verified
+feasibility constraints on 18 real contest problems.
+times. Multimodal SEA, across 608 tasks, saw a tax success rates from 7.1 to 34.5 percent,
+and adding multimodal content raised success from 19.9 percent to 29.2 percent, despite
+more verification attempts. South Africa, the national reports, ranks among only three
+African countries meeting the AI readiness benchmark.
+Why net news warns that an AI agent does not have to go rogue to put a business at risk?
+Asian Stock Benchmarks, news for Jack's reports, fell after AI-related concerns sent Wall Street
+tumbling. Edge Cloud AI inference pipelines, info world argues, are essential for balancing
+latency, cost, and capability in production deployments. Australian universities, the open
+AI blog says, are expanding chat GPT access and integrating AI into curricula to prepare students
+for an AI-enabled workforce. If a workflow still hits context or latency limits on earlier
+flash releases, run that same job on Gemini Omni 1.2 flash and compare.
+If you need long-context extrapolation without retraining, run the RECSA kernels on ruler
+from 128,000 to 1 million tokens.
+Read the Microsoft Agentech AI Advisory and Titan Tool Scopes on any autonomous coding or
+cloud management agents you already have in production.
+Drop the core research harness onto Browse Comp-style tasks and see whether course-defined snippet
+selection cuts context bloat. If retrieval has to distinguish time, place or person, try
+access Lora adapters on personal memory retrieval benchmarks.
+Updated pricing and SDK examples for Gemini Omni 1.2 Flash are expected within the next
+week. Kakao may follow with additional decision model sizes and commercial licensing terms.
+Authors on the new multilingual and safety benchmarks have promised code and data releases
+in the coming days. Before we go, those Gemini Omni 1.2-flash pricing tiers and SDK examples
+are slated this week, and tomorrow is a live window for the first of them. That's models
+and agents for today. If you found this useful, share it with someone who's trying to keep
+up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world
+moves fast. We'll help you keep up. See you tomorrow, and if you'd rather watch than listen,
+Find us on YouTube at Narin Network, links in the show notes.
+This show comes to you from the Narin Network.
+If you want a sharp, weekly briefing, Offshore North has you covered.
+Offshore Ocean Racing explained every Monday with a Canadian angle.
+All our shows are free at NarinNetwork.com.
+The Age of AI and AI Host interviews real builders in a live studio and every guest decides
+whether their conversation is published.
+Apply at NarinNetwork.com, Age of AI Apply.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.

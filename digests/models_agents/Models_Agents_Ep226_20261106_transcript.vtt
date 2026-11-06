@@ -1,0 +1,337 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior Gemini versions. This is Models &amp; Agents, Episode 226. Kakao's decision model, recursive sparse attention, and agent safety findings follow, then things to try. Google on its blog, aim the faster release at developers who need efficient inference on resource constrained devices, while keeping strong reasoning on extended contexts. Early users say it holds quality on work that previously needed
+
+00:00:29.980 --> 00:00:35.640
+needed larger Gemini variants, so on-device agents can process long documents and multimodal
+
+00:00:35.640 --> 00:00:37.720
+clips without stepping up a size class.
+
+00:00:38.677 --> 00:00:43.277
+Kakao, Harold Corp Reports, announced a decision model that answers typical requests
+
+00:00:43.277 --> 00:00:48.937
+in 183 milliseconds and runs 43 times faster than GPT-6 Luna.
+
+00:00:49.497 --> 00:00:56.157
+It matches or exceeds several larger models on Decision Index 0.4.1 and Decision Bench version
+
+00:00:56.157 --> 00:00:56.597
+4.
+
+00:00:56.597 --> 00:01:03.077
+The family ship says open 8 billion, 9 billion, 35 billion, with 3 billion active, and
+
+00:01:03.077 --> 00:01:08.257
+27 billion parameter variants, trained with supervised fine-tuning plus reinforcement
+
+00:01:08.257 --> 00:01:14.190
+learning from adjusted feedback, recursive sparse attention, posted on archive, builds
+
+00:01:14.190 --> 00:01:19.590
+a tree over the key value cache so each query reads only on the order of log L entries at
+
+00:01:19.590 --> 00:01:26.310
+context length L. Started from QN34B and trained on 0.62 billion tokens,
+
+00:01:26.310 --> 00:01:33.230
+REC SA scores 60.5 on ruler at 1 million tokens versus 40.0 for the best baseline.
+
+00:01:33.850 --> 00:01:41.910
+Pre-Fill speeds up 3.2 times and decoding 3.8 times at 524,000 tokens on 1H-200 GPU.
+
+00:01:42.956 --> 00:01:47.336
+Plattour connects frozen large and small models through lightweight linear bridges trained
+
+00:01:47.336 --> 00:01:48.656
+only with task rewards.
+
+00:01:49.296 --> 00:01:53.736
+Controlled experiments showed some reported gains can be reproduced without useful sender
+
+00:01:53.736 --> 00:01:54.276
+information.
+
+00:01:54.276 --> 00:01:58.976
+So, the authors released PACCHEC to measure genuine cross-model communication.
+
+00:02:00.093 --> 00:02:06.693
+Hybrid soft prompt tuning on Fairbought Bench raised agreement with human ratings on bias, toxicity, and personalization.
+
+00:02:07.233 --> 00:02:13.333
+The adapted QN 3.59B judge surpassed hosted reference judges across those three dimensions.
+
+00:02:14.496 --> 00:02:24.296
+Attackers, IT brief New Zealand reports, register expired domains previously used by agent tools and serve malicious content that agents fetch during routine operation.
+
+00:02:24.296 --> 00:02:28.476
+The Webhole technique needs no prompt injection at deployment time.
+
+00:02:29.447 --> 00:02:34.687
+AtSign edge AI, Enterprise Times reports, provides encrypted identity-based connections
+
+00:02:34.687 --> 00:02:38.207
+for agents running at the edge without exposing long-lived credentials.
+
+00:02:38.847 --> 00:02:43.967
+The service targets enterprise deployments that need agent-to-agent or agent-to-device links.
+
+00:02:44.944 --> 00:02:50.804
+Autonomous agents, Microsoft said in an advisory carried by Homeland 411, can be prompted
+
+00:02:50.804 --> 00:02:56.064
+to enumerate and exfiltrate cloud credentials in under five minutes when given broad tool access.
+
+00:02:56.784 --> 00:03:01.884
+The advisory urges lease-privileged tool scopes and continuous monitoring of agent actions.
+
+00:03:02.960 --> 00:03:10.380
+Safetyin, back on archive, is a clinician-informed benchmark of 32,555 simulated conversations
+
+00:03:10.760 --> 00:03:18.920
+that found a 43.3% safety criterion failure rate without teen-aware prompting and 24.9% with it.
+
+00:03:18.920 --> 00:03:25.780
+Failures on diagnosis and medication boundaries rose 10-12 points when a simulated teenager pushed back.
+
+00:03:26.597 --> 00:03:30.897
+German, Korean, Turkish, and Farsi now sit inside Tao Bench Lilt,
+
+00:03:31.317 --> 00:03:36.337
+which extends Tao 3 bench across airline, retail, telecom, and banking domains.
+
+00:03:36.757 --> 00:03:43.577
+The largest performance drops versus English reach 61 points in pass 4 on Korean and Farsi retail tasks.
+
+00:03:43.577 --> 00:03:43.677
+6.
+
+00:03:44.602 --> 00:03:50.662
+Matriarchy Classics ships a tokenizer and mapping pipeline that gender swaps public domain novels
+
+00:03:50.662 --> 00:03:53.402
+while guaranteeing that only gendered words change.
+
+00:03:53.902 --> 00:03:58.502
+The method cuts manual effort from weeks to minutes and comes with code and two example
+
+00:03:58.502 --> 00:03:58.962
+novels.
+
+00:04:00.007 --> 00:04:04.407
+The fine-tune model plugs into the open-source lingua-haru document translator.
+
+00:04:05.147 --> 00:04:10.227
+Axis Laura puts four Laura branches inside an embedding model, gated per query.
+
+00:04:10.227 --> 00:04:18.467
+4. Benchmark mean recall at 10 improved by 1.28 to 1.56 points on personal memory tasks while
+
+00:04:18.467 --> 00:04:24.151
+training only a small fraction of parameters. Core is a training-free research harness that
+
+00:04:24.151 --> 00:04:29.971
+reuses late interaction re-ranker scores to return only the most relevant snippet from each retrieved
+
+00:04:29.971 --> 00:04:36.591
+passage and lets agents expand context on demand. It outperformed prior research harnesses on three
+
+00:04:36.591 --> 00:04:42.159
+agent models and three benchmarks. From the rest of today's papers, interactive backdoor
+
+00:04:42.159 --> 00:04:47.039
+attacks, poison training data, so multi-turn dialogue steers toward attacker goals after
+
+00:04:47.039 --> 00:04:52.999
+a trigger, while normal utility holds on psychological counseling tasks. Correcting score errors
+
+00:04:52.999 --> 00:04:58.499
+raised model acceptance by more than 80 points on legal bench Sara numeric cases without changing
+
+00:04:58.499 --> 00:05:05.579
+references or responses. Prism screened 3.9 million posts and surfaced 123 candidate genetic
+
+00:05:05.579 --> 00:05:11.359
+variant reclassifications. Five of them from uncertain to pathogenic or likely pathogenic.
+
+00:05:12.039 --> 00:05:18.099
+Feedback to 1,030 volunteer SAT tutors raised eliciting and uptake moves 8-15 percent,
+
+00:05:18.619 --> 00:05:24.799
+but left tutor talktime at 91.5 percent across conditions. Persistent memory written during low
+
+00:05:24.799 --> 00:05:30.099
+stakes coding or emotional support sessions caused agents to skip verification or exhibit sick
+
+00:05:30.099 --> 00:05:33.779
+fancy on later high stakes tasks across six frontier models.
+
+00:05:34.419 --> 00:05:39.439
+Trace MRT, red teaming exposed substantial vulnerabilities in top chain of thought monitors,
+
+00:05:40.059 --> 00:05:46.739
+and a new Bayesian trajectory monitor reached 0.91 area under the curve and 0.74 true positive
+
+00:05:46.739 --> 00:05:48.979
+rate at 5% false positive rate.
+
+00:05:49.579 --> 00:05:54.359
+Fine-tuning on the Speech Accessibility Project challenged two data cat character error rate
+
+00:05:54.359 --> 00:06:01.359
+from 15.26% to 7.81% on the hidden test set, with the largest gains on the hardest speakers.
+
+00:06:02.059 --> 00:06:08.779
+Pruning 25% of experts using English calibration dropped Lithuanian comprehension 21.4 points,
+
+00:06:09.119 --> 00:06:11.559
+while English fell only 1.7 points.
+
+00:06:12.139 --> 00:06:19.159
+Supervised fine-tuning reduced expected calibration error from 0.2 to 0.006 on a Luxembourgish
+
+00:06:19.159 --> 00:06:27.819
+next-like prediction task, while raising accuracy from 0.536-0.758. Genver, which scores triples
+
+00:06:27.819 --> 00:06:35.859
+against generated natural language representations, reached 88.56-91.52% accuracy on four-fact
+
+00:06:35.859 --> 00:06:42.139
+FB variants. A key phrase survey synthesizes statistical, hybrid, and LLM-based methods,
+
+00:06:42.559 --> 00:06:47.339
+and flags data scarcity and multimodal fusion as remaining bottlenecks for spoken language
+
+00:06:47.339 --> 00:06:52.799
+extraction. A generative simulation and human reading time data both show that unresolved
+
+00:06:52.799 --> 00:06:58.399
+dependency load, integration cost, and semantic mismatch jointly predict where listeners play
+
+00:06:58.399 --> 00:07:03.939
+sentence boundaries. Hybrid state transfer preserves recurrent and convolution states when moving
+
+00:07:03.939 --> 00:07:12.179
+context between hybrid models, achieving 89.88 to 94.11 percent task retention at 21 times
+
+00:07:12.179 --> 00:07:13.139
+hand-off speed-up.
+
+00:07:13.739 --> 00:07:20.019
+Hallouchex 42,000 instance benchmark shows current LLMs handle basic detection, but struggle
+
+00:07:20.019 --> 00:07:23.819
+with localization, correction, and agent trajectory hallucinations.
+
+00:07:24.399 --> 00:07:30.759
+TB math model scores complete modeling solutions against human outstanding papers, plus lean verified
+
+00:07:30.759 --> 00:07:33.979
+feasibility constraints on 18 real contest problems.
+
+00:07:33.979 --> 00:07:42.259
+times. Multimodal SEA, across 608 tasks, saw a tax success rates from 7.1 to 34.5 percent,
+
+00:07:42.819 --> 00:07:49.099
+and adding multimodal content raised success from 19.9 percent to 29.2 percent, despite
+
+00:07:49.099 --> 00:07:54.639
+more verification attempts. South Africa, the national reports, ranks among only three
+
+00:07:54.639 --> 00:07:57.259
+African countries meeting the AI readiness benchmark.
+
+00:07:57.939 --> 00:08:02.879
+Why net news warns that an AI agent does not have to go rogue to put a business at risk?
+
+00:08:02.879 --> 00:08:09.139
+Asian Stock Benchmarks, news for Jack's reports, fell after AI-related concerns sent Wall Street
+
+00:08:09.139 --> 00:08:15.039
+tumbling. Edge Cloud AI inference pipelines, info world argues, are essential for balancing
+
+00:08:15.039 --> 00:08:20.939
+latency, cost, and capability in production deployments. Australian universities, the open
+
+00:08:20.939 --> 00:08:27.059
+AI blog says, are expanding chat GPT access and integrating AI into curricula to prepare students
+
+00:08:27.059 --> 00:08:33.095
+for an AI-enabled workforce. If a workflow still hits context or latency limits on earlier
+
+00:08:33.095 --> 00:08:38.335
+flash releases, run that same job on Gemini Omni 1.2 flash and compare.
+
+00:08:38.975 --> 00:08:44.455
+If you need long-context extrapolation without retraining, run the RECSA kernels on ruler
+
+00:08:44.455 --> 00:08:47.255
+from 128,000 to 1 million tokens.
+
+00:08:47.995 --> 00:08:53.455
+Read the Microsoft Agentech AI Advisory and Titan Tool Scopes on any autonomous coding or
+
+00:08:53.455 --> 00:08:55.955
+cloud management agents you already have in production.
+
+00:08:56.575 --> 00:09:02.395
+Drop the core research harness onto Browse Comp-style tasks and see whether course-defined snippet
+
+00:09:02.395 --> 00:09:08.475
+selection cuts context bloat. If retrieval has to distinguish time, place or person, try
+
+00:09:08.475 --> 00:09:11.935
+access Lora adapters on personal memory retrieval benchmarks.
+
+00:09:13.082 --> 00:09:18.902
+Updated pricing and SDK examples for Gemini Omni 1.2 Flash are expected within the next
+
+00:09:18.902 --> 00:09:24.342
+week. Kakao may follow with additional decision model sizes and commercial licensing terms.
+
+00:09:25.002 --> 00:09:29.462
+Authors on the new multilingual and safety benchmarks have promised code and data releases
+
+00:09:29.462 --> 00:09:36.859
+in the coming days. Before we go, those Gemini Omni 1.2-flash pricing tiers and SDK examples
+
+00:09:36.859 --> 00:09:42.059
+are slated this week, and tomorrow is a live window for the first of them. That's models
+
+00:09:42.059 --> 00:09:46.339
+and agents for today. If you found this useful, share it with someone who's trying to keep
+
+00:09:46.339 --> 00:09:51.419
+up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world
+
+00:09:51.419 --> 00:09:56.339
+moves fast. We'll help you keep up. See you tomorrow, and if you'd rather watch than listen,
+
+00:09:56.339 --> 00:10:00.099
+Find us on YouTube at Narin Network, links in the show notes.
+
+00:10:00.519 --> 00:10:02.539
+This show comes to you from the Narin Network.
+
+00:10:02.839 --> 00:10:06.239
+If you want a sharp, weekly briefing, Offshore North has you covered.
+
+00:10:06.759 --> 00:10:10.579
+Offshore Ocean Racing explained every Monday with a Canadian angle.
+
+00:10:11.099 --> 00:10:13.659
+All our shows are free at NarinNetwork.com.
+
+00:10:13.879 --> 00:10:19.659
+The Age of AI and AI Host interviews real builders in a live studio and every guest decides
+
+00:10:19.659 --> 00:10:21.479
+whether their conversation is published.
+
+00:10:22.059 --> 00:10:25.019
+Apply at NarinNetwork.com, Age of AI Apply.
+
+00:10:25.019 --> 00:10:31.479
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.
