@@ -1,0 +1,28 @@
+name: TEMP check the seam in Blaine's new cut
+on:
+  push:
+    branches: [claude/project-thread-o1l615]
+    paths: ['.github/workflows/zz_tmp_seam.yml']
+permissions:
+  contents: read
+jobs:
+  seam:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Words
+        run: |
+          pip install -q faster-whisper imageio-ffmpeg
+          F=$(python -c 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())')
+          curl -sSfL -o e.mp3 https://audio.nerranetwork.com/age_of_ai/raw/43ff31a6-e248-4352-8f47-6f5414ee0f49_edit_20261106150935.mp3
+          $F -nostdin -loglevel error -y -ss 1600 -t 45 -i e.mp3 -ac 1 -ar 16000 w.wav
+          python - <<'P'
+          from faster_whisper import WhisperModel
+          m = WhisperModel("small", compute_type="int8")
+          segs, _ = m.transcribe("w.wav", word_timestamps=True, language="en")
+          for s in segs:
+              print(" ".join(f"{w.word.strip()}@{w.start+1600:.2f}" for w in s.words))
+          P
