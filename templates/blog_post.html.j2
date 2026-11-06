@@ -787,7 +787,7 @@
                       data-source="{{ capture_source_site }}"
                       data-form-id="blog-{{ show_slug | default('show') }}-newsletter"
                       data-label-loading="Subscribing…"
-                      data-label-done="Check your email ✓"
+                      data-label-done="{% if (page_lang | default('en')) == 'ru' %}You’re in ✓{% else %}You’re in. Nerra Daily arrives at 7 AM Eastern ✓{% endif %}"
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <input type="hidden" name="tag" value="{{ newsletter_tag }}">

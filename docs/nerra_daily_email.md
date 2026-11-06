@@ -167,5 +167,22 @@ drift-guarded.
 - **Revert to per-show emails:** set `newsletter.delivery: own` in
   `shows/_defaults.yaml`.
 
-Guards: `tests/test_nerra_daily_email_2026_11_01.py`,
+## Nov 6 2026 review
+
+Review doc (Claude Doc "Buttondown review: Nerra Daily"). In the code:
+
+- A deck never opens on an item head's list of outlets and never ends a
+  sentence on an abbreviation ("Oct.").
+- An "Also on Nerra today" line prints whole up to
+  `engine.titles.EMAIL_ALSO_LINE_MAX` (110), else the digest's headline for
+  that story, else the hook's first clause.
+- **The welcome email** is composed by `engine/nerra_welcome_email.py`
+  (`python -m engine.nerra_welcome_email out.html`). It is not wired to any
+  sender: a Buttondown automation (Standard plan) or the account Worker is
+  the operator's choice.
+- Buttondown starts accounts with open and click tracking OFF; until it is
+  turned on, `opens` and `clicks` read 0 and mean "not measured".
+
+Guards: `tests/test_nerra_daily_email_2026_11_06.py`,
+`tests/test_nerra_daily_email_2026_11_01.py`,
 `workers/gallery/test/email.test.ts`.
