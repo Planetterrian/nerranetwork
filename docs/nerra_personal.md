@@ -365,6 +365,32 @@ Store:
   network outro rotation (audio — landmine #17, operator A/B), a
   newsletter launch announcement, Nerra Daily blog cross-links.
 
+## The private feeds are watched (6 Nov 2026)
+
+From Nov 2 to Nov 6 2026 every run of the batch workflow failed in its first
+second with a 401 from `/api/admin/personal-specs`: `PERSONAL_ADMIN_TOKEN`
+was rotated on the Worker but not in the batch repo. No member's feed gained
+an episode for five days, and nothing noticed, because the batch repo's
+failure webhook (`NOTIFICATION_WEBHOOK_URL`) was never set and every check in
+this repo reads the public feeds only.
+
+- **`GET /api/admin/personal-feed-health`** on the gallery Worker reads each
+  active member's `personal/<token>/episodes.json` and answers COUNTS only
+  (`members`, `built_today`, `behind`, `never_built`, the oldest member's
+  newest edition, `max_days_behind`). It takes `PERSONAL_DEMAND_TOKEN` or
+  the admin token, like `show-demand`.
+- **The daily audit's "Nerra Personal private feeds have today's edition"
+  step** (`scripts/check_personal_feeds.py`) reads it, plus the batch
+  workflow's recent run conclusions through `PERSONAL_BATCH_DISPATCH_TOKEN`,
+  writes `api/personal_feed_health.json` (null when unread, never 0) and
+  FAILS the run when a member has no edition for today (after 10:00
+  Eastern; a whole missed day pages at any hour).
+- **The builder names a 401** ("this host's PERSONAL_ADMIN_TOKEN does not
+  match the gallery Worker's secret") and strips the token.
+- **Rotating `PERSONAL_ADMIN_TOKEN` means three places at once**: the
+  gallery Worker (`wrangler secret put`), the `nerra-personal-batch` repo
+  secret, and this repo's secret if it holds one.
+
 ## First edition in minutes, and the polish pass (17 Sep 2026)
 
 **On-demand builds.** A new subscriber used to wait for the next batch

@@ -280,6 +280,19 @@ jobs:
           else:
               print("RSS freshness: all feeds OK")
 
+      - name: Nerra Personal private feeds have today's edition
+        # Nov 6 2026: every batch run failed on a 401 from Nov 2 to Nov 6
+        # (a rotated PERSONAL_ADMIN_TOKEN reached the Worker but not the
+        # batch repo) and no member's feed moved for five days while every
+        # check here read only the public feeds. Counts only — the Worker
+        # never sends a name, city, email or feed token. Pages (fails the
+        # job) like a stale public feed; unverifiable is a warning.
+        if: always()
+        env:
+          PERSONAL_DEMAND_TOKEN: ${{ secrets.PERSONAL_DEMAND_TOKEN }}
+          PERSONAL_BATCH_DISPATCH_TOKEN: ${{ secrets.PERSONAL_BATCH_DISPATCH_TOKEN }}
+        run: python scripts/check_personal_feeds.py --out api/personal_feed_health.json
+
       - name: Scheduler Worker deploy drift (live slot table vs committed)
         # Sep 24 2026: a redeploy from a stale checkout left nine newly
         # scheduled shows off the live Worker; the old slots fired on the
@@ -337,6 +350,7 @@ jobs:
           add-paths: |
             api/daily-review.json
             api/review_coverage.json
+            api/personal_feed_health.json
             api/editorial_score_history.json
             digests/_review/*.json
           commit-message: "Daily audit artifacts"

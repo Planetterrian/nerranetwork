@@ -221,3 +221,77 @@ export async function noteRebuild(env: Env, token: string, date: string): Promis
   const used = parseInt((await env.RATE_LIMIT_KV.get(key)) || "0", 10) || 0;
   await env.RATE_LIMIT_KV.put(key, String(used + 1), { expirationTtl: 36 * 3600 });
 }
+
+// ---------------------------------------------------------------------------
+// Feed freshness (Nov 6 2026)
+//
+// Every scheduled batch run from Nov 2 to Nov 6 2026 failed with a 401 on
+// /api/admin/personal-specs (the batch repo's PERSONAL_ADMIN_TOKEN no longer
+// matched the Worker's after a rotation), so no member's feed gained an
+// episode for five days, and nothing in the public repo could see it: the
+// batch repo's failure webhook was unset, and every public check reads the
+// public feeds only. These counts let the daily audit read the PRIVATE feeds
+// without a name, a city, an email or a feed token leaving the Worker.
+// ---------------------------------------------------------------------------
+
+/** The newest edition date in a member's episodes.json, or null when the
+ *  feed has never been built (or the state is unreadable). */
+export async function readLatestEditionDate(
+  env: Env,
+  token: string,
+): Promise<string | null> {
+  if (!env.PERSONAL_BUCKET) return null;
+  try {
+    const obj = await env.PERSONAL_BUCKET.get(`personal/${token}/episodes.json`);
+    if (!obj) return null;
+    const text = typeof (obj as any).text === "function"
+      ? await (obj as any).text()
+      : String((obj as any).body ?? "");
+    const state = JSON.parse(text) as { episodes?: Record<string, unknown>[] };
+    let latest: string | null = null;
+    for (const row of state.episodes ?? []) {
+      const d = row && typeof row.date === "string" ? row.date : "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d) && (!latest || d > latest)) latest = d;
+    }
+    return latest;
+  } catch (e) {
+    console.warn("build: episodes.json unreadable", token.slice(0, 8),
+      (e as Error).message);
+    return null;
+  }
+}
+
+export interface FeedFreshness {
+  today: string;               // Eastern edition date the counts are against
+  members: number;             // active paying members with a feed token
+  built_today: number;         // newest edition is today's
+  behind: number;              // built before, but not today
+  never_built: number;         // no edition at all
+  newest_edition: string | null;
+  oldest_latest_edition: string | null;  // the most-behind member's newest
+  max_days_behind: number | null;        // today minus that date, in days
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
+}
+
+/** Pure summary of each member's newest edition date (null = never built).
+ *  Counts only, by construction. */
+export function summariseFeedFreshness(
+  latest: (string | null)[],
+  today: string,
+): FeedFreshness {
+  const dates = latest.filter((d): d is string => !!d).sort();
+  const oldest = dates.length ? dates[0] : null;
+  return {
+    today,
+    members: latest.length,
+    built_today: dates.filter((d) => d >= today).length,
+    behind: dates.filter((d) => d < today).length,
+    never_built: latest.length - dates.length,
+    newest_edition: dates.length ? dates[dates.length - 1] : null,
+    oldest_latest_edition: oldest,
+    max_days_behind: oldest ? Math.max(0, daysBetween(oldest, today)) : null,
+  };
+}

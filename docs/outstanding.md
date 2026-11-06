@@ -16,7 +16,9 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 | Item | Status | Checked | Evidence / next step |
 |---|---|---|---|
 | Deploy both Workers (`workers/voices` with `GMAIL_SERVICE_ACCOUNT_JSON` + `GMAIL_DELEGATED_USER`; `workers/gallery`) | unconfirmed | 2026-11-04 | `/voices/health` does not report a version and no gate-2 email has gone out since the copy changed. The Nov 4 "Vancouver time" label in booking emails also needs the voices Worker deployed. |
-| Rotate `PERSONAL_ADMIN_TOKEN` (Worker secret and GitHub secret) | open | 2026-11-04 | |
+| Rotate `PERSONAL_ADMIN_TOKEN` (Worker secret and GitHub secret) | half done | 2026-11-06 | The Worker took the new value; the **`nerra-personal-batch` repo secret did not**. Every batch run since Nov 2 22:27 UTC failed with 401 on `/api/admin/personal-specs`; no member feed has an edition after Nov 1. Set that repo's `PERSONAL_ADMIN_TOKEN` to the Worker's value, then Run workflow. |
+| `nerra-personal-batch`: set `NOTIFICATION_WEBHOOK_URL` | open | 2026-11-06 | Its failure alert step has printed "no NOTIFICATION_WEBHOOK_URL set" on every failed run. The daily audit now pages on stale private feeds too (`scripts/check_personal_feeds.py`). |
+| Deploy `workers/gallery` for `/api/admin/personal-feed-health` | open | 2026-11-06 | Until it is deployed the audit's Nerra Personal step warns "UNVERIFIED" instead of reading the feeds. |
 | xAI monthly spending limit in console.x.ai, above one slate's spend | open | 2026-11-04 | Auto-reload works ($25 Grok receipts about daily Oct 15 to Nov 4). |
 | First "Run Podcast Show" with `rehearse: true`, and "Probe audio chain" (legacy and glue) | open | 2026-11-04 | |
 | GA4: two custom dimensions and three key events | open | 2026-11-04 | |
