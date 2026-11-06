@@ -144,7 +144,7 @@ class TestSheIsHandedWholeQuestions:
 
     def test_a_guest_who_declines_has_answered(self):
         out = sim("stuart_room")
-        assert "answered 3/7 (they declined who you should interview next)" in lines(out)
+        assert "answered 3/8 (they declined who you should interview next)" in lines(out)
         assert out["interviewNextHanded"] == "Who's one person you think I should interview next?"
         assert out["asked"].count(3) == 1   # never handed again
 
@@ -289,7 +289,7 @@ class TestWhatTheFirstRehearsalShowed:
 
     def test_a_guest_saying_goodbye_in_the_round_gets_the_closing_thanks(self):
         out = sim("guest_goodbye_in_the_round")
-        assert "the guest is saying goodbye at 2/7; closing thanks" in lines(out)
+        assert "the guest is saying goodbye at 2/8; closing thanks" in lines(out)
         assert out["state"]["roundClosed"] is True
         assert "The closing round is complete." in out["lastInstructions"]
 

@@ -189,3 +189,38 @@ handed her nothing. `refresh_staged_prompt` now also brings the room seed's
 keys (`ROOM_LOG_SEED_KEYS`) up to date while a run is still staged, and leaves
 every other key alone. Guard:
 `TestThePlanTravels::test_a_run_staged_before_the_plan_gets_it_on_the_next_tick`.
+
+## Patrick's test room, Nov 6: the opening and where to reach them
+
+Patrick's notes from his test room (01:13 UTC). The steering transitions and
+the blur belong to the other thread (#1637). This part covers three things:
+
+- **The opening is now three short turns.** First the hello. Then a turn of
+  its own on how the hour works: she is still learning and asks for the
+  guest's patience; she pauses after they finish so nothing gets cut off;
+  it is their hour, so they can steer out loud or with the studio's buttons
+  and notes, skip any question, and have anything cut afterwards; they will
+  see the transcript before anything goes out; and the hour ends with
+  closing questions, where to reach them, and anything not covered. That
+  turn ends by asking whether this sounds good. The first real question
+  comes on the turn after. The Oct 19 rule against a recital stacked on the
+  first question still holds: the explanation is a turn of its own, not a
+  preamble to a question. The brief describes it by shape and quotes no line.
+- **The closing round has eight questions.** The new last one is "How can
+  listeners reach you or follow you if they want to know more?", which comes
+  before the guest's last word. The scenario's `ROUND_QUESTIONS` and
+  `ROUND_TOPICS`, `fire_interviews.CLOSING_ROUND` and
+  `audio_metrics.ROUND_QUESTIONS_DEFAULT` move together. `closingRoundMin`
+  is now 10.
+- **The conversation.** The pacing from #1633 (a thread gets three minutes
+  of conversation before the room moves her on) was rehearsed on Nov 5
+  (guest words per answer went from 27 to 49.5) and is deployed with this
+  change. The prepared questions already cover every point the guest raised
+  on the application (`question_generation.txt`), and #1634 makes sure a
+  room staged in advance gets them.
+
+The brief stays at 1,599 words. To make room I cut "you have no sense of
+elapsed time" (the TIME CHECK notes carry it), "their name now and then",
+and "your pause is edited out", which is now something she tells the guest
+herself.
+Guards: `tests/test_opening_and_reach_2026_11_06.py`.

@@ -150,7 +150,7 @@ def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
 
 
 COHOST_INTRO_STEP = (
-    "   In that same sentence, introduce {{cohost_name}}, your co-host, by "
+    "   In the welcome, introduce {{cohost_name}}, your co-host, by "
     "name: a real person, the founder of the network, who will jump in with "
     "his own questions. If he is already in the room, hand him a beat to say "
     "hello himself before your first question.\n"
@@ -419,6 +419,11 @@ CLOSING_ROUND = (
     ("Whether they would like a follow-up interview in six months to a year",
      re.compile(r"follow-?up (interview|conversation)|interview(ed)? (by me )?again"
                 r"|another interview|(do|doing) this again", re.I)),
+    # Nov 6 2026 (Patrick): the last question before their last word.
+    ("How listeners can reach or follow them if they want to know more",
+     re.compile(r"listeners (can )?(reach|follow|find)|(reach|follow|find) you,? or (reach|follow|find) you"
+                r"|(where|how) (can|do|should|would) (listeners|people|folks|our audience)"
+                r" (reach|follow|find|connect with) you|where (can|do) (i|we|people) find you", re.I)),
 )
 _ROW = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 _COMMON = {"what", "what's", "that", "your", "with", "have", "this", "about", "more",

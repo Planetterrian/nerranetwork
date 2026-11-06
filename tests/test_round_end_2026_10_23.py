@@ -55,6 +55,8 @@ class TestPatricksSevenQuestions:
             "who has inspired them most",
             "how being interviewed by an AI was, and one improvement",
             "whether they would like a follow-up interview",
+            # Nov 6 2026 (Patrick, after his test room): the eighth, last.
+            "how listeners can reach or follow them",
         ]
 
     def test_the_words(self):
@@ -115,10 +117,10 @@ class TestAQuestionNeverHeardIsNotAnswered:
         assert ("the sign-off took the question's place; " + label +
                 " goes again when they finish") in lines
         # "handed" starts after its first hand: exactly one more, never two.
-        assert sum(1 for h in out["handed"] if h.split("\n\n")[-1].startswith("[ROUND 6 of 7")) == 1
+        assert sum(1 for h in out["handed"] if h.split("\n\n")[-1].startswith("[ROUND 6 of 8")) == 1
         # The second cut finds it already handed again: taken as asked.
         assert any(x.startswith("taken as asked: " + label) for x in lines)
-        assert "answered 6/7" in lines and "answered 7/7" in lines
+        assert "answered 6/8" in lines and "answered 7/8" in lines
         assert out["afterTrailedOff"]["roundIndex"] == 6
 
     def test_one_budget_for_every_reason(self):
@@ -133,7 +135,7 @@ class TestAQuestionNeverHeardIsNotAnswered:
         import audio_metrics
         out = sim("round_end_as_rehearsed")
         summary = audio_metrics.closing_round(out["trace"])
-        assert summary["round_asked"] == 7
+        assert summary["round_asked"] == 8
         assert summary["round_stacked"] == 0
         assert summary["round_unheard"] == 1
         assert summary["closing_round_complete"] is False
@@ -143,14 +145,16 @@ class TestSheKnowsTheRoundIsNotOver:
     def test_each_question_says_what_is_still_to_come(self):
         out = sim("round_end_as_rehearsed")
         round_turns = [h.split("\n\n")[-1] for h in out["handed"]]
-        sixth = [h for h in round_turns if h.startswith("[ROUND 6 of 7")]
-        seventh = [h for h in round_turns if h.startswith("[ROUND 7 of 7")]
-        assert sixth and seventh
+        sixth = [h for h in round_turns if h.startswith("[ROUND 6 of 8")]
+        seventh = [h for h in round_turns if h.startswith("[ROUND 7 of 8")]
+        eighth = [h for h in round_turns if h.startswith("[ROUND 8 of 8")]
+        assert sixth and seventh and eighth
         # Oct 24 2026: said in words that never name the end (naming what not
         # to do yet was itself the cue, candidate rehearsal 40110915521).
-        assert all("the room hands you 2 more questions." in h for h in sixth)
-        assert "the room hands you one more question." in seventh[0]
-        for h in sixth + seventh:
+        assert all("the room hands you 3 more questions." in h for h in sixth)
+        assert "the room hands you 2 more questions." in seventh[0]
+        assert "the room hands you one more question." in eighth[0]
+        for h in sixth + seventh + eighth:
             low = h.lower()
             for word in ("goodbye", "thanks", "last word", "recording"):
                 assert word not in low, (word, h)
@@ -203,7 +207,7 @@ class TestAQuestionOfHerOwnIsNotTheRoundQuestion:
         # question is taken as asked (Oct 24 2026), never a third time.
         assert any(x.startswith("taken as asked: the best advice they were ever given") for x in lines)
         assert out["afterFollowUp"]["roundIndex"] == 4
-        assert "answered 4/7" in lines
+        assert "answered 4/8" in lines
 
     def test_the_topic_check_does_not_take_any_interview_word(self):
         topics = SCENARIO[SCENARIO.index("const ROUND_TOPICS = {"):]

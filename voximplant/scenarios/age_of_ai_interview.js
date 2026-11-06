@@ -2667,8 +2667,9 @@ function openWhenReady(reason) {
             "[OPENING — system note, do not read aloud] You have already said hello" +
             " to the guest. Do not greet them again and do not introduce yourself" +
             " yet. When they answer, react to what they said in a few words, then" +
-            " beat 2 of HOW TO OPEN: one sentence on how this works, then your" +
-            " first real question about the subject they came to discuss." }] },
+            " beat 2 of HOW TO OPEN: how the hour works, in a few short sentences," +
+            " then ask if that sounds good and listen. Your first real question, about" +
+            " the subject they came to discuss, comes on the turn after that." }] },
       });
     } else if (humansIn("guest") > 0) {
       // Oct 5 2026 (Patrick): the opening was a recited paragraph and then a
@@ -2996,9 +2997,10 @@ function elapsedMin() {
 
 let closingPermitted = false;   // has a note told her she may close?
 let closingRequired = false;    // has a note told her she must begin it?
-// show question + 4 short + 1 about the interview + the follow-up + last word: about nine
-// minutes, never more than the closing window itself.
-function closingRoundMin() { return Math.min(9, closingWindowMin()); }
+// show question + 4 short + 1 about the interview + the follow-up + where to
+// reach them + last word: about ten minutes, never more than the closing
+// window itself.
+function closingRoundMin() { return Math.min(10, closingWindowMin()); }
 let earlySignOffs = 0;          // how often she tried to end before that
 
 function startTimeChecks() {
@@ -3227,6 +3229,9 @@ function catchClosingWithoutTheAnswer(text) {
 // in six months to a year. Asked as two separate questions at the end, the
 // two about the interview read to her as the end of the show, and in
 // rehearsal she went into her goodbye in place of both.
+//
+// Nov 6 2026 (Patrick, after his test room): an eighth, last, before the
+// guest's last word: how listeners can reach or follow them.
 const ROUND_QUESTIONS = [
   ["the show's own question", /(one bet you'?re making|bet you'?re making for the next|cannot prove yet|wish more people understood)/i],
   ["a book they would recommend", /book (you'?d|you would|you) (recommend|suggest)|recommend a book/i, "What's a book you would recommend, and in a sentence, why?"],
@@ -3235,6 +3240,7 @@ const ROUND_QUESTIONS = [
   ["who has inspired them most", /inspired you (the )?most|who inspires you/i, "Who's the person who has inspired you most?"],
   ["how being interviewed by an AI was, and one improvement", /experience of being interviewed|being interviewed by an ai|(thing|suggestion).{0,40}improve|could (we|i|be) improve/i, "How was the experience of being interviewed by an AI, and what's one specific thing we could improve?"],
   ["whether they would like a follow-up interview", /follow-?up (interview|conversation)|interview(ed)? (by me )?again|another interview/i, "Would you like to come back for a follow-up interview in six months to a year, to talk about where your projects have gone and to see how much I've improved?"],
+  ["how listeners can reach or follow them", /listeners (can )?(reach|follow|find)|(reach|follow|find) you,? or (reach|follow|find) you|(where|how) (can|do|should|would) (listeners|people|folks|our audience) (reach|follow|find|connect with) you/i, "How can listeners reach you or follow you if they want to know more?"],
 ];
 const roundAsked = {};          // label -> minute it was first asked (or handed to her)
 const roundSpoken = {};         // label -> true once her own words carried it
@@ -3381,6 +3387,7 @@ const ROUND_TOPICS = {
   "who has inspired them most": /\b(inspir\w*|look up to|influenc\w*)/i,
   "how being interviewed by an AI was, and one improvement": /\b(AI|interviewed by|this format|talking (to|with) (me|an ai)|improv\w*|better|differently)\b/i,
   "whether they would like a follow-up interview": /\b(follow-?up|again|come back|another (conversation|interview)|six months|a year)\b/i,
+  "how listeners can reach or follow them": /\b(reach you|follow you|find you|connect with you|website|online|newsletter|know more|learn more)\b/i,
 };
 
 function noteRoundTurnWithoutQuestion(text) {

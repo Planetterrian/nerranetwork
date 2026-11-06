@@ -134,13 +134,17 @@ class TestWhatSheSaysAtTheTop:
         assert "once, in a clause, as a fact rather than a boast" in flat
         assert "then be good at the job" in flat
 
-    def test_the_format_is_one_sentence_not_a_recital(self):
+    def test_the_format_is_its_own_short_turn_not_a_recital(self):
         """Oct 19 2026 (Cory O'Daniel): forty seconds of how-this-works before
-        the first question. The guest has the format by email; in the room it
-        is one sentence: who she is, and that they see the transcript first."""
+        the first question. Nov 6 2026 (Patrick, after his test room): the
+        guest should hear how the hour works, so it is a turn of its own, a
+        few short sentences that end on a check, and the first question comes
+        on the turn after; never a recital with the question stacked on it."""
         flat = _flat(PROMPT)
         opening = flat[flat.index("HOW TO OPEN"):flat.index("THEIR SUBJECT, FAST")]
-        assert "One sentence that you are Mira" in opening
+        assert "How the hour works, in a few short sentences:" in opening
+        assert "Then ask if that sounds good." in opening
+        assert "3. Welcome them ({{guest_address}}) and ask your first real question" in opening
         assert "they will see the transcript before anything goes out" in opening
         assert "roughly {{planned_minutes}} minutes" not in opening
         assert "nothing is live" not in flat

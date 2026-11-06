@@ -147,7 +147,7 @@ class TestTheRoomLog:
         src = SCENARIO.read_text(encoding="utf-8")
         block = src[src.index("const ROUND_QUESTIONS = ["):]
         block = block[:block.index("];")]
-        assert len(labels) == 7 and all(f'"{q}"' in block for q in labels)
+        assert len(labels) == 8 and all(f'"{q}"' in block for q in labels)
 
     def test_the_wider_pattern_hears_how_she_asks(self, rehearsal):
         rx = dict(rehearsal.round_questions())

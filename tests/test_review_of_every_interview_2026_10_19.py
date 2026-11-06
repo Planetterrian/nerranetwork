@@ -321,7 +321,7 @@ class TestItIsTheGuestsHour:
 
     def test_mira_says_so_at_the_open(self):
         flat = _flat(PROMPT)
-        beat2 = flat[flat.index("2. One sentence that you are Mira"):flat.index("{{cohost_intro_step}}")]
+        beat2 = flat[flat.index("2. How the hour works"):flat.index("{{cohost_intro_step}}")]
         assert "this is their hour" in beat2
         assert "anything can come out afterwards" in beat2
 
