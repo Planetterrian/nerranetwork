@@ -15,7 +15,7 @@ jobs:
           python-version: '3.12'
       - name: Words
         run: |
-          pip install -q faster-whisper imageio-ffmpeg
+          pip install -q "av<19" faster-whisper imageio-ffmpeg
           F=$(python -c 'import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())')
           curl -sSfL -o e.mp3 https://audio.nerranetwork.com/age_of_ai/raw/43ff31a6-e248-4352-8f47-6f5414ee0f49_edit_20261106150935.mp3
           $F -nostdin -loglevel error -y -ss 1600 -t 45 -i e.mp3 -ac 1 -ar 16000 w.wav
