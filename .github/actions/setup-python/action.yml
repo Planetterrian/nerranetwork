@@ -97,8 +97,8 @@ runs:
       env:
         APT_DEBS: ${{ steps.apt-key.outputs.dir }}
         CACHE_HIT: ${{ steps.apt-cache.outputs.cache-hit }}
-        BTBN_TAG: autobuild-2026-10-22-13-06
-        BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
+        BTBN_TAG: autobuild-2026-11-06-12-50
+        BTBN_ASSET: ffmpeg-n8.1.3-34-ga35157abb9-linux64-gpl-8.1.tar.xz
       run: |
         _t0=$(date +%s)
         mkdir -p "$APT_DEBS/partial"
@@ -181,20 +181,11 @@ runs:
         fi
         echo "::warning::apt could not install ffmpeg from the mirror; this run uses the pinned static ffmpeg 8.1.3 (the build the test suite runs on)"
         dest="${RUNNER_TEMP}/ffmpeg-static"
-        mkdir -p "$dest"
-        base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
-        cd "${RUNNER_TEMP}"
-        timeout 300 curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
-          -o checksums.sha256 "${base}/checksums.sha256" && \
-        timeout 300 curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
-          -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}" && \
-        grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c - || {
+        # Nov 6 2026: falls back to BtbN's latest 8.1 build when the pinned
+        # dated build has been pruned (BtbN keeps about two weeks).
+        bash "${GITHUB_WORKSPACE}/scripts/fetch_static_ffmpeg.sh" "$dest" || {
           echo "::error::apt-get install did not finish and the static ffmpeg download failed"; exit 124; }
-        tar -xJf "${BTBN_ASSET}"
-        cp "${BTBN_ASSET%.tar.xz}/bin/ffmpeg" "${BTBN_ASSET%.tar.xz}/bin/ffprobe" "$dest/"
-        chmod +x "$dest/ffmpeg" "$dest/ffprobe"
         echo "$dest" >> "$GITHUB_PATH"
-        "$dest/ffmpeg" -version | head -1
         echo "source=static" >> "$GITHUB_OUTPUT"
 
     - name: Save system packages for this image

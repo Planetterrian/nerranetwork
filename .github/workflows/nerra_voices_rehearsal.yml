@@ -131,28 +131,18 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/ffmpeg-static
-          key: ffmpeg-btbn-autobuild-2026-10-22-13-06-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1
+          key: ffmpeg-btbn-autobuild-2026-11-06-12-50-n8.1.3-34-ga35157abb9-linux64-gpl-8.1
       - name: Install static ffmpeg
         if: steps.cache-ffmpeg.outputs.cache-hit != 'true'
         timeout-minutes: 6
         env:
-          BTBN_TAG: autobuild-2026-10-22-13-06
-          BTBN_ASSET: ffmpeg-n8.1.3-23-g5c4f5744cd-linux64-gpl-8.1.tar.xz
+          BTBN_TAG: autobuild-2026-11-06-12-50
+          BTBN_ASSET: ffmpeg-n8.1.3-34-ga35157abb9-linux64-gpl-8.1.tar.xz
         run: |
           set -euo pipefail
-          dest="${{ runner.temp }}/ffmpeg-static"
-          mkdir -p "$dest"
-          base="https://github.com/BtbN/FFmpeg-Builds/releases/download/${BTBN_TAG}"
-          cd /tmp
-          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
-            -o checksums.sha256 "${base}/checksums.sha256"
-          curl -fsSL --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 240 \
-            -o "${BTBN_ASSET}" "${base}/${BTBN_ASSET}"
-          grep -F " ${BTBN_ASSET}" checksums.sha256 | sha256sum -c -
-          tar -xJf "${BTBN_ASSET}" -C /tmp
-          src="/tmp/${BTBN_ASSET%.tar.xz}"
-          cp "$src/bin/ffmpeg" "$src/bin/ffprobe" "$dest/"
-          chmod +x "$dest/ffmpeg" "$dest/ffprobe"
+          # Nov 6 2026: falls back to BtbN's latest 8.1 build (checksum-
+          # verified) when the pinned dated build has been pruned.
+          bash scripts/fetch_static_ffmpeg.sh "${{ runner.temp }}/ffmpeg-static"
       - name: Add ffmpeg to PATH
         run: |
           echo "${{ runner.temp }}/ffmpeg-static" >> "$GITHUB_PATH"
