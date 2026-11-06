@@ -288,12 +288,13 @@ describe("gate2Housekeeping", () => {
 });
 
 describe("guest approval on the review page", () => {
-  function reviewFetch(failDispatch: boolean) {
+  function reviewFetch(failDispatch: boolean, editTranscript = "") {
     return fakeFetch((c) => {
       const t = sbTable(c.url);
       if (c.url.endsWith("/dispatches")) return failDispatch ? "fail" : null;
       if (c.method === "GET" && t === "editorial_packages") {
-        return [{ id: PKG, interview_id: IV, status: "approved_by_patrick", guest_review_token: "tok", guest_redaction_windows: [] }];
+        return [{ id: PKG, interview_id: IV, status: "approved_by_patrick", guest_review_token: "tok", guest_redaction_windows: [],
+                  edit_transcript: editTranscript }];
       }
       if (c.method === "GET" && t === "interviews") return [{ id: IV, application_id: "app", show: "age_of_ai" }];
       if (c.method === "GET" && t === "guest_applications") return [{ id: "app", name: "Guest", email: "g@x.y" }];
@@ -333,6 +334,17 @@ describe("guest approval on the review page", () => {
     expect(stored?.body.guest_redaction_windows).toEqual(windows);
     const inReview = calls.find((c) => c.method === "PATCH" && c.body.status === "in_review");
     expect(inReview?.body.guest_redactions[0].note).toContain("1 marked line");
+  });
+
+  it("a line marked on the edit's transcript is stored with the edit's clock (Nov 6 2026)", async () => {
+    const { fn, calls } = reviewFetch(false, "[26:59] Guest: cut this\n[27:06] Guest: and this");
+    vi.stubGlobal("fetch", fn);
+    const windows = [{ start_sec: 1619, end_sec: 1626, line: "[26:59] Guest: cut this" }];
+    const resp = await worker.route(post("/voices/review/tokentokentokentoken",
+      { approve: false, redactions: "", windows }), env());
+    expect(resp.status).toBe(200);
+    const stored = calls.find((c) => c.method === "PATCH" && c.body.guest_redaction_windows);
+    expect(stored?.body.guest_redaction_windows).toEqual([{ ...windows[0], clock: "edit" }]);
   });
 
   it("gate 1's second Approve is a no-op: no second email, no new deadline", async () => {

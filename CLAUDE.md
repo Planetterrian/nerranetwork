@@ -2005,6 +2005,11 @@ Review [`docs/reviews/guest_steers_2026_11_05.md`](docs/reviews/guest_steers_202
 Register `interview-plan-2026-11-05`; review [`docs/reviews/interview_structure_2026_11_05.md`](docs/reviews/interview_structure_2026_11_05.md); guards `tests/test_interview_plan_2026_11_05.py`.
 **The prepared questions are the running order** (`fire_interviews.interview_plan` → `grok_session_log.interview_plan`). **The room hands her the next one in words once its slot is due and the thread has had two questions and three minutes, or six and its minutes**; first not reached; guest and close first; no plan = old room. ⚠️ AUDIO, the room.
 
+### A guest's marked line is cut where it is in the room (Nov 6 2026)
+
+Guards `tests/test_guest_windows_on_the_edit_2026_11_06.py`, `workers/voices/test/hardening.test.ts`.
+**A window clicked on the edit's transcript carries the EDIT's clock** (`clock: "edit"`, set by the Worker); **the assembler moves it onto the room's clock from the stored clock of the edit the guest reviewed, writes it back before cutting, and refuses with no clock** (`_windows_onto_the_room`). Blaine Mathieu's lines at 26:59 of his episode were at 29:18 of the room.
+
 ### The Nov 4 handoff: one tracker, Vancouver time (Nov 4 2026)
 
 Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
