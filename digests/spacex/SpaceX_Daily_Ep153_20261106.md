@@ -1,0 +1,53 @@
+# SpaceX Daily
+
+> **SpaceX targets the first upper-stage catch on Starship Flight 15 for November 13, advancing full rapid reuse of both stages.**
+
+### Top News
+
+1. **SpaceX sets November 13 target for first Starship upper-stage catch**
+   SpaceX Vice President of Launch Kiko Dontchev announced the November 13 target for Flight 15 at the UP.Summit. The mission will attempt to catch both the Super Heavy booster and the Ship with the tower arms. Booster 22 completed a full-duration 33-engine static fire on October 25. Ship 42 completed a single-engine deorbit simulation on October 26 and a full six-engine static fire the next day. The hardware has finished its test campaign and the Pad 2 arms have already lifted Ship 42 into catch position. On the third quarter earnings call, Elon Musk said Flight 15 would try to catch both the Super Heavy booster and the ship, and said a successful ship catch was “more likely than not.” The Starlink constellation that Starship is meant to expand stands at 11,214 satellites in orbit and 11,200 working, out of 13,096 launched. SpaceX has not posted a mission page or a launch time. Source: [keeptrack.space](https://keeptrack.space/x-report/spacex-brief-2026-11-06) Source: [teslarati.com](https://www.teslarati.com/spacex-starship-catch-nov-13)
+
+2. **Blue Origin unveils GS-3 third stage and Northstar engine for New Glenn**
+   Blue Origin chief executive Dave Limp has unveiled a third stage for New Glenn and a new booster engine. The GS-3 stage targets direct geostationary orbit injection and Earth-escape trajectories. On the 7×2 vehicle it is rated for up to 8 metric tonnes to GEO and 10 metric tonnes to trans-lunar injection. On the larger 9×4 variant those figures rise to 14 metric tonnes to GEO and 20 metric tonnes to TLI. The Northstar LOX/LNG engine produces 715,000 pounds of thrust. GS-3 is already under contract for a government cis-lunar mission in 2028. The stage is not required for Blue Origin’s lunar lander architecture, but the company says it can support sustained operations around the Moon. New Glenn has already flown as a two-stage vehicle from Launch Complex 36 at Cape Canaveral. NG-4 was destroyed in the pad explosion during a static fire attempt in May, but Blue Origin is preparing to return to flight with NG-4.1 early in 2027. Source: [nasaspaceflight.com](https://www.nasaspaceflight.com/2026/11/blue-origin-new-glenn-gs3-northstar-engine/)
+
+3. **xAI plans two additional data centers in Southaven**
+   SpaceXAI will build two more AI data centers in Southaven. The sites expand the company’s Memphis-area compute footprint alongside the existing Colossus cluster. Source: [actionnews5.com](https://www.actionnews5.com/2026/11/06/spacexai-build-2-more-ai-data-centers-southaven/)
+
+4. **Cursor adds live app building and sharing via link**
+   Users can now describe a tool, have Cursor build it with a database, run security checks, and deploy it for sharing. The feature is available on all paid plans. Teams across Cursor are already using the new app builder for dashboards, customer presentations, internal ops tools, onboarding programs, and developer portals. Source: [x.com](https://x.com/cursor_ai/status/2118458629091426304) Source: [cursor.com](https://cursor.com/changelog)
+
+5. **Ukraine begins talks on new Starshield contract ahead of 2027 expiration**
+   Chargé d’affaires Denys Sienik said Kyiv has started negotiations with the Pentagon on a follow-on Starshield agreement. The current contract expires around mid-2027. Sienik noted that no explanation has yet been received for October speed restrictions that disrupted drone operations. Ukraine has relied on Starshield for drone operations against Russian threats. Sienik said Kyiv is also developing domestic capabilities and looking at European systems because no effective alternative exists. A new agreement must be negotiated, funded, and signed before mid-2027. Source: [hromadske.ua](https://hromadske.ua/en/amp/war/273886-ukraine-seeks-new-starshield-deal-with-us-as-contract-nears-expiration-in-2027) Source: [breakingdefense.com](https://breakingdefense.com/2026/11/ukraine-eyeing-new-spacex-starshield-deal-by-mid-2027-still-no-answers-about-october-problems/)
+
+6. **xAI’s Colossus 2 may exceed 5.2 exabytes of storage at 1.2 million GPUs**
+   An estimate places Colossus 2 storage capacity above 5.2 exabytes as the cluster scales toward 1.2 million GPUs. The figure supports checkpoint and recovery operations across the expanding training and inference workload. Source: [xenospectrum.com](https://xenospectrum.com/en/colossus-storage-capacity-checkpoint-recovery/)
+
+7. **US proposes changes to commercial space launch regulations**
+   The changes could ease licensing for reusable vehicles and higher flight rates. The proposal comes as SpaceX prepares for increased Starship operations from multiple sites. Source: [reuters.com](https://www.reuters.com/business/media-telecom/us-proposes-space-launch-rule-changes-potential-boost-spacex-2026-11-05/)
+
+8. **SpaceX completes full water deluge test at Starship Pad 39A**
+   The test supports future Starship operations at Kennedy Space Center. SpaceX is developing two launch pads at Launch Complex 37 at Cape Canaveral and may be authorized to carry out up to 76 Starship launches and 152 landings annually from there. Source: [basenor.com](https://www.basenor.com/blogs/news/spacex-runs-full-water-deluge-test-at-starship-pad-39a)
+
+### Also Today
+**Hinojosa asks Texas Parks and Wildlife to hold off on Boca Chica land action amid SpaceX concerns:** Texas state representative Gina Hinojosa requested a delay on land decisions near Boca Chica. Source: [click2houston.com](https://www.click2houston.com/news/texas/2026/11/05/hinojosa-asks-texas-parks-and-wildlife-to-hold-off-on-boca-chica-land-action-amid-spacex-concerns/)
+
+**DeSoto County asks SpaceXAI to increase buyout offers:** County officials want higher offers for properties near planned data-center sites. Source: [desototimes.com](https://www.desototimes.com/news/desoto-county-asking-spacexai-to-increase-buyout-offers/article_1a73925f-ff2a-430c-abbf-eed06197ef19.html)
+
+## Community Buzz
+
+Voyager 2 has now spent eight years in interstellar space at roughly 119 AU, with its Plasma Science Experiment still returning data until it was powered down last year. Source: [x.com](https://x.com/NASASpaceflight/status/2118338307956392127)
+
+## The Counterpoint
+Ukraine’s Starshield contract faces an uncertain renewal path after October speed restrictions disrupted drone operations and left officials without answers from the Pentagon or SpaceX. Kyiv is simultaneously developing domestic alternatives and European systems because no effective substitute currently exists. A new agreement must still be negotiated, funded, and signed before mid-2027 to avoid another gap. Source: [breakingdefense.com](https://breakingdefense.com/2026/11/ukraine-eyeing-new-spacex-starshield-deal-by-mid-2027-still-no-answers-about-october-problems/)
+
+### Engineering Deep Dive
+Catching the Ship on Flight 15 requires the tower arms to intercept a vehicle that has already survived a full orbital reentry at roughly 25 times the speed of sound. Unlike the Super Heavy booster, which separates in the upper atmosphere and returns with modest heating, the Ship must dissipate the kinetic energy of an entire orbital velocity change, manage peak heat fluxes across its windward tiles, and then execute a precise cross-range maneuver to reach the tower. The design therefore trades added thermal-protection mass and a more robust control system for the ability to recover the stage that actually delivers payload to orbit. Static-fire data from Ship 42 already confirm that its six Raptors can throttle and gimbal through a simulated deorbit burn, giving the flight-control team the actuator authority needed for the final alignment. If the catch succeeds, the program removes the single largest remaining variable in the rapid-reuse equation: the Ship no longer needs a separate landing site or recovery vessel, collapsing the turnaround timeline from weeks to days. That step directly multiplies the number of orbital flights a single Ship can perform per year, which is the variable that ultimately sets the marginal cost per kilogram once propellant and ground operations dominate the ledger.
+
+The Northstar engine introduced by Blue Origin for the GS-3 stage illustrates a different reusability trade-off. Rated at 715,000 pounds of thrust on LOX/LNG, the engine uses an oxygen-rich staged combustion cycle and is described as 30 percent lighter with 50 percent fewer parts than the BE-4. More than 65 percent of the engine is 3D-printed, allowing assembly in under a day. On the 7×2 New Glenn configuration the GS-3 stage can deliver 8 metric tonnes directly to GEO or 10 metric tonnes to trans-lunar injection; those numbers rise to 14 and 20 metric tonnes on the larger 9×4 variant. The added stage opens high-energy missions that two-stage vehicles cannot efficiently serve, yet it also adds complexity to recovery and turnaround operations that Starship aims to avoid through full booster-and-ship catch. The contrast shows how two programs are solving the same orbital-delivery problem with different mass and operations budgets.
+
+Cursor’s new live-app builder demonstrates a parallel engineering approach on the software side of the Musk compute stack. An agent writes the code, provisions a database, executes deterministic and agentic security checks, and deploys the result behind a shareable link. The workflow removes the traditional gap between localhost development and production hosting, allowing teams to move internal dashboards, customer presentations, and onboarding tools from description to live service in minutes rather than days. Because the same agentic loop runs on xAI models hosted inside the Colossus clusters, every deployed app inherits the inference economics and interconnect fabric already scaled for training runs. The result is a measurable reduction in the “Idiot Index” of software delivery: the ratio of finished application cost to the raw GPU-hours and storage bytes required to produce it shrinks as the agent handles boilerplate, security, and deployment in one pass.
+
+### Market Watch
+SPCX is at $123.62, -9.0% vs the previous close.
+
+SpaceX’s engineering cadence on Starship continues to set the pace for the rest of the industry.
