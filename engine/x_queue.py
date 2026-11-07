@@ -45,6 +45,10 @@ R2_PREFIX = "x_queue"
 R2_BUCKET = os.getenv("X_QUEUE_R2_BUCKET", "podcast-audio")
 R2_PUBLIC_BASE = os.getenv("X_QUEUE_R2_PUBLIC_BASE", "https://audio.nerranetwork.com").rstrip("/")
 MAX_ATTEMPTS = 3
+#: Nov 7 2026: how long a post waits for a LOCKED account to be unlocked. A
+#: lock is not the post's fault, so it never spends an attempt; past this age
+#: the teaser is stale and fails as ``account_locked``.
+LOCKED_MAX_AGE = dt.timedelta(hours=24)
 # X's limit for a video on a post from a default (non-Premium) account
 # (docs.x.com media best practices, Oct 2026): 20 minutes, 8 GB.
 LONG_FORM_MAX_SECONDS = 20 * 60
@@ -324,6 +328,19 @@ def post_due(*, limit: int = 2, now: Optional[dt.datetime] = None) -> List[dict]
             if row.get("media_url"):
                 _forget_media(row["media_url"])
             results.append({"id": row["id"], "show": label, "status": "posted", "url": url})
+        elif reason == "account_locked":
+            # Give the claimed attempt back and wait; every other due row would
+            # meet the same lock, so stop here.
+            age = _age_hours(row.get("created_at") or row["due_at"], now)
+            final = age >= LOCKED_MAX_AGE.total_seconds() / 3600
+            _rest("PATCH", TABLE, params={"id": f"eq.{row['id']}"}, prefer="return=minimal",
+                  json={"status": "failed" if final else "queued", "error": reason,
+                        "attempts": int(row.get("attempts") or 0),
+                        "updated_at": _iso(now),
+                        "due_at": row["due_at"] if final else _iso(now + SPACING)})
+            results.append({"id": row["id"], "show": label,
+                            "status": "failed" if final else "locked", "error": reason})
+            break
         else:
             attempts = int(row.get("attempts") or 0) + 1
             final = attempts >= MAX_ATTEMPTS or reason == "no_credentials"

@@ -986,7 +986,14 @@ class TestKnownSectionsOnlyChapters:
                 from engine.chapters import lead_section_name
                 from engine.grok_imagine import extract_story_headlines
                 text = digest[0].read_text(encoding="utf-8")
-                allowed |= set(extract_story_headlines(text, max_count=12))
+                # Nov 7 2026: compare as the writer ships them. The chapter
+                # writer drops an outlet's SEO tail ("… [2026]", "(TSLA)")
+                # via ``_whole_title``; Ep154 shipped "Cursor Rules Linter:
+                # 12 Steps, 75 Min" from a "… [2026]" headline and this
+                # guard, reading the raw headline, failed main.
+                from engine.chapters import _whole_title
+                heads = extract_story_headlines(text, max_count=12)
+                allowed |= set(heads) | {_whole_title(h) for h in heads}
                 # Oct 14 2026: when the hook is too long to title the lead,
                 # the lead chapter takes the digest's own section name
                 # ("Top News" on Ep134) — a label, never a clipped headline.

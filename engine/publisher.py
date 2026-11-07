@@ -1637,6 +1637,14 @@ def _describe_x_error(exc: Exception) -> str:
     return " | ".join(parts)
 
 
+#: The last X refusal ``post_to_x`` logged, or "" after a post went up.
+#: Nov 7 2026: read by ``engine.x_post`` to tell a LOCKED account (X 403 "Your
+#: account is temporarily locked", which only a login at x.com clears) from a
+#: refusal of this one post. A lock is not the post's fault: the queue keeps
+#: the post instead of burning its three attempts in 90 minutes.
+LAST_X_ERROR = ""
+
+
 def post_to_x(
     text: str,
     *,
@@ -1656,6 +1664,8 @@ def post_to_x(
     *media_ids* (from :func:`engine.x_media.upload_media`) to attach a clip
     or image (Oct 10 2026).
     """
+    global LAST_X_ERROR
+    LAST_X_ERROR = ""
     try:
         import tweepy
 
@@ -1679,7 +1689,8 @@ def post_to_x(
     except Exception as exc:
         # Surface the X API's structured reason (duplicate content vs.
         # missing app write-permission vs. free-tier cap are all 403s).
-        logger.error("X post failed: %s", _describe_x_error(exc))
+        LAST_X_ERROR = _describe_x_error(exc)
+        logger.error("X post failed: %s", LAST_X_ERROR)
         return None
 
 

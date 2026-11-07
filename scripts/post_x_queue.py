@@ -32,6 +32,10 @@ def main() -> int:
     for r in results:
         if r["status"] == "posted":
             logger.info("Posted %s: %s", r["show"], r["url"])
+        elif r["status"] == "locked":
+            # Nov 7 2026: red, so the operator sees it, but the post is kept.
+            print(f"::error::The X account is locked; {r['show']} is kept in the queue. "
+                  "Log in at https://x.com to unlock it.")
         elif r["status"] == "retry":
             logger.warning("%s did not post (%s); retrying in 30 minutes", r["show"], r["error"])
         else:
@@ -50,7 +54,7 @@ def main() -> int:
             logger.warning("Full-episode reply %s: %s (%s)", r["show"], r["status"], r["error"])
         else:
             print(f"::warning::Full-episode reply for {r['show']} failed ({r['error']})")
-    return 1 if any(r["status"] == "failed" for r in results) else 0
+    return 1 if any(r["status"] in ("failed", "locked") for r in results) else 0
 
 
 if __name__ == "__main__":

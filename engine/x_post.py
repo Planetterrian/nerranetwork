@@ -11,6 +11,7 @@ failure — the episode is already in its feed by the time this runs.
 from __future__ import annotations
 
 import logging
+import re
 import os
 from datetime import date as _date_type
 from pathlib import Path
@@ -228,6 +229,18 @@ def clip_post_text(*, label: str, hook: str, episode_num: Optional[int] = None,
     return "\n\n".join(p for p in (head, body, chosen) if p)
 
 
+#: X's refusal when the ACCOUNT is locked (Nov 7 2026: @nerranetwork, every
+#: post from 13:35 UTC failed "Your account is temporarily locked. Please log
+#: in to https://x.com to unlock your account."). Only a person can clear it.
+_ACCOUNT_LOCKED_RE = re.compile(r"account is (?:temporarily )?locked", re.IGNORECASE)
+
+
+def account_locked() -> bool:
+    """True when the last X refusal said the account itself is locked."""
+    from engine import publisher
+    return bool(_ACCOUNT_LOCKED_RE.search(getattr(publisher, "LAST_X_ERROR", "") or ""))
+
+
 def post_media(*, env_prefix: str, text: str, media_paths: Sequence,
                label: str) -> Tuple[bool, str, str, str]:
     """Post *text* with the first of *media_paths* that uploads.
@@ -257,7 +270,7 @@ def post_media(*, env_prefix: str, text: str, media_paths: Sequence,
         logger.warning("X post failed for %s (non-fatal): %s", label, exc)
         return False, "post_failed", "", ""
     if not url:
-        return False, "post_failed", "", ""
+        return False, ("account_locked" if account_locked() else "post_failed"), "", ""
     logger.info("Posted %s to X%s: %s", label,
                 f" with {Path(used).name}" if used else " (text only)", url)
     return True, ("" if media_id else "no_media"), url, used
