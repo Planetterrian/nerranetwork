@@ -1,0 +1,97 @@
+Ling-3.2-flash ships five hundred sixty billion multimodal parameters you can hit through Open A I compatible A P I's today.
+
+This is Models and Agents, episode two hundred twenty-seven.
+
+Higgs Realtime Duplex, Kinference on Kubernetes, and Claude dreaming on its logs, then Things to Try.
+
+Ant Ling, in a write-up circulating on Reddit, gave Ling-3.2-flash twenty-five billion activated parameters and a one million token context window on a native mixture-of-experts that takes text plus images and video.
+
+The lab reports results on MathVision, Humanity's Last Exam-MM, ZEROBench, OmniDocBench, and domain suites including MedXpertQA-MM and AndroidWorld.
+
+Anthropic-compatible endpoints are documented as well, with demonstrations of PDF-to-code, GUI operation, three-dimensional reconstruction, and multi-agent workflows, so long multimodal jobs run through ordinary chat completions without a separate vision or video pipeline.
+
+Higgs Realtime Duplex is a forty-five billion parameter full-duplex mixture-of-experts that hears, sees, and speaks in one stream while thinking, calling tools, and handing work off in the background.
+
+Audio, video, and text land in one hundred sixty millisecond chunks, background reasoning and tool calls ride that same stream, audio uses causal flow-matching, face output uses a DiT, and voice and face reference are zero-shot at deployment.
+
+Published comparisons have it behind Open A I’s top full-duplex and proactive-video numbers, and ahead on Big Bench Audio and IFEval.
+
+FIA-L L M, in Nature, does feedback-conditioned learning-state estimation, and from shared representations it emits a learning-state stand-in grounded in Self-Determination Theory, a next-item achievement prediction, an SDT dimension label, and a diagnostic explanation.
+
+The dual-stream framework runs Confidence-Aware Robust Distillation over two thousand human-labeled examples plus L L M pseudo-labels, and Feedback Intervention Attention fuses feedback proxies with behavioral history.
+
+On frozen expert test sets, macro-average RMSE drops eight point six percent and macro-average AUC rises one point two points.
+
+Kubernetes can now put Kinference, Buoyant’s Apache two point zero inference control plane as covered by MarkTechPost, in front of vLLM workers.
+
+Declarative routing policies, token rate limits, and per-tenant metrics are what it applies on the way in.
+
+Offline dreaming on agent logs, Anthropic writes, lets Claude reorganize experience, correct mistakes, and surface relevant notes for later sessions without updating weights or stuffing more into the prompt.
+
+The method is analogized to hippocampal replay during sleep and framed as a complement to compaction and context-window management, with evaluations isolating what dreaming contributes to memory organization across multiple agent tasks.
+
+Ligo’s enzyme-design experiments feed the one hundred tasks in Open A I’s BioBasicsBench, which checks whether agents can read raw lab data, catch errors, and spot conclusions the data do not support.
+
+The suite aims at everyday wet-lab reads rather than new scientific discovery, and it is meant to track progress on scientific reliability and biosafety.
+
+ToyBlocks, on the Hugging Face blog, supplies a simulated tabletop with a robot arm and blocks, plus automatic task and demonstration generation for watching how more data lifts models and how planning sits on top of motor control.
+
+It records robot trajectories without teleoperation, scores behavior over time, and is the first FoundationWorld, with more controlled robotics domains planned in the series.
+
+Selecting among three database tools, routing on the results, and stopping after eight turns with a circuit breaker is, in a Towards Data Science walkthrough, a local Ollama-and-Python agent that never leaves your model server.
+
+State management between turns stays in that local process.
+
+OpenRouter plus G P T 4.1-mini and three Python classes give an agent a calculator, a stub web search, and conversation recall that lives through process restarts in a single JSON file.
+
+You skip a vector database and still get recall that survives a crash on a small agent.
+
+Elsewhere, researchers set out fresh evaluation criteria for A I used in carbon accounting, extending earlier model-assessment work in that domain.
+
+A Jerusalem Post study finds Israelis in emotional distress are turning to consumer ChatGPT even though those instances have no clinical safeguards or mandates.
+
+Mustafa Suleyman, C E O of Microsoft A I, called Delaware’s proposed A I agent rules deeply concerning, highlighting tension between state-level proposals and industry practice.
+
+Open A I and FMF member firms released a framework for classifying cyber jailbreaks by severity and the capabilities they unlock, aiming to standardize evaluation across labs.
+
+Planning, reviewing code, investigating changes, and debugging production with GitHub Copilot are the workflows in GitHub’s agentic engineering guide, which also marks where human judgment remains essential.
+
+Open A I launched G P T 6 Cyber after the model found eighty-one high-severity Firefox vulnerabilities and built working exploits for nine hundred forty-eight Linux kernel flaws in internal testing.
+
+Point Ling-3.2-flash at a long multimodal document through the documented Open A I compatible endpoint and see how the one million token window holds up.
+
+Spin up the ToyBlocks simulation locally, generate robot trajectories, and compare policy performance as demonstration counts go up.
+
+Drop the three-class JSON memory pattern onto an existing Ollama agent and check that recall survives a restart without a vector database.
+
+Run an agent through BioBasicsBench’s one hundred wet-lab tasks and note where interpretation errors cluster before you put it near scientific workflows.
+
+G P T 6 Cyber customers are expected to get expanded Daybreak Red access in the coming weeks.
+
+AllenAI and Hugging Face plan more FoundationWorld environments after ToyBlocks.
+
+Anthropic will keep posting evaluation results in its engineering series on agent memory components.
+
+Median time to first token on shared-prefix workloads sat at six point eight eight seconds on three L forty S G P U's, and that is the number to pop the hood on with Kinference’s key-value cache routing.
+
+Time to first token, or TTFT, is how long you wait before the model emits token one, and most of that wait is prefill — writing the prompt into key-value cache in G P U memory — with decode only starting once that cache exists.
+
+Prefill cost scales with prompt length, which is why a fat shared system prompt dominates TTFT when every request pays it in full.
+
+The overlapping case is a long system prompt or the same retrieved document sitting in front of many different user questions, and reuse only works if the next request hits the worker that already has those keys and values resident.
+
+Kinference’s balancer is built to send the request where that cache already lives, and the median TTFT on that traffic fell to zero point three one seconds.
+
+The v zero point one point zero alpha seven code is Rust, the cluster config is five custom resource definitions, or CRDs, Kubernetes objects you declare instead of hand-wiring services, and a gRPC inference handler sits on the path.
+
+The engineering says put an alpha control plane on multi-tenant traffic that actually shares prefixes, and do not treat the sub-second figure as a number for cold, one-off prompts.
+
+Before we go — Delaware is still taking comments on its A I agent rules, and that review is not finished.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — A I Chips and Data Centres Daily, the daily on accelerators, memory, and the data centres being built to run them.
+
+Find every show, free, at nerranetwork dot com. If you follow more than one of our shows, Nerra Daily stitches the whole network into one morning listen — free, with chapters, at nerranetwork dot com nerra daily.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

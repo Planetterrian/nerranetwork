@@ -1,0 +1,110 @@
+Link 3.2 flash ships, 560 billion multimodal parameters you can hit through OpenAI compatible APIs today. This is Models & Agents Episode 227. Higgs real-time duplex, kinference on Kubernetes, and Claude dreaming on its logs. Then things to try. Antling in a write-up circulating on Reddit gave Link 3.2 flash 25 billion activated parameters, and a 1 million token context window on a native mixture of experts that takes text plus images and video.
+The lab reports results on math vision, humanity's last exam, mm, zero bench, omnidoc
+bench, and domain suites including med expert QAMM, and Android world. And thropic compatible
+endpoints are documented as well, with demonstrations of PDF to code, GUI operation, three-dimensional
+reconstruction, and multi-agent workflows, so long multimodal jobs run through ordinary
+chat completions without a separate vision or video pipeline. Higgs real-time duplex is a 45
+billion-parameter full duplex mixture of experts that hears, sees, and speaks in one stream while
+thinking, calling tools and handing work off in the background. Audio, video, and text land in
+160 millisecond chunks. Background reasoning and tool calls ride that same stream. Audio uses
+causal flow matching, face output uses a DT, and voice and face reference are zero shot
+at deployment.
+Published comparisons have it behind OpenAI's top full duplex and proactive video numbers,
+and a head on Big Bench audio and IFE Val.
+FIA LLM in nature does feedback-conditioned learning state estimation, and from shared
+representations it emits a learning state stand in grounded in self-determination theory.
+A next item achievement prediction, an SDT dimension label, and a diagnostic explanation.
+The dual-stream framework runs confidence-aware robust distillation over 2,000 human labeled
+examples, plus LLM pseudo-labels, and feedback intervention attention fuses feedback proxies
+with behavioral history.
+On frozen expert test sets, macro average RMSC drops 8.6% and macro average AUC rises 1.2
+points.
+Kubernetes can now put Kinference, Boyance Apache 2.0 inference control plane, as covered
+by Mark Tech Post, in front of VLLM workers.
+Declarative routing policies, token rate limits, and pertinent metrics are what it applies
+on the way in.
+Offline dreaming on agent logs, andthropic rights, let's clawed reorganize experience, correct
+mistakes, and surface relevant notes for later sessions without updating weights or stuffing
+more into the prompt.
+The method is analogized to hippocampal replay during sleep and framed as a complement to
+compaction and context window management, with evaluations isolating what dreaming contributes
+to memory organization across multiple agent tasks.
+LIGO's enzyme design experiments feed the 100 tasks in OpenAI's biobasics bench, which
+checks whether agents can read raw lab data, catch errors, and spot conclusions the data
+do not support.
+The sweet aims at everyday wet lab reads rather than new scientific discovery, and it is
+meant to track progress on scientific reliability and biosafety.
+Toy blocks on the hugging face blog supplies a simulated tabletop with a robot arm and blocks,
+plus automatic task and demonstration generation for watching how more data lifts models and
+how planning sits on top of motor control.
+It records robot trajectories without tell operation, scores behavior over time, and
+is the first foundation world with more controlled robotics domains planned in the series.
+Selecting among three database tools, routing on the results, and stopping after eight turns
+with a circuit breaker is, in a towards data science walkthrough, a local Olama and Python
+agent that never leaves your model server.
+State management between turns stays in that local process.
+Open router plus GPT 4.1-mini and three Python classes give an agent a calculator, a stub
+web search, and conversation recall that lives through process restarts in a single JSON file.
+You skip a vector database and still get recall that survives a crash on a small agent.
+Elsewhere, researchers set out fresh evaluation criteria for AI used in carbon accounting,
+extending earlier model assessment work in that domain. A Jerusalem post study finds Israelis
+in emotional distress are turning to consumer chat GPT, even though those instances have no
+clinical safeguards or mandates. Mustafa Suleiman, CEO of Microsoft AI, called Delaware's
+proposed AI agent rules deeply concerning, highlighting tension between state level proposals
+and industry practice. Open AI and FMF member firms released a framework for classifying
+cyber jail breaks by severity and the capabilities they unlock, aiming to standardize evaluation
+across labs. Planning, reviewing code, investigating changes, and debugging production with GitHub
+co-pilot are the workflows in Github's
+agentic engineering guide, which also marks
+where human judgment remains essential. OpenAI
+launched GPT-6 cyber after the model found 81 high
+severity Firefox vulnerabilities and built
+working exploits for 948 Linux kernel
+flaws in internal testing. Point-Ling 3.2 flash
+at a long multimodal document through the
+documented OpenAI compatible endpoint and
+and see how the 1 million token window holds up.
+Spin up the toy block simulation locally,
+generate robot trajectories,
+and compare policy performance as demonstration counts go up.
+Drop the three-class JSON memory pattern
+onto an existing Olama agent,
+and check that recall survives a restart
+without a vector database.
+Run an agent through biobasics benches 100 wet lab tasks,
+and note where interpretation errors cluster
+before you put it near scientific workflows.
+GPT-6 cybercustomers are expected to get expanded daybreak red access in the
+coming weeks. Allen AI and HuggingFace plan more foundation world environments
+after toy blocks. Anthropic will keep posting evaluation results in its
+engineering series on agent memory components. Media in time to first token on
+shared prefix workloads sat at 6.88 seconds on 3L-40S GPUs and that is the
+number to pop the hood on with Kinference's key value cash routing.
+Time to first token, or TTFT, is how long you wait before the model emits token 1, and
+most of that weight is pre-fill, writing the prompt into key value cash and GPU memory,
+with decode only starting once that cash exists.
+Pre-fill costs scales with prompt length, which is why a fat-shared system prompt dominates
+TTFT when every request pays it in full.
+The overlapping case is a long system prompt or the same retrieved document sitting in front
+of many different user questions, and reuse only works if the next request hits the
+worker that already has those keys and values resident.
+Kinference's balancer is built to send the request where that cache already lives, and
+the median TTFT on that traffic fell to 0.31 seconds.
+The V0.1.0 Alpha7 code is rust.
+The cluster config is five custom resource definitions or CRDs, Kubernetes objects you declare
+instead of hand wiring services, and a GRPC inference handler sits on the path.
+The engineering says put an alpha control plane on multi-tenant traffic that actually shares
+prefixes and do not treat the sub-second figure as a number for cold one-off prompts.
+Before we go, Delaware is still taking comments on its AI agent rules, and that review
+is not finished. That's models and agents for today. If you found this useful, share
+it with someone who's trying to keep up with all these changes, and subscribe so you
+don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See
+you tomorrow. And if you'd rather watch than listen, find us on YouTube at Narin Network,
+links in the show notes. And before you go, this show is part of the Narin Network, a family
+of daily podcasts on tech, science, and markets. Each one a short, sharp briefing you can
+finish on the commute. If today earned its place in your feed, here's your next
+lesson. AI chips in data centers daily. The daily on accelerators, memory and the data centers
+being built to run them. Find every show free at narennetwork.com. If you follow more than one
+of our shows, Nerra daily stitches the whole network into one morning listen. Free with chapters
+at narennetwork.com, Nerra daily. This episode used AI voice synthesis of my voice. Editorial
+selection and analysis are my own.
