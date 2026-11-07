@@ -1384,6 +1384,99 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: '2026-11-07'
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_11_07.md
+    generated_by: grok-4.5
+    summary: Oct 24 stop/options/confidence levers partially landed (stops readable, first covered call on air in Ep224, Low grades appearing) while Market Pulse is still missing from chapters, lifetime history still rides in Portfolio Performance, and volume>20-day remains a multi-segment tic.
+    scored_prior_predictions:
+    - metric: mit_stop_stated_share_10ep (dashboard) on 2026-11-14
+      verdict: partial
+      evidence: Ep221–224 speak readable 8% stops with $80 cap on air; dashboard series not in this packet
+    - metric: mit_non_medium_share_10ep (dashboard) on 2026-11-14
+      verdict: partial
+      evidence: Ep224 IBM Low; Ep221–223 Medium — variety started, not yet ≥0.2 sustained
+    - metric: options structures among the first 15 picks after merge
+      verdict: hit
+      evidence: Ep224 IBM covered call on air with structure + early-assignment caveat (first options hit after 0/103 baseline)
+    - metric: spoken trade-review alpha equal to the tracker's alpha_pct (hand-check 5 episodes)
+      verdict: partial
+      evidence: Ep221 TD +3.25%, Ep223 PEY.TO −2.16%, Ep224 KMP.UN +7.33% sound tracker-shaped; full 5-ep JSON diff not in context
+    - metric: era closed trades carrying entry_volume_ratio_20d and sessions_held on 2026-11-01
+      verdict: partial
+      evidence: five-session / sessions_held framing on air; factor columns not visible in this packet
+    - metric: Portfolio Performance airings that lead with the lifetime 87-trade figures or recite best/worst (hand-check 5)
+      verdict: miss
+      evidence: Ep221–224 every PP still recites full March-2026 history (95→98 trades, cumulative $) beside era alpha
+    - metric: episodes whose chapters jump Practice Investment earlier than Market Pulse (disclaimer match)
+      verdict: hit
+      evidence: Ep215–224 Practice no longer opens off the disclaimer; Sep/Oct pattern fix held
+    - metric: segments per episode that teach volume>20-day confirmation
+      verdict: miss
+      evidence: Ep221/222/224 still spread 20-day/20-session volume across Strategy+Practice+Education
+    - metric: mit_new_trade_share_10ep
+      verdict: hit
+      evidence: Ep221–224 each carry a new weekly hold (PLTR, EFX, CP.TO, IBM); drought not re-tripped
+    - metric: median script words last-10 after digest floor bump (if applied)
+      verdict: hit
+      evidence: Ep215–224 all 1933–2440w; 10/10 clear 1800 floor under grok-4.6 script stage
+    shipped: []
+    deferred:
+    - 'Operator: run scripts/recompute_mit_benchmarks.py --apply after adjudicating 8 unreconciled pre-era trades (history cleanup; era on-air alpha already isolated)'
+    - 'Operator: significance-qualifier accept-or-abandon (third miss; no fourth mechanism — do_not_retry)'
+    - 'Operator: SnapTrade Phase-0 verification; keep LIVE_TRADING_ENABLED dormant until clean shadow+sim record'
+    - 'Operator decision: volume>20-day multi-segment tic after three miss windows — data-side recent-episode MEMORY vs accept as house style (do not file a third prompt-only de-seed)'
+    - Confidence mechanical grade only if forced High/Low variation carries no information after ~20 post-budget picks
+    - Listener feedback loop (inbox + triage) — product decision from Aug 20
+    - Feed measured shadow slippage into sim cost model once ~20 matched round trips
+    - HPS.A Ep150 flash open with no entry bar since 08-26 — needs void path
+    - Long-form YouTube retention ~8.4% — network video problem, not MIT-only prompt tweak
+    - Closing-price lesson family — already filtered as hygiene; leave retired
+    - Podcast-side length expand/retries — permanent do_not_retry network-wide
+    predictions:
+    - metric: episodes whose chapter JSON includes a Market Pulse (or equivalent tape) chapter
+      baseline: 0/10 (Ep215–224)
+      expected: '>=8/10 after pulse-pattern widen — pulse content jumpable from the rail'
+      verdict: pending
+      evidence: null
+    - metric: Portfolio Performance airings that recite full March-2026 lifetime trade count or cumulative $ as live scoreboard color
+      baseline: 4/4 (Ep221–224)
+      expected: 0/10; era alpha + era n only (history only if explicitly labelled HISTORY and not adjacent to the era sentence)
+      verdict: pending
+      evidence: null
+    - metric: options picks that state live strike, expiry, and quoted premium on air (or option_quote_failed)
+      baseline: Ep224 covered call with premium deferred to listener
+      expected: 100% of new options structures quote strike+expiry+mid or say quote failed
+      verdict: pending
+      evidence: null
+    - metric: ticker/name garble incidents in EN _tts.txt (Interflex/XVI/Error 2/SNP-TSX class)
+      baseline: '>=1 per ep in Ep221–224 window'
+      expected: 0/10 after letter-spell + Era-unabbreviated hygiene
+      verdict: pending
+      evidence: null
+    - metric: mit_non_medium_share_10ep sustained
+      baseline: partial (1 Low in last 4)
+      expected: '>=0.2 on dashboard at next review without calibration redesign'
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/modern_investing.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'P0: Ep215–224 never emit a Market Pulse chapter because spoken pulse leads with index tape (''Wall Street finished'', ''Friday''s closes left'', ''S&P TSX composite fell'') not the lexicon ''market pulse''. Widen the matcher only — no audio change.'
+    - file: shows/prompts/modern_investing_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P0: Oct 24 PP lifetime prediction missed — Ep221–224 still air 95–98-trade March history beside era alpha every episode. Third miss class on blend leakage; tighten the spoken contract.'
+    - file: shows/prompts/modern_investing_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep224 finally selected a covered call (options prediction HIT) but deferred the premium to the listener — half the demonstration the live-quote path exists for. Keep zero-estimated-premium constraint; require the quote on air.'
+    - file: shows/prompts/modern_investing_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: Ep222 Interflex/inner flex, Ep224 XVI and Error 2, Ep221 SNP-TSX and ''of 0.4%'' — listener-facing garble without phonetic hacks (landmine #17).'
+    agent_cost_usd: 0.2249
 do_not_retry:
   - idea: Fourth on-air significance-qualifier mechanism after three misses (operator accept-or-abandon only)
     evidence: flagged 2026-09-25 (Grok review)
