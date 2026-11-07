@@ -29,7 +29,8 @@ class TestTheMirrorIsTheLastResort:
         asset = re.search(r"BTBN_ASSET: (\S+\.tar\.xz)", TEST_WF).group(1)
         for text in (COMPOSITE, SETUP_FFMPEG):
             assert tag in text and asset in text, "the fallback is the build CI tests on"
-            assert "sha256sum -c -" in text
+            assert "scripts/fetch_static_ffmpeg.sh" in text
+        assert "scripts/fetch_static_ffmpeg.sh" in TEST_WF
         assert '"${{ inputs.system-packages }}" != "ffmpeg"' in COMPOSITE, (
             "only ffmpeg has a static fallback; any other package still fails loudly")
 
