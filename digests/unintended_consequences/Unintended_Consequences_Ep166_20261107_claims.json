@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://en.wikipedia.org/wiki/Hoy_No_Circula",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://theicct.org/publication/true-assessment-of-rw-pv-and-taxi-emissions-in-mexico-july24/",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the l",
+        "sentence": "In 1989 Mexico City launched Hoy No Circula, banning most drivers from using their cars one weekday each week according to the last digit of the license plate."
+      },
+      {
+        "pattern": "(?i)\\ba \\d{4} (?:study|paper|report|memo|survey|analysis|bulletin|note)\\b",
+        "match": "A 2008 study",
+        "sentence": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined."
+      },
+      {
+        "pattern": "(?i)\\ba\\s+\\d{4}\\s+[\\w\\- ]{0,35}?(?:journal|magazine|newspaper|publication|periodical|trade press|newsletter)\\b",
+        "match": "A 2008 study in the Journal",
+        "sentence": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 1,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "In 1989 Mexico City launched Hoy No Circula, banning most drivers from using their cars one weekday each week according to the last digit of the license plate.",
+      "Remote-sensing data collected in 2022 later showed that model-year 1994–2005 passenger vehicles registered in the State of Mexico made up only 7 percent of the sampled fleet yet produced 25–42 percent of measured CO, HC, NOx, and smoke emissions.",
+      "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined."
+    ],
+    "flagged_count": 5,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Mexico City introduced Hoy No Circula in 1989, banning most drivers one weekday per week by license-plate digit.",
+      "episode_span": "In 1989 Mexico City launched Hoy No Circula, banning most drivers from using their cars one weekday each week according to the last digit of the license plate.",
+      "source_url": "https://en.wikipedia.org/wiki/Hoy_No_Circula",
+      "supporting_quote": "Hoy No Circula was first implemented in 1989",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "2",
+      "claim": "The city shifted from exporting 74,000 used vehicles annually before the program to importing 85,000 annually between 1990 and 1993.",
+      "episode_span": "Instead, households acquired additional older vehicles, and the city shifted from exporting 74,000 used cars a year to importing 85,000 annually between 1990 and 1993.",
+      "source_url": "https://grokipedia.com/page/hoy_no_circula",
+      "supporting_quote": "Mexico City shifting from net exporter of 74,000 used vehicles annually (1983–1989) to net importer of 85,000 per year (1990–1993)",
+      "status": "verified"
+    },
+    {
+      "id": "3",
+      "claim": "Model-year 1994–2005 passenger vehicles registered in the State of Mexico comprised 7% of the sampled fleet yet accounted for 25–42% of total emissions across CO, HC, NOx and UV smoke.",
+      "episode_span": "Remote-sensing data collected in 2022 later showed that model-year 1994–2005 passenger vehicles registered in the State of Mexico made up only 7 percent of the sampled fleet yet produced 25–42 percent of measured CO, HC, NOx, and smoke emissions.",
+      "source_url": "https://theicct.org/publication/true-assessment-of-rw-pv-and-taxi-emissions-in-mexico-july24/",
+      "source_title": "Assessment of real-world passenger vehicle and taxi emissions in Mexico City",
+      "supporting_quote": "model year (MY) 1994–2005 PVs registered in the State of Mexico accounted for only 7% of the sampled fleet but made up 25%–42% of total emissions across pollutants",
+      "confidence": "high",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "u1",
+      "claim": "In 1989 Mexico City launched Hoy No Circula, banning most drivers from using their cars one weekday each week according to the last digit of the license plate.",
+      "episode_span": "In 1989 Mexico City launched Hoy No Circula, banning most drivers from using their cars one weekday each week according to the last digit of the license plate.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to the l' with no covering verified claim"
+    },
+    {
+      "id": "u2",
+      "claim": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined.",
+      "episode_span": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'A 2008 study' with no covering verified claim"
+    },
+    {
+      "id": "u3",
+      "claim": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined.",
+      "episode_span": "A 2008 study in the Journal of Political Economy documented that total vehicles in circulation rose and that the average emissions rate of the fleet increased rather than declined.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'A 2008 study in the Journal' with no covering verified claim"
+    }
+  ]
+}
