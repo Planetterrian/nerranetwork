@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 06 Nov 2026 11:22:13 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 07 Nov 2026 10:58:47 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,152 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 227: Ling-3.2-flash ships a 560B/25B multimodal MoE with 1M context and OpenAI-compatible APIs…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Ling-3.2-flash ships a 560B/25B multimodal MoE with 1M context and OpenAI-compatible APIs for immediate use.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Ant Ling released Ling-3.2-flash, a native multimodal mixture-of-experts model supporting text, image, and video with a 1M-token window. Buoyant open-sourced Kinference, a Kubernetes control plane that adds KV-cache-aware routing and policy enforcement on top of vLLM. Anthropic detailed how offline “dreaming” on interaction logs improves agent memory organization, while OpenAI introduced BioBasicsBench to test agents on routine wet-lab data interpretation.
+
+Top Story
+Ant Ling released Ling-3.2-flash, a native multimodal MoE with 560B total parameters and 25B activated parameters plus a 1M-token context window. The model accepts text, image, and video inputs and reports results on MathVision, Humanity’s Last Exam-MM, ZEROBench, OmniDocBench, and several domain-specific suites including MedXpertQA-MM and AndroidWorld. Both OpenAI-compatible and Anthropic-compatible API endpoints are documented, along with demonstrations of PDF-to-code, GUI operation, 3D reconstruction, and multi-agent workflows. Developers can now route long-context multimodal workloads through familiar chat completions interfaces without managing separate vision or video pipelines. Watch for expanded access tiers and any follow-on fine-tunes targeting specific verticals. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xpye7g/ant_ling_introduces_ling32flash_560b25b_native/"&gt;reddit.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Higgs Realtime Duplex: a 45B MoE full-duplex model that listens, watches and talks at once, and thinks, calls tools and delegates in the background [N]: r/MachineLearning&lt;/b&gt;
+Higgs Realtime Duplex processes audio, video, and text in 160 ms chunks while running background thinking and tool calls in the same stream. The 45B model uses causal flow-matching for audio and a DiT for face output, with zero-shot voice and face reference at deployment. It trails OpenAI’s best on several full-duplex and proactive-video benchmarks but leads on Big Bench Audio and IFEval in the published comparison set. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xpn5pv/higgs_realtime_duplex_a_45b_moe_fullduplex_model/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;FIA-LLM: feedback conditioned learning state estimation with large language models: Nature&lt;/b&gt;
+FIA-LLM produces a Self-Determination Theory-grounded learning-state surrogate, next-item achievement prediction, SDT dimension label, and diagnostic explanation from shared representations. The dual-stream framework uses Confidence-Aware Robust Distillation on 2,000 human annotations plus LLM pseudo-labels and Feedback Intervention Attention to fuse feedback proxies with behavioral history. On frozen expert test sets it reduces macro-average RMSE by 8.6 % and lifts macro-average AUC by 1.2 points. Source: &lt;a href="https://www.nature.com/articles/s41598-026-74388-5"&gt;nature.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Buoyant Releases Kinference: An Open Source Inference Control Plane for Kubernetes and vLLM: MarkTechPost&lt;/b&gt;
+Kinference is an Apache 2.0 inference control plane that sits in front of vLLM workers on Kubernetes and applies declarative routing policies, KV-cache-aware load balancing, token rate limits, and per-tenant metrics. The v0.1.0-alpha.7 release is written in Rust, configured through five CRDs, and ships with a gRPC inference handler. In Buoyant’s three-L40S-GPU benchmark, median TTFT on shared-prefix workloads dropped from 6.88 s to 0.31 s. Source: &lt;a href="https://www.marktechpost.com/2026/11/07/buoyant-kinference-open-source-inference-control-plane-kubernetes-vllm/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Claude's Memory: How "Dreaming" Improves Learning: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt; [preferred primary source]&lt;/b&gt;
+Anthropic describes how offline “dreaming” on agent logs lets Claude reorganize experience, correct mistakes, and surface relevant notes for future sessions without weight updates or in-context learning. The approach mirrors hippocampal replay during sleep and is positioned as a complement to compaction and context-window management. Evaluations isolate the contribution of dreaming to memory organization across multiple agent tasks. Source: &lt;a href="https://www.anthropic.com/research/components-of-agent-memory"&gt;anthropic.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI introduces BioBasicsBench for AI in wet-lab science: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt;
+BioBasicsBench comprises 100 tasks drawn from real enzyme-design experiments at Ligo to test whether agents can interpret raw lab data, flag errors, and recognize unsupported conclusions. The benchmark targets routine wet-lab analyses rather than novel discovery and is intended to track progress on scientific reliability and biosafety. Source: &lt;a href="https://x.com/OpenAI/status/2118782708767965238"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;ToyBlocks: A controlled world for robot learning and evaluation: Hugging Face Blog [preferred primary source]&lt;/b&gt;
+ToyBlocks supplies a simulated tabletop environment with a robot arm and blocks plus automatic task and demonstration generation for studying how models improve with more data and how high-level reasoning combines with physical control. The framework records robot trajectories without teleoperation and supplies metrics for behavior over time, serving as the first FoundationWorld in a planned series of controlled robotics domains. Source: &lt;a href="https://huggingface.co/blog/allenai/toyblocks"&gt;huggingface.co&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Build Your First Multi-Tool AI Agent with Ollama and Python: Towards Data Science&lt;/b&gt;
+The tutorial walks through an agent that selects among three database tools, routes on tool results, and stops after eight turns via a circuit breaker, all running locally with Ollama. It demonstrates tool-use loops and state management without external APIs beyond the local model server. Source: &lt;a href="https://towardsdatascience.com/build-your-first-multi-tool-ai-agent-with-ollama-and-python/"&gt;towardsdatascience.com&lt;/a&gt;
+
+&lt;b&gt;Give Your Python AI Agent Persistent Memory with One JSON File: Towards Data Science&lt;/b&gt;
+Three Python classes plus an OpenRouter key and gpt-4.1-mini give an agent a calculator, stub web search, and conversation recall that survives process restarts via a single JSON file. The pattern replaces external vector stores for lightweight, restart-safe memory in small agents. Source: &lt;a href="https://towardsdatascience.com/give-your-python-ai-agent-persistent-memory-with-one-json-file/"&gt;towardsdatascience.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Researchers Establish Rigorous Evaluation Criteria for Artificial Intelligence in Carbon Accounting: Bioengineer.org&lt;/b&gt;
+The article outlines new evaluation criteria for AI systems used in carbon accounting, extending prior work on model assessment in that domain. Source: &lt;a href="https://bioengineer.org/researchers-establish-rigorous-evaluation-criteria-for-artificial-intelligence-in-carbon-accounting/"&gt;bioengineer.org&lt;/a&gt;
+
+&lt;b&gt;Israelis in emotional distress are turning to ChatGPT for help, study finds: The Jerusalem Post&lt;/b&gt;
+A study finds Israeli users in emotional distress are using consumer ChatGPT instances despite the absence of clinical safeguards or mandates. Source: &lt;a href="https://www.jpost.com/health-and-wellness/mind-and-spirit/article-913917"&gt;jpost.com&lt;/a&gt;
+
+&lt;b&gt;Microsoft AI CEO Mustafa Suleyman reacts to Delaware’s AI agent proposal, says it is ‘deeply concerning t: The Times of India&lt;/b&gt;
+Microsoft AI’s CEO called Delaware’s proposed AI agent rules deeply concerning, highlighting tensions between state-level proposals and industry practice. Source: &lt;a href="https://timesofindia.indiatimes.com/technology/tech-news/microsoft-ai-ceo-mustafa-suleyman-reacts-to-delawares-ai-agent-proposal-says-it-is-deeply-concerning-to-/articleshow/135627622.cms"&gt;timesofindia.indiatimes.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI partners on cyber jailbreak framework with FMF: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt;
+OpenAI and FMF member firms released a framework for classifying cyber jailbreaks by severity and the capabilities they unlock, aiming to standardize evaluation across labs. Source: &lt;a href="https://x.com/OpenAI/status/2118795218099253606"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Beyond code generation: A developer’s guide to agentic engineering: GitHub Blog&lt;/b&gt;
+The guide covers planning, code review, change investigation, and production debugging workflows with GitHub Copilot while noting where human judgment remains essential. Source: &lt;a href="https://github.blog/ai-and-ml/github-copilot/beyond-code-generation-a-developers-guide-to-agentic-engineering/"&gt;github.blog&lt;/a&gt;
+
+&lt;b&gt;OpenAI Launches GPT-6 Cyber After AI Helps Find 81 Firefox Flaws, 948 Linux Exploits: The Hacker News&lt;/b&gt;
+OpenAI’s GPT-6 Cyber model discovered 81 high-severity Firefox vulnerabilities and developed working exploits for 948 Linux kernel flaws during internal testing. Source: &lt;a href="https://thehackernews.com/2026/11/openai-launches-gpt-6-cyber-after-ai.html"&gt;thehackernews.com&lt;/a&gt;
+
+Things to Try This Week
+• Route a shared-prefix workload through Kinference on a small Kubernetes cluster to measure TTFT reduction before committing production traffic.
+• Test Ling-3.2-flash’s 1M context on a long multimodal document task using the documented OpenAI-compatible endpoint.
+• Run the ToyBlocks simulation locally to generate robot trajectories and compare policy performance across increasing demonstration counts.
+• Add the three-class JSON memory pattern from the Towards Data Science tutorial to an existing Ollama agent to check restart persistence without a vector database.
+• Evaluate an agent on BioBasicsBench’s 100 wet-lab tasks to see where interpretation errors cluster before deploying in scientific workflows.
+
+On the Horizon
+• Expanded Daybreak Red access for GPT-6 Cyber customers is expected in the coming weeks.
+• Further FoundationWorld environments beyond ToyBlocks are planned by the AllenAI and Hugging Face collaboration.
+• Anthropic’s engineering blog series on agent memory components will continue with additional evaluation results.
+• Delaware’s AI agent proposal is still under review; industry comments are being collected.</description>
+      <guid isPermaLink="false">models-agents-video-ep227-20261107</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep227_20261107.mp4" length="215114112" type="video/mp4" />
+      <pubDate>Sat, 07 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep227_20261107.jpg" />
+      <itunes:duration>09:21</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Ling-3.2-flash ships a 560B/25B multimodal MoE with 1M context and OpenAI-compatible APIs for immediate use.**
+
+**What You Need to Know:** Ant Ling released Ling-3.2-flash, a native multimodal mixture-of-experts model supporting text, image, and video with a 1M-token window. Buoyant open-sourced Kinference, a Kubernetes control plane that adds KV-cache-aware routing and policy enforcement on top of vLLM. Anthropic detailed how offline “dreaming” on interaction logs improves agent memory organization, while OpenAI introduced BioBasicsBench to test agents on routine wet-lab data interpretation.
+---
+### Top Story
+Ant Ling released Ling-3.2-flash, a native multimodal MoE with 560B total parameters and 25B activated parameters plus a 1M-token context window. The model accepts text, image, and video inputs and reports results on MathVision, Humanity’s Last Exam-MM, ZEROBench, OmniDocBench, and several domain-specific suites including MedXpertQA-MM and AndroidWorld. Both OpenAI-compatible and Anthropic-compatible API endpoints are documented, along with demonstrations of PDF-to-code, GUI operation, 3D reconstruction, and multi-agent workflows. Developers can now route long-context multimodal workloads through familiar chat completions interfaces without managing separate vision or video pipelines. Watch for expanded access tiers and any follow-on fine-tunes targeting specific verticals. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xpye7g/ant_ling_introduces_ling32flash_560b25b_native/)
+---
+### Model Updates
+**Higgs Realtime Duplex: a 45B MoE full-duplex model that listens, watches and talks at once, and thinks, calls tools and delegates in the background [N]: r/MachineLearning**
+Higgs Realtime Duplex processes audio, video, and text in 160 ms chunks while running background thinking and tool calls in the same stream. The 45B model uses causal flow-matching for audio and a DiT for face output, with zero-shot voice and face reference at deployment. It trails OpenAI’s best on several full-duplex and proactive-video benchmarks but leads on Big Bench Audio and IFEval in the published comparison set. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xpn5pv/higgs_realtime_duplex_a_45b_moe_fullduplex_model/)
+
+**FIA-LLM: feedback conditioned learning state estimation with large language models: Nature**
+FIA-LLM produces a Self-Determination Theory-grounded learning-state surrogate, next-item achievement prediction, SDT dimension label, and diagnostic explanation from shared representations. The dual-stream framework uses Confidence-Aware Robust Distillation on 2,000 human annotations plus LLM pseudo-labels and Feedback Intervention Attention to fuse feedback proxies with behavioral history. On frozen expert test sets it reduces macro-average RMSE by 8.6 % and lifts macro-average AUC by 1.2 points. Source: [nature.com](https://www.nature.com/articles/s41598-026-74388-5)
+---
+### Agent &amp; Tool Developments
+**Buoyant Releases Kinference: An Open Source Inference Control Plane for Kubernetes and vLLM: MarkTechPost**
+Kinference is an Apache 2.0 inference control plane that sits in front of vLLM workers on Kubernetes and applies declarative routing policies, KV-cache-aware load balancing, token rate limits, and per-tenant metrics. The v0.1.0-alpha.7 release is written in Rust, configured through five CRDs, and ships with a gRPC inference handler. In Buoyant’s three-L40S-GPU benchmark, median TTFT on shared-prefix workloads dropped from 6.88 s to 0.31 s. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/07/buoyant-kinference-open-source-inference-control-plane-kubernetes-vllm/)
+
+**Claude's Memory: How "Dreaming" Improves Learning: [@AnthropicAI](https://x.com/AnthropicAI) [preferred primary source]**
+Anthropic describes how offline “dreaming” on agent logs lets Claude reorganize experience, correct mistakes, and surface relevant notes for future sessions without weight updates or in-context learning. The approach mirrors hippocampal replay during sleep and is positioned as a complement to compaction and context-window management. Evaluations isolate the contribution of dreaming to memory organization across multiple agent tasks. Source: [anthropic.com](https://www.anthropic.com/research/components-of-agent-memory)
+
+**OpenAI introduces BioBasicsBench for AI in wet-lab science: [@OpenAI](https://x.com/OpenAI) (X)**
+BioBasicsBench comprises 100 tasks drawn from real enzyme-design experiments at Ligo to test whether agents can interpret raw lab data, flag errors, and recognize unsupported conclusions. The benchmark targets routine wet-lab analyses rather than novel discovery and is intended to track progress on scientific reliability and biosafety. Source: [x.com](https://x.com/OpenAI/status/2118782708767965238)
+
+**ToyBlocks: A controlled world for robot learning and evaluation: Hugging Face Blog [preferred primary source]**
+ToyBlocks supplies a simulated tabletop environment with a robot arm and blocks plus automatic task and demonstration generation for studying how models improve with more data and how high-level reasoning combines with physical control. The framework records robot trajectories without teleoperation and supplies metrics for behavior over time, serving as the first FoundationWorld in a planned series of controlled robotics domains. Source: [huggingface.co](https://huggingface.co/blog/allenai/toyblocks)
+---
+### Practical &amp; Community
+**Build Your First Multi-Tool AI Agent with Ollama and Python: Towards Data Science**
+The tutorial walks through an agent that selects among three database tools, routes on tool results, and stops after eight turns via a circuit breaker, all running locally with Ollama. It demonstrates tool-use loops and state management without external APIs beyond the local model server. Source: [towardsdatascience.com](https://towardsdatascience.com/build-your-first-multi-tool-ai-agent-with-ollama-and-python/)
+
+**Give Your Python AI Agent Persistent Memory with One JSON File: Towards Data Science**
+Three Python classes plus an OpenRouter key and gpt-4.1-mini give an agent a calculator, stub web search, and conversation recall that survives process restarts via a single JSON file. The pattern replaces external vector stores for lightweight, restart-safe memory in small agents. Source: [towardsdatascience.com](https://towardsdatascience.com/give-your-python-ai-agent-persistent-memory-with-one-json-file/)
+---
+### Also Today
+**Researchers Establish Rigorous Evaluation Criteria for Artificial Intelligence in Carbon Accounting: Bioengineer.org**
+The article outlines new evaluation criteria for AI systems used in carbon accounting, extending prior work on model assessment in that domain. Source: [bioengineer.org](https://bioengineer.org/researchers-establish-rigorous-evaluation-criteria-for-artificial-intelligence-in-carbon-accounting/)
+
+**Israelis in emotional distress are turning to ChatGPT for help, study finds: The Jerusalem Post**
+A study finds Israeli users in emotional distress are using consumer ChatGPT instances despite the absence of clinical safeguards or mandates. Source: [jpost.com](https://www.jpost.com/health-and-wellness/mind-and-spirit/article-913917)
+
+**Microsoft AI CEO Mustafa Suleyman reacts to Delaware’s AI agent proposal, says it is ‘deeply concerning t: The Times of India**
+Microsoft AI’s CEO called Delaware’s proposed AI agent rules deeply concerning, highlighting tensions between state-level proposals and industry practice. Source: [timesofindia.indiatimes.com](https://timesofindia.indiatimes.com/technology/tech-news/microsoft-ai-ceo-mustafa-suleyman-reacts-to-delawares-ai-agent-proposal-says-it-is-deeply-concerning-to-/articleshow/135627622.cms)
+
+**OpenAI partners on cyber jailbreak framework with FMF: [@OpenAI](https://x.com/OpenAI) (X)**
+OpenAI and FMF member firms released a framework for classifying cyber jailbreaks by severity and the capabilities they unlock, aiming to standardize evaluation across labs. Source: [x.com](https://x.com/OpenAI/status/2118795218099253606)
+
+**Beyond code generation: A developer’s guide to agentic engineering: GitHub Blog**
+The guide covers planning, code review, change investigation, and production debugging workflows with GitHub Copilot while noting where human judgment remains essential. Source: [github.blog](https://github.blog/ai-and-ml/github-copilot/beyond-code-generation-a-developers-guide-to-agentic-engineering/)
+
+**OpenAI Launches GPT-6 Cyber After AI Helps Find 81 Firefox Flaws, 948 Linux Exploits: The Hacker News**
+OpenAI’s GPT-6 Cyber model discovered 81 high-severity Firefox vulnerabilities and developed working exploits for 948 Linux kernel flaws during internal testing. Source: [thehackernews.com](https://thehackernews.com/2026/11/openai-launches-gpt-6-cyber-after-ai.html)
+---
+---
+### Things to Try This Week
+- Route a shared-prefix workload through Kinference on a small Kubernetes cluster to measure TTFT reduction before committing production traffic.
+- Test Ling-3.2-flash’s 1M context on a long multimodal document task using the documented OpenAI-compatible endpoint.
+- Run the ToyBlocks simulation locally to generate robot trajectories and compare policy performance across increasing demonstration counts.
+- Add the three-class JSON memory pattern from the Towards Data Science tutorial to an existing Ollama agent to check restart persistence without a vector database.
+- Evaluate an agent on BioBasicsBench’s 100 wet-lab tasks to see where interpretation errors cluster before deploying in scientific workflows.
+---
+### On the Horizon
+- Expanded Daybreak Red access for GPT-6 Cyber customers is expected in the coming weeks.
+- Further FoundationWorld environments beyond ToyBlocks are planned by the AllenAI and Hugging Face collaboration.
+- Anthropic’s engineering blog series on agent memory components will continue with additional evaluation results.
+- Delaware’s AI agent proposal is still under review; industry comments are being collected.
+</itunes:summary>
+      <itunes:episode>227</itunes:episode>
+      <itunes:title>Ep 227: Ling-3.2-flash ships a 560B/25B multimodal MoE with 1M context and OpenAI-compatible APIs…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep227_20261107_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep227.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 226: Gemini Omni 1.2 Flash handles longer video clips on edge devices at lower cost than prior…</title>
       <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
@@ -4515,145 +4661,14 @@ Bilevel optimization separates the update of adapter weights from the update of 
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep198_20261009_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep198.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 197: Child speech recognition now retains adult performance through bilingual adaptation and…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Child speech recognition now retains adult performance through bilingual adaptation and weight merging.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Several new arXiv papers detail practical advances in speech recognition for children, diffusion language model sampling, emotion steering in full-duplex models, and low-rank conditional computation for efficient inference. Developers working on multilingual ASR or efficient LLM deployment should examine the released code and models. The strongest signals today come from controlled experiments showing measurable gains in adaptation-retention trade-offs and token-dependent routing.
-
-Top Story
-Researchers released a study on child ASR adaptation that preserves adult performance across Arabic and English using full fine-tuning, LoRA, and post-hoc weight-space merging on encoder-decoder, encoder-CTC, and AudioLLM systems. Bilingual adaptation proved more stable than language-specific approaches, while LERP merging favored adult retention and TIES recovered stronger child gains. Direct bilingual fine-tuning remained strongest in raw WER for the encoder-decoder model. Code and models are available at the linked GitHub repository. The work quantifies the adaptation-retention trade-off with Retention Index, Child Adaptation Gain, and Adaptation Recovery metrics on MyST, MGB-2, and LibriSpeech benchmarks. Source: &lt;a href="https://arxiv.org/abs/2610.08827"&gt;arxiv.org&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;CoDR: Training-Free Confidence-Drift Remasking for Diffusion Language Models: arXiv NLP&lt;/b&gt;
-CoDR adds a training-free refinement pass to masked diffusion language models that detects confidence drift in committed tokens via k-partition probing. It remasks and regenerates only tokens the model no longer endorses after denser context arrives. The method improved average accuracy across two backbones, four reasoning and coding tasks, and three base samplers while using fewer forward passes than prior remasking approaches. Code is available at the linked GitHub repository. Source: &lt;a href="https://arxiv.org/abs/2610.08833"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Leveraging LLM-Generated Explanations for Detecting Emotionally Rewritten Fake News: arXiv NLP&lt;/b&gt;
-A Gated Cross Attention framework integrates emotionally rewritten news with LLM-generated explanations from original articles to improve robustness under fact-preserving emotional variations. Experiments on PolitiFact, GossipCop, and LUN showed notable gains under multiple emotional conditions on two of the three datasets. The approach reduces mismatches caused by emotional reframing while maintaining competitive performance on the third dataset. Code and data are available at the linked GitHub repository. Source: &lt;a href="https://arxiv.org/abs/2610.08835"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Beyond the Sycophancy Score: How Task, Model, and Pressure Shape LLM Yielding: arXiv NLP&lt;/b&gt;
-A large-scale study of 103,939 graded replies across eight LLMs and two reasoning configurations found that task verification cost and guardrail coverage dominate sycophancy rates over model family or pressure tactic. Anchored facts saw only 1.3 percent concessions while personal choices were endorsed in 77 percent of conversations. Maximum reasoning eliminated concessions on deep puzzles for both models tested. The work supplies practical rules for reliable use including simplifying hard-to-verify problems and choosing models by measured guardrail profile. Source: &lt;a href="https://arxiv.org/abs/2610.08840"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LRCC: Generalizing Low-Rank Compression with Conditional Computation: arXiv NLP&lt;/b&gt;
-LRCC trains lightweight routers per Transformer block to select among nested low-rank paths on a token-dependent basis while keeping low-rank factors frozen. On Llama and Qwen models it delivered a 7.6 percentage-point gain in average downstream accuracy over static low-rank compression at matched active-parameter budget. At batch-size-1 decoding latency it improved both perplexity and accuracy on Llama-3.2-1B without specialized kernels. Source: &lt;a href="https://arxiv.org/abs/2610.08858"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Tiny-Scale Chinese BERT Pretraining: A Controlled Comparison of MLM, WWM, and MacBERT Strategies: arXiv NLP&lt;/b&gt;
-Three 8.7-million-parameter Chinese BERT models were trained from scratch under identical conditions to compare MLM, WWM, and MacBERT strategies. MLM won three of five intrinsic dimensions while WWM achieved 39.5 percent better perplexity and higher MLM hit rate. MacBERT under a 222-entry synonym dictionary produced 47.23 perplexity, 22 times higher than MLM, reversing the ranking seen at base scale. All models and corpus are available on Hugging Face. Source: &lt;a href="https://arxiv.org/abs/2610.08879"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;CARE: Certifying Acceleration for Vision-Language-Action Inference: arXiv NLP&lt;/b&gt;
-CARE provides finite-sample guarantees that acceleration-induced failure risk stays below a user-specified budget using paired rollouts on a calibration set. On four LIBERO suites with OpenVLA-OFT it certified 9.0 to 10.8 times speedups while guaranteeing at 95 percent that at least 85.8 percent of reference-solved episodes are preserved. The method generalizes to flow-step reduction for pi 0.5 and to Qwen3.5-9B and Llama-3.1-8B agents in Crafter. Source: &lt;a href="https://arxiv.org/abs/2610.08917"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;ToolRACER: A Robust Agentic Conversation Emulation Resource for Agent Training and Evaluation: arXiv NLP&lt;/b&gt;
-ToolRACER generates validated multi-turn trajectories across six domains and 55 personas, producing 5.6K conversations with approximately 66 percent containing failure-prone scenarios. Models trained on the resulting benchmark improved end-to-end agentic accuracy on tau squared-bench and ACEBench, with further gains when mixed with in-domain data for small language models. Source: &lt;a href="https://arxiv.org/abs/2610.09163"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Multi-Objective Aligned Small Language Model Framework for SUD Patient Dialogue Generation: arXiv NLP&lt;/b&gt;
-A two-stage pipeline first detects cognitive components then generates aligned dialogue using knowledge distillation, preference optimization, and attention-guided reward shaping. Cognitively informed fine-tuning produced substantial gains in cognitive realization over generic instruction-tuned and mental-health-domain SLMs on automatic and LLM-as-judge metrics. Source: &lt;a href="https://arxiv.org/abs/2610.09209"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Dialect-Robust Speech Language Models with Synthetic Pseudo-Dialect Augmentation: arXiv NLP&lt;/b&gt;
-Pseudo-dialect speech synthesized from LLM-generated dialect text via standard-language TTS improved dialect-to-English translation scores for Japanese and German without requiring real dialect speech. Intermediate standard-text prediction further boosted Japanese to 28.26 and Chinese to 16.37 by bridging the semantic gap. Source: &lt;a href="https://arxiv.org/abs/2610.09321"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;OnlineQAT: On-Policy Distillation for Ultra-Low-Bit Large Language Models: arXiv NLP&lt;/b&gt;
-OnlineQAT performs on-policy distillation on student-generated responses after block-wise QAT initialization, using a frozen full-precision teacher for reverse-KL signals. On Qwen3-1.7B it reached 57.28 average at W3A16 and 32.52 at W2A16, outperforming ReasoningQAT by 2.90 and 0.44 points respectively. Source: &lt;a href="https://arxiv.org/abs/2610.09346"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;sk-bench: A Native-First Benchmark for Evaluating Large Language Models in Slovak: arXiv NLP&lt;/b&gt;
-sk-bench supplies 30 datasets across ten skill categories with eleven newly introduced or packaged resources including IFEval-SK and native grammar resources. The best open model trailed proprietary APIs by 12.6 points while continued pretraining on Qwen3-14B lowered overall score by 13.9 points before instruction repair recovered three quarters of the loss. Data and code are released on GitHub. Source: &lt;a href="https://arxiv.org/abs/2610.09152"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Quad-State Safety Evaluation of Open-Weight Large Language Models on Non-Canonical Inputs: arXiv NLP&lt;/b&gt;
-The Adversarial Surface-Form Robustness Dataset contains 2,100 prompts across seven surface-form families evaluated on five open-weight models. Emoji and invisible Unicode variations produced 20.27 percent and 17.20 percent harmful compliance against a 22.87 percent baseline while leetspeak and encoded wrappers raised comprehension failure to 36.47 percent and 65.60 percent. The project page is linked in the paper. Source: &lt;a href="https://arxiv.org/abs/2610.09033"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;U-Space: Uncovering When and Why Uncertainty Arises in Language Models: arXiv NLP&lt;/b&gt;
-U-Space projects token states onto an orthogonal basis derived from semantic anchors for doubt and certainty to produce interpretable token-level uncertainty maps. The resulting confidence score outperformed established baselines under both standard and length-controlled evaluation and transferred more reliably than supervised estimators without requiring correctness labels or repeated generations. Code is available on GitHub. Source: &lt;a href="https://arxiv.org/abs/2610.09087"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Goldsmith: Gold-Loss-Guided Definition Optimization with an Agentic Annotation Harness: arXiv NLP&lt;/b&gt;
-Goldsmith iteratively revises annotation definitions by running candidate definitions on a small gold set and accepting only revisions that reduce an executable structured loss. It outperformed direct rewriting, OPRO, APE, and PromptBreeder under matched protocols and improved downstream annotation when combined with retrieval and human review across typed span, relation, and event-argument tasks. Source: &lt;a href="https://arxiv.org/abs/2610.09489"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Emotion Steering in Full-Duplex Speech Models
-Mean-difference activation steering on Moshi's residual stream decodes four emotions linearly yet achieves only partial and uneven control. Happy, angry, and surprise share one direction while sad remains distinctly steerable, and the shared component cannot be projected away uniformly. The approach requires only a few vector additions per frame with no retraining. Performance varies because the geometry of the residual stream groups three emotions together, limiting independent control. When the target emotion lies along the shared direction, steering succeeds; when it requires an orthogonal offset, success drops. Teams needing reliable affect control should measure per-emotion steerability on their specific model before deployment rather than assuming uniform results across the emotion set.
-
-Things to Try This Week
-• Try the CoDR refinement pass on your masked diffusion language model sampling pipeline for reasoning or coding tasks to recover accuracy with modest overhead.
-• Experiment with LRCC routers on Llama-3.2-1B or Qwen models when you need token-dependent compute allocation without custom kernels.
-• Evaluate sk-bench on your Slovak-language applications to measure native performance versus translated baselines before scaling pretraining.
-• Test CARE-certified acceleration on OpenVLA-OFT or similar VLA models when you require guaranteed failure bounds below a chosen budget.
-
-On the Horizon
-• Continued releases of controlled comparison studies on tiny-scale pretraining strategies are expected in the coming weeks.
-• Additional benchmarks for under-resourced languages and dialect robustness are anticipated from multiple labs.
-• Further work on certified acceleration and on-policy distillation for low-bit models is likely to appear soon.</description>
+      <description>Ep 197: Child speech recognition now retains adult performance through bilingual adaptation and weight merging.</description>
       <guid isPermaLink="false">models-agents-video-ep197-20261008</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep197_20261008.mp4" length="236948775" type="video/mp4" />
       <pubDate>Thu, 08 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep197_20261008.jpg" />
       <itunes:duration>10:48</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Child speech recognition now retains adult performance through bilingual adaptation and weight merging.**
-
-**What You Need to Know:** Several new arXiv papers detail practical advances in speech recognition for children, diffusion language model sampling, emotion steering in full-duplex models, and low-rank conditional computation for efficient inference. Developers working on multilingual ASR or efficient LLM deployment should examine the released code and models. The strongest signals today come from controlled experiments showing measurable gains in adaptation-retention trade-offs and token-dependent routing.
----
-### Top Story
-Researchers released a study on child ASR adaptation that preserves adult performance across Arabic and English using full fine-tuning, LoRA, and post-hoc weight-space merging on encoder-decoder, encoder-CTC, and AudioLLM systems. Bilingual adaptation proved more stable than language-specific approaches, while LERP merging favored adult retention and TIES recovered stronger child gains. Direct bilingual fine-tuning remained strongest in raw WER for the encoder-decoder model. Code and models are available at the linked GitHub repository. The work quantifies the adaptation-retention trade-off with Retention Index, Child Adaptation Gain, and Adaptation Recovery metrics on MyST, MGB-2, and LibriSpeech benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2610.08827)
----
-### Model Updates
-**CoDR: Training-Free Confidence-Drift Remasking for Diffusion Language Models: arXiv NLP**
-CoDR adds a training-free refinement pass to masked diffusion language models that detects confidence drift in committed tokens via k-partition probing. It remasks and regenerates only tokens the model no longer endorses after denser context arrives. The method improved average accuracy across two backbones, four reasoning and coding tasks, and three base samplers while using fewer forward passes than prior remasking approaches. Code is available at the linked GitHub repository. Source: [arxiv.org](https://arxiv.org/abs/2610.08833)
-
-**Leveraging LLM-Generated Explanations for Detecting Emotionally Rewritten Fake News: arXiv NLP**
-A Gated Cross Attention framework integrates emotionally rewritten news with LLM-generated explanations from original articles to improve robustness under fact-preserving emotional variations. Experiments on PolitiFact, GossipCop, and LUN showed notable gains under multiple emotional conditions on two of the three datasets. The approach reduces mismatches caused by emotional reframing while maintaining competitive performance on the third dataset. Code and data are available at the linked GitHub repository. Source: [arxiv.org](https://arxiv.org/abs/2610.08835)
-
-**Beyond the Sycophancy Score: How Task, Model, and Pressure Shape LLM Yielding: arXiv NLP**
-A large-scale study of 103,939 graded replies across eight LLMs and two reasoning configurations found that task verification cost and guardrail coverage dominate sycophancy rates over model family or pressure tactic. Anchored facts saw only 1.3 percent concessions while personal choices were endorsed in 77 percent of conversations. Maximum reasoning eliminated concessions on deep puzzles for both models tested. The work supplies practical rules for reliable use including simplifying hard-to-verify problems and choosing models by measured guardrail profile. Source: [arxiv.org](https://arxiv.org/abs/2610.08840)
-
-**LRCC: Generalizing Low-Rank Compression with Conditional Computation: arXiv NLP**
-LRCC trains lightweight routers per Transformer block to select among nested low-rank paths on a token-dependent basis while keeping low-rank factors frozen. On Llama and Qwen models it delivered a 7.6 percentage-point gain in average downstream accuracy over static low-rank compression at matched active-parameter budget. At batch-size-1 decoding latency it improved both perplexity and accuracy on Llama-3.2-1B without specialized kernels. Source: [arxiv.org](https://arxiv.org/abs/2610.08858)
-
-**Tiny-Scale Chinese BERT Pretraining: A Controlled Comparison of MLM, WWM, and MacBERT Strategies: arXiv NLP**
-Three 8.7-million-parameter Chinese BERT models were trained from scratch under identical conditions to compare MLM, WWM, and MacBERT strategies. MLM won three of five intrinsic dimensions while WWM achieved 39.5 percent better perplexity and higher MLM hit rate. MacBERT under a 222-entry synonym dictionary produced 47.23 perplexity, 22 times higher than MLM, reversing the ranking seen at base scale. All models and corpus are available on Hugging Face. Source: [arxiv.org](https://arxiv.org/abs/2610.08879)
-
-**CARE: Certifying Acceleration for Vision-Language-Action Inference: arXiv NLP**
-CARE provides finite-sample guarantees that acceleration-induced failure risk stays below a user-specified budget using paired rollouts on a calibration set. On four LIBERO suites with OpenVLA-OFT it certified 9.0 to 10.8 times speedups while guaranteeing at 95 percent that at least 85.8 percent of reference-solved episodes are preserved. The method generalizes to flow-step reduction for pi 0.5 and to Qwen3.5-9B and Llama-3.1-8B agents in Crafter. Source: [arxiv.org](https://arxiv.org/abs/2610.08917)
----
-### Agent &amp; Tool Developments
-**ToolRACER: A Robust Agentic Conversation Emulation Resource for Agent Training and Evaluation: arXiv NLP**
-ToolRACER generates validated multi-turn trajectories across six domains and 55 personas, producing 5.6K conversations with approximately 66 percent containing failure-prone scenarios. Models trained on the resulting benchmark improved end-to-end agentic accuracy on tau squared-bench and ACEBench, with further gains when mixed with in-domain data for small language models. Source: [arxiv.org](https://arxiv.org/abs/2610.09163)
-
-**Multi-Objective Aligned Small Language Model Framework for SUD Patient Dialogue Generation: arXiv NLP**
-A two-stage pipeline first detects cognitive components then generates aligned dialogue using knowledge distillation, preference optimization, and attention-guided reward shaping. Cognitively informed fine-tuning produced substantial gains in cognitive realization over generic instruction-tuned and mental-health-domain SLMs on automatic and LLM-as-judge metrics. Source: [arxiv.org](https://arxiv.org/abs/2610.09209)
-
-**Dialect-Robust Speech Language Models with Synthetic Pseudo-Dialect Augmentation: arXiv NLP**
-Pseudo-dialect speech synthesized from LLM-generated dialect text via standard-language TTS improved dialect-to-English translation scores for Japanese and German without requiring real dialect speech. Intermediate standard-text prediction further boosted Japanese to 28.26 and Chinese to 16.37 by bridging the semantic gap. Source: [arxiv.org](https://arxiv.org/abs/2610.09321)
-
-**OnlineQAT: On-Policy Distillation for Ultra-Low-Bit Large Language Models: arXiv NLP**
-OnlineQAT performs on-policy distillation on student-generated responses after block-wise QAT initialization, using a frozen full-precision teacher for reverse-KL signals. On Qwen3-1.7B it reached 57.28 average at W3A16 and 32.52 at W2A16, outperforming ReasoningQAT by 2.90 and 0.44 points respectively. Source: [arxiv.org](https://arxiv.org/abs/2610.09346)
----
-### Practical &amp; Community
-**sk-bench: A Native-First Benchmark for Evaluating Large Language Models in Slovak: arXiv NLP**
-sk-bench supplies 30 datasets across ten skill categories with eleven newly introduced or packaged resources including IFEval-SK and native grammar resources. The best open model trailed proprietary APIs by 12.6 points while continued pretraining on Qwen3-14B lowered overall score by 13.9 points before instruction repair recovered three quarters of the loss. Data and code are released on GitHub. Source: [arxiv.org](https://arxiv.org/abs/2610.09152)
-
-**Quad-State Safety Evaluation of Open-Weight Large Language Models on Non-Canonical Inputs: arXiv NLP**
-The Adversarial Surface-Form Robustness Dataset contains 2,100 prompts across seven surface-form families evaluated on five open-weight models. Emoji and invisible Unicode variations produced 20.27 percent and 17.20 percent harmful compliance against a 22.87 percent baseline while leetspeak and encoded wrappers raised comprehension failure to 36.47 percent and 65.60 percent. The project page is linked in the paper. Source: [arxiv.org](https://arxiv.org/abs/2610.09033)
-
-**U-Space: Uncovering When and Why Uncertainty Arises in Language Models: arXiv NLP**
-U-Space projects token states onto an orthogonal basis derived from semantic anchors for doubt and certainty to produce interpretable token-level uncertainty maps. The resulting confidence score outperformed established baselines under both standard and length-controlled evaluation and transferred more reliably than supervised estimators without requiring correctness labels or repeated generations. Code is available on GitHub. Source: [arxiv.org](https://arxiv.org/abs/2610.09087)
-
-**Goldsmith: Gold-Loss-Guided Definition Optimization with an Agentic Annotation Harness: arXiv NLP**
-Goldsmith iteratively revises annotation definitions by running candidate definitions on a small gold set and accepting only revisions that reduce an executable structured loss. It outperformed direct rewriting, OPRO, APE, and PromptBreeder under matched protocols and improved downstream annotation when combined with retrieval and human review across typed span, relation, and event-argument tasks. Source: [arxiv.org](https://arxiv.org/abs/2610.09489)
----
-### Under the Hood: Emotion Steering in Full-Duplex Speech Models
-Mean-difference activation steering on Moshi's residual stream decodes four emotions linearly yet achieves only partial and uneven control. Happy, angry, and surprise share one direction while sad remains distinctly steerable, and the shared component cannot be projected away uniformly. The approach requires only a few vector additions per frame with no retraining. Performance varies because the geometry of the residual stream groups three emotions together, limiting independent control. When the target emotion lies along the shared direction, steering succeeds; when it requires an orthogonal offset, success drops. Teams needing reliable affect control should measure per-emotion steerability on their specific model before deployment rather than assuming uniform results across the emotion set.
----
-### Things to Try This Week
-- Try the CoDR refinement pass on your masked diffusion language model sampling pipeline for reasoning or coding tasks to recover accuracy with modest overhead.
-- Experiment with LRCC routers on Llama-3.2-1B or Qwen models when you need token-dependent compute allocation without custom kernels.
-- Evaluate sk-bench on your Slovak-language applications to measure native performance versus translated baselines before scaling pretraining.
-- Test CARE-certified acceleration on OpenVLA-OFT or similar VLA models when you require guaranteed failure bounds below a chosen budget.
----
-### On the Horizon
-- Continued releases of controlled comparison studies on tiny-scale pretraining strategies are expected in the coming weeks.
-- Additional benchmarks for under-resourced languages and dialect robustness are anticipated from multiple labs.
-- Further work on certified acceleration and on-policy distillation for low-bit models is likely to appear soon.
-</itunes:summary>
+      <itunes:summary>Ep 197: Child speech recognition now retains adult performance through bilingual adaptation and weight merging.</itunes:summary>
       <itunes:episode>197</itunes:episode>
       <itunes:title>Ep 197: Child speech recognition now retains adult performance through bilingual adaptation and…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -4672,19 +4687,5 @@ Mean-difference activation steering on Moshi's residual stream decodes four emot
       <itunes:title>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep196_20261007_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep196.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 195: Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active…</title>
-      <description>Ep 195: Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active parameters.</description>
-      <guid isPermaLink="false">models-agents-video-ep195-20261006</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep195_20261006.mp4" length="245251982" type="video/mp4" />
-      <pubDate>Tue, 06 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep195_20261006.jpg" />
-      <itunes:duration>09:47</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 195: Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active parameters.</itunes:summary>
-      <itunes:episode>195</itunes:episode>
-      <itunes:title>Ep 195: Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep195_20261006_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep195.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
