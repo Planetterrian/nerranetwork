@@ -1,0 +1,75 @@
+TSMC is studying two paths into 3D DRAM Nvidia wants made in-house.
+
+This is A I Chips and Data Centres, episode forty-seven.
+
+After that, a diamond wafer, a utility spending plan, and a stolen Nvidia shipment, then what's on the horizon.
+
+The Information's November sixth report, as XenoSpectrum and igor'sLAB carry it, has TSMC vice president Hsu Kuo-chin sketching a new fab or a bought plant converted for memory. He runs advanced packaging and previously worked at Micron in Taiwan. Seoul Economic Daily says no decision is in on whether to invest, how much to spend, or when wafers would start.
+
+TSMC told The Information it does not comment on market rumors, and Briefs Finance has the company calling itself focused on its core business at all times and the trusted technology and capacity provider of logic chips. Nvidia did not answer, and Reuters could not independently verify the account. What is on the table is cells stacked inside one die.
+
+That is a different object from high-bandwidth memory, which stacks finished DRAM dies, and from the April nineteenth, twenty twenty-four SK hynix deal, where TSMC's piece is the HBM4 base die plus CoWoS, with HBM4 mass production planned for twenty twenty-six rather than booked as a finished result.
+
+BigGo Finance, citing Counterpoint, puts global DRAM revenue in the third quarter of twenty twenty-six up three hundred sixty-nine percent from a year earlier, Samsung at thirty-eight percent, SK hynix at twenty-nine, Micron at twenty-one, CXMT at nine.
+
+The same piece cites TrendForce looking for conventional DRAM contract prices up another ten to fifteen percent quarter on quarter in the fourth quarter. TechPowerUp notes Micron has dropped a plan to ship 4F-squared DRAM and is on a 3D DRAM path instead.
+
+BigGo points at a precedent for buying and converting a fab: Micron's purchase of Powerchip's P5 plant in Tongluo, Miaoli, for one point eight billion dollars, announced in January and closed in March.
+
+Diamond Foundry has announced a first D200 millimetre single-crystal diamond, two hundred millimetres across, and Semiconductor Digest says it is one crystal, not a stack of pieces and not a polycrystalline wafer.
+
+Chief executive Martin Roscheisen called it one of those milestones that once seemed almost impossible, credited hundreds of engineers, and said the result makes D300 millimetre predictable as well. Stefan Gsell and Martin Fischer have been at scalable single-crystal diamond for twenty-five years.
+
+The note went out with a video keynote from Roscheisen at CarbonSemi twenty twenty-six in Ningbo, and the first crystal is shown as grown and unpolished. The company is aiming the material at heat, spreading it out of A I processors that dump power into tiny regions of silicon.
+
+Hanyang University researchers, in a Semiconductor Digest note, say they can control where a semiconductor crystal first forms. The method starts the single crystal in a predefined central region.
+
+Lumai, Data Center Knowledge reports, is running optical A I servers in a U K lab. The question in the test is whether moving inference prefill off G P U's loosens data-centre power constraints.
+
+Duke Energy's large-load pipeline is fifteen point four gigawatts, Utility Dive reports, and it has barely moved since the first quarter of twenty twenty-six. After the election the company is staying on a one hundred three billion dollar spending plan aimed heavily at new natural gas generation.
+
+SpaceXAI's Arizona data centre is announced, and Data Center Dynamics says the firm claims six gigawatts. Construction work could start in March twenty twenty-seven. That is a plan and a claim, not an energized hall.
+
+ING Bank is looking to sell five hundred million dollars of data-centre loans in one lot, Data Center Dynamics reports, and the book includes a Stargate site. The outlet frames the sale as another jolt to investors in a shaky market.
+
+Amazon Web Services, in an HPCwire note dated November sixth, says FSx for Lustre on the Intelligent-Tiering class now supports up to one hundred ninety-two thousand metadata I O operations per second. That is sixteen times the old ceiling of twelve thousand. The target is metadata-heavy high-performance computing.
+
+Stop Dirty Data Centres has two days of action planned across Europe, Data Center Dynamics reports, after anti-data-centre results in the U S midterms.
+
+Oakland police are investigating six pallets of Nvidia hardware worth eleven point four million dollars that were headed for Fort Worth, Texas, TechPowerUp reports. A truck wearing a food-hauler's logo took the freight in Oakland on August twenty-ninth, then dropped off the grid going south, with multi-hour stops, until police lost it in San Bernardino County.
+
+The gap showed up in early September and reached Oakland police on September thirteenth. Olaf Groth, a UC Berkeley professor, told ABC7 that Nvidia chips can fetch about double their U S price abroad, so a five hundred fifty thousand dollar compute system can go for a million dollars or more, and that the thefts are getting larger and more professional.
+
+Eulitha, Semiconductor Digest reports, has delivered multiple automated lithography tools to foundries. Those tools are for indium phosphide distributed-feedback lasers that go into A I data centres.
+
+Shorter notes. Nvidia is said, in a FourWeekMBA report, to be financing an expansion of SPIL's CoWoS capacity, with the sum described as billions. An A I chip boom has, in Tekedia's account, set off a twenty-eight billion dollar race to add advanced packaging capacity. Paras Defence, Rediff reports, has teamed with BroadPak on a semiconductor packaging push.
+
+Dylan Patel says Baseten has to put up massive prepays in this compute market, the same way others spend on capex.
+
+Take the diffusion step apart at the kernel, where the NVIDIA Technical Blog measures attention at about sixty percent of diffusion-transformer G P U time on one B200, at two thousand forty-eight by two thousand forty-eight, under NVFP4, for both the Base and distilled FLUX 3 Image Klein checkpoints. A text encoder, Qwen3-VL-4B-Instruct, sets the condition.
+
+The transformer then walks a noisy latent, pass after pass, and an autoencoder turns that latent into pixels, or encodes a reference when the job is an edit. Resolution blows up the attention matrices, so the same step count costs more. NVFP4 cuts the traffic in the matrix multiplies that feed that attention.
+
+VisualGen fuses those multiplies with their tails, SwiGLU and the query-key-value projections that also apply normalization and rotary embeddings, through FlashInfer PrimsTS kernels. Against uncompiled BF16 on that one B200, the combined stack reaches up to three point four six times faster text-to-image and four point four five times faster image-to-image on Base.
+
+NVFP4 by itself, before the rest, is up to one point six two times on text-to-image and one point five eight times on image-to-image versus BF16. The latency table uses NVFP4, vanilla attention, and torch.compile, averaged over ten requests after two warmups. Base takes fifty denoising steps at a classifier-free guidance scale of three point five, a guided pass and an unguided one.
+
+Distilled Klein takes sixteen steps and drops guidance. Format shrinks a pass. Step count deletes passes. Once the format is already NVFP4, the pinned PrimsTS kernels add only one point zero two to one point one zero times versus the autotuned TensorRT L L M GEMM. Quantized attention moves the needle more.
+
+VC-Attention FP8 with a repair budget of zero point zero zero five hits one point one eight times on both models at that resolution, with LPIPS of zero point zero eight six on Base and zero point one five one on distilled. Sol-Attention at a tau of one point zero, with twelve initial dense steps, gives one point three zero times faster denoising plus decoding on Base.
+
+Holding sixteen dense steps for fidelity brings that to one point two four times. Cache-DiT nearly halves Base latency at both one thousand twenty-four and two thousand forty-eight on a side, and reaches one point nine four times at the higher resolution with an LPIPS of zero point zero three three.
+
+On eight B200s, guidance parallelism and Ulysses parallelism cut median text-to-image time from fourteen point nine zero seconds to three point zero zero on Base, and from two point seven three seconds to one point zero eight on distilled, denoising speedups of six point zero one times and four point four four times. The model was trained on a GB200 NVL72.
+
+The twelve-step Sol-Attention schedule loses its place the moment the job needs those sixteen dense steps, pulling Base's denoising-plus-decode gain from one point three zero times down to one point two four times, or when an LPIPS of zero point one five one on the distilled checkpoint is already past what the edit can accept.
+
+On the horizon, construction work on the announced SpaceXAI Arizona plan could start in March twenty twenty-seven. Cosmic Group is on the SEMICON Europa twenty twenty-six floor in Munich, booth C one two five five, from November tenth through November thirteenth, alongside electronica.
+
+Before we go, the open thread is whether those six pallets of Nvidia hardware ever turn up.
+
+That's A I Chips and Data Centres for today. I'm Patrick in Vancouver. Thanks for listening — see you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork dot com. And on the website: every episode's visuals live in our free image gallery at nerranetwork dot com gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
