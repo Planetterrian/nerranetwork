@@ -253,10 +253,73 @@ def story_json(story: Dict[str, Any], *, record: dict,
                         for h in more_headlines(content, hook, limit=PERSONAL_HEADLINES)]
     flagged = flagged_sentences_for(show_dir, record) if show_dir else frozenset()
     out["deck"] = story_deck(content, hook, flagged=flagged)
+    out["sources"], out["reads"] = story_links(content, hook, out["headlines"])
     stamp = story.get("stamp") or {}
     out["stamp"] = {k: stamp.get(k) for k in ("iso", "label", "short", "day", "has_time")}
     out["duration_s"] = int(duration_s) if duration_s else None
     return out
+
+
+#: Source links per story in ``api/personal_front.json`` (Nov 8 2026, the
+#: Nerra Daily email as a news page): the hook story's own sources, and one
+#: reporting link per "more in this episode" headline.
+STORY_SOURCES_MAX = 3
+STORY_READS_MAX = 4
+
+
+def outlet_name(url: str) -> str:
+    """``https://www.theverge.com/x`` -> ``theverge.com``: the publisher a
+    reader is sent to, named by its own address, never guessed."""
+    from urllib.parse import urlparse
+    host = (urlparse(url or "").netloc or "").lower().split(":")[0]
+    return host[4:] if host.startswith("www.") else host
+
+
+def _http(url: str) -> bool:
+    return str(url or "").startswith(("https://", "http://"))
+
+
+def story_links(content: str, hook: str, headlines: Sequence[str] = ()) -> tuple:
+    """``(sources, reads)`` for one episode, from the digest's own Source
+    links. *sources* are the hook story's links (``[{outlet, url}]``, at most
+    :data:`STORY_SOURCES_MAX`, one per outlet); *reads* pair each of
+    *headlines* with the first link of the item it came from
+    (``[{title, url, outlet}]``, at most :data:`STORY_READS_MAX`). A story
+    with no link gets none: nothing here is looked up or guessed.
+    Deterministic; no model call."""
+    from engine.aired_items import extract_aired_items
+
+    items = [i for i in extract_aired_items(content or "")
+             if i.kind in ("item", "heading", "section", "essay", "also_today")]
+    sources: List[Dict[str, str]] = []
+    pick = _deck_pick([i for i in items if i.kind != "also_today"], hook)
+    if pick is not None and pick.kind != "essay":
+        seen: set = set()
+        for url in pick.urls:
+            outlet = outlet_name(url)
+            if not _http(url) or not outlet or outlet in seen:
+                continue
+            seen.add(outlet)
+            sources.append({"outlet": outlet, "url": url})
+            if len(sources) >= STORY_SOURCES_MAX:
+                break
+    by_title = {}
+    for item in items:
+        by_title.setdefault(_norm(item.title), item)
+    reads: List[Dict[str, str]] = []
+    taken = {src["url"] for src in sources}
+    for title in headlines or ():
+        item = by_title.get(_norm(title))
+        if item is None:
+            continue
+        url = next((u for u in item.urls if _http(u)), "")
+        if not url or url in taken:
+            continue
+        taken.add(url)
+        reads.append({"title": title, "url": url, "outlet": outlet_name(url)})
+        if len(reads) >= STORY_READS_MAX:
+            break
+    return sources, reads
 
 
 def record_by_number(json_path: Path, number: int) -> Optional[dict]:

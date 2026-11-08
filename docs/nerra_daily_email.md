@@ -186,3 +186,42 @@ Review doc (Claude Doc "Buttondown review: Nerra Daily"). In the code:
 Guards: `tests/test_nerra_daily_email_2026_11_06.py`,
 `tests/test_nerra_daily_email_2026_11_01.py`,
 `workers/gallery/test/email.test.ts`.
+
+## Nov 8 2026: the front page in an email
+
+Patrick asked for an email that looks more like the landing page and reads
+like a news update, with links to the shows and to the articles behind
+them. Guards: `tests/test_nerra_daily_email_2026_11_08.py`.
+
+- **The masthead is the landing page's.** It is a navy band with the date,
+  "N shows published this morning", "Nerra Daily" in serif, the network
+  tagline (`engine.brand.NETWORK_TAGLINE`) and one "Hear all of it" button
+  for the edition (`masthead_html`, `wrap_with_branding(hero="custom")`).
+- **One story leads for every reader.** `choose_lead` rotates through
+  `LEAD_POOL` by date. It picks among today's stories that carry a picture
+  and a deck, and never picks a flagship. The lead has the episode's
+  picture across the column, a kicker, a large serif headline, the deck,
+  its sources and up to `LEAD_READS` article links. That show is then left
+  out of the cards and the one-liners.
+- **Cards are set like the front page.** Each card has a kicker
+  ("SPACE / SPACEX DAILY · 8 MIN"), a serif headline that links to the
+  episode, and the thumbnail beside it. The thumbnail is not a second link.
+  Under that come the deck, "Sources:" and "More in this episode", then
+  ▶ Listen, Watch and Short.
+- **The article links are the digest's own.** `engine.landing_test.story_links`
+  writes `sources` (the hook story's links, one per outlet, at most 3) and
+  `reads` (each headline paired with its own item's first link) into
+  `api/personal_front.json`. A story with no link gets none, and nothing
+  is looked up. Feed tracking parameters (`utm_*`, `traffic_source`) are
+  dropped from publisher links. Our own links still go through
+  `engine.funnel.newsletter_link`.
+- **The cards' article links give way first.** `compose` tries
+  `READS_PER_CARD` (2), then 1, then 0, and keeps the first version whose
+  largest copy fits `size_warning_bytes()`. That copy is a member who
+  follows every show. On a Sunday with 15 shows that is 1 per card. The
+  lead keeps its links, and every card keeps its headline, deck, sources
+  and buttons.
+- **"Your week" leaves out today's episode**, because it is already a card
+  or a line above.
+- **Pictures in the email are the episode's own** (gallery thumbnails),
+  with alt text "AI-generated scene illustrating <show> episode <n>".
