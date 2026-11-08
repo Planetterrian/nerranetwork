@@ -114,6 +114,11 @@ PLAIN_SAILING_TITLE_MAX = 90
 # slice.
 FACT_CARD_LABEL_MAX = 36
 
+#: Long-form "Coming up" card (Nov 8 2026, engine/long_form_cards.py): one
+#: line per story the spoken map names, 44 px at 1920 wide. An item over
+#: this is never clipped: the whole card is left out.
+RUNDOWN_ITEM_MAX = 58
+
 # The spoken open (Sep 22 2026): the digest's **HOOK:** line is read
 # aloud word for word as the episode's first sentence. Above this the
 # opener is two sentences pretending to be one (opens measured 14-32

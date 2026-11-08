@@ -1301,6 +1301,11 @@ RU reach is a Studio read, not a pipeline fix. A sub-10 s chapter is dropped (th
 [history](docs/claude_md_history/2026_10_30_hook_short_skips.md); register `shorts-skip-map-2026-10-30`; guards `tests/test_short_skips_map_2026_10_30.py`.
 **The hook Short renders from a spliced source** (`engine/short_furniture.py`; any failure renders as before; `youtube.shorts_skip_map`). **The episode, its feed audio and its long-form keep the map.**
 
+### The long-form follows the audio; X gets a clean clip (Nov 8 2026)
+
+[review](docs/reviews/youtube_x_video_review_2026_11_08.md); register `long-form-rundown-subscribe-2026-11-08`, `x-clip-without-youtube-asks-2026-11-08`; guards `tests/test_long_form_cards_2026_11_08.py`.
+**The "Coming up" card is the spoken map's own words** (`engine/long_form_cards.py`: `*_reader.txt`, timed by `map_cut`); **whole or absent, never clipped** (`engine.titles.RUNDOWN_ITEM_MAX`). The subscribe pill shows at 45 s and the midpoint. **The X copy of the hook Short carries no YouTube asks** (`_render_x_clean_clip`; a failure posts the YouTube copy). Dub long-forms pass neither.
+
 ### A Short never crops the show's own cover (Nov 4 2026)
 
 Guards `tests/test_short_cover_card_2026_11_04.py`.
