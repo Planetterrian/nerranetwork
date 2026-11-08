@@ -94,7 +94,8 @@ class TestRegistry:
 
     def test_run_show_still_feeds_the_context_lints_and_lints_the_narrative_shows(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert src.count('context={"articles": articles}') == 3
+        assert src.count("context=_lint_ctx") == 3  # Nov 8 2026: articles + past hooks + briefing
+        assert '_lint_ctx: dict = {"articles": articles}' in src
         # Lints run wherever a show lists them; only the manual deep-dive
         # special is excluded — a narrative show is linted like any other.
         assert "if _lint_names and not is_deep_dive:" in src

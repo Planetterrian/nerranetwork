@@ -699,6 +699,8 @@ def build_podcast_template_vars(
     pod_vars.setdefault("campaign_status", "")
     # Oct 30 2026: Offshore North's dated list of aired explainers.
     pod_vars.setdefault("recent_plain_sailing", "")
+    # Nov 8 2026: Offshore North's dated list of past leads.
+    pod_vars.setdefault("recent_leads", "")
     # Modern Investing (Oct 13 2026): {nasdaq_benchmark_line} in the
     # podcast prompt's Market Pulse; empty when the hook did not run.
     pod_vars.setdefault("nasdaq_benchmark_line", "")
@@ -836,6 +838,8 @@ def run_generation_phase(
         template_vars.setdefault("news_section", "")
         template_vars.setdefault("sections_json", "")
         template_vars.setdefault("recent_content_summary", "")
+        template_vars.setdefault("recent_leads", "")
+        template_vars.setdefault("recent_plain_sailing", "")
         template_vars.setdefault("recent_deep_dive_topics", "")
         template_vars.setdefault("slow_news_context", "")
         template_vars.setdefault("cross_show_context", "")

@@ -7349,3 +7349,43 @@ experiments:
       thread, a spoken move, and one conversational turn of her own in each
       part. Guards tests/test_interview_plan_2026_11_05.py. ⚠️ AUDIO, the
       room: a two-arm rehearsal PASS plus one listen before the deploy.
+  - id: offshore-north-ep012-review-2026-11-08
+    title: "Offshore North: lead with this week's news, a stop is not a retirement, a preview is not coverage, every number sourced"
+    area: offshore_north
+    shipped: 2026-11-08
+    readout: 2026-12-07
+    status: reading
+    baseline: >
+      A listener review of Ep012 (2 Nov). The hook led on Thomas Ruyant
+      withdrawing from the Route du Rhum "this week" (he withdrew 21 Sep;
+      Ep006's lead); Anthony Marchand's "contraint de stopper" aired as "out
+      of a race" and Violette Dorange diverting to repair as "removed from
+      contention"; the team's 31 Oct start preview video was told as coverage
+      of the race; "115 solo boats" and Plain Sailing's budget and insurance
+      figures had no source; the RORC Transatlantic was named without Alan
+      Roberts. Replayed on Ep001-012, hook_repeats_past_lead fires on Ep010
+      and Ep012 and explainer_figures_sourced on Ep006 and Ep012.
+    target: >
+      Next four episodes: hook_repeats_past_lead, stop_told_as_retirement,
+      preview_told_as_result, explainer_unsourced_amounts and
+      item_figures_unsourced all 0 on the SHIPPED digest; every RORC
+      Transatlantic mention names Alan Roberts.
+    criteria: >
+      HIT when all five lint metrics read 0 after the regeneration on at
+      least three of the next four episodes and no listener review repeats
+      one of the five defects; MISS when any defect airs twice; INCONCLUSIVE
+      when fewer than four episodes ship.
+    readout_plan: >
+      metrics_ep013-016.json: digest_lints_fired and
+      digest_lints_fired_after_retry, plus the five lint metrics; read each
+      shipped digest's Canadian Boat for the Roberts line.
+    notes: >
+      engine/digest_lint.py gains five lints (offshore_north opts in);
+      run_show's _digest_lint_context hands the context lints the show's
+      past hooks, its RSS keywords as beat words and the briefing (digest
+      prompt with includes resolved plus the status blocks). The digest
+      prompt carries {recent_leads}; standing facts carry a dated Route du
+      Rhum race record (checked 8 Nov: Marchand retired 4 Nov, Dorange 6 Nov
+      — after Ep012 was right to call them stopped). Guards
+      tests/test_offshore_north_ep012_review_2026_11_08.py. ⚠️ AUDIO via the
+      prompts.
