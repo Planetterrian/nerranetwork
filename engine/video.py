@@ -1909,6 +1909,104 @@ def _long_form_fact_cards_stage(
     return chain, label_in
 
 
+# Long-form "Coming up" card + subscribe pill (Nov 8 2026,
+# engine/long_form_cards.py). The card lists the spoken map's stories while
+# the map is spoken (~8-20 s, where the median long-form falls from 91% to
+# 57% of its viewers); the pill asks for the subscribe at 45 s and the
+# midpoint. Both drawtext only; no overlay input, so the single-pass input
+# indices are untouched. ``overlays=None`` (or empty) is byte-identical.
+_RUNDOWN_LABEL_FONTSIZE = 30
+_RUNDOWN_ITEM_FONTSIZE = 44
+_RUNDOWN_LINE_H = 68
+_RUNDOWN_X = 120
+_LONG_SUBSCRIBE_FONTSIZE = 34
+
+
+def _has_overlays(overlays: Optional[dict]) -> bool:
+    if not overlays:
+        return False
+    return bool(overlays.get("rundown")) or bool(overlays.get("subscribe_windows")
+                                                and overlays.get("subscribe_text"))
+
+
+def _long_form_overlays_stage(
+    post_label: str, overlays: Optional[dict], *, height: int = 1080,
+) -> Tuple[str, str]:
+    """drawtext chain for the rundown card and the subscribe pill.
+
+    *overlays* is ``{"rundown": (start, end, label, [(at, text), ...]),
+    "subscribe_text": str, "subscribe_windows": [(start, end), ...]}``; any
+    key may be missing. Returns ``(chain_fragment, new_post_label)``.
+    """
+    if not _has_overlays(overlays):
+        return "", post_label
+    font_path = _drawtext_escape(_find_font())
+    chain = ""
+    label = post_label
+    n = 0
+
+    def _next():
+        nonlocal n
+        n += 1
+        return f"[lfov{n}]"
+
+    rundown = overlays.get("rundown")
+    if rundown:
+        start, end, head, items = rundown
+        start, end = float(start), float(end)
+        items = [(float(a), str(t)) for a, t in (items or []) if str(t).strip()]
+        if items and end > start:
+            block_h = 60 + len(items) * _RUNDOWN_LINE_H
+            top = max(int((height - block_h) / 2), 140)
+            fade = 0.25
+            out_alpha = f"clip(({end:.2f}-t)/{fade},0,1)"
+            enable = f"enable='between(t,{start:.2f},{end + 0.05:.2f})'"
+            out = _next()
+            chain += (
+                f";{label}drawtext=fontfile='{font_path}':"
+                f"text='{_drawtext_escape(str(head))}':"
+                f"fontsize={_RUNDOWN_LABEL_FONTSIZE}:fontcolor=0x00D4FF:"
+                f"x={_RUNDOWN_X}:y={top}:"
+                f"box=1:boxcolor=black@0.6:boxborderw=10:"
+                f"alpha='clip((t-{start:.2f})/{fade},0,1)*{out_alpha}':"
+                f"{enable}{out}"
+            )
+            label = out
+            for i, (at, text) in enumerate(items):
+                at = min(max(at, start), end - 0.5)
+                y = top + 60 + i * _RUNDOWN_LINE_H
+                out = _next()
+                chain += (
+                    f";{label}drawtext=fontfile='{font_path}':"
+                    f"text='{_drawtext_escape(text)}':"
+                    f"fontsize={_RUNDOWN_ITEM_FONTSIZE}:fontcolor=white:"
+                    f"x={_RUNDOWN_X}:y={y}:"
+                    f"box=1:boxcolor=black@0.55:boxborderw=12:"
+                    f"alpha='clip((t-{at:.2f})/{fade},0,1)*{out_alpha}':"
+                    f"enable='between(t,{at:.2f},{end + 0.05:.2f})'{out}"
+                )
+                label = out
+
+    text = " ".join(str(overlays.get("subscribe_text") or "").split())
+    if text and len(text) <= _SUBSCRIBE_PILL_MAX_CHARS:
+        for s0, e0 in overlays.get("subscribe_windows") or []:
+            s0, e0 = float(s0), float(e0)
+            if e0 - s0 < _SUBSCRIBE_PILL_MIN_SECONDS:
+                continue
+            out = _next()
+            chain += (
+                f";{label}drawtext=fontfile='{font_path}':"
+                f"text='{_drawtext_escape(text)}':"
+                f"fontsize={_LONG_SUBSCRIBE_FONTSIZE}:fontcolor=white:"
+                f"x=w-text_w-38:y=118:"
+                f"box=1:boxcolor={_SUBSCRIBE_PILL_BOX}:boxborderw=14:"
+                f"alpha='clip((t-{s0:.2f})/0.4,0,1)*clip(({e0:.2f}-t)/0.4,0,1)':"
+                f"enable='between(t,{s0:.2f},{e0 + 0.05:.2f})'{out}"
+            )
+            label = out
+    return chain, label
+
+
 def _short_form_fact_cards_stage(
     post_label: str,
     cards: Optional[Sequence[Tuple[float, str, str]]],
@@ -2101,7 +2199,8 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             with_url_pill: bool = False,
                             hook: Optional[str] = None,
                             chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
-                            fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None) -> str:
+                            fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+                            overlays: Optional[dict] = None) -> str:
     """filter_complex for stage 2.
 
     Inputs:
@@ -2183,7 +2282,7 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
             has_subtitles=(bool(subtitles_path) or bool(chapter_cards)
-                           or bool(fact_cards)),
+                           or bool(fact_cards) or _has_overlays(overlays)),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
@@ -2199,6 +2298,12 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     if fact_cards:
         frag, post_brand_label = _long_form_fact_cards_stage(
             post_brand_label, fact_cards, width=width)
+        graph += frag
+
+    # Rundown card + subscribe pill (Nov 8 2026) — before captions.
+    if _has_overlays(overlays):
+        frag, post_brand_label = _long_form_overlays_stage(
+            post_brand_label, overlays, height=height)
         graph += frag
 
     if subtitles_path:
@@ -2742,6 +2847,7 @@ def _single_pass_long_form_filter_graph(
     input_map: Optional[Sequence[int]] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
     fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+    overlays: Optional[dict] = None,
 ) -> str:
     """One filter graph for slideshow + overlays + captions (P1-2).
 
@@ -2814,7 +2920,7 @@ def _single_pass_long_form_filter_graph(
         frag, post_brand_label = _long_form_hook_stage(
             post_brand_label, hook, width=width,
             has_subtitles=(bool(subtitles_path) or bool(chapter_cards)
-                           or bool(fact_cards)),
+                           or bool(fact_cards) or _has_overlays(overlays)),
         )
         graph += frag
         if not subtitles_path and post_brand_label == "[v]":
@@ -2830,6 +2936,12 @@ def _single_pass_long_form_filter_graph(
     if fact_cards:
         frag, post_brand_label = _long_form_fact_cards_stage(
             post_brand_label, fact_cards, width=width)
+        graph += frag
+
+    # Rundown card + subscribe pill (Nov 8 2026) — before captions.
+    if _has_overlays(overlays):
+        frag, post_brand_label = _long_form_overlays_stage(
+            post_brand_label, overlays, height=height)
         graph += frag
 
     if subtitles_path:
@@ -2889,6 +3001,7 @@ def _single_pass_long_form_cmd(
     hook: Optional[str] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
     fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+    overlays: Optional[dict] = None,
     kb_seed: int = 0,
     kb_extended: bool = True,
     outro_card_in: Optional[str] = None,
@@ -2965,6 +3078,7 @@ def _single_pass_long_form_cmd(
         hook=hook,
         chapter_cards=chapter_cards,
         fact_cards=fact_cards,
+        overlays=overlays,
         kb_seed=kb_seed, kb_extended=kb_extended,
     )
     map_label = "[v]"
@@ -3003,6 +3117,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    hook: Optional[str] = None,
                    chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
                    fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+                   overlays: Optional[dict] = None,
                    outro_card_in: Optional[str] = None,
                    total_duration: float = 0.0,
                    outro_duration: float = 6.0) -> List[str]:
@@ -3063,6 +3178,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         hook=hook,
         chapter_cards=chapter_cards,
         fact_cards=fact_cards,
+        overlays=overlays,
     )
     map_label = "[v]"
     if outro_active and outro_label:
@@ -3217,6 +3333,7 @@ def build_long_form_video(
     hook: Optional[str] = None,
     chapter_cards: Optional[Sequence[Tuple[float, str]]] = None,
     fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+    overlays: Optional[dict] = None,
     outro_card_path: Optional[Path] = None,
     outro_card_duration: float = 6.0,
 ) -> Path:
@@ -3460,6 +3577,7 @@ def build_long_form_video(
                 hook=hook,
                 chapter_cards=chapter_cards,
                 fact_cards=fact_cards,
+                overlays=overlays,
                 outro_card_in=outro_in,
                 total_duration=outro_total,
                 outro_duration=outro_card_duration,
@@ -3499,6 +3617,7 @@ def build_long_form_video(
                         hook=hook,
                 chapter_cards=chapter_cards,
                 fact_cards=fact_cards,
+                overlays=overlays,
                         kb_seed=kb_seed,
                         outro_card_in=outro_in,
                         total_duration=outro_total,
@@ -3584,6 +3703,7 @@ def build_long_form_video(
         hook=hook,
                 chapter_cards=chapter_cards,
                 fact_cards=fact_cards,
+                overlays=overlays,
         outro_card_in=outro_in,
         total_duration=outro_total,
         outro_duration=outro_card_duration,

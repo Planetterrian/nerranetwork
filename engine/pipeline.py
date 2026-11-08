@@ -253,6 +253,16 @@ def record_youtube_outcomes(
         if youtube_urls.get("shorts_subscribe_pill_rendered") is not None:
             metrics.record("shorts_subscribe_pill_rendered",
                            bool(youtube_urls["shorts_subscribe_pill_rendered"]))
+        # Nov 8 2026 — the long-form's "Coming up" card and subscribe pill,
+        # and which copy of the hook Short went to X.
+        if youtube_urls.get("long_form_rundown_items") is not None:
+            metrics.record("long_form_rundown_items",
+                           int(youtube_urls["long_form_rundown_items"]))
+        if youtube_urls.get("long_form_subscribe_pills") is not None:
+            metrics.record("long_form_subscribe_pills",
+                           int(youtube_urls["long_form_subscribe_pills"]))
+        if youtube_urls.get("x_clip_variant"):
+            metrics.record("x_clip_variant", str(youtube_urls["x_clip_variant"]))
         if youtube_urls.get("shorts_punch_frame_rendered") is not None:
             metrics.record("shorts_punch_frame_rendered",
                            bool(youtube_urls["shorts_punch_frame_rendered"]))

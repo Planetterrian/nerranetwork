@@ -6597,6 +6597,67 @@ def _run_video_stage(
             logger.warning("Video podcast step failed (non-fatal): %s", exc)
 
 
+def _render_x_clean_clip(audio, cover_path, work_dir, base_name, short_kwargs):
+    """The hook Short re-rendered for X with no YouTube asks (Nov 8 2026).
+
+    Same audio window, scenes, captions, hook and fact cards as the YouTube
+    Short; no subscribe pill and no end card, so the clip ends on the
+    episode and asks for nothing X cannot do. Returns the MP4 path, or
+    ``None`` on any failure (the caller posts the YouTube copy as before).
+    """
+    try:
+        from engine.video import build_short_video
+
+        out = Path(work_dir) / f"{base_name}_x_clip.mp4"
+        kwargs = dict(short_kwargs)
+        kwargs.update(subscribe_pill=None, end_card=False, end_card_image_path=None)
+        build_short_video(audio, cover_path, out, **kwargs)
+        return out if out.exists() and out.stat().st_size > 0 else None
+    except Exception as exc:  # noqa: BLE001 — X falls back to the YouTube copy
+        logger.warning("X clip without YouTube asks failed (%s): posting the "
+                       "YouTube copy", exc)
+        return None
+
+
+def _long_form_overlays(config, *, transcript_path, episode_s, result) -> "dict | None":
+    """The long-form's rundown card and subscribe pill (Nov 8 2026).
+
+    ``None`` when both switches are off or nothing could be built, so the
+    render is byte-identical. Records ``long_form_rundown_items`` (0 when
+    the card was left out) and ``long_form_subscribe_pills``.
+    """
+    yt = getattr(config, "youtube", None)
+    want_card = bool(getattr(yt, "long_form_rundown_card", False))
+    want_pill = bool(getattr(yt, "long_form_subscribe_pill", False))
+    if not (want_card or want_pill):
+        return None
+    overlays: dict = {}
+    try:
+        from engine import long_form_cards as lfc
+
+        offset = float(getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
+        card = None
+        if want_card and transcript_path:
+            card = lfc.rundown_card_for_episode(transcript_path, audio_offset=offset)
+            result["long_form_rundown_items"] = len(card.items) if card else 0
+            if card:
+                overlays["rundown"] = card.as_tuple()
+        if want_pill:
+            total = float(episode_s or 0.0)
+            from engine.cadence import episodes_phrase
+            windows = lfc.subscribe_windows(
+                total, avoid=[(card.start, card.end)] if card else [])
+            if windows:
+                overlays["subscribe_text"] = (
+                    "Subscribe \u00b7 " + episodes_phrase(getattr(config, "slug", "")))
+                overlays["subscribe_windows"] = windows
+            result["long_form_subscribe_pills"] = len(windows)
+    except Exception as exc:  # noqa: BLE001 — never block a render
+        logger.warning("Long-form overlays skipped: %s", exc)
+        return None
+    return overlays or None
+
+
 def _run_x_stage(
     *, args, config, metrics, tracker, digests_dir, episode_num, episode_published,
     extra_context, final_mp3, hook, today, today_str,
@@ -9135,6 +9196,15 @@ def _publish_youtube(
                 logger.warning("Fact cards skipped: %s", exc)
                 _fact_cards = None
             result["fact_cards_rendered"] = len(_fact_cards or [])
+        # ---- "Coming up" card + subscribe pill (Nov 8 2026) ----
+        # engine/long_form_cards.py: the spoken map's stories on screen
+        # while the map is spoken, and the subscribe ask at 45 s and the
+        # midpoint. Render-only, best-effort; off (or any failure) ships the
+        # render as before. Experiment long-form-rundown-subscribe-2026-11-08.
+        _lf_overlays = _long_form_overlays(
+            config, transcript_path=transcript_path,
+            episode_s=_ep_duration,
+            result=result)
         try:
             _long_render_started = time.monotonic()
             build_long_form_video(
@@ -9184,6 +9254,7 @@ def _publish_youtube(
                 chapters_path=(chapters_path if chapters_path
                                and chapters_path.exists() else None),
                 fact_cards=_fact_cards,
+                overlays=_lf_overlays,
             )
             # What the render actually cost. The budget guard above defaults
             # to a floor rather than a measurement because this number has
@@ -10106,8 +10177,7 @@ def _publish_youtube(
                             )
                         result.update(_hook_motion.as_metric())
 
-                    build_short_video(
-                        _src_audio, cover_path, this_short_video_path,
+                    _short_render_kwargs = dict(
                         fact_cards=_short_fact_cards,
                         punch_text=_short_punch,
                         subscribe_pill=_short_pill,
@@ -10149,6 +10219,10 @@ def _publish_youtube(
                         end_card_image_path=_end_card_image_path,
                         progress_bar=bool(getattr(
                             config.youtube, "shorts_progress_bar", True)),
+                    )
+                    build_short_video(
+                        _src_audio, cover_path, this_short_video_path,
+                        **_short_render_kwargs,
                     )
                     # July 18 2026: per-window optimized Short title from
                     # the title bundle ("" -> legacy opening-text headline).
@@ -10423,8 +10497,28 @@ def _publish_youtube(
                         and _x_on(config, today)
                         and getattr(config.publishing, "x_post_format", "link") == "clip"
                     )
+                    # Nov 8 2026: the X copy carries no YouTube furniture.
+                    # The Short's red "Subscribe" pill and its SUBSCRIBE end
+                    # card point at YouTube's button, which X does not have
+                    # (open since the Oct 24 review). It re-renders the same
+                    # clip without them; any failure posts the YouTube copy
+                    # as before. youtube.x_clip_without_youtube_asks.
+                    _x_clean = None
+                    if (_keep_for_x and this_short_video_path.exists()
+                            and bool(getattr(config.youtube,
+                                             "x_clip_without_youtube_asks", False))
+                            and (_short_render_kwargs.get("end_card")
+                                 or _short_render_kwargs.get("subscribe_pill"))):
+                        _x_clean = _render_x_clean_clip(
+                            _src_audio, cover_path, work_dir, base_name,
+                            _short_render_kwargs)
+                        result["x_clip_variant"] = (
+                            "no_youtube_asks" if _x_clean else "youtube_copy")
                     try:
-                        if _keep_for_x and this_short_video_path.exists():
+                        if _keep_for_x and _x_clean:
+                            result["x_clip_path"] = str(_x_clean)
+                            this_short_video_path.unlink(missing_ok=True)
+                        elif _keep_for_x and this_short_video_path.exists():
                             _x_clip = work_dir / f"{base_name}_x_clip.mp4"
                             this_short_video_path.replace(_x_clip)
                             result["x_clip_path"] = str(_x_clip)

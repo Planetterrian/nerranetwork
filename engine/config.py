@@ -1238,6 +1238,16 @@ class YouTubeConfig:
     # half of a Short's viewers leave before the end card asks). EN path
     # only — the RU/FR dubs render their own Shorts and are the control.
     shorts_subscribe_pill: bool = False
+    # Nov 8 2026 — the long-form's "Coming up" card (the spoken map's
+    # stories on screen while the map is spoken) and a subscribe pill at
+    # 45 s and the midpoint (engine/long_form_cards.py). Render-only; the
+    # dubbed long-forms never pass either and are the control.
+    long_form_rundown_card: bool = False
+    long_form_subscribe_pill: bool = False
+    # Nov 8 2026 — the hook Short posted to X is re-rendered without the
+    # YouTube subscribe pill and SUBSCRIBE end card (X has no such button;
+    # open since the Oct 24 review). Any failure posts the YouTube copy.
+    x_clip_without_youtube_asks: bool = False
     # Oct 30 2026 — the hook Short skips the episode's map (the sentence
     # after the identity line listing the stories that follow; every
     # English opening since Oct 20). The Short is cut from a spliced copy

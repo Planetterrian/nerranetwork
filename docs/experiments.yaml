@@ -7389,3 +7389,76 @@ experiments:
       — after Ep012 was right to call them stopped). Guards
       tests/test_offshore_north_ep012_review_2026_11_08.py. ⚠️ AUDIO via the
       prompts.
+
+  - id: long-form-rundown-subscribe-2026-11-08
+    title: "The long-form shows the spoken map's stories, and asks for the subscribe at 45 s and the midpoint"
+    area: retention
+    shipped: 2026-11-08
+    readout: 2026-11-29
+    status: reading
+    metric: long_hold5_age7_median_en
+    baseline: >
+      74 EN long-forms with a retention curve on the Nov 7 snapshot: median
+      share still watching 91% at 6 s, 82% at 10 s, 57% at 20 s, 42% at 30 s;
+      mean 5%-elapsed hold 0.46 (the pre-Sep 22 key long_open_hold_5pct_en
+      is not reopened). The map (the sentence after the identity
+      line listing what follows) is spoken at 8-20 s on 235 of the Oct 20 -
+      Nov 8 episodes, and the screen during it showed only the scene picture.
+      EN long-forms published Oct 8 - Nov 5 earned ~20,300 views and 28
+      subscribers (1.4 per 1,000 views); the only ask in the picture was the
+      outro card, with ~8% of viewers left at 5 min.
+    target: >
+      long_hold5_age7_median_en (the 5%-elapsed hold at age 7) at or above
+      0.50 on long-forms published after the merge, and EN long-form subscribers per 1,000 views above 2.0 over
+      the same window, with long_form_rundown_items > 0 on at least 70% of
+      EN long renders.
+    criteria: >
+      HIT when the post-merge long-forms' mean 5%-elapsed hold reads >= 0.50
+      AND long-form subscribers per 1,000 views >= 2.0 (age-matched, from the
+      stored snapshots); MISS when the hold falls below 0.44 or the rate
+      below 1.2; else INCONCLUSIVE. The RU/FR dub long-forms (no card, no
+      pill) are the control and are read on the same window.
+    readout_plan: >
+      api/youtube_stats.json retention curves (ratio at 5% elapsed and at
+      30 s) for EN longs published Nov 9 - Nov 26 vs Oct 20 - Nov 7, split by
+      long_form_rundown_items > 0 in each episode's metrics; subscribers per
+      1,000 views from the per-video subscribers_gained at age 7
+      (api/youtube_early_reach.json and the stored snapshots).
+    notes: >
+      engine/long_form_cards.py (map items from the *_reader.txt display
+      copy, timed by engine.short_furniture.map_cut; a card is whole or
+      absent; replay: 181 of 235 mapped episodes since Oct 20 get one);
+      engine/video.py _long_form_overlays_stage (drawtext only, no new
+      input); youtube.long_form_rundown_card / long_form_subscribe_pill
+      (dataclass off, _defaults.yaml on). Render only, outside landmine #17.
+      Guards tests/test_long_form_cards_2026_11_08.py.
+
+  - id: x-clip-without-youtube-asks-2026-11-08
+    title: "The hook Short posted to X drops YouTube's subscribe pill and end card"
+    area: quality
+    shipped: 2026-11-08
+    readout: 2026-11-22
+    status: reading
+    baseline: >
+      Every @nerranetwork clip post since Oct 10 was the YouTube Short as
+      uploaded: a red "Subscribe · daily episodes" pill from 3 s and a
+      3-second SUBSCRIBE / "Never miss an episode" end card, both pointing at
+      a YouTube button X does not have (the Oct 24 review's open X item).
+    target: >
+      x_clip_variant "no_youtube_asks" on at least 90% of EN clip posts from
+      YouTube shows, with no rise in x_post failures.
+    criteria: >
+      HIT when x_clip_variant reads no_youtube_asks on >= 90% of the metrics
+      files that queued a clip post in the window and x_posted holds; MISS
+      when it falls back to youtube_copy on more than a quarter.
+    readout_plan: >
+      digests/*/metrics_ep*.json for Nov 9 - Nov 22: x_clip_variant,
+      x_post_media, x_posted. X impressions are not read back yet
+      (api/x_posts.json does not exist; the account was locked Nov 7-8).
+    notes: >
+      run_show._render_x_clean_clip re-renders the same Short (same audio
+      window, scenes, captions, hook, fact cards) with subscribe_pill None
+      and end_card False; any failure posts the YouTube copy as before.
+      youtube.x_clip_without_youtube_asks (dataclass off, _defaults.yaml on).
+      Adds one 35 s vertical render to the video job. Guards
+      tests/test_long_form_cards_2026_11_08.py::TestWiring.
