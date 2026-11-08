@@ -129,11 +129,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep228.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1111,21 +1122,27 @@
     
 
     
-    
-    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3" data-nn-card data-title="Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit." data-show="Models &amp; Agents" data-cover="../../assets/covers/models-agents.jpg">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3" data-nn-card data-title="Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit." data-show="Models &amp; Agents" data-cover="../../assets/covers/models-agents.jpg"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.mp3", "title": "Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit.", "desc": "Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep228_20261108.fr.mp3", "title": "Ep 228 : Dix modèles MoE open source exposent des choix de routage qui font varier la sparsité de 4x à 128x et changent…", "desc": "Dix modèles MoE open source exposent des choix de routage qui font varier la sparsité de 4x à 128x et changent les configurations matérielles qui conviennent réellement."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1208,6 +1225,54 @@
 <li>Additional agent evaluations on national-lab open questions will likely appear as teams refine harnesses and success criteria.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Dix modèles ouverts de mélange d&#x27;experts font varier la parcimonie de quatre fois à cent vingt-huit fois, et ça change les cartes graphiques que les constructeurs peuvent utiliser.</p>
+<p>Ici Models and Agents, épisode deux cent vingt-huit.</p>
+<p>Un réseau de séries temporelles qui mélange les canaux, un face-à-face GIFT-Eval des prévisionnistes de fondation, des agents face aux questions des laboratoires nationaux, puis des choses à essayer.</p>
+<p>DeepSeek-V quatre-Pro, dans un audit de MarkTechPost sur les modèles ouverts de mélange d&#x27;experts, extraits des fichiers de configuration json de Hugging Face et des rapports techniques, utilise trois cent quatre-vingt-quatre experts, avec une sélection de type racine de softplus et un routage par hachage dans trois couches, ce qui l&#x27;égale à Kimi K deux, en tête d&#x27;une fourchette qui commence à huit experts chez Mixtral.</p>
+<p>La sélection des k meilleurs, c&#x27;est-à-dire le nombre d&#x27;experts autorisés à s&#x27;activer, va de un chez Llama quatre Maverick, dont la méthode de sélection reste non divulguée, à huit chez plusieurs variantes de Qwen et de Kimi.</p>
+<p>DeepSeek-V trois et les variantes suivantes abandonnent la perte auxiliaire habituelle au profit d&#x27;un biais sans perte auxiliaire, qui oriente le choix de l&#x27;expert et laisse les poids de mélange intacts.</p>
+<p>Kimi K deux a montré qu&#x27;augmenter la parcimonie de huit à quarante-huit réduisait les opérations en virgule flottante d&#x27;un facteur un virgule soixante-neuf, à perte de validation identique.</p>
+<p>Un guide compagnon paru le même jour passe en revue les sept stratégies de routage utilisées en production, une référence que l&#x27;on peut auditer pour savoir si un mélange d&#x27;experts donné tournera sur une seule carte graphique de quatre-vingts gigaoctets, ou s&#x27;il faudra du parallélisme d&#x27;experts sur plusieurs cartes.</p>
+<p>Sur le forum MachineLearning, GRFNet est un modèle PyTorch de classification de séries temporelles multicanaux, qui mélange les canaux d&#x27;entrée avec des filtres spatiaux appris, initialisés à partir des positions d&#x27;électrodes lorsqu&#x27;elles sont disponibles, puis envoie le résultat dans une batterie de convolutions dilatées, pour la plupart gelées.</p>
+<p>Il extrait des statistiques récapitulatives, les module par une porte, et classifie avec une tête de trois mille huit cent quarante-sept paramètres, dans la configuration par défaut à vingt-deux canaux et quatre classes, accepte des entrées de longueur variable, et s&#x27;adapte à la fréquence d&#x27;échantillonnage sans réentraînement.</p>
+<p>Une évaluation indépendante du sujet sur PhysioNet EEGMMIDB est en cours, face à EEGNet et ShallowConvNet.</p>
+<p>En comparant Timestral, t zéro, Tabby et Morpheus-deux virgule zéro sur GIFT-Eval, Towards Data Science montre que les quatre modèles de fondation pour séries temporelles mettent à l&#x27;échelle, découpent en tuiles et produisent des quantiles.</p>
+<p>La différence décisive, c&#x27;est la façon dont chaque série partage l&#x27;information à travers le lot, une scission architecturale entre traiter les séries indépendamment et s&#x27;emprunter mutuellement de la force statistique pendant l&#x27;entraînement.</p>
+<p>Nommer des formes dans des environnements en trois dimensions d&#x27;une pièce, de deux pièces et de trois pièces, c&#x27;est désormais le travail d&#x27;un modèle vision-langage-action entraîné en local, sur le forum MachineLearning : un réseau récurrent de vingt-cinq virgule cinq millions de paramètres, qui conserve une matrice d&#x27;état de sept cent soixante-huit par sept cent soixante-huit, avec des portes de type mémoire à long et court terme par cellule, et qui apprend l&#x27;attention visuelle directement sur des pixels rouge-vert-bleu bruts de cent vingt-huit par cent vingt-huit, sans encodeur préentraîné séparé.</p>
+<p>Il a été transféré à partir d&#x27;un point de contrôle de modélisation du langage, et atteint plus de quatre-vingt-dix pour cent, plus de quatre-vingts pour cent et plus de soixante pour cent de réussite respectivement, sur des passages de test aléatoires de ces tâches à une, deux et trois pièces.</p>
+<p>L&#x27;entraînement a utilisé l&#x27;imitation supervisée sur soixante-dix mille étapes, avec une taille de lot de quatre, après cent cinquante mille étapes initiales de modélisation du langage.</p>
+<p>Des agents autonomes se sont attaqués à des questions de recherche ouvertes tirées des listes de problèmes des laboratoires nationaux américains, a constaté The Decoder, et aucun des neuf n&#x27;a franchi la barre fixée par les experts du domaine.</p>
+<p>L&#x27;évaluation demandait s&#x27;ils pouvaient formuler, exécuter et vérifier des étapes de recherche inédites, sans aucun humain dans la boucle.</p>
+<p>Les cabinets d&#x27;avocats souscrivent déjà une assurance en responsabilité professionnelle pour leurs collaborateurs humains, et The New York Times examine si ces polices couvrent les erreurs d&#x27;agents d&#x27;intelligence artificielle qui rédigent des contrats, réalisent des vérifications préalables ou gèrent la communication des pièces, et comment la responsabilité doit s&#x27;attacher quand l&#x27;agent s&#x27;inscrit dans le flux de travail du cabinet.</p>
+<p>Amazon Quick a publié une taxonomie, rapporte The Chenab Times, qui décompose les systèmes agentiques en primitives nommées pour la planification, l&#x27;usage d&#x27;outils, la mémoire et la vérification, conçue comme un vocabulaire commun pour composer des agents en plusieurs étapes sur l&#x27;infrastructure Amazon Web Services.</p>
+<p>Ce n&#x27;est pas des images, mais des tenseurs de poids de réseaux de neurones, qu&#x27;un petit modèle de diffusion sur le forum MachineLearning a été entraîné à émettre, avec un dépôt de preuve de concept et une démo en ligne qui permet aux utilisateurs de demander des contrôleurs simples, comme un réseau pour la raquette de Pong.</p>
+<p>L&#x27;auteur rapporte un succès partiel après trois mille des quatre mille étapes d&#x27;entraînement sur un processeur central, et invite aux contributions ou aux pistes vers des articles connexes.</p>
+<p>Andrej Karpathy a construit TristanTube, un visionneur façon YouTube sur les quarante-sept mille vidéos du classement par paliers de Tristan, en ajoutant un mode sombre, une page à propos et un mode télévision pour le visionnage passif, et il a généré tout le site en trois minutes avec Claude Code.</p>
+<p>CASRAI a publié un guide pratique de Garak, un scanner à code ouvert qui sonde les grands modèles de langage à la recherche de vulnérabilités d&#x27;injection d&#x27;instructions, de fuite de données et de contournement des garde-fous, en détaillant l&#x27;installation, le choix des sondes et l&#x27;interprétation des résultats pour les flux de travail d&#x27;équipe rouge.</p>
+<p>Ailleurs, l&#x27;office de protection des données de Hambourg a examiné puis déployé G P T cinq virgule six Terra, rapporte PPC Land, à l&#x27;intérieur d&#x27;une enveloppe qui bloque les fuites de données personnelles, même si le modèle lui-même conserve probablement des données d&#x27;entraînement, pour rédiger la correspondance de routine, alors que les plaintes ont augmenté de soixante-deux pour cent, tandis que les humains conservent le raisonnement juridique final, après un examen de neuf pages.</p>
+<p>Le Center for Advancing Innovation and Standards for Super Intelligence des États-Unis n&#x27;a pas de directeur permanent, a cessé de publier de la recherche, et achemine désormais le travail du personnel de façon informelle vers la Maison-Blanche, a constaté ABC News, ce qui nourrit des craintes que les conclusions sur les systèmes de frontière puissent être étouffées.</p>
+<p>Un doctorant sur le forum MachineLearning dit que les présidents de domaine des grandes conférences ont rejeté des travaux d&#x27;apprentissage automatique classique sur les machines à vecteurs de support et la régression logistique, comme déjà vu et classé, même lorsque les relecteurs trouvaient les revendications inédites, et il demande si de tels sujets n&#x27;ont plus leur place que dans les revues ou sur arXiv.</p>
+<p>Une licence de mathématiques et science des données, évoquée sur le même forum, est pesée contre un diplôme d&#x27;informatique pour des postes d&#x27;ingénieur en apprentissage automatique, et l&#x27;auteur veut savoir quels fondamentaux d&#x27;informatique supplémentaires combleraient un éventuel écart perçu.</p>
+<p>Pointez Garak sur n&#x27;importe quel nouveau modèle que vous évaluez, et lisez les sondes d&#x27;injection d&#x27;instructions et de fuite avant de le livrer.</p>
+<p>Téléchargez nngen et continuez d&#x27;entraîner la diffusion génératrice de poids sur un domaine de contrôleur étroit.</p>
+<p>Lancez Timestral et Tabby sur vos propres séries sous le protocole GIFT-Eval, et voyez quel choix de partage de lot réduit l&#x27;erreur sur votre distribution.</p>
+<p>Posez GRFNet sur vos propres traces d&#x27;électroencéphalogramme ou de capteurs multicanaux, et notez les filtres spatiaux appris face à une référence EEGNet sur la précision indépendante du sujet.</p>
+<p>Des expériences communautaires sur la génération de poids par diffusion pourraient faire émerger des articles ou des réplications à plus grande échelle dans les semaines à venir.</p>
+<p>D&#x27;autres régulateurs devraient publier des études de cas sur des modèles de frontière encapsulés, après l&#x27;examen de Hambourg.</p>
+<p>D&#x27;autres évaluations d&#x27;agents sur les questions ouvertes des laboratoires nationaux devraient apparaître, à mesure que les équipes affinent les bancs d&#x27;évaluation et les critères de succès.</p>
+<p>En reculant des tables de routage d&#x27;aujourd&#x27;hui vers les sept derniers jours, trois sorties définissent encore la semaine.</p>
+<p>Un grand modèle de langage n&#x27;a modifié que zéro virgule zéro un six pour cent des poids d&#x27;un petit modèle, et a fait passer un score en maths de sept virgule neuf à quarante-huit virgule un pour cent.</p>
+<p>OpenAI a commencé à livrer du matériel prototype et des outils de conception assistée par ordinateur, construits avec G P T six Astra, en moins d&#x27;une semaine.</p>
+<p>Hier, Ling-trois virgule deux-flash a livré un mélange d&#x27;experts multimodal de cinq cent soixante milliards sur vingt-cinq milliards, avec un contexte d&#x27;un million, et des interfaces de programmation compatibles OpenAI, prêtes à l&#x27;emploi immédiat.</p>
+<p>Avant de nous quitter, ces bancs d&#x27;évaluation d&#x27;agents de suivi pour les laboratoires nationaux sont la prochaine chose qui devrait atterrir.</p>
+<p>Voilà pour Models and Agents aujourd&#x27;hui. Si vous avez trouvé ça utile, partagez-le avec quelqu&#x27;un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l&#x27;intelligence artificielle va vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu&#x27;écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l&#x27;émission.</p>
+<p>Encore une chose — si l&#x27;épisode d&#x27;aujourd&#x27;hui vous a plu, notre émission sœur Mag Seven Daily mérite une place dans votre flux : ce que les sept plus grandes entreprises technologiques ont réellement fait aujourd&#x27;hui, en tant qu&#x27;entreprises. C&#x27;est l&#x27;un des points quotidiens de Nerra Network, entièrement gratuit sur nerranetwork point com.</p>
+<p>Et si vous préférez n&#x27;entendre que vos émissions, dans votre ordre, Nerra Personal vous construit une édition quotidienne privée — les détails sont sur nerranetwork point com join.</p>
+<p>Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l&#x27;analyse sont les miennes.</p>
             </div>
             
 
@@ -1756,24 +1821,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents_beginners/ep220.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                    <a href="../../blog/models_agents_beginners/ep221.html" class="blog-related-card" style="--card-show-color: #C2410C">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
-                        <h3>A new study reveals AI already handles up to half the work scientists do when running real research projects.</h3>
+                        <h3>World models are turning old Pokémon Go scans into training grounds for robots.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/fascinating_frontiers/ep246.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/ai_chips/ep048.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">AI Chips & Data Centres Daily</span>
+                        <h3>120 megawatts went up in a year in Inner Mongolia, at a fifth of US cost.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/fascinating_frontiers/ep247.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>A Pakistani astronaut will become the first foreigner to visit China's space station on the Shenzhou-24 mission.</h3>
-                        
-                    </a>
-                    
-                    <a href="../../blog/planetterrian/ep238.html" class="blog-related-card" style="--card-show-color: #017A99">
-                        
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
-                        <h3>Brain imaging across 57 studies ties multiple sleep disorders to smaller thalamus volume.</h3>
+                        <h3>A new cosmological model proposes a 26.7-billion-year-old universe that requires neither dark matter nor dark energy.</h3>
                         
                     </a>
                     
