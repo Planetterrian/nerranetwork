@@ -1183,6 +1183,473 @@ def lint_hook_figure_sourced(digest: str, context: Optional[dict] = None) -> Opt
 
 
 # ---------------------------------------------------------------------------
+# Offshore North Ep012 review (Nov 8 2026)
+# ---------------------------------------------------------------------------
+#
+# A listener review of Offshore North Ep012 (2 Nov) found five defects, each
+# one a rule the digest prompt already stated:
+#
+# * the hook led on Thomas Ruyant withdrawing from the Route du Rhum — Ep006's
+#   hook six weeks earlier — because a new franceinfo article retold it
+#   (``hook_repeats_past_lead``);
+# * "contraint de stopper" (forced to stop) became Anthony Marchand "out of a
+#   race", and a skipper heading to port to repair became "removed from
+#   contention" (``stop_told_as_retirement``);
+# * a team video published 31 October was narrated as coverage of "the
+#   conditions the fleet faced after the 1 November start" — a preview told as
+#   a result (``preview_told_as_result``);
+# * Plain Sailing quoted a campaign budget and an insurance share with no
+#   source (``explainer_figures_sourced``);
+# * "115 solo boats" sat in no fetched article and against the field guide's
+#   sourced 118 (``item_figures_sourced``).
+#
+# Like every lint here they only feed the one-shot structural regeneration.
+
+#: Sections that carry no sourced news item.
+_NON_ITEM_SECTIONS = frozenset({
+    "plain sailing", "the countdown", "sources", "countdown", "",
+})
+
+_SOURCE_LINE_RE = re.compile(r"\bSource:\s*\[?|\]\([^)]*\)")
+
+
+def sourced_items(digest: str, skip: Iterable[str] = _NON_ITEM_SECTIONS
+                  ) -> List[Tuple[str, str, List[str]]]:
+    """``(section, text, urls)`` for every sourced item outside *skip*.
+
+    An item is the run of paragraphs that ends on one carrying a URL — the
+    shape of a digest whose items are plain paragraphs closing on a
+    ``Source:`` line (Offshore North) as well as the bold-headed ones. A
+    trailing run with no URL is not an item."""
+    skip_low = {s.lower() for s in skip}
+    out: List[Tuple[str, str, List[str]]] = []
+    for title, body in sections(digest):
+        if title.strip().lower() in skip_low:
+            continue
+        buf: List[str] = []
+        for para in re.split(r"\n\s*\n", body or ""):
+            para = para.strip()
+            if not para or para.startswith(">") or para.startswith("**HOOK") \
+                    or para.startswith("**TITLE") or para.startswith("**Week"):
+                continue
+            buf.append(para)
+            urls = urls_in(para)
+            if urls:
+                out.append((title, "\n\n".join(buf), urls))
+                buf = []
+    return out
+
+
+def _article_index(articles) -> Dict[str, dict]:
+    idx: Dict[str, dict] = {}
+    for a in articles or []:
+        for key in ("url", "aggregator_url"):
+            u = _norm_url(str(a.get(key) or ""))
+            if u:
+                idx.setdefault(u, a)
+    return idx
+
+
+def _article_text(a: dict) -> str:
+    return " ".join(str(a.get(k) or "") for k in
+                    ("title", "description", "content_text", "full_text"))
+
+
+def _item_sources(urls: List[str], idx: Dict[str, dict]) -> List[dict]:
+    out = []
+    for u in urls:
+        a = idx.get(_norm_url(u))
+        if a is not None:
+            out.append(a)
+    return out
+
+
+def _item_subject(text: str) -> str:
+    prose = _prose(text)
+    first = _SENT_SPLIT.split(prose.strip(), maxsplit=1)[0] if prose.strip() else ""
+    return clip_words(first, 70)
+
+
+# --- hook_repeats_past_lead -------------------------------------------------
+
+#: How many past episodes' hooks the lead is compared with. Ep012 repeated a
+#: hook six episodes back; twelve covers a weekly show's quarter.
+PAST_HOOKS_WINDOW = 12
+#: A token in at least this many of the window's hooks is the beat itself
+#: (Route du Rhum, IMOCA, a race start), never evidence of a repeat.
+PAST_HOOKS_COMMON_MIN = 2
+#: Distinctive tokens (names + event words) a repeat shares with the old hook.
+PAST_HOOKS_MIN_SHARED = 3
+
+_HOOK_WORD_RE = re.compile(r"[A-Za-zÀ-ÿ][\w’'À-ÿ-]*")
+_HOOK_STOP = frozenset("""
+a an the and or but of to in on at for from with by as is are was were be been
+has have had his her its their this that these those it they he she not no
+could would will can may might after before over into than then this week
+because while about against also only still more most new first last
+""".split())
+
+
+def _stem(w: str) -> str:
+    w = w.lower().strip("’'").replace("’s", "").replace("'s", "")
+    for suf in ("ing", "ed", "es", "s", "n"):
+        if w.endswith(suf) and len(w) - len(suf) >= 4:
+            return w[: -len(suf)]
+    return w
+
+
+def _hook_parts(hook: str) -> Tuple[set, set]:
+    """``(name stems, event stems)`` of a hook: capitalised words are names
+    (the first word too — a hook often opens on its subject's name), the
+    rest are the event's words."""
+    names, events = set(), set()
+    for i, w in enumerate(_HOOK_WORD_RE.findall(hook or "")):
+        low = w.lower()
+        if low in _HOOK_STOP or len(low) < 3:
+            continue
+        if w[0].isupper():
+            if w in _MONTHS_DAYS or w in _NOT_A_NAME:
+                continue
+            names.add(_stem(w))
+        elif not w[0].isupper():
+            if len(low) >= 4:
+                events.add(_stem(w))
+    return names, events
+
+
+def past_hooks(digests_dir, *, before_episode: Optional[int] = None,
+               n: int = PAST_HOOKS_WINDOW) -> List[Tuple[str, str]]:
+    """``[(YYYY-MM-DD, hook), ...]`` from the show's committed digests,
+    newest first, episodes before *before_episode* only. Never raises."""
+    from pathlib import Path
+
+    rows = []
+    try:
+        for path in Path(digests_dir).glob("*_Ep*_*.md"):
+            m = re.search(r"_Ep(\d{3,4})_(\d{4})(\d{2})(\d{2})\.md$", path.name)
+            if not m:
+                continue
+            num = int(m.group(1))
+            if before_episode is not None and num >= int(before_episode):
+                continue
+            hook = hook_line(path.read_text(encoding="utf-8"))
+            if hook:
+                rows.append((num, f"{m.group(2)}-{m.group(3)}-{m.group(4)}", hook))
+    except Exception:  # noqa: BLE001 — a lint input can never cost an episode
+        return []
+    rows.sort(reverse=True)
+    return [(d, h) for _n, d, h in rows[:n]]
+
+
+def _beat_stems(beat_terms) -> set:
+    out = set()
+    for term in beat_terms or []:
+        for w in _HOOK_WORD_RE.findall(str(term)):
+            out.add(_stem(w))
+    return out
+
+
+def hook_repeat_match(hook: str, past: List[Tuple[str, str]],
+                      beat_terms: Iterable[str] = ()) -> Optional[Tuple[str, str]]:
+    """The past ``(date, hook)`` the hook re-leads with, else None.
+
+    A repeat shares a name AND an event word with the past hook, and at
+    least ``PAST_HOOKS_MIN_SHARED`` tokens in all, none of them common to the
+    window. Replayed on Offshore North Ep001-012: fires
+    on Ep012 (Ruyant withdrawing, Ep006) and Ep010 (the boat alongside in
+    Gosport, Ep008), never on a race followed from start to finish (Ep003
+    start, Ep004 leader). *beat_terms* (the show's own subject — its RSS
+    keywords) never count: the skipper's name is the show, not a story."""
+    if not hook or not past:
+        return None
+    parts = [(_hook_parts(h), d, h) for d, h in past]
+    counts: Dict[str, int] = {}
+    for (names, events), _d, _h in parts:
+        for t in names | events:
+            counts[t] = counts.get(t, 0) + 1
+    common = {t for t, c in counts.items() if c >= PAST_HOOKS_COMMON_MIN}
+    common |= _beat_stems(beat_terms)
+    names, events = _hook_parts(hook)
+    names -= common
+    events -= common
+    for (p_names, p_events), d, h in parts:
+        shared_n, shared_e = names & p_names, events & p_events
+        if shared_n and shared_e and len(shared_n | shared_e) >= PAST_HOOKS_MIN_SHARED:
+            return d, h
+    return None
+
+
+def lint_hook_repeats_past_lead(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    past = list((context or {}).get("past_hooks") or [])
+    hook = hook_line(digest)
+    if not past or not hook:
+        return None
+    m = hook_repeat_match(hook, past, (context or {}).get("beat_terms") or ())
+    metrics = {"hook_repeats_past_lead": 0 if m is None else 1}
+    if m is None:
+        return LintFinding("hook_repeats_past_lead", "", metrics)
+    date, old = m
+    return LintFinding(
+        "hook_repeats_past_lead",
+        f"the **HOOK:** leads with a story this show already led with on "
+        f"{date} (“{clip_words(old, 60)}”) — lead with a development first "
+        f"reported inside this week's window; an earlier event retold by a "
+        f"new article is at most one dated clause of context, never the lead "
+        f"and never \"this week\"",
+        metrics,
+    )
+
+
+# --- stop_told_as_retirement ------------------------------------------------
+
+#: The item says the competitor is out.
+_RETIRED_CLAIM_RE = re.compile(
+    r"\b(?:out of (?:the|a|this|her|his) (?:race|running)|forced? (?:\w+ )?out\b|"
+    r"knock(?:s|ed)? (?:\w+ )?out|retire[sd]?\b|retiring\b|retirement|"
+    r"abandon(?:s|ed|ing|ment)?\b|(?:from|out of) contention|"
+    r"ends? (?:his|her|their) race|race is over|withdr[ae]w[ns]?\b|withdrawal)",
+    re.IGNORECASE)
+#: The source says so too (French and English).
+_RETIRED_SOURCE_RE = re.compile(
+    r"abandon|renonc|retir|forfait|withdr|l[’']éponge|hors course|pulls? out|"
+    r"pulled out|out of the race|quit|ne prendra pas le départ|"
+    r"ne poursuivra pas|met(?:tre)? fin",
+    re.IGNORECASE)
+#: Below this much source text nothing is judged.
+_SOURCE_TEXT_MIN = 200
+
+
+def stop_retirement_items(digest: str, articles) -> List[str]:
+    idx = _article_index(articles)
+    out: List[str] = []
+    for _title, text, urls in sourced_items(digest):
+        prose = _prose(text)
+        claim = next((sent for sent in _SENT_SPLIT.split(prose)
+                      if _RETIRED_CLAIM_RE.search(sent)), "")
+        if not claim:
+            continue
+        srcs = _item_sources(urls, idx)
+        src_text = " ".join(_article_text(a) for a in srcs)
+        if len(src_text.strip()) < _SOURCE_TEXT_MIN:
+            continue  # unread: nothing to judge against
+        if not _RETIRED_SOURCE_RE.search(src_text):
+            out.append(clip_words(claim.strip(), 90))
+    return out
+
+
+def lint_stop_told_as_retirement(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context or not context.get("articles"):
+        return None
+    bad = stop_retirement_items(digest, context.get("articles"))
+    metrics = {"stop_told_as_retirement": len(bad)}
+    if not bad:
+        return LintFinding("stop_told_as_retirement", "", metrics)
+    return LintFinding(
+        "stop_told_as_retirement",
+        "these items say a competitor is out of the race, but their source "
+        "reports a stop, a diversion or a repair, not a retirement: "
+        + "; ".join(f"“{b}”" for b in bad)
+        + " — say exactly what the source says (stopped, diverting to port, "
+        "repairing, assessing the damage) and that the skipper is still in "
+        "the race; a retirement is reported only when the source says so",
+        metrics,
+    )
+
+
+# --- preview_told_as_result -------------------------------------------------
+
+_MONTHS = ("january february march april may june july august september "
+           "october november december").split()
+_DATE_DM_RE = re.compile(
+    r"\b(\d{1,2})(?:st|nd|rd|th)?\s+(" + "|".join(m.title() for m in _MONTHS)
+    + r")(?:,?\s+(\d{4}))?\b")
+_DATE_MD_RE = re.compile(
+    r"\b(" + "|".join(m.title() for m in _MONTHS)
+    + r")\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?\b")
+#: A sentence that looks ahead is a preview already.
+_FORWARD_RE = re.compile(
+    r"\b(?:will|would|shall|due|scheduled|set to|plans?|planned|planning|"
+    r"ahead of|before|preview\w*|upcoming|next|(?:starts?|begins?|opens?) on|expected|"
+    r"until|closes|opens|is on|runs from|counting down|days? (?:to|until|before)|"
+    r"countdown|leading up|build-up|in the run-up|is set|aims?|intends?)\b",
+    re.IGNORECASE)
+
+
+def _source_date(a: dict):
+    import datetime as _dt
+
+    for key in ("page_published_date", "published_date"):
+        raw = str(a.get(key) or "")[:10]
+        try:
+            return _dt.date.fromisoformat(raw)
+        except ValueError:
+            continue
+    return None
+
+
+def _dates_in(sentence: str, default_year: int):
+    import datetime as _dt
+
+    found = []
+    for m in _DATE_DM_RE.finditer(sentence):
+        day, mon, yr = int(m.group(1)), _MONTHS.index(m.group(2).lower()) + 1, m.group(3)
+        found.append((day, mon, int(yr) if yr else default_year))
+    for m in _DATE_MD_RE.finditer(sentence):
+        mon, day, yr = _MONTHS.index(m.group(1).lower()) + 1, int(m.group(2)), m.group(3)
+        found.append((day, mon, int(yr) if yr else default_year))
+    out = []
+    for day, mon, yr in found:
+        try:
+            out.append(_dt.date(yr, mon, day))
+        except ValueError:
+            continue
+    return out
+
+
+def preview_result_items(digest: str, articles) -> List[Tuple[str, str]]:
+    """``(item subject, the later date)`` for items narrating, without a
+    forward-looking word, an event dated after their source was published."""
+    idx = _article_index(articles)
+    out: List[Tuple[str, str]] = []
+    for _title, text, urls in sourced_items(digest):
+        dates = [d for d in (_source_date(a) for a in _item_sources(urls, idx)) if d]
+        if not dates:
+            continue
+        src_date = max(dates)
+        for sent in _SENT_SPLIT.split(_prose(text)):
+            if _FORWARD_RE.search(sent):
+                continue
+            later = [d for d in _dates_in(sent, src_date.year) if d > src_date]
+            if later:
+                out.append((_item_subject(text), later[0].strftime("%-d %B %Y")))
+                break
+    return out
+
+
+def lint_preview_told_as_result(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context or not context.get("articles"):
+        return None
+    bad = preview_result_items(digest, context.get("articles"))
+    metrics = {"preview_told_as_result": len(bad)}
+    if not bad:
+        return LintFinding("preview_told_as_result", "", metrics)
+    return LintFinding(
+        "preview_told_as_result",
+        "these items narrate an event dated after their own source was "
+        "published, as if the source had covered it: "
+        + "; ".join(f"“{s}” ({d})" for s, d in bad)
+        + " — a source published before an event is a PREVIEW: say what it "
+        "expected or planned, in the future tense, and never what happened",
+        metrics,
+    )
+
+
+# --- explainer_figures_sourced ----------------------------------------------
+
+#: Explainer sections licensed to draw on general knowledge for MECHANISMS —
+#: never for money, a share or a count about the current sport.
+EXPLAINER_SECTIONS = ("Plain Sailing",)
+
+_NUM_WORD = (r"(?:\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|"
+             r"eleven|twelve|fifteen|twenty|thirty|forty|fifty|sixty|seventy|"
+             r"eighty|ninety|hundred|a few|several|dozens?)")
+_AMOUNT_RE = re.compile(
+    r"(?:[€$£]\s?\d[\d,.]*(?:\s*(?:million|billion|m|bn|k))?|"
+    r"\b" + _NUM_WORD + r"(?:[\s-]+(?:to|and|or)[\s-]+" + _NUM_WORD + r")?"
+    r"[\s-]+(?:million|billion|thousand|percent|per cent)\b|"
+    r"\b\d[\d,.]*\s?%)",
+    re.IGNORECASE)
+
+
+def explainer_unsourced_amounts(digest: str) -> List[str]:
+    out: List[str] = []
+    for title, body in sections(digest):
+        if title.strip().lower() not in {s.lower() for s in EXPLAINER_SECTIONS}:
+            continue
+        if urls_in(body):
+            continue
+        for m in _AMOUNT_RE.finditer(body):
+            amt = " ".join(m.group(0).split())
+            if amt not in out:
+                out.append(amt)
+    return out
+
+
+def lint_explainer_figures_sourced(digest: str) -> Optional[LintFinding]:
+    bad = explainer_unsourced_amounts(digest)
+    metrics = {"explainer_unsourced_amounts": len(bad)}
+    if not bad:
+        return LintFinding("explainer_figures_sourced", "", metrics)
+    return LintFinding(
+        "explainer_figures_sourced",
+        "the explainer states money, share or percentage figures with no "
+        "source (" + ", ".join(bad[:6]) + ") — a budget, a cost, an "
+        "insurance share or a count is a current fact, not a mechanism: cite "
+        "the fetched article that carries each one with a Source line, or "
+        "explain the concept without the figure",
+        metrics,
+    )
+
+
+# --- item_figures_sourced ---------------------------------------------------
+
+_YEAR_RE = re.compile(r"^(?:19|20)\d\d$")
+
+
+def _item_figures(text: str) -> List[str]:
+    prose = _URL_RE.sub(" ", _prose(text))
+    out: List[str] = []
+    for m in _BODY_FIGURE_RE.finditer(prose):
+        key = _figure_key(m.group(1), m.group(2))
+        if _YEAR_RE.match(key) or _is_name_number(prose, m.start()):
+            continue
+        after = prose[m.end(): m.end() + 14].lstrip()
+        if re.match(r"(?:st|nd|rd|th)?\s*(?:" + "|".join(m2.title() for m2 in _MONTHS) + r")\b", after):
+            continue  # a day of the month
+        if key not in out:
+            out.append(key)
+    return out
+
+
+def item_unsourced_figures(digest: str, context: dict) -> Optional[List[str]]:
+    """Digit-written figures in sourced items that no fetched article and no
+    briefing text (``reference_text``: the standing facts, the field guide,
+    the computed status) carries. None when nothing was read."""
+    arts = list(context.get("articles") or [])
+    texts = [_article_text(a) for a in arts]
+    if not any(len(t.strip()) >= _SOURCE_TEXT_MIN for t in texts):
+        return None
+    carried = set()
+    for t in texts + [str(context.get("reference_text") or "")]:
+        carried.update(figures_in(t))
+    missing: List[str] = []
+    for _title, text, _urls in sourced_items(digest):
+        for f in _item_figures(text):
+            if not figure_matches(f, carried) and f not in missing:
+                missing.append(f)
+    return missing
+
+
+def lint_item_figures_sourced(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context:
+        return None
+    missing = item_unsourced_figures(digest, context)
+    if missing is None:
+        return None
+    metrics = {"item_figures_unsourced": len(missing)}
+    if not missing:
+        return LintFinding("item_figures_sourced", "", metrics)
+    return LintFinding(
+        "item_figures_sourced",
+        "these figures are in no fetched article and no briefing fact: "
+        + ", ".join(missing[:8])
+        + " — state a count, a distance or an amount only as the source "
+        "gives it, or leave the number out",
+        metrics,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry + runner
 # ---------------------------------------------------------------------------
 
@@ -1226,7 +1693,9 @@ def lint_pick_stop_loss(digest: str) -> Optional[LintFinding]:
     )
 
 
-CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source", "hook_figure_sourced"})
+CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source", "hook_figure_sourced",
+                           "hook_repeats_past_lead", "stop_told_as_retirement",
+                           "preview_told_as_result", "item_figures_sourced"})
 
 LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "wyntk_hook_match": lint_wyntk_hook_match,
@@ -1246,6 +1715,11 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "deep_dive_distinct": lint_deep_dive_distinct,
     "deep_dive_distinct_measure": lint_deep_dive_distinct_measure,
     "hook_figure_sourced": lint_hook_figure_sourced,
+    "hook_repeats_past_lead": lint_hook_repeats_past_lead,
+    "stop_told_as_retirement": lint_stop_told_as_retirement,
+    "preview_told_as_result": lint_preview_told_as_result,
+    "explainer_figures_sourced": lint_explainer_figures_sourced,
+    "item_figures_sourced": lint_item_figures_sourced,
 }
 
 

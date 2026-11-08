@@ -366,7 +366,8 @@ class TestTeardownFromAReadArticle:
 
     def test_run_show_passes_the_articles(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert src.count('context={"articles": articles}') == 3
+        assert src.count("context=_lint_ctx") == 3  # Nov 8 2026: articles + past hooks + briefing
+        assert '_lint_ctx: dict = {"articles": articles}' in src
 
 
 # ------------------------------------------------------------------ item 5 --

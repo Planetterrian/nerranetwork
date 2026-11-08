@@ -45,6 +45,14 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
         ctx["recent_plain_sailing"] = recent_plain_sailing(before_episode=episode_num)
     except Exception:  # noqa: BLE001 — the block is optional
         ctx["recent_plain_sailing"] = ""
+    # Nov 8 2026: the leads already aired, dated, so the hook never re-leads
+    # with one (Ep012 led on Ep006's Ruyant withdrawal).
+    try:
+        from engine.offshore_north_status import recent_leads
+
+        ctx["recent_leads"] = recent_leads(before_episode=episode_num)
+    except Exception:  # noqa: BLE001 — the block is optional
+        ctx["recent_leads"] = ""
     articles = _source_articles(tracker)
     if articles:
         ctx["articles"] = articles

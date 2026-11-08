@@ -366,3 +366,32 @@ def recent_plain_sailing(digests_dir: Optional[Path] = None, *,
     except Exception as exc:  # noqa: BLE001 — never block an episode
         logger.warning("Offshore North Plain Sailing memory unavailable (non-fatal): %s", exc)
         return ""
+
+
+# ---------------------------------------------------------------------------
+# Lead memory (Nov 8 2026, the Ep012 review)
+# ---------------------------------------------------------------------------
+
+#: How many past leads the writer is shown.
+LEAD_MEMORY = 12
+
+
+def recent_leads(digests_dir: Optional[Path] = None, *, n: int = LEAD_MEMORY,
+                 before_episode: Optional[int] = None) -> str:
+    """A dated list of the last *n* episode hooks, newest first; '' when
+    none. Ep012 led on Thomas Ruyant withdrawing from the Route du Rhum —
+    Ep006's lead six weeks earlier — because a new article retold it, and
+    nothing in the prompt said what the show had already led with. The
+    ``hook_repeats_past_lead`` lint enforces the same list. Never raises."""
+    try:
+        from engine.digest_lint import past_hooks
+
+        rows = past_hooks(digests_dir or DIGESTS_DIR, before_episode=before_episode, n=n)
+        out = []
+        for iso, hook in rows:
+            d = _dt.date.fromisoformat(iso)
+            out.append(f"- {_fmt(d)}: {hook}")
+        return "\n".join(out)
+    except Exception as exc:  # noqa: BLE001 — never block an episode
+        logger.warning("Offshore North lead memory unavailable (non-fatal): %s", exc)
+        return ""

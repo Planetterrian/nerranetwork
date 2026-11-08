@@ -218,6 +218,18 @@ absence_sentence_filter: true
 # The prompts no longer ask for one; this removes any the model writes
 # anyway, and the brief's "Dan's lens" label (engine/host_experience.py).
 host_experience_filter: true
+# Nov 8 2026 (the Ep012 listener review): each of the five defects was a
+# rule the digest prompt already stated, so each is now a lint that spends
+# the one-shot structural regeneration (engine/digest_lint.py) — a lead an
+# earlier episode already led with, a stop told as a retirement, a preview
+# told as a result, money or shares in Plain Sailing with no source, and a
+# figure in an item that no fetched article or briefing fact carries.
+digest_lints:
+  - hook_repeats_past_lead
+  - stop_told_as_retirement
+  - preview_told_as_result
+  - explainer_figures_sourced
+  - item_figures_sourced
 # ---- X / Twitter as a CONTENT source (not posting) ----
 # Offshore racing breaks on X and Instagram before it reaches any RSS feed:
 # campaigns post launches, damage and routing calls in real time, and the

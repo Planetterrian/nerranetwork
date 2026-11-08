@@ -2537,6 +2537,8 @@ def run(args: argparse.Namespace) -> None:
         template_vars.setdefault("campaign_status", "")
         # Oct 30 2026: Offshore North's dated list of aired explainers.
         template_vars.setdefault("recent_plain_sailing", "")
+        # Nov 8 2026: Offshore North's dated list of past leads.
+        template_vars.setdefault("recent_leads", "")
         # Generic per-show hook block (Sep 2026 new shows): sibling-coverage
         # notes, the MAG 7 tape, a curriculum spotlight. Empty when the
         # show's hook does not supply it or fails.
@@ -3140,10 +3142,13 @@ def run(args: argparse.Namespace) -> None:
         # every lint whether or not it fired.
         _lint_findings: list = []
         _lint_names = list(getattr(config, "digest_lints", []) or [])
+        _lint_ctx: dict = {"articles": articles}
         if _lint_names and not is_deep_dive:
             from engine.digest_lint import run_digest_lints
+            _lint_ctx = _digest_lint_context(
+                config, articles, locals().get("template_vars") or {}, episode_num)
             _lint_findings, _lint_metrics = run_digest_lints(
-                x_thread, _lint_names, context={"articles": articles})
+                x_thread, _lint_names, context=_lint_ctx)
             for _lk, _lv in _lint_metrics.items():
                 metrics.record(_lk, _lv)
             metrics.record("digest_lints_fired", [f.lint for f in _lint_findings])
@@ -3288,7 +3293,7 @@ def run(args: argparse.Namespace) -> None:
                         if _lint_names:
                             from engine.digest_lint import run_digest_lints as _rdl
                             _after, _after_m = _rdl(_candidate, _lint_names,
-                                                    context={"articles": articles})
+                                                    context=_lint_ctx)
                             metrics.record("digest_lints_fired_after_retry",
                                            [f.lint for f in _after])
                             for _lk, _lv in _after_m.items():
@@ -3376,7 +3381,8 @@ def run(args: argparse.Namespace) -> None:
         ]
         if _blocking and not is_deep_dive:
             from engine.digest_lint import run_digest_lints as _run_blocking
-            _still, _ = _run_blocking(x_thread, _blocking, context={"articles": articles})
+            _still, _ = _run_blocking(x_thread, _blocking,
+                                      context=_lint_ctx)
             if _still:
                 _names = ", ".join(f.lint for f in _still)
                 metrics.record("digest_lints_blocked", [f.lint for f in _still])
@@ -7412,6 +7418,36 @@ _SOURCE_SCAFFOLD_RE = re.compile(
 # many prior days is a structural defect (Tesla Ep632 led with Solar Roof,
 # told on three recent days). One prior day is an update and passes.
 HOOK_RECURRENCE_MIN_DAYS = 2
+
+
+def _digest_lint_context(config, articles, template_vars, episode_num) -> dict:
+    """What the context lints read besides the digest (Nov 8 2026, the
+    Offshore North Ep012 review): the run's articles, the show's past hooks
+    (``hook_repeats_past_lead``), its own subject words, and the briefing
+    the model was given — the digest prompt with its includes resolved plus
+    the computed status blocks — so ``item_figures_sourced`` never fires on
+    a figure the standing facts supplied. Never raises."""
+    ctx: dict = {"articles": articles}
+    try:
+        from engine.digest_lint import past_hooks
+
+        out_dir = getattr(getattr(config, "episode", None), "output_dir", "") or ""
+        if out_dir:
+            ctx["past_hooks"] = past_hooks(Path(out_dir), before_episode=episode_num)
+        kw = str(getattr(getattr(config, "publishing", None), "rss_keywords", "") or "")
+        ctx["beat_terms"] = [t.strip() for t in kw.split(",") if t.strip()]
+        ref = []
+        prompt_file = getattr(getattr(config, "llm", None), "digest_prompt_file", "") or ""
+        if prompt_file:
+            from engine.generator import load_prompt
+
+            ref.append(load_prompt(prompt_file, None))
+        for key in ("campaign_status", "campaign_freshness", "hook_context"):
+            ref.append(str((template_vars or {}).get(key) or ""))
+        ctx["reference_text"] = "\n".join(ref)
+    except Exception as exc:  # noqa: BLE001 — a lint input never costs a run
+        logger.warning("Digest lint context partial (non-fatal): %s", exc)
+    return ctx
 
 
 def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics,

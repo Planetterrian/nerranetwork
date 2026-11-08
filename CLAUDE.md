@@ -650,6 +650,10 @@ today's work, not just explain yesterday's):
   Brittany/Lorient; older than `STALE_DAYS` is "last seen <date>", never
   present tense; a race EMIRA IV is not in is never her next milestone.
   **Instagram is read, never copied** (`media_url` never requested). [history](docs/claude_md_history/2026_09_14_offshore_north_show.md)
+  **Nov 8 2026 (Ep012 review):** the hook never re-leads a past lead (`{recent_leads}`,
+  `hook_repeats_past_lead`); a stop is never a retirement; a preview is never coverage; every
+  count, budget or share is sourced (five `digest_lints`; guards
+  `tests/test_offshore_north_ep012_review_2026_11_08.py`).
 
 - **Vancouver Daily News / Collingwood Weekly** — the first run_show shows
   with an AI host (`host_kind: ai`, Mira on `ara`, NO speech wrap); roads and
