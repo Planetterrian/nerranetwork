@@ -189,13 +189,16 @@ class TestEveryCardCarriesADeck:
 
     def test_the_card_renders_the_deck_under_the_hook_and_two_headlines(self, composed):
         copy = nde.render_for(composed.body, ["nerra-member", "Tesla Shorts Time"])
-        card = copy.split("Tesla Shorts Time · Ep 100", 1)[1].split("</table>", 1)[0]
+        # Nov 8 2026: the kicker carries the show; the headlines come under
+        # "More in this episode" (plain when the front carries no links).
+        card = copy.split("Your shows today", 1)[1].split("▶ Listen", 1)[0]
+        assert "Tesla Shorts Time</span>" in card
         assert nde.HEADLINES_PER_CARD == 2
-        assert 'class="nn deck"' in card and "Tesla Shorts Time deck sentence one." in card
-        assert "Also in this episode" in card
+        assert 'deck"' in card and "Tesla Shorts Time deck sentence one." in card
+        assert "More in this episode" in card
         assert "Tesla Shorts Time second item" in card and "Tesla Shorts Time third item" in card
         assert "Tesla Shorts Time fourth" not in card
-        assert card.index("deck sentence one") < card.index("Also in this episode")
+        assert card.index("deck sentence one") < card.index("More in this episode")
 
 
 class TestHeadlineWithinHook:
@@ -265,19 +268,20 @@ class TestTheFirstScreenIsTheNews:
             body = copy.split("padding:16px 24px 24px;", 1)[1]
             assert body.index("<h2") < body.index("<p")
 
-    def test_the_compact_masthead(self, composed):
+    def test_the_masthead(self, composed):
+        # Nov 8 2026: the landing page's masthead (see
+        # tests/test_nerra_daily_email_2026_11_08.py) replaced the compact one.
+        from engine.brand import NETWORK_TAGLINE
         src = composed.body
-        assert src.count("<img") <= 1
-        assert "<h1" not in src.split("padding:16px 24px 24px;", 1)[0]
-        tagline = nt._load_show_branding("nerra_daily").get("tagline") or ""
-        assert not tagline or tagline not in src
-        assert "Your shows below, then the rest of Nerra" in src
-        assert "▶ 2 h 36 min" in src
-        assert "MONDAY" in src.upper() and "Nov 2, 2026" in src
+        head = src.split("padding:16px 24px 24px;", 1)[0]
+        assert "<h1" not in head and "<img" not in head
+        assert NETWORK_TAGLINE in head
+        assert "Hear all of it · 2 h 36 min" in head
+        assert "Monday, November 2, 2026" in head and "7 shows published this morning" in head
 
     def test_the_archive_copy_opens_on_the_masthead_line_not_a_heading(self, composed):
         archive = nde.render_for(composed.body, [], subscriber=False)
-        assert archive.index("Your shows below") < archive.index("<h2")
+        assert archive.index("shows published this morning") < archive.index("<h2")
         # The "Your shows today" heading is a reader's: never on the archive,
         # which carries the default set under "Today on Nerra".
         assert "Your shows today" not in archive and "Today on Nerra" in archive
@@ -286,7 +290,7 @@ class TestTheFirstScreenIsTheNews:
         src = composed.body
         media = src.split("@media (prefers-color-scheme: dark)", 1)[1].split("</style>")[0]
         assert media.index(".nn a, .nn a span") < media.index(".nn .card-title a { color:#ffffff !important; }")
-        assert 'class="nn card-title"' in src
+        assert 'card-title"' in src
 
     def test_the_per_show_emails_keep_the_full_hero(self):
         body = "## Top Stories\n\nTesla **moved**. [link](https://x.com)"
@@ -328,7 +332,7 @@ class TestAlsoTodayReadsAsSections:
     def test_no_line_exceeds_the_limit_and_the_show_is_a_label(self, composed):
         copy = nde.render_for(composed.body, ["nerra-member", "Tesla Shorts Time"])
         also = _also_section(copy)
-        lines = re.findall(r'text-decoration:none;font-weight:600;">([^<]+)</a>', also)
+        lines = re.findall(r'text-decoration:none;font-weight:700;font-size:17px;">([^<]+)</a>', also)
         assert len(lines) >= 5
         for line in lines:
             assert len(line) <= EMAIL_ALSO_LINE_MAX + len(ELLIPSIS)

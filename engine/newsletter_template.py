@@ -385,6 +385,9 @@ _DARK_MODE_STYLE = """\
      * Nerra Daily email's card titles turned link-blue (Nov 3 2026).
      * Class-scoped under .nn and placed AFTER .nn a so it wins. */
     .nn .card-title a { color:#ffffff !important; }
+    /* The Nerra Daily email's ▶ Listen button is navy in light mode,
+     * which vanishes on the dark surface (Nov 8 2026). */
+    .nn a.pill { color:#ffffff !important; background:#6B47FF !important; }
 
     /* Brand-color tokens — lighter dark-mode variants for AA contrast
      * on `#1e293b` cards. The original brand colors are preserved in
@@ -1930,6 +1933,7 @@ def wrap_with_branding(
     featured_eyebrow: Optional[str] = None,
     masthead_lead_html: str = "",
     pill_text: Optional[str] = None,
+    masthead_html: str = "",
 ) -> str:
     """Wrap *markdown_body* with a branded hero, optional middle blocks,
     and footer.
@@ -1963,8 +1967,10 @@ def wrap_with_branding(
     *daily_date* for daily episode newsletters. If neither is set,
     the hero pill falls back to today's date.
     """
-    if hero not in ("full", "compact"):
-        raise ValueError(f"hero must be 'full' or 'compact', not {hero!r}")
+    if hero not in ("full", "compact", "custom"):
+        raise ValueError(f"hero must be 'full', 'compact' or 'custom', not {hero!r}")
+    if hero == "custom" and not masthead_html:
+        raise ValueError("hero='custom' needs masthead_html")
     if featured_position not in ("top", "after_body"):
         raise ValueError("featured_position must be 'top' or 'after_body', "
                          f"not {featured_position!r}")
@@ -1983,10 +1989,14 @@ def wrap_with_branding(
         pill = _format_week_pill(None)
 
     preheader_div = _build_preheader_html(preheader)
-    hero_block = (
-        _build_masthead_html(show, pill, lead_html=masthead_lead_html)
-        if hero == "compact" else _build_hero_html(show, pill)
-    )
+    # Nov 8 2026: ``hero="custom"`` takes the caller's own masthead (the
+    # Nerra Daily email's front-page masthead, modelled on the landing page).
+    if hero == "custom":
+        hero_block = masthead_html
+    elif hero == "compact":
+        hero_block = _build_masthead_html(show, pill, lead_html=masthead_lead_html)
+    else:
+        hero_block = _build_hero_html(show, pill)
     stats_block = _build_by_the_numbers_html(
         by_the_numbers, show["brand_color"], slug
     )

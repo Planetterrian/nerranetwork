@@ -121,7 +121,31 @@ MARKER_DIR = Path("digests") / "nerra_daily" / "email"
 
 _BODY_FONT = ("font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
               "Roboto,Helvetica,Arial,sans-serif;")
-_LINK = "color:#2563eb;text-decoration:underline;"
+_LINK = "color:#2563eb;"
+#: Nov 8 2026 — the email reads like the front page (operator: "more like
+#: the landing page and more like a news update"): serif headlines, the
+#: landing's navy masthead, "SECTION / SHOW" kickers, a lead story with its
+#: picture, and stories separated by rules rather than boxed as cards.
+_SERIF = "font-family:Georgia,Times,serif;"
+_NAVY = "#0b1220"
+_ACCENT = "#6B47FF"
+_KICKER = ("font-size:12px;font-weight:700;letter-spacing:.08em;"
+           "text-transform:uppercase;line-height:1.4;margin:0 0 6px")
+#: Width of a story's picture beside its headline, and of the lead picture.
+THUMB_PX = 96
+LEAD_IMAGE_PX = 552
+#: Reporting links listed under a story ("More in this episode").
+READS_PER_CARD = 2
+# The lead carries more of its episode's reporting than a card.
+LEAD_READS = 3
+#: Shows that may lead the email, in rotation by date. The flagships never
+#: lead (engine.brand.FLAGSHIP_SHOW_SLUGS: a flagship never also runs as the
+#: lead); a reader who follows them has their cards right under it.
+LEAD_POOL: Tuple[str, ...] = (
+    "omni_view_world", "fascinating_frontiers", "models_agents", "planetterrian",
+    "omni_view", "ai_chips", "unintended_consequences", "first_principles",
+    "mag7", "modern_investing", "longevity", "prediction_markets",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -570,9 +594,10 @@ def most_played(root: Path = ROOT, limit: int = MOST_PLAYED_MAX) -> List[Dict[st
 # ---------------------------------------------------------------------------
 
 def _heading(text: str) -> str:
-    return ('<h2 style="margin:28px 0 12px;padding:2px 0 2px 12px;'
-            'border-left:4px solid #6B47FF;font-size:19px;line-height:1.3;'
-            f'font-weight:700;color:#0f172a;">{_esc(text)}</h2>')
+    """A section label as the front page sets it: a rule, then small caps."""
+    return (f'<h2 style="margin:30px 0 16px;padding:10px 0 0;border-top:3px solid {_ACCENT};'
+            'font-size:13px;line-height:1.3;font-weight:800;letter-spacing:.1em;'
+            f'text-transform:uppercase;color:#0f172a">{_esc(text)}</h2>')
 
 
 def _note(inner_html: str) -> str:
@@ -595,64 +620,231 @@ _MUTED_LABEL = ('font-size:12px;font-weight:700;letter-spacing:0.06em;'
                 'text-transform:uppercase;color:#475569;')
 
 
+def _kicker(show: "EmailShow", story: Dict[str, Any], meta: Sequence[str] = ()) -> str:
+    """``WORLD NEWS / OMNI VIEW · EP 47 · 9 MIN`` — the front page's kicker."""
+    hub = str(story.get("hub_heading") or "").strip()
+    bits = ""
+    if hub:
+        bits += f'<span class="text-muted" style="color:#64748b">{_esc(hub)} &nbsp;/&nbsp; </span>'
+    bits += f'<span style="color:{show.brand_text};">{_esc(show.name)}</span>'
+    if meta:
+        bits += (f'<span class="text-muted" style="color:#64748b;font-weight:600"> · '
+                 f'{_esc(" · ".join(meta))}</span>')
+    return f'<div style="{_KICKER}">{bits}</div>'
+
+
+def _image_alt(show: "EmailShow", ep: int) -> str:
+    return f"AI-generated scene illustrating {show.name} episode {ep}"
+
+
+_TRACKING_PARAM_RE = re.compile(r"(?:utm_[a-z]+|traffic_source|ref|cmpid|mc_[a-z]+)=")
+
+
+def _clean_url(url: str) -> str:
+    """A publisher's link without its feed's tracking parameters
+    (``?utm_source=rss``, ``traffic_source=rss``): shorter, and the reader
+    lands on the article, not a campaign."""
+    from urllib.parse import urlsplit, urlunsplit
+    parts = urlsplit(url or "")
+    if not parts.query:
+        return url
+    kept = [q for q in parts.query.split("&") if q and not _TRACKING_PARAM_RE.match(q)]
+    return urlunsplit(parts._replace(query="&".join(kept)))
+
+
+def _sources_line(story: Dict[str, Any]) -> str:
+    """``Sources: aljazeera.com · thearabweekly.com`` — the hook story's own
+    links, named by their address (``engine.landing_test.story_links``)."""
+    srcs = [x for x in (story.get("sources") or []) if x.get("url") and x.get("outlet")]
+    if not srcs:
+        return ""
+    links = " · ".join(
+        f'<a href="{_esc(_clean_url(x["url"]))}" style="color:#475569">'
+        f'{_esc(x["outlet"])}</a>' for x in srcs)
+    return ('<p class="text-muted" style="margin:0 0 10px;font-size:13px;line-height:1.5;'
+            f'color:#64748b">Sources: {links}</p>')
+
+
+def _reads_html(story: Dict[str, Any], limit: int = READS_PER_CARD) -> str:
+    """"More in this episode": each headline linked to the article it was
+    reported from, the outlet beside it; plain headlines when the record
+    carries no links (a front built before Nov 8 2026)."""
+    reads = [r for r in (story.get("reads") or []) if r.get("url") and r.get("title")][:max(0, limit)]
+    if limit <= 0:
+        return ""
+    label = ('<div class="text-muted" style="font-size:11px;font-weight:700;letter-spacing:.08em;'
+             'text-transform:uppercase;color:#64748b;margin:2px 0 6px">More in this episode</div>')
+    li = f'<li style="margin:0 0 6px"><b style="color:{_ACCENT}">&#9632;</b>&nbsp; '
+    if reads:
+        rows = "".join(
+            li + f'<a href="{_esc(_clean_url(r["url"]))}" style="color:#0f172a;text-decoration:none">'
+            f'{_esc(r["title"])}</a> <i class="text-muted" style="color:#64748b">'
+            f'{_esc(r.get("outlet") or "")}</i></li>' for r in reads)
+    else:
+        heads = [h for h in (story.get("headlines") or []) if str(h).strip()][:min(limit, HEADLINES_PER_CARD)]
+        if not heads:
+            return ""
+        rows = "".join(li + f'{_esc(h)}</li>' for h in heads)
+    return (label + '<ul style="list-style:none;margin:0 0 12px;padding:0;line-height:1.45;'
+            'color:#334155">' + rows + "</ul>")
+
+
+def _pill(href: str, text: str) -> str:
+    return (f'<a href="{_esc(href)}" class="pill" style="display:inline-block;background:{_NAVY};color:#fff;'
+            'padding:7px 14px;border-radius:99px;font-weight:700;text-decoration:none">'
+            f'{_esc(text)}</a>')
+
+
+def _actions_html(pick: "Pick", *, now: dt.datetime, videos: Dict[int, dict]) -> str:
+    from engine.funnel import newsletter_link
+
+    show, story = pick.show, pick.story
+    ep = int(story.get("episode_num") or 0)
+    post = _absolute(story.get("post_url") or "")
+    if not post:
+        return ""
+    listen = newsletter_link(f"{post}#listen", show.slug, ep)
+    # No "Read" link: the headline and the picture both open the episode's
+    # page, as on the front page, and a card has ~200 bytes to spare.
+    links = []
+    vids = videos.get(ep) or {}
+    if vids.get("long"):
+        links.append(_a(vids["long"], "Watch") + _esc(_release_note(vids.get("long_at", ""), now)))
+    if vids.get("short"):
+        links.append(_a(vids["short"], "Short")
+                     + _esc(_release_note(vids.get("short_at", ""), now)))
+    return ('<div style="font-size:14px;line-height:2.2;color:#334155">'
+            + _pill(listen, "▶ Listen") + (" &nbsp; " if links else "")
+            + " &nbsp;·&nbsp; ".join(links) + "</div>")
+
+
+def _meta(story: Dict[str, Any], day: dt.date) -> List[str]:
+    # The episode number stays in the picture's alt text and the link; on a
+    # phone "EP 155" pushed the kicker onto a second line.
+    meta: List[str] = []
+    when = _parse_day(story.get("date_raw"))
+    if when and when != day:
+        meta.append(_short_day(when))
+    dur = _duration_words(story.get("duration_s"))
+    if dur:
+        meta.append(dur)
+    return meta
+
+
+def _hook_text(story: Dict[str, Any]) -> str:
+    hook = _esc(story.get("hook") or "")
+    if story.get("guest") and story.get("guest") not in (story.get("hook") or ""):
+        hook = f"{_esc(story['guest'])}: {hook}"
+    return hook
+
+
 def card_html(pick: Pick, *, edition_ep: int, now: dt.datetime,
-              videos: Dict[int, dict], day: dt.date) -> str:
-    """One show's card: the hook, the deck (the digest's own sentences on
-    that story), two more headlines under "Also in this episode", and where
-    to hear it. The title link carries ``card-title`` so dark mode keeps it
-    a headline, not a link (``engine.newsletter_template``)."""
+              videos: Dict[int, dict], day: dt.date, reads: int = READS_PER_CARD) -> str:
+    """One show's story, set like the front page (Nov 8 2026): the kicker,
+    a serif headline with the episode's picture beside it, the deck (the
+    digest's own sentences), the hook story's sources, up to three more of
+    the episode's stories linked to the articles they came from, and where
+    to hear it. Stories are separated by a rule, not boxed. The title keeps
+    ``card-title`` so dark mode keeps it a headline."""
     from engine.funnel import newsletter_link
 
     show, story = pick.show, pick.story
     ep = int(story.get("episode_num") or 0)
     post = _absolute(story.get("post_url") or "")
     read = newsletter_link(post, show.slug, ep) if post else ""
-    listen = newsletter_link(f"{post}#listen", show.slug, ep) if post else ""
-    when = _parse_day(story.get("date_raw"))
-    meta = [f"Ep {ep}"]
-    if when and when != day:
-        meta.append(_short_day(when))
-    dur = _duration_words(story.get("duration_s"))
-    if dur:
-        meta.append(dur)
-    eyebrow = (f'<div style="font-size:12px;font-weight:700;letter-spacing:0.06em;'
-               f'text-transform:uppercase;color:{show.brand_text};margin:0 0 6px;">'
-               f'{_esc(show.name)} · {_esc(" · ".join(meta))}</div>')
-    hook = _esc(story.get("hook") or "")
-    if story.get("guest") and story.get("guest") not in (story.get("hook") or ""):
-        hook = f"{_esc(story['guest'])}: {hook}"
-    title = (f'<div class="card-title" style="font-size:17px;font-weight:700;line-height:1.4;margin:0 0 8px;">'
-             f'<a href="{_esc(read or post)}" style="color:#0f172a;text-decoration:none;">{hook}</a></div>')
+    title = (f'<h3 class="card-title" style="margin:0;{_SERIF}font-size:20px;line-height:1.3;'
+             f'font-weight:700;color:#0f172a;"><a href="{_esc(read or post)}" '
+             f'style="color:#0f172a;text-decoration:none;">{_hook_text(story)}</a></h3>')
+    head = _kicker(show, story, _meta(story, day)) + title
+    image = str(story.get("image_url") or "").strip()
+    if image.startswith("https://"):
+        # Not a link: the headline beside it is, and the ~200 bytes of a
+        # second tracked URL per card are what kept a Sunday copy clipped.
+        thumb = (f'<img src="{_esc(image)}" width="{THUMB_PX}" '
+                 f'alt="{_esc(_image_alt(show, ep))}" style="display:block;width:{THUMB_PX}px;'
+                 f'max-width:{THUMB_PX}px;height:auto;border-radius:8px;border:0">')
+        head = ('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">'
+                f'<tr><td valign="top" style="padding:0 14px 0 0">{head}</td>'
+                f'<td valign="top" width="{THUMB_PX}" style="width:{THUMB_PX}px">'
+                f'{thumb}</td></tr></table>')
     deck = str(story.get("deck") or "").strip()
-    deck_html = (f'<p class="deck" style="margin:0 0 10px;font-size:15px;line-height:1.6;'
-                 f'color:#1f2937;">{_esc(deck)}</p>') if deck else ""
-    heads = [h for h in (story.get("headlines") or []) if str(h).strip()][:HEADLINES_PER_CARD]
-    items = ""
-    if heads:
-        items = (f'<div class="text-muted" style="{_MUTED_LABEL}margin:0 0 4px;">Also in this episode</div>'
-                 '<ul style="margin:0 0 10px;padding-left:18px;font-size:15px;'
-                 'line-height:1.55;color:#334155;">'
-                 + "".join(f'<li>{_esc(h)}</li>' for h in heads)
-                 + "</ul>")
-    actions = []
-    if listen:
-        actions.append(_a(listen, "▶ Listen", bold=True))
-    if read:
-        actions.append(_a(read, "Read"))
-    vids = videos.get(ep) or {}
-    if vids.get("long"):
-        actions.append(_a(vids["long"], "Watch") + _esc(_release_note(vids.get("long_at", ""), now)))
-    if vids.get("short"):
-        actions.append(_a(vids["short"], "30-second version")
-                       + _esc(_release_note(vids.get("short_at", ""), now)))
-    action_row = ('<div style="font-size:14px;line-height:1.6;color:#334155;">'
-                  + " &nbsp;·&nbsp; ".join(actions) + "</div>") if actions else ""
-    return ('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-            'border="0" class="card" style="background:#f8fafc;border-radius:10px;'
-            'margin:0 0 14px;"><tr><td class="card" style="padding:14px 16px;'
-            f'border:1px solid #eef0f3;border-left:4px solid {show.brand};'
-            f'border-radius:10px;{_BODY_FONT}">'
-            f"{eyebrow}{title}{deck_html}{items}{action_row}</td></tr></table>")
+    deck_html = ('<p class="deck" style="margin:10px 0 8px;font-size:16px;line-height:1.6;'
+                 f'color:#1f2937">{_esc(deck)}</p>') if deck else '<div style="height:10px;"></div>'
+    return ('<div class="story" style="border-top:1px solid #e2e8f0;padding:18px 0 6px">'
+            f"{head}{deck_html}{_sources_line(story)}{_reads_html(story, reads)}"
+            f"{_actions_html(pick, now=now, videos=videos)}</div>")
+
+
+def lead_html(pick: Pick, *, now: dt.datetime, videos: Dict[int, dict], day: dt.date) -> str:
+    """The day's top story, for every reader: the episode's picture across
+    the column, the kicker, a large serif headline, the deck, its sources
+    and the rest of the episode's reporting — the front page's lead."""
+    from engine.funnel import newsletter_link
+
+    show, story = pick.show, pick.story
+    ep = int(story.get("episode_num") or 0)
+    post = _absolute(story.get("post_url") or "")
+    read = newsletter_link(post, show.slug, ep) if post else post
+    image = str(story.get("image_url") or "").strip()
+    picture = ""
+    if image.startswith("https://"):
+        picture = (f'<a href="{_esc(read)}"><img src="{_esc(image)}" width="{LEAD_IMAGE_PX}" '
+                   f'alt="{_esc(_image_alt(show, ep))}" style="display:block;width:100%;'
+                   f'max-width:{LEAD_IMAGE_PX}px;height:auto;border:0;border-radius:10px;'
+                   f'border-bottom:4px solid {show.brand};margin:0 0 14px;"></a>')
+    title = (f'<h2 class="card-title" style="margin:0 0 10px;padding:0;border:0;{_SERIF}font-size:27px;'
+             f'line-height:1.22;font-weight:700;letter-spacing:-0.01em;color:#0f172a;text-transform:none;">'
+             f'<a href="{_esc(read)}" style="color:#0f172a;text-decoration:none;">{_hook_text(story)}</a></h2>')
+    deck = str(story.get("deck") or "").strip()
+    deck_html = ('<p class="deck" style="margin:0 0 8px;font-size:17px;line-height:1.6;'
+                 f'color:#1f2937">{_esc(deck)}</p>') if deck else ""
+    return ('<div class="lead" style="padding:4px 0 8px;">'
+            + picture + _kicker(show, story, _meta(story, day)) + title + deck_html
+            + _sources_line(story) + _reads_html(story, LEAD_READS)
+            + _actions_html(pick, now=now, videos=videos) + "</div>")
+
+
+def choose_lead(picks: Sequence[Pick], day: dt.date) -> Optional[Pick]:
+    """The show that leads the email: :data:`LEAD_POOL` in rotation by date,
+    among today's picks that carry a picture and a deck. Deterministic."""
+    by_slug = {p.show.slug: p for p in picks}
+    pool = [by_slug[s] for s in LEAD_POOL
+            if s in by_slug and str(by_slug[s].story.get("image_url") or "").startswith("https://")
+            and str(by_slug[s].story.get("deck") or "").strip()]
+    if not pool:
+        return None
+    return pool[day.toordinal() % len(pool)]
+
+
+def masthead_html(day: dt.date, *, shows_today: int, listen_url: str = "",
+                  duration: str = "") -> str:
+    """The landing page's masthead in an email: the date line, "Nerra
+    Daily" in serif with the network tagline under it, and the whole
+    morning in one listen. Navy in light and dark mode alike."""
+    from engine.brand import NETWORK_TAGLINE
+
+    date_line = day.strftime("%A, %B ") + str(day.day) + day.strftime(", %Y")
+    count = (f"{shows_today} shows published this morning" if shows_today > 1
+             else "Stories from across the network")
+    listen = ""
+    if listen_url:
+        label = "▶ Hear all of it" + (f" · {duration}" if duration else "")
+        listen = (f'<div style="margin:16px 0 0;"><a href="{_esc(listen_url)}" style="display:inline-block;'
+                  f'background:{_ACCENT};color:#ffffff;padding:9px 16px;border-radius:999px;font-weight:700;'
+                  f'font-size:14px;text-decoration:none;{_BODY_FONT}">{_esc(label)}</a></div>')
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
+            f'bgcolor="{_NAVY}" style="background:{_NAVY};background-color:{_NAVY};">'
+            f'<tr><td style="padding:20px 24px 22px;{_BODY_FONT}">'
+            f'<div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;'
+            f'color:#e2e8f0;">{_esc(date_line)}</div>'
+            f'<div style="font-size:13px;color:#94a3b8;margin:4px 0 14px;padding:0 0 12px;'
+            f'border-bottom:1px solid #1e293b;">{_esc(count)}</div>'
+            f'<div style="{_SERIF}font-size:36px;line-height:1.1;font-weight:700;color:#ffffff;'
+            f'letter-spacing:-0.01em;">Nerra <span style="color:#60a5fa;">Daily</span></div>'
+            f'<div style="{_SERIF}font-style:italic;font-size:17px;line-height:1.4;color:#e2e8f0;'
+            f'margin:8px 0 0;"><span style="color:#60a5fa;font-style:normal;">&#8212;</span> '
+            f'{_esc(NETWORK_TAGLINE)}</div>'
+            f'{listen}</td></tr></table>')
 
 
 def also_headline(story: Dict[str, Any]) -> str:
@@ -684,19 +876,18 @@ def also_headline(story: Dict[str, Any]) -> str:
 
 
 def also_line(pick: Pick, *, edition_ep: int) -> str:
-    """One line: the show as a muted label, the short headline as a plain
-    link (no underline — a run of seventeen underlined spoken hooks read as
-    a list, not a briefing)."""
+    """One line as the front page's "Latest across the network" sets it: the
+    show as a coloured kicker, the short headline in serif under it."""
     from engine.funnel import newsletter_link
 
     show, story = pick.show, pick.story
     ep = int(story.get("episode_num") or 0)
     post = _absolute(story.get("post_url") or "")
     href = newsletter_link(post, show.slug, ep) if post else _absolute(show.show_page)
-    return ('<p style="margin:0 0 8px;font-size:15px;line-height:1.5;color:#1f2937;">'
-            f'<span class="text-muted" style="{_MUTED_LABEL}">{_esc(show.name)}</span> · '
-            f'<a href="{_esc(href)}" style="color:#0f172a;text-decoration:none;font-weight:600;">'
-            f'{_esc(also_headline(story))}</a></p>')
+    return ('<p style="margin:0 0 14px;padding:0 0 12px;border-bottom:1px solid #eef2f6;line-height:1.35;">'
+            f'<span style="{_KICKER}color:{show.brand_text};">{_esc(show.name)}</span><br>'
+            f'<a href="{_esc(href)}" style="{_SERIF}color:#0f172a;text-decoration:none;font-weight:700;'
+            f'font-size:17px;">{_esc(also_headline(story))}</a></p>')
 
 
 def also_groups(picks: Sequence[Pick]) -> List[Tuple[str, List[Pick]]]:
@@ -764,9 +955,9 @@ def week_list_html(show: EmailShow, rows: List[Dict[str, Any]]) -> str:
         href = newsletter_link(url, show.slug, row["episode_num"], placement=PLACEMENT_WEEK)
         items.append(f'<li>{_esc(_short_day(row["date"]))} · '
                      f'<a href="{_esc(href)}" style="{_LINK}">{_esc(row["hook"])}</a></li>')
-    return (f'<p style="margin:16px 0 6px;font-size:13px;font-weight:700;letter-spacing:0.05em;'
-            f'text-transform:uppercase;color:{show.brand_text};">{_esc(show.name)}</p>'
-            '<ul style="margin:0 0 8px;padding-left:18px;font-size:15px;line-height:1.55;color:#334155;">'
+    return (f'<p style="margin:16px 0 6px;font-size:13px;font-weight:700;letter-spacing:.05em;'
+            f'text-transform:uppercase;color:{show.brand_text}">{_esc(show.name)}</p>'
+            '<ul style="margin:0 0 8px;padding-left:18px;font-size:15px;line-height:1.55;color:#334155">'
             + "".join(items) + "</ul>")
 
 
@@ -810,10 +1001,40 @@ class Composed:
     archive_url: str = ""
 
 
+def largest_copy_bytes(composed: "Composed", front: dict, root: Path = ROOT) -> int:
+    """The size of the biggest copy a subscriber can receive: the reader
+    who follows every show and is a member."""
+    tags = [s.tag for s in eligible_shows(front, root)] + [PAID_TAG]
+    return len(render_for(composed.body, tags).encode())
+
+
 def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = None,
             front: Optional[dict] = None, trial_days: int = 0,
             allow_no_edition: bool = False) -> Optional[Composed]:
-    """Build the day's Nerra Daily email, or ``None`` when there is nothing to send."""
+    """Build the day's Nerra Daily email, or ``None`` when there is nothing to send.
+
+    The cards' "More in this episode" links are the one part that gives way
+    to Gmail's clipping point (Nov 8 2026): the email is composed with
+    :data:`READS_PER_CARD` of them, and with fewer when the largest copy
+    would pass :func:`size_warning_bytes` (a Sunday, a reader who follows
+    every show). The lead keeps its links, and every card keeps its
+    headline, deck, sources and buttons. A copy still over the budget at
+    zero is returned as it is; the send script warns.
+    """
+    front = front if front is not None else load_front(root)
+    budget = size_warning_bytes()
+    composed = None
+    for reads in range(READS_PER_CARD, -1, -1):
+        composed = _compose(day, root=root, now=now, front=front, trial_days=trial_days,
+                            allow_no_edition=allow_no_edition, card_reads=reads)
+        if composed is None or largest_copy_bytes(composed, front, root) <= budget:
+            return composed
+    return composed
+
+
+def _compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = None,
+             front: Optional[dict] = None, trial_days: int = 0,
+             allow_no_edition: bool = False, card_reads: int = READS_PER_CARD) -> Optional[Composed]:
     from engine.funnel import PLACEMENT_WEEK, newsletter_link
     from engine.newsletter_template import wrap_with_branding
     from engine.titles import NEWSLETTER_SUBJECT_MAX, clip_words
@@ -846,6 +1067,11 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
 
     edition_ep = int((edition or {}).get("episode_num") or 0)
     sunday = day.weekday() == 6
+    all_picks = list(picks)
+    # Nov 8 2026: one story leads for every reader, with its picture; its
+    # show is then left out of the cards and the one-liners below.
+    lead = choose_lead(all_picks, day)
+    picks = [p for p in all_picks if p is not lead]
     published_tags = [p.show.tag for p in picks]
     by_slug = {p.show.slug: p for p in picks}
     default_slugs = [s for s in DEFAULT_SHOWS if s in by_slug]
@@ -855,14 +1081,17 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         default_slugs = [p.show.slug for p in picks[:3]]
 
     lines: List[str] = []
-    # No paragraph about the layout: the masthead's lead line says what
-    # follows, and the first thing a reader sees is the first card.
+    # No paragraph about the layout: the masthead says what follows, and the
+    # first thing a reader sees under it is the lead story.
+    videos_by_slug = {p.show.slug: video_links(p.show.slug, root, now) for p in all_picks}
+    if lead is not None:
+        lines.append(lead_html(lead, now=send_at, videos=videos_by_slug.get(lead.show.slug, {}), day=day))
 
     # --- Your shows --------------------------------------------------------
     lines.append("<div>" + followed_any_of(published_tags) + _heading("Your shows today") + ENDIF + "</div>")
-    videos_by_slug = {p.show.slug: video_links(p.show.slug, root, now) for p in picks}
     cards = {p.show.slug: card_html(p, edition_ep=edition_ep, now=send_at,
-                                    videos=videos_by_slug.get(p.show.slug, {}), day=day)
+                                    videos=videos_by_slug.get(p.show.slug, {}), day=day,
+                                    reads=card_reads)
              for p in picks}
     for pick in picks:
         lines.append("<div>" + tag_in(pick.show.tag) + cards[pick.show.slug] + ENDIF + "</div>")
@@ -916,9 +1145,14 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
             lines.append('<ol style="margin:0 0 16px;padding-left:22px;font-size:15px;'
                          'line-height:1.55;color:#1f2937;">' + "".join(items) + "</ol>")
         week_blocks = []
+        today_slugs = {p.show.slug for p in all_picks}
         for show in shows:
             rows = week_records(show.slug, day, root)
             if len(rows) < 2:
+                continue
+            # Today's episode is already a card or a line above (Nov 8 2026).
+            rows = [r for r in rows if r["date"] != day or show.slug not in today_slugs]
+            if not rows:
                 continue
             week_blocks.append("<div>" + tag_in(show.tag)
                                + week_list_html(show, rows)
@@ -937,7 +1171,7 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
 
     body = "\n".join(lines)
 
-    lead_hook = (edition or {}).get("hook") or (picks[0].story.get("hook") if picks else "")
+    lead_hook = (edition or {}).get("hook") or (all_picks[0].story.get("hook") if all_picks else "")
     lead_hook = str(lead_hook or _when(day)).strip().rstrip(" .")
     # The edition's title carries "<Weekday> edition — " for the podcast app
     # (engine.daily_edition.edition_hook); in an inbox showing ~40
@@ -955,14 +1189,14 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
     # The preheader is a second and third story, not a list of show names
     # (Nov 3 2026); the show list stays when the day has fewer than two.
     more_hooks = [clip_words(str(p.story.get("hook") or "").strip().rstrip(" ."), 60)
-                  for p in picks[:3]]
+                  for p in all_picks[:3]]
     more_hooks = [h for h in more_hooks if h and h.lower() != lead_hook.lower()][:2]
     if len(more_hooks) >= 2:
         preheader = "Also: " + " · ".join(more_hooks)
     else:
-        others = [p.show.name for p in picks[:4]]
+        others = [p.show.name for p in all_picks[:4]]
         preheader = (("Today: " + ", ".join(others)) if others else "Today on Nerra") + \
-            (f", and {len(picks) - 4} more" if len(picks) > 4 else "")
+            (f", and {len(all_picks) - 4} more" if len(all_picks) > 4 else "")
     archive_slug = f"nerra-daily-{day.isoformat()}"
 
     featured = None
@@ -977,18 +1211,13 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
             "listen_url": newsletter_link(f"{post}#listen", EMAIL_SLUG, edition_ep) if post else "",
         }
 
-    # The masthead's one lead line: what follows, and the whole morning in
-    # one listen. It precedes every heading, so the archive copy (no reader
-    # in the context) does not open on one either.
-    lead_bits = ["Your shows below, then the rest of Nerra"]
-    if featured and featured["listen_url"] and edition is not None:
-        dur = _duration_words(edition.get("duration_s"))
-        if dur:
-            lead_bits.append(f'<a href="{_esc(featured["listen_url"])}" '
-                             'style="color:#ffffff;text-decoration:underline;font-weight:600;">'
-                             f'▶ {_esc(dur)}</a>, the whole morning in one listen')
-    masthead_lead = ('<p style="margin:6px 0 2px;font-size:13px;line-height:1.5;'
-                     'color:#ffffff;">' + " · ".join(lead_bits) + "</p>")
+    # The masthead (Nov 8 2026): the landing page's, with the whole morning
+    # in one listen. It precedes every heading, so the archive copy (no
+    # reader in the context) opens on it too.
+    masthead = masthead_html(
+        day, shows_today=len(all_picks),
+        listen_url=(featured or {}).get("listen_url") or "",
+        duration=_duration_words((edition or {}).get("duration_s")) if edition else "")
 
     from engine.newsletter import BUTTONDOWN_USERNAME
     archive_url = f"https://buttondown.com/{BUTTONDOWN_USERNAME}/archive/{archive_slug}/"
@@ -1006,10 +1235,10 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
         # Nov 3 2026: the first screen is the news. The compact masthead
         # replaces the 350 px hero, the edition's card follows the reader's
         # own shows, and its eyebrow says what it is.
-        hero="compact",
+        hero="custom",
+        masthead_html=masthead,
         featured_position="after_body",
         featured_eyebrow="🎧 Hear all of it",
-        masthead_lead_html=masthead_lead,
     )
     # The shared footer (listen / blog / gallery / data / start here) is
     # built for every newsletter and carries no campaign; in this email every
@@ -1024,11 +1253,11 @@ def compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = Non
 
     wrapped = _re.sub(r'href="(https://nerranetwork\.com/[^"]*)"', _tag_footer, wrapped)
 
-    included = {p.show.slug: p.included for p in picks}
+    included = {p.show.slug: p.included for p in all_picks}
     if edition is not None:
         included[EMAIL_SLUG] = [edition_ep]
     return Composed(subject=subject, body=wrapped, preheader=preheader,
-                    included=included, sections=[p.show.slug for p in picks],
+                    included=included, sections=[p.show.slug for p in all_picks],
                     edition_ep=edition_ep, sunday=sunday, archive_slug=archive_slug,
                     archive_url=archive_url)
 
