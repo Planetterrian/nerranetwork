@@ -41,7 +41,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 from engine.daily_edition import (
     EDITIONS,
@@ -1455,6 +1455,36 @@ def prune_episode_state(episodes: List[dict]) -> Tuple[List[dict], List[str]]:
     dropped = [str(r.get("filename")) for r in rows[PERSONAL_FEED_MAX_EPISODES:]
                if r.get("filename")]
     return kept, dropped
+
+
+#: Nov 8 2026: how many times a sweep may re-make a member's day because a
+#: show in their lineup published after the edition was built. One: the
+#: only show that publishes after the morning wake today is Vancouver Daily
+#: News (08:15 ET, after the 7:00 ET edition), and a second late show would
+#: not justify a third build of Mira's links.
+LATE_FILLS_PER_DAY = 1
+
+
+def late_shows(row: Optional[dict], lineup: Sequence[str],
+               available: Iterable[str]) -> List[str]:
+    """The lineup shows that have published since *row* (today's built
+    edition) was made, in lineup order — empty when nothing needs a re-make.
+
+    Until Nov 8 2026 a member who carried Vancouver Daily News never heard
+    it: the edition is built at the 7:00 ET wake, Vancouver publishes at
+    08:15 ET, and the sweeps skipped any member already built for the date.
+
+    Conservative by construction: a row without ``shows`` (built before this
+    field existed) is never re-made, a row already late-filled
+    :data:`LATE_FILLS_PER_DAY` times is left alone, and a show counts only
+    when it is in the lineup, available now and absent from the row."""
+    if not row or not isinstance(row.get("shows"), list):
+        return []
+    if int(row.get("late_fills", 0) or 0) >= LATE_FILLS_PER_DAY:
+        return []
+    carried = {str(s) for s in row["shows"]}
+    ready = set(available)
+    return [s for s in lineup if s in ready and s not in carried]
 
 
 def personal_episode_title(target_date: _dt.date,

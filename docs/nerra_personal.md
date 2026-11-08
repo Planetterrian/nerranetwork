@@ -339,9 +339,13 @@ Batch host:
    ~8:00 AM Pacific from Oct 8). **Vancouver Daily News is choosable here but
    is not in the edition** and publishes after it (08:15 ET slot); the wake
    at edition time is too early for it, and the builder skips members
-   already built for the date, so today a member who carries Vancouver gets
-   a feed without that day's Vancouver segment (open operator item: a second
-   wake after Vancouver lands, or a per-member re-make). It needs one secret in THIS repo:
+   already built for the date, so until Nov 8 2026 a member who carried
+   Vancouver got a feed without that day's Vancouver segment. Now each
+   edition row records the `shows` it carried, and the next sweep re-makes
+   the day ONCE (`engine.personal_edition.late_shows`,
+   `LATE_FILLS_PER_DAY`; the same GUID through the replace path) when a
+   lineup show has published since. A row from before the field is never
+   re-made. Guards `tests/test_personal_late_shows_2026_11_08.py`. It needs one secret in THIS repo:
    `PERSONAL_BATCH_DISPATCH_TOKEN` = a fine-grained PAT (Settings →
    Developer settings → Personal access tokens → Fine-grained), repository
    access **only `nerra-personal-batch`**, permission **Actions: Read and
