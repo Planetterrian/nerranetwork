@@ -50,7 +50,7 @@ class TestSoftPersonalInterestPage:
         assert 'id="spi-email"' in src and "required" in src
         assert 'id="spi-name"' in src
         assert "I’m interested in Nerra Personal" in src
-        assert "I’d like the free SpaceX Daily / network newsletter too" in src
+        assert "I’d also like the free Nerra Daily email, 7:00 AM Eastern" in src
         assert "Save my email" in src
         assert "Or start Personal now →" in src
         assert "join.html" in src

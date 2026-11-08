@@ -674,9 +674,24 @@ def build_for_spec(
     episodes: List[dict] = state.get("episodes", [])
     date_iso = target_date.isoformat()
     previous = [e for e in episodes if e.get("date") == date_iso]
+    late_fills = 0
     if previous and not replace:
-        logger.info("%s…: already built today", spec.token[:8])
-        return True
+        # Nov 8 2026: a show in the lineup that published after this
+        # edition was built (Vancouver Daily News, 08:15 ET, after the
+        # 7:00 ET wake) re-makes the day once, on the same GUID.
+        from engine.personal_edition import late_shows
+
+        late = late_shows(previous[0], spec.shows,
+                          [s for s in segments_by_slug if s in cache])
+        if not late:
+            logger.info("%s…: already built today", spec.token[:8])
+            return True
+        late_fills = 1 + int(previous[0].get("late_fills", 0) or 0)
+        logger.info("%s…: %d lineup show(s) published since today's "
+                    "edition (%s) — re-making it", spec.token[:8],
+                    len(late), ", ".join(late))
+    elif previous:
+        late_fills = int(previous[0].get("late_fills", 0) or 0)
     # A replaced day keeps its episode number and GUID (no duplicate in
     # the app) but gets a fresh filename so cached audio is re-fetched.
     revision = 1 + max((int(e.get("revision", 0)) for e in previous), default=0)
@@ -841,6 +856,10 @@ def build_for_spec(
             "built_at": dt.datetime.now(dt.timezone.utc).isoformat(
                 timespec="seconds").replace("+00:00", "Z"),
             "revision": revision if previous else 0,
+            # Nov 8 2026: the shows this edition carried, so a later sweep
+            # can tell a show that published afterwards (late_shows).
+            "shows": [seg.slug for seg in segments],
+            "late_fills": late_fills,
             "transcripts": [tr_json_name, tr_vtt_name],
             # Edition memory (Oct 18 2026): what this edition carried, so
             # tomorrow's Mira knows what the listener already heard. Public
