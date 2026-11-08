@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 07 Nov 2026 10:58:47 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 08 Nov 2026 11:08:31 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,142 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 228: Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; A verified table from model configs shows DeepSeek-V4-Pro using 384 experts with sqrtsoftplus gating and hash routing in three layers, while Llama 4 Maverick keeps its gating method undisclosed. Hamburg’s data-protection office adopted GPT-5.6 Terra inside a wrapper that blocks personal-data leakage even though the model itself likely retains training data. The U.S. Center for Advancing Innovation and Standards for Super Intelligence now routes staff reports informally to the White House, raising questions about research independence.
+
+Top Story
+MarkTechPost published a side-by-side audit of routing knobs across ten open Mixture-of-Experts models drawn directly from their Hugging Face config.json files and technical reports. Expert counts range from 8 in Mixtral to 384 in DeepSeek-V4-Pro and Kimi K2; top-k selection runs from 1 in Llama 4 Maverick to 8 in several Qwen and Kimi variants. DeepSeek-V3 and later variants replace the usual auxiliary loss with an aux-loss-free bias that steers expert selection without altering mixing weights. Kimi K2 demonstrated that raising sparsity from 8 to 48 cut FLOPs by 1.69x at identical validation loss. Builders now have an auditable reference for deciding whether a given MoE will run on a single 80 GB GPU or requires expert parallelism across multiple cards. The same outlet released a companion guide the same day that walks through the seven routing strategies in production use. Source: &lt;a href="https://www.marktechpost.com/2026/11/08/moe-model-routing-comparison/"&gt;marktechpost.com&lt;/a&gt; Source: &lt;a href="https://www.marktechpost.com/2026/11/07/moe-routing-strategies-explained/"&gt;marktechpost.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;GRFNet, PyTorch model for multichannel time-series classification [P]: r/MachineLearning&lt;/b&gt;
+The model mixes input channels with learned spatial filters initialized from electrode positions when available, then passes the result through a bank of mostly frozen dilated convolutions. It extracts summary statistics, gates them, and classifies with a 3,847-parameter head on the default 22-channel, 4-class setting. The architecture accepts variable-length inputs and adapts to sampling rate without retraining. A subject-independent evaluation on PhysioNet EEGMMIDB is underway, comparing against EEGNet and ShallowConvNet. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xqqj67/grfnet_pytorch_model_for_multichannel_timeseries/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Timestral, t0, Tabby, and Morpheus-2.0 Compared on GIFT-Eval: Towards Data Science&lt;/b&gt;
+All four time-series foundation models scale, patch, and output quantiles; the decisive difference lies in how each series shares information across the batch. The post walks through the architectural split that determines whether models treat series independently or borrow statistical strength from one another during training. Source: &lt;a href="https://towardsdatascience.com/timestral-t0-tabby-and-morpheus-20-compared-on-gift-eval/"&gt;towardsdatascience.com&lt;/a&gt;
+
+&lt;b&gt;Locally trained VLA model with minimal attention based vision encoder. [p]: r/MachineLearning&lt;/b&gt;
+A 25.5 M parameter recurrent model maintains a 768×768 state matrix with per-cell LSTM-style gates and learns visual attention directly over raw 128×128 RGB pixels without a separate pretrained encoder. It was transitioned from a language-modeling checkpoint and now performs a shape-naming task in 1-, 2-, and 3-room 3-D environments, reaching &gt;90 %, &gt;80 %, and &gt;60 % success respectively on randomized test runs. Training used supervised imitation on 70 k steps with batch size 4 after an initial 150 k language-modeling steps. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xqrtcz/locally_trained_vla_model_with_minimal_attention/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Nine AI agents tried autonomous research on open questions from US national labs and none passed the experts' bar: The Decoder&lt;/b&gt;
+Nine autonomous agents were given open research questions drawn from U.S. national-lab problem lists and produced no outputs that met the bar set by domain experts. The evaluation focused on whether agents could formulate, execute, and validate novel research steps without human intervention. Source: &lt;a href="https://the-decoder.com/nine-ai-agents-tried-autonomous-research-on-open-questions-from-us-national-labs-and-none-passed-the-experts-bar/"&gt;the-decoder.com&lt;/a&gt;
+
+&lt;b&gt;Law Firms Have Malpractice Insurance. Should Their A.I. Agents?: The New York Times&lt;/b&gt;
+The piece examines whether existing malpractice policies cover errors made by AI agents that draft contracts, perform due diligence, or manage discovery. It notes that firms already purchase coverage for human associates and asks how liability should attach when the agent operates inside the firm’s workflow. Source: &lt;a href="https://www.nytimes.com/2026/11/07/business/dealbook/crosby-ai-agent-liability-malpractice-insurance.html"&gt;nytimes.com&lt;/a&gt;
+
+&lt;b&gt;Amazon Quick Unveils Taxonomy for Agentic AI Primitives: The Chenab Times&lt;/b&gt;
+Amazon Quick released a taxonomy that breaks agentic systems into named primitives for planning, tool use, memory, and verification. The taxonomy is intended to give developers a common vocabulary when composing multi-step agents on AWS infrastructure. Source: &lt;a href="https://thechenabtimes.com/2026/11/07/amazon-quick-unveils-taxonomy-for-agentic-ai-primitives/"&gt;thechenabtimes.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;What if diffusion models generates Neural Network weights? Gen AI generate Gen AI [R]: r/MachineLearning&lt;/b&gt;
+A small diffusion model was trained to output neural-network weight tensors instead of images, with a proof-of-concept repository and web demo that lets users request simple controllers such as a Pong paddle network. The author reports partial success after 3 000 of 4 000 training steps on CPU and invites community contributions or pointers to related papers. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xqsl8d/what_if_diffusion_models_generates_neural_network/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;TristanTube: YouTube viewer from Tristan's top channels: Andrej Karpathy&lt;/b&gt;
+Karpathy built a YouTube-style viewer over the 47 k videos in Tristan’s tier list, adding dark mode, an about page, and a TV mode for passive watching. The entire site was generated in three minutes with Claude Code. Source: &lt;a href="https://karpathy.ai/tristan-tube/"&gt;karpathy.ai&lt;/a&gt; Source: &lt;a href="https://x.com/karpathy/status/2119130029699547594"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Garak: LLM Vulnerability Scanner &amp; Probing Guide: CASRAI&lt;/b&gt;
+CASRAI published a practical guide to Garak, an open-source scanner that probes LLMs for prompt-injection, data-leakage, and jailbreak vulnerabilities. The guide walks through installation, probe selection, and result interpretation for red-team workflows. Source: &lt;a href="https://casrai.org/guides/garak"&gt;casrai.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Hamburg regulator uses OpenAI model to draft letters as complaints rise 62%: PPC Land&lt;/b&gt;
+The Hamburg data-protection office reviewed and then deployed an OpenAI-based chatbot wrapped so that personal data cannot leak back out, using it to draft routine correspondence while humans retain final legal reasoning. Source: &lt;a href="https://ppc.land/hamburg-regulator-uses-openai-model-to-draft-letters-as-complaints-rise-62/"&gt;ppc.land&lt;/a&gt;
+
+&lt;b&gt;Staff at the US center for AI safety are reporting to the White House, raising independence concerns: ABC News&lt;/b&gt;
+The Center for Advancing Innovation and Standards for Super Intelligence lacks a permanent director, has stopped publishing research, and now routes staff work informally to the White House, prompting concerns that findings on frontier systems could be muted. Source: &lt;a href="https://abcnews.com/US/wireStory/staff-us-center-ai-safety-reporting-white-house-137950879"&gt;abcnews.com&lt;/a&gt;
+
+&lt;b&gt;Advice needed regarding classical ML conference submission [D]: r/MachineLearning&lt;/b&gt;
+A PhD student reports that area chairs at top conferences rejected classical ML work on SVMs and logistic regression as “done and dusted,” even when reviewers found the claims novel, and asks whether such topics now belong only in journals or on arXiv. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xqqrof/advice_needed_regarding_classical_ml_conference/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Can I become an ML/AI Engineer with a BS Mathematics and Data Science degree instead of Computer Science? [D]: r/MachineLearning&lt;/b&gt;
+A student pursuing a mathematics-and-data-science degree asks whether employers view the credential as sufficient for ML engineering roles and what additional CS fundamentals would close any perceived gap. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xqcl2h/can_i_become_an_mlai_engineer_with_a_bs/"&gt;reddit.com&lt;/a&gt;
+
+Things to Try This Week
+• Run the Garak scanner against any new model release you are evaluating to surface prompt-injection or data-leakage vectors before production use.
+• Clone the nngen repository and continue the diffusion weight-generation experiment on a narrow controller domain to test whether the partial results hold.
+• Compare Timestral against Tabby on your own time-series dataset using the GIFT-Eval protocol to see which information-sharing strategy reduces error on your data distribution.
+• Load the GRFNet PyTorch implementation on your own multichannel EEG or sensor data and measure how the learned spatial filters affect subject-independent accuracy versus a standard EEGNet baseline.
+
+On the Horizon
+• Continued community experiments on diffusion-based weight generation may surface papers or larger-scale replications in the coming weeks.
+• More regulators are expected to publish case studies on wrapped frontier models following Hamburg’s nine-page review.
+• Additional agent evaluations on national-lab open questions will likely appear as teams refine harnesses and success criteria.</description>
+      <guid isPermaLink="false">models-agents-video-ep228-20261108</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep228_20261108.mp4" length="229630063" type="video/mp4" />
+      <pubDate>Sun, 08 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep228_20261108.jpg" />
+      <itunes:duration>09:26</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change which hardware setups actually fit.**
+
+**What You Need to Know:** A verified table from model configs shows DeepSeek-V4-Pro using 384 experts with sqrtsoftplus gating and hash routing in three layers, while Llama 4 Maverick keeps its gating method undisclosed. Hamburg’s data-protection office adopted GPT-5.6 Terra inside a wrapper that blocks personal-data leakage even though the model itself likely retains training data. The U.S. Center for Advancing Innovation and Standards for Super Intelligence now routes staff reports informally to the White House, raising questions about research independence.
+---
+### Top Story
+MarkTechPost published a side-by-side audit of routing knobs across ten open Mixture-of-Experts models drawn directly from their Hugging Face config.json files and technical reports. Expert counts range from 8 in Mixtral to 384 in DeepSeek-V4-Pro and Kimi K2; top-k selection runs from 1 in Llama 4 Maverick to 8 in several Qwen and Kimi variants. DeepSeek-V3 and later variants replace the usual auxiliary loss with an aux-loss-free bias that steers expert selection without altering mixing weights. Kimi K2 demonstrated that raising sparsity from 8 to 48 cut FLOPs by 1.69x at identical validation loss. Builders now have an auditable reference for deciding whether a given MoE will run on a single 80 GB GPU or requires expert parallelism across multiple cards. The same outlet released a companion guide the same day that walks through the seven routing strategies in production use. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/08/moe-model-routing-comparison/) Source: [marktechpost.com](https://www.marktechpost.com/2026/11/07/moe-routing-strategies-explained/)
+
+### Model Updates
+**GRFNet, PyTorch model for multichannel time-series classification [P]: r/MachineLearning**
+The model mixes input channels with learned spatial filters initialized from electrode positions when available, then passes the result through a bank of mostly frozen dilated convolutions. It extracts summary statistics, gates them, and classifies with a 3,847-parameter head on the default 22-channel, 4-class setting. The architecture accepts variable-length inputs and adapts to sampling rate without retraining. A subject-independent evaluation on PhysioNet EEGMMIDB is underway, comparing against EEGNet and ShallowConvNet. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xqqj67/grfnet_pytorch_model_for_multichannel_timeseries/)
+
+**Timestral, t0, Tabby, and Morpheus-2.0 Compared on GIFT-Eval: Towards Data Science**
+All four time-series foundation models scale, patch, and output quantiles; the decisive difference lies in how each series shares information across the batch. The post walks through the architectural split that determines whether models treat series independently or borrow statistical strength from one another during training. Source: [towardsdatascience.com](https://towardsdatascience.com/timestral-t0-tabby-and-morpheus-20-compared-on-gift-eval/)
+
+**Locally trained VLA model with minimal attention based vision encoder. [p]: r/MachineLearning**
+A 25.5 M parameter recurrent model maintains a 768×768 state matrix with per-cell LSTM-style gates and learns visual attention directly over raw 128×128 RGB pixels without a separate pretrained encoder. It was transitioned from a language-modeling checkpoint and now performs a shape-naming task in 1-, 2-, and 3-room 3-D environments, reaching &gt;90 %, &gt;80 %, and &gt;60 % success respectively on randomized test runs. Training used supervised imitation on 70 k steps with batch size 4 after an initial 150 k language-modeling steps. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xqrtcz/locally_trained_vla_model_with_minimal_attention/)
+
+### Agent &amp; Tool Developments
+**Nine AI agents tried autonomous research on open questions from US national labs and none passed the experts' bar: The Decoder**
+Nine autonomous agents were given open research questions drawn from U.S. national-lab problem lists and produced no outputs that met the bar set by domain experts. The evaluation focused on whether agents could formulate, execute, and validate novel research steps without human intervention. Source: [the-decoder.com](https://the-decoder.com/nine-ai-agents-tried-autonomous-research-on-open-questions-from-us-national-labs-and-none-passed-the-experts-bar/)
+
+**Law Firms Have Malpractice Insurance. Should Their A.I. Agents?: The New York Times**
+The piece examines whether existing malpractice policies cover errors made by AI agents that draft contracts, perform due diligence, or manage discovery. It notes that firms already purchase coverage for human associates and asks how liability should attach when the agent operates inside the firm’s workflow. Source: [nytimes.com](https://www.nytimes.com/2026/11/07/business/dealbook/crosby-ai-agent-liability-malpractice-insurance.html)
+
+**Amazon Quick Unveils Taxonomy for Agentic AI Primitives: The Chenab Times**
+Amazon Quick released a taxonomy that breaks agentic systems into named primitives for planning, tool use, memory, and verification. The taxonomy is intended to give developers a common vocabulary when composing multi-step agents on AWS infrastructure. Source: [thechenabtimes.com](https://thechenabtimes.com/2026/11/07/amazon-quick-unveils-taxonomy-for-agentic-ai-primitives/)
+
+### Practical &amp; Community
+**What if diffusion models generates Neural Network weights? Gen AI generate Gen AI [R]: r/MachineLearning**
+A small diffusion model was trained to output neural-network weight tensors instead of images, with a proof-of-concept repository and web demo that lets users request simple controllers such as a Pong paddle network. The author reports partial success after 3 000 of 4 000 training steps on CPU and invites community contributions or pointers to related papers. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xqsl8d/what_if_diffusion_models_generates_neural_network/)
+
+**TristanTube: YouTube viewer from Tristan's top channels: Andrej Karpathy**
+Karpathy built a YouTube-style viewer over the 47 k videos in Tristan’s tier list, adding dark mode, an about page, and a TV mode for passive watching. The entire site was generated in three minutes with Claude Code. Source: [karpathy.ai](https://karpathy.ai/tristan-tube/) Source: [x.com](https://x.com/karpathy/status/2119130029699547594)
+
+**Garak: LLM Vulnerability Scanner &amp; Probing Guide: CASRAI**
+CASRAI published a practical guide to Garak, an open-source scanner that probes LLMs for prompt-injection, data-leakage, and jailbreak vulnerabilities. The guide walks through installation, probe selection, and result interpretation for red-team workflows. Source: [casrai.org](https://casrai.org/guides/garak)
+
+### Also Today
+**Hamburg regulator uses OpenAI model to draft letters as complaints rise 62%: PPC Land**
+The Hamburg data-protection office reviewed and then deployed an OpenAI-based chatbot wrapped so that personal data cannot leak back out, using it to draft routine correspondence while humans retain final legal reasoning. Source: [ppc.land](https://ppc.land/hamburg-regulator-uses-openai-model-to-draft-letters-as-complaints-rise-62/)
+
+**Staff at the US center for AI safety are reporting to the White House, raising independence concerns: ABC News**
+The Center for Advancing Innovation and Standards for Super Intelligence lacks a permanent director, has stopped publishing research, and now routes staff work informally to the White House, prompting concerns that findings on frontier systems could be muted. Source: [abcnews.com](https://abcnews.com/US/wireStory/staff-us-center-ai-safety-reporting-white-house-137950879)
+
+**Advice needed regarding classical ML conference submission [D]: r/MachineLearning**
+A PhD student reports that area chairs at top conferences rejected classical ML work on SVMs and logistic regression as “done and dusted,” even when reviewers found the claims novel, and asks whether such topics now belong only in journals or on arXiv. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xqqrof/advice_needed_regarding_classical_ml_conference/)
+
+**Can I become an ML/AI Engineer with a BS Mathematics and Data Science degree instead of Computer Science? [D]: r/MachineLearning**
+A student pursuing a mathematics-and-data-science degree asks whether employers view the credential as sufficient for ML engineering roles and what additional CS fundamentals would close any perceived gap. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xqcl2h/can_i_become_an_mlai_engineer_with_a_bs/)
+---
+
+### Things to Try This Week
+- Run the Garak scanner against any new model release you are evaluating to surface prompt-injection or data-leakage vectors before production use.
+- Clone the nngen repository and continue the diffusion weight-generation experiment on a narrow controller domain to test whether the partial results hold.
+- Compare Timestral against Tabby on your own time-series dataset using the GIFT-Eval protocol to see which information-sharing strategy reduces error on your data distribution.
+- Load the GRFNet PyTorch implementation on your own multichannel EEG or sensor data and measure how the learned spatial filters affect subject-independent accuracy versus a standard EEGNet baseline.
+
+### On the Horizon
+- Continued community experiments on diffusion-based weight generation may surface papers or larger-scale replications in the coming weeks.
+- More regulators are expected to publish case studies on wrapped frontier models following Hamburg’s nine-page review.
+- Additional agent evaluations on national-lab open questions will likely appear as teams refine harnesses and success criteria.
+</itunes:summary>
+      <itunes:episode>228</itunes:episode>
+      <itunes:title>Ep 228: Ten open MoE models expose routing choices that swing sparsity from 4x to 128x and change…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep228_20261108_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep228.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 227: Ling-3.2-flash ships a 560B/25B multimodal MoE with 1M context and OpenAI-compatible APIs…</title>
       <description>Models &amp; Agents
@@ -4528,133 +4664,14 @@ MoE models keep most parameters off the GPU until needed, yet loading experts fr
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep199_20261010_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep199.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 198: Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Anthropic launches OSS Scanner and the Anthropic Cyber Mission to secure open-source software and critical infrastructure while making Claude available to federal agencies. New arXiv work introduces Diffu-LoRA for diffusion personalization, a 50-million-token memory layer that avoids recompute, and matrix-approximation sparse attention. Builders should watch the open-source security tooling and the memory-layer package for immediate experimentation.
-
-Top Story
-Anthropic is launching OSS Scanner, a free service that uses its frontier models to periodically scan opted-in open-source projects for vulnerabilities. The scanner supplies a proof-of-concept exploit, an explanation, and a suggested fix in each report. The company is also committing one hundred fifty million dollars to the Genesis Mission and will make Claude plus technical support available to more than fifteen federal agencies. At the same time it is rolling out the Anthropic Cyber Mission focused on critical infrastructure and open-source security. These moves expand Anthropic’s security work beyond its own models into shared infrastructure protection. Source: &lt;a href="https://www.anthropic.com/research/launching-opt-in-vuln-finding-service-for-open-source"&gt;anthropic.com&lt;/a&gt; Source: &lt;a href="https://www.anthropic.com/news/genesis-mission-commitment"&gt;anthropic.com&lt;/a&gt; Source: &lt;a href="https://www.anthropic.com/news/anthropic-cyber-mission"&gt;anthropic.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Diffu-LoRA learns per-layer rank allocation for diffusion personalization: arXiv NLP&lt;/b&gt;
-Diffu-LoRA inserts gated low-rank adapters into the linear layers of Transformer blocks inside Stable Diffusion. Bilevel optimization trains the adapters and gates on separate data splits while progressive pruning removes low-value components to meet a target rank budget. Experiments on DreamBooth subjects show higher subject fidelity and prompt alignment than standard LoRA or full fine-tuning baselines. The method keeps the pretrained backbone frozen throughout training. Source: &lt;a href="https://arxiv.org/abs/2610.10550"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Lossy compressive text autoencoders reach lossless compression parity at 2.24 bits per byte: arXiv NLP&lt;/b&gt;
-The autoencoder performs residual downscaling and upscaling along the time axis with a residual low-dimension discrete bottleneck. It matches lossless text compression algorithms at 2.24 bits per byte on web text while retaining usable reconstruction quality measured by BLEU and LLM judges. Downstream question-answering and semantic similarity benchmarks remain competitive across compression levels. Source: &lt;a href="https://arxiv.org/abs/2610.10738"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Real long-term memory stores fifty million tokens with no recompute on a single H100: arXiv NLP&lt;/b&gt;
-The galahad-kv package saves the key-value state of sixteen-thousand-token blocks to encrypted local NVMe and reloads them byte-exact. Loading a block is two point eight to four point three times faster than recompute and uses eight point eight to twelve point three times less GPU energy. On Gemma 4 twelve billion and thirty-one billion parameter models the approach answers facts planted millions of tokens earlier with eighty-two and ninety-eight percent accuracy respectively. Source: &lt;a href="https://arxiv.org/abs/2610.10845"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Matrix-approximation sparse attention replaces mass-based selection with closed-form error reduction: arXiv NLP&lt;/b&gt;
-MASA scores each sparse unit by how much it reduces matrix-product approximation error instead of keeping the largest attention values. The method acts as a plug-in correction on existing sparse attention frameworks without changing kernels or budgets. Experiments across multiple backbones and benchmarks show consistent accuracy gains while preserving the original sparsity pattern. Source: &lt;a href="https://arxiv.org/abs/2610.10871"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Stochastic teacher intervention improves on-policy distillation for multi-turn agents: arXiv NLP&lt;/b&gt;
-STI-OPD uses teacher-student policy discrepancy measured by KL divergence to decide when to replace a student action with a teacher-generated one. A stochastic intervention schedule samples from the resulting probability instead of using fixed thresholds. An importance-weighted reverse KL objective corrects token sampling mismatch on the resulting mixed-policy trajectories. The approach outperforms prior on-policy distillation baselines on tool-integrated reasoning and long-horizon interaction benchmarks. Source: &lt;a href="https://arxiv.org/abs/2610.10878"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Lapras adds latent reasoning to time-series language models: arXiv NLP&lt;/b&gt;
-Lapras trains a student model to align hidden states with a teacher that produces explicit chain-of-thought traces. The student reasons in continuous joint time-series and language space and emits text only for the final answer. Across four backbones and five benchmarks the method improves average F1 by up to ten point seven nine percent while generating twenty-three point nine times fewer tokens. Source: &lt;a href="https://arxiv.org/abs/2610.11111"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SFT-as-context lets parent models acquire fine-tuned capabilities without forgetting: arXiv NLP&lt;/b&gt;
-The method feeds the SFT model’s response as context to the parent model so the parent can use in-context learning for specialized tasks. Across nineteen parent-SFT pairs and eleven benchmarks the approach stays within two point two percentage points of the SFT model on fine-tuned capabilities while remaining within two point two percentage points of the parent on general capabilities. It can solve queries that require both fine-tuned and general skills even when neither model succeeds alone. Source: &lt;a href="https://arxiv.org/abs/2610.11132"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;REMORY supplements textual summaries with bounded soft memory tokens for long-horizon agents: arXiv NLP&lt;/b&gt;
-The neural memory network learns to generate a short sequence of soft tokens conditioned on the summary that help a frozen LLM approximate the continuation it would produce with full history. On SummHay the method improves source attribution at nearly unchanged insight coverage while using only five point two percent of the input positions. Both Qwen3.8-27B and GLM-5.3-Flash show consistent gains and fewer repeated tool outputs on BrowseComp and Terminal-Bench 2.1. Source: &lt;a href="https://arxiv.org/abs/2610.11287"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Grammar concept annotation at scale with fine-tuned 0.8B models outperforms prompted frontier models: arXiv NLP&lt;/b&gt;
-An 0.8B Qwen3.5 model fine-tuned on filtered teacher supervision is deployed in an end-to-end grammar mastery tracker. On two human-curated benchmarks the model exceeds prompted GPT-5.4 and GPT-5.6 Sol in precision and recall under nested matching criteria. Serving cost drops by approximately sixteen times and a live experiment records fifteen point eight percent higher learner engagement plus thirteen point two percent higher GMV from new lessons. Source: &lt;a href="https://arxiv.org/abs/2610.10827"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SignRAG unifies retrieval-augmented gloss-free sign language translation for decoder-only LLMs: arXiv NLP&lt;/b&gt;
-Hierarchical pretraining first learns sign representations then aligns the encoder with an LLM. Target-domain retrieval augmentation supplies instance-specific translation cues and retrieval-utility-guided reinforcement fine-tuning balances translation quality against harmful reliance. The method sets new state-of-the-art results on multiple SLT benchmarks and is the first gloss-free approach to outperform gloss-supervised methods on all metrics for CSL-Daily. Source: &lt;a href="https://arxiv.org/abs/2610.11371"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;When citations mislead benchmark tests claim-level legal hallucination detection: arXiv NLP&lt;/b&gt;
-PARCEL contains three thousand three hundred ninety-six parenthetical-style claims from recent New York Court of Appeals decisions labeled Supported, Refuted, or Not Found. Strongest models reach up to zero point nine seven accuracy yet still incorrectly mark unsupported claims as supported even when full opinion text is supplied. Missing support is harder to detect than direct contradiction and fabricated but plausible citations cause the largest performance drop. Source: &lt;a href="https://arxiv.org/abs/2610.10971"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Clinician queries diverge sharply from public clinical AI benchmarks: arXiv NLP&lt;/b&gt;
-Analysis of one hundred twenty-seven thousand eight hundred thirty-three real queries from six thousand three hundred forty-two clinicians shows documentation and administration tasks comprise thirty-six point two percent and knowledge retrieval twenty-eight point nine percent. The median public benchmark shares only thirty-one percent of the task mix of actual use and contains no documentation requests. Benchmarks designed to resemble clinical practice are individually no closer to real use than those in frontier model reports. Source: &lt;a href="https://arxiv.org/abs/2610.11069"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Bilevel optimization for learned rank allocation
-Bilevel optimization separates the update of adapter weights from the update of gate parameters by training each on its own data split. The outer loop optimizes the gates while the inner loop optimizes the adapters, so the gate values reflect how much each low-rank component actually improves held-out performance rather than training-set fit. Progressive pruning then removes the lowest-valued gates until the prescribed rank budget is met, producing a nonuniform allocation across layers that still respects the total parameter count. The procedure adds roughly one extra forward-backward pass per pruning step yet removes the need for manual layer-wise rank search. In practice the method works best when the target domain is small enough that full fine-tuning would overfit but large enough that uniform low-rank adapters leave some layers under-capacity. Teams facing exactly that regime should try the bilevel-plus-pruning recipe before falling back to hand-tuned LoRA ranks.
-
-Things to Try This Week
-• Try the galahad-kv package on a single H100 with Gemma 4 to store and reload KV blocks across a fifty-million-token stream without recompute.
-• Test Diffu-LoRA on a DreamBooth subject to see whether learned rank allocation improves subject fidelity over standard LoRA at the same budget.
-• Run SignRAG on a CSL-Daily sample to check whether the retrieval-augmented gloss-free pipeline beats your current gloss-supervised baseline.
-• Feed an SFT model response back to its parent model on a mixed general-plus-specialized query to measure whether the context trick recovers both capabilities.
-
-On the Horizon
-• Anthropic plans to expand OSS Scanner coverage and report additional findings from the Genesis Mission in the coming weeks.
-• Multiple labs are expected to release updated long-context memory layers following the galahad-kv results.
-• New sign-language translation benchmarks that include retrieval-augmented settings are anticipated later this month.</description>
+      <description>Ep 198: Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost.</description>
       <guid isPermaLink="false">models-agents-video-ep198-20261009</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep198_20261009.mp4" length="266813081" type="video/mp4" />
       <pubDate>Fri, 09 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep198_20261009.jpg" />
       <itunes:duration>10:27</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost.**
-
-**What You Need to Know:** Anthropic launches OSS Scanner and the Anthropic Cyber Mission to secure open-source software and critical infrastructure while making Claude available to federal agencies. New arXiv work introduces Diffu-LoRA for diffusion personalization, a 50-million-token memory layer that avoids recompute, and matrix-approximation sparse attention. Builders should watch the open-source security tooling and the memory-layer package for immediate experimentation.
----
-### Top Story
-Anthropic is launching OSS Scanner, a free service that uses its frontier models to periodically scan opted-in open-source projects for vulnerabilities. The scanner supplies a proof-of-concept exploit, an explanation, and a suggested fix in each report. The company is also committing one hundred fifty million dollars to the Genesis Mission and will make Claude plus technical support available to more than fifteen federal agencies. At the same time it is rolling out the Anthropic Cyber Mission focused on critical infrastructure and open-source security. These moves expand Anthropic’s security work beyond its own models into shared infrastructure protection. Source: [anthropic.com](https://www.anthropic.com/research/launching-opt-in-vuln-finding-service-for-open-source) Source: [anthropic.com](https://www.anthropic.com/news/genesis-mission-commitment) Source: [anthropic.com](https://www.anthropic.com/news/anthropic-cyber-mission)
----
-### Model Updates
-**Diffu-LoRA learns per-layer rank allocation for diffusion personalization: arXiv NLP**
-Diffu-LoRA inserts gated low-rank adapters into the linear layers of Transformer blocks inside Stable Diffusion. Bilevel optimization trains the adapters and gates on separate data splits while progressive pruning removes low-value components to meet a target rank budget. Experiments on DreamBooth subjects show higher subject fidelity and prompt alignment than standard LoRA or full fine-tuning baselines. The method keeps the pretrained backbone frozen throughout training. Source: [arxiv.org](https://arxiv.org/abs/2610.10550)
-
-**Lossy compressive text autoencoders reach lossless compression parity at 2.24 bits per byte: arXiv NLP**
-The autoencoder performs residual downscaling and upscaling along the time axis with a residual low-dimension discrete bottleneck. It matches lossless text compression algorithms at 2.24 bits per byte on web text while retaining usable reconstruction quality measured by BLEU and LLM judges. Downstream question-answering and semantic similarity benchmarks remain competitive across compression levels. Source: [arxiv.org](https://arxiv.org/abs/2610.10738)
-
-**Real long-term memory stores fifty million tokens with no recompute on a single H100: arXiv NLP**
-The galahad-kv package saves the key-value state of sixteen-thousand-token blocks to encrypted local NVMe and reloads them byte-exact. Loading a block is two point eight to four point three times faster than recompute and uses eight point eight to twelve point three times less GPU energy. On Gemma 4 twelve billion and thirty-one billion parameter models the approach answers facts planted millions of tokens earlier with eighty-two and ninety-eight percent accuracy respectively. Source: [arxiv.org](https://arxiv.org/abs/2610.10845)
-
-**Matrix-approximation sparse attention replaces mass-based selection with closed-form error reduction: arXiv NLP**
-MASA scores each sparse unit by how much it reduces matrix-product approximation error instead of keeping the largest attention values. The method acts as a plug-in correction on existing sparse attention frameworks without changing kernels or budgets. Experiments across multiple backbones and benchmarks show consistent accuracy gains while preserving the original sparsity pattern. Source: [arxiv.org](https://arxiv.org/abs/2610.10871)
----
-### Agent &amp; Tool Developments
-**Stochastic teacher intervention improves on-policy distillation for multi-turn agents: arXiv NLP**
-STI-OPD uses teacher-student policy discrepancy measured by KL divergence to decide when to replace a student action with a teacher-generated one. A stochastic intervention schedule samples from the resulting probability instead of using fixed thresholds. An importance-weighted reverse KL objective corrects token sampling mismatch on the resulting mixed-policy trajectories. The approach outperforms prior on-policy distillation baselines on tool-integrated reasoning and long-horizon interaction benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2610.10878)
-
-**Lapras adds latent reasoning to time-series language models: arXiv NLP**
-Lapras trains a student model to align hidden states with a teacher that produces explicit chain-of-thought traces. The student reasons in continuous joint time-series and language space and emits text only for the final answer. Across four backbones and five benchmarks the method improves average F1 by up to ten point seven nine percent while generating twenty-three point nine times fewer tokens. Source: [arxiv.org](https://arxiv.org/abs/2610.11111)
-
-**SFT-as-context lets parent models acquire fine-tuned capabilities without forgetting: arXiv NLP**
-The method feeds the SFT model’s response as context to the parent model so the parent can use in-context learning for specialized tasks. Across nineteen parent-SFT pairs and eleven benchmarks the approach stays within two point two percentage points of the SFT model on fine-tuned capabilities while remaining within two point two percentage points of the parent on general capabilities. It can solve queries that require both fine-tuned and general skills even when neither model succeeds alone. Source: [arxiv.org](https://arxiv.org/abs/2610.11132)
-
-**REMORY supplements textual summaries with bounded soft memory tokens for long-horizon agents: arXiv NLP**
-The neural memory network learns to generate a short sequence of soft tokens conditioned on the summary that help a frozen LLM approximate the continuation it would produce with full history. On SummHay the method improves source attribution at nearly unchanged insight coverage while using only five point two percent of the input positions. Both Qwen3.8-27B and GLM-5.3-Flash show consistent gains and fewer repeated tool outputs on BrowseComp and Terminal-Bench 2.1. Source: [arxiv.org](https://arxiv.org/abs/2610.11287)
----
-### Practical &amp; Community
-**Grammar concept annotation at scale with fine-tuned 0.8B models outperforms prompted frontier models: arXiv NLP**
-An 0.8B Qwen3.5 model fine-tuned on filtered teacher supervision is deployed in an end-to-end grammar mastery tracker. On two human-curated benchmarks the model exceeds prompted GPT-5.4 and GPT-5.6 Sol in precision and recall under nested matching criteria. Serving cost drops by approximately sixteen times and a live experiment records fifteen point eight percent higher learner engagement plus thirteen point two percent higher GMV from new lessons. Source: [arxiv.org](https://arxiv.org/abs/2610.10827)
-
-**SignRAG unifies retrieval-augmented gloss-free sign language translation for decoder-only LLMs: arXiv NLP**
-Hierarchical pretraining first learns sign representations then aligns the encoder with an LLM. Target-domain retrieval augmentation supplies instance-specific translation cues and retrieval-utility-guided reinforcement fine-tuning balances translation quality against harmful reliance. The method sets new state-of-the-art results on multiple SLT benchmarks and is the first gloss-free approach to outperform gloss-supervised methods on all metrics for CSL-Daily. Source: [arxiv.org](https://arxiv.org/abs/2610.11371)
-
-**When citations mislead benchmark tests claim-level legal hallucination detection: arXiv NLP**
-PARCEL contains three thousand three hundred ninety-six parenthetical-style claims from recent New York Court of Appeals decisions labeled Supported, Refuted, or Not Found. Strongest models reach up to zero point nine seven accuracy yet still incorrectly mark unsupported claims as supported even when full opinion text is supplied. Missing support is harder to detect than direct contradiction and fabricated but plausible citations cause the largest performance drop. Source: [arxiv.org](https://arxiv.org/abs/2610.10971)
-
-**Clinician queries diverge sharply from public clinical AI benchmarks: arXiv NLP**
-Analysis of one hundred twenty-seven thousand eight hundred thirty-three real queries from six thousand three hundred forty-two clinicians shows documentation and administration tasks comprise thirty-six point two percent and knowledge retrieval twenty-eight point nine percent. The median public benchmark shares only thirty-one percent of the task mix of actual use and contains no documentation requests. Benchmarks designed to resemble clinical practice are individually no closer to real use than those in frontier model reports. Source: [arxiv.org](https://arxiv.org/abs/2610.11069)
----
-### Under the Hood: Bilevel optimization for learned rank allocation
-Bilevel optimization separates the update of adapter weights from the update of gate parameters by training each on its own data split. The outer loop optimizes the gates while the inner loop optimizes the adapters, so the gate values reflect how much each low-rank component actually improves held-out performance rather than training-set fit. Progressive pruning then removes the lowest-valued gates until the prescribed rank budget is met, producing a nonuniform allocation across layers that still respects the total parameter count. The procedure adds roughly one extra forward-backward pass per pruning step yet removes the need for manual layer-wise rank search. In practice the method works best when the target domain is small enough that full fine-tuning would overfit but large enough that uniform low-rank adapters leave some layers under-capacity. Teams facing exactly that regime should try the bilevel-plus-pruning recipe before falling back to hand-tuned LoRA ranks.
----
-### Things to Try This Week
-- Try the galahad-kv package on a single H100 with Gemma 4 to store and reload KV blocks across a fifty-million-token stream without recompute.
-- Test Diffu-LoRA on a DreamBooth subject to see whether learned rank allocation improves subject fidelity over standard LoRA at the same budget.
-- Run SignRAG on a CSL-Daily sample to check whether the retrieval-augmented gloss-free pipeline beats your current gloss-supervised baseline.
-- Feed an SFT model response back to its parent model on a mixed general-plus-specialized query to measure whether the context trick recovers both capabilities.
----
-### On the Horizon
-- Anthropic plans to expand OSS Scanner coverage and report additional findings from the Genesis Mission in the coming weeks.
-- Multiple labs are expected to release updated long-context memory layers following the galahad-kv results.
-- New sign-language translation benchmarks that include retrieval-augmented settings are anticipated later this month.
-</itunes:summary>
+      <itunes:summary>Ep 198: Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost.</itunes:summary>
       <itunes:episode>198</itunes:episode>
       <itunes:title>Ep 198: Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -4673,19 +4690,5 @@ Bilevel optimization separates the update of adapter weights from the update of 
       <itunes:title>Ep 197: Child speech recognition now retains adult performance through bilingual adaptation and…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep197_20261008_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep197.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub…</title>
-      <description>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.</description>
-      <guid isPermaLink="false">models-agents-video-ep196-20261007</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep196_20261007.mp4" length="293987019" type="video/mp4" />
-      <pubDate>Wed, 07 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep196_20261007.jpg" />
-      <itunes:duration>11:46</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.</itunes:summary>
-      <itunes:episode>196</itunes:episode>
-      <itunes:title>Ep 196: OpenAI releases mathematical results from an internal frontier model in a public GitHub…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep196_20261007_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep196.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
