@@ -59,8 +59,19 @@ def test_a_lock_keeps_the_post_and_its_attempts(monkeypatch):
     assert kept[0]["due_at"] > "2026-11-07T21:05"
 
 
-def test_a_lock_older_than_a_day_fails_the_stale_post(monkeypatch):
-    out, patches, _ = _run(monkeypatch, _rows(created="2026-11-06T11:00:00Z"),
+def test_a_lock_holds_the_post_for_seven_days():
+    """Nov 9 2026: the Nov 7 lock outlasted 24 hours and posts were lost again."""
+    assert x_queue.LOCKED_MAX_AGE == dt.timedelta(days=7)
+
+
+def test_a_lock_two_days_old_still_waits(monkeypatch):
+    out, _, _ = _run(monkeypatch, _rows(created="2026-11-07T11:00:00Z"),
+                     dt.datetime(2026, 11, 9, 14, 5, tzinfo=UTC))
+    assert [r["status"] for r in out] == ["locked"]
+
+
+def test_a_lock_older_than_a_week_fails_the_stale_post(monkeypatch):
+    out, patches, _ = _run(monkeypatch, _rows(created="2026-10-31T11:00:00Z"),
                            dt.datetime(2026, 11, 7, 21, 5, tzinfo=UTC))
     assert [r["status"] for r in out] == ["failed"]
     final = [j for p, j in patches if p.get("id") == "eq.a" and j.get("status") == "failed"]
