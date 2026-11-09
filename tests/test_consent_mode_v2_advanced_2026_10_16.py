@@ -120,7 +120,7 @@ class TestPrivacyPolicyAdvancedCopy:
             assert "If you decline cookies, nothing is sent." not in src
             assert "We run Google ads" in src
             assert "If we run Google ads" not in src
-            assert "when you submit a Personal tips form" in src
+            assert "when you submit a Nerra Daily signup on a Nerra Personal page" in src
 
     def test_enhanced_conversions_sentence_kept(self):
         src = _read("templates/privacy_policy.html.j2")

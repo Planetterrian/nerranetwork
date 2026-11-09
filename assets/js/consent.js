@@ -67,7 +67,7 @@
             'With your OK you can also turn on: Analytics, which uses Google ' +
             'Analytics cookies to show us which pages and episodes are useful, ' +
             'and Ad measurement, which uses Google Ads to measure sign-ups from ' +
-            'our ads. When you sign up for Personal tips, Ad measurement also ' +
+            'our ads. When you sign up from a Nerra Personal page, Ad measurement also ' +
             'sends Google a coded (hashed) version of your email. Change your ' +
             'mind any time from Cookie settings at the bottom of every page. ',
         privacyLinkText: 'Privacy policy',
@@ -90,7 +90,7 @@
             'Google Analytics, чтобы мы видели, какие страницы и выпуски ' +
             'полезны, и Измерение рекламы — Google Ads для подсчёта ' +
             'регистраций с нашей рекламы. Когда вы подписываетесь на ' +
-            'Personal tips, Измерение рекламы также отправляет Google ' +
+            'Nerra Personal, Измерение рекламы также отправляет Google ' +
             'закодированную (хешированную) версию вашего email. Изменить ' +
             'выбор можно в любой момент через «Настройки cookie» внизу ' +
             'каждой страницы. ',
