@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 SOFT_COPY = (
-    "Get a quiet nudge with occasional Personal tips. "
-    "No charge, no card. Shows stay free either way."
+    "Get Nerra Daily, the free 7:00 AM Eastern email with the day’s stories "
+    "from every show. Shows stay free either way."
 )
 _MD = "## Top Story\n\nSpaceX flew again today. " * 5
 
@@ -112,7 +112,7 @@ def test_band_stays_inside_brand_truth():
                    "not ready to pay", "soft"):
         assert banned not in text, banned
     assert "join.html" not in band
-    assert "We’ll only email you about Nerra Personal. Unsubscribe anytime." in _norm(band)
+    assert "One email a day. Unsubscribe anytime." in _norm(band)
     assert "privacy-policy.html" in band
 
 

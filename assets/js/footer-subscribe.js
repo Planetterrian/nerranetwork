@@ -250,6 +250,12 @@
         body.company = company;
         if (firstName) body.first_name = firstName;
       }
+      // Nov 9 2026: a Personal band that offers Nerra Daily says so with
+      // data-newsletter="1"; the Worker then adds nerra-member, the tag the
+      // one email goes to (a personal-interest tag alone received nothing).
+      if (form.getAttribute('data-newsletter') === '1') {
+        body.newsletter = true;
+      }
 
       fetch(API_URL, {
         method: 'POST',

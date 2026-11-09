@@ -27,8 +27,8 @@ HERO_SLUGS = (
 )
 
 SOFT_HERO_COPY = (
-    "Get a quiet nudge with occasional Personal tips. "
-    "No charge, no card. Shows stay free either way."
+    "Get Nerra Daily, the free 7:00 AM Eastern email with the day’s stories "
+    "from every show. Shows stay free either way."
 )
 
 
@@ -160,8 +160,8 @@ class TestSoftPersonalHeroWiring:
         assert 'data-nn-subscribe="soft-personal"' in macros
         assert 'data-list="personal-interest"' in macros
         assert 'name="company"' in macros  # honeypot
-        assert "Save my email" in macros
-        assert "Or start Personal now" in macros
+        assert "Send me Nerra Daily" in macros
+        assert "Or build your own edition" in macros
         # Soft hero is free interest only — no paid-price copy in the band.
         hero_start = macros.index('id="soft-personal-hero"')
         hero_end = macros.index("</section>", hero_start)

@@ -94,7 +94,7 @@ class TestPrivacyCopyMatchesBehaviour:
             src = _read(rel)
             assert "We run Google ads" in src
             assert "If we run Google ads" not in src
-            assert "submit a Personal tips form" in src
+            assert "submit a Nerra Daily signup on a Nerra Personal page" in src
             assert "`_ga`" in src or "<code>_ga</code>" in src
             assert "`_ga_*`" in src or "<code>_ga_*</code>" in src
             assert "`_gcl_au`" in src or "<code>_gcl_au</code>" in src

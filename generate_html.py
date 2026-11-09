@@ -6008,7 +6008,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "website_ld": website_ld,
         # Homepage Soft-only (Oct 2026): the Soft Personal band is the email
         # ask; suppress the footer per-show newsletter form but keep the
-        # Personal tips link. Every other page leaves this unset/false.
+        # Personal sample link. Every other page leaves this unset/false.
         "suppress_footer_newsletter_form": True,
         # Oct 28 2026: the For you band's show picker — the Personal lineup's
         # public shows (a members-only desk is picked inside My Nerra).

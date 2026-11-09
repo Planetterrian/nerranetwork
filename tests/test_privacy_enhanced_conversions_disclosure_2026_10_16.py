@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 _NEW_SNIPPET = (
-    "If you allow Ad measurement and then submit a Personal tips form, your "
+    "If you allow Ad measurement and then submit a Nerra Daily signup on a Nerra Personal page, your "
     "browser sends Google a SHA-256 hash of your email address"
 )
 _OLD_SNIPPET = (

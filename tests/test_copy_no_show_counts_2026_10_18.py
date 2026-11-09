@@ -24,8 +24,8 @@ PROMISE_NO_COUNT = (
     "Free news and ideas on space, AI, markets, world news, science and more. "
     "Every story is sourced, every claim is checked against its source, "
     "and you can read the article or hear the episode it came from.")
-TIPS_LINE = "Get Personal tips by email — no charge, no card →"
-OLD_TIPS = "Not ready yet? Get Personal tips by email — no charge, no card →"
+TIPS_LINE = "Hear a five-minute sample of Nerra Personal →"
+OLD_TIPS = "Not ready yet? Hear a five-minute sample of Nerra Personal →"
 
 
 @pytest.fixture(scope="module")

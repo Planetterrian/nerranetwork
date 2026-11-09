@@ -17,11 +17,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 SOFT_HERO_COPY = (
-    "Get a quiet nudge with occasional Personal tips. "
-    "No charge, no card. Shows stay free either way."
+    "Get Nerra Daily, the free 7:00 AM Eastern email with the day’s stories "
+    "from every show. Shows stay free either way."
 )
 SOFT_PRIVACY_NOTE = (
-    "We’ll only email you about Nerra Personal. Unsubscribe anytime."
+    "One email a day. Unsubscribe anytime."
 )
 # Nov 9 2026: the page leads with the product and its sample.
 SOFT_META_DESCRIPTION = (
@@ -85,8 +85,7 @@ class TestSoftPersonalHomeAndAgeOfAi:
         macros = _scrub_jinja_comments(_read("templates/_macros.html.j2"))
         start = macros.index("macro soft_personal_interest")
         body = macros[start:start + 2000]
-        assert "Get occasional Personal tips by email — no charge, no card" in body
-        assert "Save my email on the Personal page →" in body
+        assert "Hear a five-minute sample of Nerra Personal" in body
         assert "reminder" not in body.lower()
         assert "Soft Personal" not in body
         assert "Not ready to pay?" not in body

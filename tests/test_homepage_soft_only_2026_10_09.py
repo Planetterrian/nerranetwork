@@ -65,7 +65,7 @@ class TestHomepageSoftOnly:
         footer = src.split("nn-footer-subscribe", 1)[1].split(
             "nn-footer-bottom", 1
         )[0]
-        assert "Personal tips by email — no charge →" in footer
+        assert "Hear a Nerra Personal sample →" in footer
         assert 'data-nn-subscribe="footer"' in footer
         assert "suppress_footer_newsletter_form" in footer
 
@@ -89,7 +89,7 @@ class TestHomepageSoftOnly:
         assert 'id="soft-personal-hero"' in html
         assert 'id="subscribe"' in html
         assert 'id="newsletter"' not in html
-        assert "Personal tips by email — no charge →" in html
+        assert "Hear a Nerra Personal sample →" in html
         assert 'href="personal-interest.html"' in html
         # Omitted markup, not display:none / visibility / min-height reserve.
         assert "nn-footer-subscribe" in html
@@ -111,7 +111,7 @@ class TestHomepageSoftOnly:
         parser.feed(html)
         kinds = [f.get("data-nn-subscribe") for f in parser.forms]
         assert "footer" in kinds
-        assert "Personal tips by email — no charge →" in html
+        assert "Hear a Nerra Personal sample →" in html
 
 
 class TestBannedWhenYoureReady:
@@ -160,8 +160,8 @@ class TestBrandQaPathPrefixAndContactConsent:
     )
     _CONTACT_CONSENT = (
         "for marketing unless you've explicitly opted in to our emails "
-        '(episode briefings or <a href="{{ path_prefix }}personal-interest.html" '
-        'style="color:var(--nn-cyan);">Personal tips by email</a>).'
+        '(Nerra Daily, or a <a href="{{ path_prefix }}personal-interest.html" '
+        'style="color:var(--nn-cyan);">Nerra Personal</a> signup).'
     )
 
     def test_contact_consent_copy_exact(self):
