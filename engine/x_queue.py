@@ -47,8 +47,10 @@ R2_PUBLIC_BASE = os.getenv("X_QUEUE_R2_PUBLIC_BASE", "https://audio.nerranetwork
 MAX_ATTEMPTS = 3
 #: Nov 7 2026: how long a post waits for a LOCKED account to be unlocked. A
 #: lock is not the post's fault, so it never spends an attempt; past this age
-#: the teaser is stale and fails as ``account_locked``.
-LOCKED_MAX_AGE = dt.timedelta(hours=24)
+#: the teaser is stale and fails as ``account_locked``. Nov 9 2026: seven days,
+#: not 24 hours — the Nov 7 lock outlasted a day and the queue started dropping
+#: posts again (Vancouver Ep047), so a lock that waits a weekend costs nothing.
+LOCKED_MAX_AGE = dt.timedelta(days=7)
 # X's limit for a video on a post from a default (non-Premium) account
 # (docs.x.com media best practices, Oct 2026): 20 minutes, 8 GB.
 LONG_FORM_MAX_SECONDS = 20 * 60
