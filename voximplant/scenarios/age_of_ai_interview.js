@@ -1219,13 +1219,16 @@ function planQuestionLine(k) {
     (item.curious ? " (what you want to find out: " + item.curious + ")" : "") + ".";
 }
 
+// Nov 9 2026 (Patrick: "give more structure"): the move names the part of the
+// hour it opens, so the listener hears the hour's shape, not only a new question.
 const PLAN_MOVE_HEAD =
   "[ROOM, for this turn only; do not read it aloud and do not mention it] This thread has" +
   " had its turns and the next subject you prepared is due. In this turn: if they just" +
   " asked you something, answer it first in a sentence or two. Then close this thread in" +
   " one sentence that carries something it gave you (a connection, a consequence, where" +
-  " you see it differently), never a summary of their answer. Then say, in your own words" +
-  " and differently each time, that you want to turn to something else. ";
+  " you see it differently), never a summary of their answer. Then, in your own words" +
+  " and differently each time, name the part of the hour you are turning to, in a phrase," +
+  " the way a host opens a new segment. ";
 
 /** Queue the move for her next turn (decideTurn, when it is due). */
 function queuePlanMove(reason) {

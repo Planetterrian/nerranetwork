@@ -175,15 +175,23 @@ def turn_gaps_ms(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> Lis
     return gaps
 
 
-def self_answered(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> int:
-    """Mira turns with no guest speech since her previous turn."""
-    count = 0
+def self_answered_spans(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> List[List[float]]:
+    """``[previous turn's end, this turn's start]`` for each Mira turn with no
+    guest speech since her previous turn (Nov 9 2026). The silence between
+    the two says what the count cannot: a gap of one or two seconds is a
+    pause inside one turn of hers, a long one is a question she answered."""
+    out: List[List[float]] = []
     for prev, cur in zip(mira_turns, mira_turns[1:]):
         spoke = any(g["end"] > prev["end"] and g["start"] < cur["start"]
                     for g in guest_turns)
         if not spoke:
-            count += 1
-    return count
+            out.append([round(prev["end"], 1), round(cur["start"], 1)])
+    return out
+
+
+def self_answered(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> int:
+    """Mira turns with no guest speech since her previous turn."""
+    return len(self_answered_spans(guest_turns, mira_turns))
 
 
 def echo_open_rate(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> Optional[float]:
@@ -592,7 +600,8 @@ def measure_audio(words_by_role: Dict[str, List[dict]],
         out["turn_gap_ms_median"] = _median(gaps)
         out["turn_gap_ms_p10"] = _percentile(gaps, 0.1)
         out["turn_gap_ms_p90"] = _percentile(gaps, 0.9)
-        out["self_answered_turns"] = self_answered(guest_turns, mira_turns)
+        out["self_answered_spans"] = self_answered_spans(guest_turns, mira_turns)
+        out["self_answered_turns"] = len(out["self_answered_spans"])
         out["echo_open_rate"] = echo_open_rate(guest_turns, mira_turns)
         # The three shapes of a question turn add to one: label (a few words
         # of hers before the question), bare (no sentence of hers before

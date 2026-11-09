@@ -1151,6 +1151,22 @@ def voice_minutes(records: List[Dict[str, Any]]) -> float:
                for r in records) * SESSIONS_PER_ROOM
 
 
+def where_to_listen(m: Dict[str, Any]) -> str:
+    """The recording times behind the two gating counts (Nov 9 2026): each
+    self-answered turn with the silence before it, and each stretch of
+    talking over. Times are into the recording; no words are carried."""
+    parts = []
+    spans = m.get("self_answered_spans") or []
+    if spans:
+        parts.append("her turn again with no guest speech between at " + ", ".join(
+            f"{_clock(b)} ({b - a:.1f} s after her last word)" for a, b in spans))
+    over = m.get("overlap_spans") or []
+    if over:
+        parts.append("talking over at " + ", ".join(
+            f"{_clock(a)} ({b - a:.1f} s)" for a, b in over))
+    return "; ".join(parts)
+
+
 def room_markdown(record: Dict[str, Any]) -> str:
     """One room's log for the step summary."""
     log = record.get("room_log") or {}
@@ -1171,6 +1187,9 @@ def room_markdown(record: Dict[str, Any]) -> str:
     for c in room_checks(record):
         mark = "—" if c["ok"] is None else ("yes" if c["ok"] else "**no**")
         out.append(f"- {c['check']}: {mark} ({c['detail']})")
+    where = where_to_listen(record.get("metrics") or {})
+    if where:
+        out.append(f"- where to listen: {where}")
     qs = log.get("questions") or []
     if qs:
         out += ["", "Each closing question: when the room handed it, and the Whisper segment "
