@@ -224,3 +224,34 @@ elapsed time" (the TIME CHECK notes carry it), "their name now and then",
 and "your pause is edited out", which is now something she tells the guest
 herself.
 Guards: `tests/test_opening_and_reach_2026_11_06.py`.
+
+## More structure, Nov 9: the parts of the hour said out loud
+
+Patrick's answer on Nov 9 was "give more structure". The room already moves
+Mira through the prepared questions; what a listener could not hear was the
+shape. Two changes make it audible, and one makes the Nov 6 rehearsal's
+failure readable:
+
+- **The opening names the parts ahead.** The how-the-hour-works turn now
+  names two or three parts, taken from the prepared questions, a phrase each,
+  before it tells the guest how to steer. It is still a turn of its own that
+  ends on a check. To stay at 1,599 words, THEIR SUBJECT, FAST loses its
+  closing clause about storytellers and nervous guests.
+- **A move opens a segment.** When the room moves her to the next prepared
+  question (`PLAN_MOVE_HEAD`), she names the part of the hour she is turning
+  to, in a phrase, the way a host opens a segment, instead of only saying she
+  wants to turn to something else. This is scenario text, so it ships with
+  the deploy after a rehearsal and a listen.
+- **The report says where to listen.** The Nov 6 rehearsal (run 42146326603)
+  failed on self-answered turns (5 against 2) and talking over (2 against 0),
+  and nothing in the report said where. `self_answered_turns` counts any two
+  turns of hers with no guest speech between them, and a turn ends at a
+  one-second gap, so a long orientation turn with a pause in it counts.
+  `audio_metrics.self_answered_spans` now keeps each one's times, and the
+  room log prints them with the silence before each one, beside the
+  talking-over times. Times only, never words. The gate itself is unchanged.
+
+Guards: `tests/test_hour_structure_2026_11_09.py`.
+
+The deadline is Rania's rebooked room, Thursday Nov 12 at 12:15 UTC.
+Surendra's moved to Friday Nov 13 at 19:15 UTC.
