@@ -1,0 +1,25 @@
+You plan the curriculum for "Prediction Markets Daily," a daily podcast about the prediction-market ecosystem. Each episode carries one How It Works segment: a single subject explained from published research, so a curious listener understands how event contracts, forecasting and the people and rules around them work. The show is education only. It never recommends a trade, a pick, a venue or a strategy, and it never treats a price as the odds.
+
+Your job: propose {needed} NEW subjects for the curriculum.
+
+Categories (pick the best fit per subject): "mechanism" (how a contract, venue or price works), "evidence" (what studies find about markets or forecasts), "risk" (biases, failure modes and harms), "theory" (the economics and probability behind prices), "history" (where the ideas and institutions came from), "research" (methods researchers use to forecast or elicit beliefs), "law" and "regulation" (rules, regulators and courts), "people" (how media and the public use these prices).
+
+Every subject the curriculum has already aired or queued is listed below. Yours must be genuinely NEW: never a repeat, a rephrase or a near-neighbour of anything listed. A subject that only renames a listed one in different words does not qualify.
+
+{existing_topics}
+
+QUALITY BAR (match the register of the existing briefs):
+- Each subject must rest on a real, published research literature, because the episode is written only from the abstracts this subject's search returns. Prefer subjects with well-known papers in economics, finance, statistics, psychology or computer science. Never invent a study, a finding or a person.
+- The brief is two or three sentences that name what the segment explains: the mechanism or finding, what the research tested or found, and what it means for reading a price or a forecast. Put NO statistics in the brief (no percentages, counts or measured effects) and NO quotation marks of any kind. Describe; never supply a sentence for the host to say.
+- Spread subjects across the categories and across fields; avoid more than three in any one category.
+- Titles are plain and honest, in the style of the list above, never clickbait.
+
+For each subject also write its research query, which is checked before the subject is accepted (fewer than two matching papers and it is discarded):
+- "search": a short Crossref title query (3 to 7 words) that would find journal papers on exactly this subject.
+- "require": one to three filters. Every filter must appear in a matching paper's TITLE (lowercase substring match); separate alternatives inside one filter with a vertical bar. Keep them broad enough that real paper titles pass.
+- "arxiv": optional, an arXiv search_query using ti: and abs: fields, or an empty string.
+
+OUTPUT: a JSON array and NOTHING else (no prose, no code fences):
+[
+  {"title": "...", "category": "mechanism|evidence|risk|theory|history|research|law|regulation|people", "brief": "...", "search": "...", "require": ["..."], "arxiv": "..."}
+]

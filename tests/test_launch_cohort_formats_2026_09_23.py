@@ -221,8 +221,9 @@ class TestPredictionMarkets:
         # and a daily show drains one a day, so it went red on main a
         # week later with nothing wrong. It is a runway alarm now: three
         # weeks of subjects, the same floor class the narrative queues
-        # carry (tests/test_queue_restock.py). Below it, restock the
-        # curriculum — there is no automation for it yet.
+        # carry (tests/test_queue_restock.py). Nov 9 2026: restock-curricula.yml
+        # refills it at four weeks (scripts/restock_curricula.py), so this
+        # fires only when that automation has been broken for a week.
         assert len(unproduced) >= 21, f"{len(unproduced)} unproduced subjects: restock the curriculum"
         ids = [e["id"] for e in data["queue"]]
         assert len(ids) == len(set(ids))

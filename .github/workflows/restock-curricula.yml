@@ -1,0 +1,87 @@
+# Auto-restock show curricula (Nov 9 2026).
+#
+# Prediction Markets Daily takes one How It Works subject a day from
+# shows/curricula/prediction_markets.yaml. It was hand-restocked, and on
+# 2026-11-09 it drained to 20 subjects, under the 21-subject (three-week)
+# runway floor, which turned the `curriculum` check red on every PR.
+# scripts/restock_curricula.py is trigger-gated (acts under four weeks,
+# refills to eight), so this daily run is a no-op most days. A subject
+# joins only when its own research query finds two paper abstracts, the
+# same call the hook makes on the day it airs.
+#
+# The runway alarm (TestPredictionMarkets::test_curriculum_restocked) stays
+# the alarm of last resort: it fires only if this has been broken a week.
+name: Restock Curricula
+
+on:
+  schedule:
+    # Daily, off-peak (:07 per landmine #24), after the queue restock.
+    - cron: "07 14 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Restock to target runway even when above the trigger"
+        required: false
+        default: "false"
+      check:
+        description: "Read-only: warn on queued subjects their own paper query cannot source"
+        required: false
+        default: "false"
+
+concurrency:
+  group: restock-curricula
+  cancel-in-progress: false
+
+jobs:
+  restock:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write  # recovery PR if push to main exhausts
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.14"
+          requirements-file: "requirements.txt"
+          skip-checkout: "true"
+
+      - name: Check queued subjects (read-only)
+        if: github.event.inputs.check == 'true'
+        run: python scripts/restock_curricula.py --check
+
+      - name: Restock curricula (trigger-gated)
+        if: github.event.inputs.check != 'true'
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          # Same override as restock-topic-queues.yml: grok-4.6 timed out
+          # on every needed queue restock in Sep 2026.
+          NERRA_RESTOCK_MODEL: grok-4.3
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          fi
+          python scripts/restock_curricula.py $FORCE_FLAG
+
+      - name: Verify curriculum integrity after restock
+        # A malformed restock (a quoted line, a missing posture, a dropped
+        # research query, a duplicate id) fails HERE, before the commit.
+        run: |
+          python -m pytest \
+            tests/test_launch_cohort_formats_2026_09_23.py::TestPredictionMarkets::test_curriculum_restocked \
+            tests/test_prediction_markets_2026_09_23.py::TestCurriculum \
+            -q --override-ini=addopts=
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            shows/curricula/*.yaml
+          commit-message: "Auto-restock: show curricula (trigger-gated)"
+          recovery-on-failure: "true"
+          recovery-show: "curricula"

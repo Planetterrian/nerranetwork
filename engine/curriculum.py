@@ -9,7 +9,10 @@ topic queues, so engine.topic_queue does the reading and writing).
 
 Curricula live outside ``shows/topic_queues/`` on purpose: that directory
 is the narrative shows' queue, swept by the restock automation and its
-runway guards. A curriculum is hand-planned and is not auto-restocked.
+runway guards. Nov 9 2026: Prediction Markets Daily's curriculum (a daily
+show, one subject a day) is auto-restocked by scripts/restock_curricula.py,
+each new subject grounded on its own paper query; the health weeklies'
+curricula are hand-planned and are not.
 """
 
 from __future__ import annotations
