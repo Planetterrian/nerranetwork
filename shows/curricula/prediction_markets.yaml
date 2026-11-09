@@ -608,6 +608,17 @@ queue:
   produced: true
   episode_number: 48
   produced_date: '2026-11-09'
+- id: noise-traders
+  title: 'Noise Traders: Why Uninformed Money Matters'
+  brief: The economist's idea of the noise trader, someone trading for reasons other than information, why markets need them for anyone else to trade at all, and what experiments and field studies find about when uninformed money moves a price and when informed traders pull it back. Education only; never a recommendation, a pick or a strategy to follow.
+  category: theory
+  search: noise traders prediction markets price efficiency
+  require:
+  - noise trad|uninformed
+  exclude:
+  - cortical
+  arxiv: abs:"noise traders" AND abs:market
+  produced: false
 - id: rate-expectations
   title: Reading the Market's Rate Expectations
   brief: How the prices of interest-rate futures are turned into the probabilities of a central bank decision that the news quotes, what assumptions sit inside that arithmetic, how those readings have compared with the decisions that followed, and how they differ from an event contract on the same meeting. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -619,6 +630,29 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"federal funds futures"
+  produced: false
+- id: extremizing
+  title: 'Extremizing: Pushing an Average Away From the Middle'
+  brief: Why an average of independent forecasts tends to sit too close to 50 percent, the extremizing adjustment researchers developed in forecasting tournaments, when it helps and when it overshoots, and what it implies for reading a crowd's number. Education only; never a recommendation, a pick or a strategy to follow.
+  category: theory
+  search: extremizing aggregated probability forecasts
+  require:
+  - extremiz|extremis|aggregat|combin
+  - forecast|probabilit
+  exclude:
+  - cortical
+  arxiv: abs:extremizing OR abs:extremization
+  produced: false
+- id: base-rates
+  title: 'Base Rates: Where a Good Forecast Starts'
+  brief: What a base rate is, why forecasters who start from how often similar events have happened tend to beat those who start from the details of the case, what the forecasting-tournament research found about it, and how a listener can apply the same habit when they see a price. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: mechanism
+  search: base rate neglect forecasting accuracy reference class superforecasters
+  require:
+  - base rate|reference class|outside view
+  exclude:
+  - cortical
+  arxiv: abs:"base rate" AND abs:forecast
   produced: false
 - id: anchoring
   title: 'Anchoring: How the First Number Sticks'
@@ -633,6 +667,18 @@ queue:
   - protein
   arxiv: abs:anchoring AND abs:forecast
   produced: false
+- id: self-fulfilling-forecasts
+  title: Can a Price Change the Outcome?
+  brief: 'Self-fulfilling and self-defeating forecasts: how a published probability can change the behaviour it forecasts, the research on whether market prices or polls affect turnout, donations or decisions, and why that makes some questions hard to forecast at all. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: self-fulfilling forecasts election polls prediction markets turnout
+  require:
+  - self-fulfilling|self-defeating|performative|bandwagon|underdog
+  - forecast|poll|prediction|market|election
+  exclude:
+  - cortical
+  arxiv: abs:"performative prediction"
+  produced: false
 - id: overreaction-to-news
   title: Do Prices Overreact to News?
   brief: What researchers find when they test whether betting and prediction-market prices move too far, or not far enough, on news such as a goal, a debate or a court ruling, how they measure it, and why the answer differs between markets. Education only; never a recommendation, a pick or a strategy to follow.
@@ -643,44 +689,6 @@ queue:
   exclude:
   - cortical
   arxiv: abs:overreaction AND abs:betting
-  produced: false
-- id: base-rates
-  title: 'Base Rates: Where a Good Forecast Starts'
-  brief: What a base rate is, why forecasters who start from how often similar events have happened tend to beat those who start from the details of the case, what the forecasting-tournament research found about it, and how a listener can apply the same habit when they see a price. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: mechanism
-  search: base rate neglect forecasting accuracy reference class superforecasters
-  require:
-  - base rate|reference class|outside view
-  exclude:
-  - cortical
-  arxiv: abs:"base rate" AND abs:forecast
-  produced: false
-- id: overconfidence
-  title: 'Overconfidence: Forecasts That Are Too Sure'
-  brief: How decision researchers measure overconfidence, the gap between how sure people say they are and how often they turn out right, what forecasting studies find about experts and traders, and how a calibration chart shows it. Education only; never a recommendation, a pick or a strategy to follow.
-  category: risk
-  search: overconfidence probability judgment forecasters calibration
-  require:
-  - overconfiden|over-confiden
-  - forecast|judgment|judgement|trader|investor|calibrat|probabilit
-  exclude:
-  - cortical
-  - conversational
-  - language model
-  arxiv: abs:overconfidence AND abs:forecast
-  produced: false
-- id: weather-markets
-  title: 'Betting on the Weather: Forecasts, Contracts and Hedging'
-  brief: How weather contracts and weather derivatives work, who uses them to hedge a cold winter or a dry summer, and what studies find when market prices on temperature or rainfall are compared with the forecasts of the national weather services. Education only; never a recommendation, a pick or a strategy to follow.
-  category: evidence
-  search: weather derivatives market prices weather forecasts hedging
-  require:
-  - weather
-  - derivative|market|contract|hedg|insurance|futures
-  exclude:
-  - cortical
-  - neural
-  arxiv: abs:"weather derivatives"
   produced: false
 - id: options-implied-probabilities
   title: Probabilities Hidden in Options Prices
@@ -705,39 +713,43 @@ queue:
   - cortical
   arxiv: abs:Delphi AND abs:"prediction market"
   produced: false
-- id: survivorship-bias
-  title: 'The Winners You Hear About: Survivorship Bias'
-  brief: Survivorship bias, the error of judging a strategy or a forecaster only by the records that are still around, how researchers found it inflating the published returns of investment funds and indices, and why a track record shown on social media needs the losers counted before it says anything. Education only; never a recommendation, a pick or a strategy to follow.
+- id: overconfidence
+  title: 'Overconfidence: Forecasts That Are Too Sure'
+  brief: How decision researchers measure overconfidence, the gap between how sure people say they are and how often they turn out right, what forecasting studies find about experts and traders, and how a calibration chart shows it. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: survivorship bias performance track records funds forecasters
+  search: overconfidence probability judgment forecasters calibration
   require:
-  - survivorship|survivor bias
-  - fund|performance|return|forecast|track record|index|indices|trader|investor
+  - overconfiden|over-confiden
+  - forecast|judgment|judgement|trader|investor|calibrat|probabilit
   exclude:
   - cortical
-  arxiv: abs:"survivorship bias" AND abs:performance
+  - conversational
+  - language model
+  arxiv: abs:overconfidence AND abs:forecast
   produced: false
-- id: noise-traders
-  title: 'Noise Traders: Why Uninformed Money Matters'
-  brief: The economist's idea of the noise trader, someone trading for reasons other than information, why markets need them for anyone else to trade at all, and what experiments and field studies find about when uninformed money moves a price and when informed traders pull it back. Education only; never a recommendation, a pick or a strategy to follow.
+- id: probability-weighting
+  title: 'Probability Weighting: Why Small Chances Feel Bigger'
+  brief: How people turn stated probabilities into felt ones, the research from prospect theory onward showing that small chances are overweighted and near-certainties underweighted, how that pattern has been measured in lotteries and insurance choices, and what it predicts for the price of an unlikely event. Education only; never a recommendation, a pick or a strategy to follow.
   category: theory
-  search: noise traders prediction markets price efficiency
+  search: probability weighting prospect theory
   require:
-  - noise trad|uninformed
+  - probability weighting|prospect theory|weighting function
   exclude:
   - cortical
-  arxiv: abs:"noise traders" AND abs:market
+  arxiv: abs:"probability weighting"
   produced: false
-- id: forecast-horizon
-  title: How Far Ahead Can Anyone See? Accuracy and the Forecast Horizon
-  brief: What studies of forecasting tournaments, economic forecasts and markets find about how accuracy falls as the question reaches further into the future, why near-term questions dominate the evidence, and what that means for reading a price on an event that resolves years from now. Education only; never a recommendation, a pick or a strategy to follow.
+- id: weather-markets
+  title: 'Betting on the Weather: Forecasts, Contracts and Hedging'
+  brief: How weather contracts and weather derivatives work, who uses them to hedge a cold winter or a dry summer, and what studies find when market prices on temperature or rainfall are compared with the forecasts of the national weather services. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: forecast horizon accuracy long-range forecasting
+  search: weather derivatives market prices weather forecasts hedging
   require:
-  - horizon|long-range|long-term forecast
-  - forecast|predict
+  - weather
+  - derivative|market|contract|hedg|insurance|futures
   exclude:
   - cortical
+  - neural
+  arxiv: abs:"weather derivatives"
   produced: false
 - id: betting-exchanges
   title: 'The Exchange Model: Betfair and the Lay Bet'
@@ -774,39 +786,39 @@ queue:
   - cortical
   arxiv: ti:"forecast combination"
   produced: false
-- id: wash-trading
-  title: 'Wash Trading: Volume That Is Not There'
-  brief: Wash trading, where one party trades with itself to make a market look busier than it is, how researchers detect it in blockchain records and on crypto exchanges, what share of reported volume studies have attributed to it, and why it matters for anyone reading a volume figure on a public venue. Education only; never a recommendation, a pick or a strategy to follow.
+- id: survivorship-bias
+  title: 'The Winners You Hear About: Survivorship Bias'
+  brief: Survivorship bias, the error of judging a strategy or a forecaster only by the records that are still around, how researchers found it inflating the published returns of investment funds and indices, and why a track record shown on social media needs the losers counted before it says anything. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: wash trading detection exchanges
+  search: survivorship bias performance track records funds forecasters
   require:
-  - wash trad
+  - survivorship|survivor bias
+  - fund|performance|return|forecast|track record|index|indices|trader|investor
   exclude:
   - cortical
-  arxiv: abs:"wash trading"
+  arxiv: abs:"survivorship bias" AND abs:performance
   produced: false
-- id: extremizing
-  title: 'Extremizing: Pushing an Average Away From the Middle'
-  brief: Why an average of independent forecasts tends to sit too close to 50 percent, the extremizing adjustment researchers developed in forecasting tournaments, when it helps and when it overshoots, and what it implies for reading a crowd's number. Education only; never a recommendation, a pick or a strategy to follow.
+- id: no-trade-theorem
+  title: Why Would Anyone Trade? The No-Trade Theorem
+  brief: The economic result that rational traders with the same starting beliefs should never bet against each other on information alone, why every trade therefore asks who on the other side knows less, and what researchers say actually keeps speculative markets busy, from hedging needs to disagreement and entertainment. Education only; never a recommendation, a pick or a strategy to follow.
   category: theory
-  search: extremizing aggregated probability forecasts
+  search: no-trade theorem speculation agree to disagree
   require:
-  - extremiz|extremis|aggregat|combin
-  - forecast|probabilit
+  - no-trade|no trade|speculat|agree to disagree
   exclude:
   - cortical
-  arxiv: abs:extremizing OR abs:extremization
+  arxiv: abs:"no-trade theorem"
   produced: false
-- id: catastrophe-bonds
-  title: 'Catastrophe Bonds: Investors Price a Hurricane'
-  brief: How insurers pass the risk of a hurricane or earthquake to investors through catastrophe bonds that lose principal if the disaster happens, how the spread on those bonds can be read as a market estimate of the disaster's chance, and what studies find on how that estimate compares with the catastrophe models behind it. Education only; never a recommendation, a pick or a strategy to follow.
+- id: forecast-horizon
+  title: How Far Ahead Can Anyone See? Accuracy and the Forecast Horizon
+  brief: What studies of forecasting tournaments, economic forecasts and markets find about how accuracy falls as the question reaches further into the future, why near-term questions dominate the evidence, and what that means for reading a price on an event that resolves years from now. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: catastrophe bonds pricing risk
+  search: forecast horizon accuracy long-range forecasting
   require:
-  - catastrophe bond|cat bond|catastrophe risk|insurance-linked
+  - horizon|long-range|long-term forecast
+  - forecast|predict
   exclude:
   - cortical
-  arxiv: abs:"catastrophe bonds"
   produced: false
 - id: policy-analysis-market
   title: 'The Market That Was Cancelled in a Day: The Policy Analysis Market'
@@ -841,39 +853,38 @@ queue:
   - cortical
   arxiv: abs:"peer prediction"
   produced: false
-- id: hindsight-bias
-  title: 'It Was Obvious All Along: Hindsight Bias'
-  brief: Hindsight bias, the tendency to remember a past forecast as closer to what happened than it was, the experiments that first measured it after real political events, and why it makes both markets and forecasters look worse or better in retrospect than their recorded prices and probabilities show. Education only; never a recommendation, a pick or a strategy to follow.
+- id: wash-trading
+  title: 'Wash Trading: Volume That Is Not There'
+  brief: Wash trading, where one party trades with itself to make a market look busier than it is, how researchers detect it in blockchain records and on crypto exchanges, what share of reported volume studies have attributed to it, and why it matters for anyone reading a volume figure on a public venue. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: hindsight bias knew it all along
+  search: wash trading detection exchanges
   require:
-  - hindsight
+  - wash trad
   exclude:
   - cortical
-  arxiv: abs:"hindsight bias"
+  arxiv: abs:"wash trading"
   produced: false
-- id: self-fulfilling-forecasts
-  title: Can a Price Change the Outcome?
-  brief: 'Self-fulfilling and self-defeating forecasts: how a published probability can change the behaviour it forecasts, the research on whether market prices or polls affect turnout, donations or decisions, and why that makes some questions hard to forecast at all. Education only; never a recommendation, a pick or a strategy to follow.'
+- id: risk-neutral-probability
+  title: 'Prices Are Not Quite Beliefs: Risk-Neutral Probabilities'
+  brief: Why the probability read off a price is what finance calls risk-neutral rather than the real-world chance, how a premium for bearing risk can push a price above or below what traders actually believe, and the research on how large that gap is in options, bonds and event contracts. Education only; never a recommendation, a pick or a strategy to follow.
   category: theory
-  search: self-fulfilling forecasts election polls prediction markets turnout
+  search: risk-neutral probabilities real-world probabilities risk premium
   require:
-  - self-fulfilling|self-defeating|performative|bandwagon|underdog
-  - forecast|poll|prediction|market|election
+  - risk-neutral|risk neutral
   exclude:
   - cortical
-  arxiv: abs:"performative prediction"
+  arxiv: abs:"risk-neutral" AND abs:"physical probabilit"
   produced: false
-- id: skill-or-luck
-  title: 'Skill or Luck: How Long a Record Has to Be'
-  brief: How researchers separate a forecaster's or investor's skill from luck, why a short record of wins is weak evidence, the statistical tests used on fund managers and forecasting tournaments, and how many scored forecasts it takes before a track record says something about the person behind it. Education only; never a recommendation, a pick or a strategy to follow.
+- id: catastrophe-bonds
+  title: 'Catastrophe Bonds: Investors Price a Hurricane'
+  brief: How insurers pass the risk of a hurricane or earthquake to investors through catastrophe bonds that lose principal if the disaster happens, how the spread on those bonds can be read as a market estimate of the disaster's chance, and what studies find on how that estimate compares with the catastrophe models behind it. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: skill versus luck performance evaluation
+  search: catastrophe bonds pricing risk
   require:
-  - luck
-  - skill
+  - catastrophe bond|cat bond|catastrophe risk|insurance-linked
   exclude:
   - cortical
+  arxiv: abs:"catastrophe bonds"
   produced: false
 - id: st-petersburg-paradox
   title: The St. Petersburg Paradox and the Limits of Expected Value
@@ -908,38 +919,38 @@ queue:
   exclude:
   - cortical
   produced: false
-- id: regression-to-the-mean
-  title: Regression to the Mean
-  brief: Why an extreme result tends to be followed by a more ordinary one for reasons of chance alone, the classic cases where it was mistaken for the effect of praise, punishment or a new policy, and how it distorts judgements of a forecaster or trader who has just had an unusually good or bad run. Education only; never a recommendation, a pick or a strategy to follow.
+- id: hindsight-bias
+  title: 'It Was Obvious All Along: Hindsight Bias'
+  brief: Hindsight bias, the tendency to remember a past forecast as closer to what happened than it was, the experiments that first measured it after real political events, and why it makes both markets and forecasters look worse or better in retrospect than their recorded prices and probabilities show. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: regression to the mean
+  search: hindsight bias knew it all along
   require:
-  - regression to the mean|regression toward the mean|regression towards the mean
+  - hindsight
   exclude:
   - cortical
+  arxiv: abs:"hindsight bias"
   produced: false
-- id: probability-weighting
-  title: 'Probability Weighting: Why Small Chances Feel Bigger'
-  brief: How people turn stated probabilities into felt ones, the research from prospect theory onward showing that small chances are overweighted and near-certainties underweighted, how that pattern has been measured in lotteries and insurance choices, and what it predicts for the price of an unlikely event. Education only; never a recommendation, a pick or a strategy to follow.
+- id: fat-tails
+  title: 'Fat Tails: When Rare Events Are Not So Rare'
+  brief: What statisticians mean by a heavy-tailed distribution, how assuming the familiar bell curve understates extreme outcomes in markets, disasters and elections, the research on how forecasters and prices handle the far tails, and why a small probability can be the hardest number on a board to get right. Education only; never a recommendation, a pick or a strategy to follow.
   category: theory
-  search: probability weighting prospect theory
+  search: heavy-tailed distributions extreme events risk
   require:
-  - probability weighting|prospect theory|weighting function
+  - heavy-tail|heavy tail|fat tail|fat-tail|extreme event
   exclude:
   - cortical
-  arxiv: abs:"probability weighting"
+  arxiv: ti:"heavy-tailed" AND abs:risk
   produced: false
-- id: social-media-forecasts
-  title: Can Social Media Forecast an Election?
-  brief: The wave of studies that tried to forecast elections by counting posts, mentions and sentiment on social platforms, why the early headline results proved hard to reproduce, and what the research now says about where online chatter adds information to polls and markets and where it only echoes them. Education only; never a recommendation, a pick or a strategy to follow.
+- id: skill-or-luck
+  title: 'Skill or Luck: How Long a Record Has to Be'
+  brief: How researchers separate a forecaster's or investor's skill from luck, why a short record of wins is weak evidence, the statistical tests used on fund managers and forecasting tournaments, and how many scored forecasts it takes before a track record says something about the person behind it. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: predicting elections with Twitter social media
+  search: skill versus luck performance evaluation
   require:
-  - twitter|social media|tweets
-  - elect|predict|forecast
+  - luck
+  - skill
   exclude:
   - cortical
-  arxiv: abs:twitter AND abs:"election prediction"
   produced: false
 - id: problem-of-points
   title: 'Where Probability Began: Pascal, Fermat and the Problem of Points'
@@ -975,38 +986,38 @@ queue:
   - cortical
   arxiv: abs:bubbles AND abs:"experimental asset market"
   produced: false
-- id: conjunction-fallacy
-  title: 'The Conjunction Fallacy: Why a Detailed Story Feels More Likely'
-  brief: The finding that people often rate a specific combination of events as more probable than one of its parts alone, the experiments that established it and the debate over why it happens, and why a market asking a detailed, story-shaped question can invite the same error. Education only; never a recommendation, a pick or a strategy to follow.
+- id: regression-to-the-mean
+  title: Regression to the Mean
+  brief: Why an extreme result tends to be followed by a more ordinary one for reasons of chance alone, the classic cases where it was mistaken for the effect of praise, punishment or a new policy, and how it distorts judgements of a forecaster or trader who has just had an unusually good or bad run. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: conjunction fallacy probability judgment
+  search: regression to the mean
   require:
-  - conjunction fallacy|conjunction effect|conjunctive
+  - regression to the mean|regression toward the mean|regression towards the mean
   exclude:
   - cortical
-  arxiv: abs:"conjunction fallacy"
   produced: false
-- id: no-trade-theorem
-  title: Why Would Anyone Trade? The No-Trade Theorem
-  brief: The economic result that rational traders with the same starting beliefs should never bet against each other on information alone, why every trade therefore asks who on the other side knows less, and what researchers say actually keeps speculative markets busy, from hedging needs to disagreement and entertainment. Education only; never a recommendation, a pick or a strategy to follow.
+- id: dutch-book
+  title: Coherent Odds and the Dutch Book
+  brief: 'The Dutch book argument: if a set of prices on related outcomes is not coherent, someone can trade against all of them and win whatever happens. Why that idea underpins treating prices as probabilities, how real venues drift from coherence, and what fees and limits do to the guaranteed profit. Education only; never a recommendation, a pick or a strategy to follow.'
   category: theory
-  search: no-trade theorem speculation agree to disagree
+  search: Dutch book coherence probabilities arbitrage betting odds
   require:
-  - no-trade|no trade|speculat|agree to disagree
+  - Dutch book|coheren|incoheren|sure-win|sure win
   exclude:
   - cortical
-  arxiv: abs:"no-trade theorem"
+  arxiv: abs:"Dutch book"
   produced: false
-- id: economic-derivatives
-  title: 'Betting on the Jobs Report: Markets in Economic Data'
-  brief: The markets that once let traders bet on the next payroll, retail sales or inflation figure, the research comparing their prices with the surveys of professional forecasters, what those markets revealed about the uncertainty around a release, and the event contracts on economic data trading today. Education only; never a recommendation, a pick or a strategy to follow.
+- id: social-media-forecasts
+  title: Can Social Media Forecast an Election?
+  brief: The wave of studies that tried to forecast elections by counting posts, mentions and sentiment on social platforms, why the early headline results proved hard to reproduce, and what the research now says about where online chatter adds information to polls and markets and where it only echoes them. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: macroeconomic derivatives market-based forecasts economic data releases
+  search: predicting elections with Twitter social media
   require:
-  - macroeconomic|economic derivative|economic data|survey forecast|announcement
-  - derivative|market|forecast
+  - twitter|social media|tweets
+  - elect|predict|forecast
   exclude:
   - cortical
+  arxiv: abs:twitter AND abs:"election prediction"
   produced: false
 - id: lloyds-coffee-house
   title: 'A Market in Risk: Marine Insurance and the Coffee House'
@@ -1030,17 +1041,6 @@ queue:
   - cortical
   arxiv: abs:"short-sale constraints"
   produced: false
-- id: event-contracts-vs-gambling-law
-  title: Event Contract or Bet? The Legal Line
-  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: regulation
-  search: event contracts gambling law jurisdiction
-  require:
-  - gambling|gaming|jurisdiction
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
-  produced: false
 - id: nowcasting
   title: 'Nowcasting: Measuring Today Before the Official Numbers'
   brief: How economists and epidemiologists estimate where things stand right now before the official numbers are published, using search queries, card payments and other fast data, what the published evaluations find about these nowcasts, and the well-known case of a search-based flu tracker that drifted off course. Education only; never a recommendation, a pick or a strategy to follow.
@@ -1052,36 +1052,36 @@ queue:
   - cortical
   arxiv: ti:nowcasting
   produced: false
-- id: availability-heuristic
-  title: 'The Availability Heuristic: Judging Chances by What Comes to Mind'
-  brief: How people estimate how often something happens by how easily examples come to mind, the research showing vivid, recent or heavily reported events judged more likely than their records support, and what that predicts for prices on questions that are in the news. Education only; never a recommendation, a pick or a strategy to follow.
+- id: conjunction-fallacy
+  title: 'The Conjunction Fallacy: Why a Detailed Story Feels More Likely'
+  brief: The finding that people often rate a specific combination of events as more probable than one of its parts alone, the experiments that established it and the debate over why it happens, and why a market asking a detailed, story-shaped question can invite the same error. Education only; never a recommendation, a pick or a strategy to follow.
   category: risk
-  search: availability heuristic risk perception frequency judgment
+  search: conjunction fallacy probability judgment
   require:
-  - availability
-  - heuristic|bias|cascade|judg|risk
+  - conjunction fallacy|conjunction effect|conjunctive
   exclude:
   - cortical
+  arxiv: abs:"conjunction fallacy"
   produced: false
-- id: risk-neutral-probability
-  title: 'Prices Are Not Quite Beliefs: Risk-Neutral Probabilities'
-  brief: Why the probability read off a price is what finance calls risk-neutral rather than the real-world chance, how a premium for bearing risk can push a price above or below what traders actually believe, and the research on how large that gap is in options, bonds and event contracts. Education only; never a recommendation, a pick or a strategy to follow.
+- id: knightian-uncertainty
+  title: 'Risk Against Uncertainty: Questions With No Base Rate'
+  brief: The economist Frank Knight's distinction between risk, where the odds can be estimated from many similar cases, and uncertainty, where they cannot. What happens to forecasts and prices on first-of-a-kind questions, and how forecasters reason when no history exists. Education only; never a recommendation, a pick or a strategy to follow.
   category: theory
-  search: risk-neutral probabilities real-world probabilities risk premium
+  search: Knightian uncertainty risk ambiguity forecasting decisions
   require:
-  - risk-neutral|risk neutral
+  - Knight|ambiguity|deep uncertainty|unknown unknowns
   exclude:
   - cortical
-  arxiv: abs:"risk-neutral" AND abs:"physical probabilit"
+  arxiv: abs:"Knightian uncertainty"
   produced: false
-- id: point-spread
-  title: The Point Spread as a Forecast
-  brief: How a sports betting line works as a public forecast of the margin of victory, the long research record testing whether those lines are efficient and where small biases have been reported, and what the comparison of lines with final scores teaches about forecasting in general rather than about betting. Education only; never a recommendation, a pick or a strategy to follow.
+- id: economic-derivatives
+  title: 'Betting on the Jobs Report: Markets in Economic Data'
+  brief: The markets that once let traders bet on the next payroll, retail sales or inflation figure, the research comparing their prices with the surveys of professional forecasters, what those markets revealed about the uncertainty around a release, and the event contracts on economic data trading today. Education only; never a recommendation, a pick or a strategy to follow.
   category: evidence
-  search: point spread betting market efficiency NFL
+  search: macroeconomic derivatives market-based forecasts economic data releases
   require:
-  - point spread|betting line|betting market|sports betting|wagering
-  - efficien|forecast|predict|bias
+  - macroeconomic|economic derivative|economic data|survey forecast|announcement
+  - derivative|market|forecast
   exclude:
   - cortical
   produced: false
@@ -1095,6 +1095,83 @@ queue:
   exclude:
   - cortical
   produced: false
+- id: contract-types
+  title: Winner-Take-All, Index and Spread Contracts
+  brief: The main ways an event contract can be designed, from a contract paying a fixed amount if something happens, to one paying in proportion to a number such as a vote share, to one that pays only beyond a threshold, and what each design lets a price reveal, from a probability to an expected value or a median. Education only; never a recommendation, a pick or a strategy to follow.
+  category: mechanism
+  search: prediction markets contract design
+  require:
+  - prediction market|event contract|information market
+  exclude:
+  - cortical
+  arxiv: ti:"prediction market" AND abs:contract
+  produced: false
+- id: event-contracts-vs-gambling-law
+  title: Event Contract or Bet? The Legal Line
+  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: regulation
+  search: event contracts gambling law jurisdiction
+  require:
+  - gambling|gaming|jurisdiction
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
+  produced: false
+- id: clinical-versus-statistical
+  title: 'Formulas Against Experts: Clinical Versus Statistical Prediction'
+  brief: The decades of studies comparing the judgement of trained experts with simple statistical formulas on the same predictions, why the formulas have so often matched or beaten the experts, the objections to that finding, and what it suggests about weighing a market price against a pundit or a model. Education only; never a recommendation, a pick or a strategy to follow.
+  category: research
+  search: clinical versus statistical prediction actuarial judgment
+  require:
+  - clinical|actuarial|mechanical prediction|expert judgment
+  - prediction|statistical|judgment
+  exclude:
+  - cortical
+  produced: false
+- id: availability-heuristic
+  title: 'The Availability Heuristic: Judging Chances by What Comes to Mind'
+  brief: How people estimate how often something happens by how easily examples come to mind, the research showing vivid, recent or heavily reported events judged more likely than their records support, and what that predicts for prices on questions that are in the news. Education only; never a recommendation, a pick or a strategy to follow.
+  category: risk
+  search: availability heuristic risk perception frequency judgment
+  require:
+  - availability
+  - heuristic|bias|cascade|judg|risk
+  exclude:
+  - cortical
+  produced: false
+- id: margin-of-error
+  title: What a Poll's Margin of Error Leaves Out
+  brief: 'What a poll''s margin of error measures, which is sampling chance only, and what it leaves out: who answers, how the sample is weighted, and how turnout is modelled. What research on historical polling error has found, and why that matters when a market price is compared with a poll. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: poll margin of error total survey error historical polling error
+  require:
+  - margin of error|polling error|survey error|sampling error
+  exclude:
+  - cortical
+  arxiv: abs:"polling error"
+  produced: false
+- id: point-spread
+  title: The Point Spread as a Forecast
+  brief: How a sports betting line works as a public forecast of the margin of victory, the long research record testing whether those lines are efficient and where small biases have been reported, and what the comparison of lines with final scores teaches about forecasting in general rather than about betting. Education only; never a recommendation, a pick or a strategy to follow.
+  category: evidence
+  search: point spread betting market efficiency NFL
+  require:
+  - point spread|betting line|betting market|sports betting|wagering
+  - efficien|forecast|predict|bias
+  exclude:
+  - cortical
+  produced: false
+- id: intrade-history
+  title: The Rise and Fall of Intrade
+  brief: 'The Dublin-based exchange that made election contracts familiar to news readers in the 2000s: how it worked, what researchers learned from its records, and how regulatory action and its own financial problems ended it. What its story shows about where the money sits on a venue. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: history
+  search: Intrade prediction market history closure
+  require:
+  - Intrade|InTrade|TradeSports
+  exclude:
+  - cortical
+  arxiv: abs:Intrade
+  produced: false
 - id: taxes-on-event-contracts
   title: 'The Tax Line: How a Payout Is Taxed'
   brief: How the United States and Canada treat a payout from an event contract (capital gain, gambling winnings or ordinary income), what the venue reports, why the regulatory label of the contract decides the tax treatment, and the difference between a regulated exchange and an offshore venue for a filer. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -1107,16 +1184,17 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:tax
   produced: false
-- id: contract-types
-  title: Winner-Take-All, Index and Spread Contracts
-  brief: The main ways an event contract can be designed, from a contract paying a fixed amount if something happens, to one paying in proportion to a number such as a vote share, to one that pays only beyond a threshold, and what each design lets a price reveal, from a probability to an expected value or a median. Education only; never a recommendation, a pick or a strategy to follow.
+- id: question-design
+  title: How a Question Is Written Changes the Price
+  brief: 'Why the wording of a contract matters: deadlines, edge cases, which source decides, and what happens when an event almost happens. How venues write resolution criteria, the disputes that ambiguous wording has caused, and how a reader can check what a contract actually pays on before reading its price. Education only; never a recommendation, a pick or a strategy to follow.'
   category: mechanism
-  search: prediction markets contract design
+  search: prediction market question wording resolution criteria disputes ambiguity
   require:
-  - prediction market|event contract|information market
+  - resolution|criteria|wording|ambigu|dispute
+  - prediction market|event contract|Polymarket|Kalshi
   exclude:
   - cortical
-  arxiv: ti:"prediction market" AND abs:contract
+  arxiv: abs:"prediction market" AND abs:resolution
   produced: false
 - id: media-and-markets-odds-on-air
   title: 'Odds on the News: When Broadcasters Show Market Prices'
@@ -1141,16 +1219,16 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:Canada
   produced: false
-- id: clinical-versus-statistical
-  title: 'Formulas Against Experts: Clinical Versus Statistical Prediction'
-  brief: The decades of studies comparing the judgement of trained experts with simple statistical formulas on the same predictions, why the formulas have so often matched or beaten the experts, the objections to that finding, and what it suggests about weighing a market price against a pundit or a model. Education only; never a recommendation, a pick or a strategy to follow.
+- id: probability-words
+  title: 'What Likely Means: Words Against Numbers'
+  brief: How differently people read verbal probability words, the intelligence-analysis research that measured the spread and led agencies to attach numbers to them, and why a market price is a number where a headline gives a word. Education only; never a recommendation, a pick or a strategy to follow.
   category: research
-  search: clinical versus statistical prediction actuarial judgment
+  search: verbal probability expressions words of estimative probability interpretation
   require:
-  - clinical|actuarial|mechanical prediction|expert judgment
-  - prediction|statistical|judgment
+  - verbal probabilit|probability words|estimative|probability phrase|linguistic probabilit
   exclude:
   - cortical
+  arxiv: abs:"verbal probability"
   produced: false
 - id: planning-fallacy
   title: 'The Planning Fallacy: Why Deadlines Slip'
@@ -1162,14 +1240,15 @@ queue:
   exclude:
   - cortical
   produced: false
-- id: fat-tails
-  title: 'Fat Tails: When Rare Events Are Not So Rare'
-  brief: What statisticians mean by a heavy-tailed distribution, how assuming the familiar bell curve understates extreme outcomes in markets, disasters and elections, the research on how forecasters and prices handle the far tails, and why a small probability can be the hardest number on a board to get right. Education only; never a recommendation, a pick or a strategy to follow.
+- id: market-selection-hypothesis
+  title: Does the Market Reward the Accurate?
+  brief: 'The market selection hypothesis: the argument that traders with better forecasts gain wealth and so gain weight in the price over time, the research that tested it, the conditions under which it fails, and what it implies for a market where most traders bet small. Education only; never a recommendation, a pick or a strategy to follow.'
   category: theory
-  search: heavy-tailed distributions extreme events risk
+  search: market selection hypothesis accurate beliefs wealth prediction markets
   require:
-  - heavy-tail|heavy tail|fat tail|fat-tail|extreme event
+  - market selection|survival|wealth dynamics|Kelly
+  - belief|forecast|accura|trader
   exclude:
   - cortical
-  arxiv: ti:"heavy-tailed" AND abs:risk
+  arxiv: abs:"market selection" AND abs:beliefs
   produced: false
