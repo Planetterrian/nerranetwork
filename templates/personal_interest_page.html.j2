@@ -178,7 +178,76 @@
             margin: 0 0 var(--sp-3);
         }
         .spi-sample audio { width: 100%; }
+        /* Nov 9 2026: the product leads; the button goes to join.html. */
+        .spi-sample { margin-top: var(--sp-2); }
+        .spi-cta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--sp-3) var(--sp-4);
+            align-items: center;
+            margin-top: var(--sp-5);
+        }
+        .spi-cta-btn {
+            display: inline-block;
+            padding: 0.95rem 1.7rem;
+            border-radius: 12px;
+            background: var(--nn-gradient);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-decoration: none;
+        }
+        .spi-cta-btn:hover { filter: brightness(1.08); }
+        .spi-cta-note {
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            color: var(--nn-text-muted);
+        }
+        .spi-gets {
+            margin: var(--sp-6) 0 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.98rem;
+            line-height: 1.55;
+            color: var(--nn-text-muted);
+        }
+        .spi-gets li { padding-left: 1.4rem; position: relative; }
+        .spi-gets li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.55em;
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--nn-cyan, #00D4FF);
+        }
+        .spi-gets strong { color: var(--nn-text, inherit); }
+        .spi-card-h {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            margin: 0 0 var(--sp-2);
+        }
+        .spi-card-sub {
+            font-family: var(--font-ui);
+            color: var(--nn-text-muted);
+            font-size: 0.95rem;
+            line-height: 1.55;
+            margin: 0 0 var(--sp-4);
+        }
+        .spi-privacy {
+            font-family: var(--font-ui);
+            margin-top: var(--sp-3);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--nn-text-muted);
+        }
         .spi-foot {
+            font-family: var(--font-ui);
             margin-top: var(--sp-8);
             font-size: 0.85rem;
             color: var(--nn-text-muted);
@@ -188,25 +257,47 @@
             .spi-actions { flex-direction: column; align-items: stretch; }
             .spi-actions button[type=submit],
             .spi-actions .spi-secondary { text-align: center; }
+            .spi-cta { flex-direction: column; align-items: stretch; }
+            .spi-cta-btn { text-align: center; }
         }
     </style>
 {% endblock %}
 
 {% block content %}
+{#- Nov 9 2026 (operator: "Rework the ad landing page"). This page takes the
+    network's paid traffic (660 sessions in the 28 days to Nov 8, 99% bounce,
+    2 signups) and led with a promise of occasional emails about Personal that no
+    send ever kept: nothing mails the personal-interest tag. It now leads with
+    the product and its five-minute sample, sends a ready visitor to
+    join.html, and offers a visitor who is not ready the one email the network
+    sends, Nerra Daily (list personal-interest + newsletter, so the Worker tags
+    personal-interest and nerra-member; no Worker change). -#}
 <section class="spi-hero" aria-labelledby="spi-title">
     <div class="spi-wrap">
         <div class="spi-eyebrow">Nerra Personal</div>
-        <h1 id="spi-title">Occasional Personal tips by email — no charge, no card</h1>
-        <p class="spi-body">Every Nerra show stays free. Personal is optional: you pick the shows (SpaceX Daily included), Mira greets you by name, and one private podcast feed arrives in the app you already use.</p>
-        <p class="spi-body">Want occasional Personal tips by email? Leave your email. No outrage diet. Curiosity only.</p>
+        <h1 id="spi-title">Your shows, one private morning edition, read to you by name</h1>
+        <p class="spi-body">Pick the Nerra shows you want, in your order. Mira opens with your name and your city, then every show plays in full, in one private feed in the podcast app you already use. Every Nerra show stays free; Personal is optional.</p>
 
-        <section class="spi-sample" aria-labelledby="spi-sample-h">
+        <section class="spi-sample" id="sample" aria-labelledby="spi-sample-h">
             <h2 id="spi-sample-h">Hear five minutes of one</h2>
-            <p>A sample edition for “Alex” in Vancouver: Mira’s open, the city brief with its sources named, the markets minute, then a taste of two shows. A real edition plays every show you pick in full.</p>
-            <audio controls preload="none" src="{{ sample_url }}" data-nn-sample="personal-interest"></audio>
+            <p>A sample edition for “Alex” in Vancouver: Mira’s open, the city brief with its sources named, the markets minute, then a taste of two shows (SpaceX Daily included). A real edition plays every show you pick in full.</p>
+            <audio controls preload="none" src="{{ sample_url }}" data-nn-sample="personal-interest" data-nn-player data-title="A sample Nerra Personal edition" data-show="Nerra Personal" aria-label="Play a five-minute sample Nerra Personal edition"></audio>
         </section>
 
+        <div class="spi-cta">
+            <a class="spi-cta-btn" href="{{ path_prefix }}join.html" data-nn-cta="personal-interest-build">Build yours →</a>
+            <span class="spi-cta-note">{% if trial_days %}{{ trial_days }} days free, then from $4.99/mo. Cancel anytime.{% else %}From $4.99/mo. Cancel anytime.{% endif %}</span>
+        </div>
+
+        <ul class="spi-gets" aria-label="What a personal edition carries">
+            <li><strong>Your lineup, your order.</strong> Any of the network’s English shows, as one edition each morning.</li>
+            <li><strong>Mira knows who it’s for.</strong> Your name, your city’s weather, and on Personal News Network a local brief with every source named aloud.</li>
+            <li><strong>Your app.</strong> One private feed for Apple Podcasts, Overcast, Pocket Casts and other apps that take one.</li>
+        </ul>
+
         <div class="spi-card" id="spi-form-card">
+            <h2 class="spi-card-h">Not ready? Get the free Nerra Daily email</h2>
+            <p class="spi-card-sub">The day’s stories from every Nerra show, at 7:00 AM Eastern. No card, and no charge.</p>
             <form id="spi-form" novalidate>
                 <div class="spi-field">
                     <label for="spi-email">Email <span class="hint">(required)</span></label>
@@ -225,33 +316,22 @@
                     <input type="text" id="spi-company" name="company" tabindex="-1" autocomplete="off">
                 </div>
 
-                <div class="spi-check">
-                    <input type="checkbox" id="spi-interest" name="personal_interest" checked>
-                    <label for="spi-interest">I’m interested in Nerra Personal</label>
-                </div>
-                <div class="spi-check">
-                    <input type="checkbox" id="spi-newsletter" name="newsletter">
-                    <label for="spi-newsletter">I’d also like the free Nerra Daily email, 7:00 AM Eastern</label>
-                </div>
-
                 <div class="spi-actions">
-                    <button type="submit" id="spi-submit">Save my email</button>
-                    <a class="spi-secondary" href="{{ path_prefix }}join.html">Or start Personal now →</a>
+                    <button type="submit" id="spi-submit">Send me Nerra Daily</button>
                 </div>
                 <p class="spi-status" id="spi-status" role="status" aria-live="polite"></p>
-                <p class="spi-privacy" style="margin-top:var(--sp-3);font-size:0.85rem;line-height:1.5;color:var(--nn-text-muted);">
-                    We’ll only email you about Nerra Personal. Unsubscribe anytime.
+                <p class="spi-privacy">
+                    One email a day. Unsubscribe anytime.
                     <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>.
                 </p>
             </form>
 
             <div class="spi-confirm" id="spi-confirm" role="status">
-                <p>You’re on the list. Shows stay free either way. If you want Personal today, it’s one click from your <a href="{{ path_prefix }}account.html">account</a> — cancel anytime.</p>
+                <p>You’re on the list. Your first Nerra Daily arrives at 7:00 AM Eastern. Shows stay free either way. When you want Personal, <a href="{{ path_prefix }}join.html">build yours here</a>; cancel anytime.</p>
             </div>
         </div>
 
-        <p class="spi-foot">Already a member? <a href="{{ path_prefix }}account.html">Go to your account →</a>
-           · Prefer to join paid now? <a href="{{ path_prefix }}join.html">Nerra Personal</a></p>
+        <p class="spi-foot">Already a member? <a href="{{ path_prefix }}account.html">Go to your account →</a></p>
     </div>
 </section>
 
@@ -290,36 +370,31 @@
     var email = (document.getElementById("spi-email").value || "").trim();
     var firstName = (document.getElementById("spi-name").value || "").trim();
     var company = (document.getElementById("spi-company").value || "").trim();
-    var interested = document.getElementById("spi-interest").checked;
-    var newsletter = document.getElementById("spi-newsletter").checked;
     var SOURCE = resolveSource();
 
     if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
-      say("That email doesn’t look right. Try again, or start Personal now at nerranetwork.com/join.", "error");
+      say("That email doesn’t look right. Try again.", "error");
       document.getElementById("spi-email").focus();
-      return;
-    }
-    if (!interested && !newsletter) {
-      say("Pick at least one option — Personal tips, or the free newsletter.", "error");
       return;
     }
 
     submitBtn.disabled = true;
     say("Saving…", "");
 
-    // ENG-SPEC: Buttondown list tag `personal-interest`. Newsletter
-    // checkbox adds the existing network newsletter segment (nerra-member)
-    // plus SpaceX Daily — never auto-charge Personal from this form.
-    var list = interested ? "personal-interest" : "member";
-    var tags = [];
-    if (newsletter) { tags.push("SpaceX Daily"); }
+    // Nov 9 2026: the form is the Nerra Daily signup. The list stays
+    // `personal-interest` (the ads' attribution and conversion), and
+    // newsletter: true makes the Worker add `nerra-member`, the tag the
+    // Nerra Daily email goes to; "SpaceX Daily" leads their email. Never
+    // auto-charge Personal from this form.
+    var list = "personal-interest";
+    var tags = ["SpaceX Daily"];
 
     var body = {
       email: email,
       list: list,
       source: SOURCE,
       tags: tags,
-      newsletter: !!newsletter,
+      newsletter: true,
       // Honeypot: Worker silently accepts & discards when company is set.
       company: company
     };
@@ -343,39 +418,26 @@
       form.hidden = true;
       confirmEl.classList.add("is-visible");
       say("", "");
-      // Soft Personal north-star event — distinct from newsletter_signup /
-      // gallery subscribe / join CTA. Soft path must never report as
-      // newsletter_signup (conflates Soft with newsletter in GA4).
-      // Enhanced conversions: consent-gated SHA-256 email via
-      // NNSubscribe.fireSoftPersonalInterestSubmit (footer-subscribe.js)
-      // immediately before the event; skip silently without consent.
+      // The ads' conversion event, unchanged in name and payload so the
+      // Google Ads key event keeps counting; it stays distinct from the
+      // footer and show forms' signup event. Enhanced conversions:
+      // consent-gated SHA-256 email via NNSubscribe.fireSoftPersonalInterestSubmit
+      // (footer-subscribe.js); skip silently without consent.
       if (typeof window.gtag === "function") {
-        if (interested) {
-          var softPayload = {
-            form_id: "personal-interest",
-            page_path: "/personal-interest.html",
-            list: list,
-            source: SOURCE || "direct"
-          };
-          // Prefer the shared helper (consent-gated enhanced conversions).
-          // Flat if/if (!…) — not nested else — so Soft vs newsletter
-          // branch finding in tests stays unambiguous.
-          var fireShared = window.NNSubscribe &&
-            typeof window.NNSubscribe.fireSoftPersonalInterestSubmit === "function";
-          if (fireShared) {
-            window.NNSubscribe.fireSoftPersonalInterestSubmit(
-              email, company, softPayload);
-          }
-          if (!fireShared) {
-            window.gtag("event", "soft_personal_interest_submit", softPayload);
-          }
-        } else {
-          // Newsletter-only path (Soft interest unchecked on this page).
-          window.gtag("event", "newsletter_signup", {
-            list: list,
-            source: SOURCE || "direct",
-            campaign: "personal-interest"
-          });
+        var softPayload = {
+          form_id: "personal-interest",
+          page_path: "/personal-interest.html",
+          list: list,
+          source: SOURCE || "direct"
+        };
+        var fireShared = window.NNSubscribe &&
+          typeof window.NNSubscribe.fireSoftPersonalInterestSubmit === "function";
+        if (fireShared) {
+          window.NNSubscribe.fireSoftPersonalInterestSubmit(
+            email, company, softPayload);
+        }
+        if (!fireShared) {
+          window.gtag("event", "soft_personal_interest_submit", softPayload);
         }
       }
     }).catch(function () {

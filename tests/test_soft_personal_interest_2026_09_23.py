@@ -30,78 +30,72 @@ class TestSoftPersonalInterestPage:
         src = _read("generate_html.py")
         assert src.count("generate_personal_interest_page(") >= 3
 
-    def test_copy_sot_header_body_confirmation(self):
+    # Nov 9 2026 (operator: "Rework the ad landing page"): the page leads
+    # with the product and its sample; the email form is the Nerra Daily
+    # signup. The old "occasional Personal tips" promise is gone because no
+    # send ever kept it.
+    def test_the_product_and_its_sample_lead(self):
         src = _read("templates/personal_interest_page.html.j2")
-        assert "Occasional Personal tips by email — no charge, no card" in src
-        assert "when you’re ready" not in src
-        assert "when you're ready" not in src
-        assert "Every Nerra show stays free. Personal is optional" in src
+        assert "Your shows, one private morning edition, read to you by name" in src
+        assert "Every Nerra show stays free; Personal is optional." in src
         assert "SpaceX Daily included" in src
-        assert "Want occasional Personal tips by email?" in src
-        assert "No outrage diet. Curiosity only." in src
-        assert "You’re on the list. Shows stay free either way." in src
-        assert "We’ll only email you about Nerra Personal" in src
+        assert src.index('id="sample"') < src.index('id="spi-form"')
+        assert 'data-nn-sample="personal-interest"' in src
+        assert "Build yours →" in src
+        assert src.index("Build yours →") < src.index('id="spi-form"')
+        assert "cancel anytime" in src.lower()
         assert "privacy-policy.html" in src
-        assert "reminder" not in src.lower()
-        assert "cancel anytime" in src.lower() or "cancel anytime" in src
+
+    def test_no_promise_of_tips_nobody_sends(self):
+        src = _read("templates/personal_interest_page.html.j2").lower()
+        assert "personal tips" not in src
+        assert "reminder" not in src
+        assert "when you’re ready" not in src and "when you're ready" not in src
 
     def test_fields_and_buttons(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert 'id="spi-email"' in src and "required" in src
         assert 'id="spi-name"' in src
-        assert "I’m interested in Nerra Personal" in src
-        assert "I’d also like the free Nerra Daily email, 7:00 AM Eastern" in src
-        assert "Save my email" in src
-        assert "Or start Personal now →" in src
+        assert "Not ready? Get the free Nerra Daily email" in src
+        assert "Send me Nerra Daily" in src
         assert "join.html" in src
+        assert "You’re on the list. Your first Nerra Daily arrives at 7:00 AM Eastern." in src
 
     def test_brand_error_copy(self):
         src = _read("templates/personal_interest_page.html.j2")
-        assert (
-            "That email doesn’t look right. Try again, or start Personal "
-            "now at nerranetwork.com/join."
-        ) in src
+        assert "That email doesn’t look right. Try again." in src
         assert "Couldn’t save that just now. Try again in a moment." in src
-        assert "whenever you’re ready" not in src
-        assert "whenever you're ready" not in src
-        # Superseded informal strings must not return.
         assert "Please enter a valid email address." not in src
         assert "Please try again in a moment." not in src
 
-    def test_posts_to_personal_interest_list(self):
+    def test_posts_a_nerra_daily_signup_on_the_personal_interest_list(self):
         src = _read("templates/personal_interest_page.html.j2")
-        assert 'list = interested ? "personal-interest" : "member"' in src
+        assert 'var list = "personal-interest";' in src
+        assert 'var tags = ["SpaceX Daily"];' in src
+        assert "newsletter: true," in src
         assert 'API_BASE = "https://api.nerranetwork.com"' in src
         assert 'API_BASE + "/api/subscribe"' in src
-        assert 'tags.push("SpaceX Daily")' in src
-        assert "newsletter: !!newsletter" in src
-        # utm_source → src-* via the shared helper (never hardcode only
-        # src-nerranetwork when a YouTube landing is present).
+        # utm_source → src-* via the shared helper.
         assert "NNSubscribe.resolveSource" in src
         assert "SOURCE_DEFAULT" in src
 
-    def test_soft_submit_fires_distinct_ga4_event(self):
-        """Soft north star must not conflate with newsletter_signup."""
+    def test_the_worker_tags_it_for_nerra_daily(self):
+        """list personal-interest + newsletter: true → personal-interest and
+        nerra-member, the tag the one email goes to. No Worker change."""
+        handlers = _read("workers/gallery/src/handlers.ts")
+        assert '"personal-interest": ["personal-interest"]' in handlers
+        assert "networkNewsletter: body?.newsletter === true" in handlers
+        assert 'tags.push("nerra-member")' in handlers
+
+    def test_submit_fires_the_ads_conversion_event(self):
         src = _read("templates/personal_interest_page.html.j2")
-        # Shared helper (preferred) or direct gtag fallback — both name the event.
         assert (
             "fireSoftPersonalInterestSubmit" in src
             and 'gtag("event", "soft_personal_interest_submit"' in src
         )
         assert 'form_id: "personal-interest"' in src
         assert 'page_path: "/personal-interest.html"' in src
-        # Soft success path: interested branch fires Soft event only.
-        soft_start = src.index("if (interested)")
-        else_at = src.index("} else {", soft_start)
-        soft_block = src[soft_start:else_at]
-        assert "soft_personal_interest_submit" in soft_block
-        assert "fireSoftPersonalInterestSubmit" in soft_block
-        assert "newsletter_signup" not in soft_block
-        # Newsletter-only (Soft unchecked) may still use newsletter_signup.
-        news_block = src[else_at:else_at + 350]
-        assert "newsletter_signup" in news_block
-        assert "soft_personal_interest_submit" not in news_block
-        # Event must not collide with gallery / join CTA names.
+        assert '"newsletter_signup"' not in src
         for banned in (
             "gallery_subscribe", "generate_lead", "select_personal_upsell",
         ):

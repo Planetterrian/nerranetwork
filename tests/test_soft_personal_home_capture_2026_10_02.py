@@ -23,9 +23,11 @@ SOFT_HERO_COPY = (
 SOFT_PRIVACY_NOTE = (
     "We’ll only email you about Nerra Personal. Unsubscribe anytime."
 )
+# Nov 9 2026: the page leads with the product and its sample.
 SOFT_META_DESCRIPTION = (
-    "Get occasional Personal tips by email, no charge, no card. Every "
-    "Nerra show stays free. No outrage diet. Curiosity only."
+    "Hear a five-minute sample, then build yours: your Nerra shows in your "
+    "order, Mira greeting you by name, one private feed. Every Nerra show "
+    "stays free."
 )
 
 
@@ -176,15 +178,15 @@ class TestPersonalInterestNoNumericShowCount:
         # with the same context helper when available.
         env = G._get_jinja_env()
         ctx = G._member_page_context(
-            "Personal tips by email, no charge, no card | Nerra Network",
+            "Your shows as one morning edition | Nerra Network",
             SOFT_META_DESCRIPTION,
             "https://nerranetwork.com/personal-interest.html",
         )
         ctx.pop("total_episodes", None)
         html = env.get_template("personal_interest_page.html.j2").render(**ctx)
         assert "Every Nerra show stays free" in html
-        assert "Want occasional Personal tips by email?" in html
-        assert SOFT_PRIVACY_NOTE in html
+        assert "Not ready? Get the free Nerra Daily email" in html
+        assert "One email a day. Unsubscribe anytime." in html
         assert "privacy-policy.html" in html
         assert "reminder" not in html.lower()
         assert "All 18" not in html
@@ -196,13 +198,14 @@ class TestPersonalInterestNoNumericShowCount:
             r'content="[^"]*\b\d+\s+(?:Nerra\s+)?shows?\b', html, flags=re.I
         )
 
-    def test_meta_description_is_tips_only(self):
+    def test_meta_description_leads_with_the_sample(self):
         import generate_html as G
 
         _title, meta = G.SEO_PAGE_COPY["personal-interest.html"]
         assert meta == SOFT_META_DESCRIPTION
         assert "reminder" not in meta.lower()
-        assert "Get occasional Personal tips" in meta
+        assert "Personal tips" not in meta
+        assert "five-minute sample" in meta
         gen = _read("generate_html.py")
         start = gen.index("def generate_personal_interest_page")
         body = gen[start : start + 1200]
