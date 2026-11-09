@@ -680,6 +680,7 @@ today's work, not just explain yesterday's):
   has papers to verify against. Board text is the pipeline's own copy, so it
   carries no specific legal claim. The Board is not content-tracked (a live
   market may lead for weeks). Guards: `tests/test_prediction_markets_2026_09_23.py`.
+  **The curriculum restocks itself** (`scripts/restock_curricula.py`).
 - **The Omni View desks + Top World** (Mira). **One definition, every
   surface:** `engine/omni_desks.py` owns the desks; the ONLY per-desk prompt
   text is `shows/prompts/omni_desks/<region>.txt`; no `keywords:` on purpose;

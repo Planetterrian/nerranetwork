@@ -48,8 +48,8 @@ _SLUG = "prediction_markets"
 _LABEL = "How It Works"
 _DIGESTS_DIR = Path(__file__).resolve().parents[2] / "digests" / _SLUG
 
-#: Below this many unproduced subjects the hook warns: the curriculum is
-#: hand-planned and a daily show uses one a day.
+#: Below this many unproduced subjects the hook warns: a daily show uses one
+#: a day, and restock-curricula.yml should have refilled it at 28.
 RUNWAY_WARN_ENTRIES = 7
 
 # The subject chosen in pre_fetch, for post_generate (same process).
