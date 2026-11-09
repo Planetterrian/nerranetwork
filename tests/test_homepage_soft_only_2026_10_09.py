@@ -19,8 +19,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 BANNED_READY = re.compile(r"when you[\u2019']re ready", re.I)
-TITLE_EXACT = "Personal tips by email, no charge, no card | Nerra Network"
-H1_EXACT = "Occasional Personal tips by email — no charge, no card"
+# Nov 9 2026: the page leads with the product (operator: "Rework the ad landing page").
+TITLE_EXACT = "Your shows as one morning edition | Nerra Network"
+H1_EXACT = "Your shows, one private morning edition, read to you by name"
 
 
 def _read(rel: str) -> str:

@@ -74,8 +74,9 @@ class TestEnhancedConversionWiring:
         for src in (tmpl, html):
             assert "fireSoftPersonalInterestSubmit" in src
             assert "soft_personal_interest_submit" in src
-            # Still fires newsletter_signup on the newsletter-only branch.
-            assert "newsletter_signup" in src
+            # Nov 9 2026: one form, one event (the ads' conversion);
+            # there is no newsletter-only branch any more.
+            assert '"newsletter_signup"' not in src
 
     def test_helpers_exported_on_nnsubscribe(self):
         js = _read("assets/js/footer-subscribe.js")
