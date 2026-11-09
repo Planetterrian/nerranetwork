@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 5,
+    "claims_anchored": 5,
+    "claims_verified": 2,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "2",
+        "url": "https://www.iea.org/reports/world-energy-investment-2023",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://www.iea.org/reports/electricity-grids-and-secure-energy-transitions",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      },
+      {
+        "id": "u1",
+        "url": "https://www.iea.org/reports/electricity-grids-and-secure-energy-transitions",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the I",
+        "sentence": "Annual investment in electricity generation such as building new power plants has risen by almost 70 percent since 2015 reaching one trillion dollars a year according to the International Energy Agency."
+      },
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the r",
+        "sentence": "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 2,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 1,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "Annual investment in electricity generation such as building new power plants has risen by almost 70 percent since 2015 reaching one trillion dollars a year according to the International Energy Agency.",
+      "The IEA calculates annual grid investment must increase by about 50 percent from today's 400 billion dollars per year.",
+      "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis."
+    ],
+    "flagged_count": 4,
+    "verified_count": 2
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "The federal budget allocates funds specifically for expanding power grids to support renewable energy integration.",
+      "episode_span": "The federal budget allocates funds specifically for expanding power grids to support renewable energy integration.",
+      "source_url": "https://www.theglobeandmail.com/business/article-federal-budget-plows-money-into-expanding-power-grids-but-connecting/",
+      "source_title": "Federal budget plows money into expanding power grids, but plans to connect them remain unclear",
+      "supporting_quote": "Federal budget plows money into expanding power grids, but plans to connect them remain unclear",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "2",
+      "claim": "Annual investment in electricity generation has risen nearly 70 percent since 2015 reaching one trillion dollars a year.",
+      "episode_span": "Annual investment in electricity generation such as building new power plants has risen by almost 70 percent since 2015 reaching one trillion dollars a year according to the International Energy Agency.",
+      "source_url": "https://www.iea.org/reports/world-energy-investment-2023",
+      "supporting_quote": "Investment in electricity generation has risen sharply since 2015",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "3",
+      "claim": "The IEA calculates annual grid investment must increase by about 50 percent from today's 400 billion dollars per year.",
+      "episode_span": "The IEA calculates annual grid investment must increase by about 50 percent from today's 400 billion dollars per year.",
+      "source_url": "https://www.iea.org/reports/electricity-grids-and-secure-energy-transitions",
+      "supporting_quote": "annual grid investment needs to rise by 50% from current levels",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "4",
+      "claim": "Political division has undermined the federal carbon pricing system with implications for industrial emissions compliance across provinces.",
+      "episode_span": "Political division has undermined the federal carbon pricing system with implications for industrial emissions compliance across provinces.",
+      "source_url": "https://theconversation.com/misinformation-won-how-divisive-politics-doomed-canadas-carbon-tax-295644",
+      "source_title": "Misinformation won: How divisive politics doomed Canada’s carbon tax",
+      "supporting_quote": "Misinformation won: How divisive politics doomed Canada’s carbon tax",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "u1",
+      "claim": "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis.",
+      "episode_span": "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis.",
+      "source_url": "https://www.iea.org/reports/electricity-grids-and-secure-energy-transitions",
+      "supporting_quote": "billions of dollars in grid upgrades are required",
+      "confidence": "medium",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "u1",
+      "claim": "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis.",
+      "episode_span": "Billions of dollars are needed to upgrade out-of-date grids according to the reported analysis.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to the r' with no covering verified claim"
+    }
+  ]
+}
