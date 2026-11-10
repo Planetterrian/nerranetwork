@@ -12,7 +12,6 @@ touches the network. They verify three things:
      ``None`` cleanly when secrets are missing instead of raising.
 """
 
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -320,11 +319,11 @@ def test_long_form_description_has_entity_hashtags():
         hook="Tesla Cybercab unveiled with new battery",
         digest_text="body", audio_url="https://x/ep.mp3",
     )
-    hashtag_lines = [l for l in meta["description"].splitlines() if l.strip().startswith("#")]
+    hashtag_lines = [ln for ln in meta["description"].splitlines() if ln.strip().startswith("#")]
     assert hashtag_lines, "long-form description should contain a hashtag line"
     assert "#podcast" in hashtag_lines[0]
     # At least one entity hashtag derived from the hook.
-    assert any("#Tesla" in l or "#Cybercab" in l for l in hashtag_lines)
+    assert any("#Tesla" in ln or "#Cybercab" in ln for ln in hashtag_lines)
     # July 2026: hashtags sit above the fold (before show-page / body),
     # not buried after chapters.
     desc = meta["description"]
@@ -334,7 +333,7 @@ def test_long_form_description_has_entity_hashtags():
 def test_short_title_keeps_shorts_suffix_when_hook_is_long():
     """When the headline is long, the #Shorts classifier hint must survive
     even if the show name is dropped."""
-    config = _make_config(rss_title="Tesla Shorts Time")
+    _make_config(rss_title="Tesla Shorts Time")
     title = vm._build_seo_title("Z" * 88, "Tesla Shorts Time", suffix="#Shorts")
     assert len(title) <= vm.YOUTUBE_TITLE_MAX
     assert title.endswith("#Shorts")
@@ -384,7 +383,7 @@ def test_build_long_form_metadata_includes_show_page_link_above_fold():
     # of youtube.com-referral sessions unattributed.
     assert "Show page:" in desc
     assert "https://nerranetwork.com/tesla.html" in desc
-    _sp_line = next(l for l in desc.splitlines() if "Show page:" in l)
+    _sp_line = next(ln for ln in desc.splitlines() if "Show page:" in ln)
     assert "utm_campaign=" in _sp_line, (
         "the show-page line must carry the funnel campaign — a bare link "
         "here is a click the funnel can never see"
@@ -414,7 +413,7 @@ def test_build_short_metadata_includes_show_page_link():
     assert "Show page:" in desc
     assert "https://nerranetwork.com/tesla.html" in desc
     # Funnel-tagged since Aug 15 2026 (see the long-form test above).
-    _sp_line = next(l for l in desc.splitlines() if "Show page:" in l)
+    _sp_line = next(ln for ln in desc.splitlines() if "Show page:" in ln)
     assert "utm_campaign=" in _sp_line
 
 

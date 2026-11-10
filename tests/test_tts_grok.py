@@ -6,7 +6,7 @@ based on `provider`, and the per-character pricing in the tracking layer.
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

@@ -487,15 +487,15 @@ class TestNightlyWarnsOnCopiesBesideARender:
         policy = {"channels": {"en": {"tesla": {"publish_long_form": True},
                                       "planetterrian": {"publish_long_form": False}}}}
         lines = fya.rss_copy_warnings(self._payload(), policy)
-        warns = [l for l in lines if l.startswith("::warning::")]
+        warns = [ln for ln in lines if ln.startswith("::warning::")]
         assert len(warns) == 1 and "tesla on en: 1 RSS-ingested copy" in warns[0]
-        notices = [l for l in lines if l.startswith("::notice::")]
+        notices = [ln for ln in lines if ln.startswith("::notice::")]
         assert len(notices) == 1 and "channel en: 3 upload(s)" in notices[0]
         assert "2 attributed" in notices[0]
 
     def test_no_policy_and_no_read_are_quiet(self):
         lines = fya.rss_copy_warnings(self._payload(), None)
-        assert not any(l.startswith("::warning::") for l in lines)
+        assert not any(ln.startswith("::warning::") for ln in lines)
         assert fya.rss_copy_warnings({"channels": {"en": {}}}, {"channels": {}}) == []
 
     def test_main_prints_the_warning(self, tmp_path, monkeypatch, capsys):

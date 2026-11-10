@@ -13,7 +13,6 @@ Also tests the enhanced music framework features:
   - dual-music / delayed-intro timing calculations
 """
 
-from pathlib import Path, PurePosixPath
 
 import pytest
 

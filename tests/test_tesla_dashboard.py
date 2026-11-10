@@ -1,9 +1,9 @@
 """Drift guards for the Tesla data dashboard + SpaceX real-Starlink count
 (June 13 2026 dashboard expansion)."""
 from __future__ import annotations
-import json, sys
+import json
+import sys
 from pathlib import Path
-import yaml
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
@@ -53,7 +53,8 @@ class TestTeslaFetcher:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_tesla_dashboard", _ROOT / "scripts" / "fetch_tesla_dashboard.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_helpers(self):
@@ -92,7 +93,8 @@ class TestSpacexStarlinkCount:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_starlink_count_function_exists(self):
@@ -107,7 +109,8 @@ class TestSpacexStarlinkCount:
         # One catalogue download yields total + the Starlink subset.
         fake = [{"OBJECT_NAME": "STARLINK-1"}, {"OBJECT_NAME": "STARLINK-2"},
                 {"OBJECT_NAME": "ISS (ZARYA)"}, {"OBJECT_NAME": "ONEWEB-9"}] * 2000
-        import io, json as _json
+        import io
+        import json as _json
 
         class _Resp(io.BytesIO):
             def __enter__(self): return self
@@ -120,7 +123,8 @@ class TestSpacexStarlinkCount:
 
     def test_satellite_counts_rejects_junk(self, monkeypatch):
         m = self._mod()
-        import io, json as _json
+        import io
+        import json as _json
 
         class _Resp(io.BytesIO):
             def __enter__(self): return self
@@ -134,7 +138,8 @@ class TestSpacexStarlinkCount:
         # As the date advances the oldest month ages out of the LL2 window and
         # returns 0 launches — that zero must NOT clobber a locked non-zero month.
         m = self._mod()
-        import json as _json, datetime as dt
+        import json as _json
+        import datetime as dt
         p = tmp_path / "spacex_metrics.json"
         p.write_text(_json.dumps({"months": {"2025-07": {
             "launches": 13, "mass_t": 181, "satellites": 184, "vehicles": {"Falcon 9": 13}}}}))
@@ -176,7 +181,7 @@ class TestMitPerformanceCharts:
             ],
         }
         c = g._mit_chart_data(tracker)
-        import json, math
+        import json
         blob = json.dumps(c)  # default allow_nan=True would still emit NaN; assert none
         assert "NaN" not in blob and "Infinity" not in blob
         # NaN trade dropped from the curve (2 finite trades remain)
@@ -199,7 +204,8 @@ class TestPadBreakdown:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_pad_label_friendly_names(self):
@@ -281,7 +287,8 @@ class TestBoosterReuseStats:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_booster_stats_from_detailed_records(self):
@@ -317,7 +324,8 @@ class TestStarshipTracker:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_metrics_has_curated_starship_record(self):

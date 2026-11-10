@@ -525,7 +525,7 @@ class TestBlogSurface:
         from engine.blog import extract_blog_metadata
 
         md = self._md()
-        md = "\n".join(l for l in md.splitlines() if not l.startswith("> **"))
+        md = "\n".join(ln for ln in md.splitlines() if not ln.startswith("> **"))
         meta = extract_blog_metadata(
             md, "nerra_daily", "Nerra_Daily_Ep004_20260824.md")
         assert not meta["hook"].startswith("Hosted by")

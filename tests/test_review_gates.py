@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import re
 import sys
 from pathlib import Path
 

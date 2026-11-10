@@ -191,7 +191,7 @@ class TestFunnelOwnsEveryPublishedCampaign:
     # Outbound links to Apple/Spotify are exempt: those parameters are read by
     # the DESTINATION's analytics, never by ours, so they carry no funnel
     # campaign and cannot affect attribution coverage.
-    _OUTBOUND_ONLY = {"generate_html.py", "make_apple_qr.py"}
+    _OUTBOUND_ONLY = {"generate_html.py"}
 
     @staticmethod
     def _docstring_lines(source: str) -> set:
@@ -554,7 +554,7 @@ class TestNightlyCommitsWhatItGenerates:
             ROOT / ".github" / "workflows" / "nightly-maintenance.yml"
         ).read_text()
         line = next(
-            l for l in nightly.splitlines() if "audit_dead_urls.py" in l
+            ln for ln in nightly.splitlines() if "audit_dead_urls.py" in ln
         )
         assert "|| true" in line or "--strict" not in line
 

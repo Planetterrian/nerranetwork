@@ -655,7 +655,6 @@ class TestTslaJsonCache:
     overwrite the previous-good value."""
 
     def test_writes_payload_on_success(self, monkeypatch, tmp_path):
-        import json
         captured: dict = {}
 
         def fake_persist(**kwargs):

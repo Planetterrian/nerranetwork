@@ -82,7 +82,9 @@ class TestTextSafeBrandColours:
 
         def lum(hex_):
             r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
-            f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            def f(c):
+                return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
             return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
 
         fg, bg = lum(m.group(1)), lum("#0B0F1A")

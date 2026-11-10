@@ -21,10 +21,8 @@ from __future__ import annotations
 
 import datetime
 import json
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
-import pytest
 
 from review_episodes import (
     _DAILY_TITLE_RE,

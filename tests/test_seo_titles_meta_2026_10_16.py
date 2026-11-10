@@ -7,7 +7,6 @@ Show pages must NOT inject the daily hook into those tags.
 """
 from __future__ import annotations
 
-import re
 from html.parser import HTMLParser
 from pathlib import Path
 

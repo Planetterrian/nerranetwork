@@ -1,6 +1,5 @@
 """Tests for YouTube preflight validation."""
 
-from pathlib import Path
 from types import SimpleNamespace
 
 from engine.youtube_preflight import validate_youtube_show_ready

@@ -28,7 +28,6 @@ import xml.etree.ElementTree as ET
 from dataclasses import replace
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 V = ROOT / "pipelines" / "voices"
@@ -473,5 +472,5 @@ class TestTheBackfill:
 def test_the_directory_doc_lists_nerra_voices_with_a_dated_pending():
     text = (ROOT / "docs" / "podcast_directories.md").read_text(encoding="utf-8")
     assert "| Nerra Voices | `https://nerranetwork.com/nerra_voices_podcast.rss` |" in text
-    row = next(l for l in text.splitlines() if l.startswith("| Nerra Voices | PENDING"))
+    row = next(ln for ln in text.splitlines() if ln.startswith("| Nerra Voices | PENDING"))
     assert "2026-11-04" in row and "LIVE" not in row

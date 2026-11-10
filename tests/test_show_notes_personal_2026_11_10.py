@@ -79,7 +79,6 @@ class TestRunShowWiring:
 
     def test_members_gate_reads_the_access_setting(self):
         from types import SimpleNamespace
-        import importlib.util, sys
         from pathlib import Path
         import ast
         src = (Path(__file__).resolve().parent.parent / "run_show.py").read_text(encoding="utf-8")

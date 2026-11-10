@@ -399,7 +399,7 @@ class TestReport:
     def _build(self, tmp_path, videos, extra_shows=None):
         import importlib
 
-        api = self._write_stats(tmp_path, videos, extra_shows=extra_shows)
+        self._write_stats(tmp_path, videos, extra_shows=extra_shows)
         module = importlib.import_module("scripts.build_shorts_ab_report")
         original = module._ROOT
         module._ROOT = tmp_path

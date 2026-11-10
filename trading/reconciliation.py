@@ -6,7 +6,7 @@ Critical for live trading. Should be run frequently.
 
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import Dict
 from .webull_client import WebullClient
 from .paper_tracker import PaperTracker
 

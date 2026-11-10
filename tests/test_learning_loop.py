@@ -660,7 +660,7 @@ class TestTheAssemblerDoesNotTrustItsSources:
     def test_narration_is_trimmed_by_default(self):
         import importlib
 
-        mod = importlib.import_module("assemble_edit")
+        importlib.import_module("assemble_edit")
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert "TRIM = (" in src
         assert 'str(cut.get("from", "")).startswith("narration:")' in src
@@ -832,6 +832,6 @@ class TestNarrationHissIsRemovedAtSource:
     def test_narration_gets_afftdn_and_conversation_does_not(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert 'NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12' in src
-        plain = [l for l in src.splitlines() if l.startswith('RESTORE = "')][0]
+        plain = [ln for ln in src.splitlines() if ln.startswith('RESTORE = "')][0]
         assert "afftdn" not in plain
         assert "chain.append(NARRATION_RESTORE if narration else restore)" in src

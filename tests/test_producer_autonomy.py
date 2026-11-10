@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 
 from tests.test_producer_inbox import (  # noqa: E402
     OWNER, FakeGmailService, _classification, decode_raw, db, env, gmail_message,  # noqa: F401
-    grok, make_thread, slack,
+    grok, make_thread, slack,  # noqa: F401  (pytest fixtures)
 )
 from pipelines.producer import chase, classify, digest, followup, inbox  # noqa: E402
 from pipelines.producer.gmail_client import GmailClient, parse_message  # noqa: E402
@@ -679,7 +679,9 @@ class TestInviteEveryone:
         rdb.rows.append(self._held_row("t1", mentions_money_or_legal=True))
         rdb.rows.append(self._held_row("t2", confidence=0.3))
         rdb.rows.append(self._held_row("t3", category="sponsor_or_sales"))
-        row = self._held_row("t4"); row["publicist_email"] = "x@apple.com"; rdb.rows.append(row)
+        row = self._held_row("t4")
+        row["publicist_email"] = "x@apple.com"
+        rdb.rows.append(row)
         rdb.rows.append(self._held_row("t5"))  # Patrick already answered this one by hand
         threads = [make_thread(f"t{i}", "sam@reyespr.com", "pitch", "p") for i in range(1, 5)]
         threads.append(make_thread("t5", "sam@reyespr.com", "pitch", "p", own_reply=True))

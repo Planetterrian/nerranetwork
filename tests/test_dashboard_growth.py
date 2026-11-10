@@ -137,7 +137,8 @@ class TestDubGateMetric:
         assert m["dub_gate_tracks_14d"] == 10 and m["dub_gate_fail_share_14d"] == 0.2
 
     def test_no_sidecars_is_unmeasured(self, tmp_path):
-        (tmp_path / "api").mkdir(); (tmp_path / "digests").mkdir()
+        (tmp_path / "api").mkdir()
+        (tmp_path / "digests").mkdir()
         m = gd._experiment_live_metrics(tmp_path)
         assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] is None
 

@@ -200,7 +200,8 @@ class TestWeeklyNewsletterSameWeekGuard:
         assert calls, "dry run must still generate"
 
     def test_marker_written_after_send_only(self, tmp_path):
-        import importlib.util, json
+        import importlib.util
+        import json
         from pathlib import Path
         import datetime as dt
         root = Path(__file__).resolve().parent.parent

@@ -131,9 +131,9 @@ class TestScanUsability:
 
         monkeypatch.setattr(fsb, "_probe", _probe)
         assert fsb._list_cc("chan", 6, workers=4) == 0
-        printed = [l for l in capsys.readouterr().out.splitlines()
-                   if l.startswith("CC ")]
-        assert [l.split()[1] for l in printed] == ["vid1", "vid3", "vid5"]
+        printed = [ln for ln in capsys.readouterr().out.splitlines()
+                   if ln.startswith("CC ")]
+        assert [ln.split()[1] for ln in printed] == ["vid1", "vid3", "vid5"]
 
     def test_scan_survives_individual_probe_failures(self, monkeypatch,
                                                      capsys):

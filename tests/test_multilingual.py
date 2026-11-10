@@ -107,7 +107,8 @@ class TestMultilingualCostTracking:
         assert 0.005 < c < 0.5
 
     def test_writes_multilingual_usage_file(self, tmp_path):
-        import json, types
+        import json
+        import types
         from engine.multilingual import _write_ml_usage
         cfg = types.SimpleNamespace(name="Demo", slug="demo")
         _write_ml_usage(tmp_path, cfg, 7, "2026-06-18", 0.12, 21000, ["fr", "ru", "zh"])

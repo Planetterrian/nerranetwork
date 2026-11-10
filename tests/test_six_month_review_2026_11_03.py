@@ -743,7 +743,6 @@ class TestTheEditionCutsBeforeThePlatformAsk:
 
     @staticmethod
     def _transcript(sentences, start=200.0):
-        import itertools
         t = start
         segments = []
         for sent in sentences:

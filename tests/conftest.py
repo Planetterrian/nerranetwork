@@ -5,7 +5,6 @@ These fixtures provide sample data for testing the pure functions
 that exist across the podcast generation scripts.
 """
 
-import os
 import sys
 import textwrap
 from pathlib import Path

@@ -4501,6 +4501,19 @@ def run(args: argparse.Namespace) -> None:
                 logger.warning("Script listener-noise filter failed "
                                "(non-fatal): %s", _noise_exc)
 
+            # Nov 10 2026: "<Outlet> is the source for …" is cut on every
+            # show, not only the absence-filter shows (network review
+            # 2026-11-05, P0 #1). Attribution on a fact stays.
+            try:
+                from engine.absence_sentences import strip_sourcing_clauses
+                podcast_script, _src_cut = strip_sourcing_clauses(podcast_script)
+                if _src_cut:
+                    logger.info("Cut %d sourcing clause(s) from the script", _src_cut)
+                metrics.record("script_sourcing_clauses_cut", _src_cut)
+            except Exception as _src_exc:  # noqa: BLE001
+                logger.warning("Script sourcing-clause cut failed (non-fatal): %s",
+                               _src_exc)
+
             # Same absence-sentence filter as the digest (opt-in): the
             # script stage writes its own ("Current reporting supplies no
             # release date for the redesign." — MAG 7 Ep1).

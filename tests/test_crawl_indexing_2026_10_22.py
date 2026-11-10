@@ -66,7 +66,7 @@ class TestBlogArchiveNoindex:
         cfg = G.NETWORK_SHOWS["tesla"]
         env = G._get_jinja_env()
         html = generate_blog_index_html([], cfg, env, page=1, total_pages=1)
-        assert f'href="' in html
+        assert 'href="' in html
         assert cfg["show_page"] in html
         assert "Listen to Tesla Shorts Time" in html
 

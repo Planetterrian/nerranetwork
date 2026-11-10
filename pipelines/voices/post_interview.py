@@ -40,7 +40,7 @@ import requests
 from common import (  # noqa: E402
     OPERATOR_EMAIL, cohost_label, cohost_name, llm, load_prompt, logger,
     new_review_token, notify_operator, package_review_token,
-    parse_json_lenient, r2_upload, render_email, sb_insert, sb_select,
+    parse_json_lenient, r2_upload, sb_insert, sb_select,
     sb_update, send_email, show_for,
     guest_links_markdown,
 )
@@ -585,7 +585,7 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     # measurement and laid over one another. Taking the longest (which is
     # what this did until Sept 15 2026) silently deleted Patrick from the
     # last seven minutes of the Wolfberg interview.
-    legs = [l for l in (host_legs or ([host_raw] if host_raw else [])) if l]
+    legs = [leg for leg in (host_legs or ([host_raw] if host_raw else [])) if leg]
     host_vox, host_delay, host_windows = None, 0.0, 0
     # A leg whose recorder lost time part-way through is placed in pieces;
     # the pieces are recorded so the review can see it happened.

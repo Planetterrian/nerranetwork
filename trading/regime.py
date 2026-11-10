@@ -6,7 +6,6 @@ Reduces aggressiveness when conditions are unfavorable for the current MIT edge.
 
 from __future__ import annotations
 
-from typing import Dict
 
 
 def get_regime_adjustment(

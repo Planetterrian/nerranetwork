@@ -37,11 +37,11 @@ class TestATurnThatAsksNothingDidNotAsk:
     def test_the_question_goes_again_when_they_finish_their_thought(self):
         out = sim("round_turn_without_question")
         lines = round_lines(out)
-        assert any(l.startswith("her turn asked nothing; the show's own question") for l in lines)
-        assert any("handing 1/8 again" in l for l in lines)
+        assert any(ln.startswith("her turn asked nothing; the show's own question") for ln in lines)
+        assert any("handing 1/8 again" in ln for ln in lines)
         assert out["roundNotesAfterThought"] == 2          # handed twice, asked once
         assert out["roundConversationNotes"] == 0          # never as a conversation note
-        assert not any(l.startswith("answered 1/8") for l in lines[:3])
+        assert not any(ln.startswith("answered 1/8") for ln in lines[:3])
 
     def test_the_round_then_runs_in_step(self):
         out = sim("round_turn_without_question")
@@ -54,7 +54,7 @@ class TestATurnThatAsksNothingDidNotAsk:
     def test_a_question_the_room_handed_her_is_never_called_a_repeat(self):
         out = sim("round_turn_without_question")
         assert out["secondTimeNotes"] == 0
-        assert not any(l.startswith("asked again") for l in round_lines(out))
+        assert not any(ln.startswith("asked again") for ln in round_lines(out))
 
     def test_a_reaction_and_their_silence_gets_the_question_now(self):
         out = sim("round_reaction_then_silence")

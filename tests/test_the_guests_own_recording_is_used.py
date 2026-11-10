@@ -62,14 +62,15 @@ def _tone_bursts(path, starts, sr=48000, total=20.0, hz=220.0, noise=0.0):
         a = int(s * sr)
         x[a:a + n] += 8000 * np.sin(2 * np.pi * (hz + 40 * i) * t) * np.hanning(n)
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
         w.writeframes(np.clip(x, -32768, 32767).astype(np.int16).tobytes())
     return path
 
 
 def test_each_phrase_lands_where_the_call_has_it(tmp_path):
     """The call leg's delay wanders; one offset cannot fit every phrase."""
-    import numpy as np
     from audio.local_tracks import _log_env, _pcm, place_phrases
     local_starts = [1.0, 4.0, 7.0, 10.0, 13.0]
     shifts = [0.0, 0.3, 0.3, 0.1, 0.45]          # the call is late, by varying amounts
@@ -85,7 +86,6 @@ def test_each_phrase_lands_where_the_call_has_it(tmp_path):
 
 
 def test_the_room_is_kept_out_between_turns(tmp_path):
-    import numpy as np
     from audio.local_tracks import _log_env, _pcm, gate_to_reference
     local = _tone_bursts(tmp_path / "local.wav", [2.0, 9.0], noise=300)   # a mic that hears the room
     call = _tone_bursts(tmp_path / "call.wav", [2.0, 9.0], noise=0)       # echo-cancelled
@@ -113,7 +113,9 @@ def _tones(path, spans, sr=48000, total=6.0):
         t = np.arange(int((b - a) * sr)) / sr
         x[int(a * sr):int(a * sr) + len(t)] += 6000 * np.sin(2 * np.pi * hz * t)
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
         w.writeframes(np.clip(x, -32768, 32767).astype(np.int16).tobytes())
     return path
 
@@ -245,9 +247,10 @@ def test_the_leg_file_puts_the_take_left_and_the_room_right(tmp_path):
     probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels,sample_rate",
                             "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip()
     assert probe == "48000,2"
-    l = _pcm_side(out, 0, tmp_path); r = _pcm_side(out, 1, tmp_path)
+    left = _pcm_side(out, 0, tmp_path)
+    r = _pcm_side(out, 1, tmp_path)
     t = _pcm(take).astype(float)
-    assert np.corrcoef(l[24000:72000], t[24000:72000])[0, 1] > 0.99   # the take, not the call mic
+    assert np.corrcoef(left[24000:72000], t[24000:72000])[0, 1] > 0.99   # the take, not the call mic
     assert np.abs(r[int(2.0 * 48000):int(2.4 * 48000)]).max() > 1000   # the room as heard
     assert np.abs(r[int(0.8 * 48000):int(1.2 * 48000)]).max() < 300
 

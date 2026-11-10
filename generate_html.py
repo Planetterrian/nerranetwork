@@ -3398,26 +3398,6 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
 
     prefix = _path_prefix(cfg["show_page"])
 
-    # Special MIT performance & learning transparency (strong recursive loop)
-    mit_performance = None
-    if slug == "modern_investing":
-        try:
-            import json as _json
-            tracker_path = ROOT / "digests" / "modern_investing" / "investment_tracker.json"
-            if tracker_path.exists():
-                tracker = _json.loads(tracker_path.read_text(encoding="utf-8"))
-                summary = tracker.get("summary", {})
-                mit_performance = {
-                    "cumulative_alpha_vs_nasdaq": summary.get("cumulative_alpha_vs_nasdaq", 0.0),
-                    "total_trades": summary.get("total_trades", 0),
-                    "win_rate": summary.get("win_rate", 0.0),
-                    "last_updated": tracker.get("last_updated", ""),
-                    "derived_principles": tracker.get("derived_principles", []),
-                    "confidence_stats": tracker.get("confidence_calibration", {}),
-                }
-        except Exception as e:
-            print(f"Warning: could not load MIT performance tracker: {e}")
-
     # Collect latest blog post metadata for the show page
     latest_blog_posts = []
     try:
@@ -3535,12 +3515,10 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # the current episode instead of static NETWORK_SHOWS text. RSS parse already
     # happens above for the episodes rail; we just reuse the first item.
     latest_episode_title = None
-    dynamic_meta_description = cfg.get("meta_description", "")
     if static_episodes:
         latest_episode_title = static_episodes[0].get("title")
         if latest_episode_title:
             # Keep original meta but lead with the fresh episode for better CTR/SEO
-            dynamic_meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
             # Page title becomes "Show — Latest Hook Snippet | Nerra Network" (safe length)
             hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
             # Titles rule (CLAUDE.md top rule): every truncation goes through
@@ -4715,7 +4693,7 @@ def _mira_shows(slugs=None):
 # the way the Mira claim and the creator credit have. The name is kept here
 # so callers and guards that read ``generate_html.MIRA_INTERVIEW_STEPS``
 # keep working; it is the same list object.
-from engine.brand import MIRA_INTERVIEW_STEPS  # noqa: E402
+from engine.brand import MIRA_INTERVIEW_STEPS  # noqa: E402, F401  (re-exported)
 
 
 def generate_mira_page(*, dry_run=False, output_dir=None):
@@ -5963,7 +5941,6 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
                       "url": "https://nerranetwork.com"},
     }
 
-    lead = page.get("lead") or {}
     _home_title, _home_meta = SEO_PAGE_COPY["index.html"]
     from engine import brand as _brand_home
     # Count-free alt: the share-card manifest still carries a numbered
@@ -6594,12 +6571,12 @@ def generate_sitemap(*, dry_run=False, out=None):
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for loc, priority, lastmod in urls:
-        lines.append(f"  <url>")
+        lines.append("  <url>")
         lines.append(f"    <loc>{_esc(loc)}</loc>")
         lines.append(f"    <priority>{priority}</priority>")
         if lastmod:
             lines.append(f"    <lastmod>{_esc(lastmod)}</lastmod>")
-        lines.append(f"  </url>")
+        lines.append("  </url>")
     lines.append("</urlset>")
     lines.append("")
 
@@ -7257,7 +7234,6 @@ _LANGUAGE_HUB_COPY = {
         "top_heading": "Главные сюжеты",
         "more_nav": "Ещё",
         "more_heading": "Ещё из сети",
-        "read_label": "Читать",
         "read_full_native": "Читать статью",
         "read_full_dubbed": "Читать статью (на английском)",
         "more_from": "Ещё от",
@@ -7374,7 +7350,6 @@ _LANGUAGE_HUB_COPY = {
         "top_heading": "Les grands titres",
         "more_nav": "Et aussi",
         "more_heading": "Aussi sur le réseau",
-        "read_label": "Lire",
         "read_full_native": "Lire l'article",
         "read_full_dubbed": "Lire l'article (en anglais)",
         "more_from": "Plus de",

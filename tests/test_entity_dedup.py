@@ -1,8 +1,6 @@
 """Tests for entity-level deduplication and weekend/low-news detection in engine/utils.py."""
 
-import datetime
 
-import pytest
 
 from engine.utils import (
     extract_primary_entity,

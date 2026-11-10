@@ -7,13 +7,10 @@ generation, and publishing — all without making real API calls.
 
 import datetime
 import json
-import os
-import re
 import sys
 import textwrap
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -1120,7 +1117,6 @@ class TestWorkflowIntegration:
             if line.startswith("|") and ".yaml" in line and "shows/" in line:
                 parts = [p.strip() for p in line.split("|")]
                 if len(parts) >= 5:
-                    show_name = parts[1].strip()
                     sched = parts[4].strip().lower()
                     # Map show name → slug using the YAML config filename
                     m = re.search(r"shows/(\w+)\.yaml", line)

@@ -411,7 +411,7 @@ class TestRuffGateRunsLocally:
     # Mirrors the CI invocation's targets. CI adds --fix
     # --exit-non-zero-on-fix (fail even when auto-fixable); a plain check
     # fails on the same findings without mutating the working tree.
-    _TARGETS = ["engine/", "run_show.py", "scripts/"]
+    _TARGETS = ["."]  # the whole repo since Nov 10 2026
 
     def test_ruff_is_clean(self):
         pytest.importorskip("ruff", reason="ruff not installed in this env")

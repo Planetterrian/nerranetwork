@@ -15,7 +15,6 @@ import re
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 EASTERN = ZoneInfo("America/New_York")
@@ -188,6 +187,5 @@ class TestWiring:
         assert body.index("resp.status_code == 401") < body.index("raise_for_status")
 
     def test_the_record_carries_no_member_identity(self):
-        src = (ROOT / "scripts/check_personal_feeds.py").read_text()
         for key in check.FEED_KEYS:
             assert not re.search(r"token|email|name|city", key)

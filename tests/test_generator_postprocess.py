@@ -14,7 +14,6 @@ Two LLM-output cleanup helpers covered here:
 
 from __future__ import annotations
 
-import re
 
 import pytest
 

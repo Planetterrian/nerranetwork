@@ -9,8 +9,6 @@ Tests cover:
 Pronunciation tests for the shared module live in test_pronunciation.py.
 """
 
-import re
-from pathlib import Path
 
 import pytest
 

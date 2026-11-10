@@ -403,8 +403,8 @@ def plan(ctx: dict) -> dict:
                     guest_title=app.get("title", ""),
                     guest_organization=app.get("organization", "") or "",
                     guest_bio=app.get("bio", "") or "",
-                    guest_links="\n".join(f"- {l['label']}: {l['url']}"
-                                          for l in guest_links(app)) or "(none)",
+                    guest_links="\n".join(f"- {link['label']}: {link['url']}"
+                                          for link in guest_links(app)) or "(none)",
                     cohost_name=(run.get("cohost_name")
                                  or interview.get("cohost_name") or "Patrick Novak"),
                     episode_thesis=interview.get("episode_thesis", "") or "",
@@ -455,7 +455,7 @@ def _find_quote(quote: str, transcript: str, who_not: str = "Mira") -> float | N
     if len(want) < 3:
         return None
     best = None
-    lines = [l for l in parse_lines(transcript) if not l[1].lower().startswith(who_not.lower())]
+    lines = [ln for ln in parse_lines(transcript) if not ln[1].lower().startswith(who_not.lower())]
     for i, (at, _who, text) in enumerate(lines):
         # A quote can start at the end of one line and run into the next.
         here = _norm_words(text + " " + (lines[i + 1][2] if i + 1 < len(lines) else ""))
@@ -549,8 +549,8 @@ def only_their_domains(text: str, app: dict) -> str:
     links = guest_links(app or {})
     allowed = {"nerranetwork.com"}
     social = None
-    for l in links:
-        host = _registrable(urlparse(str(l.get("url") or "")).netloc)
+    for link in links:
+        host = _registrable(urlparse(str(link.get("url") or "")).netloc)
         if host:
             allowed.add(host)
             if host in _SOCIAL and social is None:

@@ -219,7 +219,7 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
         lines.append("- The points they asked you to cover in the interview (already on file): "
                      + " | ".join(str(x) for x in agenda["points"][:8]))
     return {"show": show, "standing": standing, "facts": "\n".join(lines) or "- (none)",
-            "links": [l for l in links if l], "upcoming": upcoming}
+            "links": [link for link in links if link], "upcoming": upcoming}
 
 
 def _redo_agreed(interview_id: str) -> bool:

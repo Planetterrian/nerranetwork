@@ -65,7 +65,7 @@ class ValidationResult:
 
         if self.passed:
             print("\n  RESULT: PASS — show is ready for test run")
-            print(f"  Next: python run_show.py <slug> --test")
+            print("  Next: python run_show.py <slug> --test")
         else:
             print("\n  RESULT: FAIL — fix errors before running")
 
@@ -244,7 +244,7 @@ def validate_prompt(
     legit = {
         "{EXACT", "{URL", "{EXACT URL", "{SHOW_NAME", "{EPISODE_PREFIX",
     }
-    suspicious = [p for p in placeholders if not any(p.startswith(l) for l in legit)]
+    suspicious = [p for p in placeholders if not any(p.startswith(ok) for ok in legit)]
     if suspicious:
         result.error(f"{prompt_type} prompt has uncustomized placeholders: {set(suspicious)}")
 

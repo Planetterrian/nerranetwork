@@ -2780,8 +2780,10 @@ class TestChapterTitleCards:
     def test_build_long_form_video_derives_cards_from_chapters_json(
             self, tmp_path, monkeypatch):
         import json as _json
-        audio = tmp_path / "voice.mp3"; audio.write_bytes(b"\x00")
-        cover = tmp_path / "cover.jpg"; cover.write_bytes(b"\xFF\xD8")
+        audio = tmp_path / "voice.mp3"
+        audio.write_bytes(b"\x00")
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"\xFF\xD8")
         chapters = tmp_path / "chapters.json"
         chapters.write_text(_json.dumps({"chapters": [
             {"startTime": 12.0, "title": "Top Stories"},
@@ -2915,8 +2917,10 @@ class TestShortsPunchFrame:
         captured = {}
         monkeypatch.setattr(video, "_run_ffmpeg",
                             lambda c, **k: captured.setdefault("cmd", c))
-        audio = tmp_path / "a.mp3"; audio.write_bytes(b"x")
-        cover = tmp_path / "c.jpg"; cover.write_bytes(b"x")
+        audio = tmp_path / "a.mp3"
+        audio.write_bytes(b"x")
+        cover = tmp_path / "c.jpg"
+        cover.write_bytes(b"x")
         build_short_video(audio, cover, tmp_path / "s.mp4", duration=35.0,
                           hook=self.HOOK, punch_text="VIRTUAL QUEUE")
         g = captured["cmd"][captured["cmd"].index("-filter_complex") + 1]

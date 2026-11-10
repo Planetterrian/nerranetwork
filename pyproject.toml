@@ -13,6 +13,13 @@
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
 
+# Nov 10 2026: the whole repo passes this rule set now and CI lints all of it.
+# Tests keep two pytest idioms: a fixture imported from another test module
+# and then named as a test parameter (F811), and imports after a sys.path
+# insert (E402).
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["F811", "E402"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

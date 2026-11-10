@@ -1203,12 +1203,12 @@ def place_phrases(track_wav: Path, reference_wav: Path, out_wav: Path) -> Tuple[
                 if c > best[0]:
                     best = (c, lag)
         picks.append(best)
-    sure = [l for c, l in picks if c >= PHRASE_MIN_CORR]
+    sure = [lag for c, lag in picks if c >= PHRASE_MIN_CORR]
     overall = int(np.median(sure)) if sure else 0
     lags = []
-    for k, (c, l) in enumerate(picks):
+    for k, (c, lag) in enumerate(picks):
         if c >= PHRASE_MIN_CORR:
-            lags.append(l)
+            lags.append(lag)
             continue
         near = [picks[j][1] for j in range(max(0, k - 4), min(len(picks), k + 5))
                 if picks[j][0] >= PHRASE_MIN_CORR]
@@ -1229,7 +1229,7 @@ def place_phrases(track_wav: Path, reference_wav: Path, out_wav: Path) -> Tuple[
         if end > dst:
             out[dst:end] += piece[:end - dst]
 
-    bounds = [(s * step, min(len(loc), e * step), l * step) for (s, e), l in zip(segs, lags)]
+    bounds = [(s * step, min(len(loc), e * step), lag * step) for (s, e), lag in zip(segs, lags)]
     prev_end, prev_shift = 0, (bounds[0][2] if bounds else 0)
     tail = bounds[-1][2] if bounds else 0
     for a, b, shift in bounds + [(len(loc), len(loc), tail)]:

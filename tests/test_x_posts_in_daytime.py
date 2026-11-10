@@ -171,7 +171,6 @@ SECOND_WAVE = ("first_principles", "mag7", "ai_chips", "prediction_markets", "va
 def test_second_wave_keeps_its_x_sourcing(slug):
     """Turning X posting on must not turn X *reading* on: sourcing followed
     x_enabled for shows without an explicit x_fetch_enabled."""
-    from engine.fetcher import x_fetch_allowed
     cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
     assert cfg.publishing.x_post_format == "clip"
     if cfg.x_accounts:

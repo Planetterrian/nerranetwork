@@ -1,8 +1,6 @@
 """Tests for engine/content_lake.py — SQLite content storage with FTS5."""
 
-import json
 
-import pytest
 
 from engine.content_lake import (
     EpisodeRecord,

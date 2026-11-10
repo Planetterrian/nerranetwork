@@ -52,6 +52,6 @@ def test_no_surface_calls_the_network_zone_pacific_time():
                  "pipelines/producer/prompts/followup_reply.txt",
                  "templates/contact.html.j2"]:
         src = (ROOT / path).read_text()
-        code = "\n".join(l for l in src.splitlines()
-                         if not l.lstrip().startswith(("#", "//")))
+        code = "\n".join(ln for ln in src.splitlines()
+                         if not ln.lstrip().startswith(("#", "//")))
         assert "Pacific Time" not in code, path

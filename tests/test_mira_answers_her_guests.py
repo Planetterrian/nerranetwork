@@ -201,7 +201,7 @@ class TestElliot:
         guest = guest_reply.find_guest(ELLIOT)
         facts = guest_reply.facts_for(guest)
         assert "booked for" in facts["standing"]
-        assert any(l.endswith("&role=guest") for l in facts["links"])
+        assert any(ln.endswith("&role=guest") for ln in facts["links"])
         assert "https://api.nerranetwork.com/voices/manage/tok123" in facts["links"]
 
     def test_a_question_mira_cannot_answer_goes_to_patrick_now(self, gdb, outbox, grok):
@@ -290,7 +290,6 @@ class TestEverythingIsFromMira:
             assert "sign_off: \"— " not in p.read_text(), p.name
 
     def test_the_producer_sends_through_mira(self, monkeypatch):
-        from pipelines.producer import gmail_client
         src = (ROOT / "pipelines" / "producer" / "gmail_client.py").read_text()
         assert "mailer=MiraMailer.from_env(dry_run=dry_run)" in src
         c = GmailClient(object(), OWNER, mailer=mira_mail.MiraMailer(dry_run=True))

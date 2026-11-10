@@ -246,12 +246,19 @@ _SELF_NARRATION = [
 # the source for those figures, and the current reading given is eleven
 # point zero degrees." — the temperature stays. A sentence that is only
 # the clause goes.
+# Nov 10 2026: the outlet is not always a capitalised name — "Phys dot org
+# is the source for the date, the journal…", "the science subreddit is the
+# source for…" — and the clause can close the sentence with no "for":
+# "Traditional Korean paper is the material, a wearable health patch is the
+# form, and Phys dot org is the source." (Planetterrian Ep235-237). Swept
+# over every committed script, digest and reader text before widening: all
+# 33 matches are sourcing narration, none a fact.
 _SOURCE_FOR_HEAD_RE = re.compile(
-    r"^(?:The |the )?[A-Z][\w&'’.-]*(?:\s+[A-Z][\w&'’.-]*){0,5}\s+"
-    r"(?:is|are|was|were) the sources? for\b")
+    r"^(?:[\w&'’.-]+\s+){1,6}?(?:is|are|was|were) the sources?"
+    r"(?:\s+for\b|(?=\s*[.!?]?$))")
 _SOURCE_FOR_TAIL_RE = re.compile(
-    r",?\s*(?:and|but|while)\s+(?:The |the )?[A-Z][\w&'’.-]*(?:\s+[A-Z][\w&'’.-]*){0,5}\s+"
-    r"(?:is|are|was|were) the sources? for\b[^.;!?]*")
+    r",?\s*(?:and|but|while)\s+(?:[\w&'’.-]+\s+){1,6}?(?:is|are|was|were) the sources?"
+    r"(?:\s+for\b[^.;!?]*|(?=\s*[.!?]?$))")
 # The clause ends where a second CLAUSE begins — ", and the current reading
 # given is eleven…" — never at a comma inside the list it introduces ("the
 # pledge, the size claim, and the Miami campus plan").
@@ -278,6 +285,48 @@ def cut_sourcing_clause(sentence: str) -> str:
             return ""
         return head + ("." if s.endswith(".") else "")
     return s
+
+
+# Nov 10 2026 (network review 2026-11-05, P0 #1): the clause cut above ran
+# only inside the opt-in absence filter, so the shows without it spoke
+# "<Outlet> is the source for …" on air (Planetterrian, UC, MAG 7 before it
+# opted in). This runs on every show's script. It cuts the sourcing clause
+# only: "according to Phys dot org" on a sentence that carries a fact is
+# attribution and stays.
+def strip_sourcing_clauses(text: str) -> Tuple[str, int]:
+    """Cut "<Outlet> is the source for …" clauses from prose lines.
+
+    Returns (text, cuts). Structure lines, fenced blocks and lines that carry
+    a URL are left alone; a sentence the cut empties is dropped, and a line
+    left with no sentence goes.
+    """
+    if not text:
+        return text, 0
+    out = []
+    cuts = 0
+    in_fence = False
+    for line in text.split("\n"):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if (in_fence or not line.strip() or _SKIP_LINE.match(line)
+                or _URL_RE.search(line) or "source" not in line.lower()):
+            out.append(line)
+            continue
+        lead = line[: len(line) - len(line.lstrip())]
+        parts = _SENT_SPLIT.split(line.strip())
+        kept = []
+        for p in parts:
+            q = cut_sourcing_clause(p)
+            if q != p:
+                cuts += 1
+            if q:
+                kept.append(q)
+        if not kept:
+            continue
+        out.append(lead + " ".join(kept))
+    return "\n".join(out), cuts
 
 
 # Top World Ep020 (2026-10-12) opened 7 of 10 items on a doubled place

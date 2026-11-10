@@ -505,7 +505,7 @@ class TestGuestPitchFlow:
         assert summary["deferred"] == 2
         assert len(db.applications) == 1
         assert not any("max_sends_per_run" in s for s in slack)
-        assert sum(1 for labels in svc.thread_labels.values() for l in labels) <= 1
+        assert sum(1 for labels in svc.thread_labels.values() for ln in labels) <= 1
 
     def test_one_failing_thread_does_not_abort_the_run(self, db, slack, grok, monkeypatch):
         threads = [make_thread("bad", "sam@reyespr.com", "Lena pitch", "..."),

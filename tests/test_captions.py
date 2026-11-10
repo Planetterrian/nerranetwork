@@ -387,7 +387,7 @@ class TestLongSegmentsBecomeMultipleCues:
     def test_no_word_is_lost_or_duplicated(self):
         """The May 2026 bug this replaces was silent word LOSS."""
         text = " ".join(f"w{i}" for i in range(250))
-        joined = " ".join(l for b in self._blocks(text) for l in b.split("\n"))
+        joined = " ".join(ln for b in self._blocks(text) for ln in b.split("\n"))
         assert joined.split() == text.split()
 
     def test_short_segment_is_a_single_cue(self):
@@ -408,7 +408,7 @@ class TestLongSegmentsBecomeMultipleCues:
         transcript_to_srt(src[-1], out, audio_offset_seconds=0.0)
         cues = out.read_text(encoding="utf-8").strip().split("\n\n")
         for cue in cues:
-            body = [l for l in cue.split("\n")[2:] if l.strip()]
+            body = [ln for ln in cue.split("\n")[2:] if ln.strip()]
             assert len(body) <= self._MAX_LINES, cue[:160]
             for line in body:
                 assert len(line) <= self._MAX_CHARS, line
@@ -421,7 +421,7 @@ class TestLongSegmentsBecomeMultipleCues:
         expected = " ".join((s.get("text") or "").strip()
                             for s in segments
                             if float(s["end"]) - float(s["start"]) >= 0.15).split()
-        got = " ".join(l for c in cues for l in c.split("\n")[2:]).split()
+        got = " ".join(ln for c in cues for ln in c.split("\n")[2:]).split()
         assert got == expected
 
     def test_no_control_character_reaches_the_srt(self):

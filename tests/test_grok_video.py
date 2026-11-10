@@ -116,7 +116,7 @@ class TestAudioIntegration:
             video_file.write_bytes(b"dummy video")
             audio_file.write_bytes(b"dummy audio")
 
-            result = _composite_video_with_audio(video_file, audio_file, output_file)
+            _composite_video_with_audio(video_file, audio_file, output_file)
 
             # Check FFmpeg was called
             assert mock_run.called

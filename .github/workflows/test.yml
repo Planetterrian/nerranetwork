@@ -105,7 +105,7 @@ jobs:
           "${{ runner.temp }}/ffmpeg-static/ffmpeg" -version | head -1
 
       - name: Lint with ruff (full)
-        run: ruff check engine/ run_show.py scripts/ --fix --exit-non-zero-on-fix
+        run: ruff check . --fix --exit-non-zero-on-fix
 
       - name: Validate GitHub Actions workflows (actionlint)
         env:

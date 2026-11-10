@@ -9,11 +9,9 @@ ffmpeg / R2 / platform APIs are mocked — none run here.
 from __future__ import annotations
 
 import json
-import os
 import types
 from pathlib import Path
 
-import pytest
 
 
 # ---------------------------------------------------------------------------

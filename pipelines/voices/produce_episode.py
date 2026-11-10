@@ -23,7 +23,7 @@ import requests
 
 from address import spoken as spoken_address  # noqa: E402
 from common import (  # noqa: E402
-    ROOT, episode_memory_block, llm, load_prompt, logger, notify_operator,
+    episode_memory_block, llm, load_prompt, logger, notify_operator,
     parse_json_lenient, r2_upload, sb_insert, sb_select, sb_update, show_for,
     guest_links_markdown,
 )

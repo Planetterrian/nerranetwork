@@ -11,7 +11,6 @@ the per-show config registry, the prompt wiring, and the public page render.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -59,7 +58,8 @@ class TestEngine:
         c = self._cfg()
         first = sm.load_narrative_tracker(tmp_path, c)
         first["programs"]["INJECTED"] = {}
-        other = tmp_path / "x"; other.mkdir()
+        other = tmp_path / "x"
+        other.mkdir()
         assert "INJECTED" not in sm.load_narrative_tracker(other, c)["programs"]
 
     def test_section_empty_when_no_programs(self, tmp_path):

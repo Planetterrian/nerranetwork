@@ -126,7 +126,7 @@ class TestRecordTimestampsAreAware:
 # --------------------------------------------------------------- worker --
 class TestGalleryWorkerDeploys:
     def test_no_live_kv_binding_carries_a_placeholder_id(self):
-        live = "\n".join(l for l in WRANGLER.splitlines() if not l.lstrip().startswith("#"))
+        live = "\n".join(ln for ln in WRANGLER.splitlines() if not ln.lstrip().startswith("#"))
         assert "PLACEHOLDER" not in live
         assert 'binding = "SUB_COUNTS"' not in live, "un-comment only with a real id"
         # The Worker tolerates the unbound namespace.
@@ -147,7 +147,8 @@ class TestStructuralRetryKeepsTheShippingDigestsStashes:
                 "Body.\n\n```claims\n[{\"id\": \"retry\", \"claim\": \"x\", \"url\": \"https://a\", \"supporting_quote\": \"x\"}]\n```\n")
 
         t = threading.Thread(target=worker)
-        t.start(); t.join()
+        t.start()
+        t.join()
         assert "```claims" not in box["clean"]
         assert claims.drain_stashed_claims() == [{"id": "orig"}]
 
@@ -185,7 +186,8 @@ class TestStructuralRetryKeepsTheShippingDigestsStashes:
             generator._finish_combined_script("retry " * 400, "digest", object())
 
         t = threading.Thread(target=worker)
-        t.start(); t.join()
+        t.start()
+        t.join()
         assert generator.take_combined_script() == {"script": "orig", "digest": "d"}
 
     def test_run_show_snapshots_before_and_restores_unless_accepted(self):

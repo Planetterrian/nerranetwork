@@ -23,7 +23,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 
@@ -115,9 +114,6 @@ class TestTopicQueue:
         allow produced=true entries — at which point we'll know the
         pipeline shipped at least one episode end-to-end."""
         data = yaml.safe_load(QUEUE_PATH.read_text(encoding="utf-8"))
-        produced = [
-            entry for entry in data["queue"] if entry["produced"] is True
-        ]
         # Don't fail when episodes have shipped — just sanity-check that
         # SOMEONE in the queue is unproduced.
         unproduced = [

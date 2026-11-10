@@ -524,7 +524,7 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
         parts.append(bio)
     elif bio:
         stray = _stray_link(bio)
-        if stray and stray["url"].lower() not in {l["url"].lower() for l in links}:
+        if stray and stray["url"].lower() not in {link["url"].lower() for link in links}:
             links.append(stray)
     if len(bio.split()) < BIO_MIN_WORDS and topics:
         parts.append(f"**{TOPICS_LINE_LABEL}:** {'; '.join(topics)}")
@@ -559,7 +559,7 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
 
     if links:
         parts.append(f"### Where to find {name}")
-        parts.append("\n".join(f"- [{l['label']}]({l['url']})" for l in links))
+        parts.append("\n".join(f"- [{link['label']}]({link['url']})" for link in links))
         parts.append("---")
 
     if materials:
@@ -695,7 +695,6 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
     link, the same day, with every link they gave us shown back to them so
     they can see it landed. Their publicist, if they have one, is copied.
     """
-    from engine import brand as _brand
     e = _html.escape
     name = str(app.get("name") or "").strip()
     first = name.split()[0] if name else "there"
@@ -727,7 +726,7 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
     ]
     if links:
         parts.append("<p>Where to find you, as it appears on the post:</p><ul>"
-                     + "".join(f"<li>{e(l['label'])}: {link(l['url'])}</li>" for l in links)
+                     + "".join(f"<li>{e(lk['label'])}: {link(lk['url'])}</li>" for lk in links)
                      + "</ul>")
     if materials:
         parts.append("<p>And the reading you asked us to point people at:</p><ul>"
@@ -862,7 +861,7 @@ def publish_one(interview_id: str) -> int:
     # episode ships.
     links_block = guest_links_markdown(app)
     if links_block:
-        have = {l["url"].lower() for l in guest_links(app)}
+        have = {link["url"].lower() for link in guest_links(app)}
         if not any(u in description.lower() for u in have):
             description = (description.rstrip() + "\n\n" + links_block).strip()
 

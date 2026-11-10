@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import datetime as _dt
 
-import pytest
 
 from engine.deep_dive_research import research_current_context
 

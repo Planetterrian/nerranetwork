@@ -1202,7 +1202,9 @@ class TestWO13ReviewerNoteGate:
                     '"episode_span": "REWRITTEN TEXT ' + note.replace('"', "'")
                     + '", "source_url": "https://example.org/y", '
                     '"supporting_quote": "introduced in 1954"}]')
-        fetch = lambda url: (200, "<p>The perch was introduced in 1954.</p>")
+        def fetch(url):
+            return (200, "<p>The perch was introduced in 1954.</p>")
+
         new_gate, repaired = attempt_claim_repair(text, gate, claims,
                                                   generate, fetch=fetch)
         # prose untouched; anchor + claim text pinned to the originals

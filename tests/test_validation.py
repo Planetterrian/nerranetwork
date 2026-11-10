@@ -1,6 +1,5 @@
 """Tests for engine/validation.py — post-generation digest validation."""
 
-import pytest
 
 from engine.validation import (
     ValidationConfig,
@@ -150,7 +149,7 @@ def test_mab_digest_prompt_has_no_source_name_placeholder():
 
     text = Path("shows/prompts/mab_digest.txt").read_text(encoding="utf-8")
     assert "Source Name" not in text
-from engine.content_tracker import TST_SECTION_PATTERNS, FF_SECTION_PATTERNS
+from engine.content_tracker import TST_SECTION_PATTERNS
 
 
 SAMPLE_DIGEST = """
