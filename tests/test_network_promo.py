@@ -74,7 +74,8 @@ def test_promo_text_mentions_network_and_featured_show():
     # July 2026: also plugs a rotating website surface.
     assert any(
         s in promo.lower()
-        for s in ("gallery", "blog", "summaries", "tracker", "data", "start-here", "age of ai", "do positive")
+        for s in ("gallery", "blog", "summaries", "tracker", "data", "start-here", "age of ai", "do positive",
+                  "nerra personal", "nerra daily", "mira", "topics")
     )
 
 
