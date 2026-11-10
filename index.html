@@ -254,6 +254,10 @@
 }
 .lt-standfirst { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.88; font-size: 1.06rem; max-width: 36rem; margin: 0; line-height: 1.55; }
 .lt-standfirst-wrap { max-width: 36rem; }
+.lt-flag-follow { font-family: var(--lt-ui); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: var(--sp-3) 0 0; font-size: 0.9rem; }
+.lt-flag-follow span { color: var(--lt-muted, var(--nn-text-muted)); margin-right: 4px; }
+.lt-flag-follow a { padding: 6px 12px; border: 1px solid var(--lt-rule); border-radius: 999px; color: var(--lt-ink); text-decoration: none; font-weight: 600; }
+.lt-flag-follow a:hover { border-color: var(--show-color, var(--lt-cyan)); }
 .lt-masthead-actions { font-family: var(--lt-ui); display: flex; flex-wrap: wrap; gap: 8px; margin: var(--sp-3) 0 0; }
 .lt-masthead-actions a {
   font-size: 0.86rem; font-weight: 700; color: var(--nn-white); text-decoration: none;
@@ -1920,7 +1924,55 @@ body.lt-player-open { overflow: hidden; }
         <p class="lt-rail-more"><a href="blog/index.html">Every article →</a></p>
     </aside>
 </section>
+</div><div class="lt-soft container">
+<div id="home-soft-personal"><section class="nn-soft-personal-hero" id="soft-personal-hero"
+         style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
+    <div class="container" style="max-width:760px;">
+        <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
+            Get Nerra Daily, the free 7:00 AM Eastern email with the day’s stories from every show. Shows stay free either way.
+        </p>
+        <form method="post" action="#"
+              data-nn-subscribe="soft-personal"
+              data-list="personal-interest"
+              data-newsletter="1"
+              data-source="src-nerranetwork"
+              data-show="network"
+              data-form-id="show-network-soft-personal"
+              data-label-loading="Saving…"
+              data-label-done="Saved ✓"
+              data-label-soft-done="You’re on the list. Your first Nerra Daily arrives at 7:00 AM Eastern."
+              data-label-error="Couldn’t save that just now. Try again in a moment."
+              data-label-idle="Send me Nerra Daily"
+              style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
+            <label for="spi-hero-email-network"
+                   style="font-family:var(--font-ui);font-size:0.85rem;font-weight:600;color:var(--nn-text-muted);margin:0;">Email</label>
+            <input type="email" id="spi-hero-email-network" name="email" required autocomplete="email"
+                   placeholder="your@email.com"
+                   aria-label="Email address"
+                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;"><div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+                <label for="spi-hero-company-network">Company</label>
+                <input type="text" id="spi-hero-company-network" name="company" tabindex="-1" autocomplete="off">
+            </div>
+            <button type="submit"
+                    style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
+                Send me Nerra Daily
+            </button>
+            <a href="join.html"
+               style="font-family:var(--font-ui);font-size:0.9rem;font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;white-space:nowrap;">
+                Or build your own edition →
+            </a>
+        </form>
+        <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
+           style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
+        <p style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.82rem;line-height:1.45;color:var(--nn-text-muted);">
+            One email a day. Unsubscribe anytime.
+            <a href="privacy-policy.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Privacy policy</a>.
+        </p>
+    </div>
+</section></div>
 </div>
+
+
 <section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
     <div class="lt-block-head">
         <h2 id="lt-flag-h">Flagship shows</h2>
@@ -1963,6 +2015,7 @@ body.lt-player-open { overflow: hidden; }
             <p class="lt-flag-launch" data-expires="2026-11-11T02:49:00Z"><b>Next launch</b> USSF-627 · Falcon 9 · no earlier than <time datetime="2026-11-11T02:49:00Z">Nov 10, 9:49 PM ET</time></p>
             
             <p class="lt-flag-links"><a href="spacex-dashboard.html">Dashboard</a><a href="spacex-narrative.html">Story tracker</a><a href="spacex.html">All episodes</a></p>
+            <p class="lt-flag-follow"><span>Follow SpaceX Daily</span><a href="https://podcasts.apple.com/us/podcast/id1896920957" target="_blank" rel="noopener">Apple Podcasts</a><a href="https://open.spotify.com/show/033xHlNZZy4OVq1T2CkDNp" target="_blank" rel="noopener">Spotify</a><a href="https://www.youtube.com/@NerraNetwork?sub_confirmation=1" target="_blank" rel="noopener">YouTube</a></p>
             <div class="lt-lead-audio">
                 <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/spacex/SpaceX_Daily_Ep157_20261110.mp3" aria-label="Play SpaceX Daily episode 157"></audio>
                 <a class="lt-btn lt-btn--primary" href="blog/spacex/ep157.html">Read the episode</a>
@@ -2002,6 +2055,7 @@ body.lt-player-open { overflow: hidden; }
 </ul>
             
             <p class="lt-flag-links"><a href="tesla-dashboard.html">Dashboard</a><a href="tesla-narrative.html">Story tracker</a><a href="tesla.html">All episodes</a></p>
+            <p class="lt-flag-follow"><span>Follow Tesla Shorts Time</span><a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939" target="_blank" rel="noopener">Apple Podcasts</a><a href="https://open.spotify.com/show/7I1DIaUaSlVsYliigOe6sS" target="_blank" rel="noopener">Spotify</a><a href="https://www.youtube.com/@NerraNetwork?sub_confirmation=1" target="_blank" rel="noopener">YouTube</a></p>
             <div class="lt-lead-audio">
                 <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep661_20261110.mp3" aria-label="Play Tesla Shorts Time episode 661"></audio>
                 <a class="lt-btn lt-btn--primary" href="blog/tesla/ep661.html">Read the episode</a>
@@ -2047,6 +2101,52 @@ body.lt-player-open { overflow: hidden; }
                 <a class="lt-reel-show" href="spacex.html">Listen to <b>SpaceX Daily</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
             </li>
             
+            <li class="lt-reel-card" style="--show-color:#7C3AED;" data-reel-item>
+                <div class="lt-reel-frame is-card">
+                    
+                    <img class="lt-reel-cover" data-src="assets/covers/models-agents.jpg" alt="Models &amp; Agents cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
+                    
+                    
+                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/models_agents/ep230-short1.mp4" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
+                    
+                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">Models &amp; Agents</span></span>
+                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+                    <div class="lt-reel-caption">
+                        <h3 class="lt-reel-title">Claude Fable 5.2 Hits 49.1% FrontierCode at 20% Less</h3>
+                        <time class="lt-reel-date" datetime="2026-11-10">November 10, 2026</time>
+                    </div>
+                    
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=qgVVYCIn3_o" target="_blank" rel="noopener" data-reel-play="1" aria-haspopup="dialog" aria-controls="lt-player">
+                        <span class="sr-only">Play the Short: Claude Fable 5.2 Hits 49.1% FrontierCode at 20% Less, from Models &amp; Agents</span>
+                    </a>
+                    
+                </div>
+                <a class="lt-reel-show" href="models-agents.html">Listen to <b>Models &amp; Agents</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
+            </li>
+            
+            <li class="lt-reel-card" style="--show-color:#0B6FD6;" data-reel-item>
+                <div class="lt-reel-frame is-card">
+                    
+                    <img class="lt-reel-cover" data-src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
+                    
+                    
+                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/omni_view/ep232-short1.mp4" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
+                    
+                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">Omni View</span></span>
+                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+                    <div class="lt-reel-caption">
+                        <h3 class="lt-reel-title">Massie Forces Vote to Impeach Hegseth After Iran War</h3>
+                        <time class="lt-reel-date" datetime="2026-11-10">November 10, 2026</time>
+                    </div>
+                    
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=5Msjm_AK6bY" target="_blank" rel="noopener" data-reel-play="2" aria-haspopup="dialog" aria-controls="lt-player">
+                        <span class="sr-only">Play the Short: Massie Forces Vote to Impeach Hegseth After Iran War, from Omni View</span>
+                    </a>
+                    
+                </div>
+                <a class="lt-reel-show" href="omni-view.html">Listen to <b>Omni View</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
+            </li>
+            
             <li class="lt-reel-card" style="--show-color:#B45309;" data-reel-item>
                 <div class="lt-reel-frame">
                     
@@ -2062,58 +2162,12 @@ body.lt-player-open { overflow: hidden; }
                         <time class="lt-reel-date" datetime="2026-11-10">November 10, 2026</time>
                     </div>
                     
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=WT7w0Dg3DHI" target="_blank" rel="noopener" data-reel-play="1" aria-haspopup="dialog" aria-controls="lt-player">
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=WT7w0Dg3DHI" target="_blank" rel="noopener" data-reel-play="3" aria-haspopup="dialog" aria-controls="lt-player">
                         <span class="sr-only">Play the Short: 23 Million Tons of Road Salt Now Salinize 44% of Lakes, from Unintended Consequences</span>
                     </a>
                     
                 </div>
                 <a class="lt-reel-show" href="unintended-consequences.html">Listen to <b>Unintended Consequences</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
-            </li>
-            
-            <li class="lt-reel-card" style="--show-color:#7C3AED;" data-reel-item>
-                <div class="lt-reel-frame is-card">
-                    
-                    <img class="lt-reel-cover" data-src="assets/covers/models-agents.jpg" alt="Models &amp; Agents cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
-                    
-                    
-                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/models_agents/ep229-short1.mp4" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
-                    
-                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">Models &amp; Agents</span></span>
-                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
-                    <div class="lt-reel-caption">
-                        <h3 class="lt-reel-title">K-EXAONE 2.5 Opens Free 750B API for Agents</h3>
-                        <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
-                    </div>
-                    
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=u0L_2Y5Omj8" target="_blank" rel="noopener" data-reel-play="2" aria-haspopup="dialog" aria-controls="lt-player">
-                        <span class="sr-only">Play the Short: K-EXAONE 2.5 Opens Free 750B API for Agents, from Models &amp; Agents</span>
-                    </a>
-                    
-                </div>
-                <a class="lt-reel-show" href="models-agents.html">Listen to <b>Models &amp; Agents</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
-            </li>
-            
-            <li class="lt-reel-card" style="--show-color:#0B6FD6;" data-reel-item>
-                <div class="lt-reel-frame is-card">
-                    
-                    <img class="lt-reel-cover" data-src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
-                    
-                    
-                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/omni_view/ep231-short1.mp4" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
-                    
-                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">Omni View</span></span>
-                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
-                    <div class="lt-reel-caption">
-                        <h3 class="lt-reel-title">US China Russia Leaders to Meet Next Week on Ukraine, Iran</h3>
-                        <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
-                    </div>
-                    
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=lEN9VhoqhbI" target="_blank" rel="noopener" data-reel-play="3" aria-haspopup="dialog" aria-controls="lt-player">
-                        <span class="sr-only">Play the Short: US China Russia Leaders to Meet Next Week on Ukraine, Iran, from Omni View</span>
-                    </a>
-                    
-                </div>
-                <a class="lt-reel-show" href="omni-view.html">Listen to <b>Omni View</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
             </li>
             
             <li class="lt-reel-card" style="--show-color:#017A99;" data-reel-item>
@@ -2185,6 +2239,29 @@ body.lt-player-open { overflow: hidden; }
                 <a class="lt-reel-show" href="tesla.html">Listen to <b>Tesla Shorts Time</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
             </li>
             
+            <li class="lt-reel-card" style="--show-color:#334155;" data-reel-item>
+                <div class="lt-reel-frame is-card">
+                    
+                    <img class="lt-reel-cover" data-src="assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="160" height="160" loading="lazy" decoding="async" data-reel-media>
+                    
+                    
+                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/mag7/ep049-short1.mp4" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
+                    
+                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">MAG 7 Daily</span></span>
+                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+                    <div class="lt-reel-caption">
+                        <h3 class="lt-reel-title">Google DeepMind Finds No New Flaws in WhatsApp Code</h3>
+                        <time class="lt-reel-date" datetime="2026-11-10">November 10, 2026</time>
+                    </div>
+                    
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=Ib3hYioxqdY" target="_blank" rel="noopener" data-reel-play="7" aria-haspopup="dialog" aria-controls="lt-player">
+                        <span class="sr-only">Play the Short: Google DeepMind Finds No New Flaws in WhatsApp Code, from MAG 7 Daily</span>
+                    </a>
+                    
+                </div>
+                <a class="lt-reel-show" href="mag7.html">Listen to <b>MAG 7 Daily</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
+            </li>
+            
             <li class="lt-reel-card" style="--show-color:#6B47FF;" data-reel-item>
                 <div class="lt-reel-frame">
                     
@@ -2200,7 +2277,7 @@ body.lt-player-open { overflow: hidden; }
                         <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
                     </div>
                     
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=i4VfGylu-Hg" target="_blank" rel="noopener" data-reel-play="7" aria-haspopup="dialog" aria-controls="lt-player">
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=i4VfGylu-Hg" target="_blank" rel="noopener" data-reel-play="8" aria-haspopup="dialog" aria-controls="lt-player">
                         <span class="sr-only">Play the Short: Dwarf Galaxies Hold Onto Only 15% of Stars&#39; Oxygen, from Fascinating Frontiers</span>
                     </a>
                     
@@ -2223,7 +2300,7 @@ body.lt-player-open { overflow: hidden; }
                         <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
                     </div>
                     
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=qFD0jNKwCNY" target="_blank" rel="noopener" data-reel-play="8" aria-haspopup="dialog" aria-controls="lt-player">
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=qFD0jNKwCNY" target="_blank" rel="noopener" data-reel-play="9" aria-haspopup="dialog" aria-controls="lt-player">
                         <span class="sr-only">Play the Short: Park Water Sells for Four Dollars, Costs Twenty Cents, from First Principles Daily</span>
                     </a>
                     
@@ -2246,35 +2323,12 @@ body.lt-player-open { overflow: hidden; }
                         <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
                     </div>
                     
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=zN4KCfukkiM" target="_blank" rel="noopener" data-reel-play="9" aria-haspopup="dialog" aria-controls="lt-player">
+                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=zN4KCfukkiM" target="_blank" rel="noopener" data-reel-play="10" aria-haspopup="dialog" aria-controls="lt-player">
                         <span class="sr-only">Play the Short: NVIDIA Ties $2B Restricted AI Chips to Board Probe, from AI Chips &amp; Data Centres Daily</span>
                     </a>
                     
                 </div>
                 <a class="lt-reel-show" href="ai-chips.html">Listen to <b>AI Chips &amp; Data Centres Daily</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
-            </li>
-            
-            <li class="lt-reel-card" style="--show-color:#334155;" data-reel-item>
-                <div class="lt-reel-frame">
-                    
-                    <img class="lt-reel-img" data-src="https://gallery.nerranetwork.com/mag7/2026-11-09/ep048/567d859ac0fb.thumb.webp" alt="AI-generated scene from MAG 7 Daily episode 48" width="450" height="800" loading="lazy" decoding="async" data-reel-media>
-                    
-                    
-                    <video class="lt-reel-preview" data-src="https://audio.nerranetwork.com/previews/mag7/ep048-short1.mp4" data-poster="https://gallery.nerranetwork.com/mag7/2026-11-09/ep048/567d859ac0fb.thumb.webp" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview data-reel-media></video>
-                    
-                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">MAG 7 Daily</span></span>
-                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
-                    <div class="lt-reel-caption">
-                        <h3 class="lt-reel-title">Nvidia Links Korea&#39;s R200 Chips Into Its Racks</h3>
-                        <time class="lt-reel-date" datetime="2026-11-09">November 9, 2026</time>
-                    </div>
-                    
-                    <a class="lt-reel-hit" href="https://www.youtube.com/watch?v=uH0xYs0OCIE" target="_blank" rel="noopener" data-reel-play="10" aria-haspopup="dialog" aria-controls="lt-player">
-                        <span class="sr-only">Play the Short: Nvidia Links Korea&#39;s R200 Chips Into Its Racks, from MAG 7 Daily</span>
-                    </a>
-                    
-                </div>
-                <a class="lt-reel-show" href="mag7.html">Listen to <b>MAG 7 Daily</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
             </li>
             
             <li class="lt-reel-card" style="--show-color:#C2410C;" data-reel-item>
@@ -2302,7 +2356,7 @@ body.lt-player-open { overflow: hidden; }
             
         </ol>
     </div>
-    <script type="application/json" id="lt-reel-data">[{"color": "#1A5CFF", "embed": "https://www.youtube-nocookie.com/embed/h6CzMYNufpA?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "h6CzMYNufpA", "post": "blog/spacex/ep157.html", "poster": "https://gallery.nerranetwork.com/spacex/2026-11-10/ep157/2076a41c9c08.thumb.webp", "show": "SpaceX Daily", "show_page": "spacex.html", "title": "Falcon 9 Lifts Classified Payload From Vandenberg Tonight", "watch": "https://www.youtube.com/watch?v=h6CzMYNufpA"}, {"color": "#B45309", "embed": "https://www.youtube-nocookie.com/embed/WT7w0Dg3DHI?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "WT7w0Dg3DHI", "post": "blog/unintended_consequences/ep169.html", "poster": "https://gallery.nerranetwork.com/unintended_consequences/2026-11-10/ep169/0439a79f9cea.thumb.webp", "show": "Unintended Consequences", "show_page": "unintended-consequences.html", "title": "23 Million Tons of Road Salt Now Salinize 44% of Lakes", "watch": "https://www.youtube.com/watch?v=WT7w0Dg3DHI"}, {"color": "#7C3AED", "embed": "https://www.youtube-nocookie.com/embed/u0L_2Y5Omj8?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "u0L_2Y5Omj8", "post": "blog/models_agents/ep229.html", "poster": "", "show": "Models \u0026 Agents", "show_page": "models-agents.html", "title": "K-EXAONE 2.5 Opens Free 750B API for Agents", "watch": "https://www.youtube.com/watch?v=u0L_2Y5Omj8"}, {"color": "#0B6FD6", "embed": "https://www.youtube-nocookie.com/embed/lEN9VhoqhbI?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "lEN9VhoqhbI", "post": "blog/omni_view/ep231.html", "poster": "", "show": "Omni View", "show_page": "omni-view.html", "title": "US China Russia Leaders to Meet Next Week on Ukraine, Iran", "watch": "https://www.youtube.com/watch?v=lEN9VhoqhbI"}, {"color": "#017A99", "embed": "https://www.youtube-nocookie.com/embed/jVQfx8G_hdg?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "jVQfx8G_hdg", "post": "blog/planetterrian/ep239.html", "poster": "https://gallery.nerranetwork.com/planetterrian/2026-11-09/ep239/7c9131f5d759.thumb.webp", "show": "Planetterrian Daily", "show_page": "planetterrian.html", "title": "Andean Volcano Crystals Share Magma Eruption Signature", "watch": "https://www.youtube.com/watch?v=jVQfx8G_hdg"}, {"color": "#047857", "embed": "https://www.youtube-nocookie.com/embed/-1JEmtiGBIU?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "-1JEmtiGBIU", "post": "blog/modern_investing/ep223.html", "poster": "https://gallery.nerranetwork.com/modern_investing/2026-11-06/ep223/2660c76fc50c.thumb.webp", "show": "Modern Investing Techniques", "show_page": "modern-investing.html", "title": "Wealthsimple AI Preps TFSA Trades You Still Approve", "watch": "https://www.youtube.com/watch?v=-1JEmtiGBIU"}, {"color": "#E31937", "embed": "https://www.youtube-nocookie.com/embed/F-Vg0PwjfYQ?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "F-Vg0PwjfYQ", "post": "blog/tesla/ep661.html", "poster": "https://gallery.nerranetwork.com/tesla/2026-11-10/ep661/c7ba1fdbb2c2.thumb.webp", "show": "Tesla Shorts Time", "show_page": "tesla.html", "title": "Tesla Starts $10B Texas Solar Factory for 9,712 Jobs", "watch": "https://www.youtube.com/watch?v=F-Vg0PwjfYQ"}, {"color": "#6B47FF", "embed": "https://www.youtube-nocookie.com/embed/i4VfGylu-Hg?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "i4VfGylu-Hg", "post": "blog/fascinating_frontiers/ep248.html", "poster": "https://gallery.nerranetwork.com/fascinating_frontiers/2026-11-09/ep248/4f2f06e309f3.thumb.webp", "show": "Fascinating Frontiers", "show_page": "fascinating-frontiers.html", "title": "Dwarf Galaxies Hold Onto Only 15% of Stars\u0027 Oxygen", "watch": "https://www.youtube.com/watch?v=i4VfGylu-Hg"}, {"color": "#0F766E", "embed": "https://www.youtube-nocookie.com/embed/qFD0jNKwCNY?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "qFD0jNKwCNY", "post": "blog/first_principles/ep156.html", "poster": "https://gallery.nerranetwork.com/first_principles/2026-11-09/ep156/698979aed333.thumb.webp", "show": "First Principles Daily", "show_page": "first-principles.html", "title": "Park Water Sells for Four Dollars, Costs Twenty Cents", "watch": "https://www.youtube.com/watch?v=qFD0jNKwCNY"}, {"color": "#4338CA", "embed": "https://www.youtube-nocookie.com/embed/zN4KCfukkiM?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "zN4KCfukkiM", "post": "blog/ai_chips/ep049.html", "poster": "", "show": "AI Chips \u0026 Data Centres Daily", "show_page": "ai-chips.html", "title": "NVIDIA Ties $2B Restricted AI Chips to Board Probe", "watch": "https://www.youtube.com/watch?v=zN4KCfukkiM"}, {"color": "#334155", "embed": "https://www.youtube-nocookie.com/embed/uH0xYs0OCIE?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "uH0xYs0OCIE", "post": "blog/mag7/ep048.html", "poster": "https://gallery.nerranetwork.com/mag7/2026-11-09/ep048/567d859ac0fb.thumb.webp", "show": "MAG 7 Daily", "show_page": "mag7.html", "title": "Nvidia Links Korea\u0027s R200 Chips Into Its Racks", "watch": "https://www.youtube.com/watch?v=uH0xYs0OCIE"}, {"color": "#C2410C", "embed": "https://www.youtube-nocookie.com/embed/1qXNAPuSlpw?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "1qXNAPuSlpw", "post": "blog/models_agents_beginners/ep216.html", "poster": "https://gallery.nerranetwork.com/models_agents_beginners/2026-11-03/ep216/91018183f1f9.thumb.webp", "show": "Models \u0026 Agents for Beginners", "show_page": "models-agents-beginners.html", "title": "One Prompt Turns Your Story Into a Full Movie", "watch": "https://www.youtube.com/watch?v=1qXNAPuSlpw"}]</script>
+    <script type="application/json" id="lt-reel-data">[{"color": "#1A5CFF", "embed": "https://www.youtube-nocookie.com/embed/h6CzMYNufpA?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "h6CzMYNufpA", "post": "blog/spacex/ep157.html", "poster": "https://gallery.nerranetwork.com/spacex/2026-11-10/ep157/2076a41c9c08.thumb.webp", "show": "SpaceX Daily", "show_page": "spacex.html", "title": "Falcon 9 Lifts Classified Payload From Vandenberg Tonight", "watch": "https://www.youtube.com/watch?v=h6CzMYNufpA"}, {"color": "#7C3AED", "embed": "https://www.youtube-nocookie.com/embed/qgVVYCIn3_o?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "qgVVYCIn3_o", "post": "blog/models_agents/ep230.html", "poster": "", "show": "Models \u0026 Agents", "show_page": "models-agents.html", "title": "Claude Fable 5.2 Hits 49.1% FrontierCode at 20% Less", "watch": "https://www.youtube.com/watch?v=qgVVYCIn3_o"}, {"color": "#0B6FD6", "embed": "https://www.youtube-nocookie.com/embed/5Msjm_AK6bY?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "5Msjm_AK6bY", "post": "blog/omni_view/ep232.html", "poster": "", "show": "Omni View", "show_page": "omni-view.html", "title": "Massie Forces Vote to Impeach Hegseth After Iran War", "watch": "https://www.youtube.com/watch?v=5Msjm_AK6bY"}, {"color": "#B45309", "embed": "https://www.youtube-nocookie.com/embed/WT7w0Dg3DHI?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "WT7w0Dg3DHI", "post": "blog/unintended_consequences/ep169.html", "poster": "https://gallery.nerranetwork.com/unintended_consequences/2026-11-10/ep169/0439a79f9cea.thumb.webp", "show": "Unintended Consequences", "show_page": "unintended-consequences.html", "title": "23 Million Tons of Road Salt Now Salinize 44% of Lakes", "watch": "https://www.youtube.com/watch?v=WT7w0Dg3DHI"}, {"color": "#017A99", "embed": "https://www.youtube-nocookie.com/embed/jVQfx8G_hdg?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "jVQfx8G_hdg", "post": "blog/planetterrian/ep239.html", "poster": "https://gallery.nerranetwork.com/planetterrian/2026-11-09/ep239/7c9131f5d759.thumb.webp", "show": "Planetterrian Daily", "show_page": "planetterrian.html", "title": "Andean Volcano Crystals Share Magma Eruption Signature", "watch": "https://www.youtube.com/watch?v=jVQfx8G_hdg"}, {"color": "#047857", "embed": "https://www.youtube-nocookie.com/embed/-1JEmtiGBIU?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "-1JEmtiGBIU", "post": "blog/modern_investing/ep223.html", "poster": "https://gallery.nerranetwork.com/modern_investing/2026-11-06/ep223/2660c76fc50c.thumb.webp", "show": "Modern Investing Techniques", "show_page": "modern-investing.html", "title": "Wealthsimple AI Preps TFSA Trades You Still Approve", "watch": "https://www.youtube.com/watch?v=-1JEmtiGBIU"}, {"color": "#E31937", "embed": "https://www.youtube-nocookie.com/embed/F-Vg0PwjfYQ?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "F-Vg0PwjfYQ", "post": "blog/tesla/ep661.html", "poster": "https://gallery.nerranetwork.com/tesla/2026-11-10/ep661/c7ba1fdbb2c2.thumb.webp", "show": "Tesla Shorts Time", "show_page": "tesla.html", "title": "Tesla Starts $10B Texas Solar Factory for 9,712 Jobs", "watch": "https://www.youtube.com/watch?v=F-Vg0PwjfYQ"}, {"color": "#334155", "embed": "https://www.youtube-nocookie.com/embed/Ib3hYioxqdY?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "Ib3hYioxqdY", "post": "blog/mag7/ep049.html", "poster": "", "show": "MAG 7 Daily", "show_page": "mag7.html", "title": "Google DeepMind Finds No New Flaws in WhatsApp Code", "watch": "https://www.youtube.com/watch?v=Ib3hYioxqdY"}, {"color": "#6B47FF", "embed": "https://www.youtube-nocookie.com/embed/i4VfGylu-Hg?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "i4VfGylu-Hg", "post": "blog/fascinating_frontiers/ep248.html", "poster": "https://gallery.nerranetwork.com/fascinating_frontiers/2026-11-09/ep248/4f2f06e309f3.thumb.webp", "show": "Fascinating Frontiers", "show_page": "fascinating-frontiers.html", "title": "Dwarf Galaxies Hold Onto Only 15% of Stars\u0027 Oxygen", "watch": "https://www.youtube.com/watch?v=i4VfGylu-Hg"}, {"color": "#0F766E", "embed": "https://www.youtube-nocookie.com/embed/qFD0jNKwCNY?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "qFD0jNKwCNY", "post": "blog/first_principles/ep156.html", "poster": "https://gallery.nerranetwork.com/first_principles/2026-11-09/ep156/698979aed333.thumb.webp", "show": "First Principles Daily", "show_page": "first-principles.html", "title": "Park Water Sells for Four Dollars, Costs Twenty Cents", "watch": "https://www.youtube.com/watch?v=qFD0jNKwCNY"}, {"color": "#4338CA", "embed": "https://www.youtube-nocookie.com/embed/zN4KCfukkiM?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "zN4KCfukkiM", "post": "blog/ai_chips/ep049.html", "poster": "", "show": "AI Chips \u0026 Data Centres Daily", "show_page": "ai-chips.html", "title": "NVIDIA Ties $2B Restricted AI Chips to Board Probe", "watch": "https://www.youtube.com/watch?v=zN4KCfukkiM"}, {"color": "#C2410C", "embed": "https://www.youtube-nocookie.com/embed/1qXNAPuSlpw?autoplay=1\u0026playsinline=1\u0026rel=0\u0026enablejsapi=1", "id": "1qXNAPuSlpw", "post": "blog/models_agents_beginners/ep216.html", "poster": "https://gallery.nerranetwork.com/models_agents_beginners/2026-11-03/ep216/91018183f1f9.thumb.webp", "show": "Models \u0026 Agents for Beginners", "show_page": "models-agents-beginners.html", "title": "One Prompt Turns Your Story Into a Full Movie", "watch": "https://www.youtube.com/watch?v=1qXNAPuSlpw"}]</script>
     <dialog class="lt-player" id="lt-player" aria-labelledby="lt-player-title" aria-describedby="lt-player-note" aria-modal="true" data-player>
         <div class="lt-player-shell">
             <div class="lt-player-stage">
@@ -2712,53 +2766,7 @@ body.lt-player-open { overflow: hidden; }
 </section>
 
 
-<div class="lt-soft container">
-<div id="home-soft-personal"><section class="nn-soft-personal-hero" id="soft-personal-hero"
-         style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
-    <div class="container" style="max-width:760px;">
-        <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
-            Get Nerra Daily, the free 7:00 AM Eastern email with the day’s stories from every show. Shows stay free either way.
-        </p>
-        <form method="post" action="#"
-              data-nn-subscribe="soft-personal"
-              data-list="personal-interest"
-              data-newsletter="1"
-              data-source="src-nerranetwork"
-              data-show="network"
-              data-form-id="show-network-soft-personal"
-              data-label-loading="Saving…"
-              data-label-done="Saved ✓"
-              data-label-soft-done="You’re on the list. Your first Nerra Daily arrives at 7:00 AM Eastern."
-              data-label-error="Couldn’t save that just now. Try again in a moment."
-              data-label-idle="Send me Nerra Daily"
-              style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
-            <label for="spi-hero-email-network"
-                   style="font-family:var(--font-ui);font-size:0.85rem;font-weight:600;color:var(--nn-text-muted);margin:0;">Email</label>
-            <input type="email" id="spi-hero-email-network" name="email" required autocomplete="email"
-                   placeholder="your@email.com"
-                   aria-label="Email address"
-                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;"><div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
-                <label for="spi-hero-company-network">Company</label>
-                <input type="text" id="spi-hero-company-network" name="company" tabindex="-1" autocomplete="off">
-            </div>
-            <button type="submit"
-                    style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
-                Send me Nerra Daily
-            </button>
-            <a href="join.html"
-               style="font-family:var(--font-ui);font-size:0.9rem;font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;white-space:nowrap;">
-                Or build your own edition →
-            </a>
-        </form>
-        <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
-           style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
-        <p style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.82rem;line-height:1.45;color:var(--nn-text-muted);">
-            One email a day. Unsubscribe anytime.
-            <a href="privacy-policy.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Privacy policy</a>.
-        </p>
-    </div>
-</section></div>
-</div>
+
 
 
 <section class="lt-block container" id="today" aria-label="Today on Nerra">
@@ -2841,25 +2849,23 @@ body.lt-player-open { overflow: hidden; }
             </div>
         </article>
         
-        <article class="lt-video" style="--show-color:#B45309;">
+        <article class="lt-video" style="--show-color:#7C3AED;">
             
-            <a href="https://www.youtube.com/watch?v=HuCsAIvmoN8" class="lt-media" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-                <img src="https://gallery.nerranetwork.com/unintended_consequences/2026-11-10/ep169/905700c01257.thumb.webp" alt="AI-generated scene from Unintended Consequences episode 169" width="800" height="450" loading="lazy" decoding="async">
-            </a>
+            <a href="https://www.youtube.com/watch?v=L2Fij2bT7Pk" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>Models &amp; Agents</span></a>
             
             <div>
-                <h3 class="lt-hl"><a href="https://www.youtube.com/watch?v=HuCsAIvmoN8" target="_blank" rel="noopener">Road Salt Now Salinizes 44 Percent of Northeastern Lakes</a></h3>
-                <p class="lt-kicker" style="margin-top:6px;"><a href="unintended-consequences.html">Unintended Consequences</a> <time datetime="2026-11-10" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">November 10, 2026</time></p>
+                <h3 class="lt-hl"><a href="https://www.youtube.com/watch?v=L2Fij2bT7Pk" target="_blank" rel="noopener">Claude Fable 5.2 Hits 49.1% FrontierCode at 20% Less</a></h3>
+                <p class="lt-kicker" style="margin-top:6px;"><a href="models-agents.html">Models &amp; Agents</a> <time datetime="2026-11-10" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">November 10, 2026</time></p>
             </div>
         </article>
         
-        <article class="lt-video" style="--show-color:#7C3AED;">
+        <article class="lt-video" style="--show-color:#047857;">
             
-            <a href="https://www.youtube.com/watch?v=_oeIrskUR4E" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>Models &amp; Agents</span></a>
+            <a href="https://www.youtube.com/watch?v=KSPLjdYG5Ho" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>Modern Investing Techniques</span></a>
             
             <div>
-                <h3 class="lt-hl"><a href="https://www.youtube.com/watch?v=_oeIrskUR4E" target="_blank" rel="noopener">K-EXAONE 2.5 Opens Free 750B API for Agent Workloads</a></h3>
-                <p class="lt-kicker" style="margin-top:6px;"><a href="models-agents.html">Models &amp; Agents</a> <time datetime="2026-11-09" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">November 9, 2026</time></p>
+                <h3 class="lt-hl"><a href="https://www.youtube.com/watch?v=KSPLjdYG5Ho" target="_blank" rel="noopener">Nvidia Board Probe Into CEO Huang Flags Governance Risk</a></h3>
+                <p class="lt-kicker" style="margin-top:6px;"><a href="modern-investing.html">Modern Investing Techniques</a> <time datetime="2026-11-10" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">November 10, 2026</time></p>
             </div>
         </article>
         
