@@ -358,7 +358,10 @@ class TestTheRehearsal:
         keep = {"GROK_API_KEY", "ELEVENLABS_API_KEY", "GROK_CLONED_VOICE_ID",
                 "PEXELS_API_KEY", "PIPELINE_TIMEOUT_SECONDS", "NERRA_LLM_TIMEOUT_SECONDS",
                 "NERRA_SINGLE_PASS_RENDER", "NERRA_X264_PRESET",
-                "R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"}
+                "R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY",
+                # Nov 10 2026: a setting, not a credential (the show notes'
+                # My Nerra line names the trial only when the pages do).
+                "STRIPE_TRIAL_DAYS"}
         probe = {k: "x" for k in video_env}
         scrub_environment(probe)
         assert set(probe) <= keep, set(probe) - keep
