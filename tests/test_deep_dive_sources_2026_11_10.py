@@ -133,3 +133,12 @@ def test_research_focus_replaces_the_ipo_lead_line(monkeypatch):
     assert "underwriting" not in seen["prompt"]
     ddr.research_current_context("T", ["q"])
     assert "underwriting" in seen["prompt"]
+
+
+def test_a_hand_typed_id_matches_whatever_its_case():
+    from engine.topic_queue import pick_deep_dive_topic
+    queue = ROOT / "shows/deep_dives/spacex.yaml"
+    for typed in ("Flight-15-preview", " FLIGHT-15-PREVIEW ", "flight-15-preview"):
+        picked = pick_deep_dive_topic(queue, "2026-11-10", force_id=typed)
+        assert picked and picked["id"] == "flight-15-preview", typed
+    assert pick_deep_dive_topic(queue, "2026-11-10", force_id="flight-16") is None
