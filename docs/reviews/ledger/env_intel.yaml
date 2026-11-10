@@ -364,6 +364,103 @@ reviews:
     ab_listen_required: false
     rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target, and locks absence-ban / shape-deseed / hook garble set / chapter title set.
   agent_cost_usd: 0.143
+- date: '2026-11-10'
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_11_10.md
+  generated_by: grok-4.5
+  summary: Post-Sep-21 window still ships absence-of-section lines, Nerra→Narin garble, malformed/non-Closing chapters (ep74 ends on Deep Dive), and chronic under-length (7/10 <900); host-experience filter partially landed but first-person deep-dive claims and invented careers still leak in ep72–75.
+  scored_prior_predictions:
+  - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared' / 'No new peer-reviewed…'), last 10
+    verdict: miss
+    evidence: 'ep73 and ep75 EN transcripts still speak ''No qualifying industry announcements… appeared in today''s sources'' (ep75 also deadline absence) despite absence_sentence_filter: true'
+  - metric: deep-dive openers using 'Consider a…' OR 'Picture a…' OR 'A client…' (or close paraphrase), last 10 transcripts
+    verdict: partial
+    evidence: exact Consider-a/Picture-a/A-client phrases cleared in ep72–76, but replaced by bare scene + 'The mistake I see most often' / 'The common mistake is' career-claim frame
+  - metric: successor deep-dive opener tic prediction (fifth-generation watch)
+    verdict: hit
+    evidence: ep72–75 converged on mistake-I-see / common-mistake / experienced-assessor shapes; watch fired on the career-claim class
+  - metric: chapters_ep*.json titles outside the known section-title set, last 10
+    verdict: miss
+    evidence: ep67 sentence fragment; ep68 dual story headlines; ep72 cold-open truncation; ep73 COP17 headline; ep74 Compliance Brief parenthetical + story headlines; ep76 Practice Spotlight digest heading
+  - metric: episodes whose LAST chapter is Closing, last 10
+    verdict: miss
+    evidence: ep74 chapters end on Practitioner Deep Dive with no Closing title; 9/10 — regression from prior 10/10
+  - metric: Whisper garble of Kincardine / Ksi Lisims / Nerra / CEPA-as-see-EPA / Terrace / Kamloops in post-merge transcripts
+    verdict: partial
+    evidence: Nerra→Narin/Narrow/Naren in every ep72–76 closing promo; EPEA spoken as EPA on ep75; Kincardine/Ksi Lisims/Terrace/Kamloops not present in this window
+  - metric: episodes below min_podcast_words:900 among ep62+ (carry; lever-gated)
+    verdict: miss
+    evidence: scored n/a against unshipped levers per Sep-21 rule, but raw window is 7/10 under 900 (ep74=788, ep76=642); operator escalation still open — recorded miss on the measurable floor, not on a podcast-side proposal
+  shipped: []
+  deferred:
+  - 'ESCALATE to operator decision (Sep-21 + this pass; two post-lever misses): raise min_digest_words above 950 and/or licensed-knowledge section floors for Regulatory Calendar + Practice Spotlight on thin Mondays — do NOT re-file podcast-side length levers'
+  - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — local marker tighten this pass is a patch only; ep74 missing Closing and ep67/68/72/74/76 malformed titles are symptoms
+  - 'Numbers/dates spell-out drift (PM 2.5 comma pause; phase one slash two; digit dates) — landmine #17; A/B before any repair layer; never phonetic injection'
+  - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial)
+  - OP3 download flatline/decline (7d=12, WoW −56%, first-week median=7) + YouTube paused — distribution/discoverability operator review (Apple/Spotify/@nerranetwork clip since Oct-24), not a prompt change
+  - Thin-news blog <title> intelligence re-score — HOOK-level absence banned since June-11; residual is section-level absence lines (P0 this pass)
+  - Digest-verbatim paste rate 67–72% on fat days with copied section headers — monitor; reinforce content_discipline only if elevated post de-seed; no length pressure; density threshold is not a prediction
+  predictions:
+  - metric: transcripts containing spoken absence-of-section lines ('No qualifying…' / 'No specific upcoming deadlines…'), last 10
+    baseline: 2/10 (ep73, ep75) in current window
+    expected: 0/10 post-merge after podcast-stage absence ban + final-script filter pass
+    verdict: pending
+    evidence: null
+  - metric: episodes whose LAST chapter is Closing, last 10
+    baseline: 9/10 (ep74 miss)
+    expected: 10/10 post-merge; Closing pattern fires even when Deep Dive runs long
+    verdict: pending
+    evidence: null
+  - metric: chapters_ep*.json titles outside known section-title set (no sentence fragments, story headlines, or digest-heading parentheticals), last 10
+    baseline: 6/10 malformed in ep67–76
+    expected: 0/10 post-merge after marker tighten + digest_section title sanitize
+    verdict: pending
+    evidence: null
+  - metric: Whisper garble of Nerra/Narin/Narrow in closing promo, last 10
+    baseline: 5/5 closings in ep72–76
+    expected: 0 post-merge after hook override for Nerra Network / nerranetwork.com
+    verdict: pending
+    evidence: null
+  - metric: transcripts with first-person deep-dive career claims ('mistake I see most often' / 'the common mistake is' / 'experienced assessors' as host voice), last 10
+    baseline: 4/10 (ep72–75)
+    expected: 0/10 post-merge after widened host_experience patterns + prompt shape ban; deep dive built from a fetched document or omitted
+    verdict: pending
+    evidence: null
+  - metric: successor deep-dive opener tic prediction (sixth-generation watch)
+    baseline: career-claim mistake/fix dominant ep72–75
+    expected: next review checks convergence on 'the document is clear that…', 'section N states…', or bare unmarked scene; if ≥5/10 of one shape, MEMORY-ban that shape
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/hooks/env_intel.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'Highest-yield category (~100% hit historically, deterministic, no A/B). Nerra→Narin/Narrow ships in every ep72–76 closing; Kincardine/Ksi Lisims/Terrace/Kamloops/Simpcw/Tyee still unprotected because Aug-10/Sep-21 hook extensions never applied. Extend existing hook channel only — never phonetic injection (landmine #17).'
+  - file: shows/env_intel.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: Metadata-only. ep68 story-headline chapters and ep74 digest-heading leaks come from body-prose keyword hits when the script never announces the section. Tighten Science/Industry to announce shapes; keep digest_section fallback. Closing-first order and Deep Dive digest_section anchor untouched. Also ensure Compliance Brief / Practice Spotlight digest H2s are not used raw as chapter titles (sanitize parentheticals in the chapter builder or pin explicit markers).
+  - file: shows/prompts/env_intel_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'Locks three verified P0/P1 classes still shipping: (1) absence-of-section lines in ep73/75 despite YAML filter; (2) first-person career-claim deep dive in ep72–75 after Nov-3 filter; (3) opener convergence. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule; no quotable replacement (do_not_retry). A/B-listen required (landmine #17).'
+  - file: shows/prompts/env_intel_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Podcast faithfully echoes digest deep-dive openers and empty-section placeholders (June-15 through Sep-21 lineage). Digest is the seed surface; de-seed + empty-section omit here or the podcast ban alone loses. Aligns with Nov-3 sourced-deep-dive lint already in YAML. No quotable replacement example. A/B-listen required.
+  - file: engine/host_experience.py
+    kind: code
+    ab_listen_required: false
+    rationale: Nov-3 filter is on but ep72–75 still speak the career-claim beat — pattern set misses the variants the podcast stage actually emits. Code-only; deterministic; matches the existing host_experience_removed metrics. Re-run committed replay before any further widen (CLAUDE.md rule).
+  - file: engine/absence_sentences.py
+    kind: code
+    ab_listen_required: false
+    rationale: YAML flag is true but lines still reach Whisper — filter is digest-only or paraphrase-blind. Garble/filter class historically ~100% hit, no A/B. A lint is true of the text that ships (Oct 2026 rule).
+  - file: tests/test_env_intel_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix gets a drift-guard per playbook. Pins length-lever policy so a future pass cannot reintroduce podcast_expand_below_target. Guards that read today's data must tolerate today (judge episodes ≥1 day old).
+  agent_cost_usd: 0.1533
 do_not_retry:
 - idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
   evidence: flagged 2026-08-10 (Grok review)
