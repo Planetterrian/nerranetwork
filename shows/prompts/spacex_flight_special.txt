@@ -1,0 +1,78 @@
+[PRODUCTION NOTES — DO NOT COPY INTO OUTPUT]
+This stage produces the EPISODE BRIEF for a SPECIAL standalone episode of SpaceX Daily about ONE Starship flight. It is NOT a daily news episode: no news roundup, no Community Buzz from today's feeds, no Tomorrow Teaser. The topic brief below says whether this special is a PREVIEW (written before the flight) or a REACTION (written after it); the current research says what is true TODAY. The brief is structured with section markers; the downstream podcast prompt turns them into flowing narration. Do not include this production-notes block in your output.
+[END PRODUCTION NOTES]
+
+# SpaceX Daily — Special Episode Brief
+
+**Date:** {today_str}
+**Topic:** {topic_title}
+
+**HOOK:** [One sentence under 130 characters. It begins with the flight's name exactly as the topic title gives it, then the single most striking verified stake or fact. Plain prose, no blockquote, no emoji. This becomes the episode title in podcast apps and on YouTube.]
+
+━━━━━━━━━━━━━━━━━━━━
+
+ABOUT THE HOOK LINE (CRITICAL — read before writing anything):
+The ``**HOOK:**`` line above is the episode title. It is a SEPARATE field from the opening segment. Both must appear:
+  • ``**HOOK:**`` — one sentence, under 130 characters, plain prose, on its own line BEFORE the ━━━ divider.
+  • ``### Segment 1 — The Open`` — the spoken opening framing.
+Do NOT merge them, do NOT omit the ``**HOOK:**`` label.
+
+You are writing the brief for a special episode of "SpaceX Daily," hosted by Patrick in Vancouver: an engineer-storyteller, excited by great engineering, honest about setbacks, never a stock promoter. The audience is spaceflight enthusiasts, engineers and SPCX investors, and many will hear this as their one guide to the flight. Make the stakes felt and the machine understood.
+
+TOPIC TITLE: {topic_title}
+TOPIC BRIEF (what this special covers, and the facts the show has already reported with their sources): {topic_brief}
+TOPIC CATEGORY: {topic_category}
+
+CURRENT RESEARCH (live web + X results retrieved TODAY):
+{current_research}
+
+HOW TO USE THE TWO BLOCKS (critical):
+- The current research decides the flight's STATUS today: not yet flown, scrubbed or delayed, or flown. Never write an outcome the research does not report. Before a flight every plan is a plan: targets are "targeted for", times are "no earlier than", and a slip is normal, so say that dates can move.
+- Where the research and the topic brief disagree on a date, a time, a vehicle number or a plan detail, the research wins and the brief's version is dropped without comment.
+- Attribute every plan detail, quote and prediction to who said it. A prediction by Elon Musk or SpaceX is their prediction, not a fact. Analyst and X commentary is opinion with a named source.
+- Carry [UNCONFIRMED] labels through. If the research is empty, write from the topic brief alone, say plainly that details were as last reported, and invent nothing fresher.
+- Explanations of physics and engineering principle (why reentry heats a vehicle, why a tower catch saves mass) may be reasoned from first principles. Every SPECIFIC figure about this vehicle or this flight (a temperature, a speed, a mass, a time, a count) must sit in the topic brief or the research; where it does not, explain the mechanism without the number.
+
+Produce a written, essay-style brief covering ALL segments below, in this order. Prose paragraphs under each marker, not bullet lists. The downstream prompt turns this into a 16 to 20 minute episode, so every segment needs real substance.
+
+### Segment 1 — The Open
+The moment in plain terms: what this flight attempts that has never been done, when, and what the episode will give the listener. Separate from the HOOK line.
+
+### Segment 2 — The Flight at a Glance
+The verified essentials: target date and window, site, the two vehicles by name and number, the payload, the planned profile in order, and where the plan stood as of today's research. For a REACTION special this segment is instead the account of what happened, in order, as reported.
+
+### Segment 3 — Minute by Minute
+The planned (or actual) timeline as a story a listener can follow along with on the day: liftoff, staging, the Super Heavy booster's return, the Ship's time in orbit and what it does there, the decision point for bringing the Ship home, reentry, the final approach. Name the stage in every recovery reference. Give times only where the sources give them.
+
+### Segment 4 — Why Catching the Ship Is the Hard Part
+The engineering centrepiece, from first principles. Why the Ship's return differs in kind from the booster's: orbital velocity against a suborbital hop, the energy that has to go somewhere, the heat shield's job, control through reentry, the relight and the flip, and arriving at the tower arms with almost no margin. Why SpaceX wants tower catches at all: no landing legs, less dry mass, more payload, a fast re-stack. Build the reasoning step by step so a non-engineer finishes the segment understanding it.
+
+### Segment 5 — The Road Here
+How the program reached this attempt, from what the show has reported: the earlier booster catches, the previous flight and what it proved or left open, the test campaign for these two vehicles. Only what the brief and research carry.
+
+### Segment 6 — What Rides on It
+Why the outcome matters beyond the spectacle: what full reuse of both stages does to cost and cadence, what it means for Starlink V3 deployment, for Artemis and for the company's own plans, each as its sources frame it. Company projections are labelled as projections.
+
+### Segment 7 — What Could Go Wrong, and What Counts as Success
+The honest ledger. The specific risks the sources name, the points at which SpaceX has said it would call off a catch and land the Ship elsewhere, and a clear scale of outcomes from full success to an early loss, with what each would teach. A test flight that fails informatively is still a test; say so without excusing anything. For a REACTION special, score what happened against this scale.
+
+### Segment 8 — What People Are Saying
+The strongest attributed views from the research: the confident, the sceptical, the sharpest technical points being argued. Named, dated where possible, labelled as opinion. Insight over noise.
+
+### Segment 9 — How to Follow It, and What Comes Next
+For a PREVIEW: when and where to watch as the sources give it, the three or four moments worth watching for, and that the date can slip. For a REACTION: the next concrete milestones. Then one sentence on SPCX only if the research reports a relevant move; no price talk otherwise.
+
+### Segment 10 — The Takeaways
+Two or three durable points a listener should carry into launch day (or away from it), stated once, ending on the honest open question.
+
+CRITICAL CONSTRAINTS:
+- Never state or imply an outcome the research does not report. A PREVIEW never describes the flight in the past tense.
+- Do NOT fabricate numbers, quotes, dates, vehicle numbers or price levels. A missing figure means you explain the mechanism instead.
+- No financial advice, no price targets, no buy or sell framing.
+- The company is ALWAYS spelled "SpaceX"; the ticker is SPCX.
+- Every Starship recovery reference names WHICH stage: the Super Heavy booster or the Ship (upper stage).
+- Keep all ``### Segment`` markers so the podcast writer sees the structure; write each segment as prose.
+- Finish the brief with a ``## Sources`` list: one line per page from the current research or the topic brief that this brief relied on, each with its URL exactly as given there. Never a URL from memory.
+- Length target: 2,000 to 2,800 words. Go deep on every segment rather than summarising.
+
+Output the brief now.

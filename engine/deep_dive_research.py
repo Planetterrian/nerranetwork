@@ -36,6 +36,7 @@ def research_current_context(
     x_handles: Optional[List[str]] = None,
     today: Optional[_dt.date] = None,
     max_turns: int = 6,
+    focus: str = "",
 ) -> str:
     """Return a concise, source-attributed briefing on the CURRENT state of
     *topic_title*, or ``""`` if research is unavailable.
@@ -58,6 +59,17 @@ def research_current_context(
 
     today = today or _dt.date.today()
     query_lines = "\n".join(f"  - {q}" for q in queries)
+    # Nov 10 2026: an entry may say what its briefing should lead with (the
+    # default was written for the IPO deep dive).
+    focus = " ".join((focus or "").split())
+    _lead_line = (
+        f"- Lead with the most recent, concrete facts on: {focus}.\n"
+        if focus else
+        "- Lead with the most recent, concrete, decision-relevant facts: "
+        "filing status (e.g. an S-1 or draft registration), reported "
+        "timeline/dates, valuation, deal structure, who is underwriting, "
+        "how retail could participate.\n"
+    )
     prompt = (
         f"Today's date is {today.isoformat()}. Research the CURRENT, "
         f"up-to-the-day state of: {topic_title}.\n\n"
@@ -66,10 +78,8 @@ def research_current_context(
         f"{query_lines}\n\n"
         f"Return a concise factual briefing (bullet points, NOT an essay) of "
         f"the current state. Requirements:\n"
-        f"- Lead with the most recent, concrete, decision-relevant facts: "
-        f"filing status (e.g. an S-1 or draft registration), reported "
-        f"timeline/dates, valuation, deal structure, who is underwriting, "
-        f"how retail could participate.\n"
+        f"{_lead_line}"
+        f"- Give the URL of the page beside every claim it supports.\n"
         f"- Attribute EVERY claim to its source — name the publication or the "
         f"X account, with the date where possible (e.g. 'per Reuters, May 28' "
         f"or 'per @account').\n"

@@ -209,7 +209,90 @@ queue:
 # flight-15-ship-catch), whatever the outcome. Context below comes only from
 # the show's own committed digests (Ep150-157); everything about the flight
 # itself comes from {current_research}.
+#
+# Two entries: flight-15-preview is run BEFORE the flight (operator, Nov 10:
+# "a great special on Flight 15 before it happens"); flight-15-ship-catch is
+# the reaction, run the day of or after. Both use the flight-special prompts
+# (the default deep-dive prompts are the earnings special's and wrote
+# balance-sheet segments into the Nov 10 run).
 # ---------------------------------------------------------------------------
+
+- id: flight-15-preview
+  title: 'Starship Flight 15 Preview: The First Ship Catch Attempt'
+  category: event_special
+  produced: false
+  episode_number: null
+  produced_date: null
+  digest_prompt_file: shows/prompts/spacex_flight_special.txt
+  podcast_prompt_file: shows/prompts/spacex_flight_special_podcast.txt
+  research_focus: >
+    the flight's current target date and launch window, any slip or
+    scrub, the vehicle numbers, the planned flight profile and timeline,
+    the conditions SpaceX has given for attempting or calling off each
+    catch, the regulatory status, what SpaceX and Elon Musk have said
+    about the odds, the strongest technical commentary, and where the
+    webcast will be shown
+  web_search_queries:
+  - Starship Flight 15 launch date window latest
+  - Starship Flight 15 mission profile timeline ship catch
+  - Starship Flight 15 Booster 22 Ship 42 status
+  - Starship Flight 15 ship catch criteria divert
+  - Starship ship catch tower arms how it works heat shield
+  - Starship Flight 15 FAA license approval
+  - Elon Musk Starship Flight 15 ship catch odds
+  - Starship Flight 15 webcast how to watch
+  x_handles:
+  - SpaceX
+  - elonmusk
+  - NASASpaceflight
+  - SciGuySpace
+  - StarshipGazer
+  - thesheetztweetz
+  brief: >
+    A PREVIEW special, recorded BEFORE Starship Flight 15 flies, to be the
+    one episode a listener needs before launch day. The flight has NOT
+    happened: nothing about it is in the past tense, every date is a
+    target that can move, and the current status comes from
+    {current_research}. If the research shows the flight has already
+    flown, report that outcome from the research instead and say the
+    episode was planned as a preview.
+
+    WHAT THE SHOW HAS REPORTED SO FAR (attribute as earlier reporting;
+    the research wins wherever it differs): Flight 15 is targeted no
+    earlier than November 13, 2026 from Starbase, in a
+    seventy-five-minute window opening at 4:45 p.m. Central Time (per
+    Keep Track). SpaceX Vice President of Launch Kiko Dontchev announced
+    the November 13 target at the UP.Summit. Booster 22 and Ship 42, both
+    Block 3 vehicles, are assigned. Booster 22 completed a full-duration
+    33-engine static fire on October 25; Ship 42 completed a
+    single-engine deorbit simulation on October 26 and a full six-engine
+    static fire the next day; the Pad 2 arms have lifted Ship 42 into
+    catch position. The plan is to catch BOTH stages with the tower: the
+    Super Heavy booster is scheduled to return for its catch about 6
+    minutes 35 seconds after liftoff, the first catch attempt for a V3
+    Super Heavy. The Ship is to deploy 26 Starlink V3 satellites into a
+    roughly 275 km orbit, fly 14 orbits, and attempt a return catch only
+    after systems checks confirm it is ready for reentry and the landing
+    burn; three of the satellites carry cameras to inspect the heat
+    shield. Each Starlink V3 satellite adds 1 terabit of capacity, the
+    set roughly equal to ten Falcon 9 launches of V2 Minis (per Keep
+    Track). A Ship catch would be the first time an upper stage has been
+    caught after reaching orbital velocity. On the third-quarter earnings
+    call Elon Musk said a successful Ship catch was "more likely than
+    not" (his prediction). Flight 14 reached orbit and deployed
+    twenty-six Starlink V3 satellites despite an engine shutdown that
+    Musk described as a software failure on a single RVac unit, and it
+    reused heat-shield tiles from an earlier vehicle. The company frames
+    full and rapid reuse of both stages as the path to cutting
+    cost-to-orbit by 99% or more (company projection).
+
+    WHAT MAKES THIS EPISODE GREAT: the listener should be able to watch
+    the flight afterwards and know what every phase is for. The
+    minute-by-minute walk-through and the first-principles explanation of
+    why catching the Ship is harder than catching the booster are the
+    heart. Give an honest scale of outcomes so that whatever happens on
+    the day, the listener can score it. Engineering-first, honest, never
+    a stock promoter; not financial advice.
 
 - id: flight-15-ship-catch
   title: 'Starship Flight 15 Special: The First Ship Catch Attempt'
@@ -217,6 +300,13 @@ queue:
   produced: false
   episode_number: null
   produced_date: null
+  digest_prompt_file: shows/prompts/spacex_flight_special.txt
+  podcast_prompt_file: shows/prompts/spacex_flight_special_podcast.txt
+  research_focus: >
+    what happened on the flight in order, the outcome of each catch
+    attempt by stage, any anomaly and its stated cause, what SpaceX and
+    Elon Musk said afterwards, the strongest technical analysis, and the
+    next flight's timing
   web_search_queries:
   - Starship Flight 15 launch result ship catch
   - Starship Flight 15 upper stage tower catch outcome

@@ -1542,6 +1542,19 @@ def run(args: argparse.Namespace) -> None:
                     config.llm.podcast_prompt_file = _dd_cfg.podcast_prompt_file
                 if _dd_cfg.system_prompt_file:
                     config.llm.system_prompt_file = _dd_cfg.system_prompt_file
+                # Nov 10 2026: a queue entry may name its own prompt pair (a
+                # flight special is not shaped like an earnings special).
+                for _pf in ("digest_prompt_file", "podcast_prompt_file"):
+                    _entry_pf = str(deep_dive_topic.get(_pf) or "").strip()
+                    if _entry_pf:
+                        if not (PROJECT_ROOT / _entry_pf).is_file():
+                            _skip_episode(
+                                "deep_dive_prompt_missing",
+                                f"deep-dive entry {deep_dive_topic.get('id')!r} "
+                                f"names {_pf} {_entry_pf!r}, which does not exist.",
+                            )
+                            return
+                        setattr(config.llm, _pf, _entry_pf)
                 # Deep dives want a fuller episode than the show's daily target.
                 if getattr(_dd_cfg, "min_podcast_words", 0):
                     config.llm.min_podcast_words = _dd_cfg.min_podcast_words
@@ -1580,6 +1593,7 @@ def run(args: argparse.Namespace) -> None:
                                 _dd_queries,
                                 x_handles=deep_dive_topic.get("x_handles") or None,
                                 today=today,
+                                focus=str(deep_dive_topic.get("research_focus") or ""),
                             )
                         metrics.record(
                             "deep_dive_research_chars", len(deep_dive_research_block),
