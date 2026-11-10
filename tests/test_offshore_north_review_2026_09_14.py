@@ -381,7 +381,7 @@ class TestCampaignDashboard:
         assert any(e.get("canada") for e in d["rdr_imoca_entries"]["entries"])
         groups = {g["group"] for g in d["follow"]}
         assert "The campaign" in groups and "Class and race organisers" in groups
-        links = [l["url"] for g in d["follow"] for l in g["links"]]
+        links = [ln["url"] for g in d["follow"] for ln in g["links"]]
         assert "https://www.canadaoceanracing.com/scott-notes/" in links
         assert "https://www.canadaoceanracing.com/follow/" in links
         assert all(u.startswith("https://") for u in links)

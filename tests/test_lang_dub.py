@@ -9,12 +9,10 @@ YOUTUBE_REFRESH_TOKEN_FR exists.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
 import yaml
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -141,7 +139,7 @@ class TestPublishNoOps:
                       "description": "desc"}}}]))
         monkeypatch.setattr(lang_dub, "_en_optimized_long_title",
                             lambda c, e: "")
-        monkeypatch.setattr(lang_dub, "_policy_plan", lambda c, l: {
+        monkeypatch.setattr(lang_dub, "_policy_plan", lambda c, ln: {
             "publish_long": True, "shorts": 1, "tier": "C",
             "applied": True, "reason": ""})
         res = lang_dub.publish_lang_dub(_cfg(), 7, "fr", dry_run=True)
@@ -157,7 +155,7 @@ class TestPublishNoOps:
                   "translations": {"fr": {"title": "Titre", "description": "d"}}}]))
         monkeypatch.setattr(lang_dub, "_en_optimized_long_title",
                             lambda c, e: "")
-        monkeypatch.setattr(lang_dub, "_policy_plan", lambda c, l: {
+        monkeypatch.setattr(lang_dub, "_policy_plan", lambda c, ln: {
             "publish_long": True, "shorts": 1, "tier": "",
             "applied": False, "reason": ""})
         monkeypatch.setattr(eyt, "get_channel_credentials_from_env",
@@ -271,7 +269,7 @@ class TestSweepScript:
         m = self._mod()
         cfg = _cfg()
         monkeypatch.setattr(m.lang_dub, "index_path",
-                            lambda c, l: tmp_path / "youtube_videos.fr.json")
+                            lambda c, ln: tmp_path / "youtube_videos.fr.json")
         # Empty → not done.
         assert m._already_done(cfg, "fr", 7) is False
         # Status-only rows (deferral/failure) → still not done.
@@ -290,7 +288,7 @@ class TestSweepScript:
         m = self._mod()
         cfg = _cfg()
         monkeypatch.setattr(m.lang_dub, "index_path",
-                            lambda c, l: tmp_path / "youtube_videos.fr.json")
+                            lambda c, ln: tmp_path / "youtube_videos.fr.json")
         m._record_status_row(cfg, "fr", 7, kind="long", status="deferred",
                              reason="no_scenes_yet")
         m._record_status_row(cfg, "fr", 7, kind="long", status="deferred",

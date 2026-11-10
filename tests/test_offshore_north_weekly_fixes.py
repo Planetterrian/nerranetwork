@@ -625,8 +625,8 @@ class TestCampaignFreshnessPlumbing:
         # 3 -> 4 on 2026-09-14: Scott's Notes (the skipper's own writing)
         # joined the campaign channels (category feed, see the YAML).
         assert len(flagged) == 4, f"expected the 4 campaign channels, got {flagged}"
-        assert all("Canada Ocean Racing" in l for l in flagged)
-        assert any("Scott" in l for l in flagged), "Scott's Notes feed missing"
+        assert all("Canada Ocean Racing" in ln for ln in flagged)
+        assert any("Scott" in ln for ln in flagged), "Scott's Notes feed missing"
 
     def test_flag_survives_into_dataclass(self):
         """Silent config-drop class."""

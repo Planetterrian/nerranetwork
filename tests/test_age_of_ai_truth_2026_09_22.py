@@ -269,7 +269,7 @@ class TestSupportedChapters:
 
     def test_a_title_naming_a_host_with_no_lines_fails(self):
         tr = _transcript(4)  # Ep4 is the solo episode
-        assert "patrick" not in {l.lower() for l in re.findall(
+        assert "patrick" not in {ln.lower() for ln in re.findall(
             r"^\[\d\d:\d\d\]\s+(\w+):", tr, re.M)}
         ch = [{"start": 0, "end": 60, "title": "Patrick and Hogan on ethical AI royalties for artists"}]
         assert supported_chapters(ch, tr) == []

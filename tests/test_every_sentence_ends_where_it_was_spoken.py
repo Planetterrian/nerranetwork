@@ -101,7 +101,7 @@ class TestAPhraseEndsAtTheLevelItWasSpoken:
 class TestNoPerFrameLevellingOnAVoice:
     def test_dynaudnorm_is_gone_from_the_conversation_chains(self):
         chains = ASSEMBLE[ASSEMBLE.index("SPEECH_TARGET_DB ="):ASSEMBLE.index("BALANCE_GLUE =")]
-        code = "\n".join(l.split("#")[0] for l in chains.splitlines())
+        code = "\n".join(ln.split("#")[0] for ln in chains.splitlines())
         assert "dynaudnorm" not in code
 
     def test_one_gain_per_voice_across_every_cut(self):

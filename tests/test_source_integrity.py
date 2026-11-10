@@ -19,7 +19,6 @@ nowhere). These tests pin:
 """
 
 import json
-import re
 import zipfile
 from pathlib import Path
 
@@ -27,7 +26,6 @@ import pytest
 
 from engine import claims as claims_mod
 from engine.claims import (
-    CITATION_SHAPE_PATTERNS,
     claims_prompt_appendix,
     extract_claims_block,
     find_citation_shapes,

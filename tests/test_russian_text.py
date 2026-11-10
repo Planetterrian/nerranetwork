@@ -8,7 +8,6 @@ which sounds awful.
 
 from __future__ import annotations
 
-import pytest
 
 from engine.russian_text import russify_english_dates
 
@@ -104,7 +103,6 @@ class TestRussianShowAdjacencyFilter:
         # Stub the YAML lookup to a known map that includes both
         # English and Russian sisters for FP.
         import yaml as _yaml
-        original_safe_load = _yaml.safe_load
         def _fake_safe_load(text):
             return {
                 "newsletter": {

@@ -409,7 +409,8 @@ class TestStockClosing:
     def test_market_watch_pattern_matches_session_verbs(self):
         # Ep087 "finished the session higher by nearly two percent" shipped
         # with no Market Watch chapter.
-        import re, yaml
+        import re
+        import yaml
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
         marker = next(m for m in cfg["chapters"]["section_markers"] if m["title"] == "Market Watch")
         rx = re.compile(marker["pattern"], re.IGNORECASE)
@@ -534,7 +535,8 @@ class TestLaunchDashboard:
     """SpaceX Launch Dashboard data + page."""
 
     def test_fetcher_pure_helpers(self):
-        import importlib.util, datetime as dt
+        import importlib.util
+        import datetime as dt
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
         mod = importlib.util.module_from_spec(spec)
@@ -574,7 +576,6 @@ class TestLaunchDashboard:
         g.generate_spacex_dashboard(dry_run=True)  # smoke
 
     def test_dashboard_in_sitemap_and_show_page_links_it(self):
-        import generate_html as g
         # show page hero links the dashboard
         html = (_ROOT / "spacex.html").read_text(encoding="utf-8") if (_ROOT / "spacex.html").exists() else ""
         if html:
@@ -703,10 +704,12 @@ class TestResourcesAndDashboardStatsExpansion:
                 assert r["url"].startswith("https://"), r
 
     def test_fleet_payload_computes(self):
-        import importlib.util, datetime as dt
+        import importlib.util
+        import datetime as dt
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
         now = dt.datetime(2026, 6, 13, tzinfo=dt.timezone.utc)
         prev = [
             {"net": "2026-06-01T00:00:00Z", "rocket": "Falcon 9", "name": "Starlink Group 1-1", "status": "Success"},
@@ -732,7 +735,8 @@ class TestGrowingMetricsDataset:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
         return m
 
     def test_monthly_breakdown_has_mass_and_sats(self):
@@ -791,11 +795,14 @@ class TestDashboardV2Visuals:
     def test_payload_exposes_growth_and_recent(self):
         # _monthly_breakdown + timeseries feed the cumulative series the
         # area chart reads; recent list feeds the recently-flown panel.
-        import importlib.util, datetime as dt
+        import importlib.util
+        import datetime as dt
         spec = importlib.util.spec_from_file_location(
             "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
-        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-        import tempfile, pathlib
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        import tempfile
+        import pathlib
         now = dt.datetime.now(dt.timezone.utc)
         mb = mod._monthly_breakdown([
             {"net": now.strftime("%Y-%m") + "-01T00:00:00Z", "rocket": "Falcon 9",

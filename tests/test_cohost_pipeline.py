@@ -105,7 +105,6 @@ class TestAlignment:
         a, sr, ch = read_wav(aligned)
         assert sr == 48000 and ch == 1
         # After alignment the burst pattern lines up with the reference.
-        n = min(len(a), len(ref))
         lag = int(np.argmax(np.correlate(a[:SR * 5], ref[:SR * 5 - SR // 4],
                                          mode="valid")))
         assert lag < SR * 0.05, "aligned track still offset"

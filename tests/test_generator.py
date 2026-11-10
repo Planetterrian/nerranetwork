@@ -376,7 +376,9 @@ class TestStructuralLabelAndSteelManRepetitionSkip:
         words = ["alpha", "bravo", "cobalt", "delta", "ember", "flint", "gust",
                  "hazel", "ion", "jade", "kelp", "lumen", "mica", "onyx", "pike",
                  "quill", "rune", "sable", "tide", "umber", "vane", "wisp"]
-        uniq = lambda n: " ".join(random.choice(words) for _ in range(n))
+        def uniq(n):
+            return " ".join(random.choice(words) for _ in range(n))
+
         parts = []
         for i in range(20):
             parts.append(
@@ -399,7 +401,9 @@ class TestStructuralLabelAndSteelManRepetitionSkip:
         random.seed(3)
         words = ["alpha", "bravo", "cobalt", "delta", "ember", "flint", "gust",
                  "hazel", "ion", "jade", "kelp", "lumen", "mica", "onyx", "pike"]
-        uniq = lambda n: " ".join(random.choice(words) for _ in range(n))
+        def uniq(n):
+            return " ".join(random.choice(words) for _ in range(n))
+
         txt = "# X\n\n" + "\n".join(
             f"{i}. **Memory Hook:** {uniq(9)}." for i in range(30)
         )
@@ -492,7 +496,6 @@ class TestPodcastModelOverride:
         assert cfg.llm.podcast_model == ""
 
     def test_script_stage_honors_the_override(self, monkeypatch):
-        from unittest import mock
         from engine.config import load_config
         from engine import generator
 

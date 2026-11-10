@@ -15,10 +15,7 @@ Three layers:
 from __future__ import annotations
 
 import base64
-import io
 from pathlib import Path
-from typing import List
-from unittest.mock import patch
 
 import pytest
 

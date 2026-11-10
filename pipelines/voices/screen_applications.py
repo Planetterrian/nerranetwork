@@ -18,7 +18,6 @@ person who approves; it never declines anyone by itself.
 from __future__ import annotations
 
 import datetime as dt
-import json
 import logging
 import sys
 from pathlib import Path
@@ -95,7 +94,7 @@ def screen(app: dict) -> dict:
         organization=app.get("organization") or "(none given)",
         bio=app.get("bio") or "(none given)",
         topics="\n".join(f"- {t}" for t in topics) or "(none given)",
-        links=", ".join(f"{l['label']}: {l['url']}" for l in guest_links(app)) or "(none)",
+        links=", ".join(f"{link['label']}: {link['url']}" for link in guest_links(app)) or "(none)",
         public_profiles=profiles_text(app),
         provenance=provenance(app),
     )

@@ -90,11 +90,11 @@ class TestTheEditTeachesHer:
     def test_cut_lines_are_found_and_the_resumed_line_is_kept(self):
         import learning
         got = learning.editor_cut_lines(self.SPEC, self.TAPE)
-        lines = [l for _, l, _ in got]
+        lines = [ln for _, ln, _ in got]
         assert "Fair enough." in lines
         assert "What part of DECA people's process has changed the most" in lines
         assert "What's one specific win that shows this in action?" not in lines
-        assert ("Take your time.", "talkover") in [(l, k) for _, l, k in got]
+        assert ("Take your time.", "talkover") in [(ln, k) for _, ln, k in got]
 
     def test_only_short_lines_cut_for_themselves_are_retired(self, monkeypatch):
         import learning

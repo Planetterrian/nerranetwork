@@ -11,7 +11,7 @@ Covers:
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -20,7 +20,7 @@ from engine.audio import (
     _sting_padding_cmd,
     concatenate_with_stings,
 )
-from engine.chapters import Chapter, parse_chapters, split_script_at_chapters
+from engine.chapters import parse_chapters, split_script_at_chapters
 from engine.config import AudioConfig, SectionMarker, load_config
 
 # ---- Repo root for real YAML files ----------------------------------------
@@ -259,7 +259,7 @@ class TestConcatenateWithStingsFallback:
         output = tmp_path / "output.mp3"
         mock_concat.return_value = output
 
-        result = concatenate_with_stings(files, output, sting_path=None)
+        concatenate_with_stings(files, output, sting_path=None)
         mock_concat.assert_called_once_with(files, output)
 
     @patch("engine.audio.concatenate_audio")
@@ -272,7 +272,7 @@ class TestConcatenateWithStingsFallback:
         mock_concat.return_value = output
 
         missing_sting = tmp_path / "nonexistent_sting.mp3"
-        result = concatenate_with_stings(files, output, sting_path=missing_sting)
+        concatenate_with_stings(files, output, sting_path=missing_sting)
         mock_concat.assert_called_once_with(files, output)
 
 

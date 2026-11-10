@@ -17,7 +17,6 @@ properties that matter are the ones that keep it from doing harm:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -363,9 +362,9 @@ class TestStoryBreaksInTheRepair:
         monkeypatch.setattr(sb, "boundary_anchors", lambda *a, **k: ([(10.0, 10.5)], 0))
         monkeypatch.setattr(sb, "detect_silences", lambda p: [(10.4, 10.9)])
         monkeypatch.setattr(sb, "plan_breaks", lambda *a, **k: ([sb.Break(cut=10.6, insert=0.55, gap_start=10.4, gap_end=10.9)], 0))
-        monkeypatch.setattr(sb, "insert_silences_cmd", lambda src, dst, c, l: ["true"])
+        monkeypatch.setattr(sb, "insert_silences_cmd", lambda src, dst, c, ln: ["true"])
         shifted = {}
-        monkeypatch.setattr(sb, "rewrite_transcript_files", lambda d, p, c, l: shifted.update(dir=d, prefix=p, cuts=c))
+        monkeypatch.setattr(sb, "rewrite_transcript_files", lambda d, p, c, ln: shifted.update(dir=d, prefix=p, cuts=c))
         out = rs.insert_story_breaks(tesla_config, art, "A.\n[breath] B.\n<emphasis>C</emphasis>.\n", art.raw_mp3)
         assert out.name == "raw_breaks.wav"
         assert "[breath]" not in seen["spoken"] and "<emphasis>" not in seen["spoken"]

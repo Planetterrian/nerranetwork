@@ -25,7 +25,6 @@ import types
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import pytest
 
 
 def _build_fake_response(*, content: str, finish_reason: str):
@@ -117,7 +116,6 @@ class TestTruncationWarningGate:
         """The gate is ``max_tokens >= 200``. Confirm 200 warns and 199
         doesn't, so a future ``> 200`` typo doesn't break the loud
         path silently."""
-        from engine import generator as g
 
         # 199 → silent
         _, _, records_199 = _call_with(

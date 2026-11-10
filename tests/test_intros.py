@@ -547,11 +547,11 @@ class TestPromptsPutTheHookFirst:
         wrong, so both are pinned.
         """
         fp = (_PROMPTS / "fp_podcast.txt").read_text(encoding="utf-8")
-        fp_hook = next(l for l in fp.splitlines() if "{hook}" in l)
+        fp_hook = next(ln for ln in fp.splitlines() if "{hook}" in ln)
         assert fp_hook.startswith("Ведущая:"), fp_hook
 
         pr = (_PROMPTS / "privet_russian_podcast.txt").read_text(encoding="utf-8")
-        pr_hook = next(l for l in pr.splitlines() if "{hook}" in l)
+        pr_hook = next(ln for ln in pr.splitlines() if "{hook}" in ln)
         assert pr_hook.strip() == "{hook}", (
             f"privet_russian labels its cold open ({pr_hook!r}) but the same "
             "prompt forbids speaker labels"

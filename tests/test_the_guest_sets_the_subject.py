@@ -5,7 +5,6 @@ subject and the points to reach; Mira keeps choosing the questions.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from pipelines.voices import common

@@ -187,7 +187,9 @@ class TestTheTranscript:
 
 def _write(path: Path, x: np.ndarray, sr: int = 48000) -> None:
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
         w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes())
 
 

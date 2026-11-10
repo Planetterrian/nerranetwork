@@ -1028,7 +1028,7 @@ def guest_links(app: Dict[str, Any]) -> List[Dict[str, str]]:
             continue
         seen.add(link["url"].lower())
         out.append(link)
-    out.sort(key=lambda l: any(h in l["url"].lower() for h in _SOCIAL_HOSTS))
+    out.sort(key=lambda link: any(h in link["url"].lower() for h in _SOCIAL_HOSTS))
     return out
 
 
@@ -1128,7 +1128,7 @@ def guest_links_markdown(app: Dict[str, Any], heading: str = "") -> str:
         return ""
     who = app.get("organization") or app.get("name") or "the guest"
     head = heading or f"Find {who}"
-    lines = [f"- {l['label']}: {l['url']}" for l in links]
+    lines = [f"- {link['label']}: {link['url']}" for link in links]
     return f"{head}:\n" + "\n".join(lines)
 
 

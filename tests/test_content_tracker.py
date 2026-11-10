@@ -2,18 +2,12 @@
 
 import datetime
 import re
-import json
-import tempfile
-from pathlib import Path
 
-import pytest
 
 from engine.content_tracker import (
     ContentTracker,
     FF_SECTION_PATTERNS,
-    PT_SECTION_PATTERNS,
     TST_SECTION_PATTERNS,
-    OV_SECTION_PATTERNS,
     _extract_bold_headlines,
     _extract_quote_author,
 )

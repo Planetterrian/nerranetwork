@@ -25,14 +25,13 @@ from double-calling the guest.
 from __future__ import annotations
 
 import datetime as dt
-import json
 import os
 import re
 
 import requests
 
 from common import (  # noqa: E402
-    OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
+    OPERATOR_EMAIL, carry_the_show_block, cohost_name, load_prompt, logger,
     mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
     notify_operator, GUEST_AUDIO_HTML, studio_steps_html,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,

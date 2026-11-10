@@ -281,7 +281,8 @@ class TestRequestsToTheWorkerAreSigned:
         assert out["fox"] == "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"
         assert out["abc"] == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         assert out["empty"] == "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad"
-        import hashlib, hmac
+        import hashlib
+        import hmac
         assert out["longkey"] == hmac.new(b"k" * 100, b"body", hashlib.sha256).hexdigest()
         assert out["utf8"] == 32
 

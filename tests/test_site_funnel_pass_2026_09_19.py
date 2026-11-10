@@ -554,7 +554,7 @@ class TestNightlyCommitsWhatItGenerates:
             ROOT / ".github" / "workflows" / "nightly-maintenance.yml"
         ).read_text()
         line = next(
-            l for l in nightly.splitlines() if "audit_dead_urls.py" in l
+            ln for ln in nightly.splitlines() if "audit_dead_urls.py" in ln
         )
         assert "|| true" in line or "--strict" not in line
 

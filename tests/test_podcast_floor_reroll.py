@@ -23,7 +23,6 @@ These tests pin the safety properties:
 import random
 from types import SimpleNamespace
 
-import pytest
 
 import engine.generator as gen
 

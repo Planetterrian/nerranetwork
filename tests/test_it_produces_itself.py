@@ -13,7 +13,6 @@ kept in a form the next conversation can actually use.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -1418,7 +1417,7 @@ class TestTheGuestKnowsWhenItIsOver:
 
 
 
-def _bursts(seconds: float, sr: int, spans, level: float, seed: int = 1) -> "np.ndarray":
+def _bursts(seconds: float, sr: int, spans, level: float, seed: int = 1):
     """Noise bursts (speech, for a correlator) at the given (start, end)
     seconds, silence elsewhere."""
     import numpy as np
@@ -1496,7 +1495,6 @@ class TestALegThatLostTimeIsPlacedInPieces:
         assert len(pieces) == 2
         assert abs(delay - 10) < 1.0
         # After placing, the leg's second half sits where the room has it.
-        import numpy as np
         for t in (700.0, 800.0):
             room_on = _rms_db(room_and_leg / "room.wav", t, t + 8)
             leg_on = _rms_db(out, t, t + 8)
@@ -1532,7 +1530,6 @@ class TestTheGuestsMicrophoneCarriesOnlyTheGuest:
     SR = 8000
 
     def test_the_bleed_is_muted_and_the_voice_is_kept(self, tmp_path):
-        import numpy as np
         mira_spans = [(t, t + 4) for t in range(2, 300, 20)]
         guest_spans = [(t + 8, t + 16) for t in range(2, 300, 20)]
         mira = _bursts(300, self.SR, mira_spans, 0.3, seed=1)
@@ -1927,7 +1924,8 @@ class TestTheGuestHearsTheMomentTheyAreOut:
             status_code = 200
             def raise_for_status(self): pass
         def fake_post(url, headers=None, json=None, timeout=None):
-            sent.update(json); return R()
+            sent.update(json)
+            return R()
         monkeypatch.setenv("RESEND_API_KEY", "x")
         monkeypatch.setattr(common.requests, "post", fake_post)
         common.send_email("guest@example.com", "s", "<p>b</p>", cc_operator=True,
@@ -1965,7 +1963,8 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
         assert "you may begin the closing round with the show's own question" not in block
 
     def test_the_closing_window_matches_the_prompts(self):
-        import importlib, sys as _sys
+        import importlib
+        import sys as _sys
         _sys.path.insert(0, str(V))
         fire = importlib.import_module("fire_interviews")
         js = self.SCENARIO[self.SCENARIO.index("function closingWindowMin"):]
@@ -2136,7 +2135,8 @@ class TestTheLoopClosesItself:
         assert 'decided_by: str = "weekly"' in body
 
     def test_it_will_not_carry_the_same_lesson_twice(self):
-        import importlib, sys as _sys
+        import importlib
+        import sys as _sys
         _sys.path.insert(0, str(V))
         L = importlib.import_module("learning")
         assert L._already_says_it(
@@ -2196,7 +2196,9 @@ class TestHerOwnVoiceIsNotPutInTheGuestsMouth:
     BLEED = (V / "audio" / "bleed.py").read_text(encoding="utf-8")
 
     def _strip(self):
-        import importlib, sys as _sys, os as _os
+        import importlib
+        import sys as _sys
+        import os as _os
         _sys.path.insert(0, str(V))
         _os.environ.setdefault("SUPABASE_URL", "http://x")
         _os.environ.setdefault("SUPABASE_SERVICE_KEY", "x")
@@ -2320,7 +2322,9 @@ class TestAnEpisodeRunsToTheClose:
     SRC = (V / "auto_edit.py").read_text(encoding="utf-8")
 
     def _mod(self):
-        import importlib, sys as _sys, os as _os
+        import importlib
+        import sys as _sys
+        import os as _os
         _sys.path.insert(0, str(V))
         _os.environ.setdefault("SUPABASE_URL", "http://x")
         _os.environ.setdefault("SUPABASE_SERVICE_KEY", "x")

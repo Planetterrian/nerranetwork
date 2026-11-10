@@ -483,7 +483,8 @@ class TestTiers:
 
     def _raw(self, tier, **kw):
         d = {"token": TOKEN, "shows": ["spacex", "tesla"], "tier": tier}
-        d.update(kw); return d
+        d.update(kw)
+        return d
 
     def test_limits_table(self):
         from engine.personal_edition import TIER_LIMITS, tier_limits

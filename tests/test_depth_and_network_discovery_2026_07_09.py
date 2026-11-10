@@ -109,7 +109,6 @@ class TestNetworkDiscoverySurfaces:
 
     def test_gallery_is_weighted_above_peers(self):
         from engine.network_promo import (
-            NETWORK_SURFACES,
             _weighted_surface_pool,
             pick_featured_surface,
         )

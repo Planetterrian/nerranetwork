@@ -6,7 +6,6 @@ lights up a focused failure."""
 
 from __future__ import annotations
 
-import pytest
 
 from engine.shorts_hashtags import (
     extract_hashtags,

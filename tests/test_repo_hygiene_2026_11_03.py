@@ -199,8 +199,10 @@ class TestTheStagingScriptUntracksWhatTheIgnoreRulesExclude:
         repo.mkdir()
         env = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
                "GIT_COMMITTER_EMAIL": "t@t", "HOME": str(tmp_path), "PATH": "/usr/bin:/bin"}
-        run = lambda *a: subprocess.run(["git", *a], cwd=repo, env=env, check=True,
-                                        capture_output=True)
+        def run(*a):
+            return subprocess.run(["git", *a], cwd=repo, env=env, check=True,
+                                  capture_output=True)
+
         run("init", "-q")
         (repo / "digests" / "show" / "youtube_tmp").mkdir(parents=True)
         flac = repo / "digests" / "show" / "youtube_tmp" / "ep1_short_source.flac"

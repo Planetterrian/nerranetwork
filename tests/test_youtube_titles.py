@@ -3,7 +3,6 @@ optimized_title wiring in engine.video_metadata."""
 
 import types
 
-import engine.youtube_titles as yt
 from engine.youtube_titles import (
     YOUTUBE_TITLE_HARD_MAX,
     _clean_title,

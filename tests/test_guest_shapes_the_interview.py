@@ -44,7 +44,7 @@ class TestGuestLinksSurvive:
 
     def test_the_producer_inbox_shape(self):
         app = {"links": {"urls": ["https://example.com/a", "example.com/a/"]}}
-        assert [l["url"] for l in guest_links(app)] == ["https://example.com/a"]
+        assert [ln["url"] for ln in guest_links(app)] == ["https://example.com/a"]
 
     def test_the_documented_shape_and_bare_handles(self):
         app = {"links": {"website": "foo.com", "twitter": "@bar"}}

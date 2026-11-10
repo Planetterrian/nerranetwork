@@ -215,9 +215,12 @@ class TestSingleClipHybrid:
         monkeypatch.setattr(video, "_render_hybrid_slideshow",
                             lambda *a, **k: calls.append("hybrid"))
         monkeypatch.setattr(video, "_run_ffmpeg", lambda c, **k: None)
-        audio = tmp_path / "a.mp3"; audio.write_bytes(b"x")
-        cover = tmp_path / "c.jpg"; cover.write_bytes(b"x")
-        clip = tmp_path / "clip.mp4"; clip.write_bytes(b"x")
+        audio = tmp_path / "a.mp3"
+        audio.write_bytes(b"x")
+        cover = tmp_path / "c.jpg"
+        cover.write_bytes(b"x")
+        clip = tmp_path / "clip.mp4"
+        clip.write_bytes(b"x")
         video.build_short_video(audio, cover, tmp_path / "s.mp4", duration=35.0,
                                 clip_paths=[clip], clip_seconds=4.0)
         assert calls == []

@@ -10,7 +10,6 @@ import datetime
 import json
 from pathlib import Path
 
-import pytest
 
 from scripts.generate_dashboard import aggregate_mit_performance
 

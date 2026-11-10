@@ -8,7 +8,7 @@ to get a sense of how it would have performed.
 from __future__ import annotations
 
 from typing import List, Dict
-from datetime import date, timedelta
+from datetime import date
 
 from .mit_context import get_mit_context_for_trading
 from .strategy import generate_trade_ideas

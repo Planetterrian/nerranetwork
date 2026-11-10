@@ -23,9 +23,7 @@ These tests pin:
 
 from __future__ import annotations
 
-from pathlib import Path
 
-import pytest
 
 from engine.video import (
     _long_form_cmd,

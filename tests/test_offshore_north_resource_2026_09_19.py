@@ -27,7 +27,6 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
@@ -76,7 +75,7 @@ class TestCampaignStatusBlock:
         out = build_campaign_status(_curated(), now=self.NOW)
         assert "LAST KNOWN POSITION / MOVEMENT: 2026-09-17 (4 days ago)" in out
         assert "Training run in the English Channel" in out
-        pos_line = next(l for l in out.splitlines() if l.startswith("LAST KNOWN POSITION"))
+        pos_line = next(ln for ln in out.splitlines() if ln.startswith("LAST KNOWN POSITION"))
         assert "2026-10-04" not in pos_line  # the clock's future fix is skipped
         assert "Défi Azimut-Lorient Agglomération (15 September 2026): FINISHED" in out
         assert "EMIRA IV not entered / did not sail" in out
@@ -157,7 +156,8 @@ class TestCuratedRecord:
     def test_dated_calendar_entries_carry_iso_windows_or_none(self):
         for e in _curated()["calendar"]:
             if "start" in e:
-                dt.date.fromisoformat(e["start"]); dt.date.fromisoformat(e["end"])
+                dt.date.fromisoformat(e["start"])
+                dt.date.fromisoformat(e["end"])
                 assert e["start"] <= e["end"]
 
     def test_standing_facts_and_field_guide_carry_the_result(self):
@@ -260,7 +260,7 @@ class TestDashboardV2:
         from engine.blog import SHOW_RESOURCES, _show_resources
 
         assert _show_resources("tesla") == {}
-        links = {l["href"] for l in SHOW_RESOURCES["offshore_north"]["links"]}
+        links = {ln["href"] for ln in SHOW_RESOURCES["offshore_north"]["links"]}
         assert {"offshore-north-dashboard.html", "offshore-north-glossary.html"} <= links
         assert "show_resources" in _read("templates/blog_post.html.j2")
         assert "Plain Sailing glossary" in _read("blog/offshore_north/ep005.html")

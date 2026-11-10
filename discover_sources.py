@@ -33,13 +33,11 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import json
 import logging
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import requests
 import yaml
@@ -502,11 +500,11 @@ def generate_report(
     """Generate a Markdown recommendations report."""
     now = datetime.datetime.now(datetime.timezone.utc)
     lines = [
-        f"# Nerra Network — Source Discovery Report",
-        f"",
+        "# Nerra Network — Source Discovery Report",
+        "",
         f"**Generated:** {now.strftime('%Y-%m-%d %H:%M UTC')}",
         f"**Minimum score:** {min_score:.0f} (grade B)",
-        f"",
+        "",
     ]
 
     total_approved = sum(len(v) for v in all_results.values())
@@ -522,9 +520,9 @@ def generate_report(
             continue
 
         lines.append(f"## {show}")
-        lines.append(f"")
-        lines.append(f"| Grade | Score | 7d Articles | Feed | Label |")
-        lines.append(f"|-------|-------|-------------|------|-------|")
+        lines.append("")
+        lines.append("| Grade | Score | 7d Articles | Feed | Label |")
+        lines.append("|-------|-------|-------------|------|-------|")
         for r in sorted(results, key=lambda x: x.score, reverse=True):
             lines.append(f"| {r.grade} | {r.score:.0f} | {r.entries_7d} | `{r.url}` | {r.label} |")
 

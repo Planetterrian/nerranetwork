@@ -245,7 +245,7 @@ class TestSubscribeCTA:
                     "shows/_defaults.yaml", "shows/finansy_prosto.yaml",
                     "shows/privet_russian.yaml"):
             src = (ROOT / rel).read_text(encoding="utf-8")
-            code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
+            code = "\n".join(ln for ln in src.splitlines() if not ln.lstrip().startswith("#"))
             assert "WATCH FULL EPISODE" not in code, rel
             assert "СМОТРЕТЬ ПОЛНЫЙ ВЫПУСК" not in code, rel
 
@@ -360,8 +360,10 @@ class TestShortRenderStage:
         captured = {}
         monkeypatch.setattr(video, "_run_ffmpeg",
                             lambda c, **k: captured.setdefault("cmd", c))
-        audio = tmp_path / "a.mp3"; audio.write_bytes(b"x")
-        cover = tmp_path / "c.jpg"; cover.write_bytes(b"x")
+        audio = tmp_path / "a.mp3"
+        audio.write_bytes(b"x")
+        cover = tmp_path / "c.jpg"
+        cover.write_bytes(b"x")
         video.build_short_video(audio, cover, tmp_path / "s.mp4",
                                 duration=35.0, fact_cards=self.CARDS)
         g = captured["cmd"][captured["cmd"].index("-filter_complex") + 1]

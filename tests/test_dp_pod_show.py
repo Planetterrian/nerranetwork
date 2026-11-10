@@ -1037,7 +1037,6 @@ class TestLeverRotationMemory:
             assert "heat pumps, filters" not in text, where
         # The hook's injected PREVIOUS LEVER string must not name example
         # actions either (its docstring/comments may).
-        m = re.search(r'"PREVIOUS LEVER.*?"', hook_src, re.DOTALL)
         injected = re.search(
             r'return \(\n(\s+"PREVIOUS LEVER.*?)\)', hook_src, re.DOTALL)
         assert injected and "heat pump" not in injected.group(1)
@@ -1079,7 +1078,8 @@ class TestSep4NaturalnessPass:
         import shows.hooks.dp_pod as hook
 
         monkeypatch.setattr(hook, "_ROOT", tmp_path)
-        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
         self._write_digest(d, 1, "Open your utility website today, enter your postcode, and check whether a battery rebate is open.")
         self._write_digest(d, 2, "Open your utility website or app today, enter your postcode, and sign up for a time-of-use rate plan.")
         self._write_digest(d, 3, "Open ClinicalTrials.gov today, search for mRNA vaccine trials, and note the contact email.")
@@ -1095,7 +1095,8 @@ class TestSep4NaturalnessPass:
         import shows.hooks.dp_pod as hook
 
         monkeypatch.setattr(hook, "_ROOT", tmp_path)
-        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
         self._write_digest(d, 1, "Plant three native shrubs along the fence line this weekend.")
         self._write_digest(d, 2, "Cook one meal this week from a bag of dried beans instead of meat.")
         self._write_digest(d, 3, "Repair one small household item instead of replacing it.")
@@ -1119,7 +1120,8 @@ class TestSep4NaturalnessPass:
         import shows.hooks.dp_pod as hook
 
         monkeypatch.setattr(hook, "_ROOT", tmp_path)
-        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
         for ep in range(1, 7):
             (d / f"DP_Pod_Ep{ep:03d}_20260901_tts.txt").write_text(
                 "DAN: There's your preflight checklist again.\n\n"
@@ -1137,7 +1139,8 @@ class TestSep4NaturalnessPass:
         import shows.hooks.dp_pod as hook
 
         monkeypatch.setattr(hook, "_ROOT", tmp_path)
-        d = tmp_path / "digests" / "dp_pod"; d.mkdir(parents=True)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
         (tmp_path / "shows").mkdir()
         (tmp_path / "shows" / "dp_pod_founders_notes.md").write_text(
             "## DAN\n- WestJet captain.\n", encoding="utf-8")
@@ -1177,7 +1180,8 @@ class TestSep4NaturalnessPass:
 
         spec = importlib.util.spec_from_file_location(
             "review_snapshot", PROJECT_ROOT / "scripts" / "review_snapshot.py")
-        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
         out = mod.build_snapshot("dp_pod", 10)
         assert "Review snapshot: dp_pod" in out
         assert "Digest heading integrity" in out

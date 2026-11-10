@@ -15,10 +15,8 @@ end-to-end fallback so a future refactor doesn't silently regress.
 
 from __future__ import annotations
 
-import pytest
 
 from engine.chapters import (
-    Chapter,
     parse_chapters,
     _first_sentence_as_title,
     _best_headline_for_segment,

@@ -7,10 +7,8 @@ in test_tts_grok.py, test_dashboard.py, test_config.py, etc.).
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 

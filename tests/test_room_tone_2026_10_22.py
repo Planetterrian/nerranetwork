@@ -26,7 +26,9 @@ SR = 48000
 
 def _write(path: Path, x: np.ndarray) -> Path:
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
         w.writeframes(np.clip(x, -32768, 32767).astype(np.int16).tobytes())
     return path
 

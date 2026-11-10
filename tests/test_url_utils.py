@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-from unittest.mock import MagicMock
 
 from engine.url_utils import (
     is_google_news_url,

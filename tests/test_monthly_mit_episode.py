@@ -12,7 +12,6 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
 
 # Make ``scripts/`` importable for the tests.
 _REPO_ROOT = Path(__file__).resolve().parent.parent

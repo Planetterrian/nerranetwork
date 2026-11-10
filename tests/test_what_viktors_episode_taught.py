@@ -175,8 +175,8 @@ class TestTheLastWordIsWaitedFor:
         assert "lastWordRescues >= 2" in body
 
     def test_the_regexes_know_the_two_questions(self):
-        line = next(l for l in SCENARIO.splitlines()
-                    if l.startswith("const LAST_WORD_RE"))
+        line = next(ln for ln in SCENARIO.splitlines()
+                    if ln.startswith("const LAST_WORD_RE"))
         pattern = re.compile(line[line.index("/") + 1:line.rindex("/i")], re.I)
         for asked in ("Do you have any parting thoughts?",
                       "is there anything you came wanting to say that we did not reach?",
@@ -323,7 +323,9 @@ def _voice(path, spans, total=60.0, sr=16000):
         i, j = int(a * sr), int(b * sr)
         x[i:j] += 0.3 * np.sin(2 * np.pi * 220 * t[i:j])
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
         w.writeframes(np.clip(x * 32767, -32768, 32767).astype("<i2").tobytes())
     return path
 

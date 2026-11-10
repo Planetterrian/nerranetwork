@@ -11,9 +11,7 @@ where copy-isolation bugs bite.
 
 from __future__ import annotations
 
-import json
 
-import pytest
 
 from engine import tesla_memory as tm
 

@@ -121,8 +121,8 @@ class TestSceneGenerationFollowsTheRender:
         src = (REPO_ROOT / "run_show.py").read_text(encoding="utf-8")
         idx = src.index('aspect="9:16", label_suffix="_short"')
         assert "count=_fresh_short_scene_count" in src[idx:idx + 160]
-        line = [l for l in src.splitlines()
-                if "_fresh_short_scene_count = " in l][0]
+        line = [ln for ln in src.splitlines()
+                if "_fresh_short_scene_count = " in ln][0]
         assert "_long_form_produced" not in line
         from engine.config import YouTubeConfig
         assert YouTubeConfig().short_scenes_per_episode >= 4

@@ -13,7 +13,7 @@ It respects:
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import date
 from typing import Any, Dict, List
 
 from .mit_context import get_mit_context_for_trading

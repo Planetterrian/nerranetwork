@@ -10,7 +10,6 @@ worth covering everywhere.
 
 from __future__ import annotations
 
-import pytest
 
 
 class TestNotifyDirectoriesPodcastIndexRetired:

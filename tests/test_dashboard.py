@@ -15,10 +15,8 @@ encoded here are:
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -606,7 +604,8 @@ class TestAppleAnalytics:
         assert ap["per_show"]["dp_pod"]["errors"] == ["overview"]
 
     def test_fetcher_noops_without_cookies(self, monkeypatch):
-        import importlib, sys as _sys
+        import importlib
+        import sys as _sys
         _sys.path.insert(0, str(ROOT / "scripts"))
         monkeypatch.delenv("APPLE_MYACINFO", raising=False)
         monkeypatch.delenv("APPLE_ITCTX", raising=False)
@@ -614,7 +613,8 @@ class TestAppleAnalytics:
         assert mod.main(["--dry-run"]) == 0  # clean no-op, never a red nightly
 
     def test_show_id_discovery_reads_yaml(self, monkeypatch, tmp_path):
-        import importlib, sys as _sys
+        import importlib
+        import sys as _sys
         _sys.path.insert(0, str(ROOT / "scripts"))
         mod = importlib.import_module("fetch_apple_stats")
         shows = tmp_path / "shows"

@@ -43,7 +43,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    has_public_profile, mira_signature_text, parse_json_lenient, profile_links_in,
+    has_public_profile, mira_signature_text, profile_links_in,
     public_profiles, sb_select, sb_update,
 )
 from pipelines.voices.shows import get_show  # noqa: E402

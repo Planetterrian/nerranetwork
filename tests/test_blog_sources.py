@@ -72,7 +72,8 @@ class TestSourceCardsDedupeByUrl:
 
         class _T:
             def render(self, **kw):
-                captured.update(kw); return "<html></html>"
+                captured.update(kw)
+                return "<html></html>"
 
         class _Env:
             def get_template(self, name): return _T()

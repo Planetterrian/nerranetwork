@@ -14,10 +14,9 @@ All network calls are mocked — no real HTTP requests are made.
 
 import datetime
 import sys
-import time
 from threading import Lock
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 
