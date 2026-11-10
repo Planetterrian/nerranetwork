@@ -19,8 +19,8 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-from datetime import datetime, date
-from pathlib import Path
+from datetime import date
+from typing import Any, Dict
 
 from .config import load_config, TradingConfig
 from .mit_context import get_mit_context_for_trading

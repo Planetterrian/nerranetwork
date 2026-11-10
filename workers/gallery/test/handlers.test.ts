@@ -362,8 +362,8 @@ describe("POST /api/subscribe", () => {
 /** Lines whose JSON parses to event === "subscribe_ok". */
 function subscribeOkLines(spy: ReturnType<typeof vi.spyOn>): string[] {
   return spy.mock.calls
-    .map((args) => (typeof args[0] === "string" ? args[0] : ""))
-    .filter((line) => {
+    .map((args: any[]) => (typeof args[0] === "string" ? args[0] : ""))
+    .filter((line: string) => {
       try {
         return (JSON.parse(line) as { event?: string }).event === "subscribe_ok";
       } catch {

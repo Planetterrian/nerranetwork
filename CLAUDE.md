@@ -176,8 +176,8 @@ the SAME url with a verbatim quote (`source_excerpt_for_claim`;
 ## Project Overview
 
 Automated daily podcast generation system running 31 shows via a unified
-`run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
-(deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
+`run_show.py` runner + per-show YAML configs (the four legacy show scripts
+are deleted). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 
 | Show | Legacy Script | YAML Config | Schedule | X Account | TTS |
@@ -196,7 +196,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | The DP Pod | — | `shows/dp_pod.yaml` | Monday | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
-| The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
+| The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest audio from the browser room + Mira narration (Grok voice `ara`) |
 | Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
 | AI Chips & Data Centres Daily | — | `shows/ai_chips.yaml` | Daily | — (X source only) | Grok TTS (custom) |
 | MAG 7 Daily | — | `shows/mag7.yaml` | Daily | — (X source only) | Grok TTS (custom) |
@@ -222,9 +222,6 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 > podcast-only copy of the digest, so no host-instruction text reaches the
 > blog / RSS. See landmine #19.
 
-**Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
-is a standalone X-posting script, not a podcast show.
-
 ## Architecture
 
 ### Pipeline (per show, per run)
@@ -239,66 +236,15 @@ is a standalone X-posting script, not a podcast show.
 ### Key Directories
 
 ```
-nerranetwork/
-├── run_show.py                    # Unified show runner (~716 lines)
-├── shows/                         # Per-show YAML configs
-│   ├── tesla.yaml
-│   ├── omni_view.yaml
-│   ├── fascinating_frontiers.yaml
-│   ├── planetterrian.yaml
-│   ├── env_intel.yaml
-│   ├── models_agents.yaml
-│   ├── models_agents_beginners.yaml
-│   ├── finansy_prosto.yaml
-│   ├── modern_investing.yaml
-│   └── privet_russian.yaml
-├── digests/                       # Legacy show scripts (deprecated) + ALL generated output
-│   ├── tesla_shorts_time.py       # DEPRECATED — use run_show.py tesla
-│   ├── omni_view.py               # DEPRECATED — use run_show.py omni_view
-│   ├── fascinating_frontiers.py   # DEPRECATED — use run_show.py fascinating_frontiers
-│   ├── planetterrian.py           # DEPRECATED — use run_show.py planetterrian
-│   ├── science_that_changes.py    # ~83 lines — standalone X posting script
-│   ├── xai_grok.py                # Shared xAI/Grok API helper (~111 lines)
-│   ├── tesla_shorts_time/         # TST output + summaries_tesla.json
-│   ├── omni_view/                 # OV output + summaries_omni.json
-│   ├── fascinating_frontiers/     # FF output + summaries_space.json
-│   ├── planetterrian/             # PT output + summaries_planet.json
-│   ├── env_intel/                 # EI output + summaries_env_intel.json
-│   ├── models_agents/             # M&A output + summaries_models_agents.json
-│   ├── models_agents_beginners/   # MAB output
-│   ├── finansy_prosto/            # FP output (Russian)
-│   ├── modern_investing/          # MIT output
-│   ├── privet_russian/            # PR output (bilingual Russian)
-│   └── *.mp3, *.md, *.txt        # Legacy TST flat output (historical)
-├── engine/                        # Shared modules
-│   ├── __init__.py
-│   ├── utils.py                   # Env helpers, text processing, similarity, dedup
-│   ├── tts.py                     # Multi-provider TTS (Grok primary; legacy ElevenLabs path retained) — auth, chunking, synthesis
-│   ├── audio.py                   # mix_with_music (3 modes), normalize_voice, duration helpers
-│   ├── publisher.py               # RSS feeds, X posting, GitHub Pages summaries, digest formatting
-│   ├── content_tracker.py         # Cross-episode dedup (per-show section patterns)
-│   ├── fetcher.py                 # RSS article fetching
-│   ├── generator.py               # LLM digest/podcast script generation
-│   ├── tracking.py                # Credit/usage tracking
-│   ├── config.py                  # YAML config loader
-│   ├── storage.py                 # Cloudflare R2 storage helpers
-│   ├── newsletter.py              # Email newsletter helpers
-│   └── validation.py              # Config validation
-├── assets/
-│   ├── pronunciation.py           # Shared TTS pronunciation fixes
-│   └── music/                     # Centralized podcast music (intro/outro)
-│       ├── README.md              # Music generation guide + AI prompts
-│       ├── tesla_shorts_time.mp3  # TST + EI + M&A theme
-│       ├── fascinatingfrontiers.mp3     # FF intro jingle
-│       ├── fascinatingfrontiers_bg.mp3  # FF background/outro
-│       ├── LubechangeOilers.mp3         # OV theme
-│       └── oilers-pride.mp3             # PT theme
-├── tests/                         # pytest suite
-├── .github/workflows/
-│   └── run-show.yml               # Unified daily cron workflow (all shows)
-├── *.rss                          # Podcast RSS feeds (consumed by Apple/Spotify)
-├── *.html                         # GitHub Pages web players + summaries pages
-└── docs/                          # Audit docs, storage plan
+run_show.py        # Unified show runner (~11k lines)
+shows/             # One YAML per show + _defaults.yaml; prompts/, topic_queues/, hooks/
+engine/            # Shared modules (generator, tts, audio, publisher, claims, titles, funnel, brand ...)
+digests/<show>/    # ALL generated output per show (digests/*.mp3 flat files are historical)
+pipelines/voices/  # Nerra Voices / The Age of AI interview pipeline (NOT run_show)
+workers/           # Cloudflare Workers: gallery, voices, scheduler
+scripts/           # Operator + CI tools;  tests/  pytest suite (+ vitest under workers/)
+assets/music/      # Intro/outro themes;  assets/pronunciation.py  shared TTS fixes
+*.rss, *.html      # Feeds and GitHub Pages site (served from repo root)
 ```
 
 ### Script Relationships
@@ -548,14 +494,14 @@ today's work, not just explain yesterday's):
   "ElevenLabs" note was stale per landmine #17). X posting disabled.
 - **FP** (Финансы Просто) runs via `run_show.py` +
   `shows/finansy_prosto.yaml`; Russian-language financial literacy podcast
-  for women in Canada (even days only). Uses **Grok TTS** (Olya voice
+  for women in Canada (Mondays). Uses **Grok TTS** (Olya voice
   `0b875ae2`, `language_code: ru`). All content generated in Russian. X posting disabled.
 - **MIT** (Modern Investing Techniques) runs via `run_show.py` +
   `shows/modern_investing.yaml`; daily investing podcast focused on Canadian
-  and US markets. Weekdays only. X posting disabled.
+  and US markets. Daily. X posting disabled.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
-  for English speakers. Even days only. Uses **Grok TTS** (custom Olya voice
+  for English speakers. Mondays. Uses **Grok TTS** (custom Olya voice
   `0b875ae2`, `language_code: ru` — `shows/privet_russian.yaml`). X posting
   disabled.
 - **FPD** (First Principles Daily) runs via `run_show.py` +
@@ -570,7 +516,7 @@ today's work, not just explain yesterday's):
   (inherits Grok `kdif6sqjcyiq`). Distribution OFF at launch (no newsletter,
   no X, no YouTube). Queue: `shows/topic_queues/first_principles.yaml`.
 - **UC** (Unintended Consequences) runs via `run_show.py` +
-  `shows/unintended_consequences.yaml`; a weekday **narrative** show
+  `shows/unintended_consequences.yaml`; a daily **narrative** show
   (`narrative_mode: true`, topic-queue-driven — no news fetch). Patrick
   voice. X posting on via the @planetterrian account.
 - **SpaceX** (SpaceX Daily) runs via `run_show.py` + `shows/spacex.yaml`;
@@ -743,7 +689,7 @@ Use `python scripts/scaffold_show.py` to generate YAML, prompts, output dirs, an
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (legacy/rollback only — no show uses ElevenLabs in production)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: **All 13 shows are on Grok TTS** as of the May 2026 full-network migration. The 10 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
+- Voice IDs: **every show is on Grok TTS** (May 2026 migration). Patrick-voiced English shows share the custom voice `kdif6sqjcyiq`; Mira shows use `ara`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -1109,9 +1055,6 @@ pytest tests/test_audio_commands.py  # ffmpeg command structure tests
 pytest tests/test_integration.py   # Pipeline integration tests
 ```
 
-Tests use AST extraction + `exec()` to load functions from show scripts because
-`tesla_shorts_time.py` has a `SystemExit` guard preventing import.
-
 **Phase 1 hardening guards (May 2026):** the network-evolution roadmap's first
 phase added safety nets that the `run-show.yml` smoke step now runs on every
 episode:
@@ -1131,8 +1074,7 @@ episode:
 
 ### Code Style
 
-- No linter configured; scripts are large single-file programs
-- Functions are defined inline (not imported), which is why we're extracting
+- `ruff` runs in Run Tests with the rule set pinned in `pyproject.toml`
 - `logging` for all output; `sys.stdout` handler
 - `pathlib.Path` for all file operations
 - `tenacity` for retry logic on API calls
@@ -1221,8 +1163,8 @@ UNION, never a replace.** **A signup form that sends no `source` makes
 `capture_source_site` global, never a literal. Engagement events are a
 SEPARATE report — add the event to the constant when you add the `gtag`
 call. **`api/member_metrics.json` counts paid members and carries no PII.**
-**The Worker's vitest suite is not run by any workflow** — run `npx vitest`
-by hand when you change `workers/`. [history](docs/claude_md_history/2026_09_21_capture_end_funnel.md)
+**The Workers' vitest suites run in `workers-test.yml`** on any change
+under `workers/gallery` or `workers/voices`. [history](docs/claude_md_history/2026_09_21_capture_end_funnel.md)
 
 **Sep 21 2026 — the promo rotation** (guards `tests/test_rotation_pass_2026_09_21.py`;
 ⚠️ AUDIO). **A surface's `spoken` line is PROMPT TEXT, not deterministic

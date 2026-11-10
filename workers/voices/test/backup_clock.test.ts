@@ -136,8 +136,17 @@ describe("one tick, two clocks", () => {
     vi.stubGlobal("fetch", sb.fn);
     await runTick(env(), new Date("2026-10-26T12:31:00Z"), "supabase");
     const events = sb.calls.filter((c) => c.url.endsWith("/dispatches")).map((c) => c.body.event_type);
-    expect(events).toContain("fire-tick");      // :30 dispatches the fire tick unconditionally
-    expect(events).toContain("producer-tick");  // and the inbox (no Gmail gate configured: fail open)
+    expect(events).toContain("producer-tick");  // :30 runs the inbox (no Gmail gate configured: fail open)
+  });
+
+  it("the hourly fire-tick catch-all reads the slot, not the arrival minute", async () => {
+    // Nov 3 2026: the unconditional fire tick is hourly (top of the hour),
+    // no longer at :30. A 13:01 arrival claims the 13:00 slot.
+    const sb = fakeSupabase();
+    vi.stubGlobal("fetch", sb.fn);
+    await runTick(env(), new Date("2026-10-26T13:01:00Z"), "supabase");
+    const events = sb.calls.filter((c) => c.url.endsWith("/dispatches")).map((c) => c.body.event_type);
+    expect(events).toContain("fire-tick");
   });
 
   it("a tick runs anyway when Supabase cannot be reached to claim it", async () => {
@@ -154,7 +163,7 @@ describe("POST /voices/cron-tick", () => {
     const sb = fakeSupabase();
     vi.stubGlobal("fetch", sb.fn);
     for (const headers of [{}, { Authorization: "Bearer wrong" }, { Authorization: `Bearer ${ADMIN}` },
-                           { Authorization: SECRET }]) {
+                           { Authorization: SECRET }] as Record<string, string>[]) {
       const resp = await worker.fetch(cronTick(headers), env());
       expect(resp.status).toBe(401);
     }

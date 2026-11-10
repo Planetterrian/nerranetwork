@@ -60,7 +60,6 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Status | Checked | Note |
 |---|---|---|---|
-| Worker vitest: `backup_clock.test.ts` "the half-hour jobs read the slot" fails on main | open | 2026-11-04 | Expects `fire-tick` at :31; the Nov 3 change made the fire-tick catch-all hourly. Pre-existing, unrelated to the handoff; no workflow runs this suite. |
 | `api/voices_metrics.json` on main | expected tonight | 2026-11-04 | Written by the nightly. |
 | tzdata on runners and Cloudflare | watch | 2026-11-04 | Vancouver times are right only where the runtime has tzdata 2026c (B.C. permanent UTC−7). The test `test_vancouver_is_not_called_pacific_after_bc_left_dst` skips, rather than fails, on older tzdata; if it starts skipping in CI, emails are an hour off. |
 
@@ -68,6 +67,7 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Closed | Evidence |
 |---|---|---|
+| Worker vitest: `backup_clock.test.ts` "the half-hour jobs read the slot" failed on main | 2026-11-10 | The test now checks the inbox at :30 and the fire tick at the top of the hour; the voices lockfile is regenerated (`npm ci` refused it); new `workers-test.yml` runs both Workers' vitest and `tsc` on every Worker change (project audit PR). |
 | Mira's Nov 3 brief (beat line + spoken self-description) rehearsed | 2026-11-04 | Fixture roddy: rooms 894eacef (old) / 115ba095 (new), then candidate room 036ea51e; Patrick reports PASS; text-mode A/B on grok-voice-3.0, 6 sessions, no regression. |
 | Hold regex: "I'll hold the silence better" put the room on hold | 2026-11-04 | Commit 0cee8259, deployed 15:25 UTC; guard `test_only_the_waiting_senses_are_a_hold`. |
 | Apple: the 13 launch-cohort shows are live | 2026-11-04 | iTunes Search API (handoff); IDs now `apple_show_id` in each show YAML, Nerra Daily's 6805616718 in `shows/network_meta.yaml`. |

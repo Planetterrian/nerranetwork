@@ -1,0 +1,62 @@
+name: Workers tests (vitest)
+
+# Nov 10 2026: the Cloudflare Workers' vitest suites were run by no
+# workflow ("run `npx vitest` by hand", CLAUDE.md), so a red test on main
+# (voices backup_clock, Nov 3) sat unnoticed for a week and the voices
+# lockfile drifted until `npm ci` refused it. This runs both suites and the
+# type check whenever a Worker changes. It is not a required check, so the
+# paths filter cannot leave a pull request pending.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/gallery/**'
+      - 'workers/voices/**'
+      - '.github/workflows/workers-test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'workers/gallery/**'
+      - 'workers/voices/**'
+      - '.github/workflows/workers-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workers-test-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  vitest:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [gallery, voices]
+    defaults:
+      run:
+        working-directory: workers/${{ matrix.worker }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: workers/${{ matrix.worker }}/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run vitest
+        run: npx vitest run
