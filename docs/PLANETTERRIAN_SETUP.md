@@ -55,7 +55,7 @@ If you want to run Planetterrian Daily automatically via GitHub Actions, add the
 ## Running the Script
 
 ```bash
-pip install -r requirements_planetterrian.txt
+pip install -r requirements.txt
 cd digests
 python3 planetterrian.py
 ```

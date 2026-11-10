@@ -486,15 +486,6 @@ jobs:
           path: ~/.cache/huggingface
           key: whisper-faster-base-v1
 
-      - name: Install show-specific Python requirements
-        run: |
-          if [ "${{ matrix.show }}" = "fascinating_frontiers" ] && [ -f requirements_fascinating_frontiers.txt ]; then
-            pip install -r requirements_fascinating_frontiers.txt
-          fi
-          if [ "${{ matrix.show }}" = "planetterrian" ] && [ -f requirements_planetterrian.txt ]; then
-            pip install -r requirements_planetterrian.txt
-          fi
-
       - name: Run smoke tests
         # Code guards only. A test that scans every committed digest of
         # ANOTHER show (the book-release corpus checks) does not belong

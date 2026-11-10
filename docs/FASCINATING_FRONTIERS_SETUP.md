@@ -57,7 +57,7 @@ Optional (fallback only):
 ## Running the Script
 
 ```bash
-pip install -r requirements_fascinating_frontiers.txt
+pip install -r requirements.txt
 cd digests
 python3 fascinating_frontiers.py
 ```
