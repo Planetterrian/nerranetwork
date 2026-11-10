@@ -29,9 +29,9 @@ exactly as today.
 1. Create a **fine-grained PAT**: repo `Planetterrian/nerranetwork`,
    permission **Actions: Read and write** only. 1-year expiry; calendar
    reminder to rotate.
-2. `cd workers/scheduler`
-3. `wrangler secret put GITHUB_DISPATCH_TOKEN` (paste the PAT)
-4. `wrangler deploy`
+2. `cd workers/scheduler && npm ci` (wrangler is pinned in `package.json`, like the other Workers)
+3. `npx wrangler secret put GITHUB_DISPATCH_TOKEN` (paste the PAT)
+4. `npx wrangler deploy`
 5. Verify next slot in the Cloudflare dashboard (Workers → nerra-scheduler
    → Logs) and confirm the corresponding workflow run starts within ~1 min
    of its Eastern slot (`GET /` shows `next_slot.et`).
