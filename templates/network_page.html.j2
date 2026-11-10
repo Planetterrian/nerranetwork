@@ -499,6 +499,17 @@
     biggest audiences keep a band of their own every day, beside the lead the
     subject rotation picks (Oct 18 2026). A flagship story runs here and in
     the Latest list, never also as the lead or a top story. -#}
+{#- The homepage's one email ask (Oct 9 2026 "Homepage Soft-only"): Soft
+    Personal interest, never a per-show newsletter form and never a charge.
+    Rendered whatever the stories are, with the capture source engine.funnel
+    owns. Nov 10 2026 (growth review): moved up from below Top stories to
+    straight after the lead story and its Latest rail. On a 390 px phone it
+    sat on screen 12 of 38 (9,786 px); the lead stays first on a phone (the
+    Nov 1 operator decision). -#}
+<div class="lt-soft container">
+{{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
+</div>
+
 {% if p.flagships %}
 <section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
     <div class="lt-block-head">
@@ -531,6 +542,7 @@
             <p class="lt-flag-launch" data-expires="{{ l.net_iso }}"><b>Next launch</b> {{ l.mission | e }}{% if l.rocket %} · {{ l.rocket | e }}{% endif %} · no earlier than <time datetime="{{ l.net_iso }}">{{ l.net }}</time></p>
             {% endif %}
             {% if f.links %}<p class="lt-flag-links">{% for ln in f.links %}<a href="{{ path_prefix }}{{ ln.url }}">{{ ln.label }}</a>{% endfor %}</p>{% endif %}
+            {% if f.follow %}<p class="lt-flag-follow"><span>Follow {{ f.show_name }}</span>{% for ln in f.follow %}<a href="{{ ln.url }}" target="_blank" rel="noopener">{{ ln.label }}</a>{% endfor %}</p>{% endif %}
             <div class="lt-lead-audio">
                 {% if f.audio_url %}<audio controls preload="none" src="{{ f.audio_url }}" aria-label="Play {{ f.show_name }} episode {{ f.episode_num }}"></audio>{% endif %}
                 {% if f.post_url %}<a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ f.post_url }}">Read the episode</a>{% endif %}
@@ -646,13 +658,12 @@
 
 {% endif %}{#- p.lead -#}
 
-{#- The homepage's one email ask (Oct 9 2026 "Homepage Soft-only"): Soft
-    Personal interest, never a per-show newsletter form and never a charge.
-    Rendered whatever the stories are, with the capture source engine.funnel
-    owns. -#}
+{#- No stories yet: the email ask still renders (it is never conditional on the news). -#}
+{% if not p.lead %}
 <div class="lt-soft container">
 {{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
 </div>
+{% endif %}
 
 {% if p.lead %}
 {#- Today: Nerra Daily (the whole network in one episode, hosted by Mira) and
