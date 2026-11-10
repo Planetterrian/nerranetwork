@@ -120,6 +120,39 @@ def _markdown_to_rss_html(md: str) -> str:
     return "\n\n".join(paragraphs)
 
 
+#: Shows whose listeners hear the flagship pitch for My Nerra: the two
+#: flagships plus the reader's own tickers (the "your stocks" feature).
+PERSONAL_FLAGSHIP_PITCH = {
+    "spacex": "SpaceX Daily",
+    "tesla": "Tesla Shorts Time",
+}
+
+
+def personal_ask_markdown(show_slug: str, url: str, trial_days: int = 0) -> str:
+    """The show-notes line that offers My Nerra (Nerra Personal).
+
+    The flagships get the pitch that matches what their listeners follow:
+    the show, the other shows they follow and their own tickers in one
+    private episode. Every other English show gets the general line. The
+    price is the join page's; the trial is named only when the pages name
+    it (``STRIPE_TRIAL_DAYS``, the same variable the site build reads)."""
+    show = PERSONAL_FLAGSHIP_PITCH.get(show_slug or "")
+    if trial_days and trial_days > 0:
+        offer = (f"[Try My Nerra free for {int(trial_days)} days]({url}), "
+                 "then $4.99 a month.")
+    else:
+        offer = f"[Get My Nerra]({url}) from $4.99 a month."
+    if show:
+        return (
+            f"🎧 Your morning in one episode: {show}, the other shows you "
+            f"follow and your own stocks, read to you by name. {offer}"
+        )
+    return (
+        "🎧 Hear this show with the others you follow in one private morning "
+        f"episode, read to you by name. {offer}"
+    )
+
+
 def build_show_notes_footer(
     base_url: str,
     show_slug: str,
@@ -128,6 +161,8 @@ def build_show_notes_footer(
     has_blog: bool,
     blog_path_prefix: str = "blog",
     channel: str = "en",
+    personal_ask: bool = True,
+    personal_trial_days: int = 0,
 ) -> str:
     """Build the website + per-episode blog-post footer appended to an RSS
     episode description, so listeners on Apple / Spotify / Amazon / YouTube
@@ -184,10 +219,32 @@ def build_show_notes_footer(
             # One plain ask for the free account/newsletter, the network's
             # capture surface (12 subscribers against ~12,000 monthly
             # downloads on Oct 17 2026; no feed had ever asked).
-            parts.append(
-                "📬 Get the sources and notes by email, free: "
-                f"[join the newsletter]({_tagged(site + '/join.html', 'join')})"
-            )
+            #
+            # Nov 10 2026 (growth review): this line said "join the
+            # newsletter" but linked join.html, which is the My Nerra page.
+            # The free email now goes to the Nerra Daily signup itself, and
+            # My Nerra gets a line of its own that says what it is: listeners
+            # in podcast apps are 16,607 downloads a month, and they heard
+            # about Personal only in the spoken outro rotation (1 in 11).
+            # English feeds only: the Russian feeds keep their line as it
+            # was (they send their own email and Personal is English). Never
+            # on a members-only show, whose listeners are members already.
+            if channel != "en":
+                parts.append(
+                    "📬 Get the sources and notes by email, free: "
+                    f"[join the newsletter]({_tagged(site + '/join.html', 'join')})"
+                )
+            else:
+                if personal_ask:
+                    parts.append(personal_ask_markdown(
+                        show_slug, _tagged(site + "/join.html", "personal"),
+                        trial_days=personal_trial_days))
+                parts.append(
+                    "📬 The free Nerra Daily email, every morning at 7 AM "
+                    "Eastern: "
+                    f"[sign up]({_tagged(site + '/nerra-daily.html', 'email')}"
+                    "#show-nerra_daily-hero-newsletter)"
+                )
         domain = site.split("//", 1)[-1]
         parts.append(
             "🌐 Part of the Nerra Network — explore every show at "

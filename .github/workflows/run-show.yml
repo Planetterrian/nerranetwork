@@ -745,6 +745,9 @@ jobs:
           # unknown, and the members episode is produced anyway.
           PERSONAL_DEMAND_TOKEN: ${{ secrets.PERSONAL_DEMAND_TOKEN }}
           PERSONAL_R2_BUCKET: ${{ vars.PERSONAL_R2_BUCKET || 'nerra-personal' }}
+          # Nov 10 2026: the show notes' My Nerra line states the trial only
+          # when the pages do (same variable, same default).
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
           # YouTube OAuth — refresh tokens are minted once via
           # scripts/youtube_oauth_bootstrap.py, then stored as secrets.
           # Missing values cause the YouTube stage to skip cleanly.

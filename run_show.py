@@ -239,6 +239,23 @@ _AI_DISCLOSURE_RSS_AI_HOST = (
 )
 
 
+def _personal_ask_ok(config) -> bool:
+    """True when the show notes may offer My Nerra: never on a members-only
+    show (its listeners are members already). Never raises."""
+    try:
+        from engine.access import access_mode
+        return access_mode(config) != "members_only"
+    except Exception:  # noqa: BLE001 — an unreadable setting asks nothing
+        return False
+
+
+def _env_int_or_zero(name: str) -> int:
+    try:
+        return max(0, int(os.environ.get(name, "") or 0))
+    except ValueError:
+        return 0
+
+
 def _is_ai_host(config) -> bool:
     return str(getattr(config.publishing, "host_kind", "human") or "human").lower() == "ai"
 
@@ -6168,6 +6185,8 @@ def _make_feed_writer(
             episode_num,
             has_blog=_has_blog,
             channel="ru" if args.show in _RUSSIAN_SHOWS else "en",
+            personal_ask=_personal_ask_ok(config),
+            personal_trial_days=_env_int_or_zero("STRIPE_TRIAL_DAYS"),
         )
         if _notes_footer:
             episode_desc += "\n\n" + _notes_footer
