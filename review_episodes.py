@@ -45,6 +45,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 logging.basicConfig(
     level=logging.INFO,
@@ -584,6 +585,19 @@ def _read_skip_marker(output_dir: str, target_date: datetime.date) -> Optional[d
 def _members_episode_exists(output_dir: str, target_date: datetime.date) -> bool:
     members = PROJECT_ROOT / output_dir / "members"
     return any(members.glob(f"*{target_date.strftime('%Y%m%d')}.md"))
+
+
+# Nov 10 2026: the schedule runs on Eastern time (engine.release_schedule),
+# but the default review day was the runner's UTC date. A cron that GitHub
+# delivered after 00:00 UTC (the Nov 9 run started 00:13 UTC Nov 10) audited
+# a day whose shows had not run yet and paged "Missed episode" on nine of them.
+NETWORK_TZ = ZoneInfo("America/New_York")
+
+
+def network_today(now: Optional[datetime.datetime] = None) -> datetime.date:
+    """The network's calendar day: the Eastern date, never the runner's UTC one."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    return now.astimezone(NETWORK_TZ).date()
 
 
 def check_missed_episodes(
@@ -1632,7 +1646,7 @@ def write_review_credit_file(
         logger.warning("Could not import engine.tracking for review cost: %s", exc)
         return None
     out_dir = Path(out_dir) if out_dir else REVIEW_COST_DIR
-    day = run_day or datetime.date.today()
+    day = run_day or network_today()
     filename = f"credit_usage_{day.isoformat()}_review.json"
     path = out_dir / filename
 
@@ -3218,8 +3232,8 @@ def main():
     parser.add_argument(
         "--date",
         type=lambda s: datetime.date.fromisoformat(s),
-        default=datetime.date.today(),
-        help="Date to review (YYYY-MM-DD, default: today)",
+        default=network_today(),
+        help="Date to review (YYYY-MM-DD, default: today in Eastern time)",
     )
     parser.add_argument(
         "--create-issues",

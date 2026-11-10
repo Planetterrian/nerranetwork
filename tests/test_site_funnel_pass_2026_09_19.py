@@ -191,7 +191,7 @@ class TestFunnelOwnsEveryPublishedCampaign:
     # Outbound links to Apple/Spotify are exempt: those parameters are read by
     # the DESTINATION's analytics, never by ours, so they carry no funnel
     # campaign and cannot affect attribution coverage.
-    _OUTBOUND_ONLY = {"generate_html.py", "make_apple_qr.py"}
+    _OUTBOUND_ONLY = {"generate_html.py"}
 
     @staticmethod
     def _docstring_lines(source: str) -> set:
