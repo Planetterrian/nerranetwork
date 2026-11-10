@@ -766,7 +766,7 @@
             {% if episode_ask and episode_ask.paragraphs %}
             <aside class="episode-ask" style="margin:var(--sp-6) 0;padding:var(--sp-5);border-left:3px solid var(--show-color);background:color-mix(in srgb, var(--show-color), transparent 94%);font-family:var(--font-ui);font-size:0.98rem;line-height:1.55;color:var(--nn-text);">
                 {% for p in episode_ask.paragraphs %}
-                <p style="margin:0{% if not loop.last %} 0 0.85rem{% endif %};">{{ p }}</p>
+                <p style="margin:0{% if not loop.last %} 0 0.85rem{% endif %};">{{ p }}{% if loop.first and episode_ask.rate_url %} <a href="{{ episode_ask.rate_url }}" target="_blank" rel="noopener" style="color:var(--show-color-text, var(--show-color));font-weight:600;">{{ episode_ask.rate_label }}</a>{% endif %}</p>
                 {% endfor %}
             </aside>
             {% endif %}

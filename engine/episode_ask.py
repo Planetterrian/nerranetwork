@@ -30,6 +30,25 @@ SHOW_EPISODE_ASKS: dict[str, dict[str, Any]] = {
                 "shows, most of them daily."
             ),
         ],
+        # Nov 10 2026 (growth review): Apple showed 3.3 stars from 3
+        # ratings and 0 reviews on the network's largest show, and neither
+        # paragraph above linked anywhere. For the two weeks around Starship
+        # Flight 15 (Ep158 = Nov 11 to Ep171 = Nov 24) the notes OPEN the ask
+        # with one Apple-specific line and a link to the show page. It is an
+        # episode range so a regenerated older or later post stays
+        # byte-identical, and it states no rating count (a count here is a
+        # claim nothing recomputes; Oct 17 2026).
+        "push": {
+            "episodes": (158, 171),
+            "paragraph": (
+                "Apple Podcasts shows new listeners the stars from only a "
+                "handful of SpaceX Daily ratings so far, so each one counts. "
+                "If the show is worth your morning, open it in Apple "
+                "Podcasts, scroll to Ratings & Reviews and tap a star."
+            ),
+            "rate_label": "Rate SpaceX Daily on Apple Podcasts",
+            "rate_url": "https://podcasts.apple.com/podcast/id1896920957",
+        },
     },
 }
 
@@ -90,7 +109,15 @@ def episode_ask_for(show_slug: str, episode_num: int) -> Optional[dict[str, Any]
     paragraphs = [p.strip() for p in (cfg.get("paragraphs") or []) if str(p).strip()]
     if not paragraphs:
         return None
-    return {"paragraphs": list(paragraphs)}
+    out: dict[str, Any] = {"paragraphs": list(paragraphs)}
+    push = cfg.get("push") or {}
+    lo, hi = push.get("episodes") or (0, -1)
+    if push.get("paragraph") and int(lo) <= ep <= int(hi):
+        out["paragraphs"].insert(0, str(push["paragraph"]).strip())
+        if push.get("rate_url"):
+            out["rate_url"] = str(push["rate_url"])
+            out["rate_label"] = str(push.get("rate_label") or "Rate the show")
+    return out
 
 
 def episode_ask_markdown(show_slug: str, episode_num: int) -> str:
@@ -98,4 +125,7 @@ def episode_ask_markdown(show_slug: str, episode_num: int) -> str:
     ask = episode_ask_for(show_slug, episode_num)
     if not ask:
         return ""
-    return "\n\n".join(ask["paragraphs"])
+    paragraphs = list(ask["paragraphs"])
+    if ask.get("rate_url"):
+        paragraphs[0] = f"{paragraphs[0]} [{ask['rate_label']}]({ask['rate_url']})"
+    return "\n\n".join(paragraphs)

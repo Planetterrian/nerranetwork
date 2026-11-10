@@ -7462,3 +7462,32 @@ experiments:
       youtube.x_clip_without_youtube_asks (dataclass off, _defaults.yaml on).
       Adds one 35 s vertical render to the video job. Guards
       tests/test_long_form_cards_2026_11_08.py::TestWiring.
+
+  - id: spacex-focus-rating-2026-11-10
+    title: "SpaceX Daily leads Top News on a SpaceX program, and asks for Apple ratings for two weeks"
+    area: growth
+    shipped: 2026-11-10
+    readout: 2026-11-25
+    status: reading
+    baseline: >
+      SpaceX Daily: 5,051 downloads in 30 days (30% of the network), flat at
+      about 1,190 a week; Apple 3.3 stars from 3 ratings, 0 reviews. Ep155 and
+      Ep156 led Top News on NASA stories; top_news_on_beat replayed on
+      Ep098-157 fires on those two only.
+    target: >
+      top_news_lead_on_beat 1 on every SpaceX episode Nov 11-24, and the Apple
+      rating count above 3.
+    criteria: >
+      HIT when top_news_lead_on_beat reads 1 on at least 13 of 14 episodes and
+      the Apple rating count rises above 3 by Nov 25; MISS when the count is
+      still 3 with the push shipped on every episode Ep158-171.
+    readout_plan: >
+      digests/spacex/metrics_ep*.json (top_news_lead_on_beat,
+      top_news_ai_thread_items, top_news_off_beat_items, digest_lint_fired);
+      the Apple rating count from the nightly Apple ratings instrument.
+    notes: >
+      engine.digest_lint.lint_top_news_on_beat (SpaceX opts in; only a
+      non-SpaceX lead fires, the AI-thread and off-beat counts are measured);
+      engine.episode_ask SpaceX push paragraph with a link to the Apple show
+      page on Ep158-171 (show notes and blog). The spoken closing is
+      unchanged. Guards tests/test_spacex_focus_and_rating_2026_11_10.py.
