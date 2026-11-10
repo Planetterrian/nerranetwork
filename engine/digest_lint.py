@@ -1653,6 +1653,79 @@ def lint_item_figures_sourced(digest: str, context: Optional[dict] = None) -> Op
 # Registry + runner
 # ---------------------------------------------------------------------------
 
+# --- top_news_on_beat (Nov 10 2026, the SpaceX growth review) --------------
+# SpaceX Daily is 30% of the network's downloads and its Apple rating sat at
+# 3.3. Its digest prompt already rejects non-SpaceX space stories and routes
+# the AI thread into AI & Compute, and the committed digests show both rules
+# lost in Top News: Ep155 and Ep156 LED on NASA stories (a Blue Origin lander,
+# a NASA spacesuit) and Ep157 ran a Cursor benchmark as Top News #3 with no
+# SpaceX tie. More prompt text would be a fourth copy of the same rule, so
+# this measures it on the text that ships and rides the one structural regen.
+
+#: A Top News item is ON the beat when it names one of these (word-bounded,
+#: case-insensitive). The programs, not the market: SPCX alone is not a story.
+SPACEX_PROGRAM_TERMS = (
+    "spacex", "starship", "super heavy", "starlink", "starshield", "falcon",
+    "dragon", "raptor", "starbase", "mechazilla", "gigabay", "elon musk",
+    "musk", "spcx", "transporter", "bandwagon",
+)
+#: The AI thread the prompt routes into ``### AI & Compute``.
+AI_THREAD_TERMS = ("xai", "grok", "colossus", "cursor", "anysphere")
+
+#: A Crew-N flight is a Dragon flight (Ep111 led on the Crew-14 crew).
+_SPACEX_RE = re.compile(r"\b(?:" + "|".join(re.escape(t) for t in SPACEX_PROGRAM_TERMS)
+                        + r"|crew-\d+)\b", re.I)
+_AI_THREAD_RE = re.compile(r"\b(?:" + "|".join(re.escape(t) for t in AI_THREAD_TERMS) + r")\b", re.I)
+
+
+def top_news_beat(digest: str) -> Optional[Dict[str, object]]:
+    """``{"lead_on_beat": bool, "ai_items": [titles], "off_beat": [titles]}``
+    for the digest's ``### Top News``, else None (no such section).
+
+    An AI-thread item is one that names xAI, Grok, Colossus or Cursor and no
+    SpaceX program; an off-beat item names neither. The lead is item 1."""
+    body = section_body(digest, "Top News")
+    if body is None:
+        return None
+    its = items(body)
+    if not its:
+        return None
+    ai, off = [], []
+    for it in its:
+        text = _prose(it)
+        if _SPACEX_RE.search(text):
+            continue
+        title = _item_title(it.splitlines()[0]) or it.splitlines()[0]
+        (ai if _AI_THREAD_RE.search(text) else off).append(title)
+    lead_text = _prose(its[0])
+    return {"lead_on_beat": bool(_SPACEX_RE.search(lead_text)),
+            "ai_items": ai, "off_beat": off, "items": len(its)}
+
+
+def lint_top_news_on_beat(digest: str) -> Optional[LintFinding]:
+    b = top_news_beat(digest)
+    if b is None:
+        return None
+    metrics = {
+        "top_news_lead_on_beat": 1 if b["lead_on_beat"] else 0,
+        "top_news_ai_thread_items": len(b["ai_items"]),
+        "top_news_off_beat_items": len(b["off_beat"]),
+    }
+    # Only the lead fires. Replayed on Ep098-157 (58 digests with a Top
+    # News): the lead names no SpaceX program on Ep155 and Ep156 only (both
+    # NASA stories); an AI-thread item with no SpaceX tie sits in Top News on
+    # 25 of 58, too often and too arguable (xAI is SpaceX's own since the
+    # merger) to spend the one regeneration on, so those are counted for the
+    # readout and never fire.
+    note = "" if b["lead_on_beat"] else (
+        "Top News item 1 names no SpaceX program — the lead is the day's "
+        "biggest SpaceX story (Starship, Starlink, Falcon, Dragon, Raptor, "
+        "Starbase, Starshield); another company's space story runs lower, "
+        "only when it directly affects SpaceX, and says how in its first "
+        "sentence")
+    return LintFinding("top_news_on_beat", note, metrics)
+
+
 #: Lints that read the run's article list (``context``) as well as the digest.
 # --- pick_stop_loss (Oct 24 2026) --------------------------------------------
 # Modern Investing's published method says every pick states a stop-loss and
@@ -1720,6 +1793,7 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "preview_told_as_result": lint_preview_told_as_result,
     "explainer_figures_sourced": lint_explainer_figures_sourced,
     "item_figures_sourced": lint_item_figures_sourced,
+    "top_news_on_beat": lint_top_news_on_beat,
 }
 
 

@@ -220,11 +220,12 @@ class TestXSourcePolicy:
             assert "x_posts_as_sources" not in data, slug
             # They carry shape checks only — items_without_source (PR G, Sep
             # 24), hook_supported (Tesla, Oct 8) and the Nov 3 deep-dive
-            # measures — never a policy on whose posts count.
+            # measures, and SpaceX's Top News lead check (Nov 10) — never a
+            # policy on whose posts count.
             assert set(data.get("digest_lints") or []) <= {
                 "items_without_source", "hook_supported",
                 "deep_dive_distinct_measure", "deep_dive_distinct",
-                "deep_dive_fetched_source"}, slug
+                "deep_dive_fetched_source", "top_news_on_beat"}, slug
         for slug in ("omni_view", "models_agents"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert data["x_posts_as_sources"] == "secondary", slug
