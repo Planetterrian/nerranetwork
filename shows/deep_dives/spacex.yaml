@@ -39,103 +39,12 @@ queue:
     FRAMING RULES: this is the one episode where the business IS the headline — but keep the engineering heart: the numbers exist because of the hardware. Not financial advice; no price targets; no buy/sell framing. State beats/misses with attribution to reporting, state filing numbers as fact, label call quotes as call quotes, and label opinion as opinion. The episode should leave a listener — investor or engineer — feeling they understand what the first public quarter actually revealed: a launch monopoly funding a broadband profit engine funding an AI land grab, and the honest open question of whether the capex bet pays.
 
     '
-
-# ---------------------------------------------------------------------------
-# Pre-staged specials (Aug 2026). Both are MANUAL-FORCE ONLY (the show's
-# deep_dive.enabled stays false — no scheduling keys here, so the daily
-# cron can never pick them up). Run from Actions: "Run Podcast Show" ->
-# Run workflow -> show=spacex + the deep_dive id.
-#
-# Both events are IN THE FUTURE at authoring time, so unlike the Q2 entry
-# their briefs carry verified CONTEXT only — every fact about the event
-# itself must come from the {current_research} block pulled at generation
-# time. The briefs enforce that hard: if the research is thin, the host
-# says what is and is not known rather than inventing.
-# ---------------------------------------------------------------------------
-
-- id: flight-14-catch-reaction
-  title: 'Starship Flight 14 Special: The Tower Catch Attempt'
-  category: event_special
-  produced: false
-  episode_number: null
-  produced_date: null
-  # Run this the DAY OF or DAY AFTER the flight, whatever the outcome —
-  # success, partial, failure, or scrub. The research pulls what actually
-  # happened; the brief refuses to presume it.
-  web_search_queries:
-  - Starship Flight 14 launch result upper stage tower catch
-  - SpaceX Starship Flight 14 live coverage outcome
-  - Starship Flight 14 Mechazilla ship catch attempt analysis
-  - Starship Flight 14 booster catch upper stage reentry heat shield
-  - Elon Musk Starship Flight 14 reaction quotes
-  - SPCX stock reaction Starship Flight 14
-  - Starship Flight 14 engineering analysis what changed V3
-  - Starship flight cadence daily flights Musk projection
-  x_handles:
-  - SpaceX
-  - elonmusk
-  - NASASpaceflight
-  - SciGuySpace
-  - StarshipGazer
-  - thesheetztweetz
-  brief: >
-    A special standalone reaction episode on Starship Flight 14 — the
-    flight on which SpaceX said it would attempt, for the first time in
-    history, to CATCH THE SHIP (the upper stage) with the launch tower.
-    CRITICAL HONESTY RULE: this brief was written BEFORE the flight. The
-    outcome — success, partial success, failure, or scrub — is UNKNOWN
-    here and must be taken ENTIRELY from the {current_research} block and
-    reported exactly as it happened, with attribution. Do not presume
-    success; do not soften a failure; a scrub or delay is its own honest
-    episode ("what the hold tells us"). Name the stage in every recovery
-    reference — Super Heavy booster (first stage) versus Ship / upper
-    stage — and never blur the two.
-
-    VERIFIED CONTEXT (from the Q2 2026 earnings release and call, August
-    4, 2026 — safe to state as background): Starship V3 completed two
-    successful flight tests in the 90 days before the call. Flight 12 in
-    May was V3's first suborbital mission from the new Starbase pad, with
-    a precision upper-stage landing and deployment of modified V2
-    Starlink satellites. Flight 13 in July achieved all objectives: 20
-    production V3 satellites deployed, an in-space Raptor engine relight,
-    and the softest-ever Starship splashdown, returning an intact heat
-    shield. On the earnings call, Musk said the next flight — tentatively
-    end of August — would attempt to catch the Ship with the tower,
-    pending regulatory approval, and projected flight cadence reaching
-    "at least one flight a day, possibly more" within a year (attribute
-    call quotes as call coverage). The company frames Starship as the
-    path to cutting cost-to-orbit by 99% or more.
-
-    EPISODE SHAPE: (1) The moment — what was attempted and what happened,
-    from the research, minute by minute where the reporting supports it.
-    (2) Why a Ship catch is HARD, from first principles — the engineering
-    centerpiece: the upper stage returns from orbital velocity through
-    full reentry heating (unlike the booster's suborbital return), must
-    survive with a reusable heat shield, relight engines, decelerate to a
-    hover at a precise point, and be caught by the tower arms; walk the
-    physics of why SpaceX wants tower catches at all (no landing legs =
-    dry-mass savings = payload; rapid re-stack = cadence; the 99%
-    cost-to-orbit thesis needs BOTH stages back same-day). (3) What the
-    outcome — whichever it was — actually proves or disproves on the road
-    to full and rapid reusability, and what it means for the Starlink V3
-    deployment rate and the daily-flight projection. (4) The reaction:
-    the best attributed takes from the research (X commentary, analyst
-    reads, SPCX move if reported), labeled as opinion. (5) What to watch
-    next, concretely. Engineering-first, honest, never a stock promoter;
-    not financial advice.
-
 - id: q3-2026-earnings
   title: 'SpaceX Quarterly Earnings Special: Q3 2026'
   category: earnings_special
   produced: false
   episode_number: null
   produced_date: null
-  # Run this AFTER the Q3 call (expected early November 2026 — confirm
-  # the actual date from the research; the Q2 call was August 4).
-  # OPERATOR PRE-FLIGHT (same playbook that made the Q2 special sharp):
-  # if you can, drop the Q3 press release / 10-Q numbers into this brief
-  # before dispatching — verified filing numbers beat scraped ones. The
-  # episode still works from research alone, with heavier attribution.
   web_search_queries:
   - SpaceX SPCX Q3 2026 earnings results revenue net loss
   - SpaceX Q3 2026 earnings call highlights quotes Musk
@@ -153,85 +62,53 @@ queue:
   - SciGuySpace
   - xai
   - cursor_ai
-  brief: >
-    A special standalone episode on SpaceX's SECOND quarterly earnings
-    report as a public company (Q3 2026, expected early November — confirm
-    the reporting date and all figures from {current_research}). CRITICAL
-    HONESTY RULE: this brief was written in August, BEFORE the quarter
-    closed. Every Q3 NUMBER must come from the research block with
-    attribution — never reuse a Q2 figure as if it were Q3, and never
-    invent a figure the research does not carry. Where the research gives
-    filing numbers, state them as fact; call quotes as call quotes;
-    analyst takes as opinion. If a number is missing, speak to the trend
-    and say the figure was not yet verified.
+  brief: 'A special standalone episode on SpaceX''s SECOND quarterly earnings report as a public company (Q3 2026, expected early November — confirm the reporting date and all figures from {current_research}). CRITICAL HONESTY RULE: this brief was written in August, BEFORE the quarter closed. Every Q3 NUMBER must come from the research block with attribution — never reuse a Q2 figure as if it were Q3, and never invent a figure the research does not carry. Where the research gives filing numbers, state them as fact; call quotes as call quotes; analyst takes as opinion. If a number is missing, speak to the trend and say the figure was not yet verified.
 
-    VERIFIED Q2 BASELINE (from the Q2 2026 release and 10-Q — the
-    comparison bar this episode measures Q3 against): revenue $7.814
-    billion (+92% YoY); net loss $541 million; adjusted EBITDA $3.538
-    billion; loss from operations $143 million (near breakeven — THE
-    number to re-check first in Q3); segments: Space $962 million revenue
-    with a $542 million operating loss (Starship R&D), Connectivity
-    $4.291 billion revenue with $1.656 billion operating income and 12.0
-    million Starlink subscribers at $66 ARPU, AI $2.561 billion revenue
-    (+247%) with its first positive adjusted EBITDA ($1.146 billion);
-    capex $18.369 billion in the quarter ($15.828 billion AI) with
-    management guiding the NEXT TWO QUARTERS similar — so Q3 capex
-    against that guidance is a headline question; ~$100 billion cash,
-    $47.5 billion backlog, $14.1 billion of Cloud Services Agreements
-    signed in Q2 with $6.7 billion more contracted to ramp from October
-    (per the CFO on the Q2 call); the CFO's "$100 billion annualized
-    recurring revenue pace by year end" projection is a CLAIM this
-    episode should score against Q3 actuals; Cursor ($60 billion
-    acquisition) was expected to close in Q3 — confirm whether it did
-    and how it reports; compute was 1.4 GW nameplate at Q2.
+    VERIFIED Q2 BASELINE (from the Q2 2026 release and 10-Q — the comparison bar this episode measures Q3 against): revenue $7.814 billion (+92% YoY); net loss $541 million; adjusted EBITDA $3.538 billion; loss from operations $143 million (near breakeven — THE number to re-check first in Q3); segments: Space $962 million revenue with a $542 million operating loss (Starship R&D), Connectivity $4.291 billion revenue with $1.656 billion operating income and 12.0 million Starlink subscribers at $66 ARPU, AI $2.561 billion revenue (+247%) with its first positive adjusted EBITDA ($1.146 billion); capex $18.369 billion in the quarter ($15.828 billion AI) with management guiding the NEXT TWO QUARTERS similar — so Q3 capex against that guidance is a headline question; ~$100 billion cash, $47.5 billion backlog, $14.1 billion of Cloud Services Agreements signed in Q2 with $6.7 billion more contracted to ramp from October (per the CFO on the Q2 call); the CFO''s "$100 billion annualized recurring revenue pace by year end" projection is a CLAIM this episode should score against Q3 actuals; Cursor ($60 billion acquisition) was expected to close in Q3 — confirm whether it did and how it reports; compute was 1.4 GW nameplate at Q2.
 
-    EPISODE SHAPE: (1) The headline Q3 numbers vs expectations and vs
-    the Q2 baseline above — did operating breakeven arrive? (2) Segment
-    by segment against Q2: Space (Starship flight cadence and R&D),
-    Connectivity (subscriber adds, ARPU trade, aviation/enterprise
-    momentum), AI (Cloud Services ramp including the October cohort,
-    compute GW growth, Cursor's first quarter inside if closed, X
-    advertising trend). (3) The capex question, round two: did the
-    "next two quarters look similar" guidance hold, what did operating
-    cash flow cover, and how did the market read it. (4) The
-    announcements and call moments, attributed. (5) The engineering
-    angle from first principles on whatever Q3's biggest build-out
-    number is. (6) The honest counterpoints: concentration, lockup /
-    supply, any cracks in the growth story the research surfaces. Same
-    voice as always: engineering-first, honest, never a stock promoter,
-    not financial advice.
+    EPISODE SHAPE: (1) The headline Q3 numbers vs expectations and vs the Q2 baseline above — did operating breakeven arrive? (2) Segment by segment against Q2: Space (Starship flight cadence and R&D), Connectivity (subscriber adds, ARPU trade, aviation/enterprise momentum), AI (Cloud Services ramp including the October cohort, compute GW growth, Cursor''s first quarter inside if closed, X advertising trend). (3) The capex question, round two: did the "next two quarters look similar" guidance hold, what did operating cash flow cover, and how did the market read it. (4) The announcements and call moments, attributed. (5) The engineering angle from first principles on whatever Q3''s biggest build-out number is. (6) The honest counterpoints: concentration, lockup / supply, any cracks in the growth story the research surfaces. Same voice as always: engineering-first, honest, never a stock promoter, not financial advice.
 
-# ---------------------------------------------------------------------------
-# Nov 10 2026 growth review: the Flight 14 special above was never run, and
-# "starship flight 15" is the show's top YouTube search term. Flight 15 is
-# the first planned catch of the Ship. Run this from Actions the DAY OF or
-# DAY AFTER the flight ("Run Podcast Show", show=spacex, deep_dive id
-# flight-15-ship-catch), whatever the outcome. Context below comes only from
-# the show's own committed digests (Ep150-157); everything about the flight
-# itself comes from {current_research}.
-#
-# Two entries: flight-15-preview is run BEFORE the flight (operator, Nov 10:
-# "a great special on Flight 15 before it happens"); flight-15-ship-catch is
-# the reaction, run the day of or after. Both use the flight-special prompts
-# (the default deep-dive prompts are the earnings special's and wrote
-# balance-sheet segments into the Nov 10 run).
-# ---------------------------------------------------------------------------
-
-- id: flight-15-preview
-  title: 'Starship Flight 15 Preview: The First Ship Catch Attempt'
+    '
+- id: flight-14-catch-reaction
+  title: 'Starship Flight 14 Special: The Tower Catch Attempt'
   category: event_special
   produced: false
   episode_number: null
   produced_date: null
+  web_search_queries:
+  - Starship Flight 14 launch result upper stage tower catch
+  - SpaceX Starship Flight 14 live coverage outcome
+  - Starship Flight 14 Mechazilla ship catch attempt analysis
+  - Starship Flight 14 booster catch upper stage reentry heat shield
+  - Elon Musk Starship Flight 14 reaction quotes
+  - SPCX stock reaction Starship Flight 14
+  - Starship Flight 14 engineering analysis what changed V3
+  - Starship flight cadence daily flights Musk projection
+  x_handles:
+  - SpaceX
+  - elonmusk
+  - NASASpaceflight
+  - SciGuySpace
+  - StarshipGazer
+  - thesheetztweetz
+  brief: 'A special standalone reaction episode on Starship Flight 14 — the flight on which SpaceX said it would attempt, for the first time in history, to CATCH THE SHIP (the upper stage) with the launch tower. CRITICAL HONESTY RULE: this brief was written BEFORE the flight. The outcome — success, partial success, failure, or scrub — is UNKNOWN here and must be taken ENTIRELY from the {current_research} block and reported exactly as it happened, with attribution. Do not presume success; do not soften a failure; a scrub or delay is its own honest episode ("what the hold tells us"). Name the stage in every recovery reference — Super Heavy booster (first stage) versus Ship / upper stage — and never blur the two.
+
+    VERIFIED CONTEXT (from the Q2 2026 earnings release and call, August 4, 2026 — safe to state as background): Starship V3 completed two successful flight tests in the 90 days before the call. Flight 12 in May was V3''s first suborbital mission from the new Starbase pad, with a precision upper-stage landing and deployment of modified V2 Starlink satellites. Flight 13 in July achieved all objectives: 20 production V3 satellites deployed, an in-space Raptor engine relight, and the softest-ever Starship splashdown, returning an intact heat shield. On the earnings call, Musk said the next flight — tentatively end of August — would attempt to catch the Ship with the tower, pending regulatory approval, and projected flight cadence reaching "at least one flight a day, possibly more" within a year (attribute call quotes as call coverage). The company frames Starship as the path to cutting cost-to-orbit by 99% or more.
+
+    EPISODE SHAPE: (1) The moment — what was attempted and what happened, from the research, minute by minute where the reporting supports it. (2) Why a Ship catch is HARD, from first principles — the engineering centerpiece: the upper stage returns from orbital velocity through full reentry heating (unlike the booster''s suborbital return), must survive with a reusable heat shield, relight engines, decelerate to a hover at a precise point, and be caught by the tower arms; walk the physics of why SpaceX wants tower catches at all (no landing legs = dry-mass savings = payload; rapid re-stack = cadence; the 99% cost-to-orbit thesis needs BOTH stages back same-day). (3) What the outcome — whichever it was — actually proves or disproves on the road to full and rapid reusability, and what it means for the Starlink V3 deployment rate and the daily-flight projection. (4) The reaction: the best attributed takes from the research (X commentary, analyst reads, SPCX move if reported), labeled as opinion. (5) What to watch next, concretely. Engineering-first, honest, never a stock promoter; not financial advice.
+
+    '
+- id: flight-15-preview
+  title: 'Starship Flight 15 Preview: The First Ship Catch Attempt'
+  category: event_special
+  produced: true
+  episode_number: 158
+  produced_date: '2026-11-10'
   digest_prompt_file: shows/prompts/spacex_flight_special.txt
   podcast_prompt_file: shows/prompts/spacex_flight_special_podcast.txt
-  research_focus: >
-    the flight's current target date and launch window, any slip or
-    scrub, the vehicle numbers, the planned flight profile and timeline,
-    the conditions SpaceX has given for attempting or calling off each
-    catch, the regulatory status, what SpaceX and Elon Musk have said
-    about the odds, the strongest technical commentary, and where the
-    webcast will be shown
+  research_focus: 'the flight''s current target date and launch window, any slip or scrub, the vehicle numbers, the planned flight profile and timeline, the conditions SpaceX has given for attempting or calling off each catch, the regulatory status, what SpaceX and Elon Musk have said about the odds, the strongest technical commentary, and where the webcast will be shown
+
+    '
   web_search_queries:
   - Starship Flight 15 launch date window latest
   - Starship Flight 15 mission profile timeline ship catch
@@ -248,52 +125,13 @@ queue:
   - SciGuySpace
   - StarshipGazer
   - thesheetztweetz
-  brief: >
-    A PREVIEW special, recorded BEFORE Starship Flight 15 flies, to be the
-    one episode a listener needs before launch day. The flight has NOT
-    happened: nothing about it is in the past tense, every date is a
-    target that can move, and the current status comes from
-    {current_research}. If the research shows the flight has already
-    flown, report that outcome from the research instead and say the
-    episode was planned as a preview.
+  brief: 'A PREVIEW special, recorded BEFORE Starship Flight 15 flies, to be the one episode a listener needs before launch day. The flight has NOT happened: nothing about it is in the past tense, every date is a target that can move, and the current status comes from {current_research}. If the research shows the flight has already flown, report that outcome from the research instead and say the episode was planned as a preview.
 
-    WHAT THE SHOW HAS REPORTED SO FAR (attribute as earlier reporting;
-    the research wins wherever it differs): Flight 15 is targeted no
-    earlier than November 13, 2026 from Starbase, in a
-    seventy-five-minute window opening at 4:45 p.m. Central Time (per
-    Keep Track). SpaceX Vice President of Launch Kiko Dontchev announced
-    the November 13 target at the UP.Summit. Booster 22 and Ship 42, both
-    Block 3 vehicles, are assigned. Booster 22 completed a full-duration
-    33-engine static fire on October 25; Ship 42 completed a
-    single-engine deorbit simulation on October 26 and a full six-engine
-    static fire the next day; the Pad 2 arms have lifted Ship 42 into
-    catch position. The plan is to catch BOTH stages with the tower: the
-    Super Heavy booster is scheduled to return for its catch about 6
-    minutes 35 seconds after liftoff, the first catch attempt for a V3
-    Super Heavy. The Ship is to deploy 26 Starlink V3 satellites into a
-    roughly 275 km orbit, fly 14 orbits, and attempt a return catch only
-    after systems checks confirm it is ready for reentry and the landing
-    burn; three of the satellites carry cameras to inspect the heat
-    shield. Each Starlink V3 satellite adds 1 terabit of capacity, the
-    set roughly equal to ten Falcon 9 launches of V2 Minis (per Keep
-    Track). A Ship catch would be the first time an upper stage has been
-    caught after reaching orbital velocity. On the third-quarter earnings
-    call Elon Musk said a successful Ship catch was "more likely than
-    not" (his prediction). Flight 14 reached orbit and deployed
-    twenty-six Starlink V3 satellites despite an engine shutdown that
-    Musk described as a software failure on a single RVac unit, and it
-    reused heat-shield tiles from an earlier vehicle. The company frames
-    full and rapid reuse of both stages as the path to cutting
-    cost-to-orbit by 99% or more (company projection).
+    WHAT THE SHOW HAS REPORTED SO FAR (attribute as earlier reporting; the research wins wherever it differs): Flight 15 is targeted no earlier than November 13, 2026 from Starbase, in a seventy-five-minute window opening at 4:45 p.m. Central Time (per Keep Track). SpaceX Vice President of Launch Kiko Dontchev announced the November 13 target at the UP.Summit. Booster 22 and Ship 42, both Block 3 vehicles, are assigned. Booster 22 completed a full-duration 33-engine static fire on October 25; Ship 42 completed a single-engine deorbit simulation on October 26 and a full six-engine static fire the next day; the Pad 2 arms have lifted Ship 42 into catch position. The plan is to catch BOTH stages with the tower: the Super Heavy booster is scheduled to return for its catch about 6 minutes 35 seconds after liftoff, the first catch attempt for a V3 Super Heavy. The Ship is to deploy 26 Starlink V3 satellites into a roughly 275 km orbit, fly 14 orbits, and attempt a return catch only after systems checks confirm it is ready for reentry and the landing burn; three of the satellites carry cameras to inspect the heat shield. Each Starlink V3 satellite adds 1 terabit of capacity, the set roughly equal to ten Falcon 9 launches of V2 Minis (per Keep Track). A Ship catch would be the first time an upper stage has been caught after reaching orbital velocity. On the third-quarter earnings call Elon Musk said a successful Ship catch was "more likely than not" (his prediction). Flight 14 reached orbit and deployed twenty-six Starlink V3 satellites despite an engine shutdown that Musk described as a software failure on a single RVac unit, and it reused heat-shield tiles from an earlier vehicle. The company frames full and rapid reuse of both stages as the path to cutting cost-to-orbit by 99% or more (company projection).
 
-    WHAT MAKES THIS EPISODE GREAT: the listener should be able to watch
-    the flight afterwards and know what every phase is for. The
-    minute-by-minute walk-through and the first-principles explanation of
-    why catching the Ship is harder than catching the booster are the
-    heart. Give an honest scale of outcomes so that whatever happens on
-    the day, the listener can score it. Engineering-first, honest, never
-    a stock promoter; not financial advice.
+    WHAT MAKES THIS EPISODE GREAT: the listener should be able to watch the flight afterwards and know what every phase is for. The minute-by-minute walk-through and the first-principles explanation of why catching the Ship is harder than catching the booster are the heart. Give an honest scale of outcomes so that whatever happens on the day, the listener can score it. Engineering-first, honest, never a stock promoter; not financial advice.
 
+    '
 - id: flight-15-ship-catch
   title: 'Starship Flight 15 Special: The First Ship Catch Attempt'
   category: event_special
@@ -302,11 +140,9 @@ queue:
   produced_date: null
   digest_prompt_file: shows/prompts/spacex_flight_special.txt
   podcast_prompt_file: shows/prompts/spacex_flight_special_podcast.txt
-  research_focus: >
-    what happened on the flight in order, the outcome of each catch
-    attempt by stage, any anomaly and its stated cause, what SpaceX and
-    Elon Musk said afterwards, the strongest technical analysis, and the
-    next flight's timing
+  research_focus: 'what happened on the flight in order, the outcome of each catch attempt by stage, any anomaly and its stated cause, what SpaceX and Elon Musk said afterwards, the strongest technical analysis, and the next flight''s timing
+
+    '
   web_search_queries:
   - Starship Flight 15 launch result ship catch
   - Starship Flight 15 upper stage tower catch outcome
@@ -323,42 +159,10 @@ queue:
   - SciGuySpace
   - StarshipGazer
   - thesheetztweetz
-  brief: >
-    A special standalone reaction episode on Starship Flight 15, the
-    flight on which SpaceX planned to catch BOTH stages with the tower:
-    the Super Heavy booster, as it has done before, and for the first time
-    the Ship, the upper stage. CRITICAL HONESTY RULE: this brief was
-    written BEFORE the flight. The outcome (success, partial success,
-    failure, or scrub) is UNKNOWN here and must be taken ENTIRELY from the
-    {current_research} block and reported exactly as it happened, with
-    attribution. Do not presume success; do not soften a failure; a scrub
-    or delay is its own honest episode about what the hold tells us. Name
-    the stage in every recovery reference (Super Heavy booster versus Ship
-    / upper stage) and never blur the two. If the research does not say
-    whether a catch happened, say that plainly instead of guessing.
+  brief: 'A special standalone reaction episode on Starship Flight 15, the flight on which SpaceX planned to catch BOTH stages with the tower: the Super Heavy booster, as it has done before, and for the first time the Ship, the upper stage. CRITICAL HONESTY RULE: this brief was written BEFORE the flight. The outcome (success, partial success, failure, or scrub) is UNKNOWN here and must be taken ENTIRELY from the {current_research} block and reported exactly as it happened, with attribution. Do not presume success; do not soften a failure; a scrub or delay is its own honest episode about what the hold tells us. Name the stage in every recovery reference (Super Heavy booster versus Ship / upper stage) and never blur the two. If the research does not say whether a catch happened, say that plainly instead of guessing.
 
-    CONTEXT AS THE SHOW REPORTED IT BEFORE THE FLIGHT (attribute as
-    earlier reporting, not as today's news): Flight 15 was targeted no
-    earlier than November 13, 2026 from Starbase, in a seventy-five-minute
-    window opening at 4:45 p.m. Central Time (per Keep Track). Flight 14
-    reached orbit and deployed twenty-six Starlink V3 satellites despite an
-    engine shutdown; Musk described the RVac issue as a software failure on
-    a single unit. SpaceX had reused heat-shield tiles removed from an
-    earlier vehicle on Flight 14. The company frames full and rapid reuse
-    of both stages as the path to cutting cost-to-orbit by 99% or more.
+    CONTEXT AS THE SHOW REPORTED IT BEFORE THE FLIGHT (attribute as earlier reporting, not as today''s news): Flight 15 was targeted no earlier than November 13, 2026 from Starbase, in a seventy-five-minute window opening at 4:45 p.m. Central Time (per Keep Track). Flight 14 reached orbit and deployed twenty-six Starlink V3 satellites despite an engine shutdown; Musk described the RVac issue as a software failure on a single unit. SpaceX had reused heat-shield tiles removed from an earlier vehicle on Flight 14. The company frames full and rapid reuse of both stages as the path to cutting cost-to-orbit by 99% or more.
 
-    EPISODE SHAPE: (1) The moment: what was attempted and what happened,
-    from the research, in order, where the reporting supports it. (2) Why
-    a Ship catch is HARD, from first principles, the engineering
-    centrepiece: the upper stage returns from orbital velocity through full
-    reentry heating (unlike the booster's suborbital return), must survive
-    with a reusable heat shield, relight its engines, slow to a hover at a
-    precise point and be caught by the tower arms; why SpaceX wants tower
-    catches at all (no landing legs, less dry mass, more payload; a fast
-    re-stack; both stages back the same day). (3) What this outcome,
-    whichever it was, proves or leaves open on the road to full reuse, and
-    what it means for the Starlink V3 deployment rate. (4) The reaction:
-    the best attributed takes from the research, labelled as opinion, and
-    the SPCX move only if reported. (5) What to watch next, concretely.
-    Engineering-first, honest, never a stock promoter; not financial
-    advice.
+    EPISODE SHAPE: (1) The moment: what was attempted and what happened, from the research, in order, where the reporting supports it. (2) Why a Ship catch is HARD, from first principles, the engineering centrepiece: the upper stage returns from orbital velocity through full reentry heating (unlike the booster''s suborbital return), must survive with a reusable heat shield, relight its engines, slow to a hover at a precise point and be caught by the tower arms; why SpaceX wants tower catches at all (no landing legs, less dry mass, more payload; a fast re-stack; both stages back the same day). (3) What this outcome, whichever it was, proves or leaves open on the road to full reuse, and what it means for the Starlink V3 deployment rate. (4) The reaction: the best attributed takes from the research, labelled as opinion, and the SPCX move only if reported. (5) What to watch next, concretely. Engineering-first, honest, never a stock promoter; not financial advice.
+
+    '
