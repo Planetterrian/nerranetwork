@@ -5906,6 +5906,20 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
             ("Story tracker", f"{base}-narrative.html"),
             ("All episodes", f["show_page"]),
         ) if base and (ROOT / url).is_file()]
+        # Nov 10 2026 (growth review): SpaceX Daily and Tesla Shorts Time are
+        # ~45% of the network's downloads, and the card offered no way to
+        # follow either where people listen. One link per app the show is
+        # really on (a resolved URL only), the YouTube one opening the
+        # channel's subscribe dialog.
+        _apple = _apple_links_for(f["slug"], _sh.get("apple_podcasts_url"))
+        _follow = [
+            ("Apple Podcasts", _apple.get("apple_podcasts_url") or ""),
+            ("Spotify", _spotify_url_for(f["slug"], _sh.get("spotify_url"))),
+        ]
+        # Both flagships publish to the English channel (YOUTUBE_ENABLED_SHOWS).
+        from engine.video_metadata import channel_subscribe_url
+        _follow.append(("YouTube", channel_subscribe_url("en")))
+        f["follow"] = [{"label": label, "url": url} for label, url in _follow if url]
     corrections = _nr.recent_corrections(_newsroom_corrections(public))
     schedule = _nr.todays_schedule(now) if public else []
     if not _nr.schedule_is_clean(schedule):
