@@ -339,7 +339,6 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "SVE": "S V E",
     "PFAS": "P fas",
     "CSR": "C S R",
-    "ESA": "E S A",
     "PD-1": "P D one",
     "PD-L1": "P D L one",
 
@@ -349,7 +348,6 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "DOE": "D O E",
     "DOJ": "D O J",
     "DOT": "D O T",
-    "EPA": "E P A",
     "EU": "E U",
     "UK": "U K",
     "US": "U S",
