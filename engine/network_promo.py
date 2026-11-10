@@ -354,7 +354,16 @@ NETWORK_SURFACES: list[dict[str, str]] = [
 ]
 
 
-def _weighted_surface_pool() -> list[dict[str, str]]:
+# Nov 10 2026 (growth review): the flagships carry about half the network's
+# downloads (SpaceX alone 30%) and Nerra Personal is the one product their
+# listeners can pay for, but it took 1 slot in 13 like every peer. On the
+# flagships only (engine.brand.FLAGSHIP_SHOW_SLUGS) it takes 2 in 14; every
+# other show keeps the 13-slot pool byte for byte. 14 stays coprime with the
+# offset stride of 3. Spoken audio on SpaceX and Tesla: one listen before merge.
+FLAGSHIP_SURFACE_WEIGHTS: dict[str, int] = {"personal": 2}
+
+
+def _weighted_surface_pool(show_slug: str = "") -> list[dict[str, str]]:
     """Expand NETWORK_SURFACES by optional per-entry weight (default 1).
 
     The extra copies are INTERLEAVED, not clustered. The rotation walks
@@ -366,10 +375,16 @@ def _weighted_surface_pool() -> list[dict[str, str]]:
     """
     if not NETWORK_SURFACES:
         return []
+    try:
+        from engine.brand import FLAGSHIP_SHOW_SLUGS
+    except Exception:  # noqa: BLE001 — never let config break a closing
+        FLAGSHIP_SHOW_SLUGS = ()
+    overrides = FLAGSHIP_SURFACE_WEIGHTS if show_slug in FLAGSHIP_SHOW_SLUGS else {}
     weights: list[int] = []
     for surface in NETWORK_SURFACES:
         try:
-            weights.append(max(1, int(surface.get("weight") or 1)))
+            w = overrides.get(surface.get("id"), surface.get("weight") or 1)
+            weights.append(max(1, int(w)))
         except (TypeError, ValueError):
             weights.append(1)
 
@@ -433,7 +448,7 @@ def pick_featured_surface(
     different offset so the surface and sibling rotate independently.
     Surfaces with ``weight`` > 1 appear proportionally more often.
     """
-    pool = _weighted_surface_pool()
+    pool = _weighted_surface_pool(show_slug)
     if show_slug not in ENGLISH_SHOWS or not pool:
         return None
     offset = ENGLISH_ORDER.index(show_slug) * 3  # diverge from sibling idx
