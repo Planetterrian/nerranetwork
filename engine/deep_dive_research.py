@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime as _dt
 import logging
 import os
+import re as _re
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ def research_current_context(
     x_handles: Optional[List[str]] = None,
     today: Optional[_dt.date] = None,
     max_turns: int = 6,
+    focus: str = "",
 ) -> str:
     """Return a concise, source-attributed briefing on the CURRENT state of
     *topic_title*, or ``""`` if research is unavailable.
@@ -57,6 +59,17 @@ def research_current_context(
 
     today = today or _dt.date.today()
     query_lines = "\n".join(f"  - {q}" for q in queries)
+    # Nov 10 2026: an entry may say what its briefing should lead with (the
+    # default was written for the IPO deep dive).
+    focus = " ".join((focus or "").split())
+    _lead_line = (
+        f"- Lead with the most recent, concrete facts on: {focus}.\n"
+        if focus else
+        "- Lead with the most recent, concrete, decision-relevant facts: "
+        "filing status (e.g. an S-1 or draft registration), reported "
+        "timeline/dates, valuation, deal structure, who is underwriting, "
+        "how retail could participate.\n"
+    )
     prompt = (
         f"Today's date is {today.isoformat()}. Research the CURRENT, "
         f"up-to-the-day state of: {topic_title}.\n\n"
@@ -65,10 +78,8 @@ def research_current_context(
         f"{query_lines}\n\n"
         f"Return a concise factual briefing (bullet points, NOT an essay) of "
         f"the current state. Requirements:\n"
-        f"- Lead with the most recent, concrete, decision-relevant facts: "
-        f"filing status (e.g. an S-1 or draft registration), reported "
-        f"timeline/dates, valuation, deal structure, who is underwriting, "
-        f"how retail could participate.\n"
+        f"{_lead_line}"
+        f"- Give the URL of the page beside every claim it supports.\n"
         f"- Attribute EVERY claim to its source — name the publication or the "
         f"X account, with the date where possible (e.g. 'per Reuters, May 28' "
         f"or 'per @account').\n"
@@ -111,3 +122,49 @@ def research_current_context(
         len(text), topic_title,
     )
     return text
+
+
+# ---------------------------------------------------------------------------
+# Nov 10 2026: a special's Sources come from the run's own research.
+#
+# A deep dive fetches no articles, and its prompts never asked for Source
+# lines, so the Nov 9 publish guard ("an episode page with no Sources is
+# never published") skipped the first special run under it (Flight 15,
+# Nov 10). The research briefing above is the record this run read: every
+# claim in it carries a link the search returned. When the digest cites no
+# URL of its own, its Sources list is those links, and only those. Nothing
+# is added from memory and nothing is added when the research is empty, so
+# a special with no research still skips at the guard.
+# ---------------------------------------------------------------------------
+
+_URL_RE = _re.compile(r"https?://[^\s<>\"')\]]+")
+
+
+def research_source_urls(research_block: str) -> List[str]:
+    """Every http(s) URL in *research_block*, deduped, in order."""
+    seen: set = set()
+    out: List[str] = []
+    for m in _URL_RE.finditer(research_block or ""):
+        url = m.group(0).rstrip(".,;:")
+        if url not in seen:
+            seen.add(url)
+            out.append(url)
+    return out
+
+
+def append_research_sources(digest_md: str, research_block: str) -> tuple:
+    """Return ``(digest, n_added)``.
+
+    Appends a ``## Sources`` list of the research briefing's own links when
+    the digest would otherwise render with no Sources panel. A digest that
+    already cites a URL is returned unchanged.
+    """
+    from engine.blog import _extract_source_urls
+
+    if _extract_source_urls(digest_md or ""):
+        return digest_md, 0
+    urls = research_source_urls(research_block)
+    if not urls:
+        return digest_md, 0
+    block = "\n\n## Sources\n\n" + "\n".join(f"- {u}" for u in urls) + "\n"
+    return (digest_md or "").rstrip() + block, len(urls)

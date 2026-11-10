@@ -871,6 +871,11 @@ class DeepDiveConfig:
     # a show whose daily digest stays on grok-4.3 can run its specials
     # on grok-4.6. Empty = inherit the show's llm.model.
     model: str = ""
+    # Digest token budget for a deep-dive run (Nov 10 2026). A special's
+    # digest is several times a daily's: the Flight 15 run was cut at the
+    # daily 4000 and the 6000 retry, which broke its claims ledger. 0 =
+    # inherit the show's llm.max_tokens.
+    max_tokens: int = 0
 
 
 @dataclass

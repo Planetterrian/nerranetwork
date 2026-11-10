@@ -1542,6 +1542,19 @@ def run(args: argparse.Namespace) -> None:
                     config.llm.podcast_prompt_file = _dd_cfg.podcast_prompt_file
                 if _dd_cfg.system_prompt_file:
                     config.llm.system_prompt_file = _dd_cfg.system_prompt_file
+                # Nov 10 2026: a queue entry may name its own prompt pair (a
+                # flight special is not shaped like an earnings special).
+                for _pf in ("digest_prompt_file", "podcast_prompt_file"):
+                    _entry_pf = str(deep_dive_topic.get(_pf) or "").strip()
+                    if _entry_pf:
+                        if not (PROJECT_ROOT / _entry_pf).is_file():
+                            _skip_episode(
+                                "deep_dive_prompt_missing",
+                                f"deep-dive entry {deep_dive_topic.get('id')!r} "
+                                f"names {_pf} {_entry_pf!r}, which does not exist.",
+                            )
+                            return
+                        setattr(config.llm, _pf, _entry_pf)
                 # Deep dives want a fuller episode than the show's daily target.
                 if getattr(_dd_cfg, "min_podcast_words", 0):
                     config.llm.min_podcast_words = _dd_cfg.min_podcast_words
@@ -1550,6 +1563,8 @@ def run(args: argparse.Namespace) -> None:
                 if getattr(_dd_cfg, "model", ""):
                     config.llm.model = _dd_cfg.model
                     logger.info("Deep-dive model override: %s", _dd_cfg.model)
+                if getattr(_dd_cfg, "max_tokens", 0):
+                    config.llm.max_tokens = _dd_cfg.max_tokens
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),
@@ -1578,6 +1593,7 @@ def run(args: argparse.Namespace) -> None:
                                 _dd_queries,
                                 x_handles=deep_dive_topic.get("x_handles") or None,
                                 today=today,
+                                focus=str(deep_dive_topic.get("research_focus") or ""),
                             )
                         metrics.record(
                             "deep_dive_research_chars", len(deep_dive_research_block),
@@ -3925,6 +3941,21 @@ def run(args: argparse.Namespace) -> None:
                     _si_exc,
                 )
                 _si_gate = None
+
+        # Nov 10 2026: a special's Sources come from the run's own research
+        # record when the digest cites none (engine.deep_dive_research).
+        if is_deep_dive and deep_dive_research_block:
+            try:
+                from engine.deep_dive_research import append_research_sources
+                x_thread, _dd_src_n = append_research_sources(
+                    x_thread, deep_dive_research_block)
+                if _dd_src_n:
+                    logger.info(
+                        "Deep-dive: added %d Source link(s) from the run's "
+                        "research briefing", _dd_src_n)
+                    metrics.record("deep_dive_research_sources_added", _dd_src_n)
+            except Exception as _dd_src_exc:  # noqa: BLE001
+                logger.warning("Deep-dive Sources append failed: %s", _dd_src_exc)
 
         # Save digest to file. Strip lone UTF-16 surrogates (the LLM
         # occasionally emits one); ``write_text`` would otherwise abort the
