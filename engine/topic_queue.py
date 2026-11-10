@@ -155,8 +155,11 @@ def pick_deep_dive_topic(
     candidates = _valid_unproduced()
 
     if force_id:
+        # The id is typed by hand into a workflow form: a capital letter or
+        # a stray space must not cost the run (Nov 10 2026, "Flight-15-preview").
+        wanted = str(force_id).strip().casefold()
         for entry in candidates:
-            if entry.get("id") == force_id:
+            if str(entry.get("id")).strip().casefold() == wanted:
                 return dict(entry)
         logger.warning(
             "pick_deep_dive_topic: forced id %r not found among unproduced "
