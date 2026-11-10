@@ -1550,6 +1550,8 @@ def run(args: argparse.Namespace) -> None:
                 if getattr(_dd_cfg, "model", ""):
                     config.llm.model = _dd_cfg.model
                     logger.info("Deep-dive model override: %s", _dd_cfg.model)
+                if getattr(_dd_cfg, "max_tokens", 0):
+                    config.llm.max_tokens = _dd_cfg.max_tokens
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),
@@ -3925,6 +3927,21 @@ def run(args: argparse.Namespace) -> None:
                     _si_exc,
                 )
                 _si_gate = None
+
+        # Nov 10 2026: a special's Sources come from the run's own research
+        # record when the digest cites none (engine.deep_dive_research).
+        if is_deep_dive and deep_dive_research_block:
+            try:
+                from engine.deep_dive_research import append_research_sources
+                x_thread, _dd_src_n = append_research_sources(
+                    x_thread, deep_dive_research_block)
+                if _dd_src_n:
+                    logger.info(
+                        "Deep-dive: added %d Source link(s) from the run's "
+                        "research briefing", _dd_src_n)
+                    metrics.record("deep_dive_research_sources_added", _dd_src_n)
+            except Exception as _dd_src_exc:  # noqa: BLE001
+                logger.warning("Deep-dive Sources append failed: %s", _dd_src_exc)
 
         # Save digest to file. Strip lone UTF-16 surrogates (the LLM
         # occasionally emits one); ``write_text`` would otherwise abort the

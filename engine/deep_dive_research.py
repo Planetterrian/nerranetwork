@@ -23,6 +23,7 @@ from __future__ import annotations
 import datetime as _dt
 import logging
 import os
+import re as _re
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
@@ -111,3 +112,49 @@ def research_current_context(
         len(text), topic_title,
     )
     return text
+
+
+# ---------------------------------------------------------------------------
+# Nov 10 2026: a special's Sources come from the run's own research.
+#
+# A deep dive fetches no articles, and its prompts never asked for Source
+# lines, so the Nov 9 publish guard ("an episode page with no Sources is
+# never published") skipped the first special run under it (Flight 15,
+# Nov 10). The research briefing above is the record this run read: every
+# claim in it carries a link the search returned. When the digest cites no
+# URL of its own, its Sources list is those links, and only those. Nothing
+# is added from memory and nothing is added when the research is empty, so
+# a special with no research still skips at the guard.
+# ---------------------------------------------------------------------------
+
+_URL_RE = _re.compile(r"https?://[^\s<>\"')\]]+")
+
+
+def research_source_urls(research_block: str) -> List[str]:
+    """Every http(s) URL in *research_block*, deduped, in order."""
+    seen: set = set()
+    out: List[str] = []
+    for m in _URL_RE.finditer(research_block or ""):
+        url = m.group(0).rstrip(".,;:")
+        if url not in seen:
+            seen.add(url)
+            out.append(url)
+    return out
+
+
+def append_research_sources(digest_md: str, research_block: str) -> tuple:
+    """Return ``(digest, n_added)``.
+
+    Appends a ``## Sources`` list of the research briefing's own links when
+    the digest would otherwise render with no Sources panel. A digest that
+    already cites a URL is returned unchanged.
+    """
+    from engine.blog import _extract_source_urls
+
+    if _extract_source_urls(digest_md or ""):
+        return digest_md, 0
+    urls = research_source_urls(research_block)
+    if not urls:
+        return digest_md, 0
+    block = "\n\n## Sources\n\n" + "\n".join(f"- {u}" for u in urls) + "\n"
+    return (digest_md or "").rstrip() + block, len(urls)
