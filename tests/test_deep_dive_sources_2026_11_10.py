@@ -80,12 +80,42 @@ def test_both_flight_entries_use_the_flight_prompts_and_they_exist():
         assert entry["research_focus"].strip()
 
 
-def test_the_preview_is_pickable_by_id():
+def _unproduced_queue(tmp_path) -> Path:
+    """The real queue with the preview not yet produced.
+
+    The picker only offers unproduced entries, and the preview was produced
+    the evening these tests were written (Nov 10 2026, Ep158), which turned
+    two of them red on main. A real queue is never the fixture for a state
+    it will leave: the tests read a copy with the flag cleared.
+    """
+    data = yaml.safe_load((ROOT / "shows/deep_dives/spacex.yaml").read_text(encoding="utf-8"))
+    for entry in data["queue"]:
+        if entry.get("id") == "flight-15-preview":
+            for key in ("produced", "episode_number", "produced_date"):
+                entry.pop(key, None)
+    path = tmp_path / "spacex.yaml"
+    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return path
+
+
+def test_the_preview_is_pickable_by_id(tmp_path):
     from engine.topic_queue import pick_deep_dive_topic
     topic = pick_deep_dive_topic(
-        ROOT / "shows/deep_dives/spacex.yaml", "2026-11-11",
+        _unproduced_queue(tmp_path), "2026-11-11",
         force_id="flight-15-preview")
     assert topic and topic["id"] == "flight-15-preview"
+
+
+def test_a_produced_special_is_never_picked_again():
+    """The other half of the same rule, read from the real queue: a forced
+    id that has already aired returns nothing, so a re-run cannot publish
+    the special twice."""
+    from engine.topic_queue import pick_deep_dive_topic
+    produced = [t for t in _queue().values() if t.get("produced") is True]
+    for entry in produced:
+        assert pick_deep_dive_topic(
+            ROOT / "shows/deep_dives/spacex.yaml", "2026-11-11",
+            force_id=entry["id"]) is None, entry["id"]
 
 
 def test_the_flight_prompts_render_and_carry_no_earnings_furniture():
@@ -135,9 +165,9 @@ def test_research_focus_replaces_the_ipo_lead_line(monkeypatch):
     assert "underwriting" in seen["prompt"]
 
 
-def test_a_hand_typed_id_matches_whatever_its_case():
+def test_a_hand_typed_id_matches_whatever_its_case(tmp_path):
     from engine.topic_queue import pick_deep_dive_topic
-    queue = ROOT / "shows/deep_dives/spacex.yaml"
+    queue = _unproduced_queue(tmp_path)
     for typed in ("Flight-15-preview", " FLIGHT-15-PREVIEW ", "flight-15-preview"):
         picked = pick_deep_dive_topic(queue, "2026-11-10", force_id=typed)
         assert picked and picked["id"] == "flight-15-preview", typed
