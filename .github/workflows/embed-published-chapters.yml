@@ -1,0 +1,138 @@
+name: Embed Chapters in Published Episodes
+
+# Put chapters inside the episodes already published (Nov 11 2026).
+#
+# From Nov 11 every new MP3 carries its chapters in its ID3 tag (Apple
+# Podcasts, Overcast) and every new feed item lists them as "0:00 Title"
+# lines (Spotify). This brings the back catalogue up to the same state,
+# from the chapters_epNNN.json each episode committed when it was made.
+#
+# Pass 1 pulls each published MP3 back from R2 (never through the OP3
+# prefix), writes the chapters into its ID3 tag with a stream copy and
+# uploads it to the SAME key: no subscriber is re-pointed and no URL
+# changes. The upload is REFUSED unless the decoded audio of the new file
+# is bit-identical to the old one. Pass 2 runs on a fresh checkout of main,
+# just before the commit, so a show run's feed write is never raced: it
+# corrects each re-tagged item's enclosure length and adds the chapter
+# lines to its description. GUIDs, titles, dates and URLs never change.
+#
+# DRY RUN IS THE DEFAULT. Pass 1 stops starting new episodes after four
+# hours so the feeds and the log always commit; a run is resumable: digests/<dir>/mp3_chapters_log.json
+# records what was done, and the next run skips it. The edge may serve the
+# old bytes for up to four hours (cache-control max-age 14400).
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Show slug (e.g. tesla, nerra_daily) or all'
+        required: true
+        type: string
+        default: 'all'
+      episode:
+        description: 'One episode number (optional; needs a single show)'
+        required: false
+        type: string
+        default: ''
+      apply:
+        description: 'Upload, edit the feeds and commit. Leave false for a dry run.'
+        required: false
+        type: boolean
+        default: false
+      limit:
+        description: 'Episodes re-tagged this run (0 = no cap)'
+        required: false
+        type: string
+        default: '0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: embed-published-chapters
+  cancel-in-progress: false
+
+jobs:
+  embed:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 300
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Install ffmpeg
+        uses: ./.github/actions/setup-ffmpeg
+
+      - name: Pass 1 - re-tag the MP3s on R2
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          SHOW_INPUT: ${{ inputs.show }}
+          EPISODE_INPUT: ${{ inputs.episode }}
+          APPLY_INPUT: ${{ inputs.apply }}
+          LIMIT_INPUT: ${{ inputs.limit }}
+        run: |
+          set -o pipefail
+          if [ "${SHOW_INPUT}" = "all" ]; then args="--all-shows"; else args="--show ${SHOW_INPUT}"; fi
+          if [ -n "${EPISODE_INPUT}" ]; then args="$args --episode ${EPISODE_INPUT}"; fi
+          args="$args --limit ${LIMIT_INPUT:-0} --budget-minutes 240 --results ${RUNNER_TEMP}/chapters_results.json"
+          if [ "${APPLY_INPUT}" = "true" ]; then args="$args --apply"; fi
+          set +e
+          # shellcheck disable=SC2086
+          python scripts/embed_published_chapters.py --embed $args 2>&1 | tee /tmp/embed.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          echo "embed_status=$status" >> "$GITHUB_ENV"
+          {
+            echo "## Embed chapters: ${SHOW_INPUT} ${EPISODE_INPUT}"
+            if [ "${APPLY_INPUT}" = "true" ]; then echo "**Mode: APPLY**"; else echo "**Mode: dry run**, nothing written"; fi
+            echo
+            echo '```'
+            grep -E 'EMBED_SUMMARY|REFUSED|failed' /tmp/embed.txt | tail -c 20000 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The feeds are edited on the live tip, seconds before the commit, so
+      # a show run that committed its feed during pass 1 is never undone.
+      - name: Pass 2 - edit the feeds on the live tip
+        if: ${{ !cancelled() && inputs.apply }}
+        env:
+          SHOW_INPUT: ${{ inputs.show }}
+        run: |
+          git fetch --depth=1 origin main
+          git reset --hard origin/main
+          if [ "${SHOW_INPUT}" = "all" ]; then args="--all-shows"; else args="--show ${SHOW_INPUT}"; fi
+          # shellcheck disable=SC2086
+          python scripts/embed_published_chapters.py --feeds $args --apply \
+            --results "${RUNNER_TEMP}/chapters_results.json" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit the feeds and the log
+        if: ${{ !cancelled() && inputs.apply }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            *.rss
+            digests/**/mp3_chapters_log.json
+          commit-message: |
+            Embed chapters in published episodes (${{ inputs.show }})
+
+            Each re-tagged MP3 went back to its own R2 key with its audio
+            bit-identical; the feed items keep their GUIDs and URLs and gain
+            their enclosure length and the chapter lines in the notes.
+          recovery-on-failure: 'true'
+          recovery-show: chapters
+
+      - name: Fail when an episode was refused or failed
+        if: ${{ !cancelled() && env.embed_status != '0' }}
+        run: |
+          echo "::error::Some episodes were refused or failed in pass 1; nothing was uploaded for those. See the summary."
+          exit 1
