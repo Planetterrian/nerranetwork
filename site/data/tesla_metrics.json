@@ -1,44 +1,207 @@
 {
   "version": 1,
-  "note": "Curated Tesla operating metrics for the Tesla dashboard. Annual + quarterly figures are from Tesla's published Production & Deliveries / annual reports and are operator-maintained: append the newest quarter after each P&D release (and the newest year each January). Quarterly delivered totals sum to the annual deliveries here (2023=1,808,581; 2024=1,789,226). The dashboard charts whatever is here, so it grows as rows are added. Stock/market data is fetched live separately (api/tesla_dashboard.json).",
-  "updated_at": "2026-06-13",
+  "note": "Curated Tesla operating metrics for the Tesla dashboard, from Tesla's quarterly Production, Deliveries & Deployments releases (ir.tesla.com; the 8-K exhibit 99.1 for each quarter). Append the newest quarter (produced, delivered, energy_gwh) within a few days of each release (early Jan/Apr/Jul/Oct) and the newest year each January; Mission Control warns when a quarter is overdue. Quarterly deliveries reconcile exactly to the annual figures and energy within Tesla's 0.1 GWh rounding (2025: 1,654,667 produced, 1,636,129 delivered, 46.7 GWh). Stock/market data is fetched live separately (api/tesla_dashboard.json).",
+  "updated_at": "2026-11-11",
   "deliveries_annual": [
-    {"year": "2019", "vehicles": 367656},
-    {"year": "2020", "vehicles": 499550},
-    {"year": "2021", "vehicles": 936172},
-    {"year": "2022", "vehicles": 1313851},
-    {"year": "2023", "vehicles": 1808581},
-    {"year": "2024", "vehicles": 1789226}
+    {
+      "year": "2019",
+      "vehicles": 367656
+    },
+    {
+      "year": "2020",
+      "vehicles": 499550
+    },
+    {
+      "year": "2021",
+      "vehicles": 936172
+    },
+    {
+      "year": "2022",
+      "vehicles": 1313851
+    },
+    {
+      "year": "2023",
+      "vehicles": 1808581
+    },
+    {
+      "year": "2024",
+      "vehicles": 1789226
+    },
+    {
+      "year": "2025",
+      "vehicles": 1636129
+    }
   ],
   "deliveries_quarterly": [
-    {"quarter": "2023 Q1", "produced": 440808, "delivered": 422875},
-    {"quarter": "2023 Q2", "produced": 479700, "delivered": 466140},
-    {"quarter": "2023 Q3", "produced": 430488, "delivered": 435059},
-    {"quarter": "2023 Q4", "produced": 494989, "delivered": 484507},
-    {"quarter": "2024 Q1", "produced": 433371, "delivered": 386810},
-    {"quarter": "2024 Q2", "produced": 410831, "delivered": 443956},
-    {"quarter": "2024 Q3", "produced": 469796, "delivered": 462890},
-    {"quarter": "2024 Q4", "produced": 459445, "delivered": 495570},
-    {"quarter": "2025 Q1", "produced": 362615, "delivered": 336681}
+    {
+      "quarter": "2023 Q1",
+      "produced": 440808,
+      "delivered": 422875,
+      "energy_gwh": 3.9
+    },
+    {
+      "quarter": "2023 Q2",
+      "produced": 479700,
+      "delivered": 466140,
+      "energy_gwh": 3.7
+    },
+    {
+      "quarter": "2023 Q3",
+      "produced": 430488,
+      "delivered": 435059,
+      "energy_gwh": 4.0
+    },
+    {
+      "quarter": "2023 Q4",
+      "produced": 494989,
+      "delivered": 484507,
+      "energy_gwh": 3.2
+    },
+    {
+      "quarter": "2024 Q1",
+      "produced": 433371,
+      "delivered": 386810,
+      "energy_gwh": 4.1
+    },
+    {
+      "quarter": "2024 Q2",
+      "produced": 410831,
+      "delivered": 443956,
+      "energy_gwh": 9.4
+    },
+    {
+      "quarter": "2024 Q3",
+      "produced": 469796,
+      "delivered": 462890,
+      "energy_gwh": 6.9
+    },
+    {
+      "quarter": "2024 Q4",
+      "produced": 459445,
+      "delivered": 495570,
+      "energy_gwh": 11.0
+    },
+    {
+      "quarter": "2025 Q1",
+      "produced": 362615,
+      "delivered": 336681,
+      "energy_gwh": 10.4
+    },
+    {
+      "quarter": "2025 Q2",
+      "produced": 410244,
+      "delivered": 384122,
+      "energy_gwh": 9.6
+    },
+    {
+      "quarter": "2025 Q3",
+      "produced": 447450,
+      "delivered": 497099,
+      "energy_gwh": 12.5
+    },
+    {
+      "quarter": "2025 Q4",
+      "produced": 434358,
+      "delivered": 418227,
+      "energy_gwh": 14.2
+    },
+    {
+      "quarter": "2026 Q1",
+      "produced": 408386,
+      "delivered": 358023,
+      "energy_gwh": 8.8
+    },
+    {
+      "quarter": "2026 Q2",
+      "produced": 451758,
+      "delivered": 480126,
+      "energy_gwh": 13.5
+    },
+    {
+      "quarter": "2026 Q3",
+      "produced": 464391,
+      "delivered": 486532,
+      "energy_gwh": 13.7
+    }
   ],
   "energy_storage_annual_gwh": [
-    {"year": "2020", "gwh": 3.0},
-    {"year": "2021", "gwh": 4.0},
-    {"year": "2022", "gwh": 6.5},
-    {"year": "2023", "gwh": 14.7},
-    {"year": "2024", "gwh": 31.4}
+    {
+      "year": "2020",
+      "gwh": 3.0
+    },
+    {
+      "year": "2021",
+      "gwh": 4.0
+    },
+    {
+      "year": "2022",
+      "gwh": 6.5
+    },
+    {
+      "year": "2023",
+      "gwh": 14.7
+    },
+    {
+      "year": "2024",
+      "gwh": 31.4
+    },
+    {
+      "year": "2025",
+      "gwh": 46.7
+    }
   ],
   "supercharger_connectors_annual": [
-    {"year": "2019", "connectors": 16103},
-    {"year": "2020", "connectors": 23277},
-    {"year": "2021", "connectors": 31498},
-    {"year": "2022", "connectors": 42419},
-    {"year": "2023", "connectors": 54892},
-    {"year": "2024", "connectors": 65495}
+    {
+      "year": "2019",
+      "connectors": 16103
+    },
+    {
+      "year": "2020",
+      "connectors": 23277
+    },
+    {
+      "year": "2021",
+      "connectors": 31498
+    },
+    {
+      "year": "2022",
+      "connectors": 42419
+    },
+    {
+      "year": "2023",
+      "connectors": 54892
+    },
+    {
+      "year": "2024",
+      "connectors": 65495
+    },
+    {
+      "year": "2025",
+      "connectors": 77682
+    }
   ],
   "highlights": [
-    {"label": "Cumulative vehicles delivered", "value": "7.7M+", "note": "since 2012, through 2024"},
-    {"label": "Gigafactories", "value": "6", "note": "Fremont, NV, TX, Berlin, Shanghai, + energy"},
-    {"label": "Cumulative energy storage", "value": "~60 GWh", "note": "Powerwall + Megapack, through 2024"}
-  ]
+    {
+      "label": "Cumulative vehicles delivered",
+      "value": "10.6M+",
+      "note": "since 2012, through Q3 2026"
+    },
+    {
+      "label": "Gigafactories",
+      "value": "6",
+      "note": "Fremont, NV, TX, Berlin, Shanghai, + energy"
+    },
+    {
+      "label": "Cumulative energy storage",
+      "value": "~140 GWh",
+      "note": "Powerwall + Megapack, through Q3 2026"
+    }
+  ],
+  "sources": {
+    "2025 Q4 and full year 2025": "https://ir.tesla.com/press-release/tesla-fourth-quarter-2025-production-deliveries-deployments",
+    "2026 Q1": "https://www.sec.gov/Archives/edgar/data/1318605/000162828026022956/exhibit9911111.htm",
+    "2026 Q2": "https://www.01net.it/tesla-second-quarter-2026-production-deliveries-deployments/",
+    "2026 Q3": "https://www.sec.gov/Archives/edgar/data/0001318605/000162828026064366/exhibit991111111.htm",
+    "Supercharger connectors 2025": "https://www.evinfrastructurenews.com/ev-technology/tesla-supercharger-network-grows-as-company-focus-moves-away-from-automotive"
+  }
 }

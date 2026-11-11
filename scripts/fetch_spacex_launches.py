@@ -24,6 +24,7 @@ import argparse
 import datetime as _dt
 import json
 import logging
+import re
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -408,6 +409,159 @@ def _annual_launches(path: Path = _METRICS_PATH) -> Dict[str, Any]:
     return {"years": []}
 
 
+# ---------------------------------------------------------------------------
+# The two curated series that went stale (Nov 11 2026): the Starship record
+# ended at IFT-9 (May 2025) beside a launch record holding Flights 10-14, and
+# the annual totals ended at 2024. Both are now EXTENDED from the launch
+# record each run: a curated entry is never edited or removed (its milestone
+# text stays the operator's), a flight the record holds and the list lacks is
+# appended, and the current year's total is counted, never typed.
+# ---------------------------------------------------------------------------
+
+_FLIGHT_NO_RE = re.compile(r"(?:Flight|IFT)[\s-]*(\d+)", re.I)
+
+
+def _is_starship(launch: Dict[str, Any]) -> bool:
+    return "starship" in f"{launch.get('rocket') or ''} {launch.get('name') or ''}".lower()
+
+
+def _flight_number(text: Any) -> Optional[int]:
+    m = _FLIGHT_NO_RE.search(str(text or ""))
+    return int(m.group(1)) if m else None
+
+
+def _outcome_from_status(launch: Dict[str, Any]) -> Optional[str]:
+    """Launch Library's status as the tracker's three outcomes; None while
+    the flight has no result yet (it is never listed before it flies)."""
+    s = f"{launch.get('status') or ''} {launch.get('status_name') or ''}".lower()
+    if "partial" in s:
+        return "partial"
+    if "fail" in s:
+        return "failure"
+    if "success" in s:
+        return "success"
+    return None
+
+
+def _first_sentence(text: Any, limit: int = 220) -> str:
+    t = " ".join(str(text or "").split())
+    if not t:
+        return ""
+    m = re.match(r"(.+?[.!?])(\s|$)", t)
+    t = m.group(1) if m else t
+    if len(t) > limit:
+        t = t[:limit].rsplit(" ", 1)[0].rstrip(",;:") + "\u2026"
+    return t
+
+
+def merge_starship_record(curated: Dict[str, Any], launches: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return the curated Starship record extended with every flown Starship
+    flight in *launches* (slim records) that the list does not hold yet.
+
+    A flight is matched by its number (``IFT-9`` / ``Flight 9``) or its date,
+    so a curated entry is never duplicated; appended entries carry
+    ``"source": "launch_record"`` and the record's own first sentence."""
+    out = dict(curated or {})
+    flights = [dict(f) for f in (out.get("flights") or []) if isinstance(f, dict)]
+    numbers = {_flight_number(f.get("flight")) for f in flights} - {None}
+    dates = {str(f.get("date") or "") for f in flights}
+    added = 0
+    for launch in launches or []:
+        if not _is_starship(launch):
+            continue
+        outcome = _outcome_from_status(launch)
+        date = str(launch.get("net") or "")[:10]
+        if not outcome or not date:
+            continue
+        num = _flight_number(launch.get("name")) or _flight_number(launch.get("mission"))
+        if (num is not None and num in numbers) or date in dates:
+            continue
+        flights.append({
+            "flight": f"IFT-{num}" if num is not None else str(launch.get("name") or "Starship"),
+            "date": date,
+            "outcome": outcome,
+            "milestone": (_first_sentence(launch.get("mission_description"))
+                          or "Result from the Launch Library record."),
+            "source": "launch_record",
+        })
+        if num is not None:
+            numbers.add(num)
+        dates.add(date)
+        added += 1
+    flights.sort(key=lambda f: str(f.get("date") or ""))
+    out["flights"] = flights
+    if added:
+        logger.info("Starship record: appended %d flight(s) from the launch record", added)
+    return out
+
+
+def _counts_toward_annual(launch: Dict[str, Any]) -> bool:
+    """The annual series counts orbital launches: a suborbital Starship test
+    is a flight, not an orbital launch (the curated 2018-2024 totals)."""
+    if _is_starship(launch):
+        return "orbit" in str(launch.get("orbit") or "").lower() and "sub" not in str(launch.get("orbit") or "").lower()
+    return True
+
+
+def merge_annual_launches(curated: Dict[str, Any], launches: List[Dict[str, Any]],
+                          now: _dt.datetime) -> Dict[str, Any]:
+    """Return the curated annual totals extended from the launch record.
+
+    A year is counted only when the record reaches back to its 1 January.
+    A finished year is ADDED when missing (a curated total wins); the current
+    year is always recounted and flagged ``ytd`` so the page labels it."""
+    out = dict(curated or {})
+    years = [dict(y) for y in (out.get("years") or []) if isinstance(y, dict)]
+    flown = [x for x in launches or [] if _outcome_from_status(x) and str(x.get("net") or "")[:4].isdigit()]
+    if not flown:
+        out["years"] = years
+        return out
+    oldest = min(str(x["net"])[:10] for x in flown)
+    counts: Dict[str, int] = {}
+    for launch in flown:
+        if _counts_toward_annual(launch):
+            y = str(launch["net"])[:4]
+            counts[y] = counts.get(y, 0) + 1
+    by_year = {str(y.get("year")): y for y in years}
+    for y in sorted(counts):
+        if oldest > f"{y}-01-01":
+            continue  # the record does not reach this year's start
+        current = int(y) == now.year
+        row = by_year.get(y)
+        if row is None:
+            row = {"year": y}
+            years.append(row)
+            by_year[y] = row
+        elif not (current or row.get("ytd")):
+            continue  # a finished year's total is never rewritten
+        row["launches"] = counts[y]
+        if current:
+            row["ytd"] = True
+            row["through"] = now.date().isoformat()
+        else:
+            row.pop("ytd", None)
+            row.pop("through", None)
+            row.setdefault("source", "launch_record")
+    years.sort(key=lambda y: str(y.get("year")))
+    out["years"] = years
+    return out
+
+
+def _persist_curated_merges(starship: Dict[str, Any], annual: Dict[str, Any],
+                            path: Path = _METRICS_PATH) -> None:
+    """Write the extended series back so they accrue past the 400-day
+    window (a flight the window drops is still in the committed record)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        if not isinstance(data, dict):
+            return
+        data["starship_flights"] = starship
+        data["annual_launches"] = annual
+        path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    except Exception as exc:  # non-fatal: the page still renders the payload
+        logger.warning("Could not persist curated merges (non-fatal): %s", exc)
+
+
 def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
     """Accurate fleet stats + clearly-estimated mass/satellite headlines for
     the dashboard, computed over the last 365 days of fetched launches."""
@@ -467,12 +621,15 @@ def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[st
     }
 
 
-def _fetch_previous_paginated(now: _dt.datetime, max_pages: int = 4) -> tuple[List[Dict[str, Any]], Optional[int]]:
+def _fetch_previous_paginated(now: _dt.datetime, max_pages: int = 5) -> tuple[List[Dict[str, Any]], Optional[int]]:
     """Walk the previous-launches feed until ~13 months of history is
     covered (SpaceX flies ~12-15/month, so a true 12-month cadence chart
     + accurate 365-day stats need well over 100 records). Capped at
     *max_pages* (100/page) to bound API calls."""
-    cutoff = now - _dt.timedelta(days=400)
+    # Reach back to 1 January of LAST year too, so the annual series can
+    # count a finished year from the record (merge_annual_launches).
+    cutoff = min(now - _dt.timedelta(days=400),
+                 _dt.datetime(now.year - 1, 1, 1, tzinfo=_dt.timezone.utc))
     collected: List[Dict[str, Any]] = []
     total: Optional[int] = None
     url = (
@@ -544,6 +701,9 @@ def build_payload() -> Optional[Dict[str, Any]]:
     fleet["starlink_active"] = sat_counts.get("starlink")  # real count, or None
     fleet["total_active_satellites"] = sat_counts.get("total")  # real, or None
     fleet["boosters"] = _booster_stats(prev_results)  # reuse record watch
+    starship = merge_starship_record(_starship_flights(), slim_prev)
+    annual = merge_annual_launches(_annual_launches(), slim_prev, now)
+    _persist_curated_merges(starship, annual)
     return {
         "next": next_launch,
         "previous": previous_launch,
@@ -555,8 +715,8 @@ def build_payload() -> Optional[Dict[str, Any]]:
         "stats": _stats(slim_prev, now),
         "pads": _pad_breakdown(slim_prev, now),
         "fleet": fleet,
-        "starship": _starship_flights(),
-        "annual_launches": _annual_launches(),
+        "starship": starship,
+        "annual_launches": annual,
         "total_launches": prev_total,
         "source": "thespacedevs_ll2",
         "updated_at": now.isoformat(),

@@ -37,6 +37,7 @@ from engine import blog as _blog
 from engine import brand as _brand
 from engine import summaries_ssr as _summaries_ssr
 from engine import show_lang as _show_lang
+from engine import public_dashboards as _public_dashboards
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
@@ -2974,6 +2975,7 @@ def generate_spacex_dashboard(*, dry_run=False):
         "canonical_url": f"{GITHUB_RAW}/spacex-dashboard.html",
         "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
         "rss_url": f"{cfg['rss_file']}",
+        "recent_episodes": _dashboard_recent_episodes("spacex"),
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
     }
@@ -3032,6 +3034,10 @@ def generate_tesla_dashboard(*, dry_run=False):
         # Shown beside every curated block: the page reads "Live" and the
         # operating metrics are only as current as this date.
         "metrics_updated_at": metrics.get("updated_at"),
+        # The scoreboard and the home page read the same function
+        # (engine.public_dashboards), so the two can never disagree.
+        "latest_quarter": _public_dashboards.tesla_latest_quarter(metrics),
+        "recent_episodes": _dashboard_recent_episodes("tesla"),
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
     }
@@ -3043,6 +3049,41 @@ def generate_tesla_dashboard(*, dry_run=False):
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
+
+
+def _dashboard_recent_episodes(slug: str, limit: int = 3) -> list:
+    """Newest-first episode cards for a show's data dashboard (Nov 11 2026):
+    the numbers page links back to what the show said about them. Read from
+    the committed summaries JSON; an episode without its article is left out."""
+    cfg = NETWORK_SHOWS.get(slug) or {}
+    path = ROOT / (cfg.get("json_path") or "")
+    if not cfg.get("json_path") or not path.exists():
+        return []
+    try:
+        import json as _json
+        data = _json.loads(path.read_text(encoding="utf-8"))
+        items = data.get("summaries", data) if isinstance(data, dict) else data
+    except Exception as exc:  # noqa: BLE001 — a link row is never worth a build
+        print(f"Warning: could not load {slug} summaries: {exc}")
+        return []
+    rows = [i for i in (items or []) if isinstance(i, dict)]
+    rows.sort(key=lambda i: (str(i.get("date") or ""), int(i.get("episode_num") or i.get("episode") or 0)),
+              reverse=True)
+    out = []
+    for item in rows:
+        ep = item.get("episode_num") or item.get("episode") or 0
+        url = _blog_url_for_episode(slug, episode_num=ep)
+        title = (item.get("hook") or item.get("title") or "").strip()
+        if not title:
+            m = re.search(r"^>\s*\*\*(.+?)\*\*", item.get("content") or "", re.M)
+            title = m.group(1).strip() if m else ""
+        if not url or not title:
+            continue
+        out.append({"episode_num": ep, "date": str(item.get("date") or "")[:10],
+                    "title": title, "url": url})
+        if len(out) >= limit:
+            break
+    return out
 
 
 def _offshore_north_recent_episodes(limit: int = 6) -> list:
@@ -5170,11 +5211,19 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
 
     # ---- Live dashboards + Story Trackers ------------------------------
     dashboards = []
+    # Each dashboard's headline numbers, from the same reading the dashboard
+    # prints (engine.public_dashboards; a number not on file is left out).
+    try:
+        dash_stats = _public_dashboards.homepage_facts(ROOT)
+    except Exception as exc:  # noqa: BLE001 — a stat row is never worth a build
+        print(f"Warning: dashboard headline numbers unavailable: {exc}")
+        dash_stats = {}
 
-    def _dash(slug, rel, title, desc, fact=""):
+    def _dash(slug, rel, title, desc, fact="", stats=None):
         if slug not in by_slug or not _landing_file(rel):
             return
         dashboards.append({"title": title, "desc": desc, "url": rel, "fact": fact,
+                           "stats": stats or [],
                            "brand_color": by_slug[slug]["brand_color"],
                            "show_name": by_slug[slug]["name"]})
 
@@ -5189,7 +5238,8 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
                            f"{' · ' + nxt['rocket'] if nxt.get('rocket') else ''}"
                            f" · no earlier than {net_d.strftime('%b')} {net_d.day}")
     _dash("spacex", "spacex-dashboard.html", "SpaceX dashboard",
-          "Launch cadence, the fleet, pads and Starship, updated daily.", launch_fact)
+          "Launch cadence, the fleet, pads and Starship, updated daily.", launch_fact,
+          dash_stats.get("spacex"))
     # The strip's own TSLA quote (engine.newsroom.market_strip): a close is
     # dated by its bar, never by the weekend fetch that read it (Oct 18 2026).
     from engine import newsroom as _nr
@@ -5197,7 +5247,13 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
         (q for q in (markets or {}).get("quotes") or [] if q.get("symbol") == "TSLA"),
         None))
     _dash("tesla", "tesla-dashboard.html", "Tesla dashboard",
-          "The stock, deliveries and the programs the show tracks.", tsla_fact)
+          "The stock, deliveries and energy storage, quarter by quarter.", tsla_fact,
+          dash_stats.get("tesla"))
+    # MIT's record sits beside the two market dashboards: the three that carry
+    # numbers lead the band, the Offshore North pair follows.
+    _dash("modern_investing", "modern-investing-performance.html", "Modern Investing record",
+          "Every simulated trade published, losers and voided picks included.",
+          stats=dash_stats.get("modern_investing"))
     on = _load_json_quiet(ROOT / "api" / "offshore_north_dashboard.json") or {}
     fix = ((on.get("tracker") or {}).get("latest") or {}) if isinstance(on, dict) else {}
     on_fact = ""
@@ -5213,8 +5269,6 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
     _dash("offshore_north", "offshore-north-glossary.html", "Plain Sailing glossary",
           "Offshore racing explained for a keen non-expert.",
           f"{n_terms} terms, each with a sentence you could repeat" if n_terms else "")
-    _dash("modern_investing", "modern-investing-performance.html", "Modern Investing record",
-          "Every simulated trade published, losers and voided picks included.")
     out["dashboards"] = dashboards
     out["trackers"] = [
         {"name": s["name"], "url": rel, "brand_color": s["brand_color"]}

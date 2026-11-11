@@ -123,7 +123,7 @@
   .tsl-qlab { font-size:0.75rem; line-height:1.15; color:#c79aa3; white-space:nowrap; text-align:center; }
   .tsl-legend { display:flex; gap:18px; font-size:0.78rem; color:#cbb1b7; margin-bottom:8px; }
   .tsl-legend .sw { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:middle; }
-  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } }
+  @media (max-width:520px){ .tsl-qbars, #tslEnergyQ{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } #tslEnergyQ .cnt{ font-size:0.6rem; } }
   .tsl-asof { color:#e2b9c1; font-size:0.82rem; margin:0 0 0.8rem; }
 
   .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
@@ -136,6 +136,19 @@
   .tsl-hl { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0.6rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
   .tsl-hl:last-child{ border-bottom:none; }
   .tsl-hl .v { font-size:1.2rem; font-weight:800; color:#fff; }
+  /* The latest-quarter scoreboard (Nov 11 2026): the number Tesla is
+     judged on each quarter leads the page, with its year-ago comparison. */
+  .tsl-score { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:0.9rem; }
+  .tsl-score .k { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:#c79aa3; }
+  .tsl-score .v { font-size:clamp(1.7rem,4vw,2.3rem); font-weight:800; color:#fff; font-variant-numeric:tabular-nums; line-height:1.1; margin-top:2px; }
+  .tsl-score .d { font-size:0.85rem; color:#e2b9c1; margin-top:2px; }
+  .tsl-score .up { color:#5ef0a0; } .tsl-score .down { color:#ff8a8a; }
+  .tsl-eps { list-style:none; margin:0; padding:0; }
+  .tsl-eps li { padding:0.65rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
+  .tsl-eps li:last-child { border-bottom:none; }
+  .tsl-eps a { color:#fff; text-decoration:none; font-weight:600; line-height:1.35; }
+  .tsl-eps a:hover, .tsl-eps a:focus-visible { text-decoration:underline; }
+  .tsl-eps .tsl-muted { display:block; margin-top:2px; }
   .tsl-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#a8838c; font-size:0.78rem; }
 </style>
 
@@ -883,41 +896,31 @@
   </div>
 
   
+  
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <section class="tsl-panel" aria-labelledby="tslScoreH">
+      <h2 id="tslScoreH">Latest quarter: Q3 2026</h2>
+      <div class="tsl-score">
+        <div><div class="k">Vehicles delivered</div><div class="v">486,532</div>
+          <div class="d"><span class="down">-2.1%</span> on a year earlier</div></div>
+        <div><div class="k">Vehicles produced</div><div class="v">464,391</div>
+          <div class="d">22,141 more delivered than built</div></div>
+        <div><div class="k">Energy storage deployed</div><div class="v">13.7 GWh</div>
+          <div class="d"><span class="up">+9.6%</span> on a year earlier</div></div>
+      </div>
+      <p class="tsl-disclaimer">From Tesla's Q3 2026 Production, Deliveries &amp; Deployments release. The Q4 2026 figures are due in the first days after the quarter closes.</p>
+    </section>
+  </div>
+  
+  
   <div class="tsl-grid" style="grid-template-columns:1fr;">
     <div class="tsl-panel">
-      <h2>Quarterly production &amp; deliveries</h2><p class="tsl-asof">Operator data as of 2026-06-13 · latest quarter on record: 2025 Q1</p>
+      <h2>Quarterly production &amp; deliveries</h2><p class="tsl-asof">Operator data as of 2026-11-11 · latest quarter on record: 2026 Q3</p>
       <div class="tsl-legend">
         <span><span class="sw" style="background:linear-gradient(180deg,#8a5560,#4a2a31);"></span>Produced</span>
         <span><span class="sw" style="background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red));"></span>Delivered</span>
       </div>
       <div class="tsl-qbars" id="tslQuarterly">
-        
-        <div class="tsl-qg">
-          <div class="tsl-qpair">
-            <div class="tsl-qbar prod" data-v="440808" style="height:0" title="Produced: 440,808"></div>
-            <div class="tsl-qbar del" data-v="422875" style="height:0" title="Delivered: 422,875"></div>
-          </div>
-          
-          <div class="tsl-qlab">Q1<br>2023</div>
-        </div>
-        
-        <div class="tsl-qg">
-          <div class="tsl-qpair">
-            <div class="tsl-qbar prod" data-v="479700" style="height:0" title="Produced: 479,700"></div>
-            <div class="tsl-qbar del" data-v="466140" style="height:0" title="Delivered: 466,140"></div>
-          </div>
-          
-          <div class="tsl-qlab">Q2<br>2023</div>
-        </div>
-        
-        <div class="tsl-qg">
-          <div class="tsl-qpair">
-            <div class="tsl-qbar prod" data-v="430488" style="height:0" title="Produced: 430,488"></div>
-            <div class="tsl-qbar del" data-v="435059" style="height:0" title="Delivered: 435,059"></div>
-          </div>
-          
-          <div class="tsl-qlab">Q3<br>2023</div>
-        </div>
         
         <div class="tsl-qg">
           <div class="tsl-qpair">
@@ -973,10 +976,112 @@
           <div class="tsl-qlab">Q1<br>2025</div>
         </div>
         
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="410244" style="height:0" title="Produced: 410,244"></div>
+            <div class="tsl-qbar del" data-v="384122" style="height:0" title="Delivered: 384,122"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q2<br>2025</div>
+        </div>
+        
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="447450" style="height:0" title="Produced: 447,450"></div>
+            <div class="tsl-qbar del" data-v="497099" style="height:0" title="Delivered: 497,099"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q3<br>2025</div>
+        </div>
+        
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="434358" style="height:0" title="Produced: 434,358"></div>
+            <div class="tsl-qbar del" data-v="418227" style="height:0" title="Delivered: 418,227"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q4<br>2025</div>
+        </div>
+        
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="408386" style="height:0" title="Produced: 408,386"></div>
+            <div class="tsl-qbar del" data-v="358023" style="height:0" title="Delivered: 358,023"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q1<br>2026</div>
+        </div>
+        
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="451758" style="height:0" title="Produced: 451,758"></div>
+            <div class="tsl-qbar del" data-v="480126" style="height:0" title="Delivered: 480,126"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q2<br>2026</div>
+        </div>
+        
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="464391" style="height:0" title="Produced: 464,391"></div>
+            <div class="tsl-qbar del" data-v="486532" style="height:0" title="Delivered: 486,532"></div>
+          </div>
+          
+          <div class="tsl-qlab">Q3<br>2026</div>
+        </div>
+        
       </div>
       <p class="tsl-disclaimer">Tesla's published Production &amp; Deliveries figures by quarter (the number watched most closely each quarter). Quarterly delivered totals reconcile to the annual deliveries below. Operator-maintained — append each new quarter after the P&amp;D release.</p>
     </div>
   </div>
+  
+  
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <div class="tsl-panel">
+      <h2>Energy storage deployed by quarter (GWh)</h2>
+      <div class="tsl-bars" id="tslEnergyQ" style="height:200px;">
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="3.2" style="height:0"><span class="cnt">3.2</span></div><div class="tsl-qlab">Q4<br>2023</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="4.1" style="height:0"><span class="cnt">4.1</span></div><div class="tsl-qlab">Q1<br>2024</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="9.4" style="height:0"><span class="cnt">9.4</span></div><div class="tsl-qlab">Q2<br>2024</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="6.9" style="height:0"><span class="cnt">6.9</span></div><div class="tsl-qlab">Q3<br>2024</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="11.0" style="height:0"><span class="cnt">11.0</span></div><div class="tsl-qlab">Q4<br>2024</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="10.4" style="height:0"><span class="cnt">10.4</span></div><div class="tsl-qlab">Q1<br>2025</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="9.6" style="height:0"><span class="cnt">9.6</span></div><div class="tsl-qlab">Q2<br>2025</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="12.5" style="height:0"><span class="cnt">12.5</span></div><div class="tsl-qlab">Q3<br>2025</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="14.2" style="height:0"><span class="cnt">14.2</span></div><div class="tsl-qlab">Q4<br>2025</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="8.8" style="height:0"><span class="cnt">8.8</span></div><div class="tsl-qlab">Q1<br>2026</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="13.5" style="height:0"><span class="cnt">13.5</span></div><div class="tsl-qlab">Q2<br>2026</div></div>
+        
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="13.7" style="height:0"><span class="cnt">13.7</span></div><div class="tsl-qlab">Q3<br>2026</div></div>
+        
+      </div>
+      <p class="tsl-disclaimer">Megapack and Powerwall deployments each quarter, from the same quarterly release.</p>
+    </div>
+  </div>
+  
   
 
   <div class="tsl-grid">
@@ -996,8 +1101,10 @@
         
         <div class="tsl-bw"><div class="tsl-bar" data-v="1789226" style="height:0"><span class="cnt">1789k</span></div><div class="tsl-blab">2024</div></div>
         
+        <div class="tsl-bw"><div class="tsl-bar" data-v="1636129" style="height:0"><span class="cnt">1636k</span></div><div class="tsl-blab">2025</div></div>
+        
       </div>
-      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained (data as of 2026-06-13) — newest year appended each January.</p>
+      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained (data as of 2026-11-11) — newest year appended each January.</p>
     </div>
     <div class="tsl-panel">
       <h2>Energy storage deployed (GWh / yr)</h2>
@@ -1013,8 +1120,10 @@
         
         <div class="tsl-bw"><div class="tsl-bar" data-v="31.4" style="height:0"><span class="cnt">31.4</span></div><div class="tsl-blab">2024</div></div>
         
+        <div class="tsl-bw"><div class="tsl-bar" data-v="46.7" style="height:0"><span class="cnt">46.7</span></div><div class="tsl-blab">2025</div></div>
+        
       </div>
-      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained (data as of 2026-06-13).</p>
+      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained (data as of 2026-11-11).</p>
     </div>
   </div>
 
@@ -1036,6 +1145,8 @@
         
         <div class="tsl-bw"><div class="tsl-bar" data-v="65495" style="height:0"><span class="cnt">65k</span></div><div class="tsl-blab">2024</div></div>
         
+        <div class="tsl-bw"><div class="tsl-bar" data-v="77682" style="height:0"><span class="cnt">78k</span></div><div class="tsl-blab">2025</div></div>
+        
       </div>
       <p class="tsl-disclaimer">Cumulative Supercharger connectors at year-end, from Tesla's published figures — the fast-charging network that's now opening to other automakers (NACS). Operator-maintained.</p>
     </div>
@@ -1044,16 +1155,32 @@
     <div class="tsl-panel">
       <h2>Milestones</h2>
       
-      <div class="tsl-hl"><span>Cumulative vehicles delivered <span class="tsl-muted">since 2012, through 2024</span></span><span class="v">7.7M+</span></div>
+      <div class="tsl-hl"><span>Cumulative vehicles delivered <span class="tsl-muted">since 2012, through Q3 2026</span></span><span class="v">10.6M+</span></div>
       
       <div class="tsl-hl"><span>Gigafactories <span class="tsl-muted">Fremont, NV, TX, Berlin, Shanghai, + energy</span></span><span class="v">6</span></div>
       
-      <div class="tsl-hl"><span>Cumulative energy storage <span class="tsl-muted">Powerwall + Megapack, through 2024</span></span><span class="v">~60 GWh</span></div>
+      <div class="tsl-hl"><span>Cumulative energy storage <span class="tsl-muted">Powerwall + Megapack, through Q3 2026</span></span><span class="v">~140 GWh</span></div>
       
     </div>
     
   </div>
 
+  
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <section class="tsl-panel" aria-labelledby="tslEpsH">
+      <h2 id="tslEpsH">Latest from Tesla Shorts Time</h2>
+      <ul class="tsl-eps">
+        
+        <li><a href="blog/tesla/ep661.html">Tesla has started earthworks on a 3,000-acre Texas site for a $10 billion solar factory projected to create 9,712 permanent jobs.</a><span class="tsl-muted">Episode 661 · 2026-11-10</span></li>
+        
+        <li><a href="blog/tesla/ep660.html">Giga Texas is positioned to become North America’s largest cell plant as Tesla expands battery output.</a><span class="tsl-muted">Episode 660 · 2026-11-09</span></li>
+        
+        <li><a href="blog/tesla/ep659.html">Tesla&#39;s Robotaxi service in Austin now begins rides at 5 AM instead of 6 AM.</a><span class="tsl-muted">Episode 659 · 2026-11-08</span></li>
+        
+      </ul>
+    </section>
+  </div>
+  
   <p class="tsl-foot-note">
     Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Explore every dashboard at the <a href="data.html" style="color:var(--tsl-glow);">Nerra data hub</a>. Nothing here is financial advice.
   </p>
@@ -1433,7 +1560,7 @@
     const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
     bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
-  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslSupercharger');
+  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslEnergyQ'); animateBars('tslSupercharger');
 
   // quarterly paired bars share one scale across produced + delivered
   (function(){ const w=document.getElementById('tslQuarterly'); if(!w) return;

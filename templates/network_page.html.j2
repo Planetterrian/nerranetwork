@@ -855,14 +855,15 @@
 {#- Live dashboards + Story Trackers -#}
 {% if dashboards or trackers %}
 <section class="lt-block container" id="dashboards" aria-labelledby="lt-dash-h">
-    <div class="lt-block-head"><h2 id="lt-dash-h">Live dashboards &amp; trackers</h2><p class="lt-block-sub">Pages the network keeps current between episodes.</p></div>
+    <div class="lt-block-head"><h2 id="lt-dash-h">Live dashboards &amp; trackers</h2><p class="lt-block-sub">The numbers behind the shows, kept current between episodes.</p></div>
     {% if dashboards %}
-    <div class="lt-dash-grid">
+    <div class="lt-dash-grid{% if dashboards | selectattr('stats') | list %} lt-dash-grid--stats{% endif %}">
         {% for d in dashboards %}
-        <a class="lt-dash" href="{{ path_prefix }}{{ d.url }}" style="--show-color:{{ d.brand_color }};">
+        <a class="lt-dash{% if d.stats %} lt-dash--stats{% endif %}" href="{{ path_prefix }}{{ d.url }}" style="--show-color:{{ d.brand_color }};">
             <span class="lt-kicker">{{ d.show_name }}</span>
             <span class="lt-dash-title">{{ d.title }}</span>
             <span class="lt-dash-desc">{{ d.desc }}</span>
+            {% if d.stats %}<span class="lt-dash-stats">{% for st in d.stats %}<span class="lt-dash-stat"><span class="lt-dash-stat-v">{{ st.value | e }}</span><span class="lt-dash-stat-l">{{ st.label | e }}</span></span>{% endfor %}</span>{% endif %}
             {% if d.fact %}<span class="lt-dash-fact">{{ d.fact | e }}</span>{% endif %}
         </a>
         {% endfor %}

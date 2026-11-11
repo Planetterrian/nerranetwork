@@ -217,6 +217,12 @@
   .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
   .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
   .spx-muted { color:#8ea3d6; font-size:0.82rem; }
+  .spx-eps { list-style:none; margin:0; padding:0; }
+  .spx-eps li { padding:0.65rem 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .spx-eps li:last-child { border-bottom:none; }
+  .spx-eps a { color:#fff; text-decoration:none; font-weight:600; line-height:1.35; }
+  .spx-eps a:hover, .spx-eps a:focus-visible { text-decoration:underline; }
+  .spx-eps .spx-muted { display:block; margin-top:2px; font-size:0.8rem; }
   .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
   .spx-disclaimer { color:#7f93c4; font-size:0.75rem; margin-top:0.4rem; }
   .spx-asof { color:#cfe0ff; font-size:0.82rem; margin:0 0 0.6rem; padding:6px 10px; border-left:3px solid var(--spx-cyan); background:rgba(0,212,255,0.06); border-radius:4px; }
@@ -989,7 +995,8 @@
     <div class="spx-panel">
       <h2>Launches per year <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(the growth story)</span></h2>
       <div class="spx-cadence" id="spxAnnual"></div>
-      <p class="spx-disclaimer">SpaceX orbital launches by year — from 26 in 2020 to a record cadence today. The live monthly chart above covers the recent window; this is the long arc. Operator-maintained as the current year accrues.</p>
+      <p class="spx-asof" id="spxAnnualYtd" hidden></p>
+      <p class="spx-disclaimer">SpaceX orbital launches by year — from 26 in 2020 to a record cadence today. Finished years are from published totals; the current year is recounted from the launch record every night.</p>
     </div>
   </div>
 
@@ -1038,7 +1045,7 @@
       <p class="spx-asof" id="ssLiveNote" hidden></p>
       <p class="spx-asof" id="ssAsOf" hidden></p>
       <div id="ssTimeline"><p class="spx-muted">Loading…</p></div>
-      <p class="spx-disclaimer">Curated record of Starship's integrated flight tests (Super Heavy + Ship). Outcome reflects the primary test objectives; "partial" means key milestones were hit even where a stage was lost. The path to a fully reusable, rapidly-flown super-heavy-lift vehicle.</p>
+      <p class="spx-disclaimer">Starship's integrated flight tests (Super Heavy + Ship). Outcome reflects the primary test objectives; "partial" means key milestones were hit even where a stage was lost. A flight the launch record holds is added the night after it flies; its summary is the record's own until it is curated.</p>
     </div>
   </div>
 
@@ -1082,6 +1089,22 @@
     </div>
   </div>
 
+  
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
+    <section class="spx-panel" aria-labelledby="spxEpsH">
+      <h2 id="spxEpsH">Latest from SpaceX Daily</h2>
+      <ul class="spx-eps">
+        
+        <li><a href="blog/spacex/ep158.html">Starship Flight 15 Preview: The First Ship Catch Attempt aims to catch an orbital Ship at the tower for the first time.</a><span class="spx-muted">Episode 158 · 2026-11-10</span></li>
+        
+        <li><a href="blog/spacex/ep157.html">Falcon 9 lifts a classified payload from Vandenberg tonight while new medium-lift vehicles near first flights.</a><span class="spx-muted">Episode 157 · 2026-11-10</span></li>
+        
+        <li><a href="blog/spacex/ep156.html">Starship Flight 15 targets the first catch of both stages next week.</a><span class="spx-muted">Episode 156 · 2026-11-09</span></li>
+        
+      </ul>
+    </section>
+  </div>
+  
   <p class="spx-foot-note">
     Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page. Explore every dashboard at the <a href="data.html" style="color:var(--spx-cyan);">Nerra data hub</a>.
   </p>
@@ -1531,9 +1554,15 @@
     wrap.innerHTML = years.map(function(x){
       var v = x.launches||0;
       var h = Math.round((v/max)*130)+3;
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v+'</span></div><div class="spx-bar-label">'+x.year+'</div></div>';
+      // A year still running is labelled so (it is counted, never typed).
+      var lab = x.ytd ? x.year+' YTD' : x.year;
+      var style = x.ytd ? ' style="height:0;opacity:.7;background:repeating-linear-gradient(135deg,var(--spx-cyan) 0 6px,var(--spx-blue) 6px 12px)"' : ' style="height:0"';
+      return '<div class="spx-bar-wrap"><div class="spx-bar"'+style+' data-h="'+h+'"><span class="cnt">'+v+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
     }).join('');
     requestAnimationFrame(function(){ wrap.querySelectorAll('.spx-bar').forEach(function(b){ b.style.height=b.dataset.h+'px'; }); });
+    var cur = years.filter(function(x){ return x.ytd; })[0];
+    var note = document.getElementById('spxAnnualYtd');
+    if(note && cur){ note.textContent = cur.year + ' so far: ' + cur.launches + ' orbital launches through ' + (cur.through||'today') + ', counted from the launch record.'; note.hidden = false; }
   }
 
   function renderCadence(months){
@@ -1749,9 +1778,8 @@
     var el = document.getElementById('ssLatest'); if(el) el.textContent = last.flight||'—';
     var asOf = document.getElementById('ssAsOf');
     if(asOf){
-      asOf.textContent = (s.updated_at ? 'Operator data as of ' + s.updated_at + ' — this curated record'
-                                       : 'Operator-maintained record —') +
-        ' ends at ' + (last.flight||'its last entry') + (last.date ? ' (' + last.date + ')' : '') + '.';
+      asOf.textContent = 'Record through ' + (last.flight||'its last entry') + (last.date ? ' (' + last.date + ')' : '') +
+        (s.updated_at ? ' · summaries curated ' + s.updated_at : '') + '.';
       asOf.hidden = false;
     }
     var live = newestLiveStarship(data);
