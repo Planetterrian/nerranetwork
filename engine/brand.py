@@ -935,6 +935,49 @@ MIRA_INTERVIEW_STEPS = [
                      "with the AI host disclosed on air."),
 ]
 
+#: Nov 11 2026: what a guest is told about the hour itself, in writing,
+#: before they join (the studio page's pre-join card and the two-hour
+#: reminder email). The 20 graded rooms to Nov 5 named a spoken format speech
+#: at the top more than any other fault, and two guests left during one, so
+#: the details live where a guest can read them at their own pace. Every
+#: item is a statement of the room AS BUILT: the buttons are the studio's
+#: (``age-of-ai-studio.html``), a restart is cut by ``auto_edit.RESTART_RE``,
+#: the closing round is the room's, the transcript terms are step 7 above.
+#: Change an item only with the thing it describes.
+MIRA_HOUR_HEADING = "How your hour goes"
+MIRA_HOUR_PARTS = [
+    ("A hello, then your subject",
+     "Mira says hello, explains in a few words how the hour works, and is on "
+     "the subject you came to talk about within the first couple of minutes."),
+    ("She waits for you",
+     "Mira pauses a few seconds after you finish, so nothing gets cut off. "
+     "The pauses are taken out of the episode."),
+    ("You steer",
+     "Say it out loud, or use the buttons on the studio page: New subject, "
+     "Repeat the question, Good question and Let's wrap up. You can type her "
+     "a note too. Any question can be skipped."),
+    ("Start an answer again whenever you like",
+     "Say you'd like to start again and go. The first try comes out in the "
+     "edit."),
+    ("A short closing round",
+     "Near the end Mira asks a few quick closing questions, one at a time, "
+     "and the last word is yours."),
+    ("You see it before anyone else",
+     "You get the transcript, with a week to approve it, cut from it or "
+     "refuse it before it publishes."),
+]
+
+
+def mira_hour_html(style: str = "") -> str:
+    """:data:`MIRA_HOUR_PARTS` as an HTML block for an email or a page."""
+    import html as _h
+    items = "".join(f"<li><b>{_h.escape(t)}</b> — {_h.escape(d)}</li>"
+                    for t, d in MIRA_HOUR_PARTS)
+    attr = f' style="{_h.escape(style)}"' if style else ""
+    return (f"<div{attr}><p><strong>{_h.escape(MIRA_HOUR_HEADING)}</strong></p>"
+            f"<ul>{items}</ul></div>")
+
+
 #: The steps a show page shows beside the Hosted-by-Mira band — the ones a
 #: prospective guest asks about first (apply, the human read, the
 #: conversation, the human edit, the transcript). The full list is on

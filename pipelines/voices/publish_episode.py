@@ -725,6 +725,20 @@ def share_card_link(show: VoiceShow, episode_num: int) -> str:
         return ""
 
 
+def guest_post_text(pkg: dict, url: str) -> str:
+    """The guest's own draft post from the package's social copy, with the
+    episode's link in it, or "" when there is none or it carries no link."""
+    copy = (pkg or {}).get("social_copy")
+    if not isinstance(copy, dict):
+        return ""
+    text = " ".join(str(copy.get("guest_post") or "").split())
+    if not text or not url:
+        return ""
+    if "{episode_url}" in text:
+        return text.replace("{episode_url}", url)
+    return text if url in text else ""
+
+
 def published_email(show: VoiceShow, app: dict, pkg: dict,
                     episode_num: int, when: dt.date | None = None,
                     run: dict | None = None, youtube: dict | None = None) -> tuple:
@@ -780,6 +794,17 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
         parts.append("<p>A short moment to share, if you want one"
                      + (f" — <em>{e(clip_title)}</em>" if clip_title else "")
                      + f": {link(clip_url)}</p>")
+    # Nov 11 2026: a guest shares what costs them nothing to write. The
+    # social pass drafts a post in their own voice (06_social_copy.txt,
+    # ``guest_post``); it goes here, with the episode's link in it, marked
+    # as a draft for them to change.
+    draft = guest_post_text(pkg, post)
+    if draft:
+        parts.append("<p>A post in your own words, if it saves you time. It is a "
+                     "draft from the transcript, so change anything that does not "
+                     "sound like you:</p>"
+                     '<blockquote style="border-left:3px solid #ccc;margin:0 0 1em;'
+                     f'padding:.2em 1em">{e(draft)}</blockquote>')
     card = share_card_link(show, episode_num)
     if card:
         parts.append(f"<p>The episode's share card, for a post of your own: {link(card)}</p>")

@@ -125,6 +125,11 @@ def validate_social_copy(value: Any) -> None:
     for platform in ("twitter", "linkedin"):
         _require("{episode_url}" in str(value[platform]),
                  f"{platform} copy has no {{episode_url}} for the episode's link")
+    # Nov 11 2026: the guest's own post (optional, so an older package or a
+    # model that left it out still passes) carries the episode's link too.
+    if str(value.get("guest_post") or "").strip():
+        _require("{episode_url}" in str(value["guest_post"]),
+                 "guest_post has no {episode_url} for the episode's link")
 
 
 def validate_cross_show_callouts(value: Any) -> None:
