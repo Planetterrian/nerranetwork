@@ -1913,6 +1913,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
   Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
 
+### Chapters reach every app: inside the MP3 and in the notes (Nov 11 2026)
+
+Guards `tests/test_mp3_chapters_2026_11_11.py`.
+**`engine/audio_chapters.py` owns the chapters a podcast app reads**: Apple Podcasts and Overcast read only the MP3's ID3 `CHAP`/`CTOC` frames and Spotify only `0:00 Title` lines in the notes, so no episode had chapters there while `<podcast:chapters>` was on every feed. **The embed is a stream copy, the last edit before the upload and the feed** (a failure leaves the file as it was; metric `mp3_chapters_embedded`, a count the run's log reads). **A join never inherits a segment's chapters** (`-map_chapters -1` in `concatenate_audio` and `segment_trim_cmd`; Nerra Daily and Personal embed their own). **The interview feeds write only `vouched_chapters`** (`scripts/backfill_interview_chapters.py` did the published ones). Older show MP3s on R2 have no ID3 chapters until re-uploaded.
+
 ### The public dashboards stay current, and the front page shows their numbers (Nov 11 2026)
 
 Guards `tests/test_dashboards_review_2026_11_11.py`.

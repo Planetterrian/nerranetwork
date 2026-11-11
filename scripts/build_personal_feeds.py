@@ -831,6 +831,11 @@ def build_for_spec(
         chapter_pieces = personal_chapter_pieces(spec, segments,
                                                  durations_for_chapters, subchapters)
         chapters = build_chapters(chapter_pieces, title)
+        # Nov 11 2026: the chapters inside the MP3 too (Apple Podcasts and
+        # Overcast read only those; engine.audio_chapters). Before the size
+        # is recorded and the upload reads the bytes.
+        from engine.audio_chapters import embed_chapters_in_mp3
+        embed_chapters_in_mp3(final, chapters, duration_s=total)
         # Outlets each brief credits by name → the episode notes.
         sources: Dict[str, List[str]] = {}
         for (city, text) in local_texts:

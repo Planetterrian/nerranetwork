@@ -910,7 +910,9 @@ def segment_trim_cmd(
     # shipped quiet (Unintended Consequences at -25 inside Ep074, a 9.7 LU
     # step into the next chapter) no longer makes the edition uneven.
     filters = [PUBLISHED_LOUDNESS]
-    cmd = ["ffmpeg", "-y", "-i", str(in_path)]
+    # Nov 11 2026: the episode's own ID3 chapters never ride into a segment
+    # (the edition writes its own list; engine.audio_chapters).
+    cmd = ["ffmpeg", "-y", "-i", str(in_path), "-map_chapters", "-1"]
     if cut_final_seconds is not None:
         fade_start = max(0.0, cut_final_seconds - PROMO_FADE_SECONDS)
         cmd += ["-t", f"{cut_final_seconds:.2f}"]

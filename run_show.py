@@ -5746,6 +5746,20 @@ def run(args: argparse.Namespace) -> None:
                 else:
                     logger.warning("Final audio loudness: unmeasured (nothing recorded)")
 
+                # 10a-quater. Chapters INSIDE the MP3 (Nov 11 2026,
+                # engine.audio_chapters). Apple Podcasts and Overcast read
+                # chapters only from the file's ID3 tag, never the
+                # <podcast:chapters> JSON, so no episode of any show had
+                # chapters there. A stream copy: the audio is bit-identical.
+                # Last edit to the file, before the upload and the feed read
+                # its size; a failure leaves the file as it was.
+                _ch_json = digests_dir / f"chapters_ep{episode_num:03d}.json"
+                if _ch_json.exists():
+                    from engine.audio_chapters import embed_chapters_in_mp3
+                    _n_embedded = embed_chapters_in_mp3(
+                        final_mp3, _ch_json, duration_s=audio_duration)
+                    metrics.record("mp3_chapters_embedded", _n_embedded)
+
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).
 
@@ -6192,6 +6206,20 @@ def _make_feed_writer(
         if _src_line:
             episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
             metrics.record("show_notes_sources", len(_src_line.split(" · ")))
+        # Chapter timestamps (Nov 11 2026, engine.audio_chapters): Spotify
+        # builds chapters only from "0:00 Title" lines in the description,
+        # and most apps linkify them. Same list and rules as YouTube's.
+        try:
+            from engine.audio_chapters import chapter_timestamp_block
+            _ch_block = chapter_timestamp_block(
+                digests_dir / f"chapters_ep{episode_num:03d}.json",
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+            )
+        except Exception as _ch_exc:  # noqa: BLE001 — the notes ship without it
+            logger.warning("Chapter timestamps for show notes failed (non-fatal): %s", _ch_exc)
+            _ch_block = ""
+        if _ch_block:
+            episode_desc = episode_desc.rstrip() + "\n\n" + _ch_block
         # Corrections (Oct 1 2026, engine/corrections.py): the corrected
         # episode's own note, and the "Correction to episode N" line the
         # policy page promises on the NEXT episode. "" on an ordinary day.

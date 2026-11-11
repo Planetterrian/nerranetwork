@@ -437,6 +437,47 @@ def write_transcript_vtt(pkg: dict, show: VoiceShow, episode_num: int,
     return path
 
 
+def chapters_json_path(show: VoiceShow, episode_num: int) -> Path:
+    """``chapters_epNNN.json`` beside the digest, the name every run_show
+    show uses (the blog's chapter section reads it there)."""
+    return ROOT / show.audio_subdir / f"chapters_ep{episode_num:03d}.json"
+
+
+def write_chapters_json(chapters: list, show: VoiceShow, episode_num: int,
+                        title: str = "") -> Path | None:
+    """The episode's Podcasting 2.0 chapters file from the VOUCHED list, or
+    None when fewer than two chapters remain.
+
+    Nov 11 2026. The interview feeds carried no ``<podcast:chapters>`` at
+    all: the chapter list reached the post and YouTube but never a podcast
+    app. Only :func:`vouched_chapters` output is ever written here, so the
+    file can never carry a list the transcript does not support.
+    """
+    out = []
+    for ch in chapters or []:
+        if not isinstance(ch, dict):
+            continue
+        try:
+            start = float(ch.get("start", ch.get("startTime")))
+        except (TypeError, ValueError):
+            continue
+        name = " ".join(str(ch.get("title") or "").split())
+        if name:
+            out.append({"startTime": round(start, 1), "title": name})
+    out.sort(key=lambda c: c["startTime"])
+    if len(out) < 2:
+        return None
+    data = {"version": "1.2.0", "chapters": out}
+    if title:
+        data["title"] = title
+    path = chapters_json_path(show, episode_num)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+    logger.info("chapters JSON written: %s (%d chapters)", path.name, len(out))
+    return path
+
+
 def transcript_vtt_url(show: VoiceShow, path: Path) -> str:
     """Where Pages serves the committed VTT (same shape run_show uses)."""
     return f"{show.base_url}/{show.audio_subdir}/{path.name}"
@@ -880,6 +921,22 @@ def publish_one(interview_id: str) -> int:
         logger.exception("transcript VTT not written (non-fatal)")
     podcast_tags = feed_podcast_tags(show, episode_num, vtt_path,
                                      host_name=_host_name(cfg))
+    # Nov 11 2026: the vouched chapters reach the podcast apps too, as the
+    # <podcast:chapters> file and as "0:00 Title" lines in the feed's notes
+    # (Spotify reads only those). The post keeps the notes as written.
+    feed_description = description
+    try:
+        chapters_path = write_chapters_json(vouched_chapters(pkg), show,
+                                            episode_num, title)
+        if chapters_path is not None:
+            podcast_tags["chapters_url"] = (
+                f"{show.base_url}/{show.audio_subdir}/{chapters_path.name}")
+            from engine.audio_chapters import chapter_timestamp_block
+            block = chapter_timestamp_block(chapters_path)
+            if block:
+                feed_description = feed_description.rstrip() + "\n\n" + block
+    except Exception:  # noqa: BLE001 — the episode still publishes
+        logger.exception("chapters not written (non-fatal)")
 
     # Duration + file size need the real file — fetch headers/bytes to tmp.
     with tempfile.TemporaryDirectory(prefix=f"{show.slug}_publish_") as tmp:
@@ -914,7 +971,7 @@ def publish_one(interview_id: str) -> int:
         # VoiceShow registry — the same values run_show would use.
         update_rss_feed(
             show.rss_path,
-            episode_num, title, description, today,
+            episode_num, title, feed_description, today,
             local_mp3.name, duration, local_mp3,
             audio_url=feed_audio_url,
             audio_subdir=show.audio_subdir,
