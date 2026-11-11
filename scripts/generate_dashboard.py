@@ -44,7 +44,7 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Make `engine` importable when this script is run from anywhere.
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -3907,6 +3907,127 @@ def item_23_public_dashboard_data(root: Path, today: Optional[_dt.date] = None) 
                {"findings": findings})
 
 
+# Mission Control's growth panel (Nov 11 2026): the last four complete weeks
+# are compared with the four weeks this many weeks earlier (a quarter), and
+# no multiple is printed against a base smaller than the floor.
+GROWTH_STORY_WEEKS_BACK = 13
+GROWTH_STORY_RATE_FLOOR = 30
+
+
+def build_growth_story(root: Path) -> Dict[str, Any]:
+    """The network's growth since tracking began, for Mission Control's
+    growth panel (Nov 11 2026): the page had every weekly number on file
+    and no chart of them, so a sponsor's first figure was one week's
+    week-over-week change.
+
+    Same reading the media kit charts (generate_html._media_kit_growth):
+    podcast downloads are COMPLETE OP3 weeks only (the newest bucket is
+    never charted or compared), YouTube is the nightly channel snapshots
+    carried forward over a missed night per channel, one point a week.
+    The headline is the average of the last four complete weeks against
+    the four weeks a quarter (13 weeks) earlier: one week is noise, a
+    month is not. Every comparison is ``None`` (a dash on the page) until
+    the history is long enough to make it; nothing here is a forecast.
+    """
+    out: Dict[str, Any] = {"configured": False}
+
+    def _day(value: Any) -> Optional[_dt.date]:
+        try:
+            return _dt.date.fromisoformat(str(value)[:10])
+        except (TypeError, ValueError):
+            return None
+
+    # ---- podcast downloads by complete week ----
+    hist = _load_json(root / "api" / "op3_history.json") or {}
+    updated = _day(hist.get("updated_at"))
+    weekly: List[Tuple[_dt.date, int]] = []
+    for wk in sorted(hist.get("weeks") or {}):
+        start = _day(wk)
+        row = (hist.get("weeks") or {}).get(wk)
+        if start is None or not isinstance(row, dict):
+            continue
+        if updated is None or start + _dt.timedelta(days=7) > updated:
+            continue
+        weekly.append((start, sum(int(v) for v in row.values()
+                                  if isinstance(v, (int, float)))))
+    downloads: Dict[str, Any] = {
+        "weeks": [{"week": d.isoformat(), "value": v} for d, v in weekly],
+        "since": weekly[0][0].isoformat() if weekly else None,
+        "avg_4w": None, "avg_4w_then": None, "then_week": None,
+        "weeks_apart": None, "multiple": None, "change_pct": None,
+    }
+    if len(weekly) >= 4:
+        downloads["avg_4w"] = round(sum(v for _d, v in weekly[-4:]) / 4)
+    # A quarter back when the history reaches it; otherwise the earliest
+    # four weeks, and only once the two windows do not overlap.
+    back = GROWTH_STORY_WEEKS_BACK if len(weekly) >= GROWTH_STORY_WEEKS_BACK + 4 \
+        else (len(weekly) - 4 if len(weekly) >= 8 else None)
+    if back:
+        then = weekly[-(back + 4):-back]
+        then_avg = sum(v for _d, v in then) / 4
+        if then_avg >= GROWTH_STORY_RATE_FLOOR:
+            downloads["avg_4w_then"] = round(then_avg)
+            downloads["then_week"] = then[-1][0].isoformat()
+            downloads["weeks_apart"] = back
+            downloads["multiple"] = round(downloads["avg_4w"] / then_avg, 1)
+            downloads["change_pct"] = round(
+                (downloads["avg_4w"] - then_avg) / then_avg * 100, 1)
+    out["downloads"] = downloads
+
+    # ---- YouTube subscribers and lifetime views, one point a week ----
+    rows = (_load_json(root / "api" / "youtube_channel_history.json") or {}).get("rows") or []
+    by_day: Dict[_dt.date, Dict[str, Dict[str, int]]] = {}
+    for r in rows:
+        d = _day((r or {}).get("date"))
+        if d is None or not isinstance(r.get("subscribers"), (int, float)):
+            continue
+        by_day.setdefault(d, {})[str(r.get("channel"))] = {
+            "subscribers": int(r["subscribers"]),
+            "views": int(r["total_views"]) if isinstance(r.get("total_views"), (int, float)) else 0,
+        }
+    series: List[Tuple[_dt.date, Dict[str, Dict[str, int]]]] = []
+    latest: Dict[str, Dict[str, int]] = {}
+    for d in sorted(by_day):
+        latest.update(by_day[d])
+        series.append((d, dict(latest)))
+    youtube: Dict[str, Any] = {"points": [], "since": None, "channels": [],
+                               "subscribers_now": None, "subscribers_first": None,
+                               "views_now": None, "views_first": None}
+    if series:
+        points = []
+        cursor = series[-1][0]
+        while cursor >= series[0][0]:
+            snap = [s for s in series if s[0] <= cursor]
+            if not snap:
+                break
+            day, chans = snap[-1]
+            points.append({
+                "date": day.isoformat(),
+                "subscribers": sum(c["subscribers"] for c in chans.values()),
+                "views": sum(c["views"] for c in chans.values()),
+                "by_channel": {k: c["subscribers"] for k, c in sorted(chans.items())},
+            })
+            cursor -= _dt.timedelta(days=7)
+        points.reverse()
+        first_day, first = series[0]
+        youtube.update({
+            "points": points,
+            "since": first_day.isoformat(),
+            "channels": sorted(series[-1][1]),
+            "subscribers_now": points[-1]["subscribers"],
+            "subscribers_first": sum(c["subscribers"] for c in first.values()),
+            "views_now": points[-1]["views"],
+            "views_first": sum(c["views"] for c in first.values()),
+        })
+    out["youtube"] = youtube
+    out["configured"] = bool(weekly or series)
+    out["note"] = (
+        "Podcast downloads are complete OP3 weeks only; the newest bucket is "
+        "never charted or compared. YouTube is the nightly channel snapshot, "
+        "one point a week.")
+    return out
+
+
 def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optional[int] = None) -> Dict[str, Any]:
     shows = load_shows_from_yaml(root / "shows", root)
     rss = audit_rss_enclosures(root, offline=offline)
@@ -4038,6 +4159,10 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # Nov 3 2026: the daily audit's editorial score, 14 days per show —
         # the tile beside the audience headline.
         "editorial_score": build_editorial_score_section(root),
+        # Nov 11 2026: the growth panel every view opens on — complete
+        # weeks of downloads and the weekly YouTube snapshot since tracking
+        # began, with a four-week average against a quarter earlier.
+        "growth_story": build_growth_story(root),
         # Growth levers (Aug 2026): trends, experiments, stagger, specials.
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
