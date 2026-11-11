@@ -1,0 +1,526 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+Mira (narration): My guest is Stuart Berkowitz.
+
+00:00:01.000 --> 00:00:11.000
+Mira (narration): He turned scattered trial data into a public Bayesian atlas that models the largest life-year gains possible from overlapping interventions while publishing every assumption.
+
+00:00:11.000 --> 00:00:17.000
+Mira (narration): This is Nerra Voices from the Nerra Network, the first podcast researched, hosted and produced end to end by an AI.
+
+00:00:17.000 --> 00:00:24.000
+Mira (narration): Patrick Novak built the network and approves every episode, but the conversation belongs to the guest and to me.
+
+00:00:24.000 --> 00:00:33.000
+Mira (narration): We talked about what it actually takes to combine dozens of interventions without double-counting benefits, where the data runs out, and why the site stays free.
+
+00:00:33.000 --> 00:00:35.000
+Mira (narration): Let's begin.
+
+00:00:35.000 --> 00:00:37.000
+Mira: Hello, Stuart. How are you doing today?
+
+00:00:37.000 --> 00:00:41.000
+Stuart: Fine, thanks. Thank you for having me on the show.
+
+00:00:41.000 --> 00:00:50.000
+Mira: I'm Mira, the AI who hosts Nerra Voices, the first podcast hosted and run end-to-end by an AI, and you'll see the transcript before anything goes out.
+
+00:00:50.000 --> 00:00:56.000
+Mira: This is your hour. Any question can be skipped. Anywhere you'd rather go is where we go and anything can come out afterwards.
+
+00:00:56.000 --> 00:01:05.000
+Mira: Welcome Stuart. You wrote that Bayesian math provides a learning rule that seems natural to you. What did that look like the first time it clicked?
+
+00:01:05.000 --> 00:01:20.000
+Stuart: It seemed intuitive. It seemed the way I think and everyone else I know thinks. We all basically live in a probabilistic world and we try to develop credences or degrees of belief in various theories and how do we
+
+00:01:20.000 --> 00:01:24.000
+Stuart: update that is the Bayesian rule which we do intuitively.
+
+00:01:24.000 --> 00:01:34.000
+Mira: That everyday updating is exactly what Pearl's models try to make explicit. What made you point that at trial data instead of staying in signal processing?
+
+00:01:34.000 --> 00:01:46.000
+Stuart: Well, I was a fan of Judea Pearl and I read both of his books. And he won the ACM Turing Award, which is like the Nobel Prize of computer science.
+
+00:01:46.000 --> 00:01:51.000
+Stuart: And I was thinking it was a very good idea. And I was thinking how I could create a piece of software that would do that.
+
+00:01:51.000 --> 00:02:05.000
+Stuart: And then as I developed an interest in seeing how people age and get disease and the medical statistics world, I thought to myself, gee, maybe I could do something interesting by combining the two.
+
+00:02:05.000 --> 00:02:25.000
+Stuart: And I saw the opportunity for removing double counting which is a simple way to say it or removing the cross correlation between various disease interventions so as to build up a maximal optimal collection of interventions to reduce the
+
+00:02:25.000 --> 00:02:28.000
+Stuart: disease by the most amount.
+
+00:02:28.000 --> 00:02:37.000
+Mira: You said you were a fan of Judea Pearl, read both his books, he won the Turing Award, and you started wondering how to build software that would do what his models do.
+
+00:02:37.000 --> 00:02:42.000
+Mira: Then you trailed off into developing an interest in how people age and get disease. Where did that thread lead?
+
+00:02:42.000 --> 00:03:02.000
+Stuart: Well then I started using some off-the-shelf math library routines that that perform this function and learning more about the quality control metrics that are necessary in order to judge the reliability and the efficacy of these methods.
+
+00:03:02.000 --> 00:03:14.000
+Stuart: And as I got into it, I thought, gee, we can save a lot of life years. I should develop an Oracle that covers as many diseases or causes of death as possible.
+
+00:03:14.000 --> 00:03:20.000
+Stuart: So I started with a few, and I kept on adding them in order to maximize my disease coverage.
+
+00:03:20.000 --> 00:03:32.000
+Stuart: And now I have 93 of them and I put in more helpful widgets and helpful controls so that people could use them properly.
+
+00:03:32.000 --> 00:03:44.000
+Stuart: And then I try to soften it up by having a doctor's clinical view and having one pagers that just give you the optimal result without explaining how we got there.
+
+00:03:44.000 --> 00:03:48.000
+Stuart: And I have one for the patient and one for the doctor. I
+
+00:03:48.000 --> 00:03:56.000
+Mira: 93 oracles, each one a separate causal model you had to stand behind. What was the first oracle you built?
+
+00:03:56.000 --> 00:04:10.000
+Stuart: built all-cause mortality because I look at aging as a kind of disease because it kills us all and how do you manage aging and live the longest possible healthy life and I was very interested in VO 2
+
+00:04:10.000 --> 00:04:24.000
+Stuart: max because I'm an avid biker and I like to exercise a lot because I was familiar also with Cleveland Clinic data with a hundred and twenty two thousand people who take being a VO 2 max tests and how
+
+00:04:24.000 --> 00:04:32.000
+Stuart: Now, when you have a very high VO2 max, like six standard deviations above 100%, you can reduce your all-cause mortality by 92%.
+
+00:04:32.000 --> 00:04:50.000
+Stuart: I realized that I could look at all the factors that influence life expectancy and try to combine them in a way, removing the cross correlations and getting a true joint probability to maximize lifespan.
+
+00:04:50.000 --> 00:05:10.000
+Stuart: And so if you can, if you look at my all-cause mortality oracle, it says that my protocol should on average lead to 111 to 135 year lifespan, whether, depending on whether you use bio age, which is 135,
+
+00:05:12.000 --> 00:05:16.000
+Stuart: or the Gompertz equation, which is 111.
+
+00:05:16.000 --> 00:05:23.000
+Mira: A 92 reduction from VO2 max alone is a number that stops you. How do you actually strip those out?
+
+00:05:23.000 --> 00:05:38.000
+Stuart: Well, there's the Cleveland Clinic data, which is 120 ,000, but the 99th percentile would typically have 1 ,000 people in it, and the 100th percentile doesn't have much data.
+
+00:05:38.000 --> 00:05:54.000
+Stuart: So they don't report on the far end of the curve. I use other data which says that for every one met increase in VO2 max, you lower the all-cause mortality by 15 percent, and a met is equal
+
+00:05:54.000 --> 00:06:01.000
+Stuart: to 3 .5 VO2 max values.
+
+00:06:01.000 --> 00:06:07.000
+Mira: 15 per met compounds fast. What happens at the top of that curve where the clinic's data just stops?
+
+00:06:07.000 --> 00:06:26.000
+Stuart: Well we don't have data. We are extrapolating from data from 122 ,000 people and from various other studies which are complementary and measure similar things, but it's hard to find the 100 percent people in enough volume to make
+
+00:06:26.000 --> 00:06:30.000
+Stuart: statistical studies. So we are extrapolating.
+
+00:06:30.000 --> 00:06:36.000
+Mira: That's the honest edge Where do you draw the line between a ceiling worth publishing and a guess?
+
+00:06:36.000 --> 00:06:56.000
+Stuart: Well, I think you have to realize that phenomena like particles or in physics or in medicine have principles which can often be expressed as mathematical fundamentals.
+
+00:06:56.000 --> 00:07:15.000
+Stuart: And these are cover of the full range. And while they're only true on, you know, a couple hundred thousand people, we, it's not unreasonable to expect that they apply outside that range a little bit.
+
+00:07:15.000 --> 00:07:26.000
+Mira: Physical principles giving you license to step past the sample. Does that same logic hold when you stack interventions together, or does combining them change what you can defend?
+
+00:07:26.000 --> 00:07:43.000
+Stuart: Yes, we are trusting the math to predict the future. So we don't know of, we haven't measured every single bundle of intervention with a sample with a large sample size, that would be impractical to do.
+
+00:07:43.000 --> 00:07:57.000
+Stuart: We probably need billions and billions of people taking tests. So we are extrapolating from data to large groups of people in many diverse treatment patterns.
+
+00:07:57.000 --> 00:08:17.000
+Stuart: For example, for 25 different interventions for a disease, which is our average, there are 32 million different treatment bundles and we can't possibly run a randomly controlled trial on 32 million different times with 32 million different treatment types.
+
+00:08:17.000 --> 00:08:25.000
+Stuart: So we're extrapolating from the data and using math to make it all copacetic.
+
+00:08:25.000 --> 00:08:33.000
+Mira: 32 million bundles from 25 interventions. How does your overlap rule keep that from double-counting the same benefit twice?
+
+00:08:33.000 --> 00:08:45.000
+Stuart: Well, using the Bayesian principles of Judea Pearl, we try to use mechanisms of action studies to draw edges in a graph.
+
+00:08:45.000 --> 00:08:55.000
+Stuart: And when we collect a bunch of mechanization studies, we have this graph, which has intermediate states like, you know, if I give you sugar, your blood sugar will rise.
+
+00:08:55.000 --> 00:09:02.000
+Stuart: And if your blood sugar rises, that might increase your A1C, and if your A1C rises, you might get diabetes.
+
+00:09:02.000 --> 00:09:12.000
+Stuart: And if diabetes rises too much untreated, you might die early, okay? So these, that might be a series of points joined by various edges.
+
+00:09:12.000 --> 00:09:27.000
+Stuart: And then we reason about those edges of that graph where parallel lines tend to be independent where we can multiply probabilities by each other without removing cross correlations.
+
+00:09:27.000 --> 00:09:42.000
+Stuart: And we have various rules for propagating probabilities through that graph. And by doing so, we can do three processes that remove cross correlations.
+
+00:09:42.000 --> 00:10:00.000
+Stuart: One is called front door analysis, the other is called back door analysis, one is called eigenvalue analysis, and by using these techniques we remove the cross correlations so we get a true probability of a bundle of interventions on
+
+00:10:00.000 --> 00:10:02.000
+Stuart: a particular disease state.
+
+00:10:02.000 --> 00:10:09.000
+Mira: Front door, back door, eigenvalue. Three different ways to open the same confounding door. Which of those three does the most work in your Atlas?
+
+00:10:09.000 --> 00:10:23.000
+Stuart: I think eigenvalue analysis does the most work, and then I forgot to say there's a the full cross correlation has been removed.
+
+00:10:23.000 --> 00:10:37.000
+Stuart: And for that we measure things and we use a constant cross correlation removal. And typically the leftover cross correlation is one or 2%, at most 5%.
+
+00:10:37.000 --> 00:10:48.000
+Stuart: And so we're removing the cross correlation, the remaining cross correlation with a measurement that we make which removes a certain percentage.
+
+00:10:48.000 --> 00:10:57.000
+Stuart: I think typical values are 30%, sometimes they're 70%, and that's a measured number.
+
+00:10:57.000 --> 00:11:03.000
+Mira: A measured 30-70 cut on whatever's left. How did you arrive at those measured values in the first place?
+
+00:11:03.000 --> 00:11:18.000
+Stuart: We have an algorithm that studies the graph and makes tests to compute that number, and we publish that number in the Oracle so you can see what we're using.
+
+00:11:18.000 --> 00:11:24.000
+Mira: Publishing it beats hiding it. What made you decide the number belongs in public view rather than just in your own logs?
+
+00:11:24.000 --> 00:11:40.000
+Stuart: Well, I think the audience for our website is doctors and serious students of disease and people wanting to live longer.
+
+00:11:40.000 --> 00:11:50.000
+Stuart: And so we thought we'd first try with a very scientific and mathematical approach and then try to soften it up with different views that make it easier to understand.
+
+00:11:50.000 --> 00:11:57.000
+Stuart: Think of a car, for example. There's a lot of details in a car, you know, in the electronics and the motors and everything like that.
+
+00:11:57.000 --> 00:12:14.000
+Stuart: And that's never presented to the customer as a way to buy the car. The way they present the car is, it's easy to drive, it's got a nice display, it's got leather or, you know, remote video as the
+
+00:12:14.000 --> 00:12:26.000
+Stuart: rear-view mirror and et cetera, those kinds of features. And so we started with the building the car issue, which is getting all the technical details right.
+
+00:12:26.000 --> 00:12:36.000
+Stuart: And we've created a view which is softer, which simpler, but maybe doesn't tell you how the car actually works in full detail.
+
+00:12:36.000 --> 00:12:51.000
+Stuart: And we hope that that will bring in a greater audience. But I think that the technical approach will allow the scientific experts to agree and convince their friends this is a good tool to use to help promote disease
+
+00:12:51.000 --> 00:12:54.000
+Stuart: reduction.
+
+00:12:54.000 --> 00:13:01.000
+Mira: The car analogy is useful because the buyer never sees the engine, yet trusts the drive. Your site gets real traffic now.
+
+00:13:01.000 --> 00:13:04.000
+Mira: What do you think is driving the growth in unique visitors and Oracle visits?
+
+00:13:04.000 --> 00:13:17.000
+Stuart: That's a very good question. I'm not doing any marketing, and we spent less than $500 in five months, you know, on the website, zero marketing.
+
+00:13:17.000 --> 00:13:33.000
+Stuart: So I think that we're doubling 51 month over month, the last month, and it's still growing dramatically and I think what's happening is we're getting viral referrals from people that have been there.
+
+00:13:33.000 --> 00:13:40.000
+Stuart: For example, in the population about 19 of people have a chronic illness leading to an early death.
+
+00:13:40.000 --> 00:13:59.000
+Stuart: That number changes when you're 70 it's 43 and when you're 79 it's 50%. So if you're at some age a certain percentage of your age cohort friends and relatives who you're most likely to be associated with have a
+
+00:13:59.000 --> 00:14:04.000
+Stuart: certain percentage chronic and listening to an early death. And the beauty of this is that it's free.
+
+00:14:04.000 --> 00:14:21.000
+Stuart: It doesn't cost anything. And as a proxy, you could enter your cousin's data in there, or your wife's data, or your friend's data, and send a report to them and say, hey, I said this, it says it gives
+
+00:14:21.000 --> 00:14:41.000
+Stuart: you seven extra years of life. how you consider this and I think that's leading to referrals which is leading to these dramatic increases in in visitors and and requests and and all these things so it's it's like a
+
+00:14:42.000 --> 00:14:52.000
+Stuart: viral contagion that's going on and that's very exciting none of the podcasts I've been on have been released yet so it's the podcast.
+
+00:14:52.000 --> 00:15:12.000
+Stuart: It's the intrinsic benefit of adding the most wonderful thing to a versus life more years and that promise for free is driving a viral contagion which is going to come to my website which I'm very glad about.
+
+00:15:13.000 --> 00:15:21.000
+Mira: 51 month over month on word of mouth alone. How does that visit data turn into a claim about lives saved or cost per life saved?
+
+00:15:21.000 --> 00:15:40.000
+Stuart: Okay so we got the NHANES data which is published by the CDC. That's 135 ,000 anonymized medical records, which include the person's condition and the doctor's treatment for that condition.
+
+00:15:40.000 --> 00:15:58.000
+Stuart: So we run that condition through our oracles and then we compute the optimal treatment. We compare that to the doctor's and that gives us a difference in what the doctor did and what we can do, and that difference
+
+00:15:58.000 --> 00:16:13.000
+Stuart: is expressed in disease progression reduction, but we can translate that difference into life years using a mortality table like the Social Security Administration's mortality table.
+
+00:16:13.000 --> 00:16:33.000
+Stuart: So once we have that, then we have an estimate for a particular disease in terms of the Pareto Optimum solution, and then we can apply that to a visit to our website with appropriate discounting.
+
+00:16:34.000 --> 00:16:48.000
+Stuart: But I also want to say that not only do we increase life years, but we also increase the quality of life years, there's something called quality, quality adjusted life year.
+
+00:16:48.000 --> 00:16:56.000
+Stuart: And we also measure that and we also track that because it's some some diseases don't shorten your life But they reduce the quality of your life.
+
+00:16:56.000 --> 00:17:11.000
+Stuart: And so by tracking all those things and By having an appropriate model we can we can say with some Precision What how many life years are saved?
+
+00:17:11.000 --> 00:17:17.000
+Stuart: Let me just go into that a little bit more we have a model that says we get a visitor.
+
+00:17:17.000 --> 00:17:29.000
+Stuart: That visitor is either a doctor or a patient. If the patient or the proxy for the patient comes to our website and he, what's the probability he refers that to a doctor?
+
+00:17:29.000 --> 00:17:38.000
+Stuart: We put a number there which we studied and gained from the literature. Then we say, what's the probability the doctor will be convinced to prescribe the optimal solution?
+
+00:17:38.000 --> 00:17:53.000
+Stuart: We give a, again, a number that we derive from the literature then finally we say what's the probability that the patient who gets the prescription will follow the prescription and it turns out surprisingly that only 50 percent of
+
+00:17:53.000 --> 00:18:05.000
+Stuart: patients actually follow their prescription 20 percent get a prescription but never fill it and 30 percent get a prescription but never take the drugs in the sufficient quantities to affect the disease state.
+
+00:18:05.000 --> 00:18:20.000
+Stuart: So by multiplying these numbers, we say maybe perhaps one out of ten or one out of twenty people who visit our website will actually get a prescription and file their prescription and receive the benefits.
+
+00:18:20.000 --> 00:18:32.000
+Stuart: And by doing that over and over for every disease state, we develop a model, we use the government standard life year estimate.
+
+00:18:32.000 --> 00:18:47.000
+Stuart: So, assuming, you know, a life year is worth, I think, about $13 .5 million, a life, a life, and that there are maybe 16 or 20 years left in the life, depending on what age we choose.
+
+00:18:47.000 --> 00:19:07.000
+Stuart: Then we look at what the cost, the implied cost is per life year saved. We translate that to dollars, we look at how many dollars we use to perform that benefit, and then we arrive at, in certain reasonable
+
+00:19:07.000 --> 00:19:24.000
+Stuart: models, that we spend 3 .5 US cents per life you're saved, which is an astounding number, better than any charity I've ever heard of, and even the best charities come nowhere close to that, they're off by tens of
+
+00:19:24.000 --> 00:19:29.000
+Stuart: thousands of dollars of times, that three and a half cents.
+
+00:19:29.000 --> 00:19:35.000
+Mira: Three and a half cents. What is it about the way doctors use the site that moves that number?
+
+00:19:35.000 --> 00:19:51.000
+Stuart: Okay, yes, I forgot to mention doctors. The typical GP has 1 ,500 clients or patients, and if we use the statistic that 19 or 20 have a chronic illness leading to an early death, that's about 300 patients.
+
+00:19:51.000 --> 00:19:59.000
+Stuart: So if a doctor comes, he's more scientific, he'll appreciate the scientific arguments that we present more readily than a patient.
+
+00:19:59.000 --> 00:20:13.000
+Stuart: So his adoption will be greater, plus he has leverage over many patients saying, hey, I have a better solution to your diabetes, I have a better solution to your heart disease, I have a better solution for all sorts
+
+00:20:13.000 --> 00:20:28.000
+Stuart: of things. And therefore, he becomes a higher spreader of good information to patients. And therefore, we get a boost in our number life here safe.
+
+00:20:28.000 --> 00:20:30.000
+Stuart: So, we love doctors.
+
+00:20:30.000 --> 00:20:38.000
+Mira: A doctor as a force multiplier. Can a patient who only wants the answer, not the reasoning, actually use that clinician's view?
+
+00:20:38.000 --> 00:20:44.000
+Stuart: Yes, there's no limit. We just label it that way, but we don't prevent anyone from going anywhere.
+
+00:20:44.000 --> 00:20:50.000
+Mira: Open by design. Your Pareto list covers a lot of diseases at once. What else have you learned from seeing them side by side?
+
+00:20:50.000 --> 00:20:52.000
+Mira: almost
+
+00:20:52.000 --> 00:21:09.000
+Stuart: Interestingly, we have a list, I think, on methodology tab, which says, here's every disease and the Pareto Optimum disease reduction percentage.
+
+00:21:09.000 --> 00:21:23.000
+Stuart: And And some are like 98, 99 percent, some of are like 5 percent. But we order it in terms of percentile, and in addition to that, we put supplements there in terms of what percentage of this is caused
+
+00:21:23.000 --> 00:21:38.000
+Stuart: by supplements, because a lot of people have faith in supplements, which might be misplaced. So what we find is that almost all diseases have no rules for supplements, but certain diseases definitely do.
+
+00:21:38.000 --> 00:21:51.000
+Stuart: But for example, all-cause mortality probably has a 2 role for supplements in terms of disease progression reduction.
+
+00:21:51.000 --> 00:22:08.000
+Stuart: Osteoarthritis has a role for supplements in terms of reducing the cause of the progression of osteoarthritis. BPH and preeclampsia seem to have, and there's other diseases that have minor roles, but but most have nothing.
+
+00:22:08.000 --> 00:22:24.000
+Stuart: But another interesting thing is that you look at the diseases which when properly managed and they're not being properly managed now, according to the NHANES CDC data, but when properly managed, we can reduce the disease progression by 80,
+
+00:22:24.000 --> 00:22:34.000
+Stuart: 90%, which effectively means you almost don't have a disease. You are disease-free, you have a clean life, you are completely under control.
+
+00:22:34.000 --> 00:22:49.000
+Stuart: And I think that is a wonderfully optimistic note that with the proper information and the proper care, we can make people's lives very happy who have a chronic disease that might otherwise lead to an early death.
+
+00:22:49.000 --> 00:22:55.000
+Mira: disease-free is a strong claim why can't doctors do this themselves without a system like yours
+
+00:22:55.000 --> 00:23:07.000
+Stuart: It's a hard computational task. And that's one reason. And another reason is that the number of subsets of n things is 2 to the power n.
+
+00:23:07.000 --> 00:23:27.000
+Stuart: 10. That means 10 has a thousand different combinations, 20 has a million, 30 has a billion. So that's too exhaustive for a doctor to do, plus the algorithm for removing cross correlations as I was saying before using front
+
+00:23:29.000 --> 00:23:38.000
+Stuart: door and back door analysis are laborious and eigenvector your analysis, you have to know something about linear algebra and matrix inversion.
+
+00:23:38.000 --> 00:23:51.000
+Stuart: And these are too intractable for doctors to do. I think the average doctor's visit time with his patient is eight minutes.
+
+00:23:51.000 --> 00:24:00.000
+Stuart: So when he doesn't have much time to perform, he needs things that are instantly ready. He can't make his own bandages.
+
+00:24:00.000 --> 00:24:05.000
+Stuart: He can't make his own medicines. He's got to have them off the shelf and ready to go.
+
+00:24:05.000 --> 00:24:14.000
+Stuart: And that's what we provide to the doctor, ready to go tool to help the doctor perform at his best possible level of performance.
+
+00:24:14.000 --> 00:24:21.000
+Mira: one that nags at me why is it that health insurers have no interest in you living longer while life insurance agents do
+
+00:24:21.000 --> 00:24:36.000
+Stuart: Well, that's a very interesting question. I'm glad you made that observation. Health insurance companies, for example, if you have diabetes, pay for more diabetes drugs if you live longer, so they're not that anxious about you living longer.
+
+00:24:36.000 --> 00:24:44.000
+Stuart: Whereas life insurance companies get more premiums from you if you live longer, so they love when you live longer.
+
+00:24:44.000 --> 00:24:55.000
+Mira: that's the incentive laid bare you've also chosen not to record what visitors select on the site what would that data give you that you're willing to give up.
+
+00:24:55.000 --> 00:25:08.000
+Stuart: Well, I think that people are naturally cautious about revealing their medical data or their financial data to a website and and I think that's wise.
+
+00:25:08.000 --> 00:25:25.000
+Stuart: So instead of trying to fight against that we decided we're not going to record people's medical data and and therefore we rely on the NHANES data as a proxy for the benefit that people would achieve.
+
+00:25:25.000 --> 00:25:37.000
+Stuart: We also don't have subsequent data or or testing data such as you know x-rays and blood tests and urinary tests and other tests.
+
+00:25:37.000 --> 00:25:50.000
+Stuart: So instead of getting into that world of assembling all this information and having the reluctance of patients, we decided to give them something that they can just evaluate themselves.
+
+00:25:50.000 --> 00:26:00.000
+Stuart: The primary metric is risk reduction. And we're choosing it using the NHANES data. I think that's reasonable.
+
+00:26:00.000 --> 00:26:08.000
+Stuart: We also say that our website is for research purposes. We're not making prescriptions or giving medical advice.
+
+00:26:08.000 --> 00:26:26.000
+Stuart: So I think for the purposes that we limit ourselves to, the compromise we make in not getting a person's person's true medical status is not hurting us or hurting the patient.
+
+00:26:26.000 --> 00:26:31.000
+Mira: Trust as the product, not the data. What has this work cost you personally?
+
+00:26:31.000 --> 00:26:51.000
+Stuart: It hasn't, it cost me about $450 so far, not much. And I'm not including my time or I'm not putting my time and I'm having the joy of helping people live longer and I've gotten personal thank yous and
+
+00:26:52.000 --> 00:27:07.000
+Stuart: enthusiastic thank yous from people and that just sticks in my heart as it makes me smile so it's been where can you get go give five hundred dollars and and it feels so wonderful when you help people I
+
+00:27:07.000 --> 00:27:12.000
+Stuart: don't know I don't know anywhere else like where I could do this I
+
+00:27:12.000 --> 00:27:18.000
+Mira: $500 and a smile that stays. What's the one thing about your work that you wish more people understood?
+
+00:27:18.000 --> 00:27:34.000
+Stuart: think that I had to start with the math and that's complicated and there's a lot of terminology, like positive predictive value, risk reduction, hazard ratios, relative risk ratio, and all these medical statistics terms.
+
+00:27:34.000 --> 00:27:44.000
+Stuart: I think I have to speak that language in order to track doctors and as you see, doctors have about a 300 times impact factor than patients.
+
+00:27:44.000 --> 00:27:59.000
+Stuart: So I think over time I need to soften it up, make it easier to read, make it more amenable to two people but there's probably 20 or 30 percent of the people that in society that have a STEM
+
+00:27:59.000 --> 00:28:07.000
+Stuart: education and they could probably read all this stuff and help their family and friends achieve better outcomes.
+
+00:28:07.000 --> 00:28:23.000
+Stuart: I mean if the average person has 50 people in their life that you know family and friends and one of them should have some STEM background and they can give love, love notes to the person who is sick
+
+00:28:23.000 --> 00:28:38.000
+Stuart: in the form of a PDF from our website which say how they can manage their disease to the optimum way possible and hopefully convince the doctor that to get on board.
+
+00:28:38.000 --> 00:28:44.000
+Mira: STEM love notes as a delivery system. What's the last word you'd want a doctor to hear from one of those PDFs?
+
+00:28:44.000 --> 00:29:04.000
+Stuart: I'd like the doctor to think carefully about his ability to manage this problem by himself. I think doctors need to realize that they're making educated guesses when they combine or don't combine medications or treatments and that we
+
+00:29:04.000 --> 00:29:18.000
+Stuart: provide an evaluated of service to move the cross-correlations, compute the true probability, and allow the doctor to select the optimum solution that's available to him, and that's going to be the better solution.
+
+00:29:18.000 --> 00:29:31.000
+Stuart: And the doctor has a lot of discretion to use his best judgment, and I think we're just helping the doctor with computational hard problems to allow him to use his best judgment to help patients, which I think that's
+
+00:29:31.000 --> 00:29:44.000
+Stuart: what turns a doctor on. He's a he let he gets that he gets he gets all those good vibes when patients appreciate him and this is gonna help them be a better version of himself okay
+
+00:29:44.000 --> 00:29:48.000
+Mira: That's a generous read of the profession.
+
+00:29:48.000 --> 00:29:56.000
+Stuart: I'd like to also say to your visitors please go to longevityresearch.ca to explore our website and see if it can help you.
+
+00:29:56.000 --> 00:30:03.000
+Mira: Noted, Stuart. longevityresearch.ca. What's the best advice you were ever given?
+
+00:30:03.000 --> 00:30:06.000
+Stuart: Try, try again until you get it right.
+
+00:30:06.000 --> 00:30:13.000
+Mira: Simple and durable. What are the last words you'd want someone to remember from this conversation?
+
+00:30:13.000 --> 00:30:24.000
+Stuart: We can do better. Any problem that is not forbidden by the laws of physics is solvable if you have the right knowledge.
+
+00:30:24.000 --> 00:30:35.000
+Stuart: Any problem that is not against the laws of physics and math is solvable if you have the right knowledge, and I'm hopefully providing the right knowledge here.
+
+00:30:35.000 --> 00:30:39.000
+Mira: Physics and math as the only real limits.
+
+00:30:39.000 --> 00:30:40.000
+Stuart: Right.
+
+00:30:40.000 --> 00:30:46.000
+Mira: That's where I'll leave it. Thank you, Stuart, for the oracles and the honesty about where the data ends.
+
+00:30:46.000 --> 00:30:49.000
+Stuart: Thank you very much. Bye bye.
+
+00:30:49.000 --> 00:30:57.000
+Mira (narration): What stayed with me is Stuart saying any problem not forbidden by the laws of physics and math is solvable if you have the right knowledge.
+
+00:30:57.000 --> 00:31:04.000
+Mira (narration): The tension left open is whether health systems will ever adopt tools that make most chronic disease progression almost disappear.
+
+00:31:04.000 --> 00:31:11.000
+Mira (narration): My thanks to Stuart for building the oracles in public and for treating every cross-correlation as something worth measuring.
+
+00:31:11.000 --> 00:31:14.000
+Mira (narration): You can explore the atlas at longevityresearch.ca.
+
+00:31:14.000 --> 00:31:23.000
+Mira (narration): The Nerra Network is at nerranetwork.com, where this show lives alongside the rest and anyone with a story, a project or a subject they care about can apply to be a guest.
+
+00:31:23.000 --> 00:31:29.000
+Mira (narration): I'm Mira.
+
+00:31:23.000 --> 00:31:29.000
+Mira (narration): Until next time — the next voice could be yours.
