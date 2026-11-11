@@ -528,7 +528,11 @@ def concatenate_audio(file_list: List[Path], output_path: Path, *,
         parts.append(f"[{i}:a]" + ",".join(chain) + f"[p{i}]")
     labels = "".join(f"[p{i}]" for i in range(len(file_list)))
     graph = ";".join(parts) + f";{labels}concat=n={len(file_list)}:v=0:a=1[out]"
-    cmd += ["-filter_complex", graph, "-map", "[out]"]
+    # Nov 11 2026: published MP3s carry ID3 chapters now
+    # (engine.audio_chapters), and ffmpeg copies chapters from the first
+    # input that has any unless told otherwise, so a join of several
+    # episodes would ship the first one's chapter list. Never inherit.
+    cmd += ["-filter_complex", graph, "-map", "[out]", "-map_chapters", "-1"]
     args = list(encode_args) if encode_args is not None else _join_encode_args(Path(output_path))
     if "-ar" not in args:
         args = ["-ar", str(sample_rate)] + args

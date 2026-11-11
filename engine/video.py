@@ -2685,14 +2685,6 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
 # Long-form command builder (stage 2)
 # ---------------------------------------------------------------------------
 
-def _ffmetadata_escape(text: str) -> str:
-    """Escape the four characters ffmetadata treats as syntax."""
-    out = str(text or "")
-    for ch in ("\\", "=", ";", "#", "\n"):
-        out = out.replace(ch, "\\" + ch if ch != "\n" else "\\\n")
-    return out
-
-
 def write_chapter_metadata(chapters_path: Path, out_path: Path,
                            total_duration_s: float) -> Optional[Path]:
     """Render an ffmetadata chapter file, or None if there's nothing to write.
@@ -2711,49 +2703,15 @@ def write_chapter_metadata(chapters_path: Path, out_path: Path,
     would make ffmpeg fail the whole render, which is far worse than a
     video without chapters.
     """
-    try:
-        raw = json.loads(Path(chapters_path).read_text(encoding="utf-8"))
-    except Exception as exc:  # noqa: BLE001
-        logger.debug("Chapter metadata skipped (%s unreadable: %s)",
-                     chapters_path, exc)
+    # Nov 11 2026: one ffmetadata writer for the MP4 and the MP3
+    # (engine.audio_chapters), so the two files never disagree.
+    from engine.audio_chapters import chapter_marks, ffmetadata_text
+
+    marks = chapter_marks(chapters_path)
+    text = ffmetadata_text(marks, total_duration_s)
+    if not text:
         return None
-
-    items = raw.get("chapters") if isinstance(raw, dict) else raw
-    if not isinstance(items, list) or len(items) < 2:
-        return None
-
-    marks: List[Tuple[float, str]] = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        start = item.get("startTime", item.get("start_time", item.get("start")))
-        try:
-            start_f = float(start)
-        except (TypeError, ValueError):
-            continue
-        title = str(item.get("title") or item.get("name") or "").strip()
-        marks.append((start_f, title or f"Chapter {len(marks) + 1}"))
-
-    marks.sort(key=lambda m: m[0])
-    if len(marks) < 2 or total_duration_s <= marks[-1][0]:
-        return None
-
-    lines = [";FFMETADATA1"]
-    for i, (start_f, title) in enumerate(marks):
-        end_f = marks[i + 1][0] if i + 1 < len(marks) else total_duration_s
-        if end_f <= start_f:
-            continue
-        lines += [
-            "[CHAPTER]",
-            "TIMEBASE=1/1000",
-            f"START={int(start_f * 1000)}",
-            f"END={int(end_f * 1000)}",
-            f"title={_ffmetadata_escape(title)}",
-        ]
-    if len(lines) == 1:
-        return None
-
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out_path.write_text(text, encoding="utf-8")
     logger.info("Chapter metadata: %d chapters -> %s", len(marks), out_path.name)
     return out_path
 

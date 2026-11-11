@@ -578,6 +578,12 @@ def build_edition(
         title = daily_title(episode_num, target_date, segments,
                             links.get("title", ""))
         chapters = build_chapters(chapter_pieces, title)
+        # Nov 11 2026: the chapters inside the MP3 too (Apple Podcasts and
+        # Overcast read only those; engine.audio_chapters). Before the
+        # upload and the feed, which read the file's size.
+        from engine.audio_chapters import embed_chapters_in_mp3
+        if not dry_run:
+            embed_chapters_in_mp3(final_mp3, chapters, duration_s=duration)
         logger.info("assembled %s: %.1f min, %d segments, title=%r",
                     mp3_name, duration / 60, len(segments), title)
         if loudness:
