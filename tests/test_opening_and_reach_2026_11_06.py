@@ -37,14 +37,23 @@ class TestTheOpeningSaysHowTheHourWorks:
     def test_every_point_patrick_asked_for_is_in_the_turn(self):
         turn = _opening()
         turn = turn[turn.index("2. How the hour works"):turn.index("3. Welcome them")]
+        # Nov 11 2026 (review): the spoken turn keeps who she is, the
+        # patience, the claim, the parts ahead and the guest's rights; the
+        # pause, the buttons, the closing round and the transcript are on the
+        # studio page and in the reminder (engine.brand.MIRA_HOUR_PARTS), so
+        # the turn is two or three sentences, never a recital.
         for needle in ("you are Mira", "still learning, and ask their patience",
-                       "you pause after they finish, so nothing gets cut off",
-                       "this is their hour: they can steer any time, aloud or with the studio's buttons and notes",
+                       "in two or three sentences, never a list",
+                       "this is their hour: they can steer",
                        "any question can be skipped, anything can come out afterwards",
-                       "they will see the transcript before anything goes out",
-                       "closing questions, where to reach them, and anything not covered",
+                       "the studio page in front of them has the rest",
                        "Then ask if that sounds good."):
             assert needle in turn, needle
+        from engine.brand import MIRA_HOUR_PARTS
+        page = " ".join(d for _, d in MIRA_HOUR_PARTS)
+        for moved in ("pauses a few seconds after you finish", "New subject",
+                      "closing questions", "the transcript"):
+            assert moved in page, moved
 
     def test_it_is_a_turn_of_its_own_and_the_question_comes_after(self):
         turn = _opening()

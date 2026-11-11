@@ -33,8 +33,9 @@ class TestTheOpeningNamesThePartsAhead:
     def test_the_parts_come_from_the_prepared_questions_a_phrase_each(self):
         beat = _beat_two()
         assert "two or three parts ahead, from the prepared questions, a phrase each" in beat
-        # After how she listens, before the guest's controls: the map, then the rights.
-        assert beat.index("nothing gets cut off") < beat.index("parts ahead") < beat.index("this is their hour")
+        # Nov 11 2026: who she is, then the map, then the guest's rights (the
+        # pause is on the studio page now, engine.brand.MIRA_HOUR_PARTS).
+        assert beat.index("you are Mira") < beat.index("parts ahead") < beat.index("this is their hour")
 
     def test_still_one_turn_that_ends_on_a_check(self):
         beat = _beat_two()

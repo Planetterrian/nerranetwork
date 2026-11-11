@@ -78,7 +78,9 @@ Safe to merge before the booked rooms (nothing the room or the brief reads):
    publish-day email carries it as a draft to change. A guest who shares is
    the show's best distribution, and the guest who must write the post first
    mostly does not.
-3. **Transcripts on both interview feeds**: the `vtt_backfill` run.
+3. **Transcripts on the interview feeds**: the `vtt_backfill` run tagged
+   the three episodes whose packages carry an edit transcript (Age of AI
+   Ep14 and Ep15, Nerra Voices Ep4); the older ones have none to give.
 
 Drafted, NOT for a booked room until rehearsed and listened to:
 
@@ -123,13 +125,20 @@ sentences):
 > hour ends with closing questions, where to reach them, and anything not
 > covered. Then ask if that sounds good.
 
-Proposed (the rest is on the page in front of them):
+Proposed, as committed (the rest is on the page in front of them since
+#1689 merged):
 
 > 2. How the hour works, in two or three sentences, never a list: you are
 > Mira, the AI who hosts {{show_name}}, still learning, and ask their
 > patience; {{mira_spoken_claim}}; two or three parts ahead, from the
-> prepared questions, a phrase each; it is their hour to steer, aloud or
-> from the studio page, which has the rest. Then ask if that sounds good.
+> prepared questions, a phrase each; this is their hour: they can steer,
+> any question can be skipped, anything can come out afterwards, and the
+> studio page in front of them has the rest. Then ask if that sounds good.
+
+It keeps every point Patrick asked to hear spoken on Oct 19 and Nov 6 except
+the ones the page now carries word for word: the pause, the buttons, the
+closing round and the transcript terms. The brief drops from 1,599 to 1,569
+words.
 
 The room's own opening note ("beat 2 of HOW TO OPEN: how the hour works, in
 a few short sentences") stays true, so the scenario does not change and no
