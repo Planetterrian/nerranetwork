@@ -306,6 +306,174 @@
     .sparkline-row .label { width: 110px; }
     .sparkline-row .value { width: 100px; }
   }
+  /* ==== Nov 11 2026: summary-first layout ==================================
+     Every audience opens on the growth story; the operator first sees what
+     needs attention and what moved. The detail sections collapse, long
+     ranked lists show their top rows, and each view orders the page for
+     its reader. Marks follow the page's existing chart spec: 2px lines,
+     10% area wash, columns no wider than 24px with a rounded data end,
+     hairline grid, text in ink tokens and never the series colour. */
+  #content { display: flex; flex-direction: column; }
+  #content > * { order: 10; }
+  body.view-investor #investor-hero { order: 1; }
+  body.view-investor #growth-story { order: 2; }
+  body.view-investor #investor { order: 3; }
+  body.view-investor #benchmarks { order: 4; }
+  body.view-investor #tile-row { order: 5; }
+  body.view-investor #detail-bar { order: 6; }
+  body.view-investor #investor, body.view-investor #benchmarks { margin-top: 0; margin-bottom: 26px; }
+
+  /* operator brief */
+  .ops-brief { display: grid; gap: 14px; margin-bottom: 22px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+  .ops-brief .alert-band { margin: 8px 0 0; gap: 6px; }
+  details.alert { padding: 0; }
+  details.alert > summary { cursor: pointer; padding: 8px 12px; list-style: none;
+    display: flex; gap: 8px; align-items: baseline; font-weight: 600; }
+  details.alert > summary::-webkit-details-marker { display: none; }
+  details.alert > summary .sev { flex: 0 0 auto; font-size: 10.5px; letter-spacing: 0.07em;
+    text-transform: uppercase; opacity: 0.85; min-width: 34px; }
+  details.alert > summary::after { content: "+"; margin-left: auto; opacity: 0.6; font-weight: 400; }
+  details.alert[open] > summary::after { content: "\2212"; }
+  details.alert .alert-body { padding: 0 12px 10px 54px; font-size: 13px; font-weight: 400; }
+  .all-clear { font-size: 13px; color: var(--ink-3); margin: 8px 0 0; }
+  .moved-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+  .moved { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+  .moved .m-l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-4); }
+  .moved .m-v { font-size: 20px; font-weight: 600; color: var(--ink-1); margin-top: 3px;
+    font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .moved .m-s { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+  .moved .m-s .up { color: var(--status-ok); font-weight: 600; }
+  .moved .m-s .down { color: var(--status-fail); font-weight: 600; }
+  .moved a { color: #a5b4fc; text-decoration: none; }
+  .moved a:hover { text-decoration: underline; }
+
+  /* growth story */
+  .growth-story { margin-bottom: 26px; }
+  .gs-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+  .gs-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.01em; color: var(--ink-1); font-weight: 650; }
+  .gs-sub { margin: 0; font-size: 13px; color: var(--ink-3); }
+  .gs-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px;
+    margin-bottom: 14px; }
+  .gs-fact { background: linear-gradient(180deg, rgba(255,255,255,0.025), transparent 45%), var(--surface-1);
+    border: 1px solid var(--hairline); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+  .gs-fact .f-l { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+  .gs-fact .f-v { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .gs-fact .f-now { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .gs-fact .f-x { font-size: 12.5px; font-weight: 650; color: var(--status-ok);
+    background: rgba(34,197,94,0.12); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .gs-fact .f-s { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; line-height: 1.45; }
+  .gs-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .gs-chart { margin: 0; position: relative; }
+  .gs-chart h3 { margin: 0 0 2px; }
+  .gs-chart .c-sub { font-size: 12px; color: var(--ink-4); margin: 0 0 8px; }
+  .gs-chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .gs-chart svg text { font-family: inherit; font-size: 11px; fill: var(--ink-4);
+    font-variant-numeric: tabular-nums; }
+  /* a direct label keeps a surface-coloured halo so it stays legible
+     where it crosses a mark */
+  .gs-chart svg text.dl { fill: var(--ink-1); font-weight: 600; paint-order: stroke;
+    stroke: var(--surface-1); stroke-width: 3px; stroke-linejoin: round; }
+  .gs-chart .tip { position: absolute; pointer-events: none; z-index: 3; min-width: 120px;
+    background: #0b0e15; border: 1px solid #2f3748; border-radius: 9px; padding: 7px 10px;
+    font-size: 12px; color: var(--ink-3); box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    transform: translate(-50%, -100%); white-space: nowrap; }
+  .gs-chart .tip strong { display: block; font-size: 15px; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; }
+  .gs-chart .tip .tk { display: inline-block; width: 10px; height: 2px; border-radius: 1px;
+    vertical-align: middle; margin-right: 6px; }
+  .gs-chart details { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
+  .gs-chart details summary { cursor: pointer; }
+  .gs-chart details table { margin-top: 6px; border-collapse: collapse; width: 100%;
+    font-variant-numeric: tabular-nums; }
+  .gs-chart details td, .gs-chart details th { text-align: left; padding: 3px 10px 3px 0;
+    border-bottom: 1px solid var(--hairline); font-weight: 400; }
+  .gs-chart details th { color: var(--ink-4); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .gs-empty { font-size: 13px; color: var(--ink-3); padding: 18px 0; }
+
+  /* sponsor brief */
+  .brief { margin-bottom: 26px; }
+  .brief > .mc-card { margin-bottom: 14px; }
+  .brief-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .show-reach { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+    gap: 12px; margin-top: 12px; }
+  .sr { display: flex; gap: 12px; align-items: center; background: var(--surface-2);
+    border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .sr img { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; flex: 0 0 auto;
+    background: #0b0e15; }
+  .sr .sr-b { min-width: 0; }
+  .sr .sr-n { font-size: 13.5px; font-weight: 600; color: var(--ink-1); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .sr .sr-v { font-size: 17px; font-weight: 650; color: var(--ink-1); font-variant-numeric: tabular-nums;
+    margin-top: 1px; }
+  .sr .sr-v small { font-size: 11.5px; font-weight: 400; color: var(--ink-3); margin-left: 5px; }
+  .sr .sr-s { font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+  .brief h4 { margin: 14px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-4); font-weight: 600; }
+  .brief .big { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 8px; }
+  .brief .big small { font-size: 13px; font-weight: 400; color: var(--ink-3); margin-left: 8px;
+    letter-spacing: 0; }
+  .brief p { font-size: 13px; color: var(--ink-3); line-height: 1.5; margin: 8px 0 0; }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .cta { display: inline-flex; align-items: center; padding: 9px 16px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; text-decoration: none; color: var(--ink-1);
+    background: var(--surface-1); border: 1px solid #2f3748; }
+  .cta:hover { border-color: #46506a; }
+  .cta.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* even tiles: a long note is clamped, its full text one hover away */
+  .tile { display: flex; flex-direction: column; }
+  .tile[data-sponsor] { display: none; }
+  body.view-sponsor .tile[data-sponsor] { display: flex; }
+  .tile .t-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+    overflow: hidden; }
+  .tile:hover .t-sub, .tile:focus-within .t-sub { -webkit-line-clamp: unset; }
+  .tile svg.spark { margin-top: auto; padding-top: 8px; height: 34px; }
+
+  /* collapsible detail */
+  .detail-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap; margin: 6px 0 2px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+  .detail-title { font-size: 15px; font-weight: 600; color: var(--ink-1); }
+  .link-btn { appearance: none; background: none; border: 0; padding: 0 0 0 12px; cursor: pointer;
+    font: inherit; font-size: 12.5px; color: #a5b4fc; }
+  .link-btn:hover { text-decoration: underline; }
+  .mc-section > h2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 0; }
+  .sec-toggle { appearance: none; background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+    font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left;
+    display: inline-flex; align-items: center; gap: 9px; }
+  .sec-toggle .chev { display: inline-block; width: 7px; height: 7px; border-right: 2px solid var(--ink-3);
+    border-bottom: 2px solid var(--ink-3); transform: rotate(45deg) translateY(-2px);
+    transition: transform 140ms ease; flex: 0 0 auto; }
+  .mc-section.is-collapsed .sec-toggle .chev { transform: rotate(-45deg); }
+  .mc-section.is-collapsed { margin-top: 10px; }
+  .mc-section.is-collapsed > h2 { margin: 0; padding: 13px 16px; background: var(--surface-1);
+    border: 1px solid var(--hairline); border-radius: 12px; cursor: pointer; }
+  .mc-section.is-collapsed > h2:hover { border-color: #2f3748; color: var(--ink-1); }
+  .mc-section.is-collapsed > :not(h2) { display: none !important; }
+  .row-more { display: none !important; }
+  .show-rows { appearance: none; background: none; border: 0; padding: 6px 0 2px; cursor: pointer;
+    font: inherit; font-size: 12px; color: #a5b4fc; }
+  .show-rows:hover { text-decoration: underline; }
+
+  @media (max-width: 860px) {
+    .ops-brief, .gs-charts, .brief-pair { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .mc-root { padding: 18px 14px 56px; }
+    .gs-fact .f-now, .brief .big { font-size: 26px; }
+    .tile-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .tile { padding: 12px 12px 10px; }
+    .tile .t-value { font-size: 23px; }
+    .gs-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .gs-fact { padding: 12px; }
+    .mc-card { padding: 14px 14px; }
+    details.alert .alert-body { padding-left: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sec-toggle .chev, .tile { transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -339,6 +507,7 @@
 
 <nav class="mc-nav" aria-label="Sections">
   <a href="index.html">← nerranetwork.com</a>
+  <a href="#growth-story">Growth story</a>
   <a href="#audience-section">Audience</a>
   <a href="#benchmarks">Benchmarks</a>
   <a href="#investor" data-investor>Investor</a>
@@ -365,7 +534,19 @@
 
 <main id="content" hidden>
 
-  <div class="alert-band" id="alert-band" data-ops></div>
+  <!-- Nov 11 2026: summary first. The operator opens on what needs
+       attention and what moved; every audience then sees the growth story
+       before any detail. The detail sections below collapse. -->
+  <section class="ops-brief" data-ops id="ops-brief" aria-label="This week">
+    <div class="mc-card" id="ops-attention">
+      <h3>Needs attention <span class="meta" id="ops-attention-meta"></span></h3>
+      <div class="alert-band" id="alert-band" data-ops></div>
+    </div>
+    <div class="mc-card" id="ops-moved">
+      <h3>This week <span class="meta" id="ops-moved-meta"></span></h3>
+      <div class="moved-grid" id="ops-moved-grid"></div>
+    </div>
+  </section>
 
   <section class="sponsor-hero" data-sponsor id="sponsor-hero">
     <h2>Nerra Network at a glance</h2>
@@ -380,7 +561,42 @@
     <div class="reach-grid" id="investor-thesis-grid" style="margin-top:14px;"></div>
   </section>
 
+  <section class="growth-story" id="growth-story" aria-labelledby="growth-title">
+    <div class="gs-head">
+      <h2 id="growth-title">Growth since launch</h2>
+      <p class="gs-sub" id="growth-sub"></p>
+    </div>
+    <div class="gs-facts" id="growth-facts"></div>
+    <div class="gs-charts">
+      <figure class="gs-chart mc-card" id="growth-downloads"></figure>
+      <figure class="gs-chart mc-card" id="growth-youtube"></figure>
+    </div>
+    <p class="view-note" id="growth-note"></p>
+  </section>
+
+  <section class="brief" data-sponsor id="sponsor-brief" aria-label="For sponsors and advertisers">
+    <div class="mc-card" id="sb-shows"></div>
+    <div class="brief-pair">
+      <div class="mc-card" id="sb-people"></div>
+      <div class="mc-card" id="sb-trust"></div>
+    </div>
+    <div class="cta-row">
+      <a class="cta primary" href="sponsor.html">Advertising and sponsorship</a>
+      <a class="cta" href="press.html">Media kit</a>
+      <a class="cta" href="claims.html">How every claim is checked</a>
+      <a class="cta" href="index.html">Listen to the network</a>
+    </div>
+  </section>
+
   <div class="tile-row" id="tile-row"></div>
+
+  <div class="detail-bar" id="detail-bar">
+    <span class="detail-title">The detail behind these numbers</span>
+    <span class="detail-actions">
+      <button type="button" class="link-btn" id="expand-all">Open all</button>
+      <button type="button" class="link-btn" id="collapse-all">Close all</button>
+    </span>
+  </div>
 
   <section class="mc-section" id="audience-section">
     <h2>Audience <span class="pill-note" id="audience-status-pill"></span></h2>
@@ -720,14 +936,25 @@
   const funnel = data.funnel || {};
 
   // ---------- alert band ----------
+  // Nov 11 2026: each alert is one line (severity + title) that opens to
+  // its details. Six full-width banners had pushed every number on the
+  // page below the fold; a failure opens by default, a warning does not.
   const band = $("#alert-band");
+  const alertRow = (sev, title, details) => {
+    const row = h("details", { class: "alert " + sev });
+    if (sev === "fail") row.setAttribute("open", "");
+    const sum = h("summary");
+    sum.appendChild(h("span", { class: "sev", text: sev === "fail" ? "Fail" : "Warn" }));
+    sum.appendChild(h("span", { text: title }));
+    row.appendChild(sum);
+    if (details) row.appendChild(h("div", { class: "alert-body", text: details }));
+    return row;
+  };
   (data.landmines || []).filter((lm) => lm.status === "fail").forEach((lm) => {
-    band.appendChild(h("div", { class: "alert fail",
-      html: "<strong>FAIL — " + lm.title + ":</strong> " + lm.details }));
+    band.appendChild(alertRow("fail", lm.title, lm.details));
   });
   (data.landmines || []).filter((lm) => lm.status === "warn").forEach((lm) => {
-    band.appendChild(h("div", { class: "alert warn",
-      html: "<strong>Warn — " + lm.title + ":</strong> " + lm.details }));
+    band.appendChild(alertRow("warn", lm.title, lm.details));
   });
   // A landmine alert is already rendered above as its FAIL/Warn banner;
   // the rest carry a message, or a title + details. String(a) of an
@@ -738,8 +965,22 @@
       ? (a.message || [a.title, a.details].filter(Boolean).join(": "))
       : String(a || "");
     if (!msg) return;
-    band.appendChild(h("div", { class: "alert warn", text: msg }));
+    // "68 experiment(s) past their readout date in … — read the result…":
+    // the clause before the dash is the title, the rest opens.
+    const cut = msg.indexOf(" — ");
+    band.appendChild(cut > 0 ? alertRow("warn", msg.slice(0, cut), msg.slice(cut + 3))
+      : alertRow("warn", msg, ""));
   });
+  {
+    const nFail = band.querySelectorAll(".alert.fail").length;
+    const nWarn = band.querySelectorAll(".alert.warn").length;
+    $("#ops-attention-meta").textContent = (nFail || nWarn)
+      ? [nFail ? nFail + " failing" : "", nWarn ? nWarn + " to watch" : ""].filter(Boolean).join(" · ")
+      : "";
+    if (!nFail && !nWarn) {
+      band.appendChild(h("p", { class: "all-clear", text: "Nothing is failing and nothing is flagged." }));
+    }
+  }
   if (sp.configured === false || (sp.per_show && !Object.keys(sp.per_show).length)) {
     // quiet: surfaced in the Spotify card, not the alert band
   }
@@ -2993,24 +3234,35 @@
   (function renderSponsorPanel() {
     const grid = $("#reach-grid");
     if (!grid) return;
-    // The last COMPLETE week vs the week before — the same figure the
-    // audience headline tile shows. The last bucket of the OP3 weekly
-    // history is the current PARTIAL week, and comparing it put "+62%"
-    // beside the tile's "+7.8% WoW" on the same page.
-    const ahNet = (data.audience_headline || {}).network || {};
-    const lastW = ahNet.last_week;
-    const prevW = ahNet.prior_week;
-    const growth = ahNet.wow_pct;
     const ytViews = yt.network_views != null ? yt.network_views : chSum("total_views");
     const ytSubs = chSum("subscribers");
+    const apHero = audience.apple || {};
+    const ahNet = (data.audience_headline || {}).network || {};
 
     const items = [
+      // The week-over-week change stays in the hero, on the cell it
+      // belongs to and as the LAST COMPLETE week vs the week before (the
+      // audience headline's figure) — said plainly, up or down.
       { v: compact(op3.network_downloads_30d), l: "Podcast downloads · 30d",
-        s: fmt(op3.network_downloads_all_time) + " all-time (OP3-verified)" },
-      { v: (growth == null ? "—" : (growth > 0 ? "+" : "") + Number(growth).toFixed(1) + "%"),
-        l: "Week-over-week growth",
-        s: (lastW == null || prevW == null) ? "last complete week unmeasured"
-          : fmtOrDash(prevW) + " → " + fmtOrDash(lastW) + " downloads · last complete week" },
+        s: fmt(op3.network_downloads_all_time) + " all-time (OP3-verified)" +
+           (ahNet.last_week == null || ahNet.wow_pct == null ? ""
+             : " · last complete week " + fmt(ahNet.last_week) + ", " +
+               (ahNet.wow_pct > 0 ? "+" : "") + Number(ahNet.wow_pct).toFixed(1) +
+               "% on the week before") },
+      // Nov 11 2026: this cell was one week's week-over-week change as a
+      // headline ("-16.9% growth" the week it was read). One week is
+      // noise; the growth panel under this hero charts every complete
+      // week, and the weekly change moved onto the downloads cell above.
+      // This cell now carries the platform the hero had left out.
+      { v: appleIsReporting(apHero) ? compact((apHero.totals || {}).plays) : "—",
+        l: "Apple Podcasts plays",
+        s: appleIsReporting(apHero)
+          ? fmtOrDash((apHero.totals || {}).listeners) + " listeners · " +
+            fmtOrDash(Math.round((apHero.totals || {}).listening_hours || 0)) + " listening hours" +
+            (apHero.first_date ? " since " + new Date(apHero.first_date + "T00:00:00Z")
+              .toLocaleDateString("en", { month: "short", day: "numeric", timeZone: "UTC" }) : "") +
+            " · engagement only, already counted in downloads"
+          : "not reporting yet" },
       // Lifetime channel views, labelled as such. `network_views` is the
       // 90-day Analytics window and reads as a lifetime figure if the
       // label does not say otherwise — on a page a sponsor may rely on,
@@ -3063,6 +3315,492 @@
     }
   })();
 
+  // ==================== Nov 11 2026: summary-first layout ====================
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const sv = (tag, attrs, text) => {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const k in (attrs || {})) el.setAttribute(k, attrs[k]);
+    if (text != null) el.textContent = text;
+    return el;
+  };
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const isoDay = (iso) => { const p = String(iso || "").slice(0, 10).split("-"); return { y: +p[0], m: +p[1], d: +p[2] }; };
+  const shortDate = (iso) => { const t = isoDay(iso); return t.m ? MONTHS[t.m - 1] + " " + t.d : "—"; };
+  // Clean axis: a step from 1 / 2 / 2.5 / 5 x 10^k that gives about five
+  // intervals. Ticks print in full under 10,000 and compact above it.
+  const axisFor = (max) => {
+    const raw = (max || 1) / 5;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((v) => v >= raw);
+    const top = Math.ceil((max || 1) / step) * step;
+    const ticks = [];
+    for (let v = 0; v <= top + step / 2; v += step) ticks.push(v);
+    return { top, ticks };
+  };
+  const tickText = (v, top) => top >= 10000 ? compact(v) : Number(v).toLocaleString();
+
+  // One chart frame for both growth charts: hairline grid, y ticks, a
+  // month label under the first point of each month, and a nearest-point
+  // tooltip (the pointer aims at a date, never at a 2px mark).
+  // `draw(ctx)` paints the marks; `tip(i)` returns the tooltip's rows.
+  const growthChart = (fig, pts, opts) => {
+    const old = fig.querySelector("svg"); if (old) old.remove();
+    const oldTip = fig.querySelector(".tip"); if (oldTip) oldTip.remove();
+    const W = Math.max(280, Math.round(fig.clientWidth - 36));
+    const H = W < 420 ? 190 : 230;
+    const padL = 44, padR = 14, padT = 22, padB = 24;
+    const ax = axisFor(Math.max.apply(null, pts.map((p) => p.value)));
+    const x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
+    const slot = (x1 - x0) / pts.length;
+    const X = (i) => x0 + slot * (i + 0.5);
+    const Y = (v) => y0 - (v / ax.top) * (y0 - y1);
+    const svg = sv("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": opts.label });
+    ax.ticks.forEach((t) => {
+      svg.appendChild(sv("line", { x1: x0, x2: x1, y1: Y(t), y2: Y(t),
+        stroke: CSSVAR("--hairline"), "stroke-width": 1 }));
+      svg.appendChild(sv("text", { x: x0 - 8, y: Y(t) + 3.5, "text-anchor": "end" }, tickText(t, ax.top)));
+    });
+    let lastMonth = null;
+    pts.forEach((p, i) => {
+      const t = isoDay(p.date);
+      if (t.m !== lastMonth) {
+        // The first point's month is skipped when the next month starts
+        // within two slots: the two labels would collide.
+        const next = pts.findIndex((q, j) => j > i && isoDay(q.date).m !== t.m);
+        if (!(lastMonth === null && next > -1 && next - i < 2)) {
+          svg.appendChild(sv("text", { x: X(i), y: H - 6, "text-anchor": "middle" }, MONTHS[t.m - 1]));
+        }
+        lastMonth = t.m;
+      }
+    });
+    const hover = sv("g", { style: "pointer-events:none" });
+    opts.draw({ svg, hover, X, Y, slot, x0, x1, y0, y1, W, H });
+    svg.appendChild(hover);
+    fig.insertBefore(svg, fig.querySelector("details"));
+    const tip = h("div", { class: "tip" }); tip.hidden = true; fig.appendChild(tip);
+    const show = (i) => {
+      while (hover.firstChild) hover.removeChild(hover.firstChild);
+      if (i == null) { tip.hidden = true; return; }
+      opts.mark({ hover, i, X, Y, slot, y0, y1 });
+      while (tip.firstChild) tip.removeChild(tip.firstChild);
+      opts.tip(i).forEach((n) => tip.appendChild(n));
+      tip.hidden = false;
+      const box = svg.getBoundingClientRect(), fb = fig.getBoundingClientRect();
+      const px = (X(i) / W) * box.width + (box.left - fb.left);
+      const py = (Y(pts[i].value) / H) * box.height + (box.top - fb.top) - 10;
+      const half = tip.offsetWidth / 2;
+      tip.style.left = Math.min(Math.max(px, half + 4), fb.width - half - 4) + "px";
+      tip.style.top = Math.max(py, tip.offsetHeight + 2) + "px";
+    };
+    const at = (ev) => {
+      const box = svg.getBoundingClientRect();
+      const x = ((ev.clientX - box.left) / box.width) * W;
+      return Math.min(pts.length - 1, Math.max(0, Math.floor((x - x0) / slot)));
+    };
+    svg.addEventListener("pointermove", (ev) => show(at(ev)));
+    svg.addEventListener("pointerdown", (ev) => show(at(ev)));
+    svg.addEventListener("pointerleave", () => show(null));
+  };
+  const numbersTable = (headers, rows) => {
+    const d = h("details");
+    d.appendChild(h("summary", { text: "Show the numbers" }));
+    const t = h("table");
+    const hr = h("tr"); headers.forEach((x) => hr.appendChild(h("th", { text: x }))); t.appendChild(hr);
+    rows.forEach((r) => { const tr = h("tr"); r.forEach((c) => tr.appendChild(h("td", { text: c }))); t.appendChild(tr); });
+    d.appendChild(t);
+    return d;
+  };
+  const whenResized = (el, fn) => {
+    let w = el.clientWidth, timer = null;
+    if (typeof ResizeObserver === "undefined") return;
+    new ResizeObserver(() => {
+      if (el.clientWidth === w || !el.clientWidth) return;
+      w = el.clientWidth; clearTimeout(timer); timer = setTimeout(fn, 80);
+    }).observe(el);
+  };
+
+  // ---------- growth story (every view) ----------
+  (function renderGrowthStory() {
+    const gs = data.growth_story || {};
+    const dl = gs.downloads || {}, yg = gs.youtube || {};
+    const weeks = (dl.weeks || []).map((w) => ({ date: w.week, value: Number(w.value || 0) }));
+    const ypts = (yg.points || []).map((q) => ({ date: q.date, value: Number(q.subscribers || 0),
+      views: q.views, by: q.by_channel || {} }));
+    const section = $("#growth-story");
+    if (!gs.configured || (!weeks.length && !ypts.length)) { section.hidden = true; return; }
+    const CH = { en: "English", ru: "Russian", fr: "French" };
+
+    $("#growth-sub").textContent = "Measured history, not a forecast" +
+      (dl.since ? " · podcast downloads since " + shortDate(dl.since) : "") +
+      (yg.since ? " · YouTube since " + shortDate(yg.since) : "") + ".";
+    $("#growth-note").textContent = (gs.note || "") +
+      " A download, a subscriber and a view are different events and are never added together.";
+
+    // -- the facts strip: now, with where it came from --
+    const facts = $("#growth-facts");
+    const fact = (label, now, chip, sub) => {
+      const c = h("div", { class: "gs-fact" });
+      c.appendChild(h("div", { class: "f-l", text: label }));
+      const v = h("div", { class: "f-v" });
+      v.appendChild(h("span", { class: "f-now", text: now }));
+      if (chip) v.appendChild(h("span", { class: "f-x", text: chip }));
+      c.appendChild(v);
+      c.appendChild(h("div", { class: "f-s", text: sub }));
+      facts.appendChild(c);
+    };
+    const times = (now, then) => (now && then && then > 0 && now / then >= 1.05)
+      ? (now / then).toFixed(1) + "×" : null;
+    fact("Podcast downloads a week", dl.avg_4w == null ? "—" : fmt(dl.avg_4w),
+      (dl.multiple != null && dl.multiple >= 1.05) ? Number(dl.multiple).toFixed(1) + "×" : null,
+      dl.avg_4w == null ? "fewer than four complete weeks on file"
+        : "average of the last four complete weeks" +
+          (dl.avg_4w_then != null ? " · " + fmt(dl.avg_4w_then) + " a week " + fmt(dl.weeks_apart) + " weeks earlier" : ""));
+    fact("YouTube subscribers", yg.subscribers_now == null ? "—" : fmt(yg.subscribers_now),
+      times(yg.subscribers_now, yg.subscribers_first),
+      yg.subscribers_now == null ? "no channel snapshot on file"
+        : "across " + fmt((yg.channels || []).length) + " channels · " + fmtOrDash(yg.subscribers_first) +
+          " on " + shortDate(yg.since));
+    fact("YouTube views · lifetime", yg.views_now == null ? "—" : compact(yg.views_now),
+      times(yg.views_now, yg.views_first),
+      yg.views_now == null ? "no channel snapshot on file"
+        : compact(yg.views_first) + " on " + shortDate(yg.since) + " · the channels' own counters");
+    fact("Episodes in the library", compact(catalog.network_episodes_to_date), null,
+      fmtOrDash(episodesThisWeek) + " published in the last 7 days · " +
+      fmt(catalog.shows_count || (data.network || {}).shows_count) + " shows · " +
+      fmt(sponsorLanguageCount(data)) + " languages");
+
+    // -- podcast downloads per week: columns --
+    const figD = $("#growth-downloads");
+    figD.appendChild(h("h3", { text: "Podcast downloads per week" }));
+    figD.appendChild(h("p", { class: "c-sub",
+      text: "Every show, complete weeks only · counted by OP3 · the lines mark the two four-week averages" }));
+    if (weeks.length < 2) {
+      figD.appendChild(h("p", { class: "gs-empty", text: "Not enough complete weeks on file to chart yet." }));
+    } else {
+      figD.appendChild(numbersTable(["Week of", "Downloads"],
+        weeks.map((w) => [shortDate(w.date), fmt(w.value)])));
+      const C1 = () => CSSVAR("--series-1");
+      const paint = () => growthChart(figD, weeks, {
+        label: "Podcast downloads per complete week since " + shortDate(dl.since),
+        draw: (c) => {
+          const bw = Math.min(24, Math.max(4, c.slot - 2));
+          weeks.forEach((w, i) => {
+            const x = c.X(i) - bw / 2, y = c.Y(w.value), r = Math.min(4, bw / 2, (c.y0 - y));
+            c.svg.appendChild(sv("path", { fill: C1(), d:
+              "M" + x + " " + c.y0 + " V" + (y + r) + " Q" + x + " " + y + " " + (x + r) + " " + y +
+              " H" + (x + bw - r) + " Q" + (x + bw) + " " + y + " " + (x + bw) + " " + (y + r) +
+              " V" + c.y0 + " Z" }));
+          });
+          // The two windows the headline compares, drawn where they sit.
+          const avgLine = (from, to, value, anchorEnd) => {
+            if (value == null || from < 0) return;
+            const xa = c.X(from) - c.slot / 2 + 1, xb = c.X(to) + c.slot / 2 - 1, y = c.Y(value);
+            c.svg.appendChild(sv("line", { x1: xa, x2: xb, y1: y, y2: y,
+              stroke: CSSVAR("--ink-1"), "stroke-width": 2, "stroke-linecap": "round" }));
+            c.svg.appendChild(sv("text", { class: "dl", y: y - 7,
+              x: anchorEnd ? xb : xa, "text-anchor": anchorEnd ? "end" : "start" },
+              "avg " + fmt(value)));
+          };
+          const n = weeks.length;
+          avgLine(n - 4, n - 1, dl.avg_4w, true);
+          if (dl.weeks_apart != null) avgLine(n - 4 - dl.weeks_apart, n - 1 - dl.weeks_apart, dl.avg_4w_then, false);
+        },
+        mark: (m) => {
+          const bw = Math.min(24, Math.max(4, m.slot - 2));
+          m.hover.appendChild(sv("rect", { x: m.X(m.i) - bw / 2 - 2, y: m.y1, width: bw + 4,
+            height: m.y0 - m.y1, fill: "#ffffff", opacity: 0.07, rx: 3 }));
+        },
+        tip: (i) => [h("strong", { text: fmt(weeks[i].value) + " downloads" }),
+          h("span", { text: "week of " + shortDate(weeks[i].date) })],
+      });
+      paint(); whenResized(figD, paint);
+    }
+
+    // -- YouTube subscribers: one line, the channels in the tooltip --
+    const figY = $("#growth-youtube");
+    figY.appendChild(h("h3", { text: "YouTube subscribers" }));
+    figY.appendChild(h("p", { class: "c-sub",
+      text: "All " + fmt((yg.channels || []).length) + " channels together, one reading a week · the channels' own counts" }));
+    if (ypts.length < 2) {
+      figY.appendChild(h("p", { class: "gs-empty", text: "Not enough channel snapshots on file to chart yet." }));
+    } else {
+      const order = (yg.channels || []).slice().sort((a, b) =>
+        (ypts[ypts.length - 1].by[b] || 0) - (ypts[ypts.length - 1].by[a] || 0));
+      figY.appendChild(numbersTable(["Date", "Subscribers"].concat(order.map((c) => CH[c] || c)),
+        ypts.map((q) => [shortDate(q.date), fmt(q.value)].concat(
+          order.map((c) => q.by[c] == null ? "—" : fmt(q.by[c])))))) ;
+      const C2 = () => CSSVAR("--series-2");
+      const paint = () => growthChart(figY, ypts, {
+        label: "YouTube subscribers across all channels since " + shortDate(yg.since),
+        draw: (c) => {
+          const xy = ypts.map((q, i) => [c.X(i), c.Y(q.value)]);
+          const line = xy.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1)).join(" ");
+          c.svg.appendChild(sv("path", { d: line + " L" + xy[xy.length - 1][0].toFixed(1) + " " + c.y0 +
+            " L" + xy[0][0].toFixed(1) + " " + c.y0 + " Z", fill: C2(), opacity: 0.1 }));
+          c.svg.appendChild(sv("path", { d: line, fill: "none", stroke: C2(), "stroke-width": 2,
+            "stroke-linejoin": "round", "stroke-linecap": "round" }));
+          const end = xy[xy.length - 1];
+          c.svg.appendChild(sv("circle", { cx: end[0], cy: end[1], r: 4.5, fill: C2(),
+            stroke: CSSVAR("--surface-1"), "stroke-width": 2 }));
+          c.svg.appendChild(sv("text", { class: "dl", x: end[0] + 2, y: end[1] - 10, "text-anchor": "end" },
+            fmt(ypts[ypts.length - 1].value)));
+          c.svg.appendChild(sv("text", { class: "dl", x: xy[0][0] - 2, y: xy[0][1] - 9, "text-anchor": "start" },
+            fmt(ypts[0].value)));
+        },
+        mark: (m) => {
+          m.hover.appendChild(sv("line", { x1: m.X(m.i), x2: m.X(m.i), y1: m.y1, y2: m.y0,
+            stroke: CSSVAR("--ink-4"), "stroke-width": 1 }));
+          m.hover.appendChild(sv("circle", { cx: m.X(m.i), cy: m.Y(ypts[m.i].value), r: 4.5, fill: C2(),
+            stroke: CSSVAR("--surface-1"), "stroke-width": 2 }));
+        },
+        tip: (i) => {
+          const q = ypts[i];
+          const rows = [h("strong", { text: fmt(q.value) + " subscribers" }), h("span", { text: shortDate(q.date) })];
+          order.forEach((c) => { if (q.by[c] != null) rows.push(h("div", { text: (CH[c] || c) + " " + fmt(q.by[c]) })); });
+          return rows;
+        },
+      });
+      paint(); whenResized(figY, paint);
+    }
+  })();
+
+  // ---------- operator brief: what moved ----------
+  (function renderOpsMoved() {
+    const grid = $("#ops-moved-grid");
+    if (!grid) return;
+    const gs = (data.growth_story || {}).downloads || {};
+    const ahNet = (data.audience_headline || {}).network || {};
+    const exps = (data.growth || {}).experiments || {};
+    const specials = (data.growth || {}).specials || {};
+    const cell = (label, value, subNodes) => {
+      const c = h("div", { class: "moved" });
+      c.appendChild(h("div", { class: "m-l", text: label }));
+      c.appendChild(h("div", { class: "m-v", text: value }));
+      const s2 = h("div", { class: "m-s" });
+      (subNodes || []).forEach((n) => s2.appendChild(typeof n === "string" ? document.createTextNode(n) : n));
+      c.appendChild(s2);
+      grid.appendChild(c);
+    };
+    const signed = (n, suffix) => h("span", { class: n > 0 ? "up" : n < 0 ? "down" : "",
+      text: (n > 0 ? "+" : "") + Number(n).toLocaleString() + (suffix || "") });
+    cell("Downloads · last complete week", fmtOrDash(ahNet.last_week),
+      ahNet.wow_pct == null ? ["week before unmeasured"]
+        : [signed(ahNet.wow_pct, "%"), " vs " + fmtOrDash(ahNet.prior_week) + " the week before"]);
+    cell("Downloads · four-week average", fmtOrDash(gs.avg_4w),
+      gs.multiple == null ? ["not enough history to compare"]
+        : [h("span", { class: gs.multiple >= 1 ? "up" : "down", text: Number(gs.multiple).toFixed(1) + "×" }),
+           " the " + fmt(gs.avg_4w_then) + " of " + fmt(gs.weeks_apart) + " weeks earlier"]);
+    const subs7 = chSum("subscribers_delta_7d");
+    cell("YouTube subscribers", fmt(chSum("subscribers")),
+      [signed(subs7), " in 7 days · " + Object.keys(yt.channels || {}).length + " channels"]);
+    cell("Episodes · 7 days", fmtOrDash(episodesThisWeek),
+      [money((data.network || {}).total_cost_last_7_days_usd) + " spent · " +
+       (((data.benchmarks || {}).network || {}).cost_per_episode_usd != null
+         ? "$" + Number(data.benchmarks.network.cost_per_episode_usd).toFixed(2) + " an episode" : "cost per episode unmeasured")]);
+    const es2 = (data.editorial_score || {}).network || {};
+    cell("Editorial score · 14 days", es2.mean != null ? Number(es2.mean).toFixed(2) + "/10" : "—",
+      [es2.n != null ? fmt(es2.n) + " scored episodes · " + fmt(es2.critical) + " criticals" : "no audit history yet"]);
+    const pend = (specials.pending || []).length;
+    cell("Decisions waiting", exps.configured ? fmt(exps.overdue_count || 0) : "—",
+      [h("a", { href: "#growth-levers", text: "experiments past their readout" }),
+       pend ? " · " + fmt(pend) + " specials queued" : ""]);
+    $("#ops-moved-meta").textContent = "data " + ageText(data.generated_at);
+  })();
+
+  // ---------- sponsor brief ----------
+  (function renderSponsorBrief() {
+    const showsCard = $("#sb-shows"), people = $("#sb-people"), trust = $("#sb-trust");
+    if (!showsCard) return;
+    const bench = ((data.benchmarks || {}).per_show) || {};
+    const covers = {};
+    (data.shows || []).forEach((r) => {
+      if (r && r.slug && r.rss_image) covers[r.slug] = String(r.rss_image).replace(/^https?:\/\/[^/]+\//, "");
+    });
+    // The shows a sponsor would be heard on, by 30-day downloads.
+    const ranked = Object.keys(op3.per_show || {})
+      .map((slug) => ({ slug, d30: (op3.per_show[slug] || {}).downloads_30d }))
+      .filter((r) => r.d30 != null && r.d30 > 0)
+      .sort((a, b) => b.d30 - a.d30);
+    const head = h("h3");
+    head.appendChild(document.createTextNode("Where a sponsor is heard"));
+    head.appendChild(h("span", { class: "meta", text: "top shows by podcast downloads · last 30 days" }));
+    showsCard.appendChild(head);
+    const grid = h("div", { class: "show-reach" });
+    ranked.slice(0, 9).forEach((r) => {
+      const card = h("div", { class: "sr" });
+      if (covers[r.slug]) card.appendChild(h("img", { src: covers[r.slug], alt: "", loading: "lazy", width: "58", height: "58" }));
+      const b = h("div", { class: "sr-b" });
+      b.appendChild(h("div", { class: "sr-n", text: showName(r.slug), title: showName(r.slug) }));
+      const v = h("div", { class: "sr-v", text: fmt(r.d30) });
+      v.appendChild(h("small", { text: "downloads" }));
+      b.appendChild(v);
+      const ys = (yt.per_show || {})[r.slug] || {};
+      const band = (bench[r.slug] || {}).percentile_band;
+      const bits = [];
+      if (ys.views) bits.push(compact(ys.views) + " YouTube views · " + fmt(yt.window_days || 90) + "d");
+      if (["top 1%", "top 5%", "top 10%", "top 25%"].indexOf(band) !== -1) {
+        bits.push(band + " of podcasts per episode");
+      }
+      b.appendChild(h("div", { class: "sr-s", text: bits.join(" · ") || "audio only" }));
+      card.appendChild(b);
+      grid.appendChild(card);
+    });
+    showsCard.appendChild(grid);
+    if (ranked.length > 9) {
+      showsCard.appendChild(h("p", { text: "And " + fmt(ranked.length - 9) +
+        " more shows with measured downloads. Every show is listed under Audience below." }));
+    }
+
+    // Who is listening: ages and places, per platform, never blended.
+    const ph = h("h3");
+    ph.appendChild(document.createTextNode("Who is listening"));
+    ph.appendChild(h("span", { class: "meta", text: "per platform · never blended" }));
+    people.appendChild(ph);
+    const ya = (((audience.youtube_audience || {}).channels || {}).en || {});
+    const ages = (ya.summary || {}).by_age || {};
+    const ageKeys = Object.keys(ages);
+    if (ageKeys.length) {
+      people.appendChild(h("h4", { text: "Age · YouTube English channel · share of views, " + fmt(ya.window_days || 28) + "d" }));
+      const maxA = Math.max.apply(null, ageKeys.map((k) => ages[k]));
+      ageKeys.forEach((k) => people.appendChild(
+        barRow(k.replace(/-$/, "+"), ages[k], maxA, Number(ages[k]).toFixed(1) + "%")));
+    }
+    const spAges = sp.age_bands || [];
+    if (sp.configured && spAges.length) {
+      people.appendChild(h("h4", { text: "Age · Spotify listeners · " + fmt(sp.window_days || 30) + "d" }));
+      const order = spAges.slice().sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+      const maxS = Math.max.apply(null, order.map((r) => r[1]));
+      order.forEach((r) => people.appendChild(barRow(String(r[0]), r[1], maxS, fmt(r[1]))));
+    }
+    const yc = (ya.top_countries || []).slice(0, 5);
+    if (yc.length) {
+      people.appendChild(h("h4", { text: "Where · YouTube English channel · share of listed views" }));
+      people.appendChild(h("p", { text: yc.map((c) => c.country + " " + Math.round(c.pct_of_listed) + "%").join(" · ") }));
+    }
+    if (!ageKeys.length && !spAges.length && !yc.length) {
+      people.appendChild(h("p", { text: "No audience profile has been reported by a platform yet." }));
+    }
+
+    // Brand safety: the claims record, as measured.
+    const th = h("h3");
+    th.appendChild(document.createTextNode("What a sponsor stands beside"));
+    th.appendChild(h("span", { class: "meta", text: "the public claims record" }));
+    trust.appendChild(th);
+    const c30 = (data.claims || {}).window_30d || {};
+    if ((data.claims || {}).configured && c30.claims_total) {
+      const big = h("div", { class: "big", text: (100 * c30.verified_share).toFixed(1) + "%" });
+      big.appendChild(h("small", { text: "of claims traced to their source" }));
+      trust.appendChild(big);
+      trust.appendChild(h("p", { text: fmt(c30.verified) + " of " + fmt(c30.claims_total) +
+        " factual claims in the last 30 days were checked against the page they cite, across " +
+        fmt(c30.sidecars) + " episodes. The " + fmt(c30.flagged) +
+        " that could not be confirmed were published with a visible mark, never removed quietly." }));
+    } else {
+      trust.appendChild(h("p", { text: "The claims record has not been read yet." }));
+    }
+    trust.appendChild(h("h4", { text: "Also on the record" }));
+    // The sponsor policy itself is engine.brand's copy on sponsor.html;
+    // this page links to it and never restates a rule.
+    trust.appendChild(h("p", { text: "Every episode discloses how it is made, corrections are " +
+      "published, and the sponsor policy is public." }));
+    const links = h("p");
+    [["claims.html", "Claims record"], ["ai-disclosure.html", "How the shows are made"],
+     ["editorial.html", "Editorial standards"], ["sponsor.html", "Sponsor policy"]].forEach((l, i) => {
+      if (i) links.appendChild(document.createTextNode(" · "));
+      links.appendChild(h("a", { href: l[0], text: l[1], style: "color:#a5b4fc;" }));
+    });
+    trust.appendChild(links);
+  })();
+
+  // ---------- long ranked lists show their top rows ----------
+  // A 30-row bar list per card made the page 34,000px tall. A run of more
+  // than ten rows shows its first eight; one button opens the rest.
+  (function trimLongLists() {
+    const ROWS = ".bar-row, .sparkline-row";
+    const parents = new Set();
+    document.querySelectorAll(ROWS).forEach((r) => parents.add(r.parentNode));
+    parents.forEach((parent) => {
+      let run = [];
+      const flush = () => {
+        if (run.length > 10) {
+          const extra = run.slice(8);
+          extra.forEach((r) => r.classList.add("row-more"));
+          const btn = h("button", { type: "button", class: "show-rows",
+            text: "Show all " + run.length });
+          btn.addEventListener("click", () => {
+            const open = btn.getAttribute("data-open") === "1";
+            extra.forEach((r) => r.classList.toggle("row-more", open));
+            btn.setAttribute("data-open", open ? "0" : "1");
+            btn.textContent = open ? "Show all " + (extra.length + 8) : "Show the top 8";
+          });
+          parent.insertBefore(btn, extra[extra.length - 1].nextSibling);
+        }
+        run = [];
+      };
+      Array.prototype.slice.call(parent.children).forEach((child) => {
+        if (child.matches && child.matches(ROWS)) run.push(child); else flush();
+      });
+      flush();
+    });
+  })();
+
+  // ---------- collapsible detail sections ----------
+  // Each view opens the sections its reader came for; the rest are one
+  // line each until asked for. A link to a section opens it.
+  const SECTION_DEFAULTS = {
+    operator: ["audience-section"],
+    sponsor: [],
+    investor: ["investor", "benchmarks"],
+  };
+  const setSection = (sec, open) => {
+    sec.classList.toggle("is-collapsed", !open);
+    const btn = sec.querySelector(":scope > h2 .sec-toggle");
+    if (btn) btn.setAttribute("aria-expanded", String(open));
+  };
+  document.querySelectorAll("section.mc-section").forEach((sec) => {
+    const h2 = sec.querySelector(":scope > h2");
+    if (!h2) return;
+    const btn = h("button", { type: "button", class: "sec-toggle", "aria-expanded": "true" });
+    btn.appendChild(h("span", { class: "chev", "aria-hidden": "true" }));
+    const label = h("span");
+    Array.prototype.slice.call(h2.childNodes).forEach((n) => {
+      if (n.nodeType === 1 && n.classList.contains("pill-note")) return;
+      label.appendChild(n);
+    });
+    btn.appendChild(label);
+    h2.insertBefore(btn, h2.firstChild);
+    h2.addEventListener("click", (ev) => {
+      if (ev.target.closest("a")) return;
+      setSection(sec, sec.classList.contains("is-collapsed"));
+    });
+  });
+  const applySectionDefaults = (view) => {
+    const open = SECTION_DEFAULTS[view] || [];
+    document.querySelectorAll("section.mc-section").forEach((sec) =>
+      setSection(sec, open.indexOf(sec.id) !== -1));
+    openFromHash(false);
+  };
+  const openFromHash = (scroll) => {
+    const id = decodeURIComponent((window.location.hash || "").slice(1));
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    const sec = target.closest("section.mc-section");
+    if (sec && sec.classList.contains("is-collapsed")) {
+      setSection(sec, true);
+      if (scroll) target.scrollIntoView();
+    }
+  };
+  window.addEventListener("hashchange", () => openFromHash(true));
+  document.querySelectorAll('a[href^="#"]').forEach((a) => a.addEventListener("click", () => {
+    const sec = document.getElementById(a.getAttribute("href").slice(1));
+    if (sec && sec.classList.contains("is-collapsed")) setSection(sec, true);
+  }));
+  $("#expand-all").addEventListener("click", () =>
+    document.querySelectorAll("section.mc-section").forEach((sec) => setSection(sec, true)));
+  $("#collapse-all").addEventListener("click", () =>
+    document.querySelectorAll("section.mc-section").forEach((sec) => setSection(sec, false)));
+
   // ---------- view switch ----------
   // Three audiences, one page: operator (everything), sponsor (audience
   // + catalogue only), investor (audience + economics + benchmarks +
@@ -3113,6 +3851,8 @@
       }
       if (h1) h1.textContent = VIEWS[view].h1;
       if (sub) sub.textContent = VIEWS[view].sub;
+      // Each view opens its own sections; switching views resets them.
+      applySectionDefaults(view);
       try { localStorage.setItem("nerraDashView", view); } catch (e) { /* private mode */ }
       if (push) {
         const u = new URL(window.location.href);
