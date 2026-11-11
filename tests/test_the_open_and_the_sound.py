@@ -142,10 +142,11 @@ class TestWhatSheSaysAtTheTop:
         on the turn after; never a recital with the question stacked on it."""
         flat = _flat(PROMPT)
         opening = flat[flat.index("HOW TO OPEN"):flat.index("THEIR SUBJECT, FAST")]
-        assert "How the hour works, in a few short sentences:" in opening
+        assert "How the hour works, in two or three sentences, never a list:" in opening
         assert "Then ask if that sounds good." in opening
         assert "3. Welcome them ({{guest_address}}) and ask your first real question" in opening
-        assert "they will see the transcript before anything goes out" in opening
+        # Nov 11 2026: the transcript terms are on the page she points to.
+        assert "the studio page in front of them has the rest" in opening
         assert "roughly {{planned_minutes}} minutes" not in opening
         assert "nothing is live" not in flat
         assert "approve the episode before anyone else does" not in flat
