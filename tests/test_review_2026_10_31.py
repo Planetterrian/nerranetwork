@@ -137,10 +137,38 @@ class TestTheLivePolicyAfterTheReset:
                     assert vpd is not None and vpd >= mod.LONG_VPD_FLOOR[ch], (
                         ch, slug, reason)
 
-    def test_the_breakout_shows_are_back_to_a_daily_short(self):
+    def test_a_weekly_probe_is_under_the_channel_relative_bar(self):
+        """The Oct 31 reset put Fascinating Frontiers, First Principles,
+        Models & Agents and Omni View back on a daily Short, and this guard
+        first pinned those four as off. That held until the nightly of Nov
+        10, when First Principles' hook Short read a median of 3.0 against
+        its floor of 4.0 for the second night and entered the tier, which
+        is the rule working. What the reset forbids is a show cut to one
+        Short a week by the absolute bar while the whole channel is down,
+        so that is what this checks, on whatever the committed policy says
+        today: a show on the weekly probe with a full window is under the
+        bar that follows the channel, and that bar is never above 10."""
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "update_youtube_policy", ROOT / "scripts" / "update_youtube_policy.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
         en = json.loads(_read("api/youtube_policy.json"))["channels"]["en"]
-        for slug in ("fascinating_frontiers", "first_principles", "models_agents", "omni_view"):
-            assert en[slug]["shorts_probe_weekly"] is False, slug
+        for slug, entry in en.items():
+            floor = entry.get("hook_short_floor")
+            if floor is not None:
+                assert floor <= mod.DEAD_SHORTS_FLOOR, (slug, floor)
+            if entry.get("shorts_probe_weekly") is not True:
+                continue
+            median = entry.get("hook_short_d3_median_21d")
+            n = entry.get("hook_short_n_21d") or 0
+            # Under a full window the tier holds on its last read: a show
+            # on one Short a week stops filling the window it is read from.
+            if floor is None or median is None or n < mod.DEAD_SHORTS_MIN_VIDEOS:
+                continue
+            assert median < floor, (slug, median, floor)
 
 
 # ----------------------------------------------------------------- website
