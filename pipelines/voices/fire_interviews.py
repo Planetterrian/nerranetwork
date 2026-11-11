@@ -835,6 +835,12 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 "confirms I'll hear you clearly, and anything it finds is easy to fix now and "
                 "hard to fix at the start time.</p>")
         parts.append(str(studio_steps_html(studio)))
+        # Nov 11 2026: how the hour goes, in writing (engine.brand owns it),
+        # so the spoken opening never has to carry it. A closing session is
+        # a short finish, not an hour, and keeps its own email.
+        if not closing:
+            from engine.brand import mira_hour_html
+            parts.append(mira_hour_html())
     if manage and not soon:
         parts.append(f'<p>If today doesn\'t work after all, <a href="{manage}">move or '
                      "cancel it here</a>. One tap, no explanation needed; I would much "
