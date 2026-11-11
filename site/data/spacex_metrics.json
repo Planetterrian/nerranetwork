@@ -169,7 +169,7 @@
   },
   "infrastructure": [],
   "starship_flights": {
-    "note": "Curated Starship integrated flight-test record (operator-maintained \u2014 append the newest flight after each test). Outcomes: success / partial / failure. The dashboard charts whatever is listed here.",
+    "note": "Starship integrated flight-test record. Curated entries are the operator's; scripts/fetch_spacex_launches.py appends any flown Starship flight the launch record holds and this list lacks (\"source\": \"launch_record\"), so the tracker never ends behind the launch record again. Outcomes: success / partial / failure.",
     "flights": [
       {
         "flight": "IFT-1",
@@ -227,11 +227,42 @@
         "date": "2025-05-27",
         "outcome": "partial",
         "milestone": "First flight of a reflown Super Heavy booster; ship reached space but lost attitude control before splashdown."
+      },
+      {
+        "flight": "IFT-10",
+        "date": "2025-08-26",
+        "outcome": "success",
+        "milestone": "First clean Block 2 flight: Ship deployed eight Starlink simulators, relit a Raptor in space and made a controlled splashdown in the Indian Ocean; the booster flew its landing burn to the Gulf."
+      },
+      {
+        "flight": "IFT-11",
+        "date": "2025-10-13",
+        "outcome": "success",
+        "milestone": "Last flight of the V2 vehicles: a reflown booster tested its landing burn over the Gulf, and Ship deployed simulators, relit a Raptor and banked into an on-target Indian Ocean splashdown."
+      },
+      {
+        "flight": "IFT-12",
+        "date": "2026-05-22",
+        "outcome": "partial",
+        "milestone": "First Starship V3: the booster's boostback burn failed and it was lost in the Gulf; Ship deployed 22 satellites, survived a Mach 7 flap test and splashed down on target."
+      },
+      {
+        "flight": "IFT-13",
+        "date": "2026-07-24",
+        "outcome": "success",
+        "milestone": "Ship deployed 20 real Starlink V3 satellites and splashed down intact, still floating, in the Indian Ocean; the booster lit only 8 of 13 landing engines and hit the Gulf hard."
+      },
+      {
+        "flight": "IFT-14",
+        "date": "2026-09-28",
+        "outcome": "partial",
+        "milestone": "First flight to reach orbit: Ship released 26 Starlink V3 satellites, then an engine problem cut the planned six-orbit mission to about three hours; it splashed down in the North Pacific."
       }
-    ]
+    ],
+    "updated_at": "2026-11-11"
   },
   "annual_launches": {
-    "note": "Curated SpaceX orbital launch totals by year (Falcon 9 + Falcon Heavy + Starship orbital attempts). Operator-maintained \u2014 update the current year as it accrues. The long-arc growth story; the live monthly cadence above covers the recent window.",
+    "note": "SpaceX orbital launch totals by year (Falcon 9 + Falcon Heavy + Starship orbital attempts). Finished years are curated; the current year is recounted from the launch record each run and flagged ytd (scripts/fetch_spacex_launches.py merge_annual_launches).",
     "years": [
       {
         "year": "2018",
@@ -260,6 +291,16 @@
       {
         "year": "2024",
         "launches": 134
+      },
+      {
+        "year": "2025",
+        "launches": 165
+      },
+      {
+        "year": "2026",
+        "launches": 123,
+        "ytd": true,
+        "through": "2026-11-10"
       }
     ]
   }

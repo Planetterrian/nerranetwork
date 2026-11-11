@@ -55,7 +55,7 @@
   .tsl-qlab { font-size:0.75rem; line-height:1.15; color:#c79aa3; white-space:nowrap; text-align:center; }
   .tsl-legend { display:flex; gap:18px; font-size:0.78rem; color:#cbb1b7; margin-bottom:8px; }
   .tsl-legend .sw { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:middle; }
-  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } }
+  @media (max-width:520px){ .tsl-qbars, #tslEnergyQ{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } #tslEnergyQ .cnt{ font-size:0.6rem; } }
   .tsl-asof { color:#e2b9c1; font-size:0.82rem; margin:0 0 0.8rem; }
 
   .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
@@ -68,6 +68,19 @@
   .tsl-hl { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0.6rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
   .tsl-hl:last-child{ border-bottom:none; }
   .tsl-hl .v { font-size:1.2rem; font-weight:800; color:#fff; }
+  /* The latest-quarter scoreboard (Nov 11 2026): the number Tesla is
+     judged on each quarter leads the page, with its year-ago comparison. */
+  .tsl-score { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); gap:0.9rem; }
+  .tsl-score .k { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:#c79aa3; }
+  .tsl-score .v { font-size:clamp(1.7rem,4vw,2.3rem); font-weight:800; color:#fff; font-variant-numeric:tabular-nums; line-height:1.1; margin-top:2px; }
+  .tsl-score .d { font-size:0.85rem; color:#e2b9c1; margin-top:2px; }
+  .tsl-score .up { color:#5ef0a0; } .tsl-score .down { color:#ff8a8a; }
+  .tsl-eps { list-style:none; margin:0; padding:0; }
+  .tsl-eps li { padding:0.65rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
+  .tsl-eps li:last-child { border-bottom:none; }
+  .tsl-eps a { color:#fff; text-decoration:none; font-weight:600; line-height:1.35; }
+  .tsl-eps a:hover, .tsl-eps a:focus-visible { text-decoration:underline; }
+  .tsl-eps .tsl-muted { display:block; margin-top:2px; }
   .tsl-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#a8838c; font-size:0.78rem; }
 </style>
 {% endblock %}
@@ -114,6 +127,23 @@
     </div>
   </div>
 
+  {% if latest_quarter %}
+  {% set lq = latest_quarter %}
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <section class="tsl-panel" aria-labelledby="tslScoreH">
+      <h2 id="tslScoreH">Latest quarter: {{ lq.label }}</h2>
+      <div class="tsl-score">
+        <div><div class="k">Vehicles delivered</div><div class="v">{{ "{:,}".format(lq.delivered) }}</div>
+          {% if lq.delivered_yoy_pct is not none %}<div class="d"><span class="{{ 'up' if lq.delivered_yoy_pct >= 0 else 'down' }}">{{ "{:+.1f}".format(lq.delivered_yoy_pct) }}%</span> on a year earlier</div>{% endif %}</div>
+        {% if lq.produced %}<div><div class="k">Vehicles produced</div><div class="v">{{ "{:,}".format(lq.produced) }}</div>
+          {% if lq.inventory_change is not none %}<div class="d">{% if lq.inventory_change < 0 %}{{ "{:,}".format(-lq.inventory_change) }} more delivered than built{% else %}{{ "{:,}".format(lq.inventory_change) }} more built than delivered{% endif %}</div>{% endif %}</div>{% endif %}
+        {% if lq.energy_gwh is not none %}<div><div class="k">Energy storage deployed</div><div class="v">{{ lq.energy_gwh }} GWh</div>
+          {% if lq.energy_yoy_pct is not none %}<div class="d"><span class="{{ 'up' if lq.energy_yoy_pct >= 0 else 'down' }}">{{ "{:+.1f}".format(lq.energy_yoy_pct) }}%</span> on a year earlier</div>{% endif %}</div>{% endif %}
+      </div>
+      <p class="tsl-disclaimer">From Tesla's {{ lq.label }} Production, Deliveries &amp; Deployments release. The {{ lq.next_label }} figures are due in the first days after the quarter closes.</p>
+    </section>
+  </div>
+  {% endif %}
   {% if deliveries_quarterly %}
   <div class="tsl-grid" style="grid-template-columns:1fr;">
     <div class="tsl-panel">
@@ -126,7 +156,7 @@
         <span><span class="sw" style="background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red));"></span>Delivered</span>
       </div>
       <div class="tsl-qbars" id="tslQuarterly">
-        {% for q in deliveries_quarterly %}
+        {% for q in deliveries_quarterly[-12:] %}
         <div class="tsl-qg">
           <div class="tsl-qpair">
             <div class="tsl-qbar prod" data-v="{{ q.produced }}" style="height:0" title="Produced: {{ '{:,}'.format(q.produced) }}"></div>
@@ -140,6 +170,21 @@
       <p class="tsl-disclaimer">Tesla's published Production &amp; Deliveries figures by quarter (the number watched most closely each quarter). Quarterly delivered totals reconcile to the annual deliveries below. Operator-maintained — append each new quarter after the P&amp;D release.</p>
     </div>
   </div>
+  {% set eq = deliveries_quarterly[-12:] | selectattr("energy_gwh", "defined") | list %}
+  {% if eq %}
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <div class="tsl-panel">
+      <h2>Energy storage deployed by quarter (GWh)</h2>
+      <div class="tsl-bars" id="tslEnergyQ" style="height:200px;">
+        {% for q in eq %}
+        {% set qp = (q.quarter|string).split(' ') %}
+        <div class="tsl-bw"><div class="tsl-bar" data-v="{{ q.energy_gwh }}" style="height:0"><span class="cnt">{{ q.energy_gwh }}</span></div><div class="tsl-qlab">{% if qp|length == 2 %}{{ qp[1] }}<br>{{ qp[0] }}{% else %}{{ q.quarter }}{% endif %}</div></div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">Megapack and Powerwall deployments each quarter, from the same quarterly release.</p>
+    </div>
+  </div>
+  {% endif %}
   {% endif %}
 
   <div class="tsl-grid">
@@ -185,6 +230,18 @@
     {% endif %}
   </div>
 
+  {% if recent_episodes %}
+  <div class="tsl-grid" style="grid-template-columns:minmax(0,1fr);">
+    <section class="tsl-panel" aria-labelledby="tslEpsH">
+      <h2 id="tslEpsH">Latest from Tesla Shorts Time</h2>
+      <ul class="tsl-eps">
+        {% for e in recent_episodes %}
+        <li><a href="{{ path_prefix }}{{ e.url }}">{{ e.title | e }}</a><span class="tsl-muted">Episode {{ e.episode_num }} · {{ e.date }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+  {% endif %}
   <p class="tsl-foot-note">
     Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="{{ path_prefix }}tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="{{ path_prefix }}tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Explore every dashboard at the <a href="{{ path_prefix }}data.html" style="color:var(--tsl-glow);">Nerra data hub</a>. Nothing here is financial advice.
   </p>
@@ -219,7 +276,7 @@
     const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
     bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
-  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslSupercharger');
+  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslEnergyQ'); animateBars('tslSupercharger');
 
   // quarterly paired bars share one scale across produced + delivered
   (function(){ const w=document.getElementById('tslQuarterly'); if(!w) return;

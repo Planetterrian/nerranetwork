@@ -1913,6 +1913,11 @@ details in the review doc §4 and `docs/experiments.yaml`):
   14 episodes and printed only for a show in `engine.cadence.COMPUTED_LENGTH_SHOWS`**.
   Guards `tests/test_daily_audit_instrument_2026_11_03.py`.
 
+### The public dashboards stay current, and the front page shows their numbers (Nov 11 2026)
+
+Guards `tests/test_dashboards_review_2026_11_11.py`.
+**`engine/public_dashboards.py` is the one reader of the curated dashboard files** (`site/data/tesla_metrics.json`, `spacex_metrics.json`): the Tesla scoreboard, the home page's dashboard numbers and Mission Control's `item_23_public_dashboard_data` read it, so they never disagree. **The Starship tracker and the annual launch totals are EXTENDED from the launch record nightly** (`merge_starship_record`, `merge_annual_launches`; a curated entry is never rewritten; the running year is flagged `ytd`). **Tesla's quarter is appended from the P&D release within days** (Mission Control warns after `TESLA_QUARTER_GRACE_DAYS`). **MIT's front-page number is the era record only.**
+
 ### The private Nerra Personal feeds are watched (Nov 6 2026)
 
 Guards `tests/test_personal_feed_health_2026_11_06.py`, `workers/gallery/test/feed_health.test.ts`; doc `docs/nerra_personal.md` "The private feeds are watched".

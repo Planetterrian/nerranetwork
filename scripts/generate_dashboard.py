@@ -3887,6 +3887,26 @@ def build_investor_section(
     return section
 
 
+def item_23_public_dashboard_data(root: Path, today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """The curated series behind the public Tesla and SpaceX dashboards are
+    current (Nov 11 2026: Tesla's quarterly series had sat at 2025 Q1 and the
+    Starship tracker at IFT-9 for months, unseen, on pages that read "Live")."""
+    try:
+        sys.path.insert(0, str(root))
+        from engine.public_dashboards import curated_freshness
+        findings = curated_freshness(root, today)
+    except Exception as exc:  # noqa: BLE001 — a check never breaks the page
+        return _mk("item_23_public_dashboard_data", "Public dashboard data is current",
+                   "warn", f"Could not read the curated dashboard files: {exc}")
+    if not findings:
+        return _mk("item_23_public_dashboard_data", "Public dashboard data is current", "ok",
+                   "Tesla quarterly/annual figures, SpaceX annual launches and the Starship tracker are all current.")
+    details = "; ".join(f"{f['series']}: latest {f['latest']}, expected {f['expected']}" for f in findings)
+    return _mk("item_23_public_dashboard_data", "Public dashboard data is current", "warn",
+               details + ". Update the file from the primary release (see its note) and rebuild the dashboards.",
+               {"findings": findings})
+
+
 def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optional[int] = None) -> Dict[str, Any]:
     shows = load_shows_from_yaml(root / "shows", root)
     rss = audit_rss_enclosures(root, offline=offline)
@@ -3910,6 +3930,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # item_22 depends on metrics, so it goes last (and metrics is
         # computed above so the dependency holds).
         item_22_grok_imagine_health(shows, metrics),
+        item_23_public_dashboard_data(root),
     ]
 
     network = build_network_rollup(shows, landmines, metrics, costs, rss)

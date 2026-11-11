@@ -353,7 +353,10 @@ class TestStarshipTracker:
         # — which only fetches api/spacex_launches.json — can read it).
         import inspect
         src = inspect.getsource(m.build_payload)
-        assert '"starship": _starship_flights()' in src
+        # Nov 11 2026: the curated record is EXTENDED from the launch record
+        # before it reaches the payload (merge_starship_record).
+        assert "merge_starship_record(_starship_flights()" in src
+        assert '"starship": starship' in src
         # And the metrics-rewrite must preserve it across runs (not wipe it).
         rewrite = inspect.getsource(m._update_metrics_timeseries)
         assert 'existing.get("starship_flights"' in rewrite
@@ -386,7 +389,7 @@ class TestStarshipTracker:
         m = self._mod()
         assert len(m._annual_launches().get("years", [])) >= 5
         import inspect
-        assert '"annual_launches": _annual_launches()' in inspect.getsource(m.build_payload)
+        assert "merge_annual_launches(_annual_launches()" in inspect.getsource(m.build_payload)
         assert 'existing.get("annual_launches"' in inspect.getsource(m._update_metrics_timeseries)
         # Dashboard renders it.
         t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
