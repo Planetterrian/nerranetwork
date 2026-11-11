@@ -1062,9 +1062,65 @@ def clean_digest_for_blog(md_text: str) -> str:
         if stripped.startswith("let me know what you think"):
             continue
 
+        # Nov 11 2026: the digest's "Sign-off:" label is a writer's label,
+        # never reader copy (Tesla Ep661 ended on a literal "Sign-off:").
+        m = _SIGN_OFF_LABEL_RE.match(line)
+        if m:
+            line = m.group(1) + m.group(2)
+            if not line.strip():
+                continue
+
+        # The X Takeover's template intro line is boilerplate the model copies
+        # from the format spec; it says nothing and, on a day the section's
+        # items were all deduplicated away, it is the section's only line.
+        if _TAKEOVER_BOILERPLATE_RE.match(stripped):
+            continue
+
         cleaned.append(line)
 
-    return "\n".join(cleaned)
+    return drop_empty_sections("\n".join(cleaned))
+
+
+#: Nov 11 2026 (Tesla review).
+_SIGN_OFF_LABEL_RE = re.compile(r"^(\s*)(?:\*\*)?Sign-?off:(?:\*\*)?\s*(.*)$", re.IGNORECASE)
+_TAKEOVER_BOILERPLATE_RE = re.compile(
+    r"^\**\s*Tesla X Takeover\s*[-–—:]\s*What'?’?s breaking", re.IGNORECASE)
+_MD_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
+#: Item sections a show may ship empty after the cross-section dedupe drops
+#: their items (engine.digest_overlap keeps the header on purpose, so the
+#: validators can see the section is missing). Their empty header is dropped
+#: on the page even when a deeper heading follows it.
+EMPTY_ITEM_SECTIONS = ("tesla x takeover", "short spot", "also today",
+                       "the counterpoint")
+
+
+def drop_empty_sections(md_text: str) -> str:
+    """Remove a heading that has nothing under it.
+
+    Nov 11 2026 (Tesla review): Ep661's page printed "Tesla X Takeover" and
+    "Short Spot" with nothing beneath them — the dedupe had removed every
+    item and kept the headers. A heading is empty when only blank lines sit
+    between it and the next heading (or the end). It is dropped when that
+    next heading is at the same or a higher level, or when it names one of
+    :data:`EMPTY_ITEM_SECTIONS`; a parent whose content is all in deeper
+    sub-headings is kept.
+    """
+    lines = md_text.split("\n")
+    out = []
+    for i, line in enumerate(lines):
+        m = _MD_HEADING_RE.match(line.strip())
+        if m:
+            j = i + 1
+            while j < len(lines) and not lines[j].strip():
+                j += 1
+            nxt = _MD_HEADING_RE.match(lines[j].strip()) if j < len(lines) else None
+            if j >= len(lines) or nxt:
+                level = len(m.group(1))
+                name = re.split(r"\s*[:—-]\s", m.group(2).strip("* "), maxsplit=1)[0].lower()
+                if j >= len(lines) or len(nxt.group(1)) <= level or name in EMPTY_ITEM_SECTIONS:
+                    continue
+        out.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out))
 
 
 def _plain_line(text: str) -> str:

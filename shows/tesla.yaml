@@ -33,6 +33,12 @@ digest_lints:
 # page (deep_dive_source_read); it fires only on the sections whose prompt
 # states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
 - deep_dive_distinct_measure
+# Nov 11 2026 (Tesla review): the firing form. The essay re-told a body item
+# on 6 of 7 days (deep_dive_contains_body_item 0.43-0.70 over Ep655-661, the
+# threshold 0.5) and the daily audit grounded REPETITIVE on 7 straight
+# episodes. Tesla's regen share was already 3/7 (over the 0.22 ceiling); the
+# operator accepted the extra regenerations (~$0.03 and ~3 min each).
+- deep_dive_distinct
 - deep_dive_fetched_source
 preferred_domains:
 - tesla.com
@@ -99,6 +105,17 @@ sources:
     label: Not A Tesla App
   - url: https://evannex.com/blogs/news.atom
     label: Evannex
+  # Nov 11 2026 (Tesla review): the company's own record and the wires.
+  # preferred_domains named sec.gov, nhtsa.gov and ir.tesla.com, but no feed
+  # fetched them: 0 citations in Ep637-661 against 158 for x.com.
+  - url: https://electrek.co/guides/tesla/feed/
+    label: Electrek
+  - url: "https://news.google.com/rss/search?q=Tesla+(site:reuters.com+OR+site:bloomberg.com+OR+site:cnbc.com+OR+site:wsj.com)+when%3A1d&hl=en-US&gl=US&ceid=US:en"
+    label: Google News Tesla wires
+  - url: "https://news.google.com/rss/search?q=Tesla+(recall+OR+NHTSA+OR+investigation)+when%3A2d&hl=en-US&gl=US&ceid=US:en"
+    label: Google News Tesla recalls and NHTSA
+  - url: "https://news.google.com/rss/search?q=Tesla+(SEC+filing+OR+8-K+OR+10-Q+OR+%22investor+relations%22)+when%3A3d&hl=en-US&gl=US&ceid=US:en"
+    label: Google News Tesla filings
 
 x_accounts:
   - handle: Tesla
@@ -123,7 +140,40 @@ x_accounts:
   - handle: Teslarati
     label: Teslarati
     max_posts: 3
+  # Nov 11 2026 (Tesla review): primary accounts. Much Tesla news breaks in
+  # Musk's posts or on the product teams' own accounts; SpaceX Daily already
+  # reads @elonmusk. The keyword filter keeps his non-Tesla posts out.
+  - handle: elonmusk
+    label: Elon Musk
+    max_posts: 5
+  - handle: Tesla_AI
+    label: Tesla AI
+    max_posts: 3
+  - handle: Tesla_Optimus
+    label: Tesla Optimus
+    max_posts: 3
+  - handle: teslaenergy
+    label: Tesla Energy
+    max_posts: 3
+  - handle: TeslaCharging
+    label: Tesla Charging
+    max_posts: 3
 
+# Nov 11 2026 (Tesla review): publishers this show never cites — content
+# farms and shops that reached the Top 12 through the Google News queries
+# (Ep637-661: tech-insider.org 22 citations, shattered.io 15, basenor.com 11,
+# eletric-vehicles.com 11). A domain matches the URL host; a name matches
+# the Google News publisher label whole (engine.utils.is_excluded_source).
+exclude_sources:
+  - tech-insider.org
+  - shattered.io
+  - basenor.com
+  - BASENOR - Tesla Accessories
+  - eletric-vehicles.com
+  - finance.biggo.com
+  - BigGo Finance
+  - kucoin.com
+  - ad-hoc-news.de
 min_articles: 10
 min_articles_skip: 6
 
@@ -443,6 +493,11 @@ publishing:
   x_enabled: true
   x_env_prefix: "X_"
   x_handle: "@teslashortstime"
+  # Nov 11 2026 (Tesla review): the hook Short as native video, the full
+  # episode as a reply, queued into a daytime slot — as SpaceX Daily and
+  # @nerranetwork post. The link teaser cost ~$0.20 a post and X ranks link
+  # posts down; a clip post is ~$0.03.
+  x_post_format: clip
 
 episode:
   prefix: Tesla_Shorts_Time_Pod

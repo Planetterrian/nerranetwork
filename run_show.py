@@ -1678,10 +1678,12 @@ def run(args: argparse.Namespace) -> None:
             # Tesla Stake by $623M: TSLAming (X)"). Same filter, same
             # patterns, third call site.
             from engine.utils import exclude_title_patterns_for as _patterns_x
+            from engine.utils import exclude_sources_for as _x_sources
             _x_excl = _patterns_x(config)
             if _x_excl:
                 from engine.utils import drop_excluded_titles as _drop_x
-                x_posts, _x_dropped = _drop_x(x_posts, _x_excl)
+                x_posts, _x_dropped = _drop_x(
+                    x_posts, _x_excl, sources=_x_sources(config))
                 if _x_dropped:
                     logger.info(
                         "Excluded %d X post(s) via exclude_title_patterns",
@@ -1896,8 +1898,10 @@ def run(args: argparse.Namespace) -> None:
                     _excl_web = _patterns_web(config)
                     if _excl_web:
                         from engine.utils import drop_excluded_titles
+                        from engine.utils import exclude_sources_for
                         web_articles, _n_web_excl = drop_excluded_titles(
                             web_articles, _excl_web,
+                            sources=exclude_sources_for(config),
                         )
                         if _n_web_excl:
                             logger.info(
@@ -6979,7 +6983,9 @@ def _fetch_with_expansion(
         _excl = exclude_title_patterns_for(config)
         if _excl:
             from engine.utils import drop_excluded_titles
-            articles, _n_excluded = drop_excluded_titles(articles, _excl)
+            from engine.utils import exclude_sources_for
+            articles, _n_excluded = drop_excluded_titles(
+                articles, _excl, sources=exclude_sources_for(config))
             if _n_excluded:
                 logger.info(
                     "Excluded %d article(s) matching exclude_title_patterns",
