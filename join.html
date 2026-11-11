@@ -749,6 +749,19 @@ body.lt-player-open { overflow: hidden; }
 .lt-dash-title { font-family: var(--lt-head); font-weight: 700; font-size: 1.12rem; color: var(--nn-white); }
 .lt-dash-desc { font-family: var(--lt-ui); font-size: 0.84rem; color: var(--lt-muted); line-height: 1.45; }
 .lt-dash-fact { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; color: var(--lt-cyan); line-height: 1.4; margin-top: auto; padding-top: 6px; }
+/* The best of each dashboard on the front page (Nov 11 2026): its headline
+   numbers, read by engine.public_dashboards, the same reading the
+   dashboard itself prints. */
+.lt-dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 10px 14px; margin: 6px 0 2px; padding: 10px 0 2px; border-top: 1px solid var(--lt-rule); }
+.lt-dash-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lt-dash-stat-v { font-family: var(--lt-head); font-weight: 700; font-size: 1.28rem; line-height: 1.1; color: var(--nn-white); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lt-dash-stat-l { font-family: var(--lt-ui); font-size: 0.74rem; line-height: 1.3; color: var(--lt-muted); }
+/* Six tracks: a card with numbers takes a third of the row, a card without
+   takes half, so the three data dashboards lead side by side. */
+.lt-dash-grid--stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.lt-dash-grid--stats .lt-dash { grid-column: span 3; }
+.lt-dash-grid--stats .lt-dash--stats { grid-column: span 2; }
+@media (max-width: 1000px) { .lt-dash-grid--stats .lt-dash, .lt-dash-grid--stats .lt-dash--stats { grid-column: span 3; } }
 .lt-trackers { margin-top: var(--sp-5); }
 
 /* ---- Personal ---- */
@@ -843,6 +856,7 @@ body.lt-player-open { overflow: hidden; }
 }
 @media (max-width: 640px) {
   .lt-flag-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-dash-grid--stats .lt-dash, .lt-dash-grid--stats .lt-dash--stats { grid-column: 1 / -1; }
   .lt-flag { padding: var(--sp-4); }
   .lt-flag-head { grid-template-columns: 56px minmax(0, 1fr); }
   .lt-flag-cover img { width: 56px; height: 56px; }
@@ -1908,19 +1922,19 @@ body.lt-player-open { overflow: hidden; }
                 <li style="--show-color:#1A5CFF;">
                     <img src="assets/covers/spacex-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">SpaceX Daily</span>
-                    <span class="ln">9 min</span>
+                    <span class="ln">10 min</span>
                 </li>
                 
                 <li style="--show-color:#E31937;">
                     <img src="assets/covers/tesla-shorts-time-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">Tesla Shorts Time</span>
-                    <span class="ln">10 min</span>
+                    <span class="ln">8 min</span>
                 </li>
                 
                 <li style="--show-color:#7C3AED;">
                     <img src="assets/covers/models-agents-400.webp" alt="" loading="lazy" width="34" height="34">
                     <span class="nm">Models & Agents</span>
-                    <span class="ln">9 min</span>
+                    <span class="ln">12 min</span>
                 </li>
                 
                 <li style="--show-color:#017A99;">
@@ -1930,7 +1944,7 @@ body.lt-player-open { overflow: hidden; }
                 </li>
                 
             </ol>
-            <div class="jn-ed-foot"><span data-jn-shows>4 shows · starter lineup</span><span>about <strong data-jn-total>37</strong> min</span></div>
+            <div class="jn-ed-foot"><span data-jn-shows>4 shows · starter lineup</span><span>about <strong data-jn-total>39</strong> min</span></div>
             <p class="jn-ed-note">Lengths are each show's typical episode this week. The edition plays every show in full; Mira's handoffs are seconds long.</p>
         </div>
     </div>
@@ -1939,7 +1953,7 @@ body.lt-player-open { overflow: hidden; }
 <div class="jn-wrap">
 <div class="np-stats" aria-label="Network stats">
     <div class="np-stat"><strong>26</strong><span>shows to pick from</span></div>
-    <div class="np-stat"><strong>2977+</strong><span>episodes shipped</span></div><div class="np-stat"><strong>7</strong><span>days free to try</span></div>
+    <div class="np-stat"><strong>2995+</strong><span>episodes shipped</span></div><div class="np-stat"><strong>7</strong><span>days free to try</span></div>
     
     <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
 </div>
@@ -1961,7 +1975,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>SpaceX Daily</strong>
-                    <em>Daily · about 9 min</em>
+                    <em>Daily · about 10 min</em>
                     
                     <span class="jn-tag">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</span><a class="jn-hear" href="spacex.html">Hear it free</a>
                 </span>
@@ -1974,9 +1988,9 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>Tesla Shorts Time</strong>
-                    <em>Daily · about 10 min</em>
+                    <em>Daily · about 8 min</em>
                     
-                    <span class="jn-tag">Shorting Tesla? Time's Up.</span><a class="jn-hear" href="tesla.html">Hear it free</a>
+                    <span class="jn-tag">Every Tesla story that matters, every day.</span><a class="jn-hear" href="tesla.html">Hear it free</a>
                 </span>
                 <button type="button" class="jn-toggle" aria-pressed="false" data-jn-toggle="tesla" aria-label="Add Tesla Shorts Time to my edition">+</button>
             </div>
@@ -2000,7 +2014,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>Models & Agents</strong>
-                    <em>Daily · about 9 min</em>
+                    <em>Daily · about 12 min</em>
                     
                     <span class="jn-tag">Daily AI models, agents, and practical developments.</span><a class="jn-hear" href="models-agents.html">Hear it free</a>
                 </span>
@@ -2039,7 +2053,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>MAG 7 Daily</strong>
-                    <em>Daily · about 9 min</em>
+                    <em>Daily · about 10 min</em>
                     
                     <span class="jn-tag">Seven companies, one daily desk.</span><a class="jn-hear" href="mag7.html">Hear it free</a>
                 </span>
@@ -2065,7 +2079,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>Longevity Weekly</strong>
-                    <em>Weekly (Wednesday) · about 11 min</em>
+                    <em>Weekly (Wednesday) · about 12 min</em>
                     
                     <span class="jn-tag">The science of aging, read carefully.</span><a class="jn-hear" href="longevity.html">Hear it free</a>
                 </span>
@@ -2117,7 +2131,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>First Principles Daily</strong>
-                    <em>Daily · about 11 min</em>
+                    <em>Daily · about 9 min</em>
                     
                     <span class="jn-tag">Reason from raw materials, not analogy.</span><a class="jn-hear" href="first-principles.html">Hear it free</a>
                 </span>
@@ -2130,7 +2144,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>Unintended Consequences</strong>
-                    <em>Daily · about 9 min</em>
+                    <em>Daily · about 7 min</em>
                     
                     <span class="jn-tag">Good intentions. Surprising results. Real lessons.</span><a class="jn-hear" href="unintended-consequences.html">Hear it free</a>
                 </span>
@@ -2286,7 +2300,7 @@ body.lt-player-open { overflow: hidden; }
                 
                 <span>
                     <strong>Vancouver Daily News</strong>
-                    <em>Daily · about 9 min</em>
+                    <em>Daily · about 10 min</em>
                     
                     <span class="jn-tag">The morning brief for Metro Vancouver.</span><a class="jn-hear" href="vancouver.html">Hear it free</a>
                 </span>
@@ -2945,20 +2959,20 @@ body.lt-player-open { overflow: hidden; }
   'use strict';
   var SHOWS = ["spacex", "tesla", "planetterrian", "models_agents", "fascinating_frontiers", "omni_view_world", "mag7", "modern_investing", "longevity", "peptides", "offshore_north", "ai_chips", "first_principles", "unintended_consequences", "prediction_markets", "models_agents_beginners", "collingwood", "env_intel", "dp_pod", "omni_view", "omni_view_north_america", "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast", "omni_view_latam", "vancouver"];
   var META = {};
-  META["spacex"] = { name: "SpaceX Daily", cover: "assets/covers/spacex-400.webp", minutes: 9, color: "#1A5CFF", members: false };
-  META["tesla"] = { name: "Tesla Shorts Time", cover: "assets/covers/tesla-shorts-time-400.webp", minutes: 10, color: "#E31937", members: false };
+  META["spacex"] = { name: "SpaceX Daily", cover: "assets/covers/spacex-400.webp", minutes: 10, color: "#1A5CFF", members: false };
+  META["tesla"] = { name: "Tesla Shorts Time", cover: "assets/covers/tesla-shorts-time-400.webp", minutes: 8, color: "#E31937", members: false };
   META["planetterrian"] = { name: "Planetterrian Daily", cover: "assets/covers/planetterrian-daily-400.webp", minutes: 9, color: "#017A99", members: false };
-  META["models_agents"] = { name: "Models \u0026 Agents", cover: "assets/covers/models-agents-400.webp", minutes: 9, color: "#7C3AED", members: false };
+  META["models_agents"] = { name: "Models \u0026 Agents", cover: "assets/covers/models-agents-400.webp", minutes: 12, color: "#7C3AED", members: false };
   META["fascinating_frontiers"] = { name: "Fascinating Frontiers", cover: "assets/covers/fascinating-frontiers-400.webp", minutes: 8, color: "#6B47FF", members: false };
   META["omni_view_world"] = { name: "Omni View Top World News", cover: "assets/covers/omni-view-world-400.webp", minutes: 8, color: "#0B6FD6", members: false };
-  META["mag7"] = { name: "MAG 7 Daily", cover: "assets/covers/mag7-400.webp", minutes: 9, color: "#334155", members: false };
+  META["mag7"] = { name: "MAG 7 Daily", cover: "assets/covers/mag7-400.webp", minutes: 10, color: "#334155", members: false };
   META["modern_investing"] = { name: "Modern Investing Techniques", cover: "assets/covers/modern-investing-400.webp", minutes: 13, color: "#047857", members: false };
-  META["longevity"] = { name: "Longevity Weekly", cover: "assets/covers/longevity-400.webp", minutes: 11, color: "#3F6212", members: false };
+  META["longevity"] = { name: "Longevity Weekly", cover: "assets/covers/longevity-400.webp", minutes: 12, color: "#3F6212", members: false };
   META["peptides"] = { name: "Peptides Weekly", cover: "assets/covers/peptides-400.webp", minutes: 10, color: "#9D174D", members: false };
   META["offshore_north"] = { name: "Offshore North", cover: "assets/covers/offshore-north-400.webp", minutes: 6, color: "#0B3C5D", members: false };
   META["ai_chips"] = { name: "AI Chips \u0026 Data Centres Daily", cover: "assets/covers/ai-chips-400.webp", minutes: 14, color: "#4338CA", members: false };
-  META["first_principles"] = { name: "First Principles Daily", cover: "assets/covers/first-principles-daily-400.webp", minutes: 11, color: "#0F766E", members: false };
-  META["unintended_consequences"] = { name: "Unintended Consequences", cover: "assets/covers/unintended-consequences-400.webp", minutes: 9, color: "#B45309", members: false };
+  META["first_principles"] = { name: "First Principles Daily", cover: "assets/covers/first-principles-daily-400.webp", minutes: 9, color: "#0F766E", members: false };
+  META["unintended_consequences"] = { name: "Unintended Consequences", cover: "assets/covers/unintended-consequences-400.webp", minutes: 7, color: "#B45309", members: false };
   META["prediction_markets"] = { name: "Prediction Markets Daily", cover: "assets/covers/prediction-markets-400.webp", minutes: 9, color: "#A21CAF", members: false };
   META["models_agents_beginners"] = { name: "Models \u0026 Agents for Beginners", cover: "assets/covers/models-agents-beginners-400.webp", minutes: 7, color: "#C2410C", members: false };
   META["collingwood"] = { name: "Collingwood Weekly", cover: "assets/covers/collingwood-400.webp", minutes: 7, color: "#0D6E8C", members: false };
@@ -2970,7 +2984,7 @@ body.lt-player-open { overflow: hidden; }
   META["omni_view_asia_pacific"] = { name: "Omni View Asia Pacific", cover: "assets/covers/omni-view-asia-pacific-400.webp", minutes: 0, color: "#0B6FD6", members: true };
   META["omni_view_africa_mideast"] = { name: "Omni View Africa \u0026 Middle East", cover: "assets/covers/omni-view-africa-mideast-400.webp", minutes: 0, color: "#0B6FD6", members: true };
   META["omni_view_latam"] = { name: "Omni View Central \u0026 South America", cover: "assets/covers/omni-view-latam-400.webp", minutes: 0, color: "#0B6FD6", members: true };
-  META["vancouver"] = { name: "Vancouver Daily News", cover: "assets/covers/vancouver-400.webp", minutes: 9, color: "#0D6E8C", members: false };
+  META["vancouver"] = { name: "Vancouver Daily News", cover: "assets/covers/vancouver-400.webp", minutes: 10, color: "#0D6E8C", members: false };
   // The Worker's DEFAULT_LINEUP: what a new member hears before choosing.
   var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian', 'dp_pod'];
   var DRAFT = 'nnMe.draft';
