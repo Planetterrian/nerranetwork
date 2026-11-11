@@ -1382,6 +1382,12 @@ class ShowConfig:
     # content (moon calendars, planet-visibility roundups, "this day in
     # history") — see engine.utils.drop_excluded_titles.
     exclude_title_patterns: List[str] = field(default_factory=list)
+    # Nov 11 2026: publishers a show never cites. Each entry is a domain
+    # (matched on the article URL's host, subdomains included) or a
+    # publisher name (matched whole, case-insensitive, on ``source_name`` —
+    # the only signal on an unresolved Google News link). See
+    # engine.utils.drop_excluded_titles.
+    exclude_sources: List[str] = field(default_factory=list)
     # Oct 17 2026: a local news show never reads sports betting lines
     # (Vancouver Ep025 aired a sportsbook moneyline). True adds
     # engine.utils.BETTING_LINE_TITLE_PATTERNS to the title filter and strips
@@ -1817,6 +1823,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
         exclude_title_patterns=data.get("exclude_title_patterns", []),
+        exclude_sources=[str(x) for x in (data.get("exclude_sources") or [])],
         exclude_betting_lines=bool(data.get("exclude_betting_lines", False)),
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),

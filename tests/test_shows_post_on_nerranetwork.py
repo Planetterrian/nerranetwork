@@ -41,7 +41,8 @@ def test_only_tesla_posts_anywhere_but_nerranetwork(slug):
         return
     if slug == "tesla":
         assert pub.x_env_prefix == "X_" and pub.x_handle == "@teslashortstime"
-        assert pub.x_post_format == "link"
+        # Nov 11 2026 (Tesla review): its own account posts the clip too.
+        assert pub.x_post_format == "clip"
         return
     assert pub.x_env_prefix == "NERRANETWORK_X_", slug
     if slug not in INTERVIEW_SHOWS:

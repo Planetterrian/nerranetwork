@@ -542,13 +542,16 @@ NETWORK_SHOWS = {
         "x_account": "teslashortstime",
         "brand_color": "#E31937",
         "brand_color_dark": "#C4122E",
-        "tagline": "Shorting Tesla? Time's Up.",
-        "hero_tagline": "Shorting Tesla? Time's Up.",
+        # Nov 11 2026 (Tesla review): the old "Shorting Tesla? Time's Up."
+        # promised a bull's show; the show promises honest coverage and one
+        # counterpoint a day. Episodes run 7-11 minutes, never ~15.
+        "tagline": "Every Tesla story that matters, every day.",
+        "hero_tagline": "Every Tesla story that matters, every day.",
         "schedule": "Daily",
-        "episode_length": "~15 min",
+        "episode_length": "~10 min",
         "about_text": "Tesla Shorts Time is a daily podcast covering the full Tesla business — vehicles, Robotaxi/Cybercab and FSD, Optimus, Tesla Energy (Megapack/Powerwall), Tesla Solar, Cortex/Dojo AI compute, Supercharging, Semi, and manufacturing — with sources, the real-time TSLA picture, community buzz, one honest counterpoint, and a daily first-principles analysis.",
         "about_host": "Hosted by Patrick, each episode covers breaking news across every Tesla business line: product updates, energy and solar deployments, Optimus and autonomy progress, Cortex compute, and the latest from the broader EV world.",
-        "description_long": "Daily podcast covering the whole Tesla business: FSD and Robotaxi milestones, Optimus, Cybertruck and vehicle production, Megapack and Powerwall energy storage, Solar Roof, Cortex/Dojo compute, Supercharging, Semi, TSLA stock context, and why the shorts keep getting it wrong.",
+        "description_long": "Daily podcast covering the whole Tesla business: FSD and Robotaxi milestones, Optimus, Cybertruck and vehicle production, Megapack and Powerwall energy storage, Solar Roof, Cortex/Dojo compute, Supercharging, Semi, TSLA stock context, and one honest counterpoint every day.",
         "related_show": "spacex",
         "related_reason": "If you enjoy Tesla Shorts Time, you might also like SpaceX Daily — the engineering-first daily on SpaceX as a public company.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939",

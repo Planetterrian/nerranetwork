@@ -480,7 +480,51 @@ def exclude_title_patterns_for(config) -> list:
     return own + list(NETWORK_EXCLUDE_TITLE_PATTERNS)
 
 
-def drop_excluded_titles(articles: list, patterns: list) -> tuple:
+def exclude_sources_for(config) -> list:
+    """The per-show ``exclude_sources`` (publisher domains or names)."""
+    return [str(x).strip() for x in (getattr(config, "exclude_sources", None) or [])
+            if str(x).strip()] if config is not None else []
+
+
+def _normalise_source_name(name: str) -> str:
+    n = (name or "").strip().lower()
+    n = re.sub(r"^https?://", "", n).rstrip("/")
+    n = re.sub(r"\s*\((?:x|web)\)$", "", n)
+    return n.removeprefix("www.")
+
+
+def is_excluded_source(article: dict, sources: list) -> bool:
+    """Whether *article* comes from a publisher in *sources*.
+
+    A domain entry matches the URL's host or any subdomain of it, and also a
+    ``source_name`` that is that domain (Google News names some publishers
+    by their bare domain, "shattered.io"). Any entry matches a
+    ``source_name`` equal to it, case-insensitive ("BASENOR - Tesla
+    Accessories"). Never a substring: "Electric Vehicles" must not catch
+    "r/electricvehicles".
+    """
+    if not sources or not article:
+        return False
+    from urllib.parse import urlparse
+    url = str(article.get("url") or article.get("link") or "")
+    try:
+        host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    except ValueError:
+        host = ""
+    name = _normalise_source_name(str(article.get("source_name") or article.get("source") or ""))
+    for entry in sources:
+        e = _normalise_source_name(entry)
+        if not e:
+            continue
+        if host and (host == e or host.endswith("." + e)):
+            return True
+        if name and name == e:
+            return True
+    return False
+
+
+def drop_excluded_titles(articles: list, patterns: list,
+                         sources: Optional[list] = None) -> tuple:
     """Drop articles whose title matches any of *patterns*.
 
     *patterns* are case-insensitive regular expressions. Returns
@@ -495,11 +539,11 @@ def drop_excluded_titles(articles: list, patterns: list) -> tuple:
     repeat check is non-blocking). Filtering at fetch time stops them
     reaching the digest. Configured per-show via ``exclude_title_patterns``.
     """
-    if not patterns or not articles:
+    if not (patterns or sources) or not articles:
         return articles, 0
     import re
     compiled = []
-    for p in patterns:
+    for p in patterns or []:
         try:
             compiled.append(re.compile(p, re.IGNORECASE))
         except re.error as exc:
@@ -517,6 +561,11 @@ def drop_excluded_titles(articles: list, patterns: list) -> tuple:
         if url and any(c.search(url) for c in url_res):
             dropped += 1
             logger.info("Excluded by URL (paid placement or holdings filing): %s", url[:120])
+            continue
+        if sources and is_excluded_source(art, sources):
+            dropped += 1
+            logger.info("Excluded by source (exclude_sources): %s — %s",
+                        art.get("source_name") or url[:80], title[:80])
             continue
         kept.append(art)
     return kept, dropped

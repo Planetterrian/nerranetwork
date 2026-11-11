@@ -40,6 +40,12 @@ def x_credentials(env_prefix: str) -> dict:
 #: The last line of a no-link post (Oct 10 2026). No URL and no bare
 #: domain: X links either, and a linked post costs $0.20 instead of $0.015.
 CLIP_CLOSER = "Full episode: link in bio, or search Nerra Network in your podcast app."
+#: Nov 11 2026: a show posting a clip on its OWN account, not @nerranetwork,
+#: names itself — its listeners search for the show, not the network, and that
+#: account's bio is not the network's.
+OWN_ACCOUNT_CLOSERS = {
+    "tesla": "Full episode: search Tesla Shorts Time in any podcast app.",
+}
 #: X counts emoji as two characters; stay clear of the 280 limit.
 CLIP_TEXT_MAX = 270
 
@@ -180,6 +186,8 @@ def post_closers(show_slug: str, day) -> Tuple[str, ...]:
     this change still fits. :func:`clip_post_text` takes the first closer
     the whole hook fits beside.
     """
+    if show_slug in OWN_ACCOUNT_CLOSERS:
+        return (OWN_ACCOUNT_CLOSERS[show_slug],)
     if show_slug not in FOLLOW_ASK_CADENCE:
         return (CLIP_CLOSER,)
     ordinal = day.toordinal()
