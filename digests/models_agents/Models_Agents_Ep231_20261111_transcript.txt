@@ -1,0 +1,139 @@
+A new 0.8 billion on-device model doubles agentic benchmark scores while keeping all data private. This is Models & Agents, Episode 231. Time series forecasting, chat GPT business agents, then things to try. Tether AI research put bot-sci on hugging face as a fine-tune of Qwen 3.50.8B for function calling and agentic workflows. It supports tools for web search, travel, commerce, device control, files, calendar,
+and messaging, aimed at low-to-medium difficulty tasks.
+Tool use results for its size are state-of-the-art, lifting BFCL version 4 from 23.4 to 44.0,
+AC bench from 30.1 to 58.7, and Tau bench from 23.2 to 51.5.
+The model makes no third-party API calls, avoiding the cost of frontier cloud models, intended
+And it used guidance points it at personal assistance and edge deployments and says it
+is not suited for high stakes decisions.
+Time Omni-01, an archive paper describes, couples' time series foundation models with
+large language models or LLMs for joint reasoning and forecasting.
+The architecture packs each series into a compressed encoding the LLM can read, then routes the LLMs
+reasoning back into the time series model to produce the forecast.
+training used the new MMTR data set of more than 500,000 multi-modal samples across 12 domains.
+The system beats both standalone LLMs and time series models on understanding and forecasting,
+and those gains transfer to three open benchmarks.
+Converting a hybrid attention model to pure bite-level inference is the claim of one bite, one token.
+The 27 billion parameter starting point shrinks its vocabulary to 384 entries.
+Continued training used 4.77 GB of self-generated dialogue and encyclopedia data for 178.6 hours
+on 8H-200 GPUs.
+The resulting model matches the original on Math 500, Human Eval Plus, and MMLU Pro,
+while improving character-level tasks at the cost of 3-5 times lower token throughput.
+Target Android phones get task-specific small-language models searched and quantized by mobile
+AI factory. The agentic system tries base models and quantizations against real device measurements
+and rolls back any change that hurts accuracy. Across ten tasks and four phones,
+the resulting on-device models beat five-shot frontier models on five tasks and match them on three
+more using 19 times less GPU time than exhaustive search. Camoon delivers a morphine segmenter
+that works at the morphological level rather than the word level to avoid compounding
+ambiguity. The 1 million parameter model posts a boundary F1 of 0.992 for tie. It was trained
+on guidelines with near-perfect human agreement and annotation scales through an LLM plus
+human correction. Downstream models trained on its morpheme output match or exceed word-level
+baselines on part of speech tagging, named entity recognition and sentiment classification.
+Reducing interference during LLM knowledge editing is the job of capacity allocation,
+which uses L1 regularization on target hidden states.
+The method prunes unused pieces of each knowledge vector before the parameter edit,
+and experiments across multiple LLMs and benchmarks show fewer side effects on unrelated knowledge
+while preserving edit success.
+Biomedical agents are the setting for biomem,
+a training-free framework of hybrid memory retrieval and utilization.
+It improves evidence accessibility and task-aware utilization across five memory approaches and four LLMs.
+The result is an 8.6% relative gain on biomedical question answering and conversational memory benchmarks,
+and conversational answer errors fall by 24.9%.
+Synapse control selects and times advice for agent experience reuse using a classifier instead of a generative model for diagnosis.
+across 1,308 attempts on app world and web shop, it records 29.8% more successes than the base agent,
+replacing 4,987 generative diagnosis calls and cutting auxiliary control time in half.
+Rendering documents as images is how optical rag feeds retrieval augmented generation or rag,
+using encoder-bridged retrieval and query-driven distillation without cross-modal training.
+Visual tokens distilled down to 16 injected tokens. On LongBench V2, Bamboo, and Lugel V2,
+it records the best compression-aware accuracy, lifting a 7 billion quen 2.5 instruct backbone
+by 5.17 points on LongBench V2. Polly Route is a code-mixed benchmark for type decision routing
+with 13 system baselines. It holds 322 native messages, 156 code-mixed items,
+programs, and optional training rows across 12 languages and 9 scripts.
+The best fine-tune reaches 96.6% accuracy, and TFI-DF with logistic regression hits
+91.9%.
+Storing reusable procedural logic in editable programs rather than natural language documents
+is the design of program-aided patchable skill evolution.
+Past splits trajectory-derived experience into executable programs that can be patched
+without rewriting descriptive text,
+and it improves success rates by more than 2.8%
+over prior skill evolution baselines
+with greater evolutionary stability
+across models and benchmarks.
+Open AI put businesses and chat GPT into beta
+with business agents and engagement insights.
+Eligible businesses can claim their profile,
+manage information, and receive data
+on how people interact with them,
+and they can build a business agent
+to answer customer questions and surface offerings.
+Gemini for health care, the Google AI blog details, unifies clinical data and automates
+workflows on Google Cloud, the offering targets administrative burnout by connecting records
+and streamlining processes, and early users can explore the new clinical capabilities in
+the Google Cloud console.
+Adobe Creative and Productivity tools now integrate directly with Google Apps and Gemini.
+Users can edit PDFs and drive and access Adobe AI features inside Gemini.
+so those creative tools sit inside every day Google Workflows. OpenAI Academy, the OpenAI blog
+notes, expands free chat GPT workshops to caregivers in five U.S. cities. The hands-on sessions focus
+on practical everyday uses of AI, and registration is on the OpenAI site for people in the selected cities.
+Anthropic begins its initial public offering, or IPO, road show with a filed S1 registration statement
+on its site. Investor meetings are underway ahead of a potential listing and securities may
+not be sold until the registration statement becomes effective. From archive, actionable feedback
+uses a taxonomy of clinician editing behaviors plus filters so models can train on documentation
+edits without learning to hallucinate, improving alignment metrics while remaining faithful to the
+input context. Cell detects silent evidence loss in context compression even when the final answer
+or stays unchanged, comparing reader model preferences
+before and after compression without labels
+and identifying the evidence-removing edit
+in 83% of matched pairs.
+Deletion sensitivity varies by 55.7 points
+across seven open reasoning models
+when full history is stripped in multi-turn tool sessions,
+a stable model level property measurable with two runs.
+Medical claims each link to a version source text span
+in a new evidence traceable benchmark spanning guideline,
+scenario, and real world levels, and 10 LLMs show that guideline recall does not
+guarantee patient-specific evidence use.
+One sequence is enough fingerprints 51 language models from a single fixed length integer
+sequence at 92.72% closed set accuracy, and adding a second and fourth answer raises that
+to 96.06% and 97.12%.
+ESOBR releases an open, balanced 896 item corpus for misogyny detection in Brazilian Portuguese,
+with Fleiscappa of 0.788, where fine-tuned Bertambau reaches 0.833 macro F1, and classical
+baselines cluster around 0.66.
+First aid question answer work is the job of hands-on aid, which fine-tunes a 4-bit Gemma
+2 billion model on 5,550 pairs, and scores 2.51 out of 5 on medically reviewed references,
+with a retrieval augmented version producing first text in 6.86 seconds on a Pixel 7 Pro
+with no network. Transformers trained on synthetic context-free
+grammars with variable parse trees show stage-wise emergence of inside outside computation,
+with early layers handling local bi-gram information, and later layers refining predictions around
+on an abstract latent tree encoded in the middle layers.
+Representational atoms can be recovered
+by threshold activated sparse auto encoders
+with high fidelity and stability when conditions are met.
+And stable atoms show greater monosomanticity
+and compose across layers to match human conceptual structure.
+Deploy bot-sci on a device you control
+and score its tool calls against a bigger cloud agent
+on a workflow you already run.
+If you mix numeric sensor data with event text,
+Next, run Time Omnio 1 on that forecasting problem.
+Point mobile AI factory at one of your Android apps and let it search and quantize against
+that phone's measurements instead of a generic small model.
+If your rag pipeline eats long PDFs, run optical rags so layout stays in the image path and
+the prompt stays under 20 tokens.
+Open AI business agents are expected to leave beta for wider availability with more enterprise
+controls in the coming weeks.
+Google continues rolling Gemini Intelligence features to additional Android devices and workspace apps.
+Before we go, more details on Gemini 4 Carbon pricing and availability in Google Cloud are scheduled for release soon.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up, see you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in
+the show notes, and before you go, this show is part of the Narin Network, a family
+of daily podcasts on tech, science, and markets.
+Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen, Prediction Markets Daily,
+the Prediction Market World Explained Daily, never a bet.
+Find every show free at NarinNetwork.com.
+And if you would rather browse by subject than by show, every subject the network covers
+has its own page at narennetwork.com topics.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my
+own.

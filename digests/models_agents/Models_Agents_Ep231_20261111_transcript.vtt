@@ -1,0 +1,418 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+A new 0.8 billion on-device model doubles agentic benchmark scores while keeping all data private. This is Models &amp; Agents, Episode 231. Time series forecasting, chat GPT business agents, then things to try. Tether AI research put bot-sci on hugging face as a fine-tune of Qwen 3.50.8B for function calling and agentic workflows. It supports tools for web search, travel, commerce, device control, files, calendar,
+
+00:00:29.980 --> 00:00:33.620
+and messaging, aimed at low-to-medium difficulty tasks.
+
+00:00:34.160 --> 00:00:42.140
+Tool use results for its size are state-of-the-art, lifting BFCL version 4 from 23.4 to 44.0,
+
+00:00:42.800 --> 00:00:49.460
+AC bench from 30.1 to 58.7, and Tau bench from 23.2 to 51.5.
+
+00:00:50.000 --> 00:00:56.140
+The model makes no third-party API calls, avoiding the cost of frontier cloud models, intended
+
+00:00:56.140 --> 00:01:00.500
+And it used guidance points it at personal assistance and edge deployments and says it
+
+00:01:00.500 --> 00:01:02.560
+is not suited for high stakes decisions.
+
+00:01:03.488 --> 00:01:09.048
+Time Omni-01, an archive paper describes, couples' time series foundation models with
+
+00:01:09.048 --> 00:01:13.168
+large language models or LLMs for joint reasoning and forecasting.
+
+00:01:13.848 --> 00:01:20.148
+The architecture packs each series into a compressed encoding the LLM can read, then routes the LLMs
+
+00:01:20.148 --> 00:01:23.408
+reasoning back into the time series model to produce the forecast.
+
+00:01:23.408 --> 00:01:30.588
+training used the new MMTR data set of more than 500,000 multi-modal samples across 12 domains.
+
+00:01:31.308 --> 00:01:36.748
+The system beats both standalone LLMs and time series models on understanding and forecasting,
+
+00:01:37.288 --> 00:01:39.908
+and those gains transfer to three open benchmarks.
+
+00:01:41.045 --> 00:01:46.665
+Converting a hybrid attention model to pure bite-level inference is the claim of one bite, one token.
+
+00:01:47.345 --> 00:01:52.765
+The 27 billion parameter starting point shrinks its vocabulary to 384 entries.
+
+00:01:52.765 --> 00:02:01.925
+Continued training used 4.77 GB of self-generated dialogue and encyclopedia data for 178.6 hours
+
+00:02:01.925 --> 00:02:04.045
+on 8H-200 GPUs.
+
+00:02:04.445 --> 00:02:10.845
+The resulting model matches the original on Math 500, Human Eval Plus, and MMLU Pro,
+
+00:02:11.405 --> 00:02:16.605
+while improving character-level tasks at the cost of 3-5 times lower token throughput.
+
+00:02:17.546 --> 00:02:22.886
+Target Android phones get task-specific small-language models searched and quantized by mobile
+
+00:02:22.886 --> 00:02:29.026
+AI factory. The agentic system tries base models and quantizations against real device measurements
+
+00:02:29.026 --> 00:02:34.606
+and rolls back any change that hurts accuracy. Across ten tasks and four phones,
+
+00:02:34.886 --> 00:02:41.006
+the resulting on-device models beat five-shot frontier models on five tasks and match them on three
+
+00:02:41.006 --> 00:02:47.966
+more using 19 times less GPU time than exhaustive search. Camoon delivers a morphine segmenter
+
+00:02:47.966 --> 00:02:52.506
+that works at the morphological level rather than the word level to avoid compounding
+
+00:02:52.506 --> 00:03:00.186
+ambiguity. The 1 million parameter model posts a boundary F1 of 0.992 for tie. It was trained
+
+00:03:00.186 --> 00:03:05.346
+on guidelines with near-perfect human agreement and annotation scales through an LLM plus
+
+00:03:05.346 --> 00:03:10.946
+human correction. Downstream models trained on its morpheme output match or exceed word-level
+
+00:03:10.946 --> 00:03:16.246
+baselines on part of speech tagging, named entity recognition and sentiment classification.
+
+00:03:16.246 --> 00:03:22.033
+Reducing interference during LLM knowledge editing is the job of capacity allocation,
+
+00:03:22.473 --> 00:03:26.013
+which uses L1 regularization on target hidden states.
+
+00:03:26.353 --> 00:03:30.673
+The method prunes unused pieces of each knowledge vector before the parameter edit,
+
+00:03:31.033 --> 00:03:36.553
+and experiments across multiple LLMs and benchmarks show fewer side effects on unrelated knowledge
+
+00:03:36.553 --> 00:03:38.093
+while preserving edit success.
+
+00:03:39.141 --> 00:03:41.761
+Biomedical agents are the setting for biomem,
+
+00:03:42.121 --> 00:03:45.561
+a training-free framework of hybrid memory retrieval and utilization.
+
+00:03:45.561 --> 00:03:52.981
+It improves evidence accessibility and task-aware utilization across five memory approaches and four LLMs.
+
+00:03:53.461 --> 00:03:59.921
+The result is an 8.6% relative gain on biomedical question answering and conversational memory benchmarks,
+
+00:04:00.361 --> 00:04:05.116
+and conversational answer errors fall by 24.9%.
+
+00:04:05.116 --> 00:04:12.596
+Synapse control selects and times advice for agent experience reuse using a classifier instead of a generative model for diagnosis.
+
+00:04:12.596 --> 00:04:20.776
+across 1,308 attempts on app world and web shop, it records 29.8% more successes than the base agent,
+
+00:04:21.216 --> 00:04:27.436
+replacing 4,987 generative diagnosis calls and cutting auxiliary control time in half.
+
+00:04:28.374 --> 00:04:33.934
+Rendering documents as images is how optical rag feeds retrieval augmented generation or rag,
+
+00:04:34.374 --> 00:04:39.274
+using encoder-bridged retrieval and query-driven distillation without cross-modal training.
+
+00:04:39.274 --> 00:04:46.934
+Visual tokens distilled down to 16 injected tokens. On LongBench V2, Bamboo, and Lugel V2,
+
+00:04:47.114 --> 00:04:53.314
+it records the best compression-aware accuracy, lifting a 7 billion quen 2.5 instruct backbone
+
+00:04:53.314 --> 00:05:00.500
+by 5.17 points on LongBench V2. Polly Route is a code-mixed benchmark for type decision routing
+
+00:05:00.500 --> 00:05:07.600
+with 13 system baselines. It holds 322 native messages, 156 code-mixed items,
+
+00:05:07.600 --> 00:05:11.600
+programs, and optional training rows across 12 languages and 9 scripts.
+
+00:05:12.180 --> 00:05:18.740
+The best fine-tune reaches 96.6% accuracy, and TFI-DF with logistic regression hits
+
+00:05:18.740 --> 00:05:21.226
+91.9%.
+
+00:05:21.226 --> 00:05:26.406
+Storing reusable procedural logic in editable programs rather than natural language documents
+
+00:05:26.406 --> 00:05:29.686
+is the design of program-aided patchable skill evolution.
+
+00:05:30.346 --> 00:05:35.306
+Past splits trajectory-derived experience into executable programs that can be patched
+
+00:05:35.306 --> 00:05:37.026
+without rewriting descriptive text,
+
+00:05:37.366 --> 00:05:40.346
+and it improves success rates by more than 2.8%
+
+00:05:40.346 --> 00:05:42.486
+over prior skill evolution baselines
+
+00:05:42.846 --> 00:05:44.766
+with greater evolutionary stability
+
+00:05:44.766 --> 00:05:46.266
+across models and benchmarks.
+
+00:05:47.372 --> 00:05:50.392
+Open AI put businesses and chat GPT into beta
+
+00:05:50.392 --> 00:05:52.672
+with business agents and engagement insights.
+
+00:05:53.372 --> 00:05:55.512
+Eligible businesses can claim their profile,
+
+00:05:56.052 --> 00:05:57.892
+manage information, and receive data
+
+00:05:57.892 --> 00:05:59.452
+on how people interact with them,
+
+00:05:59.852 --> 00:06:01.392
+and they can build a business agent
+
+00:06:01.392 --> 00:06:03.932
+to answer customer questions and surface offerings.
+
+00:06:03.932 --> 00:06:10.478
+Gemini for health care, the Google AI blog details, unifies clinical data and automates
+
+00:06:10.478 --> 00:06:15.638
+workflows on Google Cloud, the offering targets administrative burnout by connecting records
+
+00:06:15.638 --> 00:06:20.798
+and streamlining processes, and early users can explore the new clinical capabilities in
+
+00:06:20.798 --> 00:06:22.038
+the Google Cloud console.
+
+00:06:23.119 --> 00:06:27.799
+Adobe Creative and Productivity tools now integrate directly with Google Apps and Gemini.
+
+00:06:28.439 --> 00:06:33.079
+Users can edit PDFs and drive and access Adobe AI features inside Gemini.
+
+00:06:33.079 --> 00:06:40.032
+so those creative tools sit inside every day Google Workflows. OpenAI Academy, the OpenAI blog
+
+00:06:40.032 --> 00:06:46.832
+notes, expands free chat GPT workshops to caregivers in five U.S. cities. The hands-on sessions focus
+
+00:06:46.832 --> 00:06:53.152
+on practical everyday uses of AI, and registration is on the OpenAI site for people in the selected cities.
+
+00:06:54.153 --> 00:07:00.773
+Anthropic begins its initial public offering, or IPO, road show with a filed S1 registration statement
+
+00:07:00.773 --> 00:07:06.213
+on its site. Investor meetings are underway ahead of a potential listing and securities may
+
+00:07:06.213 --> 00:07:12.151
+not be sold until the registration statement becomes effective. From archive, actionable feedback
+
+00:07:12.151 --> 00:07:17.931
+uses a taxonomy of clinician editing behaviors plus filters so models can train on documentation
+
+00:07:17.931 --> 00:07:23.371
+edits without learning to hallucinate, improving alignment metrics while remaining faithful to the
+
+00:07:23.371 --> 00:07:29.451
+input context. Cell detects silent evidence loss in context compression even when the final answer
+
+00:07:29.451 --> 00:07:32.591
+or stays unchanged, comparing reader model preferences
+
+00:07:32.591 --> 00:07:34.951
+before and after compression without labels
+
+00:07:34.951 --> 00:07:37.171
+and identifying the evidence-removing edit
+
+00:07:37.171 --> 00:07:39.151
+in 83% of matched pairs.
+
+00:07:39.911 --> 00:07:43.231
+Deletion sensitivity varies by 55.7 points
+
+00:07:43.231 --> 00:07:45.211
+across seven open reasoning models
+
+00:07:45.491 --> 00:07:48.471
+when full history is stripped in multi-turn tool sessions,
+
+00:07:48.931 --> 00:07:52.031
+a stable model level property measurable with two runs.
+
+00:07:52.731 --> 00:07:55.731
+Medical claims each link to a version source text span
+
+00:07:55.731 --> 00:07:58.711
+in a new evidence traceable benchmark spanning guideline,
+
+00:07:58.711 --> 00:08:04.571
+scenario, and real world levels, and 10 LLMs show that guideline recall does not
+
+00:08:04.571 --> 00:08:06.871
+guarantee patient-specific evidence use.
+
+00:08:07.491 --> 00:08:12.311
+One sequence is enough fingerprints 51 language models from a single fixed length integer
+
+00:08:12.311 --> 00:08:19.131
+sequence at 92.72% closed set accuracy, and adding a second and fourth answer raises that
+
+00:08:19.131 --> 00:08:24.391
+to 96.06% and 97.12%.
+
+00:08:24.391 --> 00:08:30.931
+ESOBR releases an open, balanced 896 item corpus for misogyny detection in Brazilian Portuguese,
+
+00:08:31.351 --> 00:08:39.691
+with Fleiscappa of 0.788, where fine-tuned Bertambau reaches 0.833 macro F1, and classical
+
+00:08:39.691 --> 00:08:41.891
+baselines cluster around 0.66.
+
+00:08:42.791 --> 00:08:48.011
+First aid question answer work is the job of hands-on aid, which fine-tunes a 4-bit Gemma
+
+00:08:48.011 --> 00:08:55.331
+2 billion model on 5,550 pairs, and scores 2.51 out of 5 on medically reviewed references,
+
+00:08:55.851 --> 00:09:01.531
+with a retrieval augmented version producing first text in 6.86 seconds on a Pixel 7 Pro
+
+00:09:01.531 --> 00:09:05.671
+with no network. Transformers trained on synthetic context-free
+
+00:09:05.671 --> 00:09:10.851
+grammars with variable parse trees show stage-wise emergence of inside outside computation,
+
+00:09:11.431 --> 00:09:16.571
+with early layers handling local bi-gram information, and later layers refining predictions around
+
+00:09:16.571 --> 00:09:19.211
+on an abstract latent tree encoded in the middle layers.
+
+00:09:20.231 --> 00:09:22.031
+Representational atoms can be recovered
+
+00:09:22.031 --> 00:09:24.751
+by threshold activated sparse auto encoders
+
+00:09:24.751 --> 00:09:27.531
+with high fidelity and stability when conditions are met.
+
+00:09:28.231 --> 00:09:30.691
+And stable atoms show greater monosomanticity
+
+00:09:30.691 --> 00:09:34.071
+and compose across layers to match human conceptual structure.
+
+00:09:35.075 --> 00:09:37.195
+Deploy bot-sci on a device you control
+
+00:09:37.195 --> 00:09:39.975
+and score its tool calls against a bigger cloud agent
+
+00:09:39.975 --> 00:09:41.575
+on a workflow you already run.
+
+00:09:42.115 --> 00:09:44.795
+If you mix numeric sensor data with event text,
+
+00:09:44.795 --> 00:09:48.275
+Next, run Time Omnio 1 on that forecasting problem.
+
+00:09:48.555 --> 00:09:53.515
+Point mobile AI factory at one of your Android apps and let it search and quantize against
+
+00:09:53.515 --> 00:09:56.395
+that phone's measurements instead of a generic small model.
+
+00:09:56.975 --> 00:10:02.975
+If your rag pipeline eats long PDFs, run optical rags so layout stays in the image path and
+
+00:10:02.975 --> 00:10:04.695
+the prompt stays under 20 tokens.
+
+00:10:05.709 --> 00:10:10.909
+Open AI business agents are expected to leave beta for wider availability with more enterprise
+
+00:10:10.909 --> 00:10:12.289
+controls in the coming weeks.
+
+00:10:12.289 --> 00:10:18.249
+Google continues rolling Gemini Intelligence features to additional Android devices and workspace apps.
+
+00:10:18.789 --> 00:10:25.369
+Before we go, more details on Gemini 4 Carbon pricing and availability in Google Cloud are scheduled for release soon.
+
+00:10:26.069 --> 00:10:27.589
+That's models and agents for today.
+
+00:10:27.969 --> 00:10:34.609
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:10:35.169 --> 00:10:38.709
+The AI world moves fast, we'll help you keep up, see you tomorrow.
+
+00:10:38.709 --> 00:10:44.149
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in
+
+00:10:44.149 --> 00:10:48.569
+the show notes, and before you go, this show is part of the Narin Network, a family
+
+00:10:48.569 --> 00:10:51.309
+of daily podcasts on tech, science, and markets.
+
+00:10:51.789 --> 00:10:54.929
+Each one a short, sharp briefing you can finish on the commute.
+
+00:10:55.469 --> 00:11:00.269
+If today earned its place in your feed, here's your next listen, Prediction Markets Daily,
+
+00:11:00.629 --> 00:11:03.449
+the Prediction Market World Explained Daily, never a bet.
+
+00:11:04.049 --> 00:11:07.109
+Find every show free at NarinNetwork.com.
+
+00:11:07.109 --> 00:11:12.489
+And if you would rather browse by subject than by show, every subject the network covers
+
+00:11:12.489 --> 00:11:15.709
+has its own page at narennetwork.com topics.
+
+00:11:16.289 --> 00:11:21.949
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my
+
+00:11:21.949 --> 00:11:22.209
+own.
