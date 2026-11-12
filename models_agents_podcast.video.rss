@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 11 Nov 2026 11:14:41 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 12 Nov 2026 10:58:53 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,163 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 232: Google's Gemini Decision 1 scores up to 1,000 multimodal questions in one 150-250 ms pass…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Google's Gemini Decision 1 scores up to 1,000 multimodal questions in one 150-250 ms pass at $0.10 per million input tokens with zero output cost.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Google launched the Gemini Decisions API powered by Gemini Decision 1, a specialized model that returns calibrated probabilities for yes/no, choice, and rubric questions over text, images, audio, video, and PDFs without generating tokens. The API targets agent routing, policy checks, and tool selection with 256K context and native multimodality. Builders should test it against Jev and OpenAI's decision endpoints for cost and latency on shared workloads.
+
+Top Story
+Google launched the Gemini Decisions API powered by the new Gemini Decision 1 model. It evaluates up to 1,000 independent yes/no, choice, or rubric questions against one shared multimodal input in a single forward pass and returns calibrated probabilities plus per-answer scores. The model supports text, images, audio, video, and PDFs up to 256K tokens, runs only on Google's hosted API, and bills $0.10 per million input tokens with zero output tokens. It leads seven of nine internal benchmarks with the lowest calibration error while delivering 150-250 ms end-to-end latency. Developers can use it today for fast branching decisions inside agents by passing a shared input and a map of typed questions. Watch how teams integrate it for routing and policy enforcement versus generating free-form text with standard models. Source: &lt;a href="https://simonwillison.net/2026/Nov/11/gemini-decisions-api/"&gt;simonwillison.net&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Announcing AlphaGenome 2 DNA sequence model: Demis Hassabis (DeepMind)&lt;/b&gt;
+AlphaGenome 2 is a conditional DNA sequence model that predicts regulatory activity and variant effects in specific cell types from a 1 Mb window plus a 256-dimensional cell-state embedding. It resolves closely related cell types and adapts to unseen single-cell datasets without fine-tuning, outperforming fine-tuned AlphaGenome 1, Borzoi, and Scooby on single-cell eQTL and enhancer-gene benchmarks. The model is available for non-commercial academic research through the AlphaGenome API. Source: &lt;a href="https://www.alphagenomedocs.com/"&gt;alphagenomedocs.com&lt;/a&gt;
+
+&lt;b&gt;Google DeepMind Releases AlphaGenome 2 for Cell-Type-Specific Variant Effects: MarkTechPost&lt;/b&gt;
+Training used 2048 TPU v4 chips across bulk and single-cell tracks, followed by condition refinement, distillation, and post-training that maps raw scRNA-seq counts into the model's condition space. On GTEx tissues the median Pearson r for cross-tissue expression changes rose from 0.61 to 0.71. The model outputs RNA coverage, CAGE, splicing, chromatin accessibility, histone marks, TF binding, contact maps, and CpG methylation. Source: &lt;a href="https://www.marktechpost.com/2026/11/11/google-deepmind-alphagenome-2-cell-type-variant-effects/"&gt;marktechpost.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Databricks Rebuilds Its Genie AI Platform As An Always-On Autonomous Enterprise Agent: SMBtech&lt;/b&gt;
+Databricks rebuilt Genie as a persistent autonomous enterprise agent that runs continuously rather than on-demand. The update targets production workloads where agents must maintain state and act without repeated human triggers. Source: &lt;a href="https://smbtech.au/news/databricks-rebuilds-its-genie-ai-platform-as-an-always-on-autonomous-enterprise-agent/"&gt;smbtech.au&lt;/a&gt;
+
+&lt;b&gt;Build autonomous AI agents with Amazon Bedrock and Spring AI: Amazon Web Services (AWS)&lt;/b&gt;
+The guide shows how to combine Amazon Bedrock foundation models with Spring AI to orchestrate autonomous agents that call tools, maintain memory, and handle multi-step workflows. It includes code examples for defining agents, tool schemas, and execution loops inside Spring Boot applications. Source: &lt;a href="https://aws.amazon.com/blogs/machine-learning/build-autonomous-ai-agents-with-amazon-bedrock-and-spring-ai/"&gt;aws.amazon.com&lt;/a&gt;
+
+&lt;b&gt;Google releases open-source agent substrate for secure AI sandboxing: SC Media&lt;/b&gt;
+Google open-sourced an agent substrate that provides a controlled sandbox for running AI agents with enforced boundaries on actions and data access. The release aims to reduce risks when agents interact with external systems or sensitive resources. Source: &lt;a href="https://www.scworld.com/brief/google-releases-open-source-agent-substrate-for-secure-ai-sandboxing/"&gt;scworld.com&lt;/a&gt;
+
+&lt;b&gt;aws-emulator: Simon Willison (AI builder)&lt;/b&gt;
+AWS released an official local emulator written entirely by autonomous AI agents that covers 438 API models across more than 200 services. It runs via Docker on macOS and Windows, lets the AWS CLI and SDKs target a local HTTPS endpoint, and supports development and CI without an AWS account or paid keys. Source: &lt;a href="https://simonwillison.net/2026/Nov/11/aws-emulator/"&gt;simonwillison.net&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;WhiteMatter: $20 Million Series A To Expand Enterprise AI Agent Governance: Pulse 2.0&lt;/b&gt;
+WhiteMatter raised $20 million led by Blumberg Capital to scale its platform that governs autonomous AI agents across endpoints, browsers, SaaS apps, cloud, and code. The system deploys a dedicated Guardian agent for every customer agent, enforces policies in 2.24 ms, and currently manages 2.25 million agents with 116 billion interactions governed. Source: &lt;a href="https://pulse2.com/whitematter-20-million-series-a-to-expand-enterprise-ai-agent-governance/"&gt;pulse2.com&lt;/a&gt;
+
+&lt;b&gt;Plurai raises $13M to catch AI agent failures before customers do: Ynetnews&lt;/b&gt;
+Plurai closed a $13 million seed round led by Team8 to advance its simulation and reliability platform for AI agents. The funding will expand work on catching failures in autonomous systems before they reach production users. Source: &lt;a href="https://www.ynetnews.com/business/article/bkhfcabame/"&gt;ynetnews.com&lt;/a&gt;
+
+&lt;b&gt;How to Use Apple's fm CLI to Run On-Device LLMs From Python: Towards Data Science&lt;/b&gt;
+The post demonstrates Apple's fm command-line tool for running on-device language models from Python scripts. It covers installation, model selection, and integration patterns for private, local inference without cloud calls. Source: &lt;a href="https://towardsdatascience.com/how-to-use-apples-fm-cli-to-run-on-device-llms-from-python/"&gt;towardsdatascience.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;JetBlue president says airlines should follow customers' lead on AI booking agents: Reuters&lt;/b&gt;
+JetBlue's president stated that airlines should observe how customers already use AI booking agents rather than blocking them. Source: &lt;a href="https://www.reuters.com/legal/litigation/jetblue-president-says-airlines-should-follow-customers-lead-ai-booking-agents-2026-11-12/"&gt;reuters.com&lt;/a&gt;
+
+&lt;b&gt;United Airlines Blocks A.I. Agents From Booking Flights on Customers’ Behalf: The New York Times&lt;/b&gt;
+United Airlines implemented blocks preventing third-party AI agents from completing flight bookings on its app and website. Source: &lt;a href="https://www.nytimes.com/2026/11/11/business/united-airlines-ai-agents-booking-flights.html"&gt;nytimes.com&lt;/a&gt;
+
+&lt;b&gt;Google Brings Gemini Live to Apple CarPlay: PYMNTS.com&lt;/b&gt;
+Google extended Gemini Live voice interaction to Apple CarPlay, allowing drivers to use the assistant while driving. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/google-brings-gemini-live-to-apple-carplay/"&gt;pymnts.com&lt;/a&gt;
+
+&lt;b&gt;United blocks third-party AI agents from app, website: PhocusWire&lt;/b&gt;
+United expanded its restrictions to stop third-party AI agents from accessing its booking systems through the app and website. Source: &lt;a href="https://www.phocuswire.com/news/technology/united-blocks-third-party-ai-agents-from-app-website"&gt;phocuswire.com&lt;/a&gt;
+
+&lt;b&gt;NVIDIA expands open-source contributions for AI agents and Kubernetes infrastructure: varindia&lt;/b&gt;
+NVIDIA released additional open-source components aimed at AI agent security and Kubernetes-based inference infrastructure. Source: &lt;a href="https://www.varindia.com/news/nvidia-expands-open-source-contributions-for-ai-agents-and-kubernetes-infrastructure"&gt;varindia.com&lt;/a&gt;
+
+&lt;b&gt;WikiTrace: Evidence-Linked Memory System Enhances LLM Agent Performance: Blockchain News&lt;/b&gt;
+WikiTrace adds an evidence-linked memory layer that improves LLM agent performance by tying retrieved facts to verifiable sources. Source: &lt;a href="https://blockchain.news/news/wikitrace-evidence-linked-memory-llm"&gt;blockchain.news&lt;/a&gt;
+
+Under the Hood: Context Rot in Long-Running AI Agents
+Agents lose track of earlier instructions because new tokens steadily dilute the relative weight of the system prompt inside a growing context window. Attention in transformers follows a U-shaped pattern that favors the very start and very end of the sequence while the middle receives sharply lower weight. Once a long-running agent accumulates tool outputs, reasoning traces, and sub-agent replies, the original constraints drift into that low-attention zone and stop influencing generation. The mechanical fix is to move critical rules out of the single context window entirely: store them in persistent external memory, retrieve them at every step, and re-inject them as structured context rather than relying on positional attention. Periodic summarization or hierarchical task graphs further reduce noise by compressing history while preserving goal structure. Teams that keep the system prompt static and let the context grow past roughly 20k-50k tokens see the highest drift rates; the practical safeguard is to treat the prompt as a short, high-priority prefix and treat everything else as queryable memory. When to prefer this approach: any agent expected to run more than a few dozen turns or handle conflicting sub-goals; the alternative of simply lengthening the context window only delays the same attention decay. Source: &lt;a href="https://www.thoughtworks.com/insights/blog/generative-ai/what-is-context-rot"&gt;thoughtworks.com&lt;/a&gt;
+
+Things to Try This Week
+• Test the Gemini Decisions API on a routing or policy-check task inside an existing agent loop to measure latency and cost against your current text-generation approach.
+• Spin up the AWS local emulator in Docker to run SDK and CLI tests against 200+ services without an AWS account or network calls.
+• Walk through the Amazon Bedrock + Spring AI tutorial to build a tool-calling agent that maintains memory across steps in a familiar Java stack.
+• Evaluate WhiteMatter's Guardian architecture if you need policy enforcement and spend controls across multiple autonomous agents in production.
+• Experiment with Apple's fm CLI to run on-device models from Python scripts when privacy or offline requirements rule out cloud APIs.
+
+On the Horizon
+• More labs are expected to release specialized decision or routing models that return probabilities instead of tokens.
+• Further open-source agent sandboxes and governance layers will appear as enterprises scale autonomous systems.
+• Airlines and travel platforms will continue testing or restricting third-party AI booking agents.
+• Additional funding rounds for agent reliability and simulation platforms are likely before year end.</description>
+      <guid isPermaLink="false">models-agents-video-ep232-20261112</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep232_20261112.mp4" length="183155111" type="video/mp4" />
+      <pubDate>Thu, 12 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep232_20261112.jpg" />
+      <itunes:duration>08:57</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Google's Gemini Decision 1 scores up to 1,000 multimodal questions in one 150-250 ms pass at $0.10 per million input tokens with zero output cost.**
+
+**What You Need to Know:** Google launched the Gemini Decisions API powered by Gemini Decision 1, a specialized model that returns calibrated probabilities for yes/no, choice, and rubric questions over text, images, audio, video, and PDFs without generating tokens. The API targets agent routing, policy checks, and tool selection with 256K context and native multimodality. Builders should test it against Jev and OpenAI's decision endpoints for cost and latency on shared workloads.
+---
+### Top Story
+Google launched the Gemini Decisions API powered by the new Gemini Decision 1 model. It evaluates up to 1,000 independent yes/no, choice, or rubric questions against one shared multimodal input in a single forward pass and returns calibrated probabilities plus per-answer scores. The model supports text, images, audio, video, and PDFs up to 256K tokens, runs only on Google's hosted API, and bills $0.10 per million input tokens with zero output tokens. It leads seven of nine internal benchmarks with the lowest calibration error while delivering 150-250 ms end-to-end latency. Developers can use it today for fast branching decisions inside agents by passing a shared input and a map of typed questions. Watch how teams integrate it for routing and policy enforcement versus generating free-form text with standard models. Source: [simonwillison.net](https://simonwillison.net/2026/Nov/11/gemini-decisions-api/)
+---
+### Model Updates
+**Announcing AlphaGenome 2 DNA sequence model: Demis Hassabis (DeepMind)**
+AlphaGenome 2 is a conditional DNA sequence model that predicts regulatory activity and variant effects in specific cell types from a 1 Mb window plus a 256-dimensional cell-state embedding. It resolves closely related cell types and adapts to unseen single-cell datasets without fine-tuning, outperforming fine-tuned AlphaGenome 1, Borzoi, and Scooby on single-cell eQTL and enhancer-gene benchmarks. The model is available for non-commercial academic research through the AlphaGenome API. Source: [alphagenomedocs.com](https://www.alphagenomedocs.com/)
+
+**Google DeepMind Releases AlphaGenome 2 for Cell-Type-Specific Variant Effects: MarkTechPost**
+Training used 2048 TPU v4 chips across bulk and single-cell tracks, followed by condition refinement, distillation, and post-training that maps raw scRNA-seq counts into the model's condition space. On GTEx tissues the median Pearson r for cross-tissue expression changes rose from 0.61 to 0.71. The model outputs RNA coverage, CAGE, splicing, chromatin accessibility, histone marks, TF binding, contact maps, and CpG methylation. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/11/google-deepmind-alphagenome-2-cell-type-variant-effects/)
+---
+### Agent &amp; Tool Developments
+**Databricks Rebuilds Its Genie AI Platform As An Always-On Autonomous Enterprise Agent: SMBtech**
+Databricks rebuilt Genie as a persistent autonomous enterprise agent that runs continuously rather than on-demand. The update targets production workloads where agents must maintain state and act without repeated human triggers. Source: [smbtech.au](https://smbtech.au/news/databricks-rebuilds-its-genie-ai-platform-as-an-always-on-autonomous-enterprise-agent/)
+
+**Build autonomous AI agents with Amazon Bedrock and Spring AI: Amazon Web Services (AWS)**
+The guide shows how to combine Amazon Bedrock foundation models with Spring AI to orchestrate autonomous agents that call tools, maintain memory, and handle multi-step workflows. It includes code examples for defining agents, tool schemas, and execution loops inside Spring Boot applications. Source: [aws.amazon.com](https://aws.amazon.com/blogs/machine-learning/build-autonomous-ai-agents-with-amazon-bedrock-and-spring-ai/)
+
+**Google releases open-source agent substrate for secure AI sandboxing: SC Media**
+Google open-sourced an agent substrate that provides a controlled sandbox for running AI agents with enforced boundaries on actions and data access. The release aims to reduce risks when agents interact with external systems or sensitive resources. Source: [scworld.com](https://www.scworld.com/brief/google-releases-open-source-agent-substrate-for-secure-ai-sandboxing/)
+
+**aws-emulator: Simon Willison (AI builder)**
+AWS released an official local emulator written entirely by autonomous AI agents that covers 438 API models across more than 200 services. It runs via Docker on macOS and Windows, lets the AWS CLI and SDKs target a local HTTPS endpoint, and supports development and CI without an AWS account or paid keys. Source: [simonwillison.net](https://simonwillison.net/2026/Nov/11/aws-emulator/)
+---
+### Practical &amp; Community
+**WhiteMatter: $20 Million Series A To Expand Enterprise AI Agent Governance: Pulse 2.0**
+WhiteMatter raised $20 million led by Blumberg Capital to scale its platform that governs autonomous AI agents across endpoints, browsers, SaaS apps, cloud, and code. The system deploys a dedicated Guardian agent for every customer agent, enforces policies in 2.24 ms, and currently manages 2.25 million agents with 116 billion interactions governed. Source: [pulse2.com](https://pulse2.com/whitematter-20-million-series-a-to-expand-enterprise-ai-agent-governance/)
+
+**Plurai raises $13M to catch AI agent failures before customers do: Ynetnews**
+Plurai closed a $13 million seed round led by Team8 to advance its simulation and reliability platform for AI agents. The funding will expand work on catching failures in autonomous systems before they reach production users. Source: [ynetnews.com](https://www.ynetnews.com/business/article/bkhfcabame/)
+
+**How to Use Apple's fm CLI to Run On-Device LLMs From Python: Towards Data Science**
+The post demonstrates Apple's fm command-line tool for running on-device language models from Python scripts. It covers installation, model selection, and integration patterns for private, local inference without cloud calls. Source: [towardsdatascience.com](https://towardsdatascience.com/how-to-use-apples-fm-cli-to-run-on-device-llms-from-python/)
+---
+### Also Today
+**JetBlue president says airlines should follow customers' lead on AI booking agents: Reuters**
+JetBlue's president stated that airlines should observe how customers already use AI booking agents rather than blocking them. Source: [reuters.com](https://www.reuters.com/legal/litigation/jetblue-president-says-airlines-should-follow-customers-lead-ai-booking-agents-2026-11-12/)
+
+**United Airlines Blocks A.I. Agents From Booking Flights on Customers’ Behalf: The New York Times**
+United Airlines implemented blocks preventing third-party AI agents from completing flight bookings on its app and website. Source: [nytimes.com](https://www.nytimes.com/2026/11/11/business/united-airlines-ai-agents-booking-flights.html)
+
+**Google Brings Gemini Live to Apple CarPlay: PYMNTS.com**
+Google extended Gemini Live voice interaction to Apple CarPlay, allowing drivers to use the assistant while driving. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/google-brings-gemini-live-to-apple-carplay/)
+
+**United blocks third-party AI agents from app, website: PhocusWire**
+United expanded its restrictions to stop third-party AI agents from accessing its booking systems through the app and website. Source: [phocuswire.com](https://www.phocuswire.com/news/technology/united-blocks-third-party-ai-agents-from-app-website)
+
+**NVIDIA expands open-source contributions for AI agents and Kubernetes infrastructure: varindia**
+NVIDIA released additional open-source components aimed at AI agent security and Kubernetes-based inference infrastructure. Source: [varindia.com](https://www.varindia.com/news/nvidia-expands-open-source-contributions-for-ai-agents-and-kubernetes-infrastructure)
+
+**WikiTrace: Evidence-Linked Memory System Enhances LLM Agent Performance: Blockchain News**
+WikiTrace adds an evidence-linked memory layer that improves LLM agent performance by tying retrieved facts to verifiable sources. Source: [blockchain.news](https://blockchain.news/news/wikitrace-evidence-linked-memory-llm)
+---
+### Under the Hood: Context Rot in Long-Running AI Agents
+Agents lose track of earlier instructions because new tokens steadily dilute the relative weight of the system prompt inside a growing context window. Attention in transformers follows a U-shaped pattern that favors the very start and very end of the sequence while the middle receives sharply lower weight. Once a long-running agent accumulates tool outputs, reasoning traces, and sub-agent replies, the original constraints drift into that low-attention zone and stop influencing generation. The mechanical fix is to move critical rules out of the single context window entirely: store them in persistent external memory, retrieve them at every step, and re-inject them as structured context rather than relying on positional attention. Periodic summarization or hierarchical task graphs further reduce noise by compressing history while preserving goal structure. Teams that keep the system prompt static and let the context grow past roughly 20k-50k tokens see the highest drift rates; the practical safeguard is to treat the prompt as a short, high-priority prefix and treat everything else as queryable memory. When to prefer this approach: any agent expected to run more than a few dozen turns or handle conflicting sub-goals; the alternative of simply lengthening the context window only delays the same attention decay. Source: [thoughtworks.com](https://www.thoughtworks.com/insights/blog/generative-ai/what-is-context-rot)
+---
+### Things to Try This Week
+- Test the Gemini Decisions API on a routing or policy-check task inside an existing agent loop to measure latency and cost against your current text-generation approach.
+- Spin up the AWS local emulator in Docker to run SDK and CLI tests against 200+ services without an AWS account or network calls.
+- Walk through the Amazon Bedrock + Spring AI tutorial to build a tool-calling agent that maintains memory across steps in a familiar Java stack.
+- Evaluate WhiteMatter's Guardian architecture if you need policy enforcement and spend controls across multiple autonomous agents in production.
+- Experiment with Apple's fm CLI to run on-device models from Python scripts when privacy or offline requirements rule out cloud APIs.
+---
+### On the Horizon
+- More labs are expected to release specialized decision or routing models that return probabilities instead of tokens.
+- Further open-source agent sandboxes and governance layers will appear as enterprises scale autonomous systems.
+- Airlines and travel platforms will continue testing or restricting third-party AI booking agents.
+- Additional funding rounds for agent reliability and simulation platforms are likely before year end.
+</itunes:summary>
+      <itunes:episode>232</itunes:episode>
+      <itunes:title>Ep 232: Google's Gemini Decision 1 scores up to 1,000 multimodal questions in one 150-250 ms pass…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep232_20261112_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep232.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 231: A new 0.8B on-device model doubles agentic benchmark scores while keeping all data private.</title>
       <description>Models &amp; Agents
@@ -4790,149 +4947,14 @@ Pipeline parallelism splits a model’s layers across multiple low-memory device
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep203_20261014_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep203.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; New arXiv work introduces POrchestra for proactive agent coordination and T²Mem for test-time memory building. Meta released models to power its Muse agent. Prompt optimizers and LLM-judge rubrics both show measurable side effects on requirements they were never scored on. Developers should test the new orchestration patterns and memory frameworks on long-horizon tasks this week.
-
-Top Story
-Meta released new AI models that the company says match the industry's best and will power its Muse agent. The models target competitive performance in agentic settings where orchestration and tool use matter more than raw scale alone. Builders working on agent platforms now have another closed-weight option to benchmark against existing Claude and GPT families. Watch for integration details and capability comparisons once the models reach wider availability. Early adopters should test Muse against current agent frameworks on tasks that require coordinated sub-agents. Source: &lt;a href="https://techgig.com/news/ai/meta-unveils-new-ai-models-to-power-muse-agent/134905707"&gt;techgig.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Do Prompt Optimizers Break Requirements They Are Not Scored On? A Preregistered Study: arXiv&lt;/b&gt;
-Three optimizers (GEPA, MIPROv2, TextGrad) were tested on HotpotQA, SQuAD 2.0, and IFEval. All three produced regressions on unscored requirements such as citation validity and output format when the output token cap stayed at 200. Raising the cap to 1,024 tokens removed extraction failures and kept content regression below 1 point while exact match improved further. The study shows that prompt optimization can increase accuracy while silently violating explicit output contracts. Source: &lt;a href="https://arxiv.org/abs/2610.13287"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Agreement Without Alignment: Label-Free Rubric Clarification Increases LLM-Judge Consensus but Not Agreement with Humans: arXiv&lt;/b&gt;
-A label-free procedure that rewrites only the most contested rubric clauses raised inter-judge Krippendorff's α by 0.069 on SummEval. The same edits produced no detectable change in agreement with expert human ratings. The effect did not meet pre-registered criteria on HealthBench or USR Topical-Chat. The work demonstrates that increasing judge consensus does not automatically improve alignment with human annotators. Source: &lt;a href="https://arxiv.org/abs/2610.13303"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Host-Aware Web Crawling for LLM Pretraining Data: arXiv&lt;/b&gt;
-Roughly half the variation in document quality classifier scores occurs between hosts rather than within them. Sampling a few pages per host and then fetching more from high-scoring hosts collected several times more high-quality pages than uniform-depth or centrality-based allocation. Common Crawl's observed per-host coverage showed little correlation with evaluated quality signals. The authors estimate tens of millions of high-quality pages remain among known but uncrawled URLs. Source: &lt;a href="https://arxiv.org/abs/2610.13321"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;MoPrO-SD: Modular Prompt Optimization for Stance Detection: arXiv&lt;/b&gt;
-MoPrO-SD decomposes prompts into functional semantic modules and refines them with class-conditioned LLM feedback. On SemEval-2016, class-conditioned feedback outperformed pooled feedback for four of five backbones. The framework introduces VaccineStance, a new human-annotated benchmark for vaccine stance detection. Both reasoning-based refinement strategies remained competitive with recent prompt optimization methods across four datasets. Source: &lt;a href="https://arxiv.org/abs/2610.13386"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Towards the Roof of the World: NLP Progress in Tibetan Languages: arXiv&lt;/b&gt;
-A systematic survey of 140 publications from 2004 to 2026 found 84% appeared since 2018 and covered all 25 represented NLP research areas. Researchers based in China first-authored 87% of the work. Only 29% of publications released data, code, or models. The authors identify gaps in dialect coverage, native evaluation, and responsible NLP practices for this low-resource setting. Source: &lt;a href="https://arxiv.org/abs/2610.13398"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Personalization Without Stereotyping: Do Speech LLMs Know When to Turn a Deaf Ear?: arXiv&lt;/b&gt;
-BASIS-Bench evaluates eight recent speech LLMs across demographic robustness, stereotypical bias, and explicit personalization axes. Most models recognized demographic cues yet failed to translate them into appropriate personalization. Explicit demographic labels improved personalization but also amplified stereotypical associations already present in the textual backbones. The benchmark disentangles beneficial personalization from unprompted stereotypical behavior. Source: &lt;a href="https://arxiv.org/abs/2610.13550"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Why Multi-Agent AI Succeeds Where Single-Agent Systems Hit a Wall: Nasscom&lt;/b&gt;
-Single-agent systems lack mechanisms for work decomposition, failure tolerance, and real-time coordination once tasks become layered or unpredictable. Multi-agent setups run tasks in parallel, tolerate individual failures, and adjust coordination as conditions change. The payoff comes from better orchestration rather than larger individual models. Organizations facing complex, fast-changing environments should evaluate multi-agent designs before scaling single-agent point solutions. Source: &lt;a href="https://community.nasscom.in/communities/ai/why-multi-agent-ai-succeeds-where-single-agent-systems-hit-wall"&gt;community.nasscom.in&lt;/a&gt;
-
-&lt;b&gt;Proactive Agentic Orchestration: arXiv&lt;/b&gt;
-POrchestra lets sub-agents proactively request harness adjustments from the orchestrator at any logical point while preserving local execution continuity. On three long-horizon benchmarks it improved task success by 9.1% relative to the strongest baseline. Combined with On-Policy Orchestration Distillation it raised small-orchestrator success by 10.0% relative to prior training baselines. The framework also achieves a more favorable cost-performance trade-off. Source: &lt;a href="https://arxiv.org/abs/2610.13485"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Test-Time Memory Construction: arXiv&lt;/b&gt;
-T²Mem defers memory construction to inference time and progressively builds query-specific memory along the reasoning process. It extracts lightweight episode-level metadata offline while retaining links to original interactions. Experiments on LoCoMo and LongMemEval show consistent gains across backbone LLMs with substantially lower memory-construction overhead. The approach adapts memory construction dynamically to each query's information needs. Source: &lt;a href="https://arxiv.org/abs/2610.13348"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Mashreq’s AI Agents Cut Integration Time Up to 70%: PYMNTS.com&lt;/b&gt;
-Mashreq deployed AI agents that reduced integration time by up to 70%. The agents handle repetitive coordination tasks that previously required manual effort across systems. The deployment demonstrates measurable efficiency gains in a regulated financial environment. Other institutions facing similar integration bottlenecks can examine the pattern for comparable workloads. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/mashreqs-ai-agents-cut-integration-time-up-to-70/"&gt;pymnts.com&lt;/a&gt;
-
-&lt;b&gt;How Anthropic’s Dynamic Workflows Coordinate Claude Agents: Latent Space&lt;/b&gt;
-Anthropic presented dynamic workflow patterns at AI Engineer New York that draw on Unix and Linux lessons for managing agent coordination. The approach helps agents tackle larger projects without overwhelming developers with every intermediate state. It emphasizes adaptive orchestration over static agent graphs. Teams building long-running Claude-based agents should review the patterns for production use. Source: &lt;a href="https://www.latent.space/p/claude-dynamic-workflows"&gt;latent.space&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Notes on Python 3.15, uv, and Python 3.11 features: Simon Willison&lt;/b&gt;
-Python 3.15 adds explicit lazy imports via PEP 810, a new sampling profiler called Tachyon, and unpacking syntax in comprehensions. Simon Willison walked through upgrading via uv and dropping Python 3.10 support now that it is no longer maintained. The release enables cleaner plugin architectures and lower startup costs for LLM CLI tools. Projects that still support 3.10 can begin adopting the new features immediately. Source: &lt;a href="https://simonwillison.net/2026/Oct/12/python-3-15/"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;GitHub Copilot app for Beginners: How to teach Copilot about your codebase: GitHub Blog&lt;/b&gt;
-The post shows how to add custom instructions, skills, and MCP server connections to a repository so Copilot understands project-specific patterns. It covers repository-level configuration that persists across sessions. Developers new to Copilot can follow the steps to reduce generic suggestions on their own codebases. The guidance focuses on practical setup rather than model internals. Source: &lt;a href="https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-how-to-teach-copilot-about-your-codebase/"&gt;github.blog&lt;/a&gt;
-
-&lt;b&gt;AI agent platform Drylab AI raises US$3 million seed round from Vertex Ventures and PatSnap: The Business Times&lt;/b&gt;
-Drylab AI closed a $3 million seed round led by Vertex Ventures and PatSnap. The platform focuses on agentic workflows for enterprise use cases. The funding signals continued investor interest in specialized agent tooling. Teams evaluating agent platforms should watch for Drylab's upcoming feature releases. Source: &lt;a href="https://www.businesstimes.com.sg/startups-tech/startups/ai-agent-platform-drylab-ai-raises-us3-million-seed-round-vertex-ventures-and-patsnap"&gt;businesstimes.com.sg&lt;/a&gt;
-
-Under the Hood: Test-Time Memory Construction
-Test-time memory systems avoid the obvious pre-compute cost by building only what the current query actually needs. The core move is to store cheap metadata offline—episode keys and temporal links—while keeping raw interaction pointers for later reconstruction. At inference the model retrieves a small set of metadata items, then pulls and organizes the underlying turns only as reasoning progresses. This trades a modest increase in per-query latency for a large reduction in always-on memory footprint. The quality gain is largest on tasks where relevant evidence sits in distant sessions; once the context window already covers the entire history the advantage shrinks. The practical decision is straightforward: use test-time construction when average session length exceeds what fits comfortably in context and queries are sparse; stick with offline memory when queries are frequent and latency budgets are tight. The gotcha that bites most teams is underestimating how many metadata items must be retrieved before the reconstruction step becomes reliable.
-
-Things to Try This Week
-• Test POrchestra on one of your existing long-horizon agent benchmarks to measure the 9% task-success lift reported in the paper.
-• Run the prompt-optimizer study code on your own HotpotQA-style tasks to see how often unscored requirements break under 200-token caps.
-• Upgrade a personal LLM CLI project to Python 3.15 with uv to try explicit lazy imports and the new sampling profiler.
-• Compare T²Mem against your current memory system on LoCoMo-style multi-session questions to quantify the overhead reduction.
-• Add repository-level custom instructions to a GitHub Copilot workspace and measure how quickly it stops suggesting generic patterns on your codebase.
-
-On the Horizon
-• More labs are expected to release agent orchestration frameworks that support on-the-fly harness adjustments.
-• Additional speech LLM benchmarks will likely appear that separate personalization from stereotypical bias.
-• Open-weight Tibetan NLP resources are projected to grow as the surveyed community adopts shared standards.
-• Further prompt-optimization tooling will surface that includes explicit checks for unscored output contracts.</description>
+      <description>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.</description>
       <guid isPermaLink="false">models-agents-video-ep202-20261013</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep202_20261013.mp4" length="200657123" type="video/mp4" />
       <pubDate>Tue, 13 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep202_20261013.jpg" />
       <itunes:duration>10:17</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.**
-
-**What You Need to Know:** New arXiv work introduces POrchestra for proactive agent coordination and T²Mem for test-time memory building. Meta released models to power its Muse agent. Prompt optimizers and LLM-judge rubrics both show measurable side effects on requirements they were never scored on. Developers should test the new orchestration patterns and memory frameworks on long-horizon tasks this week.
----
-### Top Story
-Meta released new AI models that the company says match the industry's best and will power its Muse agent. The models target competitive performance in agentic settings where orchestration and tool use matter more than raw scale alone. Builders working on agent platforms now have another closed-weight option to benchmark against existing Claude and GPT families. Watch for integration details and capability comparisons once the models reach wider availability. Early adopters should test Muse against current agent frameworks on tasks that require coordinated sub-agents. Source: [techgig.com](https://techgig.com/news/ai/meta-unveils-new-ai-models-to-power-muse-agent/134905707)
----
-### Model Updates
-**Do Prompt Optimizers Break Requirements They Are Not Scored On? A Preregistered Study: arXiv**
-Three optimizers (GEPA, MIPROv2, TextGrad) were tested on HotpotQA, SQuAD 2.0, and IFEval. All three produced regressions on unscored requirements such as citation validity and output format when the output token cap stayed at 200. Raising the cap to 1,024 tokens removed extraction failures and kept content regression below 1 point while exact match improved further. The study shows that prompt optimization can increase accuracy while silently violating explicit output contracts. Source: [arxiv.org](https://arxiv.org/abs/2610.13287)
-
-**Agreement Without Alignment: Label-Free Rubric Clarification Increases LLM-Judge Consensus but Not Agreement with Humans: arXiv**
-A label-free procedure that rewrites only the most contested rubric clauses raised inter-judge Krippendorff's α by 0.069 on SummEval. The same edits produced no detectable change in agreement with expert human ratings. The effect did not meet pre-registered criteria on HealthBench or USR Topical-Chat. The work demonstrates that increasing judge consensus does not automatically improve alignment with human annotators. Source: [arxiv.org](https://arxiv.org/abs/2610.13303)
-
-**Host-Aware Web Crawling for LLM Pretraining Data: arXiv**
-Roughly half the variation in document quality classifier scores occurs between hosts rather than within them. Sampling a few pages per host and then fetching more from high-scoring hosts collected several times more high-quality pages than uniform-depth or centrality-based allocation. Common Crawl's observed per-host coverage showed little correlation with evaluated quality signals. The authors estimate tens of millions of high-quality pages remain among known but uncrawled URLs. Source: [arxiv.org](https://arxiv.org/abs/2610.13321)
-
-**MoPrO-SD: Modular Prompt Optimization for Stance Detection: arXiv**
-MoPrO-SD decomposes prompts into functional semantic modules and refines them with class-conditioned LLM feedback. On SemEval-2016, class-conditioned feedback outperformed pooled feedback for four of five backbones. The framework introduces VaccineStance, a new human-annotated benchmark for vaccine stance detection. Both reasoning-based refinement strategies remained competitive with recent prompt optimization methods across four datasets. Source: [arxiv.org](https://arxiv.org/abs/2610.13386)
-
-**Towards the Roof of the World: NLP Progress in Tibetan Languages: arXiv**
-A systematic survey of 140 publications from 2004 to 2026 found 84% appeared since 2018 and covered all 25 represented NLP research areas. Researchers based in China first-authored 87% of the work. Only 29% of publications released data, code, or models. The authors identify gaps in dialect coverage, native evaluation, and responsible NLP practices for this low-resource setting. Source: [arxiv.org](https://arxiv.org/abs/2610.13398)
-
-**Personalization Without Stereotyping: Do Speech LLMs Know When to Turn a Deaf Ear?: arXiv**
-BASIS-Bench evaluates eight recent speech LLMs across demographic robustness, stereotypical bias, and explicit personalization axes. Most models recognized demographic cues yet failed to translate them into appropriate personalization. Explicit demographic labels improved personalization but also amplified stereotypical associations already present in the textual backbones. The benchmark disentangles beneficial personalization from unprompted stereotypical behavior. Source: [arxiv.org](https://arxiv.org/abs/2610.13550)
----
-### Agent &amp; Tool Developments
-**Why Multi-Agent AI Succeeds Where Single-Agent Systems Hit a Wall: Nasscom**
-Single-agent systems lack mechanisms for work decomposition, failure tolerance, and real-time coordination once tasks become layered or unpredictable. Multi-agent setups run tasks in parallel, tolerate individual failures, and adjust coordination as conditions change. The payoff comes from better orchestration rather than larger individual models. Organizations facing complex, fast-changing environments should evaluate multi-agent designs before scaling single-agent point solutions. Source: [community.nasscom.in](https://community.nasscom.in/communities/ai/why-multi-agent-ai-succeeds-where-single-agent-systems-hit-wall)
-
-**Proactive Agentic Orchestration: arXiv**
-POrchestra lets sub-agents proactively request harness adjustments from the orchestrator at any logical point while preserving local execution continuity. On three long-horizon benchmarks it improved task success by 9.1% relative to the strongest baseline. Combined with On-Policy Orchestration Distillation it raised small-orchestrator success by 10.0% relative to prior training baselines. The framework also achieves a more favorable cost-performance trade-off. Source: [arxiv.org](https://arxiv.org/abs/2610.13485)
-
-**Test-Time Memory Construction: arXiv**
-T²Mem defers memory construction to inference time and progressively builds query-specific memory along the reasoning process. It extracts lightweight episode-level metadata offline while retaining links to original interactions. Experiments on LoCoMo and LongMemEval show consistent gains across backbone LLMs with substantially lower memory-construction overhead. The approach adapts memory construction dynamically to each query's information needs. Source: [arxiv.org](https://arxiv.org/abs/2610.13348)
-
-**Mashreq’s AI Agents Cut Integration Time Up to 70%: PYMNTS.com**
-Mashreq deployed AI agents that reduced integration time by up to 70%. The agents handle repetitive coordination tasks that previously required manual effort across systems. The deployment demonstrates measurable efficiency gains in a regulated financial environment. Other institutions facing similar integration bottlenecks can examine the pattern for comparable workloads. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/mashreqs-ai-agents-cut-integration-time-up-to-70/)
-
-**How Anthropic’s Dynamic Workflows Coordinate Claude Agents: Latent Space**
-Anthropic presented dynamic workflow patterns at AI Engineer New York that draw on Unix and Linux lessons for managing agent coordination. The approach helps agents tackle larger projects without overwhelming developers with every intermediate state. It emphasizes adaptive orchestration over static agent graphs. Teams building long-running Claude-based agents should review the patterns for production use. Source: [latent.space](https://www.latent.space/p/claude-dynamic-workflows)
----
-### Practical &amp; Community
-**Notes on Python 3.15, uv, and Python 3.11 features: Simon Willison**
-Python 3.15 adds explicit lazy imports via PEP 810, a new sampling profiler called Tachyon, and unpacking syntax in comprehensions. Simon Willison walked through upgrading via uv and dropping Python 3.10 support now that it is no longer maintained. The release enables cleaner plugin architectures and lower startup costs for LLM CLI tools. Projects that still support 3.10 can begin adopting the new features immediately. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/12/python-3-15/)
-
-**GitHub Copilot app for Beginners: How to teach Copilot about your codebase: GitHub Blog**
-The post shows how to add custom instructions, skills, and MCP server connections to a repository so Copilot understands project-specific patterns. It covers repository-level configuration that persists across sessions. Developers new to Copilot can follow the steps to reduce generic suggestions on their own codebases. The guidance focuses on practical setup rather than model internals. Source: [github.blog](https://github.blog/ai-and-ml/github-copilot/github-copilot-app-for-beginners-how-to-teach-copilot-about-your-codebase/)
-
-**AI agent platform Drylab AI raises US$3 million seed round from Vertex Ventures and PatSnap: The Business Times**
-Drylab AI closed a $3 million seed round led by Vertex Ventures and PatSnap. The platform focuses on agentic workflows for enterprise use cases. The funding signals continued investor interest in specialized agent tooling. Teams evaluating agent platforms should watch for Drylab's upcoming feature releases. Source: [businesstimes.com.sg](https://www.businesstimes.com.sg/startups-tech/startups/ai-agent-platform-drylab-ai-raises-us3-million-seed-round-vertex-ventures-and-patsnap)
----
-### Under the Hood: Test-Time Memory Construction
-Test-time memory systems avoid the obvious pre-compute cost by building only what the current query actually needs. The core move is to store cheap metadata offline—episode keys and temporal links—while keeping raw interaction pointers for later reconstruction. At inference the model retrieves a small set of metadata items, then pulls and organizes the underlying turns only as reasoning progresses. This trades a modest increase in per-query latency for a large reduction in always-on memory footprint. The quality gain is largest on tasks where relevant evidence sits in distant sessions; once the context window already covers the entire history the advantage shrinks. The practical decision is straightforward: use test-time construction when average session length exceeds what fits comfortably in context and queries are sparse; stick with offline memory when queries are frequent and latency budgets are tight. The gotcha that bites most teams is underestimating how many metadata items must be retrieved before the reconstruction step becomes reliable.
----
-### Things to Try This Week
-- Test POrchestra on one of your existing long-horizon agent benchmarks to measure the 9% task-success lift reported in the paper.
-- Run the prompt-optimizer study code on your own HotpotQA-style tasks to see how often unscored requirements break under 200-token caps.
-- Upgrade a personal LLM CLI project to Python 3.15 with uv to try explicit lazy imports and the new sampling profiler.
-- Compare T²Mem against your current memory system on LoCoMo-style multi-session questions to quantify the overhead reduction.
-- Add repository-level custom instructions to a GitHub Copilot workspace and measure how quickly it stops suggesting generic patterns on your codebase.
----
-### On the Horizon
-- More labs are expected to release agent orchestration frameworks that support on-the-fly harness adjustments.
-- Additional speech LLM benchmarks will likely appear that separate personalization from stereotypical bias.
-- Open-weight Tibetan NLP resources are projected to grow as the surveyed community adopts shared standards.
-- Further prompt-optimization tooling will surface that includes explicit checks for unscored output contracts.
-</itunes:summary>
+      <itunes:summary>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.</itunes:summary>
       <itunes:episode>202</itunes:episode>
       <itunes:title>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -4951,19 +4973,5 @@ Test-time memory systems avoid the obvious pre-compute cost by building only wha
       <itunes:title>Ep 201: Self-scaling coding benchmarks just arrived, with difficulty now set by the agents…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep201_20261012_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep201.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 200: A cybersecurity model with a one-million-token context window just launched with perfect…</title>
-      <description>Ep 200: A cybersecurity model with a one-million-token context window just launched with perfect scores on professional CTF tasks.</description>
-      <guid isPermaLink="false">models-agents-video-ep200-20261011</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep200_20261011.mp4" length="187114106" type="video/mp4" />
-      <pubDate>Sun, 11 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep200_20261011.jpg" />
-      <itunes:duration>07:04</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 200: A cybersecurity model with a one-million-token context window just launched with perfect scores on professional CTF tasks.</itunes:summary>
-      <itunes:episode>200</itunes:episode>
-      <itunes:title>Ep 200: A cybersecurity model with a one-million-token context window just launched with perfect…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep200_20261011_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep200.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
