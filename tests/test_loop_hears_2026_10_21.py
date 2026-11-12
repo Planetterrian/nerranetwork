@@ -262,6 +262,10 @@ class TestTheSnapshotSeesTheInterviewShows:
         monkeypatch.delenv("SUPABASE_URL", raising=False)
         monkeypatch.delenv("VOICES_SUPABASE_URL", raising=False)
         monkeypatch.setattr(snap, "ROOT", tmp_path)
+        # The committed api/voices_metrics.json is bound at import; once it is
+        # old enough to be read it would answer for the live read under test.
+        monkeypatch.setattr(snap, "VOICES_METRICS_FILE",
+                            tmp_path / "api" / "voices_metrics.json")
         report = snap.interview_show_section("age_of_ai", out_dir, 10)
         assert "interview show" in report
         assert "_tts.txt`)" not in report and "Script length" not in report
