@@ -99,8 +99,9 @@ listener the consequence before the story reached it.
    unchanged.
 9. **Removed from the prompts:** the quoted "ideal narrative tone" passage
    in the Unintended Consequences script prompt (a seeded specimen), the
-   mid-episode cross-promo blocks on both shows, and the per-segment minute
-   targets.
+   four quoted cross-promo sentences in the First Principles script prompt
+   (the block now describes the sentence, as the network guard requires a
+   block to exist), and the per-segment minute targets.
 
 ## Left alone, on purpose
 

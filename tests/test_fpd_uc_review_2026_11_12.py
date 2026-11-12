@@ -151,9 +151,8 @@ class TestLengthFollowsTheBrief:
         "first_principles_podcast.txt", "unintended_consequences_podcast.txt"])
     def test_script_prompt_takes_its_length_from_the_brief(self, name):
         text = (PROMPTS / name).read_text()
-        assert "THE BRIEF SETS THE LENGTH" in text
-        for stale in ("2200", "2,200", "2800", "2,400", "15–18 minute",
-                      "CROSS-PROMO"):
+        assert "the brief sets the length" in text.lower()
+        for stale in ("2200", "2,200", "2800", "2,400", "15–18 minute"):
             assert stale not in text, stale
 
     def test_brief_prompts_carry_no_stale_word_target(self):
@@ -162,6 +161,11 @@ class TestLengthFollowsTheBrief:
             text = (PROMPTS / name).read_text()
             for stale in ("1500–2200", "2200–2800", "15–18 minute"):
                 assert stale not in text, (name, stale)
+
+    def test_cross_promo_is_described_never_quoted(self):
+        text = (PROMPTS / "first_principles_podcast.txt").read_text()
+        block = text[text.index("CROSS-PROMO"):]
+        assert "check out" not in block and "Write the sentence fresh" in block
 
     def test_no_quoted_tone_specimen_in_the_uc_script_prompt(self):
         text = (PROMPTS / "unintended_consequences_podcast.txt").read_text()
