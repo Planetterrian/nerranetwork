@@ -221,6 +221,39 @@ def echo_open_rate(guest_turns: Sequence[dict], mira_turns: Sequence[dict]) -> O
     return round(echoes / judged, 3) if judged else None
 
 
+#: A guest turn this short that asks to hear the question again (Nov 12 2026,
+#: Rania Esmael's room: about eight in fifty minutes, and no instrument
+#: counted them). The room's GUEST_REPEAT_RE is the same list; a guard reads
+#: one set of phrases through both.
+REPEAT_REQUEST_MAX_WORDS = 25
+_REPEAT_REQUEST_RE = re.compile(
+    r"\b((can|could|would|will) you (please |just )?(repeat|rephrase|say (that|it|this)( once)? (again|more)"
+    r"|ask (that|it|me)( once)? (again|more))"
+    r"|please (repeat|rephrase)\b|(repeat|rephrase) (the|that|your|this) question"
+    r"|say (that|it) (again|once more|one more time)"
+    r"|(sorry|pardon|excuse me),? (what|say again|come again)\b"
+    r"|what (was|is) (the|your|that) question"
+    r"|(didn'?t|did not|couldn'?t|could not) (quite |really )?(catch|hear|get|understand|follow) (that|you|it|the|your)\b"
+    r"|(don'?t|do not) (quite |really )?(understand|follow|get) (the|your|this|that) question"
+    r"|come again\b|pardon me\b|(once|one) more( time)?,? please"
+    r"|what do you mean\b|what does that mean\b)", re.I)
+
+
+def is_repeat_request(text: str) -> bool:
+    """Did this (short) guest turn ask to hear the question again?"""
+    text = " ".join(str(text or "").replace("\u2019", "'").split())
+    if not text or len(text.split()) > REPEAT_REQUEST_MAX_WORDS:
+        return False
+    return bool(_REPEAT_REQUEST_RE.search(text))
+
+
+def guest_repeat_requests(guest_turns: Sequence[dict]) -> Optional[int]:
+    """How many guest turns asked to hear the question again (None: no track)."""
+    if not guest_turns:
+        return None
+    return sum(1 for g in guest_turns if is_repeat_request(" ".join(g["words"])))
+
+
 #: A label opener: a first sentence this short, with no question in it, before
 #: the question of the turn ("Deadwood showing itself. Where does that leave...").
 LABEL_MAX_WORDS = 8
@@ -590,6 +623,7 @@ def measure_audio(words_by_role: Dict[str, List[dict]],
         median, trend = guest_words_per_answer(guest_turns)
         out["guest_words_per_answer_median"] = median
         out["guest_words_trend"] = trend
+        out["guest_repeat_requests"] = guest_repeat_requests(guest_turns)
     if mira_turns and guest_turns:
         spans = overlap(_intervals(mira_words), _intervals(guest_words))
         out["overlap_spans"] = [list(s) for s in spans]

@@ -309,7 +309,7 @@ class TestTheRoom:
 
     def test_the_shows_own_question_gets_a_second_chance_and_no_reaction_first(self):
         assert 'const ROUND_REHANDS_MAX_FOR = { "the show\'s own question": 2 };' in SCENARIO
-        assert 'const leadIn = roundLeadIn || (rehand ? REHAND_LEAD_IN : "");' in SCENARIO
+        assert '(roundLeadIn || (rehand ? REHAND_LEAD_IN : ""));' in SCENARIO
         assert "Say nothing before it" in SCENARIO
 
 

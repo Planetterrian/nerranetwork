@@ -1938,6 +1938,11 @@ Guards `tests/test_personal_feed_health_2026_11_06.py`, `workers/gallery/test/fe
 Register `mira-react-builds-2026-11-04`; notes `docs/mira_craft_notes.md`; guards `tests/test_mira_builds_2026_11_04.py`.
 **What she says after an answer is a bridge built from one thing the guest said, never a phrase folded from it, and never the same shape twice** (HOW TO REACT, by shape). **`one_liner_rate` reads the sameness beside label and bare.** **`learning.SUPERSEDED_BY_BRIEF` keeps lessons the brief now governs out of the prompt; it ships and rehearses with the brief.** ⚠️ AUDIO, the room: a rehearsal PASS plus one listen before merge.
 
+### Mira: the room rotates her turn, and questions are for the ear (Nov 12 2026)
+
+Register `mira-rooms-2026-11-12`; review [`docs/reviews/mira_rooms_2026_11_12.md`](docs/reviews/mira_rooms_2026_11_12.md); guards `tests/test_mira_rooms_2026_11_12.py`.
+**The variety of her reply is the room's job, never another brief line** (`TURN_SHAPES`, every second ordinary turn; off per room: `grok_session_log.turn_shapes: false`). **A spoken "can you repeat" is the repeat button** (`GUEST_REPEAT_RE`): plainer, and in the round never an answer or a spent re-hand. **"I'll be here" is a hold only when it waits.** **A prepared question is followed on first hearing** (`generate_briefs.spoken_question_faults`). `guest_repeat_requests` and the room's pattern change together. ⚠️ AUDIO, the room.
+
 ### The Age of AI: a guest who asks to end, ends (Nov 5 2026)
 
 Register `blaines-close-2026-11-05`; guards `tests/test_blaines_close_2026_11_05.py`; review [`docs/reviews/blaine_mathieu_2026_11_05.md`](docs/reviews/blaine_mathieu_2026_11_05.md).

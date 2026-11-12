@@ -375,3 +375,37 @@ the bare question again), mira_turn_sec_median moving toward the band,
 guest_words_per_answer_median and guest_words_trend, overlaps and
 self-answered turns (neither may rise). A PASS plus one operator listen
 ships it.
+
+## Rania Esmael, Nov 12 2026: questions she had to hear twice, and a habit a brief cannot break
+
+What happened. A guest working in her second language asked to hear the
+question again about eight times. The prepared questions ran to 33 words in
+one sentence, the room handed each to be asked in those words, and on a
+repeat Mira said it again at nearly full length. In the closing round a
+two-word request for clarification was counted as an answer and the round
+lost its place: one closing question was never put. Told the guest would
+email, Mira said she would be here, and the room took that for a wait and
+held her silent for a minute with the guest present. The grade was 5, and
+the grader's first note was the one from Nov 4: every turn opened on a
+phrase folded from the answer.
+
+Why. The questions were written to be read. Nothing in the room treated a
+spoken request to repeat as the request the studio button already was. And
+the opening habit had been addressed three times in the brief, by shape,
+without moving: a standing instruction describes every turn at once, so it
+cannot ask for a different turn from the last one.
+
+What changed. The room hands her the shape of every second ordinary turn,
+a different one each time, as directions with no line in them; the turns
+between stay hers. A spoken request to hear a question again gets her own
+question back, to be asked short and plain, and on a second request a
+simpler question instead. In the round such a request is never an answer,
+and a turn of hers that asked nothing is followed by its question at once.
+A long prepared question is handed for the ear, and new question sets are
+checked for length in code. The brief gained a clause, not a rule.
+
+How to read it. Rehearse the candidate room against the deployed one:
+reaction_open_rate up, label_open_rate down, bare_question_rate not up,
+turn_gap_ms_median not up, her median turn toward the band. Then listen
+for whether the shaped turns sound like her or like a form. Review:
+`docs/reviews/mira_rooms_2026_11_12.md`.

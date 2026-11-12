@@ -1059,6 +1059,7 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             ("label openers", "label_open_rate", "%"),
             ("bare questions", "bare_question_rate", "%"),
             ("one-line openers", "one_liner_rate", "%"),
+            ("asked to hear the question again", "guest_repeat_requests", ""),
             ("guest words per answer", "guest_words_per_answer_median", ""),
         ) if m.get("metrics_basis") == "audio" else ()
         for label, key, suffix in audio_rows + (

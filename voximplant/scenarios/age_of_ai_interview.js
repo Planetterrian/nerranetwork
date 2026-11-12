@@ -751,7 +751,13 @@ const HOLD_ENTER_RE = /\b((i (have|need|got|gotta) to|let me|i'?ll( just)?|i'?m 
 // senses count now: "I'll wait" (not "wait less/longer"), "I'll be
 // (right) here" (not "here next month"), "I'll hold on" (not "hold on
 // to"), "whenever you're back".
-const MIRA_HOLD_RE = /\b((i'?ll|i will) wait\b(?!\s+(less|longer))|(i'?ll|i will) be (right )?here\b(?!\s+(next|again|in|for)\b)|(i'?ll|i will) hold on\b(?!\s+to\b)|whenever you'?re back\b)/i;
+// Nov 12 2026 (Rania Esmael's room, run a6a46957): at closing question 6 the
+// guest said she would email, Mira answered that she would be here, and the
+// bare "I'll be here" put the room on hold for 64 seconds with the guest
+// present; she then welcomed her back. "I'll be here" is a wait only when it
+// says so: "right here", "here when / whenever / once / until", or after
+// "take your time".
+const MIRA_HOLD_RE = /\b((i'?ll|i will) wait\b(?!\s+(less|longer))|(i'?ll|i will) be right here\b(?!\s+(next|again|in|for)\b)|(i'?ll|i will) be here (when|whenever|once|as soon as|until|waiting)\b|take your time[,.]?\s+(i'?ll|i will) be here\b(?!\s+(next|again|in|for)\b)|(i'?ll|i will) hold on\b(?!\s+to\b)|whenever you'?re back\b)/i;
 // The guest turning back to her.
 const HOLD_EXIT_RE = /\b(m(i|ee)ra|sorry about that|sorry (for|about) the (wait|interruption)|(i'?m|i am) back|where were we|thanks for (waiting|your patience|bearing with me)|back to (you|it|our|the)|you were (asking|saying)|your question|(as|like) i was saying|(okay|ok|all right|alright),? (i'?m|i am) (here|back))\b/i;
 // "Back." said as its own sentence: the fourth rehearsal's guest came back on
@@ -850,6 +856,123 @@ const REPEAT_STEER_HEAD =
 const REPEAT_STEER_TAIL =
   " Put it to them again in one short line, more simply, and say nothing else. Never say" +
   " that they asked.";
+// Nov 12 2026 (Rania Esmael's room). A guest working in her second language
+// asked to hear the question again about eight times, in words, and the room
+// did nothing with it: only the studio button was a repeat. Each time Mira
+// said the same long question again at full length, and in the closing round
+// a "the one what?" was counted as the answer. Asking aloud is the same
+// request as the button. Judged only on a short reply (GUEST_REPEAT_MAX_WORDS):
+// the same words inside a long answer are part of the answer.
+const GUEST_REPEAT_RE = /\b((can|could|would|will) you (please |just )?(repeat|rephrase|say (that|it|this)( once)? (again|more)|ask (that|it|me)( once)? (again|more))|please (repeat|rephrase)\b|(repeat|rephrase) (the|that|your|this) question|say (that|it) (again|once more|one more time)|(sorry|pardon|excuse me),? (what|say again|come again)\b|what (was|is) (the|your|that) question|(didn'?t|did not|couldn'?t|could not) (quite |really )?(catch|hear|get|understand|follow) (that|you|it|the|your)\b|(don'?t|do not) (quite |really )?(understand|follow|get) (the|your|this|that) question|come again\b|pardon me\b|(once|one) more( time)?,? please|what do you mean\b|what does that mean\b)/i;
+// "The one what?": a short reply that ends on a bare "what?".
+const GUEST_WHAT_RE = /\bwhat\?\s*$/i;
+const GUEST_REPEAT_MAX_WORDS = 25;
+const GUEST_WHAT_MAX_WORDS = 6;
+const SPOKEN_REPEAT_HEAD =
+  "[ROOM, for this turn only; do not read it aloud and do not mention it] The guest has" +
+  " just asked to hear your last question again, or did not follow it.";
+const SPOKEN_REPEAT_TAIL =
+  " Do not say it again as it was. Ask it once more as one short sentence in plain," +
+  " everyday words: one idea, no idiom, no quotation and no other person's name in it." +
+  " Say nothing before it and nothing after it, and never remark that they asked.";
+const SPOKEN_REPEAT_AGAIN_TAIL =
+  " They have now asked twice, so the question itself is not reaching them. Do not ask it" +
+  " a third time. Ask a different, much simpler question about the same thing: a dozen" +
+  " plain words at most, about one concrete example from their own work. Say nothing" +
+  " before it and never remark that they asked.";
+let guestRepeatAsks = 0;         // spoken requests to hear a question again, the whole room
+let guestRepeatStreak = 0;       // ...in a row, on the question in play
+
+/** Did the guest's reply ask to hear the question again? (A short reply only.) */
+function guestAskedToRepeat(delta) {
+  const text = String(delta || "").replace(/[\u2018\u2019]/g, "'").trim();
+  if (!text) return false;
+  const n = text.split(/\s+/).length;
+  if (n > GUEST_REPEAT_MAX_WORDS) return false;
+  if (GUEST_REPEAT_RE.test(text)) return true;
+  return n <= GUEST_WHAT_MAX_WORDS && GUEST_WHAT_RE.test(text);
+}
+
+/** The turn after a spoken "can you repeat": her question, shorter and plainer. */
+function queueSpokenRepeat() {
+  if (nextTurnInstructions || guestSteer || holdMode || roundActive || roundPendingStart) return false;
+  if (!lastMiraQuestion()) return false;
+  guestRepeatAsks += 1;
+  guestRepeatStreak += 1;
+  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+  nextTurnInstructions = (base ? base + "\n\n" : "") +
+    withLastQuestion(SPOKEN_REPEAT_HEAD, guestRepeatStreak > 1 ? SPOKEN_REPEAT_AGAIN_TAIL : SPOKEN_REPEAT_TAIL);
+  trace("repeat", "the guest asked to hear the question again (" + guestRepeatAsks +
+        (guestRepeatStreak > 1 ? "; " + guestRepeatStreak + " in a row, a simpler question instead" : "") + ")");
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// The shape of her turn, rotated by the room (Nov 12 2026)
+// ---------------------------------------------------------------------------
+//
+// The graders' first complaint in thirteen of twenty rooms, and in both rooms
+// of Nov 11 and 12 (label openings 0.33 in Rania's): she opens a turn by
+// folding the answer into a phrase, then asks. Three rewrites of her brief
+// said not to, by shape, and the habit did not move; a standing instruction
+// cannot remember what she did on her last turn, and the room can. On every
+// second ordinary turn after a real answer the room hands her the shape of
+// that one turn, a different one each time; the turns between are her own.
+// Directions only: no line she could say. Never in the opening minutes, the
+// closing round, a hold, a hello or closing session, or on a turn that
+// already carries something (a plan move, a steer, a repeat, research).
+// Off for one room: grok_session_log.turn_shapes = false on the run row.
+const TURN_SHAPE_HEAD =
+  "[ROOM, the shape of this one turn; directions, not words to say, and never mentioned] ";
+const TURN_SHAPE_TAIL =
+  " If they asked you something, answer that first. One question, short, in plain words.";
+const TURN_SHAPES = [
+  ["join",
+   "Open with one full sentence of your own thinking that joins something in this answer" +
+   " to something they said earlier in the hour, in your words and none of their phrases." +
+   " Then the question that the join raises."],
+  ["weigh",
+   "Open with one full sentence that says what this answer makes harder, or costs, or where" +
+   " you see it differently, as your own view and in none of their phrases. Then hand it" +
+   " back as a question."],
+  ["instance",
+   "Open with one full sentence that says what in this answer you did not expect, or what" +
+   " you now want to understand, in none of their phrases. Then ask for one particular" +
+   " instance of it: a day, a person, a decision or a number."],
+];
+const TURN_SHAPE_MIN_WORDS = 15;   // a shorter answer needs no bridge
+let turnShapeOwed = false;         // decideTurn: this ordinary turn may carry a shape
+let turnShapeTurns = 0;            // ordinary turns after a real answer
+let turnShapesHanded = 0;
+
+function turnShapesOn() {
+  if (isHelloSession() || isClosingSession()) return false;
+  return !(config && config.grok_session_log && config.grok_session_log.turn_shapes === false);
+}
+
+/** decideTurn's ordinary path: is this a turn the room may shape? */
+function noteOrdinaryTurn(delta) {
+  turnShapeOwed = false;
+  if (!turnShapesOn() || nextTurnInstructions || guestSteer || researchAsk) return;
+  if (roundActive || roundPendingStart || closingThanksQueued || holdMode) return;
+  if (minutesIn() < PLAN_OPEN_MIN) return;
+  const text = String(delta || "").trim();
+  if (text.split(/\s+/).length < TURN_SHAPE_MIN_WORDS || /\?\s*$/.test(text)) return;
+  turnShapeTurns += 1;
+  turnShapeOwed = turnShapeTurns % 2 === 1;
+}
+
+/** The shape of this turn, as this response's instructions (or ""). */
+function takeTurnShape() {
+  if (!turnShapeOwed) return "";
+  turnShapeOwed = false;
+  const shape = TURN_SHAPES[turnShapesHanded % TURN_SHAPES.length];
+  turnShapesHanded += 1;
+  trace("shape", shape[0] + " (" + turnShapesHanded + ")");
+  const base = sessionInstructions || (config && config.mira_system_prompt) || "";
+  return (base ? base + "\n\n" : "") + TURN_SHAPE_HEAD + shape[1] + TURN_SHAPE_TAIL;
+}
+
 const STEER_FLOOR_MS = 1500;     // a free floor this long after the press: her turn now
 let steerTimer = null;
 let guestSteer = null;           // { line, leg, kind }: applied at her next turn, then gone
@@ -1215,9 +1338,19 @@ function planThreadMinutes() {
 /** The words of prepared question k, for a turn of hers. */
 function planQuestionLine(k) {
   const item = interviewPlan()[k];
-  return "Ask this question, in these words or very close to them: “" + item.question + "”" +
+  // Nov 12 2026 (Rania's room): the prepared questions are written, not
+  // spoken, and run to forty words with a clause of setup inside them. Handed
+  // "in these words", she said all forty, and the guest asked to hear four of
+  // seven again. A long one is handed for the ear: its meaning, said short.
+  const long = String(item.question || "").trim().split(/\s+/).length > PLAN_SPOKEN_MAX_WORDS;
+  return (long
+      ? "Ask this question for the ear. Keep its meaning, and say it the way a person asks" +
+        " across a table: one short question in everyday words that is understood on first" +
+        " hearing, with any setup it needs as its own short sentence before it: “"
+      : "Ask this question, in these words or very close to them: “") + item.question + "”" +
     (item.curious ? " (what you want to find out: " + item.curious + ")" : "") + ".";
 }
+const PLAN_SPOKEN_MAX_WORDS = 24;
 
 // Nov 9 2026 (Patrick: "give more structure"): the move names the part of the
 // hour it opens, so the listener hears the hour's shape, not only a new question.
@@ -1960,7 +2093,8 @@ function requestTurn(agent) {
   miraSpeaking = true;
   turnRequested = true;
   if (closingThanksQueued) closingThanksSent = true;
-  const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk();
+  const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk() || takeTurnShape();
+  turnShapeOwed = false;
   planTurnSent(instructions);
   const body = instructions ? { response: { instructions: instructions } } : {};
   nextTurnInstructions = "";
@@ -2066,10 +2200,19 @@ function decideTurn() {
     startRound("the answer in progress ended");
     return;
   }
+  // Nov 12 2026: a spoken "can you repeat the question?" is the repeat button
+  // said aloud. That turn is her question again, plainer, and nothing else:
+  // no plan move and no shape rides on it.
+  if (spoke && guestAskedToRepeat(delta) && queueSpokenRepeat()) {
+    requestTurn(grokAgent);
+    return;
+  }
   // Nov 5 2026: the shape of the hour. A thread that has had its turns moves on.
   if (spoke) {
+    guestRepeatStreak = 0;
     const due = planMoveDue();
     if (due) queuePlanMove(due);
+    noteOrdinaryTurn(delta);
   }
   requestTurn(grokAgent);
 }
@@ -3409,7 +3552,33 @@ function noteRoundTurnWithoutQuestion(text) {
     roundSpoken[label] = true;           // asked in her own words
     return;
   }
-  owedRehand(label, asked ? "her turn asked something else" : "her turn asked nothing");
+  const owed = owedRehand(label, asked ? "her turn asked something else" : "her turn asked nothing");
+  // Nov 12 2026 (Rania's room): she reacted, asked nothing, and the room
+  // waited ROUND_REPROMPT_MS for a guest who had been asked nothing. When
+  // her turn held no question the floor is nobody's: the question follows as
+  // soon as her line has been heard, unless the guest starts first.
+  if (owed && !asked) {
+    if (roundRepromptTimer) clearTimeout(roundRepromptTimer);
+    roundRepromptTimer = setTimeout(continueRoundTurn, ROUND_ASKED_NOTHING_MS);
+  }
+}
+
+const ROUND_ASKED_NOTHING_MS = 2500;
+
+/** Her round turn asked nothing and nobody has spoken: hand the question now. */
+function continueRoundTurn() {
+  roundRepromptTimer = null;
+  if (roomEnded || !grokAgent || !roundActive || !roundAwaitingAnswer || !roundRehandOwed) return;
+  if (holdMode || roundGuestGone()) return;
+  if (miraSpeaking || miraAudible()) { roundRepromptTimer = setTimeout(continueRoundTurn, 500); return; }
+  if (guestSpokeSinceMira || inboundSpeaking) {
+    // They are adding something: roundAnswered hands it when they finish.
+    roundRepromptTimer = setTimeout(roundReprompt, ROUND_REPROMPT_MS);
+    return;
+  }
+  trace("round", "her turn asked nothing and the floor is free; the question follows now");
+  roundAwaitingAnswer = false;
+  askNextRoundQuestion();
 }
 
 /**
@@ -3678,6 +3847,12 @@ let roundLastWordAsked = false;
 let roundClosed = false;
 let roundRehandOwed = false;      // the question in play goes again at the next hand (same index)
 let roundLeadIn = "";             // directions she follows before the question re-handed after a sign-off
+const ROUND_PLAIN_ASKS_MAX = 2;   // a closing question goes again in plainer words at most twice
+const roundPlainAsks = {};        // label -> times the guest asked to hear it again
+let roundPlainAgain = false;      // the next hand is that plainer re-ask
+const PLAIN_AGAIN_LEAD_IN = "They asked to hear this question again. Say nothing before it:" +
+  " your whole turn is the question below, put once more in shorter, plainer words that" +
+  " keep its meaning.";
 let roundEndedWithGuestGone = false;
 
 // Oct 23 2026 (rehearsal 0ac88c67, from its session log). A round note added
@@ -3841,7 +4016,9 @@ function askNextRoundQuestion() {
   const entry = ROUND_QUESTIONS[next];
   roundAsked[entry[0]] = elapsedMin();
   trace("round", "asked " + (next + 1) + "/" + ROUND_QUESTIONS.length + ": " + entry[0]);
-  const leadIn = roundLeadIn || (rehand ? REHAND_LEAD_IN : "");
+  const plain = roundPlainAgain && rehand;
+  roundPlainAgain = false;
+  const leadIn = plain ? PLAIN_AGAIN_LEAD_IN : (roundLeadIn || (rehand ? REHAND_LEAD_IN : ""));
   roundLeadIn = "";
   try {
     roundTurn(roundDirections((next + 1) + " of " + ROUND_QUESTIONS.length,
@@ -3850,8 +4027,10 @@ function askNextRoundQuestion() {
           ? leadIn
           : "If something in what they just said struck you, react to it first in one short" +
             " sentence of your own.") +
-        " Then ask the question below, in these words (their name may go in), and end your" +
-        " turn on it: never a question of your own in its place, a follow-up about their" +
+        (plain
+          ? " End your turn on it: never a question of your own in its place, a follow-up about their"
+          : " Then ask the question below, in these words (their name may go in), and end your" +
+            " turn on it: never a question of your own in its place, a follow-up about their") +
         " answer, a second question or a preview of the next one.\n" +
         roundQuestionText(entry)), entry[0]);
   } catch (err) {
@@ -3896,6 +4075,19 @@ function roundAnswered() {
   if (roundGuestGone()) return;
   if (roundLastWordAsked) { closeRound(); return; }
   const label = roundIndex >= 0 ? ROUND_QUESTIONS[roundIndex][0] : "";
+  // Nov 12 2026 (Rania's room): "the one what?" was counted as the answer to
+  // the show's question, the next question was handed, and the round lost its
+  // place from there. Asking to hear it again is not an answer: the same
+  // question goes again, plainer, and the re-hand allowance is not spent on it.
+  if (label && guestAskedToRepeat(guestDelta()) && (roundPlainAsks[label] || 0) < ROUND_PLAIN_ASKS_MAX) {
+    roundPlainAsks[label] = (roundPlainAsks[label] || 0) + 1;
+    guestRepeatAsks += 1;
+    roundRehandOwed = true;
+    roundPlainAgain = true;
+    trace("round", "they asked to hear " + (roundIndex + 1) + "/" + ROUND_QUESTIONS.length + " again; it goes again in plainer words");
+    askNextRoundQuestion();
+    return;
+  }
   if (label && ROUND_DECLINE_RE.test(guestDelta())) {
     roundRehandOwed = false;
     roundSpoken[label] = true;
@@ -4122,6 +4314,8 @@ async function endRoom(reason) {
       dead_air_nudges: deadAirNudgesTotal,
       guest_feedback: guestFeedback,
       guest_steers_applied: guestSteersApplied,
+      guest_repeat_asks: guestRepeatAsks,
+      turn_shapes_handed: turnShapesHanded,
       closing_round_complete: roundClosed,
       closing_questions_asked: Object.keys(roundAsked).length,
       // Oct 28 2026: what the room looked up, and what it handed her.
