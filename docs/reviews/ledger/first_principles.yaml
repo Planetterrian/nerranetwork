@@ -332,6 +332,68 @@ reviews:
       ab_listen_required: false
       rationale: Newsletter-only surface; remove the same seeded phrases so weekly copy cannot reintroduce the on-air tic family. No audio path — ab_listen false.
     agent_cost_usd: 0.1055
+  - date: '2026-11-12'
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_11_12.md
+    generated_by: grok-4.5
+    summary: Length floor is now met under grok-4.7 (0/10 under 1400), but the still-seeded “rough magic-wand estimate” hedge recurs in recent transcripts, chapter markers mis-fire on hook “raw materials” / garbage auto-titles, and Ep151 shipped a literal “*” title.
+    scored_prior_predictions:
+    - metric: occurrences of 'rough magic wand estimate' / 'rough magic-wand estimate' across 10 transcripts
+      verdict: miss
+      evidence: De-seed never applied; ep155/156/158 still speak rough magic wand estimate/floor
+    - metric: successor hedging tic — any single stock estimate-opener (e.g. 'reported to be around', 'ballpark material floor') in 5+/10 transcripts
+      verdict: partial
+      evidence: No new opener at ≥5/10 (snapshot clear); old magic-wand family still 3/10
+    shipped: []
+    deferred:
+    - Garbage auto-segment chapter titles (shared network LLM-title class) — Ep159 confirmed; network sanitizer not FP prompt
+    - 'Closer template reword if operator confirms Whisper ''depreciated'' comes from written closer — no phonetics (landmine #17)'
+    - Further podcast-side length escalation / min_podcast_words prompt pressure — do_not_retry; 0/10 under floor on grok-4.7
+    - 'Optional operator choice: lower min_podcast_words tripwire ~1100 for dashboard hygiene only — not required while floor is met'
+    - Richer queue-brief / licensed-number substrate — only if length or emptiness regresses on 4.3 fallback windows; Aug 20 rejected write-past-floor expand
+    predictions:
+    - metric: occurrences of 'rough magic wand estimate' / 'rough magic-wand estimate' / 'rough magic wand floor' in last-10 EN transcripts
+      baseline: 3/10 (ep155, ep156, ep158)
+      expected: 0/10 after system de-seed + podcast ban extension ships and A/B-listens
+      verdict: pending
+      evidence: null
+    - metric: chapters_ep*.json / RSS titles equal to '*' or empty hook
+      baseline: 1/10 in window (ep151)
+      expected: 0 new episodes after hook/title guard
+      verdict: pending
+      evidence: null
+    - metric: episodes whose first chapter is The First Principle solely because hook matches raw material|magic wand
+      baseline: 1/10 (ep154)
+      expected: 0 after First Principle pattern narrows (drop bare 'raw material')
+      verdict: pending
+      evidence: null
+    - metric: successor stock hedge opener (any single new formula) in ≥5/10 transcripts
+      baseline: not dominant in ep150–159 beyond magic-wand family
+      expected: no new formula ≥5/10; if one appears, next pass de-seeds by shape + MEMORY
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/first_principles_system.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: System prompt still seeds the exact hedge strings the podcast stage fights; Ep097 revival and ep155/156/158 prove the teacher prompt wins. Shape-based de-seed + verbatim ban, no replacement quotable example (July 2026 meta-review).
+    - file: shows/prompts/first_principles_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Mirrors the on-the-order-of ban that scored a hit; closes the magic-wand estimate hole still shipping in ep155/156/158. Shape/verbatim ban only — no new example phrase for the model to elect next.
+    - file: shows/prompts/first_principles_weekly.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Newsletter-only surface; remove the same seeded phrases so weekly copy cannot reintroduce the on-air tic family. No audio path.
+    - file: shows/first_principles.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Ep154 hook 'raw materials' matched bare 'raw material' and stole chapter 0 from Introduction. Drop bare raw material/atoms; keep phrases that mark the analytical section, not the cold-open hook. Metadata-only — no TTS field changes.
+    - file: tests/test_first_principles_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix gets a drift-guard; pins Ep151 title defect, Ep154 marker steal, and hedge re-seed. Judge committed episodes ≥1 day old so today's run does not false-red.
+    agent_cost_usd: 0.1365
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation
