@@ -16,7 +16,7 @@ if str(_ROOT) not in sys.path:
 class TestDigestExpandOptIns:
     @pytest.mark.parametrize("slug,min_words", [
         ("planetterrian", 1400),
-        ("unintended_consequences", 1200),
+        ("unintended_consequences", 900),  # Nov 12 2026: a thin-brief tripwire
         ("models_agents_beginners", 1000),
     ])
     def test_digest_expand_enabled(self, slug, min_words):

@@ -171,7 +171,10 @@ class TestMapSentence:
         news = build_cold_open_spec("tesla")
         narrative = build_cold_open_spec("first_principles", narrative=True)
         assert "never more than three" in news and "no length or duration word" in news
-        assert "segment or section label" in narrative
+        # Nov 12 2026: the narrative shows speak no map at all (it listed the
+        # parts and gave away the turn); the news shows keep theirs.
+        assert "NO MAP on this show" in narrative and "THE MAP" not in narrative
+        assert "(and the map, below)" not in narrative
         assert "two or three stories" not in narrative
 
     def test_pipeline_passes_the_narrative_flag(self):

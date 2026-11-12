@@ -332,6 +332,52 @@ reviews:
       ab_listen_required: false
       rationale: Newsletter-only surface; remove the same seeded phrases so weekly copy cannot reintroduce the on-air tic family. No audio path — ab_listen false.
     agent_cost_usd: 0.1055
+
+  - date: '2026-11-12'
+    pr: null
+    doc: docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md
+    reviewer: claude-code (operator-directed review)
+    summary: >-
+      The opportunity arm had drifted into venue and rental prices, the tool was
+      asserted and rarely computed from sourced inputs, and the length targets
+      outran the sources. The tool is renamed the First Principles Ratio.
+    shipped:
+    - Renamed the tool across prompts, show YAML, intros and site copy
+    - Removed 22 queue topics and hand-wrote 34 (engineered opportunities, modern concrete examples)
+    - Restock prompt re-aimed and story-level dedup added to the restock script
+    - Brief sets the length; min_digest_words 900; min_podcast_words 1200 with the skip floor pinned at 840
+    - THE NUMBERS block in the brief; no map sentence on narrative shows
+    deferred:
+    - One ask in the closing block (network decision)
+    - Brief on a newer model (model upgrade playbook)
+    - Lints for a computed ratio and for named people
+    predictions:
+    - metric: share of the last 7 episodes with digest_expansion_fired
+      baseline: 7 of 7 (Ep152-158)
+      expected: at most 3 of 7 by 2026-11-26
+      verdict: pending
+      evidence: null
+    - metric: claims ledger entries per episode, median of the last 7
+      baseline: 1-3
+      expected: at least 5
+      verdict: pending
+      evidence: null
+    - metric: opportunity episodes on a venue, rental or brand price, last 10 opportunity episodes
+      baseline: 6 of 10
+      expected: 0 of the episodes aired after 2026-11-12
+      verdict: pending
+      evidence: null
+    - metric: daily audit Repetitive flags, last 7 episodes
+      baseline: 7 of 7
+      expected: at most 3 of 7
+      verdict: pending
+      evidence: null
+    - metric: episodes skipped for length after 2026-11-12
+      baseline: 0
+      expected: 0
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry:
   - idea: >-
       Push the podcast length target above ~1500 words via prompt escalation

@@ -7492,6 +7492,45 @@ experiments:
       page on Ep158-171 (show notes and blog). The spoken closing is
       unchanged. Guards tests/test_spacex_focus_and_rating_2026_11_10.py.
 
+  - id: fpd-uc-review-2026-11-12
+    title: "First Principles and Unintended Consequences: engineered topics, sourced ratios, honest length, no map"
+    area: content
+    shipped: 2026-11-12
+    readout: 2026-11-26
+    status: reading
+    baseline: >
+      First Principles Ep149-158 and Unintended Consequences Ep161-170: the
+      digest expansion retry fired on 7 of 7 episodes of each show; the daily
+      audit flagged Repetitive on 7 of 7 (FPD) and 4 of 7 (UC); First
+      Principles carried 1-3 claims ledger entries an episode and 6 of its
+      last 10 opportunity episodes were venue, rental or brand prices.
+    target: >
+      The expansion retry on at most 3 of 7 episodes of each show, Repetitive
+      flags at most 3 (FPD) and 2 (UC) per 7, at least 5 ledger entries an
+      episode on First Principles, and no episode skipped for length.
+    criteria: >
+      HIT when digest_expansion_fired reads 1 on at most 3 of the 7 episodes
+      of each show in Nov 19-25 and no episode in Nov 13-25 skipped for
+      length; MISS when it still fires on 6 or more of 7 on either show, or
+      any episode skipped as too short.
+    readout_plan: >
+      digests/first_principles/metrics_ep*.json and
+      digests/unintended_consequences/metrics_ep*.json (digest_expansion_fired,
+      podcast script words, skip reasons); the *_claims.json sidecars for
+      ledger entries; api/editorial_score_history.json for the Repetitive
+      flags; the produced entries of shows/topic_queues/first_principles.yaml
+      for the subjects aired.
+    notes: >
+      Renames the show's tool to the First Principles Ratio. Queue: 22 First
+      Principles topics removed and 34 added by hand; 6 Unintended
+      Consequences duplicates retired. Restock prompts re-aimed and
+      scripts/restock_topic_queues.story_too_similar added. Brief and script
+      prompts: the brief sets the length, THE NUMBERS block, named people,
+      no map on narrative shows (engine.intros). min_digest_words 900 on
+      both; min_podcast_words 1200 / 1100 with min_podcast_publish_words
+      840 / 780. Review docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md.
+      Guards tests/test_fpd_uc_review_2026_11_12.py.
+
   - id: mira-rooms-2026-11-12
     title: "The room rotates the shape of Mira's turn, hears a spoken 'can you repeat', and questions are written for the ear"
     area: voices

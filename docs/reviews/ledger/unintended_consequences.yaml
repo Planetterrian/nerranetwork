@@ -199,4 +199,49 @@ reviews:
       ab_listen_required: true
       rationale: Matches de-seeded brief + shorter honest runtime; bans the observed Lesson tic at the script stage as belt-and-suspenders.
     agent_cost_usd: 0.11
+
+  - date: '2026-11-12'
+    pr: null
+    doc: docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md
+    reviewer: claude-code (operator-directed review)
+    summary: >-
+      The cases are sound but arrive without people, stories repeated under new
+      titles, the map sentence gave away the turn, and the length targets outran
+      the sources.
+    shipped:
+    - Retired 6 unproduced duplicates of told stories
+    - Restock prompt repeat rule and story-level dedup in the restock script
+    - Brief sets the length; min_digest_words 900; min_podcast_words 1100 with the skip floor pinned at 780
+    - Named people required in brief and script; research search asks for a source naming them
+    - Removed the quoted tone specimen; no map sentence
+    deferred:
+    - One ask in the closing block (network decision)
+    - A lint for named people
+    predictions:
+    - metric: share of the last 7 episodes with digest_expansion_fired
+      baseline: 7 of 7 (Ep164-170)
+      expected: at most 3 of 7 by 2026-11-26
+      verdict: pending
+      evidence: null
+    - metric: episodes naming at least two people in the script, last 10
+      baseline: 3 of 10
+      expected: at least 8 of 10
+      verdict: pending
+      evidence: null
+    - metric: daily audit Repetitive flags, last 7 episodes
+      baseline: 4 of 7
+      expected: at most 2 of 7
+      verdict: pending
+      evidence: null
+    - metric: podcast prompt still stating 2200-2800 words / 15-18 minutes
+      baseline: true
+      expected: false (closes the 2026-10-01 prediction)
+      verdict: pending
+      evidence: null
+    - metric: episodes skipped for length after 2026-11-12
+      baseline: 0
+      expected: 0
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry: []

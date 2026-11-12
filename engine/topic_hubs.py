@@ -327,7 +327,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
             "rocket hardware, and first-principles cost analysis of real "
             "industries."
         ),
-        "keywords": "engineering podcast, manufacturing podcast, first principles, idiot index, cost engineering",
+        "keywords": "engineering podcast, manufacturing podcast, first principles, first principles ratio, cost engineering",
     },
     {
         # Phase 2 (Sep 2026): Mira's local shows. Below MIN_EPISODES_FOR_HUB

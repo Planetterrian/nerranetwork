@@ -37,7 +37,7 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 # sibling show. Russian-language shows are deliberately absent — the DP
 # audience is English-first. Age of AI joins once it has published episodes.
 _NETWORK_SHOWS = [
-    ("first_principles", "First Principles Daily", "reasons a thing should cost less — the magic wand number and the Idiot Index, one example a day"),
+    ("first_principles", "First Principles Daily", "reasons a thing should cost less — the magic wand number and the First Principles Ratio, one example a day"),
     ("fascinating_frontiers", "Fascinating Frontiers", "the day's space and science wonders, with a cosmic deep dive"),
     ("tesla_shorts_time", "Tesla Shorts Time", "the daily Tesla briefing — deliveries, FSD, energy, and the stock"),
     ("spacex", "SpaceX Daily", "engineering-first coverage of SpaceX as a public company"),

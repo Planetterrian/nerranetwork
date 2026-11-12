@@ -750,9 +750,9 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         "framings": [
             "Today we reason from raw materials, not analogy.",
             "Today's question: what would this cost if you only paid for the atoms?",
-            "Let's run the magic wand number and the Idiot Index on today's subject.",
+            "Let's run the magic wand number and the First Principles Ratio on today's subject.",
             "Today, one example of first-principles thinking in action.",
-            "Today, an industry whose Idiot Index is begging to be attacked.",
+            "Today, an industry where the price sits far above the materials.",
             "Let's break something down to its raw materials and build the reasoning back up.",
         ],
         "day_colors": {
@@ -1278,7 +1278,8 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False,
         "Rank the day's items by that test and open on the winner, even "
         "when it is not the biggest story.\n"
         "- THE BODY KEEPS THE OPEN'S PROMISE FIRST. The first story told "
-        "after the show's identity line (and the map, below) is the story the open named — its "
+        "after the show's identity line" + ("" if narrative else " (and the map, below)")
+        + " is the story the open named — its "
         "full telling, with the facts the open did not already say, never "
         "the open's own sentence again — and only then the rest of the "
         "material in its own order. Someone who stays past the first "
@@ -1304,6 +1305,10 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False,
     )
 
 
+# Nov 12 2026 (operator-directed review): the narrative shows speak NO map.
+# Theirs listed five noun phrases after the identity line and gave away the
+# turn (UC Ep170: "how the kilns moved"). ``engine.short_furniture`` finds a
+# map by its content, so a script without one renders as before.
 # The map sentence (Oct 20 2026). A news episode maps its stories; a
 # narrative episode is one story, so its map names the parts the listener
 # will hear. Oct 21 2026: the news wording on the two narrative shows made
@@ -1323,13 +1328,11 @@ _NEWS_MAP = (
     "story, in full."
 )
 _NARRATIVE_MAP = (
-    "- THE MAP comes right after the identity line: ONE short sentence "
-    "that gives the listener the shape of this one story — the parts they "
-    "will hear, each named by what it is about in this episode, in the "
-    "order they come. Never a generic stage word, never a "
-    "segment or section label, never a name for a part the episode does "
-    "not speak, no number, no promise language, no length or duration "
-    "word. Then the story, in order."
+    "- NO MAP on this show: after the identity line the story simply "
+    "begins. Never a sentence that lists the parts the listener will "
+    "hear, previews where the story goes or names its turn — one story "
+    "told in order needs no table of contents, and the turn is the "
+    "reason to keep listening. Then the story, in order."
 )
 
 
