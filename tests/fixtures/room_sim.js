@@ -1156,6 +1156,84 @@ if (which === "server_turns_advance_the_round") {
     advance(4000);
     out.press = { instructions: instructions[instructions.length - 1] || "", plan: plan() };
   }
+} else if (which === "spoken_repeat" || which === "turn_shapes" || which === "turn_shapes_off") {
+  // Nov 12 2026 (Rania Esmael's room): a guest who asks aloud to hear the
+  // question again, and the shape of her ordinary turns, rotated by the room.
+  ctx.__log = which === "turn_shapes_off" ? { turn_shapes: false } : {};
+  run(`config = { planned_minutes: 45, mira_system_prompt: "BRIEF: the guest builds boats.",
+    grok_session_log: __log }; planCache = null; firstJoinAt = Date.now() - 10 * 60 * 1000;
+    closingPermitted = false; turnRequested = true;`);
+  const LONG = "We tried it on the lake first and it mostly worked, though the second hull" +
+    " cracked along the keel in October and we lost a month rebuilding it in the shed.";
+  const turn = function (mira, guest) {
+    roomTurnStarts();
+    miraFinishes(mira);
+    guestSays(guest, 6000);
+    advance(5000);
+    return instructions[instructions.length - 1] || "";
+  };
+  if (which === "spoken_repeat") {
+    const Q = "You said the yard is a lab. When the regulators and the insurers pull in different directions, which of them do you build for?";
+    out.first = turn(Q, "Sorry, can you repeat the question?");
+    out.second = turn("Which of them do you build for, the regulators or the insurers?", "I didn't understand the question.");
+    out.answered = turn("Who decides what a safe boat is?", LONG);
+    out.third = turn("And what did October cost you?", "The what?");
+    out.inAnAnswer = turn("What did October cost you?", LONG + " People ask me what do you mean by a lab, and" +
+      " I say come and see the shed, because nothing in it is finished and nothing in it is for sale.");
+    out.count = run("guestRepeatAsks");
+    out.trace = trace.filter(function (x) { return x.e === "repeat"; }).map(function (x) { return x.d; });
+  } else {
+    out.turns = [];
+    for (let i = 0; i < 6; i++) out.turns.push(turn("And question number " + i + " on the lake?", LONG));
+    out.short = turn("And after that?", "We sold it.");
+    out.asksHer = turn("And after that?", LONG + " Does that make sense to you?");
+    out.shapes = trace.filter(function (x) { return x.e === "shape"; }).map(function (x) { return x.d; });
+    out.handed = run("turnShapesHanded");
+  }
+} else if (which === "round_repeat_is_not_an_answer") {
+  // Rania's room: "the one what?" was taken as the answer to the show's
+  // question and the round lost its place from there.
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("The one what?", 1500);
+  advance(5000);
+  out.afterRepeat = { state: state(), instructions: instructions[instructions.length - 1] || "", handed: handed(),
+                      rehands: run("JSON.stringify(roundRehands)") };
+  roomTurnStarts();
+  miraFinishes("What is one bet you are making this year that you cannot prove?");
+  guestSays("That small yards will beat the big ones on delivery times.", 4000);
+  advance(5000);
+  out.afterAnswer = { state: state(), handed: handed() };
+  out.asked = asked();
+  out.trace = trace.filter(function (x) { return x.e === "round"; }).map(function (x) { return x.d; });
+} else if (which === "round_asked_nothing_follows_now") {
+  // Rania's room: handed the book question, she reacted and asked nothing,
+  // and the guest was left with nothing to answer.
+  run("closingPermitted = true; startRound('test', -1);");
+  roomTurnStarts();
+  miraFinishes("What's the one bet you're making for the next twelve months that you cannot prove yet?");
+  guestSays("That small yards will beat the big ones on delivery times.", 4000);
+  advance(5000);
+  roomTurnStarts();
+  miraFinishes("Scotland. That's a long way from an office in Egypt.");
+  events.length = 0;
+  advance(2000);
+  out.early = events.slice();
+  advance(2000);
+  out.events = events.slice();
+  out.instructions = instructions[instructions.length - 1] || "";
+  out.handed = handed();
+  out.state = state();
+  out.trace = trace.filter(function (x) { return x.e === "round"; }).map(function (x) { return x.d; });
+} else if (which === "question_lines_for_the_ear") {
+  ctx.__plan = [
+    { question: "What made you start building boats in your garage?", curious: "how it began", section: "opening" },
+    { question: "Other yards use the same autonomous navigation tools to sell boats that later turn out to need a crew; how do you keep the difference between those offers and your own safety-first teaching visible to buyers?", curious: "", section: "core" },
+  ];
+  run(`config = { planned_minutes: 45, mira_system_prompt: "BRIEF.", grok_session_log: { interview_plan: __plan } }; planCache = null;`);
+  out.short = run("planQuestionLine(0)");
+  out.long = run("planQuestionLine(1)");
 } else if (which === "delta_shapes") {
   out.pieces = run(`[
     deltaOf({ data: { payload: { delta: " the end of the recording." } } }),

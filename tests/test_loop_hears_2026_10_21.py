@@ -262,6 +262,9 @@ class TestTheSnapshotSeesTheInterviewShows:
         monkeypatch.delenv("SUPABASE_URL", raising=False)
         monkeypatch.delenv("VOICES_SUPABASE_URL", raising=False)
         monkeypatch.setattr(snap, "ROOT", tmp_path)
+        # The committed api/voices_metrics.json holds grades once the nightly
+        # has read some; this case is the room where nothing could be read.
+        monkeypatch.setattr(snap, "voices_metrics_for", lambda *a, **k: None)
         report = snap.interview_show_section("age_of_ai", out_dir, 10)
         assert "interview show" in report
         assert "_tts.txt`)" not in report and "Script length" not in report

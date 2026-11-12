@@ -1998,7 +1998,7 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
     def test_the_prompt_says_the_list_is_a_floor(self):
         flat = _flat(self.PROMPT)
         assert "when the prepared list runs out, go back to the best thing they said" in flat
-        assert "One question per turn, asked once, then silence" in flat
+        assert "One short question per turn, one idea in everyday words, asked once, then silence" in flat
 
 
 class TestTheIntroductionEarnsTheFirstThirtySeconds:

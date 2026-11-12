@@ -217,6 +217,82 @@ def _identity_unknown_brief(interview: dict, app: dict, why: str) -> dict:
     })
 
 
+# ---------------------------------------------------------------------------
+# Questions written for the ear (Nov 12 2026)
+# ---------------------------------------------------------------------------
+#
+# Rania Esmael's room: the prepared questions ran 19 to 33 words in one
+# sentence, the room handed each to Mira "in these words", and a guest
+# working in her second language asked to hear the question again about
+# eight times. The week's other briefs ran to 42. A question is said once to
+# someone who cannot re-read it, so its length is checked in code: the prompt
+# states the shape, and a question that misses it gets one rewrite, kept only
+# when the rewrite passes.
+
+#: The question sentence itself, and the one sentence of setup before it.
+SPOKEN_QUESTION_MAX_WORDS = 22
+SPOKEN_SETUP_MAX_WORDS = 16
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+
+
+def spoken_question_faults(text: str) -> list:
+    """Why *text* is hard to follow when heard once (an empty list: it is fine)."""
+    text = " ".join(str(text or "").split())
+    if not text:
+        return ["empty"]
+    faults = []
+    sentences = [s for s in _SENTENCE_END.split(text) if s.strip()]
+    questions = [s for s in sentences if s.rstrip().endswith("?")]
+    if len(questions) != 1 or not sentences[-1].rstrip().endswith("?"):
+        faults.append("not one question, asked last")
+    if len(sentences) > 2:
+        faults.append("more than one sentence of setup")
+    if questions and len(questions[-1].split()) > SPOKEN_QUESTION_MAX_WORDS:
+        faults.append(f"the question runs past {SPOKEN_QUESTION_MAX_WORDS} words")
+    setup = [s for s in sentences if not s.rstrip().endswith("?")]
+    if any(len(s.split()) > SPOKEN_SETUP_MAX_WORDS for s in setup):
+        faults.append(f"the setup runs past {SPOKEN_SETUP_MAX_WORDS} words")
+    if ";" in text or "(" in text:
+        faults.append("a semicolon or a parenthesis")
+    return faults
+
+
+def questions_for_the_ear(questions, show=None):
+    """One rewrite pass over the questions that fail ``spoken_question_faults``.
+
+    A rewrite replaces the original only when it passes; everything else in
+    the item (why, curious, section) is kept. Never raises: a failed call
+    leaves the set as it was written."""
+    if not isinstance(questions, list):
+        return questions
+    failing = [i for i, q in enumerate(questions)
+               if isinstance(q, dict) and spoken_question_faults(q.get("question"))]
+    if not failing:
+        return questions
+    try:
+        raw = llm(load_prompt("question_for_the_ear.txt", show=show,
+                              questions=json.dumps([questions[i]["question"] for i in failing],
+                                                   ensure_ascii=False, indent=1),
+                              spoken_question_words=SPOKEN_QUESTION_MAX_WORDS,
+                              spoken_setup_words=SPOKEN_SETUP_MAX_WORDS),
+                  temperature=0.3, max_tokens=1500)
+        rewritten = parse_json_lenient(raw)
+    except Exception as err:  # noqa: BLE001  (the brief is worth more than the polish)
+        print(f"  questions for the ear: rewrite failed ({err}); kept as written")
+        return questions
+    if not isinstance(rewritten, list) or len(rewritten) != len(failing):
+        return questions
+    out = [dict(q) if isinstance(q, dict) else q for q in questions]
+    kept = 0
+    for i, text in zip(failing, rewritten):
+        text = " ".join(str(text or "").split())
+        if text and not spoken_question_faults(text):
+            out[i]["question"] = text
+            kept += 1
+    print(f"  questions for the ear: {len(failing)} too long to hear once, {kept} rewritten")
+    return out
+
+
 def generate_brief(interview: dict, app: dict) -> dict:
     show = show_for(interview, app)
     links = json.dumps(app.get("links") or {})
@@ -252,6 +328,8 @@ def generate_brief(interview: dict, app: dict) -> dict:
                     topics=topics, show_memory=memory,
                     question_count=question_count(minutes),
                     minutes=minutes,
+                    spoken_question_words=SPOKEN_QUESTION_MAX_WORDS,
+                    spoken_setup_words=SPOKEN_SETUP_MAX_WORDS,
                     guest_shape=shape_block(interview, app),
                     # Oct 21 2026: the subject the guest asked for, and what
                     # they wrote before the call, reach the question set — they
@@ -264,7 +342,7 @@ def generate_brief(interview: dict, app: dict) -> dict:
                         show, exclude_email=app.get("email", ""), app=app)),
         temperature=0.6, max_tokens=2000,
     )
-    questions = parse_json_lenient(questions_raw)
+    questions = questions_for_the_ear(parse_json_lenient(questions_raw), show=show)
     thesis = llm(
         load_prompt("episode_thesis.txt", show=show,
                     name=app["name"], bio_research=bio_research,

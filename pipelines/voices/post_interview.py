@@ -1460,7 +1460,7 @@ def audio_metrics_basis_text(metrics: dict) -> str:
         return ("AUDIO. overlap_sec, overlap_events, turn_gap_ms_*, "
                 "mira_turn_sec_*, guest_words_per_answer_median, guest_words_trend, "
                 "self_answered_turns, echo_open_rate, label_open_rate and bare_question_rate "
-                "(with one_liner_rate beside them) "
+                "(with one_liner_rate and guest_repeat_requests beside them) "
                 "were measured from each "
                 "speaker's own recording with word timestamps. Believe them over "
                 "your reading of the transcript. interruptions, repeated_questions "
@@ -1814,7 +1814,10 @@ def main() -> int:
                      "label_open_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("label_open_rate"),
                      "bare_question_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("bare_question_rate"),
                      # Nov 4 2026: the same short line before every question.
-                     "one_liner_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("one_liner_rate")},
+                     "one_liner_rate": ((metrics.get("notes") or {}).get("audio") or {}).get("one_liner_rate"),
+                     # Nov 12 2026: how often the guest asked to hear the
+                     # question again (her questions were too long to hear once).
+                     "guest_repeat_requests": ((metrics.get("notes") or {}).get("audio") or {}).get("guest_repeat_requests")},
                     ensure_ascii=False),
                 audio_basis=audio_metrics_basis_text(metrics),
                 cleaned_transcript=cleaned,
