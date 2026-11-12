@@ -507,7 +507,7 @@ today's work, not just explain yesterday's):
 - **FPD** (First Principles Daily) runs via `run_show.py` +
   `shows/first_principles.yaml`; a **daily narrative** show
   (`narrative_mode: true`, topic-queue-driven like UC — no news fetch).
-  Applies the first-principles "magic wand number" + "Idiot Index" lens,
+  Applies the first-principles "magic wand number" + "First Principles Ratio" lens,
   alternating per episode between a concrete example of the thinking in
   action (`category: concrete_example` — historical and modern: Ford,
   Bessemer, containerization, solar, batteries, mRNA, and *sometimes*
@@ -1993,3 +1993,7 @@ Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
 [history](docs/claude_md_history/2026_10_21_covered_means_aired.md); design [`docs/story_catalog.md`](docs/story_catalog.md); register `story-catalog-2026-10-21`; guards `tests/test_story_catalog_2026_10_21.py`.
 **`engine/aired_items.py` is the one reader of "the stories a digest told".** **The tracker records what aired**, never the whole prompt list. **Story ids come from `engine/story_catalog.py`.** **The cross-show block names only today's articles a sibling told in two days, never silence.** **The story catalog is `catalog_*` in the nerra-voices Supabase** (`engine/catalog.py`; a show run's write never blocks; `missed_stories` null, never 0). **Books never print a corrected error**; a `prior_coverage.md` is never a source. ⚠️ AUDIO.
 
+### First Principles and Unintended Consequences: engineered topics, sourced ratios, no map (Nov 12 2026)
+
+[review](docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md); register `fpd-uc-review-2026-11-12`; guards `tests/test_fpd_uc_review_2026_11_12.py`.
+**The tool is the "First Principles Ratio"** on every First Principles surface (SpaceX keeps its own term; published episodes and books never change). **An opportunity topic is something designed and made, with someone attempting the rebuild**, never a venue price, a rental or a brand markup. **The restock rejects a story the queue already holds** (`story_too_similar`). **The brief sets the length** (floors 900; scripts 1,200 / 1,100 with pinned skip floors). **A narrative show has no map sentence.** ⚠️ AUDIO.

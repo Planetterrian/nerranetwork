@@ -2,11 +2,11 @@ name: First Principles Daily
 slug: first_principles
 description: 'A daily narrative podcast that reasons from first principles — the ''magic
   wand number'' (what something would cost if you only paid for raw materials) and
-  the ''Idiot Index'' (how many times more a finished part costs than its materials).
+  the ''First Principles Ratio'' (the finished price divided by that floor).
   Episodes alternate: one day a concrete example of first-principles thinking in action
   — from history (Ford, Bessemer, the shipping container) and modern industry (solar,
   batteries, mRNA), and yes sometimes one of Musk''s teams — the next a deep exposé
-  on an industry ripe for the same treatment. Musk popularized the language; the method
+  on an industry ripe for the same treatment. The method
   is much older and bigger than any one person. Produced by the Nerra Network in Vancouver.'
 narrative_mode: true
 topic_queue_file: shows/topic_queues/first_principles.yaml
@@ -84,7 +84,11 @@ llm:
   # 1,400 floor under the script prompt's 1,500-1,900w target (2026-08-20
   # retune) — the below-target signal fires only meaningfully under the
   # band, not at 1,499.
-  min_podcast_words: 1400
+  # Nov 12 2026: the script runs at most about a third longer than its brief,
+  # so the below-target line moves with it (1400 -> 1200). The skip floor
+  # is pinned where it was (60% of 1400); never raise or lower one without the other.
+  min_podcast_words: 1200
+  min_podcast_publish_words: 840
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
@@ -104,7 +108,11 @@ llm:
   # retry rescues genuinely-thin briefs (~900-1,100w) without firing on
   # an in-band 1,3xx brief. On grok-4.3 (post-trial) briefs land lower
   # in the band; the same trigger remains the sanctioned length lever.
-  min_digest_words: 1200
+  # Nov 12 2026 (operator-directed review): the brief's length follows its
+  # sources (about 1,000-1,300 words), so this is a thin-brief tripwire. At
+  # 1,200 the retry fired on every episode (first drafts ran 650-990 words)
+  # and the padding it added is what the audit heard as Repetitive.
+  min_digest_words: 900
   digest_expand_below_target: true
   podcast_chain: true
 tts: {}
@@ -131,7 +139,7 @@ publishing:
   rss_file: first_principles_podcast.rss
   rss_title: First Principles Daily
   rss_description: A daily narrative podcast that reasons about the world from first
-    principles — the 'magic wand number' and the 'Idiot Index'. Episodes alternate
+    principles — the 'magic wand number' and the 'First Principles Ratio'. Episodes alternate
     between a concrete example of first-principles thinking in action (historical
     and modern — Ford, Bessemer, the shipping container, solar, batteries, and sometimes
     Musk's teams) and a deep exposé on an industry ripe for the same treatment.
@@ -148,7 +156,7 @@ publishing:
   rss_category2: "Education"
   rss_subcategory2: "Courses"
   rss_keywords: first principles, Elon Musk, SpaceX, Tesla, engineering, cost, manufacturing,
-    innovation, idiot index
+    innovation, first principles ratio, cost engineering
   guid_prefix: first-principles
   base_url: https://nerranetwork.com
   audio_subdir: digests/first_principles
@@ -188,10 +196,12 @@ chapters:
       opportunity
     title: Closing
     where: end
-  - pattern: first principle|magic wand|raw material|atoms
+  # Nov 12 2026: the tool is the First Principles Ratio now; the lookahead
+  # keeps this marker from taking the ratio's own line.
+  - pattern: first principle(?!s ratio)|magic wand|raw material|atoms
     title: The First Principle
-  - pattern: idiot index|finished part|cost of the materials|times more
-    title: The Idiot Index
+  - pattern: first principles ratio|finished part|cost of the materials|times more
+    title: The First Principles Ratio
   - pattern: what they did|how they|the breakthrough|the redesign|the engineering
     title: The Breakdown
   - pattern: opportunity|what if|imagine if|ripe for|the potential|could be
@@ -253,7 +263,7 @@ youtube:
   tags:
   - first principles
   - engineering thinking
-  - idiot index
+  - first principles ratio
   - innovation
   - problem solving
   - learning

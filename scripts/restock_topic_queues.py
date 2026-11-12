@@ -189,6 +189,81 @@ def title_too_similar(title: str, existing_norm_titles: list[str],
     return False
 
 
+#: Words that name no particular story (Nov 12 2026). A candidate's title
+#: is reduced to what is left once these are gone; see ``story_too_similar``.
+_STORY_GENERIC = frozenset("""
+the and for with from that this into over under after before their its his
+her was were are how why what when where who which than then them they have
+has had not but new old first last great big small more most less many much
+far like case story problem effect effects paradox trap price priced prices
+cost costs ban bans law laws act rule rules program programme policy reform
+tax subsidy subsidies mandate project plan system systems market markets
+machine process model early modern american british united states state
+national federal public city world war industry industrial company power
+control controls release shift surge rise fall boom loss losses drop wave
+race rush conflict expansion increase decline floor index ratio markup rental
+retail standard standards cheap free year years century north south east
+west america europe asia africa principles idiot down build built
+""".split())
+
+_STORY_SUFFIXES = ("isation", "ization", "ations", "ation", "ings", "ing",
+                   "ies", "es", "s", "ian", "an")
+
+
+def _story_stem(word: str) -> str:
+    word = word.lower()
+    for suffix in _STORY_SUFFIXES:
+        if word.endswith(suffix) and len(word) - len(suffix) >= 4:
+            word = word[:-len(suffix)]
+            break
+    return word[:6]
+
+
+def _story_title_keys(title: str) -> set[str]:
+    return {_story_stem(w) for w in re.findall(r"[A-Za-z][A-Za-z']+", title or "")
+            if len(w) > 3 and w.lower() not in _STORY_GENERIC}
+
+
+def _story_brief_names(brief: str) -> set[str]:
+    """Capitalised words inside a sentence: the people and places of a brief."""
+    out = set()
+    for m in re.finditer(r"(?<![.!?:]\s)(?<!^)\b([A-Z][a-z]{3,})\b", brief or ""):
+        if m.group(1).lower() not in _STORY_GENERIC:
+            out.add(_story_stem(m.group(1)))
+    return out
+
+
+def story_keys(entry: dict) -> set[str]:
+    """What a queue entry is ABOUT: its title words and its brief's names."""
+    return (_story_title_keys(entry.get("title", ""))
+            | _story_brief_names(entry.get("brief", "")))
+
+
+def story_too_similar(title: str, existing_story_keys: list[set[str]], *,
+                      min_shared: int = 2, share: float = 0.5) -> bool:
+    """True when *title* names a story the queue already holds.
+
+    Nov 12 2026. ``title_too_similar`` compares title STRINGS, so a second
+    telling under a new title passed: Mexico City's driving restriction was
+    queued twice, the cane toad three times, the Philippine land reform aired
+    as Ep148 and again as Ep164, bottled water three times on First
+    Principles. This compares what the titles are about: the candidate's
+    distinctive title words against each entry's title words plus the proper
+    names in its brief. Two or more shared, and at least half of the
+    candidate's, is the same story. A title with fewer than two distinctive
+    words is left to the string check. Rejecting a candidate costs one slot
+    of a batch the model over-supplies, so the test leans strict.
+    """
+    cand = _story_title_keys(title)
+    if len(cand) < 2:
+        return False
+    for other in existing_story_keys:
+        shared = cand & other
+        if len(shared) >= min_shared and len(shared) / len(cand) >= share:
+            return True
+    return False
+
+
 def parse_topics_json(text: str) -> list[dict]:
     """Parse the model's JSON array, tolerating a fenced code block."""
     text = (text or "").strip()
@@ -221,6 +296,7 @@ def validate_and_dedupe(
     existing_ids = {e.get("id") for e in queue if isinstance(e, dict)}
     existing_titles = [_norm_title(e.get("title", ""))
                        for e in queue if isinstance(e, dict)]
+    existing_stories = [story_keys(e) for e in queue if isinstance(e, dict)]
     accepted: list[dict] = []
     for cand in candidates:
         if len(accepted) >= needed:
@@ -241,6 +317,10 @@ def validate_and_dedupe(
         if title_too_similar(title, existing_titles):
             logger.info("Rejecting candidate (near-duplicate title): %r", title[:60])
             continue
+        if story_too_similar(title, existing_stories):
+            logger.info("Rejecting candidate (a story the queue already holds): %r",
+                        title[:60])
+            continue
         accepted.append({
             "id": tid,
             "title": title,
@@ -252,6 +332,7 @@ def validate_and_dedupe(
         })
         existing_ids.add(tid)
         existing_titles.append(_norm_title(title))
+        existing_stories.append(story_keys(accepted[-1]))
     return accepted
 
 
