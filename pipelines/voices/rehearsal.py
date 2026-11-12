@@ -101,7 +101,7 @@ MUST_NOT_LOSE = ("mira_turn_sec_median", (12.0, 20.0))
 #: one_liner_rate beside them (Nov 4 2026: the same short line before every
 #: question).
 READ_BESIDE = ("bare_question_rate", "label_open_rate", "one_liner_rate",
-               "echo_open_rate", "turn_gap_ms_median")
+               "echo_open_rate", "turn_gap_ms_median", "guest_repeat_requests")
 #: What the fixture's persona may carry into the room (Voximplant's
 #: customData has to fit the whole JSON; a persona over this is cut at a
 #: line end).

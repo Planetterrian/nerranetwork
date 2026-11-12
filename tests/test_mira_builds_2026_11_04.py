@@ -161,7 +161,7 @@ class TestTheBriefAsksHerToBuild:
             assert word not in PROMPT, word
 
     def test_one_question_per_turn_still_holds(self):
-        assert "One question per turn, asked once" in PROMPT
+        assert "One question per turn: one idea, plain words, asked once." in PROMPT
 
 
 # 4. The lessons the brief now governs ----------------------------------------------

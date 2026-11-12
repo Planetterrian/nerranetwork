@@ -133,7 +133,7 @@ class TestHoldMode:
         # Oct 23 2026: a guest's feedback steer is the only other source of a
         # turn's instructions, and only when no room turn is parked. Oct 28
         # 2026: then the one-turn line after a guest asked for a lookup.
-        assert "const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk();" in create
+        assert "const instructions = nextTurnInstructions || takeGuestSteer() || takeResearchAsk() || takeTurnShape();" in create
         assert "{ response: { instructions: instructions } }" in create
         assert 'nextTurnInstructions = "";' in create
 
@@ -214,11 +214,13 @@ class TestHoldMode:
         the guest's suggested improvement, put the room on hold at the last
         closing question with the guest still there."""
         waits = ["Of course, I'll wait.", "I'll be right here.", "Take your time, I'll be here.",
+                 "I'll be here when you're back.", "I will be here whenever you are ready.",
                  "I'll hold on.", "Whenever you're back.", "I will wait for you."]
         not_waits = ["That's fair, and I'll hold the silence better.", "I'll hold that thought.",
                      "I'll hold onto that.", "I'll hold on to that one.",
                      "I'll wait less before I come in.", "I'll wait longer next time.",
                      "I'll be here next month if you want to come back.",
+                     "Deal. I'll be here.", "Send it over, I'll be here for it.",
                      "Take your time with that answer."]
         out = sim("phrases", waits + not_waits)["phrases"]
         assert [p["mira_wait"] for p in out[:len(waits)]] == [True] * len(waits), out[:len(waits)]

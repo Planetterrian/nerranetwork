@@ -1938,6 +1938,11 @@ Guards `tests/test_personal_feed_health_2026_11_06.py`, `workers/gallery/test/fe
 Register `mira-react-builds-2026-11-04`; notes `docs/mira_craft_notes.md`; guards `tests/test_mira_builds_2026_11_04.py`.
 **What she says after an answer is a bridge built from one thing the guest said, never a phrase folded from it, and never the same shape twice** (HOW TO REACT, by shape). **`one_liner_rate` reads the sameness beside label and bare.** **`learning.SUPERSEDED_BY_BRIEF` keeps lessons the brief now governs out of the prompt; it ships and rehearses with the brief.** ⚠️ AUDIO, the room: a rehearsal PASS plus one listen before merge.
 
+### Mira: the room rotates her turn, and questions are for the ear (Nov 12 2026)
+
+Register `mira-rooms-2026-11-12`; review [`docs/reviews/mira_rooms_2026_11_12.md`](docs/reviews/mira_rooms_2026_11_12.md); guards `tests/test_mira_rooms_2026_11_12.py`.
+**The variety of her reply is the room's job, never another brief line** (`TURN_SHAPES`, every second ordinary turn; off per room: `grok_session_log.turn_shapes: false`). **A spoken "can you repeat" is the repeat button** (`GUEST_REPEAT_RE`): plainer, and in the round never an answer or a spent re-hand. **"I'll be here" is a hold only when it waits.** **A prepared question is followed on first hearing** (`generate_briefs.spoken_question_faults`). `guest_repeat_requests` and the room's pattern change together. ⚠️ AUDIO, the room.
+
 ### The Age of AI: a guest who asks to end, ends (Nov 5 2026)
 
 Register `blaines-close-2026-11-05`; guards `tests/test_blaines_close_2026_11_05.py`; review [`docs/reviews/blaine_mathieu_2026_11_05.md`](docs/reviews/blaine_mathieu_2026_11_05.md).
@@ -1993,7 +1998,6 @@ Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
 [history](docs/claude_md_history/2026_10_21_covered_means_aired.md); design [`docs/story_catalog.md`](docs/story_catalog.md); register `story-catalog-2026-10-21`; guards `tests/test_story_catalog_2026_10_21.py`.
 **`engine/aired_items.py` is the one reader of "the stories a digest told".** **The tracker records what aired**, never the whole prompt list. **Story ids come from `engine/story_catalog.py`.** **The cross-show block names only today's articles a sibling told in two days, never silence.** **The story catalog is `catalog_*` in the nerra-voices Supabase** (`engine/catalog.py`; a show run's write never blocks; `missed_stories` null, never 0). **Books never print a corrected error**; a `prior_coverage.md` is never a source. ⚠️ AUDIO.
 
-### First Principles and Unintended Consequences: engineered topics, sourced ratios, no map (Nov 12 2026)
+### FPD and UC (Nov 12 2026)
 
-[review](docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md); register `fpd-uc-review-2026-11-12`; guards `tests/test_fpd_uc_review_2026_11_12.py`.
-**The tool is the "First Principles Ratio"** on every First Principles surface (SpaceX keeps its own term; published episodes and books never change). **An opportunity topic is something designed and made, with someone attempting the rebuild**, never a venue price, a rental or a brand markup. **The restock rejects a story the queue already holds** (`story_too_similar`). **The brief sets the length** (floors 900; scripts 1,200 / 1,100 with pinned skip floors). **A narrative show has no map sentence.** ⚠️ AUDIO.
+[review](docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md). **FPD's tool is the "First Principles Ratio"; the brief sets the length; a narrative show has no map.** ⚠️ AUDIO.

@@ -7530,3 +7530,47 @@ experiments:
       both; min_podcast_words 1200 / 1100 with min_podcast_publish_words
       840 / 780. Review docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md.
       Guards tests/test_fpd_uc_review_2026_11_12.py.
+
+  - id: mira-rooms-2026-11-12
+    title: "The room rotates the shape of Mira's turn, hears a spoken 'can you repeat', and questions are written for the ear"
+    area: voices
+    shipped: 2026-11-12
+    readout: 2026-12-05
+    status: reading
+    baseline: >
+      The rooms of Nov 11 (run 01ae5157, graded 4) and Nov 12 (Rania Esmael,
+      run a6a46957, graded 5): label_open_rate 0.333 / 0.325,
+      reaction_open_rate 0.30 / 0.275, bare_question_rate 0.367 / 0.40,
+      mira_turn_sec_median 7.2 / 6.4 s, turn_gap_ms_median 4125 / 4450;
+      about eight spoken requests to hear a question again in Rania's room;
+      one closing question never asked; one false hold of 64 s.
+    target: >
+      On the third real room after the scenario deploys (candidate rehearsal
+      PASS plus one operator listen first): reaction_open_rate at or above
+      0.45 with label_open_rate at or under 0.2 and bare_question_rate not
+      above 0.4; guest_repeat_requests at or under 2; closing round complete
+      with no question taken as asked; no hold with the guest present;
+      turn_gap_ms_median not above 4500; overall grade at or above 6.
+    criteria: >
+      HIT when, on the third real room after deploy, reaction_open_rate is at
+      or above 0.45, label_open_rate at or under 0.2 and guest_repeat_requests
+      at or under 2; MISS when label_open_rate is at or above 0.3 with
+      turn_shapes_handed above 5 in that room; else INCONCLUSIVE.
+    readout_plan: >
+      interview episode_metrics.notes.audio in Supabase (reaction_open_rate,
+      label_open_rate, bare_question_rate, guest_repeat_requests,
+      mira_turn_sec_median, turn_gap_ms_median); the run's scenario_trace
+      ('shape', 'repeat' and 'round' lines) and end-of-room record
+      (turn_shapes_handed, guest_repeat_asks); episode_grades; the rehearsal
+      report's 'Read beside the verdict' table before deploy.
+    notes: >
+      Room: TURN_SHAPES handed on every second ordinary turn (off per room
+      with grok_session_log.turn_shapes false); GUEST_REPEAT_RE on ordinary
+      turns and in the closing round; continueRoundTurn; MIRA_HOLD_RE
+      narrowed; planQuestionLine hands a question over 24 words for the ear.
+      Brief: one short question, one idea, plain words. Briefs:
+      generate_briefs.questions_for_the_ear (22-word question, 16-word
+      setup, one rewrite kept only when it passes). Instrument:
+      audio_metrics.guest_repeat_requests. Review
+      docs/reviews/mira_rooms_2026_11_12.md; guards
+      tests/test_mira_rooms_2026_11_12.py.

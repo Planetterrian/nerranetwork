@@ -463,11 +463,11 @@ class TestTheCraftRules:
 
     def test_a_question_is_asked_once(self):
         flat = _flat(self.PROMPT)
-        assert "One question per turn, asked once, then silence" in flat
+        assert "One short question per turn, one idea in everyday words, asked once, then silence" in flat
         assert "a pause is them thinking, and the discomfort is yours to hold" in flat
         # Oct 21 2026: the stacking and re-asking rules are the room's to
         # keep (the scenario drives the closing round question by question).
-        assert "One question per turn, asked once." in self.PROMPT
+        assert "One question per turn: one idea, plain words, asked once." in self.PROMPT
 
     def test_the_close_waits_for_the_answer(self):
         flat = _flat(self.PROMPT)
