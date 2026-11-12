@@ -1,16 +1,16 @@
 {
-  "date": "2026-11-11",
-  "generated_at": "2026-11-11T22:50:42.485182+00:00",
+  "date": "2026-11-12",
+  "generated_at": "2026-11-12T22:24:12.554381+00:00",
   "summary": {
     "episodes_reviewed": 16,
-    "critical_issues": 12,
-    "warning_issues": 16,
+    "critical_issues": 15,
+    "warning_issues": 12,
     "missed_episodes": 0,
     "skipped_episodes": 0,
     "ai_reviewed": 16,
     "ai_scored": 16,
-    "quality_score_mean": 6.75,
-    "audit_flags_grounded": 16,
+    "quality_score_mean": 6.81,
+    "audit_flags_grounded": 17,
     "audit_flags_ungrounded": 0,
     "audit_flags_grounded_share": 1.0
   },
@@ -22,41 +22,48 @@
   "episodes": [
     {
       "show": "tesla",
-      "episode_num": 662,
-      "date": "2026-11-11",
-      "critical": 0,
+      "episode_num": 663,
+      "date": "2026-11-12",
+      "critical": 1,
       "warnings": 1,
-      "quality_score": 8,
+      "quality_score": 6,
       "flags": {
         "FACTUAL_ERRORS": false,
         "INCOHERENT": false,
-        "REPETITIVE": false,
+        "REPETITIVE": true,
         "OFF_TOPIC": false,
         "TONE_BREAK": false,
         "INCOMPLETE": false,
         "FACTUAL_DOUBT": false
       },
-      "grounded_flags": [],
+      "grounded_flags": [
+        "REPETITIVE"
+      ],
       "ungrounded_flags": [],
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1059 words)",
-          "detail": "Script has 1059 words (target: 1400+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1322 words)",
+          "detail": "Script has 1322 words (target: 1400+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "\"With only one factory building the truck, every extra month of assembly delays Cybercab output.\" \u2014 this restates the already-made point that extra Cybertruck months cut Cybercab line time, after sentimentality-versus-profit and the same trade-off have already been said several times."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "A tight, sourced daily roundup whose China wholesale-minus-export math and spectrum figures hold together, with a real First Principles section rather than a retell. A few items are one-liners, and the Chicago-base Semi versus West Coast port chargers link is slightly muddy, but nothing a listener would hear as broken."
+          "title": "AI quality score: 6/10",
+          "detail": "A usable daily briefing with sourced items and a clean close, but the Cybertruck wind-down section circles the same sentimentality-versus-Cybercab trade-off instead of adding new information. The holiday-shop catalog also pads the episode without much news value."
         }
       ]
     },
     {
       "show": "omni_view",
-      "episode_num": 233,
-      "date": "2026-11-11",
+      "episode_num": 234,
+      "date": "2026-11-12",
       "critical": 2,
-      "warnings": 1,
+      "warnings": 2,
       "quality_score": 6,
       "flags": {
         "FACTUAL_ERRORS": false,
@@ -75,33 +82,38 @@
       "issues": [
         {
           "severity": "warning",
-          "title": "High cross-episode repetition (19 stories)",
-          "detail": "The content tracker found 19 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
+          "title": "Podcast script below target (1330 words)",
+          "detail": "Script has 1330 words (target: 1400+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "High cross-episode repetition (26 stories)",
+          "detail": "The content tracker found 26 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
         },
         {
           "severity": "critical",
           "title": "AI review: Incoherent",
-          "detail": "\"The Wall Street Journal walks this proposal as a single-market practicality, while a European regional outlet covering the same text from the perspective of national consumer agencies is where those agencies' own description of the traps they have already documented would sit beside that market-wide frame.\" \u2014 the unnamed outlet and the \"is where \u2026 would sit\" clause never form a clear comparison a listener can follow."
+          "detail": "\"Uniform speed thresholds applied consistently along the front line, combined with prior disputes over military use of the network, are what Ukrainian documentation of repeated disconnections at the same threshold is cited to support as coordinated limits rather than isolated faults.\" \u2014 the syntax inverts subject and evidence so it is unclear what is being cited to support what."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "\"That two-chamber process usually takes twelve to eighteen months and produces the final text that member states must turn into national law, and only after that turn does a shopper's screen have to change.\" \u2014 the deep-dive retells the Commission\u2013Parliament\u2013Council\u2013national-law path already spelled out twice in the body."
+          "detail": "\"Witkoff and Kushner are due to meet Zelenskyy on the sidelines of that summit in Ireland.\" \u2014 the Understanding section restates the lead\u2019s speed-cap, random-versus-parameter, outlet-split, and Ireland-meeting points already developed in the body."
         },
         {
           "severity": "info",
           "title": "AI quality score: 6/10",
-          "detail": "A sourced world-news briefing that stays on topic and finishes cleanly, but the EU consumer-law process is explained three times and one comparison sentence is too tangled to follow. Publishable, with those caveats."
+          "detail": "A sourced multi-story briefing with a complete close, but the explainer mostly retells the Starshield item and one sentence in that story is tangled enough to lose the point. Publishable with those caveats."
         }
       ]
     },
     {
       "show": "fascinating_frontiers",
-      "episode_num": 250,
-      "date": "2026-11-11",
+      "episode_num": 251,
+      "date": "2026-11-12",
       "critical": 1,
       "warnings": 1,
-      "quality_score": 6,
+      "quality_score": 7,
       "flags": {
         "FACTUAL_ERRORS": false,
         "INCOHERENT": false,
@@ -109,7 +121,7 @@
         "OFF_TOPIC": false,
         "TONE_BREAK": false,
         "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
+        "FACTUAL_DOUBT": true
       },
       "grounded_flags": [
         "REPETITIVE"
@@ -118,30 +130,35 @@
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1420 words)",
-          "detail": "Script has 1420 words (target: 1700+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1530 words)",
+          "detail": "Script has 1530 words (target: 1700+). Episode may feel shorter than usual."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "\"The outflows carry material beyond the galaxy's reach, enriching the surrounding intergalactic medium.\" \u2014 restates the same metal-loss and intergalactic-enrichment point already made by the bellows, seeding, and supernova sentences in the NGC 4449 section."
+          "detail": "\"The Senate committee is preparing to advance NASA\u2019s chief financial officer and inspector general nominations, and confirmation would show who holds budget oversight and internal accountability as lunar and Mars programs grow.\" \u2014 this restates the Senate nominations item already reported earlier, including the same oversight point."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A coherent space roundup with a proper close, but the dwarf-galaxy deep dive pads one outflow idea several times and several news items are only a sentence or two. Publishable, with noticeable repetition and thin spots."
+          "title": "AI review: Factual Doubt (reviewer memory only)",
+          "detail": "\"Earlier this year astronomers confirmed Spica\u2019s third companion, making it a hierarchical triple rather than a simple binary.\" \u2014 Spica is a known spectroscopic binary; a confirmed third star contradicts prior knowledge and is not in the verified-claims list."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A coherent science roundup with a proper close, but the NASA nominations item is told twice and the Spica triple claim is unverified against known stellar facts. Otherwise the episode is publishable."
         }
       ]
     },
     {
       "show": "planetterrian",
-      "episode_num": 241,
-      "date": "2026-11-11",
+      "episode_num": 242,
+      "date": "2026-11-12",
       "critical": 1,
-      "warnings": 2,
-      "quality_score": 6,
+      "warnings": 1,
+      "quality_score": 7,
       "flags": {
-        "FACTUAL_ERRORS": true,
+        "FACTUAL_ERRORS": false,
         "INCOHERENT": false,
         "REPETITIVE": true,
         "OFF_TOPIC": false,
@@ -150,40 +167,34 @@
         "FACTUAL_DOUBT": false
       },
       "grounded_flags": [
-        "FACTUAL_ERRORS",
         "REPETITIVE"
       ],
       "ungrounded_flags": [],
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1241 words)",
-          "detail": "Script has 1241 words (target: 1600+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "\"Land measures cut the carbon price from four hundred to one hundred eighty dollars a ton while protecting food security.\" \u2014 the body later says every feasible land measure brought the price down to one hundred thirty dollars per ton, so the episode contradicts its own carbon-price figure."
+          "title": "Podcast script below target (1169 words)",
+          "detail": "Script has 1169 words (target: 1600+). Episode may feel shorter than usual."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "\"Before we go \u2014 mapping which bacterial or chemical signals matter most for malaria and dengue mosquitoes is the next step named in the attraction work, so new formulations can be tested against those cues.\" \u2014 this restates the mosquito deep dive\u2019s closing point almost verbatim."
+          "detail": "\"Within five minutes of stopping the pathway, certain nuclear pore proteins and protein condensates are already accumulating.\" \u2014 restates the earlier finding that blocking autophagy for five to sixty minutes piled up nuclear pore complexes and other cargo."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A listenable science roundup with a clear self-contradiction in the lead carbon-price claim ($180 vs $130) and a closer that repeats the mosquito story. Otherwise coherent, on-topic, and complete."
+          "title": "AI quality score: 7/10",
+          "detail": "A dense, coherent science roundup that tracks its verified claims and closes cleanly. The autophagy commentary largely retells the ASAP nuclear-pore result already reported in the body, which is the main quality caveat."
         }
       ]
     },
     {
       "show": "models_agents",
-      "episode_num": 231,
-      "date": "2026-11-11",
+      "episode_num": 232,
+      "date": "2026-11-12",
       "critical": 0,
-      "warnings": 2,
-      "quality_score": 7,
+      "warnings": 0,
+      "quality_score": 8,
       "flags": {
         "FACTUAL_ERRORS": false,
         "INCOHERENT": false,
@@ -197,29 +208,19 @@
       "ungrounded_flags": [],
       "issues": [
         {
-          "severity": "warning",
-          "title": "Excessive repetition: 'open a i' (5x)",
-          "detail": "The phrase 'open a i' appears 5 times, suggesting possible LLM hallucination or loop."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (2 block pairs)",
-          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
           "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "A dense, on-topic roundup that stays internally consistent with its cited figures and moves cleanly from papers to product news and calls to action. Minor caveats are the firehose pacing and a few awkward phrasings, not broken facts or structure."
+          "title": "AI quality score: 8/10",
+          "detail": "A dense, well-structured briefing that tracks its verified claims and moves cleanly from news to try-this items to a context-rot explainer. Minor opacity around \u201cJev\u201d does not break the script or the argument."
         }
       ]
     },
     {
       "show": "models_agents_beginners",
-      "episode_num": 224,
-      "date": "2026-11-11",
+      "episode_num": 225,
+      "date": "2026-11-12",
       "critical": 1,
-      "warnings": 1,
-      "quality_score": 5,
+      "warnings": 0,
+      "quality_score": 7,
       "flags": {
         "FACTUAL_ERRORS": false,
         "INCOHERENT": false,
@@ -227,7 +228,7 @@
         "OFF_TOPIC": false,
         "TONE_BREAK": false,
         "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
+        "FACTUAL_DOUBT": true
       },
       "grounded_flags": [
         "REPETITIVE"
@@ -237,252 +238,27 @@
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "\"First they built several possible explanations. Next they asked what would disprove each idea, then hunted for evidence that could break the guess.\" \u2014 this restates the earlier Fermi section, which already said the models built explanations and looked for evidence that would knock each one out."
+          "detail": "\"Those trials happen around launch, and they keep going afterward, because a system that looks fine on day one can still drift later.\" \u2014 the deep dive restates the earlier point that outsiders must inspect frontier models and that safety checks continue after launch."
         },
         {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. The three stories fit the show, but the Fermi segment is told, then walked through again with new metaphors that add little. The lawn item is thin, so the episode feels padded rather than developed."
+          "severity": "info",
+          "title": "AI review: Factual Doubt (reviewer memory only)",
+          "detail": "\"Australia just announced the world's first law forcing top AI companies to prove their models are safe before release.\" \u2014 \"world's first\" conflicts with the earlier EU AI Act, which already imposed safety and conformity duties on high-risk and general-purpose AI; the episode's own verified framing is a proposal, not a unique enacted first."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A clear beginner episode that covers the Australia rules, Gemini in CarPlay, United's booking limit, and OpenAI's child-safety funding, but the safety deep dive mostly repeats the news item and \"world's first\" looks overstated."
         }
       ]
     },
     {
       "show": "modern_investing",
-      "episode_num": 228,
-      "date": "2026-11-11",
+      "episode_num": 229,
+      "date": "2026-11-12",
       "critical": 0,
-      "warnings": 1,
+      "warnings": 2,
       "quality_score": 7,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": false,
-        "REPETITIVE": false,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": true
-      },
-      "grounded_flags": [],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1783 words)",
-          "detail": "Script has 1783 words (target: 1800+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "AI review: Factual Doubt (reviewer memory only)",
-          "detail": "\"Medium fit the mixed tape: the catalyst produced a modest gain that matched the thesis, and a single fintech name still lagged broader tech rotation even on positive news.\" \u2014 Palantir is enterprise/AI software, not a fintech name."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "Market figures, Granite math, and the Palantir P&L all check out internally and against the verified claims. The episode is complete and listenable, with only a clear mislabel of Palantir as fintech and a slightly muddy TFSA tax aside."
-        }
-      ]
-    },
-    {
-      "show": "spacex",
-      "episode_num": 159,
-      "date": "2026-11-11",
-      "critical": 2,
-      "warnings": 1,
-      "quality_score": 6,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": true,
-        "REPETITIVE": true,
-        "OFF_TOPIC": true,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": true
-      },
-      "grounded_flags": [
-        "INCOHERENT",
-        "REPETITIVE",
-        "OFF_TOPIC"
-      ],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\"For SPCX, a modest gain of under one percent.\" \u2014 this fragment has no referent inside the solar-cell deep dive and reads like a market line spliced into the wrong section."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "\"Worth keeping an eye on is the extra public scrutiny of SpaceX employment practices, because the confidentiality layer the company wanted is gone.\" \u2014 the counterpoint restates the arbitration-rejection item already reported, including that disputes stay in open court."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Off Topic",
-          "detail": "\"Cursor launched a multiplayer Projects beta, in notes from the company, giving every teammate and their agents a shared workspace with unified task boards, context, memory, and documents.\" \u2014 a full Cursor product segment is unrelated to SpaceX."
-        },
-        {
-          "severity": "info",
-          "title": "AI review: Factual Doubt (reviewer memory only)",
-          "detail": "\"SpaceX signed a turnkey heterojunction solar-cell line to scale Starmind satellite output past 100 GW.\" \u2014 \"Starmind\" is not a known SpaceX satellite program in the rest of the episode (which is about Starlink solar production), and 100 GW of satellite output is an extraordinary figure with no supporting number later in the script."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "The episode is a usable SpaceX briefing with a proper close, but a spliced market fragment, a repeated arbitration item, and an off-topic Cursor segment keep it from feeling tight. The opening \"Starmind\" / 100 GW line is also hard to trust against the rest of the script."
-        }
-      ]
-    },
-    {
-      "show": "first_principles",
-      "episode_num": 158,
-      "date": "2026-11-11",
-      "critical": 2,
-      "warnings": 0,
-      "quality_score": 6,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": true,
-        "REPETITIVE": true,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
-      },
-      "grounded_flags": [
-        "INCOHERENT",
-        "REPETITIVE"
-      ],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "info",
-          "title": "Significant story overlap with unintended_consequences",
-          "detail": "Found 3 overlapping stories with unintended_consequences. Example: 'segment 1 \u2014 the cold open...'"
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\"The same can at a corner store, the daily route that prices the room copy, the raw-material floor and the Idiot Index, a split between cold storage and retail, and the labor-hour signal that would show a real test.\" \u2014 fragment with no clear referent; \"prices the room copy\" does not mean anything a listener can parse."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "\"A route list, a knock, a count against par, a date check, a facing of labels, a look at the seals, a posted charge, a dispute at the desk \u2014 each was bolted on because the last bolt left a hole.\" \u2014 restates the attendant SOP and empty-room labor point already walked through twice."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A coherent first-principles take on minibar markups, but the cold open is unparsable and the inspection-loop argument is retold several times in new wording. Publishable, with those caveats."
-        }
-      ]
-    },
-    {
-      "show": "unintended_consequences",
-      "episode_num": 170,
-      "date": "2026-11-11",
-      "critical": 1,
-      "warnings": 1,
-      "quality_score": 6,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": false,
-        "REPETITIVE": true,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
-      },
-      "grounded_flags": [
-        "REPETITIVE"
-      ],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1242 words)",
-          "detail": "Script has 1242 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "\"When Kenya restricted charcoal production inside its own borders, the immediate price signal rewarded any supplier who could move production across the nearest line with weaker rules.\" \u2014 this restates the displacement point already made (trade moved, forest loss was displaced, the Kenyan kiln sat idle while a Ugandan kiln took over, and the price margin locked in the new chain)."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "The episode is internally consistent with the verified charcoal-ban figures and lands a clear policy lesson, but it circles the same cross-border leakage argument several times without adding much new evidence. Publishable, with noticeable repetition."
-        }
-      ]
-    },
-    {
-      "show": "ai_chips",
-      "episode_num": 51,
-      "date": "2026-11-11",
-      "critical": 0,
-      "warnings": 1,
-      "quality_score": 8,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": false,
-        "REPETITIVE": false,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
-      },
-      "grounded_flags": [],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1334 words)",
-          "detail": "Script has 1334 words (target: 1400+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "A dense, coherent daily briefing whose figures and named claims line up with the verified source list and with each other. Minor list-like transitions and a long rural-site explainer do not rise to a listener-facing defect."
-        }
-      ]
-    },
-    {
-      "show": "mag7",
-      "episode_num": 50,
-      "date": "2026-11-11",
-      "critical": 0,
-      "warnings": 1,
-      "quality_score": 8,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": false,
-        "REPETITIVE": false,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": false
-      },
-      "grounded_flags": [],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (3 block pairs)",
-          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "A dense, well-sourced Mag 7 briefing that hits the promised counterpoint, thread, and calendar without internal contradictions or broken arithmetic. The Anthropic stake explanation is long but develops a real distinction rather than merely repeating the news."
-        }
-      ]
-    },
-    {
-      "show": "longevity",
-      "episode_num": 8,
-      "date": "2026-11-11",
-      "critical": 0,
-      "warnings": 1,
-      "quality_score": 8,
       "flags": {
         "FACTUAL_ERRORS": true,
         "INCOHERENT": false,
@@ -499,64 +275,335 @@
       "issues": [
         {
           "severity": "warning",
+          "title": "Excessive repetition: 'u s dollars' (5x)",
+          "detail": "The phrase 'u s dollars' appears 5 times, suggesting possible LLM hallucination or loop."
+        },
+        {
+          "severity": "warning",
           "title": "AI review: Factual Errors",
-          "detail": "\"An observational study of 120,000 older adults links bone drugs to 24 percent lower dementia risk.\" \u2014 The checked source is more than 120,000 adults and up to 24 percent lower risk; the hook drops both qualifiers."
+          "detail": "\"Implementation uses a self-directed TFSA at Questrade or Wealthsimple, sets a sixty-forty allocation target, turns on automatic distribution reinvestment, and reviews the mix once a quarter; staggering GIC maturities across several years so a slice rolls every twelve months is how you keep from being stuck with one stale rate.\" \u2014 the worked split just given is $50,000 GIC and $59,000 ETF (about 46/54 of the $109,000 room), not 60/40."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "A careful, well-caveated longevity roundup with a solid caloric-restriction deep dive. The only clear miss is the opening bisphosphonate figure, which overstates a qualified association."
+          "title": "AI quality score: 7/10",
+          "detail": "A complete, well-structured investing episode whose own interest, trade, and alpha math checks out, with a clear allocation mismatch between the $50k/$59k worked example and the later 60/40 target. Otherwise publishable, with standard disclaimers and a coherent close."
         }
       ]
     },
     {
-      "show": "vancouver",
-      "episode_num": 50,
-      "date": "2026-11-11",
+      "show": "spacex",
+      "episode_num": 160,
+      "date": "2026-11-12",
+      "critical": 2,
+      "warnings": 1,
+      "quality_score": 6,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": true,
+        "REPETITIVE": true,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [
+        "INCOHERENT",
+        "REPETITIVE"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (3 block pairs)",
+          "detail": "Found 3 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\"Away from the hardware, a little over two percent lower, with no reported impact on operations or contracts from the national-security flight.\" \u2014 the sentence never says what is lower, so the percent has no referent until the sign-off names the ticker."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "\"That leaves the federal Clean Air Act lawsuit as the remaining avenue, so resolution now depends on the U.S. District Court case in Mississippi, and the groups maintain the facility could become one of the region's largest sources of smog-forming pollution affecting communities across the state line.\" \u2014 this restates the already-reported pending lawsuit and modeling challenge rather than adding a new development."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A structured daily with a usable engineering segment and internal numbers that check out, but one subjectless market sentence and a counterpoint that mostly repeats the Southaven lawsuit keep it from feeling tight."
+        }
+      ]
+    },
+    {
+      "show": "first_principles",
+      "episode_num": 159,
+      "date": "2026-11-12",
       "critical": 1,
       "warnings": 1,
-      "quality_score": 7,
+      "quality_score": 6,
       "flags": {
-        "FACTUAL_ERRORS": true,
-        "INCOHERENT": true,
-        "REPETITIVE": false,
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": false,
+        "REPETITIVE": true,
         "OFF_TOPIC": false,
         "TONE_BREAK": false,
         "INCOMPLETE": false,
         "FACTUAL_DOUBT": true
       },
       "grounded_flags": [
-        "FACTUAL_ERRORS",
-        "INCOHERENT"
+        "REPETITIVE"
       ],
       "ungrounded_flags": [],
       "issues": [
         {
           "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "\"Premier-designate Lorne Doerkson is treating changes at Metro Vancouver as a top priority after a Surrey council vote, Global News reports.\" \u2014 the same person is earlier called \"premier-elect Lorne Doerkson,\" so the episode contradicts itself on his title."
+          "title": "Possible story duplication (2 block pairs)",
+          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
+        {
+          "severity": "info",
+          "title": "Significant story overlap with unintended_consequences",
+          "detail": "Found 3 overlapping stories with unintended_consequences. Example: 'segment 1 \u2014 the cold open...'"
         },
         {
           "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\"On the train from Shilo toward Fort Lewis he gave his card seat to Basil Patrick McKeown minutes before the Canoe River crash, which killed twenty-one people, seventeen of them soldiers, including McKeown and George\u2019s cousin Austin Emery George.\" \u2014 \"card seat\" is not a clear phrase and reads as a garble of giving up his seat."
+          "title": "AI review: Repetitive",
+          "detail": "\"Rossi\u2019s nineteen forty-nine installation at Allegheny Ludlum showed that the same shell-and-withdraw logic could survive a real melt shop, not only a laboratory mold.\" \u2014 the close retells the Rossi installation, the 1970-to-today adoption share, and the crop/reheat bill already developed in the body."
         },
         {
           "severity": "info",
           "title": "AI review: Factual Doubt (reviewer memory only)",
-          "detail": "\"On October twenty-eighth the Bank of Canada lifted its policy rate a quarter point to two and a half per cent, the first increase since July twenty twenty-three, pointing to inflation worries from oil prices in the U.S.-led war in Iran, and it decides again on December ninth.\" \u2014 a U.S.-led war in Iran is not in the verified claims and conflicts only with my prior knowledge."
+          "detail": "\"Irving Rossi took the same principle to steel after Junghans\u2019s death and installed the first production billet caster at Allegheny Ludlum in nineteen forty-nine.\" \u2014 Junghans is generally recorded as dying in 1954, so a 1949 installation cannot follow his death."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A clear first-principles account of why continuous casting removed ingot crop and reheat losses, but the closing third largely restates points already made, and the Junghans-death timing looks historically off. Publishable with those caveats."
+        }
+      ]
+    },
+    {
+      "show": "unintended_consequences",
+      "episode_num": 171,
+      "date": "2026-11-12",
+      "critical": 1,
+      "warnings": 1,
+      "quality_score": 7,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": false,
+        "REPETITIVE": true,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": true
+      },
+      "grounded_flags": [
+        "REPETITIVE"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Possible story duplication (5 block pairs)",
+          "detail": "Found 5 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "\"The moth that restored Australian grazing land now requires ongoing vigilance in the southeastern United States and the Caribbean.\" \u2014 this restates the solution-became-problem point already made in the opening and in the Florida-spread section."
+        },
+        {
+          "severity": "info",
+          "title": "AI review: Factual Doubt (reviewer memory only)",
+          "detail": "\"New South Wales answered with the Prickly-pear Destruction Act of eighteen eighty-four.\" \u2014 the NSW Prickly-pear Destruction Act is the 1886 statute, not 1884."
         },
         {
           "severity": "info",
           "title": "AI quality score: 7/10",
-          "detail": "A dense, listenable local roundup with a proper close, but a self-contradictory title for Lorne Doerkson and the nonsensical \"card seat\" are listener-noticeable slips. Arithmetic in the housing forecast checks out, and the hook-to-body structure is not repetition."
+          "detail": "A clear, well-paced case study of Cactoblastis as both a successful Australian biocontrol and a later Florida threat. The closing analysis circles the same thesis several times, and one statute year looks off."
+        }
+      ]
+    },
+    {
+      "show": "ai_chips",
+      "episode_num": 52,
+      "date": "2026-11-12",
+      "critical": 1,
+      "warnings": 0,
+      "quality_score": 7,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": true,
+        "REPETITIVE": false,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [
+        "INCOHERENT"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\"Trump said Sunday he did not know if Huang would be on the trip, and that he would certainly take him.\" \u2014 the only Huang named is Alice Huang, so \"him\" has no clear referent and collides with the earlier \"Huang scandal.\""
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A dense but coherent daily briefing with sourced chip, cooling, and export-control items. The only clear script flaw is the unresolved Huang/\"him\" switch, which a listener would notice."
+        }
+      ]
+    },
+    {
+      "show": "mag7",
+      "episode_num": 51,
+      "date": "2026-11-12",
+      "critical": 2,
+      "warnings": 0,
+      "quality_score": 6,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": true,
+        "REPETITIVE": true,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [
+        "INCOHERENT",
+        "REPETITIVE"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\"Google warned school districts about switching off AI mode in search, and some people in Chicago protested.\" \u2014 the protest has no stated object or link to the warning."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "\"Amazon's compute organization is the background Meta picked, so experience that ran rented capacity now lives inside a company laying its own silicon and its own sites.\" \u2014 restates the same rented-capacity-to-Meta hire point already made several times in that close."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A sourced Mag 7 briefing with a clear arc, but the Meta close pads one hire into several near-identical paragraphs and one short item leaves a protest unexplained. Publishable with those caveats."
+        }
+      ]
+    },
+    {
+      "show": "peptides",
+      "episode_num": 9,
+      "date": "2026-11-12",
+      "critical": 0,
+      "warnings": 1,
+      "quality_score": 8,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": false,
+        "REPETITIVE": false,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'with type 2' (6x)",
+          "detail": "The phrase 'with type 2' appears 6 times, suggesting possible LLM hallucination or loop."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 8/10",
+          "detail": "Careful, well-caveated episode that tracks its verified figures and keeps observational, labeling, and trial claims distinct. A few one-line items are thin, but the script is coherent and publishable."
+        }
+      ]
+    },
+    {
+      "show": "vancouver",
+      "episode_num": 51,
+      "date": "2026-11-12",
+      "critical": 1,
+      "warnings": 1,
+      "quality_score": 6,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": true,
+        "REPETITIVE": false,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": true,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [
+        "INCOHERENT",
+        "INCOMPLETE"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\"Highway 7B bridge work runs weekdays seven to five, with delays, narrow lanes, and commercial trucks told to use both.\" \u2014 \"both\" has no referent, so the instruction is unintelligible."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Incomplete",
+          "detail": "\"After that, Surrey's only opposition councillor takes on the mayor's list, investigators are at a Vancouver home, and the case on both sides of the density rules.\" \u2014 the density-rules segment is promised and never delivered."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "Most local items are clear and consistent with the verified claims, but a teased housing segment never appears and at least one traffic line is unintelligible. Publishable with those caveats."
         }
       ]
     },
     {
       "show": "prediction_markets",
-      "episode_num": 50,
-      "date": "2026-11-11",
+      "episode_num": 51,
+      "date": "2026-11-12",
+      "critical": 1,
+      "warnings": 0,
+      "quality_score": 7,
+      "flags": {
+        "FACTUAL_ERRORS": false,
+        "INCOHERENT": false,
+        "REPETITIVE": true,
+        "OFF_TOPIC": false,
+        "TONE_BREAK": false,
+        "INCOMPLETE": false,
+        "FACTUAL_DOUBT": false
+      },
+      "grounded_flags": [
+        "REPETITIVE"
+      ],
+      "ungrounded_flags": [],
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "\"Error bunched inside the ends pulls a weighted average toward one half.\" \u2014 this restates the scale-compression point already made earlier in the same extremizing section, which then walks through both reasons again."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A well-sourced, internally consistent episode with clear disclaimers and a useful prices segment. The academic deep dive restates the same two aggregation arguments several times, which drags an otherwise publishable show."
+        }
+      ]
+    },
+    {
+      "show": "omni_view_world",
+      "episode_num": 51,
+      "date": "2026-11-12",
       "critical": 0,
       "warnings": 0,
       "quality_score": 8,
@@ -575,50 +622,7 @@
         {
           "severity": "info",
           "title": "AI quality score: 8/10",
-          "detail": "A dense, well-structured briefing that tracks its verified sources, prices, and the futures-to-probability explainer without internal contradictions. Minor awkward phrasing in the rundown and a few thin rapid-fire items keep it short of exemplary."
-        }
-      ]
-    },
-    {
-      "show": "omni_view_world",
-      "episode_num": 50,
-      "date": "2026-11-11",
-      "critical": 1,
-      "warnings": 1,
-      "quality_score": 6,
-      "flags": {
-        "FACTUAL_ERRORS": false,
-        "INCOHERENT": true,
-        "REPETITIVE": false,
-        "OFF_TOPIC": false,
-        "TONE_BREAK": false,
-        "INCOMPLETE": false,
-        "FACTUAL_DOUBT": true
-      },
-      "grounded_flags": [
-        "INCOHERENT"
-      ],
-      "ungrounded_flags": [],
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1321 words)",
-          "detail": "Script has 1321 words (target: 1750+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\"Britain's prime minister, Andy Burnham, hailed a record offshore wind investment on Wednesday and called approval for two huge projects power under British control, the Guardian reported.\" \u2014 \"called approval for two huge projects power under British control\" does not parse."
-        },
-        {
-          "severity": "info",
-          "title": "AI review: Factual Doubt (reviewer memory only)",
-          "detail": "\"Britain's prime minister, Andy Burnham, hailed a record offshore wind investment on Wednesday and called approval for two huge projects power under British control, the Guardian reported.\" \u2014 the 2026 grounding identifies Keir Starmer as UK prime minister, and this officeholder is not in the verified claims."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A tight, sourced world-news roundup that mostly tracks the verified claims, but one broken sentence and a UK prime minister who contradicts the 2026 grounding keep it from a clean publish."
+          "detail": "A well-sourced world-news roundup with a clear hook, sourced briefs, and labeled Both Sides and Progress Watch segments. Minor compression in the Nvidia item is awkward but still intelligible, and the numbers and attributions stay consistent with the episode\u2019s own sources."
         }
       ]
     }
