@@ -1,0 +1,322 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.760
+Gemini Decision 1 scores 1,000 multimodal questions in under 250 milliseconds at 10 cents a million. This is Models &amp; Agents, Episode 232. DeepMind's Alpha Genome 2, Databricks Rebuilding Genie, and White Matter's Guardian platform come next. Then things to try. Google launched the Gemini Decisions API, Simon Willison reports, powered by Gemini Decision 1, which returns calibrated probabilities for yes or no, choice,
+
+00:00:28.760 --> 00:00:33.820
+voice, and rubric questions over text, images, audio, video, and PDFs.
+
+00:00:34.160 --> 00:00:39.160
+It evaluates independent questions against one shared multimodal input in a single forward
+
+00:00:39.160 --> 00:00:44.780
+pass, and returns those probabilities plus per answer scores, with no tokens generated
+
+00:00:44.780 --> 00:00:45.540
+on the way out.
+
+00:00:46.120 --> 00:00:53.200
+The model takes context up to 256,000 tokens, runs only on Google's hosted API, and leads
+
+00:00:53.200 --> 00:00:56.720
+seven of nine internal benchmarks with the lowest calibration error.
+
+00:00:56.720 --> 00:01:02.900
+developers can use it today for fast branching inside agents by passing a shared input and a map
+
+00:01:02.900 --> 00:01:08.540
+of typed questions, and it is there to be tested against Jeff and OpenAI's decision endpoints on
+
+00:01:08.540 --> 00:01:15.626
+shared workloads. Demis Hassabas at DeepMind announced Alpha Genome 2, the Alpha Genome Docs detail,
+
+00:01:16.106 --> 00:01:21.686
+as a conditional DNA sequence model that predicts regulatory activity and variant effects in specific
+
+00:01:21.686 --> 00:01:27.406
+cell types from a 1-megabase window plus a 256-dimensional cell state embedding.
+
+00:01:27.806 --> 00:01:33.426
+It resolves closely related cell types and adapts to unseen single-cell data sets without fine-tuning,
+
+00:01:34.146 --> 00:01:40.826
+outperforming fine-tuned Alpha Genome 1, Borzoi and Scooby on single-cell EQTL and enhancer
+
+00:01:40.826 --> 00:01:41.606
+gene benchmarks.
+
+00:01:42.669 --> 00:01:49.389
+Training used 2048 TPUV4 chips across bulk and single-cell tracks, followed by condition
+
+00:01:49.389 --> 00:01:54.809
+refinement, distillation, and post-training that maps raw single-cell RNA-seq counts into
+
+00:01:54.809 --> 00:02:00.549
+the model's condition space. On GTX tissues, the median Pearson R for cross-tissue expression
+
+00:02:00.549 --> 00:02:09.249
+changes rose from 0.61 to 0.71. The model outputs RNA coverage, cage, splicing, and chromatin
+
+00:02:09.249 --> 00:02:16.609
+accessibility, along with histone marks, transcription factor binding, contact maps, and CPG methylation.
+
+00:02:16.609 --> 00:02:21.489
+It is available for non-commercial academic research through the Alpha Genome API.
+
+00:02:22.613 --> 00:02:28.073
+Databricks rebuilt Genie, SMB Tech Reports, as a persistent autonomous enterprise agent
+
+00:02:28.073 --> 00:02:30.613
+that runs continuously rather than on-demand.
+
+00:02:31.013 --> 00:02:36.073
+The update targets production workloads where agents must maintain state and act without repeated
+
+00:02:36.073 --> 00:02:36.773
+human triggers.
+
+00:02:37.820 --> 00:02:43.820
+Spring AI now orchestrates autonomous agents on Amazon Bedrock Foundation models, and Amazon
+
+00:02:43.820 --> 00:02:46.980
+web services guide shows, with agents that call tools,
+
+00:02:47.420 --> 00:02:50.120
+maintain memory, and handle multi-step workflows.
+
+00:02:50.740 --> 00:02:53.400
+The guide includes code examples for defining agents,
+
+00:02:53.940 --> 00:02:57.600
+tool schemas, and execution loops inside Spring Boot applications.
+
+00:02:58.633 --> 00:03:02.393
+A controlled sandbox open source by Google, SC Media Notes,
+
+00:03:02.833 --> 00:03:05.233
+lets AI agents run with enforced boundaries
+
+00:03:05.233 --> 00:03:06.893
+on actions and data access.
+
+00:03:07.553 --> 00:03:10.333
+The release aims to reduce risks when agents interact
+
+00:03:10.333 --> 00:03:12.753
+with external systems or sensitive resources.
+
+00:03:12.753 --> 00:03:18.799
+services. An official local emulator from AWS, written entirely by autonomous AI agents,
+
+00:03:19.239 --> 00:03:26.739
+covers 438 API models across more than 200 services. Simon Willison writes, it runs via Docker
+
+00:03:26.739 --> 00:03:34.699
+on Mac OS and Windows, lets the AWS CLI and SDKs target a local HTTPS endpoint, and supports
+
+00:03:34.699 --> 00:03:40.931
+development and CI without an AWS account or paid keys. White Matter raised $20 million,
+
+00:03:40.931 --> 00:03:46.751
+dollars, Pulse 2.0 reports, in a series A led by Bloomberg Capital to scale its platform
+
+00:03:46.751 --> 00:03:53.211
+that governs autonomous AI agents across endpoints, browsers, SaaS apps, cloud and code.
+
+00:03:53.851 --> 00:03:59.011
+The system deploys a dedicated Guardian agent for every customer agent, enforces policies
+
+00:03:59.011 --> 00:04:06.211
+in 2.24 milliseconds, and currently manages 2.25 million agents with 116 billion interactions
+
+00:04:06.211 --> 00:04:06.711
+operations governed.
+
+00:04:07.643 --> 00:04:14.023
+Plurai closed a $13 million seed round led by Team 8, Wynet News reports, to advance its
+
+00:04:14.023 --> 00:04:17.043
+simulation and reliability platform for AI agents.
+
+00:04:17.583 --> 00:04:21.883
+The funding will expand work on catching failures in autonomous systems before they reach
+
+00:04:21.883 --> 00:04:22.763
+production users.
+
+00:04:23.693 --> 00:04:29.493
+Apple's FM command line tool, towards data science demonstrates, runs on-device language
+
+00:04:29.493 --> 00:04:30.973
+models from Python scripts.
+
+00:04:30.973 --> 00:04:36.753
+The post covers installation, model selection, and integration patterns for private, local
+
+00:04:36.753 --> 00:04:38.393
+inference without cloud calls.
+
+00:04:39.361 --> 00:04:43.681
+Elsewhere, JetBlue's president told Reuters that airlines should observe how customers
+
+00:04:43.681 --> 00:04:46.781
+already use AI booking agents rather than blocking them.
+
+00:04:47.441 --> 00:04:52.381
+United Airlines, the New York Times reports, implemented blocks preventing third-party AI
+
+00:04:52.381 --> 00:04:55.581
+agents from completing flight bookings on its app and website.
+
+00:04:55.581 --> 00:05:01.601
+Google Extended Gemini Live Voice Interaction to Apple CarPlay, PYM and T.S.
+
+00:05:01.781 --> 00:05:07.041
+Notes, allowing drivers to use the assistant while driving. NVIDIA, Verindia Notes,
+
+00:05:07.301 --> 00:05:11.201
+released additional open source components aimed at AI agent security and
+
+00:05:11.201 --> 00:05:13.361
+Kubernetes-based inference infrastructure.
+
+00:05:14.101 --> 00:05:18.741
+WikiTrace adds an evidence-linked memory layer, blockchain news reports that
+
+00:05:18.741 --> 00:05:23.381
+improves LLM agent performance by tying retreat facts to verifiable sources.
+
+00:05:23.381 --> 00:05:29.749
+Test the Gemini Decisions API on a routing or policy check task inside an existing agent
+
+00:05:29.749 --> 00:05:34.169
+loop, and measure latency and cost against your current text generation approach.
+
+00:05:34.709 --> 00:05:40.449
+Spin up the AWS local emulator this week so you can run SDK and CLI tests without touching
+
+00:05:40.449 --> 00:05:41.209
+a live account.
+
+00:05:41.849 --> 00:05:46.569
+Walk through the Amazon bedrock and spring AI tutorial if you want a tool calling agent
+
+00:05:46.569 --> 00:05:49.269
+that keeps memory across steps on a Java stack.
+
+00:05:49.269 --> 00:05:55.329
+Experiment with Apple's FMCLI from Python when privacy or offline rules keep you off cloud
+
+00:05:55.329 --> 00:05:55.889
+APIs.
+
+00:05:57.023 --> 00:06:01.923
+Further open source agent sandboxes and governance layers will appear as enterprises scale
+
+00:06:01.923 --> 00:06:03.023
+autonomous systems.
+
+00:06:03.703 --> 00:06:08.283
+Additional funding rounds for agent reliability and simulation platforms are likely before
+
+00:06:08.283 --> 00:06:08.903
+year end.
+
+00:06:09.834 --> 00:06:14.634
+Past roughly 20,000 tokens, long-running agents pop the hood on context rot.
+
+00:06:14.634 --> 00:06:20.514
+ThoughtWorks explains, as new tokens dilute the system prompts relative weight inside a growing window.
+
+00:06:21.074 --> 00:06:26.674
+Attention and Transformers follows a U-shaped pattern that favors the very start and very end of the sequence,
+
+00:06:27.194 --> 00:06:29.234
+while the middle receives sharply lower weight.
+
+00:06:29.694 --> 00:06:34.934
+Once a long-running agent accumulates tool outputs, reasoning traces, and sub-agent replies,
+
+00:06:35.534 --> 00:06:40.154
+the original constraints drift into that low attention zone and stop influencing generation.
+
+00:06:40.154 --> 00:06:45.434
+The mechanical fix is to move critical rules out of the single context window entirely.
+
+00:06:45.874 --> 00:06:49.474
+Store them in persistent external memory, retrieve them at every step,
+
+00:06:49.874 --> 00:06:54.154
+and re-inject them as structured context rather than relying on positional attention.
+
+00:06:54.934 --> 00:07:00.274
+Periodic summarization or hierarchical task graphs further reduce noise by compressing history
+
+00:07:00.274 --> 00:07:01.894
+while preserving goal structure.
+
+00:07:02.634 --> 00:07:08.654
+Teams that keep the system prompt static and let the context grow past roughly 20,000 to 50,000 tokens
+
+00:07:08.654 --> 00:07:14.074
+see the highest drift rates, so the safeguard is to treat the prompt as a short, high-priority
+
+00:07:14.074 --> 00:07:17.254
+prefix and treat everything else as queryable memory.
+
+00:07:17.874 --> 00:07:22.594
+This approach belongs on any agent expected to run more than a few dozen turns or handle
+
+00:07:22.594 --> 00:07:27.634
+conflicting sub-goals because simply lengthening the context window only delays the same
+
+00:07:27.634 --> 00:07:28.394
+attention decay.
+
+00:07:29.371 --> 00:07:34.051
+Before we go, specialized decision models that return probabilities instead of tokens
+
+00:07:34.051 --> 00:07:36.371
+are the next thing labs are expected to ship.
+
+00:07:36.371 --> 00:07:38.711
+That's models and agents for today.
+
+00:07:39.211 --> 00:07:43.071
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:07:43.491 --> 00:07:45.731
+and subscribe so you don't miss tomorrow's update.
+
+00:07:46.291 --> 00:07:47.691
+The AI world moves fast.
+
+00:07:48.251 --> 00:07:52.591
+We'll help you keep up, see you tomorrow, and if you'd rather watch than listen, find
+
+00:07:52.591 --> 00:07:55.891
+us on YouTube at Narin Network, links in the show notes.
+
+00:07:56.391 --> 00:08:01.051
+One more thing, if you liked today's episode, our Sister Show Vancouver Daily News is worth
+
+00:08:01.051 --> 00:08:02.051
+a spot in your feed.
+
+00:08:02.051 --> 00:08:05.991
+What changed in Metro Vancouver today, with the roads and the weather?
+
+00:08:06.571 --> 00:08:11.671
+It's one of the Narin Network's daily briefings, all free at NarinNetwork.com, and on the
+
+00:08:11.671 --> 00:08:17.131
+website, every episode's visuals live in our free image gallery at NarinNetwork.com gallery.
+
+00:08:17.651 --> 00:08:21.191
+Royalty free under creative commons, download with attribution.
+
+00:08:21.731 --> 00:08:24.631
+This episode used AI voice synthesis of my voice.
+
+00:08:25.111 --> 00:08:27.491
+Editorial selection and analysis are my own.

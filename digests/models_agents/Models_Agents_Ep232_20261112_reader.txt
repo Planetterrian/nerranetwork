@@ -1,0 +1,99 @@
+Gemini Decision one scores one thousand multimodal questions in under two hundred fifty milliseconds at ten cents a million.
+
+This is Models and Agents, episode 232.
+
+DeepMind's AlphaGenome two, Databricks rebuilding Genie, and WhiteMatter's Guardian platform come next, then Things to Try.
+
+Google launched the Gemini Decisions API, Simon Willison reports, powered by Gemini Decision one, which returns calibrated probabilities for yes-or-no, choice, and rubric questions over text, images, audio, video, and PDFs.
+
+It evaluates independent questions against one shared multimodal input in a single forward pass and returns those probabilities plus per-answer scores, with no tokens generated on the way out.
+
+The model takes context up to two hundred fifty-six thousand tokens, runs only on Google's hosted API, and leads seven of nine internal benchmarks with the lowest calibration error.
+
+Developers can use it today for fast branching inside agents by passing a shared input and a map of typed questions, and it is there to be tested against Jev and OpenAI's decision endpoints on shared workloads.
+
+Demis Hassabis at DeepMind announced AlphaGenome two, the AlphaGenome docs detail, as a conditional DNA sequence model that predicts regulatory activity and variant effects in specific cell types from a one megabase window plus a two hundred fifty-six dimensional cell-state embedding.
+
+It resolves closely related cell types and adapts to unseen single-cell datasets without fine-tuning, outperforming fine-tuned AlphaGenome one, Borzoi, and Scooby on single-cell eQTL and enhancer-gene benchmarks.
+
+Training used two thousand forty-eight TPU v four chips across bulk and single-cell tracks, followed by condition refinement, distillation, and post-training that maps raw single-cell RNA-seq counts into the model's condition space.
+
+On GTEx tissues the median Pearson r for cross-tissue expression changes rose from zero point six one to zero point seven one.
+
+The model outputs RNA coverage, CAGE, splicing, and chromatin accessibility, along with histone marks, transcription-factor binding, contact maps, and CpG methylation.
+
+It is available for non-commercial academic research through the AlphaGenome API.
+
+Databricks rebuilt Genie, SMBtech reports, as a persistent autonomous enterprise agent that runs continuously rather than on-demand.
+
+The update targets production workloads where agents must maintain state and act without repeated human triggers.
+
+Spring AI now orchestrates autonomous agents on Amazon Bedrock foundation models, an Amazon Web Services guide shows, with agents that call tools, maintain memory, and handle multi-step workflows.
+
+The guide includes code examples for defining agents, tool schemas, and execution loops inside Spring Boot applications.
+
+A controlled sandbox open-sourced by Google, SC Media notes, lets AI agents run with enforced boundaries on actions and data access.
+
+The release aims to reduce risks when agents interact with external systems or sensitive resources.
+
+An official local emulator from AWS, written entirely by autonomous AI agents, covers four hundred thirty-eight API models across more than two hundred services, Simon Willison writes.
+
+It runs via Docker on macOS and Windows, lets the AWS CLI and SDKs target a local HTTPS endpoint, and supports development and CI without an AWS account or paid keys.
+
+WhiteMatter raised twenty million dollars, Pulse 2.0 reports, in a Series A led by Blumberg Capital to scale its platform that governs autonomous AI agents across endpoints, browsers, SaaS apps, cloud, and code.
+
+The system deploys a dedicated Guardian agent for every customer agent, enforces policies in two point two four milliseconds, and currently manages two point two five million agents with one hundred sixteen billion interactions governed.
+
+Plurai closed a thirteen million dollar seed round led by Team8, Ynetnews reports, to advance its simulation and reliability platform for AI agents.
+
+The funding will expand work on catching failures in autonomous systems before they reach production users.
+
+Apple's fm command-line tool, Towards Data Science demonstrates, runs on-device language models from Python scripts.
+
+The post covers installation, model selection, and integration patterns for private, local inference without cloud calls.
+
+Elsewhere, JetBlue's president told Reuters that airlines should observe how customers already use AI booking agents rather than blocking them.
+
+United Airlines, the New York Times reports, implemented blocks preventing third-party AI agents from completing flight bookings on its app and website.
+
+Google extended Gemini Live voice interaction to Apple CarPlay, PYMNTS notes, allowing drivers to use the assistant while driving.
+
+NVIDIA, Varindia notes, released additional open-source components aimed at AI agent security and Kubernetes-based inference infrastructure.
+
+WikiTrace adds an evidence-linked memory layer, Blockchain News reports, that improves LLM agent performance by tying retrieved facts to verifiable sources.
+
+Test the Gemini Decisions API on a routing or policy-check task inside an existing agent loop, and measure latency and cost against your current text-generation approach.
+
+Spin up the AWS local emulator this week so you can run SDK and CLI tests without touching a live account.
+
+Walk through the Amazon Bedrock and Spring AI tutorial if you want a tool-calling agent that keeps memory across steps on a Java stack.
+
+Experiment with Apple's fm CLI from Python when privacy or offline rules keep you off cloud APIs.
+
+Further open-source agent sandboxes and governance layers will appear as enterprises scale autonomous systems.
+
+Additional funding rounds for agent reliability and simulation platforms are likely before year end.
+
+Past roughly twenty thousand tokens, long-running agents pop the hood on context rot, Thoughtworks explains, as new tokens dilute the system prompt's relative weight inside a growing window.
+
+Attention in transformers follows a U-shaped pattern that favors the very start and very end of the sequence, while the middle receives sharply lower weight.
+
+Once a long-running agent accumulates tool outputs, reasoning traces, and sub-agent replies, the original constraints drift into that low-attention zone and stop influencing generation.
+
+The mechanical fix is to move critical rules out of the single context window entirely, store them in persistent external memory, retrieve them at every step, and re-inject them as structured context rather than relying on positional attention.
+
+Periodic summarization or hierarchical task graphs further reduce noise by compressing history while preserving goal structure.
+
+Teams that keep the system prompt static and let the context grow past roughly twenty thousand to fifty thousand tokens see the highest drift rates, so the safeguard is to treat the prompt as a short, high-priority prefix and treat everything else as queryable memory.
+
+This approach belongs on any agent expected to run more than a few dozen turns or handle conflicting sub-goals, because simply lengthening the context window only delays the same attention decay.
+
+Before we go — specialized decision models that return probabilities instead of tokens are the next thing labs are expected to ship.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Vancouver Daily News is worth a spot in your feed: what changed in Metro Vancouver today, with the roads and the weather. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com.
+
+And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
