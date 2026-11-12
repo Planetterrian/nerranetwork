@@ -207,6 +207,7 @@ class TestTheShapeReachesMira:
                 "show_name", "show_premise", "name", "bio_research", "topics",
                 "show_memory", "question_count", "minutes", "guest_shape",
                 "prior_record", "carry_the_show", "guest_agenda", "guest_notes",
+                "spoken_question_words", "spoken_setup_words",
             },
             "mira_narration.txt": {
                 "show_name", "show_premise", "guest_name", "guest_title",
