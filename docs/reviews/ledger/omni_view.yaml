@@ -580,4 +580,84 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook; pins bans and chapter-pattern broaden without weakening hard guardrails.
     agent_cost_usd: 0.1789
+  - date: '2026-11-13'
+    pr: null
+    doc: docs/reviews/omni_view_review_2026_11_13.md
+    reviewer: claude-code (operator-directed review)
+    summary: >
+      Audit mean 5.7 (lowest daily show), Repetitive 12/14. Root causes were
+      structural, not tics: the digest prompt steered the show OFF stories a
+      sibling told ("change course"), noisy high-volume feeds filled the 150
+      newest articles the prompt sees, the prompts demanded framing and
+      next-step sentences the articles could not support (script fact-free
+      median 53% vs Top World 19%), the podcast prompt kept a worked example
+      and a 1,700-word must, and a 1,500-word digest floor padded 9 of 9
+      episodes. Fixed at the source: selection rules, banned filler shapes,
+      a 1,000-word digest floor, full text 24, feeds. The move to grok-4.7
+      (the siblings' model) is left to the operator.
+    scored_prior_predictions:
+    - metric: digest-verbatim % median (last 10 _tts vs digest) after anti-paste/CONTENT DISCIPLINE tighten ships
+      verdict: hit
+      evidence: snapshot Ep225-234 digest-verbatim 12-31%, median about 17%
+    - metric: episodes (last 10) opening Understanding with stock 'To really understand how [NP]' skeleton after de-seed+MEMORY+yaml broaden
+      verdict: n/a-lever-not-shipped
+      evidence: still 9/10 ("to really understand how"); it is the Understanding chapter anchor and no de-seed shipped
+    - metric: verbatim EXAMPLE compliance-deadlines closer in any _tts/transcript (last 10) after EXAMPLE rewrite
+      verdict: hit
+      evidence: 0 in Ep225-234; the EXAMPLE block itself is removed in this pass
+    - metric: Progress Watch slots that are lifehacks/buybacks/pure-security-interdictions without deployment-or-indicator rigor (last 10) after eligibility tighten
+      verdict: miss
+      evidence: Ep234 a UK envoy appointment; Ep233 the EU shopping proposal already told as the lead
+    - metric: episodes with Progress Watch chapter (last 10)
+      verdict: hit
+      evidence: chapters_ep225-234 all carry Progress Watch
+    - metric: audible 'both sides accept' / 'strongest case|argument for/against' scaffold uses per episode (last 10 max)
+      verdict: hit
+      evidence: 0 'both sides accept'; 'strongest case' once (Ep234). The steel-man itself has nearly vanished with it
+    - metric: successor Understanding opener tic after this de-seed (watch)
+      verdict: n/a-lever-not-shipped
+      evidence: no de-seed shipped; the deep dive's real fault is re-telling the lead (audit Ep234), addressed here
+    - metric: median _tts.txt words (last 10) — observation only unless operator ships digest-depth change
+      verdict: n/a-lever-not-shipped
+      evidence: about 1,563 words (Ep225-234)
+    - metric: episodes (last 10) with _tts.txt ≥1400 — observation only
+      verdict: n/a-lever-not-shipped
+      evidence: 9 of 10
+    shipped:
+    - digest prompt — big stories first, sibling coverage never a reason to skip, NOT A STORY list, ceilings not targets, SENTENCES THAT ARE NEVER WRITTEN, Progress watch a measured result, deep dive on any story never re-telling it, one Also Today item per story (A/B)
+    - podcast prompt — EXAMPLE removed, no length must, no coverage-about-coverage, no invented next steps, no two-outlet demand, no cross-promo lines (A/B)
+    - config — min_digest_words 1500 -> 1000, fetch_full_text 24 x 4000, NYT/Globe/CBC in, Bloomberg Markets/Wired/Ars/Reddit out, Top World title exclusions
+    deferred:
+    - grok-4.7 low on both stages like the six siblings (operator decision; staging guard test_no_show_digest_left_the_network_default)
+    - podcast-app titles are the clipped spoken hook; the YouTube headline would serve better (network-wide shape — network pass)
+    - feed descriptions open on the digest's H1 and section labels (cosmetic)
+    - AI "documentary photojournalism" imagery of real events (operator decision)
+    - run_show's pre-dedup cap slices X posts and web-search articles off for shows over 150 articles (shared engine — network pass)
+    predictions:
+    - metric: daily audit mean, Omni View rows Nov 14-27 (editorial_score_14d_omni_view)
+      baseline: "5.7"
+      expected: ">= 7.0"
+      verdict: pending
+      evidence: null
+    - metric: Repetitive flags, Omni View rows Nov 14-27
+      baseline: 12 of 14
+      expected: at most 4 of 14
+      verdict: pending
+      evidence: null
+    - metric: digest_expansion_fired, Ep235 onward (14 episodes), at the 1,000-word floor
+      baseline: 9 of 9 (Ep226-234, 1,500-word floor)
+      expected: at most 4 of 14
+      verdict: pending
+      evidence: null
+    - metric: scripts closing a story on an authority that "will monitor / review / investigate / be encouraged"
+      baseline: 4 in Ep234
+      expected: 0 across 14 episodes
+      verdict: pending
+      evidence: null
+    - metric: successor framing tic once "the coverage presents" is banned (watch "the reporting shows" and stacked "X says" sentences)
+      baseline: n/a
+      expected: next review greps both and names any at 5/10 or more
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
 do_not_retry: []
