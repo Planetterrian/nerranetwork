@@ -74,10 +74,13 @@ class TestScriptModelIsTheServedOne:
 
 class TestOmniViewScriptStage:
     def test_omni_view_is_back_on_the_model_that_served(self):
+        # Superseded Nov 13 2026: the operator moved Omni View to grok-4.7
+        # on both stages. What this guarded still holds: the model that
+        # answers streams (the 4.7 script arm timed out without it).
         from engine.config import load_config
         cfg = load_config(ROOT / "shows" / "omni_view.yaml")
-        assert cfg.llm.podcast_model == "grok-4.6"
-        assert cfg.llm.model == "grok-4.3"
+        assert cfg.llm.model == "grok-4.7"
+        assert cfg.llm.stream is True
 
 
 # Phrases that describe The Age of AI as a phone-call show. The studio room

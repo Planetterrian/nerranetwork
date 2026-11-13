@@ -150,3 +150,65 @@ the weekly probe because the hook Short's day-3 median is 3 views; a lead
 like "EU proposes rules on online shopping traps" was never going to move a
 feed. The content change is the video change. Items 9 and 11 above are the
 video-side decisions left for the operator.
+
+## Round 2 — the first episode on the new prompts (Ep235, Nov 13)
+
+| | Ep226-234 | Ep235 |
+|---|---|---|
+| Digest expansion retry | 9 of 9 | did not fire (draft 1,442 words) |
+| Script fact-free sentences | median 53% | 35.7% |
+| Digest fact-free sentences | median 42.7% | 20.9% |
+| "will monitor / review / investigate" closers | 4 on Ep234 | 0 |
+| Full text read | 8-12 | 16 |
+
+The segment-drop bug PR #1701 fixes (`[Both Sides]` labels) did not touch
+Omni View: spoken and scripted word counts agree on every episode Ep226-235.
+What was still wrong on Ep235, and what this round changes:
+
+1. **The deep dive re-told item 5 from the same Deutsche Welle article**
+   (Costa's letter, Mensch and Hinton, the Estonia/Finland letter, the venue):
+   containment 0.557. The prompt rule alone did not hold, and the spoken
+   version then dropped names to avoid restating them and came out as
+   subjectless passive sentences, the shape the audit scores Incoherent.
+   **`deep_dive_distinct` (the firing form) is on for Omni View**: 2 of the
+   last 10 digests read at or above 0.5 and the show regenerated on 1 of 10,
+   so the one-shot regeneration stays inside the 0.22 share ceiling. The
+   digest prompt says the story's own article is never the background page;
+   the podcast prompt says every sentence names its subject and a sentence
+   that needs the story's actors is cut rather than blurred.
+2. **One official supplied both sides of a "contested" story** (Kallas on
+   the Ukraine talks). Two positions now need two different named holders.
+3. **Uncredited claims and what-it-means lines survived** ("analysts have
+   noted", "the incident comes amid expectations", a city that "felt the
+   shock", a drop that "marks" improvement). Added to the never-written list.
+4. **The ANC's worst result since 1994 went to Also Today** because DW
+   headlined it as an analysis piece. The NOT A STORY rule now judges the
+   event, not the headline.
+5. **The script invented a "Go deeper" sentence the digest did not have**,
+   about what each outlet "tracked". It is spoken only from the briefing's
+   line, and states a fact one outlet reports that the other does not. Two
+   leftover contradictions in the podcast prompt went with it (an example
+   phrase "frames it as", and "stories end with what happens next").
+
+Not changed, read again next round: the lead was right (the Microsoft outage
+led Top World too), but Top World also carried the IEA oil-supply turn, the
+Ebola access story and Gaza, which Omni View did not; one day is not enough
+to say why. ⚠️ A/B-listen required on the first episode after merge.
+
+### Model (operator decision, Nov 13)
+
+Patrick moved Omni View to grok-4.7 at low effort on both stages, the
+setting Top World and the five desks run. The grok-4.6 script pin is gone, so
+the digest and the script come from one combined call. The staging guard's
+arm (`NEW_SHOWS_47_ARM`) names the show, and the two wave-2 guards in
+`tests/test_llm_usage_pass.py` no longer hold it on grok-4.3. A failed 4.7
+call falls back to grok-4.3 and records `llm_model_fallback`. The register
+readout names the confound: Ep235 is the only episode on the new prompts
+alone.
+
+Shows still writing their digest on grok-4.3: Tesla, SpaceX, Planetterrian,
+Fascinating Frontiers, Models & Agents, Models & Agents for Beginners, Modern
+Investing, Env Intel, First Principles, Unintended Consequences, The DP Pod,
+Offshore North, and the two Russian shows. Env Intel, First Principles and
+Unintended Consequences already write their scripts on grok-4.7; the other
+English shows write scripts on grok-4.6.

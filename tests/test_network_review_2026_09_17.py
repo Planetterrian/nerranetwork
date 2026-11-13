@@ -47,7 +47,11 @@ class TestChainedShowsAreEligible:
         for slug in ("unintended_consequences", "first_principles"):  # narrative
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert not gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
-        for slug in ("omni_view", "models_agents_beginners", "dp_pod", "spacex",
+        # omni_view left this list on Nov 13 2026: on grok-4.7 for both stages
+        # it runs the combined call, like Top World and the desks.
+        cfg = load_config(str(ROOT / "shows" / "omni_view.yaml"))
+        assert gen.combined_generation_enabled(cfg, {"episode_num": 200})
+        for slug in ("models_agents_beginners", "dp_pod", "spacex",
                      "planetterrian", "tesla", "fascinating_frontiers",
                      "modern_investing"):  # grok-4.6 script stage / dialogue
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))

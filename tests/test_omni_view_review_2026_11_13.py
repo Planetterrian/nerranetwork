@@ -108,13 +108,15 @@ class TestNoSeedsNoLengthPressure:
 
 
 class TestConfig:
-    def test_models_stay_staged(self):
-        # The digest model and the fact floor are staged network decisions
-        # (test_grok_47_migration, test_digest_fact_floor): this pass moves
-        # neither; the review doc asks the operator.
+    def test_the_show_runs_grok_47_like_its_siblings(self):
+        # Nov 13 2026, round 2: the operator moved Omni View onto the
+        # grok-4.7 arm (both stages, low effort, one combined call). The fact
+        # floor stays a staged network decision (test_digest_fact_floor).
         cfg = _cfg()
-        assert cfg.llm.model == "grok-4.3"
-        assert cfg.llm.podcast_model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.7"
+        assert cfg.llm.reasoning_effort == "low"
+        assert cfg.llm.stream is True
+        assert not cfg.llm.podcast_model
         assert not cfg.llm.min_digest_facts
 
     def test_word_floor_no_longer_pads_every_day(self):
@@ -160,3 +162,44 @@ class TestConfig:
 
 def test_also_today_is_one_item_per_story():
     assert "ONE ITEM PER STORY in Also Today" in DIGEST
+
+
+class TestRoundTwoFromEp235:
+    """Ep235 (Nov 13), the first episode on the new prompts: the filler was
+    gone, the expansion retry did not fire and the script's fact-free share
+    fell to 35.7% (median 53% before). What remained: the deep dive re-told
+    item 5 from the same article, one official supplied both sides of a
+    "contested" story, unnamed "analysts" and what-it-means lines survived,
+    and the script's deep dive blurred its subjects into passive fragments."""
+
+    def test_the_deep_dive_gate_fires_on_this_show(self):
+        lints = _cfg().digest_lints
+        assert "deep_dive_distinct" in lints
+        assert "deep_dive_distinct_measure" in lints
+
+    def test_ep235_deep_dive_would_have_been_regenerated(self):
+        from engine.digest_lint import run_digest_lints  # noqa: PLC0415
+
+        digest = (ROOT / "digests" / "omni_view" / "Omni_View_Ep235_20261113.md").read_text(encoding="utf-8")
+        findings, metrics = run_digest_lints(digest, _cfg().digest_lints)
+        assert [f.lint for f in findings if f.note] == ["deep_dive_distinct"]
+        assert metrics["deep_dive_contains_body_item"] >= 0.5
+
+    def test_two_sides_need_two_holders(self):
+        assert "two DIFFERENT named holders" in DIGEST
+        assert "two different named holders" in PODCAST
+
+    def test_uncredited_claims_are_never_written(self):
+        assert "a claim credited to nobody" in DIGEST
+        assert "mark, signal or mean" in DIGEST
+
+    def test_an_analysis_headline_does_not_hide_a_result(self):
+        assert "The rule judges the EVENT, not the headline" in DIGEST
+
+    def test_the_spoken_deep_dive_never_blurs_its_subjects(self):
+        assert "Every sentence names its own subject" in PODCAST
+
+    def test_go_deeper_is_a_fact_never_a_coverage_sentence(self):
+        assert "Only if the briefing has a \"Go deeper\" line" in PODCAST
+        assert "what actually differs in how each frames" not in PODCAST
+        assert "frames it as" not in PODCAST

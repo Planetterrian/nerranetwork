@@ -196,7 +196,9 @@ class TestStagedGrok46Trial:
     # stages.
     WITHDRAWN_NARRATIVE_SHOWS = ("first_principles", "unintended_consequences")
     NEWS_SHOWS_STAY_43 = (
-        "tesla", "spacex", "omni_view", "modern_investing",
+        # omni_view left this list on Nov 13 2026: the operator moved it to
+        # grok-4.7 on both stages (test_grok_47_migration's NEW_SHOWS_47_ARM).
+        "tesla", "spacex", "modern_investing",
         "models_agents", "models_agents_beginners", "planetterrian",
         "fascinating_frontiers", "env_intel", "finansy_prosto",
         "privet_russian", "offshore_north",
@@ -354,7 +356,9 @@ class TestGrok46Wave2Scripts:
         return load_config(REPO_ROOT / "shows" / f"{slug}.yaml")
 
     def test_wave2_shows_script_stage_only(self):
-        for slug in ("omni_view", "models_agents_beginners"):
+        # omni_view left wave 2 on Nov 13 2026 (operator: grok-4.7 on both
+        # stages, one combined call); MAB is the wave's remaining show.
+        for slug in ("models_agents_beginners",):
             cfg = self._load(slug)
             # The safety argument this class states is SCOPE — "scripts
             # move, facts-first digests do not" — so that is what is

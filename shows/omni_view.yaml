@@ -35,6 +35,11 @@ digest_lints:
 # page (deep_dive_source_read); it fires only on the sections whose prompt
 # states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
 - deep_dive_distinct_measure
+# Nov 13 2026 (Omni View review, round 2): the firing form. Ep235's deep dive
+# re-told item 5 from the same article (containment 0.557); 2 of the last 10
+# digests read >= 0.5 and the show's structural regeneration ran on 1 of 10,
+# so the one-shot regeneration stays well inside the 0.22 share ceiling.
+- deep_dive_distinct
 - deep_dive_fetched_source
 preferred_domains:
 - reuters.com
@@ -254,30 +259,17 @@ llm:
   system_prompt_file: shows/prompts/omni_view_system.txt
   digest_prompt_file: shows/prompts/omni_view_digest.txt
   podcast_prompt_file: shows/prompts/omni_view_podcast.txt
-  # 2026-09-01 WAVE-2 script-stage pin (experiment grok-46-wave2-scripts,
-  # staged-grok-46-trial readout verdict): dp_pod's identical script-only
-  # pin ran 14/14 days without a miss — including 08-27, the day 4.6
-  # DIGEST stalls forced FPD/UC out of the trial — with the lowest
-  # factual-flag rates on the shared 4.6-low reviewer. SCRIPT ONLY: the
-  # facts-first digest stays on the grok-4.3 network default. Revert =
-  # delete this line. A/B-listen the first episode (landmine #17).
-  # 2026-09-21: grok-4.7, stage ONE of the staged 4.6 -> 4.7 migration
-  # (experiment grok-47-staged-migration). One show, SCRIPT stage only —
-  # the shape docs/model_upgrade_playbook.md calls correct. The digest
-  # stays on the grok-4.3 network default, so the facts-first path is
-  # untouched. Revert = restore grok-4.6 on this line.
-  # AUDIO: this changes shipped prose. A/B-listen the first episode
-  # (landmine #17).
-  # 2026-10-05: RESTORED to grok-4.6. The 4.7 arm never ran: the credit
-  # files show grok-4.3 served the script on all 14 episodes since 09-22
-  # (Ep183-196) — every 4.7 call timed out (621 s on Ep196, the first
-  # timed one; this show's request does not stream) and the override fell
-  # back, while the metrics file recorded the CONFIGURED model as
-  # llm_script_model. On 4.6 (Sep 10-21) the script copied 8-17% of the
-  # digest's 8-word phrases at 76-85% coverage; on the 4.3 fallback it
-  # copied ~59%. A 4.7 script arm needs llm.stream first (the cohort's
-  # rule-7 path) and a fresh staged trial. A/B-listen the first episode.
-  podcast_model: grok-4.6
+  # Nov 13 2026 (operator, Omni View review): grok-4.7 at low effort on
+  # BOTH stages, like Top World and the five desks (experiment
+  # new-shows-grok-47-2026-09-23 arm, widened by the operator to this show).
+  # The grok-4.6 script pin is gone, so the digest and the script are one
+  # combined call again. A pinned model that fails falls back to grok-4.3
+  # and records llm_model_fallback. History of the script-stage pins:
+  # docs/reviews/omni_view_review_2026_11_13.md. Revert = delete these two
+  # lines and restore `podcast_model: grok-4.6`. ⚠️ AUDIO: A/B-listen the
+  # first episode (landmine #17).
+  model: grok-4.7
+  reasoning_effort: low
   # Oct 9 2026, afternoon: the script call timed out at 660 s on Ep200
   # (APITimeoutError) and fell back to 4.3 for the second day running.
   # Playbook rule 7 — the pinned stage streams (the line above says a
