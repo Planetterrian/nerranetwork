@@ -104,3 +104,26 @@ Over the first 14 audited episodes after merge:
 
 Register: `ff-review-2026-11-13`; guards
 `tests/test_fascinating_frontiers_review_2026_11_13.py`.
+
+## Follow-up after the first live episode (same day)
+
+Ep252, the first episode on these rules, ran 6.8 minutes (938 words; Ep251
+10.6). Accuracy held: no deep-dive comparison, no Reddit, every claim
+verified. What it lost was the show: twelve items of two or three
+sentences, several of them not space news (an Ohio astronaut profile, a
+Korean lunar-base workshop, SpaceX's Brownsville water money and site
+cleanup read from its X posts), and the deep dive built from item 12's
+article, so the script folded the two into one telling. The hook was 94
+characters and the feed title clipped. The bracket-label cleanup fixed in
+#1701 did not touch it (`podcast_script_word_count` 938 against
+`script_words` 950).
+
+Shipped (register `ff-followup-2026-11-13`): at most 10 items, each from a
+full-text article with at least three facts, including what the researchers
+say it means, attributed; a list ranked by wonder (results, then missions
+and hardware, then programmes); workshops, profiles and Earth-side company
+items never listed; the sibling "change course" rule replaced with the
+Omni View line; a hook of at most 13 words; `fetch_full_text` 16 → 24 so
+the deep dive has an article no item uses. The script now explains each
+story and may give one plain-words sentence, with no number in it, for an
+unfamiliar term; no handle or web address is spoken. ⚠️ AUDIO.
