@@ -85,3 +85,53 @@ class TestBulkWriterMatchesPerEpisodeStore:
         text = "The FDA cleared a CRISPR trial; Gigafactory output and LLM news."
         old = sorted(t for t, p in cl._TOPIC_PATTERNS.items() if re.search(p, text))
         assert cl.extract_entities_and_topics(text, "x")["topics"] == old
+
+
+class TestStatusesFromVerifiedClaims:
+    """Patrick's decision A (Nov 13): each run writes a tracked program's
+    status from the first VERIFIED claim in its own ledger that is about it."""
+
+    @staticmethod
+    def _tracker():
+        return {"programs": {
+            "starlink": {"display_name": "Starlink", "status": "seed",
+                         "key_open_questions": []},
+            "argentina_economy": {"display_name": "Argentina Economy",
+                                  "status": "seed2", "key_open_questions": []},
+        }}
+
+    def test_verified_claim_becomes_the_status(self):
+        t = self._tracker()
+        claims = [{"claim": "Starlink passed ten million users.",
+                   "source_url": "https://e.com/s", "status": "verified"}]
+        assert sm.apply_ledger_statuses(t, claims, 9, "2026-11-13") == ["starlink"]
+        p = t["programs"]["starlink"]
+        assert p["status"] == "Starlink passed ten million users."
+        assert p["status_from_ledger"] and p["seed_status"] == "seed"
+        assert p["last_major_update_episode"] == 9
+        block = sm.build_narrative_status_block(t, "X")
+        assert "Latest verified fact: Starlink passed" in block
+
+    def test_one_shared_word_is_not_enough(self):
+        t = self._tracker()
+        claims = [{"claim": "Argentina's women won the rugby sevens.",
+                   "status": "verified"}]
+        assert sm.apply_ledger_statuses(t, claims, 9, "2026-11-13") == []
+        assert t["programs"]["argentina_economy"]["status"] == "seed2"
+
+    def test_unverified_claims_never_become_memory(self, tmp_path):
+        import json
+        led = tmp_path / "Show_Ep9_20261113_claims.json"
+        led.write_text(json.dumps({"claims": [
+            {"claim": "Starlink lost a satellite.", "status": "unverified_not_found"},
+            {"claim": "Starlink launched 24 satellites.", "status": "verified_from_fetched"},
+        ]}), encoding="utf-8")
+        assert sm.find_episode_ledger(tmp_path, 9) == led
+        got = sm.verified_ledger_claims(led)
+        assert [c["claim"] for c in got] == ["Starlink launched 24 satellites."]
+
+    def test_post_generate_writes_statuses(self):
+        import inspect
+        assert "update_statuses_from_ledger" in inspect.getsource(sm.memory_post_generate)
+        src = open("run_show.py", encoding="utf-8").read()
+        assert "apply_ledger_statuses" in src  # Tesla's own tracker too

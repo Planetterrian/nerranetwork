@@ -4027,6 +4027,15 @@ def run(args: argparse.Namespace) -> None:
                 tesla_memory.auto_update_narrative_from_digest(
                     output_dir, x_thread, episode_num, today.isoformat(),
                 )
+                # Nov 13 2026: statuses from this episode's verified claims.
+                from engine import show_memory as _sm
+                _claims = _sm.verified_ledger_claims(
+                    _sm.find_episode_ledger(output_dir, episode_num))
+                if _claims:
+                    _tracker = tesla_memory.load_narrative_tracker(output_dir)
+                    if _sm.apply_ledger_statuses(_tracker, _claims, episode_num,
+                                                 today.isoformat()):
+                        tesla_memory.save_narrative_tracker(_tracker, output_dir)
             except Exception as exc:
                 logger.warning("Tesla memory update failed (non-fatal): %s", exc)
 

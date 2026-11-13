@@ -7713,3 +7713,36 @@ experiments:
       tests/test_book_compiler.py::TestPlannerNeverBuildsUntitled. AUDIO: the
       theme block is prompt context on 21 shows — A/B-listen the first
       episode of two shows.
+  - id: memory-statuses-from-claims-2026-11-13
+    title: "Show memory: each tracked story's status is the episode's own verified claim"
+    area: content
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    baseline: >
+      22 of 23 narrative trackers had never had a status written; every
+      "Current status" line was seed text from the day memory was enabled.
+      A replay of the last 14 ledgers per show writes 39 of 117 tracked
+      programs (two-keyword match; one keyword wrote off-topic facts).
+    target: >
+      By Nov 27 at least half of the tracked programs on daily memory shows
+      carry a status_from_ledger dated within 14 days, and no daily audit
+      flags a factual error that quotes a memory status.
+    criteria: >
+      HIT when, in the committed *_narrative_tracker.json files on Nov 27,
+      at least 50% of programs on the daily memory shows have
+      status_from_ledger true and last_major_update_date on or after Nov 13,
+      AND no FACTUAL_ERRORS finding in api/editorial_score_history.json for
+      Nov 14-27 quotes a status sentence; MISS when under 25% or such a
+      finding exists; else INCONCLUSIVE.
+    readout_plan: >
+      digests/*/*_narrative_tracker.json (status_from_ledger,
+      last_major_update_date, status_source_url); the daily audit's quoted
+      findings for the same window.
+    notes: >
+      engine.show_memory.update_statuses_from_ledger (from memory_post_generate)
+      and run_show's Tesla block; only VERIFIED ledger entries of at most 320
+      characters; the old text is kept once as seed_status; the prompt line
+      reads "Latest verified fact". Guards
+      tests/test_memory_books_lake_2026_11_13.py::TestStatusesFromVerifiedClaims.
+      AUDIO: prompt context — A/B-listen one episode.
