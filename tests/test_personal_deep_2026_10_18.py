@@ -235,15 +235,81 @@ class TestEditionMemory:
 # 3. Repeats across the member's own shows — calibrated on committed data
 # ---------------------------------------------------------------------------
 
+def _committed_segment(slug: str, date: dt.date):
+    """The segment rebuilt from the committed digest files.
+
+    A show's summaries file keeps its last 30 entries, so a calibration
+    date ages out of it a month on (Nov 13 2026: this guard went red on
+    main with ``KeyError: 'models_agents'``). The digest, its transcript
+    and its chapters stay committed, so the same segment is rebuilt from
+    them. ``TestCommittedSegment`` pins it to the summaries path."""
+    from engine.config import load_config
+    from engine.daily_edition import _transcript_path_for, hook_from_title
+    from engine.titles import episode_title
+
+    cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
+    digest_dir = (ROOT / cfg.publishing.summaries_json).parent
+    found = sorted(digest_dir.glob(f"*_Ep*_{date:%Y%m%d}.md"))
+    base = f"https://audio.nerranetwork.com/{slug}"
+    if not found:  # a members-only day (engine.access): private bucket
+        digest_dir = digest_dir / "members"
+        found = sorted(digest_dir.glob(f"*_Ep*_{date:%Y%m%d}.md"))
+        base = f"r2-private://nerra-personal/shows/{slug}"
+    if not found:
+        return None
+    md = found[-1]
+    num = int(re.search(r"_Ep(\d+)_", md.name).group(1))
+    content = md.read_text(encoding="utf-8")
+    hook = re.search(r"^> \*\*(.+?)\*\*\s*$", content, re.M)
+    audio_url = f"{base}/{md.stem}.mp3"
+    title = episode_title(hook.group(1) if hook else "", num)
+    return Segment(
+        slug=slug, show_name=cfg.name or slug, episode_num=num,
+        episode_title=title, hook=hook_from_title(title),
+        date=date.isoformat(), audio_url=audio_url, content=content,
+        digest_dir=digest_dir,
+        transcript_path=_transcript_path_for(digest_dir, audio_url),
+        music_intro_offset=float(cfg.audio.voice_intro_delay or 0.0))
+
+
 def _real_stories(date: dt.date, slugs):
     segs, _ = discover_segments(personal_edition_spec(), ROOT, date, include_members=True)
     by = {s.slug: s for s in segs}
+    for slug in slugs:
+        if slug not in by:
+            by[slug] = _committed_segment(slug, date)
     out = []
     for slug in slugs:
         s = by[slug]
         tr = load_transcript(s.transcript_path) if s.transcript_path else None
         out.append(ps.segment_stories(s, ROOT, transcript=tr))
     return out
+
+
+class TestCommittedSegment:
+    def test_rebuilt_segment_tells_the_same_stories(self):
+        """On a date still in the summaries files, the rebuild from the
+        committed digest gives every show the same stories and hook."""
+        import json
+
+        summ = json.loads((ROOT / "digests/tesla_shorts_time/summaries_tesla.json")
+                          .read_text(encoding="utf-8"))
+        rows = summ["summaries"] if isinstance(summ, dict) else summ
+        date = dt.date.fromisoformat(sorted(r["date"] for r in rows)[len(rows) // 2])
+        segs, _ = discover_segments(personal_edition_spec(), ROOT, date,
+                                    include_members=True)
+        assert len(segs) >= 5
+
+        def stories(seg):
+            tr = load_transcript(seg.transcript_path) if seg.transcript_path else None
+            return ps.segment_stories(seg, ROOT, transcript=tr)
+
+        for seg in segs:
+            rebuilt = _committed_segment(seg.slug, date)
+            assert rebuilt is not None, seg.slug
+            assert rebuilt.hook == seg.hook, seg.slug
+            assert rebuilt.transcript_path == seg.transcript_path, seg.slug
+            assert stories(rebuilt) == stories(seg), seg.slug
 
 
 class TestRepeats:
@@ -559,7 +625,8 @@ class TestBuilder:
     def test_promo_cut_is_set_even_when_the_segment_is_cached(self, tmp_path):
         mod = _builder()
         segs, _ = discover_segments(personal_edition_spec(), ROOT, dt.date(2026, 10, 17))
-        seg = next(s for s in segs if s.slug == "tesla")
+        seg = next((s for s in segs if s.slug == "tesla"), None) or \
+            _committed_segment("tesla", dt.date(2026, 10, 17))
         (tmp_path / "tesla.flac").write_bytes(b"cached")
         seg.cut_final_seconds = None
         out = mod.build_segment_cache(["tesla"], {"tesla": seg}, tmp_path)
