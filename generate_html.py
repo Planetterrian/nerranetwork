@@ -8147,7 +8147,8 @@ def generate_account_page(*, dry_run=False, output_dir=None):
         "events": ("🎟️", "A notable local event coming up — up to three on "
                           "Personal News Network"),
         "traffic": ("🚗", "A real closure, strike or disruption changing "
-                          "how you get around"),
+                          "how you get around — on your own routes once "
+                          "you add them below"),
         "markets": ("📈", "TSLA + SPCX closes from the network's own data "
                           "pipeline — on any paid tier"),
         "skip_repeats": ("✂️", "When a later show retells a story an earlier "

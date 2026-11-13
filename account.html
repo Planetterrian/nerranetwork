@@ -1211,6 +1211,12 @@ body.lt-player-open { overflow: hidden; }
         .me-input[disabled] { opacity: 0.45; cursor: not-allowed; }
         textarea.me-input { min-height: 92px; resize: vertical; }
         .me-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        /* Nov 13 2026: routes and trips, one row each. */
+        .me-rows { display: grid; gap: 10px; }
+        .me-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 10px; border: 1px solid var(--lt-rule-strong); border-radius: 10px; }
+        .me-row[hidden] { display: none; }
+        .me-row .me-sub { font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--lt-muted); grid-column: 1 / -1; }
+        .me-row label.me-date { display: grid; gap: 3px; font-family: var(--font-ui); font-size: 0.72rem; color: var(--lt-muted); }
 
         /* Shows: the order, then everything else */
         .me-order { list-style: none; margin: 0 0 var(--sp-5); padding: 0; counter-reset: me-order; display: grid; gap: 6px; }
@@ -2372,6 +2378,83 @@ body.lt-player-open { overflow: hidden; }
                             <span class="me-label">For each location</span>
                             <div id="nn-addons" class="me-addons"></div>
                         </div>
+                        <div class="me-field" id="nn-routes-edit">
+                            <span class="me-label">Your routes <small>(optional · the Traffic &amp; transit add-on follows them)</small></span>
+                            <div class="me-rows" id="nn-routes">
+                                <div class="me-row nn-route">
+                                    <span class="me-sub">Route 1</span>
+                                    <input type="text" class="me-input nn-r-from" maxlength="80" placeholder="From, e.g. North Vancouver" aria-label="Route 1: from">
+                                    <input type="text" class="me-input nn-r-to" maxlength="80" placeholder="To, e.g. downtown Vancouver" aria-label="Route 1: to">
+                                    <input type="text" class="me-input nn-r-via" maxlength="80" placeholder="Via (optional), e.g. Lions Gate Bridge" aria-label="Route 1: via, optional">
+                                    <select class="me-input nn-r-days" aria-label="Route 1: which days">
+                                        <option value="weekdays">Weekdays</option><option value="daily">Every day</option><option value="weekends">Weekends</option>
+                                    </select>
+                                    <select class="me-input nn-r-mode" aria-label="Route 1: how you travel">
+                                        <option value="any">Road or transit</option><option value="drive">Driving</option><option value="transit">Transit</option><option value="cycle">Cycling</option>
+                                    </select>
+                                </div>
+                                <div class="me-row nn-route">
+                                    <span class="me-sub">Route 2</span>
+                                    <input type="text" class="me-input nn-r-from" maxlength="80" placeholder="From" aria-label="Route 2: from">
+                                    <input type="text" class="me-input nn-r-to" maxlength="80" placeholder="To" aria-label="Route 2: to">
+                                    <input type="text" class="me-input nn-r-via" maxlength="80" placeholder="Via (optional)" aria-label="Route 2: via, optional">
+                                    <select class="me-input nn-r-days" aria-label="Route 2: which days">
+                                        <option value="weekdays">Weekdays</option><option value="daily">Every day</option><option value="weekends">Weekends</option>
+                                    </select>
+                                    <select class="me-input nn-r-mode" aria-label="Route 2: how you travel">
+                                        <option value="any">Road or transit</option><option value="drive">Driving</option><option value="transit">Transit</option><option value="cycle">Cycling</option>
+                                    </select>
+                                </div>
+                                <div class="me-row nn-route">
+                                    <span class="me-sub">Route 3</span>
+                                    <input type="text" class="me-input nn-r-from" maxlength="80" placeholder="From" aria-label="Route 3: from">
+                                    <input type="text" class="me-input nn-r-to" maxlength="80" placeholder="To" aria-label="Route 3: to">
+                                    <input type="text" class="me-input nn-r-via" maxlength="80" placeholder="Via (optional)" aria-label="Route 3: via, optional">
+                                    <select class="me-input nn-r-days" aria-label="Route 3: which days">
+                                        <option value="weekdays">Weekdays</option><option value="daily">Every day</option><option value="weekends">Weekends</option>
+                                    </select>
+                                    <select class="me-input nn-r-mode" aria-label="Route 3: how you travel">
+                                        <option value="any">Road or transit</option><option value="drive">Driving</option><option value="transit">Transit</option><option value="cycle">Cycling</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p class="me-help">With <strong>Traffic &amp; transit</strong> on, each morning you travel a
+                               route Mira checks what is reported on it: closures, roadworks, detours, bridge or lane
+                               restrictions, transit changes and strikes, each with its source named. She reads
+                               reports, not live traffic, so she never guesses a travel time. With routes saved, your
+                               city brief leaves traffic to this segment. Turn the add-on off and the routes rest.</p>
+                        </div>
+                        <div class="me-field" id="nn-trips-edit">
+                            <span class="me-label">Upcoming trips <small>(optional)</small></span>
+                            <div class="me-rows" id="nn-trips">
+                                <div class="me-row nn-trip">
+                                    <span class="me-sub">Trip 1</span>
+                                    <input type="text" class="me-input nn-t-place" maxlength="80" placeholder="Where, e.g. Lisbon, Portugal" aria-label="Trip 1: where">
+                                    <label class="me-date">Arriving (optional)<input type="date" class="me-input nn-t-start" aria-label="Trip 1: arriving"></label>
+                                    <label class="me-date">Leaving (optional)<input type="date" class="me-input nn-t-end" aria-label="Trip 1: leaving"></label>
+                                </div>
+                                <div class="me-row nn-trip">
+                                    <span class="me-sub">Trip 2</span>
+                                    <input type="text" class="me-input nn-t-place" maxlength="80" placeholder="Where" aria-label="Trip 2: where">
+                                    <label class="me-date">Arriving (optional)<input type="date" class="me-input nn-t-start" aria-label="Trip 2: arriving"></label>
+                                    <label class="me-date">Leaving (optional)<input type="date" class="me-input nn-t-end" aria-label="Trip 2: leaving"></label>
+                                </div>
+                                <div class="me-row nn-trip">
+                                    <span class="me-sub">Trip 3</span>
+                                    <input type="text" class="me-input nn-t-place" maxlength="80" placeholder="Where" aria-label="Trip 3: where">
+                                    <label class="me-date">Arriving (optional)<input type="date" class="me-input nn-t-start" aria-label="Trip 3: arriving"></label>
+                                    <label class="me-date">Leaving (optional)<input type="date" class="me-input nn-t-end" aria-label="Trip 3: leaving"></label>
+                                </div>
+                            </div>
+                            <p class="me-help">Mira gets you ready, at the end of your edition: about once a week she
+                               tells you about the place (its history, its culture, what to see, the practical
+                               things), each angle once. Add dates and in the three weeks before you go she looks
+                               up what is on during your stay, takes a last look a few days out, and each morning
+                               you are there says what is on that day. She stops after your last day, and a finished
+                               trip is cleared from your account the next time you save.</p>
+                            <p class="me-help">Your routes and trips go only to the AI model that writes Mira's lines,
+                               as your city does. They appear on no public page and are never written to a log.</p>
+                        </div>
                         <div class="me-field" id="nn-topics-edit">
                             <span class="me-label">Your topics <small id="nn-topics-help">(subjects you follow)</small></span><div class="me-inputs" id="nn-topics">
                                 <input type="text" class="me-input nn-topic" maxlength="60" placeholder="e.g. Starship" aria-label="Topic 1">
@@ -2560,7 +2643,7 @@ var NN = (function () {
   var SHOW_META = [{"access_note": "", "brand_color": "#1A5CFF", "cover": "assets/covers/spacex.jpg", "cover_webp": "assets/covers/spacex-400.webp", "name": "SpaceX Daily", "page": "spacex.html", "schedule": "Daily", "slug": "spacex", "tagline": "Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day."}, {"access_note": "", "brand_color": "#E31937", "cover": "assets/covers/tesla-shorts-time.jpg", "cover_webp": "assets/covers/tesla-shorts-time-400.webp", "name": "Tesla Shorts Time", "page": "tesla.html", "schedule": "Daily", "slug": "tesla", "tagline": "Every Tesla story that matters, every day."}, {"access_note": "", "brand_color": "#017A99", "cover": "assets/covers/planetterrian-daily.jpg", "cover_webp": "assets/covers/planetterrian-daily-400.webp", "name": "Planetterrian Daily", "page": "planetterrian.html", "schedule": "Daily", "slug": "planetterrian", "tagline": "Science, longevity, and the frontier of human health."}, {"access_note": "", "brand_color": "#7C3AED", "cover": "assets/covers/models-agents.jpg", "cover_webp": "assets/covers/models-agents-400.webp", "name": "Models \u0026 Agents", "page": "models-agents.html", "schedule": "Daily", "slug": "models_agents", "tagline": "Daily AI models, agents, and practical developments."}, {"access_note": "", "brand_color": "#6B47FF", "cover": "assets/covers/fascinating-frontiers.jpg", "cover_webp": "assets/covers/fascinating-frontiers-400.webp", "name": "Fascinating Frontiers", "page": "fascinating-frontiers.html", "schedule": "Daily", "slug": "fascinating_frontiers", "tagline": "Journey to the stars with today\u0027s discoveries."}, {"access_note": "", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-world.jpg", "cover_webp": "assets/covers/omni-view-world-400.webp", "name": "Omni View Top World News", "page": "omni-view-world.html", "schedule": "Daily", "slug": "omni_view_world", "tagline": "The ten stories that matter most today, anywhere."}, {"access_note": "", "brand_color": "#334155", "cover": "assets/covers/mag7.jpg", "cover_webp": "assets/covers/mag7-400.webp", "name": "MAG 7 Daily", "page": "mag7.html", "schedule": "Daily", "slug": "mag7", "tagline": "Seven companies, one daily desk."}, {"access_note": "", "brand_color": "#047857", "cover": "assets/covers/modern-investing.jpg", "cover_webp": "assets/covers/modern-investing-400.webp", "name": "Modern Investing Techniques", "page": "modern-investing.html", "schedule": "Daily", "slug": "modern_investing", "tagline": "AI-Powered Market Intelligence"}, {"access_note": "", "brand_color": "#3F6212", "cover": "assets/covers/longevity.jpg", "cover_webp": "assets/covers/longevity-400.webp", "name": "Longevity Weekly", "page": "longevity.html", "schedule": "Weekly (Wednesday)", "slug": "longevity", "tagline": "The science of aging, read carefully."}, {"access_note": "", "brand_color": "#9D174D", "cover": "assets/covers/peptides.jpg", "cover_webp": "assets/covers/peptides-400.webp", "name": "Peptides Weekly", "page": "peptides.html", "schedule": "Weekly (Thursday)", "slug": "peptides", "tagline": "Peptides, with the evidence read carefully."}, {"access_note": "", "brand_color": "#0B3C5D", "cover": "assets/covers/offshore-north.jpg", "cover_webp": "assets/covers/offshore-north-400.webp", "name": "Offshore North", "page": "offshore-north.html", "schedule": "Weekly — Mondays", "slug": "offshore_north", "tagline": "One man. One boat. Around the world, alone."}, {"access_note": "", "brand_color": "#4338CA", "cover": "assets/covers/ai-chips.jpg", "cover_webp": "assets/covers/ai-chips-400.webp", "name": "AI Chips \u0026 Data Centres Daily", "page": "ai-chips.html", "schedule": "Daily", "slug": "ai_chips", "tagline": "The silicon, the buildings and the power behind AI."}, {"access_note": "", "brand_color": "#0F766E", "cover": "assets/covers/first-principles-daily.jpg", "cover_webp": "assets/covers/first-principles-daily-400.webp", "name": "First Principles Daily", "page": "first-principles.html", "schedule": "Daily", "slug": "first_principles", "tagline": "Reason from raw materials, not analogy."}, {"access_note": "", "brand_color": "#B45309", "cover": "assets/covers/unintended-consequences.jpg", "cover_webp": "assets/covers/unintended-consequences-400.webp", "name": "Unintended Consequences", "page": "unintended-consequences.html", "schedule": "Daily", "slug": "unintended_consequences", "tagline": "Good intentions. Surprising results. Real lessons."}, {"access_note": "", "brand_color": "#A21CAF", "cover": "assets/covers/prediction-markets.jpg", "cover_webp": "assets/covers/prediction-markets-400.webp", "name": "Prediction Markets Daily", "page": "prediction-markets.html", "schedule": "Daily", "slug": "prediction_markets", "tagline": "Where forecasting meets the market."}, {"access_note": "", "brand_color": "#C2410C", "cover": "assets/covers/models-agents-beginners.jpg", "cover_webp": "assets/covers/models-agents-beginners-400.webp", "name": "Models \u0026 Agents for Beginners", "page": "models-agents-beginners.html", "schedule": "Daily", "slug": "models_agents_beginners", "tagline": "AI explained simply — for beginners and teens."}, {"access_note": "", "brand_color": "#0D6E8C", "cover": "assets/covers/collingwood.jpg", "cover_webp": "assets/covers/collingwood-400.webp", "name": "Collingwood Weekly", "page": "collingwood.html", "schedule": "Weekly (Friday)", "slug": "collingwood", "tagline": "The week around the south Georgian Bay."}, {"access_note": "", "brand_color": "#1B5E20", "cover": "assets/covers/environmental-intelligence.jpg", "cover_webp": "assets/covers/environmental-intelligence-400.webp", "name": "Environmental Intelligence", "page": "env-intel.html", "schedule": "Weekly — Mondays", "slug": "env_intel", "tagline": "Environmental regulatory and compliance briefing."}, {"access_note": "", "brand_color": "#0B7A45", "cover": "assets/covers/dp-pod.jpg", "cover_webp": "assets/covers/dp-pod-400.webp", "name": "The DP Pod: The Do Positive Podcast", "page": "thedppod.html", "schedule": "Weekly — Mondays", "slug": "dp_pod", "tagline": "The club for people who do something about it — good news, honest numbers, one action a week."}, {"access_note": "", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view.jpg", "cover_webp": "assets/covers/omni-view-400.webp", "name": "Omni View", "page": "omni-view.html", "schedule": "Daily", "slug": "omni_view", "tagline": "See every side. Decide for yourself."}, {"access_note": "Members only", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-north-america.jpg", "cover_webp": "assets/covers/omni-view-north-america-400.webp", "name": "Omni View North America", "page": "omni-view-north-america.html", "schedule": "Daily", "slug": "omni_view_north_america", "tagline": "North America, one region deep, every day."}, {"access_note": "Members only", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-europe.jpg", "cover_webp": "assets/covers/omni-view-europe-400.webp", "name": "Omni View Europe", "page": "omni-view-europe.html", "schedule": "Daily", "slug": "omni_view_europe", "tagline": "Europe, one region deep, every day."}, {"access_note": "Members only", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-asia-pacific.jpg", "cover_webp": "assets/covers/omni-view-asia-pacific-400.webp", "name": "Omni View Asia Pacific", "page": "omni-view-asia-pacific.html", "schedule": "Daily", "slug": "omni_view_asia_pacific", "tagline": "Asia Pacific, one region deep, every day."}, {"access_note": "Members only", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-africa-mideast.jpg", "cover_webp": "assets/covers/omni-view-africa-mideast-400.webp", "name": "Omni View Africa \u0026 Middle East", "page": "omni-view-africa-mideast.html", "schedule": "Daily", "slug": "omni_view_africa_mideast", "tagline": "Africa and the Middle East, one region deep, every day."}, {"access_note": "Members only", "brand_color": "#0B6FD6", "cover": "assets/covers/omni-view-latam.jpg", "cover_webp": "assets/covers/omni-view-latam-400.webp", "name": "Omni View Central \u0026 South America", "page": "omni-view-latam.html", "schedule": "Daily", "slug": "omni_view_latam", "tagline": "Central and South America, one region deep, every day."}, {"access_note": "", "brand_color": "#0D6E8C", "cover": "assets/covers/vancouver.jpg", "cover_webp": "assets/covers/vancouver-400.webp", "name": "Vancouver Daily News", "page": "vancouver.html", "schedule": "Daily", "slug": "vancouver", "tagline": "The morning brief for Metro Vancouver."}];
   var META = {}; SHOW_META.forEach(function (s) { META[s.slug] = s; });
   var STARTER = ['spacex', 'tesla', 'models_agents', 'planetterrian', 'dp_pod'];
-  var ADDONS = [{"desc": "Measured Open-Meteo forecast for your location, read by Mira", "emoji": "🌤️", "id": "weather", "label": "Local weather", "tier": "personal"}, {"desc": "A local story a resident would care about, researched and sourced aloud — up to three on Personal News Network", "emoji": "📰", "id": "local_news", "label": "Local news", "tier": "personal"}, {"desc": "A notable local event coming up — up to three on Personal News Network", "emoji": "🎟️", "id": "events", "label": "Local events", "tier": "personal"}, {"desc": "A real closure, strike or disruption changing how you get around", "emoji": "🚗", "id": "traffic", "label": "Traffic \u0026 transit", "tier": "personal"}, {"desc": "TSLA + SPCX closes from the network\u0027s own data pipeline — on any paid tier", "emoji": "📈", "id": "markets", "label": "Markets minute", "tier": "personal"}, {"desc": "When a later show retells a story an earlier one told, Mira trims it — only at a clean story break, and she says so", "emoji": "✂️", "id": "skip_repeats", "label": "Skip repeated stories", "tier": "personal"}];
+  var ADDONS = [{"desc": "Measured Open-Meteo forecast for your location, read by Mira", "emoji": "🌤️", "id": "weather", "label": "Local weather", "tier": "personal"}, {"desc": "A local story a resident would care about, researched and sourced aloud — up to three on Personal News Network", "emoji": "📰", "id": "local_news", "label": "Local news", "tier": "personal"}, {"desc": "A notable local event coming up — up to three on Personal News Network", "emoji": "🎟️", "id": "events", "label": "Local events", "tier": "personal"}, {"desc": "A real closure, strike or disruption changing how you get around — on your own routes once you add them below", "emoji": "🚗", "id": "traffic", "label": "Traffic \u0026 transit", "tier": "personal"}, {"desc": "TSLA + SPCX closes from the network\u0027s own data pipeline — on any paid tier", "emoji": "📈", "id": "markets", "label": "Markets minute", "tier": "personal"}, {"desc": "When a later show retells a story an earlier one told, Mira trims it — only at a clean story break, and she says so", "emoji": "✂️", "id": "skip_repeats", "label": "Skip repeated stories", "tier": "personal"}];
   var DEFAULT_ADDONS = ["weather", "local_news", "events", "traffic"];
   var LENGTHS = [20, 30, 45, 60];
   var WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -3049,6 +3132,55 @@ var NN = (function () {
   function cityInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-cities .nn-city')); }
   function topicInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-topics .nn-topic')); }
   function listValues(inputs) { return inputs.map(function (i) { return i.value.trim(); }).filter(Boolean); }
+  // Nov 13 2026: routes and trips (engine/personal_travel.py; the Worker
+  // re-cleans both). A row counts only with its required fields.
+  function nodes(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function routeRows() { return nodes('#nn-routes .nn-route'); }
+  function tripRows() { return nodes('#nn-trips .nn-trip'); }
+  function q(row, cls) { return row.querySelector('.' + cls); }
+  function routeValues() {
+    return routeRows().map(function (r) {
+      var o = { from: q(r, 'nn-r-from').value.trim(), to: q(r, 'nn-r-to').value.trim(),
+                via: q(r, 'nn-r-via').value.trim(), days: q(r, 'nn-r-days').value, mode: q(r, 'nn-r-mode').value };
+      if (!o.via) { delete o.via; }
+      return o;
+    }).filter(function (o) { return o.from && o.to; });
+  }
+  function tripValues() {
+    return tripRows().map(function (r) {
+      var o = { place: q(r, 'nn-t-place').value.trim(), start: q(r, 'nn-t-start').value, end: q(r, 'nn-t-end').value };
+      if (!o.start) { delete o.start; delete o.end; } else if (!o.end || o.end < o.start) { o.end = o.start; }
+      return o;
+    }).filter(function (o) { return o.place; });
+  }
+  function fillTravel(prefs) {
+    var routes = prefs.routes || [], trips = prefs.trips || [];
+    routeRows().forEach(function (r, i) {
+      var v = routes[i] || {};
+      q(r, 'nn-r-from').value = v.from || ''; q(r, 'nn-r-to').value = v.to || ''; q(r, 'nn-r-via').value = v.via || '';
+      q(r, 'nn-r-days').value = v.days || 'weekdays'; q(r, 'nn-r-mode').value = v.mode || 'any';
+    });
+    tripRows().forEach(function (r, i) {
+      var v = trips[i] || {};
+      q(r, 'nn-t-place').value = v.place || ''; q(r, 'nn-t-start').value = v.start || ''; q(r, 'nn-t-end').value = v.end || '';
+    });
+    revealRows();
+  }
+  // Only one empty row shows at a time: the next appears once the one
+  // before it is filled, so an unused list stays one row long on a phone.
+  function revealRows() {
+    [[routeRows(), function (r) { return q(r, 'nn-r-from').value.trim() || q(r, 'nn-r-to').value.trim(); }],
+     [tripRows(), function (r) { return q(r, 'nn-t-place').value.trim(); }]].forEach(function (pair) {
+      var shown = false;
+      pair[0].forEach(function (r) {
+        var filled = !!pair[1](r);
+        r.hidden = !filled && shown;
+        if (!filled) { shown = true; }
+      });
+    });
+  }
+  function travelInputs() { return nodes('#nn-routes input, #nn-routes select, #nn-trips input'); }
+  function routeRunsOn(r, wd) { var we = wd === 0 || wd === 6; return r.days === 'daily' || (r.days === 'weekends' ? we : !we); }
   function renderLists(prefs) {
     var lim = limits();
     var cities = prefs.cities || (prefs.city ? [prefs.city] : []);
@@ -3060,6 +3192,7 @@ var NN = (function () {
     });
     var topics = prefs.topics || [];
     topicInputs().forEach(function (inp, i) { inp.value = topics[i] || ''; inp.disabled = false; });
+    fillTravel(prefs);
     el('nn-topics-help').textContent = lim.topics
       ? '(up to five; Mira researches each one daily, sources named)'
       : '(up to five; this page follows them, and Mira researches them on Personal News Network)';
@@ -3112,7 +3245,7 @@ var NN = (function () {
       shows: state.shows, name: el('nn-name').value.trim(),
       cities: listValues(cityInputs()), topics: listValues(topicInputs()),
       addons: state.addons, profile: el('nn-profile').value.trim(), length: getLength(),
-      tickers: state.tickers,
+      tickers: state.tickers, routes: routeValues(), trips: tripValues(),
     });
   }
   function markClean() { state.clean = snapshot(); checkDirty(); }
@@ -3156,6 +3289,12 @@ var NN = (function () {
     } else {
       items.push('<li class="is-off">No location yet: <a class="me-link" href="#nn-places">add one</a> for a morning brief</li>');
     }
+    var commute = addons.indexOf('traffic') !== -1
+      ? routeValues().filter(function (r) { return routeRunsOn(r, wd); }) : [];
+    if (commute.length) {
+      items.push('<li>Your commute: what is reported on ' + esc(commute.map(function (r) { return r.from + ' to ' + r.to; }).join('; ')) + '</li>');
+      total += 30 + 25 * commute.length;
+    }
     if (topics.length) { items.push('<li>Your topics: ' + esc(topics.join(', ')) + '</li>'); total += 60 * topics.length; }
     if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute: ' + esc(myTickers().join(', ')) + '</li>'); total += 20 + 8 * myTickers().length; }
     var off = [];
@@ -3171,6 +3310,11 @@ var NN = (function () {
     off.forEach(function (slug) {
       items.push('<li class="is-off">' + esc(showName(slug)) + '<span class="tm">not on ' + WEEKDAYS[wd].charAt(0).toUpperCase() + WEEKDAYS[wd].slice(1) + 's</span></li>');
     });
+    var tday = tomorrow.toISOString().slice(0, 10);
+    var trips = tripValues().filter(function (t) { return !t.end || t.end >= tday; });
+    var there = trips.filter(function (t) { return t.start && t.start <= tday && tday <= t.end; })[0];
+    if (there) { items.push('<li>You are in ' + esc(there.place) + ': Mira says what is on that day</li>'); total += 50; }
+    else if (trips.length) { items.push('<li class="is-off">Your trip' + (trips.length > 1 ? 's' : '') + ' to ' + esc(trips.map(function (t) { return t.place; }).join(', ')) + ': on the days Mira has a new angle, before the sign-off</li>'); }
     if (el('nn-profile').value.trim()) { items.push('<li>Mira knows what you told her, and uses it only where a story connects</li>'); }
     if (addons.indexOf('skip_repeats') !== -1) {
       items.push('<li>A story told twice is trimmed from the later show, and Mira says so</li>');
@@ -3539,7 +3683,7 @@ var NN = (function () {
   }
 
   function wireInputs() {
-    ['nn-name', 'nn-profile'].map(el).concat(cityInputs(), topicInputs(),
+    ['nn-name', 'nn-profile'].map(el).concat(cityInputs(), topicInputs(), travelInputs(),
       Array.prototype.slice.call(document.querySelectorAll('input[name="nn-length"]')))
       .forEach(function (node) {
         if (node && !node._nnWired) {
@@ -3547,6 +3691,9 @@ var NN = (function () {
           node.addEventListener('input', checkDirty); node.addEventListener('change', checkDirty);
         }
       });
+    travelInputs().forEach(function (node) {
+      if (!node._nnRows) { node._nnRows = true; node.addEventListener('input', revealRows); }
+    });
     cityInputs().concat(topicInputs()).forEach(function (node) {
       if (!node._nnTopics) { node._nnTopics = true; node.addEventListener('change', function () { renderTopics(); renderFront(); }); }
     });
@@ -3812,6 +3959,10 @@ var NN = (function () {
         // and keeps the length to its closed set (anything else = none).
         profile: el('nn-profile').value.trim(),
         target_minutes: len ? Number(len) : null,
+        // Nov 13 2026: sent every save, like the topics (the Worker cleans
+        // both and drops a trip that has ended).
+        routes: routeValues(),
+        trips: tripValues(),
       };
       // Oct 29 2026: the stocks they follow (absent = never touched).
       if (state.tickers !== null) { body.tickers = state.tickers; }

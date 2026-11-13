@@ -549,3 +549,46 @@ TTS grows only by Mira's own lines. Register entries
 3. Nothing on the batch host: the builder change ships with this repo.
 4. Spot-listen the first edition carrying each new block and the first
    three trimmed editions (⚠️ AUDIO — Mira's lines change).
+
+## Routes and trips (13 Nov 2026)
+
+Operator-requested: the traffic add-on tailored to the member's own travel,
+and an optional place to enter upcoming trips. `engine/personal_travel.py`
+owns both; the Worker mirrors the limits (`ROUTES_MAX`, `TRIPS_MAX`,
+`ROUTE_DAYS`, `ROUTE_MODES`; drift guard
+`tests/test_personal_travel_2026_11_13.py`).
+
+**Your commute.** A route is from, to, an optional via, the days it is
+travelled (`weekdays` / `daily` / `weekends`) and how (`any` / `drive` /
+`transit` / `cycle`), up to three. With the `traffic` add-on ON and a route
+travelled that day, one web-search-grounded call (`nerra_personal_commute.txt`)
+reports closures, roadworks, detours and transit changes ON THOSE ROUTES,
+each source named, right after the city briefs. The city brief then drops its
+own traffic item for the day (`local_brief_addons`); a commute that SKIPs or
+fails leaves the city brief's traffic item in place. The add-on switch is the
+on/off: off, the routes rest. **No live traffic and no travel time**: every
+regional 511 / live-traffic API needs a key, and a paid feed (Google Routes,
+TomTom, HERE) is the operator's decision, not the builder's.
+
+**Your trip to <place>.** A place and optional dates, up to three. At most ONE
+trip segment an edition, after the last show and before the sign-off, the
+soonest dated trip first (`plan_trip`):
+
+| When | What Mira says (`trip_mode`) | How often |
+|---|---|---|
+| Any time | history, culture, sights, practical — each angle ONCE | weekly |
+| ≤ 21 days before arriving | what is on during the stay (`events`), once | then every other day for unheard angles |
+| ≤ 3 days before | a last look (`events_final`), once | |
+| Each day of the stay | what is on today and tomorrow, with Open-Meteo weather for the place (`during`) | daily |
+
+What a member has heard is `trips_heard` in their R2 `episodes.json` (only
+their current trips; a rebuild of the day ignores today's own entry so the
+segment comes back). Every item names its source, history included; an event
+needs a confirmed date inside the stay; an unverifiable focus is SKIP.
+
+**Personal data.** Routes and trips live on the Worker member record, leave it
+only through the bearer-only `/api/admin/personal-specs` (no email beside them)
+and go to the model that writes Mira's lines, as city and profile do (the
+privacy policy says so). They are never logged: the builder logs counts and the
+token prefix only (guarded). A trip that has ended is dropped on the next save
+and is filtered out of the spec export the day after it ends.
