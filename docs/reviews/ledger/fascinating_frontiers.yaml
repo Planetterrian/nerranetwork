@@ -1104,6 +1104,57 @@ reviews:
     ab_listen_required: true
     rationale: Ep245 spent a long mid-episode block on California Science Center expansion logistics; Ep247 aired Hancock County Port Air Space Day and KSC expo-rivalry PR — weak substrate and off-brand vs mission/discovery selection (same family as Oct ep218 profile/medal/meta).
   agent_cost_usd: 0.199
+- date: '2026-11-13'
+  pr: null
+  doc: docs/reviews/fascinating_frontiers_review_2026_11_13.md
+  generated_by: claude (operator-requested end-to-end review)
+  summary: Accuracy first. The audit's FACTUAL_ERRORS (12 of 22, Ep230-251) came mostly from the Cosmic Deep Dive's own invented scale comparisons and memory history, which the word-floor retry (fired 9 of 9) grew; Reddit was the second most cited source and ESA/S&T/NASA Science feeds were dead. Shipped a rebuilt feed list and exclusions, a picture-of-the-day filter, hook_repeats_past_lead, the fact floor, a deep dive that never guesses, and a script whose length is the digest's facts.
+  scored_prior_predictions:
+  - metric: episodes below 1700-word floor (digest-ceiling trajectory; no podcast-side lever)
+    verdict: hit
+    evidence: Ep244-251 scripts 1,184-1,683 words, all under 1,700; the target itself is now 1,400 and the prompt carries no word demand.
+  - metric: successor teaser-tic single-shape rate in next 10 _tts.txt
+    verdict: hit
+    evidence: Ep244-251 teasers vary; no shape on 6 of 10.
+  predictions:
+  - metric: FACTUAL_ERRORS flags over the first 14 audited episodes after merge
+    baseline: 12 of 22 (Ep230-251)
+    expected: at most 3 of 14
+    verdict: pending
+    evidence: null
+  - metric: REPETITIVE flags over the first 14 audited episodes after merge
+    baseline: 12 of 14 (Ep238-251)
+    expected: at most 6 of 14
+    verdict: pending
+    evidence: null
+  - metric: reddit.com Source lines in the first 14 digests after merge
+    baseline: 36 in Ep231-251
+    expected: 0
+    verdict: pending
+    evidence: null
+  - metric: digest_expansion_fired over the first 14 episodes after merge
+    baseline: 9 of 9 (Ep243-251)
+    expected: at most 5 of 14
+    verdict: pending
+    evidence: null
+  - metric: deep_dive_contains_body_item median over the first 14 episodes after merge
+    baseline: 0.58 (Ep243-251)
+    expected: under 0.5
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/fascinating_frontiers.yaml
+    kind: config
+    ab_listen_required: true
+    rationale: feed list, exclude_sources, picture-of-the-day patterns, hook_repeats_past_lead, min_digest_facts 18, min_podcast_words 1400 (skip floor pinned 850).
+  - file: shows/prompts/fascinating_frontiers_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: deep dive comparisons only as stated arithmetic, no memory history, one telling per story, hook under 90 characters.
+  - file: shows/prompts/fascinating_frontiers_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: no word target; accuracy on air; the quotable example story removed.
 do_not_retry:
 - idea: Phonetic respellings or programmatic speech-tag injection.
   evidence: 'Landmine #17 — 100% regression rate on the custom voice kdif6sqjcyiq. NOTE: this pass''s garble repair is the OPPOSITE (it removes a phonetic respelling the model emitted, restoring the standard spelling TTS handles) and is allowed.'

@@ -394,6 +394,12 @@ NETWORK_EXCLUDE_URL_PATTERNS = (
     # /instant-alerts/filing-: 81 of 81 such tracker URLs are holdings
     # filings; its analyst, price and insider alerts use other prefixes.
     r"marketbeat\.com/instant-alerts/filing-",
+    # Nov 13 2026 (Fascinating Frontiers review): a picture-of-the-day page is
+    # a photo caption, not news. Astronomy's daily picture ("Taula eclipse",
+    # an August eclipse photo) aired on FF Ep251 as both an Also Today line
+    # and the Cosmic Spotlight; its title names nothing a title pattern can
+    # match, its URL path does. Only FF has ever cited one (12 digests).
+    r"/picture-of-the-day/",
 )
 
 

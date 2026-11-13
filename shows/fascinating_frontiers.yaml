@@ -33,6 +33,11 @@ digest_lints:
 # states the rule (engine.digest_lint.DEEP_DIVE_FETCHED_FIRING_SECTIONS).
 - deep_dive_distinct_measure
 - deep_dive_fetched_source
+# Nov 13 2026 (FF review): Ep251 led with the story Ep250 had led with the
+# day before (white-dwarf pairs and LISA), then told it a third time as the
+# Cosmic Deep Dive. Replayed over Ep200-251 this fires once in 52 digests,
+# on exactly that pair, and rides the one-shot structural regeneration.
+- hook_repeats_past_lead
 preferred_domains:
 - nasa.gov
 - esa.int
@@ -42,35 +47,74 @@ preferred_domains:
 - arxiv.org
 - noirlab.edu
 - caltech.edu
+# Nov 13 2026 (FF review): who the show may cite. In Ep231-251 reddit.com was
+# the SECOND most cited source (36 Source lines, behind phys.org's 51) —
+# amateur astrophotos and reposts aired as space news, and Ep247's lead was
+# sourced to a Reddit post alone — and x.com/youtube.com links, press-release
+# wires and content farms reached the briefing through Google News. A
+# science show a listener trusts cites the agency, the observatory, the
+# journal or a newsroom. Matched on the URL host or Google News's source name.
+exclude_sources:
+- reddit.com
+- youtube.com
+- globenewswire.com
+- prnewswire.com
+- techbullion.com
+- latteluxurynews.com
+- futureparty.com
+- vietnam.vn
+- bgnes.com
+- tech.news.am
+- globaltimes.cn
+- Global Times
 slug: fascinating_frontiers
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
 memory_enabled: true
 description: Space exploration, astronomy, and cosmology — the frontier of human discovery
   beyond Earth. Daily briefings on NASA, ESA, SpaceX missions, planetary science,
   and the search for life in the universe.
+# Nov 13 2026 (FF review): the feed list, rebuilt from the weekly feed audit
+# (data/feed_audit_2026-11-08.json). Removed: all three ESA feeds (404 since
+# Nov 1-8), Sky & Telescope (403 every week), science.nasa.gov/feed (200 with
+# zero entries), r/spacex and r/astronomy (429) and r/space (amateur posts,
+# see exclude_sources), the duplicate NASA image-of-the-day and Space.com
+# feeds (same entries twice), and Teslarati SpaceX (a fan site on SpaceX
+# Daily's beat). Added: the primary science desks a space show is judged
+# by — JPL, ESO, ESA/Webb, ESA/Hubble, AAS Nova (plain-language summaries of
+# new AAS journal papers), the Planetary Society — plus ScienceDaily's space
+# desk, NASASpaceflight and Ars Technica's space desk (both live on SpaceX
+# Daily's audit). The other seven were read on Nov 13 and returned items.
 sources:
 - url: https://www.nasa.gov/rss/dyn/breaking_news.rss
   label: NASA Breaking
-- url: https://www.nasa.gov/rss/dyn/image_of_the_day.rss
-  label: NASA Image
+- url: https://www.jpl.nasa.gov/feeds/news/
+  label: NASA JPL
+- url: https://www.eso.org/public/news/feed/
+  label: ESO
+- url: https://esawebb.org/news/feed/
+  label: ESA/Webb
+- url: https://esahubble.org/news/feed/
+  label: ESA/Hubble
+- url: https://aasnova.org/feed/
+  label: AAS Nova
+- url: https://www.planetary.org/rss/articles
+  label: The Planetary Society
 - url: https://www.space.com/feeds/all
   label: Space.com
-- url: https://www.space.com/rss
-  label: Space.com RSS
 - url: https://www.spaceflightnow.com/feed/
   label: Spaceflight Now
 - url: https://spacenews.com/feed/
   label: SpaceNews
+- url: https://www.nasaspaceflight.com/feed/
+  label: NASASpaceflight
+- url: https://arstechnica.com/space/feed/
+  label: Ars Technica Space
+- url: https://www.sciencedaily.com/rss/space_time.xml
+  label: ScienceDaily Space & Time
 - url: https://www.astronomy.com/feed/
   label: Astronomy
-- url: https://www.skyandtelescope.com/feed/
-  label: Sky & Telescope
 - url: https://www.universetoday.com/feed/
   label: Universe Today
-- url: https://www.esa.int/rssfeed/ESA
-  label: ESA
-- url: https://www.esa.int/rssfeed/Our_Activities
-  label: ESA Activities
 - url: https://www.nature.com/nature/astronomy.rss
   label: Nature Astronomy
 - url: https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science
@@ -81,22 +125,10 @@ sources:
   label: Google News NASA SpaceX
 - url: https://news.google.com/rss/search?q=astronomy+discovery+exoplanet+when%3A1d&hl=en-US&gl=US&ceid=US:en
   label: Google News Astronomy
-- url: https://www.reddit.com/r/space/.rss
-  label: r/space
-- url: https://www.reddit.com/r/spacex/.rss
-  label: r/spacex
-- url: https://www.reddit.com/r/astronomy/.rss
-  label: r/astronomy
-- url: https://science.nasa.gov/feed/
-  label: NASA Science
 - url: https://www.nasa.gov/feeds/iotd-feed/
   label: NASA Image of the Day
-- url: https://www.esa.int/rssfeed/Our_Activities/Space_News
-  label: ESA Space News
 - url: https://phys.org/rss-feed/space-news/
   label: Phys.org Space
-- url: https://www.teslarati.com/category/spacex/feed/
-  label: Teslarati SpaceX
 - url: https://www.quantamagazine.org/feed/
   label: Quanta Magazine
 web_search_queries:
@@ -186,6 +218,15 @@ exclude_title_patterns:
 - \bthe sky (today|tonight)\b
 - \bnight sky is changing\b
 - \bwhich planets?\b.{0,20}\b(to )?(watch|see)\b
+# Nov 13 2026 (FF review): picture-of-the-day pages are captions, not news.
+# Ep251 aired NASA's APOD ("Moon, Venus and Spica Meet", a Polish landscape
+# photo) as item 7 and Astronomy's "Taula eclipse" picture of the day — an
+# August image — as BOTH an Also Today line and the Cosmic Spotlight; Ep242
+# shipped "November Night Sky Highlights". A real discovery image is
+# published by its agency as a release, which these never match.
+- \bAPOD\b
+- \b(picture|photo|image) of the day\b
+- \bnight sky highlights\b
 keywords:
 - space
 - astronomy
@@ -281,7 +322,13 @@ llm:
   # one. Free on the 94% of runs that finish well under it.
   max_tokens: 7500
   podcast_max_tokens: 10000
-  min_podcast_words: 1700
+  # Nov 13 2026 (FF review): the script prompt no longer asks for 1,900
+  # words — it is the digest's facts told once (the Nov 12 FPD/UC shape:
+  # the brief sets the length). Ep238-251 ran 1,184-1,771 words with the
+  # word demand in place and the audit flagged REPETITIVE on 12 of 14, the
+  # restatement a script writes to reach a count. The below-target line
+  # moves to 1,400; the skip floor stays pinned at 850 below.
+  min_podcast_words: 1400
   # Oct 11 2026: the publication floor is set apart from the target.
   # The Oct 10 pass capped this show at 12 items (filler had been airing
   # to reach a quota of 15), and a thin Sunday then wrote a dense
@@ -310,6 +357,21 @@ llm:
   # first slate (Ep634 1,231 / 1,600; Ep222 1,159 / 1,400); a second pass
   # runs only while it is still under 90% of the floor.
   digest_expansion_attempts: 2
+  # Nov 13 2026 (FF review; joins digest-fact-floor-2026-11-03, which ran
+  # on Planetterrian first): the retry fires on FACTS, not words. The word
+  # floor above fired on 9 of 9 episodes Ep243-251 and roughly doubled thin
+  # digests (Ep250 815 -> 1,653 words, Ep248 1,069 -> 1,845), and its word
+  # branch tells the model to lengthen the Cosmic Deep Dive first "in
+  # general terms" — the section that carried most of the daily audit's
+  # FACTUAL_ERRORS (Ep238 tidal gradient "a factor of thousands", Ep248 a
+  # dwarf galaxy "thousands of times" a coast-to-coast run, Ep235's
+  # magnetosphere scale) and its Repetitive flags (Ep251's deep dive re-told
+  # item 6). The fact branch adds only sourced, fact-bearing sentences and
+  # never grows the deep dive. Committed digests Ep231-251 carry 17-52 fact
+  # sentences (median 26); 18 matches Planetterrian's floor, so it fires on
+  # a thin day only. min_digest_words stays as the recorded number.
+  # ⚠️ AUDIO: thin days ship shorter and denser — A/B-listen the first.
+  min_digest_facts: 18
   podcast_chain: true
 tts: {}
 audio:

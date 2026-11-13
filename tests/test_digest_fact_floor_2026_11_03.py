@@ -343,8 +343,11 @@ class TestTheRollout:
         assert cfg.llm.digest_expand_below_target is True and cfg.llm.min_digest_words == 1400
         assert cfg.llm.min_podcast_publish_words == 850  # the skip floor never moves
         others = []
+        # Nov 13 2026: Fascinating Frontiers joins (its review; guards
+        # tests/test_fascinating_frontiers_review_2026_11_13.py). Any other
+        # show still waits for the register readout.
         for p in sorted((ROOT / "shows").glob("*.yaml")):
-            if p.name == "planetterrian.yaml":
+            if p.name in ("planetterrian.yaml", "fascinating_frontiers.yaml"):
                 continue
             llm = (yaml.safe_load(p.read_text(encoding="utf-8")) or {}).get("llm") or {}
             if llm.get("min_digest_facts"):
