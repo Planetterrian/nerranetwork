@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import glob
 import sys
+import re
 from pathlib import Path
 
 import pytest
@@ -199,7 +200,11 @@ class TestTheSlateReview:
     @pytest.mark.parametrize("slug", ["fascinating_frontiers", "planetterrian"])
     def test_ff_and_pt_quota_is_a_ceiling(self, slug):
         d = (P / f"{slug}_digest.txt").read_text(encoding="utf-8")
-        assert "ALWAYS pick 15" not in d and "At most 12 items" in d
+        assert "ALWAYS pick 15" not in d
+        # The quota is a CEILING of at most 12 (FF moved to "At most 10 items"
+        # on Nov 13 2026, the FF review); a lower ceiling keeps the rule.
+        m = re.search(r"At most (\d+) items", d)
+        assert m and int(m.group(1)) <= 12, slug
         assert "<<include: _shared/interesting_first.txt>>" in d
         assert "COVER MORE STORIES" not in (P / f"{slug}_podcast.txt").read_text(encoding="utf-8")
 
