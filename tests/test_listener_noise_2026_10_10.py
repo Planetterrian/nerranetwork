@@ -16,6 +16,8 @@ import glob
 import sys
 from pathlib import Path
 
+import re
+
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -199,7 +201,11 @@ class TestTheSlateReview:
     @pytest.mark.parametrize("slug", ["fascinating_frontiers", "planetterrian"])
     def test_ff_and_pt_quota_is_a_ceiling(self, slug):
         d = (P / f"{slug}_digest.txt").read_text(encoding="utf-8")
-        assert "ALWAYS pick 15" not in d and "At most 12 items" in d
+        assert "ALWAYS pick 15" not in d
+        # A ceiling, never a quota: FF lowered its own to 10 on Nov 13 2026
+        # (tests/test_fascinating_frontiers_review_2026_11_13.py).
+        m = re.search(r"At most (\d+) items", d)
+        assert m and int(m.group(1)) <= 12
         assert "<<include: _shared/interesting_first.txt>>" in d
         assert "COVER MORE STORIES" not in (P / f"{slug}_podcast.txt").read_text(encoding="utf-8")
 
