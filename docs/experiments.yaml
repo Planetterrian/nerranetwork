@@ -7395,6 +7395,44 @@ experiments:
       tests/test_offshore_north_ep012_review_2026_11_08.py. ⚠️ AUDIO via the
       prompts.
 
+  - id: offshore-north-external-review-2026-11-13
+    title: "Offshore North: the week's biggest story leads, a short dated Canadian segment, each story once, a story to watch"
+    area: offshore_north
+    shipped: 2026-11-13
+    readout: 2026-12-14
+    status: reading
+    baseline: >
+      Ep010-013 (Oct 19-Nov 9): The Canadian Boat led every episode by rule
+      and Ep012 and Ep013 retold the 23 Oct RORC Transatlantic post the
+      Ep011 hook had led with; 2-3 Fleet items; Ep013 left out the IMOCA
+      race its sources reported, told the qualification rules twice
+      (explainer re-tell share 0.43) and aired "1430 local time"; Ep012
+      opened Plain Sailing on Ep006's sentence. Scripts 980-1,034 words.
+    target: >
+      Next four episodes: explainer_distinct 0 on the shipped digest, 3-5
+      Fleet items, a Canadian Boat that re-tells no earlier post beyond one
+      clause, and no episode skipped for length.
+    criteria: >
+      HIT when, on at least three of the next four episodes,
+      digest_lints_fired_after_retry does not carry explainer_distinct, The
+      Fleet carries 3-5 items and The Canadian Boat retells no post an
+      earlier episode reported, with none skipped under the 950-word floor;
+      MISS when two episodes break any of the three or one is skipped for
+      length; INCONCLUSIVE when fewer than four episodes ship.
+    readout_plan: >
+      metrics_ep014-017.json (digest_lints_fired_after_retry,
+      explainer_retells_section, explainer_repeats_past, skip reasons); read
+      each shipped digest's The Fleet item count and The Canadian Boat
+      against the previous episode's.
+    notes: >
+      Prompt pass (digest, script, system) plus engine/digest_lint.py
+      explainer_distinct, offshore_north opts in; run_show's lint context
+      carries past_explainers. Review
+      docs/reviews/offshore_north_external_review_2026_11_13.md; guards
+      tests/test_offshore_north_external_review_2026_11_13.py. ⚠️ AUDIO:
+      the running order changes; listen to the rehearsal and the first
+      episode.
+
   - id: long-form-rundown-subscribe-2026-11-08
     title: "The long-form shows the spoken map's stories, and asks for the subscribe at 45 s and the midpoint"
     area: retention

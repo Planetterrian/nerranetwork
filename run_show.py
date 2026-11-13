@@ -7615,6 +7615,10 @@ def _digest_lint_context(config, articles, template_vars, episode_num) -> dict:
         out_dir = getattr(getattr(config, "episode", None), "output_dir", "") or ""
         if out_dir:
             ctx["past_hooks"] = past_hooks(Path(out_dir), before_episode=episode_num)
+            # Nov 13 2026: the explainers already aired (``explainer_distinct``).
+            from engine.digest_lint import past_explainer_openings
+
+            ctx["past_explainers"] = past_explainer_openings(Path(out_dir), before_episode=episode_num)
         kw = str(getattr(getattr(config, "publishing", None), "rss_keywords", "") or "")
         ctx["beat_terms"] = [t.strip() for t in kw.split(",") if t.strip()]
         ref = []

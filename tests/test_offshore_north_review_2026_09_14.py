@@ -239,15 +239,22 @@ class TestEditorialRules:
         assert "NO STANDINGS" in _podcast()
         assert "skipper-and-position roll-call" in _system()
 
-    def test_canadian_boat_leads_and_is_longest(self):
+    def test_canadian_boat_is_short_and_the_week_leads(self):
+        """Superseded Nov 13 2026 (the external review): the Canadian Boat was
+        the lead and the longest segment by rule from this pass until Ep013,
+        and on the weeks the boat sat in Gosport it filled its length by
+        retelling old posts. Now the week's biggest story leads (The Fleet
+        first) and the Canadian Boat is short, dated and every week — unless
+        the campaign has the week's biggest story. The full pins live in
+        tests/test_offshore_north_external_review_2026_11_13.py."""
         d, p = _digest(), _podcast()
-        assert "LEAD AND THE LONGEST" in d
-        assert "FIRST SEGMENT AND THE LONGEST" in p
-        # Fleet word budget now sits below the Canadian Boat's.
-        cb = re.search(r"THE FIRST SEGMENT AND THE LONGEST: (\d+)–(\d+) words", p)
-        fl = re.search(r"\[The Fleet\].*?About (\d+)–(\d+) words", p, re.S)
+        assert "LEAD AND THE LONGEST" not in d
+        assert "FIRST SEGMENT AND THE LONGEST" not in p
+        assert "SHORT AND DATED, EVERY WEEK" in d and "SHORT AND DATED, EVERY WEEK" in p
+        cb = re.search(r"SHORT AND DATED, EVERY WEEK: about (\d+)–(\d+) words", p)
+        fl = re.search(r"\[The Fleet\].*?about (\d+)–(\d+) words", p, re.S)
         assert cb and fl
-        assert int(cb.group(1)) > int(fl.group(2)) - 100 and int(cb.group(2)) > int(fl.group(2))
+        assert int(cb.group(2)) < int(fl.group(1))
 
     def test_incidents_not_leaderboards(self):
         assert "INCIDENTS, NOT LEADERBOARDS" in _digest()
