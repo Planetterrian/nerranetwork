@@ -470,8 +470,13 @@ class TestAddons:
 
     def test_builder_wires_markets_and_gating(self):
         src = _read("scripts/build_personal_feeds.py")
-        assert "wants_local_brief(spec)" in src
-        assert "needs_research_call(spec)" in src
+        # Nov 13 2026: the gates take the day's add-on set (the city brief
+        # drops traffic when the commute ran); the set still comes from the
+        # tier-enforced effective_addons(), never from the raw record.
+        assert "wants_local_brief(spec, addons)" in src
+        assert "needs_research_call(spec, addons)" in src
+        assert "addons = spec.effective_addons() if addons is None else addons" in src
+        assert "addons = local_brief_addons(spec, commute_ran)" in src
         assert "build_markets_line(ROOT, member_tickers(spec), quotes)" in src
         assert 'if "markets" in spec.effective_addons()' in src
 

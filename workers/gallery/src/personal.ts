@@ -1405,7 +1405,7 @@ export async function handleAdminSpecs(
           // re-validates the shapes (validate_spec).
           ...(rec.tickers !== undefined ? { tickers: rec.tickers } : {}),
           // Nov 13 2026: routes and trips (personal data — this route is
-          // bearer-only and carries no email). A finished trip is dropped
+          // bearer-only and carries no address). A finished trip is dropped
           // here too, so nothing past its date leaves the Worker.
           ...(rec.routes?.length ? { routes: rec.routes } : {}),
           ...(rec.trips?.length ? { trips: cleanTrips(rec.trips) } : {}),
