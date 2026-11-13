@@ -204,7 +204,10 @@ class TestLengthTarget:
         text = _PODCAST_PROMPT.read_text(encoding="utf-8")
         assert "8–12 minute" not in text and "8-12 minute" not in text
         assert "at least 2000 words" not in text
-        assert "1,700" in text  # the unified target
+        # Nov 13 2026 review: no spoken-length target at all — length follows
+        # the briefing's facts (podcast-side length levers are do_not_retry).
+        assert "1,700" not in text
+        assert "the briefing's facts set the length" in text
 
     def test_yaml_keeps_a_length_lever_and_raised_floor(self):
         # Superseded 2026-07-29 (cost-efficiency pass): the podcast-side
@@ -294,7 +297,9 @@ class TestEditorialRealignmentJuly18:
     def test_podcast_length_retry_deepens_not_adds(self):
         text = _PODCAST_PROMPT.read_text(encoding="utf-8")
         assert "COVER MORE STORIES" not in text
-        assert "DEEPEN the slate" in text
+        # Nov 13 2026 review: the deepen-to-length instruction went with the
+        # 1,700-word must (it padded; a thin day is a shorter episode).
+        assert "DEEPEN the slate" not in text
 
     def test_podcast_seeds_progress_transitions(self):
         text = _PODCAST_PROMPT.read_text(encoding="utf-8").lower()
@@ -349,7 +354,10 @@ class TestEditorialRealignmentJuly18:
         llm = _cfg()["llm"]
         assert llm.get("podcast_expansion_style") == "deepen"
         assert llm.get("digest_expand_below_target") is True
-        assert llm.get("min_digest_words", 0) >= 1400
+        # Nov 13 2026 review: 1500 -> 1000. The ledger's deferred item asked
+        # for exactly this audit first — the floor fired on 9 of 9 episodes
+        # (Ep226-234) and its padding is the audit's Repetitive predictor.
+        assert llm.get("min_digest_words", 0) >= 1000
 
     def test_yaml_has_progress_watch_chapter_marker(self):
         cfg = _cfg()

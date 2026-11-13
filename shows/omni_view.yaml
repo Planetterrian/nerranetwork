@@ -5,7 +5,12 @@ name: Omni View
 # prompt saw headline + teaser only until now), primary publishers marked
 # [preferred primary source], X posts ranked after every article where set,
 # and the X-only-lead lint riding the one-shot structural regeneration.
-fetch_full_text: 12
+# Nov 13 2026 (Omni View review): 12 -> 24 articles at 4,000 characters, the
+# Top World settings. The digest read full text on 8-12 of 60 articles and
+# wrote the rest from a headline and a teaser — which is where the
+# "the coverage presents it as..." sentences came from: nothing else to say.
+fetch_full_text: 24
+fetch_full_text_chars: 4000
 # Sep 30 2026 (network review): nothing older than three days is news.
 # The page-date probe (engine/article_dates.py, date_probe_max) dates the
 # articles nothing trustworthy dated, and this gate drops what it finds
@@ -36,8 +41,13 @@ preferred_domains:
 - apnews.com
 - bbc.com
 - aljazeera.com
-- france24.com
 - dw.com
+# Nov 13 2026: the three newsrooms Top World reads that this show did not
+# (France 24 leaves the list to keep it at the sourcing pass's cap of 8; its
+# feed stays).
+- nytimes.com
+- theglobeandmail.com
+- cbc.ca
 slug: omni_view
 memory_enabled: true   # Aug 2026 expansion: narrative memory (regulatory arcs / world-news arcs) — see engine/show_memory.py.
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
@@ -50,6 +60,17 @@ description: The day's most important stories from around the world — explaine
 # AP publish no public RSS), WSJ World, and regional feeds for Africa / Asia /
 # Latin America to fix the heavy UK/US skew (3-6 UK items per episode in the
 # Jul 3-16 window).
+#
+# Nov 13 2026 (Omni View review): Bloomberg Markets, Wired, Ars Technica and
+# the two Reddit feeds OUT, The New York Times World, The Globe and Mail World
+# and CBC World IN. The prompt sees the 150 NEWEST of ~430 fetched articles
+# (run_show's pre-dedup cap), so a high-volume feed of market ticks, gadget
+# news and Reddit links crowded out the world's newsrooms: the Nov 5-12 slate
+# led with an EU consumer proposal and carried a Turkish appliance maker, a
+# Nissan strategy note and a Reuters fund column while Top World, from the
+# same day's news, told the Mississippi Senate result and the Gaza hospital
+# strike. The spectrum outlets (Fox, Newsmax, Reason, Mother Jones, The
+# Intercept, RealClearPolitics) stay: they are the show's perspectives.
 sources:
 - url: https://feeds.npr.org/1001/rss.xml
   label: NPR
@@ -73,12 +94,8 @@ sources:
   label: Reason
 - url: https://www.realclearpolitics.com/index.xml
   label: RealClearPolitics
-- url: https://feeds.bloomberg.com/markets/news.rss
-  label: Bloomberg
 - url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114
   label: CNBC
-- url: https://www.wired.com/feed/rss
-  label: Wired
 - url: https://news.google.com/rss/search?q=US+politics+policy+news+when%3A1d&hl=en-US&gl=US&ceid=US:en
   label: Google News US Politics
 - url: https://news.google.com/rss/search?q=world+news+geopolitics+today+when%3A1d&hl=en-US&gl=US&ceid=US:en
@@ -89,10 +106,6 @@ sources:
   label: Reuters (via Google News)
 - url: https://news.google.com/rss/search?q=site:apnews.com+world&hl=en-US&gl=US&ceid=US:en
   label: AP (via Google News)
-- url: https://www.reddit.com/r/worldnews/.rss
-  label: r/worldnews
-- url: https://www.reddit.com/r/geopolitics/.rss
-  label: r/geopolitics
 - url: http://feeds.bbci.co.uk/news/world/rss.xml
   label: BBC World News
 - url: https://feeds.bbci.co.uk/news/world/africa/rss.xml
@@ -119,12 +132,16 @@ sources:
   label: NPR World
 - url: https://rss.dw.com/xml/rss-en-top
   label: Deutsche Welle
-- url: https://arstechnica.com/feed/
-  label: Ars Technica
 - url: https://www.economist.com/the-world-this-week/rss.xml
   label: The Economist
 - url: https://rss.csmonitor.com/feeds/top
   label: Christian Science Monitor
+- url: https://rss.nytimes.com/services/xml/rss/nyt/World.xml
+  label: The New York Times World
+- url: https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/
+  label: The Globe and Mail World
+- url: https://www.cbc.ca/webfeed/rss/rss-world
+  label: CBC World
 # Defense-in-depth against celebrity/tabloid shapes at fetch time (FF
 # stock-filter class — deterministic, no A/B). Conservative on purpose:
 # hard-news false drops are worse than a leaked soft item (the prompt-level
@@ -139,6 +156,12 @@ exclude_title_patterns:
 - \bpaparazzi\b
 - (?i)\bnet worth\b
 - (?i)steps out (?:in|with)
+# Nov 13 2026: the Top World list — a live blog, a gallery, a quiz or an
+# obituary page is never one of the day's stories.
+- \b(live updates?|as it happened|live blog)\b
+- \b(in pictures|photos of the (day|week)|week in pictures)\b
+- \b(quiz|crossword|wordle)\b
+- \b(obituar(y|ies)|in memoriam)\b
 web_search_queries:
 - world news geopolitics today
 - US politics policy news today
@@ -294,7 +317,16 @@ llm:
   # first slate (Ep634 1,231 / 1,600; Ep222 1,159 / 1,400); a second pass
   # runs only while it is still under 90% of the floor.
   digest_expansion_attempts: 2
-  min_digest_words: 1500
+  # 2026-11-13 (Omni View review): 1500 -> 1000. The 1,500-word floor fired
+  # the expansion retry on 9 of 9 episodes from Ep226 (first drafts 944-1,216
+  # words) and what it bought was padding: digest fact-free share 34-55%,
+  # the daily audit's best predictor of a Repetitive flag, on a show flagged
+  # Repetitive 12 of 14 days. The new digest prompt makes its depth targets
+  # ceilings and sends a thin story to Also Today, so a full day lands near
+  # 1,100-1,400 words and only a genuinely thin draft is expanded. The skip
+  # floor is untouched (min_podcast_words). The fact floor
+  # (min_digest_facts) waits for Planetterrian's Nov 17 readout.
+  min_digest_words: 1000
 tts: {}
 audio:
   music_file: assets/music/OmniView.mp3
