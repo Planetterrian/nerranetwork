@@ -136,7 +136,7 @@ class TestTheDeepDiveNeverGuesses:
     def test_hook_fits_the_title_whole(self):
         from engine.titles import PODCAST_EPISODE_TITLE_MAX, episode_title
         p = DIGEST_PROMPT.read_text(encoding="utf-8")
-        m = re.search(r"\*\*HOOK:\*\* \[One sentence \(under (\d+) characters", p)
+        m = re.search(r"\*\*HOOK:\*\* \[One sentence of at most \d+ words and under (\d+) characters", p)
         assert m
         # "Ep 999: " plus the hook must fit the feed title.
         assert int(m.group(1)) + len("Ep 999: ") <= PODCAST_EPISODE_TITLE_MAX
@@ -159,3 +159,54 @@ class TestTheScriptIsTheDigestsFacts:
         p = PODCAST_PROMPT.read_text(encoding="utf-8")
         assert "Never convert a unit, never work out a multiple or a ratio" in p
         assert "Never merge two dated events into one sentence" in p
+
+
+# --- Follow-up after the first live episode (Ep252, Nov 13) ---------------
+# Ep252 ran 6.8 minutes: twelve items of two or three sentences each (an
+# Ohio astronaut profile, a Korean workshop, SpaceX's Brownsville water
+# money read from its X post), the deep dive built from item 12's article,
+# and a 94-character hook clipped in the feed title.
+
+
+class TestFewerStoriesEachExplained:
+    def test_a_listed_item_is_built_from_a_read_article(self):
+        p = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "FEWER STORIES, EACH EXPLAINED" in p
+        assert "carries at least three distinct facts" in p
+        assert "At most 10 items" in p
+
+    def test_wonder_ranks_the_list(self):
+        p = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "WONDER RANKS THE LIST" in p
+        assert "spending or site work on Earth" in p
+
+    def test_enough_articles_are_read(self):
+        # 10 items plus a Spotlight plus a deep dive, each from its own page.
+        assert _cfg()["fetch_full_text"] >= 24
+
+    def test_a_sister_show_never_steers_the_show_away(self):
+        p = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "change course" not in p
+        assert "never a reason to skip it" in p
+
+    def test_the_hook_is_counted_in_words(self):
+        p = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "at most 13 words and under 90 characters" in p
+        ep252 = ("Euclid has released images of 900 million galaxies spanning "
+                 "an area equal to 9500 full moons.")
+        assert len(ep252.split()) > 13  # the hook that was clipped
+
+
+class TestTheScriptExplains:
+    def test_each_story_is_explained_not_listed(self):
+        p = PODCAST_PROMPT.read_text(encoding="utf-8")
+        assert "Each story is EXPLAINED, not listed" in p
+        assert "Zero commentary sentences" not in p
+        # The plain-words sentence carries no number: the accuracy rules hold.
+        assert "with no number in it" in p
+        assert "Never convert a unit, never work out a multiple or a ratio" in p
+
+    def test_no_handle_or_web_address_is_spoken(self):
+        p = PODCAST_PROMPT.read_text(encoding="utf-8")
+        assert "Never a social-media handle" in p
+        assert '"X dot com"' in p
