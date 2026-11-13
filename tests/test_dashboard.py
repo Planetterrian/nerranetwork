@@ -456,19 +456,29 @@ def test_content_lake_section_shape():
 
 
 def test_op3_history_accumulates(tmp_path):
-    """_merge_op3_history freezes old weeks and overwrites the rolling 4."""
+    """_merge_op3_history takes OP3's windows the night they end on a
+    Saturday (asof), freezes old weeks and rewrites the newest four.
+
+    Nov 12 2026: the windows are trailing seven-day windows ending on
+    ``asof``, so they are written as Sunday to Saturday weeks keyed by the
+    Monday inside them — never under the Monday of the fetch date."""
     (tmp_path / "api").mkdir()
     per_show = {"tesla": {"weekly_downloads": [10, 20, 30, 40]}}
-    out1 = gd._merge_op3_history(tmp_path, "2026-07-23T00:00:00Z", per_show)
+    # asof Saturday 2026-07-25: windows end Jul 4, 11, 18, 25.
+    out1 = gd._merge_op3_history(tmp_path, "2026-07-26T20:00:00Z", per_show,
+                                 {"tesla": "2026-07-25"})
     assert out1["network_total"] == 100
     assert out1["per_show_totals"]["tesla"] == 100
-    assert out1["since"] == "2026-06-29"  # Monday of w-3
+    assert out1["since"] == "2026-06-29"  # Monday inside Jun 28 - Jul 4
+    assert out1["through"] == "2026-07-25"
     # A week later: the window slides; the dropped-off week stays frozen.
     per_show2 = {"tesla": {"weekly_downloads": [21, 31, 41, 5]}}
-    out2 = gd._merge_op3_history(tmp_path, "2026-07-30T00:00:00Z", per_show2)
+    out2 = gd._merge_op3_history(tmp_path, "2026-08-02T20:00:00Z", per_show2,
+                                 {"tesla": "2026-08-01"})
     # frozen w 2026-06-29 (10) + overwritten 20->21, 30->31, 40->41 + new 5
     assert out2["network_total"] == 10 + 21 + 31 + 41 + 5
     assert out2["since"] == "2026-06-29"
+    assert out2["through"] == "2026-08-01"
     assert len(out2["network_series"]) == 5
 
 
@@ -773,6 +783,8 @@ class TestEfficiencyAndProjection:
             "fetched_at": "2026-07-26T00:00:00+00:00",
             "shows": {
                 "tesla": {
+                    # asof a Saturday: the night the ledger takes the window.
+                    "asof": "2026-07-25",
                     "downloads_7d": 100, "downloads_30d": 500, "weekly_avg": 100,
                     # One short week only — after merge, all-time stays < 30d.
                     "weekly_downloads": [80],

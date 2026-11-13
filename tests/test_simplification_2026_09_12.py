@@ -468,16 +468,19 @@ def _seed_root(tmp_path: Path) -> Path:
 class TestAudienceHeadline:
     TODAY = __import__("datetime").date(2026, 9, 12)
 
-    def test_wow_uses_the_last_complete_week(self):
-        assert ah.weekly_wow([623, 727, 760, 576]) == {"last_week": 760, "prior_week": 727, "wow_pct": 4.5}
-        assert ah.weekly_wow([0, 0, 5, 1])["wow_pct"] is None   # prior week 0 → unmeasured
-        assert ah.weekly_wow([5, 1])["wow_pct"] is None          # too short
+    def test_wow_is_the_newest_window_against_the_one_before(self):
+        # Nov 12 2026: OP3's series is trailing seven-day windows, every one
+        # complete (engine/op3_weeks.py). Until then the newest was skipped
+        # as "partial" and this read 727 -> 760, the week before last.
+        assert ah.weekly_wow([623, 727, 760, 576]) == {"last_week": 576, "prior_week": 760, "wow_pct": -24.2}
+        assert ah.weekly_wow([0, 5, 0, 1])["wow_pct"] is None   # prior window 0 → unmeasured
+        assert ah.weekly_wow([5])["wow_pct"] is None             # too short
         assert ah.weekly_wow([])["last_week"] is None
 
     def test_per_show_numbers(self, tmp_path):
         doc = ah.build_headline(_seed_root(tmp_path), today=self.TODAY)
         s = doc["shows"]["spacex"]
-        assert s["downloads_7d"] == 576 and s["wow_pct"] == 4.5
+        assert s["downloads_7d"] == 576 and s["wow_pct"] == -24.2   # 760 -> 576
         assert s["first_week"] == {"median": 72, "episodes": 2}
         assert s["youtube"]["short"] == 75.0 and s["youtube"]["long"] == 15.0 and s["youtube"]["videos"] == 3
         q = doc["shows"]["quiet"]
@@ -487,10 +490,11 @@ class TestAudienceHeadline:
         doc = ah.build_headline(_seed_root(tmp_path), today=self.TODAY)
         n = doc["network"]
         assert n["downloads_7d"] == 576 and n["weekly_downloads"] == [623, 727, 760, 576]
-        assert n["wow_pct"] == 4.5 and n["newsletter_subscribers"] == 5 and n["shows_measured"] == 2
+        assert n["wow_pct"] == -24.2 and n["newsletter_subscribers"] == 5 and n["shows_measured"] == 2
         assert n["first_week_top_shows"] == [{"show": "spacex", "median": 72}]
         line = ah.headline_line(doc)
-        assert line.startswith("Audience headline") and "+4.5% WoW" in line and "spacex 72" in line
+        assert line.startswith("Audience headline") and "spacex 72" in line
+        assert "latest 7 days -24.2% on the 7 before (760 → 576)" in line
         assert "shorts 75.0%" in line and "newsletter: 5" in line
 
     def test_tesla_youtube_joins_its_op3_row_under_one_key(self, tmp_path):

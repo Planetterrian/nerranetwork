@@ -206,11 +206,15 @@ class TestBrandAssets:
 
 class TestGrowth:
     def test_the_chart_reads_complete_weeks_only(self):
+        """A ledger week runs Sunday to Saturday and is keyed by the Monday
+        inside it (engine/op3_weeks.py, Nov 12 2026): it is charted only
+        once its Saturday is behind the ledger's own date."""
         hist = json.loads((ROOT / "api" / "op3_history.json").read_text(encoding="utf-8"))
         updated = dt.date.fromisoformat(hist["updated_at"][:10])
         g = G._media_kit_growth(G._public_shows(G._build_all_shows_list()))
+        assert g["weekly_downloads"]
         for w in g["weekly_downloads"]:
-            assert dt.date.fromisoformat(w["iso"]) + dt.timedelta(days=7) <= updated, w
+            assert dt.date.fromisoformat(w["iso"]) + dt.timedelta(days=5) < updated, w
 
     def test_a_rate_needs_a_real_denominator(self):
         # @NerraFR went from 2 to 26 subscribers in its first weeks: that is

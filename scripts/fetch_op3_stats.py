@@ -188,6 +188,9 @@ def _fetch_show_stats(slug: str, feed_url: str, token: str,
         #   "showDownloadCounts": {uuid: {"monthlyDownloads": N,
         #   "weeklyDownloads": [w-3, w-2, w-1, w0], "weeklyAvgDownloads": N,
         #   "numWeeks": N, "days": "0101…"}}} (verified live 2026-06).
+        # weeklyDownloads are four back-to-back TRAILING seven-day windows
+        # ending on ``asof``, every one complete — not calendar weeks, and
+        # w0 is not a week in progress (Nov 12 2026; engine/op3_weeks.py).
         per_show = ((show_counts or {}).get("showDownloadCounts") or {}).get(uuid) or {}
         weekly = per_show.get("weeklyDownloads") or []
         # episode-download-counts → {"showUuid":…, "episodes": [{"itemGuid",

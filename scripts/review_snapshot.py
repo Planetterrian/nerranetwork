@@ -519,8 +519,8 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
             _yt = _show.get("youtube") or {}
             lines.append(
                 f"- RSS downloads: 7d {_show.get('downloads_7d')} · 30d {_show.get('downloads_30d')} · "
-                f"last full week {_show.get('prior_week')} → {_show.get('last_week')} "
-                f"({'unmeasured' if _wow is None else f'{_wow:+.1f}% WoW'})"
+                f"the 7 days before {_show.get('prior_week')} "
+                f"({'unmeasured' if _wow is None else f'{_wow:+.1f}% WoW, latest 7 days on the 7 before'})"
             )
             lines.append(
                 f"- First-week downloads per episode (median, eps 7-30 days old): "

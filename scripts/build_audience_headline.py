@@ -7,8 +7,8 @@ audience files the nightly already fetches into ONE small document,
 ``api/audience_headline.json``, that the dashboard's first tile, the
 review snapshot's first section and the daily summary line all read:
 
-* per show — RSS downloads in the last 7 and 30 days, the last-complete
-  week against the week before (``wow_pct``), the median first-week
+* per show — RSS downloads in the last 7 and 30 days, the latest seven
+  complete days against the seven before (``wow_pct``), the median first-week
   downloads of episodes old enough to have had a first week, YouTube
   average view percentage over the window (views-weighted, Shorts and
   long-form separately);
@@ -18,8 +18,12 @@ review snapshot's first section and the daily summary line all read:
   sends of the last seven days.
 
 Honesty rules (the funnel report's): a number that cannot be measured is
-``null``, never 0; a week-over-week change needs a non-zero prior week;
-the CURRENT OP3 week is partial and is never compared.
+``null``, never 0; a week-over-week change needs a non-zero prior week.
+OP3's weekly series is four back-to-back trailing seven-day windows ending
+on its ``asof`` day, every one complete (``engine/op3_weeks.py``, Nov 12
+2026): the comparison is the newest window against the one before it.
+Until that date the newest window was read as a week in progress and
+skipped, which reported the week before last.
 
 Reads:  api/op3_stats.json, api/youtube_stats.json, api/buttondown_stats.json,
         api/buttondown_history.json
@@ -38,6 +42,8 @@ from typing import Any, Dict, List, Optional
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+from engine import op3_weeks  # noqa: E402 — after the path insert
 
 #: Analytics window for YouTube retention (days). Matches the policy's
 #: velocity window so the two numbers describe the same videos.
@@ -74,12 +80,14 @@ def _parse_day(value: Any) -> Optional[_dt.date]:
 
 
 def weekly_wow(weekly: List[Any]) -> Dict[str, Optional[float]]:
-    """Last COMPLETE week vs the week before it. OP3's series ends on the
-    current, partial week (w0), so the comparison is w-1 against w-2."""
-    series = [int(x or 0) for x in (weekly or [])]
-    if len(series) < 3:
+    """The latest seven complete days vs the seven before them.
+
+    OP3's series is trailing seven-day windows ending on ``asof``, all of
+    them complete, so the comparison is the newest window against the one
+    before it (``engine.op3_weeks.latest_and_prior`` owns the reading)."""
+    last, prior = op3_weeks.latest_and_prior(weekly)
+    if last is None or prior is None:
         return {"last_week": None, "prior_week": None, "wow_pct": None}
-    last, prior = series[-2], series[-3]
     return {"last_week": last, "prior_week": prior, "wow_pct": _pct_change(last, prior)}
 
 
@@ -218,6 +226,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
     op3_shows = op3.get("shows") or {}
     yt_shows = youtube_videos_by_slug(yt)
     network_weekly: List[int] = []
+    asofs: List[str] = []
     unindexed: List[str] = []
     for slug in sorted(set(op3_shows) | set(yt_shows)):
         s = op3_shows.get(slug) or {}
@@ -237,6 +246,8 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
         if slug in unindexed:
             entry["op3_unindexed"] = True
         entry.update(weekly_wow(entry["weekly_downloads"]))
+        if s and s.get("asof") and entry["weekly_downloads"]:
+            asofs.append(str(s["asof"])[:10])
         entry["first_week"] = first_week_downloads(s.get("episodes") or [], today) if s else {"median": None, "episodes": 0}
         entry["youtube"] = youtube_retention(yt_shows.get(slug) or [], today)
         shows[slug] = entry
@@ -263,6 +274,9 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
         "downloads_30d": sum(int(e["downloads_30d"] or 0) for e in measured) if measured else None,
         "weekly_downloads": network_weekly,
         **weekly_wow(network_weekly),
+        # The last day of the newest window (OP3's asof). The shows are
+        # fetched in one run and share it; the newest is named if not.
+        "week_ending": max(asofs) if asofs else None,
         "first_week_top_shows": [{"show": slug, "median": m} for slug, m in fw_top],
         "youtube": youtube_retention(all_videos, today),
         "newsletter_subscribers": bd.get("subscriber_count") if bd else None,
@@ -281,7 +295,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
             "buttondown_fetched_at": bd.get("fetched_at"),
         },
         "definitions": {
-            "wow_pct": "last COMPLETE week of RSS downloads vs the week before (the current week is partial and never compared); null when the prior week is 0 or unmeasured",
+            "wow_pct": "the latest seven complete days of RSS downloads (the window ending on week_ending, OP3's asof day) vs the seven days before; OP3's weekly windows are trailing and all complete; null when the prior window is 0 or unmeasured",
             "first_week": "median downloads_7d of episodes published 7-30 days ago — each such episode's downloads_7d is its first week",
             "youtube": f"views-weighted averageViewPercentage over videos published in the last {YOUTUBE_WINDOW_DAYS} days, Shorts and long-form separately",
             "email": f"Nerra Daily: the last send's recipients, and opens / clicks / unsubscribes summed over the sends of the last {EMAIL_WINDOW_DAYS} days (Buttondown's counts as of the nightly read); subscribers_delta_7d from api/buttondown_history.json; null where unread",
@@ -299,7 +313,7 @@ def headline_line(doc: Dict[str, Any]) -> str:
     parts.append(f"RSS downloads 7d: {d7 if d7 is not None else 'unmeasured'}")
     wow = n.get("wow_pct")
     if wow is not None:
-        parts.append(f"last full week {'+' if wow >= 0 else ''}{wow}% WoW ({n.get('prior_week')} → {n.get('last_week')})")
+        parts.append(f"latest 7 days {'+' if wow >= 0 else ''}{wow}% on the 7 before ({n.get('prior_week')} → {n.get('last_week')})")
     else:
         parts.append("WoW: unmeasured")
     top = n.get("first_week_top_shows") or []
