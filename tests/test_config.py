@@ -465,7 +465,7 @@ class TestLoadConfigRealFiles:
         cfg = load_config(SHOWS_DIR / "fascinating_frontiers.yaml")
         assert cfg.name == "Fascinating Frontiers"
         assert cfg.slug == "fascinating_frontiers"
-        assert len(cfg.sources) == 25
+        assert len(cfg.sources) == 23  # Nov 13 2026 FF review: feed list rebuilt
         assert cfg.sources[0].label == "NASA Breaking"
         assert "space" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"

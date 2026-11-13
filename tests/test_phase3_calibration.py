@@ -75,7 +75,7 @@ class TestRecalibratedMinPodcastWords:
         # prompt's own "under ~1,400 words is unacceptable" line so it
         # flags genuinely thin episodes instead of all of them.
         "tesla":                   1400,
-        "fascinating_frontiers":   1700,  # June 10 2026 review: single 1,900-2,200-word target
+        "fascinating_frontiers":   1400,  # Nov 13 2026 FF review: no word target, the digest's facts
         "planetterrian":           1600,  # June 10 2026 PT pass: single 1,800-2,100-word target
         "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target
         "omni_view":               1400,  # June 10 2026 OV pass: single 1,700-2,000-word target + expand opt-in

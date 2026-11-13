@@ -92,7 +92,9 @@ class TestUnifiedLengthTargets:
         "modern_investing": (1800, "2,000–2,200 words"),
         "models_agents": (1200, "1,200–1,500 words"),
         "models_agents_beginners": (1200, "1300–1700 words"),
-        "fascinating_frontiers": (1700, "1,900–2,200 words"),
+        # Nov 13 2026 (FF review): the script's length is the digest's
+        # facts, not a word count (tests/test_fascinating_frontiers_review_2026_11_13.py).
+        "fascinating_frontiers": (1400, "Its length is the digest's facts"),
     }
 
     PROMPTS = {

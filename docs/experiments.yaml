@@ -7579,3 +7579,45 @@ experiments:
       audio_metrics.guest_repeat_requests. Review
       docs/reviews/mira_rooms_2026_11_12.md; guards
       tests/test_mira_rooms_2026_11_12.py.
+  - id: ff-review-2026-11-13
+    title: "Fascinating Frontiers: who it cites, a deep dive that never guesses, the length of its facts"
+    area: shows
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    baseline: >
+      Daily audit Ep230-251 (22 episodes): FACTUAL_ERRORS on 12, most of them
+      in the Cosmic Deep Dive's own scale comparisons (Ep235, Ep238, Ep248)
+      or history from memory (Ep234, Ep237); REPETITIVE on 12 of Ep238-251;
+      audit score mean 6.3. Source lines Ep231-251: reddit.com 36 (second
+      only to phys.org's 51), x.com 9; ESA, Sky & Telescope and NASA Science
+      feeds dead in the Nov 8 feed audit. digest_expansion_fired 9 of 9
+      (Ep243-251). OP3 weekly downloads 202, 142, 157, 129 (four 7-day
+      windows to Nov 11). Ep251 re-led Ep250's story.
+    target: >
+      Over the first 14 audited episodes after merge: FACTUAL_ERRORS on at
+      most 3 and REPETITIVE on at most 6; no reddit.com Source line;
+      hook_repeats_past_lead regeneration on at most 2; digest_expansion_fired
+      on at most 5 of 14. OP3 weekly downloads read beside it, not judged on
+      it (four weeks are needed before a trust effect can show).
+    criteria: >
+      HIT when, over the first 14 audited episodes after merge, FACTUAL_ERRORS
+      is on at most 3 and REPETITIVE on at most 6; MISS when FACTUAL_ERRORS is
+      on 6 or more or REPETITIVE on 10 or more; else INCONCLUSIVE.
+    readout_plan: >
+      api/editorial_score_history.json rows for fascinating_frontiers dated
+      after the merge (flags FACTUAL_ERRORS, REPETITIVE, score); Source: hosts
+      in the committed digests; metrics_ep*.json counters
+      digest_expansion_fired, digest_expansion_facts_before/after,
+      deep_dive_contains_body_item, digest_structural_regen_reasons; the OP3
+      weeks in api/op3_stats.json (engine/op3_weeks.py).
+    notes: >
+      shows/fascinating_frontiers.yaml (sources, exclude_sources,
+      exclude_title_patterns, hook_repeats_past_lead, min_digest_facts 18,
+      min_podcast_words 1400 with the 850 skip floor pinned), both FF
+      prompts, and one network URL pattern (/picture-of-the-day/, which only
+      FF has cited). ⚠️ AUDIO: thin days ship shorter and denser; A/B-listen
+      the first episode (a rehearse run first). Review
+      docs/reviews/fascinating_frontiers_review_2026_11_13.md; guards
+      tests/test_fascinating_frontiers_review_2026_11_13.py.
+    evidence: null
