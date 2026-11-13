@@ -303,7 +303,12 @@ def build_narrative_status_block(tracker: Dict[str, Any]) -> str:
             )
 
         lines.append(f"\n**{name}**{when}")
-        lines.append(f"Current status: {status}")
+        if prog.get("status_from_ledger"):
+            # Nov 13 2026: written by the run from that episode's
+            # verified claims ledger (show_memory.apply_ledger_statuses).
+            lines.append(f"Latest verified fact: {status}")
+        else:
+            lines.append(f"Current status: {status}")
 
         questions = prog.get("key_open_questions", [])
         if questions:

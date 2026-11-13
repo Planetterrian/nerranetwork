@@ -126,6 +126,8 @@ prompt. See decision A.
 
 ## Decisions for Patrick
 
+**A. Narrative memory statuses — Patrick chose (1), shipped Nov 13** (`show_memory.update_statuses_from_ledger`; register `memory-statuses-from-claims-2026-11-13`). A replay of the last 14 ledgers per show writes 39 of 117 programs: a claim must carry two of a program's keywords, because one shared word wrote off-topic facts.
+
 **A. Narrative memory statuses.** (1) Let the run write the status: after
 each episode, replace a program's status with one sourced sentence from that
 episode's verified claims ledger (no new model call), dated. (2) Drop the
