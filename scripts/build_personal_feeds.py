@@ -118,7 +118,9 @@ from engine.personal_edition import (  # noqa: E402
     upgrade_nudge_line,
     validate_spec,
     wants_topics_brief,
+    local_brief_addons,
 )
+from engine import personal_travel as ptravel  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
                     stream=sys.stdout)
@@ -392,28 +394,31 @@ def generate_personal_links(
 
 
 def generate_local_brief(spec: PersonalSpec, target_date: dt.date,
-                         city: Optional[str] = None) -> Optional[str]:
-    """One city's brief (``city`` defaults to the primary)."""
+                         city: Optional[str] = None,
+                         addons: Optional[List[str]] = None) -> Optional[str]:
+    """One city's brief (``city`` defaults to the primary). *addons*
+    overrides the member's set (local_brief_addons)."""
     # Gate on the member's add-on toggles (Aug 30 2026): the brief runs
     # only when a location add-on is actually on — and tier is enforced
     # inside effective_addons(), so a base-tier spec can never buy a
     # local brief by writing addons into its record. Depth and city
     # count are tier-enforced the same way (validate_spec, Sep 13 2026).
-    if not wants_local_brief(spec):
+    addons = spec.effective_addons() if addons is None else addons
+    if not wants_local_brief(spec, addons):
         return None
     city = city or spec.city
     try:
         weather = ""
-        if "weather" in spec.effective_addons():
+        if "weather" in addons:
             weather = fetch_weather_line(spec, city=city)
-        if not needs_research_call(spec):
+        if not needs_research_call(spec, addons):
             # Weather-only: measured data, no research sections — spoken
             # verbatim, no LLM call to pay for or to hallucinate.
             return weather or None
         from digests.xai_grok import grok_generate_text
 
         prompt = build_local_brief_prompt(ROOT, spec, target_date, weather,
-                                          city=city)
+                                          city=city, addons=addons)
         text, _meta = grok_generate_text(
             prompt=prompt, model=LINKS_MODEL, temperature=0.6,
             max_tokens=1200 if spec.depth > 1 else 800,
@@ -427,13 +432,15 @@ def generate_local_brief(spec: PersonalSpec, target_date: dt.date,
         return None
 
 
-def generate_local_briefs(spec: PersonalSpec,
-                          target_date: dt.date) -> List[Tuple[str, str]]:
+def generate_local_briefs(spec: PersonalSpec, target_date: dt.date,
+                          commute_ran: bool = False) -> List[Tuple[str, str]]:
     """(city, text) for every city that produced a brief, in the
-    member's order. One Grok call per city."""
+    member's order. One Grok call per city. A day the member's own routes
+    got a commute segment, the city briefs leave traffic out."""
     out: List[Tuple[str, str]] = []
+    addons = local_brief_addons(spec, commute_ran)
     for city in spec.cities:
-        text = generate_local_brief(spec, target_date, city=city)
+        text = generate_local_brief(spec, target_date, city=city, addons=addons)
         if text:
             out.append((city, text))
     return out
@@ -460,16 +467,73 @@ def generate_topics_brief(spec: PersonalSpec,
         return None
 
 
+def generate_commute(spec: PersonalSpec, target_date: dt.date) -> Optional[str]:
+    """Nov 13 2026: "Your commute" — the traffic add-on on the member's
+    own routes. One grounded Grok call; SKIP or a failure = no segment
+    (and the city brief keeps its traffic item). The routes go to the
+    model, never to a log."""
+    if not ptravel.wants_commute(spec.effective_addons(), spec.routes, target_date):
+        return None
+    try:
+        from digests.xai_grok import grok_generate_text
+
+        prompt = ptravel.build_commute_prompt(
+            ROOT, spec.routes, target_date, spec.first_name, spec.city)
+        text, _meta = grok_generate_text(
+            prompt=prompt, model=LINKS_MODEL, temperature=0.4,
+            max_tokens=900, timeout_seconds=600, enable_web_search=True,
+        )
+        return parse_local_brief(
+            text, max_words=ptravel.commute_max_words(spec.routes, target_date))
+    except Exception as exc:  # noqa: BLE001 — never sinks the edition
+        logger.info("%s…: commute failed (%s) — skipped", spec.token[:8], exc)
+        return None
+
+
+def generate_trip(spec: PersonalSpec, target_date: dt.date,
+                  heard: Dict[str, List[dict]]):
+    """Nov 13 2026: "Your trip to <place>" — at most one a day
+    (engine.personal_travel.plan_trip). Returns (trip, mode, text) or
+    None. *heard* is the trip history before today."""
+    plan = ptravel.plan_trip(spec.trips, target_date, heard)
+    if not plan:
+        return None
+    trip, mode = plan
+    try:
+        weather = ""
+        if mode == "during":
+            weather = fetch_weather_line(spec, city=trip.place)
+        from digests.xai_grok import grok_generate_text
+
+        prompt = ptravel.build_trip_prompt(ROOT, trip, mode, target_date,
+                                           spec.first_name, weather)
+        text, _meta = grok_generate_text(
+            prompt=prompt, model=LINKS_MODEL, temperature=0.6,
+            max_tokens=1000, timeout_seconds=600, enable_web_search=True,
+        )
+        body = parse_local_brief(text, max_words=ptravel.TRIP_MAX_WORDS)
+        if body and weather:
+            body = ensure_weather_opener(body, weather)
+        return (trip, mode, body) if body else None
+    except Exception as exc:  # noqa: BLE001
+        logger.info("%s…: trip segment failed (%s) — skipped", spec.token[:8], exc)
+        return None
+
+
 def _transcript_pieces(spec, segments, durations, links, local_texts,
-                       topics_text, markets_text, signoff_text, spans=None):
+                       topics_text, markets_text, signoff_text, spans=None,
+                       commute_text=None, trip_text=None):
     """Splice order → (speaker, duration, text | None, transcript | None,
     cut) for transcript_entries. Mirrors the splice in build_for_spec.
     *spans* — per slug, the stretches trimmed out of that segment: its
     transcript and its promo-cut point move onto the trimmed timeline."""
     spans = spans or {}
     pieces = [("Mira", durations.get("intro", 0.0), links["intro"], None, None)]
-    for i, (_city, text) in enumerate(local_texts, 1):
+    for city, text in local_texts:
+        i = _city_index(spec, city)
         pieces.append(("Mira", durations.get(f"local_{i}", 0.0), text, None, None))
+    if commute_text:
+        pieces.append(("Mira", durations.get("commute", 0.0), commute_text, None, None))
     if topics_text:
         pieces.append(("Mira", durations.get("topics", 0.0), topics_text, None, None))
     if markets_text:
@@ -483,8 +547,20 @@ def _transcript_pieces(spec, segments, durations, links, local_texts,
         pieces.append((seg.show_name, durations.get(f"seg_{seg.slug}", 0.0),
                        None, pstories.remap_transcript(transcript, removed),
                        pstories.remap_cut_point(seg.cut_final_seconds, removed)))
+    if trip_text:
+        pieces.append(("Mira", durations.get("trip", 0.0), trip_text, None, None))
     pieces.append(("Mira", durations.get("signoff", 0.0), signoff_text, None, None))
     return pieces
+
+
+def _city_index(spec: PersonalSpec, city: str) -> int:
+    """A brief's piece key is its city's place in the member's list, so
+    the chapter titled for a city is that city's brief even when an
+    earlier city produced none (Nov 13 2026)."""
+    try:
+        return spec.cities.index(city) + 1
+    except ValueError:
+        return 0
 
 
 def _ensure_cover(client, spec: PersonalSpec, state: dict, prefix: str) -> bool:
@@ -715,13 +791,26 @@ def build_for_spec(
         # The researched pieces come first now (Oct 18 2026): their length
         # feeds the edition's length estimate, and nothing in the links
         # call depends on them.
-        local_texts = generate_local_briefs(spec, target_date)
+        commute_text = generate_commute(spec, target_date)
+        local_texts = generate_local_briefs(spec, target_date,
+                                            commute_ran=bool(commute_text))
         topics_text = generate_topics_brief(spec, target_date)
         markets_text = ""
         if "markets" in spec.effective_addons():
             markets_text = build_markets_line(ROOT, member_tickers(spec), quotes)
+        # Trips: the history before today, so a rebuild of the day hears
+        # the same segment again rather than skipping it.
+        heard_before = {k: [h for h in v if h.get("date") != date_iso]
+                        for k, v in (state.get("trips_heard") or {}).items()}
+        trip_out = generate_trip(spec, target_date, heard_before)
+        trip_text = trip_out[2] if trip_out else None
+        trip_title = ptravel.trip_chapter_title(trip_out[0]) if trip_out else ""
+        trips_heard = (ptravel.record_trip_heard(heard_before, trip_out[0], trip_out[1],
+                                                 target_date, spec.trips)
+                       if trip_out else ptravel.prune_trip_heard(heard_before, spec.trips))
         extra_words = sum(len(t.split()) for _c, t in local_texts) + len(
-            (topics_text or "").split()) + len(markets_text.split())
+            (topics_text or "").split()) + len(markets_text.split()) + len(
+            (commute_text or "").split()) + len((trip_text or "").split())
 
         # Personalization — deterministic, no model call: memory, repeats,
         # trims, interests. The audio trims render before the links so a
@@ -749,10 +838,15 @@ def build_for_spec(
         intro = _mira_piece(links["intro"], "intro", workdir)
         durations["intro"] = _duration(intro)
         local_pieces: List[Path] = []
-        for i, (_city, text) in enumerate(local_texts, 1):
+        for city, text in local_texts:
+            i = _city_index(spec, city)
             piece = _mira_piece(text, f"local_{i}", workdir)
             durations[f"local_{i}"] = _duration(piece)
             local_pieces.append(piece)
+        commute_piece = None
+        if commute_text:
+            commute_piece = _mira_piece(commute_text, "commute", workdir)
+            durations["commute"] = _duration(commute_piece)
         topics_piece = None
         if topics_text:
             topics_piece = _mira_piece(topics_text, "topics", workdir)
@@ -766,6 +860,10 @@ def build_for_spec(
             piece = _mira_piece(text, f"handoff_{i}", workdir, lead_in=sting)
             durations[f"handoff_{i}"] = _duration(piece)
             handoffs.append(piece)
+        trip_piece = None
+        if trip_text:
+            trip_piece = _mira_piece(trip_text, "trip", workdir, lead_in=sting)
+            durations["trip"] = _duration(trip_piece)
         nudge = upgrade_nudge_line(spec, target_date, bool(local_pieces))
         signoff_text = " ".join(x for x in (links["signoff"], nudge,
                                             MIRA_PERSONAL_DISCLOSURE) if x)
@@ -776,6 +874,8 @@ def build_for_spec(
 
         splice: List[Path] = [intro]
         splice.extend(local_pieces)
+        if commute_piece:
+            splice.append(commute_piece)
         if topics_piece:
             splice.append(topics_piece)
         if markets_piece:
@@ -784,6 +884,8 @@ def build_for_spec(
             if i > 0:
                 splice.append(handoffs[i - 1])
             splice.append(seg_paths[seg.slug])
+        if trip_piece:
+            splice.append(trip_piece)
         splice.append(signoff)
 
         # Chapter math mirrors the splice: handoff i leads segment i; each
@@ -807,7 +909,9 @@ def build_for_spec(
                     f" (asked for {spec.target_minutes})" if spec.target_minutes else "",
                     len(segments),
                     f" + {len(local_pieces)} local brief(s)" if local_pieces else "",
-                    " + topics" if topics_piece else "",
+                    (" + topics" if topics_piece else "")
+                    + (" + commute" if commute_piece else "")
+                    + (" + trip" if trip_piece else ""),
                     f", {len(kept)} trim(s) {sum(c.seconds for c in kept):.0f}s" if kept else "")
         if dry_run or client is None:
             keep = os.environ.get("NP_KEEP_DIR")
@@ -818,18 +922,19 @@ def build_for_spec(
                 dest.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(final, dest / filename)
                 pieces = personal_chapter_pieces(spec, segments, durations_for_chapters,
-                                                 subchapters)
+                                                 subchapters, trip_title)
                 (dest / "chapters.json").write_text(
                     json.dumps(build_chapters(pieces, title), indent=1))
                 cues = transcript_entries(_transcript_pieces(
                     spec, segments, durations, links, local_texts, topics_text,
-                    markets_text, signoff_text, spans))
+                    markets_text, signoff_text, spans, commute_text, trip_text))
                 (dest / "transcript.vtt").write_text(transcript_vtt(cues))
                 logger.info("%s…: dry-run artifacts kept in %s", spec.token[:8], dest)
             return True
 
         chapter_pieces = personal_chapter_pieces(spec, segments,
-                                                 durations_for_chapters, subchapters)
+                                                 durations_for_chapters, subchapters,
+                                                 trip_title)
         chapters = build_chapters(chapter_pieces, title)
         # Nov 11 2026: the chapters inside the MP3 too (Apple Podcasts and
         # Overcast read only those; engine.audio_chapters). Before the size
@@ -840,14 +945,18 @@ def build_for_spec(
         sources: Dict[str, List[str]] = {}
         for (city, text) in local_texts:
             sources[f"Your {city} brief"] = named_sources(text)
+        if commute_text:
+            sources[ptravel.COMMUTE_CHAPTER_TITLE] = named_sources(commute_text)
         if topics_text:
             sources["Your topics"] = named_sources(topics_text)
+        if trip_text:
+            sources[trip_title] = named_sources(trip_text)
         description, notes_html = episode_notes(
             spec, chapters["chapters"], sources_by_chapter=sources,
             segments=segments, trims=context.trims, absent=context.absent)
         cues = transcript_entries(_transcript_pieces(
             spec, segments, durations, links, local_texts, topics_text,
-            markets_text, signoff_text, spans))
+            markets_text, signoff_text, spans, commute_text, trip_text))
         tr_json_name, tr_vtt_name = transcript_filenames_for(date_iso)
         row = {
             "episode_num": episode_num,
@@ -894,7 +1003,12 @@ def build_for_spec(
         _r2_put(client, state_key,
                 json.dumps({"episodes": episodes,
                             "cover_signature": state.get("cover_signature", ""),
-                            "special_files": state.get("special_files", [])}
+                            "special_files": state.get("special_files", []),
+                            # Nov 13 2026: which trip angles this member
+                            # has heard (engine.personal_travel) — only
+                            # their current trips, so a removed trip
+                            # leaves no trace.
+                            "trips_heard": trips_heard}
                            ).encode("utf-8"),
                 "application/json")
         _r2_put(client, f"{prefix}/feed.rss",

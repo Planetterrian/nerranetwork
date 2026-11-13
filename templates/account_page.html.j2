@@ -196,6 +196,12 @@
         .me-input[disabled] { opacity: 0.45; cursor: not-allowed; }
         textarea.me-input { min-height: 92px; resize: vertical; }
         .me-inputs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+        /* Nov 13 2026: routes and trips, one row each. */
+        .me-rows { display: grid; gap: 10px; }
+        .me-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 10px; border: 1px solid var(--lt-rule-strong); border-radius: 10px; }
+        .me-row[hidden] { display: none; }
+        .me-row .me-sub { font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--lt-muted); grid-column: 1 / -1; }
+        .me-row label.me-date { display: grid; gap: 3px; font-family: var(--font-ui); font-size: 0.72rem; color: var(--lt-muted); }
 
         /* Shows: the order, then everything else */
         .me-order { list-style: none; margin: 0 0 var(--sp-5); padding: 0; counter-reset: me-order; display: grid; gap: 6px; }
@@ -679,6 +685,51 @@
                         <div class="me-field">
                             <span class="me-label">For each location</span>
                             <div id="nn-addons" class="me-addons"></div>
+                        </div>
+                        <div class="me-field" id="nn-routes-edit">
+                            <span class="me-label">Your routes <small>(optional · the Traffic &amp; transit add-on follows them)</small></span>
+                            <div class="me-rows" id="nn-routes">
+                                {%- for i in range(1, 4) %}
+                                <div class="me-row nn-route">
+                                    <span class="me-sub">Route {{ i }}</span>
+                                    <input type="text" class="me-input nn-r-from" maxlength="80" placeholder="{{ 'From, e.g. North Vancouver' if i == 1 else 'From' }}" aria-label="Route {{ i }}: from">
+                                    <input type="text" class="me-input nn-r-to" maxlength="80" placeholder="{{ 'To, e.g. downtown Vancouver' if i == 1 else 'To' }}" aria-label="Route {{ i }}: to">
+                                    <input type="text" class="me-input nn-r-via" maxlength="80" placeholder="{{ 'Via (optional), e.g. Lions Gate Bridge' if i == 1 else 'Via (optional)' }}" aria-label="Route {{ i }}: via, optional">
+                                    <select class="me-input nn-r-days" aria-label="Route {{ i }}: which days">
+                                        <option value="weekdays">Weekdays</option><option value="daily">Every day</option><option value="weekends">Weekends</option>
+                                    </select>
+                                    <select class="me-input nn-r-mode" aria-label="Route {{ i }}: how you travel">
+                                        <option value="any">Road or transit</option><option value="drive">Driving</option><option value="transit">Transit</option><option value="cycle">Cycling</option>
+                                    </select>
+                                </div>
+                                {%- endfor %}
+                            </div>
+                            <p class="me-help">With <strong>Traffic &amp; transit</strong> on, each morning you travel a
+                               route Mira checks what is reported on it: closures, roadworks, detours, bridge or lane
+                               restrictions, transit changes and strikes, each with its source named. She reads
+                               reports, not live traffic, so she never guesses a travel time. With routes saved, your
+                               city brief leaves traffic to this segment. Turn the add-on off and the routes rest.</p>
+                        </div>
+                        <div class="me-field" id="nn-trips-edit">
+                            <span class="me-label">Upcoming trips <small>(optional)</small></span>
+                            <div class="me-rows" id="nn-trips">
+                                {%- for i in range(1, 4) %}
+                                <div class="me-row nn-trip">
+                                    <span class="me-sub">Trip {{ i }}</span>
+                                    <input type="text" class="me-input nn-t-place" maxlength="80" placeholder="{{ 'Where, e.g. Lisbon, Portugal' if i == 1 else 'Where' }}" aria-label="Trip {{ i }}: where">
+                                    <label class="me-date">Arriving (optional)<input type="date" class="me-input nn-t-start" aria-label="Trip {{ i }}: arriving"></label>
+                                    <label class="me-date">Leaving (optional)<input type="date" class="me-input nn-t-end" aria-label="Trip {{ i }}: leaving"></label>
+                                </div>
+                                {%- endfor %}
+                            </div>
+                            <p class="me-help">Mira gets you ready, at the end of your edition: about once a week she
+                               tells you about the place (its history, its culture, what to see, the practical
+                               things), each angle once. Add dates and in the three weeks before you go she looks
+                               up what is on during your stay, takes a last look a few days out, and each morning
+                               you are there says what is on that day. She stops after your last day, and a finished
+                               trip is cleared from your account the next time you save.</p>
+                            <p class="me-help">Your routes and trips go only to the AI model that writes Mira's lines,
+                               as your city does. They appear on no public page and are never written to a log.</p>
                         </div>
                         <div class="me-field" id="nn-topics-edit">
                             <span class="me-label">Your topics <small id="nn-topics-help">(subjects you follow)</small></span>
@@ -1362,6 +1413,55 @@ var NN = (function () {
   function cityInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-cities .nn-city')); }
   function topicInputs() { return Array.prototype.slice.call(document.querySelectorAll('#nn-topics .nn-topic')); }
   function listValues(inputs) { return inputs.map(function (i) { return i.value.trim(); }).filter(Boolean); }
+  // Nov 13 2026: routes and trips (engine/personal_travel.py; the Worker
+  // re-cleans both). A row counts only with its required fields.
+  function nodes(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function routeRows() { return nodes('#nn-routes .nn-route'); }
+  function tripRows() { return nodes('#nn-trips .nn-trip'); }
+  function q(row, cls) { return row.querySelector('.' + cls); }
+  function routeValues() {
+    return routeRows().map(function (r) {
+      var o = { from: q(r, 'nn-r-from').value.trim(), to: q(r, 'nn-r-to').value.trim(),
+                via: q(r, 'nn-r-via').value.trim(), days: q(r, 'nn-r-days').value, mode: q(r, 'nn-r-mode').value };
+      if (!o.via) { delete o.via; }
+      return o;
+    }).filter(function (o) { return o.from && o.to; });
+  }
+  function tripValues() {
+    return tripRows().map(function (r) {
+      var o = { place: q(r, 'nn-t-place').value.trim(), start: q(r, 'nn-t-start').value, end: q(r, 'nn-t-end').value };
+      if (!o.start) { delete o.start; delete o.end; } else if (!o.end || o.end < o.start) { o.end = o.start; }
+      return o;
+    }).filter(function (o) { return o.place; });
+  }
+  function fillTravel(prefs) {
+    var routes = prefs.routes || [], trips = prefs.trips || [];
+    routeRows().forEach(function (r, i) {
+      var v = routes[i] || {};
+      q(r, 'nn-r-from').value = v.from || ''; q(r, 'nn-r-to').value = v.to || ''; q(r, 'nn-r-via').value = v.via || '';
+      q(r, 'nn-r-days').value = v.days || 'weekdays'; q(r, 'nn-r-mode').value = v.mode || 'any';
+    });
+    tripRows().forEach(function (r, i) {
+      var v = trips[i] || {};
+      q(r, 'nn-t-place').value = v.place || ''; q(r, 'nn-t-start').value = v.start || ''; q(r, 'nn-t-end').value = v.end || '';
+    });
+    revealRows();
+  }
+  // Only one empty row shows at a time: the next appears once the one
+  // before it is filled, so an unused list stays one row long on a phone.
+  function revealRows() {
+    [[routeRows(), function (r) { return q(r, 'nn-r-from').value.trim() || q(r, 'nn-r-to').value.trim(); }],
+     [tripRows(), function (r) { return q(r, 'nn-t-place').value.trim(); }]].forEach(function (pair) {
+      var shown = false;
+      pair[0].forEach(function (r) {
+        var filled = !!pair[1](r);
+        r.hidden = !filled && shown;
+        if (!filled) { shown = true; }
+      });
+    });
+  }
+  function travelInputs() { return nodes('#nn-routes input, #nn-routes select, #nn-trips input'); }
+  function routeRunsOn(r, wd) { var we = wd === 0 || wd === 6; return r.days === 'daily' || (r.days === 'weekends' ? we : !we); }
   function renderLists(prefs) {
     var lim = limits();
     var cities = prefs.cities || (prefs.city ? [prefs.city] : []);
@@ -1373,6 +1473,7 @@ var NN = (function () {
     });
     var topics = prefs.topics || [];
     topicInputs().forEach(function (inp, i) { inp.value = topics[i] || ''; inp.disabled = false; });
+    fillTravel(prefs);
     el('nn-topics-help').textContent = lim.topics
       ? '(up to five; Mira researches each one daily, sources named)'
       : '(up to five; this page follows them, and Mira researches them on Personal News Network)';
@@ -1425,7 +1526,7 @@ var NN = (function () {
       shows: state.shows, name: el('nn-name').value.trim(),
       cities: listValues(cityInputs()), topics: listValues(topicInputs()),
       addons: state.addons, profile: el('nn-profile').value.trim(), length: getLength(),
-      tickers: state.tickers,
+      tickers: state.tickers, routes: routeValues(), trips: tripValues(),
     });
   }
   function markClean() { state.clean = snapshot(); checkDirty(); }
@@ -1469,6 +1570,12 @@ var NN = (function () {
     } else {
       items.push('<li class="is-off">No location yet: <a class="me-link" href="#nn-places">add one</a> for a morning brief</li>');
     }
+    var commute = addons.indexOf('traffic') !== -1
+      ? routeValues().filter(function (r) { return routeRunsOn(r, wd); }) : [];
+    if (commute.length) {
+      items.push('<li>Your commute: what is reported on ' + esc(commute.map(function (r) { return r.from + ' to ' + r.to; }).join('; ')) + '</li>');
+      total += 30 + 25 * commute.length;
+    }
     if (topics.length) { items.push('<li>Your topics: ' + esc(topics.join(', ')) + '</li>'); total += 60 * topics.length; }
     if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute: ' + esc(myTickers().join(', ')) + '</li>'); total += 20 + 8 * myTickers().length; }
     var off = [];
@@ -1484,6 +1591,11 @@ var NN = (function () {
     off.forEach(function (slug) {
       items.push('<li class="is-off">' + esc(showName(slug)) + '<span class="tm">not on ' + WEEKDAYS[wd].charAt(0).toUpperCase() + WEEKDAYS[wd].slice(1) + 's</span></li>');
     });
+    var tday = tomorrow.toISOString().slice(0, 10);
+    var trips = tripValues().filter(function (t) { return !t.end || t.end >= tday; });
+    var there = trips.filter(function (t) { return t.start && t.start <= tday && tday <= t.end; })[0];
+    if (there) { items.push('<li>You are in ' + esc(there.place) + ': Mira says what is on that day</li>'); total += 50; }
+    else if (trips.length) { items.push('<li class="is-off">Your trip' + (trips.length > 1 ? 's' : '') + ' to ' + esc(trips.map(function (t) { return t.place; }).join(', ')) + ': on the days Mira has a new angle, before the sign-off</li>'); }
     if (el('nn-profile').value.trim()) { items.push('<li>Mira knows what you told her, and uses it only where a story connects</li>'); }
     if (addons.indexOf('skip_repeats') !== -1) {
       items.push('<li>A story told twice is trimmed from the later show, and Mira says so</li>');
@@ -1852,7 +1964,7 @@ var NN = (function () {
   }
 
   function wireInputs() {
-    ['nn-name', 'nn-profile'].map(el).concat(cityInputs(), topicInputs(),
+    ['nn-name', 'nn-profile'].map(el).concat(cityInputs(), topicInputs(), travelInputs(),
       Array.prototype.slice.call(document.querySelectorAll('input[name="nn-length"]')))
       .forEach(function (node) {
         if (node && !node._nnWired) {
@@ -1860,6 +1972,9 @@ var NN = (function () {
           node.addEventListener('input', checkDirty); node.addEventListener('change', checkDirty);
         }
       });
+    travelInputs().forEach(function (node) {
+      if (!node._nnRows) { node._nnRows = true; node.addEventListener('input', revealRows); }
+    });
     cityInputs().concat(topicInputs()).forEach(function (node) {
       if (!node._nnTopics) { node._nnTopics = true; node.addEventListener('change', function () { renderTopics(); renderFront(); }); }
     });
@@ -2125,6 +2240,10 @@ var NN = (function () {
         // and keeps the length to its closed set (anything else = none).
         profile: el('nn-profile').value.trim(),
         target_minutes: len ? Number(len) : null,
+        // Nov 13 2026: sent every save, like the topics (the Worker cleans
+        // both and drops a trip that has ended).
+        routes: routeValues(),
+        trips: tripValues(),
       };
       // Oct 29 2026: the stocks they follow (absent = never touched).
       if (state.tickers !== null) { body.tickers = state.tickers; }

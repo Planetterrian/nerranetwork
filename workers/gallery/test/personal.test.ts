@@ -10,8 +10,14 @@ import {
   PERSONAL_ADDONS,
   PERSONAL_SHOWS,
   TARGET_MINUTES,
+  ROUTES_MAX,
+  ROUTE_DAYS,
+  ROUTE_MODES,
   TICKERS_MAX,
+  TRIPS_MAX,
+  cleanRoutes,
   cleanTickers,
+  cleanTrips,
   handleAccount,
   handleAdminSpecs,
   handleBookDownload,
@@ -1197,5 +1203,107 @@ describe("free trial (Sep 17 2026)", () => {
       customer_details: { email: "t@example.com" } } } });
     expect(member(env).status).toBe("active");
     expect(member(env).trial_ends_at).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nov 13 2026: routes (the traffic add-on follows them) and trips.
+// ---------------------------------------------------------------------------
+
+describe("routes and trips (Nov 13 2026)", () => {
+  async function save(env: Env, email: string, body: object) {
+    return handlePreferences(new Request("https://api.example.com/api/account/preferences", {
+      method: "POST",
+      headers: { Cookie: await memberCookie(env, email), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }), env);
+  }
+  async function account(env: Env, email: string) {
+    return (await (await handleAccount(
+      new Request("https://api.example.com/api/account",
+        { headers: { Cookie: await memberCookie(env, email) } }), env)).json()) as any;
+  }
+  const iso = (days: number) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+
+  it("cleans routes: both ends required, closed days and modes, capped", () => {
+    const out = cleanRoutes([
+      { from: "North <b>Vancouver</b>", to: "Downtown", via: "Lions Gate", days: "x", mode: "rocket" },
+      { from: "north vancouver", to: "downtown", via: "lions gate" },
+      { from: "", to: "Burnaby" },
+      { from: "Home", to: "Gym {date}", days: "weekends", mode: "cycle" },
+      { from: "A", to: "B" }, { from: "C", to: "D" },
+    ]);
+    expect(out).toHaveLength(ROUTES_MAX);
+    expect(out[0]).toEqual({ from: "North Vancouver", to: "Downtown", via: "Lions Gate", days: "weekdays", mode: "any" });
+    expect(out[1].to).not.toContain("{");
+    expect(out[1].days).toBe("weekends");
+    expect(ROUTE_DAYS).toContain("daily");
+    expect(ROUTE_MODES).toContain("transit");
+  });
+
+  it("cleans trips: real dates, end after start, finished trips dropped", () => {
+    const out = cleanTrips([
+      { place: "Lisbon", start: iso(20), end: iso(27) },
+      { place: "Kyoto", start: iso(40), end: iso(30) },
+      { place: "Paris", end: iso(5) },
+      { place: "Rome", start: iso(-20), end: iso(-10) },
+      { place: "Oslo", start: "2026-02-31" },
+      { place: "Banff" },
+    ]);
+    expect(out.map((t) => t.place)).toEqual(["Lisbon", "Kyoto", "Paris"]);
+    expect(out[1].end).toBe(out[1].start);
+    expect(out[2]).toEqual({ place: "Paris" });
+    expect(cleanTrips([{ place: "Oslo", start: "2026-02-31" }])).toEqual([{ place: "Oslo" }]);
+    expect(cleanTrips(Array.from({ length: 9 }, (_, i) => ({ place: `P${i}` })))).toHaveLength(TRIPS_MAX);
+  });
+
+  it("saves them, leaves them alone when an older page omits them, clears on empty", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"],
+      routes: [{ from: "Surrey", to: "Vancouver", mode: "drive" }],
+      trips: [{ place: "Lisbon", start: iso(10) }],
+    });
+    let prefs = (await account(env, "fan@example.com")).member.preferences;
+    expect(prefs.routes).toEqual([{ from: "Surrey", to: "Vancouver", days: "weekdays", mode: "drive" }]);
+    expect(prefs.trips).toEqual([{ place: "Lisbon", start: iso(10), end: iso(10) }]);
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"] });
+    prefs = (await account(env, "fan@example.com")).member.preferences;
+    expect(prefs.routes).toHaveLength(1);
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], routes: [], trips: [] });
+    prefs = (await account(env, "fan@example.com")).member.preferences;
+    expect(prefs.routes).toEqual([]);
+    expect(prefs.trips).toEqual([]);
+  });
+
+  it("admin specs carry them only when set, never a finished trip, never an email", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"],
+      routes: [{ from: "Surrey", to: "Vancouver" }],
+      trips: [{ place: "Lisbon", start: iso(10) }],
+    });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    // A trip that ended after it was saved stays in the record until the
+    // next save, and is filtered on the way out.
+    rec.trips.push({ place: "Rome", start: iso(-9), end: iso(-5) });
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      ...rec, tier: "personal", status: "active", feed_token: "e".repeat(32),
+    }));
+    kv.store.set("member:plain@example.com", JSON.stringify({
+      shows: ["spacex", "tesla"], first_name: "", city: "", tier: "personal",
+      status: "active", feed_token: "f".repeat(32), updated_at: "",
+    }));
+    const res = await handleAdminSpecs(new Request("https://api.example.com/api/admin/personal-specs",
+      { headers: { Authorization: "Bearer admin-token" } }), env);
+    const body = await res.json() as { specs: any[] };
+    const sp = body.specs.find((x) => x.token === "e".repeat(32))!;
+    expect(sp.routes).toHaveLength(1);
+    expect(sp.trips.map((t: any) => t.place)).toEqual(["Lisbon"]);
+    const plain = body.specs.find((x) => x.token === "f".repeat(32))!;
+    expect("routes" in plain).toBe(false);
+    expect("trips" in plain).toBe(false);
+    expect(JSON.stringify(body)).not.toContain("example.com");
   });
 });

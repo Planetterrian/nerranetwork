@@ -775,8 +775,8 @@ Best-effort — any failure ships the legacy render (`engine/visual_reuse.py`). 
 
 ### Mira's recorder loses time at every session change (Nov 4 2026)
 
-Guards `tests/test_mira_session_clock_2026_11_04.py`.
-**Mira's own track is placed in the pieces her session changes made** (`post_interview.mira_session_changes` from the trace → `local_tracks.align_by_sessions`; a hand-over or a rescue costs her recorder 7–137 s right after it), **and checked in 30 s windows** (`clock_residuals`; the blind search's 150 s check passed tracks four minutes off). The lost seconds are filled from the guest's right channel only with no co-host. `pipelines/voices/retrack_run.py` rebuilds a processed run's tracks, mix and transcript (dry run by default; sends nothing).
+[history](docs/claude_md_history/2026_11_04_mira_session_clock.md); guards `tests/test_mira_session_clock_2026_11_04.py`.
+**Mira's own track is placed in the pieces her session changes made, and checked in 30 s windows**; `pipelines/voices/retrack_run.py` rebuilds a processed run (dry run by default).
 
 ### Members-only limited series (Oct 18 2026)
 
@@ -1918,13 +1918,18 @@ Guards `tests/test_mission_control_2026_11_11.py`.
 
 ### The OP3 week (Nov 12 2026)
 
-Guards `tests/test_op3_weeks_2026_11_12.py`.
-**`engine/op3_weeks.py` owns the OP3 week**: `weeklyDownloads` are four trailing 7-day windows ending on `asof`, all complete, never calendar weeks. **Week over week is the newest against the one before.** **The ledger takes them only when `asof` is a Saturday** (Sunday to Saturday, keyed by the Monday); all-time is whole weeks, nothing estimated.
+[history](docs/claude_md_history/2026_11_12_op3_week.md); guards `tests/test_op3_weeks_2026_11_12.py`.
+**`engine/op3_weeks.py` owns the OP3 week**: four trailing 7-day windows ending on `asof`, never calendar weeks; the ledger takes them only when `asof` is a Saturday.
 
 ### The private Nerra Personal feeds are watched (Nov 6 2026)
 
 Guards `tests/test_personal_feed_health_2026_11_06.py`, `workers/gallery/test/feed_health.test.ts`; doc `docs/nerra_personal.md` "The private feeds are watched".
 **A green public check says nothing about the private feeds**: Nov 2-6 every batch run 401'd and no member feed moved. **The daily audit reads `/api/admin/personal-feed-health` (counts only) and fails when a member has no edition for today**; unread is a warning and null, never 0. **Rotating `PERSONAL_ADMIN_TOKEN` is the Worker AND the batch repo together.**
+
+### Nerra Personal: routes and trips (Nov 13 2026)
+
+Doc `docs/nerra_personal.md`; guards `tests/test_personal_travel_2026_11_13.py`.
+**`engine/personal_travel.py` owns routes and trips.** **The traffic add-on is the switch; with routes it follows them.** **No live traffic, no travel time** (a paid API is the operator's call). **One trip segment an edition.** **Routes and trips are never logged.**
 
 ### Mira builds on the answer; she does not sum it up (Nov 4 2026)
 

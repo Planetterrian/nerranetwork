@@ -146,6 +146,91 @@ export function cleanTickers(raw: unknown): string[] {
   return out;
 }
 
+// Routes and trips (Nov 13 2026). Mirrors engine/personal_travel.py
+// (ROUTES_MAX, ROUTE_PART_MAX, ROUTE_DAYS, ROUTE_MODES, TRIPS_MAX,
+// TRIP_PLACE_MAX) — drift-guarded in tests/test_personal_travel_2026_11_13.py.
+// Personal data: stored on the member record, exported only through the
+// bearer-protected admin specs (no email beside them), never logged.
+export const ROUTES_MAX = 3;
+const ROUTE_PART_MAX = 80;
+export const ROUTE_DAYS = ["weekdays", "daily", "weekends"] as const;
+export const ROUTE_MODES = ["any", "drive", "transit", "cycle"] as const;
+export const TRIPS_MAX = 3;
+const TRIP_PLACE_MAX = 80;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export interface MemberRoute {
+  from: string;
+  to: string;
+  via?: string;
+  days: (typeof ROUTE_DAYS)[number];
+  mode: (typeof ROUTE_MODES)[number];
+}
+
+export interface MemberTrip {
+  place: string;
+  start?: string; // ISO date
+  end?: string;   // ISO date, >= start
+}
+
+/** A member's routes: from + to required, via optional, days and mode
+ *  from their closed sets (anything else is the default), scrubbed like
+ *  every free-text field, de-duplicated, at most ROUTES_MAX. */
+export function cleanRoutes(raw: unknown): MemberRoute[] {
+  const out: MemberRoute[] = [];
+  if (!Array.isArray(raw)) return out;
+  for (const r of raw) {
+    if (!r || typeof r !== "object") continue;
+    const o = r as Record<string, unknown>;
+    const from = cleanList([o.from], 1, ROUTE_PART_MAX)[0] ?? "";
+    const to = cleanList([o.to], 1, ROUTE_PART_MAX)[0] ?? "";
+    if (!from || !to) continue;
+    const via = cleanList([o.via], 1, ROUTE_PART_MAX)[0] ?? "";
+    const days = (ROUTE_DAYS as readonly string[]).includes(String(o.days))
+      ? String(o.days) as MemberRoute["days"] : "weekdays";
+    const mode = (ROUTE_MODES as readonly string[]).includes(String(o.mode))
+      ? String(o.mode) as MemberRoute["mode"] : "any";
+    const ident = `${from}|${to}|${via}`.toLowerCase();
+    if (out.some((x) => `${x.from}|${x.to}|${x.via ?? ""}`.toLowerCase() === ident)) continue;
+    out.push({ from, to, ...(via ? { via } : {}), days, mode });
+    if (out.length >= ROUTES_MAX) break;
+  }
+  return out;
+}
+
+function realIsoDate(v: unknown): string | undefined {
+  const s = String(v ?? "").trim();
+  if (!ISO_DATE_RE.test(s)) return undefined;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s ? s : undefined;
+}
+
+/** A member's trips: a place (required), optional ISO dates. An end
+ *  without a start is dropped; a start alone is a one-day stay; a trip
+ *  that has already ended is dropped (it never needs to be kept). The
+ *  builder re-validates (engine.personal_travel.clean_trips). */
+export function cleanTrips(raw: unknown, today = new Date()): MemberTrip[] {
+  const out: MemberTrip[] = [];
+  if (!Array.isArray(raw)) return out;
+  // A day of grace: a member west of UTC must not lose today's trip.
+  const floor = new Date(today.getTime() - 86400000).toISOString().slice(0, 10);
+  for (const t of raw) {
+    if (!t || typeof t !== "object") continue;
+    const o = t as Record<string, unknown>;
+    const place = cleanList([o.place], 1, TRIP_PLACE_MAX)[0] ?? "";
+    if (!place) continue;
+    const start = realIsoDate(o.start);
+    let end = start ? realIsoDate(o.end) : undefined;
+    if (start && (!end || end < start)) end = start;
+    if (end && end < floor) continue;
+    const ident = `${place}|${start ?? ""}`.toLowerCase();
+    if (out.some((x) => `${x.place}|${x.start ?? ""}`.toLowerCase() === ident)) continue;
+    out.push({ place, ...(start ? { start, end } : {}) });
+    if (out.length >= TRIPS_MAX) break;
+  }
+  return out;
+}
+
 const COOKIE_NAME = "nn_gallery";
 const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
 const TOKEN_RE = /^[a-f0-9]{16,64}$/;
@@ -170,6 +255,8 @@ export interface MemberRecord {
   profile?: string;    // "Tell Mira about you", ≤ PROFILE_MAX (absent = never saved)
   target_minutes?: number | null; // one of TARGET_MINUTES; null/absent = no budget
   tickers?: string[];  // member-chosen symbols, ≤ TICKERS_MAX (absent = never saved)
+  routes?: MemberRoute[]; // Nov 13 2026: routes the traffic add-on follows
+  trips?: MemberTrip[];   // Nov 13 2026: places the member is going
   tier: string;          // "personal" | "personal_local"
   status: string;        // "none" | "active" | "cancelled"
   feed_token?: string;
@@ -333,6 +420,8 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
             profile: member.profile ?? "",
             target_minutes: member.target_minutes ?? null,
             tickers: member.tickers ?? null,
+            routes: member.routes ?? [],
+            trips: cleanTrips(member.trips ?? []),
           }
         : null,
       tier: member?.tier || "none",
@@ -612,6 +701,10 @@ export async function handlePreferences(
   // replaces the stored list.
   let tickers: string[] | undefined;
   if (body?.tickers !== undefined) tickers = cleanTickers(body.tickers);
+  // Nov 13 2026 — routes and trips: absent = untouched (an older page
+  // never sends them); an array (even empty) replaces the stored list.
+  const routes = body?.routes !== undefined ? cleanRoutes(body.routes) : undefined;
+  const trips = body?.trips !== undefined ? cleanTrips(body.trips) : undefined;
 
   const existing: MemberRecord = stored || {
     shows: [], first_name: "", city: "", tier: "none", status: "none",
@@ -631,6 +724,8 @@ export async function handlePreferences(
     ...(profile !== undefined ? { profile } : {}),
     ...(targetMinutes !== undefined ? { target_minutes: targetMinutes } : {}),
     ...(tickers !== undefined ? { tickers } : {}),
+    ...(routes !== undefined ? { routes } : {}),
+    ...(trips !== undefined ? { trips } : {}),
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
@@ -651,6 +746,8 @@ export async function handlePreferences(
     profile: rec.profile ?? "",
     target_minutes: rec.target_minutes ?? null,
     tickers: rec.tickers ?? null,
+    routes: rec.routes ?? [],
+    trips: rec.trips ?? [],
   } });
 }
 
@@ -1307,6 +1404,11 @@ export async function handleAdminSpecs(
           // Oct 29 2026: the stocks the markets minute speaks. The builder
           // re-validates the shapes (validate_spec).
           ...(rec.tickers !== undefined ? { tickers: rec.tickers } : {}),
+          // Nov 13 2026: routes and trips (personal data — this route is
+          // bearer-only and carries no address). A finished trip is dropped
+          // here too, so nothing past its date leaves the Worker.
+          ...(rec.routes?.length ? { routes: rec.routes } : {}),
+          ...(rec.trips?.length ? { trips: cleanTrips(rec.trips) } : {}),
           default_lineup: (rec.shows?.length ?? 0) < 2,
         });
       }

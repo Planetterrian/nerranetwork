@@ -41,7 +41,10 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Sequence, Tuple
+
+if TYPE_CHECKING:  # pragma: no cover
+    from engine.personal_travel import Route, Trip
 
 from engine.daily_edition import (
     EDITIONS,
@@ -213,6 +216,11 @@ class PersonalSpec:
     #: The stocks the member follows (validated, ≤ TICKERS_MAX), in their
     #: order. None = never saved; the markets minute speaks DEFAULT_TICKERS.
     tickers: Optional[List[str]] = None
+    #: Nov 13 2026 (engine.personal_travel): the routes the member travels
+    #: (the traffic add-on follows them) and the trips they are taking.
+    #: Personal data: prompt-only, never logged.
+    routes: List["Route"] = field(default_factory=list)
+    trips: List["Trip"] = field(default_factory=list)
     #: Resolved lazily by the builder (Open-Meteo geocoding, cached per
     #: city name within one run).
     latitude: Optional[float] = None
@@ -326,11 +334,16 @@ def validate_spec(raw: dict) -> Optional[PersonalSpec]:
         target_minutes = tm if tm in TARGET_MINUTES else None
     except (TypeError, ValueError):
         target_minutes = None
+    from engine.personal_travel import clean_routes, clean_trips
+
+    today = _dt.datetime.now(_dt.timezone.utc).date()
     return PersonalSpec(token=token, shows=shows, tier=tier,
                         first_name=first_name, city=city, addons=addons,
                         cities=cities, topics=topics, profile=profile,
                         target_minutes=target_minutes,
-                        tickers=clean_tickers(raw.get("tickers")))
+                        tickers=clean_tickers(raw.get("tickers")),
+                        routes=clean_routes(raw.get("routes")),
+                        trips=clean_trips(raw.get("trips"), today))
 
 
 def clean_tickers(raw: object) -> Optional[List[str]]:
@@ -874,13 +887,15 @@ def build_local_brief_prompt(
     target_date: _dt.date,
     weather_line: str,
     city: Optional[str] = None,
+    addons: Optional[List[str]] = None,
 ) -> str:
     """The brief prompt for ONE city (``city`` defaults to the primary).
     Depth comes from the tier: one item per section on Personal, up to
-    three on Personal News Network."""
+    three on Personal News Network. *addons* overrides the member's set
+    (:func:`local_brief_addons` drops traffic on a day the commute ran)."""
     template = (root / "shows" / "prompts" / "nerra_personal_local.txt"
                 ).read_text(encoding="utf-8")
-    addons = spec.effective_addons()
+    addons = spec.effective_addons() if addons is None else addons
     depth = spec.depth
     lo, hi = _depth_words(depth)
     if "weather" in addons and weather_line:
@@ -912,9 +927,18 @@ def build_local_brief_prompt(
     )
 
 
-def wants_local_brief(spec: PersonalSpec) -> bool:
+def local_brief_addons(spec: PersonalSpec, commute_ran: bool) -> List[str]:
+    """The add-ons a city brief covers today. Nov 13 2026: when the
+    member's own routes got a commute segment, the city brief drops its
+    traffic item — the traffic they asked for has already been told."""
+    addons = spec.effective_addons()
+    return [a for a in addons if a != "traffic"] if commute_ran else addons
+
+
+def wants_local_brief(spec: PersonalSpec,
+                      addons: Optional[List[str]] = None) -> bool:
     """A local brief runs only when a location add-on is actually on."""
-    addons = set(spec.effective_addons())
+    addons = set(spec.effective_addons() if addons is None else addons)
     return bool(spec.cities) and bool(
         addons & ({"weather"} | set(_ADDON_RESEARCH_LINES)))
 
@@ -979,9 +1003,11 @@ def upgrade_nudge_line(spec: PersonalSpec, target_date: _dt.date,
             "switch plans any time from your account.")
 
 
-def needs_research_call(spec: PersonalSpec) -> bool:
+def needs_research_call(spec: PersonalSpec,
+                        addons: Optional[List[str]] = None) -> bool:
     """Weather-only briefs are deterministic — skip the Grok call."""
-    return bool(set(spec.effective_addons()) & set(_ADDON_RESEARCH_LINES))
+    addons = spec.effective_addons() if addons is None else addons
+    return bool(set(addons) & set(_ADDON_RESEARCH_LINES))
 
 
 #: The Worker route the site's markets strip reads (engine.newsroom owns
@@ -1510,6 +1536,7 @@ def personal_chapter_pieces(
     segments: List[Segment],
     durations: Dict[str, float],
     subchapters: Optional[Dict[str, List[Tuple[str, float]]]] = None,
+    trip_title: str = "",
 ) -> List[Tuple[str, float]]:
     """(title, duration) chapter rows in splice order for build_chapters.
 
@@ -1520,10 +1547,12 @@ def personal_chapter_pieces(
     piece of a segment (handoff + cold open + lead story) keeps the
     "Show — hook" title; titles are never generated."""
     if subchapters:
-        base = _personal_chapter_pieces(spec, segments, durations)
+        base = _personal_chapter_pieces(spec, segments, durations, trip_title)
+        tail = 1 + (1 if durations.get("trip") and trip_title else 0)
         out: List[Tuple[str, float]] = []
-        # Splice order: Mira's opening pieces, one piece per segment, sign-off.
-        first_seg = len(base) - len(segments) - 1
+        # Splice order: Mira's opening pieces, one piece per segment, the
+        # trip segment when there is one (Nov 13 2026), sign-off.
+        first_seg = len(base) - len(segments) - tail
         for idx, (title, dur) in enumerate(base):
             k = idx - first_seg
             seg = segments[k] if 0 <= k < len(segments) else None
@@ -1539,13 +1568,14 @@ def personal_chapter_pieces(
                 end = subs[k + 1][1] if k + 1 < len(subs) else seg_len
                 out.append((t, max(0.0, end - st)))
         return out
-    return _personal_chapter_pieces(spec, segments, durations)
+    return _personal_chapter_pieces(spec, segments, durations, trip_title)
 
 
 def _personal_chapter_pieces(
     spec: PersonalSpec,
     segments: List[Segment],
     durations: Dict[str, float],
+    trip_title: str = "",
 ) -> List[Tuple[str, float]]:
     from engine.titles import clip_words
 
@@ -1556,6 +1586,9 @@ def _personal_chapter_pieces(
     for i, city in enumerate(spec.cities, 1):
         if durations.get(f"local_{i}"):
             pieces.append((f"Your {city} brief", durations[f"local_{i}"]))
+    if durations.get("commute"):
+        from engine.personal_travel import COMMUTE_CHAPTER_TITLE
+        pieces.append((COMMUTE_CHAPTER_TITLE, durations["commute"]))
     if durations.get("topics"):
         pieces.append(("Your topics", durations["topics"]))
     if durations.get("markets"):
@@ -1566,6 +1599,8 @@ def _personal_chapter_pieces(
             clip_words(f"{seg.show_name} — {seg.hook or seg.episode_title}", 100),
             lead + durations.get(f"seg_{seg.slug}", 0.0),
         ))
+    if durations.get("trip") and trip_title:
+        pieces.append((trip_title, durations["trip"]))
     pieces.append(("Sign-off", durations.get("signoff", 0.0)))
     return pieces
 
