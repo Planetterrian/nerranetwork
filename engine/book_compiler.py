@@ -626,6 +626,20 @@ def parse_digest_to_chapter(
     )
 
 
+def untitled_episodes(volume: BookVolume) -> List[int]:
+    """Episodes in *volume* with no curated chapter title.
+
+    Nov 13 2026: the planner only BUILDS a volume once this is empty. The
+    Nov 1 monthly run planned two 60-chapter volumes with blank titles,
+    spent ~1 h 48 min of narration and art on them (the audiobook spoke
+    bare "Chapter 34"), then failed the title-coverage check before its
+    commit step — so nothing was published and the planned volume files
+    were lost, and every later month would have repeated it.
+    """
+    curated = volume.chapter_titles or {}
+    return [ep for ep in volume.episodes if not curated.get(ep)]
+
+
 def collect_chapters(volume: BookVolume) -> List[BookChapter]:
     chapters: List[BookChapter] = []
     curated = volume.chapter_titles or {}

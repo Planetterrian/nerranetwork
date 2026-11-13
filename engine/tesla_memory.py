@@ -333,6 +333,21 @@ def build_performance_signals_block(perf: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# Nov 13 2026 (memory / books / lake review): the RECURRING THEMES block is
+# no longer injected into any prompt. Measured on the committed histories:
+# the counts are ALL-TIME (``lookback_days`` was never read) yet the block
+# said "last ~30 days", and the top entries were section labels, outlets and
+# show-name fragments — Omni View's "happened neutral (appeared in ~610
+# recent episodes)", "york times" 212, "simon willison" 231, "space
+# astronomy" 279. Its one instruction ("consider ... a connection back to
+# the larger conversation") is the arc-framing the memory section's own
+# rules forbid, and repeated framing was the main finding of the FF and
+# Omni View reviews. Mining continues (the files stay current) so an honest
+# windowed block can come back; flip this only with an A/B listen
+# (landmine #17).
+THEME_BLOCK_IN_PROMPT = False
+
+
 def build_theme_context_block(theme_history: Dict[str, Any], lookback_days: int = 30) -> str:
     """Recurring theme signals the LLM can use to decide emphasis and avoid repetition."""
     themes = theme_history.get("recurring_themes", {})
@@ -359,7 +374,8 @@ def get_tesla_memory_context(output_dir: Path) -> Dict[str, str]:
     return {
         "tesla_narrative_status_block": build_narrative_status_block(narrative),
         "tesla_performance_signals_block": build_performance_signals_block(perf),
-        "tesla_theme_context_block": build_theme_context_block(themes),
+        "tesla_theme_context_block": (build_theme_context_block(themes)
+                                      if THEME_BLOCK_IN_PROMPT else ""),
     }
 
 

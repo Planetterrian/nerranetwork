@@ -39,7 +39,12 @@ from typing import Any, Dict, List
 # Fascinating Frontiers, AND Planetterrian while real topics (dark
 # matter, gene editing) sat in the 20s. ``_extract_bigrams`` is shared so
 # the echo filter below sees exactly what the miner produces.
-from engine.tesla_memory import _JUNK_BIGRAMS, _THEME_STOPWORDS, _extract_bigrams
+from engine.tesla_memory import (
+    _JUNK_BIGRAMS,
+    _THEME_STOPWORDS,
+    THEME_BLOCK_IN_PROMPT,
+    _extract_bigrams,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -637,10 +642,12 @@ def build_memory_section(output_dir: Path, cfg: MemoryConfig) -> str:
     injects *nothing* — the prompt renders exactly as before.
     """
     ctx = get_memory_context(output_dir, cfg)
+    # The theme block stays out of the prompt (see
+    # engine.tesla_memory.THEME_BLOCK_IN_PROMPT for the measurements).
     parts = [b for b in (
         ctx["narrative_status_block"],
         ctx["performance_signals_block"],
-        ctx["theme_context_block"],
+        ctx["theme_context_block"] if THEME_BLOCK_IN_PROMPT else "",
     ) if b]
     if not parts:
         return ""

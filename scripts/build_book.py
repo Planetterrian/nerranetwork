@@ -58,6 +58,7 @@ from engine.book_compiler import (  # noqa: E402
     load_volume,
     plan_next_volumes,
     plan_preview,
+    untitled_episodes,
     update_catalog,
 )
 
@@ -281,6 +282,8 @@ def main() -> int:
             logger.info("nothing to build")
         return 0
 
+    if args.build_planned:
+        to_build = _drop_untitled(to_build, explicit=args.volume)
     for volume_id in to_build:
         rc = _build_one(volume_id, args)
         if rc != 0:
@@ -369,6 +372,30 @@ def _generate_book_art(volume, chapters, out_dir, api_key, args):
         print(f"::warning::book art: volume {volume.volume_id} chapters "
               f"WITHOUT illustration after retry: {missing}")
     return chapter_images, cover_art, generated, cost, missing
+
+
+def _drop_untitled(volume_ids: list, explicit: str = "") -> list:
+    """Planner mode builds a volume only once every chapter has its curated
+    title (chapter titles are curated, never the hook). An untitled volume
+    is left planned, named in an annotation, and costs nothing; its YAML is
+    still committed so the titles can be written into it. An explicit
+    ``--volume`` is the operator's call and is never dropped."""
+    keep = []
+    for vid in volume_ids:
+        path = ROOT / "books" / "volumes" / f"{vid}.yaml"
+        if vid == explicit or not path.exists():
+            keep.append(vid)
+            continue
+        missing = untitled_episodes(load_volume(path))
+        if missing:
+            print(f"::warning::{vid}: planned but NOT built — {len(missing)} "
+                  f"chapter(s) have no curated title (episodes {missing[0]}"
+                  f"-{missing[-1]}). Write chapter_titles in "
+                  f"books/volumes/{vid}.yaml; the next run builds it.",
+                  flush=True)
+            continue
+        keep.append(vid)
+    return keep
 
 
 def _build_one(volume_id: str, args) -> int:

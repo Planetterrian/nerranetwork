@@ -22,6 +22,7 @@ import json
 import logging
 import re
 import sqlite3
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -129,12 +130,43 @@ def init_db(db_path: Path = DB_PATH) -> None:
 # Storage
 # ---------------------------------------------------------------------------
 
-def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH) -> None:
+def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH,
+                  conn: Optional[sqlite3.Connection] = None) -> None:
     """Store an episode record in the content lake.
 
     Upserts on ``(show_slug, episode_num)`` so re-runs are safe.
+
+    Nov 13 2026: ``conn`` lets a bulk caller (the CI backfill, ~2,900
+    episodes on every show run) share ONE connection and ONE transaction.
+    Opening a connection, re-running ``init_db`` and committing per
+    episode cost ~10 s of the ~43 s rebuild. With ``conn`` the record is
+    written inside a SAVEPOINT (a failed record still rolls back alone,
+    as before) and the caller commits.
     """
+    if conn is not None:
+        conn.execute("SAVEPOINT store_episode")
+        try:
+            _write_episode(conn, record)
+            conn.execute("RELEASE SAVEPOINT store_episode")
+        except Exception as e:  # noqa: BLE001 — one bad record never sinks the batch
+            logger.error("[ContentLake] Failed to store episode: %s", e)
+            conn.execute("ROLLBACK TO SAVEPOINT store_episode")
+            conn.execute("RELEASE SAVEPOINT store_episode")
+        return
     init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    try:
+        _write_episode(conn, record)
+        conn.commit()
+    except Exception as e:
+        logger.error("[ContentLake] Failed to store episode: %s", e)
+        conn.rollback()
+    finally:
+        conn.close()
+
+
+def _write_episode(conn: sqlite3.Connection, record: EpisodeRecord) -> None:
+    """Upsert one episode, its FTS row and its aired items (no commit)."""
     aired = []
     if record.digest_md and not record.headlines:
         try:
@@ -148,54 +180,46 @@ def store_episode(record: EpisodeRecord, db_path: Path = DB_PATH) -> None:
         except Exception as exc:  # noqa: BLE001 — items are a bonus
             logger.warning("[ContentLake] Aired items failed for %s ep%s: %s",
                            record.show_slug, record.episode_num, exc)
-    conn = sqlite3.connect(str(db_path))
-    try:
-        conn.execute("""
-            INSERT INTO episodes (show_slug, episode_num, date, title, hook,
-                                  digest_md, podcast_script, summary, headlines,
-                                  source_urls, entities, topics, word_count,
-                                  show_name, language)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(show_slug, episode_num) DO UPDATE SET
-                date=excluded.date, title=excluded.title, hook=excluded.hook,
-                digest_md=excluded.digest_md, podcast_script=excluded.podcast_script,
-                summary=excluded.summary, headlines=excluded.headlines,
-                source_urls=excluded.source_urls, entities=excluded.entities,
-                topics=excluded.topics, word_count=excluded.word_count,
-                show_name=excluded.show_name, language=excluded.language
-        """, (
-            record.show_slug, record.episode_num, record.date,
-            record.title, record.hook, record.digest_md, record.podcast_script,
-            record.summary,
-            json.dumps(record.headlines), json.dumps(record.source_urls),
-            json.dumps(record.entities), json.dumps(record.topics),
-            record.word_count, record.show_name, record.language,
-        ))
-        # Get the actual rowid (lastrowid is 0 on upsert)
-        rowid = conn.execute(
-            "SELECT id FROM episodes WHERE show_slug = ? AND episode_num = ?",
-            (record.show_slug, record.episode_num),
-        ).fetchone()[0]
-        # Update standalone FTS index
-        conn.execute("DELETE FROM episodes_fts WHERE rowid = ?", (rowid,))
-        conn.execute("""
-            INSERT INTO episodes_fts(rowid, title, hook, digest_md, summary,
-                                     headlines, entities, topics)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            rowid, record.title, record.hook, record.digest_md, record.summary,
-            json.dumps(record.headlines), json.dumps(record.entities),
-            json.dumps(record.topics),
-        ))
-        _store_items(conn, record, aired)
-        conn.commit()
-        logger.info("[ContentLake] Stored %s ep%d (%s)",
-                    record.show_slug, record.episode_num, record.date)
-    except Exception as e:
-        logger.error("[ContentLake] Failed to store episode: %s", e)
-        conn.rollback()
-    finally:
-        conn.close()
+    conn.execute("""
+        INSERT INTO episodes (show_slug, episode_num, date, title, hook,
+                              digest_md, podcast_script, summary, headlines,
+                              source_urls, entities, topics, word_count,
+                              show_name, language)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(show_slug, episode_num) DO UPDATE SET
+            date=excluded.date, title=excluded.title, hook=excluded.hook,
+            digest_md=excluded.digest_md, podcast_script=excluded.podcast_script,
+            summary=excluded.summary, headlines=excluded.headlines,
+            source_urls=excluded.source_urls, entities=excluded.entities,
+            topics=excluded.topics, word_count=excluded.word_count,
+            show_name=excluded.show_name, language=excluded.language
+    """, (
+        record.show_slug, record.episode_num, record.date,
+        record.title, record.hook, record.digest_md, record.podcast_script,
+        record.summary,
+        json.dumps(record.headlines), json.dumps(record.source_urls),
+        json.dumps(record.entities), json.dumps(record.topics),
+        record.word_count, record.show_name, record.language,
+    ))
+    # Get the actual rowid (lastrowid is 0 on upsert)
+    rowid = conn.execute(
+        "SELECT id FROM episodes WHERE show_slug = ? AND episode_num = ?",
+        (record.show_slug, record.episode_num),
+    ).fetchone()[0]
+    # Update standalone FTS index
+    conn.execute("DELETE FROM episodes_fts WHERE rowid = ?", (rowid,))
+    conn.execute("""
+        INSERT INTO episodes_fts(rowid, title, hook, digest_md, summary,
+                                 headlines, entities, topics)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        rowid, record.title, record.hook, record.digest_md, record.summary,
+        json.dumps(record.headlines), json.dumps(record.entities),
+        json.dumps(record.topics),
+    ))
+    _store_items(conn, record, aired)
+    logger.info("[ContentLake] Stored %s ep%d (%s)",
+                record.show_slug, record.episode_num, record.date)
 
 
 def _store_items(conn: sqlite3.Connection, record: EpisodeRecord, aired=None) -> None:
@@ -588,6 +612,31 @@ _TOPIC_PATTERNS = {
     "health": r"(?i)health|clinical trial|FDA|drug|therapy|disease",
 }
 
+_TOPIC_PATTERNS_LOWER = {
+    topic: re.compile(pattern.replace("(?i)", "").lower())
+    for topic, pattern in _TOPIC_PATTERNS.items()
+}
+
+
+@contextmanager
+def bulk_writer(db_path: Path = DB_PATH):
+    """One connection and one transaction for many ``store_episode`` calls.
+
+    ``with bulk_writer() as conn: store_episode(rec, conn=conn)`` — commits
+    on a clean exit, rolls back on an exception. Used by the CI backfill.
+    """
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path), isolation_level=None)
+    try:
+        conn.execute("BEGIN")
+        yield conn
+        conn.execute("COMMIT")
+    except BaseException:
+        conn.execute("ROLLBACK")
+        raise
+    finally:
+        conn.close()
+
 
 def extract_entities_and_topics(
     digest_text: str,
@@ -623,9 +672,11 @@ def extract_entities_and_topics(
         if entity.lower() in text_lower:
             entities.add(entity)
 
-    # Topic extraction
-    for topic, pattern in _TOPIC_PATTERNS.items():
-        if re.search(pattern, digest_text):
+    # Topic extraction (patterns pre-lowered and compiled once; matched
+    # against the already-lowered text — same results as the (?i) patterns,
+    # ~2.5x faster over the full backfill).
+    for topic, pattern in _TOPIC_PATTERNS_LOWER.items():
+        if pattern.search(text_lower):
             topics.add(topic)
 
     return {

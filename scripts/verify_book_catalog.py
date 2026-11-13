@@ -90,6 +90,19 @@ def check_volume(entry: dict, *, expect_audio: bool) -> list:
     return problems
 
 
+def _awaiting_titles(volume_id: str) -> bool:
+    """A planned, never-built volume whose chapter titles are not written."""
+    import sys
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from engine.book_compiler import load_volume, untitled_episodes
+    path = ROOT / "books" / "volumes" / f"{volume_id}.yaml"
+    try:
+        return bool(untitled_episodes(load_volume(path)))
+    except Exception:  # noqa: BLE001 — an unreadable volume is a failure below
+        return False
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     g = ap.add_mutually_exclusive_group(required=True)
@@ -114,6 +127,13 @@ def main() -> int:
     failures = 0
     for vid in targets:
         entry = entries.get(vid)
+        if not entry and args.require_all and _awaiting_titles(vid):
+            # Nov 13 2026: the planner commits a volume it may not build
+            # until its chapter titles are curated (scripts/build_book.py
+            # _drop_untitled). That is pending work, not a broken build.
+            print(f"::warning::{vid}: planned, awaiting curated chapter "
+                  "titles — not built yet")
+            continue
         if not entry:
             print(f"::error::{vid}: not in books/catalog.json")
             failures += 1
