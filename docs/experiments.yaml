@@ -7751,3 +7751,84 @@ experiments:
       reads "Latest verified fact". Guards
       tests/test_memory_books_lake_2026_11_13.py::TestStatusesFromVerifiedClaims.
       AUDIO: prompt context — A/B-listen one episode.
+  - id: ff-followup-2026-11-13
+    title: "Fascinating Frontiers: fewer stories, each explained, ranked by wonder"
+    area: shows
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    baseline: >
+      Ep252 (first live episode on ff-review-2026-11-13): 938-word script,
+      6.8 minutes (Ep251 10.6); twelve items of two or three sentences,
+      among them an astronaut profile, a lunar-base workshop and two SpaceX
+      Earth-side X posts (Brownsville water, site cleanup); the deep dive
+      built from item 12's article (deep_dive_contains_body_item 0.652);
+      a 94-character hook clipped in the feed title.
+    target: >
+      Over the first 14 episodes after merge: median podcast_script_word_count
+      at least 1,150 with no skip; deep_dive_contains_body_item median under
+      0.5; no x.com Source line among the listed items; at most 2 feed titles
+      clipped mid-sentence.
+    criteria: >
+      HIT when the median script is at least 1,150 words, nothing is skipped
+      for length, and at most 2 of 14 feed titles end in an ellipsis; MISS when
+      the median is under 1,000 words or 2 or more episodes skip for length;
+      else INCONCLUSIVE. Read beside ff-review-2026-11-13's audit criteria,
+      which this must not worsen.
+    readout_plan: >
+      metrics_ep*.json counters podcast_script_word_count, audio_duration_s,
+      deep_dive_contains_body_item, digest_expansion_fired for episodes after
+      the merge; Source: hosts in the Top list of the committed digests; the
+      <title> elements of the FF feed; the daily audit's REPETITIVE and
+      FACTUAL_ERRORS flags in api/editorial_score_history.json.
+    notes: >
+      Digest prompt: at most 10 items, each from a full-text article with at
+      least three facts (what, how, what it means, attributed), ranked by
+      wonder; workshops, profiles and Earth-side company items never listed;
+      the "change course" sibling rule replaced; hook at most 13 words.
+      Podcast prompt: each story explained, one plain-words sentence (no
+      number) for an unfamiliar term, no social handle or web address
+      spoken. fetch_full_text 16 -> 24. ⚠️ AUDIO: rehearse and listen first.
+      Guards tests/test_fascinating_frontiers_review_2026_11_13.py
+      (TestFewerStoriesEachExplained, TestTheScriptExplains).
+    evidence: null
+  - id: slate-review-2026-11-13
+    title: "48-hour slate review: segments a bracket label silently dropped, and a paced X queue after an unlock"
+    area: distribution
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    baseline: >
+      Nov 12 slate: Vancouver Ep051 lost its Both Sides segment (script 1,997
+      words, 1,618 spoken; the map promised it and the daily audit scored the
+      episode INCOMPLETE) and North America Ep045 its Closer Look (1,528 ->
+      1,112), because a paragraph opening with the prompt's own "[Both Sides]"
+      label was dropped whole by run_show._clean_podcast_script. On X, the
+      Nov 12 unlock (~13:00 UTC) was followed by two teasers and one
+      full-episode video every half hour for six hours, two runs 80 s apart at
+      19:07, and a fresh lock at 19:08; every queue run since has been red.
+    target: >
+      No episode with podcast_script_word_count more than 100 words above
+      script_words outside the DP Pod (speaker labels); after the next unlock,
+      the account stays unlocked for at least 72 hours while the backlog
+      drains at one post per run.
+    criteria: >
+      HIT when, Nov 14-27, no non-dialogue episode's metrics show
+      podcast_script_word_count - script_words > 100 AND the first unlock
+      after this merge is followed by 72 hours of x-queue runs with no
+      account_locked error; MISS when either recurs; INCONCLUSIVE when the
+      account is not unlocked before the readout.
+    readout_plan: >
+      digests/*/metrics_ep*.json (podcast_script_word_count vs script_words);
+      the x-queue workflow logs for "X pacing:" lines and "temporarily
+      locked" after the unlock; x_post_replies rows cancelled with error
+      "stale".
+    notes: >
+      run_show._clean_podcast_script keeps the prose after a leading
+      bracketed label (a bare note is still dropped);
+      engine.x_queue.CATCH_UP_AGE (18 h) / MIN_POST_GAP (20 min, per account)
+      / REPLY_MAX_AGE (36 h). Review docs/reviews/slate_review_2026_11_13.md;
+      guards tests/test_clean_podcast_script.py::TestSegmentLabelKeepsItsParagraph,
+      tests/test_x_queue_pacing_2026_11_13.py. AUDIO: restores spoken
+      segments on the shows that echo a label; listen to the next Vancouver
+      episode with a Both Sides section.
