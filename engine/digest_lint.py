@@ -1649,6 +1649,149 @@ def lint_item_figures_sourced(digest: str, context: Optional[dict] = None) -> Op
     )
 
 
+# --- explainer_distinct (Nov 13 2026, the Offshore North external review) ---
+# Plain Sailing is the show's one explainer, and "explains something new each
+# week" was a prompt rule twice over (the dated list of past explainers since
+# Oct 30, "never the same subject as the lead") that the text kept breaking:
+# Ep012 opened its explainer on Ep006's sentence word for word (the same
+# operating-budget explainer, six weeks later), and Ep013 told the Vendée
+# Globe qualification rules in The Canadian Boat and then again, nearly
+# sentence for sentence, as Plain Sailing. Two checks, one finding:
+#
+# * WITHIN the episode: the share of another section's paragraph that the
+#   explainer's salient vocabulary carries. Replayed on Offshore North
+#   Ep001-013 at ``EXPLAINER_RETELL_MAX`` 0.4 it fires on Ep013 (0.43) and on
+#   Ep001/003/004/005 (0.40-0.44) — the early recaps the Sep 18 round-1 fixes
+#   named — and on nothing from Ep006 to Ep012 (max 0.28).
+# * ACROSS episodes: the opening sentence (the one that names the concept,
+#   the same sentence the writer is shown) against the last
+#   ``EXPLAINER_PAST_WINDOW`` openings. A word-overlap over whole bodies does
+#   not separate a repeat from a neighbour on this show (repeats 0.27-0.54,
+#   distinct explainers up to 0.32), so this half is narrow on purpose: it
+#   catches the copied opening (Ep012 vs Ep006: 1.0, eleven shared words;
+#   next highest 0.5), not a paraphrase.
+
+#: At or above this share of another section's paragraph, the explainer
+#: re-tells it.
+EXPLAINER_RETELL_MAX = 0.4
+#: A paragraph with fewer salient tokens than this is too short to judge.
+EXPLAINER_RETELL_MIN_TOKENS = 8
+#: An opening sharing this share of the shorter opening's salient words ...
+EXPLAINER_OPENING_MAX = 0.8
+#: ... and at least this many of them, is the same explainer again.
+EXPLAINER_OPENING_MIN_SHARED = 6
+#: How many past explainers the across-episodes half reads.
+EXPLAINER_PAST_WINDOW = 12
+#: Sections never compared with the explainer (the header, the list of
+#: sources and the countdown carry no story).
+_EXPLAINER_SKIP = {"", "sources", "the countdown"}
+
+
+def _explainer_body(digest: str) -> Optional[Tuple[str, str]]:
+    for name in EXPLAINER_SECTIONS:
+        body = section_body(digest, name)
+        if body is not None and body.strip():
+            return name, body
+    return None
+
+
+def explainer_opening(digest: str) -> str:
+    """First sentence of the digest's explainer section, markdown removed."""
+    found = _explainer_body(digest)
+    if not found:
+        return ""
+    text = " ".join(_prose(found[1]).replace("*", " ").split())
+    return _SENT_SPLIT.split(text, maxsplit=1)[0].strip() if text else ""
+
+
+def past_explainer_openings(digests_dir, *, before_episode: Optional[int] = None,
+                            n: int = EXPLAINER_PAST_WINDOW) -> List[Tuple[str, str]]:
+    """``[(YYYY-MM-DD, opening), ...]`` from the show's committed digests,
+    newest first, episodes before *before_episode* only. Never raises."""
+    from pathlib import Path
+
+    rows = []
+    try:
+        for path in Path(digests_dir).glob("*_Ep*_*.md"):
+            m = re.search(r"_Ep(\d{3,4})_(\d{4})(\d{2})(\d{2})\.md$", path.name)
+            if not m:
+                continue
+            num = int(m.group(1))
+            if before_episode is not None and num >= int(before_episode):
+                continue
+            opening = explainer_opening(path.read_text(encoding="utf-8"))
+            if opening:
+                rows.append((num, f"{m.group(2)}-{m.group(3)}-{m.group(4)}", opening))
+    except Exception:  # noqa: BLE001 — a lint input can never cost an episode
+        return []
+    rows.sort(reverse=True)
+    return [(d, o) for _n, d, o in rows[:n]]
+
+
+def explainer_retell(digest: str) -> Optional[Tuple[float, str]]:
+    """``(share, section)`` of the paragraph elsewhere in the digest that the
+    explainer carries most of, or None (no explainer, nothing to compare)."""
+    found = _explainer_body(digest)
+    if not found:
+        return None
+    name, body = found
+    essay = _salient(_prose(body))
+    if not essay:
+        return None
+    best: Optional[Tuple[float, str]] = None
+    for title, sec_body in sections(digest):
+        t = title.strip()
+        if t.lower() in _EXPLAINER_SKIP or t.lower() == name.lower():
+            continue
+        for para in (p for p in sec_body.split("\n\n") if p.strip()):
+            toks = _salient(_prose(para))
+            if len(toks) < EXPLAINER_RETELL_MIN_TOKENS:
+                continue
+            share = round(len(toks & essay) / len(toks), 3)
+            if best is None or share > best[0]:
+                best = (share, t)
+    return best
+
+
+def explainer_repeat_match(opening: str, past: List[Tuple[str, str]]) -> Optional[Tuple[str, str]]:
+    """The past ``(date, opening)`` today's opening repeats, else None."""
+    mine = _salient(opening or "")
+    if not mine:
+        return None
+    for d, old in past or []:
+        theirs = _salient(old or "")
+        if not theirs:
+            continue
+        shared = mine & theirs
+        if (len(shared) >= EXPLAINER_OPENING_MIN_SHARED
+                and len(shared) / min(len(mine), len(theirs)) >= EXPLAINER_OPENING_MAX):
+            return d, old
+    return None
+
+
+def lint_explainer_distinct(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    found = _explainer_body(digest)
+    if not found:
+        return None
+    name = found[0]
+    retell = explainer_retell(digest)
+    repeat = explainer_repeat_match(explainer_opening(digest),
+                                    list((context or {}).get("past_explainers") or []))
+    metrics = {
+        "explainer_retells_section": retell[0] if retell else None,
+        "explainer_repeats_past": 0 if repeat is None else 1,
+    }
+    notes = []
+    if retell and retell[0] >= EXPLAINER_RETELL_MAX:
+        notes.append(f"{name} re-tells what {retell[1]} already told — explain a "
+                     "concept no other section of this brief carries")
+    if repeat is not None:
+        notes.append(f"{name} opens on the explainer that aired on {repeat[0]} "
+                     f"(“{clip_words(repeat[1], 60)}”) — explain a concept that "
+                     "has not aired")
+    return LintFinding("explainer_distinct", "; ".join(notes), metrics)
+
+
 # ---------------------------------------------------------------------------
 # Registry + runner
 # ---------------------------------------------------------------------------
@@ -1768,7 +1911,8 @@ def lint_pick_stop_loss(digest: str) -> Optional[LintFinding]:
 
 CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source", "hook_figure_sourced",
                            "hook_repeats_past_lead", "stop_told_as_retirement",
-                           "preview_told_as_result", "item_figures_sourced"})
+                           "preview_told_as_result", "item_figures_sourced",
+                           "explainer_distinct"})
 
 LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "wyntk_hook_match": lint_wyntk_hook_match,
@@ -1793,6 +1937,7 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "preview_told_as_result": lint_preview_told_as_result,
     "explainer_figures_sourced": lint_explainer_figures_sourced,
     "item_figures_sourced": lint_item_figures_sourced,
+    "explainer_distinct": lint_explainer_distinct,
     "top_news_on_beat": lint_top_news_on_beat,
 }
 

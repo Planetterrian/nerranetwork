@@ -109,13 +109,14 @@ class TestWiring:
             assert name in dl.CONTEXT_LINTS
 
     def test_offshore_north_opts_in(self):
-        assert list(_yaml()["digest_lints"]) == list(NEW_LINTS)
+        # Nov 13 2026: later passes append (explainer_distinct); these five stay.
+        assert list(_yaml()["digest_lints"])[:len(NEW_LINTS)] == list(NEW_LINTS)
 
     def test_config_loader_keeps_the_list(self):
         from engine.config import load_config
 
         cfg = load_config(str(ROOT / "shows" / "offshore_north.yaml"))
-        assert list(cfg.digest_lints) == list(NEW_LINTS)
+        assert list(cfg.digest_lints)[:len(NEW_LINTS)] == list(NEW_LINTS)
 
     def test_run_show_builds_the_lint_context(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")

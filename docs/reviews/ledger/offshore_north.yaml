@@ -209,6 +209,46 @@ reviews:
       - metric: "Plain Sailing concept repeats one in the recent_plain_sailing block, next 4 episodes"
         baseline: "3 back-to-back repeats in Ep005-011"
         expected: "0/4"
+        verdict: miss
+        evidence: "Ep012 (2 Nov) opened Plain Sailing on Ep006's operating-budget sentence word for word while Ep006 was in the block; scored Nov 13 by the external-review pass, which gates it in code (explainer_distinct)."
+    agent_cost_usd: null
+
+  - date: 2026-11-13
+    reviewer: external review (operator-relayed), judged against the committed Ep010-013 and acted on in session
+    summary: >-
+      Five suggestions. Ep013 (9 Nov) showed each one: the Canadian Boat led
+      by rule and retold the 23 October RORC announcement for the third week
+      running (Ep011 lead, Ep012, Ep013) plus the qualification rulebook; the
+      Fleet told the Ultim podium and left out the IMOCA race its own sources
+      reported; Plain Sailing re-told the Canadian Boat's qualification
+      paragraph (salient share 0.43); a finish aired as "1430 local time".
+      Already in place and kept: the past-leads gate, the claims gate, the
+      ten-day staleness rule, the per-item why-it-matters, the Plain Sailing
+      memory. Adapted: "say so in one line" became one dated line about the
+      team's newest post, because the show cannot tell an empty week from one
+      it could not see (the Sep 18 absence ban stands). Out of scope: the
+      review's closing offer to brief Mira (the interview host, not this
+      show) and its Ocean Race coverage note.
+    shipped:
+      - prompts: RANK THE WEEK FIRST; The Fleet first, The Canadian Boat short and dated every week (first only when the campaign has the week's biggest story); EVERY RACE FACT IS DATED (clock times with place and date); own consequence line, Canadian boat only on a real connection; Plain Sailing never re-tells the episode; countdown ends on one dated event to watch
+      - engine/digest_lint.py explainer_distinct (within the episode at 0.4; a copied opening against the last 12 explainers), wired through run_show's lint context
+    deferred:
+      - the length target (1,400-1,800 words) against scripts of ~1,000 for four weeks; the 1,300-word digest floor fired on Ep013 and padded it
+      - distribution (Apple draft, Podcast Index), open in docs/outstanding.md
+    predictions:
+      - metric: "episodes whose Canadian Boat re-tells a team post an earlier episode already reported beyond one clause, next 4 episodes"
+        baseline: "Ep012 and Ep013 (the 23 Oct post)"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "explainer_distinct fired on the SHIPPED digest (digest_lints_fired_after_retry), next 4 episodes"
+        baseline: "replay: Ep012 and Ep013"
+        expected: "0/4"
+        verdict: pending
+        evidence: null
+      - metric: "Fleet items per episode"
+        baseline: "Ep010-013: 2-3"
+        expected: "3-5 on at least 3/4"
         verdict: pending
         evidence: null
     agent_cost_usd: null
