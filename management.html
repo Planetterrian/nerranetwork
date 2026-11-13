@@ -1021,14 +1021,16 @@
   const siteSpark = (site.day_series || []).map((r) => Number(r.activeUsers || 0));
 
   // The headline number (Sep 12 2026): audience first, pipeline second.
-  // Last COMPLETE week of RSS downloads vs the week before, with the
-  // per-episode first-week median and YouTube retention underneath.
+  // The latest seven complete days of RSS downloads vs the seven before
+  // (OP3's weekly windows are trailing and all complete; Nov 12 2026,
+  // engine/op3_weeks.py), with the per-episode first-week median and
+  // YouTube retention underneath.
   const ah = data.audience_headline || {};
   const ahn = ah.network || {};
   const ahYt = ahn.youtube || {};
   const ahWow = (ahn.wow_pct == null) ? "WoW unmeasured"
     : ((ahn.wow_pct >= 0 ? "+" : "") + Number(ahn.wow_pct).toFixed(1) + "% WoW · " +
-       fmt(ahn.prior_week) + " → " + fmt(ahn.last_week) + " last full week");
+       fmt(ahn.prior_week) + " → " + fmt(ahn.last_week) + " latest 7 days vs the 7 before");
   const ahRet = (ahYt.short == null && ahYt.long == null) ? "YouTube retention unmeasured"
     : ("YouTube retention " + (ahYt.short == null ? "—" : ahYt.short + "%") + " shorts / " +
        (ahYt.long == null ? "—" : ahYt.long + "%") + " long");
@@ -1043,7 +1045,7 @@
            " · " + ahRet)
         : "audience stats not fetched yet",
       spark: (ahn.weekly_downloads || []).map((n) => Number(n || 0)),
-      sparkTitle: "Weekly RSS downloads (last element = current partial week)" }));
+      sparkTitle: "RSS downloads in four back-to-back 7-day windows (last = the latest seven days)" }));
 
   // Nov 3 2026: the editorial number beside the audience number — the
   // daily audit's 1-10 over 14 days (api/editorial_score_history.json).
@@ -1064,9 +1066,10 @@
         : "no audit history yet" }));
 
   const weeklyHist = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
+  const allTimeThrough = op3.all_time_through ? "whole weeks through " + op3.all_time_through + " · " : "";
   const allTimeSub = op3.all_time_incomplete
     ? "incomplete history (below 30d) · since " + (op3.all_time_since || "?")
-    : ((op3.all_time_since ? "tracked since " + op3.all_time_since + " · " : "") + "via OP3");
+    : ((op3.all_time_since ? "tracked since " + op3.all_time_since + " · " : "") + allTimeThrough + "via OP3");
   tiles.appendChild(statTile("RSS downloads · all-time", compact(op3.network_downloads_all_time),
     { sub: allTimeSub,
       spark: weeklyHist,
@@ -1174,7 +1177,8 @@
         sv.style.width = "100%"; sv.style.height = "40px"; sv.style.display = "block";
         sparkWrap.appendChild(sv);
         sparkWrap.appendChild(h("div", { style: "font-size:11px;color:var(--ink-4);margin-top:2px;",
-          text: "Weekly downloads · accumulating since " + (op3.all_time_since || "—") +
+          text: "Weekly downloads, Sunday to Saturday · accumulating since " + (op3.all_time_since || "—") +
+                (op3.all_time_through ? " · through " + op3.all_time_through : "") +
                 " (api/op3_history.json)" }));
         card.appendChild(sparkWrap);
       }
@@ -3241,14 +3245,15 @@
 
     const items = [
       // The week-over-week change stays in the hero, on the cell it
-      // belongs to and as the LAST COMPLETE week vs the week before (the
-      // audience headline's figure) — said plainly, up or down.
+      // belongs to and as the latest seven complete days vs the seven
+      // before (the audience headline's figure) — said plainly, up or down.
       { v: compact(op3.network_downloads_30d), l: "Podcast downloads · 30d",
-        s: fmt(op3.network_downloads_all_time) + " all-time (OP3-verified)" +
+        s: fmt(op3.network_downloads_all_time) + " all-time" +
+           (op3.all_time_through ? " through " + op3.all_time_through : "") + " (OP3-verified)" +
            (ahNet.last_week == null || ahNet.wow_pct == null ? ""
-             : " · last complete week " + fmt(ahNet.last_week) + ", " +
+             : " · latest seven days " + fmt(ahNet.last_week) + ", " +
                (ahNet.wow_pct > 0 ? "+" : "") + Number(ahNet.wow_pct).toFixed(1) +
-               "% on the week before") },
+               "% on the seven before") },
       // Nov 11 2026: this cell was one week's week-over-week change as a
       // headline ("-16.9% growth" the week it was read). One week is
       // noise; the growth panel under this hero charts every complete
@@ -3473,7 +3478,7 @@
     const figD = $("#growth-downloads");
     figD.appendChild(h("h3", { text: "Podcast downloads per week" }));
     figD.appendChild(h("p", { class: "c-sub",
-      text: "Every show, complete weeks only · counted by OP3 · the lines mark the two four-week averages" }));
+      text: "Every show, whole weeks (Sunday to Saturday) · counted by OP3 · the lines mark the two four-week averages" }));
     if (weeks.length < 2) {
       figD.appendChild(h("p", { class: "gs-empty", text: "Not enough complete weeks on file to chart yet." }));
     } else {
@@ -3583,9 +3588,9 @@
     };
     const signed = (n, suffix) => h("span", { class: n > 0 ? "up" : n < 0 ? "down" : "",
       text: (n > 0 ? "+" : "") + Number(n).toLocaleString() + (suffix || "") });
-    cell("Downloads · last complete week", fmtOrDash(ahNet.last_week),
-      ahNet.wow_pct == null ? ["week before unmeasured"]
-        : [signed(ahNet.wow_pct, "%"), " vs " + fmtOrDash(ahNet.prior_week) + " the week before"]);
+    cell("Downloads · latest seven days", fmtOrDash(ahNet.last_week),
+      ahNet.wow_pct == null ? ["seven days before unmeasured"]
+        : [signed(ahNet.wow_pct, "%"), " vs " + fmtOrDash(ahNet.prior_week) + " the seven days before"]);
     cell("Downloads · four-week average", fmtOrDash(gs.avg_4w),
       gs.multiple == null ? ["not enough history to compare"]
         : [h("span", { class: gs.multiple >= 1 ? "up" : "down", text: Number(gs.multiple).toFixed(1) + "×" }),

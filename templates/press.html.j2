@@ -84,6 +84,7 @@
                 {% if growth.downloads_last %}<p class="mk-sub" style="margin:0">{{ growth.downloads_last.value }} in the week of {{ growth.downloads_last.week }}{% if growth.downloads_multiple %}, <span class="mk-up">{{ growth.downloads_multiple }}× the week of {{ growth.downloads_first.week }}</span>{% endif %}.</p>{% endif %}
                 {{ growth.downloads_chart | safe }}
                 <details class="mk-details"><summary>Show the numbers</summary>
+                    <p class="mk-sub" style="margin:.4rem 0">Weeks run Sunday to Saturday; each is named by its Monday.</p>
                     <table class="mk-table"><thead><tr><th>Week of</th><th class="num">Downloads</th></tr></thead><tbody>
                     {% for w in growth.weekly_downloads %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
                     </tbody></table></details>
@@ -111,7 +112,7 @@
             </table>
         </div>
         <div class="mk-stats four">
-            <div class="mk-stat"><div class="mk-stat-v">{{ au.last_week }}</div><div class="mk-stat-l">downloads in the last complete week{% if au.wow_pct is not none %} ({{ "%+.0f"|format(au.wow_pct) }}% on the week before){% endif %}</div></div>
+            <div class="mk-stat"><div class="mk-stat-v">{{ au.last_week }}</div><div class="mk-stat-l">downloads in the latest seven days{% if au.wow_pct is not none %} ({{ "%+.0f"|format(au.wow_pct) }}% on the seven before){% endif %}</div></div>
             <div class="mk-stat"><div class="mk-stat-v">{{ au.youtube_views_28d }}</div><div class="mk-stat-l">YouTube views on videos published in the last 28 days</div></div>
             {% if au.shorts_view_pct %}<div class="mk-stat"><div class="mk-stat-v">{{ au.shorts_view_pct }}%</div><div class="mk-stat-l">of each Short watched, on average</div></div>{% endif %}
             {% if au.newsletter_subscribers %}<div class="mk-stat"><div class="mk-stat-v">{{ au.newsletter_subscribers }}</div><div class="mk-stat-l">newsletter subscribers</div></div>{% endif %}

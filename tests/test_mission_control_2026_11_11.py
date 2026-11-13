@@ -48,12 +48,24 @@ def _mondays(n, end="2026-11-09"):
 
 
 class TestGrowthStoryDownloads:
-    def test_newest_bucket_is_never_charted(self, tmp_path):
+    def test_a_week_that_has_not_ended_is_never_charted(self, tmp_path):
+        """A file from before Nov 12 2026 could hold a key whose Saturday
+        was still ahead of its own ``updated_at``: never read."""
         weeks = list(zip(_mondays(10), [100] * 9 + [9999]))
         out = _gen().build_growth_story(_root(tmp_path, weeks))
         charted = [w["week"] for w in out["downloads"]["weeks"]]
         assert "2026-11-09" not in charted and len(charted) == 9
         assert all(w["value"] == 100 for w in out["downloads"]["weeks"])
+
+    def test_the_newest_whole_week_is_charted(self, tmp_path):
+        """The ledger's weeks run Sunday to Saturday and every one on file is
+        complete: the Sunday fetch writes the week that ended the day
+        before, and the panel charts it that night."""
+        weeks = list(zip(_mondays(10), [100] * 9 + [140]))
+        out = _gen().build_growth_story(
+            _root(tmp_path, weeks, updated="2026-11-15T21:00:00+00:00"))
+        charted = out["downloads"]["weeks"]
+        assert charted[-1] == {"week": "2026-11-09", "value": 140} and len(charted) == 10
 
     def test_four_week_average_against_a_quarter_earlier(self, tmp_path):
         # 18 complete weeks + the newest bucket: the last four average 400,
@@ -125,7 +137,10 @@ class TestCommittedDashboard:
         newest = max(hist["weeks"])
         weeks = [w["week"] for w in gs["downloads"]["weeks"]]
         assert weeks == sorted(weeks)
-        if str(hist.get("updated_at", ""))[:10] < _plus_days(newest, 7):
+        assert set(weeks) <= set(hist["weeks"])
+        # A week is charted only once its Saturday (the Monday key + 5) is
+        # behind the ledger's own date.
+        if str(hist.get("updated_at", ""))[:10] <= _plus_days(newest, 5):
             assert newest not in weeks
 
 
@@ -164,8 +179,10 @@ class TestPageWiring:
         src = _page()
         assert 'l: "Week-over-week growth"' not in src
         panel = _block(src, "function renderSponsorPanel")
-        # The weekly change stays in the hero, as the complete-week figure.
-        assert "ahNet.wow_pct" in panel and "last complete week" in panel
+        # The weekly change stays in the hero, as the latest seven complete
+        # days against the seven before (Nov 12 2026, engine/op3_weeks.py).
+        assert "ahNet.wow_pct" in panel and "latest seven days" in panel
+        assert "last complete week" not in panel
 
     def test_sponsor_brief_types_no_price_and_no_gender(self):
         """engine.brand owns the rate card; YouTube age bands only."""

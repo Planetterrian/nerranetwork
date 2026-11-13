@@ -61,16 +61,20 @@ unconfigured.
 
 **Window:** `network_downloads_7d` / `network_downloads_30d` are rolling
 7- and 30-day totals as of the OP3 fetch. `last_week` / `prior_week` /
-`wow_pct` compare the last **complete** calendar week of downloads to
-the week before it. The current partial week is never compared.
+`wow_pct` compare the latest seven **complete** days of downloads with
+the seven days before them. OP3's weekly series is four back-to-back
+trailing seven-day windows ending on its `asof` day, not calendar weeks,
+and every window is complete (`engine/op3_weeks.py`, Nov 12 2026). Until
+that date the newest window was skipped as "partial", so these fields
+described the week before last.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `fetched_at` | string \| null | OP3 fetch timestamp from the dashboard. |
 | `network_downloads_7d` | int \| null | Rolling 7-day network downloads. |
 | `network_downloads_30d` | int \| null | Rolling 30-day network downloads. |
-| `last_week` | int \| null | Downloads in the last complete week. |
-| `prior_week` | int \| null | Downloads in the week before `last_week`. |
+| `last_week` | int \| null | Downloads in the latest seven complete days (the window ending on OP3's `asof` day). |
+| `prior_week` | int \| null | Downloads in the seven days before `last_week`. |
 | `wow_pct` | number \| null | Percent change last vs prior; **null** when prior is 0 or unmeasured. |
 | `unindexed_shows` | string[] | Show slugs OP3 does not track. **Every OP3 download figure excludes these.** As of 2026-10-28 this list is `nerra_voices`, `offshore_north`, `omni_view_north_america`. Carry it as data so a consumer can render the caveat rather than hard-code it. |
 | `shows_measured` | int \| null | Count of shows OP3 resolved and measured. |

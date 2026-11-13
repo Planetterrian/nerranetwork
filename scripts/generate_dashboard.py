@@ -3907,7 +3907,7 @@ def item_23_public_dashboard_data(root: Path, today: Optional[_dt.date] = None) 
                {"findings": findings})
 
 
-# Mission Control's growth panel (Nov 11 2026): the last four complete weeks
+# Mission Control's growth panel (Nov 11 2026): the last four ledger weeks
 # are compared with the four weeks this many weeks earlier (a quarter), and
 # no multiple is printed against a base smaller than the floor.
 GROWTH_STORY_WEEKS_BACK = 13
@@ -3921,12 +3921,13 @@ def build_growth_story(root: Path) -> Dict[str, Any]:
     week-over-week change.
 
     Same reading the media kit charts (generate_html._media_kit_growth):
-    podcast downloads are COMPLETE OP3 weeks only (the newest bucket is
-    never charted or compared), YouTube is the nightly channel snapshots
+    podcast downloads are the ledger's whole Sunday to Saturday weeks
+    (``engine/op3_weeks.py``; every week on file is complete, so the
+    newest one is charted), YouTube is the nightly channel snapshots
     carried forward over a missed night per channel, one point a week.
-    The headline is the average of the last four complete weeks against
-    the four weeks a quarter (13 weeks) earlier: one week is noise, a
-    month is not. Every comparison is ``None`` (a dash on the page) until
+    The headline is the average of the last four weeks against the four
+    weeks a quarter (13 weeks) earlier: one week is noise, a month is
+    not. Every comparison is ``None`` (a dash on the page) until
     the history is long enough to make it; nothing here is a forecast.
     """
     out: Dict[str, Any] = {"configured": False}
@@ -3937,19 +3938,14 @@ def build_growth_story(root: Path) -> Dict[str, Any]:
         except (TypeError, ValueError):
             return None
 
-    # ---- podcast downloads by complete week ----
+    # ---- podcast downloads by ledger week (Sunday to Saturday) ----
+    from engine import op3_weeks
+
     hist = _load_json(root / "api" / "op3_history.json") or {}
-    updated = _day(hist.get("updated_at"))
-    weekly: List[Tuple[_dt.date, int]] = []
-    for wk in sorted(hist.get("weeks") or {}):
-        start = _day(wk)
-        row = (hist.get("weeks") or {}).get(wk)
-        if start is None or not isinstance(row, dict):
-            continue
-        if updated is None or start + _dt.timedelta(days=7) > updated:
-            continue
-        weekly.append((start, sum(int(v) for v in row.values()
-                                  if isinstance(v, (int, float)))))
+    weekly: List[Tuple[_dt.date, int]] = [
+        (monday, sum(int(v) for v in row.values() if isinstance(v, (int, float))))
+        for monday, row in op3_weeks.complete_ledger_weeks(hist)
+    ]
     downloads: Dict[str, Any] = {
         "weeks": [{"week": d.isoformat(), "value": v} for d, v in weekly],
         "since": weekly[0][0].isoformat() if weekly else None,
@@ -4022,9 +4018,9 @@ def build_growth_story(root: Path) -> Dict[str, Any]:
     out["youtube"] = youtube
     out["configured"] = bool(weekly or series)
     out["note"] = (
-        "Podcast downloads are complete OP3 weeks only; the newest bucket is "
-        "never charted or compared. YouTube is the nightly channel snapshot, "
-        "one point a week.")
+        "Podcast downloads are whole weeks, Sunday to Saturday, as OP3 "
+        "counted them; nothing is estimated. YouTube is the nightly channel "
+        "snapshot, one point a week.")
     return out
 
 
@@ -4180,33 +4176,40 @@ def _merge_op3_history(
     root: Path,
     fetched_at: Optional[str],
     per_show: Dict[str, Dict[str, Any]],
+    asof_by_show: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Accumulate OP3's rolling 4-week series into api/op3_history.json.
+    """Accumulate OP3's weekly windows into api/op3_history.json.
 
-    OP3 has no all-time endpoint — it exposes ``weeklyDownloads``
-    (w-3 … w0, w0 = the week containing the fetch date). Each dashboard
-    build overwrites those four ISO weeks in the history file (they are
-    authoritative and w0 is still growing) and leaves older weeks frozen,
-    yielding an ever-more-complete weekly ledger. All-time totals are the
-    sum over stored weeks, i.e. "since history tracking began".
+    OP3 has no all-time endpoint. It exposes ``weeklyDownloads``: four
+    back-to-back TRAILING seven-day windows ending on the show's ``asof``
+    day, every one complete (``engine/op3_weeks.py`` has the evidence).
+    Until Nov 12 2026 this function read them as calendar weeks and wrote
+    all four every night under the Monday of the fetch, so the ledger's
+    newest four weeks changed value nightly and overlapped the frozen week
+    before them by up to six days.
+
+    Now a show's windows are written only on the night its ``asof`` is a
+    Saturday, when they ARE the ledger's Sunday to Saturday weeks. The key
+    stays the Monday inside the week. A week is written up to four times
+    (four Saturdays in OP3's range), each rewrite carrying OP3's own small
+    revisions, then left frozen. A show with no readable ``asof`` writes
+    nothing: a window is never placed by guessing its date.
 
     NOTE the file must stay in nightly-maintenance.yml's safe-commit-push
     add-paths whitelist — the youtube_channel_history landmine (July 22
     2026 pass) was exactly a history file written but never committed.
 
-    Returns {"network_total", "per_show_totals", "since", "network_series"}.
+    Returns {"network_total", "per_show_totals", "since", "through",
+    "network_series"}. ``through`` is the last Saturday the ledger
+    covers; the totals are sums of whole weeks up to it.
     Best-effort: any failure returns zeros without breaking the dashboard.
     """
-    empty = {"network_total": 0, "per_show_totals": {}, "since": None,
-             "network_series": []}
-    try:
-        # Anchor w0 to the Monday of the week containing the fetch date.
-        try:
-            fetch_date = _dt.date.fromisoformat(str(fetched_at)[:10])
-        except (ValueError, TypeError):
-            fetch_date = _dt.date.today()
-        monday_w0 = fetch_date - _dt.timedelta(days=fetch_date.weekday())
+    from engine import op3_weeks
 
+    empty = {"network_total": 0, "per_show_totals": {}, "since": None,
+             "through": None, "network_series": []}
+    try:
+        asof_by_show = asof_by_show or {}
         hist_path = root / "api" / "op3_history.json"
         weeks: Dict[str, Dict[str, int]] = {}
         if hist_path.exists():
@@ -4224,10 +4227,10 @@ def _merge_op3_history(
         stored_weeks = {wk: dict(row) for wk, row in weeks.items()}
 
         for slug, v in per_show.items():
-            series = v.get("weekly_downloads") or []
-            for i, n in enumerate(reversed(series)):
-                week_start = (monday_w0 - _dt.timedelta(weeks=i)).isoformat()
-                weeks.setdefault(week_start, {})[slug] = int(n or 0)
+            aligned = op3_weeks.ledger_weeks(
+                asof_by_show.get(slug), v.get("weekly_downloads") or [])
+            for week_start, n in aligned.items():
+                weeks.setdefault(week_start, {})[slug] = n
 
         # Churn suppression: only rewrite when a week actually changed.
         # An unconditional write bumped ``updated_at`` on every build —
@@ -4239,6 +4242,8 @@ def _merge_op3_history(
             hist_path.write_text(
                 json.dumps(
                     {"updated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+                     "week": op3_weeks.LEDGER_WEEK_LABEL
+                     + ", keyed by the Monday inside it",
                      "weeks": weeks},
                     indent=2, ensure_ascii=False, sort_keys=True) + "\n",
                 encoding="utf-8")
@@ -4254,6 +4259,8 @@ def _merge_op3_history(
             "network_total": sum(v for _, v in network_series),
             "per_show_totals": per_show_totals,
             "since": min(weeks) if weeks else None,
+            "through": (op3_weeks.ledger_week_bounds(max(weeks))[1].isoformat()
+                        if weeks else None),
             "network_series": network_series,
         }
     except Exception:  # noqa: BLE001 — never break the dashboard
@@ -4609,7 +4616,9 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                     "downloads_7d": s.get("downloads_7d") or 0,
                     "downloads_30d": s.get("downloads_30d") or 0,
                     "weekly_avg": s.get("weekly_avg") or 0,
-                    # 4-element weekly series (w-3 … w0) for trend sparklines.
+                    # Four back-to-back trailing 7-day windows, oldest
+                    # first, the last ending on OP3's asof day
+                    # (engine/op3_weeks.py) — for trend sparklines.
                     "weekly_downloads": list(s.get("weekly_downloads") or []),
                 }
                 for slug, s in shows.items()
@@ -4629,12 +4638,14 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
 
             # All-time downloads: OP3 only exposes rolling windows (the
             # per-episode downloadsAll list is a subset — summing it
-            # UNDERCOUNTS badly), so we accumulate the weekly series into
-            # api/op3_history.json on every build and sum the accumulated
-            # weeks. "All-time" therefore means "since history tracking
-            # began" and grows more complete every week.
+            # UNDERCOUNTS badly), so the weekly windows are accumulated
+            # into api/op3_history.json once a week (the night they are
+            # whole Sunday to Saturday weeks) and summed. "All-time"
+            # therefore means "since history tracking began, through the
+            # last Saturday on file" (``all_time_through``).
             history = _merge_op3_history(
-                root, data.get("fetched_at"), per_show)
+                root, data.get("fetched_at"), per_show,
+                {slug: s.get("asof") for slug, s in shows.items()})
             for slug, v in per_show.items():
                 v["downloads_all_time"] = history["per_show_totals"].get(slug, 0)
             top_episodes = sorted(
@@ -4660,6 +4671,7 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "network_downloads_7d": d7,
                 "network_downloads_all_time": all_time,
                 "all_time_since": history["since"],
+                "all_time_through": history.get("through"),
                 # History tracking began mid-2026 — all-time can read BELOW
                 # the rolling 30d window until enough weeks accumulate.
                 "all_time_incomplete": bool(

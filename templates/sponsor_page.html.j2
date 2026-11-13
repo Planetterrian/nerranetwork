@@ -109,6 +109,7 @@
                 {% if growth.downloads_last %}<p class="mk-sub" style="margin:0">{{ growth.downloads_last.value }} in the week of {{ growth.downloads_last.week }}{% if growth.downloads_multiple %}, <span class="mk-up">{{ growth.downloads_multiple }}× the week of {{ growth.downloads_first.week }}</span>{% endif %}.</p>{% endif %}
                 {{ growth.downloads_chart | safe }}
                 {% if growth.weekly_downloads %}<details class="mk-details"><summary>Show the numbers</summary>
+                <p class="mk-sub" style="margin:.4rem 0">Weeks run Sunday to Saturday; each is named by its Monday.</p>
                 <table class="mk-table"><thead><tr><th scope="col">Week of</th><th scope="col" class="num">Downloads</th></tr></thead><tbody>
                     {% for w in growth.weekly_downloads %}<tr><td>{{ w.week }}</td><td class="num">{{ "{:,}".format(w.value) }}</td></tr>{% endfor %}
                 </tbody></table></details>{% endif %}

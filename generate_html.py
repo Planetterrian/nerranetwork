@@ -8687,8 +8687,9 @@ def _fmt_axis(v: int) -> str:
 def _media_kit_growth(shows: list) -> dict:
     """How the audience has grown, from the committed history files.
 
-    Podcast downloads are COMPLETE OP3 weeks only (the current week is
-    partial and never charted); YouTube subscribers are the nightly channel
+    Podcast downloads are the ledger's whole Sunday to Saturday weeks
+    (``engine/op3_weeks.py`` owns the reading; every week on file is
+    complete); YouTube subscribers are the nightly channel
     snapshots, carried forward over a missed night per channel. Every rate
     respects :data:`MEDIA_KIT_RATE_FLOOR`; every figure the page prints is
     ``None`` (a dash) when its file is missing."""
@@ -8703,20 +8704,13 @@ def _media_kit_growth(shows: list) -> dict:
 
     out: dict = {}
 
-    # Podcast downloads by complete week, network-wide.
+    # Podcast downloads by ledger week (Sunday to Saturday), network-wide.
+    from engine import op3_weeks as _op3_weeks
     hist = _load_json_quiet(ROOT / "api" / "op3_history.json") or {}
-    updated = _day(hist.get("updated_at"))
-    weekly = []
-    for wk in sorted(hist.get("weeks") or {}):
-        start = _day(wk)
-        if start is None:
-            continue
-        if updated is None or start + _dt.timedelta(days=7) > updated:
-            continue
-        row = (hist["weeks"] or {}).get(wk) or {}
-        weekly.append((start, sum(int(v) for v in row.values() if isinstance(v, (int, float)))))
-    if updated is None and weekly:
-        weekly = weekly[:-1]
+    weekly = [
+        (monday, sum(int(v) for v in row.values() if isinstance(v, (int, float))))
+        for monday, row in _op3_weeks.complete_ledger_weeks(hist)
+    ]
     out["weekly_downloads"] = [{"week": _short_date(d), "iso": d.isoformat(), "value": v}
                                for d, v in weekly]
     shown = weekly[-MEDIA_KIT_CHART_WEEKS:]

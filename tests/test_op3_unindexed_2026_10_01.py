@@ -39,7 +39,9 @@ from scripts import generate_dashboard as gd  # noqa: E402
 
 _RESOLVED = {
     "show_uuid": "u-tesla", "feed_url": "https://nerranetwork.com/podcast.rss",
-    "asof": "2026-10-01", "downloads_7d": 149, "downloads_30d": 616,
+    # A Saturday: the one night a week the ledger takes OP3's windows
+    # (engine/op3_weeks.py, Nov 12 2026).
+    "asof": "2026-10-03", "downloads_7d": 149, "downloads_30d": 616,
     "weekly_avg": 150, "weekly_downloads": [120, 140, 150, 60],
     "episodes": [{"title": "Tesla Shorts Time Ep 620: Big ep", "item_guid": "g",
                   "pubdate": "2026-09-20T08:00:00.000Z", "downloads_3d": 5,
@@ -146,6 +148,7 @@ class TestConsumersTolerateTheMarker:
         assert sec["not_refreshed"] == []
         # The history ledger never saw the marker.
         hist = json.loads((tmp_path / "api" / "op3_history.json").read_text())
+        assert len(hist["weeks"]) == 4
         assert all(set(row) == {"tesla"} for row in hist["weeks"].values())
 
     def test_dashboard_names_not_refreshed_shows(self, tmp_path):
