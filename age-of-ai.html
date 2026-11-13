@@ -2113,6 +2113,16 @@
             return (r.episode_title || r.title || '').trim();
         }
 
+        /* Newest first. Two episodes can carry the same date (an interview
+           show publishes two in a day), and a date-only sort leaves them in
+           file order, oldest first: the higher episode number wins the tie,
+           which is what the server-rendered card already does. */
+        function newestFirst(a, b) {
+            const byDate = new Date(b.date) - new Date(a.date);
+            if (byDate) return byDate;
+            return (epNumber(b) || 0) - (epNumber(a) || 0);
+        }
+
         function epSummary(r) {
             return r.content || r.summary || '';
         }
@@ -2227,7 +2237,7 @@
 
         function renderEpisodes(episodes) {
             if (!episodes || !episodes.length) { loadFromRSS(); return; }
-            episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
+            episodes.sort(newestFirst);
             const latest = episodes[0];
             setLatestTitle(epTitle(latest) || 'Latest Episode');
             document.getElementById('latest-date').textContent = formatDate(latest.date);

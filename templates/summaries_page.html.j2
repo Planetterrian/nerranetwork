@@ -348,7 +348,9 @@
                     return;
                 }
 
-                summaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                summaries.sort((a, b) => (new Date(b.date) - new Date(a.date))
+                    || ((parseInt(b.episode_num !== undefined ? b.episode_num : b.episode, 10) || 0)
+                        - (parseInt(a.episode_num !== undefined ? a.episode_num : a.episode, 10) || 0)));
 
                 const PAGE_SIZE = 20;
                 let visibleCount = PAGE_SIZE;
