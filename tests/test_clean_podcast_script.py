@@ -258,3 +258,23 @@ class TestEdgeCases:
         script = "The answer is simple: invest early."
         result = _clean_podcast_script(script)
         assert "simple: invest" in result
+
+
+class TestSegmentLabelKeepsItsParagraph:
+    """Nov 13 2026: Vancouver Ep051 lost its Both Sides segment and North
+    America Ep045 its Closer Look because the model opened the paragraph with
+    the prompt's own "[Both Sides]" label, and a line that starts with "[" was
+    dropped whole. The label goes; the prose stays."""
+
+    def test_label_at_paragraph_start_keeps_the_prose(self):
+        script = ("This is the open.\n\n[Both Sides] The case on both sides of the "
+                  "density rules turns on Tuesday's vote at council.\n\nThat's all.")
+        result = _clean_podcast_script(script, host_name="Mira")
+        assert "The case on both sides of the density rules" in result
+        assert "[Both Sides]" not in result
+
+    def test_a_bare_note_is_still_dropped(self):
+        for note in ("[Both Sides]", "[Intro music]", "[Pause]", "[Music swells under]",
+                     "[Production note: the sources are listed in the show notes]"):
+            result = _clean_podcast_script(f"Open.\n{note}\nClose.", host_name="Mira")
+            assert "[" not in result and "Production" not in result, note
