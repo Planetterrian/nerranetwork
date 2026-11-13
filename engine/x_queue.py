@@ -51,6 +51,21 @@ MAX_ATTEMPTS = 3
 #: not 24 hours — the Nov 7 lock outlasted a day and the queue started dropping
 #: posts again (Vancouver Ep047), so a lock that waits a weekend costs nothing.
 LOCKED_MAX_AGE = dt.timedelta(days=7)
+#: Nov 13 2026: the drain after an unlock is paced. The Nov 12 unlock at about
+#: 13:00 UTC was followed by two teasers and one full-episode video every half
+#: hour for six hours (36 media posts, many for episodes three days old), two
+#: runs landed 80 seconds apart at 19:07, and the account was locked again at
+#: 19:08. A row queued this long ago is backlog, and a run that meets backlog
+#: posts ONE post, never two.
+CATCH_UP_AGE = dt.timedelta(hours=18)
+#: The least time between two runs' posts on one account. The scheduler
+#: Worker dispatches at :05 and :35 and the GitHub fallback cron can land a
+#: minute after it; the later run posts nothing.
+MIN_POST_GAP = dt.timedelta(minutes=20)
+#: A full-episode reply queued longer ago than this is cancelled, not posted:
+#: a days-old episode under a days-old teaser has no audience, and each one is
+#: a 100-300 MB upload in a burst that already looks automated.
+REPLY_MAX_AGE = dt.timedelta(hours=36)
 # X's limit for a video on a post from a default (non-Premium) account
 # (docs.x.com media best practices, Oct 2026): 20 minutes, 8 GB.
 LONG_FORM_MAX_SECONDS = 20 * 60
@@ -305,6 +320,7 @@ def post_due(*, limit: int = 2, now: Optional[dt.datetime] = None) -> List[dict]
     due = _rest("GET", TABLE, params={
         "select": "*", "status": "eq.queued", "due_at": f"lte.{_iso(now)}",
         "order": "due_at.asc", "limit": str(limit)})
+    due = _paced(due, now)
     results = []
     for row in due:
         claimed = _rest("PATCH", TABLE, params={"id": f"eq.{row['id']}", "status": "eq.queued"},
@@ -355,6 +371,54 @@ def post_due(*, limit: int = 2, now: Optional[dt.datetime] = None) -> List[dict]
     return results
 
 
+def _last_posted(now: dt.datetime) -> dict:
+    """The latest ``posted_at`` per account (env_prefix) before this run."""
+    try:
+        rows = _rest("GET", TABLE, params={
+            "select": "posted_at,env_prefix", "status": "eq.posted",
+            "order": "posted_at.desc", "limit": "10"}) or []
+    except Exception as exc:  # noqa: BLE001 — pacing never stops the queue
+        logger.info("Could not read the last X post time: %s", exc)
+        return {}
+    last: dict = {}
+    for row in rows:
+        stamp = row.get("posted_at")
+        if not stamp:
+            continue
+        try:
+            t = dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        prefix = row.get("env_prefix") or "NERRANETWORK_X_"
+        if prefix not in last or t > last[prefix]:
+            last[prefix] = t
+    return last
+
+
+def _paced(due: List[dict], now: dt.datetime) -> List[dict]:
+    """Nov 13 2026: drop rows whose account posted under MIN_POST_GAP ago, and
+    post only one row in a run that meets backlog (CATCH_UP_AGE)."""
+    if not due:
+        return due
+    last = _last_posted(now)
+    kept = []
+    for row in due:
+        prefix = row.get("env_prefix") or "NERRANETWORK_X_"
+        t = last.get(prefix)
+        if t is not None and now - t < MIN_POST_GAP:
+            logger.info("X pacing: %s ep%s waits — its account posted %d min ago",
+                        row.get("show_slug"), row.get("episode_num"),
+                        int((now - t).total_seconds() // 60))
+            continue
+        kept.append(row)
+    backlog = any(_age_hours(r.get("created_at") or "", now) >= CATCH_UP_AGE.total_seconds() / 3600
+                  for r in kept)
+    if backlog and len(kept) > 1:
+        logger.info("X pacing: backlog in the queue — one post this run, not %d", len(kept))
+        kept = kept[:1]
+    return kept
+
+
 def _status_id(url: str) -> str:
     tail = (url or "").rstrip("/").rsplit("/", 1)[-1]
     return tail if tail.isdigit() else ""
@@ -377,9 +441,19 @@ def post_due_replies(*, limit: int = 1, now: Optional[dt.datetime] = None) -> Li
         "select": "*", "status": "eq.queued", "order": "created_at.asc", "limit": "20"})
     results: List[dict] = []
     for row in queued:
-        if len(results) >= limit:
+        # A cancellation is bookkeeping, not an upload: only posts and
+        # failed attempts count toward the per-run limit.
+        if sum(1 for r in results if r["status"] != "cancelled") >= limit:
             break
         label = f"{row['show_slug']} ep{row['episode_num']} ({row.get('kind') or 'long'})"
+        if row.get("created_at") and _age_hours(row["created_at"], now) > REPLY_MAX_AGE.total_seconds() / 3600:
+            _rest("PATCH", REPLY_TABLE, params={"id": f"eq.{row['id']}"}, prefer="return=minimal",
+                  json={"status": "cancelled", "error": "stale", "updated_at": _iso(now)})
+            for url in (row.get("media_url"), row.get("subtitles_url")):
+                if url:
+                    _forget_media(url)
+            results.append({"id": row["id"], "show": label, "status": "cancelled", "error": "stale"})
+            continue
         parents = _rest("GET", TABLE, params={
             "select": "status,tweet_url", "show_slug": f"eq.{row['show_slug']}",
             "episode_num": f"eq.{row['episode_num']}", "limit": "1"})

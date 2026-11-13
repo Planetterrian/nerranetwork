@@ -7425,8 +7425,22 @@ def _clean_podcast_script(
     for line in script.splitlines():
         line = line.strip()
         # Skip stage directions, blank lines, and bracketed notes
-        if not line or line.startswith("["):
+        if not line:
             continue
+        if line.startswith("["):
+            # Nov 13 2026: a segment label echoed from the podcast prompt's
+            # "[Both Sides] ..." / "[The Closer Look] ..." instructions at the
+            # START of a prose paragraph took the whole paragraph with it.
+            # Vancouver Ep051 lost its Both Sides segment (379 words, which
+            # the map had promised) and North America Ep045 its Closer Look
+            # (416 words), silently. The label goes; the prose after it is
+            # spoken. A line that is only a bracketed note ("[Intro music]",
+            # "[Pause]") is still dropped whole.
+            _label_end = line.find("]")
+            _rest = line[_label_end + 1:].strip() if 0 < _label_end <= 60 else ""
+            if len(_rest.split()) < 4:
+                continue
+            line = _rest
         # Skip footer/debug metadata Grok sometimes appends (numeric or word form)
         if re.match(r"(?i)^\(?\s*(word\s*count|total\s*words|character\s*count)\b", line):
             continue

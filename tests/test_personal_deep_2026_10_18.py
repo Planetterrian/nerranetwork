@@ -45,6 +45,29 @@ from engine.personal_edition import (
 )
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# Nov 13 2026: these tests calibrate on committed episodes from Oct 14 and
+# Oct 17, but a show's summaries file keeps its newest 30 entries, so those
+# dates roll off (Oct 14 left Models & Agents and MAG 7 on Nov 13 and Run
+# Tests went red on main). The entries the tests read are frozen in a fixture
+# and stand in only for a date the live file no longer carries.
+_SUMMARIES_SNAPSHOT = json.loads(
+    (ROOT / "tests" / "fixtures" / "personal_summaries_2026_10.json").read_text(encoding="utf-8")
+)["by_file"]
+
+
+@pytest.fixture(autouse=True)
+def _rolled_off_summaries(monkeypatch):
+    from engine import daily_edition as _de
+
+    live = _de._summaries_entries
+
+    def entries(path):
+        rows = list(live(path))
+        have = {r.get("date") for r in rows}
+        rows += [r for r in _SUMMARIES_SNAPSHOT.get(Path(path).name, []) if r.get("date") not in have]
+        return rows
+    monkeypatch.setattr(_de, "_summaries_entries", entries)
 TOKEN = "cd" * 16
 HAS_FFMPEG = shutil.which("ffmpeg") is not None
 
