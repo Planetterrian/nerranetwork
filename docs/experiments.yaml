@@ -7621,3 +7621,53 @@ experiments:
       docs/reviews/fascinating_frontiers_review_2026_11_13.md; guards
       tests/test_fascinating_frontiers_review_2026_11_13.py.
     evidence: null
+  - id: omni-view-review-2026-11-13
+    title: "Omni View: the day's biggest stories, told from full text, with no framing filler"
+    area: content
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    metric: editorial_score_14d_omni_view
+    baseline: >
+      Daily audit Oct 30-Nov 12: mean 5.7/10, the lowest daily show,
+      Repetitive on 12 of 14 episodes and Incoherent on the last two; Top
+      World, from the same day's news, scored 8. Ep226-234: the digest
+      expansion retry fired 9 of 9 (first drafts 944-1,216 words against a
+      1,500 floor); script fact-free share 39-68%, median 53% (Top World median 19%); full
+      text read on 8-12 of 60 prompt articles; the slate led with an EU
+      consumer proposal and carried a Turkish appliance maker, a Nissan
+      strategy note and a Reuters fund column while the Mississippi Senate
+      result, the Gaza hospital strike and Spain's general strike went
+      untold or to one sentence. OP3: 123 downloads in the 7 days to Nov 11.
+    target: >
+      editorial_score_14d_omni_view at or above 7.0 over Nov 14-27, with
+      Repetitive on at most 4 of 14 episodes, the expansion retry on at most
+      4 of 14, and no episode skipped.
+    criteria: >
+      HIT when editorial_score_14d_omni_view reads 7.0 or more on Nov 27
+      and api/editorial_score_history.json shows Repetitive on at most 4 of
+      the 14 Omni View rows dated Nov 14-27; MISS when the mean is under 6.2
+      or Repetitive is on 9 or more of 14; else INCONCLUSIVE.
+    readout_plan: >
+      api/editorial_score_history.json (score and flags per Omni View row);
+      digests/omni_view/metrics_ep*.json (digest_expansion_fired,
+      digest_fact_free_pct, script_fact_free_pct, articles_full_text,
+      skip reasons); the committed
+      digests' lead headlines against Top World's for the same dates;
+      api/op3_stats.json for the download windows as a secondary read.
+    notes: >
+      Digest prompt: the big stories first (a story several outlets carry
+      outranks one; a sibling having told it is never a reason to skip),
+      NOT A STORY list, depth targets are ceilings and a story with under
+      four facts goes to Also Today, SENTENCES THAT ARE NEVER WRITTEN
+      (coverage-about-coverage, restated headlines, invented next steps),
+      Progress watch a measured result only, the deep dive may explain any
+      story and never re-tells it, interesting_first + hook_supported.
+      Podcast prompt: worked example, 1,700-word "must", two-outlet demand
+      and quotable cross-promo lines removed. Config: min_digest_words 1500
+      -> 1000, fetch_full_text 24 at 4,000 characters, NYT/Globe/CBC in,
+      Bloomberg Markets/Wired/Ars/two Reddit feeds out, Top World's
+      live-blog/gallery/quiz/obituary exclusions. Models unchanged (grok-4.3
+      digest, grok-4.6 script); a move to grok-4.7 is left to the operator. Review docs/reviews/omni_view_review_2026_11_13.md; guards
+      tests/test_omni_view_review_2026_11_13.py. AUDIO: A/B-listen the first
+      episode.

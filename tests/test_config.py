@@ -509,7 +509,9 @@ class TestLoadConfigRealFiles:
         # r/news removed; wires (Reuters/AP via Google News, WSJ World) +
         # regional balance feeds (BBC Africa/Asia/LatAm, AllAfrica, SCMP,
         # Nikkei Asia, The Hindu, Japan Times, MercoPress) added.
-        assert len(cfg.sources) == 37
+        # Nov 13 2026 review: Bloomberg Markets, Wired, Ars Technica and the
+        # two Reddit feeds out; NYT World, Globe and Mail World, CBC World in.
+        assert len(cfg.sources) == 35
         assert cfg.sources[0].label == "NPR"
         assert "election" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"

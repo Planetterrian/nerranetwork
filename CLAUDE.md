@@ -1343,19 +1343,7 @@ in [`docs/experiments.yaml`](docs/experiments.yaml)** with its readout date
 and (where supported) a live metric key — a typo'd metric name fails CI
 (`tests/test_dashboard_growth.py`).
 
-The page carries **three views** (Aug 2026): Operator (everything),
-Sponsor (`?view=sponsor` — audience + catalogue, no spend/valuation) and
-**Investor** (`?view=investor` — audience, unit economics, industry
-benchmarks and now/1yr/5yr value scenarios). Every external market figure
-(percentile ladder, CPMs, production costs, M&A multiples) lives ONLY in
-[`docs/industry_benchmarks.yaml`](docs/industry_benchmarks.yaml) with
-sources + an `as_of` date the page renders; the generator's
-`build_benchmarks_section` / `build_investor_section` compute placement
-and scenarios from the same audience/cost sections the rest of the page
-uses. Honesty rules: episode denominators come from RSS pubDates (credit
-files count dub tracks and overstate episodes), unmeasured = null never 0,
-projections are labelled scenarios with their assumptions serialized next
-to them. Drift guards: `tests/test_investor_dashboard.py`.
+**Three views** (Operator, `?view=sponsor`, `?view=investor`): every external market figure lives ONLY in [`docs/industry_benchmarks.yaml`](docs/industry_benchmarks.yaml) with sources and `as_of`; episode denominators come from RSS pubDates, unmeasured is null never 0, projections are labelled scenarios. Guards `tests/test_investor_dashboard.py`. [history](docs/claude_md_history/2026_08_dashboard_three_views.md)
 Items 7 and 10 are intentionally excluded from the dashboard (per an explicit
 decision); everything else has a live status card.
 
@@ -2002,6 +1990,11 @@ Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
 
 [history](docs/claude_md_history/2026_10_21_covered_means_aired.md); design [`docs/story_catalog.md`](docs/story_catalog.md); register `story-catalog-2026-10-21`; guards `tests/test_story_catalog_2026_10_21.py`.
 **`engine/aired_items.py` is the one reader of "the stories a digest told".** **The tracker records what aired**, never the whole prompt list. **Story ids come from `engine/story_catalog.py`.** **The cross-show block names only today's articles a sibling told in two days, never silence.** **The story catalog is `catalog_*` in the nerra-voices Supabase** (`engine/catalog.py`; a show run's write never blocks; `missed_stories` null, never 0). **Books never print a corrected error**; a `prior_coverage.md` is never a source. ⚠️ AUDIO.
+
+### Omni View (Nov 13 2026)
+
+[review](docs/reviews/omni_view_review_2026_11_13.md); register `omni-view-review-2026-11-13`; guards `tests/test_omni_view_review_2026_11_13.py`.
+**A sibling having told a story is never a reason to skip it** (no "change course" in a prompt). **No sentence about the coverage instead of the event, and no next step an article does not name.** **Depth targets are ceilings; a story under four facts goes to Also Today.** ⚠️ AUDIO.
 
 ### FPD and UC (Nov 12 2026)
 
