@@ -514,7 +514,8 @@ class TestLoadConfigRealFiles:
         assert len(cfg.sources) == 35
         assert cfg.sources[0].label == "NPR"
         assert "election" in cfg.keywords
-        assert cfg.llm.model == "grok-4.3"
+        # Nov 13 2026: operator moved the show to grok-4.7, like its siblings.
+        assert cfg.llm.model == "grok-4.7"
         assert cfg.llm.digest_temperature == 0.5
         # Raised 4000 -> 10000 so the multi-perspective digest completes
         # without truncation, then 10000 -> 13000 (July 28 2026) because it

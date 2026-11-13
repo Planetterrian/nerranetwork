@@ -344,7 +344,9 @@ class TestXOutcome:
 
 # -------------------------------------------------------------- afternoon --
 class TestAfternoonSlateFixes:
-    @pytest.mark.parametrize("slug", ("spacex", "omni_view"))
+    # omni_view's script pin ended Nov 13 2026 (grok-4.7 on both stages,
+    # still streaming: tests/test_omni_view_review_2026_11_13.py).
+    @pytest.mark.parametrize("slug", ("spacex",))
     def test_pinned_script_arms_stream(self, slug):
         cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
         assert cfg.llm.podcast_model == "grok-4.6"

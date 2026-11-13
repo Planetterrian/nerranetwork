@@ -92,7 +92,8 @@ class TestLowEffortOnNewShows:
         assert cfg.llm._pinned_reasoning_effort == "low"
 
     def test_established_shows_send_no_effort(self):
-        for slug in ("tesla", "spacex", "models_agents", "omni_view"):
+        # omni_view joined the grok-4.7 low arm on Nov 13 2026.
+        for slug in ("tesla", "spacex", "models_agents"):
             assert _llm_reasoning_effort(load_config(f"shows/{slug}.yaml")) is None
 
 

@@ -162,6 +162,9 @@ class TestStagingIsStaged:
         # Phase 3: the Omni View desks and Top World.
         "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
         "omni_view_latam", "omni_view_north_america", "omni_view_world",
+        # Nov 13 2026: the operator moved the main Omni View show onto the
+        # arm (docs/reviews/omni_view_review_2026_11_13.md).
+        "omni_view",
     })
 
     def test_no_show_digest_left_the_network_default(self):

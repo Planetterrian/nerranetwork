@@ -869,6 +869,10 @@ class TestSystemPrompts:
             "grok-4.3",
             "grok-4.6",
         }
+        # Nov 13 2026: the operator moved omni_view onto the grok-4.7 arm
+        # (test_grok_47_migration's NEW_SHOWS_47_ARM pins the scope).
+        if show_slug == "omni_view":
+            allowed = {"grok-4.7"}
         config = load_config(config_path)
         assert config.llm.model in allowed, (
             f"{show_slug} should use one of {sorted(allowed)}, "
