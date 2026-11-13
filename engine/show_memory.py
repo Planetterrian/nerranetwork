@@ -258,7 +258,12 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
             )
 
         lines.append(f"\n**{name}**{when}")
-        lines.append(f"Current status: {status}")
+        if prog.get("status_from_ledger"):
+            # Nov 13 2026: written by the run from that episode's
+            # verified claims ledger (show_memory.apply_ledger_statuses).
+            lines.append(f"Latest verified fact: {status}")
+        else:
+            lines.append(f"Current status: {status}")
 
         questions = prog.get("key_open_questions", [])
         if questions:
@@ -610,6 +615,111 @@ def auto_update_narrative_from_digest(
 
 
 # ---------------------------------------------------------------------------
+# Statuses written from the episode's verified claims (Nov 13 2026)
+# ---------------------------------------------------------------------------
+# The memory, books and lake review found 22 of 23 trackers had never had a
+# status written: every "Current status" line was the seed sentence typed
+# when the show enabled memory, under a rule that "a status is never
+# contradicted". Each run now replaces a tracked program's status with the
+# first VERIFIED claim in its own ledger that names the program — a sentence
+# the claims gate has already traced to a source, so no new model call and
+# nothing unverified ever becomes memory. A program the episode has no
+# verified claim about keeps its previous status and date.
+
+#: A claim longer than this is not a status line (it is a paragraph).
+LEDGER_STATUS_MAX_CHARS = 320
+
+
+def find_episode_ledger(output_dir: Path, episode_num: int) -> Path | None:
+    """The claims sidecar for episode *episode_num* in *output_dir* (or its
+    ``members/`` folder), newest first; ``None`` when there is none."""
+    output_dir = Path(output_dir)
+    pattern = f"*_Ep{int(episode_num)}_*_claims.json"
+    hits = sorted(output_dir.glob(pattern)) + sorted(
+        (output_dir / "members").glob(pattern))
+    return hits[-1] if hits else None
+
+
+def verified_ledger_claims(ledger_path: Path | None) -> List[Dict[str, Any]]:
+    """Verified entries of a claims sidecar, in ledger order."""
+    if not ledger_path or not Path(ledger_path).exists():
+        return []
+    from engine.claims import is_verified_status
+    try:
+        payload = json.loads(Path(ledger_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        logger.warning("memory: unreadable claims ledger %s: %s", ledger_path, exc)
+        return []
+    claims = payload.get("claims") if isinstance(payload, dict) else None
+    out = []
+    for c in claims or []:
+        if not isinstance(c, dict) or not is_verified_status(c.get("status")):
+            continue
+        text = " ".join(str(c.get("claim") or "").split())
+        if text and len(text) <= LEDGER_STATUS_MAX_CHARS:
+            out.append(c)
+    return out
+
+
+def _claim_is_about(key: str, prog: Dict[str, Any], text_lower: str) -> bool:
+    """Stricter than ``_program_mentioned``: a status must be ABOUT the
+    program, so a claim needs two of the program's keywords (or all of them
+    when it has one, or its ``mention_pattern``). One shared word wrote the
+    Vatican's travel plans under "Argentina economy" and a border fire under
+    "China economy" in the replay over the last 14 ledgers."""
+    custom = prog.get("mention_pattern")
+    if custom:
+        try:
+            return bool(re.search(custom, text_lower, flags=re.IGNORECASE))
+        except re.error:
+            pass
+    kws = _program_mention_keywords(key, prog)
+    if not kws:
+        return False
+    hits = sum(1 for kw in kws
+               if re.search(rf"\b{re.escape(kw)}(?:e?s)?\b", text_lower))
+    return hits >= min(2, len(kws))
+
+
+def apply_ledger_statuses(tracker: Dict[str, Any], claims: List[Dict[str, Any]],
+                          episode_num: int, date_str: str) -> List[str]:
+    """Write each tracked program's status from the first verified claim
+    that names it. Mutates *tracker*; returns the program keys updated."""
+    updated: List[str] = []
+    for key, prog in (tracker.get("programs") or {}).items():
+        for c in claims:
+            text = " ".join(str(c.get("claim") or "").split())
+            if not _claim_is_about(key, prog, text.lower()):
+                continue
+            if not prog.get("status_from_ledger") and "seed_status" not in prog:
+                prog["seed_status"] = prog.get("status", "")
+            prog["status"] = text
+            prog["status_from_ledger"] = True
+            prog["status_source_url"] = str(c.get("source_url") or "")
+            prog["last_major_update_episode"] = episode_num
+            prog["last_major_update_date"] = date_str
+            updated.append(key)
+            break
+    return updated
+
+
+def update_statuses_from_ledger(output_dir: Path, cfg: MemoryConfig,
+                                episode_num: int, date_str: str) -> List[str]:
+    """Load this episode's ledger and write the statuses it supports."""
+    claims = verified_ledger_claims(find_episode_ledger(output_dir, episode_num))
+    if not claims:
+        return []
+    tracker = load_narrative_tracker(output_dir, cfg)
+    updated = apply_ledger_statuses(tracker, claims, episode_num, date_str)
+    if updated:
+        save_narrative_tracker(tracker, output_dir, cfg)
+        logger.info("[%s] narrative tracker: statuses written from Ep%s's "
+                    "verified claims for %s", cfg.slug, episode_num,
+                    ", ".join(updated))
+    return updated
+
+
+# ---------------------------------------------------------------------------
 # Composed prompt section (single placeholder, empty == true no-op)
 # ---------------------------------------------------------------------------
 
@@ -702,6 +812,9 @@ def memory_post_generate(config, slug: str, digest_text: str, episode_num: int) 
         from datetime import date as _date
         auto_update_narrative_from_digest(
             out_dir, cfg, digest_text, episode_num, _date.today().isoformat(),
+        )
+        update_statuses_from_ledger(
+            out_dir, cfg, episode_num, _date.today().isoformat(),
         )
     except Exception as exc:  # noqa: BLE001
         logger.warning("%s memory post_generate failed (non-fatal): %s", slug, exc)
