@@ -33,6 +33,7 @@ from engine.book_compiler import (  # noqa: E402
     load_volume,
     opening_credits_text,
     parse_digest_to_chapter,
+    untitled_episodes,
     update_catalog,
 )
 from engine.titles import BOOK_CHAPTER_TITLE_MAX, fits  # noqa: E402
@@ -99,6 +100,30 @@ class TestDigestParsing:
             raise AssertionError("an empty chapter must raise, not ship")
 
 
+class TestPlannerNeverBuildsUntitled:
+    """Nov 13 2026: planner mode builds a volume only once every chapter
+    has a curated title; an explicit --volume is never dropped."""
+
+    def test_untitled_planned_volume_is_dropped(self, tmp_path, monkeypatch):
+        import scripts.build_book as bb
+        vols = tmp_path / "books" / "volumes"
+        vols.mkdir(parents=True)
+        src = (_ROOT / "books" / "volumes" / "first_principles_vol1.yaml")
+        (vols / "titled.yaml").write_text(
+            src.read_text(encoding="utf-8").replace(
+                "first_principles_vol1", "titled"), encoding="utf-8")
+        import yaml
+        data = yaml.safe_load(src.read_text(encoding="utf-8"))
+        data["volume_id"] = "untitled"
+        data["chapter_titles"] = {ep: "" for ep in data["episodes"]}
+        (vols / "untitled.yaml").write_text(yaml.safe_dump(data),
+                                            encoding="utf-8")
+        monkeypatch.setattr(bb, "ROOT", tmp_path)
+        assert bb._drop_untitled(["titled", "untitled"]) == ["titled"]
+        assert bb._drop_untitled(["untitled"], explicit="untitled") == [
+            "untitled"]
+
+
 class TestChapterTitles:
     """Curated titles (2026-08-22). The original derivation clipped the
     episode hook — a full podcast sentence — so every store-TOC entry was
@@ -125,10 +150,20 @@ class TestChapterTitles:
         """Every committed volume must be store-ready: a curated title
         for every episode. (Planner-fresh FUTURE volumes may run bare
         'Chapter N' until titled — that is a warning, not an error.)"""
+        # Nov 13 2026: "committed" here means BUILT (cataloged with files).
+        # The Nov 1 run failed this check on a planner-fresh volume after
+        # building it, losing the run; the planner now leaves an untitled
+        # volume planned and unbuilt (scripts/build_book.py _drop_untitled).
+        import json as _json
+        catalog = _json.loads((_ROOT / "books" / "catalog.json").read_text(
+            encoding="utf-8"))
+        built = {e.get("volume_id") for e in catalog.get("volumes", [])
+                 if e.get("files")}
         for vp in sorted((_ROOT / "books" / "volumes").glob("*.yaml")):
             v = load_volume(vp)
-            missing = [ep for ep in v.episodes
-                       if not v.chapter_titles.get(ep)]
+            if v.volume_id not in built:
+                continue
+            missing = untitled_episodes(v)
             assert not missing, f"{v.volume_id}: untitled episodes {missing}"
 
     def test_titles_are_unique_within_a_series(self):

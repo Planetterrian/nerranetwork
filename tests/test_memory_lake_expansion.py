@@ -256,7 +256,7 @@ class TestAug27PipelineHygiene:
         import scripts.backfill_content_lake as bf
         assert callable(getattr(bf, "import_virtual_shows", None))
         src = open("scripts/backfill_content_lake.py", encoding="utf-8").read()
-        assert "import_virtual_shows()" in src, (
+        assert "import_virtual_shows(conn)" in src, (
             "main() no longer calls the virtual-show import — nerra_daily "
             "drops out of the lake and site search again")
 

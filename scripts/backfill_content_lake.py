@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from engine.content_lake import (
     EpisodeRecord,
+    bulk_writer,
     extract_entities_and_topics,
     get_lake_stats,
     init_db,
@@ -110,7 +111,7 @@ def extract_hook_from_digest(text: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def import_virtual_shows() -> int:
+def import_virtual_shows(conn=None) -> int:
     """Import registry-only shows (network_meta entries with no YAML).
 
     Returns the number of episodes stored. Best-effort: a malformed
@@ -164,7 +165,7 @@ def import_virtual_shows() -> int:
                 word_count=len(digest_text.split()),
                 show_name=show_name,
                 language="en",
-            ))
+            ), conn=conn)
             show_imported += 1
         if show_imported:
             logger.info(
@@ -191,7 +192,13 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     init_db()
+    with bulk_writer() as conn:
+        total_imported = _import_all(conn)
+    return _finish(args, total_imported)
 
+
+def _import_all(conn) -> int:
+    """Store every committed episode through ONE shared connection."""
     total_imported = 0
 
     # Meta/config YAMLs that are not shows — loading them logs a noisy
@@ -260,7 +267,7 @@ def main(argv=None):
                 language=lang,
             )
 
-            store_episode(record)
+            store_episode(record, conn=conn)
             total_imported += 1
             show_imported += 1
 
@@ -300,7 +307,7 @@ def main(argv=None):
                             entities=et["entities"], topics=et["topics"],
                             word_count=len(body.split()), show_name=show_name,
                             language=lang,
-                        ))
+                        ), conn=conn)
                         total_imported += 1
                         show_imported += 1
                     if show_imported:
@@ -322,7 +329,11 @@ def main(argv=None):
     # Aug 25). Import any network_meta entry that has no shows/<slug>.yaml
     # but does have a digests directory with dated .md files; fall back to
     # its summaries JSON like the Age of AI path above.
-    total_imported += import_virtual_shows()
+    total_imported += import_virtual_shows(conn)
+    return total_imported
+
+
+def _finish(args, total_imported: int) -> int:
 
     # Oct 21 2026: story ids for every aired item, in the canonical order —
     # the same ids the story catalog stores (engine/story_catalog.py).

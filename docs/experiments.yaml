@@ -7671,3 +7671,45 @@ experiments:
       digest, grok-4.6 script); a move to grok-4.7 is left to the operator. Review docs/reviews/omni_view_review_2026_11_13.md; guards
       tests/test_omni_view_review_2026_11_13.py. AUDIO: A/B-listen the first
       episode.
+  - id: memory-books-lake-2026-11-13
+    title: "Memory, books, lake: the junk themes leave the prompt, the planner stops building untitled books, the lake rebuild halves"
+    area: content
+    shipped: 2026-11-13
+    readout: 2026-11-27
+    status: reading
+    baseline: >
+      The RECURRING THEMES block reached 21 memory-enabled shows' digest and
+      podcast prompts as all-time counts labelled "last ~30 days", led by
+      section labels, outlets and show-name fragments (Omni View "happened
+      neutral" 610, "context perspectives" 597; North America "york times"
+      212; M&A "simon willison" 231; FF "space astronomy" 279), with an
+      instruction to connect stories "back to the larger conversation".
+      The Nov 1 Build Book run spent 1 h 48 min building two untitled
+      60-chapter volumes and failed before its commit. The lake backfill took
+      ~43 s on every show run and every finalize.
+    target: >
+      Repetitive on fewer of the 14 rows per show (Nov 14-27 against Oct
+      31-Nov 13) on the memory-enabled shows other than FF and Omni View; the
+      Dec 1 Build Book run green in under 10 minutes with both volume-2 files
+      committed; the lake backfill step under 25 s in run-show logs.
+    criteria: >
+      HIT when, across the memory-enabled shows excluding fascinating_frontiers
+      and omni_view (both overhauled the same week), the Repetitive share in
+      api/editorial_score_history.json for Nov 14-27 is at least 5 points
+      under Oct 31-Nov 13 AND the Dec 1 Build Book run is green; MISS when the
+      Repetitive share rises 5 points or more; else INCONCLUSIVE.
+    readout_plan: >
+      api/editorial_score_history.json (Repetitive flags per row, both
+      windows); the Dec 1 Build Book run's conclusion, duration and the
+      ::warning:: lines naming untitled volumes; the "Backfill Content Lake"
+      step duration on three show runs.
+    notes: >
+      engine.tesla_memory.THEME_BLOCK_IN_PROMPT = False (mining continues);
+      content_lake.bulk_writer + store_episode(conn=) in the backfill (rows
+      byte-identical to the per-episode path); build_book._drop_untitled and
+      verify_book_catalog skip a planned, untitled volume. Review
+      docs/reviews/memory_books_lake_review_2026_11_13.md; guards
+      tests/test_memory_books_lake_2026_11_13.py,
+      tests/test_book_compiler.py::TestPlannerNeverBuildsUntitled. AUDIO: the
+      theme block is prompt context on 21 shows — A/B-listen the first
+      episode of two shows.
