@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 13 Nov 2026 11:07:05 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 14 Nov 2026 10:59:47 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,122 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 234: Vercel’s UI SDK supplies agents with 50 behaviors for building accessible components…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Vercel’s UI SDK supplies agents with 50 behaviors for building accessible components across five frameworks.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Vercel Labs released an Apache-2.0 beta library of 50+ UI behaviors that agents compose into components for React, Vue, Svelte, Solid, and Web Components. Agents using the bridge cut tool calls by 69% and task time by 61% on a settings task in Vercel’s tests. Builders should test the primitives on ui-sdk.dev this week to see how they reduce repetitive UI scaffolding for coding agents.
+
+Top Story
+Vercel Labs released Vercel UI SDK, an Apache-2.0 beta library of 50+ UI behaviors that agents assemble into accessible components. The headless library ships primitives such as createRovingFocus, createTypeahead, createPopup, createSelection, and createReorder rather than finished components. Agents combine these behaviors with framework adapters for React 19+, Vue 3.5+, Svelte 5.33+, Solid 2 RC, and plain Web Components. In Vercel’s own test an agent completed a settings task with 69% fewer tool calls and 61% less time when using the direct UI bridge. The library includes prebuilt examples for Select, Combobox, Date Picker, Menu, Tree, and Color Picker, plus a prompt template agents can paste to learn the primitives. Behaviors are defined once with definePrimitive and rendered identically across all five adapters via createParts, so one behavior definition serves React, Vue, Svelte, Solid, and Web Components without duplication. The project ships six npm packages at version 0.1.0-beta.1 and runs in any modern browser with no GPU requirement. Source: &lt;a href="https://www.marktechpost.com/2026/11/13/vercel-ui-sdk-agent-ui-behaviors/"&gt;marktechpost.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;I have trained a model to predict my blood sugar [P]: r/MachineLearning&lt;/b&gt;
+A 31,253-parameter encoder-only transformer was pretrained on 19,200 CGM-years of synthetic data from one million simulated type-1 diabetics, then LoRA-fitted to 115 days of the author’s personal CGM traces. The model predicts two hours ahead, infills missing segments, and performs backcasts while outputting blood-glucose values in Kovatchev risk space using combined DILATE, MSE, and pinball loss. It also learns to predict time-of-day from past traces once context exceeds 48 hours. The model accepts insulin units and carbohydrate grams with glycemic index as action curves, trains with learned Kendall-Gal weights, and maintains a native variable context window of 3.5 to 7.0 days. It remains weaker than the author at predicting hypoglycemia in the next 30 minutes. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xvja5n/i_have_trained_a_model_to_predict_my_blood_sugar_p/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Scaling to 1T MoE on TorchTitan [P]: r/MachineLearning&lt;/b&gt;
+A ~1 T-parameter MoE reached 1,300 tokens per second per GPU on 384 GH200s using 384-way FSDP plus 4-way expert parallelism inside nodes. Full activation checkpointing with Grace offload, Muon optimizer, and FP8 expert all-gather delivered a 14× throughput gain over the team’s starting baseline. Newton-Schulz orthogonalization was moved onto GPU to cut the optimizer step from 42 s to roughly 2 s. The team replaced pipeline parallelism with FSDP plus expert parallelism to avoid long step times on InfiniBand, added node-local resharding of dense weights after the forward pass to keep the backward gather on NVLink, and routed allocations through the compute stream to free 13.5 GiB of peak memory. Group-limited routing kept expert load balanced but introduced a small training instability risk still under measurement. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xvce5h/scaling_to_1t_moe_on_torchtitan_p/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Bolt PCHIE: a deterministic, tamper-evident safety harness for AI agents [P]: r/MachineLearning&lt;/b&gt;
+Every agent decision is appended to a hash chain so runs can be replayed and verified after the fact instead of trusted. Episodic memory writes are checked against the chain for tampering. The open repository is at https://github.com/wetwaferworks/bolt-pch-ie. The harness records every decision into the chain as it occurs, allowing full replay and verification of the agent’s execution history. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xvyvbd/p_bolt_pchie_a_deterministic_tamperevident_safety/"&gt;reddit.com&lt;/a&gt;
+
+&lt;b&gt;Perplexity Teammates bring autonomous AI agents to the Mac app: Digital Trends&lt;/b&gt;
+Teammates are persistent agents that plan tasks, spawn additional agents when needed, and notify the user when work is complete. The feature, already live on the web, now runs in the Mac app and works on growth campaigns, bug triage, metrics tracking, and market research. Access requires the $200-per-month Max plan. Agents communicate through dedicated channels, maintain their own cloud instances, and continue working even after the user closes the computer. Source: &lt;a href="https://www.digitaltrends.com/computing/perplexity-teammates-bring-autonomous-ai-agents-to-the-mac-app/"&gt;digitaltrends.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI has launched ChatGPT Wallet for AI-powered purchases: UkrMedia News&lt;/b&gt;
+ChatGPT Wallet lets “dots” agents find products, reach checkout, and pay after the user confirms with Face ID or fingerprint. Card details stay hidden from both the agent and merchants via tokenized payments; the service is rolling out first to selected U.S. ChatGPT Pro subscribers aged 18+. The system displays retailer, items, total, and payment method before each biometric confirmation, then generates a token that replaces actual card numbers and security codes while preserving existing rewards and consumer protections. Some merchants may still block automated purchases. Source: &lt;a href="https://ukrmedia.news/en/science-tech/openai-chatgpt-wallet-pokupky-shtuchnyi-intelekt/"&gt;ukrmedia.news&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;10 Recommendations for Building Strong Safety Evaluations: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt;
+Anthropic’s engineering blog outlines how to design, run, and report safety evaluations that measure whether a model increases or decreases harm likelihood. The post draws on system-card experience and psychology’s replication reforms, stressing preregistration, multi-expert review, and clear documentation of sampling and grading methods. It distinguishes safety evals from capability measurements, notes that evals are easy to game and hard to reproduce, and recommends involving subject-matter experts alongside technical and methods specialists when deciding how to sample, grade, and analyze responses. Source: &lt;a href="https://www.anthropic.com/research/building-strong-safety-evaluations"&gt;anthropic.com&lt;/a&gt;
+
+&lt;b&gt;Google Releases TPU Sync: Open-Source KV Cache Transfer for TPUs: MarkTechPost&lt;/b&gt;
+TPU Sync is a C++ library that moves KV caches and weights across TPU HBM, host DRAM, storage, and network. Google reports more than 90% lower KV transfer latency on 235 B to 480 B MoE models. The library targets the movement of large KV caches and model weights between high-bandwidth memory, host memory, persistent storage, and network links in TPU clusters. Source: &lt;a href="https://www.marktechpost.com/2026/11/13/google-tpu-sync-kv-cache-transfer-library/"&gt;marktechpost.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Databricks' Ken Wong says context, not model IQ, is what's blocking AI agents at work: BigGo Finance&lt;/b&gt;
+Wong argues that the 40-point accuracy gap on the BIRD benchmark disappears once explicit company-specific term mappings are supplied, showing that enterprise agent performance hinges on curated tribal knowledge rather than raw model scale. On the public BIRD leaderboard the top 50 entries all receive oracle knowledge of term definitions and reach nearly 90% accuracy, while the same systems drop to roughly 50% without it. Source: &lt;a href="https://finance.biggo.com/news/06e36a7a2e12362a"&gt;finance.biggo.com&lt;/a&gt;
+
+&lt;b&gt;Keyword Search Tied an 8B Embedding Model at Picking Agent Tools: Towards Data Science&lt;/b&gt;
+BM25 keyword search matched BGE-large accuracy on 200 ToolRet questions while running roughly 40× faster on CPU when full tool documentation was indexed. The test covered up to 3,794 tools and found that indexing complete tool documentation made the simple keyword approach competitive with the 8B embedding model. Source: &lt;a href="https://towardsdatascience.com/keyword-search-tied-an-8b-embedding-model-at-picking-agent-tools/"&gt;towardsdatascience.com&lt;/a&gt;
+
+Things to Try This Week
+• Install the Vercel UI SDK beta and paste the provided prompt into your coding agent to let it compose accessible components without hand-written ARIA.
+• Clone the Bolt PCHIE repository and wrap an existing agent run to generate verifiable hash-chain receipts for audit or replay.
+• Run the 1 T MoE TorchTitan recipe on a smaller node count to test the Muon-plus-FP8 path before committing to a full-scale job.
+• Add BM25 alongside your embedding retriever for tool selection; the 40× CPU speedup is immediate on modest hardware.
+• Load the personal CGM transformer from the GitHub repo and test its two-hour forecasts against your own continuous glucose data.
+
+On the Horizon
+• OpenAI continues gradual rollout of ChatGPT Wallet to more U.S. Pro users; watch for expansion beyond “dots” agents.
+• Anthropic’s safety-evaluation recommendations are expected to influence upcoming system-card releases.
+• Perplexity Teammates on Mac may reach additional subscription tiers if usage data supports it.
+• Databricks plans further Genie data-agent updates that incorporate the context-mapping work Ken Wong described.</description>
+      <guid isPermaLink="false">models-agents-video-ep234-20261114</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep234_20261114.mp4" length="205253577" type="video/mp4" />
+      <pubDate>Sat, 14 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep234_20261114.jpg" />
+      <itunes:duration>09:38</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Vercel’s UI SDK supplies agents with 50 behaviors for building accessible components across five frameworks.**
+
+**What You Need to Know:** Vercel Labs released an Apache-2.0 beta library of 50+ UI behaviors that agents compose into components for React, Vue, Svelte, Solid, and Web Components. Agents using the bridge cut tool calls by 69% and task time by 61% on a settings task in Vercel’s tests. Builders should test the primitives on ui-sdk.dev this week to see how they reduce repetitive UI scaffolding for coding agents.
+---
+### Top Story
+Vercel Labs released Vercel UI SDK, an Apache-2.0 beta library of 50+ UI behaviors that agents assemble into accessible components. The headless library ships primitives such as createRovingFocus, createTypeahead, createPopup, createSelection, and createReorder rather than finished components. Agents combine these behaviors with framework adapters for React 19+, Vue 3.5+, Svelte 5.33+, Solid 2 RC, and plain Web Components. In Vercel’s own test an agent completed a settings task with 69% fewer tool calls and 61% less time when using the direct UI bridge. The library includes prebuilt examples for Select, Combobox, Date Picker, Menu, Tree, and Color Picker, plus a prompt template agents can paste to learn the primitives. Behaviors are defined once with definePrimitive and rendered identically across all five adapters via createParts, so one behavior definition serves React, Vue, Svelte, Solid, and Web Components without duplication. The project ships six npm packages at version 0.1.0-beta.1 and runs in any modern browser with no GPU requirement. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/13/vercel-ui-sdk-agent-ui-behaviors/)
+---
+### Model Updates
+**I have trained a model to predict my blood sugar [P]: r/MachineLearning**
+A 31,253-parameter encoder-only transformer was pretrained on 19,200 CGM-years of synthetic data from one million simulated type-1 diabetics, then LoRA-fitted to 115 days of the author’s personal CGM traces. The model predicts two hours ahead, infills missing segments, and performs backcasts while outputting blood-glucose values in Kovatchev risk space using combined DILATE, MSE, and pinball loss. It also learns to predict time-of-day from past traces once context exceeds 48 hours. The model accepts insulin units and carbohydrate grams with glycemic index as action curves, trains with learned Kendall-Gal weights, and maintains a native variable context window of 3.5 to 7.0 days. It remains weaker than the author at predicting hypoglycemia in the next 30 minutes. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xvja5n/i_have_trained_a_model_to_predict_my_blood_sugar_p/)
+
+**Scaling to 1T MoE on TorchTitan [P]: r/MachineLearning**
+A ~1 T-parameter MoE reached 1,300 tokens per second per GPU on 384 GH200s using 384-way FSDP plus 4-way expert parallelism inside nodes. Full activation checkpointing with Grace offload, Muon optimizer, and FP8 expert all-gather delivered a 14× throughput gain over the team’s starting baseline. Newton-Schulz orthogonalization was moved onto GPU to cut the optimizer step from 42 s to roughly 2 s. The team replaced pipeline parallelism with FSDP plus expert parallelism to avoid long step times on InfiniBand, added node-local resharding of dense weights after the forward pass to keep the backward gather on NVLink, and routed allocations through the compute stream to free 13.5 GiB of peak memory. Group-limited routing kept expert load balanced but introduced a small training instability risk still under measurement. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xvce5h/scaling_to_1t_moe_on_torchtitan_p/)
+---
+### Agent &amp; Tool Developments
+**Bolt PCHIE: a deterministic, tamper-evident safety harness for AI agents [P]: r/MachineLearning**
+Every agent decision is appended to a hash chain so runs can be replayed and verified after the fact instead of trusted. Episodic memory writes are checked against the chain for tampering. The open repository is at https://github.com/wetwaferworks/bolt-pch-ie. The harness records every decision into the chain as it occurs, allowing full replay and verification of the agent’s execution history. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xvyvbd/p_bolt_pchie_a_deterministic_tamperevident_safety/)
+
+**Perplexity Teammates bring autonomous AI agents to the Mac app: Digital Trends**
+Teammates are persistent agents that plan tasks, spawn additional agents when needed, and notify the user when work is complete. The feature, already live on the web, now runs in the Mac app and works on growth campaigns, bug triage, metrics tracking, and market research. Access requires the $200-per-month Max plan. Agents communicate through dedicated channels, maintain their own cloud instances, and continue working even after the user closes the computer. Source: [digitaltrends.com](https://www.digitaltrends.com/computing/perplexity-teammates-bring-autonomous-ai-agents-to-the-mac-app/)
+
+**OpenAI has launched ChatGPT Wallet for AI-powered purchases: UkrMedia News**
+ChatGPT Wallet lets “dots” agents find products, reach checkout, and pay after the user confirms with Face ID or fingerprint. Card details stay hidden from both the agent and merchants via tokenized payments; the service is rolling out first to selected U.S. ChatGPT Pro subscribers aged 18+. The system displays retailer, items, total, and payment method before each biometric confirmation, then generates a token that replaces actual card numbers and security codes while preserving existing rewards and consumer protections. Some merchants may still block automated purchases. Source: [ukrmedia.news](https://ukrmedia.news/en/science-tech/openai-chatgpt-wallet-pokupky-shtuchnyi-intelekt/)
+---
+### Practical &amp; Community
+**10 Recommendations for Building Strong Safety Evaluations: [@AnthropicAI](https://x.com/AnthropicAI)**
+Anthropic’s engineering blog outlines how to design, run, and report safety evaluations that measure whether a model increases or decreases harm likelihood. The post draws on system-card experience and psychology’s replication reforms, stressing preregistration, multi-expert review, and clear documentation of sampling and grading methods. It distinguishes safety evals from capability measurements, notes that evals are easy to game and hard to reproduce, and recommends involving subject-matter experts alongside technical and methods specialists when deciding how to sample, grade, and analyze responses. Source: [anthropic.com](https://www.anthropic.com/research/building-strong-safety-evaluations)
+
+**Google Releases TPU Sync: Open-Source KV Cache Transfer for TPUs: MarkTechPost**
+TPU Sync is a C++ library that moves KV caches and weights across TPU HBM, host DRAM, storage, and network. Google reports more than 90% lower KV transfer latency on 235 B to 480 B MoE models. The library targets the movement of large KV caches and model weights between high-bandwidth memory, host memory, persistent storage, and network links in TPU clusters. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/13/google-tpu-sync-kv-cache-transfer-library/)
+---
+### Also Today
+**Databricks' Ken Wong says context, not model IQ, is what's blocking AI agents at work: BigGo Finance**
+Wong argues that the 40-point accuracy gap on the BIRD benchmark disappears once explicit company-specific term mappings are supplied, showing that enterprise agent performance hinges on curated tribal knowledge rather than raw model scale. On the public BIRD leaderboard the top 50 entries all receive oracle knowledge of term definitions and reach nearly 90% accuracy, while the same systems drop to roughly 50% without it. Source: [finance.biggo.com](https://finance.biggo.com/news/06e36a7a2e12362a)
+
+**Keyword Search Tied an 8B Embedding Model at Picking Agent Tools: Towards Data Science**
+BM25 keyword search matched BGE-large accuracy on 200 ToolRet questions while running roughly 40× faster on CPU when full tool documentation was indexed. The test covered up to 3,794 tools and found that indexing complete tool documentation made the simple keyword approach competitive with the 8B embedding model. Source: [towardsdatascience.com](https://towardsdatascience.com/keyword-search-tied-an-8b-embedding-model-at-picking-agent-tools/)
+---
+---
+### Things to Try This Week
+- Install the Vercel UI SDK beta and paste the provided prompt into your coding agent to let it compose accessible components without hand-written ARIA.
+- Clone the Bolt PCHIE repository and wrap an existing agent run to generate verifiable hash-chain receipts for audit or replay.
+- Run the 1 T MoE TorchTitan recipe on a smaller node count to test the Muon-plus-FP8 path before committing to a full-scale job.
+- Add BM25 alongside your embedding retriever for tool selection; the 40× CPU speedup is immediate on modest hardware.
+- Load the personal CGM transformer from the GitHub repo and test its two-hour forecasts against your own continuous glucose data.
+---
+### On the Horizon
+- OpenAI continues gradual rollout of ChatGPT Wallet to more U.S. Pro users; watch for expansion beyond “dots” agents.
+- Anthropic’s safety-evaluation recommendations are expected to influence upcoming system-card releases.
+- Perplexity Teammates on Mac may reach additional subscription tiers if usage data supports it.
+- Databricks plans further Genie data-agent updates that incorporate the context-mapping work Ken Wong described.
+</itunes:summary>
+      <itunes:episode>234</itunes:episode>
+      <itunes:title>Ep 234: Vercel’s UI SDK supplies agents with 50 behaviors for building accessible components…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep234_20261114_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep234.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 233: Gemini 4 Hydrogen ships at $1.50/$7.50 per million tokens and powers the free tier plus…</title>
       <description>Models &amp; Agents
@@ -4886,125 +5002,14 @@ MicroVM designs keep the host outside guest control by injecting secrets only at
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep206_20261017_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep206.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 204: Regulated voice agents can now follow entirely unseen legal procedures after one training…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Regulated voice agents can now follow entirely unseen legal procedures after one training run on synthetic flows.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; A 9B model fine-tuned with FlowSpec lifts documented compliance checks from 67-71% to 93-100% on four held-out debt-collection procedures. New model releases include LLM-jp-4 (8B dense and 32B-A3B MoE) and Titan-Llama memory retrofits, while benchmarks such as NEPSEE, LePhilBench, and PersEvalBench target low-resource languages, legal philosophy, and persona handling. Builders should watch how specification-driven supervision and memory modules change agent reliability in constrained domains.
-
-Top Story
-A single 9B model trained on 2,506 conversations from 297 randomized procedures now follows four entirely unseen regulated flows, including three debt-collection procedures from a withheld lineage. FlowSpec supplies the machine-readable specification that generates instructions, gates tools, supplies supervision, and defines tests; the agent is restricted to an approved sentence catalogue. Documented checks rose from 67-71% to 93-100% while grounded checks already passed at 97-100% before training; scenario pass rate improved from 15/43 to 40/43. An audit of the shared specification uncovered 11 defects, three of which the metric itself missed. The approach demonstrates that a small self-hosted policy can generalize across creditor-specific revisions of the same legal rules without retraining. The evaluation used a Thai outbound-call agent and included one non-debt procedure alongside the three debt-collection cases. Every creditor turns legal rules into its own procedure and revises it, yet the trained policy transferred without additional fine-tuning on the target procedures. Source: &lt;a href="https://arxiv.org/abs/2610.18881"&gt;arxiv.org&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;LLM-jp-4 Technical Report: arXiv NLP&lt;/b&gt;
-LLM-jp-4 comprises an 8B dense model and a 32B-A3B mixture-of-experts model, both trained from scratch on approximately 12 trillion tokens with explicit criteria for data, external models, and software selection. The models show substantial gains over prior LLM-jp releases and competitive results against open-weight models of similar scale. The full development process is released for independent verification and reproduction. The emphasis on transparency includes public criteria for choosing training data and external components. Evaluation results place the new models ahead of earlier LLM-jp versions while remaining competitive with other open-weight systems at comparable parameter counts. Source: &lt;a href="https://arxiv.org/abs/2610.19331"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Titan-Llama: Retrofitting Pre-trained LLMs with External Neural Memory Modules: arXiv NLP&lt;/b&gt;
-Titan-Llama replaces attention layers in Llama-3.2-1B-Instruct with a hierarchical memory architecture that preserves full-fidelity attention over recent tokens while compressing history into recurrent fixed-size neural memory modules. On QuALITY accuracy rises from 23.87% to 40.51% and on LongHealth from 14.50% to 40.75%; inference shows more than 20% faster prefill and 37% faster decode at medium context lengths with 24% lower steady-state memory usage. The method applies post-training without training a new model from scratch. The blockwise attention mask keeps recent tokens under full attention while historical context moves into the neural memory modules. The formulation allows pre-trained attention layers to be swapped for the memory architecture after initial pre-training. Source: &lt;a href="https://arxiv.org/abs/2610.19210"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Copy-Paste Language Models: arXiv NLP&lt;/b&gt;
-Copy-Paste Language Models add a lightweight Copy-Paste head to the standard language-modeling head, creating an alternative gradient path that mitigates the LM-head gradient bottleneck. Models from 135M to 1.7B parameters show improvements across scales and backbones with negligible training and inference overhead. The approach improves training efficiency, downstream performance, and operating points in long-context and retrieval settings. The added head supplies a direct gradient route that bypasses the primary language-modeling head during back-propagation. Validation covered multiple model scales and different backbone architectures. Source: &lt;a href="https://arxiv.org/abs/2610.19247"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Qwenfant: Train Big Character-level BabyLMs on Concise Parallel Text: arXiv NLP&lt;/b&gt;
-Qwenfant, a Qwen3-based model submitted to the 2026 BabyLM Multilingual track, uses LLM-summarized and translated data plus a character-level vocabulary and larger model size, realized through LoRA-style fine-tuning. At submission time it ranked first in the Multilingual track. The training data came from concise parallel text produced by summarization and translation steps. Both the character-level vocabulary and the increased model size required LoRA adapters to reach full performance. The submission achieved the top position among entries in the multilingual category of the challenge. Source: &lt;a href="https://arxiv.org/abs/2610.19294"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;HERO: Harnessing Evidence for Test-time Refinement and Prompt Optimization in Program Generation: arXiv NLP&lt;/b&gt;
-HERO learns reusable prompt updates from execution-verified successes and failures, validates revisions before adoption, and at test time treats generated code as an instance-specific harness refined by execution feedback. Across four SQL, Cypher, and Python benchmarks it improves pass@1 by 7.6 points offline; test-time refinement adds another 2.0 points and improves execution efficiency. The offline stage extracts prompt revisions only from cases where execution confirms correctness or exposes clear failures. At inference time the generated program itself becomes the harness that receives further execution-driven edits. The method was tested on text-to-SQL, text-to-Cypher, and text-to-Python tasks. Source: &lt;a href="https://arxiv.org/abs/2610.19184"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Learning What to Keep: Transfer-Aware Personal Skill Learning from User Feedback: arXiv NLP&lt;/b&gt;
-SkillGrain decomposes user feedback into atomic rules, predicts transferability, and retains only rules suitable for future requests using rubric-guided rewards and fine-grained credit assignment. Across three base models on five personalized writing tasks it achieves the best overall average performance in both in-domain and out-of-domain settings. The framework evaluates each rule for content quality and for the decision to retain or discard it. Reinforcement learning jointly optimizes skill induction and the skill-conditioned generation step. The benchmark spans five distinct personalized writing tasks with both in-domain and out-of-domain test splits. Source: &lt;a href="https://arxiv.org/abs/2610.19380"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;PersEvalBench: Can LLM Evaluators Judge Contextually Appropriate Use of Persona Information?: arXiv NLP&lt;/b&gt;
-PersEvalBench contains 403 multi-episode scenarios testing nine controlled error subtypes across under-, over-, and misapplied-state personalization. On the human-evaluated subset the strongest evaluator recognizes 63.9% of under-personalization errors while humans recognize 94.4%; highlighting relevant history raises recognition only slightly. The benchmark covers three families of errors and was constructed so that generated errors match their intended types according to human audits. Five LLM evaluators were tested on the full set of scenarios. The largest performance gap appears on under-personalization cases. Source: &lt;a href="https://arxiv.org/abs/2610.19314"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;NEPSEE: A Double-Annotated Benchmark for Nepali Sentiment Analysis: arXiv NLP&lt;/b&gt;
-NEPSEE retains 3,189 sentences where two annotators agree on polarity from 5,614 tweets; on the three-class benchmark NepBERTa reaches 0.877 macro-F1 and three commercial LLMs reach 0.882-0.896 zero-shot. On the five-point scale Claude Opus 5.5 beats the best encoders by 0.10-0.12 macro-F1. Restoring non-spacing Devanagari marks changes macro-F1 by +0.084 or -0.095 depending on the tokenizer. The dataset draws from tweets by Nepali public figures and keeps only items with matching polarity labels from both annotators. On the five-point scale 766 sentences carry two adjacent labels that are both accepted during training. Source: &lt;a href="https://arxiv.org/abs/2610.19190"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;TopicMerge: A Divide and Conquer Approach to Topic Modeling: arXiv NLP&lt;/b&gt;
-TopicMerge first over-segments documents into fine-grained micro-clusters, then uses an LLM-guided iterative merging algorithm with local neighborhood context to consolidate topics. On Bills and Wiki datasets it reaches state-of-the-art clustering while reducing required LLM calls by over 92% compared with document-level methods. The initial over-segmentation produces semantically pure micro-clusters that receive preliminary semantic labels. The subsequent merging stage arbitrates candidate pairs using neighborhood context before any merge is executed. The pipeline was evaluated on the Bills and Wiki collections. Source: &lt;a href="https://arxiv.org/abs/2610.19323"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Whose Data, Whose Benchmark? A User-Centric Framework for Auditing Evaluation Resources: arXiv NLP&lt;/b&gt;
-The framework audits 16 resources across seven dimensions and finds American-centered conventions account for 62.4-94.4% of matched signals in 11 text benchmarks; geographic visibility in five image-text resources correlates with national GDP share (mean Pearson r = 0.780). All 16 resources operationalize source-user context but none operationalize target-user context. Paired scoring experiments on DROP and TruthfulQA illustrate how meaning-preserving answer variants affect exact-match and reference-similarity scores. The audit covers benchmark content, metadata, documentation, and scoring procedures. Source: &lt;a href="https://arxiv.org/abs/2610.19268"&gt;arxiv.org&lt;/a&gt;
-
-Under the Hood: Target-Token Asymmetry in Layer-Ablation Studies
-Layer-ablation studies compare early- versus late-layer damage across two corpora and interpret a larger early-layer effect on one corpus as task-specific depth specialization. The comparison is actually performed over different target-token distributions: math solutions contain far more whitespace and numbers than encyclopedia prose. When the pooled interaction is decomposed by target-token type, only whitespace tokens produce a positive early-late interaction; removing whitespace reverses the sign of the pooled effect in all three fully decomposed model instances. The same reversal occurs in two of three instances once the full target mixture is matched across corpora. A simple screen computed from the tokenizer alone places every held-out pair into the risk region its label predicts. The diagnosis was validated under position matching and adversarial reassignment of token types. A smaller content-word effect one token ahead follows the share of content targets that the unablated model already predicts. The practical consequence is that any claim of depth specialization must first report the target-token mixture, decompose the effect by token type, and confirm the sign survives mixture matching; otherwise the result is an artifact of the evaluation corpora rather than model architecture.
-
-Things to Try This Week
-• Test the FlowSpec training recipe on your own regulated workflow by generating synthetic procedures and measuring compliance lift on held-out flows.
-• Run the NEPSEE three-class and five-point splits against your preferred Nepali-capable model to check tokenizer sensitivity on Devanagari marks.
-• Apply Titan-Llama memory retrofitting to a Llama-3.2-1B-Instruct checkpoint and measure QuALITY and LongHealth accuracy gains at 128K context.
-• Evaluate PersEvalBench scenarios against your current LLM judge to quantify under- versus over-personalization error rates on multi-episode histories.
-• Compare the Copy-Paste head addition against a standard language-modeling head on a 1B-scale model for long-context retrieval tasks.
-
-On the Horizon
-• Additional sovereign LLM releases following the LLM-jp-4 transparency model are expected from other national efforts.
-• Further agent frameworks will incorporate execution-verified harness updates similar to HERO.
-• Expanded low-resource language benchmarks will continue to test transfer from high-resource pre-training.
-• More post-training memory retrofit methods are likely to appear for additional base model families.</description>
+      <description>Ep 204: Regulated voice agents can now follow entirely unseen legal procedures after one training run on synthetic flows.</description>
       <guid isPermaLink="false">models-agents-video-ep204-20261015</guid>
       <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep204_20261015.mp4" length="223216147" type="video/mp4" />
       <pubDate>Thu, 15 Oct 2026 08:00:00 +0000</pubDate>
       <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep204_20261015.jpg" />
       <itunes:duration>11:52</itunes:duration>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Regulated voice agents can now follow entirely unseen legal procedures after one training run on synthetic flows.**
-
-**What You Need to Know:** A 9B model fine-tuned with FlowSpec lifts documented compliance checks from 67-71% to 93-100% on four held-out debt-collection procedures. New model releases include LLM-jp-4 (8B dense and 32B-A3B MoE) and Titan-Llama memory retrofits, while benchmarks such as NEPSEE, LePhilBench, and PersEvalBench target low-resource languages, legal philosophy, and persona handling. Builders should watch how specification-driven supervision and memory modules change agent reliability in constrained domains.
----
-### Top Story
-A single 9B model trained on 2,506 conversations from 297 randomized procedures now follows four entirely unseen regulated flows, including three debt-collection procedures from a withheld lineage. FlowSpec supplies the machine-readable specification that generates instructions, gates tools, supplies supervision, and defines tests; the agent is restricted to an approved sentence catalogue. Documented checks rose from 67-71% to 93-100% while grounded checks already passed at 97-100% before training; scenario pass rate improved from 15/43 to 40/43. An audit of the shared specification uncovered 11 defects, three of which the metric itself missed. The approach demonstrates that a small self-hosted policy can generalize across creditor-specific revisions of the same legal rules without retraining. The evaluation used a Thai outbound-call agent and included one non-debt procedure alongside the three debt-collection cases. Every creditor turns legal rules into its own procedure and revises it, yet the trained policy transferred without additional fine-tuning on the target procedures. Source: [arxiv.org](https://arxiv.org/abs/2610.18881)
----
-### Model Updates
-**LLM-jp-4 Technical Report: arXiv NLP**
-LLM-jp-4 comprises an 8B dense model and a 32B-A3B mixture-of-experts model, both trained from scratch on approximately 12 trillion tokens with explicit criteria for data, external models, and software selection. The models show substantial gains over prior LLM-jp releases and competitive results against open-weight models of similar scale. The full development process is released for independent verification and reproduction. The emphasis on transparency includes public criteria for choosing training data and external components. Evaluation results place the new models ahead of earlier LLM-jp versions while remaining competitive with other open-weight systems at comparable parameter counts. Source: [arxiv.org](https://arxiv.org/abs/2610.19331)
-
-**Titan-Llama: Retrofitting Pre-trained LLMs with External Neural Memory Modules: arXiv NLP**
-Titan-Llama replaces attention layers in Llama-3.2-1B-Instruct with a hierarchical memory architecture that preserves full-fidelity attention over recent tokens while compressing history into recurrent fixed-size neural memory modules. On QuALITY accuracy rises from 23.87% to 40.51% and on LongHealth from 14.50% to 40.75%; inference shows more than 20% faster prefill and 37% faster decode at medium context lengths with 24% lower steady-state memory usage. The method applies post-training without training a new model from scratch. The blockwise attention mask keeps recent tokens under full attention while historical context moves into the neural memory modules. The formulation allows pre-trained attention layers to be swapped for the memory architecture after initial pre-training. Source: [arxiv.org](https://arxiv.org/abs/2610.19210)
-
-**Copy-Paste Language Models: arXiv NLP**
-Copy-Paste Language Models add a lightweight Copy-Paste head to the standard language-modeling head, creating an alternative gradient path that mitigates the LM-head gradient bottleneck. Models from 135M to 1.7B parameters show improvements across scales and backbones with negligible training and inference overhead. The approach improves training efficiency, downstream performance, and operating points in long-context and retrieval settings. The added head supplies a direct gradient route that bypasses the primary language-modeling head during back-propagation. Validation covered multiple model scales and different backbone architectures. Source: [arxiv.org](https://arxiv.org/abs/2610.19247)
-
-**Qwenfant: Train Big Character-level BabyLMs on Concise Parallel Text: arXiv NLP**
-Qwenfant, a Qwen3-based model submitted to the 2026 BabyLM Multilingual track, uses LLM-summarized and translated data plus a character-level vocabulary and larger model size, realized through LoRA-style fine-tuning. At submission time it ranked first in the Multilingual track. The training data came from concise parallel text produced by summarization and translation steps. Both the character-level vocabulary and the increased model size required LoRA adapters to reach full performance. The submission achieved the top position among entries in the multilingual category of the challenge. Source: [arxiv.org](https://arxiv.org/abs/2610.19294)
----
-### Agent &amp; Tool Developments
-**HERO: Harnessing Evidence for Test-time Refinement and Prompt Optimization in Program Generation: arXiv NLP**
-HERO learns reusable prompt updates from execution-verified successes and failures, validates revisions before adoption, and at test time treats generated code as an instance-specific harness refined by execution feedback. Across four SQL, Cypher, and Python benchmarks it improves pass@1 by 7.6 points offline; test-time refinement adds another 2.0 points and improves execution efficiency. The offline stage extracts prompt revisions only from cases where execution confirms correctness or exposes clear failures. At inference time the generated program itself becomes the harness that receives further execution-driven edits. The method was tested on text-to-SQL, text-to-Cypher, and text-to-Python tasks. Source: [arxiv.org](https://arxiv.org/abs/2610.19184)
-
-**Learning What to Keep: Transfer-Aware Personal Skill Learning from User Feedback: arXiv NLP**
-SkillGrain decomposes user feedback into atomic rules, predicts transferability, and retains only rules suitable for future requests using rubric-guided rewards and fine-grained credit assignment. Across three base models on five personalized writing tasks it achieves the best overall average performance in both in-domain and out-of-domain settings. The framework evaluates each rule for content quality and for the decision to retain or discard it. Reinforcement learning jointly optimizes skill induction and the skill-conditioned generation step. The benchmark spans five distinct personalized writing tasks with both in-domain and out-of-domain test splits. Source: [arxiv.org](https://arxiv.org/abs/2610.19380)
-
-**PersEvalBench: Can LLM Evaluators Judge Contextually Appropriate Use of Persona Information?: arXiv NLP**
-PersEvalBench contains 403 multi-episode scenarios testing nine controlled error subtypes across under-, over-, and misapplied-state personalization. On the human-evaluated subset the strongest evaluator recognizes 63.9% of under-personalization errors while humans recognize 94.4%; highlighting relevant history raises recognition only slightly. The benchmark covers three families of errors and was constructed so that generated errors match their intended types according to human audits. Five LLM evaluators were tested on the full set of scenarios. The largest performance gap appears on under-personalization cases. Source: [arxiv.org](https://arxiv.org/abs/2610.19314)
----
-### Practical &amp; Community
-**NEPSEE: A Double-Annotated Benchmark for Nepali Sentiment Analysis: arXiv NLP**
-NEPSEE retains 3,189 sentences where two annotators agree on polarity from 5,614 tweets; on the three-class benchmark NepBERTa reaches 0.877 macro-F1 and three commercial LLMs reach 0.882-0.896 zero-shot. On the five-point scale Claude Opus 5.5 beats the best encoders by 0.10-0.12 macro-F1. Restoring non-spacing Devanagari marks changes macro-F1 by +0.084 or -0.095 depending on the tokenizer. The dataset draws from tweets by Nepali public figures and keeps only items with matching polarity labels from both annotators. On the five-point scale 766 sentences carry two adjacent labels that are both accepted during training. Source: [arxiv.org](https://arxiv.org/abs/2610.19190)
-
-**TopicMerge: A Divide and Conquer Approach to Topic Modeling: arXiv NLP**
-TopicMerge first over-segments documents into fine-grained micro-clusters, then uses an LLM-guided iterative merging algorithm with local neighborhood context to consolidate topics. On Bills and Wiki datasets it reaches state-of-the-art clustering while reducing required LLM calls by over 92% compared with document-level methods. The initial over-segmentation produces semantically pure micro-clusters that receive preliminary semantic labels. The subsequent merging stage arbitrates candidate pairs using neighborhood context before any merge is executed. The pipeline was evaluated on the Bills and Wiki collections. Source: [arxiv.org](https://arxiv.org/abs/2610.19323)
-
-**Whose Data, Whose Benchmark? A User-Centric Framework for Auditing Evaluation Resources: arXiv NLP**
-The framework audits 16 resources across seven dimensions and finds American-centered conventions account for 62.4-94.4% of matched signals in 11 text benchmarks; geographic visibility in five image-text resources correlates with national GDP share (mean Pearson r = 0.780). All 16 resources operationalize source-user context but none operationalize target-user context. Paired scoring experiments on DROP and TruthfulQA illustrate how meaning-preserving answer variants affect exact-match and reference-similarity scores. The audit covers benchmark content, metadata, documentation, and scoring procedures. Source: [arxiv.org](https://arxiv.org/abs/2610.19268)
----
-### Under the Hood: Target-Token Asymmetry in Layer-Ablation Studies
-Layer-ablation studies compare early- versus late-layer damage across two corpora and interpret a larger early-layer effect on one corpus as task-specific depth specialization. The comparison is actually performed over different target-token distributions: math solutions contain far more whitespace and numbers than encyclopedia prose. When the pooled interaction is decomposed by target-token type, only whitespace tokens produce a positive early-late interaction; removing whitespace reverses the sign of the pooled effect in all three fully decomposed model instances. The same reversal occurs in two of three instances once the full target mixture is matched across corpora. A simple screen computed from the tokenizer alone places every held-out pair into the risk region its label predicts. The diagnosis was validated under position matching and adversarial reassignment of token types. A smaller content-word effect one token ahead follows the share of content targets that the unablated model already predicts. The practical consequence is that any claim of depth specialization must first report the target-token mixture, decompose the effect by token type, and confirm the sign survives mixture matching; otherwise the result is an artifact of the evaluation corpora rather than model architecture.
----
-### Things to Try This Week
-- Test the FlowSpec training recipe on your own regulated workflow by generating synthetic procedures and measuring compliance lift on held-out flows.
-- Run the NEPSEE three-class and five-point splits against your preferred Nepali-capable model to check tokenizer sensitivity on Devanagari marks.
-- Apply Titan-Llama memory retrofitting to a Llama-3.2-1B-Instruct checkpoint and measure QuALITY and LongHealth accuracy gains at 128K context.
-- Evaluate PersEvalBench scenarios against your current LLM judge to quantify under- versus over-personalization error rates on multi-episode histories.
-- Compare the Copy-Paste head addition against a standard language-modeling head on a 1B-scale model for long-context retrieval tasks.
----
-### On the Horizon
-- Additional sovereign LLM releases following the LLM-jp-4 transparency model are expected from other national efforts.
-- Further agent frameworks will incorporate execution-verified harness updates similar to HERO.
-- Expanded low-resource language benchmarks will continue to test transfer from high-resource pre-training.
-- More post-training memory retrofit methods are likely to appear for additional base model families.
-</itunes:summary>
+      <itunes:summary>Ep 204: Regulated voice agents can now follow entirely unseen legal procedures after one training run on synthetic flows.</itunes:summary>
       <itunes:episode>204</itunes:episode>
       <itunes:title>Ep 204: Regulated voice agents can now follow entirely unseen legal procedures after one training…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
@@ -5023,19 +5028,5 @@ Layer-ablation studies compare early- versus late-layer damage across two corpor
       <itunes:title>Ep 203: Nvidia supplies $250 million in UK compute for agentic safety research over five years.</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep203_20261014_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep203.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by…</title>
-      <description>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.</description>
-      <guid isPermaLink="false">models-agents-video-ep202-20261013</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep202_20261013.mp4" length="200657123" type="video/mp4" />
-      <pubDate>Tue, 13 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep202_20261013.jpg" />
-      <itunes:duration>10:17</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.</itunes:summary>
-      <itunes:episode>202</itunes:episode>
-      <itunes:title>Ep 202: Multi-agent orchestration now delivers measurable gains in long-horizon reliability by…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep202_20261013_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep202.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
