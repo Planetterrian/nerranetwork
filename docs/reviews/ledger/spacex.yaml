@@ -1193,4 +1193,103 @@ reviews:
     verdict: pending
     evidence: null
   agent_cost_usd: null
+- date: '2026-11-13'
+  pr: null
+  doc: docs/reviews/spacex_review_2026_11_13.md
+  generated_by: grok-4.5
+  summary: Host-ID garble still ships on every recent EN close, Ep158 special chapters collapsed to four markers with massive segment-title copy, and density is healthier on dailies under grok-4.6 while length/price-once stay escalated operator decisions.
+  scored_prior_predictions:
+  - metric: Whisper/transcript hits for identity garble "patrick and vancouver" in next 10 EN episodes
+    verdict: miss
+    evidence: Ep158–161 EN Whisper all still say "I'm Patrick and Vancouver"; disambiguation never shipped
+  - metric: non-special dailies where Counterpoint chapter start is before ≥3 Top News stories are told (Ep121-class early Counterpoint lumping)
+    verdict: hit
+    evidence: Ep159–161 Counterpoint sits after body/Top News; no Ep121-class early lumping in window
+  - metric: dailies with sourced AI/compute items in digest or body but no AI & Compute chapter / no On-the-AI-front anchor
+    verdict: hit
+    evidence: Ep156 has AI chapter when segment runs; Ep159/161 correctly omit when empty; no AI-news-without-chapter miss
+  - metric: Engineering Deep Dive listed in script_copied_sections, last 10
+    verdict: partial
+    evidence: Dailies mostly clean under grok-4.6; Ep158 special flags 6 brief-segment copies (special path, not daily Engineering essay)
+  - metric: non-special dailies with mid-body tape line using note-on-the-tape / shares-moved forms and no Market Watch chapter
+    verdict: hit
+    evidence: Window dailies fire MW on mid-body tape or correctly omit when price is sign-off-only (Closing wins)
+  - metric: editorial_score_14d_spacex (daily-audit mean 1-10 over 14 days by episode date)
+    verdict: miss
+    evidence: No post-Nov-03 14d mean ≥6.3 in bundle; October baseline 5.23/5.38 still the last committed readout — hold numeric re-score next pass with history export
+  - metric: source_integrity_claims median, Ep+1..Ep+14 (Sep-24 sourcing)
+    verdict: miss
+    evidence: Claims/sidecar medians not in bundle — cannot confirm ≥4; treat as open/miss for ledger hygiene
+  - metric: 'digests with leaked Title: heading labels / laundered SEO junk titles'
+    verdict: hit
+    evidence: 'review_snapshot: 0 leaked heading labels; 0 fetch-filter hits on last 10'
+  shipped: []
+  deferred:
+  - 'OPERATOR DECISION (repeated misses): accept grok-4.3/daily length plateau vs further digest-substrate only (min_digest_words / full-text utilization / licensed Engineering floors) — do not re-propose podcast expand, podcast word floors, or conditional 7+/10 if lever ships predictions'
+  - 'OPERATOR DECISION (since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; or accept double price as brand and close the ledger item'
+  - 'OPERATOR DECISION (mega-story retell, prompt lever missed): data-side exclusion of headlines already used in AI/Counterpoint/Deep Dive from Top News — do not file a third MEGA-STORY prompt rule'
+  - 'Q2/special path: richer spacex_deep_dive.txt briefs so earnings specials clear deep_dive.min_podcast_words 2400; do not stack time-critical flight specials on the daily publish day (Ep059 lesson)'
+  - Entity-discipline prompt (xAI/SpaceX Memphis/Colossus operator) — regression guard only; A/B; carried while body stays clean (chapter-title SpaceXAI scrub is the metadata half proposed this pass)
+  - Undated-URL stale articles — refuse record/first claims below memory last-known when page date is unknown
+  - Pin single closing CTA pack network-wide (Sep-05 identical-closing miss) — separate from market verb; A/B if audio-affecting
+  - Score source_integrity_claims median and editorial_score_14d_spacex when sidecar/dashboard export is in the review bundle
+  - api/shorts_ab.json status hygiene after experiment end — non-audio
+  - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side
+  - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+  predictions:
+  - metric: Whisper/transcript hits for identity garble "patrick and vancouver" (or "Patrick and Vancouver") in next 10 EN episodes
+    baseline: 4/4 in Ep158–161 EN transcripts
+    expected: ≤1/10 if identity-line disambiguation ships after A/B; else n/a-lever-not-shipped
+    verdict: pending
+    evidence: null
+  - metric: Flight/earnings special episodes with copied_sections naming 'Segment N' brief headings or chapters collapsed to <6 section markers
+    baseline: '1/1 (Ep158: 6 Segment-* copies; only 4 chapters)'
+    expected: 0/N new specials after label strip + special markers ship; else n/a-lever-not-shipped
+    verdict: pending
+    evidence: null
+  - metric: chapters_ep*.json titles matching /SpaceXAI/ (entity bleed)
+    baseline: 1/10 (Ep160 SpaceXAI’s Permit)
+    expected: 0/10 new episodes after chapter-title entity scrub ships
+    verdict: pending
+    evidence: null
+  - metric: editorial_score_14d_spacex (dashboard / api/editorial_score_history.json)
+    baseline: 5.23 October mean; 5.38 Oct 18–Nov 2 (INCOHERENT 11/16)
+    expected: ≥6.3 over the 14 days before the next SpaceX review IF host-ID + special-copy fixes ship; else score n/a-lever-not-shipped and keep baseline open
+    verdict: pending
+    evidence: null
+  - metric: non-special dailies with mid-body SPCX tape/price and no Market Watch chapter
+    baseline: 0/10 in Ep152–161 (sign-off-only correctly Closing)
+    expected: 0/10 sustained; Closing still wins sign-off-only price lines
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/hooks/spacex.py
+    kind: code
+    ab_listen_required: true
+    rationale: P0 listener-facing host-ID garble on Ep158–161 after three review proposals never applied. Structural wording only. A/B-listen the identity line on the first two merged episodes.
+  - file: engine/chapters.py
+    kind: code
+    ab_listen_required: false
+    rationale: P0 public chapter-list entity bleed. Deterministic garble/filter class (~100% hit per meta-review); no A/B.
+  - file: engine/generator.py
+    kind: code
+    ab_listen_required: false
+    rationale: P0 Ep158 segment-title leak + four-chapter collapse. Stripper is deterministic no-A/B; adding special markers is metadata-only if titles stay listener-facing names.
+  - file: shows/prompts/spacex_flight_special_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'P1 Ep158 53% verbatim + 6 copied Segment-* headings. Special path did not inherit daily grok-4.6 density win. A/B-listen next forced flight special only (landmine #17).'
+  - file: shows/spacex.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: Metadata-only residual of Ep091/097 class. Current window clean; widen prevents silent regression. No audio change.
+  - file: tests/test_spacex_show.py
+    kind: code
+    ab_listen_required: false
+    rationale: Code-only locks so Ep158-class, Ep160-title, and host-ID regressions cannot return unnoticed.
+  - file: digests/spacex/chapters_ep160.json
+    kind: code
+    ab_listen_required: false
+    rationale: One-time archive cleanup so the public chapter surface matches entity truth; pairs with the scrubber guard.
+  agent_cost_usd: 0.2287
 do_not_retry: []
