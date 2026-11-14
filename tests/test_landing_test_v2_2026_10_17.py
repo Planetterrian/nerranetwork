@@ -301,11 +301,22 @@ class TestSignup:
 
 class TestNumbersAndTrust:
     def test_trust_strip_prints_exactly_what_claims_html_counts(self, rendered):
-        totals = G._claims_network_ledger(G._build_all_shows_list())["totals"]
+        # The ledger's window is keyed to the calendar day, and the page is
+        # rendered once for the module: a run that crosses midnight UTC reads
+        # one day later than the page it rendered (Nov 14 2026, 00:01 UTC).
+        # The strip must match the ledger for today or for the day before.
+        from datetime import date, timedelta
         sec = _section(rendered, "numbers")
-        assert f"{totals['claims']:,}" in sec
-        assert f"{totals['verified_share_pct']}%" in sec
-        assert f"claims on the ledger across {totals['episodes']} episodes" in sec
+
+        def matches(day):
+            totals = G._claims_network_ledger(
+                G._build_all_shows_list(), today=day)["totals"]
+            return (f"{totals['claims']:,}" in sec
+                    and f"{totals['verified_share_pct']}%" in sec
+                    and f"claims on the ledger across {totals['episodes']} episodes" in sec)
+
+        today = date.today()
+        assert matches(today) or matches(today - timedelta(days=1))
 
     def test_claims_page_and_landing_share_one_ledger_function(self):
         src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
