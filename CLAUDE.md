@@ -1049,10 +1049,7 @@ Every long-form video ends on an outro card from committed `assets/site_screens/
 
 ```bash
 pytest                             # Run all tests
-pytest tests/test_utils.py         # Pure function tests (AST extraction)
-pytest tests/test_rss.py           # RSS feed validation
-pytest tests/test_audio_commands.py  # ffmpeg command structure tests
-pytest tests/test_integration.py   # Pipeline integration tests
+pytest tests/test_rss.py           # One file
 ```
 
 **Phase 1 hardening guards (May 2026):** the network-evolution roadmap's first
@@ -1244,10 +1241,10 @@ RU reach is a Studio read, not a pipeline fix. A sub-10 s chapter is dropped (th
 [history](docs/claude_md_history/2026_10_30_hook_short_skips.md); register `shorts-skip-map-2026-10-30`; guards `tests/test_short_skips_map_2026_10_30.py`.
 **The hook Short renders from a spliced source** (`engine/short_furniture.py`; any failure renders as before; `youtube.shorts_skip_map`). **The episode, its feed audio and its long-form keep the map.**
 
-### The long-form follows the audio; X gets a clean clip (Nov 8 2026)
+### The long-form follows the audio; X gets a clean clip; reach is read (Nov 8, 14 2026)
 
-[review](docs/reviews/youtube_x_video_review_2026_11_08.md); register `long-form-rundown-subscribe-2026-11-08`, `x-clip-without-youtube-asks-2026-11-08`; guards `tests/test_long_form_cards_2026_11_08.py`.
-**The "Coming up" card is the spoken map's own words** (`engine/long_form_cards.py`: `*_reader.txt`, timed by `map_cut`); **whole or absent, never clipped** (`engine.titles.RUNDOWN_ITEM_MAX`). The subscribe pill shows at 45 s and the midpoint. **The X copy of the hook Short carries no YouTube asks** (`_render_x_clean_clip`; a failure posts the YouTube copy). Dub long-forms pass neither.
+Reviews [Nov 8](docs/reviews/youtube_x_video_review_2026_11_08.md), [Nov 14](docs/reviews/youtube_review_2026_11_14.md); register `long-form-rundown-subscribe-2026-11-08`, `x-clip-without-youtube-asks-2026-11-08`, `youtube-reach-instrument-2026-11-14`; guards `tests/test_{long_form_cards_2026_11_08,youtube_reach_2026_11_14}.py`.
+**The "Coming up" card is the map's own words** (`engine/long_form_cards.py`, `*_reader.txt`, `map_cut`), **whole or absent, never clipped, never a name cut to one word**. Pill at 45 s and the midpoint; dubs pass neither. **The X copy carries no YouTube asks** (`_render_x_clean_clip`). **Impressions and CTR come from the Reporting API** (`scripts/fetch_youtube_reach.py`): absent is never 0, CTR null under 100 impressions, read at age 7.
 
 ### A Short never crops the show's own cover (Nov 4 2026)
 

@@ -7870,3 +7870,38 @@ experiments:
       tests/test_x_queue_pacing_2026_11_13.py. AUDIO: restores spoken
       segments on the shows that echo a label; listen to the next Vancouver
       episode with a Both Sides section.
+
+  - id: youtube-reach-instrument-2026-11-14
+    title: "Thumbnail impressions and click-through are read nightly (YouTube Reporting API)"
+    area: growth
+    shipped: 2026-11-14
+    readout: 2026-11-29
+    status: reading
+    baseline: >
+      Browse (home and the subscriptions feed) is 45-55% of the EN channel's
+      daily views and nothing in the repo measured impressions or
+      click-through: the Analytics API has neither, so every title,
+      thumbnail and card change since July was judged on views alone.
+    target: >
+      api/youtube_reach.json carries first-week impressions and CTR for every
+      EN long-form published from Nov 16 by the readout, so the Nov 29
+      readout of long-form-rundown-subscribe-2026-11-08 can tell a video
+      that was shown less from one that was chosen less.
+    criteria: >
+      HIT when channels.en.status is ok and summary.groups.en.long._all reads
+      at least 30 videos with a non-null ctr_week1_pct by Nov 29; MISS when
+      the job exists and no report arrives by Nov 22; INCONCLUSIVE when the
+      report type is unavailable to the channel (status unavailable), which
+      the file says in words.
+    readout_plan: >
+      api/youtube_reach.json (channels.*.status, last_report_day,
+      summary.groups); the nightly log line "created reach job" on the first
+      night. Compare per-show week-one CTR against Studio's own figure for
+      two videos as a spot check before reading a trend.
+    notes: >
+      scripts/fetch_youtube_reach.py: one reporting job per channel
+      (channel_reach_basic_a1), created on the first night, read oldest first,
+      30 reports a night; absent rows are absent, never 0; CTR null under 100
+      impressions; read at age 7 days only. Same token and scope as the
+      Analytics fetch. Consumer: the YouTube review and the Nov 29 readout.
+      Guards tests/test_youtube_reach_2026_11_14.py.
