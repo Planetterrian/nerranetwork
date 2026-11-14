@@ -159,6 +159,11 @@ jobs:
           # fixed age instead of against the rolling peak. Additive,
           # idempotent, non-fatal.
           python scripts/track_early_reach.py || true
+          # Nov 14 2026: thumbnail impressions + click-through (the
+          # Reporting API's reach report) into api/youtube_reach.json. The
+          # first night creates each channel's reporting job; reports start
+          # about two days later. Absent rows stay absent, never 0.
+          python scripts/fetch_youtube_reach.py || true
           python scripts/update_youtube_performance.py || true
           # Staggered Shorts (Aug 2026): post funnel comments queued for
           # publishAt-scheduled Shorts that have since gone public —
@@ -545,6 +550,7 @@ jobs:
             api/youtube_channel_history.json
             api/youtube_policy.json
             api/youtube_early_reach.json
+            api/youtube_reach.json
             api/gallery_retention.json
             api/funnel.json
             api/mit_trade_ledger.json

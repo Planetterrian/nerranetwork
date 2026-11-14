@@ -87,11 +87,21 @@ _BACK_POINTER_RE = re.compile(r"^after\s+(?:the|that|this|we)\b[^,]*$", re.IGNOR
 _SEQUENCE_SPLIT_RE = re.compile(
     r"\s+(?:and then|then|and later|later|plus|along with)\s+", re.IGNORECASE)
 _ITEM_PREFIX_RE = re.compile(
-    r"^(?:(?:and then|and later|then|and|plus|later|with|along with|also|first)\s+)+",
+    r"^(?:(?:and then|and later|then|and|plus|later|with|along with|also)\s+"
+    # "First, X" / "first X" opens a list; "First Principles" is a name.
+    r"|first,?\s+(?-i:(?![A-Z])))+",
     re.IGNORECASE)
+#: A piece that is only a connective ("follow; later, The Counterpoint").
+_BARE_CONNECTIVE_RE = re.compile(r"^(?:then|later|next|and|plus|also)$", re.IGNORECASE)
+#: Where a too-long item may be split in two: "and" followed by an article
+#: ("the counterpoint and a look at ..."), never "engines and Ship 40".
+_ARTICLE_AND_RE = re.compile(r"\s+and\s+(?=(?:a|an|the)\s)", re.IGNORECASE)
+#: The sequence words after which a map closes on its section names.
+_TAIL_RE = re.compile(r"\b(?:then|later)\b", re.IGNORECASE)
 _ITEM_SUFFIX_RE = re.compile(
     r"\s+(?:(?:comes?|follows?)(?: next| later| after [\w'’ ]+| from there)?|"
     r"(?:are|is) up(?: after the lead)?|"
+    r"come in that order|in that order|(?:are|is) (?:the )?next(?: stops?)?|"
     r"later|first|after (?:that|this)|at the end|from there)$",
     re.IGNORECASE)
 #: A map that narrates the host's own moves ("we screen ..., walk ...")
@@ -101,6 +111,15 @@ _PRONOUN_START_RE = re.compile(
     r"^(?:we|we'll|we’ll|i|you|it|they|she|he|this|that|there|"
     r"after|before|through|into|the path)\b", re.IGNORECASE)
 _TRAILING_PUNCT = " \t.,;:!?—–-"
+
+
+def _strip_suffixes(text: str) -> str:
+    item = text.strip(_TRAILING_PUNCT)
+    prev = None
+    while prev != item:
+        prev = item
+        item = _ITEM_SUFFIX_RE.sub("", item.strip(_TRAILING_PUNCT)).strip(_TRAILING_PUNCT)
+    return item
 
 
 def rundown_items(map_text: str) -> Optional[List[Tuple[str, int]]]:
@@ -142,19 +161,30 @@ def rundown_items(map_text: str) -> Optional[List[Tuple[str, int]]]:
             idx = seg.find(part, pos)
             pos = idx + len(part) if idx >= 0 else pos
             pieces.append((part, off + max(idx, 0)))
-    items: List[Tuple[str, int]] = []
+    # A piece over the word or width budget is split once at "and" + an
+    # article, when both halves then read as items.
+    split_pieces: List[Tuple[str, int]] = []
     for raw, off in pieces:
+        parts = _ARTICLE_AND_RE.split(raw, maxsplit=1)
+        whole = _strip_suffixes(raw)
+        if (len(parts) == 2 and (len(whole.split()) > RUNDOWN_ITEM_MAX_WORDS
+                                 or not fits(whole, RUNDOWN_ITEM_MAX))
+                and len(parts[0].split()) >= 2):
+            split_pieces.append((parts[0], off))
+            split_pieces.append((parts[1], off + raw.find(parts[1], len(parts[0]))))
+        else:
+            split_pieces.append((raw, off))
+    tail_at = max((m.start() for m in _TAIL_RE.finditer(text)), default=len(text))
+    items: List[Tuple[str, int]] = []
+    for raw, off in split_pieces:
         lead_ws = len(raw) - len(raw.lstrip())
         item = raw.strip()
         before = len(item)
         item = _ITEM_PREFIX_RE.sub("", item)
         off += lead_ws + (before - len(item))
-        prev = None
-        while prev != item:
-            prev = item
-            item = _ITEM_SUFFIX_RE.sub("", item.strip(_TRAILING_PUNCT)).strip(_TRAILING_PUNCT)
+        item = _strip_suffixes(item)
         item = _ITEM_PREFIX_RE.sub("", item).strip(_TRAILING_PUNCT)
-        if not item:
+        if not item or _BARE_CONNECTIVE_RE.match(item):
             continue
         words = item.split()
         if len(words) > RUNDOWN_ITEM_MAX_WORDS:
@@ -177,8 +207,10 @@ def rundown_items(map_text: str) -> Optional[List[Tuple[str, int]]]:
     # A one-word item is a section name ("Spotlight", "Sports"), and those
     # close a map; one-word items in the middle are a list of places or
     # subjects the commas broke apart ("Finland, Ontario, two power ...").
-    for i, (item, _off) in enumerate(items[:-2]):
-        if len(item.split()) == 1:
+    # Section names after the map's last "then"/"later" are the closing run
+    # ("then Tools, Quick Hits, and the record") and may be one word anywhere.
+    for i, (item, off) in enumerate(items[:-2]):
+        if len(item.split()) == 1 and off < tail_at:
             return None
     return items
 
