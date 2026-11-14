@@ -2109,6 +2109,15 @@
             return isNaN(n) ? null : n;
         }
 
+        /* Newest first by date; two episodes on one date (Age of AI Ep16 and
+           Ep17, Nov 13 2026) fall back to the episode number, the order the
+           server-rendered card uses. */
+        function newestFirst(a, b) {
+            const d = new Date(b.date) - new Date(a.date);
+            if (d) return d;
+            return (epNumber(b) || 0) - (epNumber(a) || 0);
+        }
+
         function epTitle(r) {
             return (r.episode_title || r.title || '').trim();
         }
@@ -2227,7 +2236,7 @@
 
         function renderEpisodes(episodes) {
             if (!episodes || !episodes.length) { loadFromRSS(); return; }
-            episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
+            episodes.sort(newestFirst);
             const latest = episodes[0];
             setLatestTitle(epTitle(latest) || 'Latest Episode');
             document.getElementById('latest-date').textContent = formatDate(latest.date);

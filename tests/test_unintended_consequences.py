@@ -54,7 +54,9 @@ class TestShowYaml:
         # X posting enabled May 12 2026 — UC shares the @planetterrian
         # account (Option B from pipeline-streamline plan). UC has no
         # ``x_accounts`` configured so the X-fetch path stays empty.
-        assert cfg["publishing"]["x_enabled"] is True
+        # Nov 14 2026: paused after four @nerranetwork locks that each
+        # began minutes after the UC post.
+        assert cfg["publishing"]["x_enabled"] is False
         # Oct 10 2026: @nerranetwork (was @planetterrian).
         assert cfg["publishing"]["x_env_prefix"] == "NERRANETWORK_X_"
 
