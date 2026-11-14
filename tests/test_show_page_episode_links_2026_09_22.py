@@ -56,7 +56,7 @@ def _js_reader() -> str:
     """
     src = _template()
     out = []
-    for name in ("recordsFrom", "epNumber", "epTitle", "epSummary"):
+    for name in ("recordsFrom", "epNumber", "newestFirst", "epTitle", "epSummary"):
         match = re.search(r"\n        function %s\(.*?\n        \}\n" % name,
                           src, re.S)
         assert match, f"{name} is gone from the show page script"
@@ -68,7 +68,7 @@ def _run_reader(json_path: Path) -> dict:
     harness = _js_reader() + """
 const data = JSON.parse(require('fs').readFileSync(process.argv[2],'utf8'));
 const recs = recordsFrom(data);
-recs.sort((a,b) => new Date(b.date) - new Date(a.date));
+recs.sort(newestFirst);
 const l = recs[0] || {};
 console.log(JSON.stringify({
   n: recs.length, num: epNumber(l), title: epTitle(l),
