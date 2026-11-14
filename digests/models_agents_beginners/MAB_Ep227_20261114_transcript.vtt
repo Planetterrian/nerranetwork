@@ -1,0 +1,382 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.300
+A complete beginner just built a working racing game on his MacBook using only ChatGPT. This is Models &amp; Agents for Beginners, episode 227. Safety tests before a model ships, robots taught by video, shopping agents in ChatGPT, then a deep dive, cool stuff and try this, and quick bits fill the rest. Someone with no coding history at all decided in August, a Reddit post says, to make a racing game. He asked ChatGPT, the Chatbot you type questions into for help.
+
+00:00:29.300 --> 00:00:34.060
+It pointed him to Godot, a free game engine that works on computers and phones.
+
+00:00:34.620 --> 00:00:37.880
+Think of Godot as a giant box of Lego made for video games.
+
+00:00:38.320 --> 00:00:41.700
+You snap pieces together instead of carving every brick by hand.
+
+00:00:42.300 --> 00:00:46.940
+Across the next two months, weekend tinkering became a daily habit that now takes six to eight
+
+00:00:46.940 --> 00:00:47.880
+hours after work.
+
+00:00:48.380 --> 00:00:52.400
+The coastline alone ate two full days of a loop that feels like art class.
+
+00:00:52.900 --> 00:00:57.540
+He would launch around, say which bit looked off, receive fresh code, and try again.
+
+00:00:57.540 --> 00:01:02.840
+The water uses shaders, which are tiny recipes that tell every pixel how light should sit
+
+00:01:02.840 --> 00:01:05.820
+on a surface, like a makeup tutorial for the ocean.
+
+00:01:06.380 --> 00:01:10.740
+Foam is painted on with generated textures, the wrapping paper that sits on top of a
+
+00:01:10.740 --> 00:01:11.000
+shape.
+
+00:01:11.580 --> 00:01:17.160
+Splash motion was built in Blender, a free tool for making 3D movement, then imported into
+
+00:01:17.160 --> 00:01:18.540
+Godot as moving textures.
+
+00:01:19.100 --> 00:01:24.300
+He first tried a recording of a real engine, and it felt off inside the game, so chat GPT
+
+00:01:24.300 --> 00:01:25.940
+helped him invent a custom synth.
+
+00:01:25.940 --> 00:01:31.160
+A synth is like a keyboard that invents a noise from scratch, note by note, instead of
+
+00:01:31.160 --> 00:01:32.640
+playing a tape of a real motor.
+
+00:01:33.140 --> 00:01:38.680
+Background audio came from 11 labs or Adobe Firefly, which are tools that can invent voices,
+
+00:01:39.080 --> 00:01:41.080
+whooshes, and room tone from a description.
+
+00:01:41.740 --> 00:01:46.440
+The vehicle is a ready-made stock model that carries a free license, meaning anyone is
+
+00:01:46.440 --> 00:01:48.020
+allowed to use that 3D car.
+
+00:01:48.540 --> 00:01:53.360
+He built buildings and props from type descriptions or pictures the AI drew as references.
+
+00:01:53.360 --> 00:02:00.140
+A few scenery pieces arrived as full 3D models from TRIPO AI, Codex, and AI helper for
+
+00:02:00.140 --> 00:02:05.120
+code and files, then help slim down both the meshes and textures so Godot could run them.
+
+00:02:05.760 --> 00:02:10.140
+Meshes are the chicken wire frames under a 3D object, slimming them is like shrinking
+
+00:02:10.140 --> 00:02:12.820
+a stuffed backpack until a laptop can carry it.
+
+00:02:13.220 --> 00:02:20.440
+He began on GPT 5.6 Sol with a $20 plan, then in November switched to GPT 6 Astro with
+
+00:02:20.440 --> 00:02:21.680
+a $500 plan.
+
+00:02:21.680 --> 00:02:28.420
+He tests on an M1 Pro, MacBook Pro, and an iPhone 15 Pro, building both at once because the phone
+
+00:02:28.420 --> 00:02:34.340
+build has to run leaner. That is like mixing the same song twice, once for stadium speakers and
+
+00:02:34.340 --> 00:02:40.720
+once for tiny earbuds. Attention sits on steering feel, how the car bumps into the world, and whether
+
+00:02:40.720 --> 00:02:46.940
+the look and the sound work together while moving. He plans sprints, circuit races, and rivals, and a
+
+00:02:46.940 --> 00:02:48.860
+The story wants those modes actually run.
+
+00:02:49.440 --> 00:02:54.520
+A police chase comes first, making a real game used to mean a long education or a crew,
+
+00:02:55.060 --> 00:02:56.680
+and that wall is a lot lower now.
+
+00:02:57.320 --> 00:03:01.300
+If a homemade game has ever been on your wish list, this is proof you can start.
+
+00:03:01.780 --> 00:03:06.580
+Go to the chat GPT website, start a new chat, and type that you have never coded before.
+
+00:03:07.100 --> 00:03:16.920
+Then ask it to help you make a simple 2D racing game in the Free Good O engine, and to give
+
+00:03:16.920 --> 00:03:18.260
+Not a full 3D world yet.
+
+00:03:18.880 --> 00:03:21.660
+Save your progress in a notebook so you can keep going tomorrow.
+
+00:03:22.760 --> 00:03:27.620
+Researchers at Anthropic, writing on the company's engineering blog, put out 10 practical
+
+00:03:27.620 --> 00:03:31.280
+rules for building safety checks on artificial intelligence, or AI.
+
+00:03:32.060 --> 00:03:34.460
+Unlocking your phone with your face is a tiny gate.
+
+00:03:35.040 --> 00:03:38.360
+The phone is checking that the right person is about to do something that matters.
+
+00:03:38.940 --> 00:03:41.320
+These rules are a much bigger version of that gate.
+
+00:03:41.880 --> 00:03:46.560
+Instead of guarding one phone, they guard against a model that might give bad advice or cause
+
+00:03:46.560 --> 00:03:51.900
+harm. This part is a little tricky, but the simple version is enough. People who know
+
+00:03:51.900 --> 00:03:56.920
+the topic and people who know the machinery should both help write the tests, not one group
+
+00:03:56.920 --> 00:04:01.320
+alone. That is like a group project where the history student and the science student
+
+00:04:01.320 --> 00:04:06.960
+both help write the quiz, so it is not just one person's blind spot. Spell out the exact
+
+00:04:06.960 --> 00:04:12.460
+thing you are measuring before any test begins. The post-barrels from psychology's replication
+
+00:04:12.460 --> 00:04:17.800
+reforms from a decade ago, including pre-registration of hypotheses and analysis plans.
+
+00:04:18.440 --> 00:04:23.660
+A hypothesis is the guess you are checking. An analysis plan is how you will score the results.
+
+00:04:24.380 --> 00:04:29.180
+Pre-registration means you show that plan first, like handing your teacher the quiz questions
+
+00:04:29.180 --> 00:04:34.180
+before anyone takes the test, so you cannot quietly change the rules after you see the answers.
+
+00:04:34.720 --> 00:04:38.080
+A test should not fall over just because someone rephrases the question.
+
+00:04:38.080 --> 00:04:42.740
+Picture a student who memorizes the answer keys phrasing instead of actually learning
+
+00:04:42.740 --> 00:04:43.420
+the material.
+
+00:04:43.860 --> 00:04:48.300
+Run the check more than one way, since scores can shift when items are multiple choice
+
+00:04:48.300 --> 00:04:49.340
+versus open-ended.
+
+00:04:49.860 --> 00:04:51.540
+Same pop quiz, two formats.
+
+00:04:52.260 --> 00:04:53.480
+Bubble sheets can hide a guess.
+
+00:04:54.080 --> 00:04:56.580
+A blank page shows whether the idea is really there.
+
+00:04:57.160 --> 00:05:02.240
+Clear proof should exist before a new model ships that it will not help a person harm themselves
+
+00:05:02.240 --> 00:05:03.180
+or other people.
+
+00:05:03.740 --> 00:05:07.860
+The evidence sits in the open rather than a company simply asking the world to believe
+
+00:05:07.860 --> 00:05:08.040
+it.
+
+00:05:08.600 --> 00:05:13.640
+Once you see the steps, a safety test stops feeling like secret lab magic and starts feeling
+
+00:05:13.640 --> 00:05:15.940
+like a checklist you could explain to a classmate.
+
+00:05:16.864 --> 00:05:22.184
+Praxis 1, an open source model from Runway, was trained on millions of videos and can now
+
+00:05:22.184 --> 00:05:24.584
+control robots, the decoder reports.
+
+00:05:25.264 --> 00:05:27.444
+Open source here means the recipe is public.
+
+00:05:28.164 --> 00:05:33.364
+Runway released open weights and source code under the Apache 2.0 license, a permission
+
+00:05:33.364 --> 00:05:36.304
+slip that lets anyone use, share, and build on it.
+
+00:05:36.304 --> 00:05:41.084
+Wates are the millions of little knobs the model learned, like the muscle memory in a
+
+00:05:41.084 --> 00:05:43.384
+dancer's body after watching a million clips.
+
+00:05:43.884 --> 00:05:48.784
+It uses knowledge from video training for robot control and leads the world action model
+
+00:05:48.784 --> 00:05:52.204
+category on Nvidia's RoboLab 120 benchmark.
+
+00:05:52.764 --> 00:05:54.964
+A benchmark is a scored obstacle course.
+
+00:05:55.544 --> 00:06:00.044
+World action model means AI that turns what it sees into a physical next step.
+
+00:06:00.464 --> 00:06:03.604
+It cannot yet plan complex action sequences on its own.
+
+00:06:03.604 --> 00:06:08.684
+Instead of writing thousands of lines of robot code, the model uses what it learned from
+
+00:06:08.684 --> 00:06:12.224
+watching things move to tell a robot arm or body what to do next.
+
+00:06:12.824 --> 00:06:17.724
+That is learning a dance from YouTube, then your arms copy the next move, without yet
+
+00:06:17.724 --> 00:06:19.284
+choreographing a whole recital.
+
+00:06:19.804 --> 00:06:24.784
+It is free to download if you have a decent computer, and it is one path from tools that make
+
+00:06:24.784 --> 00:06:28.144
+cool videos to tools that can help robots do real tasks.
+
+00:06:28.144 --> 00:06:34.384
+Go to Hugging Face, a site where people share AI models, search for Praxis 1, and scroll
+
+00:06:34.384 --> 00:06:38.704
+the examples until you see a robot arm stacking blocks after only watching video.
+
+00:06:39.324 --> 00:06:46.804
+Open AI launch Chat GPT wallet on November 13th, 2026, so special agents inside Chat GPT
+
+00:06:46.804 --> 00:06:51.064
+can finish purchases after you approve them with Face ID or a fingerprint.
+
+00:06:51.744 --> 00:06:56.144
+An agent here is a helper that can take steps for you, not just answer a question.
+
+00:06:56.144 --> 00:07:02.264
+Face ID is that face scan many iPhones already use as a lock, and a fingerprint works the same
+
+00:07:02.264 --> 00:07:04.004
+way if that is how your phone unlocks.
+
+00:07:04.664 --> 00:07:07.764
+The feature is available for chat GPT Pro subscribers.
+
+00:07:08.264 --> 00:07:13.044
+The paid higher tier in the United States who hold eligible United States issued American
+
+00:07:13.044 --> 00:07:16.204
+Express, Chase, Mastercard, or Visa cards.
+
+00:07:16.784 --> 00:07:20.184
+The AI never receives your card details, and neither does the store.
+
+00:07:20.184 --> 00:07:25.704
+After you approve, the Payment Network mints a stand-in with its own card number, security
+
+00:07:25.704 --> 00:07:29.744
+code, and expiration date, then charges that stand-in to your card.
+
+00:07:30.304 --> 00:07:34.744
+Think of it as a one-time gift card number that pretends to be your real card, so the
+
+00:07:34.744 --> 00:07:36.124
+shop never sees the original.
+
+00:07:36.724 --> 00:07:40.624
+Open AI built the feature with American Express, MasterCard, and Visa.
+
+00:07:41.224 --> 00:07:46.384
+At checkout, chat GPT wallet shows the merchant, the items, the total, and the selected card.
+
+00:07:46.384 --> 00:07:51.124
+users keep existing card rewards and dispute protections for eligible claims.
+
+00:07:51.564 --> 00:07:55.764
+Right now, it is only for chat GPT pro subscribers in the United States.
+
+00:07:56.264 --> 00:08:00.684
+Open AI plans to let users delegate purchases to an agent in a future version
+
+00:08:00.684 --> 00:08:04.524
+that would use spending limits, purchase categories, and time periods.
+
+00:08:04.984 --> 00:08:08.664
+That future version is like giving a friend your shopping list plus a budget
+
+00:08:08.664 --> 00:08:11.044
+and they can only buy inside those fences.
+
+00:08:11.044 --> 00:08:17.004
+If you have access, open chat GPT, look for the dots agent, and try asking it to find
+
+00:08:17.004 --> 00:08:20.984
+a blue hoodie under $30, then watch how the approval flow works.
+
+00:08:21.938 --> 00:08:27.278
+A fresh clip from today's AI video tools, posts on XShow, looks so real that people
+
+00:08:27.278 --> 00:08:28.958
+online are calling it unbelievable.
+
+00:08:29.638 --> 00:08:31.858
+Those tools turn words into moving pictures.
+
+00:08:32.478 --> 00:08:35.818
+The person who made it use methods that did not exist two years ago.
+
+00:08:36.358 --> 00:08:40.898
+To see how good it looks right now, search for recent examples from Tupacabra on X.
+
+00:08:40.898 --> 00:08:46.118
+And that's a wrap. If any of today's stories made you go, huh, that's cool. Go play
+
+00:08:46.118 --> 00:08:51.418
+with it. Curiosity is how every expert started. See you tomorrow, and if you'd rather watch
+
+00:08:51.418 --> 00:08:57.218
+than listen, find us on YouTube at Narin Network, links in the show notes. And before you go,
+
+00:08:57.558 --> 00:09:02.538
+this show is part of the Narin Network, a family of daily podcasts on tech, science, and
+
+00:09:02.538 --> 00:09:07.718
+markets. Each one a short, sharp briefing you can finish on the commute. If today earned
+
+00:09:07.718 --> 00:09:13.238
+place in your feed, here's your next listen. Tesla Shorts Time, your daily deep dive into
+
+00:09:13.238 --> 00:09:21.578
+everything Tesla. Find every show free at narennetwork.com. New to the network? Narennetwork.com start here,
+
+00:09:21.738 --> 00:09:27.418
+picks the right daily briefing for you in about two minutes. This episode used AI voice synthesis of
+
+00:09:27.418 --> 00:09:30.838
+my voice. Editorial selection and analysis are my own.

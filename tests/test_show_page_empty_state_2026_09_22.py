@@ -127,7 +127,7 @@ class TestAPageWithoutAnArchiveGridStillRendersItsCard:
         """
         out = _node(
             _DOM
-            + _js("episodeGrid", "setLatestTitle", "withOp3", "previewUnlessTitle", "renderEpisodes")
+            + _js("episodeGrid", "setLatestTitle", "withOp3", "previewUnlessTitle", "newestFirst", "renderEpisodes")
             + """
             const title = el({textContent: 'Loading...'});
             const summary = el({});
@@ -143,7 +143,6 @@ class TestAPageWithoutAnArchiveGridStillRendersItsCard:
             globalThis.epTitle = (r) => r.title || '';
             globalThis.epSummary = (r) => r.summary || '';
             globalThis.epNumber = (r) => r.episode;
-            globalThis.newestFirst = (a, b) => (new Date(b.date) - new Date(a.date)) || ((b.episode || 0) - (a.episode || 0));
             globalThis.postUrlFor = () => '';
             globalThis.renderLatestLangs = () => {};
             globalThis.loadFromRSS = () => { throw new Error('must not fall back'); };

@@ -52,9 +52,16 @@ def test_only_tesla_posts_anywhere_but_nerranetwork(slug):
 
 def test_the_shows_that_posted_before_still_post():
     for slug in ("spacex", "models_agents", "modern_investing", "omni_view",
-                 "planetterrian", "fascinating_frontiers", "unintended_consequences",
+                 "planetterrian", "fascinating_frontiers",
                  "age_of_ai", "nerra_voices", "tesla"):
         assert _cfg(slug).publishing.x_enabled, slug
+
+
+def test_unintended_consequences_is_paused_on_x():
+    # Nov 14 2026: @nerranetwork was locked minutes after the UC post on
+    # Nov 6, 8, 12 and 13 (and on no day UC did not post). Paused while the
+    # cause is found; turning it back on is Patrick's call.
+    assert not _cfg("unintended_consequences").publishing.x_enabled
 
 
 def test_nobody_posts_on_planetterrian_any_more():

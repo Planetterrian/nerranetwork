@@ -411,13 +411,13 @@ class TestThePost:
 
     def test_a_post_without_a_photo_renders_as_before(self, monkeypatch):
         import generate_html as G
-        from engine.blog import extract_blog_metadata, generate_blog_post_html
         from engine import blog
+        from engine.blog import extract_blog_metadata, generate_blog_post_html
         real = blog.interview_context
 
+        # Nov 14 2026: the newest real episode (Luke Miler) now has a photo,
+        # so the "no photo" state is set here, never read from the record.
         def without_photo(*a, **k):
-            # The newest guest may have a photo (Ep17 did, Nov 13 2026): the
-            # state under test is set here, never borrowed from the catalogue.
             ctx = real(*a, **k)
             ctx["guest_photo"] = ""
             return ctx

@@ -1,0 +1,352 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.120
+Versels UISDK supplies agents with 50 behaviors for building accessible components across 5 frameworks. This is Models &amp; Agents Episode 234, then a personal glucose predictor, a tamper evident agent harness, and perplexity teammates on the MAC, with a look under the hood later. Versels Labs released the UISDK as an Apache 2.0 license beta, Mark Tech Post reports a headless library of Primitive's Agents assemble, rather than finish components.
+
+00:00:29.120 --> 00:00:36.280
+agents combine primitives such as create roving focus, create type-ahead, create pop-up, create selection,
+
+00:00:36.740 --> 00:00:44.140
+and create reorder with adapters for React 19 plus, view 3.5 plus, svelte 5.33 plus,
+
+00:00:44.780 --> 00:00:47.780
+solid two release candidate, and plain web components.
+
+00:00:48.300 --> 00:00:53.620
+In Versels Own Test, an agent completed a settings task with 69% fewer tool calls
+
+00:00:53.620 --> 00:00:57.500
+and 61% less time when using the direct UI bridge.
+
+00:00:57.500 --> 00:01:04.200
+Pre-built examples cover select, combo box, date picker, menu, tree, and color picker, and
+
+00:01:04.200 --> 00:01:07.680
+a prompt template is there for agents to paste so they learn the primitives.
+
+00:01:08.460 --> 00:01:12.820
+Behaviors are defined once with defined primitive and rendered identically across every
+
+00:01:12.820 --> 00:01:18.440
+adapter via create parts, so one behavior definition serves all of them without duplication.
+
+00:01:19.020 --> 00:01:26.160
+The project ships six NPM packages at version 0.1.0 beta 1, and runs in any modern browser
+
+00:01:26.160 --> 00:01:27.760
+with no GPU requirement.
+
+00:01:28.675 --> 00:01:34.995
+An author on the machine learning subreddit pre-trained a 31,253 parameter encoder-only
+
+00:01:34.995 --> 00:01:42.695
+transformer on 19,200 years of synthetic continuous glucose monitor, or CGM data from 1 million
+
+00:01:42.695 --> 00:01:50.015
+simulated type 1 diabetics, then use low-rank adaptation or Laura to fit 115 days of personal
+
+00:01:50.015 --> 00:01:50.475
+traces.
+
+00:01:50.475 --> 00:01:55.615
+The model predicts two hours ahead, infills missing segments, and back casts,
+
+00:01:55.915 --> 00:02:00.935
+outputting blood glucose values in covachev risk space, using combined dilate,
+
+00:02:01.215 --> 00:02:03.335
+mean-squared error, and pinball loss.
+
+00:02:03.915 --> 00:02:08.715
+It learns to predict time of day from past traces once context exceeds 48 hours,
+
+00:02:09.115 --> 00:02:14.115
+accepts insulin units and carbohydrate grams with glycemic index as action curves,
+
+00:02:14.115 --> 00:02:20.155
+Trains with learned Kendall gal weights and keeps a native variable context window of 3.5
+
+00:02:20.155 --> 00:02:21.635
+to 7.0 days.
+
+00:02:22.135 --> 00:02:26.615
+It remains weaker than the author at predicting hypoglycemia in the next 30 minutes.
+
+00:02:27.613 --> 00:02:33.553
+Bolt PCHE is a deterministic, tamper-evident safety harness that depends every agent
+
+00:02:33.553 --> 00:02:38.913
+decision to a hash chain so runs can be replayed and verified after the fact instead of trusted.
+
+00:02:39.713 --> 00:02:44.233
+Episodic memory rights are checked against the chain for tampering, and the open harness
+
+00:02:44.233 --> 00:02:47.033
+records every decision into that chain as it occurs.
+
+00:02:48.100 --> 00:02:53.820
+The MAC app now hosts perplexity teammates, digital trends reports, persistent agents that
+
+00:02:53.820 --> 00:02:59.100
+plan tasks, spawn additional agents when needed, and notify the user when work is complete.
+
+00:02:59.700 --> 00:03:05.500
+They take on growth campaigns, bug triage, metrics tracking, and market research, and access
+
+00:03:05.500 --> 00:03:08.320
+requires the $200 per month MACS plan.
+
+00:03:08.320 --> 00:03:12.460
+agents communicate through dedicated channels, maintain their own cloud
+
+00:03:12.460 --> 00:03:17.982
+instances, and continue working even after the user closes the computer. Chat
+
+00:03:17.982 --> 00:03:23.822
+GPT wallet launched by OpenAI, Eucromedia news reports, lets dots agents find
+
+00:03:23.822 --> 00:03:28.162
+products, reach checkout, and pay after the user confirms with Face ID or
+
+00:03:28.162 --> 00:03:32.602
+fingerprint. Card details stay hidden from both the agent and merchants via
+
+00:03:32.602 --> 00:03:37.762
+tokenized payments, and the service is rolling out first to select US Chat GPT
+
+00:03:37.762 --> 00:03:40.082
+pro-subscribers aged 18 and older.
+
+00:03:40.722 --> 00:03:46.342
+The system displays retailer, items, total and payment method before each biometric confirmation.
+
+00:03:46.782 --> 00:03:51.762
+Then generates a token that replaces actual card numbers and security codes while preserving
+
+00:03:51.762 --> 00:03:53.982
+existing rewards and consumer protections.
+
+00:03:54.682 --> 00:03:57.462
+Some merchants may still block automated purchases.
+
+00:03:58.561 --> 00:04:03.381
+Harm likelihood tests got 10 recommendations on anthropics engineering blog for how to
+
+00:04:03.381 --> 00:04:09.441
+design, run, and report safety evaluations that measure whether a model increases or decreases
+
+00:04:09.441 --> 00:04:15.481
+harm likelihood. The post draws on system card experience and psychology's replication reforms,
+
+00:04:15.781 --> 00:04:21.541
+stressing pre-registration, multi-expert review, and clear documentation of sampling and grading
+
+00:04:21.541 --> 00:04:27.221
+methods. It distinguishes safety evals from capability measurements, notes that evals are
+
+00:04:27.221 --> 00:04:33.081
+easy to game and hard to reproduce, and recommends involving subject matter experts alongside technical
+
+00:04:33.081 --> 00:04:37.801
+and method specialists when deciding how to sample, grade, and analyze responses.
+
+00:04:38.720 --> 00:04:45.200
+TPU Sync, MarkTech Post Reports, is an open source C++ library Google released to move key
+
+00:04:45.200 --> 00:04:51.500
+value caches and weights across tensor processing unit high band with memory, host DRAM, storage,
+
+00:04:51.740 --> 00:04:52.140
+and network.
+
+00:04:52.780 --> 00:05:00.080
+Google reports more than 90% lower key value transfer latency on 235 billion to 480 billion
+
+00:05:00.080 --> 00:05:02.160
+parameter mixture of experts models.
+
+00:05:02.160 --> 00:05:09.401
+Elsewhere, Databricks' Ken Wong argues, big-go finance reports that context not model IQ
+
+00:05:09.401 --> 00:05:15.541
+is blocking AI agents at work, because the 40-point accuracy gap on the bird benchmark disappears
+
+00:05:15.541 --> 00:05:18.281
+once company-specific term-mappings are supplied.
+
+00:05:18.741 --> 00:05:24.721
+The top 50 leaderboard entries all get Oracle term definitions and reach nearly 90%, then
+
+00:05:24.721 --> 00:05:26.781
+drop to roughly 50% without them.
+
+00:05:26.781 --> 00:05:34.401
+B.M.25 keyword search matched BGE large accuracy towards data science found on 200 tool-wret
+
+00:05:34.401 --> 00:05:40.801
+questions while running roughly 40 times faster on CPU when full tool documentation was indexed.
+
+00:05:40.801 --> 00:05:47.261
+Covering up to 3,794 tools and staying competitive with an 8 billion parameter embedding model.
+
+00:05:48.180 --> 00:05:53.840
+Install the Versel UISDK beta and paste the provided prompt into your coding agent so
+
+00:05:53.840 --> 00:05:56.340
+it can compose components without handwritten ARIA.
+
+00:05:56.340 --> 00:05:59.740
+via the Accessibility Attributes screen readers rely on.
+
+00:06:00.160 --> 00:06:05.960
+Clone the Bolt PCHIE repository and wrap an existing agent run to generate verifiable
+
+00:06:05.960 --> 00:06:08.180
+hash chain receipts for audit or replay.
+
+00:06:08.860 --> 00:06:12.720
+Add BM25 alongside your embedding retriever for tool selection.
+
+00:06:13.340 --> 00:06:15.980
+The CPU path is immediate on modest hardware.
+
+00:06:16.660 --> 00:06:21.620
+Load the personal CGM transformer from the GitHub repo and test its forecasts against your
+
+00:06:21.620 --> 00:06:23.280
+own continuous glucose data.
+
+00:06:23.280 --> 00:06:30.538
+OpenAI continues a gradual rollout of chat GPT wallet to more US pro users, with expansion
+
+00:06:30.538 --> 00:06:32.338
+beyond dots agents still coming.
+
+00:06:33.078 --> 00:06:37.658
+Anthropics safety evaluation recommendations are expected to influence upcoming system
+
+00:06:37.658 --> 00:06:38.398
+card releases.
+
+00:06:39.318 --> 00:06:43.898
+Proplexity teammates on Mac may reach additional subscription tiers if usage data supports
+
+00:06:43.898 --> 00:06:44.198
+it.
+
+00:06:45.012 --> 00:06:49.832
+Pipeline parallelism looks like the way to hold an approximately 1 trillion parameter mixture
+
+00:06:49.832 --> 00:06:54.232
+of experts, so let me pop the hood on the machine learning sub-reddit run that dropped
+
+00:06:54.232 --> 00:06:57.952
+it and still hit 1,300 tokens per second per GPU.
+
+00:06:58.652 --> 00:07:04.492
+Only some expert networks fire for each token in that mixture of experts set up, and 384
+
+00:07:04.492 --> 00:07:12.572
+GH-200s ran 384-way fully-sharded data parallel, or FSDP, which shards weights across GPUs,
+
+00:07:12.912 --> 00:07:15.792
+plus 4-way expert parallelism inside each node.
+
+00:07:15.792 --> 00:07:21.372
+full activation checkpointing with grace offload, the Mewon optimizer and 8-bit
+
+00:07:21.372 --> 00:07:25.612
+floating-point expert all gathered delivered a 14 times throughput gain over
+
+00:07:25.612 --> 00:07:30.812
+the starting baseline. Newton Shull's orthogonalization moved on to the GPU and
+
+00:07:30.812 --> 00:07:35.892
+cut the optimizer step from 42 seconds to roughly two seconds. Infinity band
+
+00:07:35.892 --> 00:07:45.772
+made pipeline steps too long, so FSDP plus expert parallelism took over, and
+
+00:07:45.772 --> 00:07:47.012
+on NV-Link.
+
+00:07:47.732 --> 00:07:49.912
+Routing allocations through the compute stream
+
+00:07:49.912 --> 00:07:52.812
+freed 13.5 GB of peak memory,
+
+00:07:53.252 --> 00:07:55.992
+while group-limited routing kept expert load balance
+
+00:07:55.992 --> 00:07:58.412
+but left a small training instability risk
+
+00:07:58.412 --> 00:07:59.432
+still under measurement.
+
+00:08:00.132 --> 00:08:02.532
+The stack belongs on NV-Link heavy nodes
+
+00:08:02.532 --> 00:08:05.072
+where FSDP and expert parallelism
+
+00:08:05.072 --> 00:08:06.632
+can replace pipeline stages,
+
+00:08:07.152 --> 00:08:09.012
+and it is the wrong fit if every step
+
+00:08:09.012 --> 00:08:10.552
+still crosses infinity band,
+
+00:08:10.732 --> 00:08:13.352
+or you cannot absorb that unmeasured routing instability.
+
+00:08:13.892 --> 00:08:19.476
+Before we go, Databricks is lining up further genie data agent updates that incorporate that
+
+00:08:19.476 --> 00:08:20.776
+context mapping work.
+
+00:08:21.176 --> 00:08:22.956
+That's models and agents for today.
+
+00:08:23.556 --> 00:08:27.496
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:08:27.956 --> 00:08:30.216
+and subscribe so you don't miss tomorrow's update.
+
+00:08:30.776 --> 00:08:33.476
+The AI world moves fast, we'll help you keep up.
+
+00:08:33.956 --> 00:08:38.136
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin
+
+00:08:38.136 --> 00:08:39.696
+Network, links in the show notes.
+
+00:08:40.296 --> 00:08:42.276
+This show comes to you from the Narin Network.
+
+00:08:42.276 --> 00:08:46.976
+If you want another sharp daily briefing, omniview top world news has you covered.
+
+00:08:47.476 --> 00:08:50.476
+The 10 stories that matter most in the world today, ranked.
+
+00:08:51.036 --> 00:08:53.756
+All our shows are free at narennetwork.com.
+
+00:08:54.356 --> 00:08:56.096
+Want the written briefing with source links?
+
+00:08:56.776 --> 00:09:01.736
+Each show keeps a summaries page on narennetwork.com, scannable, dated, and free.
+
+00:09:02.236 --> 00:09:05.236
+This episode used AI voice synthesis of my voice.
+
+00:09:05.736 --> 00:09:08.196
+Editorial selection and analysis are my own.

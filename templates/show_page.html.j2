@@ -1288,18 +1288,17 @@
             return isNaN(n) ? null : n;
         }
 
-        function epTitle(r) {
-            return (r.episode_title || r.title || '').trim();
+        /* Newest first by date; two episodes on one date (Age of AI Ep16 and
+           Ep17, Nov 13 2026) fall back to the episode number, the order the
+           server-rendered card uses. */
+        function newestFirst(a, b) {
+            const d = new Date(b.date) - new Date(a.date);
+            if (d) return d;
+            return (epNumber(b) || 0) - (epNumber(a) || 0);
         }
 
-        /* Newest first. Two episodes can carry the same date (an interview
-           show publishes two in a day), and a date-only sort leaves them in
-           file order, oldest first: the higher episode number wins the tie,
-           which is what the server-rendered card already does. */
-        function newestFirst(a, b) {
-            const byDate = new Date(b.date) - new Date(a.date);
-            if (byDate) return byDate;
-            return (epNumber(b) || 0) - (epNumber(a) || 0);
+        function epTitle(r) {
+            return (r.episode_title || r.title || '').trim();
         }
 
         function epSummary(r) {

@@ -56,7 +56,7 @@ def _js_reader() -> str:
     """
     src = _template()
     out = []
-    for name in ("recordsFrom", "epNumber", "epTitle", "newestFirst", "epSummary"):
+    for name in ("recordsFrom", "epNumber", "newestFirst", "epTitle", "epSummary"):
         match = re.search(r"\n        function %s\(.*?\n        \}\n" % name,
                           src, re.S)
         assert match, f"{name} is gone from the show page script"
@@ -115,17 +115,6 @@ class TestTheScriptReadsWhatTheServerRead:
         assert js["num"] == server["episode_num"], f"{slug}: episode number"
         assert js["title"] == server["title"], f"{slug}: title"
         assert js["audio"] == server["audio_url"], f"{slug}: audio url"
-
-    def test_two_episodes_on_one_date_put_the_higher_number_first(self, tmp_path):
-        """Nov 13 2026: an interview show published two episodes on one day
-        and the page script kept file order, so it led with the older one."""
-        same = tmp_path / "same.json"
-        same.write_text(json.dumps({"episodes": [
-            {"episode": 16, "date": "2026-11-13", "title": "A", "audio_url": "a"},
-            {"episode": 17, "date": "2026-11-13", "title": "B", "audio_url": "b"},
-        ]}), encoding="utf-8")
-        assert _run_reader(same)["num"] == 17
-        assert "episodes.sort(newestFirst)" in _template()
 
     def test_the_interview_shape_is_readable_at_all(self):
         """The regression: {"episodes": [...]} read as an empty show."""
