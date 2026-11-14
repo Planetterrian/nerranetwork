@@ -182,6 +182,39 @@ x_accounts:
 min_articles: 8
 min_articles_skip: 5
 
+# Nov 14 2026 (remaining-shows review): publishers this show should never
+# cite — content farms and shops that reached Top News through the Google
+# News queries (Ep149-162: shattered.io 4 Source lines, among them a
+# Cursor "rules linter" how-to the audit called off-topic; ad-hoc-news.de
+# 4; finance.biggo.com 3; basenor.com 2). Tesla's Nov 11 list, which the
+# same farms reach the same way. Matched by engine.utils.is_excluded_source.
+exclude_sources:
+  - tech-insider.org
+  - shattered.io
+  - basenor.com
+  - BASENOR - Tesla Accessories
+  - finance.biggo.com
+  - BigGo Finance
+  - kucoin.com
+  - ad-hoc-news.de
+
+# Nov 14 2026: the podcast prompt REQUIRES the stage on every landing or
+# catch ("NAME THE STAGE"), so the stage names repeat by design. The
+# script's phrase-loop detector read "super heavy booster" (24 times in
+# Ep158) as a loop and re-ran the whole grok-4.6 script call on 3 of 8
+# episodes (Ep155-162) — about six minutes each, and the reason this
+# show's script stage p95 (903 s) sits past the 600 s request timeout in
+# api/model_trial.json. A phrase containing one of these is not a loop.
+repetition_exempt_terms:
+  - super heavy
+  - booster
+  - ship
+  - starship
+  - space x
+  - spacex
+  - upper stage
+  - raptor
+
 # Story-recurrence memory (Aug 2026): inline "already covered — update,
 # don't re-tell" notes on fetched articles matching the ContentTracker's
 # recent-headline window. Built after the Fort Bend story ran in 5 of 10

@@ -224,7 +224,9 @@ class TestPromptContracts:
 
     def test_podcast_prompt_states_one_length_target(self):
         text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
-        assert text.count("1,900") == 1, (
+        # Nov 14 2026: 1,500-1,900 / 11-14 min -> 1,300-1,700 / 9-12 min, the
+        # deep dive no longer a length lever (remaining-shows review).
+        assert text.count("1,700") == 1, (
             "ONE unified length target: the prompt must state the word target "
             "exactly once"
         )
@@ -232,10 +234,11 @@ class TestPromptContracts:
     def test_system_prompt_length_agrees_with_podcast_prompt(self):
         # The system + podcast prompts must state the SAME length window
         # (the contradictory-length class every June 2026 review fixed).
-        # Recalibrated to 11-14 min after the Ep2 thin-day skip.
+        # Recalibrated to 11-14 min after the Ep2 thin-day skip; 9-12 min on
+        # Nov 14 2026 with the podcast prompt's 1,300-1,700 words.
         system = (_ROOT / "shows/prompts/spacex_system.txt").read_text(encoding="utf-8")
-        assert "11–14 minutes" in system
-        assert "10-12" not in system and "10–12" not in system and "12–14" not in system
+        assert "9–12 minutes" in system
+        assert "11–14" not in system and "10–12" not in system and "12–14" not in system
 
 
 class TestXaiEngineeringScope:
@@ -944,10 +947,15 @@ class TestEngineeringAnchorRotation:
     def test_market_watch_is_qualitative_price_once(self):
         text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(
             encoding="utf-8")
-        assert "Do NOT speak the precise dollar figure here" in text, (
+        # Nov 14 2026: the mid-episode note is gone entirely — the closing
+        # block carries the one quote. The note had aired as a subject-less
+        # fragment ("a little over two percent lower") on 6 of 17 audits and
+        # told the move twice with conflicting numbers (Ep152).
+        assert "spoken exactly once, by the closing block" in text, (
             "the price-once rule is gone — the same number aired twice "
             "~30s apart for weeks (escalated since 2026-06-13)"
         )
+        assert "[Market Watch" not in text
 
 
 class TestKnownSectionsOnlyChapters:
