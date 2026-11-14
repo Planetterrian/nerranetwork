@@ -255,8 +255,10 @@ class TestXPostItems:
 
     def test_spacex_market_watch_note_carries_no_tense_of_its_own(self):
         p = _prompt("spacex_podcast.txt")
-        assert "never a tense of its own on the quote" in p
-        assert "the closing block carries the clock's verb" in p
+        # Nov 14 2026: stronger — there is no mid-episode note at all; the
+        # closing block (which carries the clock's verb) speaks the quote.
+        assert "[Market Watch" not in p
+        assert "spoken exactly once, by the closing block" in p
 
 
 class TestAWholePostIsNeverAHeading:
