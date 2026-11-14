@@ -1,0 +1,93 @@
+Vercel’s UI SDK supplies agents with fifty behaviors for building accessible components across five frameworks.
+
+This is Models and Agents, episode 234.
+
+Then a personal glucose predictor, a tamper-evident agent harness, and Perplexity teammates on the Mac, with a look under the hood later.
+
+Vercel Labs released the UI SDK as an Apache two point zero licensed beta, MarkTechPost reports, a headless library of primitives agents assemble rather than finished components.
+
+Agents combine primitives such as createRovingFocus, createTypeahead, createPopup, createSelection, and createReorder with adapters for React nineteen plus, Vue three point five plus, Svelte five point thirty-three plus, Solid two release candidate, and plain Web Components.
+
+In Vercel’s own test an agent completed a settings task with sixty-nine percent fewer tool calls and sixty-one percent less time when using the direct UI bridge.
+
+Prebuilt examples cover Select, Combobox, Date Picker, Menu, Tree, and Color Picker, and a prompt template is there for agents to paste so they learn the primitives.
+
+Behaviors are defined once with definePrimitive and rendered identically across every adapter via createParts, so one behavior definition serves all of them without duplication.
+
+The project ships six npm packages at version zero point one point zero beta one and runs in any modern browser with no GPU requirement.
+
+An author on the Machine Learning subreddit pretrained a thirty-one thousand two hundred fifty-three parameter encoder-only transformer on nineteen thousand two hundred years of synthetic continuous glucose monitor, or CGM, data from one million simulated type-one diabetics, then used Low-Rank Adaptation, or LoRA, to fit one hundred fifteen days of personal traces.
+
+The model predicts two hours ahead, infills missing segments, and backcasts, outputting blood-glucose values in Kovatchev risk space using combined DILATE, mean squared error, and pinball loss.
+
+It learns to predict time of day from past traces once context exceeds forty-eight hours, accepts insulin units and carbohydrate grams with glycemic index as action curves, trains with learned Kendall-Gal weights, and keeps a native variable context window of three point five to seven point zero days.
+
+It remains weaker than the author at predicting hypoglycemia in the next thirty minutes.
+
+Bolt PCHIE is a deterministic, tamper-evident safety harness that appends every agent decision to a hash chain so runs can be replayed and verified after the fact instead of trusted.
+
+Episodic memory writes are checked against the chain for tampering, and the open harness records every decision into that chain as it occurs.
+
+The Mac app now hosts Perplexity Teammates, Digital Trends reports, persistent agents that plan tasks, spawn additional agents when needed, and notify the user when work is complete.
+
+They take on growth campaigns, bug triage, metrics tracking, and market research, and access requires the two hundred dollars per month Max plan.
+
+Agents communicate through dedicated channels, maintain their own cloud instances, and continue working even after the user closes the computer.
+
+ChatGPT Wallet, launched by OpenAI, UkrMedia News reports, lets dots agents find products, reach checkout, and pay after the user confirms with Face ID or fingerprint.
+
+Card details stay hidden from both the agent and merchants via tokenized payments, and the service is rolling out first to selected U.S. ChatGPT Pro subscribers aged eighteen and older.
+
+The system displays retailer, items, total, and payment method before each biometric confirmation, then generates a token that replaces actual card numbers and security codes while preserving existing rewards and consumer protections.
+
+Some merchants may still block automated purchases.
+
+Harm-likelihood tests got ten recommendations on Anthropic’s engineering blog for how to design, run, and report safety evaluations that measure whether a model increases or decreases harm likelihood.
+
+The post draws on system-card experience and psychology’s replication reforms, stressing preregistration, multi-expert review, and clear documentation of sampling and grading methods.
+
+It distinguishes safety evals from capability measurements, notes that evals are easy to game and hard to reproduce, and recommends involving subject-matter experts alongside technical and methods specialists when deciding how to sample, grade, and analyze responses.
+
+TPU Sync, MarkTechPost reports, is an open-source C++ library Google released to move key-value caches and weights across Tensor Processing Unit high-bandwidth memory, host DRAM, storage, and network.
+
+Google reports more than ninety percent lower key-value transfer latency on two hundred thirty-five billion to four hundred eighty billion parameter mixture-of-experts models.
+
+Elsewhere, Databricks’ Ken Wong argues, BigGo Finance reports, that context not model IQ is blocking AI agents at work, because the forty-point accuracy gap on the BIRD benchmark disappears once company-specific term mappings are supplied — the top fifty leaderboard entries all get oracle term definitions and reach nearly ninety percent, then drop to roughly fifty percent without them.
+
+BM25 keyword search matched BGE-large accuracy, Towards Data Science found, on two hundred ToolRet questions while running roughly forty times faster on CPU when full tool documentation was indexed, covering up to three thousand seven hundred ninety-four tools and staying competitive with an eight-billion-parameter embedding model.
+
+Install the Vercel UI SDK beta and paste the provided prompt into your coding agent so it can compose components without hand-written ARIA, the accessibility attributes screen readers rely on.
+
+Clone the Bolt PCHIE repository and wrap an existing agent run to generate verifiable hash-chain receipts for audit or replay.
+
+Add BM25 alongside your embedding retriever for tool selection; the CPU path is immediate on modest hardware.
+
+Load the personal CGM transformer from the GitHub repo and test its forecasts against your own continuous glucose data.
+
+OpenAI continues a gradual rollout of ChatGPT Wallet to more U.S. Pro users, with expansion beyond dots agents still coming.
+
+Anthropic’s safety-evaluation recommendations are expected to influence upcoming system-card releases.
+
+Perplexity Teammates on Mac may reach additional subscription tiers if usage data supports it.
+
+Pipeline parallelism looks like the way to hold an approximately one-trillion-parameter mixture of experts, so let me pop the hood on the Machine Learning subreddit run that dropped it and still hit one thousand three hundred tokens per second per GPU.
+
+Only some expert networks fire for each token in that mixture-of-experts setup, and three hundred eighty-four GH two hundreds ran three hundred eighty-four-way Fully Sharded Data Parallel, or FSDP, which shards weights across GPUs, plus four-way expert parallelism inside each node.
+
+Full activation checkpointing with Grace offload, the Muon optimizer, and eight-bit floating point expert all-gather delivered a fourteen-times throughput gain over the starting baseline.
+
+Newton-Schulz orthogonalization moved onto the GPU and cut the optimizer step from forty-two seconds to roughly two seconds.
+
+InfiniBand made pipeline steps too long, so FSDP plus expert parallelism took over, and node-local resharding of dense weights after the forward pass kept the backward gather on NVLink.
+
+Routing allocations through the compute stream freed thirteen point five gibibytes of peak memory, while group-limited routing kept expert load balanced but left a small training instability risk still under measurement.
+
+The stack belongs on NVLink-heavy nodes where FSDP and expert parallelism can replace pipeline stages, and it is the wrong fit if every step still crosses InfiniBand or you cannot absorb that unmeasured routing instability.
+
+Before we go — Databricks is lining up further Genie data-agent updates that incorporate that context-mapping work.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Omni View Top World News has you covered — the ten stories that matter most in the world today, ranked. All our shows are free at nerranetwork.com. Want the written briefing with source links? Each show keeps a summaries page on nerranetwork.com — scannable, dated, and free.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
