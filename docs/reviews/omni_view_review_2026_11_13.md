@@ -212,3 +212,16 @@ Investing, Env Intel, First Principles, Unintended Consequences, The DP Pod,
 Offshore North, and the two Russian shows. Env Intel, First Principles and
 Unintended Consequences already write their scripts on grok-4.7; the other
 English shows write scripts on grok-4.6.
+
+## Round 3 — the first episode on grok-4.7 (Ep236, Nov 14)
+
+Stronger journalism: named sides on both contested stories, numbers with
+comparisons, no "analysts", no invented next steps, script fact-free share
+33.1%, deep-dive containment 0.312 (the gate did not need to fire), 38% of
+prompt articles reported (21.7% on Ep235). But the model filled every ceiling:
+digest 3,473 words, script 2,990 words, 19 minutes, two TTS chunks, so the
+single-call speech wrap was dropped and the delivery slowed
+(`tts_speech_wrap_dropped`). The podcast prompt now carries a ceiling of about
+1,900 spoken words (about twelve minutes), spent on the seven stories, with
+Also Today one short sentence per item. A ceiling, never a target or a retry.
+⚠️ A/B-listen.

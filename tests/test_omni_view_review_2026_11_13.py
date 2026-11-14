@@ -203,3 +203,11 @@ class TestRoundTwoFromEp235:
         assert "Only if the briefing has a \"Go deeper\" line" in PODCAST
         assert "what actually differs in how each frames" not in PODCAST
         assert "frames it as" not in PODCAST
+
+
+def test_the_script_has_a_ceiling_that_keeps_one_voice_call():
+    # Ep236 (grok-4.7): 2,990 words, 19 minutes, two TTS chunks, so the
+    # single-call speech wrap was dropped. A ceiling, never a target or a
+    # retry (network do_not_retry: podcast-side length levers).
+    assert "CEILING of about 1,900 spoken words" in PODCAST
+    assert "must be at least" not in PODCAST
