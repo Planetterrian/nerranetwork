@@ -98,6 +98,17 @@ class LLMConfig:
     # ceiling (Oct 10) left a 1,700-word target whose 1,020 floor a dense
     # Sunday could not clear, and the day was lost at 1,013 words.
     min_podcast_publish_words: int = 0
+    # Nov 14 2026 (remaining-shows review): the spoken-word CEILING the
+    # podcast prompt states. 0 = none. The newer shows wrote 25-60% past
+    # their targets (AI Chips median 1,976 against 1,400; Prediction
+    # Markets 2,289 against 1,400) and a script past ~2,200 words splits
+    # the single-call TTS request, which drops the <fast> wrap (landmine
+    # #17: tts_speech_wrap_dropped) so the episode reads at a different
+    # pace. The prompt states the number; run_show records
+    # ``script_over_ceiling`` and never trims or retries (a podcast-side
+    # length lever is do_not_retry). tests/test_remaining_shows_review_
+    # 2026_11_14.py pins the prompt's number to this value.
+    max_podcast_words: int = 0
     # June 2026 (Tesla quality pass): when true, the one-shot expansion
     # retry in generate_podcast_script fires whenever the script lands
     # under the FULL min_podcast_words target instead of only near the
@@ -1443,6 +1454,12 @@ class ShowConfig:
     # in 5 of 10 Tesla episodes past three existing dedup layers.
     # Default False; the daily news shows opt in per-YAML.
     story_recurrence: bool = False
+    # Nov 14 2026: beat names the podcast prompt requires (SpaceX's "name
+    # the stage" rule) that the script's phrase-loop detector must not
+    # read as a loop (engine.validation.detect_phrase_repetition). An
+    # n-gram containing one of these whole-word terms never fires the
+    # anti-repetition script retry. Empty = byte-identical.
+    repetition_exempt_terms: List[str] = field(default_factory=list)
     # Same-story clustering (Oct 2026, engine/story_clusters.py): articles
     # that tell ONE story from several outlets carry an inline "write one
     # item, fold this angle in" note in the digest prompt. Tesla Ep622
@@ -1827,6 +1844,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         exclude_betting_lines=bool(data.get("exclude_betting_lines", False)),
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
+        repetition_exempt_terms=[str(x) for x in (data.get("repetition_exempt_terms") or [])],
         story_clusters=bool(data.get("story_clusters", False)),
         story_clusters_regen=bool(data.get("story_clusters_regen", False)),
         hook_item_first=bool(data.get("hook_item_first", False)),

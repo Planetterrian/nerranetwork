@@ -4435,6 +4435,17 @@ def run(args: argparse.Namespace) -> None:
             # let us compute the actual/target ratio over time.
             metrics.record("podcast_script_word_count", _script_word_count)
             metrics.record("podcast_script_target_words", _TARGET_WORDS)
+            # Nov 14 2026: the stated ceiling (llm.max_podcast_words) is
+            # recorded, never enforced here — no trim, no retry.
+            _CEILING_WORDS = int(getattr(config.llm, "max_podcast_words", 0) or 0)
+            if _CEILING_WORDS:
+                metrics.record("podcast_script_ceiling_words", _CEILING_WORDS)
+                metrics.record("script_over_ceiling", _script_word_count > _CEILING_WORDS)
+                if _script_word_count > _CEILING_WORDS:
+                    logger.warning(
+                        "Podcast script above its ceiling (%d words, ceiling %d)",
+                        _script_word_count, _CEILING_WORDS,
+                    )
             # Model-era stamps (2026-08-19): the RENDER_LOOK_VERSION pattern
             # applied to LLMs — per-episode model ids so analytics can
             # segment length/LV/retention/cost by model era instead of

@@ -187,7 +187,13 @@ llm:
   podcast_temperature: 0.75
   max_tokens: 5000
   podcast_max_tokens: 6000
-  min_podcast_words: 1200
+  # Nov 14 2026 (remaining-shows review): 1200 -> 1000. The prompt asked
+  # for 1,300-1,700 words and "at least 8 analogies" from a three-story
+  # briefing; the script restated each idea in new metaphors and the daily
+  # audit flagged REPETITIVE on 9 of 14 (Ep213-226). The briefing's facts
+  # set the length now. The skip floor stays where it was (0.6 x 1200).
+  min_podcast_words: 1000
+  min_podcast_publish_words: 720
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never

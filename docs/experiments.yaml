@@ -7905,3 +7905,54 @@ experiments:
       impressions; read at age 7 days only. Same token and scope as the
       Analytics fetch. Consumer: the YouTube review and the Nov 29 readout.
       Guards tests/test_youtube_reach_2026_11_14.py.
+
+  - id: remaining-shows-review-2026-11-14
+    title: "The remaining shows: SpaceX's market line and deep dive, a word ceiling for the newer shows, one teaser or none, Beginners/Finansy/Env Intel stop restating"
+    area: shows
+    shipped: 2026-11-14
+    readout: 2026-11-28
+    status: reading
+    baseline: >
+      Daily audits Oct 29-Nov 13: SpaceX audit 6.2 with INCOHERENT on 10 of 14
+      (6 of 17 audits quote a subject-less market sentence) and FACTUAL_ERRORS
+      on 9 (deep-dive arithmetic: Ep150, Ep151, Ep153); SpaceX script stage
+      p95 903 s against a 600 s timeout, the anti-repetition retry on 3 of 8
+      episodes. 124 Repetitive findings network-wide, 21 of them the closing
+      teaser. Median script against target: AI Chips 1,797/1,400, Longevity
+      1,708/1,200, Vancouver 1,682/1,450; tts_speech_wrap_dropped on AI Chips
+      1, Prediction Markets 2, Models & Agents 3 of their last 14. REPETITIVE:
+      Beginners 9 of 14, Env Intel 13 of 13, Finansy Prosto 9 of 13.
+    target: >
+      Over each show's first 14 audited episodes after merge: SpaceX
+      INCOHERENT on at most 5 and no subject-less market sentence; no SpaceX
+      Source line from the excluded farms; SpaceX script stage p95 under 600 s;
+      script_over_ceiling on at most 3 of 14 per ceiling show and
+      tts_speech_wrap_dropped on none; at most 5 teaser restatements across the
+      five teaser shows; Beginners REPETITIVE on at most 5; Env Intel and
+      Finansy REPETITIVE on at most half of their next 4.
+    criteria: >
+      HIT when SpaceX INCOHERENT is on at most 5 of 14, no ceiling show drops
+      the TTS wrap, and Beginners REPETITIVE is on at most 5 of 14; MISS when
+      SpaceX INCOHERENT is on 9 or more or two or more ceiling shows still drop
+      the wrap; else INCONCLUSIVE.
+    readout_plan: >
+      api/editorial_score_history.json rows dated after the merge (flags,
+      score) and the daily-review.json history for the quoted sentences;
+      metrics_ep*.json counters script_over_ceiling, podcast_script_ceiling_words,
+      tts_speech_wrap_dropped, script_words; credit files for
+      podcast_script_anti_repetition_retry; api/model_trial.json for the SpaceX
+      script stage; Source: hosts in the SpaceX digests.
+    notes: >
+      shows/spacex.yaml (exclude_sources, repetition_exempt_terms), SpaceX
+      podcast/system/digest prompts; llm.max_podcast_words on AI Chips, MAG 7,
+      Prediction Markets, Peptides, Longevity, Vancouver, Collingwood and
+      Models & Agents with the HARD CEILING line in each podcast prompt; the
+      teaser rule on SpaceX, AI Chips, MAG 7, Prediction Markets and Models &
+      Agents; mab_podcast.txt (min_podcast_words 1000, skip floor 720 pinned),
+      fp_podcast.txt, env_intel_podcast.txt. Code: engine.validation
+      detect_phrase_repetition(exempt_terms), engine.config
+      repetition_exempt_terms + LLMConfig.max_podcast_words, run_show records
+      the ceiling. ⚠️ AUDIO on every prompt change: rehearse SpaceX, AI Chips
+      and Beginners and listen before merging. Review
+      docs/reviews/remaining_shows_review_2026_11_14.md; guards
+      tests/test_remaining_shows_review_2026_11_14.py.

@@ -55,6 +55,7 @@ def detect_phrase_repetition(
     min_phrase_words: int = 3,
     max_phrase_words: int = 6,
     max_allowed_repeats: int = 3,
+    exempt_terms: tuple = (),
 ) -> List[Dict[str, Any]]:
     """Detect phrases repeated excessively in generated text.
 
@@ -66,6 +67,14 @@ def detect_phrase_repetition(
     Returns a list of ``{phrase, count, severity}`` dicts sorted by count
     descending.  Severity is ``"critical"`` for 6+ occurrences, ``"warning"``
     for 4-5.  Returns an empty list when nothing exceeds the threshold.
+
+    ``exempt_terms`` (Nov 14 2026, a show's ``repetition_exempt_terms``):
+    an n-gram that contains one of these whole-word terms is the show's
+    beat vocabulary, not a loop. SpaceX's prompt REQUIRES the stage to be
+    named on every landing or catch, so "super heavy booster" ran 24 times
+    in Ep158 and fired the anti-repetition retry on 3 of 8 episodes — a
+    second full script call (~6 minutes on the script model) that cannot
+    remove a name the prompt demands. Empty = byte-identical behaviour.
     """
     if not text or not text.strip():
         return []
@@ -88,12 +97,20 @@ def detect_phrase_repetition(
             phrase = " ".join(tokens[i : i + n])
             ngram_counts[phrase] += 1
 
+    _exempt = [
+        re.compile(r"(?:^| )" + re.escape(" ".join(
+            re.sub(r"[^\w']+", "", w).lower() for w in str(term).split()
+        ).strip()) + r"(?: |$)")
+        for term in (exempt_terms or ()) if str(term).strip()
+    ]
     violations: List[Dict[str, Any]] = []
     seen_phrases: set = set()
     for phrase, count in ngram_counts.most_common():
         if count <= max_allowed_repeats:
             break  # ordered descending — nothing more to find
         if phrase in _REPETITION_ALLOWLIST:
+            continue
+        if _exempt and any(rx.search(phrase) for rx in _exempt):
             continue
         # Skip phrases where all tokens are stopword-length (<=3 chars)
         if all(len(t) <= 3 for t in phrase.split()):

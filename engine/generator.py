@@ -3920,7 +3920,8 @@ def generate_podcast_script(
     # One retry with anti-repetition instructions if any "critical" violation.
     try:
         from engine.validation import detect_phrase_repetition
-        reps = detect_phrase_repetition(text)
+        _rep_exempt = tuple(getattr(config, "repetition_exempt_terms", ()) or ())
+        reps = detect_phrase_repetition(text, exempt_terms=_rep_exempt)
         critical_reps = [r for r in reps if r["severity"] == "critical"]
         if critical_reps:
             phrases_str = ", ".join(
@@ -3960,7 +3961,7 @@ def generate_podcast_script(
             )
                     except Exception:
                         pass
-                reps_rr = detect_phrase_repetition(text_rr)
+                reps_rr = detect_phrase_repetition(text_rr, exempt_terms=_rep_exempt)
                 critical_rr = [r for r in reps_rr if r["severity"] == "critical"]
                 orig_words = len(text.split())
                 retry_words = len(text_rr.split())

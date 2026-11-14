@@ -91,7 +91,9 @@ class TestUnifiedLengthTargets:
     EXPECTED = {
         "modern_investing": (1800, "2,000–2,200 words"),
         "models_agents": (1200, "1,200–1,500 words"),
-        "models_agents_beginners": (1200, "1300–1700 words"),
+        # Nov 14 2026 (remaining-shows review): the briefing's facts set
+        # the length; no sentence quotas (tests/test_remaining_shows_review_2026_11_14.py).
+        "models_agents_beginners": (1000, "about 1,000–1,400 words"),
         # Nov 13 2026 (FF review): the script's length is the digest's
         # facts, not a word count (tests/test_fascinating_frontiers_review_2026_11_13.py).
         "fascinating_frontiers": (1400, "Its length is the digest's facts"),

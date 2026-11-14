@@ -234,6 +234,10 @@ llm:
   # 1,200-1,400 is accepted as the show's natural length (prompt says so).
   # The skip floor stays at its old 900 (60% of 1,500), pinned below.
   min_podcast_words: 1200
+  # Nov 14 2026 (remaining-shows review): the ceiling the podcast prompt
+  # states, about 1.25x the target (engine.config.LLMConfig.max_podcast_words;
+  # recorded as script_over_ceiling, never trimmed or retried).
+  max_podcast_words: 1600
   min_podcast_publish_words: 900
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
