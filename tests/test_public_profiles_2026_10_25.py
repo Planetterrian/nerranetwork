@@ -409,9 +409,19 @@ class TestThePost:
         assert person["image"].endswith("photo-1.jpg")
         assert "https://x.com/pipermartz" in person["sameAs"]
 
-    def test_a_post_without_a_photo_renders_as_before(self):
+    def test_a_post_without_a_photo_renders_as_before(self, monkeypatch):
         import generate_html as G
+        from engine import blog
         from engine.blog import extract_blog_metadata, generate_blog_post_html
+        real = blog.interview_context
+
+        # Nov 14 2026: the newest real episode (Luke Miler) now has a photo,
+        # so the "no photo" state is set here, never read from the record.
+        def without_photo(*a, **k):
+            ctx = real(*a, **k)
+            ctx["guest_photo"] = ""
+            return ctx
+        monkeypatch.setattr(blog, "interview_context", without_photo)
         path = sorted((ROOT / "digests" / "age_of_ai").glob("Age_of_AI_Ep0*.md"))[-1]
         md = path.read_text(encoding="utf-8")
         meta = extract_blog_metadata(md, "age_of_ai", path.name, file_path=path)
