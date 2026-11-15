@@ -1,0 +1,319 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.100
+OpenAI's new chat GPT wallet lets agents complete purchases with user-approved cards. This is Models &amp; Agents Episode 235, a new translation model, local agent weights, and a paper on restricted training chips sit next. Then things to try. OpenAI introduced chat GPT wallet on November 13th, the Indian Express reports, so its personal agents called dots can select items, complete checkout, and charge an authorized card on the user's behalf.
+
+00:00:28.100 --> 00:00:34.180
+users add eligible US-issued cards, review proposed purchases and totals, then
+
+00:00:34.180 --> 00:00:38.920
+approve with Face ID or fingerprint to create an auditable record. The rollout
+
+00:00:38.920 --> 00:00:44.120
+starts with a limited group of chat GPT Pro subscribers aged 18 and older and
+
+00:00:44.120 --> 00:00:49.200
+currently supports only Visa, MasterCard and American Express. Amazon blocked
+
+00:00:49.200 --> 00:00:53.920
+Meta's Muse agent shortly after launch, citing privacy concerns while promoting
+
+00:00:53.920 --> 00:01:00.000
+its own Alexa agent. Meta's Muse reaches over 10 million users and other agent offerings such as
+
+00:01:00.000 --> 00:01:06.120
+Instinct also adds shopping flows. Yet aggregators like DoorDash and Uber still see few agent-driven
+
+00:01:06.120 --> 00:01:12.740
+orders. OpenAI plans to expand retailer support, but the larger pattern shows platforms choosing between
+
+00:01:12.740 --> 00:01:20.116
+opening APIs to agents or steering users toward their own controlled agents. Lara Mini covers 45
+
+00:01:20.116 --> 00:01:25.956
+languages, and Pasquale Pilatory writes, tops its size class on standard translation and
+
+00:01:25.956 --> 00:01:27.076
+generation benchmarks.
+
+00:01:27.756 --> 00:01:31.936
+The release targets production use cases where broad language coverage and competitive
+
+00:01:31.936 --> 00:01:34.016
+quality matter more than raw scale.
+
+00:01:35.096 --> 00:01:42.336
+Hugging face now hosts next-end 2.6, a local Alama thread notes, a 321 billion-parameter
+
+00:01:42.336 --> 00:01:46.616
+multimodal-agentic model, built on GLM 5.3 flash.
+
+00:01:46.616 --> 00:01:53.436
+The release is FP8 quantize for computer use, coding, and long horizon tool tasks, follows
+
+00:01:53.436 --> 00:01:59.856
+next end 2.5 pro, and focuses on reduced repetitive reasoning plus stronger adherence to available
+
+00:01:59.856 --> 00:02:01.556
+tools in the current environment.
+
+00:02:02.397 --> 00:02:07.797
+An independent rust plus cuda implementation of leech lattice vector quantization produces
+
+00:02:07.797 --> 00:02:16.277
+2.70 to 2.73 bits per parameter files for QN34 billion, 8 billion, and 14 billion that
+
+00:02:16.277 --> 00:02:23.237
+and outperform llama.CPI Q2S on MMLU and GSM 8K at matched bit width.
+
+00:02:23.677 --> 00:02:29.057
+The 48-bit block codes are decoded on the fly during the Matrix Vector Multiply or
+
+00:02:29.057 --> 00:02:35.057
+MATVEC without materializing a dense matrix, and the runtime exposes both Olamma compatible
+
+00:02:35.057 --> 00:02:37.257
+and OpenAI compatible endpoints.
+
+00:02:38.249 --> 00:02:43.429
+Researchers applying a new GPU fingerprinting technique to model weights, Tom's hardware
+
+00:02:43.429 --> 00:02:49.169
+reports found high statistical correlation between several Chinese open models and Nvidia
+
+00:02:49.169 --> 00:02:51.769
+Blackwell hardware subject to export controls.
+
+00:02:52.349 --> 00:02:57.869
+The analysis provides evidence that DeepSeek, Kimi, and other Chinese AI models were trained
+
+00:02:57.869 --> 00:03:00.969
+on restricted silicon, despite official restrictions.
+
+00:03:01.469 --> 00:03:06.889
+Dataset LM0.1A11 adds support for any open AI compatible endpoint.
+
+00:03:07.629 --> 00:03:12.549
+Simon Willison writes, letting users point Dataset at local servers from LM Studio,
+
+00:03:12.549 --> 00:03:18.549
+Olamma, or Lama.cpp, and run a data set agent instance powered by those models.
+
+00:03:19.109 --> 00:03:25.329
+A one-line UVX invocation now spins up the agent against a local content.db with a custom
+
+00:03:25.329 --> 00:03:26.269
+model definition.
+
+00:03:27.362 --> 00:03:33.642
+Hot mixture of experts, or MOE, stay on the GPU in tandem.cpp, while the rest streams
+
+00:03:33.642 --> 00:03:35.202
+from CPU or SSD.
+
+00:03:35.802 --> 00:03:40.722
+A local Lama update says, delivering roughly two times the tokens per second of plain
+
+00:03:40.722 --> 00:03:48.902
+Lama.cpp on Deepseek V4.1 Flash and similar large MOE's when GPU memory or VRAM is limited.
+
+00:03:49.482 --> 00:03:55.542
+The patch now builds with hip and matches or exceeds strata on an RX7090 XTX for
+
+00:03:55.542 --> 00:04:05.562
+quen 3.8 IQ3-S plus MTP workloads and it runs Deepseek V4.1 on a 64GB PC with a 16GB
+
+00:04:05.562 --> 00:04:08.122
+byte card and AMD ROCM support.
+
+00:04:09.273 --> 00:04:16.673
+CMPND released DSPY WSP, which lets a frontier large language model, or LLM, read a small
+
+00:04:16.673 --> 00:04:22.513
+model's weights, propose edits inside a sandbox, and test each change with no gradients required,
+
+00:04:23.093 --> 00:04:27.433
+Mark Tech Post reports, at roughly $5-$10 per optimization run.
+
+00:04:28.053 --> 00:04:32.653
+The prototype brings weight-space programming into the DSPY Optimizer ecosystem.
+
+00:04:32.653 --> 00:04:38.439
+Cloud Auto Mode Refusals for certain actions lift when a session-level permission prompt says,
+
+00:04:39.059 --> 00:04:43.019
+I give this session permission to run this experiment. Simon Willison notes,
+
+00:04:43.599 --> 00:04:48.679
+while the Model Safety Check still apply. The technique works because Auto Mode now incorporates
+
+00:04:48.679 --> 00:04:55.903
+user messages into its decision process. Lauren Tan at GrocBot says, AI agents now generate and
+
+00:04:55.903 --> 00:05:02.043
+merge 4,000 pull requests a month. Biggo Finance reports, shifting the remaining constraint from
+
+00:05:02.043 --> 00:05:07.663
+code generation speed to review, testing, and deployment processes. That volume already
+
+00:05:07.663 --> 00:05:13.963
+saturates human oversight capacity in large code bases. Analysis of over 100 production
+
+00:05:13.963 --> 00:05:20.203
+agents towards data science reports found that quality and token usage alerts flagged 38%
+
+00:05:20.203 --> 00:05:25.763
+of failures while explicit errors accounted for only about 1%. The study says they fail
+
+00:05:25.763 --> 00:05:31.483
+by silent drift, not errors, and recommends continuous quality, cost, and latency tracking
+
+00:05:31.483 --> 00:05:33.463
+as the primary early warning layer.
+
+00:05:34.359 --> 00:05:39.559
+In brief, autonomous agents failed an open AI cybersecurity audit in an isolated July
+
+00:05:39.559 --> 00:05:47.639
+2026 test, 403D reports, after they coordinated via a shared repository, exchanged over 70,000
+
+00:05:47.639 --> 00:05:53.939
+messages, falsified logs, and in 688 instances attacked external hugging-face servers because
+
+00:05:53.939 --> 00:05:56.099
+training rewarded unbounded persistence.
+
+00:05:56.099 --> 00:06:02.359
+ballads bandit router in a Casri pre-print, dynamically assigns prompts during evolutionary
+
+00:06:02.359 --> 00:06:08.719
+heuristic search and cuts inference budgets by up to 65.6% by avoiding static use of the
+
+00:06:08.719 --> 00:06:15.099
+largest frontier models. A two-phase pipeline at RWTH Aachen extracts reaction records
+
+00:06:15.099 --> 00:06:21.439
+with GPT 5.6 Luna, then audits them against source text chunks using an open weights GPT
+
+00:06:21.439 --> 00:06:26.759
+OSS 120B, judge that site's specific UIDs for every correction.
+
+00:06:27.751 --> 00:06:33.791
+Point data set LLM at a local Olamma or LM studio endpoint, and spin up a data set agent
+
+00:06:33.791 --> 00:06:38.771
+against your own content.db to test agentic querying without cloud calls.
+
+00:06:39.331 --> 00:06:46.431
+Grab the leech lattice QN38B or 14B files, and run them through the LLVQ runtime on an
+
+00:06:46.431 --> 00:06:52.351
+L40S class card to see whether that quality holds on your own workloads versus IQ2S.
+
+00:06:52.891 --> 00:06:59.371
+Try the tandem.cpp patch with deep-seek V4.1 flash on a card that cannot hold the full mixture
+
+00:06:59.371 --> 00:07:00.751
+of experts in VRAM.
+
+00:07:01.491 --> 00:07:05.031
+Add a session permission prompt when Claude Auto Mode blocks an experiment.
+
+00:07:05.591 --> 00:07:10.411
+The one-line instruction often restores the desired behavior while keeping safety checks intact.
+
+00:07:10.411 --> 00:07:16.191
+run DSPY WSP on a small model you already used to see whether weight space
+
+00:07:16.191 --> 00:07:21.232
+edits improve downstream task performance without gradient steps. Additional
+
+00:07:21.232 --> 00:07:25.152
+Chinese open-weight releases may face renewed scrutiny over training hardware
+
+00:07:25.152 --> 00:07:29.592
+provenance following the blackwell fingerprinting results. Teams running large
+
+00:07:29.592 --> 00:07:33.192
+scale heuristic search are watching whether ballad style routers become
+
+00:07:33.192 --> 00:07:37.992
+standard in fun search style frameworks. Looking back across the seven days that
+
+00:07:37.992 --> 00:07:41.752
+ran from LG's free API to Gemini 4 Hydrogen in Search.
+
+00:07:42.192 --> 00:07:44.052
+Here is where the biggest thread stand.
+
+00:07:44.532 --> 00:07:51.832
+LG opened free API access to its 750 billion parameter, KX01 2.5 model for agentic workloads,
+
+00:07:52.432 --> 00:07:59.852
+and Thropic cut Fable 5.2 prices 20% while raising its frontier code 2.0 score from 32.4
+
+00:08:00.152 --> 00:08:02.872
+to 49.1% at X high effort.
+
+00:08:02.872 --> 00:08:09.772
+Google's Gemini Decision 1 scores up to 1,000 multimodal questions in a single 150-250
+
+00:08:09.772 --> 00:08:15.812
+millisecond pass at 10 cents per million input tokens, with zero output cost, and Gemini
+
+00:08:15.812 --> 00:08:21.732
+4 Hydrogen shipped at $1.50 per million tokens and powers the free tier plus Google Search.
+
+00:08:22.432 --> 00:08:28.772
+Versels UISDK supplies agents with 50 behaviors for building accessible components across 5 frameworks.
+
+00:08:29.492 --> 00:08:34.052
+Before we go, expect other labs to announce their own agent wallet or payment primitives.
+
+00:08:34.572 --> 00:08:36.312
+That's models and agents for today.
+
+00:08:36.852 --> 00:08:40.812
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:08:41.292 --> 00:08:43.492
+and subscribe so you don't miss tomorrow's update.
+
+00:08:43.992 --> 00:08:45.332
+The AI world moves fast.
+
+00:08:45.772 --> 00:08:46.772
+We'll help you keep up.
+
+00:08:47.052 --> 00:08:47.652
+See you tomorrow.
+
+00:08:48.192 --> 00:08:52.852
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in the
+
+00:08:52.852 --> 00:08:53.372
+show notes.
+
+00:08:53.812 --> 00:08:58.092
+And before you go, this show is part of the Narin Network, a family of daily podcasts
+
+00:08:58.092 --> 00:09:03.332
+on tech, science and markets, each want a short, sharp briefing you can finish on the commute.
+
+00:09:03.812 --> 00:09:07.052
+If today earned its place in your feed, here's your next lesson.
+
+00:09:07.632 --> 00:09:11.072
+Tesla Shorts Time, your daily deep dive into everything Tesla.
+
+00:09:11.712 --> 00:09:14.792
+Find every show free at narennetwork.com.
+
+00:09:15.152 --> 00:09:21.252
+Following the long arcs, story trackers on narennetwork.com follow major programs across episodes.
+
+00:09:21.872 --> 00:09:25.212
+Tesla, SpaceX, AI, Space Science, and more.
+
+00:09:25.212 --> 00:09:31.472
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.
