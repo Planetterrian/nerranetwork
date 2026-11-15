@@ -172,3 +172,14 @@ def test_a_hand_typed_id_matches_whatever_its_case(tmp_path):
         picked = pick_deep_dive_topic(queue, "2026-11-10", force_id=typed)
         assert picked and picked["id"] == "flight-15-preview", typed
     assert pick_deep_dive_topic(queue, "2026-11-10", force_id="flight-16") is None
+
+
+def test_the_catch_special_claims_the_first_it_was_and_no_larger_one():
+    import yaml
+    queue = yaml.safe_load((ROOT / "shows/deep_dives/spacex.yaml").read_text())["queue"]
+    entry = next(e for e in queue if e["id"] == "flight-15-ship-catch")
+    brief = " ".join(entry["brief"].split())
+    assert "NOT recovered" in brief and "not yet true" in brief
+    assert "Attempt" not in entry["title"]
+    hook_rule = (ROOT / "shows/prompts/spacex_flight_special.txt").read_text()
+    assert "exactly as the topic title gives it" not in hook_rule
