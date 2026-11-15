@@ -210,3 +210,34 @@ class TestTheScriptExplains:
         p = PODCAST_PROMPT.read_text(encoding="utf-8")
         assert "Never a social-media handle" in p
         assert '"X dot com"' in p
+
+
+class TestNotToldAgain:
+    """Nov 15 2026: Ep252, Ep253 and Ep254 each told the same white-dwarf
+    radio pair as a numbered item, from three outlets. The recurrence note
+    reached the prompt on both later days (``times`` 3 and 2) and the model
+    told it anyway; the digest prompt now states what a noted article may
+    be, and the tease never restates the episode (Ep253's Voyager tease)."""
+
+    def test_a_noted_article_is_never_a_listed_item(self):
+        d = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "TOLD ON AN EARLIER DAY, NOT TOLD AGAIN" in d
+        assert "ALREADY-COVERED note is never a numbered item" in d
+        # Never a ban: a real development keeps one Also Today sentence.
+        assert "ONE Also Today sentence that leads with what changed" in d
+
+    def test_the_note_matches_the_wording_the_pipeline_writes(self):
+        from engine.story_recurrence import annotation_for
+
+        note = annotation_for({"date": "2026-11-13", "headline": "x", "times": 1})
+        assert "ALREADY-COVERED NOTE" in note
+
+    def test_the_depth_instruction_is_not_a_heading(self):
+        d = DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert not re.search(r"(?m)^#+\s*DEPTH OVER BREADTH", d)
+        assert "Do not copy this heading or this paragraph into the output." in d
+
+    def test_the_tease_never_restates_the_episode(self):
+        p = PODCAST_PROMPT.read_text(encoding="utf-8")
+        assert "nothing already said" in p
+        assert "If the digest names no dated upcoming event, there is no tease." in p
