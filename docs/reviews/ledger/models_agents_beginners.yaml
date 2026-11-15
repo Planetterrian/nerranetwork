@@ -251,6 +251,88 @@ reviews:
         baseline: "0"
         expected: ">= 3"
         verdict: pending
+  - date: '2026-11-15'
+    pr: null
+    doc: docs/reviews/models_agents_beginners_review_2026_11_15.md
+    generated_by: grok-4.5
+    summary: July 31 handoff/magic/opener tics and Closing/Welcome gaps are cleared in ep219–228; remaining ceiling is high script fact-free rates (69–90%) plus stale phonetic hook entries and a digest-substrate length decision after the Nov floor cut.
+    scored_prior_predictions:
+    - metric: '"okay now for my favorite part of the show" in last-10 transcripts'
+      verdict: hit
+      evidence: 0/10 in ep219–228 Whisper transcripts; Deep Dive handoffs vary without that stem
+    - metric: Deep Dive closers using "stops feeling like magic|mysterious" or "less like magic" (last 10)
+      verdict: hit
+      evidence: 0/10; closers use checklist/loop/notebook payoffs without magic/mysterious
+    - metric: Big Story openers starting "Here's something that" / "that's going to change" / "could change how you" (last 10)
+      verdict: hit
+      evidence: 0/10; cold opens are concrete scene/fact hooks (Airbnb agent, Fermi, Australia law, …)
+    - metric: episodes whose chapters include Closing (last 10)
+      verdict: hit
+      evidence: 10/10 chapters_ep219–228 end on Closing
+    - metric: cold-open episodes speaking an identity line matching Welcome anchor (last 10)
+      verdict: hit
+      evidence: '10/10 transcripts speak "This is Models & Agents for Beginners, Episode #" after the hook; Welcome chapter present'
+    - metric: median _tts.txt words, last 10 (July 31 no-regression)
+      verdict: hit
+      evidence: median ≈1220 vs baseline ~1089; min_podcast_words later cut 1200→1000 and all 10 clear 1000
+    - metric: source_integrity_claims median (Sep 24 network sourcing)
+      verdict: partial
+      evidence: fetch_full_text 10 + preferred_domains + x_only_lead live in YAML; snapshot has no claims median to score numerically
+    - metric: episodes with repeated boilerplate outro phrases ≤4/10 after de-seed (July 30)
+      verdict: miss
+      evidence: still 10/10 — intentional network outro + AI disclosure; de-seed correctly rejected (do_not_retry)
+    - metric: median _tts.txt words raise above 1200 floor (June 25 / July 30 length hopes)
+      verdict: miss
+      evidence: podcast-side length levers banned; operator cut floor to 1000 instead of raising digest substrate further
+    shipped: []
+    deferred:
+    - 'Operator decision only: raise min_digest_words / licensed-knowledge floors if longer beginner eps wanted — never podcast_expand_below_target or prompt word-pressure (network do_not_retry; June 25 miss + Nov 14 floor cut already accepted ~1000-word eps).'
+    - Network digest-driven / position-aware chapter titles (raw-sentence class clear this window; still the right long-term lever).
+    - '"Try this" items ineligible unless the tool is NAMED in the source (July 2; still intermittent).'
+    - Quick Bits ≤3 sentences / every sentence a new fact (July 2 A/B, not applied).
+    - Analogy-stem variety (think of it like / picture / the way you) only if one stem >6/10 next window — shape ban, no replacement seed.
+    - NVIDIA identity override in MAB hook vs network pronunciation_map — listen-test only.
+    - MAB pronunciation hook full align with sister M&A beyond jargon phonetics removal (letter-spell policy already documented in hook docstring).
+    predictions:
+    - metric: script fact-free sentence share median, last 10 (density audit)
+      baseline: median ≈78% (range 69–90% ep219–228)
+      expected: ≤60% median on episodes generated after one-analogy-per-beat prompt ships; no single stacked-metaphor beat >3 analogies
+      verdict: pending
+      evidence: null
+    - metric: hook phonetic jargon entries (SOTA/LoRA/ONNX/GGUF class) in pronunciation_overrides
+      baseline: present in shows/hooks/models_agents_beginners.py extra_acronyms
+      expected: 0 jargon-phonetic entries post-merge; letter-spellings (AI/GPT/ChatGPT) and foreign names retained
+      verdict: pending
+      evidence: null
+    - metric: episodes with Closing chapter + identity line near open (last 10)
+      baseline: 10/10
+      expected: 10/10 maintained (regression guard on July 31 hits)
+      verdict: pending
+      evidence: null
+    - metric: '"okay now for my favorite part" / "stops feeling like magic" / "Here''s something that…change" (last 10)'
+      baseline: 0/10
+      expected: 0/10 maintained; if a successor handoff/closer/opener stem appears ≥4/10, next pass de-seeds by shape
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words vs min_podcast_words 1000 (last 10)
+      baseline: median ≈1220; 10/10 ≥1000
+      expected: no regression below floor from prompt tighten; length only moves if operator raises digest substrate
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/mab_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Script fact-free 69–90% is the live REPETITIVE driver after the Nov 14 floor cut; density audit + ep219/ep226 transcript stacks show multi-metaphor restatement, not missing digest substrate.
+    - file: shows/hooks/models_agents_beginners.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'Stale Fish-era phonetics on Grok custom voice; landmine #17 / do_not_retry forbids adding phonetics (100% regression). Remove-only align with sister M&A letter-spellings; keep AI/GPT expansions and foreign names.'
+    - file: tests/test_mab_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Playbook: every behavioral fix gets a drift-guard; pins July 31 hits so they cannot silently regress and locks the hook cleanup.'
+    agent_cost_usd: 0.1095
 do_not_retry:
   - idea: phonetic respellings / programmatic speech-tag injection on the custom voice
     evidence: landmine #17 — 100% regression rate; reverted May 11 2026. (Note this pass did NOT add any; it recommends REMOVING the stale MAB hook respellings.)
