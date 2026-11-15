@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-11-14",
+    "last_updated": "2026-11-15",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -4194,7 +4194,8 @@
         "sp500": -3.07,
         "tsx": 0.18
       },
-      "reviewed_in_episode": 224
+      "reviewed_in_episode": 224,
+      "callback_in_episode": 232
     },
     {
       "episode_num": 219,
@@ -4603,7 +4604,8 @@
         "nasdaq": 1.45,
         "sp500": 1.88,
         "tsx": 0.19
-      }
+      },
+      "reviewed_in_episode": 232
     },
     {
       "episode_num": 227,
@@ -4741,14 +4743,49 @@
         "LL-028"
       ],
       "resolved_symbol": "STT",
-      "pick_reference_price": 173.45
+      "pick_reference_price": 173.45,
+      "current_price": 173.45
+    },
+    {
+      "episode_num": 232,
+      "date": "2026-11-15",
+      "symbol": "COST",
+      "market": "NASDAQ",
+      "strategy": "Valuation comparison against Walmart on margin stability and membership growth",
+      "confidence": "Low",
+      "target_range": "+2% to +5%",
+      "invalidation": "Walmart reports same-store sales below consensus in its next quarterly release",
+      "structure": "long_equity",
+      "sector": "consumer",
+      "strategy_family": "valuation",
+      "trade_type": "weekly",
+      "policy_version": 2,
+      "horizon_sessions": 5,
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "stop_loss": {
+        "pct": 8.0
+      },
+      "rules_in_effect": [
+        "LL-068",
+        "LL-067",
+        "LL-066",
+        "LL-002",
+        "LL-041"
+      ],
+      "resolved_symbol": "COST",
+      "pick_reference_price": 1106.21
     }
   ],
   "benchmark": {
     "current_close": 25136.27,
     "inception_to_date_pct": 12.34,
     "ytd_pct": 8.18,
-    "last_updated": "2026-11-14"
+    "last_updated": "2026-11-15"
   },
   "alpha": {
     "inception_to_date_pct": -12.13,
@@ -4756,11 +4793,6 @@
     "monthly": {}
   },
   "sectors": {
-    "financials": {
-      "trade_count": 3,
-      "exposure_pct": 30.0,
-      "cumulative_pnl": 32.66
-    },
     "tech": {
       "trade_count": 3,
       "exposure_pct": 30.0,
@@ -4776,9 +4808,19 @@
       "exposure_pct": 10.0,
       "cumulative_pnl": 36.22
     },
+    "financials": {
+      "trade_count": 2,
+      "exposure_pct": 20.0,
+      "cumulative_pnl": 17.17
+    },
     "other": {
       "trade_count": 2,
       "exposure_pct": 20.0,
+      "cumulative_pnl": 0.0
+    },
+    "consumer": {
+      "trade_count": 1,
+      "exposure_pct": 10.0,
       "cumulative_pnl": 0.0
     }
   },
@@ -4870,7 +4912,6 @@
     }
   ],
   "used_segment_ids": [
-    "mit_method_invalidation",
     "mit_guide_first_10k",
     "mit_etf_strategies",
     "mit_technical_analysis",
@@ -4929,6 +4970,7 @@
     "mit_history_dotcom",
     "mit_history_index_fund",
     "mit_contrarian_passive",
-    "mit_contrarian_home_bias"
+    "mit_contrarian_home_bias",
+    "mit_utility_brokerage"
   ]
 }
