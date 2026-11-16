@@ -292,7 +292,11 @@ class TestSignup:
         stats = json.loads((ROOT / "api" / "buttondown_stats.json").read_text(encoding="utf-8"))
         count = stats.get("subscriber_count")
         if not (isinstance(count, int) and count >= G.MIN_SOCIAL_PROOF_SUBSCRIBERS):
-            assert not re.search(r"Join \d+", _body(rendered))
+            # A count of PEOPLE: a story headline on the page ("Nvidia
+            # Employees Join 100K Petition", MAG 7 Nov 15) is not the claim.
+            assert not re.search(
+                r"\bJoin \d[\d,]*\+? (?:readers|listeners|subscribers|people|others)\b",
+                _body(rendered), re.IGNORECASE)
 
 
 # --------------------------------------------------------------------------

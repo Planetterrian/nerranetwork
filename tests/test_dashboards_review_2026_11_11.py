@@ -126,7 +126,10 @@ class TestSpaceXFromTheRecord:
     def test_committed_tracker_reaches_flight_14(self):
         d = json.loads((ROOT / "site/data/spacex_metrics.json").read_text(encoding="utf-8"))
         flights = d["starship_flights"]["flights"]
-        assert flights[-1]["flight"] == "IFT-14" and flights[-1]["date"] == "2026-09-28"
+        # The nightly extends the tracker (IFT-15 on Nov 15), so the guard reads
+        # that Flight 14 is in the record, never that it is the last flight.
+        by_flight = {f["flight"]: f.get("date") for f in flights}
+        assert by_flight.get("IFT-14") == "2026-09-28"
         years = {y["year"] for y in d["annual_launches"]["years"]}
         assert "2025" in years
 
