@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 16 Nov 2026 11:15:43 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 17 Nov 2026 11:06:53 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,108 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 237: Liquid AI's d1.2 models read text, images and audio then return calibrated probabilities…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Liquid AI's d1.2 models read text, images and audio then return calibrated probabilities with zero output tokens.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Liquid AI released d1.2 and d1.2-ultra, omnimodal decision models that top the Artificial Analysis Decision Index v2.1 at 75. Sarvam opened its Token Factory to serve eight open models including Sarvam 105B and DeepSeek V4.1 Flash from Indian GPU clusters via one OpenAI-compatible endpoint. Simon Willison published external sandbox prototypes that keep agent credentials out of the execution environment and support full network disablement while the agent still reaches its model.
+
+Top Story
+Liquid AI released d1.2 and d1.2-ultra, omnimodal decision models that ingest text, images and audio and emit calibrated probabilities without producing any output tokens. The d1.2-ultra variant scores 75 on the Artificial Analysis Decision Index v2.1. These models target decision tasks where a probability distribution is more useful than generated text. Builders working on risk scoring, routing or verification pipelines can now call a single endpoint that returns well-calibrated numbers across modalities. The models read three distinct input types in one forward pass and return only numeric outputs, eliminating token generation overhead. Watch for follow-on releases that add support for longer context windows or additional sensor inputs. The release positions Liquid AI in the growing space of specialized decision models that prioritize calibrated outputs over fluent text. Source: &lt;a href="https://www.marktechpost.com/2026/11/17/liquid-ai-d1-2-omnimodal-decision-models/"&gt;marktechpost.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Sarvam Launches Sarvam Token Factory: Bringing India-Hosted Inference to 8 Open Models — MarkTechPost&lt;/b&gt;
+Sarvam Token Factory now serves Sarvam 105B, GLM 5.3, DeepSeek V4.1 Flash, Kimi K3.1 Pro and Gemma 4 31B from GPU clusters located in India through a single OpenAI-compatible API. The platform is open to everyone and routes requests to eight distinct open models hosted on domestic infrastructure. Developers gain an alternative endpoint that avoids routing through US or European providers while maintaining the same request format used with OpenAI clients. The service aggregates multiple model families under one set of credentials and billing. Latency and cost comparisons become straightforward because every model shares the identical API surface. Early users can test inference for both dense and mixture-of-experts architectures without changing client code. Source: &lt;a href="https://www.marktechpost.com/2026/11/17/sarvam-token-factory-india-inference-platform/"&gt;marktechpost.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Sandbox credential isolation benefits — Simon Willison (AI builder) (X)&lt;/b&gt;
+The design keeps the agent's own credentials outside the sandbox, allows complete network disablement inside the sandbox while the agent still reaches its model, and prevents untrusted code from touching agent configs or logs. By separating identity material from the execution environment, operators reduce the blast radius of any compromise inside the sandbox. The same boundary also stops sandboxed processes from reading or overwriting configuration files and execution logs that remain on the host. Full network isolation becomes practical because the model endpoint is reached through a host-side proxy rather than direct outbound sockets. This pattern supports running thousands of sandboxes on a single host without credential sprawl across every container image. Source: &lt;a href="https://x.com/simonw/status/2122537630080667981"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;External sandbox prototypes GitHub repo — Simon Willison (AI builder)&lt;/b&gt;
+Willison and Prime Radiant published the index repository for the external sandbox prototypes at https://github.com/prime-radiant-inc/external-sandbox. The repository serves as the central index for multiple sandbox server implementations developed in collaboration with the AI research lab behind Superpowers. Each implementation demonstrates the credential isolation and proxy patterns described in the accompanying posts. Builders can clone the repo to inspect working examples of network-restricted, credential-free agent runtimes. The project focuses on practical deployment rather than new research abstractions. Source: &lt;a href="https://github.com/prime-radiant-inc/external-sandbox"&gt;github.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;Curated list of resources: Theory and Code for learning Distributed Training for beginners [P] — r/MachineLearning&lt;/b&gt;
+The post collects a reading order covering Horovod, PyTorch Distributed, ZeRO, Megatron-LM, GPipe and PyTorch FSDP for anyone building distributed training frameworks from first principles. The sequence begins with video lectures on building a distributed training framework and proceeds through foundational papers on data parallelism, model parallelism, and memory optimizations. Each resource includes links to the original papers or implementations so readers can follow the progression without searching. The list targets practitioners who want to understand the internals rather than simply calling high-level APIs. Contributors can suggest reordering or additions directly in the thread. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1xyf6pr/curated_list_of_resources_theory_and_code_for/"&gt;reddit.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Google found hackers using autonomous AI agents to turn security patches into exploits — The New Stack:&lt;/b&gt; Researchers observed attackers running multi-agent frameworks that perform patch diffing, generate exploit candidates and test them with no human intervention. The exploit_agent framework coordinates specialized agents through an orchestrator and shared context, applying familiar coding workflows to offensive security tasks. A publicly exposed staging server contained the framework alongside stolen victim data and scripts for reconnaissance, brute-force attacks, and webshell installation. The operators showed interest in French media, entertainment, and education websites while examining access controls in the Spectra WordPress plugin. The same report notes that attackers are now automating the entire vulnerability discovery and exploitation loop that previously required manual patch analysis. Source: &lt;a href="https://thenewstack.io/autonomous-ai-exploit-agents/"&gt;thenewstack.io&lt;/a&gt;
+
+&lt;b&gt;Google Finds Hackers Using AI Agents to Build and Run Exploits From Software Patches — The Hacker News:&lt;/b&gt; The same activity was seen targeting U.S. aerospace organizations with frameworks that coordinate specialized agents through shared blackboards. CAIRN uses an observe-orient-decide-act loop and a shared blackboard to manage multiple agents during intrusions. Other frameworks follow similar orchestration patterns built around open-source offensive tooling. Google Threat Intelligence Group documented these cases in a report published Monday and noted that the agents can now complete much of the patch-diffing work autonomously. Source: &lt;a href="https://thehackernews.com/2026/11/google-finds-hackers-using-ai-agents-to.html"&gt;thehackernews.com&lt;/a&gt;
+
+&lt;b&gt;Expanding free frontier model access to 200k scientists — &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; [preferred primary source]:&lt;/b&gt; OpenAI is expanding free access to frontier models for up to 200,000 scientists worldwide with training and support; applications open November 23 and shared data is not used for training by default. The program builds on an earlier pilot that measured productivity gains among more than 1,800 participants. Scientists reported nearly doubling their output when using ChatGPT across idea development, data analysis, and code writing. Privacy-preserving analysis showed usage patterns from initial ideation through final manuscript preparation. Source: &lt;a href="https://openai.com/index/expanding-chatgpt-for-academic-researchers/"&gt;openai.com&lt;/a&gt;
+
+&lt;b&gt;ChatGPT for Healthcare advances with agents and plugins — &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X):&lt;/b&gt; The service now includes more capable computer-use agents, stronger clinical answers and more than 20 new healthcare plugins used by organizations including Abridge, Ambience AI, Cigna and CVS Health. The plugins support prior authorizations, referrals, discharge planning, and patient outreach workflows. Computer-use agents can now navigate existing clinical systems on behalf of care teams, reducing time spent on administrative interfaces. The updates connect medical evidence directly to the tools already in daily use inside hospitals and insurers. Source: &lt;a href="https://x.com/OpenAI/status/2122465625109090646"&gt;x.com&lt;/a&gt;
+
+Things to Try This Week
+• Point an agent at the external-sandbox prototypes on GitHub to test credential isolation without exposing keys inside the runtime.
+• Call the Sarvam Token Factory endpoint with one of the eight hosted models to compare latency and cost against your current OpenAI-compatible provider.
+• Run the Liquid AI d1.2 decision model on a multimodal verification task to see how zero-token probability outputs change downstream routing logic.
+• Review the distributed-training reading list on r/MachineLearning if you are scaling training jobs beyond a single node.
+• Experiment with the sandbox HTTP proxy configuration to enforce host allow-lists while still permitting model calls through credential replacement.
+
+On the Horizon
+• Applications open November 23 for OpenAI's expanded free frontier-model access program for up to 200,000 scientists.
+• Watch for further state-level responses following California's lawsuit over AI-agent sandbox escapes.
+• Expect additional healthcare plugins and computer-use agent updates in the ChatGPT for Healthcare offering.
+• Monitor the external-sandbox repository for new server implementations that extend the proxy and isolation patterns.</description>
+      <guid isPermaLink="false">models-agents-video-ep237-20261117</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep237_20261117.mp4" length="209416782" type="video/mp4" />
+      <pubDate>Tue, 17 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep237_20261117.jpg" />
+      <itunes:duration>07:59</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Liquid AI's d1.2 models read text, images and audio then return calibrated probabilities with zero output tokens.**
+
+**What You Need to Know:** Liquid AI released d1.2 and d1.2-ultra, omnimodal decision models that top the Artificial Analysis Decision Index v2.1 at 75. Sarvam opened its Token Factory to serve eight open models including Sarvam 105B and DeepSeek V4.1 Flash from Indian GPU clusters via one OpenAI-compatible endpoint. Simon Willison published external sandbox prototypes that keep agent credentials out of the execution environment and support full network disablement while the agent still reaches its model.
+---
+### Top Story
+Liquid AI released d1.2 and d1.2-ultra, omnimodal decision models that ingest text, images and audio and emit calibrated probabilities without producing any output tokens. The d1.2-ultra variant scores 75 on the Artificial Analysis Decision Index v2.1. These models target decision tasks where a probability distribution is more useful than generated text. Builders working on risk scoring, routing or verification pipelines can now call a single endpoint that returns well-calibrated numbers across modalities. The models read three distinct input types in one forward pass and return only numeric outputs, eliminating token generation overhead. Watch for follow-on releases that add support for longer context windows or additional sensor inputs. The release positions Liquid AI in the growing space of specialized decision models that prioritize calibrated outputs over fluent text. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/17/liquid-ai-d1-2-omnimodal-decision-models/)
+---
+### Model Updates
+**Sarvam Launches Sarvam Token Factory: Bringing India-Hosted Inference to 8 Open Models — MarkTechPost**
+Sarvam Token Factory now serves Sarvam 105B, GLM 5.3, DeepSeek V4.1 Flash, Kimi K3.1 Pro and Gemma 4 31B from GPU clusters located in India through a single OpenAI-compatible API. The platform is open to everyone and routes requests to eight distinct open models hosted on domestic infrastructure. Developers gain an alternative endpoint that avoids routing through US or European providers while maintaining the same request format used with OpenAI clients. The service aggregates multiple model families under one set of credentials and billing. Latency and cost comparisons become straightforward because every model shares the identical API surface. Early users can test inference for both dense and mixture-of-experts architectures without changing client code. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/17/sarvam-token-factory-india-inference-platform/)
+---
+### Agent &amp; Tool Developments
+**Sandbox credential isolation benefits — Simon Willison (AI builder) (X)**
+The design keeps the agent's own credentials outside the sandbox, allows complete network disablement inside the sandbox while the agent still reaches its model, and prevents untrusted code from touching agent configs or logs. By separating identity material from the execution environment, operators reduce the blast radius of any compromise inside the sandbox. The same boundary also stops sandboxed processes from reading or overwriting configuration files and execution logs that remain on the host. Full network isolation becomes practical because the model endpoint is reached through a host-side proxy rather than direct outbound sockets. This pattern supports running thousands of sandboxes on a single host without credential sprawl across every container image. Source: [x.com](https://x.com/simonw/status/2122537630080667981)
+
+**External sandbox prototypes GitHub repo — Simon Willison (AI builder)**
+Willison and Prime Radiant published the index repository for the external sandbox prototypes at https://github.com/prime-radiant-inc/external-sandbox. The repository serves as the central index for multiple sandbox server implementations developed in collaboration with the AI research lab behind Superpowers. Each implementation demonstrates the credential isolation and proxy patterns described in the accompanying posts. Builders can clone the repo to inspect working examples of network-restricted, credential-free agent runtimes. The project focuses on practical deployment rather than new research abstractions. Source: [github.com](https://github.com/prime-radiant-inc/external-sandbox)
+---
+### Practical &amp; Community
+**Curated list of resources: Theory and Code for learning Distributed Training for beginners [P] — r/MachineLearning**
+The post collects a reading order covering Horovod, PyTorch Distributed, ZeRO, Megatron-LM, GPipe and PyTorch FSDP for anyone building distributed training frameworks from first principles. The sequence begins with video lectures on building a distributed training framework and proceeds through foundational papers on data parallelism, model parallelism, and memory optimizations. Each resource includes links to the original papers or implementations so readers can follow the progression without searching. The list targets practitioners who want to understand the internals rather than simply calling high-level APIs. Contributors can suggest reordering or additions directly in the thread. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1xyf6pr/curated_list_of_resources_theory_and_code_for/)
+---
+### Also Today
+**Google found hackers using autonomous AI agents to turn security patches into exploits — The New Stack:** Researchers observed attackers running multi-agent frameworks that perform patch diffing, generate exploit candidates and test them with no human intervention. The exploit_agent framework coordinates specialized agents through an orchestrator and shared context, applying familiar coding workflows to offensive security tasks. A publicly exposed staging server contained the framework alongside stolen victim data and scripts for reconnaissance, brute-force attacks, and webshell installation. The operators showed interest in French media, entertainment, and education websites while examining access controls in the Spectra WordPress plugin. The same report notes that attackers are now automating the entire vulnerability discovery and exploitation loop that previously required manual patch analysis. Source: [thenewstack.io](https://thenewstack.io/autonomous-ai-exploit-agents/)
+
+**Google Finds Hackers Using AI Agents to Build and Run Exploits From Software Patches — The Hacker News:** The same activity was seen targeting U.S. aerospace organizations with frameworks that coordinate specialized agents through shared blackboards. CAIRN uses an observe-orient-decide-act loop and a shared blackboard to manage multiple agents during intrusions. Other frameworks follow similar orchestration patterns built around open-source offensive tooling. Google Threat Intelligence Group documented these cases in a report published Monday and noted that the agents can now complete much of the patch-diffing work autonomously. Source: [thehackernews.com](https://thehackernews.com/2026/11/google-finds-hackers-using-ai-agents-to.html)
+
+**Expanding free frontier model access to 200k scientists — [@OpenAI](https://x.com/OpenAI) [preferred primary source]:** OpenAI is expanding free access to frontier models for up to 200,000 scientists worldwide with training and support; applications open November 23 and shared data is not used for training by default. The program builds on an earlier pilot that measured productivity gains among more than 1,800 participants. Scientists reported nearly doubling their output when using ChatGPT across idea development, data analysis, and code writing. Privacy-preserving analysis showed usage patterns from initial ideation through final manuscript preparation. Source: [openai.com](https://openai.com/index/expanding-chatgpt-for-academic-researchers/)
+
+**ChatGPT for Healthcare advances with agents and plugins — [@OpenAI](https://x.com/OpenAI) (X):** The service now includes more capable computer-use agents, stronger clinical answers and more than 20 new healthcare plugins used by organizations including Abridge, Ambience AI, Cigna and CVS Health. The plugins support prior authorizations, referrals, discharge planning, and patient outreach workflows. Computer-use agents can now navigate existing clinical systems on behalf of care teams, reducing time spent on administrative interfaces. The updates connect medical evidence directly to the tools already in daily use inside hospitals and insurers. Source: [x.com](https://x.com/OpenAI/status/2122465625109090646)
+---
+---
+### Things to Try This Week
+- Point an agent at the external-sandbox prototypes on GitHub to test credential isolation without exposing keys inside the runtime.
+- Call the Sarvam Token Factory endpoint with one of the eight hosted models to compare latency and cost against your current OpenAI-compatible provider.
+- Run the Liquid AI d1.2 decision model on a multimodal verification task to see how zero-token probability outputs change downstream routing logic.
+- Review the distributed-training reading list on r/MachineLearning if you are scaling training jobs beyond a single node.
+- Experiment with the sandbox HTTP proxy configuration to enforce host allow-lists while still permitting model calls through credential replacement.
+---
+### On the Horizon
+- Applications open November 23 for OpenAI's expanded free frontier-model access program for up to 200,000 scientists.
+- Watch for further state-level responses following California's lawsuit over AI-agent sandbox escapes.
+- Expect additional healthcare plugins and computer-use agent updates in the ChatGPT for Healthcare offering.
+- Monitor the external-sandbox repository for new server implementations that extend the proxy and isolation patterns.
+</itunes:summary>
+      <itunes:episode>237</itunes:episode>
+      <itunes:title>Ep 237: Liquid AI's d1.2 models read text, images and audio then return calibrated probabilities…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep237_20261117_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep237.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 236: Alibaba's Qwen4-Max packs 2.4T parameters into a 71B-active MoE with 1M context for…</title>
       <description>Models &amp; Agents
@@ -5323,19 +5425,5 @@ First Passage Attention replaces the monotonic accumulation of decay along the k
       <itunes:title>Ep 208: Frozen 16 MB embedding tables let ternary 46 MB models hit 615–740 tokens/sec on laptop…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep208_20261019_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep208.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 206: Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable…</title>
-      <description>Ep 206: Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable isolation layer for long-running agent tasks.</description>
-      <guid isPermaLink="false">models-agents-video-ep206-20261017</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep206_20261017.mp4" length="275402227" type="video/mp4" />
-      <pubDate>Sat, 17 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep206_20261017.jpg" />
-      <itunes:duration>10:18</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>Ep 206: Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable isolation layer for long-running agent tasks.</itunes:summary>
-      <itunes:episode>206</itunes:episode>
-      <itunes:title>Ep 206: Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep206_20261017_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep206.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
