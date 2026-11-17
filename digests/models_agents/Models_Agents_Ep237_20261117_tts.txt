@@ -1,0 +1,81 @@
+Liquid A I's d1.2 models read text, images and audio then return calibrated probabilities with zero output tokens.
+
+This is Models and Agents, episode two hundred thirty-seven.
+
+Sarvam stood up India-hosted inference, Simon Willison published external sandbox prototypes, and Google tracked agents writing exploits from patches, then Things to Try.
+
+Liquid A I, MarkTechPost reports, released d1.2 and d1.2-ultra as omnimodal decision models built for tasks where a probability distribution is more useful than generated text.
+
+d1.2-ultra lands at seventy-five on Artificial Analysis Decision Index version two point one.
+
+Risk scoring, routing and verification pipelines can hit one endpoint and get well-calibrated numbers across modalities.
+
+Three distinct input types go through one forward pass and come back as numeric outputs only, which cuts token generation overhead.
+
+India-hosted G P U clusters at Sarvam Token Factory now run Sarvam one hundred five B, GLM five point three, DeepSeek V four point one Flash, Kimi K three point one Pro and Gemma four thirty-one B through one Open A I compatible A P I.
+
+The platform is open to everyone and routes requests to eight distinct open models on domestic infrastructure.
+
+Developers get an alternative endpoint that skips U S or European providers while keeping the same request format used with Open A I clients.
+
+Multiple model families sit under one set of credentials and billing, so latency and cost line up against each other on an identical A P I surface.
+
+Early users can exercise both dense and mixture-of-experts architectures without changing client code.
+
+Simon Willison and Prime Radiant published an index repository on GitHub for the external sandbox prototypes, collecting multiple sandbox server implementations developed with the A I research lab behind Superpowers.
+
+Each implementation shows credential isolation and proxy patterns, and you can clone the repo to inspect working examples of network-restricted, credential-free agent runtimes.
+
+The work aims at practical deployment rather than new research abstractions.
+
+A post on r slash MachineLearning collects a reading order covering Horovod, PyTorch Distributed, ZeRO, Megatron-LM, GPipe and PyTorch FSDP for anyone building distributed training frameworks from first principles.
+
+Video lectures on building a distributed training framework come first, then papers that established splitting work across data, splitting the model itself, and cutting memory use.
+
+Every resource points to the original papers or implementations so readers can follow the progression without searching, and the list is for people who want the internals rather than high-level A P I's.
+
+Contributors can suggest reordering or additions directly in the thread.
+
+In a quicker pass, Google researchers observed attackers automating the whole vulnerability discovery and exploitation loop with multi-agent frameworks that perform patch diffing, generate exploit candidates and test them with no human intervention, The New Stack reports, and a publicly exposed staging server held the exploit agent framework beside stolen victim data and scripts for reconnaissance, brute-force attacks, and webshell installation, with operators looking at French media, entertainment, and education websites and at access controls in the Spectra WordPress plugin.
+
+CAIRN, in the Google Threat Intelligence Group report published Monday as covered by The Hacker News, targeted U.S. aerospace organizations with an observe-orient-decide-act loop and a shared blackboard, with agents now completing much of the patch-diffing work autonomously and other frameworks following similar orchestration around open-source offensive tooling.
+
+Open A I is expanding free access to frontier models for up to two hundred thousand scientists worldwide with training and support, building on an earlier pilot among more than one thousand eight hundred participants who reported nearly doubling their output when using ChatGPT across idea development, data analysis, and code writing, and privacy-preserving analysis showed usage from initial ideation through final manuscript preparation.
+
+ChatGPT for Healthcare now includes more capable computer-use agents, stronger clinical answers and more than twenty new healthcare plugins used by Abridge, Ambience A I, Cigna and CVS Health for prior authorizations, referrals, discharge planning, and patient outreach, with those agents navigating existing clinical systems on behalf of care teams and connecting medical evidence to tools already in daily use inside hospitals and insurers.
+
+Call the Sarvam Token Factory endpoint with one hosted model and compare latency and cost against the Open A I compatible provider you already use.
+
+Run the Liquid A I d1.2 decision model on a multimodal verification task and see how probability outputs change downstream routing logic.
+
+Review the distributed-training reading list on r slash MachineLearning if you are scaling training jobs beyond a single node.
+
+Applications for that scientist access program open November twenty-third, and shared data is not used for training by default.
+
+California's lawsuit over A I agent sandbox escapes is expected to draw further state-level responses.
+
+Further plugins and computer-use agent updates are expected in that ChatGPT for Healthcare offering.
+
+Let me pop the hood on those external sandboxes, because the design decision is to keep the agent's own credentials outside the execution environment.
+
+Untrusted code running inside never sees keys, and it cannot touch agent configs or logs.
+
+Operators shrink the blast radius of a compromise by putting identity material on one side of that boundary and the guest process on the other.
+
+Configuration files and execution logs stay on the host, so a sandboxed process cannot read or overwrite them.
+
+Complete network disablement inside the sandbox is workable because the model endpoint is reached through a host-side HTTP proxy rather than direct outbound sockets.
+
+That proxy can enforce host allow-lists and do credential replacement, so model calls still go through while the guest stays off the open network.
+
+The same pattern supports running thousands of sandboxes on a single host without copying credentials into every container image.
+
+The engineering rule is to use it for network-restricted, credential-free agent runtimes at high density on one machine, and not to use it when a model call has to leave through a direct outbound socket instead of the host-side proxy.
+
+Before we go — new server implementations that extend the proxy and isolation patterns are what that external-sandbox repository is poised to add next.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science. Every Nerra Network show is free at nerranetwork dot com. New to the network? nerranetwork dot com start here picks the right daily briefing for you in about two minutes.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
