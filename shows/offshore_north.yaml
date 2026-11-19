@@ -421,7 +421,15 @@ llm:
   # still refused — but a real racing week no longer loses the episode to
   # a rounding error. The length fix is the wider fetch window below;
   # this is only the safety net under it.
-  min_podcast_word_floor: 950
+  # Nov 19 2026 (weekly review): 950 -> 700, with the publication floor
+  # pinned beside it. Since the Nov 13 format (the week's biggest story
+  # leads, a short dated Canadian segment, each story once) the brief runs
+  # 520-690 words before expansion, and even with the full week fetched
+  # (63 articles) the Nov 19 rehearsal wrote 870 words and SKIPPED. Nov 16
+  # skipped at 881/693. A 6-minute weekly that ships beats a missing one;
+  # the 1,500 target still drives both retries.
+  min_podcast_word_floor: 700
+  min_podcast_publish_words: 700
   # Network-wide July 2026 policy: length is attacked on the DIGEST side
   # only — the script can never say more than the brief gives it, and
   # podcast-side expansion pads by paraphrase-duplication. A weekly show

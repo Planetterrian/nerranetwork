@@ -34,6 +34,14 @@ class TestOffshoreNorthReadsTheWeek:
             f"reports on; the campaign feeds always satisfy min_articles, so a "
             f"narrower first rung is the only rung (got {hours})")
 
+    def test_a_short_weekly_still_ships(self):
+        llm = load_config(str(ROOT / "shows" / "offshore_north.yaml")).llm
+        # The Nov 19 rehearsal (full week fetched) wrote 870 words; the
+        # Nov 16 episode 881. Both floors sit under that, pinned together.
+        assert llm.min_podcast_word_floor <= 800
+        assert 0 < llm.min_podcast_publish_words <= 800
+        assert max(llm.min_podcast_word_floor, int(llm.min_podcast_words * 0.4)) <= 800
+
     def test_stale_news_is_still_kept_out(self):
         raw = yaml.safe_load((ROOT / "shows" / "offshore_north.yaml").read_text())
         assert 0 < int(raw["stale_article_days"]) <= 10

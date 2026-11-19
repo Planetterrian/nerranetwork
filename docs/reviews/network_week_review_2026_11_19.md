@@ -68,6 +68,11 @@ item.
    week. On a quiet weekend the script reached 881, then 693 words against the
    950 floor, and the episode skipped. `fetch_expansion_hours` is now `[168]`;
    `stale_article_days: 10` still keeps old news out.
+   The Nov 19 rehearsal on the full week fetched 63 articles (against 24)
+   but still wrote an 870-word script and skipped: since the Nov 13 format
+   the brief itself runs short. The skip floor is now 700 (publication floor
+   pinned beside it) so a short week ships; the 1,500 target still drives
+   both retries.
 2. **No filter ever read X posts.** `engine.fetcher.fetch_x_posts` took
    `keywords` and never used it, although Tesla's YAML said "the keyword filter
    keeps his non-Tesla posts out". Tesla Ep666-669 put Starship catches,
