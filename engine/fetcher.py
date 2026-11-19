@@ -789,6 +789,29 @@ def rotate_x_accounts(x_accounts: list, per_run: int,
     return [accounts[(start + i) % n] for i in range(per_run)]
 
 
+def filter_x_posts_on_topic(posts: List[Dict], keywords: Optional[List[str]]) -> List[Dict]:
+    """Keep the posts whose headline or text names one of *keywords*.
+
+    For an X account marked ``on_topic_only`` (Nov 19 2026): a broad account
+    such as @elonmusk posts about every subject, and before this nothing
+    applied the show's keywords to X posts at all — ``fetch_x_posts`` took a
+    ``keywords`` argument and never read it. Tesla Ep666-669 put Starship
+    catches, a Crisco joke and a reply about catch-arm lubrication in the
+    Tesla X Takeover; SpaceX Ep164 aired a Musk post on Hong Kong's birth
+    rate. Same substring test as the RSS keyword filter. No keywords = no
+    filter (an empty list must never empty the intake).
+    """
+    kws = [k.lower() for k in (keywords or []) if str(k).strip()]
+    if not kws:
+        return list(posts)
+    kept = []
+    for p in posts:
+        text = f"{p.get('title') or ''} {p.get('description') or ''} {p.get('text') or ''}".lower()
+        if any(k in text for k in kws):
+            kept.append(p)
+    return kept
+
+
 def fetch_x_posts(
     x_accounts: list,
     keywords: Optional[List[str]] = None,
@@ -880,6 +903,14 @@ def fetch_x_posts(
             return []
 
         posts = posts[:max_posts]
+        if getattr(account, "on_topic_only", False):
+            kept = filter_x_posts_on_topic(posts, keywords)
+            if len(kept) < len(posts):
+                logger.info(
+                    "X @%s: dropped %d of %d post(s) naming none of the show's "
+                    "keywords (on_topic_only)", handle, len(posts) - len(kept), len(posts),
+                )
+            posts = kept
         logger.info("X @%s: %d posts fetched", handle, len(posts))
         return posts
 
