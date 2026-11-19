@@ -1,0 +1,51 @@
+# SpaceX Daily
+
+> **SpaceX clarified that Ukraine seeks commercial Starlink for offensive strikes while Starshield remains under U.S. government control.**
+
+### Top News
+
+1. **Musk says Ukraine seeks Starlink for military strikes, not Starshield**
+   Elon Musk told the New York Times DealBook Summit that Ukraine is attempting to use the commercial Starlink network for offensive drone operations, which violates the service terms. He stated Starlink is a civilian system and any offensive military use requires Starshield, which is controlled by the U.S. government. Musk rejected Zelenskyy’s account of Starshield speed restrictions as false and described Zelenskyy as “not always truthful.” He emphasized that decisions on offensive operations belong to the U.S. Department of War, not a private company. Musk added that Starlink was never intended to support drone strikes that kill people and that any such capability must route through the separate Starshield system. The exchange followed Zelenskyy’s earlier claim that speed limits on Starshield terminals along the front line and in Russian territory were hampering interceptor drone missions against high-speed threats. Musk noted that Ukraine had previously pushed back against allegations of misuse, with officials stating existing restrictions would have made strikes into Russian territory physically impossible. Multiple outlets reported the same exchange at the summit. Source: [engadget.com](https://www.engadget.com/2321464/elon-musk-accuses-ukraine-of-being-untruthful-about-starshield-disruptions/) Source: [news.ssbcrack.com](https://news.ssbcrack.com/musk-accuses-zelenskyy-of-lying-about-starshield-disruptions-and-seeking-starlink-for-military-operations/) Source: [hromadske.ua](https://hromadske.ua/en/amp/war/274632-musk-accuses-zelenskyy-of-lying-about-starshield-restrictions-says-ukraine-wants-starlink-for-offensive-strikes)
+
+2. **SpaceX responds to Texas rejection of data-center tax abatement**
+   SpaceX stated that the proposed abatement would have delivered predictable county revenue through payments in lieu of taxes while supporting continued investment. Without the agreement, property owners now face greater year-to-year tax-rate swings as computing equipment depreciates. The company said it looks forward to further discussions with local jurisdictions on sustainable long-term revenue. Under Texas’s no-new-revenue tax framework, rising property values generally drive tax rates down, but rapid depreciation of expensive hardware creates significant annual fluctuations. The abatement had been structured to convert those swings into stable payments in lieu of taxes that would have given the county predictable income across the life of the project. Source: [x.com](https://x.com/SpaceX/status/2123193048574419212)
+
+3. **Memphis residents in one ZIP code can apply for share of SpaceXAI tax revenue**
+   The Commercial Appeal reported that residents of a specific Memphis ZIP code may receive a portion of tax revenue tied to a SpaceXAI project for home improvements. The outlet detailed the application process for eligible households seeking funds from the project’s local economic contributions. Source: [commercialappeal.com](https://www.commercialappeal.com/story/news/local/2026/11/18/spacexai-tax-revenue-memphis-home-improvements/92846627007/)
+
+4. **Dragon cargo return now targets no earlier than November 20**
+   SpaceX said teams continue monitoring weather at California splashdown sites after standing down from the November 19 opportunity. The spacecraft arrived at the station on October 15 and carries completed science experiments and lab hardware. NASA flight engineers have been packing 3D bioprinted blood vessel samples, antibiotic-resistant bacteria specimens, and protein crystal growth experiments into the vehicle for return analysis. Additional hardware includes a circadian lighting system and a spacesuit slated for refurbishment on the ground. Source: [x.com](https://x.com/SpaceX/status/2123171410373677100)
+
+5. **Voyager 1 reaches one light-day from Earth**
+   At 5:16 a.m. EST on November 18, Voyager 1 passed 26 billion km from Earth, the distance light travels in 24 hours. The milestone came nearly 50 years after its September 1977 launch. The probe followed the JST trajectory that targeted Jupiter, Saturn, and Titan after the original Grand Tour program was scaled back due to budget constraints in the early 1970s. Voyager 1 used gravitational assists from the outer planets to achieve the required escape trajectory into interstellar space. Source: [nasaspaceflight.com](https://www.nasaspaceflight.com/2026/11/voyager-1-light-day/)
+
+6. **Planet Labs partners with Stoke Space as backup to Falcon 9**
+   Planet Labs signed an agreement with Stoke Space to secure launch capacity if SpaceX retires the Falcon 9. The deal provides an alternative rideshare option for the company’s Earth-observation satellites. Planet Labs cited the need for diversified launch access as Falcon 9 flight rates remain high and future retirement discussions continue in the industry. Source: [fool.com](https://www.fool.com/investing/2026/11/19/planet-labs-teams-up-with-stoke-space-just-in-case-spacex-really-retires-the-falcon-9/)
+
+7. **Gemini 4 Neon model now available inside Cursor**
+   Cursor added Gemini 4 Neon at default effort, raising CursorBench 4.1 score to 63.7 percent from 57.3 percent for the prior Hydrogen version. Pricing is set at $3 per million input tokens and $15 per million output tokens. The model gives developers access to all agent tools including file search, web queries, terminal execution, and browser control while remaining a third-party option billed from prepaid credits on legacy plans. Source: [x.com](https://x.com/cursor_ai/status/2123198346802450926)
+
+8. **Snapchat opens Lens creation to Claude Code, Codex, and Cursor**
+   Snap released Easy Lens CLI so developers can describe an AR Lens in plain language and let the AI assistants handle building, testing, and publishing. The tool works on Mac, Windows, and Linux and supports over 100 AR blocks plus 50 AI asset generators. A full Lens game can move from initial idea to published experience in a single day without handwritten code. Developers enrolled in the Lens+ Payouts program can earn revenue from CLI-built Lenses, following Snap’s distribution of $1.8 million to community creators last month. Source: [cryptopolitan.com](https://www.cryptopolitan.com/claude-code-codex-cursor-snapchat-lenses/)
+
+### Also Today
+**Starship Flight 2 anniversary marks hot-staging debut:** Three years ago Booster 9 and Ship 25 lifted off, with all 33 Raptors operating through ascent and Ship 25 lighting engines while still attached to the booster. Source: [x.com](https://x.com/NASASpaceflight/status/2123035404173484413)
+
+**Test patch of stainless steel wool appears on Starship 42 aft flap:** Observers noted the patch on one flap of the vehicle slated for future flights, intended to protect the ablative coating under catch points. Source: [x.com](https://x.com/StarshipGazer/status/2123151106159296792)
+
+## The Counterpoint
+Commissioners in Texas rejected a public hearing on a 100 percent, 10-year tax abatement for SpaceX’s planned $24 billion Starbase data center. The vote leaves the company without the long-term revenue predictability the abatement was designed to provide and exposes future property-tax rates to larger swings as equipment depreciates. SpaceX had proposed payments in lieu of taxes to smooth income for the county while still supporting continued investment in the turbines and switchgear. The company indicated it will continue discussions with local jurisdictions on alternative structures that balance investment incentives with stable county income.
+
+### Engineering Deep Dive
+Data-center power systems face a fundamental mismatch between capital cost and operating life. Computing hardware depreciates on a three-to-five-year curve while the supporting gas-turbine and grid infrastructure is built for twenty-to-thirty years of service. When tax policy assumes constant or rising assessed value, the rapid drop in equipment value produces sharp swings in the property-tax rate even if total plant output stays flat. The mismatch grows larger as GPU clusters scale because each new generation of accelerators replaces the prior one before the civil works have reached even one-quarter of their design life.
+
+SpaceX’s proposed abatement used payments in lieu of taxes to convert that mismatch into a predictable revenue stream for the county. The mechanism effectively amortizes the county’s expected income over the life of the investment rather than letting annual assessed-value resets drive rate volatility. Without the abatement, the county still receives the turbines and switchgear, but the tax base shrinks each year as servers and GPUs are replaced, forcing rate adjustments that can exceed ten percent year-over-year. The structure also protected against the opposite problem: if property values rose faster than expected, the abatement would have capped the county’s windfall while still delivering the promised PILOT amounts.
+
+The same arithmetic appears in orbital data-center concepts. Placing compute mass in orbit removes atmospheric cooling limits but replaces them with solar-array area and radiator mass. A ground turbine delivering one megawatt occupies roughly 0.2 square meters of footprint; the equivalent orbital array plus radiator requires tens of square meters of deployed surface. The trade-off only closes when launch cost per kilogram falls below the cost of terrestrial land, water, and grid interconnection—an equation Starship’s catch-and-reuse architecture is explicitly designed to solve. Each successful tower catch reduces the marginal cost of lifting the next megawatt of orbital compute, directly attacking the surface-area penalty that currently keeps data centers on the ground.
+
+### Market Watch
+SPCX is at $143.50, +1.3% vs the previous close.
+
+SpaceX clarified its position on the rejected Texas tax abatement for the Starbase data center in a statement posted to X.
+
+One sentence closes every loop.
