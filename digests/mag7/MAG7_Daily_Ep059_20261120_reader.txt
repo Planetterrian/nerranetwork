@@ -1,0 +1,67 @@
+Dozens of clicks become one Gemini prompt on a Mac, while your cursor stays free.
+
+This is Mag Seven Daily, episode 59.
+
+Next, agents that can put a purchase on an Amazon bill, a chip designer in talks for a diffusion lab, and two Alphabet energy deals buyers would not take, then a counterpoint, a thread on rented Macs, and the calendar.
+
+Google says that computer use is live in the Gemini app for Mac starting today, and one prompt can move through local files, desktop apps and the web. The work sits in an isolated background window, with a live preview inside the chat. You pick the apps it may open, you can watch each step, you can pause it, and key actions wait for your approval.
+
+Silicon UK says this first cut is English, in the United States, and it needs the desktop app plus a Google AI Plus, Pro or Ultra subscription. Google’s own examples run from batch color-grading, to lifting weights, dimensions and addresses out of local PDFs into shipping quotes, to a Slides deck built from dashboard screenshots, to resale listings staged from a folder of clothing photos.
+
+The same week, Tasks got a wider rollout, and that feature can handle multi-step jobs online, including purchases and booking appointments.
+
+Amazon, on November nineteenth, opened a path for agents to pay. Bedrock AgentCore can settle buys from x402 sellers on AWS Marketplace through ordinary AWS Billing, in dollars, on the developer’s cloud bill, with no stablecoin wallet and no separate API key for those purchases. A seller that has not been paid answers with HTTP four hundred two and a signed quote.
+
+If the session still has budget, AgentCore hands back a token that Unite.AI says lasts about five minutes, and Marketplace throws out a quote if someone has changed the price. The first buy from a seller creates a Marketplace agreement. Later buys track against it, show up in CloudTrail and Cost Explorer, and settle before the monthly bill. If the budget check fails, the developer is not charged.
+
+In the sample, the role that sets the budget cannot pay, and the role that pays cannot create a new session or raise its own limit. Private Marketplace can shrink the catalog further. The walkthrough defaults to a five-cent session budget and a two-cent cap on each request. In Amazon’s test, the agent compared two listings and paid one cent once.
+
+Nvidia is in advanced talks to buy Inception, The Information reported, citing three people who know the discussions. Inception is two years old. It builds diffusion language models meant to run faster than the kind behind ChatGPT and Claude.
+
+One of those people put the proposed price at at least five hundred million dollars, plus earnout awards if the new employees hit stated goals, and said the models and the team are meant to feed Nvidia’s Nemotron open-source work. The same report says those talks are still moving after Jensen Huang resigned as chief executive.
+
+Alphabet has two prepaid energy deals on hold. The Information, citing Bloomberg, says the pair would have provided three billion dollars, and that buyers stepped back on muted demand, market shakiness, and a slower municipal bond market. The deals are still expected to go ahead.
+
+WhatsApp is lifting the size of a group chat. The cap moves from one thousand twenty-four people to one thousand five hundred, and 9to5Mac says the higher limit is rolling out gradually.
+
+The check on Gemini’s new Mac control is the company that makes the Mac. TechCrunch, citing Bloomberg, says the upcoming macOS twenty-seven point three will warn people against giving third-party agents full access. In October, Apple told developers it would add controls so that kind of access takes a very explicit yes.
+
+Apple is also hiring a senior engineering manager for an agent that browses, crosses apps, runs commands, writes and debugs code, and calls services, and the posting says it should do that privately. Bloomberg’s account, as TechCrunch relays it, is that Apple has looked at shipping that service as soon as the end of next year, and that the work is still early.
+
+TechCrunch asked Apple and got no reply. What decides this is whether those warnings, and that explicit-consent gate, arrive before or on top of an outside agent that needs broad reach into apps, files and the web.
+
+Amazon and Apple now share a machine an outside coding agent cannot skip. Nearly one thousand organizations were running Devin on macOS within six weeks of launch, Cognition told Amazon. Devin could already write Swift on Linux. Signing and testing an app for iPhone, iPad or Mac still needed Apple hardware and macOS, and Devin Cloud only got that a couple of months ago.
+
+Before then, sessions lived on Linux and Windows virtual machines. Without Xcode, the agent waited on a customer’s own build system or that customer’s own Macs. A clean compile still does not prove behavior. The post’s case is an iPhone game that should resume where the player paused: the agent has to play, pause, quit, relaunch, and check the save.
+
+Amazon’s piece of that is EC2 Mac. Each instance is a physical Mac mini or Mac Studio on the Nitro System, so Cognition can use Apple’s Virtualization framework the way it would on a Mac it owned. Hosts arrive through the EC2 API, not a loading dock. The fleet sits in six AWS regions.
+
+A fresh macOS virtual machine starts in under a minute, which Cognition puts at fifteen to twenty times faster than a customer standing up a Mac host. Each Dedicated Host has a twenty-four-hour minimum, so a session’s life is split from the host’s. Where capacity is not already held, an Auto Scaling group takes hosts and gives them back.
+
+A manager on the host boots guests from images Cognition maintains. A disk keeps the session’s work, so an idle session does not sit on a virtual machine. Network rules follow the session. A live view, plus an accessibility tree from accessibility-cli, lets the person and Devin both see and drive the app.
+
+The cap that binds them is Apple’s license, not Amazon’s rack. The macOS agreement allows up to two extra copies of the system in virtual environments on each Mac, and the operating system enforces it, so each bare-metal host runs two isolated Devin workspaces. Idle sessions give those machines back, and one host can serve more than one session in a day.
+
+Apple remains the only legal hardware, and the only system that can sign the app and open the iOS Simulator. Amazon is the API, the regions, the private network and the boot volume that make those Macs look like any other EC2 box. Cognition wrote the agent.
+
+What changes is who has to own the computer. A customer no longer keeps a private fleet just so an agent can open the simulator before it returns a change ready to merge. Cognition can start a clean guest, Xcode and simulator included, and put the host back to later work the same day. Apple’s license still bounds how many copies sit on one computer at once.
+
+Amazon’s host minimum still means the bill works only if many short sessions share a machine. The post names no further launch date.
+
+A few more shipments.
+
+Pixalate, announcing from London on November nineteenth, put an OpenEPG module on AWS real-time-bidding fabric that stamps show, channel, genre and content rating onto connected-TV bid requests, covering more than seven hundred seventy thousand U.S. streaming shows, live sports included, on more than seventeen thousand nine hundred FAST and linear channels, across eight platforms, at single-digit latency.
+
+Google put fifteen million dollars toward water stewardship in Iowa and sent the first one point six million to Bur Oak Land Trust. 9to5Google says the 3D emoji that arrived on Pixel this year now has published Android minimums, ten gigabytes of free space and six gigabytes of RAM.
+
+Ars Technica says Amazon is fighting the Delivery Protection Act with a homepage banner and an in-app pop-up, and that the shopping site is being used for a political fight.
+
+CloudFormation StackSets can now take a customer template for the role it uses in each member account, instead of the default administrator role, which also lets service-managed sets deploy nested stacks, macros and transforms, and the switch does not delete that default role.
+
+On the calendar, Pixalate chief executive Jalal Nasir and chief technology officer Amin Bandeali present that OpenEPG module with AWS at re:Invent in Las Vegas, November thirtieth through December fourth.
+
+That's Mag Seven Daily for today. Nothing in this show is financial advice. I'm Patrick in Vancouver — see you tomorrow. If this show earns a place in your day, follow it in your podcast app so the next episode is waiting for you. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Peptides Weekly next — the week in peptide science, evidence first and never dosing advice. Every Nerra Network show is free at nerranetwork.com. And if you would rather hear only your shows, in your order, Nerra Personal builds you a private daily edition — the details are at nerranetwork.com/join.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
