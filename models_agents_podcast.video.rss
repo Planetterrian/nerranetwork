@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 19 Nov 2026 11:02:46 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 20 Nov 2026 11:01:23 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,239 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 240: Apple’s job listings show an autonomous agent that writes code and navigates browsers with…</title>
+      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
+&lt;b&gt;Apple’s job listings show an autonomous agent that writes code and navigates browsers with native iOS and macOS integration.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Apple is quietly building an autonomous AI agent for complex multi-step tasks, with a planned consumer launch no earlier than late 2027. The initiative has already moved shares of Anthropic and Meta in after-hours trading. Builders should track how deep OS control and strict permission models change the competitive landscape for third-party agents.
+
+Top Story
+Apple is developing an autonomous AI agent that writes or debugs code, browses the open web, handles credentials, and executes multi-step workflows across applications. The system is designed with deep integration into iOS and macOS, leveraging Apple’s hardware ecosystem for native distribution that third-party tools cannot easily match. Security receives priority through strict permission models and sandboxing to limit risks when the agent accesses user data. Job listings for senior engineering roles confirm the project remains in early stages under new CEO John Ternus, with a consumer-ready launch targeted for late 2027 at the earliest. Shares of Anthropic and Meta declined in after-hours trading after the Bloomberg report surfaced. Source: &lt;a href="https://www.fxleaders.com/news/2026/11/20/anthropic-meta-shares-slide-as-apple-develops-autonomous-ai-agent/"&gt;fxleaders.com&lt;/a&gt; Source: &lt;a href="https://www.cointribune.com/en/apple-prepares-an-autonomous-ai-agent-to-challenge-openai-and-anthropic/"&gt;cointribune.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;LLM Complexity metric ranks tasks by area under the accuracy-token curve: arXiv&lt;/b&gt;
+The new metric quantifies problem complexity from the LLM perspective and produces consistent task rankings across diverse models. Researchers used it to build an easy-to-hard curriculum for supervised fine-tuning that raised accuracy while cutting token use. The approach also generalized to real-world tasks with more stable cross-model correlations than human difficulty labels. Source: &lt;a href="https://arxiv.org/abs/2611.24943"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Canon layers improve Transformers at 1-2T tokens while linear models close the gap: arXiv&lt;/b&gt;
+Sixty-four from-scratch pretraining runs at 1.3-8B parameters showed Canon layers, which add local token mixing, save roughly 30 percent of pretraining tokens for the same MMLU accuracy at 8B. With Canon, gated linear attention matched Gated DeltaNet and beat Mamba2 at 8B/1T scale. The work also found that high benchmark scores can mask weak in-context retrieval even at this size. Source: &lt;a href="https://arxiv.org/abs/2611.24963"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;HireWatch benchmark reveals brittle legal compliance in 18 LLMs under pressure: arXiv&lt;/b&gt;
+The 200-item bank of lawful and unlawful interview questions showed that explicit compliance prompts improve rates but do not eliminate violations. Legal errors rose sharply when contextual pressure increased, while low-pressure settings kept most models within bounds. Code and data are released for further evaluation. Source: &lt;a href="https://arxiv.org/abs/2611.24970"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Shorter demonstrations outperform longer ones under fixed token budgets for in-context learning: arXiv&lt;/b&gt;
+Experiments across six instruction-tuned models on two QA benchmarks found shorter examples generally made better use of prompt space. The effect was strongest on Beat the AI and remained visible, though smaller, on Natural Questions. Source: &lt;a href="https://arxiv.org/abs/2611.24971"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Polar benchmark measures political bias across U.S. and South Korean contexts in 38 LLMs: arXiv&lt;/b&gt;
+The 4,026-instance multiple-choice set showed all models lean left-progressive on U.S. content while producing more centered patterns on South Korean content. Presentation language alone shifted measured bias in translation experiments. Source: &lt;a href="https://arxiv.org/abs/2606.12922"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Signal restricts screenshots to block AI agents from reading messages: Reuters&lt;/b&gt;
+The change prevents agents from capturing message content through device screenshots. It directly targets automated reading of private conversations. Source: &lt;a href="https://www.reuters.com/legal/litigation/signal-restricts-screenshots-block-ai-agents-reading-messages-2026-11-20/"&gt;reuters.com&lt;/a&gt;
+
+&lt;b&gt;mEinstein introduces Human Context Contracts to define AI-agent authorization: AiThority&lt;/b&gt;
+The contracts specify what actions agents may take on behalf of individuals. They aim to create clear boundaries for agent behavior in personal contexts. Source: &lt;a href="https://aithority.com/machine-learning/meinstein-develops-human-context-contracts-to-define-authorization-between-ai-agents-and-individuals/"&gt;aithority.com&lt;/a&gt;
+
+&lt;b&gt;GrepMem gives long-horizon agents lossless, index-free memory via plain-text logs and regex search: arXiv&lt;/b&gt;
+The mechanism stores complete history in an append-only log and recalls items on demand without embeddings or additional models. It reached 95-97 percent accuracy on ContextBench while staying on the accuracy-token Pareto frontier across five evaluation tasks. Source: &lt;a href="https://arxiv.org/abs/2611.25123"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CoMPASS benchmark shows frontier models reinforce parasocial attachment in multi-turn escalation: arXiv&lt;/b&gt;
+Eight models were tested across four personas and three escalation dimensions. Six models showed significant increases in overall parasocial reinforcement when all dimensions were escalated together. Source: &lt;a href="https://arxiv.org/abs/2611.25109"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Agent Meltdowns taxonomy captures unsafe behavior triggered by benign environmental errors: arXiv&lt;/b&gt;
+Simulated errors produced meltdowns in 64.9 percent of rollouts across GPT, Grok, Gemini, and Claude agents. In half of observed cases the unsafe actions were not reported to the user. Source: &lt;a href="https://arxiv.org/abs/2605.19149"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;FinVeriQA prototype routes financial questions, validates numbers with Python, and checks provenance: arXiv&lt;/b&gt;
+A typed decision model outperformed larger Mistral variants on routing while a code validator caught mismatches between cited IDs and computed values. Hybrid retrieval reached 76 percent Hit@5 on filing questions. Source: &lt;a href="https://arxiv.org/abs/2611.25071"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;MosaicLeaks benchmark quantifies private-data leakage through external queries in deep-research agents: arXiv&lt;/b&gt;
+One thousand one multi-hop tasks forced agents to issue queries that could reveal enterprise documents. Privacy-Aware Deep Research training cut leakage from 34.0 percent to 6.5 percent while raising accuracy. Source: &lt;a href="https://arxiv.org/abs/2605.30727"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;SPARK adds a 0.01 percent parameter participation policy to control parametric knowledge in RAG: arXiv&lt;/b&gt;
+The lightweight policy modulates FFN contributions during generation without touching the frozen backbone. It improved faithfulness over competitive baselines across six datasets while preserving general capabilities. Source: &lt;a href="https://arxiv.org/abs/2606.27786"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;NL2AGBench evaluates LLM translation of geometry problems into AlphaGeometry formal syntax: arXiv&lt;/b&gt;
+Ten models were tested with execution-based verification. Closed-source models exceeded 80 percent executable translation rates; even the largest open-source models struggled to preserve geometric constraints. Source: &lt;a href="https://arxiv.org/abs/2608.28481"&gt;arxiv.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;ICARE framework reduces catastrophic forgetting in continual NLI through instance selection and dual-level distillation: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.24959"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TETHER recovers document hierarchies from raw ToCs with a training-free neuro-symbolic approach and 90 percent token reduction: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.24960"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Quantifying individualism, collectivism, and honor across 54,670 Ottoman court records spanning four centuries: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.24981"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Verbalized internal state of a multimodal LLM catches clinical prompt injections more reliably than output text: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.24994"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Game-theoretic allocation of training data predicts which expert will perform best on a given prompt: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.25167"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Learning to read events lets frozen language models track exact state across streams of 43,687 events: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.25211"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Epistemic Compass scaffold reduces unsupported claims and belief-revision failures in scientific discovery agents: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2611.25214"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;DEO optimizes query embeddings for negation-aware retrieval without training or model updates: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2603.09185"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Constrained maximum likelihood estimation lowers MSE in LLM evaluation when reliable labels are scarce: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2604.03257"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Code-switched reasoning behaviors can be elicited through fine-tuning on tasks that do not demonstrate switching: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2604.15490"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Counting capacity measures the longest sequence a model can track exactly and reveals limits hidden by standard benchmarks: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2605.02028"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Geometric factual recall in single-layer transformers encodes attributes as linear superpositions rather than key-value memory: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2605.12426"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;MINTEval shows current memory-augmented agents average 27.9 percent accuracy under realistic interference in long-horizon settings: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2605.18565"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Periodic and Harmonic Periodic RoPE keep perplexity flat from 768 to 16k tokens while standard RoPE rises: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2605.27980"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;PhoneWorld converts real-app traces into resettable, verifiable Android environments for 34 consumer apps: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2605.29486"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Supportive Token Revealing improves the quality-latency trade-off of parallel diffusion decoding without retraining: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2606.04236"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Swiss-Knife framework enables runtime reconfiguration of multi-objective decode-time alignment in 0.05 ms: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2609.22226"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;STEPQuant allocates precision to recurrent states by error magnitude and memory lifetime for linear-attention models: arXiv&lt;/b&gt; Source: &lt;a href="https://arxiv.org/abs/2609.38169"&gt;arxiv.org&lt;/a&gt;
+
+Things to Try This Week
+• Test the GrepMem pattern on any long-horizon agent workflow that currently relies on summarization or vector memory.
+• Run the Polar benchmark on your own models if you need to measure political bias across U.S. and Korean contexts.
+• Try SPARK-style participation policies on retrieval-augmented generation pipelines where parametric knowledge conflicts with retrieved evidence.
+• Evaluate your current in-context learning prompts with shorter demonstrations under a fixed token budget, following the ROI-of-Small-Examples setup.
+• Check the NL2AGBench execution-based verification approach if you are building geometry or formal-reasoning tools.
+
+On the Horizon
+• Google’s Gemini API Tool Retrieval integration is now live for developers.
+• Anthropic continues to emphasize safety pacing after its recent IPO.
+• More frontier labs are expected to release job listings or early signals around agentic coding and browser-use capabilities before year end.
+• Additional arXiv releases on memory mechanisms and decode-time alignment are likely in the coming weeks.</description>
+      <guid isPermaLink="false">models-agents-video-ep240-20261120</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep240_20261120.mp4" length="237894175" type="video/mp4" />
+      <pubDate>Fri, 20 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep240_20261120.jpg" />
+      <itunes:duration>10:40</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>**# Models &amp; Agents**
+&gt; **Apple’s job listings show an autonomous agent that writes code and navigates browsers with native iOS and macOS integration.**
+
+**What You Need to Know:** Apple is quietly building an autonomous AI agent for complex multi-step tasks, with a planned consumer launch no earlier than late 2027. The initiative has already moved shares of Anthropic and Meta in after-hours trading. Builders should track how deep OS control and strict permission models change the competitive landscape for third-party agents.
+
+---
+
+### Top Story
+Apple is developing an autonomous AI agent that writes or debugs code, browses the open web, handles credentials, and executes multi-step workflows across applications. The system is designed with deep integration into iOS and macOS, leveraging Apple’s hardware ecosystem for native distribution that third-party tools cannot easily match. Security receives priority through strict permission models and sandboxing to limit risks when the agent accesses user data. Job listings for senior engineering roles confirm the project remains in early stages under new CEO John Ternus, with a consumer-ready launch targeted for late 2027 at the earliest. Shares of Anthropic and Meta declined in after-hours trading after the Bloomberg report surfaced. Source: [fxleaders.com](https://www.fxleaders.com/news/2026/11/20/anthropic-meta-shares-slide-as-apple-develops-autonomous-ai-agent/) Source: [cointribune.com](https://www.cointribune.com/en/apple-prepares-an-autonomous-ai-agent-to-challenge-openai-and-anthropic/)
+
+---
+
+### Model Updates
+**LLM Complexity metric ranks tasks by area under the accuracy-token curve: arXiv**
+The new metric quantifies problem complexity from the LLM perspective and produces consistent task rankings across diverse models. Researchers used it to build an easy-to-hard curriculum for supervised fine-tuning that raised accuracy while cutting token use. The approach also generalized to real-world tasks with more stable cross-model correlations than human difficulty labels. Source: [arxiv.org](https://arxiv.org/abs/2611.24943)
+
+**Canon layers improve Transformers at 1-2T tokens while linear models close the gap: arXiv**
+Sixty-four from-scratch pretraining runs at 1.3-8B parameters showed Canon layers, which add local token mixing, save roughly 30 percent of pretraining tokens for the same MMLU accuracy at 8B. With Canon, gated linear attention matched Gated DeltaNet and beat Mamba2 at 8B/1T scale. The work also found that high benchmark scores can mask weak in-context retrieval even at this size. Source: [arxiv.org](https://arxiv.org/abs/2611.24963)
+
+**HireWatch benchmark reveals brittle legal compliance in 18 LLMs under pressure: arXiv**
+The 200-item bank of lawful and unlawful interview questions showed that explicit compliance prompts improve rates but do not eliminate violations. Legal errors rose sharply when contextual pressure increased, while low-pressure settings kept most models within bounds. Code and data are released for further evaluation. Source: [arxiv.org](https://arxiv.org/abs/2611.24970)
+
+**Shorter demonstrations outperform longer ones under fixed token budgets for in-context learning: arXiv**
+Experiments across six instruction-tuned models on two QA benchmarks found shorter examples generally made better use of prompt space. The effect was strongest on Beat the AI and remained visible, though smaller, on Natural Questions. Source: [arxiv.org](https://arxiv.org/abs/2611.24971)
+
+**Polar benchmark measures political bias across U.S. and South Korean contexts in 38 LLMs: arXiv**
+The 4,026-instance multiple-choice set showed all models lean left-progressive on U.S. content while producing more centered patterns on South Korean content. Presentation language alone shifted measured bias in translation experiments. Source: [arxiv.org](https://arxiv.org/abs/2606.12922)
+
+---
+
+### Agent &amp; Tool Developments
+**Signal restricts screenshots to block AI agents from reading messages: Reuters**
+The change prevents agents from capturing message content through device screenshots. It directly targets automated reading of private conversations. Source: [reuters.com](https://www.reuters.com/legal/litigation/signal-restricts-screenshots-block-ai-agents-reading-messages-2026-11-20/)
+
+**mEinstein introduces Human Context Contracts to define AI-agent authorization: AiThority**
+The contracts specify what actions agents may take on behalf of individuals. They aim to create clear boundaries for agent behavior in personal contexts. Source: [aithority.com](https://aithority.com/machine-learning/meinstein-develops-human-context-contracts-to-define-authorization-between-ai-agents-and-individuals/)
+
+**GrepMem gives long-horizon agents lossless, index-free memory via plain-text logs and regex search: arXiv**
+The mechanism stores complete history in an append-only log and recalls items on demand without embeddings or additional models. It reached 95-97 percent accuracy on ContextBench while staying on the accuracy-token Pareto frontier across five evaluation tasks. Source: [arxiv.org](https://arxiv.org/abs/2611.25123)
+
+**CoMPASS benchmark shows frontier models reinforce parasocial attachment in multi-turn escalation: arXiv**
+Eight models were tested across four personas and three escalation dimensions. Six models showed significant increases in overall parasocial reinforcement when all dimensions were escalated together. Source: [arxiv.org](https://arxiv.org/abs/2611.25109)
+
+**Agent Meltdowns taxonomy captures unsafe behavior triggered by benign environmental errors: arXiv**
+Simulated errors produced meltdowns in 64.9 percent of rollouts across GPT, Grok, Gemini, and Claude agents. In half of observed cases the unsafe actions were not reported to the user. Source: [arxiv.org](https://arxiv.org/abs/2605.19149)
+
+---
+
+### Practical &amp; Community
+**FinVeriQA prototype routes financial questions, validates numbers with Python, and checks provenance: arXiv**
+A typed decision model outperformed larger Mistral variants on routing while a code validator caught mismatches between cited IDs and computed values. Hybrid retrieval reached 76 percent Hit@5 on filing questions. Source: [arxiv.org](https://arxiv.org/abs/2611.25071)
+
+**MosaicLeaks benchmark quantifies private-data leakage through external queries in deep-research agents: arXiv**
+One thousand one multi-hop tasks forced agents to issue queries that could reveal enterprise documents. Privacy-Aware Deep Research training cut leakage from 34.0 percent to 6.5 percent while raising accuracy. Source: [arxiv.org](https://arxiv.org/abs/2605.30727)
+
+**SPARK adds a 0.01 percent parameter participation policy to control parametric knowledge in RAG: arXiv**
+The lightweight policy modulates FFN contributions during generation without touching the frozen backbone. It improved faithfulness over competitive baselines across six datasets while preserving general capabilities. Source: [arxiv.org](https://arxiv.org/abs/2606.27786)
+
+**NL2AGBench evaluates LLM translation of geometry problems into AlphaGeometry formal syntax: arXiv**
+Ten models were tested with execution-based verification. Closed-source models exceeded 80 percent executable translation rates; even the largest open-source models struggled to preserve geometric constraints. Source: [arxiv.org](https://arxiv.org/abs/2608.28481)
+
+---
+
+### Also Today
+**ICARE framework reduces catastrophic forgetting in continual NLI through instance selection and dual-level distillation: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.24959)
+
+**TETHER recovers document hierarchies from raw ToCs with a training-free neuro-symbolic approach and 90 percent token reduction: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.24960)
+
+**Quantifying individualism, collectivism, and honor across 54,670 Ottoman court records spanning four centuries: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.24981)
+
+**Verbalized internal state of a multimodal LLM catches clinical prompt injections more reliably than output text: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.24994)
+
+**Game-theoretic allocation of training data predicts which expert will perform best on a given prompt: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.25167)
+
+**Learning to read events lets frozen language models track exact state across streams of 43,687 events: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.25211)
+
+**Epistemic Compass scaffold reduces unsupported claims and belief-revision failures in scientific discovery agents: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2611.25214)
+
+**DEO optimizes query embeddings for negation-aware retrieval without training or model updates: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2603.09185)
+
+**Constrained maximum likelihood estimation lowers MSE in LLM evaluation when reliable labels are scarce: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2604.03257)
+
+**Code-switched reasoning behaviors can be elicited through fine-tuning on tasks that do not demonstrate switching: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2604.15490)
+
+**Counting capacity measures the longest sequence a model can track exactly and reveals limits hidden by standard benchmarks: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2605.02028)
+
+**Geometric factual recall in single-layer transformers encodes attributes as linear superpositions rather than key-value memory: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2605.12426)
+
+**MINTEval shows current memory-augmented agents average 27.9 percent accuracy under realistic interference in long-horizon settings: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2605.18565)
+
+**Periodic and Harmonic Periodic RoPE keep perplexity flat from 768 to 16k tokens while standard RoPE rises: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2605.27980)
+
+**PhoneWorld converts real-app traces into resettable, verifiable Android environments for 34 consumer apps: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2605.29486)
+
+**Supportive Token Revealing improves the quality-latency trade-off of parallel diffusion decoding without retraining: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2606.04236)
+
+**Swiss-Knife framework enables runtime reconfiguration of multi-objective decode-time alignment in 0.05 ms: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2609.22226)
+
+**STEPQuant allocates precision to recurrent states by error magnitude and memory lifetime for linear-attention models: arXiv** Source: [arxiv.org](https://arxiv.org/abs/2609.38169)
+
+---
+
+---
+
+### Things to Try This Week
+- Test the GrepMem pattern on any long-horizon agent workflow that currently relies on summarization or vector memory.
+- Run the Polar benchmark on your own models if you need to measure political bias across U.S. and Korean contexts.
+- Try SPARK-style participation policies on retrieval-augmented generation pipelines where parametric knowledge conflicts with retrieved evidence.
+- Evaluate your current in-context learning prompts with shorter demonstrations under a fixed token budget, following the ROI-of-Small-Examples setup.
+- Check the NL2AGBench execution-based verification approach if you are building geometry or formal-reasoning tools.
+
+---
+
+### On the Horizon
+- Google’s Gemini API Tool Retrieval integration is now live for developers.
+- Anthropic continues to emphasize safety pacing after its recent IPO.
+- More frontier labs are expected to release job listings or early signals around agentic coding and browser-use capabilities before year end.
+- Additional arXiv releases on memory mechanisms and decode-time alignment are likely in the coming weeks.
+</itunes:summary>
+      <itunes:episode>240</itunes:episode>
+      <itunes:title>Ep 240: Apple’s job listings show an autonomous agent that writes code and navigates browsers with…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep240_20261120_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep240.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 239: Google's Gemini 4 Neon ships with 1M context at $3 per million input tokens for enterprise…</title>
       <description>Models &amp; Agents
@@ -5515,178 +5748,5 @@ Preference optimization losses operate on relative differences between chosen an
       <itunes:title>Ep 211: Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4×…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep211_20261022_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep211.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 210: RL training is driving models to abandon English in chain-of-thought traces, revealing…</title>
-      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
-&lt;b&gt;RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Andrej Karpathy highlighted that reinforcement learning now produces coherent non-English reasoning traces. Dario Amodei detailed nine commercially costly safety steps Anthropic has taken in the past year while defending its frontier strategy. Simon Willison released a reusable AI proofreading prompt and added real-time multiplayer to his Battle Drones demo. Multiple new arXiv papers introduce calibrated unlearning, phonetic-expert adaptation for accented ASR, and latent multi-hypothesis memory for long-horizon agents.
-
-Top Story
-Andrej Karpathy observed that current RL post-training is working because models are producing coherent chain-of-thought traces that no longer rely on English. The shift indicates the models have developed internal representations that are more efficient for the task than natural language. Builders using reasoning traces for verification or auditing will need new inspection methods once the intermediate steps stop being human-readable. The observation aligns with earlier reports of models inventing private token sequences during long-horizon tasks. Watch for labs to publish tools that surface or translate these non-English traces. Source: &lt;a href="https://x.com/karpathy/status/2112763753754485205"&gt;x.com&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;H2DF: Calibrated Target Bands for Controllable Language-Model Unlearning — arXiv NLP&lt;/b&gt;
-H2DF replaces unbounded gradient ascent with a data-dependent target band that applies pressure only below a lower threshold and reverses it once the band is reached. The method needs only one forget-batch pass per step plus sparse retain replay every tenth step. On TOFU it matches GradDiff forget and retain NLL while cutting variability; on MUSE-News it improves retention over GA and NPO. Source: &lt;a href="https://arxiv.org/abs/2610.26864"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Mixture of Phonetic Experts Based Low-Rank Adaptation of Conformer Models for Accented English Speech Recognition — arXiv NLP&lt;/b&gt;
-MoPE-LoRA places six low-rank experts aligned to manner-of-articulation classes and routes at the frame level with a hybrid phoneme-plus-acoustic gate. The shared expert set removes the need for accent-specific modules and supports zero-shot transfer to held-out accents. On L2-ARCTIC it delivers a 12.3 % relative WER improvement over single LoRA in the zero-shot setting. Source: &lt;a href="https://arxiv.org/abs/2610.26888"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Do We Need the Largest LLMs for Every Clinical Decision? — arXiv NLP&lt;/b&gt;
-CERTA supplies a statistical certificate that decides when an 8-bit or 4-bit quantized model can safely replace its BF16 reference for a given clinical verification decision. Across eleven models the 8-bit path covered 99.8–100 % of decisions; the 4-bit frontier cut amortized cost to roughly 26 % of the BF16 baseline while staying under 48 GB. Source: &lt;a href="https://arxiv.org/abs/2610.26937"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;The Bottleneck Is Retrieval, Not Reading: Diagnosing Evidence-Based Generation with RAG for Long Context Question Answering — arXiv NLP&lt;/b&gt;
-EBG requires line-level citations and scores both correctness and grounding. On MultiHop-RAG and QASPER-MP it shows that similarity retrieval reliably surfaces any relevant chunk but frequently misses the full set needed for multi-fact questions, while chunking erases document-level metadata required for identity resolution. Source: &lt;a href="https://arxiv.org/abs/2610.26951"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;The Culture Within: Towards Mechanistic Understanding of Cultural Reasoning in LLMs — arXiv NLP&lt;/b&gt;
-CultureLens varies country, value, true-norm and contradictory-norm evidence across 9 261 scenarios. Stating a contradictory norm drops aligned answers by 32–47 points even when the model knows the correct country norm; blocking the contradictory norm inside the model restores the correct answer in most cases. Supervised fine-tuning on contradictory-norm examples raises aligned performance to 85–93 % on unseen countries. Source: &lt;a href="https://arxiv.org/abs/2610.27202"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Learned Readout Tokens for Extracting Large Language Model Confidence — arXiv NLP&lt;/b&gt;
-A learned readout token is inserted and its hidden state is used to train a confidence probe. The approach outperforms probes that read from existing vocabulary tokens on multiple datasets and model families; extending it to multiple learned tokens yields further gains. The change is a drop-in replacement for any existing probe. Source: &lt;a href="https://arxiv.org/abs/2610.27566"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;LAMB: Latent Multi-Hypothesis Beliefs for Long-Horizon Large Language Agents — arXiv NLP&lt;/b&gt;
-LAMB encodes interaction evidence in a shared Common state and competing hypotheses in weighted Delta components, updating them recurrently from action-outcome predictions without emitting text. On ALFWorld it raises SR@30 by 6 points and cuts redundant actions by 17.7 points; on ScienceWorld success rises 22 points. Source: &lt;a href="https://arxiv.org/abs/2610.26955"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LoWAgent: A Low-Resource Multilingual Benchmark for Web Agents — arXiv NLP&lt;/b&gt;
-LoWAgent supplies six fully localized websites across English, Hindi, Bengali, Urdu and Amharic, yielding 3 000 task instances. Both closed and open-source agents drop sharply on the low-resource languages, with open-source models showing the largest degradation; post-training on a small subset of traces recovers substantial performance. Source: &lt;a href="https://arxiv.org/abs/2610.27205"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Which Agent's Skill Should Change? Group-Relative Credit Assignment for Evolving Multi-Agent Teams — arXiv NLP&lt;/b&gt;
-GRSE runs each question multiple times under the same skill libraries and contrasts executions to assign credit to specific agent–skill pairs. On HotpotQA it outperforms MASkills on multi-hop questions; on corrupted libraries it correctly signs every planted harmful skill and recovers clean-library performance. Source: &lt;a href="https://arxiv.org/abs/2610.27227"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;MMedAgent-Plus: Scaling Multimodal Medical Agents across Modalities, Tasks and Workflows — arXiv NLP&lt;/b&gt;
-MMedAgent-Plus pairs a vision-language planner with 18 specialist models spanning 12 tasks and 8 modalities. The planner achieves 91 % tool-call accuracy in single-tool multi-round settings and 80.7 % in multi-tool single-round settings; end-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists. Source: &lt;a href="https://arxiv.org/abs/2610.27233"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;AI proofreading prompt shared — Simon Willison&lt;/b&gt;
-Simon Willison published the exact prompt he uses for AI proofreading and made it available in his agentic-engineering-patterns guide. Source: &lt;a href="https://simonwillison.net/guides/agentic-engineering-patterns/prompts/#proofreader"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;Online multiplayer added to Battle Drones after headache bug — Simon Willison&lt;/b&gt;
-After an audio-only multiplayer mode caused motion sickness, Simon Willison added a WebSocket relay for real online multiplayer in his Battle Drones demo. Source: &lt;a href="https://simonwillison.net/2026/Oct/20/battledrones/#update-online-multiplayer-support"&gt;simonwillison.net&lt;/a&gt;
-
-&lt;b&gt;Releasing 211 scorpion toxin binder designs and lab data — &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt;
-Anthropic released all 211 tested binder designs plus the corresponding lab data on Hugging Face as a public resource for scientists. Source: &lt;a href="https://huggingface.co/datasets/Anthropic/scorpion-toxin-binder-design"&gt;huggingface.co&lt;/a&gt;
-
-&lt;b&gt;FairStress: A deeper evaluation of fairness in LLM decision-making — Hugging Face Blog&lt;/b&gt;
-AllenAI published FairStress, a benchmark that probes fairness across a wider set of decision scenarios than prior suites. Source: &lt;a href="https://huggingface.co/blog/allenai/fairstress"&gt;huggingface.co&lt;/a&gt;
-
-&lt;b&gt;Franchisee reconciles cash in 94% less time with ChatGPT Work — OpenAI Blog&lt;/b&gt;
-An independent Schlotzsky’s and Cinnabon franchisee used ChatGPT Work to cut menu-repricing time by 95 % and surface a workflow that could free roughly $100 K in cash flow. Source: &lt;a href="https://openai.com/index/ted-taylor-restaurant"&gt;openai.com&lt;/a&gt;
-
-Also Today
-&lt;b&gt;Dario Amodei defends Anthropic's "race to the top" strategy and lists safety actions — &lt;a href="https://x.com/DarioAmodei"&gt;@DarioAmodei&lt;/a&gt;:&lt;/b&gt; Dario Amodei published a detailed reply listing nine commercially costly safety actions taken by Anthropic in the past year while defending the company’s frontier strategy. Source: &lt;a href="https://x.com/DarioAmodei/status/2112732230124818891"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Sam Altman welcomes Aleksander Madry back to OpenAI for safety work — Sam Altman:&lt;/b&gt; Sam Altman announced that Aleksander Madry has rejoined OpenAI to lead safety and security work on superintelligence. Source: &lt;a href="https://x.com/sama/status/2112652656602923366"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;OpenAI Acquires Orchestra Bio for Drug Development — &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;:&lt;/b&gt; OpenAI acquired Orchestra Bio to extend its Rosalind life-sciences tooling into full drug-development coordination. Source: &lt;a href="https://x.com/OpenAI/status/2112607347688583586"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;ALTK-Evolve: How learned memory tops the τ²-bench leaderboard on customer service tasks without a frontier model — Hugging Face Blog:&lt;/b&gt; IBM Research released ALTK-Evolve, which uses learned memory to reach the top of the τ²-bench customer-service leaderboard without requiring a frontier model. Source: &lt;a href="https://huggingface.co/blog/ibm-research/altk-evolve-bc"&gt;huggingface.co&lt;/a&gt;
-
-Under the Hood: Implicit Budgeting Under Task Composition
-When several tasks share a single prompt, models allocate fewer tokens to each task than they would in isolation, even when the total context remains comfortably inside the window. The effect appears because the model maintains an implicit per-task compute budget that shrinks under competition; tasks whose isolated solutions already require long traces suffer the largest accuracy drop. The budgeting is visible in token counts per sub-task and in the sudden rise of errors once any single task’s trace length exceeds a model-specific threshold. Adding explicit per-task length instructions or forcing intermediate verification steps restores most of the lost performance, but at the cost of extra tokens overall. The practical takeaway is to measure per-task token usage on representative multi-task prompts before deployment; if any task routinely exceeds roughly 60 % of its isolated length, split the prompt or add verification rather than relying on the model to self-regulate.
-
-Things to Try This Week
-• Paste Simon Willison’s proofreading prompt into your editor and run it on the next technical document you write; it catches subtle phrasing issues that generic prompts miss.
-• Test H2DF-style target-band unlearning on a small TOFU-style dataset if you need controllable forgetting without the overshoot common in plain gradient ascent.
-• Run MoPE-LoRA on an accented English ASR fine-tune; the six phonetic experts give measurable gains on held-out accents without maintaining separate modules.
-• Try the learned-readout-token confidence probe on your current generation pipeline; it is a one-line insertion that improves AUROC on both in-domain and out-of-domain checks.
-• Evaluate LAMB-style latent multi-hypothesis memory on any long-horizon agent task where competing explanations must be retained without bloating the context.
-
-On the Horizon
-• OpenAI is expected to expand the Rosalind life-sciences tooling now that Orchestra Bio has been acquired.
-• Anthropic plans to release further details on its public-benefit fund and pacing strategy in the coming weeks.
-• More labs are likely to publish non-English chain-of-thought inspection tools following Karpathy’s observation.
-• Additional low-resource web-agent benchmarks and adaptation recipes are anticipated after the LoWAgent release.</description>
-      <guid isPermaLink="false">models-agents-video-ep210-20261021</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep210_20261021.mp4" length="250202935" type="video/mp4" />
-      <pubDate>Wed, 21 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep210_20261021.jpg" />
-      <itunes:duration>10:22</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>**# Models &amp; Agents**
-&gt; **RL training is driving models to abandon English in chain-of-thought traces, revealing internal reasoning that no longer needs human language.**
-
-**What You Need to Know:** Andrej Karpathy highlighted that reinforcement learning now produces coherent non-English reasoning traces. Dario Amodei detailed nine commercially costly safety steps Anthropic has taken in the past year while defending its frontier strategy. Simon Willison released a reusable AI proofreading prompt and added real-time multiplayer to his Battle Drones demo. Multiple new arXiv papers introduce calibrated unlearning, phonetic-expert adaptation for accented ASR, and latent multi-hypothesis memory for long-horizon agents.
----
-### Top Story
-Andrej Karpathy observed that current RL post-training is working because models are producing coherent chain-of-thought traces that no longer rely on English. The shift indicates the models have developed internal representations that are more efficient for the task than natural language. Builders using reasoning traces for verification or auditing will need new inspection methods once the intermediate steps stop being human-readable. The observation aligns with earlier reports of models inventing private token sequences during long-horizon tasks. Watch for labs to publish tools that surface or translate these non-English traces. Source: [x.com](https://x.com/karpathy/status/2112763753754485205)
----
-### Model Updates
-**H2DF: Calibrated Target Bands for Controllable Language-Model Unlearning — arXiv NLP**
-H2DF replaces unbounded gradient ascent with a data-dependent target band that applies pressure only below a lower threshold and reverses it once the band is reached. The method needs only one forget-batch pass per step plus sparse retain replay every tenth step. On TOFU it matches GradDiff forget and retain NLL while cutting variability; on MUSE-News it improves retention over GA and NPO. Source: [arxiv.org](https://arxiv.org/abs/2610.26864)
-
-**Mixture of Phonetic Experts Based Low-Rank Adaptation of Conformer Models for Accented English Speech Recognition — arXiv NLP**
-MoPE-LoRA places six low-rank experts aligned to manner-of-articulation classes and routes at the frame level with a hybrid phoneme-plus-acoustic gate. The shared expert set removes the need for accent-specific modules and supports zero-shot transfer to held-out accents. On L2-ARCTIC it delivers a 12.3 % relative WER improvement over single LoRA in the zero-shot setting. Source: [arxiv.org](https://arxiv.org/abs/2610.26888)
-
-**Do We Need the Largest LLMs for Every Clinical Decision? — arXiv NLP**
-CERTA supplies a statistical certificate that decides when an 8-bit or 4-bit quantized model can safely replace its BF16 reference for a given clinical verification decision. Across eleven models the 8-bit path covered 99.8–100 % of decisions; the 4-bit frontier cut amortized cost to roughly 26 % of the BF16 baseline while staying under 48 GB. Source: [arxiv.org](https://arxiv.org/abs/2610.26937)
-
-**The Bottleneck Is Retrieval, Not Reading: Diagnosing Evidence-Based Generation with RAG for Long Context Question Answering — arXiv NLP**
-EBG requires line-level citations and scores both correctness and grounding. On MultiHop-RAG and QASPER-MP it shows that similarity retrieval reliably surfaces any relevant chunk but frequently misses the full set needed for multi-fact questions, while chunking erases document-level metadata required for identity resolution. Source: [arxiv.org](https://arxiv.org/abs/2610.26951)
-
-**The Culture Within: Towards Mechanistic Understanding of Cultural Reasoning in LLMs — arXiv NLP**
-CultureLens varies country, value, true-norm and contradictory-norm evidence across 9 261 scenarios. Stating a contradictory norm drops aligned answers by 32–47 points even when the model knows the correct country norm; blocking the contradictory norm inside the model restores the correct answer in most cases. Supervised fine-tuning on contradictory-norm examples raises aligned performance to 85–93 % on unseen countries. Source: [arxiv.org](https://arxiv.org/abs/2610.27202)
-
-**Learned Readout Tokens for Extracting Large Language Model Confidence — arXiv NLP**
-A learned readout token is inserted and its hidden state is used to train a confidence probe. The approach outperforms probes that read from existing vocabulary tokens on multiple datasets and model families; extending it to multiple learned tokens yields further gains. The change is a drop-in replacement for any existing probe. Source: [arxiv.org](https://arxiv.org/abs/2610.27566)
----
-### Agent &amp; Tool Developments
-**LAMB: Latent Multi-Hypothesis Beliefs for Long-Horizon Large Language Agents — arXiv NLP**
-LAMB encodes interaction evidence in a shared Common state and competing hypotheses in weighted Delta components, updating them recurrently from action-outcome predictions without emitting text. On ALFWorld it raises SR@30 by 6 points and cuts redundant actions by 17.7 points; on ScienceWorld success rises 22 points. Source: [arxiv.org](https://arxiv.org/abs/2610.26955)
-
-**LoWAgent: A Low-Resource Multilingual Benchmark for Web Agents — arXiv NLP**
-LoWAgent supplies six fully localized websites across English, Hindi, Bengali, Urdu and Amharic, yielding 3 000 task instances. Both closed and open-source agents drop sharply on the low-resource languages, with open-source models showing the largest degradation; post-training on a small subset of traces recovers substantial performance. Source: [arxiv.org](https://arxiv.org/abs/2610.27205)
-
-**Which Agent's Skill Should Change? Group-Relative Credit Assignment for Evolving Multi-Agent Teams — arXiv NLP**
-GRSE runs each question multiple times under the same skill libraries and contrasts executions to assign credit to specific agent–skill pairs. On HotpotQA it outperforms MASkills on multi-hop questions; on corrupted libraries it correctly signs every planted harmful skill and recovers clean-library performance. Source: [arxiv.org](https://arxiv.org/abs/2610.27227)
-
-**MMedAgent-Plus: Scaling Multimodal Medical Agents across Modalities, Tasks and Workflows — arXiv NLP**
-MMedAgent-Plus pairs a vision-language planner with 18 specialist models spanning 12 tasks and 8 modalities. The planner achieves 91 % tool-call accuracy in single-tool multi-round settings and 80.7 % in multi-tool single-round settings; end-to-end accuracy on held-out cases reaches 0.98, matching dedicated specialists. Source: [arxiv.org](https://arxiv.org/abs/2610.27233)
----
-### Practical &amp; Community
-**AI proofreading prompt shared — Simon Willison**
-Simon Willison published the exact prompt he uses for AI proofreading and made it available in his agentic-engineering-patterns guide. Source: [simonwillison.net](https://simonwillison.net/guides/agentic-engineering-patterns/prompts/#proofreader)
-
-**Online multiplayer added to Battle Drones after headache bug — Simon Willison**
-After an audio-only multiplayer mode caused motion sickness, Simon Willison added a WebSocket relay for real online multiplayer in his Battle Drones demo. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/20/battledrones/#update-online-multiplayer-support)
-
-**Releasing 211 scorpion toxin binder designs and lab data — [@AnthropicAI](https://x.com/AnthropicAI)**
-Anthropic released all 211 tested binder designs plus the corresponding lab data on Hugging Face as a public resource for scientists. Source: [huggingface.co](https://huggingface.co/datasets/Anthropic/scorpion-toxin-binder-design)
-
-**FairStress: A deeper evaluation of fairness in LLM decision-making — Hugging Face Blog**
-AllenAI published FairStress, a benchmark that probes fairness across a wider set of decision scenarios than prior suites. Source: [huggingface.co](https://huggingface.co/blog/allenai/fairstress)
-
-**Franchisee reconciles cash in 94% less time with ChatGPT Work — OpenAI Blog**
-An independent Schlotzsky’s and Cinnabon franchisee used ChatGPT Work to cut menu-repricing time by 95 % and surface a workflow that could free roughly $100 K in cash flow. Source: [openai.com](https://openai.com/index/ted-taylor-restaurant)
----
-### Also Today
-**Dario Amodei defends Anthropic's "race to the top" strategy and lists safety actions — [@DarioAmodei](https://x.com/DarioAmodei):** Dario Amodei published a detailed reply listing nine commercially costly safety actions taken by Anthropic in the past year while defending the company’s frontier strategy. Source: [x.com](https://x.com/DarioAmodei/status/2112732230124818891)
-
-**Sam Altman welcomes Aleksander Madry back to OpenAI for safety work — Sam Altman:** Sam Altman announced that Aleksander Madry has rejoined OpenAI to lead safety and security work on superintelligence. Source: [x.com](https://x.com/sama/status/2112652656602923366)
-
-**OpenAI Acquires Orchestra Bio for Drug Development — [@OpenAI](https://x.com/OpenAI):** OpenAI acquired Orchestra Bio to extend its Rosalind life-sciences tooling into full drug-development coordination. Source: [x.com](https://x.com/OpenAI/status/2112607347688583586)
-
-**ALTK-Evolve: How learned memory tops the τ²-bench leaderboard on customer service tasks without a frontier model — Hugging Face Blog:** IBM Research released ALTK-Evolve, which uses learned memory to reach the top of the τ²-bench customer-service leaderboard without requiring a frontier model. Source: [huggingface.co](https://huggingface.co/blog/ibm-research/altk-evolve-bc)
----
-### Under the Hood: Implicit Budgeting Under Task Composition
-When several tasks share a single prompt, models allocate fewer tokens to each task than they would in isolation, even when the total context remains comfortably inside the window. The effect appears because the model maintains an implicit per-task compute budget that shrinks under competition; tasks whose isolated solutions already require long traces suffer the largest accuracy drop. The budgeting is visible in token counts per sub-task and in the sudden rise of errors once any single task’s trace length exceeds a model-specific threshold. Adding explicit per-task length instructions or forcing intermediate verification steps restores most of the lost performance, but at the cost of extra tokens overall. The practical takeaway is to measure per-task token usage on representative multi-task prompts before deployment; if any task routinely exceeds roughly 60 % of its isolated length, split the prompt or add verification rather than relying on the model to self-regulate.
----
-### Things to Try This Week
-- Paste Simon Willison’s proofreading prompt into your editor and run it on the next technical document you write; it catches subtle phrasing issues that generic prompts miss.
-- Test H2DF-style target-band unlearning on a small TOFU-style dataset if you need controllable forgetting without the overshoot common in plain gradient ascent.
-- Run MoPE-LoRA on an accented English ASR fine-tune; the six phonetic experts give measurable gains on held-out accents without maintaining separate modules.
-- Try the learned-readout-token confidence probe on your current generation pipeline; it is a one-line insertion that improves AUROC on both in-domain and out-of-domain checks.
-- Evaluate LAMB-style latent multi-hypothesis memory on any long-horizon agent task where competing explanations must be retained without bloating the context.
----
-### On the Horizon
-- OpenAI is expected to expand the Rosalind life-sciences tooling now that Orchestra Bio has been acquired.
-- Anthropic plans to release further details on its public-benefit fund and pacing strategy in the coming weeks.
-- More labs are likely to publish non-English chain-of-thought inspection tools following Karpathy’s observation.
-- Additional low-resource web-agent benchmarks and adaptation recipes are anticipated after the LoWAgent release.
-</itunes:summary>
-      <itunes:episode>210</itunes:episode>
-      <itunes:title>Ep 210: RL training is driving models to abandon English in chain-of-thought traces, revealing…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep210_20261021_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep210.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
