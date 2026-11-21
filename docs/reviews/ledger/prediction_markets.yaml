@@ -111,3 +111,89 @@ reviews:
         baseline: "1.3 (Ep2, fallback)"
         expected: ">= 4.0 median Ep3-9"
         verdict: pending
+  - date: '2026-11-21'
+    pr: null
+    doc: docs/reviews/prediction_markets_review_2026_11_21.md
+    generated_by: grok-4.5
+    summary: Posture, chapters, fetch filters and Board discipline are holding at ep51–60, but one under-floor script, repeated over-ceiling scripts, two low hook-coverage episodes, a freelanced mid-week wrap, and a near-dry curriculum runway are the next-tier issues; downloads remain tiny and falling.
+    scored_prior_predictions:
+    - metric: episodes (first 7) with any recommendation, pick, tip, edge or 'mispriced' language (transcript read)
+      verdict: hit
+      evidence: 'Launch Ep1 note plus ep51–60 transcripts: journalism posture holds; no pick/tip/edge/mispriced language'
+    - metric: The Board carries more than five markets, or a market / probability / volume not in the hook articles
+      verdict: hit
+      evidence: ep51–60 spoken Boards stay at or under five markets with venue-tied prices
+    - metric: share of script words spent on The Board
+      verdict: hit
+      evidence: Chapter timings keep Board near one minute inside 8–10 minute episodes (e.g. ep51 Board 275.3–361.3s)
+    - metric: How It Works figures or named studies stripped by the claims gate (source_integrity_stripped_sentences in that section)
+      verdict: partial
+      evidence: HIW still names papers/findings in ep51–60; no stripped-sentence metric series in this snapshot
+    - metric: legal claims without a named jurisdiction and a dated source
+      verdict: hit
+      evidence: Legal tops name body + jurisdiction + date (WA suit, LA orders, MD Fourth Circuit, NY TRO, CFTC stays)
+    - metric: first Friday's The Week's Board rows
+      verdict: hit
+      evidence: ep52 and ep59 both speak multi-row 'week's board' segments
+    - metric: Board lines missing one of the four fields
+      verdict: partial
+      evidence: Audio omits volume by design; digest four-field compliance not re-audited from raw digest files in this pass
+    - metric: episodes with a number spoken as 'the odds' or a forecast in the show's voice
+      verdict: hit
+      evidence: ep51–60 use priced/implied-probability wording; no show-voice 'will happen' forecasts found
+    - metric: curriculum unproduced on 2026-10-21
+      verdict: partial
+      evidence: Restock machinery exists; live risk is ep60 runway (hook warns at <7) — curriculum file not in bundle
+    - metric: articles_preferred_in_prompt per episode
+      verdict: partial
+      evidence: preferred_domains still in shows/prediction_markets.yaml; metric not present in snapshot
+    - metric: Top Story sourced to a regulator, court or wire when the story is a rule or ruling
+      verdict: partial
+      evidence: Legal tops dominate but often via rg.org/The Block/DeFi Rate rather than cftc.gov/reuters/bloomberg
+    - metric: episodes recording llm_model_fallback
+      verdict: partial
+      evidence: stream + same-model retry shipped Sep 24; fallback counts not in this snapshot
+    - metric: commas per 100 words in the digest
+      verdict: hit
+      evidence: Recent episodes show ~5.3–7.6 commas/100 words, not Ep2 fallback-thin 1.3
+    shipped: []
+    deferred:
+    - Restock shows/curricula/prediction_markets.yaml before unproduced runway <7 (carry/escalate; not a third prompt filing)
+    - Re-grade feeds from a runner and verify per-handle X yield
+    - Expose articles_preferred_in_prompt / board_venues in review snapshot for mechanical scoring
+    - Named-critic beat vs first-week downloads experiment
+    - YouTube enable decision for prediction_markets (currently false)
+    - Any podcast-side min-word floor, expand-retry, or ceiling-trim lever (network length do_not_retry class)
+    - 'Phonetic respellings for Kalshi/Polymarket/Nerra/Ossoff (landmine #17)'
+    - Enforcing max_podcast_words with trim/retry (record-only today; audio-risk)
+    predictions:
+    - metric: weekday episodes (non-Sunday) whose body contains a multi-sentence 'past seven days' / week-circle recap before closing
+      baseline: 1/10 in ep51–60 (ep54)
+      expected: 0/10 after week-wrap guard ships
+      verdict: pending
+      evidence: null
+    - metric: episodes whose first Host paragraph after the identity line shares zero concrete cold-open anchors (named party/court/bill/dollar)
+      baseline: 2/10 weak hook-cov band (ep55 33%, ep59 29%)
+      expected: 0/10 after cold-open anchor rule ships
+      verdict: pending
+      evidence: null
+    - metric: scripts under min_podcast_words 1400
+      baseline: 1/10 (ep53 at 1216)
+      expected: ≤1/10 without any podcast-expand lever (digest-substrate watch only)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/prediction_markets_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep54 transcript freelances a full past-seven-days recap before closing though weekly_summary_segment is Sunday-only; blocks weekday week-echo without touching length.
+    - file: shows/prompts/prediction_markets_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Snapshot hook cov ep55 33% and ep59 29%: cold open sold a stake the early body did not land; data-side anchor requirement, not a coverage-% target.'
+    - file: tests/test_prediction_markets_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Pins posture + the ep54 week-wrap class with wiring-through-real-config; ages episodes one day so today's uncommitted run does not false-red.
+    agent_cost_usd: 0.1188
+do_not_retry: []
