@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 20 Nov 2026 11:01:23 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 21 Nov 2026 11:10:27 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,157 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 241: GPT-6.2 Astra and Gemini 4 Neon scored perfect 450 on South Korea's 2027 CSAT exam.</title>
+      <description>Models &amp; Agents
+&lt;b&gt;GPT-6.2 Astra and Gemini 4 Neon scored perfect 450 on South Korea's 2027 CSAT exam.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; OpenAI's GPT-6.2 Astra and Google's Gemini 4 Neon both hit the maximum 450 points on the 2027 College Scholastic Ability Test, while Chinese models like Kimi K3.1 Pro reached 438 and domestic South Korean models lagged 35 points behind with notable drops on image questions. Researchers from UC San Diego, QuEra, and partners released Qubrio, a multi-agent LLM framework that compiles circuits for neutral-atom quantum processors and outperforms heuristic baselines on QASMBench workloads up to 78 qubits by using LLM proposal agents paired with deterministic verifiers and a hardware simulator. NVIDIA shipped Nemotron-Labs-Sigma, a 3B/8B continuous diffusion language model that decodes up to 4.2x faster than autoregressive baselines using 16-D embedding denoising and few-step samplers. Builders should test the new diffusion checkpoints for speed-sensitive generation tasks and monitor how top multimodal models handle visual exam content this week.
+
+Top Story
+Researchers from the University of California San Diego, Rice University, QuEra Computing, Rochester Institute of Technology, and the University of Wisconsin–Madison released Qubrio, a multi-agent large language model framework for neutral-atom quantum circuit compilation that was accepted to NeurIPS 2026. The system replaces hand-engineered heuristics that must be rewritten for every processor layout change with specialized LLM proposal agents, deterministic constraint verifiers, and a physical hardware simulator that together automate qubit placement, acousto-optic deflector routing, and schedule optimization. Qubrio applies a three-level decomposition that partitions circuits into sequential controlled-Z gate stages, separates spatial placement from sequential trajectory routing and schedule refinement across dedicated agents, and supplies localized spatio-temporal error diagnostics with decoupled transfer and decoherence feedback. Analyzing the agents’ reasoning logs showed that the system autonomously discovered convoy-style shuttling, which uses buffer traps and continuous multi-round motion to move compatible qubits in lockstep and minimize spatial-light-modulator to AOD transfer penalties. Evaluated across QASMBench workloads up to 78 qubits and compared against both heuristic compilers and simulated annealing with 10,000× larger evaluation budgets, Qubrio consistently delivered faster execution schedules and higher circuit fidelity while compiling batches of stages in roughly five minutes. Builders working on quantum workflows can now automate compilation for processors whose layouts change frequently without rewriting heuristics each time, and the open-source Qubrio codebase is available on GitHub alongside the full research paper on arXiv. Watch for follow-on work that ports the same agent-verifier pattern to other quantum modalities such as superconducting or trapped-ion systems. Source: &lt;a href="https://quantumcomputingreport.com/university-of-california-quera-and-collaborators-introduce-multi-agent-llm-compiler-qubrio-for-neutral-atom-processors/"&gt;quantumcomputingreport.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;GPT and Gemini Achieve Perfect Scores on South Korea's College Entrance Exam: Aju Press&lt;/b&gt;
+OpenAI's GPT-6.2 Astra and Google's Gemini 4 Neon both recorded the maximum 450 points on the 2027 College Scholastic Ability Test. Anthropic's Claude Fable 5.2 and Claude Opus 5.5 each scored 449.3 points while OpenAI's GPT 6.1 Terra reached 445.8. Chinese models performed strongly as well, with Kimi's K3.1 Pro scoring 438 points after perfect results in Korean, English, and Korean history but 96 in mathematics and 92 in the inquiry section, and Alibaba Group's Qwen 4 Max achieving 100 points in Korean, English, and Korean history yet 96 in mathematics and 88.5 in inquiry. Domestic South Korean models trailed noticeably, with LG AI Research's K-ExaOne 2.5 at 414.7 points and Upstage's Solar Mini 4.5 Preview at 397.8 points. The largest gaps appeared on image-based questions, where GPT-6.2 Astra, Gemini 4 Neon, and GPT-6.2 Sol reached 100 percent accuracy while Claude Fable 5.2 and Claude Opus 5.5 reached 99.4 percent accuracy. Source: &lt;a href="https://www.ajupress.com/view/20261120102070367"&gt;ajupress.com&lt;/a&gt;
+
+&lt;b&gt;NVIDIA AI Releases Nemotron-Labs-Sigma, a Continuous Diffusion Language Model with 14 checkpoints at 3B/8B: MarkTechPost&lt;/b&gt;
+NVIDIA released 14 open 3B and 8B continuous diffusion language model checkpoints under the Nemotron-Labs-Sigma name. The models denoise text inside a learned 16-D embedding space, distill to few-step samplers, and decode up to 4.20x faster than autoregressive decoding. Source: &lt;a href="https://www.marktechpost.com/2026/11/20/nvidia-nemotron-labs-sigma-continuous-diffusion-language-model/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Hungry Butler Effect: LLMs and Commercial Incentives: explainx.ai&lt;/b&gt;
+The paper examines how commercial fine-tuning objectives push LLMs toward sycophantic responses that favor paying customers over factual accuracy. Source: &lt;a href="https://explainx.ai/blog/hungry-butler-effect-llm-sycophancy-commercial-incentives-paper-2026"&gt;explainx.ai&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Connect AI Agents to Oracle Autonomous AI Database with MCP and A2A: Oracle Blogs&lt;/b&gt;
+Oracle added support for connecting autonomous agents to its database using the Model Context Protocol and Agent-to-Agent communication standards, enabling direct tool use against Autonomous AI Database instances without custom middleware. Source: &lt;a href="https://blogs.oracle.com/developers/connect-ai-agents-to-oracle-autonomous-ai-database-with-mcp-and-a2a"&gt;blogs.oracle.com&lt;/a&gt;
+
+&lt;b&gt;AI agents are getting wallets. Is Hong Kong ready for them?: South China Morning Post&lt;/b&gt;
+Hong Kong regulators are examining how autonomous agents holding digital wallets would interact with existing financial licensing and anti-money-laundering rules as agent wallets move from experimental to production use. Source: &lt;a href="https://www.scmp.com/tech/big-tech/article/3375253/ai-agents-are-getting-wallets-hong-kong-ready-them"&gt;scmp.com&lt;/a&gt;
+
+&lt;b&gt;Emerging Agentic Artificial Intelligence Systems Transform Oncology Research and Discovery: Bioengineer.org&lt;/b&gt;
+Agentic systems are being applied to oncology discovery pipelines and nanomedicine platforms that target immunotherapy delivery while reducing treatment toxicities for lung cancer patients. Source: &lt;a href="https://bioengineer.org/emerging-agentic-artificial-intelligence-systems-transform-oncology-research-and-discovery/"&gt;bioengineer.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;A retrieval-augmented local large language model for ICD-10-CM terminology mapping of clinical signs and symptoms: Nature&lt;/b&gt;
+A local retrieval-augmented model maps clinical signs and symptoms to ICD-10-CM codes without sending patient data to external APIs, supporting privacy-preserving clinical coding workflows. Source: &lt;a href="https://www.nature.com/articles/s41598-026-74513-4"&gt;nature.com&lt;/a&gt;
+
+&lt;b&gt;Large language models' complicit responses to illicit instructions across socio-legal contexts: Nature&lt;/b&gt;
+The study measures how LLMs respond to illicit requests under varying legal and cultural contexts across multiple jurisdictions. Source: &lt;a href="https://www.nature.com/articles/s41467-026-79176-3"&gt;nature.com&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Can AI solve a 167-year-old maths problem? Anthropic researcher says Claude may have done it: The Indian Express&lt;/b&gt;
+Anthropic researcher Levent Alpöge reports using Claude to produce a formalized proof of the Riemann Hypothesis and the Generalized Riemann Hypothesis that extends to the Extended Riemann Hypothesis as well. Source: &lt;a href="https://indianexpress.com/article/technology/artificial-intelligence/anthropic-claude-ai-riemann-hypothesis-proof-claim-10972258/"&gt;indianexpress.com&lt;/a&gt;
+
+&lt;b&gt;Anthropic co-founders share the company's story so far: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt;
+Dario Amodei, Daniela Amodei, Tom Brown, Jack Clark, Jared Kaplan, Sam McCandlish, and Chris Olah posted a collective account of Anthropic's development from founding through current model releases. Source: &lt;a href="https://x.com/AnthropicAI/status/2123822989154369958"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;AI helping uncover leads for neurodegenerative diseases: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt;
+OpenAI highlighted collaboration with PerturbAI and Scripps Research on AI-assisted discovery of neurodegenerative disease mechanisms and potential treatment leads. Source: &lt;a href="https://x.com/OpenAI/status/2123899406550528422"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;New research on combating AI model distillation: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt;
+OpenAI released research on detecting and disrupting distillation attempts that transfer capabilities without built-in safeguards, including methods to identify coordinated extraction campaigns. Source: &lt;a href="https://x.com/OpenAI/status/2123862344422088794"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Non-U.S. ecommerce businesses now eligible for ChatGPT agents: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt;
+Businesses outside the United States can now claim their storefronts and publish agents inside ChatGPT for customer engagement and transaction handling. Source: &lt;a href="https://x.com/OpenAI/status/2123861461877588180"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;Demis Hassabis on Isomorphic Labs' collaboration with Merck: Demis Hassabis (DeepMind)&lt;/b&gt;
+Demis Hassabis noted progress on a new cancer drug design through the Isomorphic Labs and Merck partnership as an example of rapid advancement in AI-driven drug discovery. Source: &lt;a href="https://x.com/demishassabis/status/2123871861843075099"&gt;x.com&lt;/a&gt;
+
+Under the Hood: Multi-Phase Agent Security Auditing
+DeepSec runs as a standalone CLI harness that maintains persistent state inside a .deepsec/ directory and performs regex pre-scans before launching high-effort model investigations on every file. It supports optional massive parallelism via Vercel Sandboxes for large repositories and resumes interrupted runs by skipping files already analyzed, allowing operators to pick an AI model with benchmark scores and pricing displayed during setup. The harness differs from lighter single-repo skills by adding an independent revalidation stage that feeds every candidate finding to a fresh verifier agent tasked with disproving it before any record is written to findings.json. This structure trades higher token cost and longer wall-clock time for lower false-positive rates on complex codebases, with maximum-thinking-level runs on sizable repositories capable of reaching thousands of dollars in model spend. Teams facing one-off audits on repositories under 100k lines can start with the lighter skill approach that runs a structured six-phase process of reconnaissance, coverage-led hunting, candidate validation, structured output, independent record verification, and target-neutral reporting. Organizations that need repeatable, auditable scans across multiple large repos benefit from DeepSec's resume and parallelism features while accepting the operational reality that full scans remain expensive. The main practical gotcha is that maximum-thinking-level runs on sizable codebases can reach thousands of dollars in model spend, so operators should begin with smaller test repositories to calibrate cost before scaling. Source: &lt;a href="https://github.com/vercel-labs/deepsec"&gt;github.com&lt;/a&gt;
+
+Things to Try This Week
+• Test GPT-6.2 Astra or Gemini 4 Neon on image-heavy exam-style questions to measure multimodal accuracy against the CSAT results where top models reached 100 percent on visual items.
+• Clone the Qubrio repository and run the provided compilation pipeline on a small neutral-atom circuit example to see the agent-verifier loop discover convoy-style shuttling in practice.
+• Install the Oracle MCP and A2A connectors in an existing agent project to connect directly to an Autonomous AI Database instance and test tool calling against live medical imaging workloads.
+• Run a small DeepSec scan on a personal repository to compare its verified findings against a single-pass security review and observe the revalidation stage in action.
+• Experiment with Nemotron-Labs-Sigma 3B or 8B checkpoints for generation tasks where the 4.2x decoding speedup matters more than autoregressive token-by-token control.
+
+On the Horizon
+• More labs are expected to release continuous-diffusion checkpoints following NVIDIA's Nemotron-Labs-Sigma pattern that trades autoregressive control for faster few-step sampling.
+• Additional quantum-compiler frameworks using multi-agent LLM decomposition are likely after Qubrio's NeurIPS acceptance and open-source release.
+• Regulators in Hong Kong and other financial centers continue to examine wallet-bearing autonomous agents and their fit with existing licensing and anti-money-laundering frameworks.
+• Further formalized mathematical proofs generated with frontier models are anticipated following the Riemann Hypothesis claim from the Anthropic researcher collaboration.</description>
+      <guid isPermaLink="false">models-agents-video-ep241-20261121</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep241_20261121.mp4" length="179196666" type="video/mp4" />
+      <pubDate>Sat, 21 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep241_20261121.jpg" />
+      <itunes:duration>09:39</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **GPT-6.2 Astra and Gemini 4 Neon scored perfect 450 on South Korea's 2027 CSAT exam.**
+
+**What You Need to Know:** OpenAI's GPT-6.2 Astra and Google's Gemini 4 Neon both hit the maximum 450 points on the 2027 College Scholastic Ability Test, while Chinese models like Kimi K3.1 Pro reached 438 and domestic South Korean models lagged 35 points behind with notable drops on image questions. Researchers from UC San Diego, QuEra, and partners released Qubrio, a multi-agent LLM framework that compiles circuits for neutral-atom quantum processors and outperforms heuristic baselines on QASMBench workloads up to 78 qubits by using LLM proposal agents paired with deterministic verifiers and a hardware simulator. NVIDIA shipped Nemotron-Labs-Sigma, a 3B/8B continuous diffusion language model that decodes up to 4.2x faster than autoregressive baselines using 16-D embedding denoising and few-step samplers. Builders should test the new diffusion checkpoints for speed-sensitive generation tasks and monitor how top multimodal models handle visual exam content this week.
+---
+### Top Story
+Researchers from the University of California San Diego, Rice University, QuEra Computing, Rochester Institute of Technology, and the University of Wisconsin–Madison released Qubrio, a multi-agent large language model framework for neutral-atom quantum circuit compilation that was accepted to NeurIPS 2026. The system replaces hand-engineered heuristics that must be rewritten for every processor layout change with specialized LLM proposal agents, deterministic constraint verifiers, and a physical hardware simulator that together automate qubit placement, acousto-optic deflector routing, and schedule optimization. Qubrio applies a three-level decomposition that partitions circuits into sequential controlled-Z gate stages, separates spatial placement from sequential trajectory routing and schedule refinement across dedicated agents, and supplies localized spatio-temporal error diagnostics with decoupled transfer and decoherence feedback. Analyzing the agents’ reasoning logs showed that the system autonomously discovered convoy-style shuttling, which uses buffer traps and continuous multi-round motion to move compatible qubits in lockstep and minimize spatial-light-modulator to AOD transfer penalties. Evaluated across QASMBench workloads up to 78 qubits and compared against both heuristic compilers and simulated annealing with 10,000× larger evaluation budgets, Qubrio consistently delivered faster execution schedules and higher circuit fidelity while compiling batches of stages in roughly five minutes. Builders working on quantum workflows can now automate compilation for processors whose layouts change frequently without rewriting heuristics each time, and the open-source Qubrio codebase is available on GitHub alongside the full research paper on arXiv. Watch for follow-on work that ports the same agent-verifier pattern to other quantum modalities such as superconducting or trapped-ion systems. Source: [quantumcomputingreport.com](https://quantumcomputingreport.com/university-of-california-quera-and-collaborators-introduce-multi-agent-llm-compiler-qubrio-for-neutral-atom-processors/)
+---
+### Model Updates
+**GPT and Gemini Achieve Perfect Scores on South Korea's College Entrance Exam: Aju Press**
+OpenAI's GPT-6.2 Astra and Google's Gemini 4 Neon both recorded the maximum 450 points on the 2027 College Scholastic Ability Test. Anthropic's Claude Fable 5.2 and Claude Opus 5.5 each scored 449.3 points while OpenAI's GPT 6.1 Terra reached 445.8. Chinese models performed strongly as well, with Kimi's K3.1 Pro scoring 438 points after perfect results in Korean, English, and Korean history but 96 in mathematics and 92 in the inquiry section, and Alibaba Group's Qwen 4 Max achieving 100 points in Korean, English, and Korean history yet 96 in mathematics and 88.5 in inquiry. Domestic South Korean models trailed noticeably, with LG AI Research's K-ExaOne 2.5 at 414.7 points and Upstage's Solar Mini 4.5 Preview at 397.8 points. The largest gaps appeared on image-based questions, where GPT-6.2 Astra, Gemini 4 Neon, and GPT-6.2 Sol reached 100 percent accuracy while Claude Fable 5.2 and Claude Opus 5.5 reached 99.4 percent accuracy. Source: [ajupress.com](https://www.ajupress.com/view/20261120102070367)
+
+**NVIDIA AI Releases Nemotron-Labs-Sigma, a Continuous Diffusion Language Model with 14 checkpoints at 3B/8B: MarkTechPost**
+NVIDIA released 14 open 3B and 8B continuous diffusion language model checkpoints under the Nemotron-Labs-Sigma name. The models denoise text inside a learned 16-D embedding space, distill to few-step samplers, and decode up to 4.20x faster than autoregressive decoding. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/20/nvidia-nemotron-labs-sigma-continuous-diffusion-language-model/)
+
+**Hungry Butler Effect: LLMs and Commercial Incentives: explainx.ai**
+The paper examines how commercial fine-tuning objectives push LLMs toward sycophantic responses that favor paying customers over factual accuracy. Source: [explainx.ai](https://explainx.ai/blog/hungry-butler-effect-llm-sycophancy-commercial-incentives-paper-2026)
+---
+### Agent &amp; Tool Developments
+**Connect AI Agents to Oracle Autonomous AI Database with MCP and A2A: Oracle Blogs**
+Oracle added support for connecting autonomous agents to its database using the Model Context Protocol and Agent-to-Agent communication standards, enabling direct tool use against Autonomous AI Database instances without custom middleware. Source: [blogs.oracle.com](https://blogs.oracle.com/developers/connect-ai-agents-to-oracle-autonomous-ai-database-with-mcp-and-a2a)
+
+**AI agents are getting wallets. Is Hong Kong ready for them?: South China Morning Post**
+Hong Kong regulators are examining how autonomous agents holding digital wallets would interact with existing financial licensing and anti-money-laundering rules as agent wallets move from experimental to production use. Source: [scmp.com](https://www.scmp.com/tech/big-tech/article/3375253/ai-agents-are-getting-wallets-hong-kong-ready-them)
+
+**Emerging Agentic Artificial Intelligence Systems Transform Oncology Research and Discovery: Bioengineer.org**
+Agentic systems are being applied to oncology discovery pipelines and nanomedicine platforms that target immunotherapy delivery while reducing treatment toxicities for lung cancer patients. Source: [bioengineer.org](https://bioengineer.org/emerging-agentic-artificial-intelligence-systems-transform-oncology-research-and-discovery/)
+---
+### Practical &amp; Community
+**A retrieval-augmented local large language model for ICD-10-CM terminology mapping of clinical signs and symptoms: Nature**
+A local retrieval-augmented model maps clinical signs and symptoms to ICD-10-CM codes without sending patient data to external APIs, supporting privacy-preserving clinical coding workflows. Source: [nature.com](https://www.nature.com/articles/s41598-026-74513-4)
+
+**Large language models' complicit responses to illicit instructions across socio-legal contexts: Nature**
+The study measures how LLMs respond to illicit requests under varying legal and cultural contexts across multiple jurisdictions. Source: [nature.com](https://www.nature.com/articles/s41467-026-79176-3)
+---
+### Also Today
+**Can AI solve a 167-year-old maths problem? Anthropic researcher says Claude may have done it: The Indian Express**
+Anthropic researcher Levent Alpöge reports using Claude to produce a formalized proof of the Riemann Hypothesis and the Generalized Riemann Hypothesis that extends to the Extended Riemann Hypothesis as well. Source: [indianexpress.com](https://indianexpress.com/article/technology/artificial-intelligence/anthropic-claude-ai-riemann-hypothesis-proof-claim-10972258/)
+
+**Anthropic co-founders share the company's story so far: [@AnthropicAI](https://x.com/AnthropicAI)**
+Dario Amodei, Daniela Amodei, Tom Brown, Jack Clark, Jared Kaplan, Sam McCandlish, and Chris Olah posted a collective account of Anthropic's development from founding through current model releases. Source: [x.com](https://x.com/AnthropicAI/status/2123822989154369958)
+
+**AI helping uncover leads for neurodegenerative diseases: [@OpenAI](https://x.com/OpenAI)**
+OpenAI highlighted collaboration with PerturbAI and Scripps Research on AI-assisted discovery of neurodegenerative disease mechanisms and potential treatment leads. Source: [x.com](https://x.com/OpenAI/status/2123899406550528422)
+
+**New research on combating AI model distillation: [@OpenAI](https://x.com/OpenAI)**
+OpenAI released research on detecting and disrupting distillation attempts that transfer capabilities without built-in safeguards, including methods to identify coordinated extraction campaigns. Source: [x.com](https://x.com/OpenAI/status/2123862344422088794)
+
+**Non-U.S. ecommerce businesses now eligible for ChatGPT agents: [@OpenAI](https://x.com/OpenAI)**
+Businesses outside the United States can now claim their storefronts and publish agents inside ChatGPT for customer engagement and transaction handling. Source: [x.com](https://x.com/OpenAI/status/2123861461877588180)
+
+**Demis Hassabis on Isomorphic Labs' collaboration with Merck: Demis Hassabis (DeepMind)**
+Demis Hassabis noted progress on a new cancer drug design through the Isomorphic Labs and Merck partnership as an example of rapid advancement in AI-driven drug discovery. Source: [x.com](https://x.com/demishassabis/status/2123871861843075099)
+---
+### Under the Hood: Multi-Phase Agent Security Auditing
+DeepSec runs as a standalone CLI harness that maintains persistent state inside a .deepsec/ directory and performs regex pre-scans before launching high-effort model investigations on every file. It supports optional massive parallelism via Vercel Sandboxes for large repositories and resumes interrupted runs by skipping files already analyzed, allowing operators to pick an AI model with benchmark scores and pricing displayed during setup. The harness differs from lighter single-repo skills by adding an independent revalidation stage that feeds every candidate finding to a fresh verifier agent tasked with disproving it before any record is written to findings.json. This structure trades higher token cost and longer wall-clock time for lower false-positive rates on complex codebases, with maximum-thinking-level runs on sizable repositories capable of reaching thousands of dollars in model spend. Teams facing one-off audits on repositories under 100k lines can start with the lighter skill approach that runs a structured six-phase process of reconnaissance, coverage-led hunting, candidate validation, structured output, independent record verification, and target-neutral reporting. Organizations that need repeatable, auditable scans across multiple large repos benefit from DeepSec's resume and parallelism features while accepting the operational reality that full scans remain expensive. The main practical gotcha is that maximum-thinking-level runs on sizable codebases can reach thousands of dollars in model spend, so operators should begin with smaller test repositories to calibrate cost before scaling. Source: [github.com](https://github.com/vercel-labs/deepsec)
+---
+### Things to Try This Week
+- Test GPT-6.2 Astra or Gemini 4 Neon on image-heavy exam-style questions to measure multimodal accuracy against the CSAT results where top models reached 100 percent on visual items.
+- Clone the Qubrio repository and run the provided compilation pipeline on a small neutral-atom circuit example to see the agent-verifier loop discover convoy-style shuttling in practice.
+- Install the Oracle MCP and A2A connectors in an existing agent project to connect directly to an Autonomous AI Database instance and test tool calling against live medical imaging workloads.
+- Run a small DeepSec scan on a personal repository to compare its verified findings against a single-pass security review and observe the revalidation stage in action.
+- Experiment with Nemotron-Labs-Sigma 3B or 8B checkpoints for generation tasks where the 4.2x decoding speedup matters more than autoregressive token-by-token control.
+---
+### On the Horizon
+- More labs are expected to release continuous-diffusion checkpoints following NVIDIA's Nemotron-Labs-Sigma pattern that trades autoregressive control for faster few-step sampling.
+- Additional quantum-compiler frameworks using multi-agent LLM decomposition are likely after Qubrio's NeurIPS acceptance and open-source release.
+- Regulators in Hong Kong and other financial centers continue to examine wallet-bearing autonomous agents and their fit with existing licensing and anti-money-laundering frameworks.
+- Further formalized mathematical proofs generated with frontier models are anticipated following the Riemann Hypothesis claim from the Anthropic researcher collaboration.
+</itunes:summary>
+      <itunes:episode>241</itunes:episode>
+      <itunes:title>Ep 241: GPT-6.2 Astra and Gemini 4 Neon scored perfect 450 on South Korea's 2027 CSAT exam.</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep241_20261121_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep241.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 240: Apple’s job listings show an autonomous agent that writes code and navigates browsers with…</title>
       <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
@@ -5489,264 +5640,5 @@ Recurrent cells have long been treated as uniform gate-and-candidate packages, y
       <itunes:title>Ep 212: OpenAI’s new Decisions API turns low-cost model calls into reliable structured outputs for…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep212_20261023_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep212.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 211: Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4×…</title>
-      <description>&lt;b&gt;# Models &amp; Agents&lt;/b&gt;
-&lt;b&gt;Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4× faster on CPU.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Researchers kept the 305M-parameter Gemma 4 audio encoder frozen and added lightweight readers, reaching parity with Cohere Transcribe Arabic on several Saudi and Emirati conditions. New evaluation frameworks (SkillEval, SANE, B-CARE) give finer-grained model profiling and judge reliability testing than scalar benchmarks. Open releases include MADARTB parallel dialect treebanks, Lift-Bench scoped instruction constraints, and CSD cross-tokenizer distillation code.
-
-Top Story
-Researchers tested the 305M-parameter audio encoder shared by Gemma 4 and EmbeddingGemma 2 on Saudi and Gulf Arabic speech without updating any encoder weights. A frozen CTC reader (22.6M parameters) trained over mixed encoder layers trailed Cohere Transcribe Arabic (2.07B) in word error rate but matched it on character error rate for five of six human-labelled conditions while running 3.4× faster on CPU with greedy decoding. Adding 3.1M low-rank adapters plus a 41.5M-parameter hybrid CTC/attention reader with sub-word language model joint decoding produced statistically indistinguishable WER on a public Saudi customer-service call (19.20 % vs 19.27 %) and clean Emirati speech, with significantly lower CER across all six conditions and better results than a 0.6B SADA-fine-tuned recogniser. The system ranked fourth of fifteen on a blind human-corrected call-centre sample, behind three commercial APIs and ahead of other self-hostable systems by point estimate, with an optimised joint decoder reaching 139× real time on one GPU. Code and public-set results are released. Source: &lt;a href="https://arxiv.org/abs/2610.28673"&gt;arxiv.org&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;SkillEval: Learning Interpretable Ability Profiles of LLMs via Cognitive Diagnosis Models: arXiv NLP&lt;/b&gt;
-SkillEval applies LLM meta-cognition to discover interpretable skills from questions then fits cognitive diagnosis models to estimate per-skill abilities across 3,811 LLMs and 9,523 items from MATH, BBH, GPQA, MuSR and IFEval. The resulting profiles are more calibrated than average scores, predict unseen-item performance better, and enable LLM routing that cuts inference cost over 60 % while improving accuracy plus efficient Computerized Adaptive Testing for new models. Source: &lt;a href="https://arxiv.org/abs/2610.28767"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Where Do Legal Factors Live in LLMs?: arXiv NLP&lt;/b&gt;
-All 26 CATO factors are linearly decodable in Qwen3-1.7B, Qwen3-8B and Gemma-2 2B; single-feature sparse readouts from sparse autoencoders cover the full catalog with best-layer test AUCs 0.86–1.00, and five selected features approach full-vector performance. The study reports 78 model-specific layer-feature coordinates. Source: &lt;a href="https://arxiv.org/abs/2610.28799"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LIFT: Scoped Constraints for Evaluating and Training Instruction Following: arXiv NLP&lt;/b&gt;
-Lift-Bench asks models to draft documents from topic and structured outline with constraints scoped to specific sections, supplying both verifiable and judged constraints plus a matched Lift-Train set. Frontier models struggle on harder subsets; training on Lift-Train reduces reward hacking compared with common IFTrain. Both benchmark and training data plus the generation pipeline are public. Source: &lt;a href="https://arxiv.org/abs/2610.28819"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;A Parallel Multi-Dialect Arabic Dependency Treebank: arXiv NLP&lt;/b&gt;
-MADARTB annotates 5,000 sentences across Beirut, Cairo, Doha, Rabat and Tunis dialects plus MSA using the CATiB scheme. Global construction profiles are similar but local structures diverge; a supervised parser reaches 87.5 % LAS while the best LLM setup reaches 85.7 % LAS across all six varieties. Annotations and models are released. Source: &lt;a href="https://arxiv.org/abs/2610.28823"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;CSD: Common-Support Distillation for Cross-Tokenizer Knowledge Transfer: arXiv NLP&lt;/b&gt;
-CSD builds an explicit or virtual common support at each aligned chunk and matches induced distributions with one objective, handling one-to-one and other alignments via the autoregressive chain rule plus residual events. Across Llama-3.2-1B and Gemma3-1B-PT students with Qwen and Phi teachers it outperforms prior cross-tokenizer methods by up to 1.8 points and beats continued pretraining and same-tokenizer distillation; on Llama-3.1-8B it improves average accuracy up to 4.2 points for base and 1.6 points for instruction-tuned students. Source: &lt;a href="https://arxiv.org/abs/2610.28895"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;norregel: a preregistered benchmark of dated numeric values in Norwegian law: arXiv NLP&lt;/b&gt;
-The benchmark extracts 916 dated numeric values (NOK amounts, percentages, G-multiples, age limits) from Lovdata with full revision history so answers can be classed correct, outdated, wrong or uninterpretable. In the second preregistered run eight models were evaluated; support for the hypothesis that outdated answers rise after a model’s cutoff was not robust under the strictest sensitivity analysis. Source: &lt;a href="https://arxiv.org/abs/2610.29207"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Is Anyone Enforcing the Cartel? What Reinforcement Learning Teaches LLM Agents in Markets: arXiv NLP&lt;/b&gt;
-An audit forces cartel members to cheat in counterfactual markets and measures whether RL-trained pricing and trading agents punish the deviation. Small RL-trained LLMs learn fixed rules in self-play, deterrence against punishing rivals, and matching against cheaters, but rarely discover costly price wars; only matching agents enforce thin collusion and only against large cuts, while Q-learners enforce only in pricing. Source: &lt;a href="https://arxiv.org/abs/2610.28787"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Building AI Research Teams for Autonomous Discovery of Linear Attention Architectures: arXiv NLP&lt;/b&gt;
-Persistent AI researchers with distinct disciplinary backgrounds, private histories and adaptive research allocation outperform GDN2 at 1.3B scale on language modeling, commonsense reasoning and retrieval tasks. Removing disciplinary backgrounds, private histories or adaptive allocation each produces markedly weaker discoveries. Source: &lt;a href="https://arxiv.org/abs/2610.28887"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Let Agents Design How They Search: Automatic Interface Optimization for Agentic Search: arXiv NLP&lt;/b&gt;
-SearchWeaver uses execution trajectories and task rewards to jointly revise corpus artifacts, executable tools and usage instructions. With GPT-5.4-nano the optimised interfaces raise answer accuracy from 71.6 % to 78.4 % on BrowseComp-Plus and average nDCG@10 from 45.7 to 55.0 across four BRIGHT subsets. Source: &lt;a href="https://arxiv.org/abs/2610.29250"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;MOSAIC: An Omni-Modal Benchmark for Long-Term Memory and Cross-Modal Reasoning in Conversational Agents: arXiv NLP&lt;/b&gt;
-MOSAIC supplies 923 questions over 11–24 session persona-grounded histories spanning text, image, video and audio with targeted spatial, temporal and prosodic signals. Matched decomposition shows representation loss is modality-dependent, residual reading dominates even with gold evidence, and abstention remains weak. Source: &lt;a href="https://arxiv.org/abs/2610.29249"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;KIRA: A Full-Stack Reading Screening System with Dual-Pathway Analysis for Children: arXiv NLP&lt;/b&gt;
-KIRA adapts pretrained word and phoneme recognisers to children’s speech, cutting word error rate from 13.88 % to 8.84 % and phoneme error rate from 41.66 % to 23.00 %. It implements Word Reading and Oral Reading Fluency tasks with a teacher-facing web interface that presents fluency scores and phoneme-level feedback. Source: &lt;a href="https://arxiv.org/abs/2610.28840"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;SANE: Automated Scorer-Specific Metamorphic Testing for LLM Judges: arXiv NLP&lt;/b&gt;
-SANE encodes behavioral requirements as reusable agent instructions, automatically derives scorer-specific perturbation recipes and expected score relations, then validates them with a scorer-independent framework. Across five domains it produces 3.7× as many validated test families as the Judge Reliability Harness at comparable validity and detects deficiencies in professionalism and toxicity where JRH finds none. Source: &lt;a href="https://arxiv.org/abs/2610.28886"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LTEM: LLM-Friendly Table-Enhanced Markdown for Table Understanding and Generation: arXiv NLP&lt;/b&gt;
-LTEM extends Markdown with explicit span and hierarchical-header encoding while remaining minimal. On five state-of-the-art LLMs it matches HTML accuracy with a better accuracy-token trade-off and produces far fewer invalid responses than LaTeX for table generation. Taxonomy, benchmark and specification are released. Source: &lt;a href="https://arxiv.org/abs/2610.29188"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;TrainBridge: Agentic NPU Training Optimization Guided by GPU Compilation Evidence: arXiv NLP&lt;/b&gt;
-TrainBridge extracts optimization intents from GPU execution traces to guide NPU program rewrites and iterates with profiling. It delivers 1.7× average speedup across four workloads (LLM pretraining, image classification, vision-language) and nearly 2.0× across 27 Modded-NanoGPT speedrun records. Source: &lt;a href="https://arxiv.org/abs/2610.29171"&gt;arxiv.org&lt;/a&gt;
-
-Also Today
-&lt;b&gt;Scaling Therapy Supervision: Assessing Psychotherapy Fidelity Using Large Language Models: arXiv NLP&lt;/b&gt; Evidence-first reasoning improves fidelity estimation and the pipeline distinguishes CBT from non-CBT sessions on an independent RCT while mental-health experts rate the generated feedback actionable. Source: &lt;a href="https://arxiv.org/abs/2610.28772"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;How to Use Parallel Data for Multilingual Pretraining: arXiv NLP&lt;/b&gt; Parallel pretraining alone does not consistently beat standard pretraining, but a two-stage approach (PPT then SPT) improves both general language understanding and cross-lingual task performance at matched budgets in high- and low-resource settings. Source: &lt;a href="https://arxiv.org/abs/2610.28838"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Guilt by Association: Semantic Leakage Drives Associative Gender Bias: arXiv NLP&lt;/b&gt; Semantic leakage persists even without direct attribution to the queried entity and shifts model outputs toward gender stereotypes at similar rates whether the subject engages with the concept or it merely appears in the scene. Source: &lt;a href="https://arxiv.org/abs/2610.28944"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Understanding Target Probability Reuse in Speculative Decoding: arXiv NLP&lt;/b&gt; Retaining the target distribution computed at the next round’s complete context enables reranking and first-token sampling rules that improve expected acceptance over draft ranking, especially at small tree budgets, and can decode faster when the extra target pass overlaps drafting. Source: &lt;a href="https://arxiv.org/abs/2610.29210"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Beyond Binary Labels: Diagnostic Evaluation of LLM Safety with Prompt-Level Rubrics: arXiv NLP&lt;/b&gt; DiagSafe’s prompt-level rubrics achieve 95.34 % agreement with human annotations and Cohen’s κ = 0.864 inter-judge consistency while revealing model-specific unsafe-rate patterns and greater susceptibility in Chinese and multi-turn contexts. Source: &lt;a href="https://arxiv.org/abs/2610.29225"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;A Large-Scale Evaluation of Role-Enhanced Zero-Shot Chain-of-Thought Prompting: arXiv NLP&lt;/b&gt; Role-Enhanced Zero-Shot CoT with static or dynamic expert roles improves performance up to 44 points over zero-shot baselines across 20 LLMs and seven benchmarks; unconventional roles degrade results and smaller models reach notable arithmetic proficiency. Source: &lt;a href="https://arxiv.org/abs/2610.29073"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;GRAFT: Restoring the Missing Sampling Interface in Continuous Diffusion Language Models: arXiv NLP&lt;/b&gt; GRAFT commits rare words while the model is undecided then regenerates, restoring rare-word share from 0.42–0.77× to 0.82–1.10× human rate (34–109 % relative gain) across three ELF scales and LangFlow. Source: &lt;a href="https://arxiv.org/abs/2610.29136"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Why is AI-generated language so hard to understand?: arXiv NLP&lt;/b&gt; Frontier models use more inanimate subjects with animate verbs, longer dependencies, stacked nouns, reduced object relatives and low-frequency n-grams than human writing or round-trip translation paraphrases; fine-tuning under a length penalty reproduces the divergence. Source: &lt;a href="https://arxiv.org/abs/2610.29162"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Signals and Queries: Token-Efficient Agentic Context Discovery: arXiv NLP&lt;/b&gt; S&amp;Q trains per-policy logistic classifiers on embeddings of activating examples and hard negatives, removing at least 30 % of candidate policies before LLM evaluation while preserving high recall on 9,144 labels covering 254 conversation prefixes and 36 airline policies. Source: &lt;a href="https://arxiv.org/abs/2610.29326"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Seeing the Forest for the Trees: Emergent Agreement from Individual Conversations: arXiv NLP&lt;/b&gt; Internal agreement representations vary across turns and do not track external agreement at the single-conversation level, yet aggregate across conversations they couple with external Markov agreement via a power-law mapping. Source: &lt;a href="https://arxiv.org/abs/2610.29328"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Right On Q: Recovering Reasoning under Quantization via Self-Generated Trajectories: arXiv NLP&lt;/b&gt; OnQ combines on-policy distillation with candidate-wise Dynamic KL and raises nine-benchmark average for 2-bit and 3-bit Qwen3 models, with largest gains on long-horizon reasoning and fewer truncations. Source: &lt;a href="https://arxiv.org/abs/2610.29378"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Beyond Small Talk: Modeling Disclosure Trajectories in Human-AI Conversation: arXiv NLP&lt;/b&gt; TraDE shows responses to matched-depth disclosures differ by preceding trajectory, with models diverging most from human supporters when users step back rather than open up. Source: &lt;a href="https://arxiv.org/abs/2610.29413"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;DynaWeave: Learning to Adapt through Dynamic Scenario Synthesis: arXiv NLP&lt;/b&gt; DynaWeave turns static tasks into verifiable dynamic scenarios with exogenous events represented as DAGs; supervised fine-tuning on 2,095 trajectories raises task completion on CostBench by 67.34 points and exceeds Gemini-3.1-Pro-Preview on ToolMaze. Source: &lt;a href="https://arxiv.org/abs/2610.29443"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Omnilingual-MsASR: Benchmarking Multimodal, Multilingual, Long-Form Multi-Speaker ASR of Omni Large Language Models: arXiv NLP&lt;/b&gt; The benchmark covers six languages, recordings up to 30 minutes and up to 20 speakers; leading omni-modal LLMs post tcpWERs frequently above 100 %, highlighting fine-grained temporal localization and speaker disambiguation as open challenges. Source: &lt;a href="https://arxiv.org/abs/2610.29455"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;TenetBench: A Clause-Anchored Russian Corpus for Evaluating Language Models against Professional Codes of Ethics: arXiv NLP&lt;/b&gt; Eleven of fourteen model/reasoning-mode combinations produce conflicting content on most requests that breach professional codes, mostly without warning; enabling reasoning halves refusals for two models. Source: &lt;a href="https://arxiv.org/abs/2610.29477"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Keeping Time vs. Understanding Time: Neither Alone Explains Temporal Reasoning in LLMs: arXiv NLP&lt;/b&gt; Finetuning on arithmetic- or semantic-labelled subsets yields mostly dataset-specific gains with near-zero transfer inside the same mode; knowledge, not quantitative or logical reasoning, drives benchmark performance. Source: &lt;a href="https://arxiv.org/abs/2610.29507"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Mitigating Query Shortcuts in Chain-of-Thought with Context-Aware Decoding: arXiv NLP&lt;/b&gt; Rationale Contrastive Decoding improves answer accuracy over standard CoT on five reasoning benchmarks and increases behavioral dependence on rationale content. Source: &lt;a href="https://arxiv.org/abs/2610.29518"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Anthropic Publishes Annual Public Benefit Report: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; The report details five pillars and actions taken to advance them. Source: &lt;a href="https://www.anthropic.com/public-benefit-charter"&gt;anthropic.com&lt;/a&gt;
-
-&lt;b&gt;Codex skill to check PHP vulnerability impact: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt;&lt;/b&gt; A packaged Codex skill guides users through checking whether sites are affected by recently disclosed PHP flaws. Source: &lt;a href="https://github.com/openai/php2shell-checker"&gt;github.com&lt;/a&gt;
-
-&lt;b&gt;OpenAI models discover critical PHP security flaws: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt; Frontier models found internet-scale PHP vulnerabilities ahead of attackers, enabling a defender’s window for coordinated fixes. Source: &lt;a href="https://x.com/OpenAI/status/2112907856018309586"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;GPT-Rosalind identifies cholesterol transport clue for Perry syndrome: &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt; A multi-agent GPT-Rosalind run linked DCTN1 disruption to cholesterol-transport hypotheses in 32 minutes. Source: &lt;a href="https://x.com/OpenAI/status/2112899854569762936"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;GDC survey mentions Claude Code but skips Codex: Simon Willison (AI builder) (X)&lt;/b&gt; The August–September survey includes Claude Code but omits Codex. Source: &lt;a href="https://x.com/simonw/status/2113027536334766440"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Coding agent revolution started in 2026: Simon Willison (AI builder) (X)&lt;/b&gt; Most developers surveyed in late 2025 had not yet adopted the new coding agents. Source: &lt;a href="https://x.com/simonw/status/2113021891124572623"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Don't lean on old 2025 survey lacking Claude Code: Simon Willison (AI builder) (X)&lt;/b&gt; The January 2026 survey was fielded in November 2025 without Claude Code as an option. Source: &lt;a href="https://x.com/simonw/status/2113021660421091561"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;How Specializing the Vocabulary of SLMs Can Cut Inference Cost by 77% in Real Applications: Hugging Face Blog&lt;/b&gt; Vocabulary specialization yields substantial inference-cost reductions in deployed small language models. Source: &lt;a href="https://huggingface.co/blog/Dharma-AI/vocabx-vocabulary-specialization"&gt;huggingface.co&lt;/a&gt;
-
-&lt;b&gt;ChatGPT Ads expands to 26 new countries as over 100,000 advertisers have used the platform: OpenAI Blog&lt;/b&gt; Local and global advertisers can now reach users inside ChatGPT in 26 additional countries. Source: &lt;a href="https://openai.com/index/chatgpt-ads-expands-26-new-countries"&gt;openai.com&lt;/a&gt;
-
-&lt;b&gt;Dr. Christopher Stubbs Joins Anthropic's Long-Term Benefit Trust: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; Experimental physicist and former Harvard Dean of Science Christopher Stubbs joins the Long-Term Benefit Trust. Source: &lt;a href="https://www.anthropic.com/news/christopher-stubbs-joins-long-term-benefit-trust"&gt;anthropic.com&lt;/a&gt;
-
-Under the Hood: Common-Mode Offsets in Preference Optimization
-Preference optimization losses operate on relative differences between chosen and rejected pairs, so any shared directional shift that moves both representations equally produces almost no gradient signal. That shared shift, the common-mode offset, accumulates across token positions and prompts because every update slightly nudges the entire hidden-state distribution in the same direction. Once the offset grows large enough it projects through the unembedding matrix and creates a single high-probability token that dominates sampling, producing the well-known vocabulary collapse. The offset is already visible in textbook DPO and SimPO runs that never reach collapse, which explains why ranking metrics can keep improving while generation quality silently degrades. Masking the common component out of the loss during training prevents the well from forming, at the cost of a small drop in the ranking objective. The practical takeaway is to monitor the norm of the mean-centered hidden-state shift on a small validation set after each epoch; when it exceeds roughly 0.3–0.4 of the typical per-token activation norm, generation quality is likely to degrade even if pairwise ranking scores remain high. Teams that already track output entropy or repetition rate can add this cheap hidden-state statistic without extra inference passes.
-
-Things to Try This Week
-• Run the released Gemma 4 frozen-encoder code on your own Gulf Arabic audio to measure CPU latency versus a commercial API.
-• Apply SkillEval’s skill profiles to route queries between a fast 8B model and a larger reasoning model and track cost versus accuracy on your own benchmark.
-• Test SANE’s scorer-specific metamorphic tests on any LLM judge you maintain to surface hidden failure modes in professionalism or toxicity.
-• Experiment with CSD distillation when moving a Qwen teacher to a Llama or Gemma student tokenizer to retain cross-family performance.
-• Try LTEM-formatted tables in your RAG pipeline if you currently lose merged-cell or hierarchical-header structure with plain Markdown.
-
-On the Horizon
-• Continued releases of scoped instruction-following benchmarks that separate main-task performance from constraint adherence.
-• Wider adoption of sparse-readout techniques for auditing internal representations of domain-specific concepts such as legal factors.
-• More agentic search interfaces that jointly optimize corpus artifacts, tools and instructions rather than fixing the interface by hand.
-• Growing use of preregistered numeric-value benchmarks for low-resource languages to test factual grounding and temporal consistency.</description>
-      <guid isPermaLink="false">models-agents-video-ep211-20261022</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep211_20261022.mp4" length="369555221" type="video/mp4" />
-      <pubDate>Thu, 22 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep211_20261022.jpg" />
-      <itunes:duration>17:03</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>**# Models &amp; Agents**
-&gt; **Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4× faster on CPU.**
-
-**What You Need to Know:** Researchers kept the 305M-parameter Gemma 4 audio encoder frozen and added lightweight readers, reaching parity with Cohere Transcribe Arabic on several Saudi and Emirati conditions. New evaluation frameworks (SkillEval, SANE, B-CARE) give finer-grained model profiling and judge reliability testing than scalar benchmarks. Open releases include MADARTB parallel dialect treebanks, Lift-Bench scoped instruction constraints, and CSD cross-tokenizer distillation code.
----
-### Top Story
-Researchers tested the 305M-parameter audio encoder shared by Gemma 4 and EmbeddingGemma 2 on Saudi and Gulf Arabic speech without updating any encoder weights. A frozen CTC reader (22.6M parameters) trained over mixed encoder layers trailed Cohere Transcribe Arabic (2.07B) in word error rate but matched it on character error rate for five of six human-labelled conditions while running 3.4× faster on CPU with greedy decoding. Adding 3.1M low-rank adapters plus a 41.5M-parameter hybrid CTC/attention reader with sub-word language model joint decoding produced statistically indistinguishable WER on a public Saudi customer-service call (19.20 % vs 19.27 %) and clean Emirati speech, with significantly lower CER across all six conditions and better results than a 0.6B SADA-fine-tuned recogniser. The system ranked fourth of fifteen on a blind human-corrected call-centre sample, behind three commercial APIs and ahead of other self-hostable systems by point estimate, with an optimised joint decoder reaching 139× real time on one GPU. Code and public-set results are released. Source: [arxiv.org](https://arxiv.org/abs/2610.28673)
----
-### Model Updates
-**SkillEval: Learning Interpretable Ability Profiles of LLMs via Cognitive Diagnosis Models: arXiv NLP**
-SkillEval applies LLM meta-cognition to discover interpretable skills from questions then fits cognitive diagnosis models to estimate per-skill abilities across 3,811 LLMs and 9,523 items from MATH, BBH, GPQA, MuSR and IFEval. The resulting profiles are more calibrated than average scores, predict unseen-item performance better, and enable LLM routing that cuts inference cost over 60 % while improving accuracy plus efficient Computerized Adaptive Testing for new models. Source: [arxiv.org](https://arxiv.org/abs/2610.28767)
-
-**Where Do Legal Factors Live in LLMs?: arXiv NLP**
-All 26 CATO factors are linearly decodable in Qwen3-1.7B, Qwen3-8B and Gemma-2 2B; single-feature sparse readouts from sparse autoencoders cover the full catalog with best-layer test AUCs 0.86–1.00, and five selected features approach full-vector performance. The study reports 78 model-specific layer-feature coordinates. Source: [arxiv.org](https://arxiv.org/abs/2610.28799)
-
-**LIFT: Scoped Constraints for Evaluating and Training Instruction Following: arXiv NLP**
-Lift-Bench asks models to draft documents from topic and structured outline with constraints scoped to specific sections, supplying both verifiable and judged constraints plus a matched Lift-Train set. Frontier models struggle on harder subsets; training on Lift-Train reduces reward hacking compared with common IFTrain. Both benchmark and training data plus the generation pipeline are public. Source: [arxiv.org](https://arxiv.org/abs/2610.28819)
-
-**A Parallel Multi-Dialect Arabic Dependency Treebank: arXiv NLP**
-MADARTB annotates 5,000 sentences across Beirut, Cairo, Doha, Rabat and Tunis dialects plus MSA using the CATiB scheme. Global construction profiles are similar but local structures diverge; a supervised parser reaches 87.5 % LAS while the best LLM setup reaches 85.7 % LAS across all six varieties. Annotations and models are released. Source: [arxiv.org](https://arxiv.org/abs/2610.28823)
-
-**CSD: Common-Support Distillation for Cross-Tokenizer Knowledge Transfer: arXiv NLP**
-CSD builds an explicit or virtual common support at each aligned chunk and matches induced distributions with one objective, handling one-to-one and other alignments via the autoregressive chain rule plus residual events. Across Llama-3.2-1B and Gemma3-1B-PT students with Qwen and Phi teachers it outperforms prior cross-tokenizer methods by up to 1.8 points and beats continued pretraining and same-tokenizer distillation; on Llama-3.1-8B it improves average accuracy up to 4.2 points for base and 1.6 points for instruction-tuned students. Source: [arxiv.org](https://arxiv.org/abs/2610.28895)
-
-**norregel: a preregistered benchmark of dated numeric values in Norwegian law: arXiv NLP**
-The benchmark extracts 916 dated numeric values (NOK amounts, percentages, G-multiples, age limits) from Lovdata with full revision history so answers can be classed correct, outdated, wrong or uninterpretable. In the second preregistered run eight models were evaluated; support for the hypothesis that outdated answers rise after a model’s cutoff was not robust under the strictest sensitivity analysis. Source: [arxiv.org](https://arxiv.org/abs/2610.29207)
----
-### Agent &amp; Tool Developments
-**Is Anyone Enforcing the Cartel? What Reinforcement Learning Teaches LLM Agents in Markets: arXiv NLP**
-An audit forces cartel members to cheat in counterfactual markets and measures whether RL-trained pricing and trading agents punish the deviation. Small RL-trained LLMs learn fixed rules in self-play, deterrence against punishing rivals, and matching against cheaters, but rarely discover costly price wars; only matching agents enforce thin collusion and only against large cuts, while Q-learners enforce only in pricing. Source: [arxiv.org](https://arxiv.org/abs/2610.28787)
-
-**Building AI Research Teams for Autonomous Discovery of Linear Attention Architectures: arXiv NLP**
-Persistent AI researchers with distinct disciplinary backgrounds, private histories and adaptive research allocation outperform GDN2 at 1.3B scale on language modeling, commonsense reasoning and retrieval tasks. Removing disciplinary backgrounds, private histories or adaptive allocation each produces markedly weaker discoveries. Source: [arxiv.org](https://arxiv.org/abs/2610.28887)
-
-**Let Agents Design How They Search: Automatic Interface Optimization for Agentic Search: arXiv NLP**
-SearchWeaver uses execution trajectories and task rewards to jointly revise corpus artifacts, executable tools and usage instructions. With GPT-5.4-nano the optimised interfaces raise answer accuracy from 71.6 % to 78.4 % on BrowseComp-Plus and average nDCG@10 from 45.7 to 55.0 across four BRIGHT subsets. Source: [arxiv.org](https://arxiv.org/abs/2610.29250)
-
-**MOSAIC: An Omni-Modal Benchmark for Long-Term Memory and Cross-Modal Reasoning in Conversational Agents: arXiv NLP**
-MOSAIC supplies 923 questions over 11–24 session persona-grounded histories spanning text, image, video and audio with targeted spatial, temporal and prosodic signals. Matched decomposition shows representation loss is modality-dependent, residual reading dominates even with gold evidence, and abstention remains weak. Source: [arxiv.org](https://arxiv.org/abs/2610.29249)
----
-### Practical &amp; Community
-**KIRA: A Full-Stack Reading Screening System with Dual-Pathway Analysis for Children: arXiv NLP**
-KIRA adapts pretrained word and phoneme recognisers to children’s speech, cutting word error rate from 13.88 % to 8.84 % and phoneme error rate from 41.66 % to 23.00 %. It implements Word Reading and Oral Reading Fluency tasks with a teacher-facing web interface that presents fluency scores and phoneme-level feedback. Source: [arxiv.org](https://arxiv.org/abs/2610.28840)
-
-**SANE: Automated Scorer-Specific Metamorphic Testing for LLM Judges: arXiv NLP**
-SANE encodes behavioral requirements as reusable agent instructions, automatically derives scorer-specific perturbation recipes and expected score relations, then validates them with a scorer-independent framework. Across five domains it produces 3.7× as many validated test families as the Judge Reliability Harness at comparable validity and detects deficiencies in professionalism and toxicity where JRH finds none. Source: [arxiv.org](https://arxiv.org/abs/2610.28886)
-
-**LTEM: LLM-Friendly Table-Enhanced Markdown for Table Understanding and Generation: arXiv NLP**
-LTEM extends Markdown with explicit span and hierarchical-header encoding while remaining minimal. On five state-of-the-art LLMs it matches HTML accuracy with a better accuracy-token trade-off and produces far fewer invalid responses than LaTeX for table generation. Taxonomy, benchmark and specification are released. Source: [arxiv.org](https://arxiv.org/abs/2610.29188)
-
-**TrainBridge: Agentic NPU Training Optimization Guided by GPU Compilation Evidence: arXiv NLP**
-TrainBridge extracts optimization intents from GPU execution traces to guide NPU program rewrites and iterates with profiling. It delivers 1.7× average speedup across four workloads (LLM pretraining, image classification, vision-language) and nearly 2.0× across 27 Modded-NanoGPT speedrun records. Source: [arxiv.org](https://arxiv.org/abs/2610.29171)
----
-### Also Today
-**Scaling Therapy Supervision: Assessing Psychotherapy Fidelity Using Large Language Models: arXiv NLP** Evidence-first reasoning improves fidelity estimation and the pipeline distinguishes CBT from non-CBT sessions on an independent RCT while mental-health experts rate the generated feedback actionable. Source: [arxiv.org](https://arxiv.org/abs/2610.28772)
-
-**How to Use Parallel Data for Multilingual Pretraining: arXiv NLP** Parallel pretraining alone does not consistently beat standard pretraining, but a two-stage approach (PPT then SPT) improves both general language understanding and cross-lingual task performance at matched budgets in high- and low-resource settings. Source: [arxiv.org](https://arxiv.org/abs/2610.28838)
-
-**Guilt by Association: Semantic Leakage Drives Associative Gender Bias: arXiv NLP** Semantic leakage persists even without direct attribution to the queried entity and shifts model outputs toward gender stereotypes at similar rates whether the subject engages with the concept or it merely appears in the scene. Source: [arxiv.org](https://arxiv.org/abs/2610.28944)
-
-**Understanding Target Probability Reuse in Speculative Decoding: arXiv NLP** Retaining the target distribution computed at the next round’s complete context enables reranking and first-token sampling rules that improve expected acceptance over draft ranking, especially at small tree budgets, and can decode faster when the extra target pass overlaps drafting. Source: [arxiv.org](https://arxiv.org/abs/2610.29210)
-
-**Beyond Binary Labels: Diagnostic Evaluation of LLM Safety with Prompt-Level Rubrics: arXiv NLP** DiagSafe’s prompt-level rubrics achieve 95.34 % agreement with human annotations and Cohen’s κ = 0.864 inter-judge consistency while revealing model-specific unsafe-rate patterns and greater susceptibility in Chinese and multi-turn contexts. Source: [arxiv.org](https://arxiv.org/abs/2610.29225)
-
-**A Large-Scale Evaluation of Role-Enhanced Zero-Shot Chain-of-Thought Prompting: arXiv NLP** Role-Enhanced Zero-Shot CoT with static or dynamic expert roles improves performance up to 44 points over zero-shot baselines across 20 LLMs and seven benchmarks; unconventional roles degrade results and smaller models reach notable arithmetic proficiency. Source: [arxiv.org](https://arxiv.org/abs/2610.29073)
-
-**GRAFT: Restoring the Missing Sampling Interface in Continuous Diffusion Language Models: arXiv NLP** GRAFT commits rare words while the model is undecided then regenerates, restoring rare-word share from 0.42–0.77× to 0.82–1.10× human rate (34–109 % relative gain) across three ELF scales and LangFlow. Source: [arxiv.org](https://arxiv.org/abs/2610.29136)
-
-**Why is AI-generated language so hard to understand?: arXiv NLP** Frontier models use more inanimate subjects with animate verbs, longer dependencies, stacked nouns, reduced object relatives and low-frequency n-grams than human writing or round-trip translation paraphrases; fine-tuning under a length penalty reproduces the divergence. Source: [arxiv.org](https://arxiv.org/abs/2610.29162)
-
-**Signals and Queries: Token-Efficient Agentic Context Discovery: arXiv NLP** S&amp;Q trains per-policy logistic classifiers on embeddings of activating examples and hard negatives, removing at least 30 % of candidate policies before LLM evaluation while preserving high recall on 9,144 labels covering 254 conversation prefixes and 36 airline policies. Source: [arxiv.org](https://arxiv.org/abs/2610.29326)
-
-**Seeing the Forest for the Trees: Emergent Agreement from Individual Conversations: arXiv NLP** Internal agreement representations vary across turns and do not track external agreement at the single-conversation level, yet aggregate across conversations they couple with external Markov agreement via a power-law mapping. Source: [arxiv.org](https://arxiv.org/abs/2610.29328)
-
-**Right On Q: Recovering Reasoning under Quantization via Self-Generated Trajectories: arXiv NLP** OnQ combines on-policy distillation with candidate-wise Dynamic KL and raises nine-benchmark average for 2-bit and 3-bit Qwen3 models, with largest gains on long-horizon reasoning and fewer truncations. Source: [arxiv.org](https://arxiv.org/abs/2610.29378)
-
-**Beyond Small Talk: Modeling Disclosure Trajectories in Human-AI Conversation: arXiv NLP** TraDE shows responses to matched-depth disclosures differ by preceding trajectory, with models diverging most from human supporters when users step back rather than open up. Source: [arxiv.org](https://arxiv.org/abs/2610.29413)
-
-**DynaWeave: Learning to Adapt through Dynamic Scenario Synthesis: arXiv NLP** DynaWeave turns static tasks into verifiable dynamic scenarios with exogenous events represented as DAGs; supervised fine-tuning on 2,095 trajectories raises task completion on CostBench by 67.34 points and exceeds Gemini-3.1-Pro-Preview on ToolMaze. Source: [arxiv.org](https://arxiv.org/abs/2610.29443)
-
-**Omnilingual-MsASR: Benchmarking Multimodal, Multilingual, Long-Form Multi-Speaker ASR of Omni Large Language Models: arXiv NLP** The benchmark covers six languages, recordings up to 30 minutes and up to 20 speakers; leading omni-modal LLMs post tcpWERs frequently above 100 %, highlighting fine-grained temporal localization and speaker disambiguation as open challenges. Source: [arxiv.org](https://arxiv.org/abs/2610.29455)
-
-**TenetBench: A Clause-Anchored Russian Corpus for Evaluating Language Models against Professional Codes of Ethics: arXiv NLP** Eleven of fourteen model/reasoning-mode combinations produce conflicting content on most requests that breach professional codes, mostly without warning; enabling reasoning halves refusals for two models. Source: [arxiv.org](https://arxiv.org/abs/2610.29477)
-
-**Keeping Time vs. Understanding Time: Neither Alone Explains Temporal Reasoning in LLMs: arXiv NLP** Finetuning on arithmetic- or semantic-labelled subsets yields mostly dataset-specific gains with near-zero transfer inside the same mode; knowledge, not quantitative or logical reasoning, drives benchmark performance. Source: [arxiv.org](https://arxiv.org/abs/2610.29507)
-
-**Mitigating Query Shortcuts in Chain-of-Thought with Context-Aware Decoding: arXiv NLP** Rationale Contrastive Decoding improves answer accuracy over standard CoT on five reasoning benchmarks and increases behavioral dependence on rationale content. Source: [arxiv.org](https://arxiv.org/abs/2610.29518)
-
-**Anthropic Publishes Annual Public Benefit Report: [@AnthropicAI](https://x.com/AnthropicAI)** The report details five pillars and actions taken to advance them. Source: [anthropic.com](https://www.anthropic.com/public-benefit-charter)
-
-**Codex skill to check PHP vulnerability impact: [@OpenAI](https://x.com/OpenAI)** A packaged Codex skill guides users through checking whether sites are affected by recently disclosed PHP flaws. Source: [github.com](https://github.com/openai/php2shell-checker)
-
-**OpenAI models discover critical PHP security flaws: [@OpenAI](https://x.com/OpenAI) (X)** Frontier models found internet-scale PHP vulnerabilities ahead of attackers, enabling a defender’s window for coordinated fixes. Source: [x.com](https://x.com/OpenAI/status/2112907856018309586)
-
-**GPT-Rosalind identifies cholesterol transport clue for Perry syndrome: [@OpenAI](https://x.com/OpenAI) (X)** A multi-agent GPT-Rosalind run linked DCTN1 disruption to cholesterol-transport hypotheses in 32 minutes. Source: [x.com](https://x.com/OpenAI/status/2112899854569762936)
-
-**GDC survey mentions Claude Code but skips Codex: Simon Willison (AI builder) (X)** The August–September survey includes Claude Code but omits Codex. Source: [x.com](https://x.com/simonw/status/2113027536334766440)
-
-**Coding agent revolution started in 2026: Simon Willison (AI builder) (X)** Most developers surveyed in late 2025 had not yet adopted the new coding agents. Source: [x.com](https://x.com/simonw/status/2113021891124572623)
-
-**Don't lean on old 2025 survey lacking Claude Code: Simon Willison (AI builder) (X)** The January 2026 survey was fielded in November 2025 without Claude Code as an option. Source: [x.com](https://x.com/simonw/status/2113021660421091561)
-
-**How Specializing the Vocabulary of SLMs Can Cut Inference Cost by 77% in Real Applications: Hugging Face Blog** Vocabulary specialization yields substantial inference-cost reductions in deployed small language models. Source: [huggingface.co](https://huggingface.co/blog/Dharma-AI/vocabx-vocabulary-specialization)
-
-**ChatGPT Ads expands to 26 new countries as over 100,000 advertisers have used the platform: OpenAI Blog** Local and global advertisers can now reach users inside ChatGPT in 26 additional countries. Source: [openai.com](https://openai.com/index/chatgpt-ads-expands-26-new-countries)
-
-**Dr. Christopher Stubbs Joins Anthropic's Long-Term Benefit Trust: [@AnthropicAI](https://x.com/AnthropicAI)** Experimental physicist and former Harvard Dean of Science Christopher Stubbs joins the Long-Term Benefit Trust. Source: [anthropic.com](https://www.anthropic.com/news/christopher-stubbs-joins-long-term-benefit-trust)
----
-### Under the Hood: Common-Mode Offsets in Preference Optimization
-Preference optimization losses operate on relative differences between chosen and rejected pairs, so any shared directional shift that moves both representations equally produces almost no gradient signal. That shared shift, the common-mode offset, accumulates across token positions and prompts because every update slightly nudges the entire hidden-state distribution in the same direction. Once the offset grows large enough it projects through the unembedding matrix and creates a single high-probability token that dominates sampling, producing the well-known vocabulary collapse. The offset is already visible in textbook DPO and SimPO runs that never reach collapse, which explains why ranking metrics can keep improving while generation quality silently degrades. Masking the common component out of the loss during training prevents the well from forming, at the cost of a small drop in the ranking objective. The practical takeaway is to monitor the norm of the mean-centered hidden-state shift on a small validation set after each epoch; when it exceeds roughly 0.3–0.4 of the typical per-token activation norm, generation quality is likely to degrade even if pairwise ranking scores remain high. Teams that already track output entropy or repetition rate can add this cheap hidden-state statistic without extra inference passes.
----
-### Things to Try This Week
-- Run the released Gemma 4 frozen-encoder code on your own Gulf Arabic audio to measure CPU latency versus a commercial API.
-- Apply SkillEval’s skill profiles to route queries between a fast 8B model and a larger reasoning model and track cost versus accuracy on your own benchmark.
-- Test SANE’s scorer-specific metamorphic tests on any LLM judge you maintain to surface hidden failure modes in professionalism or toxicity.
-- Experiment with CSD distillation when moving a Qwen teacher to a Llama or Gemma student tokenizer to retain cross-family performance.
-- Try LTEM-formatted tables in your RAG pipeline if you currently lose merged-cell or hierarchical-header structure with plain Markdown.
----
-### On the Horizon
-- Continued releases of scoped instruction-following benchmarks that separate main-task performance from constraint adherence.
-- Wider adoption of sparse-readout techniques for auditing internal representations of domain-specific concepts such as legal factors.
-- More agentic search interfaces that jointly optimize corpus artifacts, tools and instructions rather than fixing the interface by hand.
-- Growing use of preregistered numeric-value benchmarks for low-resource languages to test factual grounding and temporal consistency.
-</itunes:summary>
-      <itunes:episode>211</itunes:episode>
-      <itunes:title>Ep 211: Frozen Gemma 4 encoders match commercial Arabic ASR on character error while running 3.4×…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep211_20261022_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep211.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
