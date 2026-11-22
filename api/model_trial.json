@@ -1,7 +1,7 @@
 {
-  "generated": "2026-11-21T22:05:40Z",
-  "since": "2026-11-07",
-  "baseline_start": "2026-10-24",
+  "generated": "2026-11-22T22:18:31Z",
+  "since": "2026-11-08",
+  "baseline_start": "2026-10-25",
   "timeout_s": 600.0,
   "p95_timeout_share_limit": 0.5,
   "max_p95_regression_pct": 50.0,
@@ -30,27 +30,27 @@
         },
         "generate_digest": {
           "n": 16,
-          "p50": 74.03,
+          "p50": 74.39,
           "p95": 310.87,
           "max": 370.14,
           "failures": 0,
-          "baseline_p95": 128.62,
+          "baseline_p95": 100.18,
           "p95_timeout_share": 0.518,
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 7,
-          "p50": 60.7,
-          "p95": 98.81,
-          "max": 98.81,
+          "n": 6,
+          "p50": 52.61,
+          "p95": 73.82,
+          "max": 73.82,
           "failures": 0,
-          "baseline_p95": 66.94,
-          "p95_timeout_share": 0.165,
+          "baseline_p95": 98.81,
+          "p95_timeout_share": 0.123,
           "llm_stage": true
         },
         "generate_podcast_script": {
           "n": 16,
-          "p50": 368.14,
+          "p50": 364.23,
           "p95": 737.62,
           "max": 775.43,
           "failures": 0,
@@ -92,7 +92,7 @@
       "episodes": 16,
       "fallbacks": 0,
       "gate_failures": [
-        "spacex/generate_digest: p95 311s is +142% against a 129s baseline (limit +50%)",
+        "spacex/generate_digest: p95 311s is +210% against a 100s baseline (limit +50%)",
         "spacex/generate_digest: p95 311s is 52% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
         "spacex/generate_podcast_script: p95 738s is 123% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
       ]
@@ -101,7 +101,7 @@
       "stages": {
         "fetch_and_dedup": {
           "n": 15,
-          "p50": 58.51,
+          "p50": 55.49,
           "p95": 85.57,
           "max": 96.9,
           "failures": 0,
@@ -120,12 +120,12 @@
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 7,
-          "p50": 131.17,
+          "n": 6,
+          "p50": 118.11,
           "p95": 196.51,
           "max": 196.51,
           "failures": 0,
-          "baseline_p95": 147.29,
+          "baseline_p95": 183.14,
           "p95_timeout_share": 0.328,
           "llm_stage": true
         },
@@ -135,13 +135,13 @@
           "p95": 466.16,
           "max": 644.46,
           "failures": 0,
-          "baseline_p95": 474.36,
+          "baseline_p95": 448.76,
           "p95_timeout_share": 0.777,
           "llm_stage": true
         },
         "grok_leads": {
           "n": 15,
-          "p50": 74.46,
+          "p50": 75.92,
           "p95": 123.28,
           "max": 158.39,
           "failures": 0,
@@ -162,7 +162,7 @@
         "source_integrity_gate": {
           "n": 15,
           "p50": 0.01,
-          "p95": 0.52,
+          "p95": 0.58,
           "max": 1.16,
           "failures": 0,
           "baseline_p95": 0.44,
@@ -180,7 +180,7 @@
       "stages": {
         "fetch_and_dedup": {
           "n": 15,
-          "p50": 54.62,
+          "p50": 54.39,
           "p95": 74.17,
           "max": 89.2,
           "failures": 0,
@@ -190,7 +190,7 @@
         },
         "generate_digest": {
           "n": 15,
-          "p50": 68.21,
+          "p50": 71.95,
           "p95": 203.81,
           "max": 297.6,
           "failures": 0,
@@ -204,18 +204,18 @@
           "p95": 121.2,
           "max": 121.2,
           "failures": 0,
-          "baseline_p95": 94.14,
+          "baseline_p95": null,
           "p95_timeout_share": 0.202,
           "llm_stage": true
         },
         "generate_podcast_script": {
           "n": 15,
           "p50": 280.44,
-          "p95": 373.73,
+          "p95": 375.95,
           "max": 570.31,
           "failures": 0,
           "baseline_p95": 440.99,
-          "p95_timeout_share": 0.623,
+          "p95_timeout_share": 0.627,
           "llm_stage": true
         },
         "grok_leads": {
@@ -231,7 +231,7 @@
         "source_integrity_flag": {
           "n": 15,
           "p50": 0.0,
-          "p95": 0.0,
+          "p95": 0.04,
           "max": 0.28,
           "failures": 0,
           "baseline_p95": 0.0,
@@ -241,25 +241,25 @@
         "source_integrity_gate": {
           "n": 15,
           "p50": 0.05,
-          "p95": 0.36,
-          "max": 1.64,
+          "p95": 0.23,
+          "max": 0.36,
           "failures": 0,
           "baseline_p95": 0.14,
-          "p95_timeout_share": 0.001,
+          "p95_timeout_share": 0.0,
           "llm_stage": false
         }
       },
       "episodes": 15,
       "fallbacks": 0,
       "gate_failures": [
-        "models_agents/generate_podcast_script: p95 374s is 62% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
+        "models_agents/generate_podcast_script: p95 376s is 63% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
       ]
     },
     "modern_investing": {
       "stages": {
         "fetch_and_dedup": {
           "n": 15,
-          "p50": 72.58,
+          "p50": 81.9,
           "p95": 118.63,
           "max": 129.66,
           "failures": 0,
@@ -278,7 +278,7 @@
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 8,
+          "n": 9,
           "p50": 99.47,
           "p95": 144.87,
           "max": 144.87,
@@ -289,7 +289,7 @@
         },
         "generate_podcast_script": {
           "n": 15,
-          "p50": 229.43,
+          "p50": 220.77,
           "p95": 287.76,
           "max": 411.06,
           "failures": 0,
@@ -336,7 +336,7 @@
         },
         "generate_digest": {
           "n": 15,
-          "p50": 84.93,
+          "p50": 85.72,
           "p95": 167.3,
           "max": 176.02,
           "failures": 0,
@@ -345,7 +345,7 @@
           "llm_stage": true
         },
         "generate_digest_retry": {
-          "n": 6,
+          "n": 5,
           "p50": 116.91,
           "p95": 189.96,
           "max": 189.96,
@@ -366,7 +366,7 @@
         },
         "generate_podcast_script": {
           "n": 15,
-          "p50": 296.94,
+          "p50": 304.07,
           "p95": 431.02,
           "max": 451.77,
           "failures": 0,
@@ -377,8 +377,8 @@
         "source_integrity_flag": {
           "n": 15,
           "p50": 0.0,
-          "p95": 0.01,
-          "max": 0.14,
+          "p95": 0.14,
+          "max": 1.18,
           "failures": 0,
           "baseline_p95": 0.01,
           "p95_timeout_share": 0.0,
@@ -416,30 +416,30 @@
         "generate_digest": {
           "n": 15,
           "p50": 62.38,
-          "p95": 127.23,
-          "max": 138.12,
+          "p95": 95.86,
+          "max": 127.23,
           "failures": 0,
           "baseline_p95": 150.51,
-          "p95_timeout_share": 0.212,
+          "p95_timeout_share": 0.16,
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
           "n": 11,
-          "p50": 71.76,
-          "p95": 105.2,
+          "p50": 67.39,
+          "p95": 98.06,
           "max": 122.53,
           "failures": 0,
-          "baseline_p95": 58.81,
-          "p95_timeout_share": 0.175,
+          "baseline_p95": 105.2,
+          "p95_timeout_share": 0.163,
           "llm_stage": true
         },
         "generate_podcast_script": {
           "n": 15,
-          "p50": 192.12,
+          "p50": 184.05,
           "p95": 240.62,
           "max": 242.34,
           "failures": 0,
-          "baseline_p95": 277.91,
+          "baseline_p95": 273.89,
           "p95_timeout_share": 0.401,
           "llm_stage": true
         },
@@ -455,20 +455,18 @@
         },
         "source_integrity_gate": {
           "n": 15,
-          "p50": 0.03,
+          "p50": 0.02,
           "p95": 0.31,
           "max": 3.07,
           "failures": 0,
-          "baseline_p95": 0.21,
+          "baseline_p95": 0.07,
           "p95_timeout_share": 0.001,
           "llm_stage": false
         }
       },
       "episodes": 15,
       "fallbacks": 0,
-      "gate_failures": [
-        "planetterrian/generate_digest_structural_retry: p95 105s is +79% against a 59s baseline (limit +50%)"
-      ]
+      "gate_failures": []
     }
   },
   "consumers": [
@@ -477,13 +475,12 @@
   ],
   "any_trial_data": true,
   "failures": [
-    "spacex/generate_digest: p95 311s is +142% against a 129s baseline (limit +50%)",
+    "spacex/generate_digest: p95 311s is +210% against a 100s baseline (limit +50%)",
     "spacex/generate_digest: p95 311s is 52% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
     "spacex/generate_podcast_script: p95 738s is 123% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
     "tesla/generate_podcast_script: p95 466s is 78% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
-    "models_agents/generate_podcast_script: p95 374s is 62% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
-    "fascinating_frontiers/generate_podcast_script: p95 431s is 72% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
-    "planetterrian/generate_digest_structural_retry: p95 105s is +79% against a 59s baseline (limit +50%)"
+    "models_agents/generate_podcast_script: p95 376s is 63% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
+    "fascinating_frontiers/generate_podcast_script: p95 431s is 72% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
   ],
   "gate": "FAIL"
 }
