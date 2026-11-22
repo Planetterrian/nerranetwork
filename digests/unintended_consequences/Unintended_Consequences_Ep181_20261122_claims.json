@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 3,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://documents1.worldbank.org/curated/en/328231630472598389/pdf/Technical-Report-Improving-Governance-of-Indonesias-Peatlands-and-Other-Lowland-Ecosystems.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "empty or non-text body",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://link.springer.com/article/10.1007/s11273-017-9544-0",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\b(?:researchers|scientists|analysts|officials) (?:found|noted|estimated|documented)\\b",
+        "match": "officials noted",
+        "sentence": "Some local officials noted that the policy preserved space for both conservation and continued cultivation within the same hydrological unit."
+      },
+      {
+        "pattern": "(?i)\\bmost accounts\\b",
+        "match": "most accounts",
+        "sentence": "By most accounts the two-million-hectare restoration target for 2020 was not fully met."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 1,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "After the 2015 fires burned 2.6 million hectares across Indonesia, with one-third on peat, the government created the Peatland Restoration Agency, known as BRG",
+      "The 2017 study in Wetlands Ecology and Management recorded 28 percent encroachment of plantations onto protected peat despite the three-meter rule.",
+      "Some local officials noted that the policy preserved space for both conservation and continued cultivation within the same hydrological unit.",
+      "By most accounts the two-million-hectare restoration target for 2020 was not fully met."
+    ],
+    "flagged_count": 4,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "After the 2015 fires burned 2.6 million hectares across Indonesia, with one-third on peat, the government created the Peatland Restoration Agency (BRG).",
+      "episode_span": "After the 2015 fires burned 2.6 million hectares across Indonesia, with one-third on peat, the government created the Peatland Restoration Agency, known as BRG",
+      "source_url": "https://documents1.worldbank.org/curated/en/328231630472598389/pdf/Technical-Report-Improving-Governance-of-Indonesias-Peatlands-and-Other-Lowland-Ecosystems.pdf",
+      "source_title": "Technical Report: Improving Governance of Indonesia’s Peatlands and Other Lowland Ecosystems",
+      "supporting_quote": "2015 fires (2.6M ha burned, 33% peat)",
+      "confidence": "high",
+      "status": "unverified_unreachable",
+      "status_reason": "empty or non-text body"
+    },
+    {
+      "id": "2",
+      "claim": "The peatland agency’s indicative maps show roughly 2 million hectares of peat domes, about half already planted.",
+      "episode_span": "Early maps showed roughly two million hectares of domes, and roughly half remained unplanted",
+      "source_url": "https://news.mongabay.com/2016/08/indonesias-peat-restoration-chief-calls-for-protection-of-all-peat-domes/",
+      "supporting_quote": "About half have already been planted by agribusinesses and farmers.",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "3",
+      "claim": "The 2017 study in Wetlands Ecology and Management recorded 28 percent encroachment of plantations onto protected peat despite the three-meter rule.",
+      "episode_span": "The 2017 study in Wetlands Ecology and Management recorded 28 percent encroachment of plantations onto protected peat despite the three-meter rule.",
+      "source_url": "https://link.springer.com/article/10.1007/s11273-017-9544-0",
+      "source_title": "Towards sustainable management of Indonesian tropical peatlands",
+      "supporting_quote": "28% encroachment of oil palm/plantations on protected peat areas",
+      "confidence": "high",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "u1",
+      "claim": "Some local officials noted that the policy preserved space for both conservation and continued cultivation within the same hydrological unit.",
+      "episode_span": "Some local officials noted that the policy preserved space for both conservation and continued cultivation within the same hydrological unit.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'officials noted' with no covering verified claim"
+    },
+    {
+      "id": "u2",
+      "claim": "By most accounts the two-million-hectare restoration target for 2020 was not fully met.",
+      "episode_span": "By most accounts the two-million-hectare restoration target for 2020 was not fully met.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'most accounts' with no covering verified claim"
+    }
+  ]
+}
