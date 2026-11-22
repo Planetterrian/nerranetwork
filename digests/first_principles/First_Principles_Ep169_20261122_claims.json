@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 2,
+    "claims_anchored": 2,
+    "claims_verified": 0,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://emp.lbl.gov/sites/default/files/2024-09/tracking_the_sun_2024_report.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "HTTP 404",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.nrel.gov/docs/fy24osti/90409.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "fetch failed: HTTPSConnectionPool(host='www.nrel.gov', port=443): Max retries exceeded with url: /docs/fy24osti/90409.pdf (Caused by NameResolutionError(\"HTTPSConnection(host='www.nrel.gov', port=443): Failed to resolve 'www.nrel.gov' ([Errno -5] No address associated with hostname)\"))",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "A typical American household pays about $2.53 per watt to install a rooftop solar system. In Australia the same hardware and installation run closer to $0.82 per watt.",
+      "The November 2024 NREL performance review reports that projects using SolarAPP+ finish permitting and inspection 14.5 business days faster than traditional routes"
+    ],
+    "flagged_count": 2,
+    "verified_count": 0
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "US residential rooftop solar costs average roughly $2.53 per watt while Australian systems cost $0.82 per watt.",
+      "episode_span": "A typical American household pays about $2.53 per watt to install a rooftop solar system. In Australia the same hardware and installation run closer to $0.82 per watt.",
+      "source_url": "https://emp.lbl.gov/sites/default/files/2024-09/tracking_the_sun_2024_report.pdf",
+      "supporting_quote": "median installed price of $2.53 per watt for residential systems",
+      "status": "unverified_not_found",
+      "status_reason": "HTTP 404"
+    },
+    {
+      "id": "2",
+      "claim": "SolarAPP+ projects finish permitting and inspection 14.5 business days faster than traditional processes.",
+      "episode_span": "The November 2024 NREL performance review reports that projects using SolarAPP+ finish permitting and inspection 14.5 business days faster than traditional routes",
+      "source_url": "https://www.nrel.gov/docs/fy24osti/90409.pdf",
+      "supporting_quote": "SolarAPP+ reduced permitting and inspection time by 14.5 business days",
+      "status": "unverified_unreachable",
+      "status_reason": "fetch failed: HTTPSConnectionPool(host='www.nrel.gov', port=443): Max retries exceeded with url: /docs/fy24osti/90409.pdf (Caused by NameResolutionError(\"HTTPSConnection(host='www.nrel.gov', port=443): Failed to resolve 'www.nrel.gov' ([Errno -5] No address associated with hostname)\"))"
+    }
+  ]
+}
