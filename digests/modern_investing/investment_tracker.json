@@ -6,7 +6,7 @@
     "position_size": 1000,
     "currency": "USD",
     "created": "2026-03-16",
-    "last_updated": "2026-11-21",
+    "last_updated": "2026-11-23",
     "inception_date": "2026-03-16",
     "benchmark_symbol": "^IXIC",
     "nasdaq_inception_close": 22374.18,
@@ -4633,7 +4633,8 @@
         "sp500": 1.88,
         "tsx": 0.19
       },
-      "reviewed_in_episode": 232
+      "reviewed_in_episode": 232,
+      "callback_in_episode": 240
     },
     {
       "episode_num": 227,
@@ -4880,7 +4881,8 @@
         "nasdaq": -9.0,
         "sp500": -8.03,
         "tsx": -7.84
-      }
+      },
+      "reviewed_in_episode": 240
     },
     {
       "episode_num": 233,
@@ -5124,13 +5126,47 @@
       "resolved_symbol": "FTS.TO",
       "pick_reference_price": 84.87,
       "current_price": 84.87
+    },
+    {
+      "episode_num": 240,
+      "date": "2026-11-23",
+      "symbol": "AMAT",
+      "market": "NASDAQ",
+      "strategy": "Earnings surprise entry after beat and guidance that aligns with sector rotation signals",
+      "confidence": "Medium",
+      "target_range": "+3% to +7% over the five-session window if volume supports follow-through and the broader market stabilizes",
+      "invalidation": "Price closes below the 50-day moving average on any of the next five sessions",
+      "structure": "long_equity",
+      "sector": "tech",
+      "strategy_family": "earnings_surprise",
+      "trade_type": "weekly",
+      "policy_version": 2,
+      "horizon_sessions": 5,
+      "status": "open",
+      "entry_price": null,
+      "exit_price": null,
+      "pnl_pct": null,
+      "pnl_dollars": null,
+      "lesson": "",
+      "stop_loss": {
+        "pct": 8.0
+      },
+      "rules_in_effect": [
+        "LL-068",
+        "LL-067",
+        "LL-066",
+        "LL-002",
+        "LL-041"
+      ],
+      "resolved_symbol": "AMAT",
+      "pick_reference_price": 302.63
     }
   ],
   "benchmark": {
     "current_close": 22617.73,
     "inception_to_date_pct": 1.09,
     "ytd_pct": -2.66,
-    "last_updated": "2026-11-22"
+    "last_updated": "2026-11-23"
   },
   "alpha": {
     "inception_to_date_pct": -1.82,
@@ -5138,11 +5174,6 @@
     "monthly": {}
   },
   "sectors": {
-    "tech": {
-      "trade_count": 2,
-      "exposure_pct": 20.0,
-      "cumulative_pnl": 128.16
-    },
     "financials": {
       "trade_count": 3,
       "exposure_pct": 30.0,
@@ -5162,6 +5193,11 @@
       "trade_count": 2,
       "exposure_pct": 20.0,
       "cumulative_pnl": -10.57
+    },
+    "tech": {
+      "trade_count": 2,
+      "exposure_pct": 20.0,
+      "cumulative_pnl": 0.0
     }
   },
   "monthly_snapshots": [
@@ -5252,7 +5288,6 @@
     }
   ],
   "used_segment_ids": [
-    "mit_profile_cathie_wood",
     "mit_risk_management",
     "mit_history_market_crashes",
     "mit_contrarian_passive_vs_active",
@@ -5311,6 +5346,7 @@
     "mit_etf_strategies",
     "mit_technical_analysis",
     "mit_options_basics",
-    "mit_sector_rotation"
+    "mit_sector_rotation",
+    "mit_dividend_investing"
   ]
 }
