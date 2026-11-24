@@ -4659,6 +4659,10 @@ async function handleUploadDone(req: Request, env: Env): Promise<Response> {
     manifest: manifestKey, sid, started_at: manifest.started_at,
     duration_ms: manifest.duration_ms, chunks: keys.length, missing: missing.length,
     ...(kind === "video" ? { mime: manifest.mime, bytes } : {}),
+    // Nov 24 2026: how the page left the call (an End press or a drop); the
+    // room's own trace says only "disconnected". A closed vocabulary.
+    ...(body?.ended_by === "guest_end" || body?.ended_by === "dropped"
+      ? { ended_by: body.ended_by } : {}),
   };
   await appendTake(env, runId, kind === "video" ? "local_video_takes" : "local_takes",
                    gate.role, take);
