@@ -2135,6 +2135,22 @@ def _collect_dp_dispatches(limit: int = 9) -> list:
     return dispatches
 
 
+def _email_pick_shows() -> list[dict]:
+    """``[{slug, name, newsletter_tag}]`` for every show a reader can follow
+    in the Nerra Daily email, in the registry's order. Empty on any failure:
+    the form still works without its picker."""
+    try:
+        from engine.nerra_daily_email import email_show_tags
+
+        return [
+            {"slug": slug, "name": NETWORK_SHOWS[slug]["name"], "newsletter_tag": tag}
+            for slug, tag in email_show_tags().items() if slug in NETWORK_SHOWS
+        ]
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: email show picker unavailable: {exc}")
+        return []
+
+
 def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:
     """Return the Buttondown tag for a show.
 
@@ -3721,6 +3737,10 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # One-field Soft Personal hero form on the pages YouTube actually
         # lands on (Sep 2026 capture pass). Closed set — not every show.
         "soft_personal_hero": slug in SOFT_PERSONAL_HERO_SLUGS,
+        # Nov 24 2026: the shows the email can carry (engine.nerra_daily_email
+        # owns the set: public English sections), for the picker in Nerra
+        # Daily's hero form. A gated or Russian show is never offered there.
+        "email_pick_shows": _email_pick_shows() if slug == "nerra_daily" else [],
         # The strand this show belongs to ("mira" today). Drives the
         # "Hosted by Mira" band and the link to her hub, so the three shows
         # cross-reference each other instead of each being a dead end.
