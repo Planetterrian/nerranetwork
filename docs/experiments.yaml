@@ -8141,3 +8141,27 @@ experiments:
       (the Nov 14 instrument has never run: the Reporting API is off in the
       Google Cloud project). Guards tests/test_long_form_skip_map_2026_11_24.py,
       tests/test_youtube_growth_2026_11_24.py.
+  - id: market-review-2026-11-24
+    title: "The on-air outro rotation asks for the Nerra Daily email"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-22
+    status: reading
+    baseline: >
+      Nov 24: 5 email subscribers (one unsubscribe in the week), 16,113
+      downloads in 30 days, 7 show-note click sessions in 28 days. None of the
+      13 outro-rotation surfaces asked for the email.
+    target: >
+      At least 25 subscribers by the readout, with a signup within 48 h of at
+      least half of the flagship airings of the email surface.
+    criteria: >
+      HIT at 25 or more subscribers and the 48 h pattern on half the flagship
+      airings; MISS at 10 or fewer; else INCONCLUSIVE.
+    readout_plan: >
+      api/buttondown_history.json subscriber rows by night; the closing_block
+      surface id per episode (engine.network_promo.pick_featured_surface for
+      each flagship date); Buttondown subscriber dates against airing dates.
+    notes: >
+      engine/network_promo.py email surface, FLAGSHIP_SURFACE_WEIGHTS email 2.
+      Review docs/reviews/market_review_2026_11_24.md; guards
+      tests/test_market_review_2026_11_24.py. ⚠️ AUDIO: one listen first.
