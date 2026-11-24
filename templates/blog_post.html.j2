@@ -459,6 +459,37 @@
                 </a>
                 {% endif %}
             </div>
+            {#- Follow + share, in the hero (Nov 24 2026). A post is where a
+                search result or a shared link lands; on a phone it linked no
+                podcast app anywhere and the share row sat under the whole
+                article. The share button uses the phone's own share sheet and
+                is shown only where the browser has one; the URL it hands on
+                is engine.funnel's (share_urls), like the row below. -#}
+            {% if follow_links and not _is_ru %}
+            <div class="blog-follow-row">
+                <span class="blog-follow-label">Follow {{ show_name }}</span>
+                {% for f in follow_links %}
+                <a class="blog-follow-chip" data-follow="{{ f.kind }}" data-show="{{ show_slug }}"
+                   href="{% if f.kind == 'rss' %}{{ path_prefix }}{{ f.url }}{% elif f.kind == 'youtube' %}{{ f.url }}{% else %}{{ f.url | with_utm(campaign=show_slug, medium='blog') }}{% endif %}"
+                   {% if f.kind != 'rss' %}target="_blank" rel="noopener"{% endif %}>{{ f.label }}</a>
+                {% endfor %}
+                <button type="button" class="blog-follow-chip blog-share-native" hidden
+                        data-share-url="{{ share_urls.native | default(canonical_url, true) }}"
+                        data-share-title="{{ episode_title | e }}">Share</button>
+            </div>
+            <script>
+            (function () {
+                var b = document.querySelector('.blog-share-native');
+                if (!b || !navigator.share) return;
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    navigator.share({ title: b.getAttribute('data-share-title'), url: b.getAttribute('data-share-url') })
+                        .then(function () { if (typeof window.gtag === 'function') window.gtag('event', 'share', { method: 'native', content_type: 'episode' }); })
+                        .catch(function () {});
+                });
+            })();
+            </script>
+            {% endif %}
         </div>
     </header>
     {% endif %}

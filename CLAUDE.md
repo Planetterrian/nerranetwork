@@ -1239,7 +1239,12 @@ RU reach is a Studio read, not a pipeline fix. A sub-10 s chapter is dropped (th
 ### The hook Short skips the map (Oct 30 2026)
 
 [history](docs/claude_md_history/2026_10_30_hook_short_skips.md); register `shorts-skip-map-2026-10-30`; guards `tests/test_short_skips_map_2026_10_30.py`.
-**The hook Short renders from a spliced source** (`engine/short_furniture.py`; any failure renders as before; `youtube.shorts_skip_map`). **The episode, its feed audio and its long-form keep the map.**
+**The hook Short renders from a spliced source** (`engine/short_furniture.py`; any failure renders as before; `youtube.shorts_skip_map`). **The episode and its feed audio keep the map.**
+
+### The long-form opens on the story (Nov 24 2026)
+
+[review](docs/reviews/youtube_growth_review_2026_11_24.md); register `long-form-skip-map-2026-11-24`; guards `tests/test_{long_form_skip_map,youtube_growth}_2026_11_24.py`.
+**`youtube.long_form_skip_map: ab` cuts the map from the EN long-form on ODD episodes**; the whole YouTube stage reads ONE spliced timeline. **Evergreen b-roll never opens a long-form.** Readout `api/youtube_growth.json`.
 
 ### The long-form follows the audio; X gets a clean clip; reach is read (Nov 8, 14 2026)
 

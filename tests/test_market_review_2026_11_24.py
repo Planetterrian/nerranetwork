@@ -53,3 +53,37 @@ def test_the_spoken_line_makes_no_promise_the_brand_rules_ban():
     spoken = _email()["spoken"].lower()
     for banned in ("ad-free", "ad free", "no ads", "no spam"):
         assert banned not in spoken
+
+
+# --- Analytics on by default outside the opt-in regions (operator decision,
+# Nov 24 2026). Ad measurement stays opt-in everywhere.
+
+import shutil  # noqa: E402
+
+import pytest  # noqa: E402
+
+_OPT_IN = {"GB", "CH", "CA-QC", "FR", "DE", "IE", "NO", "IS", "LI"}
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
+def test_analytics_waits_only_in_the_opt_in_regions():
+    from tests.test_consent_mode_v2_advanced_2026_10_16 import _run
+
+    defaults = _run()["defaults"]
+    regional = [d for d in defaults if d.get("region")]
+    global_ = [d for d in defaults if not d.get("region")]
+    assert len(regional) == 1 and len(global_) == 1
+    assert _OPT_IN <= set(regional[0]["region"])
+    assert "US" not in regional[0]["region"] and "CA" not in regional[0]["region"]
+    assert regional[0]["analytics_storage"] == "denied"
+    assert global_[0]["analytics_storage"] == "granted"
+    for d in defaults:
+        assert d["ad_storage"] == d["ad_user_data"] == d["ad_personalization"] == "denied"
+
+
+def test_the_banner_and_the_policy_say_where_analytics_waits():
+    js = (ROOT / "assets" / "js" / "consent.js").read_text(encoding="utf-8")
+    policy = (ROOT / "templates" / "privacy_policy.html.j2").read_text(encoding="utf-8")
+    assert "Everywhere else, Analytics is on until you turn" in js
+    assert "denied by default in the EU, the UK, Switzerland and Quebec" in policy
+    assert "Advertising storage is <strong>denied by default everywhere" in policy

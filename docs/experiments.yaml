@@ -8063,37 +8063,49 @@ experiments:
       (critical_rate_rise, contract_page_shows), review_snapshot "Must-haves
       and audit trend". No prompt or audio change. Guards
       tests/test_review_loop_automation_2026_11_24.py.
-  - id: review-apply-and-slate-2026-11-24
-    title: "The review agent applies and rehearses its own show's changes; one weekly slate merges records and lists the rest by tier"
-    area: quality
+  - id: web-signup-path-2026-11-24
+    title: "Show pages, episode posts and the Nerra Daily page put play, follow and the email form on a phone's first screen"
+    area: growth
     shipped: 2026-11-24
-    readout: 2026-12-11
+    readout: 2026-12-22
     status: reading
     baseline: >
-      Nov 24: nine review PRs (#1694-#1730) merged as records only; every
-      proposal lived in a PR body, so no merge changed a show, and none of the
-      nine ran CI (opened with GITHUB_TOKEN, action_required).
+      Nov 24, measured at 390x844 on the committed pages: on every show page
+      the play and follow buttons sat on screen two (1.3 screens down on
+      tesla.html); nerra-daily.html, the address the email is asked for at,
+      had its form 2.1 screens down; an episode post linked no podcast app on
+      a phone and its share row sat under the article; the front page's and
+      the show pages' sign-up bands never showed their confirmation or error
+      sentence (the status line is the form's sibling and the script looked
+      only inside the form). api/ga4_stats.json fetched Nov 24: 13
+      subscribe_click, 31 episode_play and no sign-up conversion in the
+      window, with analytics consent denied by default (an undercount of
+      unknown size).
     target: >
-      Of the review PRs opened Nov 26 - Dec 11, at least half carry an
-      applied change with a dispatched rehearsal; every tier-A PR is merged
-      by the slate within a week; no tier-B or tier-C PR is merged by the
-      slate; with REVIEW_PR_TOKEN set, review PRs run Run Tests.
+      Over the 28 days from the merge: subscribe_click events at least
+      double the 13 of the window before, at flat or lower sessions; at
+      least one newsletter_signup or soft_personal_interest_submit with
+      page_path /nerra-daily.html in every week the on-air email line airs.
     criteria: >
-      HIT when all hold. MISS when most applied counts are zero because Grok's
-      old text does not match the file (fix the contract, never loosen the
-      exact-once rule), or the slate merges anything outside docs/reviews/.
+      HIT when both hold. INCONCLUSIVE, with the confound named, if the
+      analytics consent default changes inside the window (the market-research
+      PR of Nov 24 does exactly that): then read the Buttondown subscriber
+      count by src-* tag instead of GA4 rates. MISS when sessions on these
+      pages rose and neither number moved.
     readout_plan: >
-      The ledgers' proposed_changes_in_pr status counts for entries dated
-      Nov 26 - Dec 11; the "Rehearse the applied changes" step logs; the
-      review-slate issue and the Weekly Review Slate runs' summaries.
+      api/ga4_stats.json site_events by page for subscribe_click,
+      newsletter_signup, soft_personal_interest_submit and share (added to
+      ENGAGEMENT_EVENTS in this pass); api/buttondown_history.json for the
+      subscriber count.
     notes: >
-      scripts/review_changes.py (allowlist, apply_change, tier_for_paths),
-      scripts/run_show_review.py (--no-apply, .review_result.json),
-      show-review.yml (REVIEW_PR_TOKEN, rehearsal dispatch),
-      scripts/review_slate.py + review-slate.yml. Prompt changes reach a show
-      only after the operator's listen (landmine #17). Guards
-      tests/test_review_apply_and_slate_2026_11_24.py.
-
+      templates/show_page.html.j2 (hero order on a phone is CSS in
+      styles/main.css; the description clamps only when the script runs;
+      Listen Now starts the latest episode), _macros.html.j2
+      hero_email_signup (list member, optional show picker), blog_post.html.j2
+      follow row (engine.blog.show_follow_links: empty for a gated show or a
+      show with no feed) and the phone share sheet,
+      assets/js/footer-subscribe.js statusEl. Email fields are 16px (iOS zooms
+      the page below that). Guards tests/test_web_signup_path_2026_11_24.py.
   - id: pipeline-hardening-2026-11-24
     title: "Pipeline hardening: the audit on an exact clock, Offshore North searches its week, alarms that only fire on a real fault"
     area: reliability
@@ -8144,6 +8156,84 @@ experiments:
       Offshore North more source material; no prompt or audio setting
       changed. Guards tests/test_pipeline_hardening_2026_11_24.py and the
       five test files dated 2026_11_24 beside it.
+  - id: review-apply-and-slate-2026-11-24
+    title: "The review agent applies and rehearses its own show's changes; one weekly slate merges records and lists the rest by tier"
+    area: quality
+    shipped: 2026-11-24
+    readout: 2026-12-11
+    status: reading
+    baseline: >
+      Nov 24: nine review PRs (#1694-#1730) merged as records only; every
+      proposal lived in a PR body, so no merge changed a show, and none of the
+      nine ran CI (opened with GITHUB_TOKEN, action_required).
+    target: >
+      Of the review PRs opened Nov 26 - Dec 11, at least half carry an
+      applied change with a dispatched rehearsal; every tier-A PR is merged
+      by the slate within a week; no tier-B or tier-C PR is merged by the
+      slate; with REVIEW_PR_TOKEN set, review PRs run Run Tests.
+    criteria: >
+      HIT when all hold. MISS when most applied counts are zero because Grok's
+      old text does not match the file (fix the contract, never loosen the
+      exact-once rule), or the slate merges anything outside docs/reviews/.
+    readout_plan: >
+      The ledgers' proposed_changes_in_pr status counts for entries dated
+      Nov 26 - Dec 11; the "Rehearse the applied changes" step logs; the
+      review-slate issue and the Weekly Review Slate runs' summaries.
+    notes: >
+      scripts/review_changes.py (allowlist, apply_change, tier_for_paths),
+      scripts/run_show_review.py (--no-apply, .review_result.json),
+      show-review.yml (REVIEW_PR_TOKEN, rehearsal dispatch),
+      scripts/review_slate.py + review-slate.yml. Prompt changes reach a show
+      only after the operator's listen (landmine #17). Guards
+      tests/test_review_apply_and_slate_2026_11_24.py.
+  - id: long-form-skip-map-2026-11-24
+    title: "The EN long-form opens on the story: the map sentence is cut from the YouTube render on odd episode numbers (A/B)"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-15
+    status: reading
+    baseline: >
+      Median of 141 EN long-form retention curves published Sep 16 - Nov 21:
+      0.85 of viewers at 10 s, 0.63 at 20 s, 0.47 at 30 s, 0.29 at 60 s;
+      average view duration 70-80 s on 9-10 minute videos. The Nov 8 "Coming
+      up" card and subscribe pill did not move it (0.46 at 30 s before, 0.48
+      after). Seconds 8-22 are the identity line and the map. The hook Short
+      lost 2.5 s of average view duration to the same sentence (Oct 30).
+    target: >
+      Long-forms rendered without the map hold at least 4 points more of
+      their audience at 30 s than those with it, read on the retention curve,
+      with average view duration at age 7 no lower.
+    criteria: >
+      HIT when api/youtube_growth.json long_form_map_ab.verdict is cut_ahead
+      (at least 20 curves in each arm and the cut arm 0.04 or more ahead at
+      30 s) and the cut arm's median_avd_s is not below the kept arm's; then
+      set youtube.long_form_skip_map to "on". MISS when verdict is
+      kept_ahead: set it "off". No difference: "off", the map is not the
+      leak. INCONCLUSIVE under 20 curves an arm by the readout (extend two
+      weeks; about 12 mapped EN long-forms publish a day).
+    readout_plan: >
+      api/youtube_growth.json long_form_map_ab (arms.map_cut / arms.map_kept:
+      n, curves, retention_30s, retention_60s, median_avd_s,
+      subs_per_1000_views), written nightly by scripts/build_youtube_growth.py.
+      The arm is the long-form's `variant` in digests/<show>/youtube_videos.json
+      and the metric long_form_map_arm; only episodes that HAVE a map are in
+      either arm. Both arms publish the same days on the same shows (episode
+      parity), so a distribution swing hits both.
+    notes: >
+      engine/short_furniture.py (long_form_map_arm, spliced_long_source,
+      shift_chapters), run_show._long_form_source: in the cut arm the whole
+      YouTube stage reads one spliced timeline, so captions, scene cuts, fact
+      cards and the description's chapters move with it, the "Coming up" card
+      is left out, and the Apple video item omits the audio's chapters and
+      transcript (map_cut_s on the track). The episode, its feed audio and its
+      podcast chapters keep the map. Same pass: evergreen b-roll never opens
+      a long-form (SpaceX Daily spent its first 7 s on a stock NASA launch
+      clip on every episode since August; read spacex retention at 5 s and
+      10 s, 0.93 and 0.80 before, beside the A/B), and
+      scripts/fetch_youtube_reach.py says api_disabled with the enable link
+      (the Nov 14 instrument has never run: the Reporting API is off in the
+      Google Cloud project). Guards tests/test_long_form_skip_map_2026_11_24.py,
+      tests/test_youtube_growth_2026_11_24.py.
   - id: market-review-2026-11-24
     title: "The on-air outro rotation asks for the Nerra Daily email"
     area: growth

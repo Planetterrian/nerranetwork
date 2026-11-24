@@ -128,6 +128,7 @@ def record_video(
     date: str = "",
     title: str = "",
     image_url: str = "",
+    map_cut_s: Optional[float] = None,
     project_root: Optional[Path] = None,
 ) -> bool:
     """Record one episode's hosted video. Idempotent on *episode*.
@@ -141,7 +142,13 @@ def record_video(
         data = load_index(path)
         rows: List[dict] = [r for r in data.get("videos", [])
                             if r.get("episode") != episode]
+        row_extra = {}
+        # Nov 24 2026: seconds of the map spliced out of this video. Only
+        # written when set; the feed then omits the audio's sidecars.
+        if map_cut_s:
+            row_extra["map_cut_s"] = round(float(map_cut_s), 2)
         rows.append({
+            **row_extra,
             "episode": int(episode),
             "url": url,
             "bytes": int(bytes or 0),
@@ -187,5 +194,6 @@ def record_from_track(config, episode: int, track: dict, *,
         date=date,
         title=title,
         image_url=track.get("image_url") or "",
+        map_cut_s=track.get("map_cut_s"),
         project_root=project_root,
     )
