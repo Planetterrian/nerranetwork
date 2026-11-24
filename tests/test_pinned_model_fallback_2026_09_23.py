@@ -97,7 +97,10 @@ class TestDigestStageFallback:
         def fake_call(prompt, **kw):
             calls.append(kw["model"])
             if kw["model"] == fail_on:
-                raise APIConnectionError(request=None)
+                # A real request: the SDK reads its headers (openai 3.59).
+                from engine.generator import sdk_httpx
+                raise APIConnectionError(request=sdk_httpx().Request(
+                    "POST", "https://api.x.ai/v1/chat/completions"))
             return DIGEST, {"finish_reason": "stop", "usage": {}}
         return fake_call, calls
 

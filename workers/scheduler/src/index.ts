@@ -58,6 +58,21 @@ const X_QUEUE_DISPATCH = {
   minutes: [5, 35],
 };
 
+// Daily Audit dispatch (Nov 24 2026). The audit is what notices a missed
+// episode and retries it, and it was the one pipeline workflow still left to
+// GitHub's own cron: its 16:15 UTC schedule event arrived between 20:40 and
+// 02:52 UTC on every one of the ten days to Nov 24, so a show that missed
+// its morning slot was retried in the evening at best, and after 00:00 UTC
+// not at all (a show run stamps the UTC date). 11:15 Eastern is three hours
+// after the last show slot. The workflow's own first job skips a second
+// audit of the same network day, so GitHub's late cron stays as the
+// fallback without auditing twice. Deliberately an OBJECT, not a SLOTS row.
+const AUDIT_DISPATCH = {
+  tz: "America/New_York",
+  time: [11, 15] as [number, number],
+  workflow: "daily-audit.yml",
+};
+
 function xQueueDue(eh: number, em: number): boolean {
   if (!X_QUEUE_DISPATCH.minutes.includes(em)) return false;
   const at = eh * 60 + em;
@@ -313,6 +328,7 @@ export default {
       next_slot: nextSlot(now),
       edition_dispatch: EDITION_DISPATCH,
       x_queue_dispatch: X_QUEUE_DISPATCH,
+      audit_dispatch: AUDIT_DISPATCH,
       // Eastern wall time, e.g. {"at": "05:45", "tz": "America/New_York"} —
       // engine/scheduler_slots.slots_from_status parses exactly this.
       slots: SLOTS.map(([h, m, show, f]) => ({
@@ -348,6 +364,13 @@ export default {
         await dispatchWorkflow(env, EDITION_DISPATCH.workflow, {}, "nerra-daily");
       } catch (e) {
         console.log(`nerra-daily dispatch failed: ${(e as Error).message}`);
+      }
+    }
+    if (AUDIT_DISPATCH.time[0] === clock.hour && AUDIT_DISPATCH.time[1] === clock.minute) {
+      try {
+        await dispatchWorkflow(env, AUDIT_DISPATCH.workflow, {}, "daily-audit");
+      } catch (e) {
+        console.log(`daily-audit dispatch failed: ${(e as Error).message}`);
       }
     }
     const slot = SLOTS.find(([h, m]) => h === clock.hour && m === clock.minute);

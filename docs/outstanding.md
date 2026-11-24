@@ -15,6 +15,7 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Status | Checked | Evidence / next step |
 |---|---|---|---|
+| Deploy `workers/scheduler` (the Daily Audit dispatch at 11:15 Eastern) | open | 2026-11-24 | `cd workers/scheduler && npx wrangler deploy`, then `GET /` should list `audit_dispatch`. Until then the audit keeps arriving on GitHub's late cron (20:40 to 02:52 UTC, Nov 14-24); the nightly drift check names it. |
 | Deploy both Workers (`workers/voices` with `GMAIL_SERVICE_ACCOUNT_JSON` + `GMAIL_DELEGATED_USER`; `workers/gallery`) | unconfirmed | 2026-11-04 | `/voices/health` does not report a version and no gate-2 email has gone out since the copy changed. The Nov 4 "Vancouver time" label in booking emails also needs the voices Worker deployed. |
 | Rotate `PERSONAL_ADMIN_TOKEN` (Worker secret and GitHub secret) | done | 2026-11-08 | The batch repo has the new value: `api/personal_feed_health.json` (Nov 8 20:38 UTC) reads 2 of 2 members built today and the batch run at 18:28 UTC succeeded, 0 failures in a row. |
 | `nerra-personal-batch`: set `NOTIFICATION_WEBHOOK_URL` | open | 2026-11-06 | Its failure alert step has printed "no NOTIFICATION_WEBHOOK_URL set" on every failed run. The daily audit now pages on stale private feeds too (`scripts/check_personal_feeds.py`). |

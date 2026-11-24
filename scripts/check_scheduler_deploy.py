@@ -80,6 +80,22 @@ def check(payload: dict, committed: Optional[dict] = None) -> tuple[bool, list[s
     return False, lines
 
 
+#: Dispatches that are not SLOTS rows and so are invisible to ``check``.
+#: Each is a key the Worker's status page prints once the build that carries
+#: it is deployed (Nov 24 2026: the Daily Audit dispatch).
+EXTRA_DISPATCH_KEYS = {"AUDIT_DISPATCH": "audit_dispatch"}
+
+
+def missing_extra_dispatches(payload: dict, source: Optional[str] = None) -> list[str]:
+    """Constants the committed Worker dispatches that the live one does not
+    report. A Worker older than a dispatch simply never fires it, and nothing
+    else would say so — the audit would go on arriving hours late."""
+    if source is None:
+        source = (ROOT / "workers" / "scheduler" / "src" / "index.ts").read_text(encoding="utf-8")
+    return [const for const, key in sorted(EXTRA_DISPATCH_KEYS.items())
+            if f"const {const} = " in source and not payload.get(key)]
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--strict", action="store_true", help="exit 1 on drift or an unreachable Worker")
@@ -99,6 +115,14 @@ def main(argv=None) -> int:
     ok, lines = check(payload)
     for line in lines:
         print(line)
+    missing = missing_extra_dispatches(payload)
+    if missing:
+        print(f"::warning::scheduler Worker deploy drift — the live Worker does not carry "
+              f"{', '.join(missing)} from workers/scheduler/src/index.ts, so that "
+              f"dispatch never fires; fix: {FIX}")
+        ok = False if args.strict else ok
+        if args.strict:
+            return 1
     if ok:
         return 0
     print(f"::warning::scheduler Worker deploy drift — the live slot table does not match "

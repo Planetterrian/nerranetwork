@@ -114,7 +114,18 @@ class TestHomepage:
         now = dt.datetime(y, m, d, 17, 30, tzinfo=dt.timezone.utc)
         page = G.generate_network_page(output_dir=tmp_path, now=now).read_text(encoding="utf-8")
         strip = page[page.index('id="markets"'):]
-        assert strip.index(">TSLA<") < strip.index(">NVDA<")
+        # Nov 24 2026: NVDA was missing from the committed quotes (its close
+        # failed the quote guard on Nov 24) and this line, which named it,
+        # turned main red. The claim is that the flagship ticker LEADS: it
+        # comes before every other ticker the committed file carries.
+        import engine.newsroom as N
+        present = {q["ticker"] for q in quotes.get("quotes", [])
+                   if q.get("bar_date") == newest}
+        assert "TSLA" in present, "the committed quotes carry no fresh TSLA bar"
+        assert N.MARKET_TICKERS[0] == "TSLA"
+        shown = [t for t in N.MARKET_TICKERS if f">{t}<" in strip]
+        assert shown and shown[0] == "TSLA", shown
+        assert all(strip.index(">TSLA<") < strip.index(f">{t}<") for t in shown[1:])
 
     def test_footer_signs_with_the_tagline(self, home):
         assert f"{B.NETWORK_TAGLINE} Independent news and podcasts" in home

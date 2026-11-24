@@ -474,6 +474,16 @@ def generate_candidates(prompt: str) -> tuple[list[dict], str]:
     raise last_exc
 
 
+#: Appended to the prompt for the one retry after a batch made only of
+#: repeats. It states what happened; it names no topic.
+REPEAT_RETRY_NOTE = (
+    "\n\nNOTE: a first answer to this request was discarded whole by the "
+    "check described above — its topics were already on the list. Check "
+    "each title against that list before you write it, and return only "
+    "cases that are absent from it."
+)
+
+
 def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     """Restock one show. Returns a result dict for the run summary."""
     queue_path = ROOT / cfg.queue_file
@@ -513,6 +523,19 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     valid = prefer_categories(
         validate_and_dedupe(candidates, queue, cfg, len(candidates)), arm_needs)
     accepted = ground_candidates(valid, needed)
+    if not valid and candidates:
+        # Nov 24 2026: on Nov 14 and Nov 20 every candidate (30 and 29) was a
+        # topic already on the queue — the model answered with the list it
+        # was shown — and the night ended there with the runway under its
+        # trigger. One more call, told what happened, before giving up.
+        logger.warning("%s: all %d candidates repeated the queue — asking once more",
+                       cfg.slug, len(candidates))
+        candidates, model_used = generate_candidates(prompt + REPEAT_RETRY_NOTE)
+        result["model"] = model_used
+        result["repeat_retry"] = True
+        valid = prefer_categories(
+            validate_and_dedupe(candidates, queue, cfg, len(candidates)), arm_needs)
+        accepted = ground_candidates(valid, needed)
     result["ungrounded"] = len(valid) - len(accepted) if len(accepted) < needed else 0
     result["added"] = len(accepted)
 
