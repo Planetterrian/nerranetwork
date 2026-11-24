@@ -51,6 +51,10 @@ class XAccountConfig:
     handle: str  # e.g. "sawyermerrit" (no @ prefix)
     label: str = ""  # Human-readable name for attribution
     max_posts: int = 10  # Max posts to fetch per run
+    # Nov 19 2026: a broad account (Musk, a commentator) posts about many
+    # subjects; True keeps only posts whose headline or text names one of the
+    # show's ``keywords``. False (default) = every post, as before.
+    on_topic_only: bool = False
 
 
 @dataclass
@@ -1672,6 +1676,7 @@ def _build_x_accounts(raw: list) -> List[XAccountConfig]:
                     handle=handle,
                     label=item.get("label", f"@{handle}"),
                     max_posts=item.get("max_posts", 5),
+                    on_topic_only=bool(item.get("on_topic_only", False)),
                 ))
     return accounts
 

@@ -390,11 +390,27 @@ class TestTheRehearsal:
         assert (out / "01_ep.mp4").exists() and res.video_id == "REHEARSAL01"
         assert fake.uploads[0]["title"] == "T"
 
-    def test_it_rebuilds_the_handoff_from_a_published_episode(self):
+    def test_it_rebuilds_the_handoff_from_a_published_episode(self, tmp_path, monkeypatch):
+        # Nov 19 2026: this read the REAL SpaceX Ep134 record, which rolled
+        # off summaries_spacex.json on Nov 16 and turned main's Run Tests red
+        # (CLAUDE.md: never use a real show as a fixture for a state it will
+        # leave). The digest and its summaries record are this test's own.
+        import json
+        import scripts.rehearse_video as rv
         from engine.config import load_config
-        from scripts.rehearse_video import published_handoff
         cfg = load_config(ROOT / "shows" / "spacex.yaml")
-        h = published_handoff(cfg, ROOT / cfg.episode.output_dir, dt.date(2026, 10, 18))
+        digests = tmp_path / "digests"
+        digests.mkdir()
+        (digests / f"{cfg.episode.prefix}_Ep134_20261018.md").write_text("# x\n")
+        (digests / f"{cfg.episode.prefix}_Ep133_20261017.md").write_text("# x\n")
+        summaries = tmp_path / cfg.publishing.summaries_json
+        summaries.parent.mkdir(parents=True, exist_ok=True)
+        summaries.write_text(json.dumps({"summaries": [
+            {"episode_num": 133, "audio_url": "https://audio.example/SpaceX_Daily_Ep133_20261017.mp3"},
+            {"episode_num": 134, "audio_url": "https://audio.example/SpaceX_Daily_Ep134_20261018.mp3"},
+        ]}))
+        monkeypatch.setattr(rv, "ROOT", tmp_path)
+        h = rv.published_handoff(cfg, digests, dt.date(2026, 10, 18))
         assert h["episode_num"] == 134
         assert h["audio_url"].endswith("/SpaceX_Daily_Ep134_20261018.mp3")
         assert h["mp3"] == "SpaceX_Daily_Ep134_20261018.mp3"

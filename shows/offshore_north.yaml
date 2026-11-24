@@ -36,7 +36,17 @@ min_articles_skip: 2
 # by dropping keyword filtering, i.e. by going off-topic; the digest came
 # out at 596 words against a 1300 target and the episode was skipped.
 # 168h = the seven days a Monday episode actually reports on.
-fetch_expansion_hours: [48, 96, 168]
+# Nov 19 2026 (weekly network review): the ladder STARTED at 48h and only
+# widened when fewer than min_articles came back, but the campaign feeds'
+# own 720h windows always supply that many (Nov 16: 30 articles at 48h), so
+# every episode since the override read two days of a seven-day week — logs
+# for Nov 2, 9 and 16 all stop at "cutoff=48h"; Vendée Globe (50 entries),
+# Google News IMOCA (51) and Scuttlebutt (40) passed 0. The digest came out
+# at 530-691 words every week and the expansion retry fired every week; on
+# Nov 16 the script reached 881 then 693 words against the 950 floor and the
+# episode was SKIPPED. The first rung is now the week; stale_article_days
+# (10) still keeps old news out.
+fetch_expansion_hours: [168]
 
 sources:
   # ---- Tier 1: the campaign itself (primary, low volume, highest value) ----
@@ -411,7 +421,15 @@ llm:
   # still refused — but a real racing week no longer loses the episode to
   # a rounding error. The length fix is the wider fetch window below;
   # this is only the safety net under it.
-  min_podcast_word_floor: 950
+  # Nov 19 2026 (weekly review): 950 -> 700, with the publication floor
+  # pinned beside it. Since the Nov 13 format (the week's biggest story
+  # leads, a short dated Canadian segment, each story once) the brief runs
+  # 520-690 words before expansion, and even with the full week fetched
+  # (63 articles) the Nov 19 rehearsal wrote 870 words and SKIPPED. Nov 16
+  # skipped at 881/693. A 6-minute weekly that ships beats a missing one;
+  # the 1,500 target still drives both retries.
+  min_podcast_word_floor: 700
+  min_podcast_publish_words: 700
   # Network-wide July 2026 policy: length is attacked on the DIGEST side
   # only — the script can never say more than the brief gives it, and
   # podcast-side expansion pads by paraphrase-duplication. A weekly show

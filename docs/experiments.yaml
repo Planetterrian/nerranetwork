@@ -6638,7 +6638,18 @@ experiments:
     area: shows
     shipped: 2026-11-03
     readout: 2026-11-17
-    status: reading
+    status: decide
+    update_2026_11_19: >
+      Read Nov 19 (weekly review, docs/reviews/network_week_review_2026_11_19.md).
+      The retry now fires on 9 of 16 Planetterrian episodes since the merge
+      (Ep234-249) and 3 of the last 7, against 7 of 7 before: half the target
+      share, but the padding went. The audit did not move: mean 6.29 on the
+      14 audits before Nov 4, 6.40 on the 15 after; Repetitive on 8 of 14
+      before and 13 of 15 after. Padding was not the main cause of
+      Planetterrian's Repetitive flag, so the evidence does not support
+      extending the fact floor to Tesla yet; the Repetitive quotes this week
+      are within-item paraphrase (a second sentence restating the first).
+      Left at decide: keep on Planetterrian, extend nowhere.
     metric: digest_expansion_fired_share_7d
     baseline: >
       The word floor (min_digest_words 1,400) fired the expansion retry on
@@ -7962,3 +7973,43 @@ experiments:
       and Beginners and listen before merging. Review
       docs/reviews/remaining_shows_review_2026_11_14.md; guards
       tests/test_remaining_shows_review_2026_11_14.py.
+  - id: weekly-review-2026-11-19
+    title: "Weekly review: Offshore North reads its week, broad X accounts stay on topic, narrative lessons add instead of retelling"
+    area: shows
+    shipped: 2026-11-19
+    readout: 2026-12-03
+    status: reading
+    baseline: >
+      Week of Nov 12-18: Offshore North skipped Nov 16 (script 881 then 693
+      words against a 950 floor; every run since the ladder override fetched
+      at 48h only). Tesla's X Takeover carried SpaceX/Starship or off-topic
+      posts on Ep666-669 and SpaceX aired an off-topic Musk post on Ep164
+      (OFF_TOPIC 3 of 7 on SpaceX). First Principles Repetitive on 7 of 7
+      audits (mean 6.0, down from 6.5), Unintended Consequences 6 of 7 (7.0),
+      each flag quoting the close re-telling the body; FPD Ep164 and Ep165
+      mis-stated a ratio and a sum.
+    target: >
+      Offshore North publishes on each of its next two Mondays with a digest
+      over 900 words before any expansion; no Tesla X Takeover item and no
+      SpaceX item drawn from an off-topic Musk/commentator post; FPD
+      Repetitive on at most 8 of the next 14 audits and its mean at or above
+      6.5; UC Repetitive on at most 8 of 14.
+    criteria: >
+      HIT when Offshore North publishes Nov 23 and Nov 30, FPD Repetitive is
+      on at most 8 of 14 and no OFF_TOPIC flag on Tesla or SpaceX quotes an
+      X post; MISS when Offshore North skips again or FPD Repetitive stays on
+      12 or more of 14; else INCONCLUSIVE.
+    readout_plan: >
+      api/editorial_score_history.json rows after the merge (flags, score);
+      daily-review.json history for the quoted sentences; Offshore North's
+      run logs ("Fetch (cutoff=168h"), digest word counts and skip markers;
+      the X fetch log lines "dropped N of M post(s) ... (on_topic_only)" on
+      Tesla and SpaceX.
+    notes: >
+      shows/offshore_north.yaml fetch_expansion_hours [168];
+      engine.fetcher.filter_x_posts_on_topic + XAccountConfig.on_topic_only
+      (Tesla's commentators and Musk, SpaceX's Musk; official accounts read
+      whole); FPD and UC lesson budgets (FPD 250-350 -> 100-160 words, UC
+      150-250 -> 100-160) with a never-re-tell rule, FPD range sums. ⚠️ AUDIO
+      on the FPD/UC prompts: rehearsed before merge. Guards
+      tests/test_weekly_review_2026_11_19.py.
