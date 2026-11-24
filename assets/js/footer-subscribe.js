@@ -86,7 +86,13 @@
   }
 
   function statusEl(form) {
-    return form.querySelector('[data-nn-subscribe-status], .nn-subscribe-status, .spi-status');
+    var sel = '[data-nn-subscribe-status], .nn-subscribe-status, .spi-status';
+    // Nov 24 2026: the hero and post bands put the status line AFTER the
+    // form, as its sibling, so a look inside the form alone found nothing
+    // and every message meant for it (the confirmation sentence, "that
+    // email doesn't look right", the error) was never shown.
+    return form.querySelector(sel) ||
+      (form.parentNode && form.parentNode.querySelector ? form.parentNode.querySelector(sel) : null);
   }
 
   function say(form, text, state) {
@@ -318,10 +324,16 @@
           btn.textContent = L.done;
           var a = form.querySelector('.nn-account-link');
           if (a) a.style.display = 'inline';
+          // Nov 24 2026: a form with a status line says what happens next
+          // in a sentence (the button alone clipped it on a phone).
+          var doneText = form.getAttribute('data-label-status-done');
+          if (doneText) say(form, doneText, 'ok');
         }
       }).catch(function () {
         btn.textContent = L.error;
         btn.disabled = false;
+        var errText = form.getAttribute('data-label-status-error');
+        if (errText && !soft) say(form, errText, 'error');
         if (soft) {
           say(
             form,

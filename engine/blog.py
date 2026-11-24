@@ -1755,6 +1755,46 @@ def next_episode_placeholder(schedule: str, *, is_ru: bool = False) -> dict:
     return {"label": "Next episode →", "title": "New episode coming"}
 
 
+def show_follow_links(show_slug: str, show_config: dict | None) -> list[dict]:
+    """Where a reader can follow *show_slug*: ``[{label, url, kind}]``.
+
+    The same resolution the show page uses (registry URL, else the id in the
+    show YAML), so a post never links an app the show page does not. Empty
+    for a gated show (members-only shows never ask for a follow), for a show
+    with no feed on disk (no surface advertises something that does not
+    exist) and on any failure: a post is never worth less for a missing row.
+    """
+    cfg = show_config or {}
+    try:
+        from engine import access as _access
+        from generate_html import (
+            ROOT as _root, _apple_links_for, _read_show_youtube,
+            _spotify_url_for,
+        )
+
+        if _access.mode_for_slug(show_slug) != "public":
+            return []
+        rss = cfg.get("rss_file") or ""
+        if not rss or not (_root / rss).exists():
+            return []
+        links: list[dict] = []
+        apple = _apple_links_for(show_slug, cfg.get("apple_podcasts_url"))
+        if apple.get("apple_podcasts_url"):
+            links.append({"label": "Apple Podcasts", "kind": "apple",
+                          "url": apple["apple_podcasts_url"]})
+        spotify = _spotify_url_for(show_slug, cfg.get("spotify_url"))
+        if spotify:
+            links.append({"label": "Spotify", "kind": "spotify", "url": spotify})
+        yt = _read_show_youtube(show_slug)
+        if yt.get("youtube_enabled") and yt.get("youtube_playlist_url"):
+            links.append({"label": "YouTube", "kind": "youtube",
+                          "url": yt["youtube_playlist_url"]})
+        links.append({"label": "RSS", "kind": "rss", "url": rss})
+        return links
+    except Exception:  # noqa: BLE001 - never block a post on a follow row
+        return []
+
+
 def _blog_meta_description(metadata: dict, show_config: dict) -> str:
     """A description that is not just a copy of the <title>.
 
@@ -2149,6 +2189,10 @@ def generate_blog_post_html(
         "blog_author": _show_host_name(show_slug),
         "show_name": show_config["name"],
         "show_slug": show_slug,
+        # Nov 24 2026: where to follow the show, in the post's own hero. An
+        # episode post is where a search or a shared link lands, and it
+        # linked no podcast app at all on a phone.
+        "follow_links": show_follow_links(show_slug, show_config),
         "podcast_image": show_config.get("podcast_image", ""),
         "episode_title": metadata.get("title", ""),
         "episode_num": ep_num,
