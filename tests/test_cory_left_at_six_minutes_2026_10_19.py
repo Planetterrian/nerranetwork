@@ -25,7 +25,7 @@ def _section(start: str, end: str) -> str:
 class TestTheOpening:
     def test_two_beats_and_then_their_subject(self):
         opening = _section("HOW TO OPEN", "THEIR SUBJECT, FAST")
-        assert "Three short turns" in opening
+        assert "Two short turns" in opening  # Nov 24 2026 (Patrick): the opening is two turns; see test_opening_first_question_2026_11_24.py.
         assert "ask your first real question, about the subject they came to discuss" in opening
         assert "The tagline ({{opening_line}}) belongs to the produced episode" in opening
 

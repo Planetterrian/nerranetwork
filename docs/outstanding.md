@@ -37,23 +37,36 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 | Podcast Index: add the six unindexed feeds at podcastindex.org/add | open | 2026-11-04 | `api/op3_stats.json` (Nov 3): `nerra_voices`, `offshore_north`, `omni_view_north_america` unresolved; plus `env_intel:fr`, `first_principles:fr`, `models_agents:fr`. |
 | Apple: publish Offshore North (draft; artwork now 3000 px) and submit Nerra Voices | open | 2026-11-04 | `docs/podcast_directories.md`. |
 | Spotify: Nerra Daily's show id (Spotify for Creators) | open | 2026-11-04 | |
-| Cal.com: create the 5-minute `age-of-ai-hello` and `nerra-voices-hello` event types, or retire the hello feature | open | 2026-11-04 | The link 404'd for five guests; `HELLO_INVITES: "0"` in the fire workflow until the pages exist. |
+| Cal.com: create the 5-minute `age-of-ai-hello` and `nerra-voices-hello` event types, or retire the hello feature | retire (recommended) | 2026-11-24 | The link 404'd for five guests; `HELLO_INVITES: "0"` stays. Nov 24: the new two-turn opening (PR #1738) does the hello's job inside the room, so the event types are not needed. |
 | Google Calendar is on America/Los_Angeles | open | 2026-11-04 | It shows an hour behind a Vancouver clock since Nov 1. Settings → Time zone → Vancouver. |
 | `docs/listens.md`: the Mira-brief listen line | not written | 2026-11-04 | The handoff proposed a line saying Patrick listened to rooms 115ba095 and 036ea51e. It was never committed and is not added here; add it yourself once you have listened. |
 | Re-master the quiet back catalogue (Actions "Re-master Episodes", one listen first) | open | 2026-11-04 | UC Ep161 is −25.7 LUFS. New episodes are in spec: Tesla Ep655 −16.2, Vancouver Ep043 −16.2, UC Ep163 −16.6. Collingwood Ep006 −24.9; its Nov 6 episode is the check. |
-| Interview pages: run `vtt_backfill`, then `refresh_post` for AoAI Ep12–14 and NV Ep3–4 | open | 2026-11-04 | Neither `age_of_ai_podcast.rss` (15 items) nor `nerra_voices_podcast.rss` (4) carries `podcast:transcript`. |
+| Interview pages: run `vtt_backfill`, then `refresh_post` for AoAI Ep12–14 and NV Ep3–4 | backfill dispatched | 2026-11-24 | Nov 24: `vtt_backfill` run on main; `refresh_post` only for an episode its log lists as skipped. Was: | Neither `age_of_ai_podcast.rss` (15 items) nor `nerra_voices_podcast.rss` (4) carries `podcast:transcript`. |
 | First Principles: restock opportunity_area topics | open | 2026-11-04 | 27 open concrete_example, 0 open opportunity_area. If the next restock adds none, rerun "Restock Topic Queues" with force. |
 | Close Stuart Berkowitz's duplicate application 4484f810 | open | 2026-11-04 | The chase job now closes such rows itself (see Closed); this one can wait for the next chase run or be closed by hand. |
 | Re-run the Pyvot correction for Michael Kamins' episode | open | 2026-11-04 | `scripts/apply_corrections.py --show age_of_ai --episode <n> --apply` now also amends `episode_records` (the record was fixed by hand today). |
+
+## Nov 24 2026: Age of AI and Nerra Voices
+
+| Item | Owner | Status | Evidence / next step |
+|---|---|---|---|
+| Blaine Mathieu: his Nov 9 cut requests (4 lines) | Patrick | re-assembled Nov 24 | Listen to the new cut, then press "Changes made: send the guest the new cut" on his review page. Was stuck because the assemble never re-ran after Nov 9. |
+| John Ossipinsky (NV) | Claude | publish dispatched Nov 24 | Approved by Patrick Nov 13 and the guest Nov 20; produced Nov 20; publishing is a manual dispatch. |
+| Gary Amaral (NV, Nov 13), Surendra Goel (AoAI, Nov 20) | Patrick | gate 1 | Both graded 4/10; listen and approve from the review emails. |
+| Tahir Rauf: invite back, drop the 6-minute edit | Patrick | email drafted | Re-record as a fresh interview; the 6-minute piece is not publishable. |
+| Tamara Laine, Animesh Alang: rebook | Patrick | emails drafted | Booking link `cal.com/patrick-novak-lkcqo4/age-of-ai-interview`. |
+| Rejoin after a mid-interview drop | Claude | scoped, with the Dec 9 batch | A 3-minute in-room wait is impossible (Voximplant ends an empty session at 60 s). Reopening a room past 5 minutes would overwrite its recordings, so a rejoin is a continuation session spliced onto the first edit, like the closing session (`splice_closing`), with its own prompt: a room change, rehearsed. |
+| Latency: hold and release her server turn | Claude | next | Every turn is cancelled and re-requested today (4–4.6 s median gap). |
+| Producer model drafts her bridge and next question | Claude | next | Label openers 0.33–0.80 after four brief rewrites. |
 
 ## Rehearsal (prompt or room; not shipped, needs a PASS plus one listen)
 
 | Item | Status | Checked | Note |
 |---|---|---|---|
-| Mira's opening says the AI part twice and in the third person | proposed | 2026-11-04 | Step 2 today lands as "I'm Mira, the AI who hosts The Age of AI, and on this show an AI asks the questions while the guest decides…". Proposal: step 2 says she is Mira, the AI who hosts {{show_name}}, and that the guest sees the transcript first and decides what is published; the claim stays in WHAT YOU ARE. |
+| Mira's opening says the AI part twice and in the third person | superseded | 2026-11-24 | PR #1738 (two-turn opening: hello, then who she is in two sentences and the first question); two-arm rehearsals adrian + vincent on Nov 24. Was: | Step 2 today lands as "I'm Mira, the AI who hosts The Age of AI, and on this show an AI asks the questions while the guest decides…". Proposal: step 2 says she is Mira, the AI who hosts {{show_name}}, and that the guest sees the transcript first and decides what is published; the claim stays in WHAT YOU ARE. |
 | A standing lesson contradicts the beat rule | proposed | 2026-11-04 | The adopted lesson "Most turns go straight to the next question" (in `show_lessons`, not the repo) contradicts the CRITICAL line asking for one sentence after a real answer. Retire or reword the lesson; lessons are retired by the metric, so cite `bare_question_rate` from the three Nov 4 rooms. |
 | The beat is mostly an echo label | measured | 2026-11-04 | Most reactions in the three rooms were 2–4 of the guest's own words. `question_turn_shape` counts these as `label`, never `reaction` (guard `tests/test_handoff_2026_11_04.py::TestEchoLabelsAreNeverReactions`), so read `label_open_rate` beside `bare_question_rate` before calling the beat fixed. |
-| Mira's reply after an answer is the same short summary line every turn (Patrick, Blaine Mathieu's room) | proposed, on a draft PR | 2026-11-04 | HOW TO REACT rewritten so she builds on one thing said and leads into the question; the three lessons that kept her short (6c89834c, 8c69e55d, 1d5a5f84) and the stale two-closing-questions lesson (854dfc33) stay out of the prompt via `learning.SUPERSEDED_BY_BRIEF`. Rehearse the branch (`arms: both`, fixture `adrian`), read `one_liner_rate` beside label and bare, one listen, then merge; retire the four rows after it ships. Supersedes the "standing lesson contradicts the beat rule" row above. |
+| Mira's reply after an answer is the same short summary line every turn (Patrick, Blaine Mathieu's room) | shipped, not fixed | 2026-11-24 | Shipped Nov 4 (register `mira-react-builds-2026-11-04`); label openers were still 47–80% in the Nov 13–23 rooms. Next: the producer model in the Nov 24 plan. Was: | HOW TO REACT rewritten so she builds on one thing said and leads into the question; the three lessons that kept her short (6c89834c, 8c69e55d, 1d5a5f84) and the stale two-closing-questions lesson (854dfc33) stay out of the prompt via `learning.SUPERSEDED_BY_BRIEF`. Rehearse the branch (`arms: both`, fixture `adrian`), read `one_liner_rate` beside label and bare, one listen, then merge; retire the four rows after it ships. Supersedes the "standing lesson contradicts the beat rule" row above. |
 | The close skips the site and guest-application line, and says "Take care, Roddy" after "you can hang up now" | proposed | 2026-11-04 | All three rooms. |
 
 ## Claude (code and docs)

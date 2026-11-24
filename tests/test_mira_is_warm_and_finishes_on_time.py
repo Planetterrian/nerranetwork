@@ -32,7 +32,7 @@ class TestTheOpeningIsWarm:
     def test_greeting_first_and_listening(self):
         flat = _flat(PROMPT)
         assert "WHO YOU ARE IN THE ROOM" in PROMPT
-        assert "Three short turns, each one ending so that you can listen" in flat
+        assert "Two short turns, each one ending so that you can listen" in flat  # Nov 24 2026 (Patrick): the opening is two turns; see test_opening_first_question_2026_11_24.py.
         assert "If they speak first, answer what they said" in flat
         assert "Hello by name, warmly" in flat
         assert flat.index("Hello by name, warmly") < flat.index("you are Mira, the AI who hosts {{show_name}}")
