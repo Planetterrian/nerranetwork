@@ -104,12 +104,23 @@ def _new_york(now: _dt.datetime | None) -> _dt.datetime:
         return now - _dt.timedelta(hours=5)
 
 
+_CLOSE = _dt.time(16, 0)
+
+
 def close_session_date(now: _dt.datetime | None = None) -> _dt.date:
-    """The session whose close is the last one at *now*, read before the
-    open: the previous trading day. From the open on a trading day the hooks
-    keep their old reading (the bar may be today's), so this answers only
-    the before-the-open question."""
-    return previous_session(_new_york(now).date())
+    """The session whose close is the last one at *now*.
+
+    Before the close that is the previous trading day (the morning run's
+    case). From 4pm Eastern on a trading day it is today: the Nov 24 2026
+    rehearsals ran at 6pm Eastern, the quote was Tuesday's close, and the
+    move's search asked about Monday. Half-days close at 1pm; a run between
+    1pm and 4pm on one of those three days reads the day before, which the
+    dated window in ``engine.market_move`` still covers."""
+    local = _new_york(now)
+    today = local.date()
+    if is_trading_day(today) and local.time() >= _CLOSE:
+        return today
+    return previous_session(today)
 
 
 def close_day_word(now: _dt.datetime | None = None) -> str:
