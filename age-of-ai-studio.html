@@ -1579,6 +1579,7 @@
     stopMiraMeter();
     hideSelfView();
     if (movedToPhone) { stopLocalRecording(); stopLocalVideo(); show("stateDone"); return; }
+    rec.endedBy = (isHost ? leaving : guestEnded) ? "guest_end" : "dropped";
     var flush = Promise.all([stopLocalRecording(), stopLocalVideo()]);
     if (isHost) {
       // The co-host left (or dropped). The room goes on without him; the
@@ -2019,7 +2020,7 @@
       // 26 minutes of 192 kbps audio. Every join gets its own id, so the
       // takes sit side by side instead of on top of each other.
       rec.sid = (Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
-      rec.seq = 0; rec.uploaded = 0; rec.failed = 0; rec.done = false;
+      rec.seq = 0; rec.uploaded = 0; rec.failed = 0; rec.done = false; rec.endedBy = "";
       recorder.addEventListener("dataavailable", function (ev) {
         if (!ev.data || !ev.data.size) return;
         var seq = rec.seq++;
@@ -2040,6 +2041,9 @@
                     sid: rec.sid || null,
                     started_at: rec.startedAt,
                     duration_ms: rec.startedAt ? Date.now() - Date.parse(rec.startedAt) : 0 };
+    // Nov 24 2026: the room only logs "disconnected", so an End press and a
+    // dropped call looked the same. The take says which.
+    if (rec.endedBy) payload.ended_by = rec.endedBy;
     if (isHost && adminToken) payload.token = adminToken;
     return payload;
   }

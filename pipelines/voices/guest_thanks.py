@@ -28,6 +28,15 @@ Rules:
   package is the product and a lost email is a lost email.
 * Closing sessions get no note (the guest already had one); a pre-call hello
   writes the agenda instead (``hello_sessions`` when present).
+* **A room cut short is not thanked for the hour** (Nov 24 2026). On Nov 23
+  a guest's browser left at 6 min 18 s of a planned 45, with no goodbye and
+  no closing round; the room closed 45 s later, and 11 minutes after that
+  this note thanked him "for the hour" with a colleague copied. A room that
+  ran under ``CUT_SHORT_SHARE`` of its planned minutes without finishing its
+  closing round gets no automatic note: Patrick is told instead
+  (``cut_short_alert``) and decides between inviting the guest back and
+  dropping the piece. The Worker's own rule (a room under 5 minutes is a
+  failed join and reopens) is untouched.
 
 ``EDIT_REACHES_YOU_DAYS`` is the promise: gate 1 is a person and does not
 time out, so the note says "within about a week" and gives the date.
@@ -41,7 +50,8 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from common import (  # noqa: E402
-    kits_html, logger, mira_signature_html, sb_update, send_email, show_for,
+    OPERATOR_EMAIL, kits_html, logger, mira_signature_html, notify_operator,
+    sb_update, send_email, show_for,
 )
 
 EDIT_REACHES_YOU_DAYS = 7
@@ -51,6 +61,8 @@ MOMENT_MIN_WORDS = 12
 MOMENT_MAX_WORDS = 40
 MOMENT_MAX_CHARS = 320
 ANSWER_WINDOW_SEC = 120          # a line this long after her question is its answer
+CUT_SHORT_SHARE = 0.5            # under this share of the planned minutes...
+CUT_SHORT_MIN_PLANNED_MIN = 20   # ...of a room planned at least this long
 
 _LINE = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
 _NUMBER = re.compile(r"\d")
@@ -241,6 +253,71 @@ def thank_you_email(show, app: Dict[str, Any], transcript: str,
     return subject, "".join(parts)
 
 
+def _planned_minutes(run: Dict[str, Any], interview: Dict[str, Any]) -> float:
+    for v in (run.get("planned_minutes"), interview.get("duration_min")):
+        try:
+            if v is not None and float(v) > 0:
+                return float(v)
+        except (TypeError, ValueError):
+            continue
+    return 0.0
+
+
+def guest_ended_by(run: Dict[str, Any]) -> str:
+    """How the guest's studio page last left the call, from its newest take:
+    ``guest_end`` (they pressed End), ``dropped`` (the call ended without the
+    button) or ``""`` when the page did not say (pages before Nov 24 2026)."""
+    takes = (((run.get("grok_session_log") or {}).get("local_takes") or {})
+             .get("guest") or [])
+    if not takes:
+        return ""
+    last = max(takes, key=lambda t: str(t.get("started_at") or ""))
+    v = str(last.get("ended_by") or "")
+    return v if v in ("guest_end", "dropped") else ""
+
+
+def cut_short(run: Dict[str, Any], interview: Dict[str, Any]) -> bool:
+    """True for an interview room that ended well short of its planned time
+    with its closing round unfinished: the guest left (or dropped) part way."""
+    if (interview.get("session_kind") or "interview") != "interview":
+        return False
+    planned = _planned_minutes(run, interview)
+    if planned < CUT_SHORT_MIN_PLANNED_MIN:
+        return False
+    try:
+        dur = float(run.get("duration_sec") or 0)
+    except (TypeError, ValueError):
+        return False
+    if dur <= 0:
+        return False
+    if (run.get("grok_session_log") or {}).get("closing_round_complete") is True:
+        return False
+    return dur < CUT_SHORT_SHARE * planned * 60
+
+
+def cut_short_alert(run: Dict[str, Any], interview: Dict[str, Any],
+                    app: Dict[str, Any]) -> Tuple[str, str]:
+    """``(subject, html)`` of the note to Patrick in place of the thank-you."""
+    e = _html.escape
+    name = str(app.get("name") or "the guest").strip()
+    mins = round(float(run.get("duration_sec") or 0) / 60, 1)
+    planned = int(_planned_minutes(run, interview))
+    how = {"guest_end": "pressed End interview on the studio page",
+           "dropped": "dropped off the call (the studio page recorded no End press)",
+           }.get(guest_ended_by(run),
+                 "left the call (the page did not say whether they pressed End)")
+    subject = f"{name}'s interview ended after {mins:g} of {planned} minutes"
+    body = (f"<p>Hi Patrick,</p><p>{e(name)} {e(how)} {mins:g} minutes into a "
+            f"{planned}-minute interview, before the closing round. The room closed "
+            f"after its rejoin wait.</p><p>I have <strong>not</strong> sent my usual "
+            f"thank-you note, because it thanks them for the hour. The edit is being "
+            f"cut as usual so nothing is lost. Your call: invite them back to finish, "
+            f"or drop the piece.</p>"
+            f"<p>Interview {e(str(interview.get('id') or ''))}, run "
+            f"{e(str(run.get('id') or ''))}.</p><p>— Mira</p>")
+    return subject, body
+
+
 def send_thank_you(run: Dict[str, Any], interview: Dict[str, Any], app: Dict[str, Any],
                    transcript: str, package: Dict[str, Any]) -> bool:
     """Send the note once. Returns True when it went out now."""
@@ -248,6 +325,13 @@ def send_thank_you(run: Dict[str, Any], interview: Dict[str, Any], app: Dict[str
         return False
     if package.get("thanks_sent_at"):
         logger.info("thank-you already sent %s", package["thanks_sent_at"])
+        return False
+    if cut_short(run, interview):
+        subject, body = cut_short_alert(run, interview, app)
+        send_email(OPERATOR_EMAIL, subject, body)
+        notify_operator(subject + " (thank-you held)", critical=True)
+        logger.warning("room cut short (%ss of %s min); thank-you held for Patrick",
+                       run.get("duration_sec"), _planned_minutes(run, interview))
         return False
     to = str(app.get("email") or "").strip()
     if "@" not in to:
