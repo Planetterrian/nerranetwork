@@ -1354,27 +1354,11 @@ decision); everything else has a live status card.
    before shows were migrated to subdirectories. These cannot be moved without
    breaking existing RSS feed URLs. New episodes now write to subdirectories.
 23. **GitHub push transients on large text commits ("fatal error in commit_refs")** —
-    Successful episode generation (run_show.py) can produce 8k–10k+ line commits
-    (full Whisper transcripts JSON+txt, _tts.txt, metrics, chapters, digests, blog
-    HTML, RSS updates). GitHub's ref-update service occasionally returns a server
-    error during `git push origin main` even after the pack is accepted. The
-    4-attempt rebase/merge loop in `.github/workflows/run-show.yml` handles
-    normal concurrency races between matrix jobs. On final exhaustion the step
-    now calls `scripts/create_recovery_pr.sh` which creates a `recovery/<show>-<run_id>-<ts>`
-    branch, pushes it, and opens a **draft PR** with the complete artifacts plus
-    operator instructions. The job exits 0 (data preserved). The PR appears in
-    the repo for the operator to merge. This is the hardened path for the
-    "Commit and push output" step (the finalize shared-pages push has a 5-attempt
-    loop + warning but no recovery PR because those pages are fully regenerable).
-    The `safe-commit-push` composite now has an opt-in `recovery-on-failure`
-    input wired for the two callers whose commits are expensive to regenerate
-    (nightly maintenance, topic-queue restock); the other composite callers
-    deliberately stay fail-visible because their artifacts are regenerable
-    (stale note corrected 2026-08-15). The multilingual
-    sweep's commit step (`.github/workflows/multilingual.yml`) also uses the
-    recovery-PR escape hatch now, since it commits large translation-track +
-    per-language-feed diffs on the same push-contended `main`. Drift guard:
-    the recovery script + the warning annotation in the Actions log.
+    run-show's 4-attempt push loop ends in `scripts/create_recovery_pr.sh` (a draft
+    `recovery/<show>-<run_id>-<ts>` PR with every artifact; the job exits 0). The
+    `safe-commit-push` composite's opt-in `recovery-on-failure` covers nightly
+    maintenance, the topic-queue restock and the multilingual sweep; regenerable
+    commits stay fail-visible. [history](docs/claude_md_history/active_issue_23_push_transients.md)
 
 24. **Schedule punctuality: exact-time dispatcher + duplicate guard (June
     2026)** — GitHub delivers cron `schedule` events 1-6 h late (Tesla's
@@ -1990,3 +1974,4 @@ Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
 
 Register `review-loop-automation-2026-11-24`; guards `tests/test_review_loop_automation_2026_11_24.py`.
 **A metric entry states its success as a `target_rule`** (`">= 0.9"`, required from Nov 24) and `readout_register.py` writes hit / miss / unmeasured; a rule restates the entry's own number, never a new one. **The review rotation ranks audience share x weeks since review x problems** (`pick_review_target.rank_targets`; `--plain` is the old date rule). **`shows/contracts/must_haves.yaml` is what every episode must carry** (never under `shows/*.yaml`); the Daily Audit pages on a `page` miss the day it ships; calibrate a line on 14 episodes first. **A critical dispatches a review only above the show's own rate.**
+**The review agent applies its own show's changes and rehearses them** (`scripts/review_changes.py`: only `shows/<slug>.yaml` and `shows/prompts/<slug>_*`, `old` text exactly once, the file must still load; everything else stays a proposal); the merge waits for the listen. **Merge tiers: A records (`docs/reviews/**`) merge in the weekly slate (`scripts/review_slate.py`) once the ledger parses; B listen and C operator never merge there.** `REVIEW_PR_TOKEN` makes review PRs run CI. Guards `tests/test_review_apply_and_slate_2026_11_24.py`.

@@ -8063,3 +8063,33 @@ experiments:
       (critical_rate_rise, contract_page_shows), review_snapshot "Must-haves
       and audit trend". No prompt or audio change. Guards
       tests/test_review_loop_automation_2026_11_24.py.
+  - id: review-apply-and-slate-2026-11-24
+    title: "The review agent applies and rehearses its own show's changes; one weekly slate merges records and lists the rest by tier"
+    area: quality
+    shipped: 2026-11-24
+    readout: 2026-12-11
+    status: reading
+    baseline: >
+      Nov 24: nine review PRs (#1694-#1730) merged as records only; every
+      proposal lived in a PR body, so no merge changed a show, and none of the
+      nine ran CI (opened with GITHUB_TOKEN, action_required).
+    target: >
+      Of the review PRs opened Nov 26 - Dec 11, at least half carry an
+      applied change with a dispatched rehearsal; every tier-A PR is merged
+      by the slate within a week; no tier-B or tier-C PR is merged by the
+      slate; with REVIEW_PR_TOKEN set, review PRs run Run Tests.
+    criteria: >
+      HIT when all hold. MISS when most applied counts are zero because Grok's
+      old text does not match the file (fix the contract, never loosen the
+      exact-once rule), or the slate merges anything outside docs/reviews/.
+    readout_plan: >
+      The ledgers' proposed_changes_in_pr status counts for entries dated
+      Nov 26 - Dec 11; the "Rehearse the applied changes" step logs; the
+      review-slate issue and the Weekly Review Slate runs' summaries.
+    notes: >
+      scripts/review_changes.py (allowlist, apply_change, tier_for_paths),
+      scripts/run_show_review.py (--no-apply, .review_result.json),
+      show-review.yml (REVIEW_PR_TOKEN, rehearsal dispatch),
+      scripts/review_slate.py + review-slate.yml. Prompt changes reach a show
+      only after the operator's listen (landmine #17). Guards
+      tests/test_review_apply_and_slate_2026_11_24.py.
