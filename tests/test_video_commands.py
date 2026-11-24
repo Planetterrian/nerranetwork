@@ -2100,8 +2100,10 @@ def test_build_long_form_video_broll_with_schedule_keeps_scene_order(
     assert hybrid[-1].endswith("_hybrid.part.mp4")  # .part -> atomic replace
     i_indices = [i for i, x in enumerate(hybrid) if x == "-i"]
     input_paths = [hybrid[i + 1] for i in i_indices]
-    # Clip opens the sequence; scheduled still order preserved after it.
-    assert input_paths[0] == str(clips[0])
+    # Nov 24 2026: the episode opens on its own first scheduled scene and
+    # the evergreen clip follows it; the scheduled still order is preserved.
+    assert input_paths[0] == str(scenes[2])
+    assert input_paths[1] == str(clips[0])
     assert [p for p in input_paths if p != str(clips[0])] == [
         str(scenes[2]), str(scenes[0]), str(scenes[1]),
     ]

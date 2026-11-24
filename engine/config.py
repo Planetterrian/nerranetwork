@@ -1273,6 +1273,13 @@ class YouTubeConfig:
     # English opening since Oct 20). The Short is cut from a spliced copy
     # of the mix; the episode is untouched (engine/short_furniture.py).
     shorts_skip_map: bool = False
+    # Nov 24 2026 — the EN long-form opens on the story: the map sentence is
+    # spliced out of the YouTube long-form's source (and its captions,
+    # chapters and cards move with it) the same way as the hook Short.
+    # "off" | "ab" (odd episode numbers cut, even keep: the A/B) | "on".
+    # The episode, its feed audio and the podcast chapters keep the map.
+    # Experiment long-form-skip-map-2026-11-24.
+    long_form_skip_map: str = "off"
 
     # End-screen CTA card on Shorts (May 2026). When enabled, the last
     # ``shorts_end_card_duration_seconds`` of the Shorts MP4 overlay a
