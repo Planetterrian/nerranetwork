@@ -12,7 +12,10 @@ the handler converts each firing to Eastern time and the day filters read
 the Eastern date, so the 1 November and March clock changes move nothing.
 The Nerra Daily edition (`EDITION_DISPATCH`, 06:35 / 06:50 ET) and the
 @nerranetwork X queue (`X_QUEUE_DISPATCH`, :05 / :35 from 7:05 AM to
-10:05 PM ET) read the same clock. The Worker's ONE cron trigger is
+10:05 PM ET) read the same clock, and so does the Daily Audit
+(`AUDIT_DISPATCH`, 11:15 ET, Nov 24 2026: GitHub delivered the audit's own
+16:15 UTC cron four to ten hours late; that cron stays as the fallback and
+the workflow's `once` job skips a second audit of the same day). The Worker's ONE cron trigger is
 `*/5 * * * *` (written on Workers Free, five triggers per account; the account is on
 Workers Paid now and one trigger is still all the handler needs);
 every Eastern minute it needs is a multiple of five, which is a multiple of

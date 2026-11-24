@@ -111,4 +111,12 @@ class TestRequirements:
             m = re.search(rf"^{re.escape(name)}>=([\d.]+)\s*$", req, re.M)
             assert m, name
             assert _v(m.group(1)) >= _v(floor), (name, m.group(1))
-        assert re.search(r"^av>=18\.1\.0,<19\s*$", req, re.M)
+        # Nov 24 2026: the same mistake a second time. The grouped Dependabot
+        # PR (#1739) moved the PyAV floor to 18.1.1 inside the ceiling and this
+        # line, pinned to the exact Oct 9 floor, failed it. Because Run Tests
+        # stops at the first failure, that one red line also hid whether the
+        # other four bumps were safe. The rule is the floor never falls below
+        # 18.1.0 and the ceiling stays under 19; a patch bump is the point.
+        m = re.search(r"^av>=([\d.]+),<19\s*$", req, re.M)
+        assert m, "the PyAV line lost its <19 ceiling"
+        assert (18, 1, 0) <= _v(m.group(1)) < (19,), m.group(1)

@@ -179,6 +179,35 @@ def _extract_items_from_section(text: str, pattern: str) -> List[str]:
     return items
 
 
+def _is_label_span(item: str) -> bool:
+    """True for a bold span that is a field LABEL, not a story headline.
+
+    Omni View writes every story as ``**What happened (neutral):** ...`` /
+    ``**Context & perspectives:** ...`` / ``**Read more (sources):**``. The
+    bold-span extractor read each label as a headline, so every episode
+    logged ~60 "Duplicate within 'headlines'" and ~20 "BLOCKING
+    cross-episode repeat" findings (Nov 22-24 2026: 268 of 268 duplicate
+    findings network-wide were these four labels), ran the duplicate-story
+    stripper for nothing, and handed the labels to run_show's exact-repeat
+    stripper. A bold span that ends on a colon labels the text after it.
+    """
+    return item.rstrip().endswith((":", "\uff1a"))
+
+
+def _extract_headline_items(text: str, pattern: str) -> List[str]:
+    """Bold items of a section that can be compared as STORIES.
+
+    Only the duplicate checks use this. ``check_item_counts`` (and the
+    generator's item counter) keep ``_extract_items_from_section`` whole on
+    purpose: Omni View's ``min_items`` is met by those bold spans, and
+    dropping them there would force a digest regeneration every episode.
+    """
+    return [
+        item for item in _extract_items_from_section(text, pattern)
+        if not _is_label_span(item)
+    ]
+
+
 def _extract_section_text(text: str, pattern: str) -> str:
     """Extract raw text of a section."""
     m = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
@@ -310,7 +339,7 @@ def check_within_episode_duplicates(
 
     for sec_name, pattern in section_patterns.items():
         if sec_name in ("headlines", "takeover_headlines"):
-            items = _extract_items_from_section(digest_text, pattern)
+            items = _extract_headline_items(digest_text, pattern)
             all_items_by_section[sec_name] = items
 
     # Check within each section
@@ -354,10 +383,15 @@ def check_cross_episode_repeats(
     if not headlines_pattern:
         return [], []
 
-    today_items = _extract_items_from_section(digest_text, headlines_pattern)
+    today_items = _extract_headline_items(digest_text, headlines_pattern)
 
     from engine.utils import norm_headline_for_similarity
-    recent_norm = [norm_headline_for_similarity(h) for h in recent_headlines if h]
+    # The tracker's own extractor stored the same labels as "headlines";
+    # a label on the recent side is no story either.
+    recent_norm = [
+        norm_headline_for_similarity(h) for h in recent_headlines
+        if h and not _is_label_span(h)
+    ]
 
     for item in today_items:
         norm_item = norm_headline_for_similarity(item)

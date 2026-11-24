@@ -39,6 +39,11 @@ on:
     # (Stale-comment fix June 2026: the per-episode workflow_run trigger was
     # removed earlier — this once-daily sweep reviews ALL of the day's
     # committed episodes. Tune later if GitHub delays worsen.)
+    #
+    # Nov 24 2026: this cron is the FALLBACK now. GitHub delivered it between
+    # 20:40 and 02:52 UTC on each of the ten days to Nov 24, so the scheduler
+    # Worker dispatches the audit at 11:15 Eastern (AUDIT_DISPATCH) and the
+    # `once` job below skips whichever of the two arrives second.
     - cron: '15 16 * * *'
 
   workflow_dispatch:
@@ -55,6 +60,11 @@ on:
         description: "Create GitHub issues for critical problems (default true)"
         required: false
         default: "true"
+        type: string
+      force:
+        description: "Audit again even though today's audit has already run"
+        required: false
+        default: "false"
         type: string
 
 # Runs ONCE per day (the 16:15 cron) + on manual dispatch. Previously it also
@@ -79,7 +89,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Once a day (Nov 24 2026). The scheduler Worker dispatches this workflow
+  # at 11:15 Eastern; the cron above is the fallback and GitHub delivers it
+  # hours late. Whichever arrives second finds today's report on main and
+  # stops here. The workflow-level concurrency group makes the second wait
+  # for the first, and the gate reads main through the API, so it sees the
+  # report the first one committed. scripts/audit_gate.py holds the rule.
+  once:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - name: Checkout the gate script
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          sparse-checkout: scripts/audit_gate.py
+          sparse-checkout-cone-mode: false
+      - name: Has today's audit already run?
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_DATE: ${{ inputs.date || '' }}
+          INPUT_SHOW: ${{ inputs.show || '' }}
+          INPUT_FORCE: ${{ inputs.force || 'false' }}
+        run: python3 scripts/audit_gate.py
+
   audit:
+    needs: once
+    # ``!= 'false'``, not ``== 'true'``: a gate job that itself failed must
+    # never be the reason a day goes unaudited.
+    if: always() && needs.once.outputs.run != 'false'
     runs-on: ubuntu-26.04
     # 45, not 20. The review step calls Grok once per episode, and the
     # catch-up pass (Aug 2026) adds up to CATCH_UP_MAX_PER_RUN more. On

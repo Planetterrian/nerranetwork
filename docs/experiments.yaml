@@ -8106,6 +8106,56 @@ experiments:
       show with no feed) and the phone share sheet,
       assets/js/footer-subscribe.js statusEl. Email fields are 16px (iOS zooms
       the page below that). Guards tests/test_web_signup_path_2026_11_24.py.
+  - id: pipeline-hardening-2026-11-24
+    title: "Pipeline hardening: the audit on an exact clock, Offshore North searches its week, alarms that only fire on a real fault"
+    area: reliability
+    shipped: 2026-11-24
+    readout: 2026-12-08
+    status: reading
+    baseline: >
+      Nov 14-24: the Daily Audit's 16:15 UTC cron was delivered between 20:40
+      and 02:52 UTC on all ten days, and on Nov 17 and Nov 24 its retry step
+      called the run's own report stale. Offshore North skipped Nov 16 and
+      Nov 23 (podcast_script_too_thin); on Nov 23 all eight web-search
+      queries, each asked for "the last 24 hours", answered that nothing was
+      recent. Omni View logged 78-85 validation issues a run, 268 of 268
+      duplicate findings in 68 show runs being four template labels. Restock
+      Topic Queues failed Nov 14 and Nov 20 with every candidate (30, 29) a
+      repeat of the queue. The grouped Python Dependabot PR (#1739) was red
+      on a guard that pinned the PyAV floor exactly.
+    target: >
+      The Daily Audit starts within 15 minutes of 11:15 Eastern on at least
+      12 of the 14 days after the scheduler Worker is redeployed and no day
+      is audited twice; Offshore North publishes Nov 30 and Dec 7; Omni
+      View's "Digest validation found N issue(s)" is under 5 on every run;
+      no Restock Topic Queues run fails on an all-repeats answer; the next
+      grouped Python Dependabot PR is green without a test edit.
+    criteria: >
+      HIT when the audit start times, both Offshore North Mondays and the
+      Omni View issue counts all meet the target; MISS when Offshore North
+      skips as too thin with the 7-day search in its log, or a day is
+      audited twice, or a fresh report is again called stale; else
+      INCONCLUSIVE (say which part, and whether the Worker was deployed).
+    readout_plan: >
+      Actions run list for daily-audit.yml (event, created_at, the `once`
+      job's notice); Offshore North run logs ("Search the web for recent
+      news articles (last 7 days)" is not logged — read "Web search:" result
+      counts and the skip markers under digests/offshore_north/);
+      omni_view run logs ("Digest validation found"); restock-topic-queues
+      runs ("asking once more"); the Dependabot PR's Run Tests check.
+    notes: >
+      workers/scheduler AUDIT_DISPATCH (needs an operator deploy; until then
+      GitHub's cron is still the only clock and nothing changes),
+      scripts/audit_gate.py + the `once` job, dispatch_audit_retries
+      report_verdict (fresh / late / stale), engine.fetcher window_hours,
+      engine.validation._is_label_span, restock REPEAT_RETRY_NOTE and the
+      verify/commit steps that run after a failed restock,
+      engine.market_quotes corroborated moves and last_verified,
+      modern_investing _report_missing_pick, four dead feeds commented out,
+      the Offshore North fleet-page stale warning. The wider search gives
+      Offshore North more source material; no prompt or audio setting
+      changed. Guards tests/test_pipeline_hardening_2026_11_24.py and the
+      five test files dated 2026_11_24 beside it.
   - id: review-apply-and-slate-2026-11-24
     title: "The review agent applies and rehearses its own show's changes; one weekly slate merges records and lists the rest by tier"
     area: quality

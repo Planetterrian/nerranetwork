@@ -1981,7 +1981,7 @@ Register `review-loop-automation-2026-11-24`; guards `tests/test_review_loop_aut
 **A metric entry states its success as a `target_rule`** (`">= 0.9"`, required from Nov 24) and `readout_register.py` writes hit / miss / unmeasured; a rule restates the entry's own number, never a new one. **The review rotation ranks audience share x weeks since review x problems** (`pick_review_target.rank_targets`; `--plain` is the old date rule). **`shows/contracts/must_haves.yaml` is what every episode must carry** (never under `shows/*.yaml`); the Daily Audit pages on a `page` miss the day it ships; calibrate a line on 14 episodes first. **A critical dispatches a review only above the show's own rate.**
 **The review agent applies its own show's changes and rehearses them** (`scripts/review_changes.py`: only `shows/<slug>.yaml` and `shows/prompts/<slug>_*`, `old` text exactly once, the file must still load; everything else stays a proposal); the merge waits for the listen. **Merge tiers: A records (`docs/reviews/**`) merge in the weekly slate (`scripts/review_slate.py`) once the ledger parses; B listen and C operator never merge there.** `REVIEW_PR_TOKEN` makes review PRs run CI. Guards `tests/test_review_apply_and_slate_2026_11_24.py`.
 
-### Flagship quality pass (Nov 24 2026)
+### Pipeline hardening (Nov 24 2026)
 
-[review](docs/reviews/flagship_quality_review_2026_11_24.md); guards `tests/test_flagship_quality_2026_11_24.py`.
-**A 4%+ stock move gets ONE dated search (`engine/market_move.py`); the pipeline never writes its reason.** ⚠️ AUDIO.
+Register `pipeline-hardening-2026-11-24`; guards `tests/test_pipeline_hardening_2026_11_24.py`.
+**The Daily Audit runs once a network day** (`audit_gate.py`); **no retry after 00:00 UTC**. **A bold span ending in a colon is a label.**

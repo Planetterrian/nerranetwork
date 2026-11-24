@@ -51,6 +51,7 @@ jobs:
           skip-checkout: "true"
 
       - name: Restock queues (trigger-gated)
+        id: restock
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
@@ -70,12 +71,21 @@ jobs:
           python scripts/restock_topic_queues.py $FORCE_FLAG
 
       - name: Verify queue integrity after restock
+        id: verify
         # The runway/uniqueness/alternation drift guards double as the
         # post-restock validator: a malformed or under-filled restock
         # fails HERE, before anything is committed.
+        #
+        # Nov 24 2026: the restock step exits 1 when ANY show that needed
+        # topics got none, and that used to skip this step and the commit —
+        # so one show's empty night threw away the other show's sourced
+        # topics. Verify and commit whatever was written; the job stays red
+        # on the failed step.
+        if: always() && steps.restock.outcome != 'skipped'
         run: python -m pytest tests/test_network_quality_pass.py::TestNarrativeQueueRunway -q
 
       - uses: ./.github/actions/safe-commit-push
+        if: always() && steps.verify.outcome == 'success'
         with:
           # Glob, not per-show hardcoding: with the two files listed
           # explicitly, a third narrative show's restocked queue would be

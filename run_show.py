@@ -1919,9 +1919,20 @@ def run(args: argparse.Namespace) -> None:
             )
             try:
                 from engine.fetcher import fetch_web_search_articles
+                # Nov 24 2026: the search asks as far back as the show's
+                # own fetch ladder reaches. Offshore North is weekly
+                # (fetch_expansion_hours: [168]) and its eight queries were
+                # each asked for "the last 24 hours": on Nov 23 all eight
+                # answered that nothing was recent and the episode skipped
+                # as too thin, as it had on Nov 16. A show with no custom
+                # ladder passes 24 and its request is unchanged.
+                _search_window = max(
+                    [int(h) for h in (getattr(config, "fetch_expansion_hours", None) or [])]
+                    or [24])
                 web_articles = fetch_web_search_articles(
                     config.web_search_queries,
                     keywords=config.keywords,
+                    window_hours=_search_window,
                 )
                 if web_articles:
                     # July 16 2026: web-search results bypassed the per-show

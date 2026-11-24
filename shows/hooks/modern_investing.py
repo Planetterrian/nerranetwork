@@ -959,7 +959,7 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             trade["symbol"], trade["strategy"], trade.get("sector"), trade["confidence"],
         )
     else:
-        logger.warning("Could not extract Practice Investment pick from digest")
+        _report_missing_pick(digest_text, episode_num)
 
     # Execution bridge (July 2026 live-trading prep): emit a
     # machine-readable trade signal for the (future, isolated) SnapTrade
@@ -1450,6 +1450,33 @@ def _no_trade_reason(digest_text: str) -> str:
                  re.IGNORECASE):
         return "no_pick_extracted"
     return "no_practice_section"
+
+def _report_missing_pick(digest_text: str, episode_num: int | None) -> str:
+    """Say WHY no trade was recorded, and annotate the one case that is a loss.
+
+    Nov 24 2026: every no-trade episode logged the same "Could not extract
+    Practice Investment pick" warning, so a deliberate no-trade day (Ep239,
+    "Today's Pick: None") read exactly like Ep205, whose "TSX:H" pick was
+    announced on air and never reached the ledger — and that one stayed
+    unseen for five days. Only ``no_pick_extracted`` is a lost pick; it gets
+    a workflow annotation, the other two an info line. Returns the reason.
+    """
+    reason = _no_trade_reason(digest_text)
+    if reason == "no_pick_extracted":
+        after = (digest_text.split("Today's Pick", 1)[1][:80]
+                 if "Today's Pick" in digest_text else "")
+        print(
+            f"::warning::modern_investing Ep{episode_num}: the digest has a "
+            f"Practice Investment section but no pick could be read from it "
+            f"({after.strip()!r}) — a pick announced on air is NOT in the "
+            f"trade ledger. Fix the extractor or record the trade by hand.",
+            flush=True,
+        )
+        logger.warning("Could not extract Practice Investment pick from digest")
+    else:
+        logger.info("No trade recorded for this episode (%s).", reason)
+    return reason
+
 
 # uuid5 namespace for deterministic client_order_ids — SnapTrade's
 # place-order endpoint accepts a caller-supplied ``client_order_id`` for

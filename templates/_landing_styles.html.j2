@@ -3,7 +3,12 @@
     (language_hub.html.j2 — ru/index.html, fr/index.html) since Oct 19 2026,
     so the three pages are one design. Edit here, never in a page. -#}
 <style>
-.lt-page {
+/* Nov 24 2026: the tokens are also on ``.lt-tokens``. join.html uses the
+   landing page's tokens on 70 rules and has no ``.lt-page`` ancestor (that
+   class also brings the front page's padding and link reset), so every one
+   of them was undefined there: no serif headings, no cyan accents, no card
+   or field borders, and a "Members only" badge in dark ink on nothing. */
+.lt-page, .lt-tokens {
   --lt-ink: var(--nn-text);
   --lt-muted: var(--nn-text-muted);
   --lt-rule: var(--nn-border);
@@ -18,6 +23,8 @@
   --lt-head: 'Source Serif 4', Georgia, serif;
   --lt-ui: var(--font-ui);
   --lt-radius: 10px;
+}
+.lt-page {
   padding-top: calc(var(--nav-height, 72px) + var(--sp-4));
   padding-bottom: var(--sp-12);
   color: var(--lt-ink);

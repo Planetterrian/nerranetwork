@@ -39,6 +39,20 @@ ROOT = Path(__file__).resolve().parent.parent
 #: for a mega-cap). Tesla uses 25%, SpaceX 35%.
 MAX_DEVIATION = 0.30
 
+#: Nov 24 2026: NVDA closed 165.05 on Nov 23 after 125.53 on Nov 20 (+31.5%,
+#: the session after a 14% fall) and the guard above omitted it from the tape
+#: on the day it was the story. A move past ``MAX_DEVIATION`` is accepted when
+#: the SAME fetch's previous bar agrees with the cached close: the source's
+#: series is continuous with the record, so the move is the source's own and
+#: not a stale or garbled quote. Still bounded.
+CORROBORATION_TOLERANCE = 0.02
+MAX_CORROBORATED_DEVIATION = 0.60
+
+#: A cached close this many calendar days older than the fetched bar cannot
+#: judge it (the ticker was missing for a while); the fetch's own previous
+#: bar is the reference then, so a rejection can never lock a ticker out.
+CACHE_STALE_DAYS = 7
+
 #: Sanity band for any mega-cap share price, in USD.
 PRICE_MIN, PRICE_MAX = 5.0, 20000.0
 
@@ -148,17 +162,34 @@ def _history_fetch(ticker: str) -> Optional[Tuple[float, Optional[float], str]]:
 def load_cache(path: Path) -> Dict[str, dict]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return {q["ticker"]: q for q in data.get("quotes", []) if q.get("ticker")}
+        # ``last_verified`` holds the last validated close of a ticker that
+        # is missing from ``quotes`` (see ``persist``): the guard's memory,
+        # never a quote any page prints.
+        out = {q["ticker"]: q for q in data.get("last_verified", []) if q.get("ticker")}
+        out.update({q["ticker"]: q for q in data.get("quotes", []) if q.get("ticker")})
+        return out
     except Exception:
         return {}
 
 
-def valid_close(price: float, cached: Optional[float]) -> bool:
+def valid_close(price: float, cached: Optional[float],
+                prev: Optional[float] = None) -> bool:
     if not (PRICE_MIN <= price <= PRICE_MAX):
         return False
     if cached and abs(price - cached) / cached > MAX_DEVIATION:
-        return False
+        deviation = abs(price - cached) / cached
+        corroborated = bool(
+            prev and abs(prev - cached) / cached <= CORROBORATION_TOLERANCE)
+        return corroborated and deviation <= MAX_CORROBORATED_DEVIATION
     return True
+
+
+def _cache_is_stale(cached_bar: Optional[str], bar_date: str) -> bool:
+    try:
+        gap = _dt.date.fromisoformat(bar_date) - _dt.date.fromisoformat(str(cached_bar))
+    except (TypeError, ValueError):
+        return False
+    return gap.days > CACHE_STALE_DAYS
 
 
 def fetch_daily_closes(
@@ -179,10 +210,24 @@ def fetch_daily_closes(
         if not got:
             continue
         close, prev, bar_date = got
-        prior = (cached.get(t) or {}).get("close")
-        if not valid_close(close, prior):
+        entry = cached.get(t) or {}
+        prior = entry.get("close")
+        if prior and _cache_is_stale(entry.get("bar_date"), bar_date):
+            logger.warning("%s: cached close is from %s, too old to judge the %s "
+                           "bar — validating against the fetch's previous bar",
+                           t, entry.get("bar_date"), bar_date)
+            prior = prev
+        if not valid_close(close, prior, prev):
+            # Annotated: an omitted ticker is a hole in the published tape.
+            print(f"::warning::market quotes: {t} close {close:.2f} failed "
+                  f"validation (cached {prior}, previous bar {prev}) — omitted "
+                  f"from the tape", flush=True)
             logger.warning("%s close %.2f failed validation (cached %s) — omitted", t, close, prior)
             continue
+        if prior and abs(close - prior) / prior > MAX_DEVIATION:
+            logger.warning("%s close %.2f is %.0f%% from the cached %s — accepted: "
+                           "the fetch's previous bar (%s) matches the cache",
+                           t, close, abs(close - prior) / prior * 100, prior, prev)
         out.append(Quote(t, round(close, 2), round(prev, 2) if prev else None, bar_date))
     return out
 
@@ -192,7 +237,16 @@ def persist(quotes: List[Quote], cache_path: Path) -> None:
         return  # never overwrite a good cache with an empty one
     try:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps({
+        # A ticker omitted today used to vanish from the cache, so the next
+        # run validated it against nothing. Its last validated close is kept
+        # under ``last_verified`` (the guard reads it; no page prints it).
+        have = {q.ticker for q in quotes}
+        carried = [
+            {"ticker": t, "close": e.get("close"), "bar_date": e.get("bar_date")}
+            for t, e in load_cache(cache_path).items()
+            if t not in have and e.get("close")
+        ]
+        payload = {
             "updated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "basis": "regular-session daily close",
             "quotes": [
@@ -200,7 +254,10 @@ def persist(quotes: List[Quote], cache_path: Path) -> None:
                  "change_pct": q.change_pct, "bar_date": q.bar_date}
                 for q in quotes
             ],
-        }, indent=2) + "\n", encoding="utf-8")
+        }
+        if carried:
+            payload["last_verified"] = carried
+        cache_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     except Exception as exc:  # noqa: BLE001
         logger.warning("could not persist %s (non-fatal): %s", cache_path, exc)
 
