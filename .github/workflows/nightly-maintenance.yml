@@ -164,6 +164,10 @@ jobs:
           # first night creates each channel's reporting job; reports start
           # about two days later. Absent rows stay absent, never 0.
           python scripts/fetch_youtube_reach.py || true
+          # Nov 24 2026: the growth readout (weekly subscribers and views per
+          # channel, the same hook Short across EN/RU/FR, the long-form map
+          # A/B) from the three files above. No API call, no secret.
+          python scripts/build_youtube_growth.py || true
           python scripts/update_youtube_performance.py || true
           # Staggered Shorts (Aug 2026): post funnel comments queued for
           # publishAt-scheduled Shorts that have since gone public —
@@ -551,6 +555,7 @@ jobs:
             api/youtube_policy.json
             api/youtube_early_reach.json
             api/youtube_reach.json
+            api/youtube_growth.json
             api/gallery_retention.json
             api/funnel.json
             api/mit_trade_ledger.json

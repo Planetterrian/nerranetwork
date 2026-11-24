@@ -8136,3 +8136,75 @@ experiments:
       scripts/review_slate.py + review-slate.yml. Prompt changes reach a show
       only after the operator's listen (landmine #17). Guards
       tests/test_review_apply_and_slate_2026_11_24.py.
+  - id: long-form-skip-map-2026-11-24
+    title: "The EN long-form opens on the story: the map sentence is cut from the YouTube render on odd episode numbers (A/B)"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-15
+    status: reading
+    baseline: >
+      Median of 141 EN long-form retention curves published Sep 16 - Nov 21:
+      0.85 of viewers at 10 s, 0.63 at 20 s, 0.47 at 30 s, 0.29 at 60 s;
+      average view duration 70-80 s on 9-10 minute videos. The Nov 8 "Coming
+      up" card and subscribe pill did not move it (0.46 at 30 s before, 0.48
+      after). Seconds 8-22 are the identity line and the map. The hook Short
+      lost 2.5 s of average view duration to the same sentence (Oct 30).
+    target: >
+      Long-forms rendered without the map hold at least 4 points more of
+      their audience at 30 s than those with it, read on the retention curve,
+      with average view duration at age 7 no lower.
+    criteria: >
+      HIT when api/youtube_growth.json long_form_map_ab.verdict is cut_ahead
+      (at least 20 curves in each arm and the cut arm 0.04 or more ahead at
+      30 s) and the cut arm's median_avd_s is not below the kept arm's; then
+      set youtube.long_form_skip_map to "on". MISS when verdict is
+      kept_ahead: set it "off". No difference: "off", the map is not the
+      leak. INCONCLUSIVE under 20 curves an arm by the readout (extend two
+      weeks; about 12 mapped EN long-forms publish a day).
+    readout_plan: >
+      api/youtube_growth.json long_form_map_ab (arms.map_cut / arms.map_kept:
+      n, curves, retention_30s, retention_60s, median_avd_s,
+      subs_per_1000_views), written nightly by scripts/build_youtube_growth.py.
+      The arm is the long-form's `variant` in digests/<show>/youtube_videos.json
+      and the metric long_form_map_arm; only episodes that HAVE a map are in
+      either arm. Both arms publish the same days on the same shows (episode
+      parity), so a distribution swing hits both.
+    notes: >
+      engine/short_furniture.py (long_form_map_arm, spliced_long_source,
+      shift_chapters), run_show._long_form_source: in the cut arm the whole
+      YouTube stage reads one spliced timeline, so captions, scene cuts, fact
+      cards and the description's chapters move with it, the "Coming up" card
+      is left out, and the Apple video item omits the audio's chapters and
+      transcript (map_cut_s on the track). The episode, its feed audio and its
+      podcast chapters keep the map. Same pass: evergreen b-roll never opens
+      a long-form (SpaceX Daily spent its first 7 s on a stock NASA launch
+      clip on every episode since August; read spacex retention at 5 s and
+      10 s, 0.93 and 0.80 before, beside the A/B), and
+      scripts/fetch_youtube_reach.py says api_disabled with the enable link
+      (the Nov 14 instrument has never run: the Reporting API is off in the
+      Google Cloud project). Guards tests/test_long_form_skip_map_2026_11_24.py,
+      tests/test_youtube_growth_2026_11_24.py.
+  - id: market-review-2026-11-24
+    title: "The on-air outro rotation asks for the Nerra Daily email"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-22
+    status: reading
+    baseline: >
+      Nov 24: 5 email subscribers (one unsubscribe in the week), 16,113
+      downloads in 30 days, 7 show-note click sessions in 28 days. None of the
+      13 outro-rotation surfaces asked for the email.
+    target: >
+      At least 25 subscribers by the readout, with a signup within 48 h of at
+      least half of the flagship airings of the email surface.
+    criteria: >
+      HIT at 25 or more subscribers and the 48 h pattern on half the flagship
+      airings; MISS at 10 or fewer; else INCONCLUSIVE.
+    readout_plan: >
+      api/buttondown_history.json subscriber rows by night; the closing_block
+      surface id per episode (engine.network_promo.pick_featured_surface for
+      each flagship date); Buttondown subscriber dates against airing dates.
+    notes: >
+      engine/network_promo.py email surface, FLAGSHIP_SURFACE_WEIGHTS email 2.
+      Review docs/reviews/market_review_2026_11_24.md; guards
+      tests/test_market_review_2026_11_24.py. ⚠️ AUDIO: one listen first.
