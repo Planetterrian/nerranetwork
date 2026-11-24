@@ -1623,10 +1623,19 @@ def run(args: argparse.Namespace) -> None:
                 try:
                     extra_context = hook_future.result(timeout=60)
                 except Exception as exc:
+                    # Nov 24 2026: a timeout's message is empty, so this line
+                    # read "failed for spacex:  —" on three SpaceX episodes
+                    # that lost their price and closing. Name the exception
+                    # and record it, so a lost hook is a number, not a log.
                     logger.warning(
-                        "Pre-fetch hook failed for %s: %s — continuing without hook data",
-                        args.show, exc,
+                        "Pre-fetch hook failed for %s: %s: %s — "
+                        "continuing without hook data",
+                        args.show, type(exc).__name__, exc,
                     )
+                    print(f"::warning::{args.show}: pre-fetch hook failed "
+                          f"({type(exc).__name__}) — the episode runs without "
+                          "its hook data (price, closing, memory)")
+                    metrics.record("pre_fetch_hook_failed", type(exc).__name__)
                     extra_context = {}
                 # A hook may return ``metrics`` (Sep 23 2026: Top World's
                 # desks_live_at_publish, Prediction Markets' week_board_rows)

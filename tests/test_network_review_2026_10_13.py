@@ -139,11 +139,13 @@ class TestHookRecurrence:
         """Replayed on the tracker as it stood before each episode."""
         from engine.digest_lint import hook_line
         from engine.story_recurrence import RecurrenceIndex
-        tracker = json.loads((ROOT / "digests" / "tesla_shorts_time" /
-                              "tesla_content_tracker.json").read_text(encoding="utf-8"))
+        # The live tracker keeps a rolling window: by Nov 23 2026 it had
+        # dropped the September headlines Ep632's hook re-told, so the test
+        # read 0 and Run Tests went red. The window as it stood after Ep632
+        # is frozen in a fixture (date + headlines, all the index reads).
+        tracker = json.loads((ROOT / "tests" / "fixtures" /
+                              "tesla_tracker_2026_10_12.json").read_text(encoding="utf-8"))
         episodes = tracker.get("episodes", [])
-        if not any(str(e.get("date", "")) < "2026-10-12" for e in episodes):
-            pytest.skip("tracker window has rolled past the fixture")
         def times(stem: str, iso: str) -> int:
             idx = RecurrenceIndex([e for e in episodes if str(e.get("date", "")) < iso],
                                   exclude_date=iso)

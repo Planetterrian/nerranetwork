@@ -7897,13 +7897,33 @@ def _member_page_context(title, description, canonical):
         "stripe_personal_local_url": os.environ.get(
             "STRIPE_LINK_PERSONAL_LOCAL", ""),
         "donate_monthly_url": os.environ.get("STRIPE_LINK_DONATE_MONTHLY", ""),
-        "donate_once_url": os.environ.get("STRIPE_LINK_DONATE_ONCE", ""),
+        "donate_once_url": _donate_once_url(),
         # The support page's whole premise is "here's the real ledger", so the
         # figure has to come from the ledger. Hardcoded at 120 since Aug 2026
         # while api/dashboard.json read $155.85/30d — a page about honesty
         # understating its own costs by 30%.
         **_network_cost_ledger(),
     }
+
+
+# Nov 16 2026: the one-time donation link was card-tested and replaced; the
+# old link is deactivated in Stripe. The repo variable STRIPE_LINK_DONATE_ONCE
+# still held it a week later, so every page build put the dead link back on
+# support.html. A retired link is never rendered, whatever the variable says;
+# the page gets the current link instead (the same one the workflows fall back
+# to when the variable is unset).
+RETIRED_DONATE_ONCE_LINKS = ("donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03",)
+CURRENT_DONATE_ONCE_LINK = "https://donate.stripe.com/7sY6oIc9Q0iK2zUbwb0Ba04"
+
+
+def _donate_once_url() -> str:
+    url = os.environ.get("STRIPE_LINK_DONATE_ONCE", "").strip()
+    if any(r in url for r in RETIRED_DONATE_ONCE_LINKS):
+        print("::warning::STRIPE_LINK_DONATE_ONCE holds the retired donation "
+              "link; rendering the current one. Update or delete the repo "
+              "variable.")
+        return CURRENT_DONATE_ONCE_LINK
+    return url
 
 
 # Hosting, storage and delivery (R2, Cloudflare, the domain) are paid outside

@@ -87,6 +87,20 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     # Refresh the public launch-dashboard data (best-effort, non-fatal).
     # Writes api/spacex_launches.json for spacex-dashboard.html; a failure
     # keeps the last-good cache and never blocks the episode.
+    #
+    # Nov 24 2026: it runs BESIDE the episode, never inside the hook.
+    # run_show waits 60 s for a pre-fetch hook and this refresh (several
+    # 25 s upstream calls) took longer on Nov 17, 20 and 21: the hook was
+    # abandoned, the episode ran with no hook context at all, and SpaceX
+    # Ep165, Ep168 and Ep169 shipped with no share price, the fallback
+    # closing and no story memory, while the quote it had already fetched
+    # sat unused in api/spcx.json. The file is committed minutes later.
+    _start_launch_dashboard_refresh()
+
+    return context
+
+
+def _refresh_launch_dashboard() -> None:
     try:
         import subprocess
         subprocess.run(
@@ -97,7 +111,11 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     except Exception as exc:
         logger.warning("Launch-dashboard data refresh failed (non-fatal): %s", exc)
 
-    return context
+
+def _start_launch_dashboard_refresh() -> None:
+    import threading
+    threading.Thread(target=_refresh_launch_dashboard,
+                     name="spacex-launch-dashboard", daemon=True).start()
 
 
 def post_generate(config, *, digest_text: str = "", episode_num: int = 0) -> None:
