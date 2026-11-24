@@ -1306,6 +1306,27 @@ def _apply_story_chapters(
     if not inserts:
         return chapters, False
     bounds = [[c.word_start, c.char_start, c.title] for c in chapters]
+    # Nov 24 2026 (SpaceX Ep172): a story told again in ONE trailing sentence
+    # ("Himes is expected to become chair…", 17 words, after the same event's
+    # own item) took a chapter, and the min-gap rule below then dropped the
+    # NEXT story's chapter for starting too close to it — so "Himes Warns…"
+    # sat over forty seconds of an unrelated Mexico debris story that had no
+    # chapter at all. A start whose own telling is shorter than the gap
+    # yields: its sentence stays in the chapter before it, and the story
+    # after it keeps its title.
+    _starts = sorted({b[0] for b in bounds} | {w for w, _c, _t in inserts}
+                     | {body_end})
+    _bound_titles = {b[2] for b in bounds}
+
+    def _own_span(w: int) -> int:
+        nxt = next((x for x in _starts if x > w), total_words)
+        return nxt - w
+
+    inserts = [(w, c, t) for w, c, t in inserts
+               if t in _bound_titles
+               or _own_span(w) >= STORY_CHAPTER_MIN_GAP_WORDS]
+    if not inserts:
+        return chapters, False
     all_starts = sorted({b[0] for b in bounds} | {w for w, _c, _t in inserts})
     added: list = []
     for w, c, t in inserts:

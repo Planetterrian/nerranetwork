@@ -1649,6 +1649,102 @@ def lint_item_figures_sourced(digest: str, context: Optional[dict] = None) -> Op
     )
 
 
+# --- item_names_sourced_measure (Nov 24 2026, the flagship quality pass) -----
+# SpaceX Ep172 headed an item "Britain Seeks Answers on Starshield Service
+# Changes" and opened it "British officials demanded explanations". Its one
+# source, read back on Nov 24, never mentions Britain: the article is about a
+# US congressman. The claims gate passed the episode 9 of 9, because the
+# ledger entry quoted a sentence that IS in the page; nothing compared the
+# item's own NAMES with its own source. This does, and only measures: fetched
+# page text is not committed, so the check cannot be replayed on past
+# episodes, and a firing form is listed only after a fortnight of readings
+# (``shows/contracts`` rule: calibrate a line on 14 episodes first).
+#
+# A name is a capitalised word inside a body sentence (never its first word,
+# never an acronym, a month or a title word). It is "carried" when its first
+# four letters appear in the item's own fetched sources, so Britain/British
+# and Mexico/Mexican read as one name. Items whose sources were not read as
+# pages are not judged.
+
+#: An item is judged only when its own sources carry this much fetched text.
+ITEM_NAMES_SOURCE_MIN = 1500
+_ITEM_NAME_RE = re.compile(r"[A-Z][A-Za-zÀ-ÿ]+(?:[’'][a-z]+)?")
+_BOLD_RE = re.compile(r"\*\*.+?\*\*", re.S)
+_MD_LINK_ANY_RE = re.compile(r"\[[^\]]*\]\([^)]*\)")
+
+
+def _item_body_names(text: str) -> List[str]:
+    """Names in one item. Mid-sentence capitals count directly. A headline
+    word or a sentence's first word is capitalised whatever it is, so it
+    counts only when its four-letter stem is capitalised twice in the item
+    and never written in lower case there (Britain / British)."""
+    flat = _MD_LINK_ANY_RE.sub(" ", (text or "").replace("**", " "))
+    flat = re.sub(r"\bSource:\s*", " ", _URL_RE.sub(" ", flat))
+    lower_stems = {w[:4] for w in re.findall(r"\b[a-zà-ÿ]{4,}", flat)}
+    cap_stems: Dict[str, int] = {}
+    out: List[str] = []
+    edge: List[str] = []
+
+    def _tok(raw: str) -> str:
+        m = _ITEM_NAME_RE.fullmatch(raw.strip(".,;:()\"“”‘’'—–-"))
+        if not m:
+            return ""
+        tok = re.sub(r"(?:’s|'s)$", "", m.group(0))
+        if len(tok) < 4 or tok.isupper() or tok in _NOT_A_NAME or tok in _MONTHS_DAYS:
+            return ""
+        return tok
+
+    bold = {w.strip(".,;:()\"“”‘’'—–-") for b in _BOLD_RE.findall(text or "") for w in b.strip("*").split()}
+    for sent in _SENT_SPLIT.split(flat):
+        for i, raw in enumerate(sent.split()):
+            tok = _tok(raw)
+            if not tok:
+                continue
+            cap_stems[tok.lower()[:4]] = cap_stems.get(tok.lower()[:4], 0) + 1
+            if i == 0 or tok in bold:
+                edge.append(tok)
+            elif tok not in out:
+                out.append(tok)
+    for tok in edge:
+        stem = tok.lower()[:4]
+        if tok not in out and cap_stems.get(stem, 0) >= 2 and stem not in lower_stems:
+            out.append(tok)
+    return out
+
+
+def item_unsourced_names(digest: str, context: dict) -> Optional[Tuple[int, List[str]]]:
+    """``(items judged, names in no source of their own item)``; None when no
+    item's sources were read as pages."""
+    idx = _article_index(context.get("articles") or [])
+    judged, missing = 0, []
+    for _title, text, urls in sourced_items(digest):
+        src = " ".join(_article_text(a) for a in _item_sources(urls, idx)).lower()
+        if len(src) < ITEM_NAMES_SOURCE_MIN:
+            continue
+        judged += 1
+        for name in _item_body_names(text):
+            if name.lower()[:4] not in src and name not in missing:
+                missing.append(name)
+    if not judged:
+        return None
+    return judged, missing
+
+
+def lint_item_names_sourced_measure(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    """Records, never fires."""
+    if not context:
+        return None
+    res = item_unsourced_names(digest, context)
+    if res is None:
+        return None
+    judged, missing = res
+    return LintFinding("item_names_sourced_measure", "", {
+        "item_names_judged_items": judged,
+        "item_names_unsourced": len(missing),
+        "item_names_unsourced_sample": ", ".join(missing[:6]),
+    })
+
+
 # --- explainer_distinct (Nov 13 2026, the Offshore North external review) ---
 # Plain Sailing is the show's one explainer, and "explains something new each
 # week" was a prompt rule twice over (the dated list of past explainers since
@@ -1912,7 +2008,7 @@ def lint_pick_stop_loss(digest: str) -> Optional[LintFinding]:
 CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source", "hook_figure_sourced",
                            "hook_repeats_past_lead", "stop_told_as_retirement",
                            "preview_told_as_result", "item_figures_sourced",
-                           "explainer_distinct"})
+                           "explainer_distinct", "item_names_sourced_measure"})
 
 LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "wyntk_hook_match": lint_wyntk_hook_match,
@@ -1937,6 +2033,7 @@ LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "preview_told_as_result": lint_preview_told_as_result,
     "explainer_figures_sourced": lint_explainer_figures_sourced,
     "item_figures_sourced": lint_item_figures_sourced,
+    "item_names_sourced_measure": lint_item_names_sourced_measure,
     "explainer_distinct": lint_explainer_distinct,
     "top_news_on_beat": lint_top_news_on_beat,
 }

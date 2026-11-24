@@ -1762,6 +1762,32 @@ def run(args: argparse.Namespace) -> None:
             metrics.record("articles_from_hook", _n_hook)
             logger.info("Merged %d hook-supplied article(s) (%d offered)",
                         _n_hook, len(_hook_articles))
+        # Market move (Nov 24 2026, engine/market_move.py): when the show's
+        # own stock closed 4% or more away from its previous close, the hook
+        # hands back ``market_move`` and ONE search looks for dated reporting
+        # on why. The results are ordinary articles (numbered list, page
+        # fetch, claims gate); the block states the move and whether a
+        # report was found. Run here, not in the hook: a search inside the
+        # hook's 60 s budget is how SpaceX lost its price on three episodes.
+        _move = extra_context.pop("market_move", None) if isinstance(extra_context, dict) else None
+        if isinstance(extra_context, dict):
+            extra_context.setdefault("market_move_section", "")
+        if isinstance(_move, dict) and not _topic_driven:
+            try:
+                from engine import market_move as _mm
+                with metrics.stage("market_move_search"):
+                    _mv_found = _mm.fetch_move_articles(_move)
+                from engine.hook_articles import normalize_hook_articles as _mv_norm
+                _mv_found = _mv_norm(_mv_found, slug=config.slug)
+                for _mva in _mv_found:  # the search model's, like research
+                    _mva["source_kind"] = _mm.SOURCE_KIND_MARKET_MOVE
+                articles, _n_mv = merge_hook_articles(articles, _mv_found)
+                extra_context["market_move_section"] = _mm.render_block(_move, _mv_found)
+                metrics.record("market_move_pct", _move.get("pct"))
+                metrics.record("market_move_reports", len(_mv_found))
+                metrics.record("market_move_reports_merged", _n_mv)
+            except Exception as exc:  # noqa: BLE001 — never blocks the episode
+                logger.warning("Market move desk failed (non-fatal): %s", exc)
         # Narrative research (Oct 9 2026): the topic-queue shows wrote from
         # a brief and nothing else — no Source lines, UC 0 verified claims in
         # eight episodes. One web search per topic (any date) supplies the
@@ -2582,6 +2608,10 @@ def run(args: argparse.Namespace) -> None:
 
         # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
         template_vars.update(extra_context)
+        # Nov 24 2026: the flagship digest prompts carry
+        # {market_move_section}; a failed hook or a resumed run must still
+        # render it (as nothing).
+        template_vars.setdefault("market_move_section", "")
 
         # Phase 3 recursive memory: the digest/podcast prompts for memory-enabled
         # shows reference {narrative_memory_section}, supplied by the show's
@@ -7761,6 +7791,7 @@ def _dedupe_digest_sections(x_thread, config, metrics):
         result = dedupe_cross_section_items(
             x_thread, show_name=config.name,
             exempt_sections=getattr(config, "digest_overlap_exempt_sections", []) or [],
+            claiming_sections=getattr(config, "digest_overlap_claiming_sections", []) or [],
         )
     except Exception as exc:  # noqa: BLE001 — a guard must never break a run
         logger.warning("Digest cross-section dedupe failed (non-fatal): %s", exc)

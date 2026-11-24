@@ -111,7 +111,11 @@ class TestSpacexPrompt:
         assert "reach length by deepening the engineering" not in system
 
     def test_derived_numbers_show_their_working(self):
-        assert "SHOW THE WORKING" in self.text
+        # Nov 24 2026 (flagship quality pass): "show the working" put
+        # equations on air (Ep171, Ep172). The rule is now written for the
+        # ear; the count floor it replaced stays gone.
+        assert "NUMBERS FOR THE EAR" in self.text
+        assert "SHOW THE WORKING" not in self.text
         assert "at least five numbers" not in self.text
 
     def test_cursor_items_say_why_they_are_here(self):

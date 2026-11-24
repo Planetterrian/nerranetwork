@@ -1434,6 +1434,10 @@ class ShowConfig:
     # both sections, headers included, to the same-URL rule. Empty = every
     # section is compared (legacy).
     digest_overlap_exempt_sections: List[str] = field(default_factory=list)
+    # Nov 24 2026: one-item sections that KEEP their story when it repeats an
+    # earlier item; the earlier item is removed instead (never the lead).
+    # Tesla's Short Spot shipped empty on 19 of 30 digests without it.
+    digest_overlap_claiming_sections: List[str] = field(default_factory=list)
     # Lints that BLOCK when they still fire after the one-shot structural
     # regeneration (Sep 24 2026): the episode is skipped with a marker, never
     # stripped. Opt-in per show; Peptides Ep2 shipped "Doses of 7 mg and
@@ -1870,6 +1874,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         host_experience_mode=_host_experience_mode(data.get("host_experience_mode")),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
+        digest_overlap_claiming_sections=[str(x) for x in (data.get("digest_overlap_claiming_sections") or [])],
         digest_lints_blocking=[str(x) for x in (data.get("digest_lints_blocking") or [])],
         x_posts_as_sources=str(data.get("x_posts_as_sources", "any") or "any"),
         region_allowlist=[str(x) for x in (data.get("region_allowlist") or [])],

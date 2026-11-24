@@ -225,7 +225,10 @@ class TestXSourcePolicy:
             assert set(data.get("digest_lints") or []) <= {
                 "items_without_source", "hook_supported",
                 "deep_dive_distinct_measure", "deep_dive_distinct",
-                "deep_dive_fetched_source", "top_news_on_beat"}, slug
+                "deep_dive_fetched_source", "top_news_on_beat",
+                # Nov 24 2026: a measure; it judges only items whose source
+                # was read as a page, so a post is never judged.
+                "item_names_sourced_measure"}, slug
         for slug in ("omni_view", "models_agents"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert data["x_posts_as_sources"] == "secondary", slug
@@ -267,9 +270,11 @@ class TestSmallFixes:
         tesla = load_config(ROOT / "shows" / "tesla.yaml")
         # PR G (Sep 24 2026) + hook_supported (Oct 8 2026, Ep627) + the Nov 3
         # 2026 deep-dive measures (digest-lints pass) + the firing
-        # deep_dive_distinct (Nov 11 2026 Tesla review).
+        # deep_dive_distinct (Nov 11 2026 Tesla review) + the Nov 24 2026
+        # names measure (flagship quality pass; records, never fires).
         assert tesla.digest_lints == [
             "items_without_source", "hook_supported",
+            "item_names_sourced_measure",
             "deep_dive_distinct_measure", "deep_dive_distinct",
             "deep_dive_fetched_source"]
         assert tesla.x_posts_as_sources == "any" and tesla.region_allowlist == []

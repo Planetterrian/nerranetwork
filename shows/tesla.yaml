@@ -19,11 +19,23 @@ stale_article_days: 3
 frame_memory: true
 # Sep 24 2026: a digest whose story items carry no Source: lines regenerates once
 # (PT Ep193 / FF Ep192-195 / Tesla Ep614 shipped source-less items unnoticed).
+# Nov 24 2026 (flagship quality pass): the Short Spot is one item, and when it
+# re-used a Top 12 story the cross-section dedupe removed it, so the
+# Counterpoint segment shipped empty on 19 of the 30 digests Ep646-675. The
+# Short Spot now keeps its story and the earlier item is removed instead
+# (never the lead item). Changes what is spoken: rehearse before merging.
+digest_overlap_claiming_sections:
+- Short Spot
 digest_lints:
 - items_without_source
 # Oct 8 2026: Ep627's hook added "Tesla Megapack deployments" to a story
 # whose item and source never mention them (Ep582 did the same).
 - hook_supported
+# Nov 24 2026 (flagship quality pass): SpaceX Ep172 headed an item "Britain
+# Seeks Answers" from a source that never mentions Britain, and the claims
+# gate passed it. item_names_sourced_measure counts the names an item carries
+# that its own fetched source does not (item_names_unsourced); it never fires.
+- item_names_sourced_measure
 # Nov 3 2026 (digest-lints pass): the deep dive is a second STORY, never a
 # second pass. deep_dive_distinct_measure records how much of a body item's
 # vocabulary the essay carries (deep_dive_contains_body_item) and never
@@ -530,7 +542,12 @@ chapters:
       where: start
     - pattern: "Top \\d+|biggest.*stories|let.?s.*get into|here's what happened"
       title: "Top Stories"
-    - pattern: "X Takeover|takeover"
+    # Nov 24 2026: the bare "takeover" alternate is gone. The prompt bans
+    # speaking the section name, so its only firing mode was a false one:
+    # Ep674's hook ("a Space X takeover of Tesla") opened the episode on a
+    # "Tesla X Takeover" chapter AHEAD of Introduction, and Ep636 filed a
+    # robotaxi "remote takeovers" story under it. Only the full name fires.
+    - pattern: "Tesla X Takeover"
       title: "Tesla X Takeover"
     # Oct 19 2026: the Also Today run (every remaining qualifying story,
     # one sentence each) — anchored where its digest section's words begin.
@@ -538,8 +555,14 @@ chapters:
       title: Also Today
       where: body
       digest_section: Also Today
+    # Nov 24 2026: anchored on the digest's Short Spot section. The prompt
+    # tells the script to enter the Counterpoint on its first fact with no
+    # announcing phrase, so the spoken patterns fired on 1 of 40 episodes
+    # (Ep636-675) and the segment had no chapter.
     - pattern: "one thing worth watching|challenge worth discussing|Short Spot|short.?seller"
       title: "The Counterpoint"
+      where: body
+      digest_section: Short Spot
     # Aug 15 2026: the bare "First Principles" marker was REMOVED. The
     # podcast prompt forbids announcing the section, so over Ep548-573 it
     # fired on 1 of 26 episodes — and that one hit was Ep565's disaster:

@@ -178,7 +178,7 @@ def _same_story(title_a: str, title_b: str) -> Optional[str]:
 def _url_match_is_same_story(prior: tuple, title: Optional[str],
                              tokens: frozenset) -> bool:
     """A shared URL counts only when the items also share the story."""
-    _section, prior_title, prior_tokens = prior
+    _section, prior_title, prior_tokens = prior[:3]
     short = min(len(prior_tokens), len(tokens)) < URL_MATCH_MIN_TOKENS
     if title and prior_title:
         if (_same_story(prior_title, title)
@@ -293,6 +293,7 @@ def _header_only(block: str) -> str:
 def dedupe_cross_section_items(
     digest_text: str, *, show_name: str = "digest",
     exempt_sections: Iterable[str] = (),
+    claiming_sections: Iterable[str] = (),
 ) -> DedupeResult:
     """Drop later items that repeat an earlier item's URL or headline.
 
@@ -306,11 +307,23 @@ def dedupe_cross_section_items(
     compared nor recorded (a later section repeating THEM is still judged
     against the sections before). A section header is never removed: when
     a header's own first item is the duplicate, the header line stays.
+
+    ``claiming_sections`` (Nov 24 2026) names sections whose item is the
+    section: Tesla's Short Spot is one item, and when it re-used a Top 12
+    story the rule above removed it and the Counterpoint segment shipped
+    empty (19 of the 30 digests Ep646-675). There the LATER telling wins and
+    the earlier item is removed, so the story is still told once, in the
+    segment built for it. The digest's lead item is never given up: a claim
+    on the lead is dropped as before.
     """
     if not digest_text or "\n" not in digest_text:
         return DedupeResult(digest_text or "")
 
     exempt = {_section_key(n) for n in (exempt_sections or []) if n}
+    claiming = {_section_key(n) for n in (claiming_sections or []) if n}
+    lead_idx: Optional[int] = None
+    header_blocks: set = set()
+    block_meta: dict = {}     # idx -> (section, title)
     blocks = _split_blocks(digest_text)
     section = ""
     in_sections = False  # items live under a ##/### header, never in the preamble
@@ -346,26 +359,45 @@ def dedupe_cross_section_items(
 
         reason = None
         kept_section = ""
+        prior_idx: Optional[int] = None
         body_tokens = _body_tokens(stripped)
         story_tokens = _story_tokens(stripped)
         for url in urls:
             if url in seen_urls and _url_match_is_same_story(
                     seen_urls[url], title, story_tokens):
                 kept_section = seen_urls[url][0]
+                prior_idx = seen_urls[url][3]
                 reason = "same source URL"
                 break
         if reason is None and title:
-            for prior_section, prior_title in seen_titles:
+            for prior_section, prior_title, p_idx in seen_titles:
                 why = _same_story(prior_title, title)
                 if why:
-                    kept_section, reason = prior_section, why
+                    kept_section, reason, prior_idx = prior_section, why, p_idx
                     break
         if reason is None:
-            for prior_section, prior_title, prior_tokens in seen_bodies:
+            for prior_section, prior_title, prior_tokens, p_idx in seen_bodies:
                 why = _same_body(prior_tokens, body_tokens)
                 if why:
-                    kept_section, reason = prior_section, why
+                    kept_section, reason, prior_idx = prior_section, why, p_idx
                     break
+
+        if (reason and claiming and _section_key(section) in claiming
+                and prior_idx is not None and prior_idx != lead_idx
+                and prior_idx not in drop and prior_idx not in keep_header
+                and _section_key(block_meta[prior_idx][0]) not in claiming):
+            # The claiming section keeps its item; the earlier telling goes.
+            if prior_idx in header_blocks:
+                keep_header[prior_idx] = _header_only(blocks[prior_idx])
+            else:
+                drop.add(prior_idx)
+            p_section, p_title = block_meta[prior_idx]
+            removed.append(DuplicateItem(
+                section=p_section, title=(p_title or title or "")[:120],
+                kept_section=section, reason=reason + " (claimed)",
+                body=blocks[prior_idx].strip(),
+            ))
+            reason = None
 
         if reason:
             if hm:
@@ -378,11 +410,16 @@ def dedupe_cross_section_items(
             ))
             continue
 
+        if lead_idx is None:
+            lead_idx = idx
+        if hm:
+            header_blocks.add(idx)
+        block_meta[idx] = (section, title or "")
         for url in urls:
-            seen_urls.setdefault(url, (section, title or "", story_tokens))
+            seen_urls.setdefault(url, (section, title or "", story_tokens, idx))
         if title:
-            seen_titles.append((section, title))
-        seen_bodies.append((section, title or "", body_tokens))
+            seen_titles.append((section, title, idx))
+        seen_bodies.append((section, title or "", body_tokens, idx))
 
     if not drop and not keep_header:
         return DedupeResult(digest_text)

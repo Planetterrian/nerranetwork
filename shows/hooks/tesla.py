@@ -79,6 +79,20 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     context["tone_hint"] = _tone_from_change(change_str)
     context["closing_block"] = _pick_closing(context)
 
+    # Nov 24 2026: a close 4% or more from the previous one is handed to
+    # run_show as data (engine.market_move); it runs one search for dated
+    # reporting on why. Only a publishable quote counts — a failed quote
+    # must never start a search for a move that did not happen.
+    context["market_move_section"] = ""
+    try:
+        if is_price_publishable(price, change_str):
+            from engine.market_move import describe as _describe_move
+            _move = _describe_move("TSLA", "Tesla", change_str, price=price)
+            if _move:
+                context["market_move"] = _move
+    except Exception as exc:  # noqa: BLE001 — never costs the price or closing
+        logger.warning("Tesla market-move check failed (non-fatal): %s", exc)
+
     # === Tesla Recursive Memory System (Narrative + Performance + Theme loops) ===
     # This is the core of TST's long-term self-improvement capability.
     try:
@@ -696,20 +710,19 @@ _CLOSING_VARIANTS = (
 
 
 def _weekend_close_word(now=None) -> str:
-    """``" Friday"`` on a Saturday or Sunday in New York, else ``""``.
+    """The day word after "closed": ``""`` or ``" Friday"``.
 
     Oct 18 2026: the weekend episodes said "closed at $354.72, down 2.1
     percent" two days running with no day named, so Saturday and Sunday
     each sounded like a fresh session.
+
+    Nov 24 2026: Monday's episode runs before the open, so its close is
+    Friday's too (Ep667 and Ep674 spoke it as "closed at" on the third
+    morning), and the morning after an exchange holiday has the same shape.
+    ``engine.market_calendar`` owns the rule for both flagships.
     """
-    import datetime as _d
-    now = now or _d.datetime.now(_d.timezone.utc)
-    try:
-        from zoneinfo import ZoneInfo
-        local = now.astimezone(ZoneInfo("America/New_York"))
-    except Exception:  # pragma: no cover
-        local = now - _d.timedelta(hours=4)
-    return " Friday" if local.weekday() >= 5 else ""
+    from engine.market_calendar import close_day_word
+    return close_day_word(now)
 
 
 def _price_sentence(price_str: str, change_str: str, now=None) -> str:
@@ -749,6 +762,10 @@ def _pick_closing(context: dict, *, date: datetime.date | None = None) -> str:
     template = _CLOSING_VARIANTS[d.toordinal() % len(_CLOSING_VARIANTS)]
     sentence = _price_sentence(
         context.get("price", "0.00"), context.get("change_str", ""),
-        now=datetime.datetime(d.year, d.month, d.day, 16, tzinfo=datetime.timezone.utc),
+        # The show runs before the New York open. A dated call (tests, a
+        # replay) is read at 11:00 UTC, the show's slot; a live call reads
+        # the real clock, so a mid-session rerun keeps "closed at".
+        now=(datetime.datetime(d.year, d.month, d.day, 11, tzinfo=datetime.timezone.utc)
+             if date is not None else datetime.datetime.now(datetime.timezone.utc)),
     )
     return template.format(price_sentence=sentence)
