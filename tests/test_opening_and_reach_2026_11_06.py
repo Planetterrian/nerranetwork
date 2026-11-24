@@ -35,39 +35,39 @@ def _opening() -> str:
 
 class TestTheOpeningSaysHowTheHourWorks:
     def test_every_point_patrick_asked_for_is_in_the_turn(self):
+        # Nov 24 2026 (Patrick): the spoken turn is who she is and that it is
+        # their hour; the rest of how the hour works (the pause, the buttons,
+        # skipping, the closing round, the transcript) is on the studio page
+        # and in the reminder (engine.brand.MIRA_HOUR_PARTS). Six guests in
+        # eight weeks left inside seven minutes, three during the speech.
         turn = _opening()
-        turn = turn[turn.index("2. How the hour works"):turn.index("3. Welcome them")]
-        # Nov 11 2026 (review): the spoken turn keeps who she is, the
-        # patience, the claim, the parts ahead and the guest's rights; the
-        # pause, the buttons, the closing round and the transcript are on the
-        # studio page and in the reminder (engine.brand.MIRA_HOUR_PARTS), so
-        # the turn is two or three sentences, never a recital.
-        for needle in ("you are Mira", "still learning, and ask their patience",
-                       "in two or three sentences, never a list",
-                       "this is their hour: they can steer",
-                       "any question can be skipped, anything can come out afterwards",
-                       "the studio page in front of them has the rest",
-                       "Then ask if that sounds good."):
+        turn = turn[turn.index("2. Who you are"):]
+        for needle in ("you are Mira", "still learning",
+                       "in two short sentences, never a list",
+                       "this is their hour",
+                       "anything can come out afterwards",
+                       "the studio page in front of them has the rest"):
             assert needle in turn, needle
         from engine.brand import MIRA_HOUR_PARTS
         page = " ".join(d for _, d in MIRA_HOUR_PARTS)
         for moved in ("pauses a few seconds after you finish", "New subject",
-                      "closing questions", "the transcript"):
+                      "closing questions", "the transcript", "skipped"):
             assert moved in page, moved
 
-    def test_it_is_a_turn_of_its_own_and_the_question_comes_after(self):
+    def test_the_first_question_follows_in_the_same_turn(self):
         turn = _opening()
-        assert "Three short turns, each one ending so that you can listen" in turn
-        assert turn.index("2. How the hour works") < turn.index("3. Welcome them")
+        assert "Two short turns, each one ending so that you can listen" in turn
+        assert "first real question comes inside the first minute" in turn
         assert "ask your first real question, about the subject they came to discuss" in turn
+        assert "Then ask if that sounds good." not in turn
 
     def test_no_quoted_specimen_line(self):
         turn = _opening()
         assert "“" not in turn and '"' not in turn
 
     def test_the_room_tells_her_the_same_when_she_has_already_said_hello(self):
-        assert ("beat 2 of HOW TO OPEN: how the hour works, in a few short sentences,\" +\n"
-                "            \" then ask if that sounds good and listen.") in SCENARIO
+        assert "beat 2 of HOW TO OPEN: who you are in two short sentences" in SCENARIO
+        assert "ask if that sounds good" not in SCENARIO
         assert "one sentence on how this works" not in SCENARIO
 
     def test_the_co_host_is_introduced_in_the_welcome(self):

@@ -321,7 +321,7 @@ class TestItIsTheGuestsHour:
 
     def test_mira_says_so_at_the_open(self):
         flat = _flat(PROMPT)
-        beat2 = flat[flat.index("2. How the hour works"):flat.index("{{cohost_intro_step}}")]
+        beat2 = flat[flat.index("2. Who you are"):flat.index("{{cohost_intro_step}}")]  # Nov 24 2026 (Patrick): the opening is two turns; see test_opening_first_question_2026_11_24.py.
         assert "this is their hour" in beat2
         assert "anything can come out afterwards" in beat2
 

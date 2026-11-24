@@ -26,20 +26,21 @@ sys.path.insert(0, str(VOICES))
 
 def _beat_two() -> str:
     turn = FLAT[FLAT.index("HOW TO OPEN"):FLAT.index("THEIR SUBJECT, FAST")]
-    return turn[turn.index("2. How the hour works"):turn.index("3. Welcome them")]
+    return turn[turn.index("2. Who you are"):]
 
 
 class TestTheOpeningNamesThePartsAhead:
-    def test_the_parts_come_from_the_prepared_questions_a_phrase_each(self):
+    def test_the_parts_are_named_as_the_room_reaches_them(self):
+        # Nov 24 2026 (Patrick): the map moved out of the spoken opening; the
+        # room's plan move announces each part (point 2 below) and the guest's
+        # points are on the studio page.
         beat = _beat_two()
-        assert "two or three parts ahead, from the prepared questions, a phrase each" in beat
-        # Nov 11 2026: who she is, then the map, then the guest's rights (the
-        # pause is on the studio page now, engine.brand.MIRA_HOUR_PARTS).
-        assert beat.index("you are Mira") < beat.index("parts ahead") < beat.index("this is their hour")
+        assert "parts of the hour are named as the room reaches them, never up front" in beat
+        assert beat.index("you are Mira") < beat.index("this is their hour") < beat.index("first real question")
 
-    def test_still_one_turn_that_ends_on_a_check(self):
+    def test_no_check_question_before_the_subject(self):
         beat = _beat_two()
-        assert beat.rstrip().endswith("Then ask if that sounds good.")
+        assert "sounds good" not in beat
         assert "“" not in beat and '"' not in beat
 
     def test_the_brief_stays_inside_its_budget(self):

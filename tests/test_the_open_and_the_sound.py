@@ -136,16 +136,14 @@ class TestWhatSheSaysAtTheTop:
 
     def test_the_format_is_its_own_short_turn_not_a_recital(self):
         """Oct 19 2026 (Cory O'Daniel): forty seconds of how-this-works before
-        the first question. Nov 6 2026 (Patrick, after his test room): the
-        guest should hear how the hour works, so it is a turn of its own, a
-        few short sentences that end on a check, and the first question comes
-        on the turn after; never a recital with the question stacked on it."""
+        the first question. Nov 24 2026 (Patrick): who she is in two short
+        sentences, then the first real question in the same turn; the rest of
+        the format is on the studio page."""
         flat = _flat(PROMPT)
         opening = flat[flat.index("HOW TO OPEN"):flat.index("THEIR SUBJECT, FAST")]
-        assert "How the hour works, in two or three sentences, never a list:" in opening
-        assert "Then ask if that sounds good." in opening
-        assert "3. Welcome them ({{guest_address}}) and ask your first real question" in opening
-        # Nov 11 2026: the transcript terms are on the page she points to.
+        assert "Who you are, in two short sentences, never a list:" in opening
+        assert "sounds good" not in opening
+        assert "Then welcome them ({{guest_address}}) and ask your first real question" in opening
         assert "the studio page in front of them has the rest" in opening
         assert "roughly {{planned_minutes}} minutes" not in opening
         assert "nothing is live" not in flat

@@ -2813,9 +2813,9 @@ function openWhenReady(reason) {
             "[OPENING — system note, do not read aloud] You have already said hello" +
             " to the guest. Do not greet them again and do not introduce yourself" +
             " yet. When they answer, react to what they said in a few words, then" +
-            " beat 2 of HOW TO OPEN: how the hour works, in a few short sentences," +
-            " then ask if that sounds good and listen. Your first real question, about" +
-            " the subject they came to discuss, comes on the turn after that." }] },
+            " beat 2 of HOW TO OPEN: who you are in two short sentences, then" +
+            " welcome them and ask your first real question, about the subject they" +
+            " came to discuss, and listen." }] },
       });
     } else if (humansIn("guest") > 0) {
       // Oct 5 2026 (Patrick): the opening was a recited paragraph and then a
@@ -2839,8 +2839,8 @@ function openWhenReady(reason) {
             " This turn is beat 1 of HOW TO OPEN only: a warm, unhurried hello by name," +
             " glad they came, and ONE easy human question (how they are today, or" +
             " where they are joining from). Then stop and listen. Do not answer your" +
-            " own question. How the hour works comes on your next turn, after they" +
-            " have answered and you have reacted to it." }] },
+            " own question. Who you are and your first real question come on your" +
+            " next turn, after they have answered and you have reacted to it." }] },
       });
     }
     if (!alreadyGreeted) requestTurn(grokAgent);
