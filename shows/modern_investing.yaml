@@ -281,7 +281,12 @@ chapters:
       Investing|This is Modern Investing|Modern Investing Techniques.*episode
     title: Introduction
     where: start
-  - pattern: market pulse|market overview|here's where markets|let's check the pulse|check.*pulse
+  # Nov 24 2026 (Nov 17 review): the pulse is spoken as the index tape,
+  # never the phrase "market pulse" — Ep225-240 shipped no Market Pulse
+  # chapter, and on Ep240 the Trade Review heading's fallback anchored on
+  # the tape instead. The tape's own first sentence is the anchor: an
+  # index name with a closing verb, or "<day>'s close left the <index>".
+  - pattern: 'market pulse|market overview|here''s where markets|let''s check the pulse|check.*pulse|close(?: in [A-Z][a-z]+(?: [A-Z][a-z]+)?)? left the (?:S|NASDAQ|T ?S ?X|Dow)|benchmarks finished|(?:S ?(?:&|and|-and-) ?P (?:500|five hundred)|NASDAQ Composite|T ?S ?X Composite)[^.]{0,30}?\b(?:clos(?:ed|ing)|finish(?:ed|ing)|ended)\b'
     title: Market Pulse
   - pattern: strategy spotlight|strategy of the day|today's strategy|educational centrepiece
     title: Strategy Spotlight
