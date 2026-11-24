@@ -69,7 +69,7 @@
     <script defer src="assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="styles/main.css?v=b238b7e9">
 
     
 <!-- Schema.org PodcastSeries -->
@@ -844,14 +844,14 @@
                 <div class="show-hero-meta" style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);"><span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">Daily</span>
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~10-12 min</span>
                     
-                </div>
-                <p class="show-hero-desc">A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry where the price sits far above what its materials and physics require.</p>
+                </div><p class="show-hero-desc" id="showHeroDesc">A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry where the price sits far above what its materials and physics require.</p>
+                <button type="button" class="show-hero-desc-more" id="showHeroDescMore" aria-controls="showHeroDesc" aria-expanded="false" hidden>Read more</button>
                 
                 
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">For engineers, builders, founders, and the endlessly curious — anyone who wants to understand WHY something costs what it costs and where the next 10x is hiding.</p>
                 
                 <div class="show-hero-actions">
-                    <a href="#latest-player" class="nn-btn nn-btn-primary">Listen Now</a>
+                    <a href="#latest-player" class="nn-btn nn-btn-primary" data-nn-play-latest>Listen Now</a>
                     <a href="blog/first_principles/index.html" class="nn-btn">Read Blog</a>
                     
                     
@@ -898,7 +898,31 @@
                 
             </div>
         </div>
-    </section><section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
+    </section><script>
+    (function () {
+        var d = document.getElementById('showHeroDesc'), b = document.getElementById('showHeroDescMore');
+        if (d && b && window.matchMedia && window.matchMedia('(max-width: 639px)').matches) {
+            d.classList.add('is-clamped');
+            if (d.scrollHeight > d.clientHeight + 4) {
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    d.classList.remove('is-clamped');
+                    b.setAttribute('aria-expanded', 'true');
+                    b.hidden = true;
+                });
+            } else { d.classList.remove('is-clamped'); }
+        }
+        var play = document.querySelector('[data-nn-play-latest]');
+        if (play) play.addEventListener('click', function () {
+            var a = document.getElementById('latest-audio');
+            if (!a || !a.getAttribute('src')) return;
+            try {
+                if (window.NNPlayer && typeof window.NNPlayer.playElement === 'function') window.NNPlayer.playElement(a);
+                else a.play();
+            } catch (e) {}
+        });
+    })();
+    </script><section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
         <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
             <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
                 📬 Get First Principles Daily in Nerra Daily, our 7 AM email:
@@ -917,7 +941,7 @@
                 <input type="email" name="email" required autocomplete="email"
                        placeholder="your@email.com"
                        aria-label="Email address"
-                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.92rem;min-width:200px;">
+                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:200px;">
                 <button type="submit" style="padding:6px 14px;border-radius:6px;background:var(--show-color);color:#ffffff;border:none;font-size:0.92rem;font-weight:600;cursor:pointer;">Subscribe</button>
             </form>
         </div>
@@ -2293,7 +2317,7 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="assets/js/footer-subscribe.js?v=445af143" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
