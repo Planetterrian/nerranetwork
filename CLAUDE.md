@@ -1984,4 +1984,4 @@ Register `review-loop-automation-2026-11-24`; guards `tests/test_review_loop_aut
 ### Pipeline hardening (Nov 24 2026)
 
 Register `pipeline-hardening-2026-11-24`; guards `tests/test_pipeline_hardening_2026_11_24.py`.
-**The Daily Audit runs once a network day** (Worker `AUDIT_DISPATCH`, 11:15 ET; `scripts/audit_gate.py`); **no retry is dispatched after 00:00 UTC**. **The web search asks as far back as `fetch_expansion_hours`.** **A requirements guard states a floor or a ceiling, never a whole line.** **A bold span ending in a colon is a label, never a headline.**
+**The Daily Audit runs once a network day** (`audit_gate.py`); **no retry after 00:00 UTC**. **A bold span ending in a colon is a label.**
