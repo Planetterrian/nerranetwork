@@ -351,6 +351,28 @@ NETWORK_SURFACES: list[dict[str, str]] = [
         ),
         "url": "topics/index.html",
     },
+    # Nov 24 2026 (market review, docs/reviews/market_review_2026_11_24.md):
+    # the network's one owned channel was never asked for on air. 16,113
+    # downloads in 30 days made 5 email subscribers, and show-note links made
+    # 7 site visits in 28 days, because podcast listeners act on what the host
+    # says, not on the notes. Every surface above points at a page; none asks
+    # for the email. Prompt text, not insertion: no quotable specimen, and no
+    # no-ads promise (free surfaces never make one). ⚠️ AUDIO on every English show:
+    # one listen of the first episode that airs it before merging.
+    {
+        "id": "email",
+        "spoken": (
+            "If you would like the network's stories in your inbox, the Nerra "
+            "Daily email arrives at seven Eastern with the shows you choose, "
+            "every story with its source, free — sign up at "
+            "nerranetwork.com/nerra-daily."
+        ),
+        "x_line": (
+            "More from the Nerra Network: the Nerra Daily email, the shows "
+            "you choose at 7 AM Eastern, every story sourced"
+        ),
+        "url": "nerra-daily.html",
+    },
 ]
 
 
@@ -360,7 +382,11 @@ NETWORK_SURFACES: list[dict[str, str]] = [
 # flagships only (engine.brand.FLAGSHIP_SHOW_SLUGS) it takes 2 in 14; every
 # other show keeps the 13-slot pool byte for byte. 14 stays coprime with the
 # offset stride of 3. Spoken audio on SpaceX and Tesla: one listen before merge.
-FLAGSHIP_SURFACE_WEIGHTS: dict[str, int] = {"personal": 2}
+#
+# Nov 24 2026 (market review): the email ask takes 2 slots on the flagships
+# too, where about half the downloads are. Pools: 14 for every other show,
+# 16 on the flagships; both stay coprime with the stride of 3.
+FLAGSHIP_SURFACE_WEIGHTS: dict[str, int] = {"personal": 2, "email": 2}
 
 
 def _weighted_surface_pool(show_slug: str = "") -> list[dict[str, str]]:
