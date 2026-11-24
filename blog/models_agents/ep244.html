@@ -129,11 +129,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep244.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1111,21 +1122,27 @@
     
 
     
-    
-    <section class="nn-episode-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3" data-nn-card data-title="Z.ai’s GLM-5.4 runs 28 layers twice via shared weights to deepen reasoning at fixed parameter count." data-show="Models &amp; Agents" data-cover="../../assets/covers/models-agents.jpg">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3" data-nn-card data-title="Z.ai’s GLM-5.4 runs 28 layers twice via shared weights to deepen reasoning at fixed parameter count." data-show="Models &amp; Agents" data-cover="../../assets/covers/models-agents.jpg"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.mp3", "title": "Z.ai’s GLM-5.4 runs 28 layers twice via shared weights to deepen reasoning at fixed parameter count.", "desc": "Z.ai’s GLM-5.4 runs 28 layers twice via shared weights to deepen reasoning at fixed parameter count."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep244_20261124.fr.mp3", "title": "Ép. 244 : Le GLM-5.4 de Z.ai exécute 28 couches deux fois via des poids partagés pour approfondir le raisonnement à un nombre fixe…", "desc": "Le GLM-5.4 de Z.ai exécute 28 couches deux fois via des poids partagés pour approfondir le raisonnement à un nombre de paramètres fixe."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1206,6 +1223,52 @@
 <li>meshIQ intends to expand Neo’s middleware coverage to additional enterprise message brokers.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Chez Z point A I, GLM cinq point quatre fait tourner vingt-huit couches deux fois grâce à des poids partagés, pour approfondir le raisonnement à nombre de paramètres constant.</p>
+<p>Ici Models and Agents, épisode deux cent quarante-quatre.</p>
+<p>Datasette Agent trace désormais des graphiques en direct dans la conversation, Solana a livré une pile de paiement pour agents, et Workday a bouclé un accord sur l’identité, puis Des choses à essayer.</p>
+<p>Z point A I a lancé GLM cinq point quatre, son premier transformeur en boucle, a rapporté Simon Willison, avec un groupe de couches qui itèrent plusieurs fois en une seule passe avant pour affiner les états cachés.</p>
+<p>Le modèle à l’échelle de sept cent cinquante milliards n’est accessible que via l’abonnement Coding Plan de l’entreprise, sur un point d’accès partagé compatible Open A I, et Willison a écrit un module temporaire L L M glm parce que le module L L M zai existant ne le prenait pas encore en charge.</p>
+<p>Cette conception en boucle correspond à celle que Thinking Machines Lab a décrite plus tôt ce mois-ci pour Inkling deux Mini.</p>
+<p>Il a testé la génération d’images en demandant des pélicans à bicyclette sur les versions GLM cinq point un à cinq point quatre, et il a constaté un net changement de style entre cinq point deux et cinq point trois, les versions suivantes se rapprochant en qualité des sorties d’Open A I et d’Anthropic.</p>
+<p>Les poids restent fermés pour l’instant, une publication ouverte étant prévue après davantage de travail sur la sécurité.</p>
+<p>datasette-charts zéro point deux a zéro de Simon Willison permet désormais à Datasette Agent d’écrire et de rendre des graphiques à partir de demandes en langage naturel, en utilisant les mêmes outils de suggestion et de génération que le panneau de construction de graphiques.</p>
+<p>L’intégration ouvre un panneau latéral iframe qui se met à jour quand l’utilisateur change de tables ou bascule de vues, et une vidéo de démonstration montre l’agent créer un graphique des téléchargements dans le temps, puis décrire la nouvelle vue après que l’utilisateur soit passé à la table datasette.</p>
+<p>datasette-agent zéro point sept a un ajoute la prise en charge des sessions de conversation qui ouvrent un panneau latéral iframe et naviguent via des hachages de fragments, ce qui permet un couplage plus étroit avec les modules qui mettent à jour l’état par ces hachages, et cette version a été conçue spécifiquement pour résoudre les bogues de navigation que l’intégration des graphiques avait mis au jour.</p>
+<p>Les utilisateurs se connectent avec GitHub pour essayer le flux combiné.</p>
+<p>Solana a lancé solana point A I, rapporte Gadgets 360, une plateforme pour agents autonomes et paiements qui regroupe Solana Agent Kit, un registre d’agents, pay.sh pour les micropaiements en USDC, et Milo, un agent de négociation autonome qui tourne vingt-quatre heures sur vingt-quatre.</p>
+<p>Payment Channels a traité plus d’un million de messages par seconde lors de tests avec cent mille portefeuilles, et Alibaba Cloud s’est joint comme partenaire de lancement.</p>
+<p>Confidential Compute tourne sur le réseau de test et enregistre l’attestation matérielle sur la chaîne, sans exposer les données privées.</p>
+<p>Le Solana A I Toolkit fournit un serveur Model Context Protocol et des ressources pour développeurs afin de connecter les agents aux services de chaîne de blocs, et la conception permet aux agents de transférer des jetons, d’exécuter des échanges de finance décentralisée, et d’acheter des services sans maintenir d’abonnements A P I classiques ni de comptes utilisateurs.</p>
+<p>L’acquisition de C1 point A I par Workday, rapporte citybiz, combine la plateforme d’identité de C1 point A I avec les données R H, finance et informatique de Workday, pour que les changements de permissions suivent les événements de rôle des employés et s’étendent automatiquement aux agents autonomes.</p>
+<p>Le système accorde, surveille et révoque l’accès sur Slack, Jira, les tableaux de bord financiers et l’infrastructure en nuage, et Gerrit Kazmaier a qualifié ce mouvement d’investissement délibéré dans la gouvernance des effectifs hybrides humains plus agents.</p>
+<p>C1 point A I connectait déjà la messagerie, le CRM, les dépôts de code et les systèmes en nuage, pour que les embauches, les changements de rôle et les départs déclenchent des mises à jour d’accès immédiates, et l’offre combinée réduit l’administration manuelle pilotée par tickets tout en appliquant des politiques cohérentes pour les personnes comme pour les agents.</p>
+<p>Neo diagnostique et résout les problèmes dans les environnements intergiciels, rapporte IT Brief New Zealand, et meshIQ l’a conçu pour les équipes d’exploitation d’entreprise qui font déjà tourner la supervision meshIQ.</p>
+<p>L’agent étend les capacités meshIQ existantes vers des flux de remédiation automatisés.</p>
+<p>Surelio, rapporte Startupticker, est une start-up suisse qui lève des fonds pour sécuriser les agents I A.</p>
+<p>La levée est d’un million de francs suisses, destinée à des outils de sécurité visant les agents autonomes.</p>
+<p>Sur le reste de la bande, Open A I a présenté Shirudo, un environnement d’exécution Linux à code ouvert pour la défense des agents, qui permet aux agents d’écrire des contrôles eBPF dynamiques, des programmes noyau qui filtrent le comportement à la volée, protégeant les systèmes contre les attaques sans interruption de service pendant que les défenseurs préparent les correctifs.</p>
+<p>Open A I a lancé OpenWorks, un programme qui finance des experts I A locaux pour aider les petites entreprises à construire des outils et des compétences, sans frais pour les entreprises.</p>
+<p>Natural a permis aux agents vocaux d’accepter des paiements au téléphone, rapporte PYMNTS, pour que ces agents puissent conclure des transactions sans passer la main à un opérateur humain.</p>
+<p>Inscrivez-vous au Coding Plan de Z point A I et testez GLM cinq point quatre sur des tâches de codage agentique via le point d’accès Responses A P I.</p>
+<p>Demandez à Datasette Agent de générer un graphique à partir d’une de vos tables.</p>
+<p>Récupérez le Solana Agent Kit et lancez l’exemple pay.sh pour voir comment un agent peut dépenser des USDC pour des services sans gérer de clés A P I.</p>
+<p>La Solana Foundation s’attend à ce que plus de cent vingt équipes livrent des agents en production sur la nouvelle plateforme dans les mois à venir.</p>
+<p>Workday commencera à déployer les contrôles d’accès combinés employés plus agents auprès des clients existants au premier trimestre deux mille vingt-sept.</p>
+<p>meshIQ a l’intention d’étendre la couverture intergicielle de Neo à d’autres courtiers de messages d’entreprise.</p>
+<p>Les séquences au-delà de cent vingt-huit mille jetons, c’est là qu’on lève le capot sur SLAKE de SeoulTech, qui, rapporte techxplore, conserve une représentation approximative des jetons écartés au lieu de les jeter purement et simplement.</p>
+<p>Deux approches standard échouent chacune d’une manière différente : écarter les jetons de faible valeur fait perdre de l’information, tandis que simplifier les calculs d’attention partout peut dégrader la précision sur toute la ligne.</p>
+<p>L’attention approximée partiellement par Taylor applique un développement de Taylor uniquement aux jetons de faible valeur et l’attention complète aux jetons importants, et le classement de budget sensible à la valeur classe les jetons selon leur contribution attendue à la sortie finale.</p>
+<p>Parce que l’approximation conserve une image approximative du contexte complet, la perte d’information reste plus faible que l’éviction pure, tandis que l’usage mémoire reste fixe.</p>
+<p>Le gain de qualité disparaît dès que la longueur de contexte dépasse le point où même les jetons de haute valeur conservés ne tiennent plus dans le budget, le régime où les grands modèles de langage actuels saturent déjà le calcul et la mémoire.</p>
+<p>SLAKE applique l’approximation de façon sélective et note les jetons selon leur impact en aval, en préservant les signaux les plus utiles dans une enveloppe mémoire fixe ; utilisez-le pour un travail en long contexte stable sur du matériel aux plafonds mémoire stricts, quand un petit compromis de précision est acceptable, et revenez à l’éviction standard ou à l’attention complète quand chaque jeton conservé doit être exact.</p>
+<p>Voilà pour Models and Agents aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Encore une chose — si l’épisode d’aujourd’hui vous a plu, notre émission sœur First Principles Daily mérite une place dans votre flux : un raisonnement à partir des matières premières, pas par analogie, sur les percées qui font vraiment baisser les coûts. C’est l’un des points quotidiens de Nerra Network, entièrement gratuit sur nerranetwork point com.</p>
+<p>Et si vous préférez naviguer par sujet plutôt que par émission, chaque sujet couvert par le réseau a sa propre page sur nerranetwork point com topics.</p>
+<p>Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
@@ -1716,24 +1779,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents_beginners/ep236.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                    <a href="../../blog/models_agents_beginners/ep237.html" class="blog-related-card" style="--card-show-color: #C2410C">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
-                        <h3>A tiny San Francisco running live buses, planes, and robotaxis right in your browser is making people dream of a full-world version.</h3>
+                        <h3>AI agents are teaming up in swarms to tackle impossible math puzzles and even try porting GTA 6.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/vancouver/ep063.html" class="blog-related-card" style="--card-show-color: #0D6E8C">
+                    <a href="../../blog/ai_chips/ep064.html" class="blog-related-card" style="--card-show-color: #4338CA">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0D6E8C, white 35%)">Vancouver Daily News</span>
-                        <h3>A three-million-dollar yearly bill lands on Vancouver for living-wage recertification.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">AI Chips & Data Centres Daily</span>
+                        <h3>Helios racks are powered in Azure labs, giving AMD's next platform a cloud foothold.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/env_intel/ep078.html" class="blog-related-card" style="--card-show-color: #1B5E20">
+                    <a href="../../blog/planetterrian/ep253.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #1B5E20, white 35%)">Environmental Intelligence</span>
-                        <h3>University of Guelph research shows raising entire male pigs could cut Canadian swine GHG emissions by 11.2 percent per kg carcass weight.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>X-ray scans of a 130-year-old museum rock uncovered a 100-million-year-old monocot flower with intact three-part symmetry.</h3>
                         
                     </a>
                     
