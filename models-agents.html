@@ -69,7 +69,7 @@
     <script defer src="assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="styles/main.css?v=b238b7e9">
 
     
 <!-- Schema.org PodcastSeries -->
@@ -844,14 +844,14 @@
                 <div class="show-hero-meta" style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);"><span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">Daily</span>
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~10 min</span>
                     
-                </div>
-                <p class="show-hero-desc">Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to open-source projects — stay on top of the most exciting tech developments of our generation.</p>
+                </div><p class="show-hero-desc" id="showHeroDesc">Daily AI briefing covering new model releases, agent frameworks, and practical developments. From GPT and Claude to open-source projects — stay on top of the most exciting tech developments of our generation.</p>
+                <button type="button" class="show-hero-desc-more" id="showHeroDescMore" aria-controls="showHeroDesc" aria-expanded="false" hidden>Read more</button>
                 
                 
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">For developers building with AI, professionals adopting AI tools, and anyone who wants to stay ahead of the most transformative technology of our generation.</p>
                 
                 <div class="show-hero-actions">
-                    <a href="#latest-player" class="nn-btn nn-btn-primary">Listen Now</a>
+                    <a href="#latest-player" class="nn-btn nn-btn-primary" data-nn-play-latest>Listen Now</a>
                     <a href="blog/models_agents/index.html" class="nn-btn">Read Blog</a>
                     
                     
@@ -899,7 +899,31 @@
                 
             </div>
         </div>
-    </section>
+    </section><script>
+    (function () {
+        var d = document.getElementById('showHeroDesc'), b = document.getElementById('showHeroDescMore');
+        if (d && b && window.matchMedia && window.matchMedia('(max-width: 639px)').matches) {
+            d.classList.add('is-clamped');
+            if (d.scrollHeight > d.clientHeight + 4) {
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    d.classList.remove('is-clamped');
+                    b.setAttribute('aria-expanded', 'true');
+                    b.hidden = true;
+                });
+            } else { d.classList.remove('is-clamped'); }
+        }
+        var play = document.querySelector('[data-nn-play-latest]');
+        if (play) play.addEventListener('click', function () {
+            var a = document.getElementById('latest-audio');
+            if (!a || !a.getAttribute('src')) return;
+            try {
+                if (window.NNPlayer && typeof window.NNPlayer.playElement === 'function') window.NNPlayer.playElement(a);
+                else a.play();
+            } catch (e) {}
+        });
+    })();
+    </script>
     <section class="nn-soft-personal-hero" id="soft-personal-hero"
          style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
     <div class="container" style="max-width:760px;">
@@ -924,7 +948,7 @@
             <input type="email" id="spi-hero-email-models_agents" name="email" required autocomplete="email"
                    placeholder="your@email.com"
                    aria-label="Email address"
-                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;"><div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:220px;"><div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
                 <label for="spi-hero-company-models_agents">Company</label>
                 <input type="text" id="spi-hero-company-models_agents" name="company" tabindex="-1" autocomplete="off">
             </div>
@@ -2487,7 +2511,7 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="assets/js/footer-subscribe.js?v=445af143" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
