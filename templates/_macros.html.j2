@@ -246,7 +246,7 @@
             <input type="email" id="spi-hero-email-{{ show_slug }}" name="email" required autocomplete="email"
                    placeholder="your@email.com"
                    aria-label="Email address"
-                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;">
+                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:220px;">
             {#- Honeypot — leave empty. Worker discards when company is set. -#}
             <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
                 <label for="spi-hero-company-{{ show_slug }}">Company</label>
@@ -327,4 +327,54 @@
         <a href="{{ path_prefix }}personal-interest.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Hear a five-minute sample of Nerra Personal →</a>
     </p>
 </aside>
+{%- endmacro -%}
+
+
+{#- Email sign-up INSIDE a show hero (Nov 24 2026). Nerra Daily's page is the
+    address every ask for the email points at, so the form is the first
+    action on it. It is the newsletter list itself (``member``: the
+    nerra-member tag the one email goes to), with the footer form's
+    optional show picker so "the shows you choose" is true at sign-up; a
+    reader who picks none gets the default set and can choose later on
+    My Nerra. Its own ids, so "exactly ONE #soft-personal-hero" still
+    holds. The input is 16px: iOS Safari zooms the page on focus below that.
+    Arguments: path_prefix, show_slug, capture_source (default src-* tag),
+    shows (the chrome's show list; each needs name + newsletter_tag).
+-#}
+{%- macro hero_email_signup(path_prefix='', show_slug='', capture_source='', shows=none) -%}
+<div class="show-hero-email" id="hero-email-signup">
+    <p class="show-hero-email-lead">Get it by email: the free 7:00 AM Eastern email with the day’s stories from every show, or only the shows you pick.</p>
+    <form method="post" action="#"
+          data-nn-subscribe="show-hero"
+          data-list="member"
+          data-source="{{ capture_source }}"
+          data-show="{{ show_slug }}"
+          data-form-id="show-{{ show_slug }}-hero-email"
+          data-label-loading="Saving…"
+          data-label-done="You’re in ✓"
+          data-label-status-done="You’re on the list. Your first Nerra Daily arrives at 7:00 AM Eastern."
+          data-label-error="Try again"
+          data-label-status-error="Couldn’t save that just now. Try again in a moment."
+          data-label-idle="Send me Nerra Daily"
+          class="show-hero-email-form">
+        <input type="email" id="hero-email-{{ show_slug }}" name="email" required autocomplete="email"
+               inputmode="email" enterkeyhint="send"
+               placeholder="your@email.com" aria-label="Email address">
+        <button type="submit">Send me Nerra Daily</button>
+        {%- set _pick = (shows or []) | selectattr('newsletter_tag') | rejectattr('slug', 'equalto', show_slug) | list %}
+        {%- if _pick %}
+        <details class="nn-subscribe-pick show-hero-email-pick">
+            <summary>Choose your shows <span>(optional)</span></summary>
+            <div class="nn-subscribe-tags">
+                {% for s in _pick %}
+                <label><input type="checkbox" name="tag" value="{{ s.newsletter_tag }}"> {{ s.name }}</label>
+                {% endfor %}
+            </div>
+        </details>
+        {%- endif %}
+    </form>
+    <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"></p>
+    <p class="show-hero-email-fine">One email a day. Unsubscribe anytime.
+        <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>.</p>
+</div>
 {%- endmacro -%}

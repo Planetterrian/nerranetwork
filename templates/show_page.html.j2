@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% block content %}
-    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest, soft_personal_hero_band %}
+    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest, soft_personal_hero_band, hero_email_signup %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -102,7 +102,20 @@
                     {% if episode_length %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ episode_length }}</span>{% endif %}
                     {% if first_run_note %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ first_run_note }}</span>{% endif %}
                 </div>
-                <p class="show-hero-desc">{{ show_description }}</p>
+                {#- Nov 24 2026: Nerra Daily's page is where the email is asked
+                    for (the footer, the show notes and the on-air line all send
+                    a listener to nerranetwork.com/nerra-daily), and the form
+                    sat two phone screens down, under a description that fills a desktop screen too. -#}
+                {% if show_slug == 'nerra_daily' and not _is_ru %}
+                {{ hero_email_signup(path_prefix, show_slug, capture_source_site, chrome_shows) }}
+                {% endif %}
+                {#- Nov 24 2026: on a phone the description ran to a screen and a
+                    half ABOVE the play and follow buttons. It now sits below
+                    them (styles/main.css orders the hero) and shows three
+                    lines until the reader asks for the rest. Without the
+                    script nothing is clamped. -#}
+                <p class="show-hero-desc" id="showHeroDesc">{{ show_description }}</p>
+                <button type="button" class="show-hero-desc-more" id="showHeroDescMore" aria-controls="showHeroDesc" aria-expanded="false" hidden>{% if _is_ru %}Читать дальше{% else %}Read more{% endif %}</button>
                 {% if campaign_strip %}
                 {#- Offshore North (Sep 2026): the campaign's headline facts on
                     the show page itself — days to the next start line, the
@@ -131,7 +144,7 @@
                     apply, the show's own dashboard); the reference pages sit in
                     one quiet link row beneath. -#}
                 <div class="show-hero-actions">
-                    <a href="{{ '#latest-player' if latest_episode else '#episodes' }}" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
+                    <a href="{{ '#latest-player' if latest_episode else '#episodes' }}" class="nn-btn nn-btn-primary"{% if latest_episode %} data-nn-play-latest{% endif %}>{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
                     {#- The Mira interview shows are guest-driven: promote the
                         apply page instead of a blog that is empty until the
                         first interview publishes. -#}
@@ -223,6 +236,35 @@
             </div>
         </div>
     </section>
+    {#- Hero behaviour (Nov 24 2026). "Listen Now" starts the latest episode in
+        the site's player as well as scrolling to it; the description shows
+        three lines on a phone until asked for. Both degrade to the plain
+        anchor and the full text. -#}
+    <script>
+    (function () {
+        var d = document.getElementById('showHeroDesc'), b = document.getElementById('showHeroDescMore');
+        if (d && b && window.matchMedia && window.matchMedia('(max-width: 639px)').matches) {
+            d.classList.add('is-clamped');
+            if (d.scrollHeight > d.clientHeight + 4) {
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    d.classList.remove('is-clamped');
+                    b.setAttribute('aria-expanded', 'true');
+                    b.hidden = true;
+                });
+            } else { d.classList.remove('is-clamped'); }
+        }
+        var play = document.querySelector('[data-nn-play-latest]');
+        if (play) play.addEventListener('click', function () {
+            var a = document.getElementById('latest-audio');
+            if (!a || !a.getAttribute('src')) return;
+            try {
+                if (window.NNPlayer && typeof window.NNPlayer.playElement === 'function') window.NNPlayer.playElement(a);
+                else a.play();
+            } catch (e) {}
+        });
+    })();
+    </script>
 
     {#- Soft Personal one-field capture — top YouTube-landing show pages
         (+ age_of_ai). Markup owned by soft_personal_hero_band in
@@ -231,6 +273,8 @@
         path is /join.html. -#}
     {% if soft_personal_hero and not _is_ru %}
     {{ soft_personal_hero_band(path_prefix, show_slug, capture_source_site) }}
+    {% elif show_slug == 'nerra_daily' and not _is_ru %}
+    {#- The email form is in the hero (Nov 24 2026); one ask, not two. -#}
     {% elif newsletter_tag %}
     {#- Compact above-fold newsletter capture (May 2026 audit). Worker-
         backed (not Buttondown popup) so src-* attribution and the
@@ -255,7 +299,7 @@
                 <input type="email" name="email" required autocomplete="email"
                        placeholder="{% if _is_ru %}ваш@email.ru{% else %}your@email.com{% endif %}"
                        aria-label="{% if _is_ru %}Адрес электронной почты{% else %}Email address{% endif %}"
-                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.92rem;min-width:200px;">
+                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:200px;">
                 <button type="submit" style="padding:6px 14px;border-radius:6px;background:var(--show-color);color:#ffffff;border:none;font-size:0.92rem;font-weight:600;cursor:pointer;">{% if _is_ru %}Подписаться{% else %}Subscribe{% endif %}</button>
             </form>
         </div>

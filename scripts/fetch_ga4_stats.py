@@ -85,6 +85,9 @@ ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
                      "app_install_prompt", "app_installed", "app_open",
                      # Oct 29 2026: the app offer sheet (nn-app.js).
                      "app_sheet",
+                     # Nov 24 2026: the phone share sheet on an episode post
+                     # (templates/blog_post.html.j2), method "native".
+                     "share",
                      # Nov 3 2026: real-user vitals (assets/js/tracking.js) —
                      # one web_vital event per metric per page (LCP, CLS,
                      # INP) with params name / rating / page_type. Every

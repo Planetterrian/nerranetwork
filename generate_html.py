@@ -66,6 +66,7 @@ _SEO_URL_TO_FILE = {
     "/mag7.html": "mag7.html",
     "/prediction-markets.html": "prediction-markets.html",
     "/modern-investing.html": "modern-investing.html",
+    "/nerra-daily.html": "nerra-daily.html",
 }
 
 

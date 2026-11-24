@@ -8063,6 +8063,49 @@ experiments:
       (critical_rate_rise, contract_page_shows), review_snapshot "Must-haves
       and audit trend". No prompt or audio change. Guards
       tests/test_review_loop_automation_2026_11_24.py.
+  - id: web-signup-path-2026-11-24
+    title: "Show pages, episode posts and the Nerra Daily page put play, follow and the email form on a phone's first screen"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-22
+    status: reading
+    baseline: >
+      Nov 24, measured at 390x844 on the committed pages: on every show page
+      the play and follow buttons sat on screen two (1.3 screens down on
+      tesla.html); nerra-daily.html, the address the email is asked for at,
+      had its form 2.1 screens down; an episode post linked no podcast app on
+      a phone and its share row sat under the article; the front page's and
+      the show pages' sign-up bands never showed their confirmation or error
+      sentence (the status line is the form's sibling and the script looked
+      only inside the form). api/ga4_stats.json fetched Nov 24: 13
+      subscribe_click, 31 episode_play and no sign-up conversion in the
+      window, with analytics consent denied by default (an undercount of
+      unknown size).
+    target: >
+      Over the 28 days from the merge: subscribe_click events at least
+      double the 13 of the window before, at flat or lower sessions; at
+      least one newsletter_signup or soft_personal_interest_submit with
+      page_path /nerra-daily.html in every week the on-air email line airs.
+    criteria: >
+      HIT when both hold. INCONCLUSIVE, with the confound named, if the
+      analytics consent default changes inside the window (the market-research
+      PR of Nov 24 does exactly that): then read the Buttondown subscriber
+      count by src-* tag instead of GA4 rates. MISS when sessions on these
+      pages rose and neither number moved.
+    readout_plan: >
+      api/ga4_stats.json site_events by page for subscribe_click,
+      newsletter_signup, soft_personal_interest_submit and share (added to
+      ENGAGEMENT_EVENTS in this pass); api/buttondown_history.json for the
+      subscriber count.
+    notes: >
+      templates/show_page.html.j2 (hero order on a phone is CSS in
+      styles/main.css; the description clamps only when the script runs;
+      Listen Now starts the latest episode), _macros.html.j2
+      hero_email_signup (list member, optional show picker), blog_post.html.j2
+      follow row (engine.blog.show_follow_links: empty for a gated show or a
+      show with no feed) and the phone share sheet,
+      assets/js/footer-subscribe.js statusEl. Email fields are 16px (iOS zooms
+      the page below that). Guards tests/test_web_signup_path_2026_11_24.py.
   - id: review-apply-and-slate-2026-11-24
     title: "The review agent applies and rehearses its own show's changes; one weekly slate merges records and lists the rest by tier"
     area: quality
