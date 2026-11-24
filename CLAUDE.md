@@ -1346,23 +1346,7 @@ decision); everything else has a live status card.
 
 ### Active Issues
 
-1. **2.2 GB of MP3s in git HISTORY (HEAD is clean)** — measured June 10
-   2026: zero episode MP3s are tracked at HEAD (guards in `.gitignore` +
-   the commit step's `git reset -- '*.mp3'`; only the 43 MB of
-   `assets/music` themes + two voice-reference WAVs remain, which the
-   pipeline needs). All enclosure URLs serve from R2. CI clones are
-   shallow since the June 2026 workflow pass (~115 MB packed vs ~2.5 GB
-   full), so the day-to-day clone cost is FIXED and growth is now
-   text-only (~50 MB/month → years of headroom under GitHub's 10 GB
-   limit). The history weight itself can only be removed by a
-   `git filter-repo` rewrite + force-push of main — DESTRUCTIVE:
-   requires a paused-cron window (12 daily workflows push to main and
-   could race the force-push and resurrect old history), invalidates
-   every existing clone, and dangles the commit SHAs referenced across
-   docs/. Playbook in
-   [`docs/workflow_review_2026_06_10.md`](docs/workflow_review_2026_06_10.md);
-   operator-scheduled, not urgent. For full local clones meanwhile:
-   `git clone --filter=blob:none` skips historical blobs.
+1. **2.2 GB of MP3s in git HISTORY (HEAD is clean)** — no episode MP3 is tracked at HEAD; removing the history needs a `git filter-repo` force-push in a paused-cron window (operator-scheduled; `docs/history_purge_2026_11.md`). Meanwhile `git clone --filter=blob:none`. [history](docs/claude_md_history/active_issue_1_mp3_history.md)
 2. **Git LFS breaks RSS** — `raw.githubusercontent.com` returns pointer files
    for LFS-tracked content. Do NOT use LFS for MP3s.
 3. **Historical TST/OV flat files in `digests/`** — ~220 legacy output files
@@ -2001,3 +1985,8 @@ Guards `tests/test_handoff_2026_11_04.py`, `tests/test_times_are_pacific.py`.
 ### FPD and UC (Nov 12 2026)
 
 [review](docs/reviews/first_principles_unintended_consequences_review_2026_11_12.md). **FPD's tool is the "First Principles Ratio"; the brief sets the length; a narrative show has no map.** ⚠️ AUDIO.
+
+### The review loop scores itself (Nov 24 2026)
+
+Register `review-loop-automation-2026-11-24`; guards `tests/test_review_loop_automation_2026_11_24.py`.
+**A metric entry states its success as a `target_rule`** (`">= 0.9"`, required from Nov 24) and `readout_register.py` writes hit / miss / unmeasured; a rule restates the entry's own number, never a new one. **The review rotation ranks audience share x weeks since review x problems** (`pick_review_target.rank_targets`; `--plain` is the old date rule). **`shows/contracts/must_haves.yaml` is what every episode must carry** (never under `shows/*.yaml`); the Daily Audit pages on a `page` miss the day it ships; calibrate a line on 14 episodes first. **A critical dispatches a review only above the show's own rate.**

@@ -1,0 +1,51 @@
+# What every published episode of a show must carry — read by
+# scripts/check_show_contracts.py in the Daily Audit (Nov 24 2026).
+#
+# Why this exists: SpaceX shipped Ep165, Ep168 and Ep169 (Nov 17-21 2026)
+# with no share price and no closing, because its pre-fetch hook timed out
+# and the run went on without the hook's data. The audit's Grok read flagged
+# SpaceX on six of eight days that week and never named the missing price;
+# it was found by hand a week later. A must-have is a fact a listener notices
+# when it is gone, so it is checked by pattern against the committed digest,
+# the same day.
+#
+# Lives in shows/contracts/, NOT shows/*.yaml: a dozen loaders glob
+# shows/*.yaml as show configs.
+#
+# Schema: <show slug as in review_episodes.SHOW_REGISTRY>: list of
+#   id:             short slug, unique per show
+#   what:           the sentence the audit prints on a miss
+#   pattern:        Python regex searched in the published digest (.md)
+#   unless_counter: (optional) skip the check when this metrics counter is
+#                   truthy for the episode (e.g. SpaceX deep-dive specials)
+#   severity:       page (default) fails the audit step, like a stale feed;
+#                   warn prints a ::warning:: only
+#
+# Calibrate a new line against the show's last 14 committed digests first
+# (python scripts/check_show_contracts.py --show <slug> --history): a line
+# that misses on a healthy episode trains everyone to ignore it.
+
+spacex:
+  - id: share_price
+    what: "Market Watch states the SPCX share price"
+    pattern: 'SPCX (?:is|was|closed|ended|finished|opened|traded)[^.\n]{0,24}\$\d'
+    unless_counter: deep_dive_mode
+
+tesla:
+  - id: share_price
+    what: "The digest opens on the real-time TSLA price"
+    pattern: 'TSLA price:\*\*\s*\$\d'
+
+modern_investing:
+  - id: portfolio_performance
+    what: "Portfolio Performance carries the record as a number"
+    pattern: '(?ms)^#{2,3} Portfolio Performance[^\n]*\n(?:(?!^#{2,3} ).)*?\d(?:\.\d+)?\s?(?:%|percent)'
+
+models_agents:
+  # Under the Hood was missing on 10 of the 14 episodes to Ep243 (Nov 23);
+  # a generation-time lint lands separately. Warn until that has shipped a
+  # clean week, then move to page.
+  - id: under_the_hood
+    what: "The Under the Hood section is present"
+    pattern: '(?mi)^#{2,3}\s*Under the Hood'
+    severity: warn

@@ -37,6 +37,9 @@
 #              Unknown/absent metric renders as null — never 0.
 #   baseline:  (optional) the number when the change shipped
 #   target:    (optional) what success looks like
+#   target_rule: (metric entries; required from 2026-11-24) ONE comparison
+#              on the entry's own metric — "<= 0.22", ">= 0.9", "> 35" —
+#              so scripts/readout_register.py writes a hit/miss verdict.
 #   criteria:  (optional, decide entries) the decision rule
 #   readout_plan: (optional) the file or command that answers the
 #              readout. From Nov 3 2026 an entry needs a computable
@@ -4212,6 +4215,7 @@ experiments:
     readout: 2026-10-23
     status: reading
     metric: digest_structural_regen_share_7d
+    target_rule: "<= 0.22"
     baseline: >
       107 of 304 episodes (35%) over Sep 25 – Oct 8 regenerated their
       digest once: 43 on a hook over 150 characters (omni_view 12/14,
@@ -4318,6 +4322,7 @@ experiments:
     readout: 2026-10-23
     status: reading
     metric: x_posted_share_7d
+    target_rule: ">= 0.9"
     baseline: >
       Seven of 31 shows posted to X and nothing recorded whether a post
       went out (x_post_duration_s only): a credential failure on all
@@ -5431,6 +5436,7 @@ experiments:
     readout: 2026-11-15
     status: reading
     metric: hook_motion_vs_control_d3
+    target_rule: ">= 1.2"
     baseline: >
       The clip ran on every flagship hook Short since Sep 22 (about $24 a
       month) with no control arm. Against the drop week, flagship hook
@@ -5556,6 +5562,7 @@ experiments:
     readout: 2026-11-02
     status: reading
     metric: prompt_articles_reported_pct_7d
+    target_rule: "> 35"
     baseline: >
       Over Oct 13-19 the prompt listed at most 40 of what each show fetched
       (desks 300-480 articles, Tesla 72, MAG 7 119) and the digests carried
@@ -5735,6 +5742,7 @@ experiments:
     readout: 2026-11-14
     status: reading
     metric: mit_stop_stated_share_10ep
+    target_rule: ">= 0.9"
     baseline: 0.5
     target: >
       Share of the last ten recorded picks carrying a stop the sim can
@@ -5860,6 +5868,7 @@ experiments:
     readout: 2026-11-15
     status: reading
     metric: short_subs_per_1k_views_14d_en
+    target_rule: "> 2.2"
     baseline: >
       EN Shorts hold a median 16 s of a 32-35 s clip, so about half of the
       viewers leave before the 3 s end card, the only place a Short asked
@@ -7177,6 +7186,7 @@ experiments:
     readout: 2026-11-24
     status: reading
     metric: editorial_score_14d_spacex
+    target_rule: ">= 6.3"
     baseline: >
       The audit's 1-10 lived only in issue titles; SpaceX, 30% of downloads,
       averaged 5.23 in October (30 episodes) and 5.38 Oct 18 - Nov 2 with
@@ -8013,3 +8023,43 @@ experiments:
       150-250 -> 100-160) with a never-re-tell rule, FPD range sums. ⚠️ AUDIO
       on the FPD/UC prompts: rehearsed before merge. Guards
       tests/test_weekly_review_2026_11_19.py.
+
+  - id: review-loop-automation-2026-11-24
+    title: "The review loop scores itself: readout verdicts, an audience-ranked rotation, must-haves checked daily, dispatch on change"
+    area: quality
+    shipped: 2026-11-24
+    readout: 2026-12-08
+    status: reading
+    baseline: >
+      Nov 22-24: 102 of 103 due register readouts overdue (59 past 14 days
+      with no outcome); none of the 19 metric entries carried a verdict. The
+      date-only rotation reviewed Prediction Markets (154 downloads in 30
+      days) and the Africa & Middle East desk (3) the week SpaceX (5,918)
+      and Tesla (2,221) waited. 154 of 225 audited episodes Nov 9-23 carried
+      a critical and the dispatcher ran seven out-of-rotation reviews in ten
+      days. SpaceX Ep165/168/169 shipped without the share price; no check
+      named it for a week.
+    target: >
+      Every metric entry due by Dec 8 that states a target_rule carries a
+      verdict in api/register_readouts.json; the scheduled rotation's next
+      two picks are among the five largest shows by downloads or a show past
+      its 90-day gap; a must-have miss is in api/show_contracts.json (and the
+      audit is red) on the day it ships; out-of-rotation dispatches at most
+      three in the 14 days to Dec 8.
+    criteria: >
+      HIT when all four hold. MISS when a page-severity must-have miss ships
+      and the audit stays green, or the dispatcher still runs most days.
+      A contract line that misses on a healthy episode is a calibration
+      defect: fix the pattern, never widen the severity.
+    readout_plan: >
+      api/register_readouts.json (verdict_counts, misses);
+      api/show_contracts.json and the Daily Audit runs' "Must-haves" step;
+      the Show Review Agent runs' "Pick review target" log (--explain) and
+      its workflow_dispatch count Nov 24 - Dec 8.
+    notes: >
+      scripts/readout_register.py (target_rule, verdict_for, stale_no_path),
+      scripts/pick_review_target.py (rank_targets), scripts/check_show_contracts.py
+      + shows/contracts/must_haves.yaml, scripts/dispatch_quality_reviews.py
+      (critical_rate_rise, contract_page_shows), review_snapshot "Must-haves
+      and audit trend". No prompt or audio change. Guards
+      tests/test_review_loop_automation_2026_11_24.py.

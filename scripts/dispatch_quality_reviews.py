@@ -7,6 +7,17 @@ show shipped an episode with editorial-CRITICAL issues today, dispatches
 investigates out of rotation — review when something breaks, not just
 when the calendar says so.
 
+Nov 24 2026 — a critical is news only against the show's own normal.
+154 of 225 reviewed episodes Nov 9-23 carried an audit critical (REPETITIVE
+on 135), so "any critical today" dispatched a review almost every day and
+the one daily review went to noise. With the score history passed in, a
+show qualifies only when its share of critical episodes over the last
+``RECENT_ROWS`` exceeds its share over the ``PRIOR_ROWS`` before by
+``RATE_MARGIN`` (a show with under ``MIN_PRIOR_ROWS`` of history keeps the
+old rule). A page-severity MUST-HAVE miss today
+(``api/show_contracts.json``, scripts/check_show_contracts.py) outranks
+every critical: a missing share price is a defect the listener hears.
+
 Deliberately conservative:
   - Missed episodes are NOT a trigger (dispatch_audit_retries.py already
     re-runs those; a missed episode needs a retry, not a review).
@@ -29,19 +40,64 @@ import sys
 from pathlib import Path
 
 
-def pick_review_candidate(data: dict) -> str | None:
+RECENT_ROWS = 7
+PRIOR_ROWS = 28
+MIN_PRIOR_ROWS = 14
+RATE_MARGIN = 0.25
+
+
+def critical_rate_rise(rows: list[dict], show: str) -> float | None:
+    """The show's critical-episode share over its last RECENT_ROWS audit
+    rows minus the share over the PRIOR_ROWS before them; None when the
+    prior window is shorter than MIN_PRIOR_ROWS."""
+    mine = sorted((r for r in rows if r.get("show") == show),
+                  key=lambda r: (str(r.get("date")), r.get("episode") or 0))
+    recent = mine[-RECENT_ROWS:]
+    prior = mine[-(RECENT_ROWS + PRIOR_ROWS):-RECENT_ROWS]
+    if len(prior) < MIN_PRIOR_ROWS or not recent:
+        return None
+
+    def share(block):
+        return sum(1 for r in block if (r.get("critical") or 0) > 0) / len(block)
+    return share(recent) - share(prior)
+
+
+def contract_page_shows(contracts: dict | None) -> dict[str, int]:
+    """``{show: page-severity misses today}`` from api/show_contracts.json."""
+    out: dict[str, int] = {}
+    for slug, entry in ((contracts or {}).get("shows") or {}).items():
+        n = sum(1 for ep in entry.get("today", []) for c in ep.get("checks", [])
+                if c.get("ok") is False and c.get("severity") == "page")
+        if n:
+            out[slug] = n
+    return out
+
+
+def pick_review_candidate(data: dict, history: list[dict] | None = None,
+                          contracts: dict | None = None) -> str | None:
     """The single show most deserving an out-of-rotation review, or None.
 
-    Counts editorial criticals from episodes that actually shipped;
-    auto-retry (missed) shows are excluded.
+    A page-severity must-have miss today wins. Otherwise counts editorial
+    criticals from episodes that actually shipped; auto-retry (missed) shows
+    are excluded; with *history* (the rows of
+    api/editorial_score_history.json) a show must ALSO be above its own
+    critical rate by RATE_MARGIN.
     """
     retried = set(data.get("remediation", {}).get("auto_retry_shows", []) or [])
+    paged = {s: n for s, n in contract_page_shows(contracts).items() if s not in retried}
+    if paged:
+        return min(paged.items(), key=lambda kv: (-kv[1], kv[0]))[0]
     criticals: dict[str, int] = {}
     for episode in data.get("episodes", []) or []:
         show = episode.get("show")
         count = episode.get("critical", 0) or 0
         if show and count > 0 and show not in retried:
             criticals[show] = criticals.get(show, 0) + count
+    if history is not None:
+        for show in list(criticals):
+            rise = critical_rate_rise(history, show)
+            if rise is not None and rise < RATE_MARGIN:
+                del criticals[show]
     if not criticals:
         return None
     return min(criticals.items(), key=lambda kv: (-kv[1], kv[0]))[0]
@@ -81,9 +137,21 @@ def main() -> None:
         print(f"Failed to parse {review_path}: {exc}")
         return
 
-    slug = pick_review_candidate(data)
+    history = None
+    try:
+        history = json.loads(Path("api/editorial_score_history.json")
+                             .read_text()).get("rows")
+    except Exception as exc:  # a missing history keeps the old rule
+        print(f"No score history ({exc}) — dispatching on any critical")
+    contracts = None
+    try:
+        contracts = json.loads(Path("api/show_contracts.json").read_text())
+    except Exception:
+        pass
+    slug = pick_review_candidate(data, history, contracts)
     if not slug:
-        print("No editorial-critical issues today — no review dispatch needed")
+        print("No must-have miss and no show above its own critical rate "
+              "— no review dispatch needed")
         return
 
     if not (os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")):

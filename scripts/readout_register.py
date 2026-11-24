@@ -29,6 +29,20 @@ answers it — the CI rule in ``tests/test_dashboard_growth.py`` binds those
 register: a readout the script drafts is a DRAFT the next review confirms
 (the judgement is human), and the outcome goes into the register by hand.
 
+**Nov 24 2026 — the machine also scores what it can.** 102 of 103 due
+readouts were overdue and the 19 with a live metric were never read
+against their target, because the target is prose. An entry may now carry
+``target_rule`` — one comparison on its own metric, ``">= 0.9"``,
+``"<= 0.22"``, ``"> 35"`` — and each due metric row gets a ``verdict``:
+``hit`` / ``miss`` when the live value is a number, ``unmeasured`` when it
+is null (never a fake miss), ``no_rule`` when the entry states none. The
+verdict is still a DRAFT for the record (the outcome goes into the register
+by hand), but a miss is now listed under ``misses`` for the Monday review
+to act on, and ``stale_no_path`` lists the entries ``STALE_DAYS`` past
+readout with neither a metric nor an outcome — candidates to close as
+unmeasured, never closed by this script. Entries shipped on/after
+``TARGET_RULE_SINCE`` that name a metric must state a ``target_rule``.
+
 ``--strict`` exits 1 when any entry is ``STRICT_OVERDUE_DAYS`` (14) or more
 days past its readout with neither an ``outcome`` nor a ``metric`` — the
 nightly step turns that into a ``::warning::``; the file is written either
@@ -50,9 +64,10 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import yaml
 
@@ -77,6 +92,63 @@ REGISTER_READABLE_SINCE = _dt.date(2026, 11, 3)
 #: with an outcome is read — it may stay ``reading`` while the register's
 #: owner moves it to ``done``.
 OUTCOME_KEYS = ("outcome", "interim")
+
+#: Nov 24 2026: an entry shipped on/after this date that names a ``metric``
+#: must state its success as a ``target_rule`` the machine can score.
+TARGET_RULE_SINCE = _dt.date(2026, 11, 24)
+
+#: ``stale_no_path``: days past readout with neither metric nor outcome.
+STALE_DAYS = 30
+
+_RULE_RE = re.compile(r"^\s*(<=|>=|<|>|==)\s*(-?\d+(?:\.\d+)?)\s*$")
+
+
+def parse_target_rule(rule: Any) -> Optional[Tuple[str, float]]:
+    """``">= 0.9"`` -> ``(">=", 0.9)``; None when absent; ValueError when
+    present but not one comparison against a number."""
+    text = _text(rule)
+    if not text:
+        return None
+    m = _RULE_RE.match(text)
+    if not m:
+        raise ValueError(f"target_rule {text!r} is not '<op> <number>' "
+                         "(op one of <=, >=, <, >, ==)")
+    return m.group(1), float(m.group(2))
+
+
+def verdict_for(rule: Any, live: Any) -> str:
+    """hit | miss | unmeasured | no_rule | bad_rule for one metric row."""
+    try:
+        parsed = parse_target_rule(rule)
+    except ValueError:
+        return "bad_rule"
+    if parsed is None:
+        return "no_rule"
+    if isinstance(live, bool) or not isinstance(live, (int, float)):
+        return "unmeasured"
+    op, value = parsed
+    ok = {"<=": live <= value, ">=": live >= value, "<": live < value,
+          ">": live > value, "==": live == value}[op]
+    return "hit" if ok else "miss"
+
+
+def target_rule_defect(entry: Dict[str, Any],
+                       since: _dt.date = TARGET_RULE_SINCE) -> Optional[str]:
+    """Why an entry's ``target_rule`` is unusable, or None. A malformed rule
+    is a defect on any entry; a missing one only on a metric entry shipped
+    on/after *since*."""
+    try:
+        parsed = parse_target_rule(entry.get("target_rule"))
+    except ValueError as exc:
+        return str(exc)
+    if parsed is not None:
+        if not _text(entry.get("metric")):
+            return "target_rule without a metric to compare it to"
+        return None
+    shipped = _as_date(entry.get("shipped"))
+    if _text(entry.get("metric")) and shipped is not None and shipped >= since:
+        return "names a metric but no target_rule the readout can score"
+    return None
 
 
 def _as_date(value: Any) -> Optional[_dt.date]:
@@ -137,6 +209,8 @@ def build_readouts(entries: List[Dict[str, Any]], live: Dict[str, Any],
     needs_human: List[Dict[str, Any]] = []
     strict_failures: List[str] = []
     notes_not_experiments: List[Dict[str, Any]] = []
+    stale_no_path: List[str] = []
+    rule_defects: List[Dict[str, Any]] = []
     computable = set(live.keys())
 
     for e in entries:
@@ -144,6 +218,10 @@ def build_readouts(entries: List[Dict[str, Any]], live: Dict[str, Any],
         if defect:
             notes_not_experiments.append({
                 "id": e["id"], "shipped": str(e.get("shipped")), "defect": defect})
+
+        rule_defect = target_rule_defect(e)
+        if rule_defect:
+            rule_defects.append({"id": e["id"], "defect": rule_defect})
 
         status = str(e.get("status") or "reading")
         if status not in OPEN_STATUSES:
@@ -170,17 +248,24 @@ def build_readouts(entries: List[Dict[str, Any]], live: Dict[str, Any],
             row["metric"] = metric
             # None is "unmeasured" — never a fake zero (the funnel's rule).
             row["live"] = live.get(metric)
+            row["target_rule"] = _text(e.get("target_rule")) or None
+            row["verdict"] = verdict_for(e.get("target_rule"), row["live"])
             with_metric.append(row)
         else:
             row["readout_plan"] = _text(e.get("readout_plan")) or None
             needs_human.append(row)
         if days_overdue >= STRICT_OVERDUE_DAYS and not metric and not has_outcome(e):
             strict_failures.append(e["id"])
+        if days_overdue >= STALE_DAYS and not metric and not has_outcome(e):
+            stale_no_path.append(e["id"])
 
     key = lambda r: (-r["days_overdue"], r["id"])  # noqa: E731
     with_metric.sort(key=key)
     needs_human.sort(key=key)
     due = with_metric + needs_human
+    verdicts: Dict[str, List[str]] = {}
+    for r in with_metric:
+        verdicts.setdefault(r["verdict"], []).append(r["id"])
     return {
         "generated": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "today": today.isoformat(),
@@ -193,12 +278,21 @@ def build_readouts(entries: List[Dict[str, Any]], live: Dict[str, Any],
         "with_metric_count": len(with_metric),
         "needs_human_read_count": len(needs_human),
         "strict_failures": strict_failures,
+        # Nov 24 2026: the machine's draft verdicts on the metric rows.
+        "verdict_counts": {k: len(v) for k, v in sorted(verdicts.items())},
+        "misses": verdicts.get("miss", []),
+        "hits": verdicts.get("hit", []),
+        "stale_days": STALE_DAYS,
+        "stale_no_path": sorted(stale_no_path),
+        "target_rule_defects": rule_defects,
         "with_metric": with_metric,
         "needs_human_read": needs_human,
         "readable_rule_since": REGISTER_READABLE_SINCE.isoformat(),
         "notes_not_experiments": notes_not_experiments,
         "consumers": ["management.html (Readouts due)",
-                      "tests/test_review_loop_2026_11_03.py"],
+                      "scripts/review_snapshot.py (readouts for a show)",
+                      "tests/test_review_loop_2026_11_03.py",
+                      "tests/test_review_loop_automation_2026_11_24.py"],
     }
 
 
@@ -224,9 +318,11 @@ def print_report(doc: Dict[str, Any]) -> None:
           f"{doc['needs_human_read_count']} need a human read); "
           f"{doc['overdue_count']} past their date.\n")
     if doc["with_metric"]:
-        print("WITH A LIVE METRIC (live · baseline · target)")
+        print("WITH A LIVE METRIC (verdict · live · baseline · target)")
         for r in doc["with_metric"]:
-            print(f"  {r['id']:52} +{r['days_overdue']:>3}d  {r['metric']}: "
+            print(f"  {r['id']:52} +{r['days_overdue']:>3}d  "
+                  f"[{r.get('verdict', '?')}{' ' + r['target_rule'] if r.get('target_rule') else ''}] "
+                  f"{r['metric']}: "
                   f"live {_fmt(r['live'])} · baseline {_fmt(r['baseline'])} · "
                   f"target {_fmt(r['target'])}")
         print()
@@ -243,6 +339,19 @@ def print_report(doc: Dict[str, Any]) -> None:
               "(a note, not an experiment)")
         for r in doc["notes_not_experiments"]:
             print(f"  {r['id']:52} {r['defect']}")
+        print()
+    if doc.get("misses"):
+        print("MISSED THEIR TARGET (act on these: revert or a new plan): "
+              + ", ".join(doc["misses"]))
+        print()
+    if doc.get("target_rule_defects"):
+        print("TARGET_RULE DEFECTS")
+        for r in doc["target_rule_defects"]:
+            print(f"  {r['id']:52} {r['defect']}")
+        print()
+    if doc.get("stale_no_path"):
+        print(f"{len(doc['stale_no_path'])} entries >= {doc['stale_days']} days past readout "
+              "with neither metric nor outcome (close as unmeasured, by hand)")
         print()
     if doc["strict_failures"]:
         print(f"STRICT: {len(doc['strict_failures'])} entr"

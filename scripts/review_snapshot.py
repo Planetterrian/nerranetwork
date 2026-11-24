@@ -545,6 +545,41 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
         lines.append(f"- (audience headline unavailable: {_ah_exc})")
     lines.append("")
 
+    # --- Must-haves and the audit's own trend (Nov 24 2026): the review
+    # scored six of thirteen predictions "partial" for want of a number the
+    # snapshot did not carry, and no review saw SpaceX ship without its
+    # share price. Both are committed data; print them before the pipeline.
+    lines.append("## Must-haves and audit trend")
+    try:
+        from scripts.check_show_contracts import (
+            load_contracts, _registry, digest_files, check_text, load_counters)
+        _contracts = load_contracts().get(slug)
+        _info = _registry().get(slug)
+        if _contracts and _info:
+            for _ep, _d, _path in digest_files(ROOT, _info)[-episodes:]:
+                _res = check_text(_contracts, _path.read_text(encoding="utf-8", errors="replace"),
+                                  load_counters(ROOT, _info, _ep))
+                lines.append(f"- Ep{_ep} {_d}: " + ", ".join(
+                    f"{r['id']} {'skipped' if r['ok'] is None else ('ok' if r['ok'] else 'MISSING')}"
+                    for r in _res))
+        else:
+            lines.append("- (no must-haves listed in shows/contracts/must_haves.yaml)")
+        _hist = json.loads((ROOT / "api" / "editorial_score_history.json")
+                           .read_text(encoding="utf-8")).get("rows") or []
+        _mine = sorted((r for r in _hist if r.get("show") == slug),
+                       key=lambda r: (str(r.get("date")), r.get("episode") or 0))
+        _sc = [r["score"] for r in _mine if isinstance(r.get("score"), (int, float))]
+        if len(_sc) >= 14:
+            lines.append(f"- Audit score: last 7 {sum(_sc[-7:]) / 7:.1f} · "
+                         f"the 21 before {sum(_sc[-28:-7]) / len(_sc[-28:-7]):.1f}")
+        for _r in _mine[-3:]:
+            if _r.get("criticals"):
+                lines.append(f"- {_r.get('date')} Ep{_r.get('episode')}: "
+                             + "; ".join(str(c) for c in _r["criticals"])[:300])
+    except Exception as _mh_exc:  # noqa: BLE001 — the snapshot must always render
+        lines.append(f"- (must-haves unavailable: {_mh_exc})")
+    lines.append("")
+
     # --- Script length per episode ---
     tts_files = _latest(out_dir.glob("*_tts.txt"), episodes)
     lines.append(f"## Script length (last {len(tts_files)} `_tts.txt`)")
