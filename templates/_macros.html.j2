@@ -344,7 +344,9 @@
 {%- macro hero_email_signup(path_prefix='', show_slug='', capture_source='', shows=none) -%}
 <div class="show-hero-email" id="hero-email-signup">
     <p class="show-hero-email-lead">Get it by email: the free 7:00 AM Eastern email with the day’s stories from every show, or only the shows you pick.</p>
-    <form method="post" action="#"
+    {#- The id is the anchor every show-notes email line links to
+        (engine.publisher: nerra-daily.html#show-nerra_daily-hero-newsletter). -#}
+    <form method="post" action="#" id="show-{{ show_slug }}-hero-newsletter"
           data-nn-subscribe="show-hero"
           data-list="member"
           data-source="{{ capture_source }}"
