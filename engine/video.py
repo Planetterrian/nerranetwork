@@ -1325,8 +1325,12 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
                            clip_paths: Sequence[Path],
                            clip_durations: Sequence[float],
                            *, audio_duration_s: float,
-                           max_scene_hold_s: float = _MAX_SCENE_HOLD_S) -> List[tuple]:
+                           max_scene_hold_s: float = _MAX_SCENE_HOLD_S,
+                           open_on_clip: bool = True) -> List[tuple]:
     """Interleave video clips among (cycled) stills.
+
+    ``open_on_clip=False`` (Nov 24 2026, evergreen b-roll): every clip
+    FOLLOWS a still, so the episode opens on its own first scene.
 
     Stills share the audio time NOT consumed by clips, cycled so no still
     holds longer than *max_scene_hold_s*. Clips are spread across the timeline
@@ -1366,10 +1370,13 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
     step = max(1, len(stills) // n_clips)
     ci = 0
     for j, s in enumerate(stills):
-        if ci < n_clips and j % step == 0:
+        if open_on_clip and ci < n_clips and j % step == 0:
             visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
             ci += 1
         visuals.append((s, False, hold))
+        if not open_on_clip and ci < n_clips and j % step == 0:
+            visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
+            ci += 1
     while ci < n_clips:  # any leftover clips tail the sequence
         visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
         ci += 1
@@ -1403,8 +1410,14 @@ def _interleave_broll_into_schedule(
     tracks the chapters) but their holds shrink proportionally to make
     room for the clips, keeping total runtime ≈ the scheduled total
     (which the scheduler pinned to the audio length). Clips are spread
-    at roughly even positions, first clip at the open — same placement
-    rhythm as the uniform hybrid path.
+    at roughly even positions, each one AFTER a still.
+
+    Nov 24 2026: the first clip used to open the episode. An evergreen
+    clip is stock footage chosen by rotation, so every SpaceX Daily
+    long-form since August spent its first 7 seconds, the hook, on a NASA
+    night-launch clip unrelated to the story (a bright plume, then an empty
+    frame) before the episode's own first scene appeared. The opening
+    picture is the episode's own scene; a clip is an accent after it.
     """
     total = math.fsum(d for _, d in schedule)
     clip_total = math.fsum(float(d) for d in clip_durations)
@@ -1418,10 +1431,10 @@ def _interleave_broll_into_schedule(
     step = max(1, len(stills) // n_clips)
     ci = 0
     for j, (path, dur) in enumerate(stills):
+        visuals.append((path, False, dur))
         if ci < n_clips and j % step == 0:
             visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
             ci += 1
-        visuals.append((path, False, dur))
     while ci < n_clips:
         visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
         ci += 1
@@ -3509,6 +3522,10 @@ def build_long_form_video(
                     visuals = _build_hybrid_sequence(
                         list(scene_paths), usable_clips, clip_durs,
                         audio_duration_s=audio_duration_s,
+                        # A generated clip is the episode's own opening;
+                        # an evergreen one never opens it (Nov 24 2026).
+                        open_on_clip=any(
+                            Path(c).exists() for c in (clip_paths or [])),
                     )
                 hybrid_path = work_dir / f"{output_path.stem}_hybrid.mp4"
                 _render_hybrid_slideshow(visuals, hybrid_path, fps=fps,

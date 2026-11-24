@@ -137,6 +137,8 @@ def _records_with_video(records: List[dict], limit: int,
                     "duration_sec": float(row.get("duration_sec") or 0.0),
                     "filename": row.get("filename") or "",
                     "image_url": row.get("image_url") or "",
+                    **({"map_cut_s": row["map_cut_s"]}
+                       if row.get("map_cut_s") else {}),
                 },
             })
 
@@ -208,6 +210,11 @@ def _sidecar_assets(
     digests tree, which correctly yields no tags.
     """
     if assets_root is None:
+        return []
+    # Nov 24 2026: a video rendered without the episode's map sentence runs
+    # on its own timeline; the audio's chapters and word-timed transcript
+    # would be seconds off, so this item carries neither.
+    if track.get("map_cut_s"):
         return []
 
     subdir = (audio_subdir or "digests").strip("/")
