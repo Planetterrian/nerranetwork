@@ -41,6 +41,24 @@ _MAP_CUE_RE = re.compile(
     re.IGNORECASE)
 
 
+def _line_at(text: str, offset: int) -> str:
+    """The line of *text* that starts at *offset*."""
+    end = text.find("\n", offset)
+    return text[offset:] if end < 0 else text[offset:end]
+
+
+def _is_spoken_map(line: str) -> bool:
+    """A map line anywhere in the opening (Nov 24 2026): map-shaped, one
+    sentence and no speaker label. DP Pod's "PATRICK: Then you're going to
+    like this. The James Webb…" is map-shaped and is the lead."""
+    text = (line or "").strip()
+    if re.match(r"^[A-Z]{2,}:", text):
+        return False
+    if len([p for p in re.split(r"(?<=[.!?])\s+", text) if p.strip()]) > 1:
+        return False
+    return _looks_like_map(text)
+
+
 def _looks_like_map(line: str) -> bool:
     text = (line or "").strip()
     if not text or re.search(r"\d", text):
@@ -645,12 +663,21 @@ def _lead_story_split(
     for i, (w, c, tokens) in enumerate(body[:LEAD_SEARCH_PARAGRAPHS]):
         if i in _skip:
             continue
+        # Nov 24 2026: a map spoken after the disclaimer is the same map.
+        # Modern Investing Ep236/238 opened the lead (Strategy Spotlight) on
+        # "…, then the Practice Investment, Tools, Quick Hits, and the
+        # record", so the tape and the lead itself filed under the wrong
+        # chapter whatever came between.
+        if _is_spoken_map(_line_at(text, c)):
+            continue
         # The paragraph tells the hook's story: it shares the hook's or the
         # headline's words, or (Oct 14 2026) three of the digest's own lead
         # text — the desks' short, pronoun-led paragraphs match that way.
         if (len(tokens & lead_tokens) >= 2 or len(tokens & text_tokens) >= LEAD_TEXT_MIN_SHARED
                 or w in (lead_story_words or ())):
-            while i > _floor and _opens_as_continuation(text[body[i - 1][1]:body[i - 1][1] + 80]):
+            while (i > _floor
+                   and _opens_as_continuation(text[body[i - 1][1]:body[i - 1][1] + 80])
+                   and not _is_spoken_map(_line_at(text, body[i - 1][1]))):
                 i -= 1
             w, c = body[i][0], body[i][1]
             return w, c, (_whole_title(title) if whole_only else _clip_title(title, max_chars))
@@ -1185,7 +1212,32 @@ def _in_section_order(entries: list, units) -> list:
             or e[3] not in order]
 
 
-def _marker_section_misfires(ctx, matches: list, section_markers: list) -> set:
+_BOLD_LABEL_RE = re.compile(r"^\s*\*\*([^*:\n]{3,40}):\*\*")
+
+
+def _pre_heading_labels(digest_text: str) -> set:
+    """Normalised ``**Label:**`` paragraph openers above the first heading.
+
+    Nov 24 2026: Modern Investing writes its tape as ``**Market Pulse:** …``
+    above the first ``###`` heading, where ``story_breaks.story_units``
+    deliberately sees no story. The story map therefore cannot place the
+    spoken tape, and it filed those lines under whichever section shared
+    the most words, so ``_marker_section_misfires`` dropped every Market
+    Pulse chapter (Ep225-240 shipped none). A section the digest labels
+    there is real but outside the map, so the map is no witness against it.
+    """
+    out: set = set()
+    for line in (digest_text or "").splitlines():
+        if re.match(r"^#{2,4}\s", line):
+            break
+        m = _BOLD_LABEL_RE.match(line)
+        if m:
+            out.add(_norm_heading(m.group(1)))
+    return out
+
+
+def _marker_section_misfires(ctx, matches: list, section_markers: list,
+                             digest_text: str = "") -> set:
     """Marker matches that fired inside ANOTHER section's content.
 
     Oct 17 2026: Modern Investing Ep203 opened "Trade Review & Lessons" on
@@ -1204,12 +1256,15 @@ def _marker_section_misfires(ctx, matches: list, section_markers: list) -> set:
         at_word.setdefault(w, i)
     where = {_marker_field(m, "title"): _marker_field(m, "where")
              for m in section_markers or []}
+    unmapped = _pre_heading_labels(digest_text)
     bad = set()
     for w, _c, title in matches:
         if where.get(title) in ("start", "end"):
             continue
         k = at_word.get(w)
         if k is None:
+            continue
+        if _norm_heading(title) in unmapped:
             continue
         u = assigned[k][0]
         if u < 0 or not _confident(assigned[k], kept[k], units[u]):
@@ -1496,6 +1551,7 @@ def parse_chapters(
         if seen_text >= _MAP_IDENTITY_SEARCH_LINES:
             break
 
+    map_held: dict = {}
     for line_i, line in enumerate(lines):
         line_words = line.split()
         line_word_count = len(line_words)
@@ -1522,12 +1578,28 @@ def parse_chapters(
             if where == "body" and word_idx <= start_window_end:
                 continue
             if regex.search(line_stripped):
+                # Nov 24 2026: a map the script speaks AFTER the disclaimer
+                # is still a map. Modern Investing Ep237/239 named "Market
+                # Pulse" in it, the marker fired there, and the real tape a
+                # line later could no longer open the chapter. A match on
+                # such a line is held back and used only when the section's
+                # own line never matches (Offshore North's map sits directly
+                # above The Canadian Boat, the only line that names it).
+                if (where != "start" and word_idx <= start_window_end
+                        and _is_spoken_map(line_stripped)):
+                    map_held.setdefault(title, (word_idx, char_offset))
+                    continue
                 matches.append((word_idx, char_offset, title))
                 matched_titles.add(title)
                 break  # Only match first marker per line
 
         word_idx += line_word_count
         char_offset += len(line)
+    for title, (w, c) in map_held.items():
+        if title not in matched_titles:
+            matches.append((w, c, title))
+            matched_titles.add(title)
+    matches.sort(key=lambda m: m[0])
 
     # Where every story starts (Oct 17 2026): the story-change detector's
     # map of the script onto the digest's stories. Used to drop a marker
@@ -1544,7 +1616,8 @@ def parse_chapters(
                            show_name or "show", exc)
             story_ctx = None
     if story_ctx is not None and matches:
-        misfires = _marker_section_misfires(story_ctx, matches, section_markers)
+        misfires = _marker_section_misfires(story_ctx, matches, section_markers,
+                                            digest_text)
         if misfires:
             logger.info(
                 "Dropping %d marker chapter(s) that fired inside another "

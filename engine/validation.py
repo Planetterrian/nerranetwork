@@ -660,6 +660,22 @@ def ma_validation_config() -> ValidationConfig:
                 min_items=1,
                 optional=True,
             ),
+            # Nov 24 2026 (Nov 14 review): Under the Hood is the show's
+            # required daily teardown, and the digest dropped it on 16 of
+            # the 18 episodes Ep226-243 (from the Nov 4 prompt rewrite on;
+            # 0 misses in Ep200-225). The prompt already has a fallback for
+            # a day with no fetched page (the host's own explanation), so
+            # an absent section is a structural defect, same as an empty
+            # one: it spends the one-shot missing-section regeneration.
+            SectionRule(
+                name="Under the Hood",
+                pattern=(
+                    r"(?:### Under the Hood|## Under the Hood)"
+                    r"(.*?)"
+                    r"(?=━━|\n### |\n## |$)"
+                ),
+                min_items=0,
+            ),
         ],
         forbidden_patterns=[
             r"https?://\S+",
