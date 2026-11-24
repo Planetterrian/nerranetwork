@@ -314,6 +314,16 @@ jobs:
         continue-on-error: true
         run: python scripts/check_promised_lengths.py
 
+      - name: Must-haves on today's episodes (and counter flips)
+        # Nov 24 2026: SpaceX shipped Ep165/168/169 without its share price
+        # (a pre-fetch hook timeout) and the audit's Grok read never named
+        # it. shows/contracts/must_haves.yaml lists what every episode must
+        # carry; a page-severity miss fails this step the day it ships, like
+        # a stale feed. Writes api/show_contracts.json, which the review
+        # dispatch below and the review rotation read.
+        if: always()
+        run: python scripts/check_show_contracts.py --strict --out api/show_contracts.json
+
       - name: Automated Remediation (retry missed shows using daily-review.json)
         if: always()
         env:
@@ -352,6 +362,7 @@ jobs:
             api/review_coverage.json
             api/personal_feed_health.json
             api/editorial_score_history.json
+            api/show_contracts.json
             digests/_review/*.json
           commit-message: "Daily audit artifacts"
 

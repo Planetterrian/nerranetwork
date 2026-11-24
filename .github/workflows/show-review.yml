@@ -99,7 +99,7 @@ jobs:
             echo "Forced target: $FORCED"
             exit 0
           fi
-          if SLUG=$(python scripts/pick_review_target.py --exclude "${EXCLUDES[@]}"); then
+          if SLUG=$(python scripts/pick_review_target.py --explain --exclude "${EXCLUDES[@]}"); then
             echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
             echo "Picked target: $SLUG"
           else
