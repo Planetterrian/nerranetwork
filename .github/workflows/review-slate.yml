@@ -1,0 +1,57 @@
+name: Weekly Review Slate
+
+# Nov 24 2026 (register review-loop-automation-2026-11-24, item 6): one page
+# a week for every open review PR, instead of a PR per show to read one at a
+# time. scripts/review_slate.py merges tier-A PRs (records only, under
+# docs/reviews/) once each changed ledger parses and no check failed, lists
+# tier-B PRs with their rehearsal (merge after the listen) and tier-C PRs for
+# the operator, and publishes the slate as one rolling issue (label
+# review-slate). It never merges a PR that changes a prompt, a show YAML or
+# code. Tiers: scripts/review_changes.py; rules: docs/REVIEW_AGENT.md.
+
+on:
+  schedule:
+    # Friday 15:00 UTC: a day after the Thursday review run, so its
+    # rehearsal has finished.
+    - cron: '0 15 * * 5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the slate only: merge nothing, publish nothing'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: review-slate
+  cancel-in-progress: false
+
+jobs:
+  slate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Install
+        run: pip install pyyaml
+
+      - name: Build the slate
+        env:
+          GH_TOKEN: ${{ secrets.REVIEW_PR_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python scripts/review_slate.py
+          else
+            python scripts/review_slate.py --apply
+          fi
