@@ -8033,6 +8033,12 @@ def _short_source(yt, short_idx, fill_mode, final_mp3, transcript_path,
     failure, renders from the episode itself.
     """
     source = (final_mp3, transcript_path, transcript_words)
+    # Nov 24 2026: in the long-form's cut arm the whole stage already reads
+    # a source without the map, so the hook Short is cut from it as it is.
+    if (short_idx == 0 and fill_mode == "hook_open"
+            and result.get("long_form_map_cut_s")):
+        result["shorts_map_cut_s"] = result["long_form_map_cut_s"]
+        return source
     if not (short_idx == 0 and fill_mode == "hook_open"
             and transcript_path is not None
             and bool(getattr(yt, "shorts_skip_map", False))):
@@ -8053,6 +8059,46 @@ def _short_source(yt, short_idx, fill_mode, final_mp3, transcript_path,
         except Exception:  # noqa: BLE001 — cuts fall back to the grid
             words = []
     return audio, tx, words
+
+
+def _long_form_source(config, episode_num, final_mp3, transcript_path,
+                      chapters_path, work_dir, result):
+    """``(audio, transcript, chapters)`` the YouTube stage reads (Nov 24 2026).
+
+    In the cut arm of ``youtube.long_form_skip_map`` these are copies with
+    the map sentence spliced out (``engine.short_furniture``); in the keep
+    arm, off, or on any failure they are the episode's own. Records
+    ``long_form_map_arm`` only for an episode that HAS a map, so both arms
+    of the readout hold mapped episodes, and ``long_form_map_cut_s``.
+    """
+    source = (final_mp3, transcript_path, chapters_path)
+    try:
+        from engine import short_furniture as sf
+
+        arm = sf.long_form_map_arm(
+            getattr(config.youtube, "long_form_skip_map", "off"), episode_num)
+        if not arm or transcript_path is None:
+            return source
+        if sf.episode_map_cut(Path(transcript_path)) is None:
+            return source
+        if arm == sf.ARM_MAP_KEPT:
+            result["long_form_map_arm"] = arm
+            return source
+        offset = float(getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
+        spliced = sf.spliced_long_source(
+            final_mp3, Path(transcript_path),
+            chapters_path if chapters_path and Path(chapters_path).exists() else None,
+            work_dir, audio_offset=offset)
+        if spliced is None:
+            return source
+        audio, tx, chapters, cut_s = spliced
+        result["long_form_map_arm"] = arm
+        result["long_form_map_cut_s"] = cut_s
+        logger.info("Long-form: the map (%.1f s) is cut from the YouTube render", cut_s)
+        return audio, tx, (chapters or chapters_path)
+    except Exception as exc:  # noqa: BLE001 — never block a render
+        logger.warning("Long-form map splice skipped: %s", exc)
+        return source
 
 
 def _publish_youtube(
@@ -8298,6 +8344,13 @@ def _publish_youtube(
     transcript_path = find_transcript_for_episode(
         digests_dir, config.episode.prefix, episode_num, f"{today:%Y%m%d}",
     )
+    # Nov 24 2026: the long-form opens on the story. In the cut arm the whole
+    # YouTube stage reads ONE spliced timeline (mix, transcript, chapters)
+    # with the map sentence removed; the episode's own files are untouched.
+    _episode_stem = final_mp3.stem
+    final_mp3, transcript_path, chapters_path = _long_form_source(
+        config, episode_num, final_mp3, transcript_path, chapters_path,
+        digests_dir / "youtube_tmp", result)
     if (_policy_shorts_count > 1
             and (getattr(config.youtube, "shorts_start_mode", None) or "voice") == "smart"
             and getattr(config.youtube, "shorts_start_offset", None) is None
@@ -8398,7 +8451,7 @@ def _publish_youtube(
 
     work_dir = digests_dir / "youtube_tmp"
     work_dir.mkdir(parents=True, exist_ok=True)
-    base_name = final_mp3.stem  # e.g. Tesla_Shorts_Time_Pod_Ep042_20260425
+    base_name = _episode_stem  # e.g. Tesla_Shorts_Time_Pod_Ep042_20260425
     long_video_path = work_dir / f"{base_name}.mp4"
     thumbnail_path = work_dir / f"{base_name}_thumb.jpg"
     short_thumbnail_path = work_dir / f"{base_name}_short_thumb.jpg"
@@ -9468,6 +9521,12 @@ def _publish_youtube(
                 _video_track = upload_episode_video(long_video_path, config)
                 if _video_track:
                     _video_track["duration_sec"] = _ep_duration
+                    # Nov 24 2026: a video rendered without the map is
+                    # shorter than the audio episode, so the video feed must
+                    # not point it at the audio's chapters and transcript.
+                    if result.get("long_form_map_cut_s"):
+                        _video_track["map_cut_s"] = float(
+                            result["long_form_map_cut_s"])
                     # Square artwork for the feed's item-level
                     # <itunes:image>. Without it every episode in Apple's
                     # list renders the identical channel cover. Prefers
@@ -9587,6 +9646,10 @@ def _publish_youtube(
                                     if _long_publish_at else ""),
                         watch_url=long_url,
                         channel=(getattr(config.youtube, "channel", "en") or "en"),
+                        # Nov 24 2026: the map A/B arm ("map_cut" |
+                        # "map_kept"), absent on an episode with no map.
+                        variant=str(result.get("long_form_map_arm") or ""),
+                        map_cut_s=result.get("long_form_map_cut_s"),
                         index_path=digests_dir / "youtube_videos.json",
                     )
                 except Exception as _exc:

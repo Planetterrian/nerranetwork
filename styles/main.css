@@ -3704,3 +3704,70 @@ html.nn-standalone body { padding-bottom: calc(var(--nn-player-h, 0px) + var(--n
 .nn-gp-read { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; }
 .nn-gp-read[hidden] { display: none; }
 @media (max-width: 760px) { .nn-gp-read { width: 30px; height: 30px; padding: 0; justify-content: center; } .nn-gp-read .t { display: none; } }
+
+
+/* ---------- Show hero on a phone: the actions first (Nov 24 2026) ----------
+   Measured at 390x844: the cover (200px) and the description (a screen and a
+   half on Nerra Daily) sat above every button, so the first screen of every
+   show page offered nothing to press, and the play and follow buttons were on
+   screen two. The hero is reordered, not rewritten: title, then (Nerra Daily)
+   the email form, then listen, then follow, then the description clamped to
+   three lines. Desktop and tablet are untouched. */
+.show-hero-desc-more {
+  display: none;
+  background: none; border: 0; padding: 4px 8px; margin: calc(-1 * var(--sp-4)) auto var(--sp-4);
+  font-family: var(--font-ui); font-size: 0.88rem; font-weight: 600;
+  color: var(--show-color-text, var(--nn-cyan)); cursor: pointer; min-height: 32px;
+}
+.show-hero-email { max-width: 520px; margin: 0 0 var(--sp-5); }
+.show-hero-email-lead {
+  font-family: var(--font-ui); font-size: 0.98rem; line-height: 1.5;
+  color: var(--nn-text); margin: 0 0 var(--sp-3);
+}
+.show-hero-email-form { display: flex; gap: var(--sp-2); flex-wrap: wrap; position: relative; }
+.show-hero-email-form input[type="email"] {
+  flex: 1 1 220px; min-width: 0; padding: 11px 14px; border-radius: 10px;
+  border: 1px solid var(--nn-border); background: var(--nn-bg); color: var(--nn-text);
+  font-size: 16px; /* iOS zooms the page on focus below 16px */
+}
+.show-hero-email-form button {
+  flex: 0 0 auto; padding: 11px 18px; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--nn-gradient, var(--show-color)); color: #fff;
+  font-family: var(--font-ui); font-size: 0.98rem; font-weight: 700; min-height: 44px;
+}
+.show-hero-email-pick { flex: 1 1 100%; margin: var(--sp-2) 0 0; text-align: left; }
+.show-hero-email-pick > summary { min-height: 32px; display: list-item; color: var(--nn-text-secondary, var(--nn-text)); }
+.show-hero-email-pick .nn-subscribe-tags { margin-bottom: 0; }
+.show-hero-email-pick .nn-subscribe-tags label { min-height: 32px; }
+.show-hero-email .nn-subscribe-status[data-state="ok"] { color: #7ee2a8; }
+.show-hero-email .nn-subscribe-status[data-state="error"] { color: #ffb4a8; }
+.show-hero-email .nn-subscribe-status {
+  margin: var(--sp-2) 0 0; font-family: var(--font-ui); font-size: 0.9rem; min-height: 1.3em;
+}
+.show-hero-email-fine {
+  margin: 2px 0 0; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted);
+}
+.show-hero-email-fine a { color: var(--nn-cyan, #00D4FF); font-weight: 600; text-decoration: none; }
+@media (max-width: 639px) {
+  .show-hero { padding: calc(var(--nav-height) + var(--sp-6)) 0 var(--sp-8); }
+  .show-hero-inner { gap: var(--sp-4); }
+  .show-hero-art { width: 112px; height: 112px; }
+  .show-hero-info { display: flex; flex-direction: column; align-items: center; }
+  .show-hero-info > * { order: 6; max-width: 100%; }
+  .show-hero-info > h1,
+  .show-hero-info > .show-hero-tagline,
+  .show-hero-info > .show-hero-meta { order: 1; }
+  .show-hero-info > .show-hero-tagline { margin-bottom: var(--sp-3); }
+  .show-hero-info > .show-hero-email { order: 2; width: 100%; margin-bottom: var(--sp-4); }
+  .show-hero-info > .show-hero-actions { order: 3; }
+  .show-hero-info > .show-hero-subscribe { order: 4; justify-content: center; }
+  .show-hero-info > .show-hero-subscribe.nn-lang-feeds { order: 6; }
+  .show-hero-info > .show-hero-desc { order: 5; margin: var(--sp-5) auto var(--sp-4); }
+  .show-hero-info > .show-hero-desc-more { order: 5; display: inline-block; }
+  .show-hero-info > .show-hero-desc-more[hidden] { display: none; }
+  .show-hero-desc.is-clamped {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  .show-hero-email-form button { flex: 1 1 100%; }
+}

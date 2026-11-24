@@ -230,14 +230,36 @@ def script_for_transcript(transcript_path: Path) -> Optional[Path]:
     return path if path.exists() else None
 
 
+def episode_map_cut(transcript_path: Path) -> Optional[Tuple[float, float]]:
+    """``(cut_from, cut_to)`` of the map in a committed episode (voice
+    timeline), from its ``*_transcript.json`` and the ``_tts.txt`` beside
+    it. ``None`` when there is no map or anything fails. Reads only."""
+    try:
+        import json
+
+        from engine.utils import strip_speech_tags
+
+        script_path = script_for_transcript(Path(transcript_path))
+        if script_path is None:
+            return None
+        transcript = json.loads(Path(transcript_path).read_text(encoding="utf-8"))
+        script = strip_speech_tags(script_path.read_text(encoding="utf-8"))
+        return map_cut(script, transcript)
+    except Exception as exc:  # noqa: BLE001 — never block a render
+        logger.warning("Map lookup skipped: %s", exc)
+        return None
+
+
 def spliced_short_source(final_mp3: Path, transcript_path: Path, work_dir: Path,
-                         *, audio_offset: float = 0.0):
+                         *, audio_offset: float = 0.0,
+                         suffix: str = "_short_source"):
     """``(audio, transcript_json, cut_seconds)`` for the hook Short, or
     ``None`` when the episode has no map to remove or anything fails.
 
     *audio_offset* is where the voice sits in the mix (``voice_intro_delay``):
     the cut is made on the mix at the voice time plus it, and the spliced
-    transcript stays on the voice timeline like the original.
+    transcript stays on the voice timeline like the original. *suffix* names
+    the two files (the long-form's copy is ``_long_source``, Nov 24 2026).
     """
     try:
         import json
@@ -255,8 +277,8 @@ def spliced_short_source(final_mp3: Path, transcript_path: Path, work_dir: Path,
             return None
         cut_from, cut_to = cut
         work_dir.mkdir(parents=True, exist_ok=True)
-        audio = work_dir / (final_mp3.stem + "_short_source.flac")
-        tx = work_dir / (Path(transcript_path).stem + "_short_source.json")
+        audio = work_dir / (final_mp3.stem + suffix + ".flac")
+        tx = work_dir / (Path(transcript_path).stem + suffix + ".json")
         subprocess.run(
             splice_audio_cmd(final_mp3, audio, cut_from + audio_offset, cut_to + audio_offset),
             check=True, timeout=300, capture_output=True)
@@ -265,6 +287,110 @@ def spliced_short_source(final_mp3: Path, transcript_path: Path, work_dir: Path,
         return audio, tx, round(cut_to - cut_from, 2)
     except Exception as exc:  # noqa: BLE001 — never block a render
         logger.warning("Short map splice skipped (the Short keeps the map): %s", exc)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# The long-form opens on the story (Nov 24 2026)
+# ---------------------------------------------------------------------------
+#
+# The EN long-form loses 17 points of its audience between 10 and 20 seconds
+# and 35 between 10 and 30 (median of 141 retention curves, Sep 16 - Nov 21:
+# 0.85 at 10 s, 0.63 at 20 s, 0.47 at 30 s). Seconds 8-22 are the identity
+# line and the map: a viewer who clicked a headline hears the hook, then a
+# list of other stories and section names. The hook Short lost 2.5 s of
+# average view duration to the same sentence (Oct 30). On odd episode numbers
+# the YouTube long-form is rendered from a copy of the mix with the map
+# spliced out; even numbers keep it. Captions, scene cuts, fact cards and the
+# description's chapters all read the spliced timeline. The episode, its
+# feed audio and the podcast chapters JSON are never touched.
+
+#: ``youtube.long_form_skip_map`` values.
+LONG_MAP_OFF, LONG_MAP_AB, LONG_MAP_ON = "off", "ab", "on"
+#: The arm recorded on the video's index row (``variant``) and the metric.
+ARM_MAP_CUT, ARM_MAP_KEPT = "map_cut", "map_kept"
+LONG_SOURCE_SUFFIX = "_long_source"
+
+
+def long_form_map_arm(mode, episode_num) -> str:
+    """The arm an episode is in: ``map_cut``, ``map_kept`` or ``""`` (off).
+
+    ``ab`` cuts on ODD episode numbers. Episode parity, not the date: the
+    hook-Short motion A/B runs on date parity, and a show's episode parity
+    against the date differs from show to show, so the two do not line up.
+    An unknown mode is off (YAML ``on``/``off`` unquoted load as booleans).
+    """
+    if mode is True:
+        mode = LONG_MAP_ON
+    mode = str(mode or "").strip().lower()
+    if mode == LONG_MAP_ON:
+        return ARM_MAP_CUT
+    if mode == LONG_MAP_AB:
+        try:
+            return ARM_MAP_CUT if int(episode_num) % 2 == 1 else ARM_MAP_KEPT
+        except (TypeError, ValueError):
+            return ""
+    return ""
+
+
+def shift_chapters(data: dict, cut_from: float, cut_to: float) -> dict:
+    """A chapters JSON (mix timeline) with ``[cut_from, cut_to)`` removed.
+
+    A start inside the cut moves to its opening; a later one moves earlier
+    by the cut. The 0:00 chapter never moves, and a chapter whose start
+    lands on the previous one (both inside the cut) is dropped.
+    """
+    gap = cut_to - cut_from
+    out = copy.deepcopy(data)
+    kept: List[dict] = []
+    for ch in out.get("chapters") or []:
+        for key in ("startTime", "endTime"):
+            if key not in ch or ch[key] is None:
+                continue
+            t = float(ch[key])
+            if t >= cut_to:
+                t -= gap
+            elif t > cut_from:
+                t = cut_from
+            ch[key] = round(t, 3)
+        if kept and "startTime" in ch and \
+                float(ch["startTime"]) <= float(kept[-1].get("startTime", -1.0)):
+            continue
+        kept.append(ch)
+    out["chapters"] = kept
+    return out
+
+
+def spliced_long_source(final_mp3: Path, transcript_path: Path,
+                        chapters_path: Optional[Path], work_dir: Path,
+                        *, audio_offset: float = 0.0):
+    """``(audio, transcript_json, chapters_json_or_None, cut_seconds)`` for
+    the long-form without its map, or ``None`` (the long-form renders from
+    the episode as before). The chapters copy is written only when the
+    episode has a chapters file; a chapters failure refuses the whole splice,
+    because a description whose timestamps are off is worse than a map."""
+    try:
+        import json
+
+        cut = episode_map_cut(Path(transcript_path))
+        if cut is None:
+            return None
+        chapters_out: Optional[Path] = None
+        if chapters_path is not None and Path(chapters_path).exists():
+            data = json.loads(Path(chapters_path).read_text(encoding="utf-8"))
+            shifted = shift_chapters(data, cut[0] + audio_offset, cut[1] + audio_offset)
+            work_dir.mkdir(parents=True, exist_ok=True)
+            chapters_out = work_dir / (Path(chapters_path).stem + LONG_SOURCE_SUFFIX + ".json")
+            chapters_out.write_text(json.dumps(shifted, ensure_ascii=False), encoding="utf-8")
+        spliced = spliced_short_source(final_mp3, Path(transcript_path), work_dir,
+                                       audio_offset=audio_offset,
+                                       suffix=LONG_SOURCE_SUFFIX)
+        if spliced is None:
+            return None
+        audio, tx, cut_s = spliced
+        return audio, tx, chapters_out, cut_s
+    except Exception as exc:  # noqa: BLE001 — never block a render
+        logger.warning("Long-form map splice skipped (the long-form keeps the map): %s", exc)
         return None
 
 

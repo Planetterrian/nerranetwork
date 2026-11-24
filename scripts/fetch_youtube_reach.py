@@ -321,6 +321,33 @@ def pending_reports(reports: Iterable[dict], read_ids: Iterable[str]) -> List[di
     return todo[:MAX_REPORTS_PER_RUN]
 
 
+#: Where the operator switches the Reporting API on (one click, free).
+ENABLE_URL = ("https://console.cloud.google.com/apis/library/"
+              "youtubereporting.googleapis.com")
+
+
+def classify_failure(message: str) -> Tuple[str, str]:
+    """``(status, error)`` for a failed read.
+
+    Nov 24 2026: the first ten nights all failed with a 403 saying the
+    Reporting API is not enabled in the OAuth client's Google Cloud project,
+    and the file said only ``error``. That one is ``api_disabled`` with the
+    operator's next step, so the dashboard and the daily list can name it.
+    """
+    text = message or ""
+    if ("has not been used in project" in text or "it is disabled" in text
+            or "SERVICE_DISABLED" in text or "accessNotConfigured" in text):
+        import re
+
+        m = re.search(r"project[= ](\d+)", text)
+        url = ENABLE_URL + (f"?project={m.group(1)}" if m else "")
+        return "api_disabled", (
+            "The YouTube Reporting API is switched off in the Google Cloud "
+            f"project. Enable it at {url}; the next nightly run creates the "
+            "job and data starts about two days later.")
+    return "error", text[:200]
+
+
 def read_channel(channel: str, credentials, data: dict) -> None:
     """Read one channel into ``data`` in place; its status says what happened."""
     block = data["channels"].setdefault(channel, {})
@@ -356,8 +383,7 @@ def read_channel(channel: str, credentials, data: dict) -> None:
         block["read_report_ids"] = read[-(KEEP_DAYS + MAX_REPORTS_PER_RUN):]
         block["reports_read_tonight"] = len(todo)
     except Exception as exc:
-        block["status"] = "error"
-        block["error"] = str(exc)[:200]
+        block["status"], block["error"] = classify_failure(str(exc))
         logger.warning("reach read failed on %s: %s", channel, exc)
 
 

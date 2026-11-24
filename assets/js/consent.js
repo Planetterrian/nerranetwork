@@ -38,23 +38,35 @@
     var CONSENT_MODE = 'advanced'; // 'basic' | 'advanced'
 
     var STORAGE_KEY = 'nn_consent_v1';
+
+    // Where analytics waits for an explicit OK (ISO 3166-1 / 3166-2): the
+    // EEA, the UK, Switzerland and Quebec. See the consent defaults below.
+    var CONSENT_REQUIRED_REGIONS = [
+        'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE',
+        'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT',
+        'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH', 'CA-QC',
+    ];
     var STORAGE_DAYS = 365;
 
     // ---- Copy (easy to swap) ----------------------------------------
     var BODY_LEAD_BY_MODE = {
         advanced:
-            'Before you choose, Google gets only basic, cookie-free signals ' +
+            'In the EU, the UK, Switzerland and Quebec, analytics waits for ' +
+            'your OK. Before you choose, Google gets only basic, cookie-free signals ' +
             '(for example, that a page loaded), with no cookies or IDs that ' +
-            'identify you. ',
+            'identify you. Everywhere else, Analytics is on until you turn ' +
+            'it off. ',
         basic:
             'Nothing is sent to Google until you choose. ',
     };
 
     var BODY_LEAD_BY_MODE_RU = {
         advanced:
-            'До вашего выбора Google получает только базовые сигналы без ' +
+            'В ЕС, Великобритании, Швейцарии и Квебеке аналитика ждёт ' +
+            'вашего согласия. До вашего выбора Google получает только базовые сигналы без ' +
             'cookie (например, что страница загрузилась), без cookie и ' +
-            'идентификаторов, которые вас узнают. ',
+            'идентификаторов, которые вас узнают. В остальных странах ' +
+            'Аналитика включена, пока вы её не выключите. ',
         basic:
             'Пока вы не выберете, Google ничего не получает. ',
     };
@@ -64,10 +76,10 @@
         heading: 'Cookies on Nerra',
         // Lead sentence is mode-specific (see bodyBeforePrivacy()).
         bodyAfterLead:
-            'With your OK you can also turn on: Analytics, which uses Google ' +
+            'Your choices: Analytics, which uses Google ' +
             'Analytics cookies to show us which pages and episodes are useful, ' +
             'and Ad measurement, which uses Google Ads to measure sign-ups from ' +
-            'our ads. When you sign up from a Nerra Personal page, Ad measurement also ' +
+            'our ads and stays off everywhere until you allow it. When you sign up from a Nerra Personal page, Ad measurement also ' +
             'sends Google a coded (hashed) version of your email. Change your ' +
             'mind any time from Cookie settings at the bottom of every page. ',
         privacyLinkText: 'Privacy policy',
@@ -86,10 +98,11 @@
         label: 'Cookie на Nerra',
         heading: 'Cookie на Nerra',
         bodyAfterLead:
-            'С вашего согласия можно также включить: Аналитику — cookie ' +
+            'Ваш выбор: Аналитика — cookie ' +
             'Google Analytics, чтобы мы видели, какие страницы и выпуски ' +
             'полезны, и Измерение рекламы — Google Ads для подсчёта ' +
-            'регистраций с нашей рекламы. Когда вы подписываетесь на ' +
+            'регистраций с нашей рекламы; оно выключено везде, пока вы его ' +
+            'не разрешите. Когда вы подписываетесь на ' +
             'Nerra Personal, Измерение рекламы также отправляет Google ' +
             'закодированную (хешированную) версию вашего email. Изменить ' +
             'выбор можно в любой момент через «Настройки cookie» внизу ' +
@@ -306,11 +319,30 @@
     }
 
     // Defaults BEFORE any gtag('config', …).
+    //
+    // Nov 24 2026 (operator decision, docs/reviews/market_review_2026_11_24.md):
+    // analytics is opt-in only where the law requires it — the EEA, the UK,
+    // Switzerland and Quebec (Law 25) — and on by default elsewhere, with the
+    // banner's Reject kept everywhere. Denied-everywhere left GA4 seeing only
+    // visitors who clicked Accept (157 real sessions in 28 days, 4 from
+    // Google), so no web number could be read. Ad measurement and ad
+    // personalization stay denied everywhere until a visitor allows them.
+    // The region-specific default wins over the global one whatever the
+    // order (Consent Mode v2); it is pushed first so a reader of
+    // dataLayer sees the strict rule first.
     gtag('consent', 'default', {
         'ad_storage': 'denied',
         'ad_user_data': 'denied',
         'ad_personalization': 'denied',
         'analytics_storage': 'denied',
+        'region': CONSENT_REQUIRED_REGIONS,
+        'wait_for_update': 500,
+    });
+    gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'granted',
         'wait_for_update': 500,
     });
     gtag('set', 'url_passthrough', false);
@@ -536,6 +568,7 @@
     window.NNConsent = window.NNConsent || {};
     window.NNConsent.CONSENT_MODE = CONSENT_MODE;
     window.NNConsent.STORAGE_KEY = STORAGE_KEY;
+    window.NNConsent.CONSENT_REQUIRED_REGIONS = CONSENT_REQUIRED_REGIONS;
     window.NNConsent.BANNER_COPY = BANNER_COPY;
     window.NNConsent.BANNER_COPY_RU = BANNER_COPY_RU;
     window.NNConsent.BODY_LEAD_BY_MODE = BODY_LEAD_BY_MODE;

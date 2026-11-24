@@ -250,6 +250,13 @@ def record_youtube_outcomes(
                            int(youtube_urls["shorts_fact_cards_rendered"]))
         if youtube_urls.get("shorts_map_cut_s") is not None:
             metrics.record("shorts_map_cut_s", float(youtube_urls["shorts_map_cut_s"]))
+        # Nov 24 2026 — the long-form map A/B (a result key is not a metric
+        # until it is here).
+        if youtube_urls.get("long_form_map_arm"):
+            metrics.record("long_form_map_arm", str(youtube_urls["long_form_map_arm"]))
+        if youtube_urls.get("long_form_map_cut_s") is not None:
+            metrics.record("long_form_map_cut_s",
+                           float(youtube_urls["long_form_map_cut_s"]))
         if youtube_urls.get("shorts_subscribe_pill_rendered") is not None:
             metrics.record("shorts_subscribe_pill_rendered",
                            bool(youtube_urls["shorts_subscribe_pill_rendered"]))
