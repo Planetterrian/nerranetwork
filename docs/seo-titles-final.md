@@ -19,3 +19,28 @@ Oct 18 2026: the no-advertising claim was removed from every line (ads are comin
 | /prediction-markets.html | Prediction Markets Daily: Kalshi & Polymarket News &#124; Nerra | A daily podcast on prediction markets in Canada, the US and the world: Kalshi, Polymarket, the CFTC and the courts. Not financial advice. |
 | /modern-investing.html | Modern Investing Techniques: Markets Podcast &#124; Nerra | AI-powered daily market intelligence with simulated trades, strategy breakdowns and tools for Canadian and US investors. Free to listen. |
 | /nerra-daily.html | Nerra Daily: One Free Daily News Podcast and Email &#124; Nerra | Every Nerra Network show in one daily episode by 7 AM Eastern, anchored by Mira, and a free morning email with the day's sourced stories. Free to listen. |
+
+## Added Nov 24 2026: the remaining show pages
+
+Not from the Oct 16 HoM list. These eighteen show pages had no row, so their title led with the day's episode hook, clipped ("Collingwood Weekly — Ten Grey County councillors will not return after the… | Nerra Network", 91 characters) and changed every day. Each row below is the show's own description in the approved rows' shape. Edit freely; the page follows the row.
+
+| URL | Title | Meta description |
+|---|---|---|
+| /omni-view.html | Omni View: Balanced Daily World News Podcast &#124; Nerra | The day's most important world news, explained calmly from every side: a daily briefing in plain language, with sources. Free to listen. |
+| /planetterrian.html | Planetterrian Daily: Science & Longevity Podcast &#124; Nerra | A daily podcast on science, longevity and health discoveries: genetics, biotech, CRISPR and more, with sources. Free to listen. |
+| /env-intel.html | Environmental Intelligence: Compliance Podcast &#124; Nerra | A weekly environmental regulatory and compliance briefing for Canadian environmental professionals, every Monday, with sources. Free to listen. |
+| /models-agents-beginners.html | Models & Agents for Beginners: AI Explained Simply &#124; Nerra | A daily AI podcast for beginners and teens: new models, agents and tools explained simply, with sources. Free to listen. |
+| /unintended-consequences.html | Unintended Consequences: Daily History Podcast &#124; Nerra | A daily narrative podcast on inventions, policies and systems that were designed to help and triggered surprising results. Free to listen. |
+| /first-principles.html | First Principles Daily: Engineering Thinking Podcast &#124; Nerra | A daily podcast that reasons from raw materials, not analogy: real engineering cases and the industries ripe for the same thinking. Free to listen. |
+| /thedppod.html | The DP Pod: Good News and One Thing to Do About It &#124; Nerra | The Do Positive Podcast with Dan and Patrick. Every Monday: good news in science and tech, plus one concrete action with honest numbers. Free to listen. |
+| /offshore-north.html | Offshore North: Ocean Racing & Vendée Globe Podcast &#124; Nerra | The weekly ocean racing podcast: Canada Ocean Racing's road to the Vendée Globe 2028, the IMOCA fleet and one concept explained each week. Free to listen. |
+| /peptides.html | Peptides Weekly: Peptide Science & Rules Podcast &#124; Nerra | A weekly education podcast on peptide drugs, research compounds and regulation, with evidence levels named. Never dosing or medical advice. |
+| /longevity.html | Longevity Weekly: The Science of Aging Podcast &#124; Nerra | A weekly education podcast on the science of aging: what people can do, how aging works and which claims hold up. Never medical advice. |
+| /vancouver.html | Vancouver Daily News: Metro Vancouver News Podcast &#124; Nerra | The daily morning podcast for Metro Vancouver: council, the province, getting around, sport and what's on, with sources named. Hosted by Mira, an AI host. |
+| /collingwood.html | Collingwood Weekly: South Georgian Bay News Podcast &#124; Nerra | The Friday podcast for Collingwood, Wasaga Beach, Clearview and The Blue Mountains: council, roads, weather and what's on. Hosted by Mira, an AI host. |
+| /omni-view-world.html | Omni View Top World News: Daily World News Podcast &#124; Nerra | A daily podcast ranking the ten world stories that matter most, with sources named and claims attributed. Hosted by Mira, an AI host. Free to listen. |
+| /omni-view-europe.html | Omni View Europe: Daily News Podcast &#124; Nerra | A daily podcast on Europe, one region deep: decisions, conflicts, economies and elections, with sources. A members' show in Nerra Personal. |
+| /omni-view-asia-pacific.html | Omni View Asia Pacific: Daily News Podcast &#124; Nerra | A daily podcast on Asia Pacific, one region deep: decisions, conflicts, economies and elections, with sources. A members' show in Nerra Personal. |
+| /omni-view-africa-mideast.html | Omni View Africa & Middle East: Daily News Podcast &#124; Nerra | A daily podcast on Africa and the Middle East, one region deep: decisions, conflicts, economies and elections, with sources. A members' show in Nerra Personal. |
+| /omni-view-latam.html | Omni View Central & South America: Daily Podcast &#124; Nerra | A daily podcast on Central and South America, one region deep: decisions, conflicts, economies and elections, with sources. A members' show in Nerra Personal. |
+| /omni-view-north-america.html | Omni View North America: Daily News Podcast &#124; Nerra | A daily podcast on North America, one region deep: decisions, conflicts, economies and elections, with sources. A members' show in Nerra Personal. |
