@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 def _post_webhook(text: str) -> None:
@@ -31,6 +32,25 @@ def _post_webhook(text: str) -> None:
             print(f"::warning::Audit webhook returned {resp.status_code} (non-blocking)")
     except Exception as exc:  # noqa: BLE001
         print(f"::warning::Audit webhook failed: {exc} (non-blocking)")
+
+
+#: The audit dates its report by the network's calendar day (review_episodes
+#: ``NETWORK_TZ``), a show run by the runner's UTC date. Both are needed here.
+NETWORK_TZ = ZoneInfo("America/New_York")
+
+
+def report_verdict(review_date: str, now: datetime.datetime) -> str:
+    """Classify the committed report against the clock.
+
+    ``fresh``: dated today in UTC — a retry started now lands on the day the
+    audit read. ``late``: dated today on the network's (Eastern) calendar but
+    UTC has already rolled over — the report is this run's own, and a retry
+    would be stamped with the next day. ``stale``: anything else."""
+    if review_date == now.date().isoformat():
+        return "fresh"
+    if review_date == now.astimezone(NETWORK_TZ).date().isoformat():
+        return "late"
+    return "stale"
 
 
 def _same_day_recovery_branch(show: str,
@@ -64,7 +84,7 @@ def _same_day_recovery_branch(show: str,
     return None
 
 
-def main() -> None:
+def main(now: datetime.datetime | None = None) -> None:
     review_path = Path("api/daily-review.json")
 
     if not review_path.exists():
@@ -84,17 +104,41 @@ def main() -> None:
     # and R2 uploads included. The 2026-08-19 list was replayed on BOTH the
     # 20th and 21st (4 duplicate episodes/day, 6 recovery PRs). A retry
     # decision is only ever valid for the day it was computed.
-    today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    verdict = report_verdict(str(data.get("date") or ""), now)
     review_date = str(data.get("date") or "")
-    if review_date != today:
+    shows = data.get("remediation", {}).get("auto_retry_shows", []) or []
+    if verdict == "stale":
         msg = (f"api/daily-review.json is dated {review_date or 'unknown'}, "
-               f"not {today} — refusing to dispatch retries from a stale "
-               "report (today's audit did not ship one)")
+               f"not {now.date().isoformat()} — refusing to dispatch retries "
+               "from a stale report (today's audit did not ship one)")
         print(f"::warning::{msg}")
         _post_webhook(f"⚠️ Daily audit: {msg}")
         return
+    if verdict == "late":
+        # Nov 24 2026: the audit dates its report by the network's (Eastern)
+        # day since Nov 10, and GitHub delivers its 16:15 UTC cron four to
+        # ten hours late — after 00:00 UTC on Nov 10, 17 and 24. The report
+        # was fresh each time and this guard called it stale ("today's audit
+        # did not ship one"), paging the operator about an audit that had
+        # run. It still must not dispatch: a show run stamps its episode and
+        # its "Auto-generated: <show> <date>" commit with the runner's UTC
+        # date, so a retry started now would publish as TOMORROW's episode
+        # and the same-day duplicate guard would then skip tomorrow's own
+        # run. Say which shows went unretried; page only when there are any.
+        if shows:
+            msg = (f"the audit for {review_date} ran after 00:00 UTC, too "
+                   f"late to retry that day's episode — NOT retried: "
+                   f"{', '.join(shows)}. A run started now would be stamped "
+                   f"{now.date().isoformat()} and take that day's slot; "
+                   "re-run by hand only if the episode is still wanted.")
+            print(f"::warning::{msg}")
+            _post_webhook(f"⚠️ Daily audit: {msg}")
+        else:
+            print(f"Audit for {review_date} ran after 00:00 UTC; it asked "
+                  "for no retries, so nothing was lost.")
+        return
 
-    shows = data.get("remediation", {}).get("auto_retry_shows", []) or []
     if not shows:
         print("No auto-retries needed")
         return

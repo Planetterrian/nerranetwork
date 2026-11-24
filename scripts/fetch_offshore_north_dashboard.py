@@ -322,6 +322,45 @@ def collect_fleet(previous: Optional[Dict[str, Any]] = None) -> List[Dict[str, A
     return fleet
 
 
+#: A boat page that has not parsed for this long is named in ONE workflow
+#: annotation. Nov 24 2026: four of the twenty pages (the Canadian boat's
+#: among them) had answered 200 with no facts for four to nine weeks; each
+#: run logged four quiet per-boat lines and kept the old record, correctly
+#: marked stale, and nothing ever said how long that had been true.
+FLEET_STALE_WARN_DAYS = 14
+
+
+def fleet_stale_report(fleet: List[Dict[str, Any]], *, today: Optional[_dt.date] = None) -> Optional[str]:
+    """One line naming the boat pages this run could not read, or None.
+
+    Returned when EVERY page failed (the register changed shape, or the
+    site is refusing the runner) or when any page's last good read is older
+    than ``FLEET_STALE_WARN_DAYS``. A boat with no earlier record at all
+    counts as never read. The line states dates the records already carry;
+    it writes nothing."""
+    today = today or _dt.date.today()
+    failed = [f for f in fleet if isinstance(f, dict) and (f.get("stale") or not f.get("fetched"))]
+    if not failed:
+        return None
+    old = []
+    for rec in failed:
+        fetched = str(rec.get("fetched") or "")
+        try:
+            age = (today - _dt.date.fromisoformat(fetched)).days
+        except ValueError:
+            age = None
+        if age is None or age >= FLEET_STALE_WARN_DAYS:
+            old.append(f"{rec.get('slug')} (last read {fetched or 'never'})")
+    if len(failed) == len(fleet):
+        return (f"Offshore North fleet guide: none of the {len(fleet)} imoca.org boat pages "
+                f"could be read this run; every record shown is an earlier one.")
+    if old:
+        return (f"Offshore North fleet guide: {len(old)} of {len(fleet)} imoca.org boat pages "
+                f"have not been readable for {FLEET_STALE_WARN_DAYS}+ days: " + ", ".join(old)
+                + ". Their records are the last good read; check the page markup or the slug.")
+    return None
+
+
 def collect_press() -> List[Dict[str, Any]]:
     """Recent press about the campaign, newest first, publisher URLs."""
     try:
@@ -476,6 +515,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         data["instagram"] = previous["instagram"]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _fleet_note = fleet_stale_report(data.get("fleet") or [])
+    if _fleet_note:
+        print(f"::warning::{_fleet_note}", flush=True)
     logger.info(
         "Wrote %s: %d campaign posts, %d headlines, position=%s, tracker=%s, instagram=%d",
         out, len(data["campaign_posts"]), len(data["headlines"]),

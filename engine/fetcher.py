@@ -1210,6 +1210,7 @@ def fetch_web_search_articles(
     keywords: Optional[List[str]] = None,
     max_results_per_query: int = 10,
     max_age_hours: int = 72,
+    window_hours: int = 24,
 ) -> List[Dict]:
     """Fetch recent news articles using xAI's web_search tool.
 
@@ -1224,6 +1225,14 @@ def fetch_web_search_articles(
         Optional keyword filter applied after retrieval.
     max_results_per_query:
         Maximum articles to extract per query.
+    window_hours:
+        How far back the search is ASKED to look. 24 (the default) renders
+        the prompt byte-for-byte as before. A show on a wider fetch ladder
+        (Offshore North, weekly, ``fetch_expansion_hours: [168]``) passes
+        its widest window: on 2026-11-23 its eight queries were all asked
+        for "the last 24 hours" on a Monday morning, all eight answered
+        NO_RECENT_ARTICLES, and the episode skipped as too thin. The
+        age drop below never cuts inside the window that was asked for.
 
     Returns
     -------
@@ -1233,6 +1242,14 @@ def fetch_web_search_articles(
     """
     import os
     import re
+
+    window_hours = max(int(window_hours or 24), 24)
+    if window_hours > 24:
+        _days = max(round(window_hours / 24), 2)
+        _window_phrase = f"last {_days} days"
+        max_age_hours = max(int(max_age_hours), window_hours)
+    else:
+        _window_phrase = "last 24 hours"
 
     if not queries:
         return []
@@ -1246,6 +1263,11 @@ def fetch_web_search_articles(
     # Sep 30 2026: results the model dates outside the window are dropped
     # (counted here for the log); an undated result is undated, not "now".
     stale_dropped = 0
+    # Nov 24 2026: a query the model ANSWERED with the empty sentinel is not
+    # an outage. Counted apart from calls that raised, so the summary below
+    # can tell "nothing in the window" from "the search is down".
+    answered_empty = 0
+    failed = 0
 
     for query in queries:
         logger.info("Web search: querying '%s' ...", query)
@@ -1253,7 +1275,7 @@ def fetch_web_search_articles(
             from digests.xai_grok import grok_generate_text
 
             extraction_prompt = (
-                f"Search the web for recent news articles (last 24 hours) about: {query}\n\n"
+                f"Search the web for recent news articles ({_window_phrase}) about: {query}\n\n"
                 f"Return ONLY a structured list of articles, formatted exactly like this "
                 f"(one block per article, separated by blank lines):\n\n"
                 f"ARTICLE_TITLE: [exact headline]\n"
@@ -1264,7 +1286,7 @@ def fetch_web_search_articles(
                 f"or the single word unknown]\n\n"
                 f"Rules:\n"
                 f"- Include up to {max_results_per_query} articles maximum\n"
-                f"- Only include articles from the last 24 hours\n"
+                f"- Only include articles from the {_window_phrase}\n"
                 f"- ARTICLE_DATE is the date the article was PUBLISHED, read from "
                 f"the page or the search result — never today's date by default\n"
                 f"- Skip opinion pieces, editorials, and social media posts\n"
@@ -1290,6 +1312,10 @@ def fetch_web_search_articles(
                 "NO_RECENT_ARTICLES" in text and "ARTICLE_TITLE" not in text
             ):
                 logger.info("Web search: no recent articles for '%s'", query)
+                if text:
+                    answered_empty += 1
+                else:
+                    failed += 1
                 continue
 
             # Parse structured response
@@ -1355,6 +1381,7 @@ def fetch_web_search_articles(
 
         except Exception as exc:
             logger.warning("Web search failed for '%s': %s", query, exc)
+            failed += 1
             continue
 
     if stale_dropped:
@@ -1385,7 +1412,17 @@ def fetch_web_search_articles(
 
     # Escalate to ERROR when we tried N queries and got zero results — a
     # clean zero on a non-empty query list is almost always a Grok/API issue.
-    if queries and not all_articles:
+    # Nov 24 2026: when every query came back with the model's own "nothing
+    # recent" answer the search RAN — saying it "may be down" sent the reader
+    # to the wrong place (Offshore North, 2026-11-23: eight 200 responses).
+    if queries and not all_articles and answered_empty == len(queries):
+        logger.warning(
+            "Web search ran but found nothing: all %d quer(y|ies) answered "
+            "'no recent articles' inside the %s — the search worked; the "
+            "window or the queries are too narrow for this run",
+            len(queries), _window_phrase,
+        )
+    elif queries and not all_articles:
         logger.error(
             "Web search produced 0 articles from %d quer(y|ies) — Grok "
             "web_search may be down or credentials rejected",

@@ -88,7 +88,14 @@ VARS = {"today_str": "2026-09-24", "episode_num": 2}
 
 def _connection_error():
     from openai import APIConnectionError
-    return APIConnectionError(request=None)
+
+    # Nov 24 2026: the SDK reads ``request.headers`` when it builds the
+    # error (openai 3.59), so ``request=None`` raised AttributeError in the
+    # fixture itself and main went red with no change of ours. A real
+    # request from the SDK's own HTTP module, as engine.generator builds it.
+    from engine.generator import sdk_httpx
+    return APIConnectionError(
+        request=sdk_httpx().Request("POST", "https://api.x.ai/v1/chat/completions"))
 
 
 def _timeout_error():
