@@ -43,7 +43,7 @@ twelve draw under 200 a month each.
 3. Sunset or pause the shows nobody hears; slow EN YouTube volume (the YouTube
    thread owns the channel work). Patrick decides.
 4. Analytics on by default outside the EEA, UK, Switzerland and Quebec, so the
-   site can be measured at all. Privacy posture: Patrick decides; not built.
+   site can be measured at all. **Shipped here** (Patrick chose it Nov 24).
 5. Trust promise first in every directory listing; Spotify verification.
 6. A music-light SpaceX open (the one Apple review: "hate background music").
    Rehearsal and a listen.
@@ -56,6 +56,14 @@ twelve draw under 200 a month each.
 English show, two in 16 on the flagships (both pools coprime with the stride).
 It is prompt text for `{closing_block}`, so ⚠️ AUDIO: one listen of the first
 episode that airs it before merge (Tesla Nov 26, SpaceX Dec 1 by the rotation).
+
+`assets/js/consent.js`: a region-scoped Consent Mode default denies analytics in
+the EEA, UK, Switzerland and Quebec (`CONSENT_REQUIRED_REGIONS`) and grants it
+elsewhere; ad storage, ad user data and ad personalization stay denied
+everywhere until allowed. The banner (EN and RU) and the privacy policy say
+so; Reject still works everywhere. Expect GA4 sessions to jump the day it
+deploys: that is the measurement changing, not the audience, so compare
+nothing across Nov 24.
 
 ## Predictions (scored at the Dec 22 readout)
 
