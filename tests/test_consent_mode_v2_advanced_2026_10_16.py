@@ -30,8 +30,11 @@ _ADVANCED_LEAD = (
 )
 _BASIC_LEAD = "Nothing is sent to Google until you choose."
 
+# Nov 24 2026: analytics is opt-in only in the EEA, UK, Switzerland and
+# Quebec (operator decision, docs/reviews/market_review_2026_11_24.md).
 _YOUR_CHOICES_ADVANCED = (
-    "Before you choose, and if you reject, Google's tag sends only limited "
+    "In the EU, the UK, Switzerland and Quebec before you choose, and "
+    "anywhere once you reject, Google's tag sends only limited "
     "cookie-free signals, such as that a page loaded, so we can estimate "
     "overall traffic. These don't set cookies or include identifiers, "
     "though like any web request your browser shares its IP address."
