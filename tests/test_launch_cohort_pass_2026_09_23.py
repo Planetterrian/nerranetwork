@@ -225,7 +225,10 @@ class TestXSourcePolicy:
             assert set(data.get("digest_lints") or []) <= {
                 "items_without_source", "hook_supported",
                 "deep_dive_distinct_measure", "deep_dive_distinct",
-                "deep_dive_fetched_source", "top_news_on_beat"}, slug
+                "deep_dive_fetched_source", "top_news_on_beat",
+                # Nov 24 2026: a measure; it judges only items whose source
+                # was read as a page, so a post is never judged.
+                "item_names_sourced_measure"}, slug
         for slug in ("omni_view", "models_agents"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert data["x_posts_as_sources"] == "secondary", slug
