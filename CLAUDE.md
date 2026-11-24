@@ -1984,4 +1984,4 @@ Register `review-loop-automation-2026-11-24`; guards `tests/test_review_loop_aut
 ### Flagship quality pass (Nov 24 2026)
 
 [review](docs/reviews/flagship_quality_review_2026_11_24.md); guards `tests/test_flagship_quality_2026_11_24.py`.
-**A 4%+ stock move gets ONE dated search (`engine/market_move.py`); the pipeline never writes its reason.** **"closed <day> at": `engine/market_calendar.py`.** ⚠️ AUDIO.
+**A 4%+ stock move gets ONE dated search (`engine/market_move.py`); the pipeline never writes its reason.** ⚠️ AUDIO.
