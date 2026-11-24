@@ -1,0 +1,83 @@
+Z.ai’s GLM-5.4 runs twenty-eight layers twice via shared weights to deepen reasoning at fixed parameter count.
+
+This is Models and Agents, episode 244.
+
+Datasette Agent now draws live charts in chat, Solana shipped an agent payment stack, and Workday closed an identity deal, then Things to Try.
+
+Z.ai shipped GLM-5.4 as its first Loop Transformer, Simon Willison reported, with a group of layers iterating several times in one forward pass to refine hidden states.
+
+The seven hundred fifty billion scale model is reachable only through the company’s Coding Plan subscription on a shared OpenAI-compatible endpoint, and Willison wrote a temporary llm-glm plugin because the existing llm-zai plugin did not yet support it.
+
+The looped design matches one Thinking Machines Lab described earlier this month for Inkling two Mini.
+
+He tested image generation by prompting pelicans riding bicycles across GLM versions five point one through five point four and saw a stark style shift between five point two and five point three, with later versions landing closer in quality to OpenAI and Anthropic outputs.
+
+Weights stay closed for now, with an open release planned after further safety work.
+
+Simon Willison’s datasette-charts zero point two a zero now lets Datasette Agent write and render charts from natural-language requests using the same suggestion and generation tools as the chart builder panel.
+
+The integration opens an iframe side panel that updates when the user changes tables or switches views, and a demo video shows the agent creating a downloads-over-time chart, then describing the new view after the user switches to the datasette table.
+
+datasette-agent zero point seven a one adds support for chat sessions that open an iframe side panel and navigate via fragment hashes, enabling tighter coupling with plugins that update state through those hashes, and the release was built specifically to resolve navigation bugs the charts integration exposed.
+
+Users sign in with GitHub to try the combined flow.
+
+Solana launched solana.ai, Gadgets 360 reports, as a platform for autonomous agents and payments that bundles Solana Agent Kit, an agent registry, pay.sh for USDC micropayments, and Milo, an autonomous trading agent that runs twenty-four seven.
+
+Payment Channels processed over one million messages per second in tests with one hundred thousand wallets, and Alibaba Cloud joined as a launch partner.
+
+Confidential Compute runs on testnet and records hardware attestation on-chain without exposing private data.
+
+The Solana AI Toolkit supplies a Model Context Protocol server and developer resources for connecting agents to blockchain services, and the design lets agents transfer tokens, execute decentralized finance swaps, and purchase services without maintaining conventional API subscriptions or user accounts.
+
+Workday’s C1.ai acquisition, citybiz reports, combines C1.ai’s identity platform with Workday’s HR, finance, and IT data so permission changes follow employee role events and extend automatically to autonomous agents.
+
+The system grants, monitors, and revokes access across Slack, Jira, finance dashboards, and cloud infrastructure, and Gerrit Kazmaier called the move a deliberate investment in governing hybrid human-plus-agent workforces.
+
+C1.ai previously connected email, CRM, code repositories, and cloud systems so that hiring, role changes, and departures trigger immediate access updates, and the combined offering reduces manual ticket-driven administration while enforcing consistent policies for both people and agents.
+
+Neo diagnoses and resolves issues in middleware environments, IT Brief New Zealand reports, and meshIQ built it for enterprise operations teams that already run meshIQ monitoring.
+
+The agent extends existing meshIQ capabilities into automated remediation workflows.
+
+Surelio, Startupticker reports, is a Swiss startup raising money to secure AI agents.
+
+The round is one million Swiss francs, earmarked for security tooling aimed at autonomous agents.
+
+Across the rest of the tape, OpenAI introduced Shirudo, an open-source Linux runtime for agent defense that lets agents write dynamic eBPF controls, kernel programs that filter behavior on the fly, shielding systems from exploits without downtime while defenders prepare patches.
+
+OpenAI launched OpenWorks, a program that funds local AI experts to help small businesses build tools and skills at no cost to the businesses.
+
+Natural enabled voice agents to accept payments over the phone, PYMNTS reports, so those agents can complete transactions without handing off to a human operator.
+
+Sign up for Z.ai’s Coding Plan and test GLM-5.4 on agentic coding tasks through the Responses API endpoint.
+
+Ask Datasette Agent to generate a chart from one of your tables.
+
+Clone the Solana Agent Kit and run the pay.sh example to see how an agent can spend USDC on services without managing API keys.
+
+Solana Foundation expects more than one hundred twenty teams to ship production agents on the new platform in the coming months.
+
+Workday will begin rolling out combined employee-plus-agent access controls to existing customers in the first quarter of twenty twenty-seven.
+
+meshIQ intends to expand Neo’s middleware coverage to additional enterprise message brokers.
+
+Sequences past one hundred twenty-eight thousand tokens are where we pop the hood on SeoulTech’s SLAKE, which, techxplore reports, keeps an approximate representation of discarded tokens instead of dropping them outright.
+
+Two standard approaches each fail in a different way: discarding low-value tokens loses information, while simplifying attention calculations everywhere can degrade accuracy across the board.
+
+Partially Taylor-Approximated Attention applies a Taylor expansion only to low-value tokens and full attention on important ones, and Value-Aware Budget Scoring ranks tokens by their expected contribution to the final output.
+
+Because the approximation retains a rough picture of the full context, information loss stays lower than pure eviction while memory usage remains fixed.
+
+The quality gain disappears once context length exceeds the point where even the retained high-value tokens no longer fit the budget, the regime where current large language models already strain compute and memory.
+
+SLAKE applies the approximation selectively and scores tokens by downstream impact, preserving the most useful signals inside a fixed memory envelope; use it for stable long-context work on hardware with strict memory caps when a small accuracy trade-off is acceptable, and fall back to standard eviction or full attention when every retained token must be exact.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show First Principles Daily is worth a spot in your feed: reasoning from raw materials, not analogy, on the breakthroughs that actually cut cost. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com.
+
+And if you would rather browse by subject than by show, every subject the network covers has its own page at nerranetwork.com/topics.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
