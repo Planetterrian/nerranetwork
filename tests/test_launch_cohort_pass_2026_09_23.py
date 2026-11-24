@@ -267,9 +267,11 @@ class TestSmallFixes:
         tesla = load_config(ROOT / "shows" / "tesla.yaml")
         # PR G (Sep 24 2026) + hook_supported (Oct 8 2026, Ep627) + the Nov 3
         # 2026 deep-dive measures (digest-lints pass) + the firing
-        # deep_dive_distinct (Nov 11 2026 Tesla review).
+        # deep_dive_distinct (Nov 11 2026 Tesla review) + the Nov 24 2026
+        # names measure (flagship quality pass; records, never fires).
         assert tesla.digest_lints == [
             "items_without_source", "hook_supported",
+            "item_names_sourced_measure",
             "deep_dive_distinct_measure", "deep_dive_distinct",
             "deep_dive_fetched_source"]
         assert tesla.x_posts_as_sources == "any" and tesla.region_allowlist == []

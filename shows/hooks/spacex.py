@@ -68,6 +68,19 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     context["tone_hint"] = _tone_from_change(price, change_str)
     context["closing_block"] = _pick_closing(price, change_str, source)
 
+    # Nov 24 2026: a close 4% or more from the previous one is handed to
+    # run_show as data (engine.market_move), which runs one search for
+    # dated reporting on why. Only a spoken-as-a-close quote counts.
+    context["market_move_section"] = ""
+    try:
+        if price and (source == "yfinance_history" or not _market_is_open()):
+            from engine.market_move import describe as _describe_move
+            _move = _describe_move("SPCX", "SpaceX", change_str, price=price)
+            if _move:
+                context["market_move"] = _move
+    except Exception as exc:  # noqa: BLE001 — never costs the price or closing
+        logger.warning("SPCX market-move check failed (non-fatal): %s", exc)
+
     context["ipo_debut_section"] = _ipo_debut_section(episode_num)
 
     # Engineering Deep Dive chapter anchor, date-rotated (Aug 15 2026).
@@ -421,19 +434,15 @@ def _price_sentence(
             change_part = ""
     if source == "yfinance_history" or not _market_is_open(now):
         # Oct 18 2026: on a weekend the close is Friday's; say so.
-        _local = (now or datetime.datetime.now(datetime.timezone.utc))
-        try:
-            from zoneinfo import ZoneInfo
-            _local = _local.astimezone(ZoneInfo("America/New_York"))
-        except Exception:  # pragma: no cover
-            pass
         # Nov 3 2026: before Monday's open the last bar is still Friday's —
         # Ep149 (Mon Nov 2, 03:30 New York) spoke Friday's close as "closed
         # at" beside a hook about pre-market trading. The verb comes from
         # the clock (Sep 4 rule); so does the day.
-        _friday = (_local.weekday() >= 5
-                   or (_local.weekday() == 0 and _local.time() < datetime.time(9, 30)))
-        _day = " Friday" if _friday else ""
+        # Nov 24 2026: the day comes from engine.market_calendar, which
+        # also knows exchange holidays (the morning after Thanksgiving the
+        # last close is Wednesday's) and is shared with the Tesla hook.
+        from engine.market_calendar import close_day_word
+        _day = close_day_word(now)
         return f"Ess Pee See Ex closed{_day} at {spoken}{change_part}. "
     return f"Ess Pee See Ex is trading at {spoken}{change_part}. "
 

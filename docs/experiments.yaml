@@ -8093,3 +8093,41 @@ experiments:
       scripts/review_slate.py + review-slate.yml. Prompt changes reach a show
       only after the operator's listen (landmine #17). Guards
       tests/test_review_apply_and_slate_2026_11_24.py.
+  - id: flagship-quality-2026-11-24
+    title: "SpaceX Daily and Tesla Shorts Time: a big stock move gets its sourced reason, the Counterpoint stays, chapters match their story"
+    area: quality
+    shipped: 2026-11-24
+    readout: 2026-12-08
+    status: reading
+    baseline: >
+      Tesla Ep660-675 and SpaceX Ep157-172: ten closings spoke a move of 4%
+      or more (TSLA -7.6% three mornings, +11.5%; SPCX -7.7% twice) and none
+      gave a reason. Tesla's Short Spot had text in 11 of 30 digests
+      (Ep646-675). SpaceX Ep172 headed an item "Britain Seeks Answers" from a
+      source that never mentions Britain and called a three-month 12 km decay
+      "sudden"; the claims gate passed 9 of 9. Two chapters sat over the
+      wrong story (SpaceX Ep172, Tesla Ep674).
+    target: >
+      Every 4%+ session records market_move_pct; at least half carry a dated
+      report and the episode gives that report's reason with a Source line;
+      no reason is spoken on a day market_move_reports is 0. Tesla's Short
+      Spot has text in at least 11 of 14 digests. No chapter title names a
+      story other than the one spoken under it on a 14-episode replay.
+    criteria: >
+      HIT when all three hold. MISS when a reason is spoken with no dated
+      report behind it (the prompt rule failed: tighten the block, never add
+      a pipeline-written reason), or the Short Spot is still empty on more
+      than 3 of 14.
+    readout_plan: >
+      digests/{tesla_shorts_time,spacex}/metrics_ep*.json (market_move_pct,
+      market_move_reports, market_move_reports_merged, item_names_unsourced,
+      digest_cross_section_dupes_removed); the Short Spot section of each
+      Tesla digest; a chapter replay of the 14 episodes per show.
+    notes: >
+      engine/market_move.py + engine/market_calendar.py, both hooks,
+      engine/chapters.py (short second telling yields),
+      digest_overlap_claiming_sections on Tesla, item_names_sourced_measure
+      (records, never fires). Prompt changes on both shows: rehearse and
+      listen before merging (landmine #17). Review
+      docs/reviews/flagship_quality_review_2026_11_24.md; guards
+      tests/test_flagship_quality_2026_11_24.py.
