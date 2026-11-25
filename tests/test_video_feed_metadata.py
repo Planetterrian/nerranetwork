@@ -275,6 +275,17 @@ class TestRealShowsProduceTheMetadata:
         # audit's), not a feed-builder defect. The builder is judged on
         # what exists: a transcript TAG whenever the sidecar file exists,
         # and chapters always.
+        import json as _json
+        from engine.video_index import indexed_episodes
+        map_cut_eps = {
+            int(ep) for ep, row in indexed_episodes(index_path(config, ROOT)).items()
+            if row.get("map_cut_s")
+        }
+        _summ = _json.loads(summaries.read_text(encoding="utf-8"))
+        _summ = _summ.get("episodes", _summ) if isinstance(_summ, dict) else _summ
+        for _row in (_summ if isinstance(_summ, list) else []):
+            if isinstance(_row, dict) and (_row.get("video") or {}).get("map_cut_s"):
+                map_cut_eps.add(int(_row.get("episode_num") or 0))
         import re as _re
         _digests = ROOT / (getattr(pub, "audio_subdir", "digests") or "digests")
         for item in items:
@@ -283,6 +294,15 @@ class TestRealShowsProduceTheMetadata:
             if not m:
                 continue
             ep, day = int(m.group(1)), m.group(2)
+            # Nov 25 2026: a video rendered without the episode's map
+            # sentence (youtube.long_form_skip_map, odd episodes since Nov
+            # 24) runs on its own timeline, so by design its item carries
+            # neither tag (engine.video_feed._sidecar_tags). Models & Agents
+            # Ep245 was the first, and this guard read it as a dropped tag.
+            if ep in map_cut_eps:
+                assert item.find(f"{{{PODCAST_NS}}}transcript") is None, guid
+                assert item.find(f"{{{PODCAST_NS}}}chapters") is None, guid
+                continue
             sidecars = list(_digests.glob(f"*_Ep{ep:03d}_{day}_transcript.*"))
             if sidecars:
                 assert item.find(f"{{{PODCAST_NS}}}transcript") is not None, (
