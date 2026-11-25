@@ -115,6 +115,22 @@ const GUEST_SETTLE_MS = 3 * 1000;
 const TURN_DECIDE_MS = 500;            // let the transcription of the last clause land
 const TURN_TRANSCRIPT_WAIT_MS = 1500;  // once more, when speech was heard but no words arrived
 const TURN_THINK_EXTRA_MS = 1500;      // once more, when the last clause reads unfinished
+// Nov 25 2026: the wait for words ends when the words land, not on the timer.
+// Timed in a rehearsal room: the guest transcript lands a median 597 ms after
+// the VAD stop, just past TURN_DECIDE_MS, so about half her replies waited the
+// whole TURN_TRANSCRIPT_WAIT_MS (a request at ~2,000 ms, median 1,109 ms).
+const TURN_WORDS_LANDED_MS = 100;
+// Nov 25 2026 (rehearsal 6bf7252c): a turn requested before the rerouted
+// server turn's cancel has finished is lost, and the room waited in silence
+// (the closing round's first question, five minutes, until the guest left).
+// A request waits for that cancel's response.done, at most this long.
+const REROUTE_CANCEL_WAIT_MS = 800;
+let rerouteCancelAt = 0;
+let rerouteCancelTimer = null;
+function rerouteCancelSettled() {
+  rerouteCancelAt = 0;
+  if (rerouteCancelTimer) { clearTimeout(rerouteCancelTimer); rerouteCancelTimer = null; }
+}
 const TURN_MIN_SPEECH_MS = 1000;       // untranscribed speech this long still earns her a turn
 const ROUND_REPROMPT_MS = 35 * 1000;   // a closing question unanswered this long gets one gentle re-ask
 const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
@@ -678,6 +694,8 @@ let hostSpokeSinceMira = false;   // the co-host has, and the guest has not
 let speechSinceMiraMs = 0;        // how much, in ms, by the VAD
 let turnDecisionTimer = null;     // the pending decideTurn
 let turnWaitedForWords = false;   // decideTurn already waited once for a transcription
+let turnWaitingForWords = false;  // ...and that wait is the timer pending now
+let turnWordsLandedEarly = 0;     // decisions the landed words brought forward
 let turnWaitedToThink = false;    // decideTurn already waited once on an unfinished clause
 let miraLineIndex = -1;           // transcript index of her last line (the guest delta starts after it)
 let currentResponseText = "";     // what she has said so far on the response in flight
@@ -712,6 +730,54 @@ let endReason = "normal";
 // cancelled and decided by the room like any other (markTurnStarted).
 let serverTurnsRerouted = 0;
 let cancelledLinePending = false; // the next line of hers is from a cancelled turn: not remembered
+// Nov 25 2026: where the wait before her reply goes. Measuring only: each
+// reply the room asks for after the guest's pause is timed from the VAD's
+// stop (which itself comes silence_duration_ms after their last word) to the
+// guest transcript, to the room's request, to her first words. Read from
+// grok_session_log.turn_timing; nothing here changes a turn.
+let turnClock = { stopped: 0, transcript: 0, requested: 0, path: [] };
+const TURN_PATH_TRACES_MAX = 40;
+let turnPathTraces = 0;
+const turnTimings = [];
+const TURN_TIMINGS_MAX = 200;
+
+function clockTurnFirstWords() {
+  if (!turnClock.requested || !turnClock.stopped) return;
+  if (turnTimings.length < TURN_TIMINGS_MAX) {
+    const now = Date.now();
+    turnTimings.push({
+      transcript_ms: turnClock.transcript ? turnClock.transcript - turnClock.stopped : null,
+      decide_ms: turnClock.requested - turnClock.stopped,
+      first_words_ms: now - turnClock.requested,
+    });
+  }
+  // Nov 25 2026: which waits a reply went through (each entry is "when it was
+  // scheduled>how long", ms after the VAD stop), so the request leg can be
+  // read turn by turn instead of guessed from a median.
+  if (turnPathTraces < TURN_PATH_TRACES_MAX) {
+    turnPathTraces += 1;
+    trace("turn", "path: request " + (turnClock.requested - turnClock.stopped) + " ms, words " +
+      (turnClock.transcript ? (turnClock.transcript - turnClock.stopped) + " ms" : "none") +
+      ", waits " + (turnClock.path.join(" ") || "none"));
+  }
+  turnClock = { stopped: 0, transcript: 0, requested: 0, path: [] };
+}
+
+function medianOf(xs) {
+  const v = xs.filter(function (x) { return typeof x === "number"; }).sort(function (a, b) { return a - b; });
+  if (!v.length) return null;
+  const m = Math.floor(v.length / 2);
+  return v.length % 2 ? v[m] : Math.round((v[m - 1] + v[m]) / 2);
+}
+
+function turnTimingSummary() {
+  return {
+    turns: turnTimings.length,
+    transcript_ms_median: medianOf(turnTimings.map(function (t) { return t.transcript_ms; })),
+    decide_ms_median: medianOf(turnTimings.map(function (t) { return t.decide_ms; })),
+    first_words_ms_median: medianOf(turnTimings.map(function (t) { return t.first_words_ms; })),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Hold mode (Oct 22 2026)
@@ -1903,6 +1969,7 @@ function deltaOf(event) {
 function noteMiraDelta(event) {
   const piece = deltaOf(event);
   if (!piece) return;
+  if (!currentResponseText) clockTurnFirstWords();
   currentResponseText = (currentResponseText + piece).replace(/^\s+/, "");
   catchEarlyCloseOnDelta(currentResponseText);
 }
@@ -1930,6 +1997,11 @@ const GUEST_ITEM_OVERLAP = 40;
 function noteGuestTranscript(itemId, text) {
   const t = String(text || "").trim();
   if (!t) return;
+  if (turnClock.stopped && !turnClock.transcript) turnClock.transcript = Date.now();
+  if (turnWaitingForWords && turnDecisionTimer && !inboundSpeaking) {
+    turnWordsLandedEarly += 1;
+    scheduleTurnDecision(TURN_WORDS_LANDED_MS);
+  }
   if (itemId && itemId === lastGuestItemId && lastGuestItemIdx >= 0
       && lastGuestItemIdx < transcript.length
       && transcript[lastGuestItemIdx].indexOf("Guest: ") === 0) {
@@ -2059,6 +2131,18 @@ function requestTurn(agent) {
   // dropped, not parked: the exit note says what to do when they are back.
   if (holdMode && !holdCheckInRequested) return;
   if (miraSpeaking) { pendingTurn = true; return; }
+  if (rerouteCancelAt && Date.now() - rerouteCancelAt < REROUTE_CANCEL_WAIT_MS) {
+    pendingTurn = true;
+    if (!rerouteCancelTimer) {
+      rerouteCancelTimer = setTimeout(function () {
+        rerouteCancelTimer = null;
+        rerouteCancelAt = 0;
+        trace("turn", "the cancelled server turn never reported done; her turn goes anyway");
+        if (pendingTurn && !inboundSpeaking && !miraSpeaking && grokAgent) requestTurn(grokAgent);
+      }, Math.max(0, REROUTE_CANCEL_WAIT_MS - (Date.now() - rerouteCancelAt)));
+    }
+    return;
+  }
   // Oct 22 2026: nor over her own line still playing; the turn goes when the
   // guest has heard the end of it (unless they start talking first).
   if (miraAudible()) {
@@ -2100,6 +2184,7 @@ function requestTurn(agent) {
   nextTurnInstructions = "";
   turnRoundLabel = roundTurnRequested;
   roundTurnRequested = "";
+  if (turnClock.stopped && !turnClock.requested) turnClock.requested = Date.now();
   agent.responseCreate(body);
 }
 
@@ -2143,15 +2228,20 @@ function looksFinished(text) {
 
 function cancelTurnDecision() {
   if (turnDecisionTimer) { clearTimeout(turnDecisionTimer); turnDecisionTimer = null; }
+  turnWaitingForWords = false;
 }
 
 function scheduleTurnDecision(delayMs) {
   cancelTurnDecision();
+  if (turnClock.stopped && !turnClock.requested && turnClock.path.length < 12) {
+    turnClock.path.push((Date.now() - turnClock.stopped) + ">" + Math.round(delayMs || TURN_DECIDE_MS));
+  }
   turnDecisionTimer = setTimeout(decideTurn, delayMs || TURN_DECIDE_MS);
 }
 
 function decideTurn() {
   turnDecisionTimer = null;
+  turnWaitingForWords = false;
   if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
   // A pause the room hears while her own line is still playing is hers, not
   // the guest's: decide when it ends.
@@ -2167,6 +2257,7 @@ function decideTurn() {
   if (spoke && !delta && speechSinceMiraMs >= TURN_MIN_SPEECH_MS && !turnWaitedForWords) {
     turnWaitedForWords = true;
     scheduleTurnDecision(TURN_TRANSCRIPT_WAIT_MS);
+    turnWaitingForWords = true;
     return;
   }
   if (spoke && !delta && speechSinceMiraMs < TURN_MIN_SPEECH_MS && !owed) {
@@ -2399,6 +2490,7 @@ async function createAgent(note) {
       inboundSpeaking = false;
       noteSpeechEnded(Date.now() - inboundSpokeAt);
       if (agent !== grokAgent) return;
+      turnClock = { stopped: Date.now(), transcript: 0, requested: 0, path: [] };
       // The VAD found the pause; the room decides whether it is the end of
       // a turn (see decideTurn). The opening waits for this too.
       if (!openingFired) { setTimeout(openAfterGuestSpoke, TURN_DECIDE_MS); return; }
@@ -2508,6 +2600,7 @@ async function createAgent(note) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
         miraSpeaking = false;
         trace("grok", "response done");
+        rerouteCancelSettled();
         if (agent !== grokAgent || roomEnded) return;
         roundTurnDone();
         armDeadAir();
@@ -2573,6 +2666,7 @@ function markTurnStarted(agent) {
     if (openingFired) {
       serverTurnsRerouted += 1;
       miraSpeaking = false;
+      rerouteCancelAt = Date.now();
       cancelledLinePending = true;
       try {
         if (agent.responseCancel) agent.responseCancel();
@@ -2582,7 +2676,11 @@ function markTurnStarted(agent) {
       if (serverTurnsRerouted <= 3 || serverTurnsRerouted % 10 === 0) {
         trace("turn", "server turn after guest speech cancelled; the room decides it (#" + serverTurnsRerouted + ")");
       }
-      if (!inboundSpeaking) scheduleTurnDecision(TURN_DECIDE_MS);
+      // Nov 25 2026: the server starts its own turn on almost every reply,
+      // the moment it has the guest's words, and a fresh 500 ms wait here
+      // was most of the gap (rehearsal 98825561: every reply waited "words
+      // landed, then 500"). Words already in hand need only the short wait.
+      if (!inboundSpeaking) scheduleTurnDecision(guestDelta() ? TURN_WORDS_LANDED_MS : TURN_DECIDE_MS);
       return;
     }
   } else if (holdMode && !holdCheckInRequested) {
@@ -4273,6 +4371,12 @@ async function endRoom(reason) {
    roundRepromptTimer, holdTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
+  // Nov 25 2026: the Worker keeps only its own counters from the payload, so
+  // the turn timing rides the stored trace as one line.
+  const timing = turnTimingSummary();
+  if (timing.turns) trace("turn", "timing: " + timing.turns + " replies; transcript " + timing.transcript_ms_median +
+    " ms, request " + timing.decide_ms_median + " ms, first words " + timing.first_words_ms_median + " ms after the VAD stop / request; " +
+    turnWordsLandedEarly + " decided when the words landed");
   const plan = planSummary();
   if (plan) trace("plan", "reached " + plan.reached + "/" + plan.questions + "; room moves " + plan.moves +
     ", hers " + plan.own + "; longest thread " + plan.longest_thread + " questions");
@@ -4310,6 +4414,7 @@ async function endRoom(reason) {
       server_turns: serverTurns,
       self_answers_blocked: selfAnswersBlocked,
       server_turns_rerouted: serverTurnsRerouted,
+      turn_timing: turnTimingSummary(),
       holds: holdsEntered,
       dead_air_nudges: deadAirNudgesTotal,
       guest_feedback: guestFeedback,
