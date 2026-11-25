@@ -89,3 +89,26 @@ def test_a_rerouted_server_turn_with_words_in_hand_decides_soon():
     i = SCENARIO.index("the room decides it (#")
     block = SCENARIO[i:i + 900]
     assert "scheduleTurnDecision(guestDelta() ? TURN_WORDS_LANDED_MS : TURN_DECIDE_MS);" in block
+
+
+class TestATurnWaitsForTheCancelToFinish:
+    """Rehearsal 6bf7252c: the closing round's first question was requested
+    100 ms after a rerouted server turn was cancelled, before that cancel's
+    response.done; it never played and the room sat silent for five minutes."""
+
+    def test_the_reroute_stamps_the_cancel(self):
+        i = SCENARIO.index("serverTurnsRerouted += 1;")
+        assert "rerouteCancelAt = Date.now();" in SCENARIO[i:i + 200]
+
+    def test_a_request_waits_for_it_with_a_ceiling(self):
+        req = _fn("requestTurn")
+        assert "if (rerouteCancelAt && Date.now() - rerouteCancelAt < REROUTE_CANCEL_WAIT_MS) {" in req
+        assert req.index("if (miraSpeaking) { pendingTurn = true; return; }") < req.index("rerouteCancelAt &&")
+        assert req.index("rerouteCancelAt &&") < req.index("agent.responseCreate(body);")
+        assert "const REROUTE_CANCEL_WAIT_MS = 800;" in SCENARIO
+
+    def test_response_done_settles_it_and_sends_the_parked_turn(self):
+        i = SCENARIO.index('trace("grok", "response done");')
+        handler = SCENARIO[i:i + 900]
+        assert "rerouteCancelSettled();" in handler
+        assert handler.index("rerouteCancelSettled();") < handler.index("if (pendingTurn && !inboundSpeaking) requestTurn(agent);")

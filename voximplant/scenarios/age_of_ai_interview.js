@@ -120,6 +120,17 @@ const TURN_THINK_EXTRA_MS = 1500;      // once more, when the last clause reads 
 // the VAD stop, just past TURN_DECIDE_MS, so about half her replies waited the
 // whole TURN_TRANSCRIPT_WAIT_MS (a request at ~2,000 ms, median 1,109 ms).
 const TURN_WORDS_LANDED_MS = 100;
+// Nov 25 2026 (rehearsal 6bf7252c): a turn requested before the rerouted
+// server turn's cancel has finished is lost, and the room waited in silence
+// (the closing round's first question, five minutes, until the guest left).
+// A request waits for that cancel's response.done, at most this long.
+const REROUTE_CANCEL_WAIT_MS = 800;
+let rerouteCancelAt = 0;
+let rerouteCancelTimer = null;
+function rerouteCancelSettled() {
+  rerouteCancelAt = 0;
+  if (rerouteCancelTimer) { clearTimeout(rerouteCancelTimer); rerouteCancelTimer = null; }
+}
 const TURN_MIN_SPEECH_MS = 1000;       // untranscribed speech this long still earns her a turn
 const ROUND_REPROMPT_MS = 35 * 1000;   // a closing question unanswered this long gets one gentle re-ask
 const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
@@ -2120,6 +2131,18 @@ function requestTurn(agent) {
   // dropped, not parked: the exit note says what to do when they are back.
   if (holdMode && !holdCheckInRequested) return;
   if (miraSpeaking) { pendingTurn = true; return; }
+  if (rerouteCancelAt && Date.now() - rerouteCancelAt < REROUTE_CANCEL_WAIT_MS) {
+    pendingTurn = true;
+    if (!rerouteCancelTimer) {
+      rerouteCancelTimer = setTimeout(function () {
+        rerouteCancelTimer = null;
+        rerouteCancelAt = 0;
+        trace("turn", "the cancelled server turn never reported done; her turn goes anyway");
+        if (pendingTurn && !inboundSpeaking && !miraSpeaking && grokAgent) requestTurn(grokAgent);
+      }, Math.max(0, REROUTE_CANCEL_WAIT_MS - (Date.now() - rerouteCancelAt)));
+    }
+    return;
+  }
   // Oct 22 2026: nor over her own line still playing; the turn goes when the
   // guest has heard the end of it (unless they start talking first).
   if (miraAudible()) {
@@ -2577,6 +2600,7 @@ async function createAgent(note) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
         miraSpeaking = false;
         trace("grok", "response done");
+        rerouteCancelSettled();
         if (agent !== grokAgent || roomEnded) return;
         roundTurnDone();
         armDeadAir();
@@ -2642,6 +2666,7 @@ function markTurnStarted(agent) {
     if (openingFired) {
       serverTurnsRerouted += 1;
       miraSpeaking = false;
+      rerouteCancelAt = Date.now();
       cancelledLinePending = true;
       try {
         if (agent.responseCancel) agent.responseCancel();
