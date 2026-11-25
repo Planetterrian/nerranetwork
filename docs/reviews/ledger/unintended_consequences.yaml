@@ -244,4 +244,81 @@ reviews:
       verdict: pending
       evidence: null
     agent_cost_usd: null
+  - date: '2026-11-25'
+    pr: null
+    doc: docs/reviews/unintended_consequences_review_2026_11_25.md
+    generated_by: grok-4.5
+    summary: Prior Nov-12 length/target and people fixes largely held, but script fact-free rates stay 63–75% (driving Repetitive flags on Ep180–181), Environmental Intelligence cross-promo has converged on a stock bridge, and 4/10 scripts still sit under the 1100 floor with no podcast-side length lever left to pull.
+    scored_prior_predictions:
+    - metric: share of the last 7 episodes with digest_expansion_fired
+      verdict: partial
+      evidence: No expansion_fired in snapshot; min_digest 900 shipped and median words ~1053→1169, but 4/10 still <1100 — cannot confirm ≤3/7 firings
+    - metric: episodes naming at least two people in the script, last 10
+      verdict: hit
+      evidence: ep176–183 routinely name ≥2 people (Wagner/Portman, Cowan/Bailey, Aquino/Guiang, Kemfert/Graichen, Foad, Modi+economists, MacBride/Byrne); ≥8/10
+    - metric: daily audit Repetitive flags, last 7 episodes
+      verdict: hit
+      evidence: Snapshot flags Repetitive only on Ep180 and Ep181 (2/7 at expected ceiling)
+    - metric: podcast prompt still stating 2200-2800 words / 15-18 minutes
+      verdict: hit
+      evidence: STRUCTURAL REQUIREMENTS now brief-scaled with hard cap 1,700; 2200–2800/15–18m band absent
+    - metric: episodes skipped for length after 2026-11-12
+      verdict: hit
+      evidence: Continuous ep174–183 publish window; no length skips
+    - metric: last-10 scripts containing the stock lesson couplet 'Incentive structures always find their loopholes' OR 'Complex systems resist simple interventions'
+      verdict: hit
+      evidence: Absent across ep174–183 transcripts after Segment-6 de-seed
+    - metric: median _tts.txt words, last 10 (after digest floor work)
+      verdict: partial
+      evidence: Median ≈1169 (was ≈1053); 6/10 clear 1100 but still short of ≥1200 expected
+    shipped: []
+    deferred:
+    - Data-side UC closing-pool rotation in engine/intros.py — 6/10 still share 'That's the case for today. The lessons tend to travel further…' (supplied block; not a show-prompt fix)
+    - Data-side lesson/cross-promo rotation memory if stock bridges survive this prompt ban (prefer over a third prompt-only pass)
+    - Cap 'One might ask/object' ≤1/ep (July 2 A/B; still occasional on ep180/181)
+    - Missing-intro guard (June; double-greeting risk if bolted on)
+    - Re-clear Philippine land-reform topic (delete gate_blocks) once claim-repair has a scored track record
+    - 'Operator decision: accept ~8–10 min / ~1100–1300 spoken as the product vs further digest/research-depth investment only — do not re-enable podcast_expand or third-file the same floor story'
+    - YouTube long-form retention (~12%) and X pause (x_enabled false since Nov 14) — network growth/distribution, not UC prompt
+    - Named-people lint (Nov-12 deferred)
+    - One ask in the closing block (network decision)
+    - Do not re-pin grok-4.6 whole-show without fresh staged trial (Aug 27 withdrawal still binds)
+    predictions:
+    - metric: median fact-free sentence share in script body, last 10 (density audit)
+      baseline: ≈69% (window ep174–183 mostly 63–75%)
+      expected: ≤50% within 3 weeks after fact-free body rule ships; if still ≥65%, escalate to data-side sentence lint not a third prompt pass
+      verdict: pending
+      evidence: null
+    - metric: last-10 scripts containing EI stock bridge 'Environmental intelligence follows' OR 'Environmental intelligence is where this network stays' (case-insensitive)
+      baseline: ≥5/10 in ep174–183 environment-adjacent window
+      expected: ≤1/10 within 3 weeks; successor tic likely another fixed sibling-bridge shape — score separately
+      verdict: pending
+      evidence: null
+    - metric: daily audit Repetitive flags, last 7 episodes
+      baseline: 2 of 7 (Ep180–181)
+      expected: ≤1 of 7 within 3 weeks if fact-free median drops
+      verdict: pending
+      evidence: null
+    - metric: last-10 scripts still free of stock lesson couplet (Incentive structures… / Complex systems resist…)
+      baseline: 0/10 (hold)
+      expected: 0/10 hold; if a new abstract couplet family appears ≥3/10, file data-side lesson memory not another example ban
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/unintended_consequences_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Density audit shows 63–75% fact-free script sentences (cohort 10–22%); Ep180/181 Repetitive flags track that padding. Nov-12 cut digest-expand padding; remaining driver is script-stage fact-free reflection. Shape rule only — no coverage% prediction.
+      status: applied
+    - file: shows/prompts/unintended_consequences_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'EI cross-promo converged on two stock bridges across ep174/178/180/181/183 despite ''write fresh''. Meta-review: de-seed by shape + verbatim ban; predict successor bridge tic.'
+      status: applied
+    - file: shows/prompts/unintended_consequences_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Density copied-sections high on ep177/179/180/182; scripts march the six-beat brief as narration. Shape-only re-scene steer; no overlap/coverage numeric gate (Sep 2026 meta misses).
+      status: applied
+    agent_cost_usd: 0.1199
 do_not_retry: []
