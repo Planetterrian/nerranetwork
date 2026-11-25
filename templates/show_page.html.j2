@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% block content %}
-    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest, soft_personal_hero_band, hero_email_signup %}
+    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest, soft_personal_hero_band, hero_email_signup, spacex_weekly_signup %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -304,6 +304,10 @@
             </form>
         </div>
     </section>
+    {% endif %}
+    {#- Nov 25 2026: the weekly SpaceX email (a Nerra Daily tag set). -#}
+    {% if show_slug == 'spacex' and not _is_ru %}
+    {{ spacex_weekly_signup(path_prefix, capture_source_site) }}
     {% endif %}
 
     {#- The latest episode, as ONE card: play it on the left, read it on the

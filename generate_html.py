@@ -920,8 +920,11 @@ NETWORK_SHOWS = {
         "about_text": "Daily discoveries in longevity science, genetics, biotech, CRISPR, neuroscience, and health research. If it could extend your healthspan or change medicine, we cover it.",
         "about_host": "Hosted by Patrick in Vancouver. A tribe of forward-thinking innovators.",
         "description_long": "Daily discoveries in longevity science, genetics, biotech, CRISPR, neuroscience, and health research. If it could extend your healthspan or change medicine, we cover it.",
-        "related_show": "fascinating_frontiers",
-        "related_reason": "If you enjoy Planetterrian Daily, you might also like Fascinating Frontiers — daily space and astronomy news.",
+        # Nov 25 2026 (market review 9c): Longevity Weekly had 48 downloads
+        # in 30 days and only Peptides linked to it; Planetterrian's daily
+        # longevity listeners are its nearest audience on the network.
+        "related_show": "longevity",
+        "related_reason": "If you enjoy Planetterrian Daily, you might also like Longevity Weekly — every Wednesday, the week's aging research with each finding's evidence level.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/planetterrian-daily/id1857782085",
         "spotify_url": "https://open.spotify.com/show/0GgrsEDFLaZfTOQkQm5DI2",
         "theme_color": "#017A99",

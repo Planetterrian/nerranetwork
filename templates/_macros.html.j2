@@ -380,3 +380,40 @@
         <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>.</p>
 </div>
 {%- endmacro -%}
+
+
+{#- "SpaceX, once a week" (Nov 25 2026, market review item 8). The weekly
+    SpaceX email is a Nerra Daily TAG set, never a second email: the
+    gallery Worker's ``spacex-weekly`` list adds the free account, the
+    SpaceX Daily follow and the Sunday-only tag, and the Sunday edition
+    carries the whole SpaceX week for that reader
+    (engine.nerra_daily_email.FULL_WEEK_SLUGS). Its own ids, so no other
+    form's "exactly one" rule moves. Arguments: path_prefix, capture_source.
+-#}
+{%- macro spacex_weekly_signup(path_prefix='', capture_source='') -%}
+<section class="nn-weekly-email" id="spacex-weekly" aria-label="The SpaceX week by email">
+    <div class="container" style="max-width:760px;">
+        <p class="nn-weekly-email-lead"><strong>SpaceX, once a week.</strong> Every Sunday morning, the week&rsquo;s SpaceX stories in one free email, each with its source.</p>
+        <form method="post" action="#" id="spacex-weekly-form"
+              data-nn-subscribe="show-weekly"
+              data-list="spacex-weekly"
+              data-source="{{ capture_source }}"
+              data-show="spacex"
+              data-form-id="spacex-weekly-email"
+              data-label-loading="Saving…"
+              data-label-done="You’re in ✓"
+              data-label-status-done="You’re on the list. The SpaceX week arrives Sunday at 7:00 AM Eastern."
+              data-label-error="Try again"
+              data-label-status-error="Couldn’t save that just now. Try again in a moment."
+              data-label-idle="Send me the SpaceX week"
+              class="nn-weekly-email-form">
+            <input type="email" id="spacex-weekly-email" name="email" required autocomplete="email"
+                   inputmode="email" enterkeyhint="send"
+                   placeholder="your@email.com" aria-label="Email address">
+            <button type="submit">Send me the SpaceX week</button>
+        </form>
+        <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"></p>
+        <p class="nn-weekly-email-fine">One email a week. Want it every day instead? Switch on <a href="{{ path_prefix }}account.html#email">My Nerra</a>. Unsubscribe anytime. <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>.</p>
+    </div>
+</section>
+{%- endmacro -%}

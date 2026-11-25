@@ -90,7 +90,7 @@ def _front(day=DAY):
 def composed(monkeypatch):
     monkeypatch.setattr(nde, "already_sent", lambda day, root=None, **k: {})
     monkeypatch.setattr(nde, "video_links", lambda *a: {})
-    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [])
+    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: [])
     return nde.compose(DAY, now=NOW, front=_front(), trial_days=7)
 
 

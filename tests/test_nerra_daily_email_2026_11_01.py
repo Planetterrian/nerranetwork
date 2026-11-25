@@ -57,7 +57,7 @@ def composed(monkeypatch):
     monkeypatch.setattr(nde, "video_links", lambda slug, root, now: {
         100: {"long": "https://www.youtube.com/watch?v=aaaaaaaaaaa",
               "long_at": "2026-11-02T13:00:00Z"}} if slug == "tesla" else {})
-    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [])
+    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: [])
     return nde.compose(DAY, now=NOW, front=_front(), trial_days=7)
 
 
@@ -179,7 +179,7 @@ class TestSunday:
         monkeypatch.setattr(nde, "most_played", lambda root=None, limit=5: [
             {"slug": "spacex", "show_name": "SpaceX Daily", "episode_num": 99,
              "title": "Most played story", "url": "blog/spacex/ep099.html"}])
-        monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [
+        monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: [
             {"episode_num": 98, "date": day - dt.timedelta(days=2), "hook": f"{slug} midweek"},
             {"episode_num": 97, "date": day - dt.timedelta(days=4), "hook": f"{slug} early"},
         ])

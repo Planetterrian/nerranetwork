@@ -108,6 +108,12 @@ const SUBSCRIBE_LISTS: Record<string, string[]> = {
   // for the browser that just subscribed; magic-login looks up the
   // address, not the tag. Never creates a paid Personal subscription.
   "personal-interest": ["personal-interest"],
+  // Nov 25 2026 (market review item 8): "SpaceX, once a week". The weekly
+  // SpaceX email is a Nerra Daily TAG set, never a second email: the free
+  // account, the SpaceX Daily follow and the Sunday-only tag, so this reader
+  // gets the Sunday edition with the whole SpaceX week
+  // (engine.nerra_daily_email.FULL_WEEK_SLUGS). WEEKLY_ONLY_TAG in email.ts.
+  "spacex-weekly": ["nerra-member", SUBSCRIBER_TAG, "SpaceX Daily", "nerra-daily-weekly"],
 };
 const DEFAULT_LIST = "gallery";
 

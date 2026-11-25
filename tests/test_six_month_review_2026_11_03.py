@@ -824,7 +824,7 @@ class TestTheEmailsArchiveCopyCarriesTheNews:
             100: {"long": "https://www.youtube.com/watch?v=aaaaaaaaaaa", "long_at": "2026-11-02T12:00:00Z"}}
             if slug == "tesla" else ({100: {"long": "https://www.youtube.com/watch?v=bbbbbbbbbbb",
                                             "long_at": "2026-11-02T13:00:00Z"}} if slug == "spacex" else {}))
-        monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [])
+        monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: [])
         return nde.compose(self.DAY, now=self.NOW, front=self._front(), trial_days=7)
 
     def test_the_archive_renders_the_default_copy_with_every_one_liner(self, composed):
