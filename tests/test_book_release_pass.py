@@ -75,9 +75,13 @@ class TestWO3ChapterCuts:
             assert _uc_digest(ep)
 
     def test_volumes_within_enforced_size_band(self):
+        # The retired 20-chapter books (``_vol<N>``) keep the old band; a
+        # planner-cut ``_volume<N>`` (Nov 25 2026, Volume 2) is held to the
+        # series band 10-80 (WO-12).
         for p in sorted(VOLS.glob("unintended_consequences_vol*.yaml")):
             data = yaml.safe_load(p.read_text(encoding="utf-8"))
-            assert 10 <= len(data["episodes"]) <= 20, p.name
+            hi = 80 if "_volume" in p.name else 20
+            assert 10 <= len(data["episodes"]) <= hi, p.name
 
     def test_sf_rent_control_correction(self):
         """Enacted by the Board of Supervisors, signed by Feinstein,
@@ -923,10 +927,20 @@ class TestWO12SeriesVolumes:
     # ---- Part C: the planner produces Volume 2 next ------------------
     def test_planner_preview_next_is_volume_two(self):
         from engine.book_compiler import load_series, plan_preview
+        from engine.book_compiler import load_volume
+        # Volume 2 was cut on Nov 25 2026 (eps 61-120 / 81-140), so the
+        # planner's next volume is 3 and starts after Volume 2's last
+        # episode (unless that episode is excluded).
         uc = plan_preview("unintended_consequences")
-        assert uc["next_volume_number"] == 2 and uc["first_episode"] == 81
+        assert uc["next_volume_number"] == 3
+        assert uc["first_episode"] is None or uc["first_episode"] > 140
         fp = plan_preview("first_principles")
-        assert fp["next_volume_number"] == 2 and fp["first_episode"] == 61
+        assert fp["next_volume_number"] == 3
+        assert fp["first_episode"] is None or fp["first_episode"] > 120
+        for vid, first in (("first_principles_volume2", 61),
+                           ("unintended_consequences_volume2", 81)):
+            vol = load_volume(VOLS / f"{vid}.yaml")
+            assert vol.volume_number == 2 and vol.episodes[0] == first
         assert set(load_series("first_principles")["excluded_episodes"]) \
             == {21, 25}
         for pv in (uc, fp):
