@@ -20,7 +20,7 @@ def _fn(name):
 def test_the_clock_starts_at_the_vad_stop():
     i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
     handler = SCENARIO[i:i + 600]
-    assert "turnClock = { stopped: Date.now(), transcript: 0, requested: 0 };" in handler
+    assert "turnClock = { stopped: Date.now(), transcript: 0, requested: 0, path: [] };" in handler
 
 
 def test_each_leg_is_stamped_where_it_happens():
@@ -73,3 +73,11 @@ class TestTheWordsEndTheWait:
 
     def test_the_count_rides_the_timing_line(self):
         assert '" decided when the words landed"' in SCENARIO
+
+
+def test_each_reply_traces_the_waits_it_went_through():
+    """Nov 25 2026: the words-landed change moved the request median by ~0-120 ms,
+    so each reply's waits are traced (bounded) to find where the rest goes."""
+    assert "turnClock.path.push(" in _fn("scheduleTurnDecision")
+    assert 'trace("turn", "path: request "' in _fn("clockTurnFirstWords")
+    assert "TURN_PATH_TRACES_MAX = 40" in SCENARIO

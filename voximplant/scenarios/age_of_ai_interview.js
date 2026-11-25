@@ -724,7 +724,9 @@ let cancelledLinePending = false; // the next line of hers is from a cancelled t
 // stop (which itself comes silence_duration_ms after their last word) to the
 // guest transcript, to the room's request, to her first words. Read from
 // grok_session_log.turn_timing; nothing here changes a turn.
-let turnClock = { stopped: 0, transcript: 0, requested: 0 };
+let turnClock = { stopped: 0, transcript: 0, requested: 0, path: [] };
+const TURN_PATH_TRACES_MAX = 40;
+let turnPathTraces = 0;
 const turnTimings = [];
 const TURN_TIMINGS_MAX = 200;
 
@@ -738,7 +740,16 @@ function clockTurnFirstWords() {
       first_words_ms: now - turnClock.requested,
     });
   }
-  turnClock = { stopped: 0, transcript: 0, requested: 0 };
+  // Nov 25 2026: which waits a reply went through (each entry is "when it was
+  // scheduled>how long", ms after the VAD stop), so the request leg can be
+  // read turn by turn instead of guessed from a median.
+  if (turnPathTraces < TURN_PATH_TRACES_MAX) {
+    turnPathTraces += 1;
+    trace("turn", "path: request " + (turnClock.requested - turnClock.stopped) + " ms, words " +
+      (turnClock.transcript ? (turnClock.transcript - turnClock.stopped) + " ms" : "none") +
+      ", waits " + (turnClock.path.join(" ") || "none"));
+  }
+  turnClock = { stopped: 0, transcript: 0, requested: 0, path: [] };
 }
 
 function medianOf(xs) {
@@ -2199,6 +2210,9 @@ function cancelTurnDecision() {
 
 function scheduleTurnDecision(delayMs) {
   cancelTurnDecision();
+  if (turnClock.stopped && !turnClock.requested && turnClock.path.length < 12) {
+    turnClock.path.push((Date.now() - turnClock.stopped) + ">" + Math.round(delayMs || TURN_DECIDE_MS));
+  }
   turnDecisionTimer = setTimeout(decideTurn, delayMs || TURN_DECIDE_MS);
 }
 
@@ -2453,7 +2467,7 @@ async function createAgent(note) {
       inboundSpeaking = false;
       noteSpeechEnded(Date.now() - inboundSpokeAt);
       if (agent !== grokAgent) return;
-      turnClock = { stopped: Date.now(), transcript: 0, requested: 0 };
+      turnClock = { stopped: Date.now(), transcript: 0, requested: 0, path: [] };
       // The VAD found the pause; the room decides whether it is the end of
       // a turn (see decideTurn). The opening waits for this too.
       if (!openingFired) { setTimeout(openAfterGuestSpoke, TURN_DECIDE_MS); return; }
