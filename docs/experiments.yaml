@@ -8321,35 +8321,3 @@ experiments:
       engine/network_promo.py email surface, FLAGSHIP_SURFACE_WEIGHTS email 2.
       Review docs/reviews/market_review_2026_11_24.md; guards
       tests/test_market_review_2026_11_24.py. ⚠️ AUDIO: one listen first.
-  - id: mira-hold-release-2026-11-25
-    title: "The room holds the server's own reply while it decides, and releases it instead of asking again"
-    area: voices
-    shipped: 2026-11-25
-    readout: 2026-12-16
-    status: reading
-    baseline: >
-      Nov 24 rehearsals (adrian and vincent, both arms): turn_gap_ms_median
-      3,720 / 3,770 / 3,825 / 3,830 ms. The Vincent proposed room: 13 server
-      turns, 13 rerouted (every reply generated twice). Real rooms Nov 11-12:
-      4,125 / 4,450 ms.
-    target: >
-      turn_gap_ms_median at or under 3,200 ms in a candidate rehearsal and in
-      MaryAnn Bautista's Dec 9 room, with overlap_events and
-      self_answered_turns no higher than the current arm.
-    criteria: >
-      HIT when the candidate rehearsal and the first real room after deploy
-      both read turn_gap_ms_median at or under 3,200 with held_turns_released
-      above 0 and no rise in overlap_events or self_answered_turns; MISS when
-      the gap is at or above 3,600 with held_turns_released above 5; else
-      INCONCLUSIVE (a room that released nothing measured nothing).
-    readout_plan: >
-      The rehearsal report's turn_gap_ms_median beside the verdict;
-      interview_runs.grok_session_log server_turns_held, held_turns_released,
-      held_turns_dropped and held_drop_reasons for each room; one operator
-      listen for a clipped first word on a released turn.
-    notes: >
-      voximplant/scenarios/age_of_ai_interview.js (holdServerTurn,
-      heldReleasable, releaseHeld, dropHeld); off for one room with
-      grok_session_log.hold_release false. Ships to a booked room only on a
-      rehearsal plus one listen. Guards
-      tests/test_hold_and_release_2026_11_25.py. ⚠️ AUDIO, the room.

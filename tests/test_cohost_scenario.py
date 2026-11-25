@@ -401,7 +401,7 @@ class TestSessionRelay:
         armed = _fn(js, "function armRotation()")
         assert "rotationDue = true;" in armed and "rotateAfterMs()" in armed
         assert "setTimeout(rotateAgent, rotateAfterMs())" not in js
-        done = js[js.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        if (agent === grokAgent && heldDone()) return;\n        miraSpeaking = false;"):]
+        done = js[js.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;"):]
         done = done[:done.index("});")]
         assert "if (rotationDue && !inboundSpeaking && !rotating) { rotateAgent(); return; }" in done
         assert "if (rotationDue) {" in _fn(js, "function decideTurn()")
