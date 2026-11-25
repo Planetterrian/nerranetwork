@@ -78,11 +78,16 @@
     <script defer src="../assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="../styles/main.css?v=dd382439">
 
     
 <style>
-.lt-page {
+/* Nov 24 2026: the tokens are also on ``.lt-tokens``. join.html uses the
+   landing page's tokens on 70 rules and has no ``.lt-page`` ancestor (that
+   class also brings the front page's padding and link reset), so every one
+   of them was undefined there: no serif headings, no cyan accents, no card
+   or field borders, and a "Members only" badge in dark ink on nothing. */
+.lt-page, .lt-tokens {
   --lt-ink: var(--nn-text);
   --lt-muted: var(--nn-text-muted);
   --lt-rule: var(--nn-border);
@@ -97,6 +102,8 @@
   --lt-head: 'Source Serif 4', Georgia, serif;
   --lt-ui: var(--font-ui);
   --lt-radius: 10px;
+}
+.lt-page {
   padding-top: calc(var(--nav-height, 72px) + var(--sp-4));
   padding-bottom: var(--sp-12);
   color: var(--lt-ink);
@@ -361,7 +368,8 @@ a.lt-media:hover img { transform: scale(1.03); }
   padding: 9px 14px; border-radius: 8px; border: 1px solid var(--lt-rule-strong); color: var(--nn-white); background: var(--lt-panel-2);
 }
 .lt-btn:hover { border-color: var(--lt-cyan); }
-.lt-btn--primary { background: var(--lt-accent); border-color: var(--lt-accent); }
+/* Nov 24 2026: white, not --nn-white, on the accent (4.46:1 measured). */
+.lt-btn--primary { background: var(--lt-accent); border-color: var(--lt-accent); color: #fff; }
 .lt-btn--primary:hover { background: var(--nn-accent-hover); }
 
 .lt-latest { border-left: 1px solid var(--lt-rule); padding-left: var(--sp-6); min-width: 0; }
@@ -2723,7 +2731,7 @@ body.lt-player-open { overflow: hidden; }
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="../assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../assets/js/footer-subscribe.js?v=445af143" defer></script><script src="../assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
