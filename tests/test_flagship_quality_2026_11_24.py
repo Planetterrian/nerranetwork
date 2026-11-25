@@ -61,6 +61,12 @@ class TestMarketCalendar:
         assert not mc.is_trading_day(dt.date(2027, 1, 1))
         assert mc.close_day_word(_utc(2027, 1, 4)) == " Thursday"
 
+    def test_after_the_close_the_session_is_today(self):
+        # The Nov 24 rehearsals ran at 22:58 UTC (5:58pm Eastern).
+        assert mc.close_session_date(_utc(2026, 11, 24, 22, 58)) == dt.date(2026, 11, 24)
+        assert mc.close_session_date(_utc(2026, 11, 24, 11)) == dt.date(2026, 11, 23)
+        assert mc.close_session_date(_utc(2026, 11, 28, 23)) == dt.date(2026, 11, 27)  # Saturday
+
     def test_holidays_by_rule(self):
         h = mc.holidays(2026)
         for day in ((1, 1), (1, 19), (2, 16), (4, 3), (5, 25), (6, 19),
