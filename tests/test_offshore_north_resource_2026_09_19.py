@@ -295,7 +295,7 @@ class TestRound2FleetAndRecord:
         entries = d["rdr_imoca_entries"]["entries"]
         slugs = [e.get("imoca_slug") for e in entries if e.get("imoca_slug")]
         assert len(slugs) >= 19 and len(slugs) == len(set(slugs))
-        assert next(e for e in entries if e.get("canada"))["imoca_slug"] == "emira-iv"
+        assert next(e for e in entries if e.get("canada"))["imoca_slug"] == "canada-ocean-racing-be-water-positive"
 
     def test_map_markers_are_named_places_never_a_guessed_fix(self):
         d = _curated()

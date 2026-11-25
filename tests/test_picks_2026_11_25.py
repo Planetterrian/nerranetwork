@@ -169,3 +169,26 @@ class TestSourcesAreReadFromWhereTheShowsReadThem:
         assert any("Architect" in ln for ln in lines)
         rows = probe_urls.read_list(probe_urls.DEFAULT_LIST)
         assert rows and all(u.startswith("https://") for u, _ in rows)
+
+
+class TestMovedPagesAreReadAtTheirNewAddress:
+    """Nov 25 2026, read from a GitHub runner by Actions "Probe URLs"."""
+
+    def test_env_intel_reads_no_renamed_ministry_feed(self):
+        text = (ROOT / "shows/env_intel.yaml").read_text(encoding="utf-8")
+        for dead in ("environment-and-parks", "energy-and-climate-solutions",
+                     "water-land-and-resource-stewardship",
+                     "emergency-management-and-climate-readiness"):
+            assert f"news.gov.bc.ca/ministries/{dead}/feed" not in text
+        # The two feeds that carried November items on the day of the probe.
+        assert "news.gov.bc.ca/themes/environmental-protection-and-sustainability/feed" in text
+        assert "news.gov.bc.ca/news-subscribe/natural-resources/feed" in text
+
+    def test_no_boat_entry_points_at_a_page_that_redirects_home(self):
+        import json
+
+        data = json.loads((ROOT / "site/data/offshore_north_dashboard.json").read_text(encoding="utf-8"))
+        slugs = {e.get("imoca_slug") for e in data["rdr_imoca_entries"]["entries"]}
+        assert not slugs & {"emira-iv", "horizon-29", "coup-de-pouce-1", "tr-racing-1"}
+        canada = next(e for e in data["rdr_imoca_entries"]["entries"] if e.get("canada"))
+        assert canada["imoca_slug"] == "canada-ocean-racing-be-water-positive"
