@@ -285,4 +285,84 @@ reviews:
       ab_listen_required: false
       rationale: Drift-guard pattern per playbook; pin the two P0 metadata fixes and the daily→weekly copy correction.
     agent_cost_usd: 0.1478
+  - date: '2026-11-24'
+    pr: null
+    doc: docs/reviews/dp_pod_review_2026_11_24.md
+    generated_by: grok-4.5
+    summary: Oct-8 chapter/Cold-Open/cadence fixes partially landed in YAML and later episodes, but speaker-label scrubber titles still ship (ep77), residual daily writer/on-air copy remains, Dispatch wall is empty on fifth filing, and downloads stay flat despite clean levers and length.
+    scored_prior_predictions:
+    - metric: 'chapter titles matching ^(DAN|PATRICK): or <4-word dialogue fragments, next 8 weekly episodes'
+      verdict: miss
+      evidence: 'chapters_ep077.json still has DAN: Minus eighty and DAN: Strongest version of that…; sanitizer not shipped'
+    - metric: Cold Open present as first chapter (title Cold Open or equivalent) when chapters enabled, next 8 episodes
+      verdict: partial
+      evidence: ep79–85 have Cold Open after YAML This is The DP Pod marker; ep76–78 still lack it
+    - metric: writer-facing prompts/system copy claiming the show is daily
+      verdict: miss
+      evidence: system.txt still day's developments; digest day's good news; transcripts still daily email / tomorrow's good news
+    - metric: Lever segment present in digest and script, next 8 weekly episodes
+      verdict: hit
+      evidence: 10/10 levers present in ep76–85 transcripts
+    shipped: []
+    deferred:
+    - Seed one real host Dispatch into dispatches.json (operator decision — fifth filing; Dan solar payback in founders notes is ready material) OR stop club-page / on-air wall promises until one exists
+    - Deterministic script-quality re-roll on paste/short days if rate rises above ~2/10 — code gate, not prompt pressure (not firing in ep76–85)
+    - 'Optional: widen banned-opening-verb window so repeats across ~10 weekly levers trip a ban (last-6 alone can miss under weekly cadence)'
+    - 'Operator listen only: historical Whisper ''liver'' for Lever (ep30/ep56); not observed in ep76–85'
+    - Weekly Lever-of-the-Week + collective counter (blocked on real Dispatch receipts)
+    - YouTube long-form (waits on adaptive policy; Shorts-only continues)
+    - Additional founders biography (Yukon, WestJet, cockpit, daughters) — operator-supplied notes only
+    - 'Checklist word: do not ban-list; leave to RETIRED BITS shape mining (prior miss, escalated past ban)'
+    - Backfill Cold Open into pre-YAML-fix chapter JSON (ep76–78) — operator taste only
+    predictions:
+    - metric: 'chapter titles matching ^(DAN|PATRICK|HOST): in next 8 weekly chapter JSON files'
+      baseline: 1/10 in ep76–85 (ep77); historically 4/10 in ep69–78 window
+      expected: 0/8 after sanitizer ships
+      verdict: pending
+      evidence: null
+    - metric: spoken or writer copy with daily-cadence claims (daily email, tomorrow's good news, day's briefing, family of daily podcasts) in next 8 episodes / prompt files
+      baseline: system+digest day-framing live; daily email / tomorrow's good news in multiple ep76–85 transcripts
+      expected: 0 remaining daily-cadence claims in dp_pod system+digest+intro/closing/Dispatch furniture after edit; ≤1/8 episodes echoing residual daily
+      verdict: pending
+      evidence: null
+    - metric: Lever segment present in script, next 8 weekly episodes
+      baseline: 10/10 in ep76–85
+      expected: 8/8 present (gate continues to hold)
+      verdict: pending
+      evidence: null
+    - metric: Cold Open first chapter on newly produced episodes
+      baseline: 7/10 in ep76–85 (fail only pre-YAML-fix eps)
+      expected: 8/8 new episodes latch Cold Open
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/chapters.py
+      kind: code
+      ab_listen_required: false
+      rationale: P0 listener-facing scrubber pollution still shipping after Oct-8 proposal; metadata-only fix; ep77 proves the defect class is live.
+    - file: tests/test_dp_pod_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Playbook requires drift-guard per behavioral fix; pin P0 scrubber + Cold Open latch.
+    - file: shows/prompts/dp_pod_system.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Show is Monday-only since 2026-09-21; writer system prompt still day-scopes the brief and fights public weekly schedule (Oct-8 prediction miss).
+    - file: shows/prompts/dp_pod_system.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Keep Monday framing; avoid implying a daily dispatch reading habit the empty wall cannot support; align wording with weekly cadence.
+    - file: shows/prompts/dp_pod_digest.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Digest still day-scopes after weekly move; Oct-8 daily-copy prediction missed.
+    - file: shows/prompts/dp_pod_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'On-air daily furniture survived writer-note fixes; listeners hear weekly show claim daily email/tomorrow. Touches spoken script stage → A/B-listen landmine #17.'
+    - file: engine/intros.py
+      kind: code
+      ab_listen_required: true
+      rationale: Transcripts show the daily phrases in closing blocks copied verbatim; fixing the podcast prompt alone may not clear pool-sourced lines.
+    agent_cost_usd: 0.1456
 do_not_retry: []
