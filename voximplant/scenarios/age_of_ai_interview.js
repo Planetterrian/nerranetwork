@@ -712,6 +712,43 @@ let endReason = "normal";
 // cancelled and decided by the room like any other (markTurnStarted).
 let serverTurnsRerouted = 0;
 let cancelledLinePending = false; // the next line of hers is from a cancelled turn: not remembered
+// Nov 25 2026: where the wait before her reply goes. Measuring only: each
+// reply the room asks for after the guest's pause is timed from the VAD's
+// stop (which itself comes silence_duration_ms after their last word) to the
+// guest transcript, to the room's request, to her first words. Read from
+// grok_session_log.turn_timing; nothing here changes a turn.
+let turnClock = { stopped: 0, transcript: 0, requested: 0 };
+const turnTimings = [];
+const TURN_TIMINGS_MAX = 200;
+
+function clockTurnFirstWords() {
+  if (!turnClock.requested || !turnClock.stopped) return;
+  if (turnTimings.length < TURN_TIMINGS_MAX) {
+    const now = Date.now();
+    turnTimings.push({
+      transcript_ms: turnClock.transcript ? turnClock.transcript - turnClock.stopped : null,
+      decide_ms: turnClock.requested - turnClock.stopped,
+      first_words_ms: now - turnClock.requested,
+    });
+  }
+  turnClock = { stopped: 0, transcript: 0, requested: 0 };
+}
+
+function medianOf(xs) {
+  const v = xs.filter(function (x) { return typeof x === "number"; }).sort(function (a, b) { return a - b; });
+  if (!v.length) return null;
+  const m = Math.floor(v.length / 2);
+  return v.length % 2 ? v[m] : Math.round((v[m - 1] + v[m]) / 2);
+}
+
+function turnTimingSummary() {
+  return {
+    turns: turnTimings.length,
+    transcript_ms_median: medianOf(turnTimings.map(function (t) { return t.transcript_ms; })),
+    decide_ms_median: medianOf(turnTimings.map(function (t) { return t.decide_ms; })),
+    first_words_ms_median: medianOf(turnTimings.map(function (t) { return t.first_words_ms; })),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Hold mode (Oct 22 2026)
@@ -1903,6 +1940,7 @@ function deltaOf(event) {
 function noteMiraDelta(event) {
   const piece = deltaOf(event);
   if (!piece) return;
+  if (!currentResponseText) clockTurnFirstWords();
   currentResponseText = (currentResponseText + piece).replace(/^\s+/, "");
   catchEarlyCloseOnDelta(currentResponseText);
 }
@@ -1930,6 +1968,7 @@ const GUEST_ITEM_OVERLAP = 40;
 function noteGuestTranscript(itemId, text) {
   const t = String(text || "").trim();
   if (!t) return;
+  if (turnClock.stopped && !turnClock.transcript) turnClock.transcript = Date.now();
   if (itemId && itemId === lastGuestItemId && lastGuestItemIdx >= 0
       && lastGuestItemIdx < transcript.length
       && transcript[lastGuestItemIdx].indexOf("Guest: ") === 0) {
@@ -2100,6 +2139,7 @@ function requestTurn(agent) {
   nextTurnInstructions = "";
   turnRoundLabel = roundTurnRequested;
   roundTurnRequested = "";
+  if (turnClock.stopped && !turnClock.requested) turnClock.requested = Date.now();
   agent.responseCreate(body);
 }
 
@@ -2399,6 +2439,7 @@ async function createAgent(note) {
       inboundSpeaking = false;
       noteSpeechEnded(Date.now() - inboundSpokeAt);
       if (agent !== grokAgent) return;
+      turnClock = { stopped: Date.now(), transcript: 0, requested: 0 };
       // The VAD found the pause; the room decides whether it is the end of
       // a turn (see decideTurn). The opening waits for this too.
       if (!openingFired) { setTimeout(openAfterGuestSpoke, TURN_DECIDE_MS); return; }
@@ -4310,6 +4351,7 @@ async function endRoom(reason) {
       server_turns: serverTurns,
       self_answers_blocked: selfAnswersBlocked,
       server_turns_rerouted: serverTurnsRerouted,
+      turn_timing: turnTimingSummary(),
       holds: holdsEntered,
       dead_air_nudges: deadAirNudgesTotal,
       guest_feedback: guestFeedback,

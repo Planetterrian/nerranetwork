@@ -1,0 +1,44 @@
+"""Nov 25 2026: the room times the wait before Mira's reply (measuring only).
+
+Hold-and-release (rehearsed Nov 25) could not work: the server's own reply
+streams audio within milliseconds of starting, so a muted hold loses it. And
+reasoning effort "low" made the gap longer, not shorter. Before another room
+change, the room records where the wait goes: VAD stop -> guest transcript ->
+the room's request -> her first words, as medians in
+grok_session_log.turn_timing.
+"""
+from pathlib import Path
+
+SCENARIO = Path("voximplant/scenarios/age_of_ai_interview.js").read_text(encoding="utf-8")
+
+
+def _fn(name):
+    body = SCENARIO[SCENARIO.index("function " + name + "("):]
+    return body[:body.index("\n}\n")]
+
+
+def test_the_clock_starts_at_the_vad_stop():
+    i = SCENARIO.index("InputAudioBufferSpeechStopped, function () {")
+    handler = SCENARIO[i:i + 600]
+    assert "turnClock = { stopped: Date.now(), transcript: 0, requested: 0 };" in handler
+
+
+def test_each_leg_is_stamped_where_it_happens():
+    assert "if (turnClock.stopped && !turnClock.transcript) turnClock.transcript = Date.now();" in _fn("noteGuestTranscript")
+    req = _fn("requestTurn")
+    assert "if (turnClock.stopped && !turnClock.requested) turnClock.requested = Date.now();\n  agent.responseCreate(body);" in req
+    assert "if (!currentResponseText) clockTurnFirstWords();" in _fn("noteMiraDelta")
+
+
+def test_only_a_requested_turn_is_timed_and_it_is_bounded():
+    body = _fn("clockTurnFirstWords")
+    assert "if (!turnClock.requested || !turnClock.stopped) return;" in body
+    assert "turnTimings.length < TURN_TIMINGS_MAX" in body
+
+
+def test_the_summary_reaches_the_session_log_and_changes_no_turn():
+    assert "turn_timing: turnTimingSummary()," in SCENARIO
+    for name in ("clockTurnFirstWords", "turnTimingSummary", "medianOf"):
+        body = _fn(name)
+        for call in ("responseCreate", "responseCancel", "requestTurn(", "scheduleTurnDecision"):
+            assert call not in body
