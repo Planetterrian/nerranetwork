@@ -172,6 +172,9 @@ def collect(show_dir: Path) -> List[dict]:
             "fallback": bool(counters.get("llm_model_fallback")),
             "ttft_s": counters.get("llm_digest_ttft_s"),
             "pinned_retries": counters.get("llm_pinned_retries"),
+            # Nov 25 2026: the run's slowest completed call (absolute alarm
+            # engine.generator.SLOW_CALL_ALARM_S), None before that date.
+            "slowest_call_s": counters.get("llm_slowest_call_s"),
         })
     return rows
 

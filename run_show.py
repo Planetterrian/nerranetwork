@@ -3495,7 +3495,29 @@ def run(args: argparse.Namespace) -> None:
         # v2 prompt). Used for the episode's display-title surfaces (RSS item
         # title, chapters, summaries); the hook remains the spoken cold open
         # and the blog/description material. Absent line = hook, unchanged.
-        title_hook = _extract_short_title(x_thread) or hook
+        title_hook = _extract_short_title(x_thread)
+        if not title_hook and hook:
+            # Nov 25 2026: a show whose prompt asks for the TITLE line and
+            # whose digest left it out gets ONE small call for it. Any
+            # failure keeps the hook, exactly as before. Display surfaces
+            # only: the spoken hook and the script are untouched.
+            try:
+                from engine.app_title import followup_app_title, wants_app_title
+                if wants_app_title(config):
+                    title_hook = followup_app_title(
+                        config, x_thread, hook, tracker=tracker,
+                        budget_left_s=_pipeline_budget_remaining(),
+                    )
+                    # Read by the register entry picks-2026-11-25: the share
+                    # of episodes whose title is still the hook.
+                    metrics.record("app_title_source",
+                                   "followup" if title_hook else "hook")
+            except Exception as _at_exc:  # noqa: BLE001
+                logger.warning("App title follow-up errored (non-fatal): %s", _at_exc)
+                title_hook = None
+        elif title_hook:
+            metrics.record("app_title_source", "digest")
+        title_hook = title_hook or hook
         if title_hook != hook:
             logger.info("Short title: %s", title_hook)
 
@@ -4355,6 +4377,17 @@ def run(args: argparse.Namespace) -> None:
                 _rv = getattr(config.llm, _rk, None)
                 if _rv is not None:
                     metrics.record(_mk, _rv)
+            # Slow-call alarm (Nov 25 2026): the slowest completed LLM call of
+            # the run so far and how many passed the absolute alarm. Consumers:
+            # scripts/model_trial_report.py and the run log's annotation.
+            try:
+                from engine.generator import slow_call_stats as _slow_call_stats
+                _scs = _slow_call_stats()
+                if _scs.get("slowest_s") is not None:
+                    metrics.record("llm_slowest_call_s", _scs["slowest_s"])
+                    metrics.record("llm_slow_call_alarms", _scs.get("alarms", 0))
+            except Exception:  # noqa: BLE001 - a metric never costs an episode
+                pass
             metrics.record(
                 "combined_generation",
                 (template_vars or {}).pop("_generation_path", None)

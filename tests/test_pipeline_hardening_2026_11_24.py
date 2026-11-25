@@ -345,7 +345,10 @@ class TestTheSearchWindowFollowsTheShowsFetchLadder:
             ladder = data.get("fetch_expansion_hours") or []
             if ladder and max(ladder) > 24 and data.get("web_search_queries"):
                 wide[path.stem] = max(ladder)
-        assert wide == {"offshore_north": 168}, wide
+        # Nov 25 2026: Финансы Просто and Env Intel are weekly too and read
+        # their week; every daily show still sends the request it sent before.
+        assert wide == {"offshore_north": 168, "finansy_prosto": 168,
+                        "env_intel": 168}, wide
 
     def test_the_default_request_is_unchanged_and_a_week_asks_for_seven_days(self, monkeypatch):
         import sys as _sys
