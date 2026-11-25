@@ -57,7 +57,7 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 | Tahir Rauf: invite back, drop the 6-minute edit | Patrick | email drafted | Re-record as a fresh interview; the 6-minute piece is not publishable. |
 | Tamara Laine, Animesh Alang: rebook | Patrick | emails drafted | Booking link `cal.com/patrick-novak-lkcqo4/age-of-ai-interview`. |
 | Rejoin after a mid-interview drop | Claude | scoped, with the Dec 9 batch | A 3-minute in-room wait is impossible (Voximplant ends an empty session at 60 s). Reopening a room past 5 minutes would overwrite its recordings, so a rejoin is a continuation session spliced onto the first edit, like the closing session (`splice_closing`), with its own prompt: a room change, rehearsed. |
-| Latency: hold and release her server turn | Claude | next | Every turn is cancelled and re-requested today (4–4.6 s median gap). |
+| Latency: hold and release her server turn | Claude | built Nov 25, rehearsal next | Draft PR on `claude/project-thread-awd3os`; a candidate rehearsal reads turn_gap_ms_median and held_turns_released before MaryAnn Bautista's Dec 9 room, then one listen and a scenario deploy. Was 3.7–3.8 s in every Nov 24 rehearsal room. |
 | Producer model drafts her bridge and next question | Claude | next | Label openers 0.33–0.80 after four brief rewrites. |
 
 ## Rehearsal (prompt or room; not shipped, needs a PASS plus one listen)

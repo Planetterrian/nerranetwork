@@ -53,6 +53,9 @@
  *    the guest hears at most its first words;
  *  - the closing round is a state machine here: the room hands her each of
  *    the ROUND_QUESTIONS one at a time after the previous answer ends.
+ *  - Nov 25 2026: a reply the server starts on its own is HELD (muted) while
+ *    the room decides, and released only when the turn carries nothing for
+ *    her; anything else drops it as before (tests/test_hold_and_release_2026_11_25.py).
  *
  * All call config (guest phone, caller id, compiled Mira prompt, tools,
  * voice preset, host_mode, reasoning_effort) is pulled from Supabase so the fire step and
@@ -712,6 +715,121 @@ let endReason = "normal";
 // cancelled and decided by the room like any other (markTurnStarted).
 let serverTurnsRerouted = 0;
 let cancelledLinePending = false; // the next line of hers is from a cancelled turn: not remembered
+
+// ---------------------------------------------------------------------------
+// Hold and release (Nov 25 2026)
+// ---------------------------------------------------------------------------
+//
+// The server starts a turn of its own at nearly every pause (create_response
+// is ignored: 13 of 13 turns in the Nov 24 Vincent rehearsal). Until now the
+// room cancelled every one and asked for a fresh turn once it had decided,
+// so each reply was generated twice and the guest waited for the second:
+// 3.7-3.8 s from their last word to hers in every room measured. Now the
+// server's turn is HELD (her audio to the room and her recorder is stopped,
+// nothing is cancelled) while the room decides. When the decision is an
+// ordinary turn with nothing to hand her (no plan move, shape, steer,
+// research note or closing question), the held turn is RELEASED: the audio
+// is reconnected and the generation already under way is the one heard.
+// Anything else drops it exactly as before (cancel, clear, decide). A held
+// turn whose audio began before the release is dropped too, since its first
+// words went nowhere; so is one the guest talks over. Off for one room with
+// grok_session_log.hold_release: false.
+const HOLD_RELEASE_MAX_MS = 4000;  // a held turn the room has not decided by then is dropped
+let heldTurn = null;               // { at, timer }: the server's turn, muted, awaiting the decision
+let serverTurnsHeld = 0;
+let heldReleased = 0;
+let heldDropped = 0;
+const heldDropReasons = {};
+// A dropped turn still ends with its own response.done, which can arrive after
+// the room's own turn has started: that done is not hers to act on.
+const HELD_DONE_WINDOW_MS = 2500;
+let heldDoneOwed = 0;
+let heldDoneOwedUntil = 0;
+
+function holdReleaseOn() {
+  return !(config && config.grok_session_log && config.grok_session_log.hold_release === false);
+}
+
+function muteMira(agent) {
+  try { agent.stopMediaTo(conf); } catch (err) { /* best-effort */ }
+  if (miraRecorder) { try { agent.stopMediaTo(miraRecorder); } catch (err) { /* best-effort */ } }
+}
+
+function unmuteMira(agent) {
+  try { agent.sendMediaTo(conf); } catch (err) { /* best-effort */ }
+  if (miraRecorder) { try { agent.sendMediaTo(miraRecorder); } catch (err) { /* best-effort */ } }
+}
+
+/** Hold the server's own turn while the room decides (markTurnStarted). */
+function holdServerTurn(agent) {
+  serverTurnsHeld += 1;
+  muteMira(agent);
+  heldTurn = { at: Date.now(), timer: setTimeout(function () { dropHeld("not decided in time"); }, HOLD_RELEASE_MAX_MS) };
+  if (serverTurnsHeld <= 3 || serverTurnsHeld % 10 === 0) {
+    trace("turn", "server turn after guest speech held; the room decides it (#" + serverTurnsHeld + ")");
+  }
+}
+
+/** The held turn is not the one she gives: cancel it, as the room always did. */
+function dropHeld(reason) {
+  if (!heldTurn) return;
+  clearTimeout(heldTurn.timer);
+  if (!heldTurn.finished) { heldDoneOwed += 1; heldDoneOwedUntil = Date.now() + HELD_DONE_WINDOW_MS; }
+  heldTurn = null;
+  heldDropped += 1;
+  heldDropReasons[reason] = (heldDropReasons[reason] || 0) + 1;
+  cancelledLinePending = true;
+  responseCancelledEarly = true;
+  const agent = grokAgent;
+  if (agent) {
+    try {
+      if (agent.responseCancel) agent.responseCancel();
+      else if (agent.send) agent.send(JSON.stringify({ type: "response.cancel" }));
+      agent.clearMediaBuffer(); miraSilenced();
+    } catch (err) { /* best-effort */ }
+    unmuteMira(agent);
+  }
+  if (heldDropped <= 3 || heldDropped % 10 === 0) trace("turn", "held turn dropped (" + reason + ")");
+}
+
+/** ResponseDone: true when this done belongs to a held or dropped turn. */
+function heldDone() {
+  if (heldTurn) { heldTurn.finished = true; dropHeld("it finished while held"); return true; }
+  if (heldDoneOwed > 0) {
+    heldDoneOwed -= 1;
+    if (Date.now() <= heldDoneOwedUntil) return true;
+    heldDoneOwed = 0;
+  }
+  return false;
+}
+
+/** Nothing to hand her this turn, and nothing of the held line lost yet? */
+function heldReleasable() {
+  if (!heldTurn || !holdReleaseOn()) return false;
+  if (Date.now() - heldTurn.at >= HOLD_RELEASE_MAX_MS) return false;
+  if (nextTurnInstructions || guestSteer || researchAsk || turnShapeOwed) return false;
+  if (closingThanksQueued || closingThanksSent || holdMode || roundActive || roundPendingStart) return false;
+  if (!guestInRoom()) return false;
+  return true;
+}
+
+/** Give her the held turn: the generation under way is the one heard. */
+function releaseHeld() {
+  const agent = grokAgent;
+  clearTimeout(heldTurn.timer);
+  heldTurn = null;
+  heldReleased += 1;
+  pendingTurn = false;
+  miraSpeaking = true;
+  turnShapeOwed = false;
+  planTurnSent("");
+  nextTurnInstructions = "";
+  turnRoundLabel = roundTurnRequested;
+  roundTurnRequested = "";
+  unmuteMira(agent);
+  turnBegins();
+  if (heldReleased <= 3 || heldReleased % 10 === 0) trace("turn", "held turn released (#" + heldReleased + ")");
+}
 
 // ---------------------------------------------------------------------------
 // Hold mode (Oct 22 2026)
@@ -1903,6 +2021,7 @@ function deltaOf(event) {
 function noteMiraDelta(event) {
   const piece = deltaOf(event);
   if (!piece) return;
+  if (heldTurn) { dropHeld("her audio began before the decision"); return; }
   currentResponseText = (currentResponseText + piece).replace(/^\s+/, "");
   catchEarlyCloseOnDelta(currentResponseText);
 }
@@ -2089,6 +2208,7 @@ function requestTurn(agent) {
       "[ROOM — for this turn only, do not read aloud] The interview is over and you" +
       " have thanked them. Say goodbye in a few words and end your turn there.";
   }
+  dropHeld("the room asked for its own turn");
   pendingTurn = false;
   miraSpeaking = true;
   turnRequested = true;
@@ -2147,7 +2267,15 @@ function cancelTurnDecision() {
 
 function scheduleTurnDecision(delayMs) {
   cancelTurnDecision();
-  turnDecisionTimer = setTimeout(decideTurn, delayMs || TURN_DECIDE_MS);
+  turnDecisionTimer = setTimeout(decideTurnHoldingNothing, delayMs || TURN_DECIDE_MS);
+}
+
+// Nov 25 2026: decideTurn returns true only while the decision is still
+// pending (a wait), so a held turn stays held; on every other path it has
+// been released or used, and what is left is dropped here.
+function decideTurnHoldingNothing() {
+  const waiting = decideTurn();
+  if (!waiting) dropHeld(inboundSpeaking ? "they kept talking" : "the room gave no ordinary turn");
 }
 
 function decideTurn() {
@@ -2155,7 +2283,7 @@ function decideTurn() {
   if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
   // A pause the room hears while her own line is still playing is hers, not
   // the guest's: decide when it ends.
-  if (miraAudible()) { scheduleTurnDecision(miraAudibleUntil - Date.now() + TURN_DECIDE_MS); return; }
+  if (miraAudible()) { scheduleTurnDecision(miraAudibleUntil - Date.now() + TURN_DECIDE_MS); return true; }
   if (holdMode) { holdPausesSkipped += 1; return; }
   const owed = pendingTurn;
   const spoke = guestSpokeSinceMira || hostSpokeSinceMira;
@@ -2167,7 +2295,7 @@ function decideTurn() {
   if (spoke && !delta && speechSinceMiraMs >= TURN_MIN_SPEECH_MS && !turnWaitedForWords) {
     turnWaitedForWords = true;
     scheduleTurnDecision(TURN_TRANSCRIPT_WAIT_MS);
-    return;
+    return true;
   }
   if (spoke && !delta && speechSinceMiraMs < TURN_MIN_SPEECH_MS && !owed) {
     trace("turn", "a sound, not a sentence (" + speechSinceMiraMs + " ms); holding");
@@ -2177,7 +2305,7 @@ function decideTurn() {
     turnWaitedToThink = true;
     trace("turn", "clause reads unfinished; giving them " + TURN_THINK_EXTRA_MS + " ms more");
     scheduleTurnDecision(TURN_THINK_EXTRA_MS);
-    return;
+    return true;
   }
   if (rotationDue) {
     handoverTurnOwed = true;
@@ -2214,6 +2342,8 @@ function decideTurn() {
     if (due) queuePlanMove(due);
     noteOrdinaryTurn(delta);
   }
+  if (heldReleasable()) { releaseHeld(); return true; }
+  dropHeld("the turn carries something for her");
   requestTurn(grokAgent);
 }
 
@@ -2415,6 +2545,7 @@ async function createAgent(note) {
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
     anyoneHeard = true;
     if (agent !== grokAgent) return;
+    dropHeld("they kept talking");
     const hostOnly = noteInboundStart();
     // Oct 21 2026: the co-host's voice is not the guest's barge-in. When the
     // per-leg microphone state says only a host leg is live, she finishes
@@ -2506,6 +2637,7 @@ async function createAgent(note) {
     }
     if (Grok.VoiceAgentAPIEvents.ResponseDone) {
       agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {
+        if (agent === grokAgent && heldDone()) return;
         miraSpeaking = false;
         trace("grok", "response done");
         if (agent !== grokAgent || roomEnded) return;
@@ -2570,6 +2702,15 @@ function markTurnStarted(agent) {
     // reads are reset here). So a server turn after the guest spoke is
     // cancelled too, and the room decides it like any other pause: the
     // unfinished-clause wait, the hand-over, the closing round, the hold.
+    // The closing round, a hold and the goodbye always carry something for
+    // her, so their server turns are rerouted as before, never held.
+    if (openingFired && holdReleaseOn() && !heldTurn && !inboundSpeaking && !holdMode
+        && !roundActive && !roundPendingStart && !closingThanksQueued && !rotationDue) {
+      miraSpeaking = false;   // nothing of hers is heard until the room releases it
+      holdServerTurn(agent);
+      scheduleTurnDecision(TURN_DECIDE_MS);
+      return;
+    }
     if (openingFired) {
       serverTurnsRerouted += 1;
       miraSpeaking = false;
@@ -2600,6 +2741,20 @@ function markTurnStarted(agent) {
   }
   holdCheckInRequested = false;
   cancelledLinePending = false;
+  roundTurnInFlight = turnRoundLabel;
+  turnRoundLabel = "";
+  guestSpokeSinceMira = false;
+  hostSpokeSinceMira = false;
+  speechSinceMiraMs = 0;
+  turnWaitedForWords = false;
+  turnWaitedToThink = false;
+}
+
+/** markTurnStarted's bookkeeping, for a held turn the room released. */
+function turnBegins() {
+  holdCheckInRequested = false;
+  cancelledLinePending = false;
+  responseCancelledEarly = false;
   roundTurnInFlight = turnRoundLabel;
   turnRoundLabel = "";
   guestSpokeSinceMira = false;
@@ -2656,6 +2811,7 @@ async function rotateAgent() {
   // fresh session would just burn an xAI session on silence; wait for a
   // rejoin instead. If the room really is over, endRoom() clears the timer.
   if (legs.length === 0) { rotateTimer = setTimeout(function () { rotationDue = true; rotateAgent(); }, 15 * 1000); return; }
+  dropHeld("session hand-over");
   rotating = true;
   cancelTurnDecision();
   const previous = grokAgent;
@@ -4310,6 +4466,10 @@ async function endRoom(reason) {
       server_turns: serverTurns,
       self_answers_blocked: selfAnswersBlocked,
       server_turns_rerouted: serverTurnsRerouted,
+      server_turns_held: serverTurnsHeld,
+      held_turns_released: heldReleased,
+      held_turns_dropped: heldDropped,
+      held_drop_reasons: heldDropReasons,
       holds: holdsEntered,
       dead_air_nudges: deadAirNudgesTotal,
       guest_feedback: guestFeedback,

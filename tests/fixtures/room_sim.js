@@ -54,7 +54,12 @@ const agent = {
   clearMediaBuffer() { events.push("clear"); },
   addEventListener() {},
   sessionUpdate() {},
+  // Nov 25 2026: hold and release mutes her audio to the room; recorded
+  // apart from `events` so the older scenarios read exactly as before.
+  stopMediaTo() { media.push("mute"); },
+  sendMediaTo() { media.push("unmute"); },
 };
+const media = [];
 const ctx = {
   console, JSON, Math, Object, Array, String, Number, Boolean, RegExp, Promise, Error,
   parseInt, parseFloat, isFinite, encodeURIComponent,
@@ -170,7 +175,34 @@ function state() {
 }
 
 const out = {};
-if (which === "server_turns_advance_the_round") {
+function heldState() {
+  return run(`({ held: !!heldTurn, serverTurnsHeld, heldReleased, heldDropped,
+    reasons: JSON.parse(JSON.stringify(heldDropReasons)), miraSpeaking, serverTurnsRerouted })`);
+}
+if (which.indexOf("held_") === 0) {
+  // Nov 25 2026: hold and release. A room past its opening, Mira's last line
+  // heard, then the guest answers and the server starts her reply itself.
+  run("conf = {};");
+  if (which === "held_off") run("config.grok_session_log = { hold_release: false };");
+  if (which === "held_shape") run("config.grok_session_log = { turn_shapes: true };");
+  else run("config.grok_session_log = Object.assign({ turn_shapes: false }, config.grok_session_log || {});");
+  roomTurnStarts();
+  miraFinishes("What did the first year of the company teach you?");
+  events.length = 0; media.length = 0;
+  const answer = which === "held_shape"
+    ? "We learned that the customers who complained the most were the ones who stayed the longest with us."
+    : "Mostly that hiring slowly was the right call.";
+  guestSays(answer, 3000);
+  serverStartsATurn();
+  out.whileHeld = { events: events.slice(), media: media.slice(), state: heldState() };
+  if (which === "held_audio_first") { ctx.__ev = { delta: "So" }; run("noteMiraDelta(__ev);"); }
+  if (which === "held_talked_over") { run("inboundSpeaking = true; inboundSpokeAt = Date.now();"); run("dropHeld('they kept talking'); noteInboundStart();"); advance(1500); run("inboundSpeaking = false;"); run("scheduleTurnDecision(TURN_DECIDE_MS);"); }
+  advance(1000);
+  out.decided = { events: events.slice(), media: media.slice(), state: heldState(),
+    instructions: instructions.slice(-1)[0] || "" };
+  out.doneSwallowed = run("heldDone()");
+  out.nextDoneSwallowed = run("heldDone()");
+} else if (which === "server_turns_advance_the_round") {
   run("closingPermitted = true; startRound('test', -1);");
   roomTurnStarts();
   miraFinishes("What is the one bet you are making for the next five years?");

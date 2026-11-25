@@ -349,7 +349,7 @@ class TestDeadAirIsBroken:
         assert "cancelDeadAir();" in _fn("function noteInboundStart()")
 
     def test_it_fires_from_the_end_of_her_turn_and_is_reported(self):
-        i = SCENARIO.index("agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;")
+        i = SCENARIO.index("agent.addEventListener(Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        if (agent === grokAgent && heldDone()) return;\n        miraSpeaking = false;")
         assert "armDeadAir();" in SCENARIO[i:i + 400]
         assert "dead_air_nudges: deadAirNudgesTotal" in _fn("async function endRoom(reason)")
 
