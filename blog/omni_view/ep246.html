@@ -67,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="../../styles/main.css?v=dd382439">
 
     
     <link rel="alternate" type="application/rss+xml" title="Omni View Blog RSS" href="https://nerranetwork.com/blog_omni_view.rss">
@@ -349,7 +349,7 @@
         }
     </style>
     
-    <link rel="stylesheet" href="../../styles/blog.css?v=c634c5e8">
+    <link rel="stylesheet" href="../../styles/blog.css?v=c85b1bb3">
 
 
     
@@ -1100,12 +1100,48 @@
                     Listen to podcast
                 </a>
                 
-                <a href="https://www.youtube.com/watch?v=bz1ukVa7KtQ" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long" hidden data-nn-release="2026-11-24T13:00:00Z">
+                <a href="https://www.youtube.com/watch?v=bz1ukVa7KtQ" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
                     Watch on YouTube
                 </a>
                 
             </div>
+            <div class="blog-follow-row">
+                <span class="blog-follow-label">Follow Omni View</span>
+                
+                <a class="blog-follow-chip" data-follow="apple" data-show="omni_view"
+                   href="https://podcasts.apple.com/us/podcast/omni-view-balanced-news-perspectives/id1885661594?utm_source=nerranetwork&utm_medium=blog&utm_campaign=omni_view"
+                   target="_blank" rel="noopener">Apple Podcasts</a>
+                
+                <a class="blog-follow-chip" data-follow="spotify" data-show="omni_view"
+                   href="https://open.spotify.com/show/4KuOgvZMm4Mweorshrm2qR?utm_source=nerranetwork&utm_medium=blog&utm_campaign=omni_view"
+                   target="_blank" rel="noopener">Spotify</a>
+                
+                <a class="blog-follow-chip" data-follow="youtube" data-show="omni_view"
+                   href="https://www.youtube.com/playlist?list=PLRHMnzNNXPYCv9Q34Hnv9h6C3PMUpkLXo"
+                   target="_blank" rel="noopener">YouTube</a>
+                
+                <a class="blog-follow-chip" data-follow="rss" data-show="omni_view"
+                   href="../../omni_view_podcast.rss"
+                   >RSS</a>
+                
+                <button type="button" class="blog-follow-chip blog-share-native" hidden
+                        data-share-url="https://nerranetwork.com/blog/omni_view/ep246.html"
+                        data-share-title="More than 6,500 Rohingya face return from Malaysia to Myanmar after a genocide ruling.">Share</button>
+            </div>
+            <script>
+            (function () {
+                var b = document.querySelector('.blog-share-native');
+                if (!b || !navigator.share) return;
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    navigator.share({ title: b.getAttribute('data-share-title'), url: b.getAttribute('data-share-url') })
+                        .then(function () { if (typeof window.gtag === 'function') window.gtag('event', 'share', { method: 'native', content_type: 'episode' }); })
+                        .catch(function () {});
+                });
+            })();
+            </script>
+            
         </div>
     </header>
     
@@ -1906,12 +1942,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep247.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 247 · Two-hour daily power cuts now reach ninety-two million people across Iran.</span>
+                </a>
                 
             </nav>
             
@@ -1939,6 +1973,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>More from Omni View</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep247.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Ep 247</span>
+                        <h3>Two-hour daily power cuts now reach ninety-two million… · Omni View</h3>
+                    </a>
+                    
                     <a href="ep245.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Ep 245</span>
                         <h3>Seven naval drones sank Russia's Merkury in Libya… · Omni View</h3>
@@ -1959,11 +1998,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <h3>Up to half a percent of GDP is what Britain's Treasury… · Omni View</h3>
                     </a>
                     
-                    <a href="ep241.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Ep 241</span>
-                        <h3>Four of twenty-six points is what aid groups now give… · Omni View</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../omni-view.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">Omni View show page</a><span aria-hidden="true"> · </span>
@@ -1978,10 +2012,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/nerra_daily/ep095.html" class="blog-related-card" style="--card-show-color: #007A99">
+                    <a href="../../blog/nerra_daily/ep096.html" class="blog-related-card" style="--card-show-color: #007A99">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
-                        <h3>Monday edition — SpaceX records, a Libya strike, and AI power scale</h3>
+                        <h3>Tuesday edition — Satellite recoveries, Cybercab rollouts, and gene-therapy results</h3>
                         
                     </a>
                     
@@ -2449,7 +2483,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="../../assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=445af143" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
