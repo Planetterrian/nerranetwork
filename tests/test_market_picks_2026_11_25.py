@@ -26,6 +26,10 @@ from tests.test_nerra_daily_email_2026_11_03 import NOW, _front  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 BIG_SIX = ("spacex", "tesla", "models_agents", "fascinating_frontiers",
            "modern_investing", "models_agents_beginners")
+#: 9c: the three smallest shows keep running; their directory copy leads
+#: with the words a listener searches for (the towns, the subject).
+SMALL_THREE = {"collingwood": "Collingwood", "longevity": "longevity",
+               "env_intel": "environmental regulation"}
 
 
 def _rss(slug):
@@ -40,7 +44,12 @@ class TestDirectoryCopy:
         head = _rss(slug)[:150].lower()
         assert "source" in head or "ledger" in head
 
-    @pytest.mark.parametrize("slug", BIG_SIX)
+    @pytest.mark.parametrize("slug,word", sorted(SMALL_THREE.items()))
+    def test_small_shows_lead_with_what_a_listener_searches(self, slug, word):
+        assert word.lower() in _rss(slug)[:80].lower()
+        assert "source" in _rss(slug).lower()
+
+    @pytest.mark.parametrize("slug", BIG_SIX + tuple(SMALL_THREE))
     def test_copy_never_repeats_the_disclosure_or_promises_a_length(self, slug):
         text = _rss(slug)
         assert "AI Disclosure" not in text
@@ -78,6 +87,12 @@ def sunday_copy(monkeypatch):
         pytest.skip("fixture has no SpaceX row")
     composed = nde.compose(SUNDAY, now=NOW + dt.timedelta(days=6), front=front, trial_days=7)
     return composed, asked
+
+
+def test_planetterrian_points_its_listeners_at_longevity():
+    import generate_html
+    assert generate_html.NETWORK_SHOWS["planetterrian"]["related_show"] == "longevity"
+    assert 'href="longevity.html"' in (ROOT / "planetterrian.html").read_text(encoding="utf-8")
 
 
 class TestSpaceXWeek:
