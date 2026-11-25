@@ -387,7 +387,8 @@
 <div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches"{% if live_ticker %} data-live-markets="{{ live_ticker.markets_api }}" data-every="{{ live_ticker.quotes_every_s }}" data-account="{{ path_prefix }}account.html"{% endif %}>
     <span class="lt-markets-h">Markets &amp; launches</span>
     <button type="button" class="lt-tape-pause" hidden aria-pressed="false" data-pause="Pause" data-play="Play">Pause</button>
-    <ul>
+    {#- A scrolling list a keyboard can reach (Nov 24 2026). -#}
+    <ul tabindex="0" aria-label="Market quotes and upcoming launches">
         {% for g in mk.groups %}
         <li class="lt-mk-group" data-quotes><span class="lt-mk-label">{{ g.label }} · <time datetime="{{ g.as_of_iso }}">{{ g.as_of }}</time></span>
             {% for q in g.quotes %}<span class="lt-quote is-{{ q.direction }}" data-symbol="{{ q.symbol }}"><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}</span>{% endfor %}

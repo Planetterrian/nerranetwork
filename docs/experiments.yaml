@@ -8063,6 +8063,31 @@ experiments:
       (critical_rate_rise, contract_page_shows), review_snapshot "Must-haves
       and audit trend". No prompt or audio change. Guards
       tests/test_review_loop_automation_2026_11_24.py.
+  - id: show-page-search-titles-2026-11-24
+    title: "Every show page has a stable search title and description"
+    area: growth
+    shipped: 2026-11-24
+    readout: 2026-12-22
+    status: reading
+    baseline: >
+      Nov 24: 18 English show pages had no row in
+      docs/seo-titles-final.md, so their title led with the day's episode
+      hook, clipped, and changed with every episode (25 site pages over 65
+      characters, the longest 104; "Collingwood Weekly — Ten Grey County
+      councillors will not return after the… | Nerra Network"). GA4 recorded
+      4 Google-organic sessions in 28 days, an undercount while analytics
+      consent is denied by default.
+    target: >
+      Search Console, 28 days from the merge against the 28 before: clicks on
+      the 18 show pages up, at an average position no worse.
+    criteria: >
+      HIT when clicks on the 18 pages rise and position holds. INCONCLUSIVE
+      if Search Console shows under 100 impressions across the 18 pages in
+      either window: then the titles are not what limits them.
+    readout_plan: >
+      Search Console, Pages filtered to the 18 URLs added under "Added Nov 24
+      2026" in docs/seo-titles-final.md, Dec 22. Guards
+      tests/test_discoverability_2026_11_24.py.
   - id: web-signup-path-2026-11-24
     title: "Show pages, episode posts and the Nerra Daily page put play, follow and the email form on a phone's first screen"
     area: growth

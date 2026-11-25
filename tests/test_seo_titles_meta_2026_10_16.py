@@ -33,6 +33,24 @@ URL_TO_FILE = {
     "/prediction-markets.html": "prediction-markets.html",
     "/modern-investing.html": "modern-investing.html",
     "/nerra-daily.html": "nerra-daily.html",
+    "/omni-view.html": "omni-view.html",
+    "/planetterrian.html": "planetterrian.html",
+    "/env-intel.html": "env-intel.html",
+    "/models-agents-beginners.html": "models-agents-beginners.html",
+    "/unintended-consequences.html": "unintended-consequences.html",
+    "/first-principles.html": "first-principles.html",
+    "/thedppod.html": "thedppod.html",
+    "/offshore-north.html": "offshore-north.html",
+    "/peptides.html": "peptides.html",
+    "/longevity.html": "longevity.html",
+    "/vancouver.html": "vancouver.html",
+    "/collingwood.html": "collingwood.html",
+    "/omni-view-world.html": "omni-view-world.html",
+    "/omni-view-europe.html": "omni-view-europe.html",
+    "/omni-view-asia-pacific.html": "omni-view-asia-pacific.html",
+    "/omni-view-africa-mideast.html": "omni-view-africa-mideast.html",
+    "/omni-view-latam.html": "omni-view-latam.html",
+    "/omni-view-north-america.html": "omni-view-north-america.html",
 }
 
 TITLE_TAGS = ("title", "og:title", "twitter:title")
@@ -123,8 +141,8 @@ def test_seo_file_matches_url_to_file(approved):
     # approved() already asserts set(rows) == set(URL_TO_FILE); pin the
     # expected size so adding a dict entry without a docs row still fails
     # (11 original + 4 show pages on 2026-10-28).
-    assert len(URL_TO_FILE) == 16
-    assert len(approved) == 16
+    assert len(URL_TO_FILE) == 34
+    assert len(approved) == 34
     assert set(approved) == set(URL_TO_FILE)
 
 
