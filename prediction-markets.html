@@ -69,7 +69,7 @@
     <script defer src="assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="styles/main.css?v=dd382439">
 
     
 <!-- Schema.org PodcastSeries -->
@@ -844,14 +844,14 @@
                 <div class="show-hero-meta" style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);"><span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">Daily</span>
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">~8-10 min</span>
                     
-                </div>
-                <p class="show-hero-desc">Prediction Markets Daily follows a field that changes every week. Every day: the rulings, rules and lawsuits deciding what prediction markets may be; the venues, their new products and the people building and criticizing them; a short board of the day's most traded questions with their prices, volumes and caveats; and one clear explainer on how these markets work and what the research says about them. It reports and explains — it never tells anyone what to trade. Not financial advice.</p>
+                </div><p class="show-hero-desc" id="showHeroDesc">Prediction Markets Daily follows a field that changes every week. Every day: the rulings, rules and lawsuits deciding what prediction markets may be; the venues, their new products and the people building and criticizing them; a short board of the day's most traded questions with their prices, volumes and caveats; and one clear explainer on how these markets work and what the research says about them. It reports and explains — it never tells anyone what to trade. Not financial advice.</p>
+                <button type="button" class="show-hero-desc-more" id="showHeroDescMore" aria-controls="showHeroDesc" aria-expanded="false" hidden>Read more</button>
                 
                 
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">curious, numerate listeners who want to understand prediction markets — the law, the venues, the economics — whether or not they ever trade</p>
                 
                 <div class="show-hero-actions">
-                    <a href="#latest-player" class="nn-btn nn-btn-primary">Listen Now</a>
+                    <a href="#latest-player" class="nn-btn nn-btn-primary" data-nn-play-latest>Listen Now</a>
                     <a href="blog/prediction_markets/index.html" class="nn-btn">Read Blog</a>
                     
                     
@@ -887,7 +887,31 @@
                 
             </div>
         </div>
-    </section><section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
+    </section><script>
+    (function () {
+        var d = document.getElementById('showHeroDesc'), b = document.getElementById('showHeroDescMore');
+        if (d && b && window.matchMedia && window.matchMedia('(max-width: 639px)').matches) {
+            d.classList.add('is-clamped');
+            if (d.scrollHeight > d.clientHeight + 4) {
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    d.classList.remove('is-clamped');
+                    b.setAttribute('aria-expanded', 'true');
+                    b.hidden = true;
+                });
+            } else { d.classList.remove('is-clamped'); }
+        }
+        var play = document.querySelector('[data-nn-play-latest]');
+        if (play) play.addEventListener('click', function () {
+            var a = document.getElementById('latest-audio');
+            if (!a || !a.getAttribute('src')) return;
+            try {
+                if (window.NNPlayer && typeof window.NNPlayer.playElement === 'function') window.NNPlayer.playElement(a);
+                else a.play();
+            } catch (e) {}
+        });
+    })();
+    </script><section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
         <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
             <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
                 📬 Get Prediction Markets Daily in Nerra Daily, our 7 AM email:
@@ -906,7 +930,7 @@
                 <input type="email" name="email" required autocomplete="email"
                        placeholder="your@email.com"
                        aria-label="Email address"
-                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.92rem;min-width:200px;">
+                       style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:200px;">
                 <button type="submit" style="padding:6px 14px;border-radius:6px;background:var(--show-color);color:#ffffff;border:none;font-size:0.92rem;font-weight:600;cursor:pointer;">Subscribe</button>
             </form>
         </div>
@@ -915,24 +939,24 @@
     <!-- Latest Episode -->
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
-            <div class="latest-episode glass-card" id="latest-player" data-episode="63">
+            <div class="latest-episode glass-card" id="latest-player" data-episode="64">
                 <div class="latest-episode-label">Latest Episode</div>
                 <div class="nn-latest-grid">
                     <div class="nn-latest-listen">
-                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 63: Seventeen no-action letters end, putting event-contract venues under one reporting rule.</div>
-                        <div class="latest-episode-date" id="latest-date">November 24, 2026</div>
+                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 64: Fourteen days from now, Kalshi must block sports contracts on four New Mexico tribal lands.</div>
+                        <div class="latest-episode-date" id="latest-date">November 25, 2026</div>
                         
-                        <audio id="latest-audio" controls preload="metadata" data-nn-card data-nn-title-from="#latest-title" data-show="Prediction Markets Daily" data-cover="assets/covers/prediction-markets.jpg" src="https://op3.dev/e/audio.nerranetwork.com/prediction_markets/Prediction_Markets_Ep063_20261124.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        <audio id="latest-audio" controls preload="metadata" data-nn-card data-nn-title-from="#latest-title" data-show="Prediction Markets Daily" data-cover="assets/covers/prediction-markets.jpg" src="https://op3.dev/e/audio.nerranetwork.com/prediction_markets/Prediction_Markets_Ep064_20261125.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
                         
                         <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                     </div>
 
                     <div class="nn-latest-read">
                         <div class="nn-latest-read-label">Read this episode</div>
-                        <div class="nn-latest-summary" id="latest-summary">Seventeen no-action letters end, putting event-contract venues under one reporting rule.</div>
+                        <div class="nn-latest-summary" id="latest-summary">Fourteen days from now, Kalshi must block sports contracts on four New Mexico tribal lands.</div>
                         <div class="nn-latest-actions">
                             
-                            <a id="latest-article" href="blog/prediction_markets/ep063.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
+                            <a id="latest-article" href="blog/prediction_markets/ep064.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">Article &amp; transcript &rarr;</a>
                             
                             
                             <a class="nn-latest-archive" href="blog/prediction_markets/index.html">Every episode, written up</a>
@@ -966,6 +990,14 @@
             
             <div id="episodes-grid" class="episodes-grid">
                 
+                
+                <div class="episode-card glass-card">
+                    <div class="episode-card-title">Ep 64: Fourteen days from now, Kalshi must block sports contracts on four New Mexico tribal lands.</div>
+                    <div class="episode-card-date">Wed, Nov 25, 2026</div>
+                    
+                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/prediction_markets/Prediction_Markets_Ep064_20261125.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                    
+                </div>
                 
                 <div class="episode-card glass-card">
                     <div class="episode-card-title">Ep 63: Seventeen no-action letters end, putting event-contract venues under one reporting rule.</div>
@@ -1052,14 +1084,6 @@
                     <div class="episode-card-date">Sat, Nov 14, 2026</div>
                     
                     <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/prediction_markets/Prediction_Markets_Ep053_20261114.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 52: A Louisiana judge barred event contracts for ten days after the attorney general sued.</div>
-                    <div class="episode-card-date">Fri, Nov 13, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/prediction_markets/Prediction_Markets_Ep052_20261113.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                     
                 </div>
                 
@@ -1152,6 +1176,19 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
                 
+                <a href="blog/prediction_markets/ep064.html" class="blog-idx-card">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-date">November 25, 2026</span>
+                        <span class="blog-idx-ep">Ep 64</span>
+                        <span class="blog-idx-reading">8 min</span>
+                    </div>
+                    <h2>Fourteen days from now, Kalshi must block sports contracts on four New Mexico tribal lands.</h2>
+                    
+                    <p>Fourteen days from now, Kalshi must block sports contracts on four New Mexico tribal lands.</p>
+                    
+                    <span class="blog-idx-read-more">Read article &rarr;</span>
+                </a>
+                
                 <a href="blog/prediction_markets/ep063.html" class="blog-idx-card">
                     <div class="blog-idx-card-top">
                         <span class="blog-idx-date">November 24, 2026</span>
@@ -1174,19 +1211,6 @@
                     <h2>Twenty-five thousand Kalshi event outcomes now sit inside LSEG Workspace for institutional clients.</h2>
                     
                     <p>Twenty-five thousand Kalshi event outcomes now sit inside LSEG Workspace for institutional clients.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/prediction_markets/ep061.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">November 22, 2026</span>
-                        <span class="blog-idx-ep">Ep 61</span>
-                        <span class="blog-idx-reading">6 min</span>
-                    </div>
-                    <h2>Forty-four attorneys general want a federal swap rule pulled before it overrides state gambling law.</h2>
-                    
-                    <p>Forty-four attorneys general want a federal swap rule pulled before it overrides state gambling law.</p>
                     
                     <span class="blog-idx-read-more">Read article &rarr;</span>
                 </a>
@@ -1685,7 +1709,7 @@
            only the server can tell an article from a redirect stub. An
            episode missing from this map renders without a link, never with a
            broken one. */
-        const EPISODE_POST_URLS = {"34": "blog/prediction_markets/ep034.html", "35": "blog/prediction_markets/ep035.html", "36": "blog/prediction_markets/ep036.html", "37": "blog/prediction_markets/ep037.html", "38": "blog/prediction_markets/ep038.html", "39": "blog/prediction_markets/ep039.html", "40": "blog/prediction_markets/ep040.html", "41": "blog/prediction_markets/ep041.html", "42": "blog/prediction_markets/ep042.html", "43": "blog/prediction_markets/ep043.html", "44": "blog/prediction_markets/ep044.html", "45": "blog/prediction_markets/ep045.html", "46": "blog/prediction_markets/ep046.html", "47": "blog/prediction_markets/ep047.html", "48": "blog/prediction_markets/ep048.html", "49": "blog/prediction_markets/ep049.html", "50": "blog/prediction_markets/ep050.html", "51": "blog/prediction_markets/ep051.html", "52": "blog/prediction_markets/ep052.html", "53": "blog/prediction_markets/ep053.html", "54": "blog/prediction_markets/ep054.html", "55": "blog/prediction_markets/ep055.html", "56": "blog/prediction_markets/ep056.html", "57": "blog/prediction_markets/ep057.html", "58": "blog/prediction_markets/ep058.html", "59": "blog/prediction_markets/ep059.html", "60": "blog/prediction_markets/ep060.html", "61": "blog/prediction_markets/ep061.html", "62": "blog/prediction_markets/ep062.html", "63": "blog/prediction_markets/ep063.html"};
+        const EPISODE_POST_URLS = {"35": "blog/prediction_markets/ep035.html", "36": "blog/prediction_markets/ep036.html", "37": "blog/prediction_markets/ep037.html", "38": "blog/prediction_markets/ep038.html", "39": "blog/prediction_markets/ep039.html", "40": "blog/prediction_markets/ep040.html", "41": "blog/prediction_markets/ep041.html", "42": "blog/prediction_markets/ep042.html", "43": "blog/prediction_markets/ep043.html", "44": "blog/prediction_markets/ep044.html", "45": "blog/prediction_markets/ep045.html", "46": "blog/prediction_markets/ep046.html", "47": "blog/prediction_markets/ep047.html", "48": "blog/prediction_markets/ep048.html", "49": "blog/prediction_markets/ep049.html", "50": "blog/prediction_markets/ep050.html", "51": "blog/prediction_markets/ep051.html", "52": "blog/prediction_markets/ep052.html", "53": "blog/prediction_markets/ep053.html", "54": "blog/prediction_markets/ep054.html", "55": "blog/prediction_markets/ep055.html", "56": "blog/prediction_markets/ep056.html", "57": "blog/prediction_markets/ep057.html", "58": "blog/prediction_markets/ep058.html", "59": "blog/prediction_markets/ep059.html", "60": "blog/prediction_markets/ep060.html", "61": "blog/prediction_markets/ep061.html", "62": "blog/prediction_markets/ep062.html", "63": "blog/prediction_markets/ep063.html", "64": "blog/prediction_markets/ep064.html"};
         const PATH_PREFIX = "";
         const SHOW_NAME = "Prediction Markets Daily";
 
@@ -2147,7 +2171,7 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js?v=eca36a37" defer></script>
     <script src="assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="assets/js/footer-subscribe.js?v=445af143" defer></script><script src="assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
