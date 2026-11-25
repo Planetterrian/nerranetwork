@@ -4314,6 +4314,11 @@ async function endRoom(reason) {
    roundRepromptTimer, holdTimer].forEach(function (t) { if (t) clearTimeout(t); });
   if (timeCheckTimer) clearInterval(timeCheckTimer);
   trace("room", "ending: " + reason);
+  // Nov 25 2026: the Worker keeps only its own counters from the payload, so
+  // the turn timing rides the stored trace as one line.
+  const timing = turnTimingSummary();
+  if (timing.turns) trace("turn", "timing: " + timing.turns + " replies; transcript " + timing.transcript_ms_median +
+    " ms, request " + timing.decide_ms_median + " ms, first words " + timing.first_words_ms_median + " ms after the VAD stop / request");
   const plan = planSummary();
   if (plan) trace("plan", "reached " + plan.reached + "/" + plan.questions + "; room moves " + plan.moves +
     ", hers " + plan.own + "; longest thread " + plan.longest_thread + " questions");

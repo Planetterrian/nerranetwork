@@ -42,3 +42,11 @@ def test_the_summary_reaches_the_session_log_and_changes_no_turn():
         body = _fn(name)
         for call in ("responseCreate", "responseCancel", "requestTurn(", "scheduleTurnDecision"):
             assert call not in body
+
+
+def test_the_summary_also_rides_the_stored_trace():
+    # The Voices Worker keeps only its own counters (roomCountersOf), so the
+    # end of the room writes the timing as one trace line too.
+    end = SCENARIO[SCENARIO.index("async function endRoom("):]
+    end = end[:end.index("await fireWebhook(")]
+    assert 'trace("turn", "timing: "' in end
