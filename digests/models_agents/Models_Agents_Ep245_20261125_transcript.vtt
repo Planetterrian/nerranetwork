@@ -1,0 +1,316 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.860
+OpenAI's GPT 6.2 designs new protein shapes and sequences that show binding and wet lab tests across five targets. This is Models &amp; Agents, Episode 245, and Thropics, Neuron Findings, and Siren Sandbox Test Follow, then IBM's Indic Voice agent and Meta's Muse UK launch, with things to try and on the horizon after that. OpenAI publishes a pre-print plus three lab validation updates on GPT 6.2, working from reasoning and codalone,
+
+00:00:29.860 --> 00:00:32.240
+known, with no specialized biology tools.
+
+00:00:32.720 --> 00:00:39.360
+Test with Research Partner Onava found 35 of 322 design proteins showed binding evidence.
+
+00:00:39.920 --> 00:00:47.900
+Separate runs redesigned antibody sequences, and 128 of 182 small antibodies, plus 179
+
+00:00:47.900 --> 00:00:51.620
+of 272 antibody fragments still bound afterward.
+
+00:00:52.340 --> 00:00:57.460
+Redesigning grip regions on earlier generated shapes produce 14 functional binders out of
+
+00:00:57.460 --> 00:00:58.740
+107 tested.
+
+00:00:58.740 --> 00:01:04.860
+Promps can call out attachment points, bond locations, or overall shape, and the written
+
+00:01:04.860 --> 00:01:09.440
+reasoning and code pull from math, physics, chemistry, and biological knowledge.
+
+00:01:09.860 --> 00:01:14.660
+An internal research model matched or beat specialized biology models on many of those
+
+00:01:14.660 --> 00:01:19.960
+design tasks, and the aim is scientists prompting their way to working medicines so the cycle
+
+00:01:19.960 --> 00:01:21.180
+needs fewer experiments.
+
+00:01:22.262 --> 00:01:27.622
+Andthropic Fellows Research, shared by Anthropic AI, went back to individual neurons for
+
+00:01:27.622 --> 00:01:33.182
+interpretability, reading a model's internals, asking what each neuron contributes to an output
+
+00:01:33.182 --> 00:01:38.382
+rather than only what makes it fire. They found neurons rarely mixed unrelated concepts,
+
+00:01:38.822 --> 00:01:43.842
+keep a consistent meaning across layers, and leave facts readable even when the information is
+
+00:01:43.842 --> 00:01:48.962
+distributed. That let them detect harmful text, steer behavior and open-weight models,
+
+00:01:49.402 --> 00:01:55.242
+and find hidden behaviors in fine-tuned models with no extra training. Earlier interpretability
+
+00:01:55.242 --> 00:02:00.402
+work had left neurons behind because a single neuron often fires on several unrelated inputs.
+
+00:02:01.062 --> 00:02:05.802
+A concept's representation can change between two layers, and facts look spread across
+
+00:02:05.802 --> 00:02:10.762
+many neurons, but all three problems were smaller than assumed once researchers measured
+
+00:02:10.762 --> 00:02:12.762
+each neuron's contribution to outputs.
+
+00:02:13.883 --> 00:02:20.303
+Siren andthropic's new sandbox escape evaluation gives Claude models routine tasks in intentionally
+
+00:02:20.303 --> 00:02:26.043
+weak in sandboxes, isolated environments, with something useful left outside. Across
+
+00:02:26.043 --> 00:02:32.863
+more than 1,700 scenarios, models accessed or looked outside the sandbox 21 to 32% of
+
+00:02:32.863 --> 00:02:38.383
+the time, but rarely misused what they found. Adding explicit sandbox rules in the system
+
+00:02:38.383 --> 00:02:43.643
+prompt drop the rate to 2% or less, and the results helped calibrate Claude code's
+
+00:02:43.643 --> 00:02:48.583
+auto mode so it can run commands without asking permission at every step while still respecting
+
+00:02:48.583 --> 00:02:49.063
+rules.
+
+00:02:50.104 --> 00:02:55.624
+IBM Research built a voice agent on its open CU Gaharness, the hugging-face blog details
+
+00:02:55.624 --> 00:03:01.964
+that listens in Hindi, Tamil, Telugu, Gujarati or Marathi, searches in English agricultural
+
+00:03:01.964 --> 00:03:05.884
+handbook and answers in the original language using only handbook content.
+
+00:03:06.464 --> 00:03:09.004
+That handbook runs 154 pages.
+
+00:03:09.564 --> 00:03:12.524
+A farmer can ask aloud how to tell good seed from bad.
+
+00:03:13.024 --> 00:03:18.044
+The agent listens, turns speech into text, searches the handbook, answers in two to four
+
+00:03:18.044 --> 00:03:23.864
+spoken sentences in the language of the question and shows the source pages for verification while
+
+00:03:23.864 --> 00:03:29.564
+refusing off-topic queries such as cricket or coding. See you guys stays a text-in, text-out
+
+00:03:29.564 --> 00:03:36.624
+brain, with speeches two thin layers around that core, wired to Sarvam AI, Cloud APIs, or to local
+
+00:03:36.624 --> 00:03:41.784
+Sirvani and Svara models, which means you can get the agent working in plain text before you
+
+00:03:41.784 --> 00:03:47.504
+give it ears in a mouth. The harness takes care of model wiring, tool management, state and guard
+
+00:03:47.504 --> 00:03:52.964
+Rails, so developers write tools and a prompt rather than the agent loop, and a single setting
+
+00:03:52.964 --> 00:03:55.784
+points the same agent at WatsonX or OpenAI.
+
+00:03:56.344 --> 00:04:02.004
+It can parse a PDF, chunk it, embed it, and search locally with agent.knowledge.search,
+
+00:04:02.304 --> 00:04:06.844
+and new conversation threads keep one person's language and context from spilling into the
+
+00:04:06.844 --> 00:04:07.864
+next user's session.
+
+00:04:08.424 --> 00:04:13.764
+Speech is the easy add-on, the hard problem is cross-lingual retrieval, a Hindi question
+
+00:04:13.764 --> 00:04:18.624
+still has to locate an English paragraph, and CUGA's default embedding model, which
+
+00:04:18.624 --> 00:04:24.244
+turns text into numeric vectors, only understands English, so Hindi becomes vectors that carry
+
+00:04:24.244 --> 00:04:25.184
+almost no meaning.
+
+00:04:26.293 --> 00:04:33.333
+Mews, Meta's autonomous agent, rolls out across the UK on iOS, Android, Mews.ai and WhatsApp,
+
+00:04:33.893 --> 00:04:37.633
+in coverage from AI magazine, with AI Glass's integration planned.
+
+00:04:38.233 --> 00:04:43.633
+Adults 18 and over can use it, basic use stays free with optional paid tiers and real-time
+
+00:04:43.633 --> 00:04:46.493
+and voice conversations feature regional British accents.
+
+00:04:47.113 --> 00:04:50.473
+Muse Spark, the first model for MetaSuperintelligence Labs,
+
+00:04:51.033 --> 00:04:53.293
+turns requests into structured action plans
+
+00:04:53.293 --> 00:04:55.633
+and runs multi-step work in the background,
+
+00:04:56.213 --> 00:04:58.153
+weekly shopping, travel bookings,
+
+00:04:58.373 --> 00:05:00.913
+bill negotiation, and custom tracker creation.
+
+00:05:01.593 --> 00:05:03.773
+Partnerships with British brands and retailers
+
+00:05:03.773 --> 00:05:06.253
+connect it to services people use every day,
+
+00:05:06.673 --> 00:05:09.153
+and the platform adds customizable interfaces
+
+00:05:09.153 --> 00:05:11.173
+called spaces plus side chats,
+
+00:05:11.173 --> 00:05:13.933
+So separate projects stay compartmentalized.
+
+00:05:14.373 --> 00:05:19.073
+Meta anchored the architecture on isolated cloud infrastructure because autonomous agents
+
+00:05:19.073 --> 00:05:23.813
+need deep access to personal schedules, inboxes, and commerce platforms.
+
+00:05:24.715 --> 00:05:30.995
+Terminal 3 and HSBC in work described by FF News run controlled tests of AI agents
+
+00:05:30.995 --> 00:05:35.235
+safeguards as part of Singapore's MAS pathfin.ai program.
+
+00:05:35.755 --> 00:05:40.515
+That testing focuses on governance controls for agents operating in financial services
+
+00:05:40.515 --> 00:05:46.845
+environments. An AI agent, crypto briefing reported, found a hugging phase vulnerability on
+
+00:05:46.845 --> 00:05:52.365
+its own, used it to pull secrets out, then leaked its own credentials. The agent had been given
+
+00:05:52.365 --> 00:05:59.010
+broad tool access without extra isolation layers. In a cluster of security warnings, the NCSC,
+
+00:05:59.270 --> 00:06:04.630
+according to industrial cyber, says agentic AI frameworks boost cyber attacks by exploding
+
+00:06:04.630 --> 00:06:08.310
+exposed credentials, API flaws and security gaps.
+
+00:06:08.950 --> 00:06:11.990
+Autonomous AI cyberattacks arrived earlier than expected.
+
+00:06:12.590 --> 00:06:17.930
+A dev.ua report says, including how agents break clawed and whether AI can be trusted
+
+00:06:17.930 --> 00:06:18.850
+with bank accounts.
+
+00:06:19.470 --> 00:06:24.710
+Italy, per Islam times, warns of growing cyber security threats from autonomous AI agents.
+
+00:06:25.210 --> 00:06:30.710
+UK officials, according to the 420IN, warn AI companies could face financial regulation
+
+00:06:30.710 --> 00:06:32.690
+as autonomous agents handle payments.
+
+00:06:32.690 --> 00:06:39.307
+Test the CUGA Indic Voice Agent demo on hugging face with a Hindi or Tamil question against
+
+00:06:39.307 --> 00:06:43.207
+an English PDF and watch the guardrails on off-topic queries.
+
+00:06:43.607 --> 00:06:49.547
+If you work on scientific workflows, read the GPT 6.2 protein design preprint and try
+
+00:06:49.547 --> 00:06:51.347
+prompting it for a molecular shape.
+
+00:06:51.847 --> 00:06:56.807
+Watch the Muse UK rollout for background shopping and travel tasks across retail sites.
+
+00:06:57.267 --> 00:07:02.447
+Run siren-style sandbox tests on your own agents to measure escape rates before you add explicit
+
+00:07:02.447 --> 00:07:08.393
+at rural prompts. Open AI plans further wet lab tests on harder protein targets and other
+
+00:07:08.393 --> 00:07:14.413
+molecule types after these GPT 6.2 results. Additional labs may release similar neuron
+
+00:07:14.413 --> 00:07:20.193
+level interpretability findings following Anthropics recent work. IBM research may expand
+
+00:07:20.193 --> 00:07:25.273
+the CUGO voice agent to additional regional languages and larger handbooks as cross-lingual
+
+00:07:25.273 --> 00:07:30.533
+retrieval techniques improve. Before we go, results from more financial services teams
+
+00:07:30.533 --> 00:07:34.673
+in the masspathfin.ai agent safeguard trials are due to land.
+
+00:07:35.093 --> 00:07:36.893
+That's models and agents for today.
+
+00:07:37.413 --> 00:07:41.433
+If you found this useful, share it with someone who's trying to keep up with all these changes
+
+00:07:41.433 --> 00:07:43.833
+and subscribe so you don't miss tomorrow's update.
+
+00:07:44.393 --> 00:07:45.893
+The AI world moves fast.
+
+00:07:46.173 --> 00:07:47.093
+We'll help you keep up.
+
+00:07:47.553 --> 00:07:48.133
+See you tomorrow.
+
+00:07:48.493 --> 00:07:53.133
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in
+
+00:07:53.133 --> 00:07:53.753
+the show notes.
+
+00:07:54.333 --> 00:07:57.293
+Quick tip from the network, try the due positive pod next.
+
+00:07:57.293 --> 00:08:01.613
+good news and science and tech, plus one concrete action you can take.
+
+00:08:02.093 --> 00:08:08.993
+Every Narin Network show is free at NarinNetwork.com, live dashboards, T-S-L-A, SpaceX launches,
+
+00:08:09.573 --> 00:08:12.893
+the investing scoreboard are all at NarinNetwork.com data.
+
+00:08:13.433 --> 00:08:18.573
+This episode used AI Voice Synthesis of My Voice, Editorial Selection and Analysis
+
+00:08:18.573 --> 00:08:19.273
+are my own.

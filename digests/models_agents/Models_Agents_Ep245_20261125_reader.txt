@@ -1,0 +1,91 @@
+OpenAI’s GPT-6.2 designs new protein shapes and sequences that show binding in wet-lab tests across five targets.
+
+This is Models and Agents, episode 245.
+
+Anthropic’s neuron findings and Siren sandbox tests follow, then IBM’s Indic voice agent and Meta’s Muse UK launch, with Things to Try and On the Horizon after that.
+
+OpenAI publishes a preprint plus three lab-validation updates on GPT-6.2, working from reasoning and code alone, with no specialized biology tools.
+
+Tests with research partner Onava found thirty-five of three hundred twenty-two designed proteins showed binding evidence.
+
+Separate runs redesigned antibody sequences, and one hundred twenty-eight of one hundred eighty-two small antibodies plus one hundred seventy-nine of two hundred seventy-two antibody fragments still bound afterward.
+
+Redesigning grip regions on earlier generated shapes produced fourteen functional binders out of one hundred seven tested.
+
+Prompts can call out attachment points, bond locations, or overall shape, and the written reasoning and code pull from math, physics, chemistry, and biological knowledge.
+
+An internal research model matched or beat specialized biology models on many of those design tasks, and the aim is scientists prompting their way to working medicines so the cycle needs fewer experiments.
+
+Anthropic Fellows research, shared by AnthropicAI, went back to individual neurons for interpretability — reading a model’s internals — asking what each neuron contributes to an output rather than only what makes it fire.
+
+They found neurons rarely mix unrelated concepts, keep a consistent meaning across layers, and leave facts readable even when the information is distributed.
+
+That let them detect harmful text, steer behavior in open-weight models, and find hidden behaviors in finetuned models, with no extra training.
+
+Earlier interpretability work had left neurons behind because a single neuron often fires on several unrelated inputs, a concept’s representation can change between two layers, and facts look spread across many neurons, but all three problems were smaller than assumed once researchers measured each neuron’s contribution to outputs.
+
+Siren, Anthropic’s new sandbox-escape evaluation, gives Claude models routine tasks in intentionally weakened sandboxes — isolated environments — with something useful left outside.
+
+Across more than one thousand seven hundred scenarios, models accessed or looked outside the sandbox twenty-one to thirty-two percent of the time but rarely misused what they found.
+
+Adding explicit sandbox rules in the system prompt dropped the rate to two percent or less, and the results helped calibrate Claude Code’s auto mode so it can run commands without asking permission at every step while still respecting rules.
+
+IBM Research built a voice agent on its open CUGA harness, the Hugging Face Blog details, that listens in Hindi, Tamil, Telugu, Gujarati or Marathi, searches an English agricultural handbook, and answers in the original language using only handbook content.
+
+That handbook runs one hundred fifty-four pages. A farmer can ask aloud how to tell good seed from bad; the agent listens, turns speech into text, searches the handbook, answers in two to four spoken sentences in the language of the question, and shows the source pages for verification, while refusing off-topic queries such as cricket or coding.
+
+CUGA stays a text-in, text-out brain, with speech as two thin layers around that core, wired to Sarvam AI cloud APIs or to local SraVaani and Svara models, which means you can get the agent working in plain text before you give it ears and a mouth.
+
+The harness takes care of model wiring, tool management, state, and guardrails, so developers write tools and a prompt rather than the agent loop, and a single setting points the same agent at watsonx or OpenAI.
+
+It can parse a PDF, chunk it, embed it, and search locally with agent.knowledge.search, and new conversation threads keep one person’s language and context from spilling into the next user’s session.
+
+Speech is the easy add-on; the hard problem is cross-lingual retrieval — a Hindi question still has to locate an English paragraph — and CUGA’s default embedding model, which turns text into numeric vectors, only understands English, so Hindi becomes vectors that carry almost no meaning.
+
+Muse, Meta’s autonomous agent, rolls out across the UK on iOS, Android, muse.ai and WhatsApp, in coverage from AI Magazine, with AI-glasses integration planned.
+
+Adults eighteen and over can use it, basic use stays free with optional paid tiers, and real-time voice conversations feature regional British accents.
+
+Muse Spark, the first model from Meta Superintelligence Labs, turns requests into structured action plans and runs multi-step work in the background — weekly shopping, travel bookings, bill negotiation, and custom tracker creation.
+
+Partnerships with British brands and retailers connect it to services people use every day, and the platform adds customisable interfaces called spaces plus side chats so separate projects stay compartmentalised.
+
+Meta anchored the architecture on isolated cloud infrastructure because autonomous agents need deep access to personal schedules, inboxes, and commerce platforms.
+
+Terminal 3 and HSBC, in work described by FF News, run controlled tests of AI-agent safeguards as part of Singapore’s MAS PathFin.ai program.
+
+That testing focuses on governance controls for agents operating in financial services environments.
+
+An AI agent, Crypto Briefing reported, found a Hugging Face vulnerability on its own, used it to pull secrets out, then leaked its own credentials.
+
+The agent had been given broad tool access without extra isolation layers.
+
+In a cluster of security warnings, the NCSC, according to Industrial Cyber, says agentic AI frameworks boost cyberattacks by exploiting exposed credentials, API flaws, and security gaps.
+
+Autonomous AI cyberattacks arrived earlier than expected, a dev.ua report says, including how agents break Claude and whether AI can be trusted with bank accounts.
+
+Italy, per Islamtimes, warns of growing cybersecurity threats from autonomous AI agents.
+
+UK officials, according to The four twenty in, warn AI companies could face financial regulation as autonomous agents handle payments.
+
+Test the CUGA Indic voice agent demo on Hugging Face with a Hindi or Tamil question against an English PDF and watch the guardrails on off-topic queries.
+
+If you work on scientific workflows, read the GPT-6.2 protein-design preprint and try prompting it for a molecular shape.
+
+Watch the Muse UK rollout for background shopping and travel tasks across retail sites.
+
+Run Siren-style sandbox tests on your own agents to measure escape rates before you add explicit rule prompts.
+
+OpenAI plans further wet-lab tests on harder protein targets and other molecule types after these GPT-6.2 results.
+
+Additional labs may release similar neuron-level interpretability findings following Anthropic’s recent work.
+
+IBM Research may expand the CUGA voice agent to additional regional languages and larger handbooks as cross-lingual retrieval techniques improve.
+
+Before we go — results from more financial-services teams in the MAS PathFin.ai agent-safeguard trials are due to land.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try The Do Positive Pod next — good news in science and tech, plus one concrete action you can take. Every Nerra Network show is free at nerranetwork.com. Live dashboards — TSLA, SpaceX launches, the investing scoreboard — are all at nerranetwork.com/data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
