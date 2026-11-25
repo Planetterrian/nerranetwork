@@ -115,6 +115,11 @@ const GUEST_SETTLE_MS = 3 * 1000;
 const TURN_DECIDE_MS = 500;            // let the transcription of the last clause land
 const TURN_TRANSCRIPT_WAIT_MS = 1500;  // once more, when speech was heard but no words arrived
 const TURN_THINK_EXTRA_MS = 1500;      // once more, when the last clause reads unfinished
+// Nov 25 2026: the wait for words ends when the words land, not on the timer.
+// Timed in a rehearsal room: the guest transcript lands a median 597 ms after
+// the VAD stop, just past TURN_DECIDE_MS, so about half her replies waited the
+// whole TURN_TRANSCRIPT_WAIT_MS (a request at ~2,000 ms, median 1,109 ms).
+const TURN_WORDS_LANDED_MS = 100;
 const TURN_MIN_SPEECH_MS = 1000;       // untranscribed speech this long still earns her a turn
 const ROUND_REPROMPT_MS = 35 * 1000;   // a closing question unanswered this long gets one gentle re-ask
 const COHOST_WAIT_MS = 2 * 60 * 1000; // hold the open this long for the co-host
@@ -678,6 +683,8 @@ let hostSpokeSinceMira = false;   // the co-host has, and the guest has not
 let speechSinceMiraMs = 0;        // how much, in ms, by the VAD
 let turnDecisionTimer = null;     // the pending decideTurn
 let turnWaitedForWords = false;   // decideTurn already waited once for a transcription
+let turnWaitingForWords = false;  // ...and that wait is the timer pending now
+let turnWordsLandedEarly = 0;     // decisions the landed words brought forward
 let turnWaitedToThink = false;    // decideTurn already waited once on an unfinished clause
 let miraLineIndex = -1;           // transcript index of her last line (the guest delta starts after it)
 let currentResponseText = "";     // what she has said so far on the response in flight
@@ -1969,6 +1976,10 @@ function noteGuestTranscript(itemId, text) {
   const t = String(text || "").trim();
   if (!t) return;
   if (turnClock.stopped && !turnClock.transcript) turnClock.transcript = Date.now();
+  if (turnWaitingForWords && turnDecisionTimer && !inboundSpeaking) {
+    turnWordsLandedEarly += 1;
+    scheduleTurnDecision(TURN_WORDS_LANDED_MS);
+  }
   if (itemId && itemId === lastGuestItemId && lastGuestItemIdx >= 0
       && lastGuestItemIdx < transcript.length
       && transcript[lastGuestItemIdx].indexOf("Guest: ") === 0) {
@@ -2183,6 +2194,7 @@ function looksFinished(text) {
 
 function cancelTurnDecision() {
   if (turnDecisionTimer) { clearTimeout(turnDecisionTimer); turnDecisionTimer = null; }
+  turnWaitingForWords = false;
 }
 
 function scheduleTurnDecision(delayMs) {
@@ -2192,6 +2204,7 @@ function scheduleTurnDecision(delayMs) {
 
 function decideTurn() {
   turnDecisionTimer = null;
+  turnWaitingForWords = false;
   if (roomEnded || !grokAgent || inboundSpeaking || miraSpeaking || rotating) return;
   // A pause the room hears while her own line is still playing is hers, not
   // the guest's: decide when it ends.
@@ -2207,6 +2220,7 @@ function decideTurn() {
   if (spoke && !delta && speechSinceMiraMs >= TURN_MIN_SPEECH_MS && !turnWaitedForWords) {
     turnWaitedForWords = true;
     scheduleTurnDecision(TURN_TRANSCRIPT_WAIT_MS);
+    turnWaitingForWords = true;
     return;
   }
   if (spoke && !delta && speechSinceMiraMs < TURN_MIN_SPEECH_MS && !owed) {
@@ -4318,7 +4332,8 @@ async function endRoom(reason) {
   // the turn timing rides the stored trace as one line.
   const timing = turnTimingSummary();
   if (timing.turns) trace("turn", "timing: " + timing.turns + " replies; transcript " + timing.transcript_ms_median +
-    " ms, request " + timing.decide_ms_median + " ms, first words " + timing.first_words_ms_median + " ms after the VAD stop / request");
+    " ms, request " + timing.decide_ms_median + " ms, first words " + timing.first_words_ms_median + " ms after the VAD stop / request; " +
+    turnWordsLandedEarly + " decided when the words landed");
   const plan = planSummary();
   if (plan) trace("plan", "reached " + plan.reached + "/" + plan.questions + "; room moves " + plan.moves +
     ", hers " + plan.own + "; longest thread " + plan.longest_thread + " questions");

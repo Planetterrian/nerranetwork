@@ -50,3 +50,26 @@ def test_the_summary_also_rides_the_stored_trace():
     end = SCENARIO[SCENARIO.index("async function endRoom("):]
     end = end[:end.index("await fireWebhook(")]
     assert 'trace("turn", "timing: "' in end
+
+
+class TestTheWordsEndTheWait:
+    """Timed in rehearsal (Nov 25): the guest transcript landed a median 597 ms
+    after the VAD stop, just past TURN_DECIDE_MS (500), so about half her
+    replies waited the whole TURN_TRANSCRIPT_WAIT_MS. The wait for words now
+    ends when they land; the 1,500 ms timer stays the ceiling."""
+
+    def test_the_wait_is_marked_only_while_its_timer_is_pending(self):
+        decide = _fn("decideTurn")
+        assert decide.index("turnWaitingForWords = false;") < decide.index("const owed = pendingTurn;")
+        assert ("scheduleTurnDecision(TURN_TRANSCRIPT_WAIT_MS);\n    turnWaitingForWords = true;") in decide
+        assert "turnWaitingForWords = false;" in _fn("cancelTurnDecision")
+
+    def test_landed_words_bring_the_decision_forward_never_over_the_guest(self):
+        body = _fn("noteGuestTranscript")
+        assert "if (turnWaitingForWords && turnDecisionTimer && !inboundSpeaking) {" in body
+        assert "scheduleTurnDecision(TURN_WORDS_LANDED_MS);" in body
+        assert "const TURN_WORDS_LANDED_MS = 100;" in SCENARIO
+        assert "const TURN_TRANSCRIPT_WAIT_MS = 1500;" in SCENARIO
+
+    def test_the_count_rides_the_timing_line(self):
+        assert '" decided when the words landed"' in SCENARIO
