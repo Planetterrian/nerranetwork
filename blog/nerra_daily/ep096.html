@@ -67,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="../../styles/main.css?v=dd382439">
 
     
     <link rel="alternate" type="application/rss+xml" title="Nerra Daily Blog RSS" href="https://nerranetwork.com/blog_nerra_daily.rss">
@@ -348,7 +348,7 @@
         }
     </style>
     
-    <link rel="stylesheet" href="../../styles/blog.css?v=c634c5e8">
+    <link rel="stylesheet" href="../../styles/blog.css?v=c85b1bb3">
 
 
     
@@ -1100,6 +1100,34 @@
                 </a>
                 
             </div>
+            <div class="blog-follow-row">
+                <span class="blog-follow-label">Follow Nerra Daily</span>
+                
+                <a class="blog-follow-chip" data-follow="apple" data-show="nerra_daily"
+                   href="https://podcasts.apple.com/us/podcast/id6805616718?utm_source=nerranetwork&utm_medium=blog&utm_campaign=nerra_daily"
+                   target="_blank" rel="noopener">Apple Podcasts</a>
+                
+                <a class="blog-follow-chip" data-follow="rss" data-show="nerra_daily"
+                   href="../../nerra_daily_podcast.rss"
+                   >RSS</a>
+                
+                <button type="button" class="blog-follow-chip blog-share-native" hidden
+                        data-share-url="https://nerranetwork.com/blog/nerra_daily/ep096.html"
+                        data-share-title="Tuesday edition — Satellite recoveries, Cybercab rollouts, and gene-therapy results">Share</button>
+            </div>
+            <script>
+            (function () {
+                var b = document.querySelector('.blog-share-native');
+                if (!b || !navigator.share) return;
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    navigator.share({ title: b.getAttribute('data-share-title'), url: b.getAttribute('data-share-url') })
+                        .then(function () { if (typeof window.gtag === 'function') window.gtag('event', 'share', { method: 'native', content_type: 'episode' }); })
+                        .catch(function () {});
+                });
+            })();
+            </script>
+            
         </div>
     </header>
     
@@ -1511,12 +1539,10 @@
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep097.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 97 · Wednesday edition — Iran power limits, AI protein design, and lunar rover plans</span>
+                </a>
                 
             </nav>
             
@@ -2044,7 +2070,7 @@
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="../../assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=445af143" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
