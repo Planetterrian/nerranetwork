@@ -286,6 +286,9 @@ llm:
   max_tokens: 13000
   podcast_max_tokens: 8000
   min_podcast_words: 1400
+  # Nov 25 2026: the ceiling the podcast prompt has stated since Nov 14,
+  # now recorded (script_over_ceiling; never trimmed or retried here).
+  max_podcast_words: 1900
   # DISABLED July 29 2026 (cost + quality). Measured over 901 committed
   # episodes: 81% still shipped BELOW target WITH this retry running (Tesla
   # 96.7%, M&A 95.2%) — it fires on nearly every episode and almost never
@@ -319,7 +322,14 @@ llm:
   # floor is untouched (min_podcast_words). The fact floor
   # (min_digest_facts) waits for Planetterrian's Nov 17 readout.
   min_digest_words: 1000
-tts: {}
+# Nov 25 2026 (operator pick 4a): the script ran past one voice call on
+# eight straight episodes (14,190 to 19,524 characters against 14,000), so
+# the delivery wrap was dropped daily. When the final script is over the
+# limit, whole items come off the END of the spoken Also Today run until it
+# fits (engine/single_call_fit.py; never fewer than four items, never a
+# story; the digest keeps every item). Metric single_call_fit.
+tts:
+  fit_single_call: true
 audio:
   music_file: assets/music/OmniView.mp3
   transition_sting: assets/music/transition_sting.mp3

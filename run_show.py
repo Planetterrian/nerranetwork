@@ -5036,6 +5036,43 @@ def run(args: argparse.Namespace) -> None:
             except Exception:  # noqa: BLE001 — tripwire must never break a run
                 pass
 
+            # Nov 25 2026 (engine/single_call_fit.py, operator pick 4a): a
+            # script too long for one voice call loses the delivery wrap
+            # (landmine #17). Opt-in per show: whole items come off the END
+            # of the spoken Also Today run until the text fits; a script
+            # that cannot be brought under the limit is left as it was.
+            if (getattr(config.tts, "fit_single_call", False)
+                    and not config.tts.dialogue_mode
+                    and (config.tts.speech_wrap_open or config.tts.speech_wrap_close)):
+                try:
+                    from engine.single_call_fit import fit_single_call as _fit_call
+                    from engine.tts import GROK_MAX_CHARS_PER_REQUEST as _GROK_MAX
+                    from engine.tts import prepare_text_for_tts as _prep_tts
+                    _fit_limit = min(
+                        int(config.tts.max_chars or _GROK_MAX), _GROK_MAX,
+                    ) - len(config.tts.speech_wrap_open or "") - len(config.tts.speech_wrap_close or "")
+                    _fit = _fit_call(
+                        podcast_script, x_thread or "", _fit_limit,
+                        measure=lambda _t: len(_prep_tts(_t)),
+                    )
+                    podcast_script = _fit.script
+                    metrics.record("single_call_fit", _fit.outcome)
+                    metrics.record("single_call_fit_removed", _fit.removed)
+                    metrics.record("single_call_fit_chars_before", _fit.chars_before)
+                    metrics.record("single_call_fit_chars_after", _fit.chars_after)
+                    if _fit.outcome == "trimmed":
+                        logger.info(
+                            "Single-call fit: %d of %d Also Today sentences removed "
+                            "(%d -> %d chars, limit %d)", _fit.removed, _fit.run_items,
+                            _fit.chars_before, _fit.chars_after, _fit_limit)
+                    elif _fit.outcome != "fits":
+                        logger.warning(
+                            "::warning::Single-call fit: %s (%d chars, limit %d); "
+                            "the script is unchanged and the delivery wrap will drop",
+                            _fit.outcome, _fit.chars_before, _fit_limit)
+                except Exception as exc:  # noqa: BLE001 — never costs an episode
+                    logger.warning("Single-call fit skipped (non-fatal): %s", exc)
+
             # Oct 20 2026 (engine/story_tags.py): speech tags where a new
             # story starts — a breath opening its first line and, when the
             # probe has named one, a landing tag around the previous

@@ -272,6 +272,11 @@ class TTSConfig:
     # bare tag NAME ("low" -> <low>...</low>), set only from probe
     # evidence on the custom voice — an unknown tag is spoken aloud.
     story_tags: bool = False
+    # Nov 25 2026 (engine/single_call_fit.py): when the final script is too
+    # long for one voice call, whole items are removed from the END of the
+    # spoken Also Today run until it fits, so the delivery wrap survives.
+    # Off = byte-identical. Opt-in per show.
+    fit_single_call: bool = False
     story_tag_open: str = "[breath]"
     story_tag_close: str = ""
     # Post-TTS transcription validation (opt-in)
