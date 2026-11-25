@@ -407,6 +407,11 @@ class TestSomebodyIsActuallyTold:
         assert "secrets.OPERATOR_EMAIL || 'patricknovak1@gmail.com'" in wf
 
 
+def _held_release_body():
+    body = SCENARIO[SCENARIO.index("function releaseHeld() {"):]
+    return body[:body.index("\n}\n")]
+
+
 class TestSheActuallyStops:
     """Sept 15 2026. Barge-in flushed her buffered audio, which stops her
     being HEARD, and left the server generating the rest of the turn. That
@@ -431,7 +436,10 @@ class TestSheActuallyStops:
         # Oct 21 2026: ONE place asks for a turn (requestTurn) and one place
         # records that a turn started whoever asked (markTurnStarted); every
         # other "she is speaking" flag went with the direct responseCreate calls.
-        assert SCENARIO.count("miraSpeaking = true") == 2
+        # Nov 25 2026: a held server turn the room releases is the third —
+        # releaseHeld hands her the turn the server already started.
+        assert SCENARIO.count("miraSpeaking = true") == 3
+        assert "miraSpeaking = true;" in _held_release_body()
         assert "miraSpeaking = true;\n  turnRequested = true;\n" in SCENARIO
         # requestTurn's body may carry one response's instructions (the hold
         # check-in, Oct 22 2026); the narration take sends none.

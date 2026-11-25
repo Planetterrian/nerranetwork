@@ -160,7 +160,7 @@ class TestTheRoomNeverTalksOverItself:
         body = _jsfn("requestTurn")
         assert "if (miraSpeaking) { pendingTurn = true; return; }" in body
         # ResponseDone releases it, unless someone is talking.
-        done = SCENARIO[SCENARIO.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        miraSpeaking = false;"):]
+        done = SCENARIO[SCENARIO.index("Grok.VoiceAgentAPIEvents.ResponseDone, function () {\n        if (agent === grokAgent && heldDone()) return;\n        miraSpeaking = false;"):]
         done = done[:done.index("});")]
         assert "if (agent !== grokAgent || roomEnded) return;" in done
         assert "if (pendingTurn && !inboundSpeaking) requestTurn(agent);" in done
