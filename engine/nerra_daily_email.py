@@ -114,6 +114,15 @@ def size_warning_bytes() -> int:
 WINDOW_DAYS = 2
 #: Episodes listed per followed show in the Sunday week list.
 WEEK_LIST_MAX = 3
+#: Nov 25 2026 (the weekly SpaceX email, market review item 8): a reader on
+#: the Sunday edition only (:data:`WEEKLY_ONLY_TAG`) got none of the week's
+#: daily emails, so for these shows the Sunday "Your week" list carries the
+#: whole week instead of three episodes. Daily readers keep three. Signing up
+#: for "SpaceX, once a week" is the ``spacex-weekly`` list on the gallery
+#: Worker: the SpaceX Daily tag plus the Sunday-only tag, so the product is a
+#: Nerra Daily tag, never a second email.
+FULL_WEEK_SLUGS: Tuple[str, ...] = ("spacex",)
+WEEK_LIST_FULL_MAX = 7
 #: Most-played episodes in the Sunday block.
 MOST_PLAYED_MAX = 5
 #: Where a sent email's record lives (committed; the idempotency key).
@@ -507,7 +516,8 @@ def video_links(slug: str, root: Path, now: dt.datetime) -> Dict[int, dict]:
         return {}
 
 
-def week_records(slug: str, day: dt.date, root: Path = ROOT) -> List[Dict[str, Any]]:
+def week_records(slug: str, day: dt.date, root: Path = ROOT,
+                 limit: int = WEEK_LIST_MAX) -> List[Dict[str, Any]]:
     """The show's episodes from the seven days ending *day*, newest first."""
     try:
         from generate_html import NETWORK_SHOWS
@@ -526,7 +536,7 @@ def week_records(slug: str, day: dt.date, root: Path = ROOT) -> List[Dict[str, A
             if not ep or not hook:
                 continue
             rows.append({"episode_num": int(ep), "date": when, "hook": hook})
-        return rows[:WEEK_LIST_MAX]
+        return rows[:limit]
     except Exception:  # noqa: BLE001
         return []
 
@@ -1147,12 +1157,24 @@ def _compose(day: dt.date, *, root: Path = ROOT, now: Optional[dt.datetime] = No
         week_blocks = []
         today_slugs = {p.show.slug for p in all_picks}
         for show in shows:
-            rows = week_records(show.slug, day, root)
+            full = show.slug in FULL_WEEK_SLUGS
+            rows = week_records(show.slug, day, root,
+                                limit=WEEK_LIST_FULL_MAX if full else WEEK_LIST_MAX)
             if len(rows) < 2:
                 continue
             # Today's episode is already a card or a line above (Nov 8 2026).
             rows = [r for r in rows if r["date"] != day or show.slug not in today_slugs]
             if not rows:
+                continue
+            if full:
+                # The Sunday-only reader gets the whole week; a daily reader
+                # the same three rows as every other show.
+                week_blocks.append("<div>" + tag_in(show.tag) + tag_in(WEEKLY_ONLY_TAG)
+                                   + week_list_html(show, rows)
+                                   + ENDIF + ENDIF + "</div>")
+                week_blocks.append("<div>" + tag_in(show.tag) + tag_not_in(WEEKLY_ONLY_TAG)
+                                   + week_list_html(show, rows[:WEEK_LIST_MAX])
+                                   + ENDIF + ENDIF + "</div>")
                 continue
             week_blocks.append("<div>" + tag_in(show.tag)
                                + week_list_html(show, rows)

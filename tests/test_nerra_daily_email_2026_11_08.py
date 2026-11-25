@@ -45,7 +45,7 @@ def _rich_front(day=DAY):
 def patched(monkeypatch):
     monkeypatch.setattr(nde, "already_sent", lambda day, root=None, **k: {})
     monkeypatch.setattr(nde, "video_links", lambda *a: {})
-    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None: [])
+    monkeypatch.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: [])
     return monkeypatch
 
 
@@ -210,7 +210,7 @@ class TestTheReadsGiveWay:
     def test_your_week_leaves_out_todays_episode(self, patched):
         rows = [{"episode_num": 100, "date": DAY, "hook": "Today's tesla hook"},
                 {"episode_num": 99, "date": DAY - dt.timedelta(days=1), "hook": "Yesterday's tesla hook"}]
-        patched.setattr(nde, "week_records", lambda slug, day, root=None: rows if slug == "tesla" else [])
+        patched.setattr(nde, "week_records", lambda slug, day, root=None, **_kw: rows if slug == "tesla" else [])
         sunday = dt.date(2026, 11, 8)
         front = _rich_front(sunday)
         rows[0]["date"], rows[1]["date"] = sunday, sunday - dt.timedelta(days=1)

@@ -163,6 +163,15 @@ describe("resolveSubscribeTags", () => {
     expect(tags).toEqual(["ru-spacex", "src-youtube-ru"]);
   });
 
+  it("resolves the weekly SpaceX email as Nerra Daily tags, Sundays only", () => {
+    // Nov 25 2026: the SpaceX week is a tag set on the one email, never a
+    // second email.
+    expect(resolveSubscribeTags("spacex-weekly", "src-nerranetwork").tags).toEqual([
+      "nerra-member", "gallery-subscriber", "SpaceX Daily", "nerra-daily-weekly",
+      "src-nerranetwork",
+    ]);
+  });
+
   it("resolves the Soft Personal interest list without forcing newsletter", () => {
     // ENG-SPEC / Soft Personal SoT: exact tag `personal-interest` +
     // allow-listed source. Do NOT force gallery-subscriber — that made
