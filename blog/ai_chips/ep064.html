@@ -67,7 +67,7 @@
     <script defer src="../../assets/js/tracking.js?v=6cfe7511"></script>
 
     <!-- Shared CSS -->
-    <link rel="stylesheet" href="../../styles/main.css?v=8beed5df">
+    <link rel="stylesheet" href="../../styles/main.css?v=dd382439">
 
     
     <link rel="alternate" type="application/rss+xml" title="AI Chips & Data Centres Daily Blog RSS" href="https://nerranetwork.com/blog_ai_chips.rss">
@@ -349,7 +349,7 @@
         }
     </style>
     
-    <link rel="stylesheet" href="../../styles/blog.css?v=c634c5e8">
+    <link rel="stylesheet" href="../../styles/blog.css?v=c85b1bb3">
 
 
     
@@ -1100,12 +1100,40 @@
                     Listen to podcast
                 </a>
                 
-                <a href="https://www.youtube.com/watch?v=41k_JkBVsus" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long" hidden data-nn-release="2026-11-24T13:30:00Z">
+                <a href="https://www.youtube.com/watch?v=41k_JkBVsus" class="blog-listen-cta" rel="noopener" target="_blank" data-nn-watch="long">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
                     Watch on YouTube
                 </a>
                 
             </div>
+            <div class="blog-follow-row">
+                <span class="blog-follow-label">Follow AI Chips & Data Centres Daily</span>
+                
+                <a class="blog-follow-chip" data-follow="apple" data-show="ai_chips"
+                   href="https://podcasts.apple.com/us/podcast/id6818850243?utm_source=nerranetwork&utm_medium=blog&utm_campaign=ai_chips"
+                   target="_blank" rel="noopener">Apple Podcasts</a>
+                
+                <a class="blog-follow-chip" data-follow="rss" data-show="ai_chips"
+                   href="../../ai_chips_podcast.rss"
+                   >RSS</a>
+                
+                <button type="button" class="blog-follow-chip blog-share-native" hidden
+                        data-share-url="https://nerranetwork.com/blog/ai_chips/ep064.html"
+                        data-share-title="Helios racks are powered in Azure labs, giving AMD&#39;s next platform a cloud foothold.">Share</button>
+            </div>
+            <script>
+            (function () {
+                var b = document.querySelector('.blog-share-native');
+                if (!b || !navigator.share) return;
+                b.hidden = false;
+                b.addEventListener('click', function () {
+                    navigator.share({ title: b.getAttribute('data-share-title'), url: b.getAttribute('data-share-url') })
+                        .then(function () { if (typeof window.gtag === 'function') window.gtag('event', 'share', { method: 'native', content_type: 'episode' }); })
+                        .catch(function () {});
+                });
+            })();
+            </script>
+            
         </div>
     </header>
     
@@ -1671,12 +1699,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep065.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Ep 65 · Samsung plans fivefold Xi'an V9 NAND growth, to fifty thousand wafers, for AI SSDs.</span>
+                </a>
                 
             </nav>
             
@@ -1708,6 +1734,11 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>More from AI Chips & Data Centres Daily</h2>
                 <div class="blog-related-grid">
                     
+                    <a href="ep065.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 65</span>
+                        <h3>Samsung plans fivefold Xi'an V9 NAND growth, to fifty… · AI Chips & Data Centres Daily</h3>
+                    </a>
+                    
                     <a href="ep063.html" class="blog-related-card" style="--card-show-color: #4338CA">
                         <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 63</span>
                         <h3>Nearly twenty fabs of tool demand still chase AI orders… · AI Chips & Data Centres Daily</h3>
@@ -1728,11 +1759,6 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <h3>TSMC halted Chinese foundry orders at sixteen nanometres… · AI Chips & Data Centres Daily</h3>
                     </a>
                     
-                    <a href="ep059.html" class="blog-related-card" style="--card-show-color: #4338CA">
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">Ep 59</span>
-                        <h3>JEDEC previews DDR6 at 12.8 GT/s, quadrupling DDR5… · AI Chips & Data Centres Daily</h3>
-                    </a>
-                    
                 </div>
                 <p style="margin:.85rem 0 0;font-size:.9rem;">
                     <a href="../../ai-chips.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">AI Chips & Data Centres Daily show page</a><span aria-hidden="true"> · </span>
@@ -1747,24 +1773,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents/ep243.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                    <a href="../../blog/models_agents/ep244.html" class="blog-related-card" style="--card-show-color: #7C3AED">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
-                        <h3>Architect Labs' AI-designed Frostbite CPU runs interaction nets at 4.59x performance per watt over in-order cores.</h3>
+                        <h3>Z.ai’s GLM-5.4 runs 28 layers twice via shared weights to deepen reasoning at fixed parameter count.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/fascinating_frontiers/ep262.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                    <a href="../../blog/spacex/ep172.html" class="blog-related-card" style="--card-show-color: #1A5CFF">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
-                        <h3>NASA's new Arctic laser station tracks satellites with single-photon precision from the northernmost site on Earth.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #1A5CFF, white 35%)">SpaceX Daily</span>
+                        <h3>A Starlink satellite dropped 12 km then climbed back, showing how the constellation corrects sudden orbital decay.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/first_principles/ep171.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                    <a href="../../blog/planetterrian/ep254.html" class="blog-related-card" style="--card-show-color: #017A99">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Tunnel kilns cut coal use for firing a thousand fire-bricks to 650 pounds.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>A single AAV injection improved fatty liver and diabetes markers in lipodystrophy mice for at least two months.</h3>
                         
                     </a>
                     
@@ -2218,7 +2244,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js?v=eca36a37" defer></script>
     <script src="../../assets/js/language-control.js?v=38af1572" defer></script>
-    <script src="../../assets/js/footer-subscribe.js?v=7c005f65" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
+    <script src="../../assets/js/footer-subscribe.js?v=445af143" defer></script><script src="../../assets/js/nn-markets.js?v=11b80b46" defer></script>
     <script src="../../assets/js/nn-player.js?v=3226834b" defer></script>
     <script src="../../assets/js/nn-app.js?v=cff26f8f" defer></script>
     <script>
