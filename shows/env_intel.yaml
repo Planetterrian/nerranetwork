@@ -62,14 +62,24 @@ description: Daily environmental regulatory, science, and compliance briefing fo
 
 sources:
   # British Columbia
-  - url: https://news.gov.bc.ca/ministries/environment-and-parks/feed
+  # Nov 25 2026: the four ministry feeds here had answered 404 since Nov 22
+  # (a new cabinet renamed the ministries). These are the feeds the
+  # province's own subscribe page lists now, read from a GitHub runner
+  # (Actions "Probe URLs"); the theme feed does not move with a cabinet.
+  - url: https://news.gov.bc.ca/ministries/environment/feed
     label: BC Ministry of Environment
-  - url: https://news.gov.bc.ca/ministries/energy-and-climate-solutions/feed
-    label: BC Energy and Climate Solutions
-  - url: https://news.gov.bc.ca/ministries/water-land-and-resource-stewardship/feed
-    label: BC Water Land and Resource Stewardship
-  - url: https://news.gov.bc.ca/ministries/emergency-management-and-climate-readiness/feed
-    label: BC Emergency Management
+  - url: https://news.gov.bc.ca/themes/environmental-protection-and-sustainability/feed
+    label: BC Environmental Protection and Sustainability
+  - url: https://news.gov.bc.ca/ministries/energy-mines-and-petroleum-resources/feed
+    label: BC Energy, Mines and Petroleum Resources
+  - url: https://news.gov.bc.ca/ministries/water-land-and-natural-resource-operations/feed
+    label: BC Water, Land and Natural Resource Operations
+  - url: https://news.gov.bc.ca/news-subscribe/cleanbc/feed
+    label: CleanBC
+  # The ministry feeds above answer but carried nothing newer than Sep 21
+  # on Nov 25; this one and the theme feed are the two that are current.
+  - url: https://news.gov.bc.ca/news-subscribe/natural-resources/feed
+    label: BC Natural Resources
 
   # Alberta — note: alberta.ca and aer.ca no longer offer standard RSS feeds.
   # Coverage sourced via Canadian Geographic, The Narwhal, and CBC Canada feeds.
@@ -230,6 +240,11 @@ keywords:
   - renewable
 
 min_articles: 5
+# Nov 25 2026: a weekly show reads its week. The default ladder stops at 72
+# hours, so a Monday episode read Friday to Monday and nothing from the
+# four weekdays before; the Nov 23 run opened on 5 articles from 2 of 26
+# feeds. First 72 hours, then the full 168, keywords dropped only last.
+fetch_expansion_hours: [72, 168]
 min_articles_skip: 2
 
 # Story-recurrence memory (Aug 2026): inline "already covered — update,

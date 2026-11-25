@@ -8131,6 +8131,67 @@ experiments:
       show with no feed) and the phone share sheet,
       assets/js/footer-subscribe.js statusEl. Email fields are 16px (iOS zooms
       the page below that). Guards tests/test_web_signup_path_2026_11_24.py.
+  - id: picks-2026-11-25
+    title: "Picks 3a, 5a, 6a: a 900 s model timeout with an absolute alarm, the missing app title asked for once, sources read where the shows read them"
+    area: reliability
+    shipped: 2026-11-25
+    readout: 2026-12-09
+    status: reading
+    baseline: >
+      The combined digest and script call on the grok-4.7 shows reached 508 s
+      (omni_view_world Ep064) against a 600 s timeout, with nothing reading
+      the absolute number. Tesla's digest omitted its TITLE line on some days
+      and the feed title fell back to the long hook. Env Intel's four
+      news.gov.bc.ca ministry feeds answered 404 from Nov 22 (a new cabinet
+      renamed the ministries). Finansy Prosto's first fetch on Monday Nov 23
+      found 6 articles in a 24 h window. Reddit answered 429 to runner
+      requests on seven shows.
+    target: >
+      No show run fails on a model timeout; every call over 480 s is
+      annotated and llm_slowest_call_s is recorded on every episode.
+      app_title_source is never "hook" on two consecutive Tesla or SpaceX
+      episodes. Env Intel's Dec 1 and Dec 8 runs read at least one BC
+      government article. Finansy Prosto's first fetch on Nov 30 and Dec 7
+      finds 15 or more articles.
+    criteria: >
+      HIT when all four hold over Nov 26 to Dec 9; MISS when a run fails on
+      a model timeout, or Env Intel reads no BC government article on both
+      Mondays; otherwise INCONCLUSIVE with the failing part named. Reddit is
+      not in the criteria: pacing lowers the burst, and a runner address
+      Reddit refuses outright stays refused.
+    readout_plan: >
+      Read llm_slowest_call_s, llm_slow_call_alarms and app_title_source
+      from digests/<slug>/metrics_ep*.json for Nov 26 to Dec 9; read the
+      "Fetched N articles" lines and the per-feed results in the Env Intel
+      and Finansy Prosto run logs for the four Mondays.
+    guards: tests/test_picks_2026_11_25.py
+
+  - id: omni-view-single-call-2026-11-25
+    title: "Omni View fits one voice call: the spoken Also Today run is shortened from its end when the script is over the limit"
+    area: audio
+    shipped: 2026-11-25
+    readout: 2026-12-09
+    status: reading
+    baseline: >
+      Ep240 to Ep247 (Nov 18-25): eight of eight scripts were over the
+      14,000 characters one voice call takes (14,190 to 19,524), so the
+      delivery wrap was dropped on every episode. Replayed on Ep236 to
+      Ep247, the fit brings 4 of the 10 over-length scripts inside one call
+      by removing 2 to 8 Also Today sentences; 5 are too long for it (the
+      stories themselves run long) and 1 has no run to shorten.
+    target: >
+      The delivery wrap is kept (tts_speech_wrap_dropped false) on at least half of
+      the 14 episodes after the merge, against none of the last eight.
+    criteria: >
+      HIT at 7 or more of 14 with the wrap kept; MISS at 3 or fewer;
+      otherwise INCONCLUSIVE. A "cannot" share above half says the stories
+      need their own ceiling, which is a content decision, not this lever.
+    readout_plan: >
+      Read single_call_fit, single_call_fit_removed, script_over_ceiling and
+      the wrap-drop record from digests/omni_view/metrics_ep*.json for the
+      14 episodes after the merge.
+    guards: tests/test_single_call_fit_2026_11_25.py
+
   - id: pipeline-hardening-2026-11-24
     title: "Pipeline hardening: the audit on an exact clock, Offshore North searches its week, alarms that only fire on a real fault"
     area: reliability

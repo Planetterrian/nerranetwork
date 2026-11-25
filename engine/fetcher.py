@@ -7,6 +7,7 @@ Provides:
 import datetime
 import logging
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
 from typing import Dict, List, Optional, Tuple
@@ -315,6 +316,47 @@ def _headers_for_url(url: str) -> dict:
     return DEFAULT_HEADERS
 
 
+# Per-host pacing (Nov 25 2026). The feeds of one show are fetched from a
+# thread pool, so a show with five subreddits sent five requests to Reddit
+# in the same second from one runner address, and Reddit answered 429 to
+# most of them (15 of 19 Reddit feeds across eight shows in the week to Nov
+# 24; three tenacity attempts two to ten seconds apart did not clear it).
+# Requests to a paced host now leave one at a time, ``seconds`` apart.
+_HOST_PACING_S = {"reddit.com": 3.0}
+_host_pacing_lock = Lock()
+_host_last_request: Dict[str, float] = {}
+_pacing_sleep = time.sleep
+_pacing_clock = time.monotonic
+
+
+def _paced_host(url: str) -> Optional[str]:
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        return None
+    for paced in _HOST_PACING_S:
+        if host == paced or host.endswith("." + paced):
+            return paced
+    return None
+
+
+def _pace_request(url: str) -> float:
+    """Wait this request's turn for a paced host; returns the seconds waited."""
+    host = _paced_host(url)
+    if host is None:
+        return 0.0
+    gap = _HOST_PACING_S[host]
+    with _host_pacing_lock:
+        now = _pacing_clock()
+        slot = max(now, _host_last_request.get(host, 0.0) + gap) if host in _host_last_request else now
+        _host_last_request[host] = slot
+    wait = max(0.0, slot - now)
+    if wait:
+        _pacing_sleep(wait)
+    return wait
+
+
 class ThrottledError(Exception):
     """A feed answered 429/503 — retryable, unlike other HTTP errors."""
 
@@ -345,6 +387,7 @@ def _fetch_url_with_retry(url: str) -> requests.Response:
     timeouts, so a throttled feed was dropped on the first refusal with no
     second attempt. Backing off and asking again recovers most of them.
     """
+    _pace_request(url)
     response = requests.get(url, headers=_headers_for_url(url), timeout=HTTP_TIMEOUT_SECONDS)
     if response.status_code in _RETRYABLE_STATUSES:
         raise ThrottledError(

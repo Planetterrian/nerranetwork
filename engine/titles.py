@@ -56,6 +56,13 @@ YOUTUBE_TITLE_MAX = 100
 #: missing and that YouTube was silently enforcing for us.
 PODCAST_EPISODE_TITLE_MAX = 100
 
+#: The podcast-app title a digest's ``**TITLE:**`` line asks for is a
+#: 60-character HEADLINE (``shows/prompts/_shared/app_title.txt``). When the
+#: model leaves the line out, ``engine.app_title`` asks for it once more in a
+#: small call; this is the longest answer that call accepts. It is a FIT GATE,
+#: never a clip: a longer answer is refused and the hook stands, as before.
+APP_TITLE_FOLLOWUP_MAX = 72
+
 #: Lead portion of an HTML ``<title>`` before the show tail.
 #: Google renders ~60 characters of a title. Nov 3 2026: every episode
 #: page shipped ``<hook>… — Ep653 | Tesla Shorts Time`` (median 88

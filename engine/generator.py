@@ -106,6 +106,47 @@ def _request_timeout_s() -> float:
     return float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", 300))
 
 
+# ---------------------------------------------------------------------------
+# Slow-call alarm (Nov 25 2026)
+# ---------------------------------------------------------------------------
+# The grok-4.7 shows' one combined call climbed from 366 s to 508 s in a week
+# against a 600 s request timeout, and a timeout there costs the episode. The
+# canary below (60% of the timeout) moves whenever the timeout does, so
+# raising the timeout to 900 s would have silenced it at exactly the latency
+# that prompted the raise. This alarm is an ABSOLUTE number: any completion
+# slower than it prints a GitHub annotation and is counted for the run.
+SLOW_CALL_ALARM_S = 480.0
+_slow_call_stats: Dict[str, Any] = {"slowest_s": None, "slowest_model": "", "alarms": 0}
+
+
+def _slow_call_alarm_s() -> float:
+    try:
+        return float(os.environ.get("NERRA_LLM_SLOW_ALARM_SECONDS", SLOW_CALL_ALARM_S))
+    except ValueError:
+        return SLOW_CALL_ALARM_S
+
+
+def note_call_latency(model: str, elapsed_s: float, timeout_s: float) -> bool:
+    """Record one completed call's wall time; True when it trips the alarm."""
+    slowest = _slow_call_stats["slowest_s"]
+    if slowest is None or elapsed_s > slowest:
+        _slow_call_stats["slowest_s"] = round(float(elapsed_s), 1)
+        _slow_call_stats["slowest_model"] = model
+    if elapsed_s <= _slow_call_alarm_s():
+        return False
+    _slow_call_stats["alarms"] += 1
+    print(f"::warning::slow LLM call: {model} took {elapsed_s:.0f}s, over the "
+          f"{_slow_call_alarm_s():.0f}s alarm (request timeout {timeout_s:.0f}s). "
+          "A timeout here costs the episode; see docs/model_upgrade_playbook.md.",
+          flush=True)
+    return True
+
+
+def slow_call_stats() -> Dict[str, Any]:
+    """The run's slowest completed call and how many tripped the alarm."""
+    return dict(_slow_call_stats)
+
+
 def _is_pinned(config) -> bool:
     """True while the run's model is a per-show pin (not the network default)."""
     llm = getattr(config, "llm", None)
@@ -458,6 +499,7 @@ def _call_grok(
     # takes most of its timeout budget is one capacity dip away from a
     # hard stall. The grok-4.6 day-one failure would have printed this on
     # every successful show hours before the big shows started timing out.
+    note_call_latency(model, _elapsed, timeout)
     if _elapsed > 0.6 * timeout:
         logger.warning(
             "Slow LLM completion: %s took %.0fs (%.0f%% of the %.0fs request "

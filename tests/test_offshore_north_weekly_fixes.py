@@ -53,7 +53,9 @@ class TestFetchLadderOverride:
         re-tune the fetch window for all 15 other shows at once."""
         offenders = []
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
-            if path.stem.startswith("_") or path.stem == "offshore_north":
+            # Nov 25 2026: the two other weekly news shows read their week too.
+            if path.stem.startswith("_") or path.stem in (
+                    "offshore_north", "finansy_prosto", "env_intel"):
                 continue
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if not isinstance(data, dict) or "slug" not in data:
@@ -512,7 +514,9 @@ class TestShortDisplayTitle:
 
     def test_run_show_wires_title_hook_into_rss_title(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert "title_hook = _extract_short_title(x_thread) or hook" in src
+        # Nov 25 2026: a missing line is asked for once before the hook stands.
+        assert "title_hook = _extract_short_title(x_thread)" in src
+        assert "title_hook = title_hook or hook" in src
         assert "_build_episode_title(\n            title_hook," in src
 
 
@@ -555,7 +559,9 @@ class TestWebSearchAlways:
     def test_every_other_show_keeps_the_count_gate(self):
         offenders = []
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
-            if path.stem.startswith("_") or path.stem == "offshore_north":
+            # Nov 25 2026: the two other weekly news shows read their week too.
+            if path.stem.startswith("_") or path.stem in (
+                    "offshore_north", "finansy_prosto", "env_intel"):
                 continue
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if not isinstance(data, dict) or "slug" not in data:
@@ -636,7 +642,9 @@ class TestCampaignFreshnessPlumbing:
     def test_no_other_show_flags_feeds(self):
         offenders = []
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
-            if path.stem.startswith("_") or path.stem == "offshore_north":
+            # Nov 25 2026: the two other weekly news shows read their week too.
+            if path.stem.startswith("_") or path.stem in (
+                    "offshore_north", "finansy_prosto", "env_intel"):
                 continue
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if not isinstance(data, dict) or "slug" not in data:

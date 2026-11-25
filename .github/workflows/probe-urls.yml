@@ -1,0 +1,40 @@
+name: Probe URLs
+
+# Reads the URLs in data/probe_urls.txt from a GitHub runner and prints what
+# each answers (scripts/probe_urls.py). A feed that is dead from the
+# runners' addresses can only be diagnosed, and its replacement only be
+# checked, from where the shows read it. Read-only: no secret, no commit.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'data/probe_urls.txt'
+      - 'scripts/probe_urls.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-urls-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          extra-packages: "pyyaml requests feedparser"
+          skip-checkout: 'true'
+
+      - name: Probe
+        run: python scripts/probe_urls.py
