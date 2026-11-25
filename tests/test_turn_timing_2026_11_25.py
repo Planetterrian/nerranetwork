@@ -81,3 +81,11 @@ def test_each_reply_traces_the_waits_it_went_through():
     assert "turnClock.path.push(" in _fn("scheduleTurnDecision")
     assert 'trace("turn", "path: request "' in _fn("clockTurnFirstWords")
     assert "TURN_PATH_TRACES_MAX = 40" in SCENARIO
+
+
+def test_a_rerouted_server_turn_with_words_in_hand_decides_soon():
+    """Rehearsal 98825561: the server started its own turn on every reply when
+    the words landed, and the reroute's fresh 500 ms wait was the gap."""
+    i = SCENARIO.index("the room decides it (#")
+    block = SCENARIO[i:i + 900]
+    assert "scheduleTurnDecision(guestDelta() ? TURN_WORDS_LANDED_MS : TURN_DECIDE_MS);" in block

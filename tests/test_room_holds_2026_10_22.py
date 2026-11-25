@@ -82,9 +82,10 @@ class TestAServerTurnGoesThroughTheDecision:
     def test_the_source_routes_it(self):
         body = _fn("function markTurnStarted(agent)")
         i = body.index("if (openingFired) {")
-        rerouted = body[i:i + 900]
+        rerouted = body[i:i + 1400]
         assert "serverTurnsRerouted += 1;" in rerouted
-        assert "scheduleTurnDecision(TURN_DECIDE_MS);" in rerouted
+        # Nov 25 2026: with the guest's words in hand it waits the short beat.
+        assert "scheduleTurnDecision(guestDelta() ? TURN_WORDS_LANDED_MS : TURN_DECIDE_MS);" in rerouted
         assert "responseCancel" in rerouted
         # The self-answer rule still runs first: no words, no turn at all.
         assert body.index("if (!spoke && openingFired) {") < i

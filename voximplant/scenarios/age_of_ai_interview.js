@@ -2651,7 +2651,11 @@ function markTurnStarted(agent) {
       if (serverTurnsRerouted <= 3 || serverTurnsRerouted % 10 === 0) {
         trace("turn", "server turn after guest speech cancelled; the room decides it (#" + serverTurnsRerouted + ")");
       }
-      if (!inboundSpeaking) scheduleTurnDecision(TURN_DECIDE_MS);
+      // Nov 25 2026: the server starts its own turn on almost every reply,
+      // the moment it has the guest's words, and a fresh 500 ms wait here
+      // was most of the gap (rehearsal 98825561: every reply waited "words
+      // landed, then 500"). Words already in hand need only the short wait.
+      if (!inboundSpeaking) scheduleTurnDecision(guestDelta() ? TURN_WORDS_LANDED_MS : TURN_DECIDE_MS);
       return;
     }
   } else if (holdMode && !holdCheckInRequested) {
