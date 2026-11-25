@@ -15,31 +15,29 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Status | Checked | Evidence / next step |
 |---|---|---|---|
-| Deploy `workers/scheduler` (the Daily Audit dispatch at 11:15 Eastern) | open | 2026-11-24 | `cd workers/scheduler && npx wrangler deploy`, then `GET /` should list `audit_dispatch`. Until then the audit keeps arriving on GitHub's late cron (20:40 to 02:52 UTC, Nov 14-24); the nightly drift check names it. |
-| Deploy both Workers (`workers/voices` with `GMAIL_SERVICE_ACCOUNT_JSON` + `GMAIL_DELEGATED_USER`; `workers/gallery`) | unconfirmed | 2026-11-04 | `/voices/health` does not report a version and no gate-2 email has gone out since the copy changed. The Nov 4 "Vancouver time" label in booking emails also needs the voices Worker deployed. |
-| Rotate `PERSONAL_ADMIN_TOKEN` (Worker secret and GitHub secret) | done | 2026-11-08 | The batch repo has the new value: `api/personal_feed_health.json` (Nov 8 20:38 UTC) reads 2 of 2 members built today and the batch run at 18:28 UTC succeeded, 0 failures in a row. |
 | `nerra-personal-batch`: set `NOTIFICATION_WEBHOOK_URL` | open | 2026-11-06 | Its failure alert step has printed "no NOTIFICATION_WEBHOOK_URL set" on every failed run. The daily audit now pages on stale private feeds too (`scripts/check_personal_feeds.py`). |
-| Deploy `workers/gallery` for `/api/admin/personal-feed-health` | done | 2026-11-08 | The route answers: `api/personal_feed_health.json` carries `feeds` counts with `feeds_error: null`. |
-| Unlock the @nerranetwork X account (log in at x.com) | open | 2026-11-07 | Every queued post since 13:35 UTC Nov 7 failed with X 403 "Your account is temporarily locked" (run 42414197454). Nine "Post queued X posts" runs went red; First Principles Ep154 and others were lost. A lock keeps posts queued for 24 h (#1651), 7 days from Nov 9; posts older than 24 h failed for good before that (Vancouver Ep047 on Nov 9). |
+| Apple stats cookies expired | open | 2026-11-25 | `api/apple_stats.json` last fetched 2026-07-25. Refresh the Apple Podcasts Connect cookies secret (Patrick only; the built-in browser is not signed in to Apple). |
+| `REVIEW_PR_TOKEN` repo secret | open | 2026-11-25 | Fine-grained token on this repo, Contents and Pull requests read/write, so review-agent PRs run checks (PR #1736). Only Patrick can create and paste it. |
+| Stripe Radar rule on the one-time donate link | open | 2026-11-25 | `Block if :card_country: != :billing_address_country:`. Dashboard only (no API). |
+| `STRIPE_LINK_DONATE_ONCE` repo variable still holds the retired link | open | 2026-11-25 | Set it to `https://donate.stripe.com/7sY6oIc9Q0iK2zUbwb0Ba04` or delete it (workflows fall back to that link). |
+| Remove the RSS-ingested podcast copies on the EN YouTube channel | open | 2026-11-25 | ~9 duplicate long-forms a day (`docs/reviews/youtube_growth_review_2026_11_24.md`). The browser on Patrick's Mac is signed in to a different channel (no podcasts listed), so it has to be done from the Nerra channel. Record the Podcasts-tab play counts first. |
+| Gate 1: Gary Amaral (NV) and Surendra Goel (AoAI) | waiting on Patrick's yes | 2026-11-25 | Both edits read on their review pages; recommendation: approve both, with a note to Surendra that the end of his call dropped. |
 | xAI monthly spending limit in console.x.ai, above one slate's spend | open | 2026-11-04 | Auto-reload works ($25 Grok receipts about daily Oct 15 to Nov 4). |
-| First "Run Podcast Show" with `rehearse: true`, and "Probe audio chain" (legacy and glue) | open | 2026-11-04 | |
-| GA4: two custom dimensions and three key events | open | 2026-11-04 | |
+| "Probe audio chain" (legacy and glue) | open | 2026-11-25 | The first `rehearse: true` show runs happened Nov 24 (Tesla Ep676, SpaceX Ep173, PR #1747), so only the probe is left. |
+| GA4: two custom dimensions and three key events | open | 2026-11-25 | `api/ga4_stats.json` (Nov 25) `conversions: []`, so no key event is marked yet. |
 | Google Ads: campaign and ad-group names for `scripts/funnel_link.py` | open | 2026-11-04 | |
 | Search Console: submit `news-sitemap.xml` | open | 2026-11-04 | The file is live (200, 18 KB). |
 | Buttondown: is a welcome email on? | answered: no (Patrick, Nov 6); draft in `engine/nerra_welcome_email.py`, sender not chosen | 2026-11-06 | |
-| Buttondown: turn on open and click tracking (off by default; every send reads 0) | open | 2026-11-06 | api/buttondown_stats.json |
 | Buttondown: send the "Nerra Daily email" test draft | open | 2026-11-04 | None has reached the inbox, so `BUTTONDOWN_WRAPPER_BYTES` is unknown. |
-| Stripe: set `STRIPE_SECRET_KEY` | open | 2026-11-04 | `api/member_metrics.json` (Nov 3 22:23 UTC): `stripe_configured: false`. |
 | YouTube Studio: banners, descriptions, RU/FR trailers, end screens (note the start date) | open | 2026-11-04 | RSS-podcast removal is the Nov 16 item. |
 | YouTube: podcast playlists for AI Chips and MAG 7 | open | 2026-11-04 | Both shows upload to the EN channel from their next run once the PR merges (`docs/reviews/youtube_audit_2026_11_04.md`). Run `python3 scripts/create_youtube_playlists.py <client_secrets.json> en`; it writes `podcast_playlist_id` into both YAMLs. |
 | YouTube: RU SpaceX and RU FF long-forms come back on tonight | decide | 2026-11-04 | `api/youtube_policy.json` (Nov 3): both compute tier A on the four-video read, night 1 of 2. Turn on `DUB_LONG_RELATIVE_ENABLED` (C17) if dub longs should stay off. |
 | Label the seven closed review PRs | open | 2026-11-04 | Only `rejected` writes `do_not_retry`. |
 | Decisions list and dated items (Nov 10, 16, 17, 18) | unchanged | 2026-11-04 | |
-| Podcast Index: add the six unindexed feeds at podcastindex.org/add | open | 2026-11-04 | `api/op3_stats.json` (Nov 3): `nerra_voices`, `offshore_north`, `omni_view_north_america` unresolved; plus `env_intel:fr`, `first_principles:fr`, `models_agents:fr`. |
-| Apple: publish Offshore North (draft; artwork now 3000 px) and submit Nerra Voices | open | 2026-11-04 | `docs/podcast_directories.md`. |
-| Spotify: Nerra Daily's show id (Spotify for Creators) | open | 2026-11-04 | |
-| Cal.com: create the 5-minute `age-of-ai-hello` and `nerra-voices-hello` event types, or retire the hello feature | retire (recommended) | 2026-11-24 | The link 404'd for five guests; `HELLO_INVITES: "0"` stays. Nov 24: the new two-turn opening (PR #1738) does the hello's job inside the room, so the event types are not needed. |
-| Google Calendar is on America/Los_Angeles | open | 2026-11-04 | It shows an hour behind a Vancouver clock since Nov 1. Settings → Time zone → Vancouver. |
+| Podcast Index: add the four unindexed feeds at podcastindex.org/add | open | 2026-11-25 | `api/op3_stats.json` (Nov 25): `omni_view_north_america`, `env_intel:fr`, `first_principles:fr`, `models_agents:fr` still unresolved. `nerra_voices` and `offshore_north` now resolve. |
+| Apple: publish Offshore North (draft; artwork now 3000 px) and submit Nerra Voices | open | 2026-11-25 | `shows/offshore_north.yaml` still has no `apple_show_id`. `docs/podcast_directories.md`. |
+| Spotify: Nerra Daily's show id (Spotify for Creators) | open | 2026-11-25 | `shows/network_meta.yaml` nerra_daily `spotify_url: null`. Longevity and Collingwood have no Spotify id either. |
+| Spotify: SpaceX Daily is listed in Russian | open, needs Patrick's yes | 2026-11-25 | `api/spotify_stats.json` (Nov 25) reads `language: ru` for show 033xHlNZZy4OVq1T2CkDNp while `spacex_podcast.rss` says `en-us`. Fix in Spotify for Creators (show settings, language English). |
 | `docs/listens.md`: the Mira-brief listen line | not written | 2026-11-04 | The handoff proposed a line saying Patrick listened to rooms 115ba095 and 036ea51e. It was never committed and is not added here; add it yourself once you have listened. |
 | Re-master the quiet back catalogue (Actions "Re-master Episodes", one listen first) | open | 2026-11-04 | UC Ep161 is −25.7 LUFS. New episodes are in spec: Tesla Ep655 −16.2, Vancouver Ep043 −16.2, UC Ep163 −16.6. Collingwood Ep006 −24.9; its Nov 6 episode is the check. |
 | Interview pages: run `vtt_backfill`, then `refresh_post` for AoAI Ep12–14 and NV Ep3–4 | backfill dispatched | 2026-11-24 | Nov 24: `vtt_backfill` run on main; `refresh_post` only for an episode its log lists as skipped. Was: | Neither `age_of_ai_podcast.rss` (15 items) nor `nerra_voices_podcast.rss` (4) carries `podcast:transcript`. |
@@ -51,11 +49,11 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Owner | Status | Evidence / next step |
 |---|---|---|---|
-| Blaine Mathieu: his Nov 9 cut requests (4 lines) | Patrick | re-assembled Nov 24 | Listen to the new cut, then press "Changes made: send the guest the new cut" on his review page. Was stuck because the assemble never re-ran after Nov 9. |
+| Blaine Mathieu: his Nov 9 cut requests (4 lines) | Patrick | new cut sent Nov 24; auto-approves Nov 30 | Listen to the new cut, then press "Changes made: send the guest the new cut" on his review page. Was stuck because the assemble never re-ran after Nov 9. |
 | John Ossipinsky (NV) | Claude | publish dispatched Nov 24 | Approved by Patrick Nov 13 and the guest Nov 20; produced Nov 20; publishing is a manual dispatch. |
-| Gary Amaral (NV, Nov 13), Surendra Goel (AoAI, Nov 20) | Patrick | gate 1 | Both graded 4/10; listen and approve from the review emails. |
-| Tahir Rauf: invite back, drop the 6-minute edit | Patrick | email drafted | Re-record as a fresh interview; the 6-minute piece is not publishable. |
-| Tamara Laine, Animesh Alang: rebook | Patrick | emails drafted | Booking link `cal.com/patrick-novak-lkcqo4/age-of-ai-interview`. |
+| Gary Amaral (NV, Nov 13), Surendra Goel (AoAI, Nov 20) | Patrick | gate 1, see the Patrick table | Both graded 4/10; listen and approve from the review emails. |
+| Tahir Rauf: invite back, drop the 6-minute edit | Patrick | email sent Nov 24 | Re-record as a fresh interview; the 6-minute piece is not publishable. |
+| Tamara Laine, Animesh Alang: rebook | Patrick | emails sent Nov 24 | Booking link `cal.com/patrick-novak-lkcqo4/age-of-ai-interview`. |
 | Rejoin after a mid-interview drop | Claude | scoped, with the Dec 9 batch | A 3-minute in-room wait is impossible (Voximplant ends an empty session at 60 s). Reopening a room past 5 minutes would overwrite its recordings, so a rejoin is a continuation session spliced onto the first edit, like the closing session (`splice_closing`), with its own prompt: a room change, rehearsed. |
 | Latency: hold and release her server turn | Claude | next | Every turn is cancelled and re-requested today (4–4.6 s median gap). |
 | Producer model drafts her bridge and next question | Claude | next | Label openers 0.33–0.80 after four brief rewrites. |
@@ -81,6 +79,15 @@ rehearsal plus one operator listen, per CLAUDE.md "The Age of AI").
 
 | Item | Closed | Evidence |
 |---|---|---|
+| Deploy `workers/scheduler` (Daily Audit dispatch) | 2026-11-25 | Patrick reports the Workers deployed (Nov 25). |
+| Deploy `workers/voices` and `workers/gallery` | 2026-11-25 | Patrick reports the Workers deployed (Nov 25). |
+| Rotate `PERSONAL_ADMIN_TOKEN` | 2026-11-08 | `api/personal_feed_health.json` read 2 of 2 members built. |
+| Deploy `workers/gallery` for `/api/admin/personal-feed-health` | 2026-11-08 | `feeds_error: null`. |
+| Unlock @nerranetwork on X | 2026-11-25 | Every "Post queued X posts" run on Nov 25 succeeded (latest 45635781973). UC stays off X (PR #1711). |
+| Buttondown open and click tracking | 2026-11-25 | On since Nov 8: `api/buttondown_stats.json` shows opens on every send from Nov 9. |
+| Stripe: `STRIPE_SECRET_KEY` | 2026-11-25 | `api/member_metrics.json`: `stripe_configured: true`. |
+| Google Calendar time zone | 2026-11-25 | The primary calendar is America/Vancouver. |
+| Cal.com hello event types: retired | 2026-11-25 | The two-turn opening (PR #1738) does the hello's job; `HELLO_INVITES` stays "0". |
 | Worker vitest: `backup_clock.test.ts` "the half-hour jobs read the slot" failed on main | 2026-11-10 | The test now checks the inbox at :30 and the fire tick at the top of the hour; the voices lockfile is regenerated (`npm ci` refused it); new `workers-test.yml` runs both Workers' vitest and `tsc` on every Worker change (project audit PR). |
 | Mira's Nov 3 brief (beat line + spoken self-description) rehearsed | 2026-11-04 | Fixture roddy: rooms 894eacef (old) / 115ba095 (new), then candidate room 036ea51e; Patrick reports PASS; text-mode A/B on grok-voice-3.0, 6 sessions, no regression. |
 | Hold regex: "I'll hold the silence better" put the room on hold | 2026-11-04 | Commit 0cee8259, deployed 15:25 UTC; guard `test_only_the_waiting_senses_are_a_hold`. |
