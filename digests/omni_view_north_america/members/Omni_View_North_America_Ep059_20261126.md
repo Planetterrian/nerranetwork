@@ -1,0 +1,75 @@
+# Omni View North America
+> **Thirty years of Texas border wire is now locked in before Democrats take over.**
+
+**What You Need to Know:** A legal settlement between the Trump administration and outgoing Texas Republicans bars removal of border wire for thirty years, just before Democrats take over the state government. Canada has paid for F-35 components for up to forty-eight jets while a review of the full purchase is still unfinished. The FCC has cleared SpaceX to deploy one million satellites for data centers in orbit.
+
+### Lead
+**Border Barrier Cannot be Removed for Decades, Texas Republicans and D.O.J. Agree: The New York Times**
+The Trump administration and outgoing Republican officials in Texas have signed a legal settlement with the Justice Department that bars removal of border wire for thirty years. The New York Times reports the agreement was inked just before Democrats take over the state government. Texas Republicans and the Justice Department agree the barrier cannot be removed for decades. The settlement converts a state-federal enforcement choice into a thirty-year legal bar on taking the wire down. Incoming Democratic officials in Texas inherit that limit on what they can do with the barrier. Source: [nytimes.com](https://www.nytimes.com/2026/11/25/us/politics/texas-border-legal-settlement-trump.html)
+
+### Across the Region
+**FCC says SpaceX can deploy 1 million satellites for data centers in space. Scientists are skeptical: NPR**
+The Trump administration has given Elon Musk's SpaceX the green light to deploy one million satellites that the company said would create data centers in space. NPR reports the Federal Communications Commission approval, and says the move has raised skepticism among scientists. The BBC describes the project as the Starmind constellation, aimed at being the most cost- and energy-efficient way to meet growing demand for artificial-intelligence computing power. The approval is a deployment clearance for that orbital computing plan, not a report that the satellites are already in orbit. Source: [npr.org](https://www.npr.org/2026/11/26/g-s1-155940/fcc-spacex-satellites-data-centers-in-space) Source: [bbc.co.uk](https://www.bbc.co.uk/news/articles/cwp836l8n1jgo?at_medium=RSS&at_campaign=rss)
+
+**U.S. Judge rules FCC violated ABC's free speech rights to please Trump: NPR**
+A federal judge has blocked the Trump administration from moving to review all local broadcast licenses held by ABC. NPR reports that the judge ruled the Federal Communications Commission violated ABC's free-speech rights to please President Trump. The stations air in six of the largest U.S. markets. The order stops that license review from going forward. Source: [npr.org](https://www.npr.org/2026/11/26/nx-s1-6000576/fcc-disney-abc-first-amendment-trump-brendan-carr)
+
+### The Closer Look
+**Canada puts money down for more F-35s even as it remains undecided on buying them: The Globe and Mail**
+The Canadian government has made more long-lead payments for components that will go into American F-35 fighter jets even as it remains undecided on a full order of eighty-eight aircraft, The Globe and Mail reports. Two government officials, whom the paper is not identifying because they were not authorized to discuss the matter publicly, say Canada has now made payments to cover components for up to forty-eight F-35s. They say the payments preserve Canada's place in the production queue and do not constitute a decision to buy the aircraft. They also say the payments are not irreversible: the parts can be sold to other countries buying F-35s and the money recouped. The officials declined to say when the latest payments were made. They denied any link to trade talks and said Canada pays when it receives notification from the program office managing F-35 procurement.
+
+Canada is committed at the moment to buy sixteen F-35 aircraft. CBC reported earlier this year that Ottawa had made long-lead payments for an additional fourteen. With the latest component payments, the officials say, Canada has paid to secure the parts necessary for up to forty-eight fighters.
+
+Last year, as a trade war with the United States was deepening, Prime Minister Mark Carney announced that the federal government would reconsider plans to buy a full complement of F-35s. The Globe and Mail reports that review remains unfinished twenty months later, and the government has not indicated when it might be completed. The payments come as trade negotiations continue between Ottawa and Washington on deals to cut U.S. tariffs on Canadian steel, aluminum and autos and to renew the United States-Mexico-Canada Agreement. During a briefing for Canadian reporters in Washington this week with two Pentagon officials, one official cited the F-35 purchase as something the administration wants to see from Canada and said Canada was too focused on trade issues.
+
+The government has said it is considering scaling back F-35 plans to accommodate a second fleet, such as Sweden's Saab Gripen. The Swedish king visited Ottawa last year to promote a sale. Philippe Lagassé, a Carleton University professor and expert in defence procurement, told the Globe that Mr. Carney has taken no steps toward buying the Gripen. He said that when this government believes something is urgent or important, it tends to decide quickly, and that the absence of that pattern lends credence to the idea that the Gripen option remains a bargaining chip in negotiations with the Trump administration. He noted that Canada's aging CF-18 fleet is at the end of its lifespan, and that without a decision to embrace a mixed fleet the only plan in place is F-35s. "Every day that goes by without a decision is a decision in favour of the status quo, namely the F-35," he said.
+
+Simon Lafortune, director of communications for Defence Minister David McGuinty, said the proposed purchase of additional F-35s remains under review and no decision has been made on procurement of additional aircraft. He said that while the review is under way, Canada will continue to honour its fiscal obligations and maintain its place in line with the U.S. Joint Program Office, including commitments for long-lead items. "This is not a firm financial commitment to purchase additional aircraft, but a reservation by the Government of Canada to secure a place in the production schedule," he said.
+
+Professor Lagassé said the Canadian Armed Forces remain strongly in favour of the F-35, and have been clear that a mixed fleet would be too onerous for the Royal Canadian Air Force. He said the window to replace the vast majority of the F-35s with Gripens is effectively closed, though Canada can still supplement an F-35 fleet with Gripens. He said the risk remains that the United States would refuse to fully integrate non-American fighters into the North American Aerospace Defence Command. Source: [theglobeandmail.com](https://www.theglobeandmail.com/politics/article-canada-puts-money-down-for-f-35s-remains-undecided-on-buying/)
+
+### Also Today
+**Judge rejects Trump’s latest attempt to restrict birthright citizenship: EL PAÍS**
+A judge has rejected President Trump's latest attempt to restrict birthright citizenship. Source: [english.elpais.com](https://english.elpais.com/usa/2026-11-26/judge-rejects-trumps-latest-attempt-to-restrict-birthright-citizenship.html)
+
+**Pierre Poilievre says Alberta nurse may lose job after photo with him in Wainwright: Global News**
+Conservative Leader Pierre Poilievre says a nurse working on contract at CFB Wainwright, who helped treat soldiers burned in the base fire, has been told she might lose her job after she was photographed speaking with him. Source: [globalnews.ca](https://globalnews.ca/news/12166812/pierre-poilievre-alberta-nurse-wainwright-photo/) Source: [cbc.ca](https://www.cbc.ca/news/politics/poilievre-wainwright-nurse-employment-9.7436563?cmp=rss)
+
+**New Alberta riding maps pass debate in legislature as court fight looms: CBC**
+New Alberta riding maps have passed debate in the legislature as a court fight looms, and an NDP MLA was kicked out of the debate. Source: [cbc.ca](https://www.cbc.ca/news/canada/calgary/alberta-legislature-riding-maps-9.7436431) Source: [globalnews.ca](https://globalnews.ca/news/12166561/alberta-legislature-riding-maps-debate/)
+
+**Ford calls online gambling ads 'out of control,' says cabinet will look into problem: CBC**
+Ford says online gambling ads are out of control and that cabinet will look into the problem. Source: [cbc.ca](https://www.cbc.ca/news/canada/toronto/ontario-gambling-ads-doug-ford-opposition-reaction-9.7436285)
+
+**Rare vision loss risk from semaglutide medication, Health Canada warns: The Globe and Mail**
+Health Canada is warning of a rare vision-loss risk from semaglutide, the key ingredient in drugs such as Ozempic and Wegovy, following similar warnings from other health regulators. Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/article-semaglutide-medication-vision-loss-risk-rare-ozempic-wegovy-health/)
+
+**Flights at Miami Airport Are Disrupted After FedEx Jet Overshoots Runway: The New York Times**
+A FedEx jet overran a runway after landing at Miami International Airport on Wednesday and stopped near a fence; FedEx said there were no injuries, and flights were disrupted. Source: [nytimes.com](https://www.nytimes.com/2026/11/26/us/fedex-plane-miami-airport.html)
+
+**Alaskan flying team airdrops Thanksgiving turkeys to remote communities: BBC**
+An Alaskan flying team the BBC calls the turkey bombers has again airdropped Thanksgiving turkeys to residents in off-grid communities, as it has for the last few years. Source: [bbc.co.uk](https://www.bbc.co.uk/news/videos/cvze7yk7dy5lo?at_medium=RSS&at_campaign=rss)
+
+**Holiday Inn Packed as Prominent Residents Urge Government to Pause Hydro Deal with Quebec: VOCM**
+A packed Holiday Inn heard prominent residents urge the government to pause a hydro deal with Quebec. Source: [vocm.com](https://vocm.com/2026/11/26/holiday-inn-packed-as-prominent-residents-urge-government-to-pause-hydro-deal-with-quebec/)
+
+**Steelers cut Aaron Rodgers after the QB rips coach Mike McCarthy on TV: NPR**
+The Steelers have cut Aaron Rodgers after the forty-two-year-old criticized coach Mike McCarthy on television, capping eighteen hours in which the team first said it was benching him for Mason Rudolph ahead of Friday's visit from Denver. Source: [npr.org](https://www.npr.org/2026/11/26/nx-s1-6054760/steelers-cut-aaron-rodgers)
+
+**LCBO to deploy paid duty cops in over 40 stores to bolster anti-theft efforts: The Globe and Mail**
+The LCBO says it will deploy paid duty police officers in more than forty stores to bolster anti-theft efforts, and that existing measures led to more than two thousand arrests last year. Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/toronto/article-lcbo-cops-police-theft-security/)
+
+### The Region and the World
+**Lukoil to Sell Foreign Assets, but Not to Kushner and Witkoff Associates: The New York Times**
+Valuable foreign properties of Russian energy giant Lukoil will be sold to an American-led consortium, The New York Times reports. The sale will not go to associates of Kushner and Witkoff, two Trump envoys. Middle Eastern business contacts of the two pulled out because of political winds. The buyer group is American-led; the assets belong to the Russian company. Source: [nytimes.com](https://www.nytimes.com/2026/11/25/us/politics/lukoil-deal.html)
+
+### Both Sides: The notwithstanding clause and Quebec's Bill 21
+Friday at 9:45 a.m. in Ottawa, the Supreme Court of Canada is due to deliver judgment on six appeals of Bill 21, Quebec's 2019 secularism law, which prohibits many public-sector workers, including teachers and police, from wearing religious symbols such as a hijab or a cross on the job. Quebec shielded the law with section 33 of the Charter, the notwithstanding clause. The court is being asked whether that shield holds, and whether Bill 21 can be struck down.
+
+Appellants, including female Muslim, Sikh and Catholic teachers, want the judges to strike the law down. Their case is that sections 23 and 28 of the Charter, on minority-language education and gender equality, cannot be overridden by the notwithstanding clause and protect people affected by Bill 21. Critics view the law as aimed at minority women in a province with deep Catholic roots. In April 2021, after a thirty-three-day trial, Quebec Superior Court Justice Marc-André Blanchard upheld the law but observed that it forced "a cruel consequence that dehumanizes the people targeted," and said it could not be struck down for Charter violations because of the notwithstanding clause. The Quebec Court of Appeal upheld it in February 2024 for the same reason. At the Supreme Court hearing in March, one lawyer for an appellant warned of a "mini-Trump" in Canada wielding the clause.
+
+Quebec's case is that the clause was the bargain that unlocked the Charter, and that the province used it as written. The law has broad support in Quebec, where state secularism is described as a cherished value, Jean-Christophe Jasmin, Quebec director of the Christian think tank Cardus, told The Globe and Mail. He said many nationalists have concluded the Quebec nation can flourish inside the Canadian constitutional order, and that "a very restrictive decision would give ammunition to the separatist nationalists." Former Liberal premier Jean Charest said the Parti Québécois is hoping the ruling will be controversial. Premier Paul St-Pierre Plamondon's minority government, elected with 28 percent of the vote, a record low, would likely welcome a decision limiting the clause or invalidating parts of Bill 21, The Globe and Mail reports. On the hearing's last day, Chief Justice Richard Wagner said, "I don't think that this case will be disposed of by extremist or catastrophic scenarios." The judgment is set for Friday morning. Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/article-historic-stakes-in-landmark-supreme-court-ruling-quebec-bill-21/) Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/article-quebec-braces-for-supreme-court-decision-on-bill-21/)
+
+### Progress Watch
+**Shooting at the auto shop: how Canada is tackling India's extortion gangs: Global News**
+Surrey police say extortion shootings fell from ten in January to none since the start of October, a drop Sergeant Lindsey Houghton called encouraging for a city where those shootings had become common. Police in Edmonton and Calgary said extortion-related incidents were also trending downward. The Canada Border Services Agency said it had removed more than one hundred suspects identified through extortion investigations. For business owners who had been targeted in those cities, the six-month decline is a measured change in how often the attacks are being reported. Source: [globalnews.ca](https://globalnews.ca/news/12165117/investigation-canada-progress-india-extortion-gangs-bishnoi/)
