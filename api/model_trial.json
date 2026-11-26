@@ -1,7 +1,7 @@
 {
-  "generated": "2026-11-25T01:18:39Z",
-  "since": "2026-11-11",
-  "baseline_start": "2026-10-28",
+  "generated": "2026-11-26T00:53:02Z",
+  "since": "2026-11-12",
+  "baseline_start": "2026-10-29",
   "timeout_s": 600.0,
   "p95_timeout_share_limit": 0.5,
   "max_p95_regression_pct": 50.0,
@@ -30,7 +30,7 @@
         },
         "generate_digest": {
           "n": 14,
-          "p50": 74.03,
+          "p50": 74.39,
           "p95": 102.79,
           "max": 310.87,
           "failures": 0,
@@ -39,7 +39,7 @@
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 6,
+          "n": 5,
           "p50": 52.61,
           "p95": 73.82,
           "max": 73.82,
@@ -50,7 +50,7 @@
         },
         "generate_podcast_script": {
           "n": 14,
-          "p50": 342.1,
+          "p50": 364.23,
           "p95": 737.62,
           "max": 775.43,
           "failures": 0,
@@ -60,12 +60,22 @@
         },
         "grok_leads": {
           "n": 14,
-          "p50": 82.9,
+          "p50": 86.69,
           "p95": 121.07,
           "max": 128.04,
           "failures": 0,
           "baseline_p95": 137.38,
           "p95_timeout_share": 0.202,
+          "llm_stage": false
+        },
+        "market_move_search": {
+          "n": 1,
+          "p50": 21.7,
+          "p95": 21.7,
+          "max": 21.7,
+          "failures": 0,
+          "baseline_p95": null,
+          "p95_timeout_share": 0.036,
           "llm_stage": false
         },
         "source_integrity_flag": {
@@ -99,7 +109,7 @@
       "stages": {
         "fetch_and_dedup": {
           "n": 14,
-          "p50": 55.49,
+          "p50": 51.92,
           "p95": 85.57,
           "max": 96.9,
           "failures": 0,
@@ -118,8 +128,8 @@
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 7,
-          "p50": 118.11,
+          "n": 6,
+          "p50": 114.22,
           "p95": 196.51,
           "max": 196.51,
           "failures": 0,
@@ -130,11 +140,11 @@
         "generate_podcast_script": {
           "n": 14,
           "p50": 263.28,
-          "p95": 436.92,
-          "max": 466.16,
+          "p95": 363.23,
+          "max": 436.92,
           "failures": 0,
           "baseline_p95": 558.24,
-          "p95_timeout_share": 0.728,
+          "p95_timeout_share": 0.605,
           "llm_stage": true
         },
         "grok_leads": {
@@ -160,18 +170,18 @@
         "source_integrity_gate": {
           "n": 14,
           "p50": 0.01,
-          "p95": 1.16,
+          "p95": 0.58,
           "max": 1.42,
           "failures": 0,
-          "baseline_p95": 0.49,
-          "p95_timeout_share": 0.002,
+          "baseline_p95": 0.52,
+          "p95_timeout_share": 0.001,
           "llm_stage": false
         }
       },
       "episodes": 14,
       "fallbacks": 0,
       "gate_failures": [
-        "tesla/generate_podcast_script: p95 437s is 73% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
+        "tesla/generate_podcast_script: p95 363s is 61% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
       ]
     },
     "models_agents": {
@@ -188,7 +198,7 @@
         },
         "generate_digest": {
           "n": 14,
-          "p50": 84.98,
+          "p50": 85.45,
           "p95": 203.81,
           "max": 297.6,
           "failures": 0,
@@ -208,7 +218,7 @@
         },
         "generate_podcast_script": {
           "n": 14,
-          "p50": 259.32,
+          "p50": 246.17,
           "p95": 375.95,
           "max": 570.31,
           "failures": 0,
@@ -238,7 +248,7 @@
         },
         "source_integrity_gate": {
           "n": 14,
-          "p50": 0.05,
+          "p50": 0.01,
           "p95": 0.23,
           "max": 0.36,
           "failures": 0,
@@ -257,7 +267,7 @@
       "stages": {
         "fetch_and_dedup": {
           "n": 14,
-          "p50": 69.32,
+          "p50": 67.55,
           "p95": 100.15,
           "max": 129.66,
           "failures": 0,
@@ -267,7 +277,7 @@
         },
         "generate_digest": {
           "n": 14,
-          "p50": 91.36,
+          "p50": 92.94,
           "p95": 132.38,
           "max": 287.23,
           "failures": 0,
@@ -277,7 +287,7 @@
         },
         "generate_digest_structural_retry": {
           "n": 9,
-          "p50": 104.54,
+          "p50": 99.47,
           "p95": 144.87,
           "max": 144.87,
           "failures": 0,
@@ -287,7 +297,7 @@
         },
         "generate_podcast_script": {
           "n": 14,
-          "p50": 229.43,
+          "p50": 220.77,
           "p95": 287.76,
           "max": 411.06,
           "failures": 0,
@@ -324,7 +334,7 @@
       "stages": {
         "fetch_and_dedup": {
           "n": 14,
-          "p50": 26.49,
+          "p50": 27.11,
           "p95": 88.98,
           "max": 176.94,
           "failures": 0,
@@ -334,27 +344,27 @@
         },
         "generate_digest": {
           "n": 14,
-          "p50": 84.93,
+          "p50": 83.11,
           "p95": 158.32,
           "max": 176.02,
           "failures": 0,
-          "baseline_p95": 167.3,
+          "baseline_p95": 162.17,
           "p95_timeout_share": 0.264,
           "llm_stage": true
         },
         "generate_digest_retry": {
-          "n": 4,
+          "n": 3,
           "p50": 116.91,
-          "p95": 122.29,
-          "max": 122.29,
+          "p95": 120.21,
+          "max": 120.21,
           "failures": 0,
-          "baseline_p95": 189.96,
-          "p95_timeout_share": 0.204,
+          "baseline_p95": 144.02,
+          "p95_timeout_share": 0.2,
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 8,
-          "p50": 72.32,
+          "n": 9,
+          "p50": 68.31,
           "p95": 110.96,
           "max": 110.96,
           "failures": 0,
@@ -364,7 +374,7 @@
         },
         "generate_podcast_script": {
           "n": 14,
-          "p50": 304.25,
+          "p50": 310.97,
           "p95": 417.68,
           "max": 451.77,
           "failures": 0,
@@ -378,13 +388,13 @@
           "p95": 0.01,
           "max": 1.18,
           "failures": 0,
-          "baseline_p95": 0.01,
+          "baseline_p95": 0.0,
           "p95_timeout_share": 0.0,
           "llm_stage": false
         },
         "source_integrity_gate": {
           "n": 14,
-          "p50": 0.06,
+          "p50": 0.03,
           "p95": 0.41,
           "max": 0.72,
           "failures": 0,
@@ -413,7 +423,7 @@
         },
         "generate_digest": {
           "n": 14,
-          "p50": 67.15,
+          "p50": 62.38,
           "p95": 82.87,
           "max": 95.86,
           "failures": 0,
@@ -422,13 +432,13 @@
           "llm_stage": true
         },
         "generate_digest_structural_retry": {
-          "n": 9,
-          "p50": 67.39,
-          "p95": 122.53,
-          "max": 122.53,
-          "failures": 0,
+          "n": 10,
+          "p50": 71.76,
+          "p95": 900.0,
+          "max": 900.0,
+          "failures": 1,
           "baseline_p95": 105.2,
-          "p95_timeout_share": 0.204,
+          "p95_timeout_share": 1.5,
           "llm_stage": true
         },
         "generate_podcast_script": {
@@ -464,7 +474,11 @@
       },
       "episodes": 14,
       "fallbacks": 0,
-      "gate_failures": []
+      "gate_failures": [
+        "planetterrian/generate_digest_structural_retry: p95 900s is +756% against a 105s baseline (limit +50%)",
+        "planetterrian/generate_digest_structural_retry: p95 900s is 150% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
+        "planetterrian/generate_digest_structural_retry: 1 failed stage(s) in the trial window"
+      ]
     }
   },
   "consumers": [
@@ -474,9 +488,12 @@
   "any_trial_data": true,
   "failures": [
     "spacex/generate_podcast_script: p95 738s is 123% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
-    "tesla/generate_podcast_script: p95 437s is 73% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
+    "tesla/generate_podcast_script: p95 363s is 61% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
     "models_agents/generate_podcast_script: p95 376s is 63% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
-    "fascinating_frontiers/generate_podcast_script: p95 418s is 70% of the 600s request timeout \u2014 no headroom (playbook rule 2)"
+    "fascinating_frontiers/generate_podcast_script: p95 418s is 70% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
+    "planetterrian/generate_digest_structural_retry: p95 900s is +756% against a 105s baseline (limit +50%)",
+    "planetterrian/generate_digest_structural_retry: p95 900s is 150% of the 600s request timeout \u2014 no headroom (playbook rule 2)",
+    "planetterrian/generate_digest_structural_retry: 1 failed stage(s) in the trial window"
   ],
   "gate": "FAIL"
 }
