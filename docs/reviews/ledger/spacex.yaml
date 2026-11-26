@@ -1292,4 +1292,102 @@ reviews:
     ab_listen_required: false
     rationale: One-time archive cleanup so the public chapter surface matches entity truth; pairs with the scrubber guard.
   agent_cost_usd: 0.2287
+- date: '2026-11-26'
+  pr: null
+  doc: docs/reviews/spacex_review_2026_11_26.md
+  generated_by: grok-4.5
+  summary: Host-ID garble still ships on every recent EN close, 8/10 dailies sit under 1300w, Ep165 retains a SpaceXAI chapter-title bleed, while editorial audit mean recovered to 6.7 and density/chapter defenses mostly held—length and price-once stay escalated operator decisions.
+  scored_prior_predictions:
+  - metric: Whisper/transcript hits for identity garble "patrick and vancouver" in next 10 EN episodes
+    verdict: miss
+    evidence: Ep171–174 EN Whisper all still say "I'm Patrick and Vancouver"; disambiguation never shipped
+  - metric: Flight/earnings special episodes with copied_sections naming Segment N brief headings or chapters collapsed to <6 section markers
+    verdict: miss
+    evidence: Stripper/special markers never shipped; no new special in Ep165–174 window — item stays open
+  - metric: chapters_ep*.json titles matching /SpaceXAI/ (entity bleed)
+    verdict: miss
+    evidence: Ep165 chapter title "SpaceXAI affiliate buys 96 acres near Memphis data centers"; scrub never shipped
+  - metric: editorial_score_14d_spacex (dashboard / api/editorial_score_history.json)
+    verdict: hit
+    evidence: Snapshot audit score last 7 = 6.7 (21 before 6.1), clears ≥6.3 expectation
+  - metric: non-special dailies with mid-body SPCX tape/price and no Market Watch chapter
+    verdict: hit
+    evidence: Ep165–174 either fire MW on mid-body tape or correctly omit when price is sign-off-only (Closing wins)
+  - metric: source_integrity_claims median, Ep+1..Ep+14 (Sep-24 sourcing)
+    verdict: miss
+    evidence: Claims/sidecar medians not in bundle — cannot confirm ≥4
+  - metric: 'digests with leaked Title: heading labels / laundered SEO junk titles'
+    verdict: hit
+    evidence: 'review_snapshot: 0 leaked heading labels; 0 fetch-filter hits on last 10'
+  - metric: episodes >=1300w / conditional length if deep-dive lever ships
+    verdict: miss
+    evidence: only 2/10 (Ep167, Ep171) ≥1300; podcast-side levers banned — do not re-file
+  shipped: []
+  deferred:
+  - 'OPERATOR DECISION (repeated misses): accept daily length plateau vs further digest-substrate only (min_digest_words / full-text utilization / licensed Engineering floors) — do not re-propose podcast expand, podcast word floors, or conditional 7+/10 if lever ships predictions'
+  - 'OPERATOR DECISION (since 2026-06-13): SPCX price-once — Market Watch qualitative + single precise quote only in closing_block; coupled A/B-listen; or accept double price as brand and close the ledger item'
+  - 'OPERATOR DECISION (mega-story retell, prompt lever missed): data-side exclusion of headlines already used in AI/Counterpoint/Deep Dive from Top News — do not file a third MEGA-STORY prompt rule'
+  - 'Q2/special path: richer spacex_deep_dive.txt / flight briefs so specials clear deep_dive.min_podcast_words 2400; code-side ### Segment N — strip + special section_markers; do not stack time-critical flight specials on the daily publish day'
+  - Entity-discipline prompt (xAI/SpaceX Memphis/Colossus operator naming in body) — regression guard only; A/B; chapter-title SpaceXAI scrub is the metadata half proposed this pass
+  - Code-side mandatory-anchor / section-order validator for bare Top News lumps (Ep168/Ep174) and missing Counterpoint when digest has the section (Ep170) — escalate off third prompt-only re-seed
+  - Undated-URL stale articles — refuse record/first claims below memory last-known when page date is unknown
+  - Pin single closing CTA pack network-wide (Sep-05 identical-closing miss) — separate from market verb; A/B if audio-affecting
+  - Score source_integrity_claims median when sidecar/gate export is in the review bundle
+  - api/shorts_ab.json status hygiene after experiment end — non-audio
+  - NASA public-domain b-roll pool vs retired shorts_ab generated motion — render-side
+  - Scheduler forensics for any missed Sunday weekly_summary_segment run (June-28 class) — operator
+  - Monitor share_price must-have only — Ep165/168/169 explained by pre_fetch timeout; Nov-24 hook thread should hold
+  predictions:
+  - metric: Whisper/transcript hits for identity garble "patrick and vancouver" (or "Patrick and Vancouver") in next 10 EN episodes
+    baseline: 4/4 in Ep171–174 EN transcripts
+    expected: ≤1/10 if identity-line disambiguation ships after A/B; else n/a-lever-not-shipped
+    verdict: pending
+    evidence: null
+  - metric: chapters_ep*.json titles matching /SpaceXAI/ (entity bleed) in next 10
+    baseline: 1/10 (Ep165 SpaceXAI affiliate)
+    expected: 0/10 new episodes after chapter-title entity scrub ships; Ep165 cleaned or accepted as frozen archive
+    verdict: pending
+    evidence: null
+  - metric: non-special dailies with mid-body SPCX tape/price and no Market Watch chapter
+    baseline: 0 misses in Ep165–174 sign-off-only class
+    expected: 0/10 sustained; Closing still wins sign-off-only price lines
+    verdict: pending
+    evidence: null
+  - metric: editorial_score last-7 / editorial_score_14d_spacex
+    baseline: last 7 = 6.7; 21 before 6.1
+    expected: ≥6.3 sustained on next review window
+    verdict: pending
+    evidence: null
+  - metric: must-have share_price present on non-special dailies
+    baseline: 3 misses in Ep165–174 (Ep165/168/169); Ep170–174 ok after Nov-24 hook thread
+    expected: 0 new share_price MISSING on dailies after Ep174
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/hooks/spacex.py
+    kind: code
+    ab_listen_required: true
+    rationale: 'P0 listener-facing host-ID garble on Ep171–174 after four review proposals never applied. Structural wording only so TTS cannot confute in→and (landmine #17-safe). Apply to every closing_block / identity variant that currently uses ''Patrick in Vancouver''. A/B-listen the identity line on the first two merged episodes.'
+    status: not_allowed
+  - file: engine/chapters.py
+    kind: code
+    ab_listen_required: false
+    rationale: P0 public chapter-list entity bleed on Ep165 (and historically Ep160). Deterministic garble/filter class (~100% hit per meta-review); no A/B. Pair with one-time archive cleanup of chapters_ep165.json.
+    status: empty
+  - file: digests/spacex/chapters_ep165.json
+    kind: code
+    ab_listen_required: false
+    rationale: One-time archive cleanup so the public chapter surface matches entity truth; pairs with the scrubber guard.
+    status: not_allowed
+  - file: tests/test_spacex_show.py
+    kind: code
+    ab_listen_required: false
+    rationale: Code-only locks so Ep171-class host-ID and Ep165-class title bleed cannot return unnoticed.
+    status: empty
+  - file: shows/prompts/spacex_flight_special_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'P1 Ep158-class special path: 53% verbatim + spoken Segment-* headings when daily grok-4.6 density already won. Shape-only ban on segment-label speech + rewrite-not-read rule; no new quotable example sentence (de-seed-by-shape). A/B-listen next forced flight special only (landmine #17).'
+    status: applied
+  agent_cost_usd: 0.2156
 do_not_retry: []
