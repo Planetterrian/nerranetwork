@@ -54,6 +54,13 @@ def _normalise(raw: str) -> str:
     if value in _NON_PATHS:
         return ""
     value = value.split(";", 1)[0].strip()
+    # Nov 27 2026: GA4 recorded "//blog/tesla/ep674.html" (a client that
+    # doubled the slash). urlparse reads a leading "//" as a host, so the
+    # path became "tesla/ep674.html" and a page that exists was reported
+    # as a 404, turning Run Tests red on main and on every review PR. A
+    # landing path never carries a host: collapse the leading slashes.
+    if value.startswith("/"):
+        value = "/" + value.lstrip("/")
     path = urlparse(value).path or value
     path = unquote(path).strip().lstrip("/")
     if not path or path in _NON_PATHS:
