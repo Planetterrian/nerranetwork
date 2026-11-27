@@ -700,26 +700,10 @@ END_SEARCH_SEC = 6.0
 END_KEEP_SEC = 0.5
 
 
-def _last_silence_before(src, end: float, cut: dict | None = None) -> float | None:
-    """Where everyone stopped talking, just before ``end``.
-
-    Sept 22 2026. An EDL's end comes from transcript timestamps, and those are
-    approximate at both edges: Meridan Zerner's closing line was stamped nine
-    seconds long and ran fourteen, so the cut took "It is complex." off the
-    end; correcting it to the next speaker's stamp then included the first
-    three quarters of a second of Mira's live "Thank you, Meridan", because
-    that stamp was itself nearly a second late. Two failures from the same
-    cause, in opposite directions, on the same episode.
-
-    The audio does not need to be guessed at. Look at the last few seconds
-    before the nominal end and find where speech actually stops — the fold is
-    silent only when NOBODY is talking, which is exactly the seam an editor
-    would choose.
-
-    ``src`` is one file or several. Several are folded first, because with the
-    speakers on separate tracks no single one of them can answer "has everyone
-    stopped": the guest's track is silent through every question Mira asks.
-    """
+def _loud_frames(src, lo: float, hi: float, cut: dict | None = None):
+    """10 ms frames of the fold from ``lo`` to ``hi``, True where anyone is
+    talking (as the fold will be HEARD: each voice at its playing level,
+    muted speakers muted). None when the probe fails or reads nothing."""
     srcs = [src] if isinstance(src, (str, Path)) else list(src)
     # (role, path) pairs: listen to the fold as it will be HEARD, with any
     # muted speaker already muted. Sept 26 2026, Dr. Brandt: the probe heard
@@ -728,11 +712,10 @@ def _last_silence_before(src, end: float, cut: dict | None = None) -> float | No
     # thank you so much for having me" off the end of the episode.
     roles = [s[0] if isinstance(s, tuple) else "" for s in srcs]
     srcs = [s[1] if isinstance(s, tuple) else s for s in srcs]
-    lo = max(0.0, end - END_SEARCH_SEC)
 
     cmd = ["ffmpeg", "-v", "error"]
     for one in srcs:
-        cmd += ["-ss", str(lo), "-to", str(end + 0.5), "-i", str(one)]
+        cmd += ["-ss", str(lo), "-to", str(hi), "-i", str(one)]
     if len(srcs) > 1:
         probe_cut = {**(cut or {}), "start": lo}
         # At the level each voice will be played at (a quiet guest's raw
@@ -759,7 +742,34 @@ def _last_silence_before(src, end: float, cut: dict | None = None) -> float | No
     if n == 0:
         return None
     db = 20 * np.log10(np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1)) + 1e-9)
-    loud = db > -45.0
+    return db > -45.0
+
+
+def _last_silence_before(src, end: float, cut: dict | None = None) -> float | None:
+    """Where everyone stopped talking, just before ``end``.
+
+    Sept 22 2026. An EDL's end comes from transcript timestamps, and those are
+    approximate at both edges: Meridan Zerner's closing line was stamped nine
+    seconds long and ran fourteen, so the cut took "It is complex." off the
+    end; correcting it to the next speaker's stamp then included the first
+    three quarters of a second of Mira's live "Thank you, Meridan", because
+    that stamp was itself nearly a second late. Two failures from the same
+    cause, in opposite directions, on the same episode.
+
+    The audio does not need to be guessed at. Look at the last few seconds
+    before the nominal end and find where speech actually stops — the fold is
+    silent only when NOBODY is talking, which is exactly the seam an editor
+    would choose.
+
+    ``src`` is one file or several. Several are folded first, because with the
+    speakers on separate tracks no single one of them can answer "has everyone
+    stopped": the guest's track is silent through every question Mira asks.
+    """
+    import numpy as np
+    lo = max(0.0, end - END_SEARCH_SEC)
+    loud = _loud_frames(src, lo, end + 0.5, cut)
+    if loud is None:
+        return None
     at_end = int(round((end - lo) / 0.01))
     before = np.where(loud[:at_end])[0]
     if not len(before):
@@ -783,6 +793,65 @@ def _last_silence_before(src, end: float, cut: dict | None = None) -> float | No
     if not (lo < at < end):
         return None
     return at + END_KEEP_SEC
+
+
+# The shortest pause that separates an acknowledgment from the question after
+# it, and how far past the word-count estimate it may sit.
+ACK_PAUSE_MIN_SEC = 0.15
+ACK_SEARCH_AFTER_SEC = 1.5
+
+
+def ack_pause(loud, lo: float, until: float) -> float | None:
+    """The room second to start on, just after the pause that ends an
+    acknowledgment, from 10 ms ``loud`` frames starting at ``lo``. The pause
+    must follow speech (the acknowledgment) and be followed by speech (the
+    next question), begin after a third of the estimate has been spoken, and
+    sit no further than ``ACK_SEARCH_AFTER_SEC`` past the estimate; the one
+    nearest the estimate wins. None when there is no such pause."""
+    need = int(round(ACK_PAUSE_MIN_SEC / 0.01))
+    earliest = lo + (until - lo) / 3.0
+    latest = until + ACK_SEARCH_AFTER_SEC
+    runs, i, n = [], 0, len(loud)
+    while i < n:
+        if loud[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and not loud[j]:
+            j += 1
+        a, b = lo + i * 0.01, lo + j * 0.01
+        if (j - i >= need and earliest <= a <= latest and any(loud[:i])
+                and j < n and any(loud[j:])):
+            runs.append((abs(a - until), a, b))
+        i = j
+    if not runs:
+        return None
+    _d, _a, b = min(runs)
+    return round(max(lo, b - 0.08), 2)
+
+
+def _start_after_the_ack(cut: dict, src) -> None:
+    """Take Mira's acknowledgment of a pass off the front of the piece after
+    it, when it shares its transcript line with her next question ("Of
+    course, a different one. You refuse MQL targets..."). Nov 27 2026. The
+    piece starts on the line as the fallback, so a probe that finds no
+    pause keeps the acknowledgment rather than guessing a cut through a
+    word; that is logged so it shows at gate 1."""
+    ack = cut.get("skip_ack") or {}
+    try:
+        lo, until = float(ack["line_at"]), float(ack["until_sec"])
+    except (KeyError, TypeError, ValueError):
+        return
+    loud = _loud_frames(src, lo, until + ACK_SEARCH_AFTER_SEC + 1.0, cut)
+    at = ack_pause(loud, lo, until) if loud is not None else None
+    if at is None:
+        logger.warning("no pause after Mira's %r at %.1fs — the acknowledgment "
+                       "stays in", ack.get("ack"), lo)
+        return
+    logger.info("pass: Mira's %r taken off the front, %.1fs -> %.1fs",
+                ack.get("ack"), float(cut.get("start") or lo), at)
+    cut["start"] = at
+    cut["_ack_skipped"] = True
 
 
 def _end_on_the_last_word(cut: dict, src) -> None:
@@ -920,6 +989,8 @@ def assemble(slug: str) -> dict:
                     if side in CHANNEL_FILTERS:
                         _TRACK_PAN[str(path)] = CHANNEL_FILTERS[side]
                     _TRACK_SOURCE[str(path)] = str(origin.get(role) or "")
+                if cut.get("skip_ack"):
+                    _start_after_the_ack(cut, srcs)
                 if i == last_conversation:
                     _end_on_the_last_word(cut, srcs)
                 pieces.append(_piece_clean(cut, srcs, out))
@@ -934,6 +1005,8 @@ def assemble(slug: str) -> dict:
                 if side in CHANNEL_FILTERS:
                     cut = {**cut, "channel": side}
             src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
+            if cut.get("skip_ack") and _is_conversation(cut):
+                _start_after_the_ack(cut, src)
             if i == last_conversation and _is_conversation(cut):
                 _end_on_the_last_word(cut, src)
             pieces.append(_piece(cut, src, out))

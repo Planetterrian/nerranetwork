@@ -285,6 +285,20 @@ def transcript_of_the_edit(transcript: str, cuts: List[dict],
             # span over the time it actually takes in the edit.
             scale = min(1.0, dur / (e - s)) if e > s else 1.0
             removed = cut.get("_gaps_removed")
+            # Nov 27 2026: the assembler took Mira's acknowledgment of a pass
+            # off the front of this piece, from inside a line that goes on to
+            # her next question. The rest of that line is heard first.
+            ack = cut.get("skip_ack") or {}
+            if cut.get("_ack_skipped") and ack.get("line_at") is not None:
+                line_at = float(ack["line_at"]) + room_offset_sec
+                for at, who, text in lines:
+                    if abs(at - line_at) < 0.5 and who.lower().startswith("mira"):
+                        rest = text.strip()
+                        if rest.startswith(str(ack.get("ack") or "")):
+                            rest = rest[len(str(ack.get("ack") or "")):].strip()
+                        if rest:
+                            out.append(f"{stamp(clock)} {who}: {rest}")
+                        break
             for at, who, text in lines:
                 if s <= at < e and not _muted(cut, at - room_offset_sec, who):
                     # Oct 27 2026: when the assembler says which silences it
