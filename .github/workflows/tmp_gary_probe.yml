@@ -1,0 +1,22 @@
+# Temporary (Nov 27 2026): word timings for the Gary Amaral recut. Removed before merge.
+name: tmp Gary probe
+on:
+  push:
+    branches: [claude/project-thread-x9zj29]
+    paths: ['tmp_probe/**']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-ffmpeg
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install faster-whisper
+      - run: python tmp_probe/probe.py
