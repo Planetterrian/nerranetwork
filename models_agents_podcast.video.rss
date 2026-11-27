@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 26 Nov 2026 10:59:10 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 27 Nov 2026 11:14:20 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,176 @@
     </itunes:owner>
     <itunes:summary>The day's AI model releases and agent tools, each with its source, the link to where it was announced. For people who use these tools, not people who sell them: new models, open-weight drops, agent frameworks, benchmarks and pricing. Corrections and the claim record at nerranetwork.com/claims.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 247: India's Chariot-1 11B model cuts Indian-text tokens by 2.5x while running on phones.</title>
+      <description>Models &amp; Agents
+&lt;b&gt;India's Chariot-1 11B model cuts Indian-text tokens by 2.5x while running on phones.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Chariot AI released the Chariot-1 suite—an 11B-parameter mixture-of-experts LLM and a context-aware TTS model supporting English plus ten Indian languages—under the IndiaAI Mission. The models were trained from scratch in India with IndicShift tokenization and nested training techniques that delivered measurable efficiency gains. Builders working on Indic-language applications or edge deployments should test the three available sizes this week.
+
+Top Story
+Chariot Artificial Intelligence Pvt. Ltd. launched the Chariot-1 foundation model suite on 26 November at Bharat Mandapam in New Delhi. MeitY Secretary S. Krishnan performed the launch under the IndiaAI Mission, making Chariot one of the first four teams selected for sovereign foundation-model development. The suite pairs an 11-billion-parameter mixture-of-experts LLM with four billion active parameters per token and a text-to-speech system, both pre-trained from scratch in India. Three sizes—10.7 billion, 1.7 billion, and 745 million parameters—are provided for data-center, laptop, and smartphone deployment. The TTS model supports English and ten Indian languages—Hindi, Bengali, Marathi, Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi, and Odia—while determining context-aware pronunciation for numbers, dates, currencies, URLs, and abbreviations, achieving over 97 percent verbalisation accuracy on the Async TTS Pronunciation Benchmark. IndicShift tokenization, covering 1,012 characters across 12 Indian scripts, delivers up to 2.5 times fewer tokens on Indian text than OpenAI’s GPT tokenizer. Nested training techniques produced a 38 percent improvement in training speed on the same GPUs with negligible change in model loss; a separate reported approach reached 62 percent faster training. Co-founder Parth Sarthi stated that a nation of India’s scale and diversity cannot depend on AI built elsewhere. The company is already developing a 70-billion-parameter model and holds longer-term ambitions for a trillion-parameter system. Developers building Indic-language or on-device applications should download the three available sizes and benchmark token efficiency against existing tokenizers. Source: &lt;a href="https://www.wocult.com/news/indiaai-mission-chariot-1-foundation-models-india"&gt;wocult.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Sakana AI Releases Namazu Small, a 30B Model Built on Nemotron 3 Nano: MarkTechPost&lt;/b&gt;
+Sakana AI released Sakana Namazu Small, a 30B-A3B reasoning model built on NVIDIA Nemotron 3 Nano. It averages 60.1 across 25 benchmarks, ahead of the 120B Nemotron 3 Super at 56.2. The model demonstrates that a smaller active-parameter count can outperform a much larger dense counterpart on aggregate reasoning tasks. Source: &lt;a href="https://www.marktechpost.com/2026/11/26/sakana-ai-namazu-small-30b-nemotron-3-nano/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Tencent Open-Sources DFly2: Speculative Decoding That Reuses the Target’s Sparse KV Cache: MarkTechPost&lt;/b&gt;
+Tencent open-sourced DFly2, a speculative decoding drafter for sparse-attention LLMs. Each draft layer reuses the target’s KV cache and top-k indexer picks, adding no draft KV memory. The approach lifts 64K serving throughput by up to 81 percent. Because the drafter shares the target’s cache, memory overhead remains zero while still accelerating generation on long contexts. Source: &lt;a href="https://www.marktechpost.com/2026/11/26/tencent-dfly2-speculative-decoding-sparse-models/"&gt;marktechpost.com&lt;/a&gt;
+
+&lt;b&gt;Russian AI model fills void in unfinished Gogol novel. Not everyone is happy: Reuters&lt;/b&gt;
+A Russian AI model completed an unfinished Gogol novel, drawing mixed reactions from literary observers. The project highlights both the capability of current models to continue classic literary works and the cultural sensitivities that arise when AI intervenes in national literary heritage. Source: &lt;a href="https://www.reuters.com/technology/russian-ai-model-fills-void-unfinished-gogol-novel-not-everyone-is-happy-2026-11-27/"&gt;reuters.com&lt;/a&gt;
+
+&lt;b&gt;Stable Gated DeltaNet-2: Understanding and Mitigating Recurrent State Instability: arXiv NLP&lt;/b&gt;
+Researchers introduced Stable Gated DeltaNet-2, which uses symmetric erasure and decay-regulated residual writing to bound recurrent state growth at O(√T). On approximately 1.6B parameter models the method raised the 128K average RULER score by 6.80 points in the recurrent setting and average accuracy across nine downstream tasks by 0.62 points in the hybrid setting. The fix addresses exponential state growth caused by asymmetric erase operators in the original Gated DeltaNet-2 design. Source: &lt;a href="https://arxiv.org/abs/2611.34051"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Lightweight Reasoning Transfer via Chain-of-Thought Vector Projection: arXiv NLP&lt;/b&gt;
+A two-stage projected cross-model Chain-of-Thought vector transfer method improved base student models by 10.37-21.98 accuracy points on GSM8K and MATH and by 3.23-9.65 pass@1 points on four code-generation benchmarks while keeping both teacher and student frozen. The approach first learns a task-level CoT vector in the teacher, then trains only a lightweight linear projector to map it into the student’s residual space. No teacher outputs or intermediate traces are required during student adaptation. Source: &lt;a href="https://arxiv.org/abs/2611.34183"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;LaunchDarkly Orchestrates Parallel AI Agents in Cloud Sandboxes to Drive 44 Code Changes: Howl.Link&lt;/b&gt;
+LaunchDarkly demonstrated parallel AI agents running in cloud sandboxes that produced 44 code changes. The setup isolates agent execution while still allowing measurable productivity gains on real engineering tasks. Source: &lt;a href="https://t.co/cTdoZCh4E8"&gt;t.co&lt;/a&gt;
+
+&lt;b&gt;EACON announces significant ORCASTRA upgrades plus new mining AI agent: International Mining&lt;/b&gt;
+EACON announced ORCASTRA upgrades together with a new mining AI agent. The agent targets autonomous operation of heavy equipment in mining environments, extending the platform’s existing orchestration capabilities. Source: &lt;a href="https://im-mining.com/2026/11/27/eacon-announces-significant-orcastra-upgrades-plus-new-mining-ai-agent/"&gt;im-mining.com&lt;/a&gt;
+
+&lt;b&gt;Metano Emerges from Stealth with $12M Seed to Secure Autonomous AI Agents: FF News&lt;/b&gt;
+Metano emerged from stealth with a $12M seed round to unify AI agent security across the enterprise. The funding targets consistent policy enforcement and runtime controls for agents operating inside corporate environments. Source: &lt;a href="https://ffnews.com/news/metano-emerges-from-stealth-to-unify-ai-agent-security-across-the-enterprise-c03bf277"&gt;ffnews.com&lt;/a&gt;
+
+&lt;b&gt;Valory Unveils Onchainbench to Test How Safely and Reliably AI Agents Use Crypto Wallets: HackerNoon&lt;/b&gt;
+Valory released Onchainbench, a benchmark for measuring how safely and reliably AI agents interact with crypto wallets. The suite evaluates wallet operations under realistic threat models and provides standardized scoring for agentic financial actions. Source: &lt;a href="https://hackernoon.com/valory-unveils-onchainbench-to-test-how-safely-and-reliably-ai-agents-use-crypto-wallets"&gt;hackernoon.com&lt;/a&gt;
+
+&lt;b&gt;Japan's Amada and Hitachi Push Toward Autonomous Factories With AI Agents, Targeting Equipment and Robot Control: BigGo Finance&lt;/b&gt;
+Amada and Hitachi are developing AI agents aimed at autonomous control of factory equipment and robots. The collaboration focuses on real-time decision loops for industrial machinery without constant human oversight. Source: &lt;a href="https://finance.biggo.com/news/0ee2dee9-8116-4894-a452-855cabe93ec2"&gt;finance.biggo.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;AI agents need tool response validation for safety: TechGig&lt;/b&gt;
+Developers are advised to add explicit validation of tool responses to prevent unsafe agent behavior. Without validation, agents can act on malformed or malicious tool outputs, creating downstream security and correctness risks. Source: &lt;a href="https://techgig.com/news/ai/ai-agents-need-tool-response-validation-for-safety/136206704"&gt;techgig.com&lt;/a&gt;
+
+&lt;b&gt;Puzzling-Bench: Evaluating Language Models on 23,777 Human-Written Puzzles with Community-Verified Answers: arXiv NLP&lt;/b&gt;
+Puzzling-Bench supplies 23,777 community-verified puzzles, including a rolling post-cutoff slice and a multimodal pilot, for contamination-resistant evaluation of frontier models. Every puzzle carries the author-accepted answer, short reference answer, author hints, community tags, and creation date. Source: &lt;a href="https://arxiv.org/abs/2611.34331"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;MINE: A Training-Free Defense against Indirect Prompt Injection via Mutual Information and Embedding Variance: arXiv NLP&lt;/b&gt;
+MINE offers a training-free, attack-agnostic defense that reranks retrieved content by mutual information and embedding variance; it leads accuracy-security trade-offs on Inj-SQuAD, Inj-TriviaQA, LC-Inj-SQuAD, and InjecAgent while adding the lowest latency on long contexts. The method was evaluated on a new long-context benchmark averaging 4,032 words per context. Source: &lt;a href="https://arxiv.org/abs/2611.34188"&gt;arxiv.org&lt;/a&gt;
+
+Also Today
+&lt;b&gt;Small AI Models Give Banks a Way to Keep Sensitive Data In-House: PYMNTS.com&lt;/b&gt;
+Smaller on-premise models let banks retain sensitive data without sending it to external providers. The approach reduces regulatory exposure while still delivering useful inference capabilities inside controlled environments. Source: &lt;a href="https://www.pymnts.com/news/artificial-intelligence/2026/small-ai-models-give-banks-a-way-to-keep-sensitive-data-in-house/"&gt;pymnts.com&lt;/a&gt;
+
+&lt;b&gt;ChatGPT Stock Picks Outperform S&amp;P 500 With 22% Gain: Chosun&lt;/b&gt;
+ChatGPT-generated stock selections delivered a 22 percent gain, beating the S&amp;P 500. The result illustrates both the appeal and the limitations of using general-purpose models for financial decision support. Source: &lt;a href="https://www.chosun.com/english/market-money-en/2026/11/27/VCWPUAYMDJC4NPGG425TNLSMAI/"&gt;chosun.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI’s GPT‑6.2 correction means you get less AI for the same fee: InfoWorld&lt;/b&gt;
+OpenAI adjusted GPT-6.2 output limits, reducing tokens delivered at the existing price point. Customers now receive fewer generated tokens per request without any change in subscription cost. Source: &lt;a href="https://www.infoworld.com/article/4253883/openais-gpt%E2%80%916-2-correction-means-you-get-less-ai-for-the-same-fee.html"&gt;infoworld.com&lt;/a&gt;
+
+&lt;b&gt;From Data Room to Report: End-to-End AI Support for M&amp;A Legal Due Diligence: arXiv NLP&lt;/b&gt;
+LEXI demonstrates an LLM workflow that ingests virtual data room documents, extracts due-diligence information with provenance, and prepares report sections while keeping final legal judgment with lawyers. The system classifies documents under a configurable taxonomy, assigns target entities, and surfaces supporting passages with page-level citations. Source: &lt;a href="https://arxiv.org/abs/2611.34120"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;IRTIQA: Evolving in English, Evaluated in Urdu -- Does Agent Self-Evolution Transfer from English to Urdu and Code-Switched Input?: arXiv NLP&lt;/b&gt;
+Self-evolution frameworks improve goal completion on AppWorld and SkillsBench yet leave persistent gaps between English and Urdu or code-switched performance, with the largest shortfalls on multi-step tasks. The IRTIQA benchmark supplies aligned English, Urdu-translated, and code-switched variants of four existing datasets with human verification. Source: &lt;a href="https://arxiv.org/abs/2611.34303"&gt;arxiv.org&lt;/a&gt;
+
+Things to Try This Week
+• Download the three Chariot-1 sizes and measure token counts on Hindi or Tamil text against your current tokenizer.
+• Run Sakana Namazu Small on the 25-benchmark suite you already use and compare against Nemotron 3 Super.
+• Add MINE’s mutual-information reranker to an existing RAG pipeline and test on LC-Inj-SQuAD-style long contexts.
+• Evaluate LaunchDarkly’s parallel agent sandboxing on a small internal code-change workflow.
+• Benchmark Valory Onchainbench against your current crypto-wallet agent test suite.
+
+On the Horizon
+• Chariot AI plans a 70B follow-up model under the IndiaAI Mission.
+• Sakana AI is expected to release additional sizes in the Namazu family.
+• More European CSIRTs are scheduled to publish guidance on autonomous attack agents.
+• Additional IndiaAI Mission-backed foundation models from Sarvam, BharatGen, and Gnani are slated for public release.</description>
+      <guid isPermaLink="false">models-agents-video-ep247-20261127</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep247_20261127.mp4" length="225161344" type="video/mp4" />
+      <pubDate>Fri, 27 Nov 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep247_20261127.jpg" />
+      <itunes:duration>10:14</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **India's Chariot-1 11B model cuts Indian-text tokens by 2.5x while running on phones.**
+
+**What You Need to Know:** Chariot AI released the Chariot-1 suite—an 11B-parameter mixture-of-experts LLM and a context-aware TTS model supporting English plus ten Indian languages—under the IndiaAI Mission. The models were trained from scratch in India with IndicShift tokenization and nested training techniques that delivered measurable efficiency gains. Builders working on Indic-language applications or edge deployments should test the three available sizes this week.
+---
+### Top Story
+Chariot Artificial Intelligence Pvt. Ltd. launched the Chariot-1 foundation model suite on 26 November at Bharat Mandapam in New Delhi. MeitY Secretary S. Krishnan performed the launch under the IndiaAI Mission, making Chariot one of the first four teams selected for sovereign foundation-model development. The suite pairs an 11-billion-parameter mixture-of-experts LLM with four billion active parameters per token and a text-to-speech system, both pre-trained from scratch in India. Three sizes—10.7 billion, 1.7 billion, and 745 million parameters—are provided for data-center, laptop, and smartphone deployment. The TTS model supports English and ten Indian languages—Hindi, Bengali, Marathi, Tamil, Telugu, Kannada, Malayalam, Gujarati, Punjabi, and Odia—while determining context-aware pronunciation for numbers, dates, currencies, URLs, and abbreviations, achieving over 97 percent verbalisation accuracy on the Async TTS Pronunciation Benchmark. IndicShift tokenization, covering 1,012 characters across 12 Indian scripts, delivers up to 2.5 times fewer tokens on Indian text than OpenAI’s GPT tokenizer. Nested training techniques produced a 38 percent improvement in training speed on the same GPUs with negligible change in model loss; a separate reported approach reached 62 percent faster training. Co-founder Parth Sarthi stated that a nation of India’s scale and diversity cannot depend on AI built elsewhere. The company is already developing a 70-billion-parameter model and holds longer-term ambitions for a trillion-parameter system. Developers building Indic-language or on-device applications should download the three available sizes and benchmark token efficiency against existing tokenizers. Source: [wocult.com](https://www.wocult.com/news/indiaai-mission-chariot-1-foundation-models-india)
+---
+### Model Updates
+**Sakana AI Releases Namazu Small, a 30B Model Built on Nemotron 3 Nano: MarkTechPost**
+Sakana AI released Sakana Namazu Small, a 30B-A3B reasoning model built on NVIDIA Nemotron 3 Nano. It averages 60.1 across 25 benchmarks, ahead of the 120B Nemotron 3 Super at 56.2. The model demonstrates that a smaller active-parameter count can outperform a much larger dense counterpart on aggregate reasoning tasks. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/26/sakana-ai-namazu-small-30b-nemotron-3-nano/)
+
+**Tencent Open-Sources DFly2: Speculative Decoding That Reuses the Target’s Sparse KV Cache: MarkTechPost**
+Tencent open-sourced DFly2, a speculative decoding drafter for sparse-attention LLMs. Each draft layer reuses the target’s KV cache and top-k indexer picks, adding no draft KV memory. The approach lifts 64K serving throughput by up to 81 percent. Because the drafter shares the target’s cache, memory overhead remains zero while still accelerating generation on long contexts. Source: [marktechpost.com](https://www.marktechpost.com/2026/11/26/tencent-dfly2-speculative-decoding-sparse-models/)
+
+**Russian AI model fills void in unfinished Gogol novel. Not everyone is happy: Reuters**
+A Russian AI model completed an unfinished Gogol novel, drawing mixed reactions from literary observers. The project highlights both the capability of current models to continue classic literary works and the cultural sensitivities that arise when AI intervenes in national literary heritage. Source: [reuters.com](https://www.reuters.com/technology/russian-ai-model-fills-void-unfinished-gogol-novel-not-everyone-is-happy-2026-11-27/)
+
+**Stable Gated DeltaNet-2: Understanding and Mitigating Recurrent State Instability: arXiv NLP**
+Researchers introduced Stable Gated DeltaNet-2, which uses symmetric erasure and decay-regulated residual writing to bound recurrent state growth at O(√T). On approximately 1.6B parameter models the method raised the 128K average RULER score by 6.80 points in the recurrent setting and average accuracy across nine downstream tasks by 0.62 points in the hybrid setting. The fix addresses exponential state growth caused by asymmetric erase operators in the original Gated DeltaNet-2 design. Source: [arxiv.org](https://arxiv.org/abs/2611.34051)
+
+**Lightweight Reasoning Transfer via Chain-of-Thought Vector Projection: arXiv NLP**
+A two-stage projected cross-model Chain-of-Thought vector transfer method improved base student models by 10.37-21.98 accuracy points on GSM8K and MATH and by 3.23-9.65 pass@1 points on four code-generation benchmarks while keeping both teacher and student frozen. The approach first learns a task-level CoT vector in the teacher, then trains only a lightweight linear projector to map it into the student’s residual space. No teacher outputs or intermediate traces are required during student adaptation. Source: [arxiv.org](https://arxiv.org/abs/2611.34183)
+---
+### Agent &amp; Tool Developments
+**LaunchDarkly Orchestrates Parallel AI Agents in Cloud Sandboxes to Drive 44 Code Changes: Howl.Link**
+LaunchDarkly demonstrated parallel AI agents running in cloud sandboxes that produced 44 code changes. The setup isolates agent execution while still allowing measurable productivity gains on real engineering tasks. Source: [t.co](https://t.co/cTdoZCh4E8)
+
+**EACON announces significant ORCASTRA upgrades plus new mining AI agent: International Mining**
+EACON announced ORCASTRA upgrades together with a new mining AI agent. The agent targets autonomous operation of heavy equipment in mining environments, extending the platform’s existing orchestration capabilities. Source: [im-mining.com](https://im-mining.com/2026/11/27/eacon-announces-significant-orcastra-upgrades-plus-new-mining-ai-agent/)
+
+**Metano Emerges from Stealth with $12M Seed to Secure Autonomous AI Agents: FF News**
+Metano emerged from stealth with a $12M seed round to unify AI agent security across the enterprise. The funding targets consistent policy enforcement and runtime controls for agents operating inside corporate environments. Source: [ffnews.com](https://ffnews.com/news/metano-emerges-from-stealth-to-unify-ai-agent-security-across-the-enterprise-c03bf277)
+
+**Valory Unveils Onchainbench to Test How Safely and Reliably AI Agents Use Crypto Wallets: HackerNoon**
+Valory released Onchainbench, a benchmark for measuring how safely and reliably AI agents interact with crypto wallets. The suite evaluates wallet operations under realistic threat models and provides standardized scoring for agentic financial actions. Source: [hackernoon.com](https://hackernoon.com/valory-unveils-onchainbench-to-test-how-safely-and-reliably-ai-agents-use-crypto-wallets)
+
+**Japan's Amada and Hitachi Push Toward Autonomous Factories With AI Agents, Targeting Equipment and Robot Control: BigGo Finance**
+Amada and Hitachi are developing AI agents aimed at autonomous control of factory equipment and robots. The collaboration focuses on real-time decision loops for industrial machinery without constant human oversight. Source: [finance.biggo.com](https://finance.biggo.com/news/0ee2dee9-8116-4894-a452-855cabe93ec2)
+---
+### Practical &amp; Community
+**AI agents need tool response validation for safety: TechGig**
+Developers are advised to add explicit validation of tool responses to prevent unsafe agent behavior. Without validation, agents can act on malformed or malicious tool outputs, creating downstream security and correctness risks. Source: [techgig.com](https://techgig.com/news/ai/ai-agents-need-tool-response-validation-for-safety/136206704)
+
+**Puzzling-Bench: Evaluating Language Models on 23,777 Human-Written Puzzles with Community-Verified Answers: arXiv NLP**
+Puzzling-Bench supplies 23,777 community-verified puzzles, including a rolling post-cutoff slice and a multimodal pilot, for contamination-resistant evaluation of frontier models. Every puzzle carries the author-accepted answer, short reference answer, author hints, community tags, and creation date. Source: [arxiv.org](https://arxiv.org/abs/2611.34331)
+
+**MINE: A Training-Free Defense against Indirect Prompt Injection via Mutual Information and Embedding Variance: arXiv NLP**
+MINE offers a training-free, attack-agnostic defense that reranks retrieved content by mutual information and embedding variance; it leads accuracy-security trade-offs on Inj-SQuAD, Inj-TriviaQA, LC-Inj-SQuAD, and InjecAgent while adding the lowest latency on long contexts. The method was evaluated on a new long-context benchmark averaging 4,032 words per context. Source: [arxiv.org](https://arxiv.org/abs/2611.34188)
+---
+### Also Today
+**Small AI Models Give Banks a Way to Keep Sensitive Data In-House: PYMNTS.com**
+Smaller on-premise models let banks retain sensitive data without sending it to external providers. The approach reduces regulatory exposure while still delivering useful inference capabilities inside controlled environments. Source: [pymnts.com](https://www.pymnts.com/news/artificial-intelligence/2026/small-ai-models-give-banks-a-way-to-keep-sensitive-data-in-house/)
+
+**ChatGPT Stock Picks Outperform S&amp;P 500 With 22% Gain: Chosun**
+ChatGPT-generated stock selections delivered a 22 percent gain, beating the S&amp;P 500. The result illustrates both the appeal and the limitations of using general-purpose models for financial decision support. Source: [chosun.com](https://www.chosun.com/english/market-money-en/2026/11/27/VCWPUAYMDJC4NPGG425TNLSMAI/)
+
+**OpenAI’s GPT‑6.2 correction means you get less AI for the same fee: InfoWorld**
+OpenAI adjusted GPT-6.2 output limits, reducing tokens delivered at the existing price point. Customers now receive fewer generated tokens per request without any change in subscription cost. Source: [infoworld.com](https://www.infoworld.com/article/4253883/openais-gpt%E2%80%916-2-correction-means-you-get-less-ai-for-the-same-fee.html)
+
+**From Data Room to Report: End-to-End AI Support for M&amp;A Legal Due Diligence: arXiv NLP**
+LEXI demonstrates an LLM workflow that ingests virtual data room documents, extracts due-diligence information with provenance, and prepares report sections while keeping final legal judgment with lawyers. The system classifies documents under a configurable taxonomy, assigns target entities, and surfaces supporting passages with page-level citations. Source: [arxiv.org](https://arxiv.org/abs/2611.34120)
+
+**IRTIQA: Evolving in English, Evaluated in Urdu -- Does Agent Self-Evolution Transfer from English to Urdu and Code-Switched Input?: arXiv NLP**
+Self-evolution frameworks improve goal completion on AppWorld and SkillsBench yet leave persistent gaps between English and Urdu or code-switched performance, with the largest shortfalls on multi-step tasks. The IRTIQA benchmark supplies aligned English, Urdu-translated, and code-switched variants of four existing datasets with human verification. Source: [arxiv.org](https://arxiv.org/abs/2611.34303)
+---
+---
+### Things to Try This Week
+- Download the three Chariot-1 sizes and measure token counts on Hindi or Tamil text against your current tokenizer.
+- Run Sakana Namazu Small on the 25-benchmark suite you already use and compare against Nemotron 3 Super.
+- Add MINE’s mutual-information reranker to an existing RAG pipeline and test on LC-Inj-SQuAD-style long contexts.
+- Evaluate LaunchDarkly’s parallel agent sandboxing on a small internal code-change workflow.
+- Benchmark Valory Onchainbench against your current crypto-wallet agent test suite.
+---
+### On the Horizon
+- Chariot AI plans a 70B follow-up model under the IndiaAI Mission.
+- Sakana AI is expected to release additional sizes in the Namazu family.
+- More European CSIRTs are scheduled to publish guidance on autonomous attack agents.
+- Additional IndiaAI Mission-backed foundation models from Sarvam, BharatGen, and Gnani are slated for public release.
+</itunes:summary>
+      <itunes:episode>247</itunes:episode>
+      <itunes:title>Ep 247: India's Chariot-1 11B model cuts Indian-text tokens by 2.5x while running on phones.</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    </item>
     <item>
       <title>Ep 246: Claude Opus 5.5 turned 31 real US government datasets into a playable Civilization-style…</title>
       <description>Models &amp; Agents
@@ -5370,186 +5540,5 @@ Adding acoustic or paralinguistic features to a text-aligned embedding model nor
       <itunes:title>Ep 218: Gemini 4 Carbon scores 88.2 percent on vulnerability finding and leads the Artificial…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep218_20261029_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep218.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 217: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; DeepMind has begun rolling Genie 4 out to trusted testers with wider access and a waitlist coming soon. The model combines real-time physics, reasoning, and audio inside simulations that nest inside other simulations. Builders should watch the official blog post and join the waitlist to experiment with world-model creation.
-
-Top Story
-DeepMind has started rolling Genie 4 out to trusted testers, with wider access planned soon. The interactive world model integrates real-time physics, reasoning, and audio generation inside nested simulations. It builds on prior Genie versions by adding richer sensory and planning capabilities that let users create and interact with dynamic environments. Developers and researchers interested in simulation, robotics, or game-like world building can sign up via the linked waitlist to explore what the model enables. The release positions Genie 4 as a step toward more capable generative world models that run at interactive speeds. Source: &lt;a href="https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/"&gt;deepmind.google&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;3, 7, 14, 17, 42: Instruction Tuning Installs and Sharpens Number-Choice Heuristics in Language Models: arXiv NLP&lt;/b&gt;
-Instruction tuning on 15 matched base and tuned open-weight model pairs makes number distributions less uniform by installing round-number avoidance and sharpening endpoint avoidance. Base models return endpoints 1 and N at 0.30–0.60 of the interior rate while tuned models almost never do; tuned models also avoid multiples of 10 almost completely. The study evaluated 18 model lines at five ranges up to N=100 under 29 decoding configurations and found no shared modal integer above N=10 across more than 42 percent of tuned conditions. Source: &lt;a href="https://arxiv.org/abs/2610.36178"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Beyond IceBERT: Open-Data ModernBERT Encoders for Icelandic from 12M to 1B Parameters: arXiv NLP&lt;/b&gt;
-A 1B-parameter Icelandic encoder trained from scratch on 9B open tokens outperforms the prior IceBERT reference on all eleven evaluated tasks, while a warm-started version from an English Ettin encoder of the same shape ranks highest on every task. Warm-start transfer from English layers works at base size and above even when the target vocabulary is transplanted, and the 1B model remains the first monolingual Icelandic encoder of that scale. Source: &lt;a href="https://arxiv.org/abs/2610.36230"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;MedJev: Evaluating Zero-Shot System-One Decision Making in Medicine: arXiv NLP&lt;/b&gt;
-MedJev, an open System-One model that runs locally on a laptop, reaches 72.5 percent on MedQA, 75.4 percent on USMLE, and 80.1 percent on NEJM while staying within 0.028–0.063 ECE on those knowledge tasks. On patient-level prediction from MIMIC IV it exceeds XGBoost on in-hospital mortality (AUROC 0.926) but trails supervised models on operational outcomes such as ED triage admission. A two-parameter recalibration method using 50–200 local labels reduces ECE to 0.007 on patient-level tasks. Source: &lt;a href="https://arxiv.org/abs/2610.36006"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;OmniBrain-0: A Unified Agentic Model for Embodied Intelligence: arXiv NLP&lt;/b&gt;
-OmniBrain-0 is a lightweight unified embodied agent that coordinates manipulation and navigation through a shared high-level decision model trained with embodied pretraining, domain-specialized distillation, and multi-teacher on-policy distillation. It adds Rubric-Guided Recursive Self-Improvement that turns execution evidence into refined rubrics and verified trajectories before reconsolidation. The model is evaluated on LIBERO-Pro, RoboCasa365, RoboTwin 2.0, R2R-CE, and multiple real-world manipulation tasks while showing substantially lower inference and execution overhead than its closed-source teacher. Source: &lt;a href="https://arxiv.org/abs/2610.36013"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;FinLLM-KG: Knowledge Graph-Enhanced LLMs for Financial Sentiment Analysis in Algorithmic Trading: arXiv NLP&lt;/b&gt;
-FinLLM-KG injects temporally grounded company-level facts from SEC 10-K filings into any causal LLM at inference time without weight updates, supplying either natural-language profiles or relevance-ranked triples. The framework attributes each sentiment score to individual sentences and retrieved triples for inspectability and improves portfolio performance over state-of-the-art baselines in simulation. Source: &lt;a href="https://arxiv.org/abs/2610.36083"&gt;arxiv.org&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;Benchmarking Task Takeover Across Agent Handoffs: arXiv NLP&lt;/b&gt;
-The Handoff State Continuity Benchmark (HSC-Bench) contains 1,039 tasks that measure how well a receiving model recovers repository evidence and continues from prior conversational, tool, and file state after an agent handoff. Structured handoff state improves evidence recovery for every tested model and continuation performance for most models, with the strongest receivers differing between the two tracks. Source: &lt;a href="https://arxiv.org/abs/2610.36523"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;TrawMem: Reframing Agent Memory as Task-Oriented Role-Adaptive Workspaces: arXiv NLP&lt;/b&gt;
-TrawMem organizes interaction histories into local threads and builds task-oriented workspaces by assigning roles and jointly selecting complementary memories across Event, Affect, and Time views. On LoCoMo and MemGallery it delivers macro-F1 gains of 2.23–3.14 points over prior memory systems while using 5.1–12.8 percent fewer context tokens on two backbones. Source: &lt;a href="https://arxiv.org/abs/2610.36918"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;DocSkill: Skill-Integrated Agentic Reasoning for Multilingual Multi-Hop Document Question Answering: arXiv NLP&lt;/b&gt;
-DocSkill uses a learned skill-orchestration policy trained via bounded MCTS demonstrations and DPO to select, revisit, or skip skills as evidence state evolves. On the new MMHop-DocBench (60K QA pairs across 10 languages) the Qwen3-VL-8B instantiation reaches 41.0 accuracy and 49.2 F1, exceeding the strongest baseline by 5.5 and 6.3 points. Source: &lt;a href="https://arxiv.org/abs/2610.36759"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;CAMR: Compatibility-Aware Memory Replay for Continual Learning in Large Language Models: arXiv NLP&lt;/b&gt;
-CAMR jointly controls current-example supervision and historical replay via compatibility checks and a learned memory gate, choosing among learning with replay, reinforcing compatible examples, or skipping mastered duplicates. On WikiBigEdit it reaches 93.66 percent Original Match after only 3K facts and leads all evaluated methods on four TRACE tasks while preserving earlier-task performance. Source: &lt;a href="https://arxiv.org/abs/2610.36734"&gt;arxiv.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It: arXiv NLP&lt;/b&gt;
-Lipi-Ghor supplies 885 hours of speaker-diarized long-form Bengali audio from 998 YouTube videos across 17 domains together with SSTT annotations and a human-verified gold split. The construction pipeline is released as reusable code for any language with captioned YouTube presence, and four ASR models show consistent degradation on emotive, dialectal, and long-form content. Source: &lt;a href="https://arxiv.org/abs/2610.36184"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;No Tokenizer, Still a Gap: Cross-Lingual Fairness of Homoglyph and Invisible-Character Watermarking: arXiv NLP&lt;/b&gt;
-Homoglyph and invisible-character watermarks achieve capacity that varies 3.3-fold across 40 language varieties in 24 scripts, with script accounting for 96 percent of the variation. Ordinary copy-paste widens the gap so that a detector needs roughly 2 code points for English or Persian but 93 for Lao. Source: &lt;a href="https://arxiv.org/abs/2610.36432"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;ETAMem: Decoupling and Aligning Heterogeneous Memory for Long-Term Conversational Agents: arXiv NLP&lt;/b&gt;
-ETAMem parses conversations into atomic units, separates affective information, and maintains three hierarchical views (Event, Affect, Time) with adaptively calibrated thresholds. On LoCoMo and LongMemEval-S it improves accuracy by 12.46 percent and 7.96 percent relative to state-of-the-art baselines while keeping competitive token efficiency. Source: &lt;a href="https://arxiv.org/abs/2610.37443"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Nothing Left Behind: Finding Evidence from a Large Randomized Evaluation Corpus: arXiv NLP&lt;/b&gt;
-An embedding-based retrieval plus LLM filtering approach finds 92 percent of the evidence a systematic review would include in a 7,354-trial corpus, compared with 45 percent for label search alone. The two-stage design supports broad candidate retrieval followed by query-specific filtering at rising per-query cost with depth. Source: &lt;a href="https://arxiv.org/abs/2610.36910"&gt;arxiv.org&lt;/a&gt;
-
-Also Today
-&lt;b&gt;ReCoPII: A Relation-Grounded Framework for Building Contextual PII Masking Datasets: arXiv NLP&lt;/b&gt; — ReCoPII produces relation-grounded contextual PII masking data for Korean documents that yields 88.42 percent annotator agreement on KEEP labels versus 26.27 percent for author-based augmentation and supports joint fine-tuning that limits over-masking to at most 5.04 percent within a fixed leakage budget. Source: &lt;a href="https://arxiv.org/abs/2610.35925"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Frankly Speaking: The Company Election Integrity Keeps in Congressional Communication: arXiv NLP&lt;/b&gt; — Analysis of 10,420 congressional e-newsletters shows Democrats and Republicans surround the same election-integrity terms with entirely different neighboring language, with divergence growing on “certification” after 2020 and on “rigged” and “stolen” after that year. Source: &lt;a href="https://arxiv.org/abs/2610.36187"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Detect Before You Disambiguate: Perturbation-Based Input Ambiguity Detection in LLMs: arXiv NLP&lt;/b&gt; — A label-preserving perturbation framework detects input ambiguity before disambiguation and outperforms output-side uncertainty baselines and LLM-paraphrase baselines across open-domain, conversational, and visual QA datasets. Source: &lt;a href="https://arxiv.org/abs/2610.36353"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;AK_QMUL at ArGuard Shared Tasks: A Single Fine-Tuned JAIS for Arabic Harmful-Prompt Detection: arXiv NLP&lt;/b&gt; — A single JAIS-6.7B backbone fine-tuned with 4-bit QLoRA ranks first on both the binary safe/unsafe track (macro-F1 0.984) and the seven-way harm-domain track (macro-F1 0.790) of the ArGuard-2026 shared task while remaining accurate across six Arabic dialects. Source: &lt;a href="https://arxiv.org/abs/2610.36360"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;LLM Hallucination Detection via Low-rank Multilinear Decomposition: arXiv NLP&lt;/b&gt; — LOTUS summarizes variable-length token representations with statistical descriptors then applies low-rank multilinear decomposition to train a lightweight hallucination classifier that improves over recent state-of-the-art baselines across multiple LLMs and QA benchmarks. Source: &lt;a href="https://arxiv.org/abs/2610.36191"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;Expanding Partnership with USGSA for Claude Access: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; — Anthropic’s new OneGov agreement extends Claude access to federal, state, local, tribal, and territorial governments at 40 percent off under a single contract. Source: &lt;a href="https://www.anthropic.com/news/expanding-partnership-gsa"&gt;anthropic.com&lt;/a&gt;
-
-&lt;b&gt;Anthropic Research Partnerships in Drug Development: &lt;a href="https://x.com/AnthropicAI"&gt;@AnthropicAI&lt;/a&gt;&lt;/b&gt; — Anthropic scientists have formed research partnerships with six organizations developing new medicines and begun internal drug-discovery efforts, sharing early results on how Claude supports stages of drug development. Source: &lt;a href="https://x.com/AnthropicAI/status/2115178675050307942"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Build specialized multimodal models with LFM3: Hugging Face Blog&lt;/b&gt; — Liquid AI releases guidance on building specialized multimodal models with LFM3. Source: &lt;a href="https://huggingface.co/blog/LiquidAI/lfm3"&gt;huggingface.co&lt;/a&gt;
-
-&lt;b&gt;Can we trust LLMs to judge whether a research idea is novel?: Hugging Face Blog&lt;/b&gt; — AllenAI examines whether LLMs can reliably judge research novelty. Source: &lt;a href="https://huggingface.co/blog/allenai/novelty-bench"&gt;huggingface.co&lt;/a&gt;
-
-Under the Hood: Causal Head Attribution for Evidence Effects
-Causal head attribution works by running controlled symbolic probes that vary only the count and order of two symbols inside otherwise fixed prompts, then measuring how much each attention head shifts the logit difference between two answer tokens. The method first identifies candidate heads whose ablation removes most of the count effect and whose mean-output patching recovers the effect in both directions, then applies conditional bounds to decide which heads survive finite-sample noise. In Pythia-410M this process isolates sets of 1–12 heads that remove 65.5–91.6 percent of the count effect while preserving influence on count comparisons never seen during selection. When the same heads are ablated on a natural-language task that asks which state is supported by more reports, accuracy drops 8.2 points versus 0.8 points for random sets of the same size and layer. The technique therefore supplies a compact, causally validated shortlist rather than a diffuse importance map. Teams should reach for it when they need to know which specific heads carry a particular reasoning behavior before deciding whether to edit, prune, or monitor those heads in production; the main practical limit is that the symbolic probe must be carefully balanced so that the measured effect truly isolates the variable of interest.
-
-Things to Try This Week
-• Join the Genie 4 waitlist at the DeepMind blog link if you build simulations, robotics planners, or interactive environments and want early access to real-time physics plus audio.
-• Test MedJev on your local laptop for zero-shot medical QA or patient-level prediction tasks where you need low compute and well-calibrated outputs before supervised fine-tuning.
-• Run the released Lipi-Ghor pipeline code on your own language’s captioned YouTube channels to create a diarized long-form speech corpus without manual transcription.
-• Apply the HSC-Bench handoff tasks to measure how well your current agent setup preserves repository evidence and conversational state when responsibility passes between models.
-• Experiment with FinLLM-KG-style knowledge-graph injection on any causal LLM you already use for financial sentiment to add company-level context at inference time with almost zero added cost.
-
-On the Horizon
-• Wider Genie 4 access expected after the current trusted-tester phase.
-• Additional results from Anthropic’s drug-development research partnerships scheduled for the coming months.
-• Further ArGuard shared-task submissions and analyses for Arabic harmful-prompt detection.
-• Continued releases of open Icelandic ModernBERT-scale encoders and evaluation harnesses.</description>
-      <guid isPermaLink="false">models-agents-video-ep217-20261028</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep217_20261028.mp4" length="320762203" type="video/mp4" />
-      <pubDate>Wed, 28 Oct 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep217_20261028.jpg" />
-      <itunes:duration>14:21</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Genie 4 now gives builders real-time physics, reasoning, and audio in interactive simulations they can test today.**
-
-**What You Need to Know:** DeepMind has begun rolling Genie 4 out to trusted testers with wider access and a waitlist coming soon. The model combines real-time physics, reasoning, and audio inside simulations that nest inside other simulations. Builders should watch the official blog post and join the waitlist to experiment with world-model creation.
----
-### Top Story
-DeepMind has started rolling Genie 4 out to trusted testers, with wider access planned soon. The interactive world model integrates real-time physics, reasoning, and audio generation inside nested simulations. It builds on prior Genie versions by adding richer sensory and planning capabilities that let users create and interact with dynamic environments. Developers and researchers interested in simulation, robotics, or game-like world building can sign up via the linked waitlist to explore what the model enables. The release positions Genie 4 as a step toward more capable generative world models that run at interactive speeds. Source: [deepmind.google](https://deepmind.google/blog/genie-4-a-new-generation-of-world-simulation/)
----
-### Model Updates
-**3, 7, 14, 17, 42: Instruction Tuning Installs and Sharpens Number-Choice Heuristics in Language Models: arXiv NLP**
-Instruction tuning on 15 matched base and tuned open-weight model pairs makes number distributions less uniform by installing round-number avoidance and sharpening endpoint avoidance. Base models return endpoints 1 and N at 0.30–0.60 of the interior rate while tuned models almost never do; tuned models also avoid multiples of 10 almost completely. The study evaluated 18 model lines at five ranges up to N=100 under 29 decoding configurations and found no shared modal integer above N=10 across more than 42 percent of tuned conditions. Source: [arxiv.org](https://arxiv.org/abs/2610.36178)
-
-**Beyond IceBERT: Open-Data ModernBERT Encoders for Icelandic from 12M to 1B Parameters: arXiv NLP**
-A 1B-parameter Icelandic encoder trained from scratch on 9B open tokens outperforms the prior IceBERT reference on all eleven evaluated tasks, while a warm-started version from an English Ettin encoder of the same shape ranks highest on every task. Warm-start transfer from English layers works at base size and above even when the target vocabulary is transplanted, and the 1B model remains the first monolingual Icelandic encoder of that scale. Source: [arxiv.org](https://arxiv.org/abs/2610.36230)
-
-**MedJev: Evaluating Zero-Shot System-One Decision Making in Medicine: arXiv NLP**
-MedJev, an open System-One model that runs locally on a laptop, reaches 72.5 percent on MedQA, 75.4 percent on USMLE, and 80.1 percent on NEJM while staying within 0.028–0.063 ECE on those knowledge tasks. On patient-level prediction from MIMIC IV it exceeds XGBoost on in-hospital mortality (AUROC 0.926) but trails supervised models on operational outcomes such as ED triage admission. A two-parameter recalibration method using 50–200 local labels reduces ECE to 0.007 on patient-level tasks. Source: [arxiv.org](https://arxiv.org/abs/2610.36006)
-
-**OmniBrain-0: A Unified Agentic Model for Embodied Intelligence: arXiv NLP**
-OmniBrain-0 is a lightweight unified embodied agent that coordinates manipulation and navigation through a shared high-level decision model trained with embodied pretraining, domain-specialized distillation, and multi-teacher on-policy distillation. It adds Rubric-Guided Recursive Self-Improvement that turns execution evidence into refined rubrics and verified trajectories before reconsolidation. The model is evaluated on LIBERO-Pro, RoboCasa365, RoboTwin 2.0, R2R-CE, and multiple real-world manipulation tasks while showing substantially lower inference and execution overhead than its closed-source teacher. Source: [arxiv.org](https://arxiv.org/abs/2610.36013)
-
-**FinLLM-KG: Knowledge Graph-Enhanced LLMs for Financial Sentiment Analysis in Algorithmic Trading: arXiv NLP**
-FinLLM-KG injects temporally grounded company-level facts from SEC 10-K filings into any causal LLM at inference time without weight updates, supplying either natural-language profiles or relevance-ranked triples. The framework attributes each sentiment score to individual sentences and retrieved triples for inspectability and improves portfolio performance over state-of-the-art baselines in simulation. Source: [arxiv.org](https://arxiv.org/abs/2610.36083)
----
-### Agent &amp; Tool Developments
-**Benchmarking Task Takeover Across Agent Handoffs: arXiv NLP**
-The Handoff State Continuity Benchmark (HSC-Bench) contains 1,039 tasks that measure how well a receiving model recovers repository evidence and continues from prior conversational, tool, and file state after an agent handoff. Structured handoff state improves evidence recovery for every tested model and continuation performance for most models, with the strongest receivers differing between the two tracks. Source: [arxiv.org](https://arxiv.org/abs/2610.36523)
-
-**TrawMem: Reframing Agent Memory as Task-Oriented Role-Adaptive Workspaces: arXiv NLP**
-TrawMem organizes interaction histories into local threads and builds task-oriented workspaces by assigning roles and jointly selecting complementary memories across Event, Affect, and Time views. On LoCoMo and MemGallery it delivers macro-F1 gains of 2.23–3.14 points over prior memory systems while using 5.1–12.8 percent fewer context tokens on two backbones. Source: [arxiv.org](https://arxiv.org/abs/2610.36918)
-
-**DocSkill: Skill-Integrated Agentic Reasoning for Multilingual Multi-Hop Document Question Answering: arXiv NLP**
-DocSkill uses a learned skill-orchestration policy trained via bounded MCTS demonstrations and DPO to select, revisit, or skip skills as evidence state evolves. On the new MMHop-DocBench (60K QA pairs across 10 languages) the Qwen3-VL-8B instantiation reaches 41.0 accuracy and 49.2 F1, exceeding the strongest baseline by 5.5 and 6.3 points. Source: [arxiv.org](https://arxiv.org/abs/2610.36759)
-
-**CAMR: Compatibility-Aware Memory Replay for Continual Learning in Large Language Models: arXiv NLP**
-CAMR jointly controls current-example supervision and historical replay via compatibility checks and a learned memory gate, choosing among learning with replay, reinforcing compatible examples, or skipping mastered duplicates. On WikiBigEdit it reaches 93.66 percent Original Match after only 3K facts and leads all evaluated methods on four TRACE tasks while preserving earlier-task performance. Source: [arxiv.org](https://arxiv.org/abs/2610.36734)
----
-### Practical &amp; Community
-**Lipi-Ghor: A Large-Scale, Diarized, Multi-Domain Bengali Speech Corpus and a Scalable Pipeline for Building It: arXiv NLP**
-Lipi-Ghor supplies 885 hours of speaker-diarized long-form Bengali audio from 998 YouTube videos across 17 domains together with SSTT annotations and a human-verified gold split. The construction pipeline is released as reusable code for any language with captioned YouTube presence, and four ASR models show consistent degradation on emotive, dialectal, and long-form content. Source: [arxiv.org](https://arxiv.org/abs/2610.36184)
-
-**No Tokenizer, Still a Gap: Cross-Lingual Fairness of Homoglyph and Invisible-Character Watermarking: arXiv NLP**
-Homoglyph and invisible-character watermarks achieve capacity that varies 3.3-fold across 40 language varieties in 24 scripts, with script accounting for 96 percent of the variation. Ordinary copy-paste widens the gap so that a detector needs roughly 2 code points for English or Persian but 93 for Lao. Source: [arxiv.org](https://arxiv.org/abs/2610.36432)
-
-**ETAMem: Decoupling and Aligning Heterogeneous Memory for Long-Term Conversational Agents: arXiv NLP**
-ETAMem parses conversations into atomic units, separates affective information, and maintains three hierarchical views (Event, Affect, Time) with adaptively calibrated thresholds. On LoCoMo and LongMemEval-S it improves accuracy by 12.46 percent and 7.96 percent relative to state-of-the-art baselines while keeping competitive token efficiency. Source: [arxiv.org](https://arxiv.org/abs/2610.37443)
-
-**Nothing Left Behind: Finding Evidence from a Large Randomized Evaluation Corpus: arXiv NLP**
-An embedding-based retrieval plus LLM filtering approach finds 92 percent of the evidence a systematic review would include in a 7,354-trial corpus, compared with 45 percent for label search alone. The two-stage design supports broad candidate retrieval followed by query-specific filtering at rising per-query cost with depth. Source: [arxiv.org](https://arxiv.org/abs/2610.36910)
----
-### Also Today
-**ReCoPII: A Relation-Grounded Framework for Building Contextual PII Masking Datasets: arXiv NLP** — ReCoPII produces relation-grounded contextual PII masking data for Korean documents that yields 88.42 percent annotator agreement on KEEP labels versus 26.27 percent for author-based augmentation and supports joint fine-tuning that limits over-masking to at most 5.04 percent within a fixed leakage budget. Source: [arxiv.org](https://arxiv.org/abs/2610.35925)
-
-**Frankly Speaking: The Company Election Integrity Keeps in Congressional Communication: arXiv NLP** — Analysis of 10,420 congressional e-newsletters shows Democrats and Republicans surround the same election-integrity terms with entirely different neighboring language, with divergence growing on “certification” after 2020 and on “rigged” and “stolen” after that year. Source: [arxiv.org](https://arxiv.org/abs/2610.36187)
-
-**Detect Before You Disambiguate: Perturbation-Based Input Ambiguity Detection in LLMs: arXiv NLP** — A label-preserving perturbation framework detects input ambiguity before disambiguation and outperforms output-side uncertainty baselines and LLM-paraphrase baselines across open-domain, conversational, and visual QA datasets. Source: [arxiv.org](https://arxiv.org/abs/2610.36353)
-
-**AK_QMUL at ArGuard Shared Tasks: A Single Fine-Tuned JAIS for Arabic Harmful-Prompt Detection: arXiv NLP** — A single JAIS-6.7B backbone fine-tuned with 4-bit QLoRA ranks first on both the binary safe/unsafe track (macro-F1 0.984) and the seven-way harm-domain track (macro-F1 0.790) of the ArGuard-2026 shared task while remaining accurate across six Arabic dialects. Source: [arxiv.org](https://arxiv.org/abs/2610.36360)
-
-**LLM Hallucination Detection via Low-rank Multilinear Decomposition: arXiv NLP** — LOTUS summarizes variable-length token representations with statistical descriptors then applies low-rank multilinear decomposition to train a lightweight hallucination classifier that improves over recent state-of-the-art baselines across multiple LLMs and QA benchmarks. Source: [arxiv.org](https://arxiv.org/abs/2610.36191)
-
-**Expanding Partnership with USGSA for Claude Access: [@AnthropicAI](https://x.com/AnthropicAI)** — Anthropic’s new OneGov agreement extends Claude access to federal, state, local, tribal, and territorial governments at 40 percent off under a single contract. Source: [anthropic.com](https://www.anthropic.com/news/expanding-partnership-gsa)
-
-**Anthropic Research Partnerships in Drug Development: [@AnthropicAI](https://x.com/AnthropicAI)** — Anthropic scientists have formed research partnerships with six organizations developing new medicines and begun internal drug-discovery efforts, sharing early results on how Claude supports stages of drug development. Source: [x.com](https://x.com/AnthropicAI/status/2115178675050307942)
-
-**Build specialized multimodal models with LFM3: Hugging Face Blog** — Liquid AI releases guidance on building specialized multimodal models with LFM3. Source: [huggingface.co](https://huggingface.co/blog/LiquidAI/lfm3)
-
-**Can we trust LLMs to judge whether a research idea is novel?: Hugging Face Blog** — AllenAI examines whether LLMs can reliably judge research novelty. Source: [huggingface.co](https://huggingface.co/blog/allenai/novelty-bench)
----
-### Under the Hood: Causal Head Attribution for Evidence Effects
-Causal head attribution works by running controlled symbolic probes that vary only the count and order of two symbols inside otherwise fixed prompts, then measuring how much each attention head shifts the logit difference between two answer tokens. The method first identifies candidate heads whose ablation removes most of the count effect and whose mean-output patching recovers the effect in both directions, then applies conditional bounds to decide which heads survive finite-sample noise. In Pythia-410M this process isolates sets of 1–12 heads that remove 65.5–91.6 percent of the count effect while preserving influence on count comparisons never seen during selection. When the same heads are ablated on a natural-language task that asks which state is supported by more reports, accuracy drops 8.2 points versus 0.8 points for random sets of the same size and layer. The technique therefore supplies a compact, causally validated shortlist rather than a diffuse importance map. Teams should reach for it when they need to know which specific heads carry a particular reasoning behavior before deciding whether to edit, prune, or monitor those heads in production; the main practical limit is that the symbolic probe must be carefully balanced so that the measured effect truly isolates the variable of interest.
----
-### Things to Try This Week
-- Join the Genie 4 waitlist at the DeepMind blog link if you build simulations, robotics planners, or interactive environments and want early access to real-time physics plus audio.
-- Test MedJev on your local laptop for zero-shot medical QA or patient-level prediction tasks where you need low compute and well-calibrated outputs before supervised fine-tuning.
-- Run the released Lipi-Ghor pipeline code on your own language’s captioned YouTube channels to create a diarized long-form speech corpus without manual transcription.
-- Apply the HSC-Bench handoff tasks to measure how well your current agent setup preserves repository evidence and conversational state when responsibility passes between models.
-- Experiment with FinLLM-KG-style knowledge-graph injection on any causal LLM you already use for financial sentiment to add company-level context at inference time with almost zero added cost.
----
-### On the Horizon
-- Wider Genie 4 access expected after the current trusted-tester phase.
-- Additional results from Anthropic’s drug-development research partnerships scheduled for the coming months.
-- Further ArGuard shared-task submissions and analyses for Arabic harmful-prompt detection.
-- Continued releases of open Icelandic ModernBERT-scale encoders and evaluation harnesses.
-</itunes:summary>
-      <itunes:episode>217</itunes:episode>
-      <itunes:title>Ep 217: Genie 4 now gives builders real-time physics, reasoning, and audio in interactive…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep217_20261028_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep217.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
