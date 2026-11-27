@@ -1,0 +1,57 @@
+# Collingwood Weekly
+> **Two hundred million dollars is what Simcoe's board wants for three school builds, led by a new Collingwood Collegiate.**
+
+**What You Need to Know:** Two hundred million dollars is what Simcoe's board wants for three school builds, led by a new Collingwood Collegiate. The Simcoe County District School Board is filing that ask with the Ministry of Education by January 5, and trustee Jodi Lloyd told the November 25 meeting the board may get none of it. A replacement for Collingwood Collegiate Institute is ranked first, at an expected $83 million.
+
+### The Week's Stories
+**Simcoe County board applying for new school projects in Collingwood, Elmvale and Bradford: CollingwoodToday**
+At the November 25 meeting, board chief executive Dawn Stephens told trustees a Ministry of Education capital-priority call arrived November 13, with business cases due January 5. The board will ask, in order, for a replacement Collingwood Collegiate Institute, an addition at Huronia Centennial Elementary School in Elmvale, and a new Bradford West Gwillimbury secondary school. The three projects are estimated at $200 million; in past calls the province has typically set aside $500 million province-wide. Orillia, Severn and Ramara trustee Jodi Lloyd said, "We are excited but we are also very realistic that we may get none. We don't know what we'll get," and called it "a big ask" that "will depend on how good the competition is." Business and facility services superintendent Corry Van Nispen said in October the three were chosen because talks with the ministry suggested they could attract funding, and that the ministry decides. The province favours shovel-ready work, land the board already owns, finished designs, and designs copied from schools already built. A two-storey CCI design for 1,134 students is done; the board would not release it before provincial approval. There has been interest in a joint-use build. The expected price is $83 million. The Hurontario Street school, built in the 1950s, is the oldest board high school not already approved for a rebuild. A December 2020 assessment found 57 per cent of components at the end of their life; the board puts repair of those components at $21 million and calls the building prohibitive to repair. A site is selected. Communications manager Sarah Kekewich said in October, "We will be better positioned to provide information after the plan goes forward," after the board did not say whether that site is new land or the current one. In Elmvale the board wants a single-storey addition, renovations and site work; an architect has the design about 75 per cent done, and the board is still in site-plan talks with the Township of Springwater. The Bradford secondary school is also expected to cost $83 million and to ease Bradford District High School, which the board says has 21 portables. Trustees were told Van Nispen will report on all approved capital projects at the February business committee. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/simcoe-county-board-applying-for-new-school-projects-in-collingwood-elmvale-and-bradford-13061956) Source: [barrietoday.com](https://www.barrietoday.com/local-news/big-ask-public-school-board-eyes-funding-for-multiple-construction-projects-13062124)
+
+**Wasaga welcomes new family doctor through recruitment effort: BarrieToday**
+Dr. Michael Cipparrone has joined Dr. Jacob McGavin, Dr. Yannick Charette and Dr. Stephanie Rogers, who provide primary care to around 4,900 people. The Town of Wasaga Beach says its doctor recruitment strategy has delivered four physicians in four years. Source: [barrietoday.com](https://www.barrietoday.com/local-news/wasaga-welcomes-new-family-doctor-through-recruitment-effort-13063123) Source: [wasagabeach.com](https://www.wasagabeach.com/news/posts/wasaga-beach-doctor-recruitment-strategy-delivers-four-physicians-in-four-years/)
+
+**Eight trucks inspected: one pulled off the road in Collingwood: CTV News**
+Collingwood officers inspected commercial vehicles in a blitz and took one off the road. Eight trucks were inspected. The inspections yielded 14 charges. Source: [ctvnews.ca](https://www.ctvnews.ca/toronto/barrie/article/eight-trucks-inspected-one-pulled-off-the-road-in-collingwood/) Source: [trucknews.com](https://www.trucknews.com/regulations/collingwood-ont-truck-inspections-yield-14-charges/1003225339/)
+
+**'One cabin at a time': Community unites to try to save Camp Simpresca: MidlandToday**
+Nearly 100 people from across Simcoe County gathered in Midland as efforts to revive the 77-year-old summer camp began to take shape, framed as one cabin at a time. Source: [midlandtoday.ca](https://www.midlandtoday.ca/local-news/community-rallies-to-save-camp-simpresca-13058063)
+
+### Council & County
+**Meaford Councillors Question $3.675M Land Purchase After Province Rules Out Highway Access: The Owen Sound Current**
+Meaford councillors are questioning a $3.675 million land purchase after the province ruled out highway access. Source: [owensoundcurrent.com](https://www.owensoundcurrent.com/p/meaford-councillors-question-3675m)
+
+### The Closer Look
+**School nutrition dollars still coming up short in Simcoe County: CollingwoodToday**
+The Simcoe County District School Board is pressing again for more student-nutrition money across its 105 schools. At the November 25 meeting, board chair Brandy Rafeek, trustee for Adjala-Tosorontio, Clearview, CFB Borden and Essa, told trustees that last year's commitment from the Ministry of Children, Community and Social Services and Peterborough Child and Family Services is not turning out as the board hoped. Trustees approved Rafeek writing both agencies a letter, for the board, affirming support for more dollars.
+
+Rafeek also sits with the local Eat Well to Excel chapter. Before the board's advocacy, the ministry had not increased province-wide student food-program dollars since 2014, and it wait-listed newly opened schools so they received none. Last year the ministry committed to pulling new schools off that wait-list with money from the federal $1 billion National School Food Program, and promised nutrition funding for new schools would continue.
+
+At the latest Eat Well to Excel meeting, Rafeek said, the chapter was told new schools being built now would get no student nutrition dollars and would go on a new wait-list. She said Peterborough Child and Family Services was instructed around this time last year to remove every school from the waiting list, and did, but no future directive was attached. "It is a hard decision for them," Rafeek said. Fifteen new schools are coming to Simcoe County within the next few years. She said the overall pot has not increased; it has been redistributed to more schools.
+
+Orillia, Severn and Ramara trustee Jodi Lloyd pointed to Ontario Public School Board Association advocacy and the federal dollars. "Even though they've announced more money and there are intentions that are very well-meaning, there's still not sufficient funds," she said. "We have significant challenges in Simcoe County."
+
+Public Health Ontario figures show 26 per cent of Simcoe County households experienced food insecurity in 2023-24, above the provincial average of 24 per cent. The Simcoe County Greenbelt Coalition says one in six children and youth in the county live with food insecurity. Trustees were told earlier this year that about 17,000 of the 57,000 students in the 105 schools use the nutrition programs.
+
+Eat Well to Excel, a non-profit partnership of more than 20 years, supports volunteer breakfast, lunch and snack programs in all Simcoe County schools. The partnership includes the public board, the Simcoe Muskoka District Health Unit, United Way Simcoe Muskoka, the Simcoe Muskoka Catholic District School Board, the Sharing Place Food Centre, the Karma Project and Peterborough Child and Family Services. Ministry base funding is funnelled through Peterborough Child and Family Services. The ministry gave the public board $790,717 in the 2024-25 school year. The board estimates ministry and organizational funds cover 10 to 15 per cent of actual operating costs in each school. School and community fundraising make up the difference, so programs vary widely from school to school.
+
+New Oro-Medonte and Springwater trustee SuEllen Laurin said that variation is the part she has an issue with: a strong parent council can mean more fundraising and more money for food. Rafeek said areas differ in the relationships, partnerships and service clubs willing to help. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/school-nutrition-dollars-still-coming-up-short-in-simcoe-county-13062654)
+
+### Also Today
+**Fireball lights up the night sky in Simcoe County: CTV News**
+A bright meteor was spotted over Barrie, Simcoe County and southern Ontario. Source: [ctvnews.ca](https://www.ctvnews.ca/barrie/article/simcoe-county-residents-treated-to-meteor-sighting/)
+
+**Michelin-recommended Lore in Collingwood named one of the best new restaurants by Air Canada: Simcoe.com**
+Michelin-recommended Lore in Collingwood was named one of the best new restaurants by Air Canada. Source: [simcoe.com](https://www.simcoe.com/things-to-do/food-and-drink/lore-collingwood-restaurant/article_ee40fe84-60d7-5048-aa4b-d4ce1483def3.html)
+
+**Driver blows more than 4 times over after leaving restaurant: OPP: MidlandToday**
+Nottawasaga OPP say an accused driver blew more than four times over the limit after leaving an Alliston restaurant Tuesday night, where police say the driver had arrived to pick up an order and a vigilant employee called officers. Source: [midlandtoday.ca](https://www.midlandtoday.ca/police-beat/driver-blows-more-than-4-times-over-after-leaving-restaurant-opp-13062142)
+
+**Rural high-speed internet expanded in Bruce and Grey County: CTV News**
+Rural high-speed internet has been expanded in Bruce and Grey County. Source: [ctvnews.ca](https://www.ctvnews.ca/windsor/article/rural-high-speed-internet-expanded-in-bruce-and-grey-county/)
+
+### Roads & Weather Ahead
+Environment Canada has a yellow freezing-rain warning for Collingwood, issued at 4:15 a.m. EST Friday, November 27, telling people in or near the area to watch for adverse weather and take safety precautions. Current conditions are 2.0 degrees. Friday brings rain changing to periods of snow or rain this morning, a risk of freezing rain early, an east wind of 20 kilometres an hour becoming light, and a high of plus 4, with a UV index of 1. Friday night turns from periods of rain to periods of snow or rain late this evening, ending overnight, then cloudy with a 30 per cent chance of rain showers or flurries; the wind becomes northwest at 20 kilometres an hour before morning, and the low is plus 1. Saturday is cloudy with a 30 per cent chance of rain showers or flurries, a west wind of 20 kilometres an hour and a high of 7; Saturday night stays cloudy with the same 30 per cent chance and a low of plus 2. Sunday is cloudy with a 30 per cent chance of showers and a high of plus 4. Source: [weather.gc.ca](https://weather.gc.ca/rss/weather/44.5_-80.217_e.xml)
+
+### The Weekend
+**New exhibit in Thornbury puts unconventional portraits on display: CollingwoodToday**
+Disparate Portraits opens at Thornbury's LE Shore Memorial Library on December 5. Source: [collingwoodtoday.ca](https://www.collingwoodtoday.ca/local-news/new-exhibit-in-thornbury-puts-unconventional-portraits-on-display-13061991)
