@@ -133,6 +133,9 @@ class TestDeadUrlAudit:
         assert audit._normalise("/blog/env_intel/ep068.html)") == "blog/env_intel/ep068.html"
         assert audit._normalise("/blog/x.html%29%29") == "blog/x.html"
         assert audit._normalise("(not set)") == ""
+        # Nov 27 2026: a doubled leading slash is not a host.
+        assert audit._normalise("//blog/tesla/ep674.html") == "blog/tesla/ep674.html"
+        assert audit._normalise("/////blog/tesla/ep613.html") == "blog/tesla/ep613.html"
         assert audit._normalise("/") == ""
 
     def test_accepted_404s_are_not_reported(self, audit):
