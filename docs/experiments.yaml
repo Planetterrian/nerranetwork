@@ -8409,3 +8409,34 @@ experiments:
       engine/nerra_daily_email.py FULL_WEEK_SLUGS, the gallery Worker's
       spacex-weekly list, generate_html planetterrian related_show. Guards
       tests/test_market_picks_2026_11_25.py.
+  - id: mira-reply-gap-2026-11-25
+    title: "Mira replies sooner: the room stops adding half a second after every guest answer"
+    area: age_of_ai
+    shipped: 2026-11-25
+    readout: 2026-12-16
+    status: reading
+    baseline: >
+      Rehearsals on Nov 25 (rooms 6a619587, 692e0f90): the room's request for
+      her reply went 1,102 to 1,109 ms (median) after the guest's pause, with
+      the words landing at ~600 ms. The server starts its own turn the moment
+      the words land; the room cancelled it and waited a fresh 500 ms.
+    target: >
+      The room's request leg at or under 750 ms median in the first two real
+      rooms after the deploy, with the closing round complete and no more
+      talking-over events than the rehearsal current arm.
+    criteria: >
+      HIT when both rooms' "timing:" trace lines read request <= 750 ms and
+      neither room has a "never reported done" line or an unfinished closing
+      round; MISS when either reads over 900 ms or a room stalls; else
+      INCONCLUSIVE.
+    readout_plan: >
+      interview_runs.scenario_trace in the nerra-voices Supabase: the "timing:"
+      and "path:" turn lines, the round lines, and the end-of-room counters, for
+      the first two rooms run on the deployed scenario. Rehearsal evidence:
+      rooms b1bd19a6 (vincent, 640 ms) and 5402bcbd (adrian, 686 ms).
+    notes: >
+      PR #1756. voximplant/scenarios/age_of_ai_interview.js
+      TURN_WORDS_LANDED_MS, REROUTE_CANCEL_WAIT_MS, the reroute in
+      markTurnStarted. Guards tests/test_turn_timing_2026_11_25.py,
+      tests/test_room_holds_2026_10_22.py. ⚠️ AUDIO, the room: deploy only
+      after a rehearsal PASS reading and one listen.
