@@ -247,12 +247,19 @@ GAP_WINDOW_SEC = 0.02
 GAP_FADE_SEC = 0.01
 
 
-def close_gaps(wav: Path) -> dict:
+def close_gaps(wav: Path, max_gap: float | None = None) -> dict:
     """Shorten every silence longer than MAX_GAP_SEC in a mono 16-bit WAV, in
     place, keeping both edges of it. Returns {"closed": n, "removed_sec": s,
     "removed": [[from, to], ...]}: the stretches taken out, in seconds from the
     start of the file as it was (Oct 27 2026: the edit clock is built from
-    these, so chapters and the transcript land where the words are)."""
+    these, so chapters and the transcript land where the words are).
+
+    Nov 27 2026, Gary Amaral asked on air for "the pauses" to come out. A cut
+    may carry ``"max_gap": s`` (a hand EDL only): a silence over ``s`` keeps
+    the same two edges scaled by ``s / MAX_GAP_SEC``. Unset, nothing changes."""
+    limit = MAX_GAP_SEC if max_gap is None else max(0.3, float(max_gap))
+    scale = limit / MAX_GAP_SEC
+    lead, tail = GAP_LEAD_SEC * scale, GAP_TAIL_SEC * scale
     import wave
     import numpy as np
     with wave.open(str(wav), "rb") as w:
@@ -278,8 +285,8 @@ def close_gaps(wav: Path) -> dict:
         while j < frames and quiet[j]:
             j += 1
         s, e = i * hop, (j * hop if j < frames else len(x))
-        if (e - s) / sr > MAX_GAP_SEC:
-            a, b = s + int(GAP_LEAD_SEC * sr), e - int(GAP_TAIL_SEC * sr)
+        if (e - s) / sr > limit:
+            a, b = s + int(lead * sr), e - int(tail * sr)
             if b > a:
                 cuts.append((a, b))
         i = j
@@ -611,7 +618,7 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
             "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
     if cut.get("gaps", True):
-        closed = close_gaps(out)
+        closed = close_gaps(out, cut.get("max_gap"))
         # Kept on this run's copy of the cut (never the file) for edit_clock:
         # where each stretch of the room lands in the episode.
         cut["_gaps_removed"] = closed.get("removed") or []
