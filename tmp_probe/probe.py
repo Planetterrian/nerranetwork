@@ -2,7 +2,9 @@
 import subprocess, urllib.request
 import numpy as np
 url = "https://audio.nerranetwork.com/nerra_voices/raw/88ed9ad7-33cf-4179-b8be-3e14345f154e_edit_20261127154652.mp3"
-urllib.request.urlretrieve(url, "/tmp/e.mp3")
+req = urllib.request.Request(url, headers={"User-Agent": "nerra-probe"})
+with urllib.request.urlopen(req) as r, open("/tmp/e.mp3", "wb") as f:
+    f.write(r.read())
 raw = subprocess.run(["ffmpeg", "-v", "error", "-i", "/tmp/e.mp3", "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
                      check=True, capture_output=True).stdout
 x = np.frombuffer(raw, dtype=np.int16).astype(np.float64)
