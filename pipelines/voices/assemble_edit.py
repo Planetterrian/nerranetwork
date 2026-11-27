@@ -765,11 +765,46 @@ def _last_silence_before(src, end: float, cut: dict | None = None) -> float | No
     speakers on separate tracks no single one of them can answer "has everyone
     stopped": the guest's track is silent through every question Mira asks.
     """
-    import numpy as np
+    srcs = [src] if isinstance(src, (str, Path)) else list(src)
+    # (role, path) pairs: listen to the fold as it will be HEARD, with any
+    # muted speaker already muted. Sept 26 2026, Dr. Brandt: the probe heard
+    # Mira's muted "I'm glad you could join us" over his goodbye, found no
+    # pause after it, settled on the pause before it, and cut "My pleasure,
+    # thank you so much for having me" off the end of the episode.
+    roles = [s[0] if isinstance(s, tuple) else "" for s in srcs]
+    srcs = [s[1] if isinstance(s, tuple) else s for s in srcs]
     lo = max(0.0, end - END_SEARCH_SEC)
-    loud = _loud_frames(src, lo, end + 0.5, cut)
-    if loud is None:
+
+    cmd = ["ffmpeg", "-v", "error"]
+    for one in srcs:
+        cmd += ["-ss", str(lo), "-to", str(end + 0.5), "-i", str(one)]
+    if len(srcs) > 1:
+        probe_cut = {**(cut or {}), "start": lo}
+        # At the level each voice will be played at (a quiet guest's raw
+        # track dips under the silence line between syllables), with anyone
+        # muted already muted.
+        chains = "".join(
+            f"[{i}:a]{_pan_of(srcs[i]) or 'anull'},"
+            f"volume={_speech_gain(srcs[i], pan=_pan_of(srcs[i])):.1f}dB"
+            f"{_mutes(probe_cut, roles[i])}[p{i}];"
+            for i in range(len(srcs)))
+        labels = "".join(f"[p{i}]" for i in range(len(srcs)))
+        cmd += ["-filter_complex", chains + f"{labels}amix=inputs={len(srcs)}:"
+                "duration=longest:normalize=0[o]", "-map", "[o]"]
+    cmd += ["-ac", "1", "-ar", "8000", "-f", "f32le", "-"]
+    try:
+        raw = subprocess.run(cmd, capture_output=True, timeout=180).stdout
+    except Exception:  # noqa: BLE001 — the nominal end is a fine fallback
+        logger.exception("silence probe failed (non-fatal)")
         return None
+    import numpy as np
+    x = np.frombuffer(raw, dtype=np.float32)
+    hop = 80                                   # 10 ms
+    n = len(x) // hop
+    if n == 0:
+        return None
+    db = 20 * np.log10(np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1)) + 1e-9)
+    loud = db > -45.0
     at_end = int(round((end - lo) / 0.01))
     before = np.where(loud[:at_end])[0]
     if not len(before):
