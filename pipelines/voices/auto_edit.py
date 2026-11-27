@@ -193,7 +193,13 @@ def _last_guest_turn(transcript: str) -> float | None:
 # model also found is merged with its span.
 RESTART_RE = re.compile(
     r"\b(let me (start|try|do) (that |this )?(over|again)|(can|could|may) i (start|do|try|say|take) "
-    r"(that |this )?(over|again)|start (that |this )?(over|again)|scratch that|"
+    r"(that |this )?(over|again)|"
+    # Nov 27 2026, Surendra Goel: "every time I go to any of the current
+    # platform, I start over" described other apps, and the bare phrase cut
+    # 62 seconds of his answer and landed the episode mid-sentence. A
+    # restart is a request or an imperative, never a description.
+    r"(let'?s|i'?m going to|i want to|i'?d like to|sorry|okay|ok|wait|no),? "
+    r"start (that |this )?(over|again)|^start (that |this )?(over|again)|scratch that|"
     r"let me (rephrase|redo|re-?do)|i'?ll (start|say) (that |this )?(over|again)|"
     r"take two|from the top)\b", re.I)
 CUT_RE = re.compile(
