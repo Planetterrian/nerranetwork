@@ -203,9 +203,54 @@ CUT_RE = re.compile(
     r"(leave|take) (that|this) (out|off)|not for the (show|episode|recording)|"
     r"i'?d rather (that|this) (not|didn'?t|wasn'?t))\b", re.I)
 DECLINE_RE = re.compile(
-    r"^(i'?d rather not|i'?ll pass|pass on that|let'?s not go there|"
+    r"^(?:(?:um+|uh+|hmm+|yeah|oh|well|so|actually|honestly|you know|"
+    r"that'?s a good question|good question)[,.]?\s+)*"
+    r"(?:(i'?d rather not|i'?ll pass|pass on that|let'?s not go there|"
     r"i'?d prefer not|i can'?t (talk|speak|comment) (about|on) that|"
-    r"no comment|skip (that|this) one)\b", re.I)
+    r"no comment|skip (that|this) one|"
+    r"i'?d (rather|prefer) (to skip|to pass)|"
+    r"(i|i'?m) (don'?t|do not|won'?t|will not|not going to|am not going to) "
+    r"(want to )?(answer|comment|talk about|get into|go into)|"
+    r"(can|could) we (skip|pass on|move on from) (that|this|it)|"
+    r"let'?s (skip|move on from) (that|this|it))\b"
+    # Nov 27 2026, Gary Amaral: a pass is often one word. "Pass." alone on
+    # a line, or "Next question.", is a decline.
+    r"|(pass|next( question)?|skip( (it|that|this))?)[.!]?\s*$)", re.I)
+# ...and anywhere in the line, the shapes that are a pass wherever they sit:
+# "That's a fair question, but I'm going to pass on it."
+DECLINE_ANYWHERE_RE = re.compile(
+    r"\b((i'?ll|i will|i'?m going to|i'?m gonna|i think i'?ll|let me) pass\b|"
+    r"(can|could) we skip (that|this|it)( one| question)?\b|"
+    r"next question,? please\b|"
+    r"i'?d (rather|prefer) not (answer|say|get into|go into|talk about|comment)\b|"
+    r"(don'?t|do not) want to (answer|get into|talk about) (that|this|it)\b)", re.I)
+
+# What Mira says when a guest passes (Nov 27 2026). Gary Amaral passed on
+# nine questions and the episode shipped every one of them, with Mira's
+# "Sure." after each: his one-word "pass" never reached the transcript
+# (Whisper drops a lone word in a long silence, or glues it onto the end of
+# his previous answer), so nothing above could see it. What IS in the
+# transcript every time is the shape: her question, no answer from anyone,
+# then her acknowledgment and a different question. That shape is the pass.
+PASS_ACK_RE = re.compile(
+    r"^(sure|fine|of course|no problem|understood|ok(ay)?|all right|alright|"
+    r"got it|fair enough|no worries|that'?s (fine|okay|ok|alright|all right)|"
+    r"noted|absolutely|totally fair|completely fair|moving on|let'?s move on|"
+    r"we'?ll (skip|leave|pass on) (that|it|this)( one)?|skipping|"
+    r"skip(ped)? (that|it|this)( one)?|a different one|another one|"
+    r"something else|let'?s try (a different|another) one)\b", re.I)
+# The guest has to have had the floor: her ack within a few seconds of her
+# question is her own two-part turn, not a pass.
+PASS_MIN_WAIT_SEC = 5.0
+# A line this short that is not a question, standing between her unanswered
+# question and her next one, is an acknowledgment whatever its words are
+# (Gary's "Taking those.").
+PASS_ACK_MAX_WORDS = 3
+# Drops closer than this are joined into one.
+MERGE_GAP_SEC = 1.0
+# An acknowledgment that shares its line with the next question is cut on
+# the audio's own pause after it when its first sentence is this short.
+INLINE_ACK_MAX_WORDS = 8
 # A request is about what was just said: the span never reaches further back.
 REQUEST_SPAN_MAX_SEC = 180.0
 # Mira's acknowledgment of a request ("Done, that stays out") is part of the
@@ -245,7 +290,8 @@ def guest_requests(transcript: str, host: str = "Mira") -> list:
             continue
         kind = ("restart" if RESTART_RE.search(text) else
                 "cut" if CUT_RE.search(text) else
-                "decline" if DECLINE_RE.search(text) else "")
+                "decline" if (DECLINE_RE.search(text)
+                              or DECLINE_ANYWHERE_RE.search(text)) else "")
         if not kind:
             continue
         # Back to the start of the guest's turn (their consecutive lines),
@@ -268,16 +314,114 @@ def guest_requests(transcript: str, host: str = "Mira") -> list:
                 and "?" not in lines[k + 1][2]:
             k += 1
         end = _line_end(lines, k)
+        inline = None
+        if kind == "decline" and k == i and k + 1 < len(lines) \
+                and lines[k + 1][1].lower() == host.lower():
+            # "Of course. Where did pricing go next?": the acknowledgment
+            # shares its line with the next question. The span stops before
+            # the line, and the assembler takes the acknowledgment off its
+            # front on the audio's own pause when it can find one.
+            inline = _inline_ack(lines[k + 1])
         if kind == "restart":
             # The retake starts where the next line of theirs begins; the
             # request itself and the aborted attempt go, the retake stays.
             end = lines[k + 1][0] - 0.25 if k + 1 < len(lines) else end
         if end <= start:
             continue
-        found.append({"from_sec": round(start, 2), "to_sec": round(end, 2),
-                      "kind": kind, "guest_request": True,
-                      "why": f"the guest asked ({kind}): \"{text[:120]}\""})
+        row = {"from_sec": round(start, 2), "to_sec": round(end, 2),
+               "kind": kind, "guest_request": True,
+               "why": f"the guest asked ({kind}): \"{text[:120]}\""}
+        if inline:
+            row["skip_ack"] = inline
+        found.append(row)
+    found += passed_questions(lines, host, already=found)
+    found.sort(key=lambda r: r["from_sec"])
     return found
+
+
+def _inline_ack(line: tuple) -> dict | None:
+    """``{line_at, until_sec, ack}`` when ``line`` (one of Mira's) opens with
+    a short acknowledgment sentence and goes on to something else, else None.
+    ``until_sec`` is the word-count estimate of where the acknowledgment
+    ends; the assembler looks for the real pause around it."""
+    at, _who, text = line
+    parts = re.split(r"(?<=[.!])\s+", text.strip(), maxsplit=1)
+    if len(parts) < 2 or not parts[1].strip():
+        # "Of course, a different one. You refuse..." splits on the period;
+        # "Sure, what about hiring?" is one sentence and stays whole.
+        return None
+    first = parts[0]
+    if not PASS_ACK_RE.search(first) or "?" in first \
+            or len(first.split()) > INLINE_ACK_MAX_WORDS:
+        return None
+    return {"line_at": round(at, 2),
+            "until_sec": round(at + WORD_SEC * len(first.split()), 2),
+            "ack": first}
+
+
+def _is_ack(text: str) -> bool:
+    text = text.strip()
+    if "?" in text:
+        return False
+    return bool(PASS_ACK_RE.search(text)) or len(text.split()) <= PASS_ACK_MAX_WORDS
+
+
+def passed_questions(lines: list, host: str = "Mira", already: list | None = None) -> list:
+    """Questions the guest passed on, read from the shape the room leaves when
+    the pass itself is not in the transcript: Mira asks, nobody answers for
+    at least ``PASS_MIN_WAIT_SEC``, and her next line acknowledges and moves
+    to a different question. The span runs from the start of the turn that
+    holds the question (her reaction to the previous answer included: it was
+    the run-up to the question that is no longer there) through her
+    acknowledgment, so the listener hears the guest's last answer and then
+    her next question. Spans already found as an explicit decline are not
+    found twice."""
+    is_host = [who.lower() == host.lower() for _at, who, _t in lines]
+    out: list = []
+    taken = [(float(r["from_sec"]), float(r["to_sec"])) for r in (already or [])]
+    for i, (at, _who, text) in enumerate(lines):
+        if not is_host[i] or "?" not in text or i + 1 >= len(lines):
+            continue
+        j = i + 1
+        if not is_host[j] or lines[j][0] - at < PASS_MIN_WAIT_SEC:
+            continue
+        nxt = lines[j][2]
+        inline = None
+        if _is_ack(nxt):
+            # Her next question has to follow, before the guest speaks.
+            k = j + 1
+            while k < len(lines) and is_host[k] and "?" not in lines[k][2]:
+                k += 1
+            if k >= len(lines) or not is_host[k]:
+                continue
+            end = lines[j + 1][0] - 0.25
+            ack = nxt.strip()
+        else:
+            inline = _inline_ack(lines[j])
+            if not inline:
+                continue
+            end = lines[j][0] - 0.25
+            ack = inline["ack"]
+        # Back to the start of her turn: the lines of hers since the guest
+        # last spoke, but never back past an earlier question or into the
+        # span of an earlier pass (two passes in a row are two spans).
+        s = i
+        while s > 0 and is_host[s - 1] and "?" not in lines[s - 1][2] \
+                and not any(a <= lines[s - 1][0] < b for a, b in taken) \
+                and at - lines[s - 1][0] <= REQUEST_SPAN_MAX_SEC:
+            s -= 1
+        start = lines[s][0]
+        if end <= start or any(a <= start < b or a < end <= b for a, b in taken):
+            continue
+        row = {"from_sec": round(start, 2), "to_sec": round(end, 2),
+               "kind": "pass", "guest_request": True,
+               "why": (f"the guest passed on \"{text.strip()[:120]}\": no answer, "
+                       f"and Mira moved on (\"{ack[:60]}\")")}
+        if inline:
+            row["skip_ack"] = inline
+        out.append(row)
+        taken.append((start, end))
+    return out
 
 
 def merge_drops(model_drops: list, requests: list) -> list:
@@ -955,8 +1099,29 @@ def build(run_id: str) -> dict:
             floor = 0.0
         if b - a >= floor and start < a < b < end:
             drops.append({"from": a, "to": b, "why": d.get("why", ""),
-                          **({"guest_request": True} if d.get("guest_request") else {})})
+                          **({"guest_request": True} if d.get("guest_request") else {}),
+                          **({"skip_ack": {**d["skip_ack"],
+                                           "line_at": leg(d["skip_ack"]["line_at"]),
+                                           "until_sec": leg(d["skip_ack"]["until_sec"])}}
+                             if d.get("skip_ack") else {})})
     drops.sort(key=lambda d: d["from"])
+    # Two drops a breath apart are one (Nov 27 2026: two passes in a row left
+    # a quarter-second piece of nothing between them).
+    joined: list = []
+    for d in drops:
+        if joined and d["from"] - joined[-1]["to"] < MERGE_GAP_SEC:
+            last = joined[-1]
+            last["to"] = max(last["to"], d["to"])
+            last["why"] = (str(last.get("why", "")) + " " + str(d.get("why", ""))).strip()
+            last["guest_request"] = bool(last.get("guest_request") or d.get("guest_request"))
+            last.pop("skip_ack", None)
+            if d.get("skip_ack"):
+                last["skip_ack"] = d["skip_ack"]
+            if not last["guest_request"]:
+                last.pop("guest_request")
+        else:
+            joined.append(d)
+    drops = joined
     kept_requests = sum(1 for d in drops if d.get("guest_request"))
     rationale_requests = (f"{kept_requests} passage(s) the guest asked to have out "
                           "are out, whatever their length." if kept_requests else "")
@@ -1003,16 +1168,22 @@ def build(run_id: str) -> dict:
         rationale += (" Mira talked over the guest mid-answer " +
                       ", ".join(f"at {a // 60:.0f}:{a % 60:04.1f}" for a, _b in over) +
                       "; her voice is muted there and the guest's carries on.")
-    at = start
+    at, ack = start, None
     for d in drops:
         cuts.append(_with_mutes({**bed,
                      "start": round(at, 1), "end": round(d["from"], 1),
-                     "note": f"to {d['from']:.0f}s: {d['why']}"}, over))
+                     "note": f"to {d['from']:.0f}s: {d['why']}",
+                     **({"skip_ack": ack} if ack else {})}, over))
         cuts.append({"gap": 0.4})
-        at = d["to"]
+        at, ack = d["to"], d.get("skip_ack")
     cuts.append(_with_mutes({**bed,
                  "start": round(at, 1), "end": round(end, 1),
-                 "note": decided.get("end_why", "")}, over))
+                 "note": decided.get("end_why", ""),
+                 **({"skip_ack": ack} if ack else {})}, over))
+    passes = sum(str(d.get("why", "")).count("passed on") for d in drops)
+    if passes:
+        rationale += (f" {passes} question(s) the guest passed on are out, with "
+                      "Mira's acknowledgment.")
     # A breath after the guest's last word before the produced close; 0.7 s
     # ran the outro straight into the end of the sentence.
     cuts += [{"gap": 1.4}, {"from": "narration:outro"}]
