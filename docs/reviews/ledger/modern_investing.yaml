@@ -1581,8 +1581,86 @@ reviews:
       ab_listen_required: true
       rationale: 'P1: Ep224 selected a covered call but deferred the premium; Ep231–234 returned to shares only. Require quote fields when options is chosen; zero estimated premium constraint unchanged. A/B-listen.'
     agent_cost_usd: 0.2264
+  - date: '2026-11-28'
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_11_28.md
+    generated_by: grok-4.5
+    summary: Market Pulse chapters landed after the Nov 24 matcher ship, but every close still garbles Nerra→Narin, every Portfolio Performance still recites the full March-2026 lifetime totals beside era alpha (fourth miss class—escalate, do not re-strip), and EN scripts keep splitting Invalidation and mangling names while AI flags Repetitive on Ep241–243.
+    scored_prior_predictions:
+    - metric: episodes whose chapter JSON includes a Market Pulse (or index-tape) chapter title
+      verdict: hit
+      evidence: 'Ep241–244 chapters_ep241–244.json all title Market Pulse after Nov 24 #1734 matcher ship'
+    - metric: Portfolio Performance airings that speak March-2026 lifetime trade count or cumulative P&L as scoreboard color
+      verdict: miss
+      evidence: Ep241–244 every PP still speaks 110–111 trades and cumulative −$802 to −$811 beside era alpha; strip was not shipped
+    - metric: EN _tts.txt incidents of Narin/Narrow/naren for Nerra, or wind rate for win rate
+      verdict: miss
+      evidence: Ep241–244 closes all say Narin Network / narennetwork.com (transcript quotes)
+    - metric: episodes whose Trade Review chapter starts before Strategy Spotlight
+      verdict: partial
+      evidence: Ep240 TR@34.4s before Strategy@102.7s; Ep241–244 Strategy/Pulse before Review
+    - metric: mit_non_medium_share_10ep on dashboard at next review
+      verdict: hit
+      evidence: Ep241 FNV High + Ep243 CLSK Low in last-4; non-Medium share well above 0.2 in hand window
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (escalate, fourth miss): daily Portfolio Performance lifetime March-2026 trade count / cumulative $ — (A) accept one labelled history sentence as house style and retire 0/10 predictions, (B) data-side gate to ≤1×/week or when era n changes, (C) strip from on-air prompt context (performance page only). Do not file a fifth identical prompt-only ban.'
+    - 'Operator: run scripts/recompute_mit_benchmarks.py --apply after adjudicating 8 unreconciled pre-era trades (history cleanup; era on-air alpha already isolated)'
+    - 'Operator: significance-qualifier accept-or-abandon (third miss; no fourth mechanism — do_not_retry)'
+    - 'Operator: SnapTrade Phase-0 verification; keep LIVE_TRADING_ENABLED dormant until clean shadow+sim record'
+    - 'Operator decision: volume>20-day multi-segment tic — data-side recent-episode MEMORY vs accept as house style (do not file a third prompt-only de-seed)'
+    - Options cadence / live strike+expiry+mid on air — only if operator still wants post-Ep224; zero estimated premium unchanged
+    - Confidence mechanical grade only if forced High/Low variation carries no information after ~20 post-budget picks
+    - Listener feedback loop (inbox + triage) — product decision from Aug 20
+    - Feed measured shadow slippage into sim cost model once ~20 matched round trips
+    - HPS.A Ep150 flash open with no entry bar since 08-26 — needs void path
+    - Long-form YouTube retention ~8.2% and −42.9% WoW downloads — network video/discovery problem, not MIT-only prompt tweak
+    - Closing-price lesson family — already filtered as hygiene; leave retired
+    - Podcast-side length expand/retries — permanent do_not_retry network-wide
+    - Ep240-class Trade Review-before-Strategy — monitor one more window before further yaml pattern churn
+    - Elevated fact-free script share — continue digest-density only after this pass's digest note; no podcast word pressure
+    predictions:
+    - metric: EN close/network mentions written as exact 'Nerra Network' / 'nerranetwork.com' (no Narin/Narrow/naren)
+      baseline: 4/4 Ep241–244 closes garble Narin/naren
+      expected: 0/10 garble incidents in EN _tts.txt after hygiene lock
+      verdict: pending
+      evidence: null
+    - metric: EN _tts.txt incidents of 'In validation' split for Invalidation
+      baseline: 2/4 (Ep241, Ep242)
+      expected: 0/10 after one-word lock
+      verdict: pending
+      evidence: null
+    - metric: operator decision recorded on daily lifetime PP sentence (accept vs weekly gate vs strip)
+      baseline: fourth miss; still every episode Ep241–244
+      expected: explicit A/B/C choice in ledger do_not_retry or shipped gate — no fifth identical 0/10 prediction without a new lever
+      verdict: pending
+      evidence: null
+    - metric: AI audit Repetitive flag rate last-7
+      baseline: 3 of Ep241–243 flagged Repetitive; fact-free script 37–62%
+      expected: ≤1/7 Repetitive if digest density rises; else unchanged flags point at substrate not close copy
+      verdict: pending
+      evidence: null
+    - metric: mit_non_medium_share_10ep sustained on dashboard
+      baseline: hit in hand window (High+Low present)
+      expected: ≥0.2 sustained next review without calibration redesign
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/modern_investing_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P0: Ep241–244 EN closes still garble Nerra→Narin/naren every episode (Nov 7+17 miss). Ep241/242 split Invalidation→In validation. Recurring Unusual Wales / Tormelene / Andthropic / In Vidya. Verbatim locks + shape bans; no phonetic hacks (landmine #17). A/B-listen.'
+      status: applied
+    - file: shows/prompts/modern_investing_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1: fact-free script 37–62% with AI Repetitive on Ep241–243. Playbook: length/density via digest substrate only, never podcast expand. A/B-listen resulting episodes for padding vs real claims.'
+      status: applied
+    agent_cost_usd: 0.2269
 do_not_retry:
   - idea: Fourth on-air significance-qualifier mechanism after three misses (operator accept-or-abandon only)
     evidence: flagged 2026-09-25 (Grok review)
   - idea: Podcast-side word-floor / expand-retry pressure for MIT length (digest-substrate only)
     evidence: flagged 2026-09-25 (Grok review)
+  - idea: Fourth (or fifth) prompt-only ban on Portfolio Performance lifetime March-2026 totals without a new data-side gate or explicit operator A/B/C decision — identical proposal missed Oct 24, Nov 7, Nov 17; Nov 17 already declined strip-by-design
+    evidence: flagged 2026-11-28 (Grok review)
